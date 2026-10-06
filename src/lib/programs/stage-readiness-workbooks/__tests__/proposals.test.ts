@@ -2,6 +2,7 @@ import type { TenancyCtx, ProgramCore } from "@/lib/programs/types.db";
 import {
   buildStageReadinessProposalReview,
   buildStageReadinessProposalSet,
+  isReviewForStageReadinessProposalSet,
   persistStageReadinessProposalReview,
   persistStageReadinessProposalSet,
 } from "../proposals";
@@ -81,6 +82,43 @@ const parsed: StageReadinessWorkbookParseResult = {
 };
 
 describe("stage readiness workbook proposals", () => {
+  it("matches a saved review only to its exact proposal artifact and version", () => {
+    const proposalSet = {
+      proposalSetId: "proposal-set-1",
+      artifactId: "proposal-artifact-1",
+      artifactVersion: 2,
+    };
+    const review = {
+      proposalSetId: "proposal-set-1",
+      sourceProposalSetArtifact: {
+        artifactId: "proposal-artifact-1",
+        artifactVersion: 2,
+      },
+    };
+
+    expect(isReviewForStageReadinessProposalSet({ proposalSet, review })).toBe(
+      true,
+    );
+    expect(
+      isReviewForStageReadinessProposalSet({
+        proposalSet,
+        review: {
+          ...review,
+          sourceProposalSetArtifact: {
+            ...review.sourceProposalSetArtifact,
+            artifactVersion: 1,
+          },
+        },
+      }),
+    ).toBe(false);
+    expect(
+      isReviewForStageReadinessProposalSet({
+        proposalSet,
+        review: { ...review, proposalSetId: "older-proposal-set" },
+      }),
+    ).toBe(false);
+  });
+
   it("builds pending proposals without treating unknown or insufficient evidence as readiness", () => {
     const proposalSet = buildStageReadinessProposalSet({
       ctx,
@@ -328,6 +366,70 @@ describe("stage readiness workbook proposals", () => {
         decisions: [{ proposalId: "missing", disposition: "accepted" }],
       }),
     ).toThrow(/unknown stage readiness proposal id/i);
+  });
+
+  it("does not allow a blank workbook response to be accepted", () => {
+    const proposalSet = buildStageReadinessProposalSet({
+      ctx,
+      program,
+      parsed: {
+        ...parsed,
+        responses: [
+          {
+            ...parsed.responses[0],
+            response: "",
+            context: "Available evidence: approved workflow notes",
+            evidenceOrSource: "Existing evidence: ev-workflow",
+            status: "prefilled_confirmed",
+            hasUserInput: false,
+          },
+        ],
+      },
+      uploadedWorkbookSha256: "d".repeat(64),
+    });
+
+    expect(proposalSet.proposals[0]).toMatchObject({
+      answerState: "blank",
+      disposition: "pending",
+    });
+    expect(() =>
+      buildStageReadinessProposalReview({
+        ctx,
+        program,
+        proposalSet,
+        sourceProposalSetArtifactId: "proposal-artifact-1",
+        sourceProposalSetArtifactVersion: 1,
+        decisions: [
+          {
+            proposalId: proposalSet.proposals[0].proposalId,
+            disposition: "accepted",
+          },
+        ],
+      }),
+    ).toThrow(/blank.*cannot be accepted/i);
+
+    const staleAnsweredState = {
+      ...proposalSet,
+      proposals: proposalSet.proposals.map((proposal) => ({
+        ...proposal,
+        answerState: "answered" as const,
+      })),
+    };
+    expect(() =>
+      buildStageReadinessProposalReview({
+        ctx,
+        program,
+        proposalSet: staleAnsweredState,
+        sourceProposalSetArtifactId: "proposal-artifact-1",
+        sourceProposalSetArtifactVersion: 1,
+        decisions: [
+          {
+            proposalId: staleAnsweredState.proposals[0].proposalId,
+            disposition: "accepted",
+          },
+        ],
+      }),
+    ).toThrow(/blank.*cannot be accepted/i);
   });
 
   it("refuses to persist invalid parses", async () => {

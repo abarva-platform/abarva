@@ -361,6 +361,11 @@ describe("answerHomeAvaQuestion", () => {
     });
 
     expect(answer.artifacts).toHaveLength(1);
+    expect(answer.citations.map((citation) => citation.id)).toContain(
+      "tech.application_system.by_businessFunction",
+    );
+    expect(answer.prose).toBeUndefined();
+    expect(answer.gaps[0]?.detail).toContain("recorded counts");
     const chart = answer.artifacts[0];
     expect(chart.artifact).toBe("chart");
     if (chart.artifact === "chart") {
@@ -624,6 +629,85 @@ describe("answerHomeAvaQuestion", () => {
 
     expect(answer.status).toBe("no_data");
     expect(answer.quality.answerCompleteness).toBe("blocked");
+  });
+
+  it("does not package uncited narrative when the model reports no data", async () => {
+    mockClaudeJson({
+      status: "no_data",
+      direct_answer: "I cannot compare reviews, but 27 programs are off track.",
+      prose: "Those 27 programs require leadership action now.",
+      cited_claim_tags: [],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: ["27 programs were counted in an older review."],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "What changed since the last governed review?",
+    });
+
+    expect(answer.status).toBe("no_data");
+    expect(answer.directAnswer).not.toContain("27 programs");
+    expect(answer.prose).toBeUndefined();
+    expect(answer.caveats).toEqual([]);
+    expect(answer.artifacts).toEqual([]);
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("keeps stored chapter prose out of aVa when served lineage is unverified", async () => {
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: CHAPTERS,
+        technologyEstate: TECHNOLOGY_ESTATE,
+        contextVersion: {
+          assessmentId: "assessment-test",
+          projectionContentHash: "rows-hash",
+          sourceSetHash: null,
+          sourceLineageHash: "lineage-hash",
+          sourceCoverage: {
+            totalRecordRows: 2,
+            linkedRecordRows: 1,
+            families: [
+              { pageKey: "vendor_contracts", totalRows: 2, linkedRows: 1 },
+            ],
+          },
+          sourceCatalogHash: "source-catalog-hash",
+          sourceFileReview: {
+            totalFiles: 14,
+            acceptedFiles: 0,
+            partialFiles: 14,
+            blockedFiles: 0,
+            supersededFiles: 0,
+          },
+          sourceDateCoverage: {
+            earliest: "2026-08-23",
+            latest: "2026-08-23",
+            datedFiles: 14,
+            totalFiles: 14,
+          },
+          deterministicPacketHash: "read-packet-hash",
+          narrativePacketHash: "writer-packet-hash",
+          narrativeGeneratedAt: "2026-08-21T00:00:00Z",
+          dataAsOf: null,
+          coherence: "unverified",
+        },
+      },
+      tenantKey: "meridian-health",
+      question: "What should leadership address first?",
+    });
+
+    expect(answer.status).toBe("no_data");
+    expect(answer.directAnswer).toContain("not been verified");
+    expect(answer.directAnswer).toContain(
+      "Source-file quality: 0 of 14 accepted; 14 partial",
+    );
+    expect(answer.directAnswer).toContain(
+      "Registered source dates: 2026-08-23 (14 of 14 files); data currency not attested",
+    );
+    expect(answer.directAnswer).toContain("incomplete for contracts");
+    expect(answer.prose).toBeUndefined();
+    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
   });
 
   it("recovers broad CXO questions from cited chapter claims instead of returning generic no_data", async () => {

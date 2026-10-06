@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireProductModule } from "@/lib/auth/server-module-access";
 import { getStrategicMovePortfolio } from "@/lib/programs/queries";
+import { applyEffectivePhasesToPortfolio } from "@/lib/programs/effective-move-phase";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import {
   DEFAULT_STRATEGIC_MOVES_PREFERENCES,
@@ -11,6 +12,17 @@ import { AppShell } from "@/components/shell/AppShell";
 import { getActiveClientRow } from "@/lib/active-client";
 import { buildPortfolioReconciliation } from "@/lib/programs/canonical-portfolio-reconciliation";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { MovesHome } from "@/components/strategic-moves/MovesHome";
+import { buildMovesHomeProps } from "@/components/strategic-moves/moves-home-adapter";
+import {
+  buildPortfolioValueLine,
+  strategicMoveToHomeInput,
+} from "@/components/strategic-moves/moves-home-mapper";
+import {
+  buildPortfolioReconciliationSummary,
+  hasDeclaredAmount,
+} from "@/lib/programs/portfolio-reconciliation-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -40,42 +52,61 @@ function PortfolioReconciliationPanel({
   reconciliation: Awaited<ReturnType<typeof buildPortfolioReconciliation>>;
 }) {
   if (!reconciliation) return null;
-  const { declaredCount, trackedCount, declaredBudgetUsd, declaredValueUsd } = reconciliation;
+  const { declaredCount, trackedCount, declaredBudgetUsd, declaredValueUsd } =
+    reconciliation;
   return (
     <section className="mb-5 rounded-md border border-[#d9ddd2] bg-white p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold text-[#111827]">Declared vs tracked portfolio</h2>
-        <p className="font-mono text-[11px] uppercase tracking-wider text-[#667085]">
-          canonical build {reconciliation.buildVersion}
-        </p>
+        <h2 className="text-lg font-semibold text-[#111827]">
+          Declared vs tracked portfolio
+        </h2>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-3">
-          <p className="text-xs font-semibold uppercase text-[#667085]">Declared by client</p>
-          <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">{declaredCount}</p>
-          <p className="mt-1 text-[11px] text-[#667085]">canonical programme inventory</p>
-        </div>
-        <div className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-3">
-          <p className="text-xs font-semibold uppercase text-[#667085]">Tracked in Moves</p>
-          <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">{trackedCount}</p>
-          <p className="mt-1 text-[11px] text-[#667085]">operational records</p>
-        </div>
-        <div className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-3">
-          <p className="text-xs font-semibold uppercase text-[#667085]">Declared budget</p>
+          <p className="text-xs font-semibold uppercase text-[#667085]">
+            Declared by client
+          </p>
           <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">
-            {declaredBudgetUsd === null ? "not declared" : money(declaredBudgetUsd)}
+            {declaredCount}
+          </p>
+          <p className="mt-1 text-[11px] text-[#667085]">
+            canonical programme inventory
           </p>
         </div>
         <div className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-3">
-          <p className="text-xs font-semibold uppercase text-[#667085]">Declared value</p>
+          <p className="text-xs font-semibold uppercase text-[#667085]">
+            Tracked in Moves
+          </p>
           <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">
-            {declaredValueUsd === null ? "not declared" : money(declaredValueUsd)}
+            {trackedCount}
+          </p>
+          <p className="mt-1 text-[11px] text-[#667085]">operational records</p>
+        </div>
+        <div className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-3">
+          <p className="text-xs font-semibold uppercase text-[#667085]">
+            Declared budget
+          </p>
+          <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">
+            {hasDeclaredAmount(declaredBudgetUsd)
+              ? money(declaredBudgetUsd)
+              : "not declared"}
+          </p>
+        </div>
+        <div className="rounded border border-[#e4e7ec] bg-[#fbfcfd] p-3">
+          <p className="text-xs font-semibold uppercase text-[#667085]">
+            Declared value
+          </p>
+          <p className="mt-1 font-mono text-2xl tabular-nums text-[#111827]">
+            {hasDeclaredAmount(declaredValueUsd)
+              ? money(declaredValueUsd)
+              : "not declared"}
           </p>
         </div>
       </div>
       {reconciliation.declaredOnly.length > 0 ? (
         <p className="mt-4 text-sm leading-6 text-[#b54708]">
-          Declared but not tracked: {reconciliation.declaredOnly.slice(0, 5).join(" · ")}
+          Declared but not tracked:{" "}
+          {reconciliation.declaredOnly.slice(0, 5).join(" · ")}
           {reconciliation.declaredOnly.length > 5
             ? ` and ${reconciliation.declaredOnly.length - 5} more`
             : ""}
@@ -83,8 +114,8 @@ function PortfolioReconciliationPanel({
         </p>
       ) : null}
       <p className="mt-2 text-[11px] leading-4 text-[#667085]">
-        Reconciled, not merged. Work items, milestones and approvals are created here and are never
-        overwritten from canonical.
+        Reconciled, not merged. Work items, milestones and approvals are created
+        here and are never overwritten from canonical.
       </p>
     </section>
   );
@@ -100,8 +131,13 @@ export default async function StrategicMovesPage() {
   // Include archived rows so the landing can power the Archived chip and an
   // accurate active/archived split client-side. The list view shows the full
   // portfolio, so the prior limit of 8 is raised.
+  // The stored phase is the furthest a Move was advanced, not necessarily the
+  // phase that is open. Show the phase the Move's own workspace would show, so
+  // a row never links to a phase its page will refuse.
   const [portfolio, prefs] = await Promise.all([
-    getStrategicMovePortfolio(ctx, { limit: 100, includeArchived: true }),
+    getStrategicMovePortfolio(ctx, { limit: 100, includeArchived: true }).then(
+      (stored) => applyEffectivePhasesToPortfolio(ctx, stored),
+    ),
     getStrategicMovesPreferences(ctx).catch(
       () => DEFAULT_STRATEGIC_MOVES_PREFERENCES,
     ),
@@ -117,6 +153,45 @@ export default async function StrategicMovesPage() {
     canonicalTenantKey(activeClient?.key ?? null),
     portfolio.moves.map((m) => m.name),
   ).catch(() => null);
+
+  // moves_home_v2 (flag, default OFF): the redesigned portfolio landing. Reads
+  // the SAME portfolio + reconciliation; value numbers come from the governed
+  // valueAtStake / reconciliation totals (never invented here).
+  const homeV2Enabled = isFeatureEnabled(
+    {
+      clientKey: activeClient?.key ?? null,
+      clientId: activeClient?.id ?? null,
+    },
+    "moves_home_v2",
+  );
+
+  if (homeV2Enabled) {
+    const moveInputs = portfolio.moves.map((m) => strategicMoveToHomeInput(m));
+    // Counted from each move's governed valueAtStake, never from the formatted
+    // label: the previous derivation compared the rendered string against the
+    // "Declares in Charter" fallback copy, so changing that copy would have
+    // silently reported every move as having declared a value.
+    const valueLine = buildPortfolioValueLine(
+      portfolio.moves.map((m) => m.valueAtStake),
+    );
+    const homeProps = buildMovesHomeProps({
+      tenantName,
+      moves: moveInputs,
+      valueLine,
+      // The four strings are derived in a pure module so they can be pinned; this
+      // host cannot be rendered in a test (async server component).
+      reconciliation: buildPortfolioReconciliationSummary(
+        reconciliation,
+        money,
+      ),
+      newMoveHref: "/strategic-moves/new",
+    });
+    return (
+      <AppShell surface="programs">
+        <MovesHome {...homeProps} />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell surface="programs">

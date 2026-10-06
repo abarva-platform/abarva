@@ -8,6 +8,7 @@
 // Display rendering is unchanged — this is additive only.
 
 import type { ProgramInstance, ProgramPhaseState } from './program-instance';
+import { getMovesStageName } from './phase-labels';
 
 // ── Phase builder ────────────────────────────────────────────────────────────
 
@@ -15,7 +16,9 @@ function buildPhaseStates(
   currentPhase: number,
   overrides?: Partial<Record<number, Partial<ProgramPhaseState>>>,
 ): ProgramPhaseState[] {
-  const PHASE_LABELS = ['Originate', 'Discovery', 'Synthesis', 'Design', 'Execution Roadmap', 'Approval & Mobilization', 'Tower Handoff'];
+  const PHASE_LABELS = Array.from({ length: 7 }, (_, stage) =>
+    getMovesStageName(stage),
+  );
   const states: ProgramPhaseState[] = [];
 
   for (let i = 0; i <= 6; i++) {
@@ -542,7 +545,7 @@ export const APX_COPILOT_2026_INSTANCE: ProgramInstance = {
 };
 
 // ── DEMO · APX-CCAI-2026 · Contact Center AI Programme ───────────────────────
-// Pattern PAT-PRG-CC-AI-001. Programme is at P5 Approval & Mobilization with containment
+// Pattern PAT-PRG-CC-AI-001. Programme is at P5 Mobilize & Handoff with containment
 // climbing but CSAT eroding, vendor benchmark claim contested, hallucination
 // incidents in pilot transcripts, and handoff context loss observed.
 

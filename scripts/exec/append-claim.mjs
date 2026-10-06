@@ -34,7 +34,7 @@
  *
  *   node scripts/exec/append-claim.mjs --file <register.md> \
  *        --item <id> --identity <base-agent#run-id> --message <text> \
- *        [--action claim|release|abstain] [--branch <name>] [--files a,b] \
+ *        [--action claim|release|abstain|amend] [--branch <name>] [--files a,b] \
  *        [--strict] [--dry-run] \
  *        [--now ISO] [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...
  *
@@ -48,6 +48,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { announcesRelease, announcesAbstention } from "./register-time-authority.mjs";
+import { SILENT, reviewReleaseLine } from "./signed-in-proof-reconcile.mjs";
 import { unknownFlags } from "./cli-entry.mjs";
 import {
   describeQueueProvenance,
@@ -67,8 +68,10 @@ const EXIT_GATE_UNUSABLE = 3;
 
 export const USAGE =
   "usage: --file <register.md> --item <id> --identity <base-agent#run-id> --message <text>\n" +
-  "       [--action claim|release|abstain] [--branch <name>] [--files a,b]\n" +
+  "       [--action claim|release|abstain|amend] [--branch <name>] [--files a,b]\n" +
+  "       --action amend REQUIRES --files: an amendment declares its lock\n" +
   "       [--strict] [--dry-run] [--now ISO] [--queue <EXECUTION_QUEUE.md>]\n" +
+  "       [--repo <dir>] [--records <dir>] [--base <ref>]\n" +
   "       [--window-hours 3] [--gate <path>] [--gate-arg <flag>]...";
 
 /**
@@ -88,6 +91,7 @@ export const FLAG_SPEC = {
   value: [
     "--file", "--item", "--identity", "--message", "--files", "--action",
     "--branch", "--now", "--window-hours", "--gate", "--gate-arg", "--queue",
+    "--repo", "--records", "--base",
   ],
   boolean: ["--strict", "--dry-run"],
 };
@@ -108,7 +112,20 @@ export function advertisedFlags(usageText) {
  * attributes — `<stamp> | <identity> | item <id> ...` — because a line that
  * reads as prose holds nothing, however carefully it is worded.
  */
-export const ACTIONS = new Set(["claim", "release", "abstain"]);
+export const ACTIONS = new Set(["claim", "release", "abstain", "amend"]);
+
+/**
+ * The actions that TAKE something, and are therefore asked the file half and
+ * held to the same message guards as a claim (item T-836).
+ *
+ * A release and an abstention take nothing — C-564 and the rung below it
+ * exempt them, and the reasoning is written out at the call site. An amendment
+ * is the opposite: its whole purpose is to widen a hold onto paths the
+ * original claim did not name, so it is a claim for the file half's purposes
+ * and must not become the one action that can write a hold over somebody
+ * else's.
+ */
+const TAKING_ACTIONS = new Set(["claim", "amend"]);
 
 /**
  * The head of the message field, in the grammar the register's OWN reader
@@ -132,9 +149,105 @@ export function announcementHead(action, item, branch) {
   // An abstention carries no branch: `announcesAbstention` reads NOT TAKEN in
   // the slot directly after the id, and anything between them hides it.
   if (action === "abstain") return `item ${item} NOT TAKEN`;
+  /*
+   * T-836. An amendment extends a claim already made, and it has a head of
+   * its own because the register already writes one: 59 lines open `AMEND`,
+   * and the shape is what a reader of this file recognises as an amendment
+   * rather than a second claim.
+   *
+   * `item <id>` is kept inside it deliberately. The ownership reader finds
+   * the line's subject there, and a head that only said `AMEND` would write
+   * a line the register cannot attribute to the item being amended — which
+   * is a hold nobody can see. Asserted through `itemSubjects`,
+   * `announcesRelease` and `announcesAbstention` in the suite rather than
+   * against a copy of the grammar, because a writer and a reader drifting
+   * apart is what T-712 was filed against.
+   */
+  if (action === "amend") {
+    const parts = [`AMEND item ${item} claim`];
+    if (branch) parts.push(`on branch \`${branch}\``);
+    return parts.join(" ");
+  }
   const parts = [`item ${item} claimed`];
   if (branch) parts.push(`on branch \`${branch}\``);
   return parts.join(" ");
+}
+
+const DEFAULT_RECORD_DIR = "docs/releases/records";
+const DEFAULT_BASE = "origin/main";
+
+/**
+ * The release records this branch adds or changes (item C-528).
+ *
+ * The record a release is about is the one its own branch introduces, which is
+ * a question git answers without a pull request id — and at the moment a
+ * release line is written there may be no local commit carrying one, because
+ * the squash lands on `main` and the agent is standing on its feature branch.
+ *
+ * Returns `{ records, undetermined }`. A repository this cannot read makes the
+ * answer UNDETERMINED and says so; it does not return an empty list, because
+ * "no record contradicts this line" and "I could not look" are different
+ * statements and collapsing them is how a check stops being one.
+ */
+export function releaseRecordsInBranch({
+  repo,
+  dir = DEFAULT_RECORD_DIR,
+  base = DEFAULT_BASE,
+  git = runGit,
+} = {}) {
+  let out;
+  try {
+    out = git(["diff", "--name-only", "--diff-filter=AM", `${base}...HEAD`, "--", dir], repo);
+  } catch (error) {
+    const detail = String(error?.stderr ?? error?.message ?? error).trim().split("\n")[0];
+    return { records: [], undetermined: `git could not compare ${base}...HEAD in ${repo}: ${detail}` };
+  }
+  const records = [];
+  for (const rel of out.split("\n").map((l) => l.trim()).filter(Boolean)) {
+    const abs = path.join(repo, rel);
+    if (!fs.existsSync(abs)) continue;
+    records.push({ file: rel, text: fs.readFileSync(abs, "utf8") });
+  }
+  return { records, undetermined: null };
+}
+
+function runGit(args, cwd) {
+  return execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+}
+
+/**
+ * What this line would leave behind in the record it releases (item C-528).
+ *
+ * Nine release records on `main` assert a signed-in debt the register says was
+ * already paid. None of them is a wrong verdict; every one is a writing order.
+ * The record is authored before the merge, so it can only ever say the proof
+ * has not run; the register line is appended after the deploy, when the proof
+ * HAS run; and nothing between the two ever reopens the record. The debt is
+ * then recoverable only from an operator-root register that CI cannot see.
+ *
+ * So the check runs here, on the one sanctioned writer of a register line, at
+ * the one moment both accounts are in hand. It cannot repair the record — that
+ * file is already merged — and it does not pretend to: it names the record, the
+ * two accounts, and the append-only repair that is owed.
+ *
+ * A line that says nothing about a signed-in proof cannot contradict anything,
+ * and short-circuits before git is touched.
+ */
+export function describeRecordContradiction(review) {
+  const lines = [];
+  for (const row of review.contradicted) {
+    lines.push(
+      `  record:   ${row.file}`,
+      `    says:     ${row.recordSays} — ${String(row.recordEvidence ?? "").trim()}`,
+      `    register: ${row.registerSays} — ${String(row.registerEvidence ?? "").trim()}`,
+    );
+  }
+  lines.push(
+    "  This record is already merged, so this line cannot repair it. What is owed is an",
+    "  APPEND-ONLY section on the record — that the replay ran, when, what it found, and the",
+    "  id carrying any residual — never a rewrite of the original assertion (item C-528).",
+  );
+  return lines.join("\n");
 }
 
 export function buildClaimLine({ stamp, identity, item, message, branch, files, verdict, action = "claim" }) {
@@ -146,9 +259,44 @@ export function buildClaimLine({ stamp, identity, item, message, branch, files, 
   return line;
 }
 
+/*
+ * T-801. The write/no-write verdict, as the last line of stdout, on every path.
+ *
+ * It was announced before this by `Appended to <file>:` followed by the claim
+ * line, and on the UNDETERMINED path that announcement arrived after two lines
+ * of advisory prose. An invocation piped through `head -3` showed the advisory
+ * and hid the announcement, the run read its own write as a refusal, and item
+ * U-553 ended with two release lines eleven seconds apart. Three register
+ * controls were run against the duplicate and none of them detects it.
+ *
+ * Two properties, and the second is the one that was missing:
+ *
+ *   - LAST. Every path ends here, after any advisory and after the claim line
+ *     itself, so a `tail -1` read reaches it no matter how much preceded it.
+ *   - STDOUT, including on a refusal whose prose goes to stderr. The incident
+ *     was a pipe, and a pipe does not carry stderr: a verdict only on stderr
+ *     is invisible to exactly the read that got this wrong.
+ *
+ * `--dry-run` is a no-write that exits 0, and before this it printed the claim
+ * line last — byte-for-byte the shape a successful append printed. That is the
+ * same inversion in the opposite direction, so it says NOT WRITTEN rather than
+ * sharing the refusal's wording or the write's.
+ *
+ * The fix is not "tell agents not to truncate". The control carries the signal.
+ */
+const VERDICT_WROTE = (file) => `VERDICT: WROTE ${file}`;
+const VERDICT_REFUSED = "VERDICT: REFUSED, nothing appended";
+const VERDICT_DRY_RUN = "VERDICT: NOT WRITTEN, nothing appended (--dry-run)";
+
+/** Print the final verdict and leave. The only way out of `main`. */
+function finish(code, verdict) {
+  console.log(verdict);
+  process.exit(code);
+}
+
 function fail(code, message) {
   console.error(message);
-  process.exit(code);
+  finish(code, VERDICT_REFUSED);
 }
 
 function main(argv) {
@@ -225,24 +373,64 @@ function main(argv) {
     );
   }
 
+  /*
+   * T-836. An amendment DECLARES its files, and it is the one action here for
+   * which `--files` is not optional.
+   *
+   * T-804 made a line's `files:` list the whole of its lock and left the line
+   * that declares none reading its own prose. Measured on the live register at
+   * `91d90ad59f`, 303 of 1325 attributed path-holding lines declare no list and
+   * 83 of those open `AMEND`: they extend an earlier claim by naming a file in
+   * a sentence, and they mean to hold it. That residual is NOT an oversight and
+   * the remedy is not to extend the rule to them — freeing them would put two
+   * runs on one file, and a wrong free costs another lane its work silently
+   * where a wrong hold costs one refusal that names itself.
+   *
+   * The defect is upstream of the reader: an amendment had no way to declare
+   * its files, because this helper offered no action that writes one. It does
+   * now, and the declaration is REQUIRED — an amendment whose `--files` were
+   * optional is the field-less line again, written from the sanctioned path,
+   * which is the shape this whole directory exists against.
+   *
+   * NOT DECIDED HERE, and deliberately: whether an amendment's declared list
+   * REPLACES or ADDS TO the list of the claim it amends. That is a protocol
+   * call, it is the half T-836's row gates, and nothing here needs an answer
+   * to it — each line's declaration is its own lock, which is what the reader
+   * already did. Both live lines contribute their paths to the hold set today,
+   * so the effect is ADD-TO; that is a description of the current reader, not
+   * a ruling, and the ruling is still owed.
+   */
+  if (action === "amend" && files === undefined) {
+    fail(
+      EXIT_USAGE,
+      "--action amend requires --files. An amendment that declares no list falls back to " +
+        "holding whatever path its prose happens to name, which is the reading this action " +
+        "exists to replace: name the paths the amendment adds, and they become its lock.\n" +
+        USAGE,
+    );
+  }
+
   // A message that announces one thing under an action that announces another
   // is precisely the record that caused this item: the head says `claimed` and
   // the body says `RELEASED ... all files free`, and the head wins. Refuse,
   // and name the flag, rather than writing a line that contradicts itself.
   const asMessage = `x | y | ${message.trim()}`;
-  if (action === "claim" && announcesRelease(asMessage)) {
+  // An amendment is held to the same two guards (item T-836): its head asserts
+  // the hold STANDS and widens, so a body that hands the work back is the same
+  // self-contradicting record under a new verb, and the head still wins.
+  if (TAKING_ACTIONS.has(action) && announcesRelease(asMessage)) {
     fail(
       EXIT_USAGE,
-      "this message announces a RELEASE but --action is `claim`, so the record would open " +
-        "`item ... claimed` and the register would keep reading it as a hold. " +
+      `this message announces a RELEASE but --action is \`${action}\`, so the record would open ` +
+        "with a head the register keeps reading as a hold. " +
         "Pass --action release.",
     );
   }
-  if (action === "claim" && announcesAbstention(asMessage)) {
+  if (TAKING_ACTIONS.has(action) && announcesAbstention(asMessage)) {
     fail(
       EXIT_USAGE,
-      "this message announces an ABSTENTION but --action is `claim`, so the record would open " +
-        "`item ... claimed` and the register would read it as a hold on every file it names. " +
+      `this message announces an ABSTENTION but --action is \`${action}\`, so the record would ` +
+        "open with a head the register reads as a hold on every file it names. " +
         "Pass --action abstain.",
     );
   }
@@ -270,6 +458,11 @@ function main(argv) {
    * gate below.
    *
    * Before the gate, so a stale queue costs no register read.
+   *
+   * An AMENDMENT is exempt for the same reason and the exemption is paid for
+   * rather than assumed (item T-836): it may only extend a claim this identity
+   * already holds, which was itself gated on a current queue, and that is
+   * enforced on the gate's verdict below.
    */
   if (action === "claim") {
     const provenance = evaluateQueueProvenance({
@@ -308,8 +501,37 @@ function main(argv) {
     );
   }
 
+  /*
+   * C-564. A RELEASE is exempt from the file-overlap half.
+   *
+   * The file half asks whether any path this record names is already held by
+   * another live claim, and refuses when one is. For a CLAIM that is the whole
+   * point (T-707). For a RELEASE it is the wrong question: a release asserts
+   * the work is finished and the paths are free, so an overlap can only mean a
+   * successor has already taken them — the normal case, and the one the
+   * release unblocks. Reproduced on the live register while closing C-563: the
+   * item half answered `already-yours` and did not refuse, the file half
+   * refused, and nothing was appended. `--action abstain` is exempt one rung
+   * down for the same reason — the moment you most need to record the decision
+   * is the moment the gate refuses.
+   *
+   * The exemption is implemented by NOT ASKING the file half, rather than by
+   * ignoring its answer or by weakening `fileOverlap`: the question the gate is
+   * asked is the question whose answer is wanted, and one reader of one
+   * grammar. The `files:` list still reaches the appended line, which is the
+   * half the `--files`-less workaround silently lost.
+   *
+   * The ITEM half is untouched. A release of an item another identity holds is
+   * still refused, so this cannot be used to write a release over someone
+   * else's claim.
+   */
+  // T-836. `amend` reaches this as a taking action, so the file half IS asked:
+  // an amendment widens a hold onto paths the original claim did not name, and
+  // a path another live claim holds must stop it exactly as it stops a claim.
+  const askFileHalf = files !== undefined && action !== "release";
+
   const forwarded = allFlagValues("--gate-arg");
-  const unknown = [...forwarded, ...(files !== undefined ? ["--files"] : [])].filter(
+  const unknown = [...forwarded, ...(askFileHalf ? ["--files"] : [])].filter(
     (f) => f.startsWith("--") && !advertised.has(f),
   );
   if (unknown.length) {
@@ -325,7 +547,7 @@ function main(argv) {
   if (flag("--now")) gateArgs.push("--now", flag("--now"));
   if (flag("--window-hours")) gateArgs.push("--window-hours", flag("--window-hours"));
   if (has("--strict")) gateArgs.push("--strict");
-  if (files !== undefined) gateArgs.push("--files", files);
+  if (askFileHalf) gateArgs.push("--files", files);
   for (const extra of forwarded) gateArgs.push(extra);
 
   let status = 0;
@@ -349,14 +571,67 @@ function main(argv) {
     report = null;
   }
 
+  /**
+   * Render the gate's report for the run that has to act on it.
+   *
+   * T-707's acceptance was "refuse when any path appears in another live
+   * claim's `files:` list, NAMING THE PATH AND THE HOLDER". The refusing
+   * shipped; the naming did not, because this function read `report.contended`
+   * and the gate reports the overlap under `fileOverlap.conflicts`. Every
+   * field the acceptance asks for — path, holding line, stamp, agent — was
+   * computed and then discarded, so a file-overlap refusal printed the banner,
+   * the ITEM half's `verdict: take`, and an item-half reason about a live claim
+   * that does not exist. A refusal whose text reads as permission.
+   *
+   * Two consequences, and the second is the expensive one: a run cannot tell
+   * WHICH of the files it asked for is held, so it re-invokes the helper one
+   * path at a time to find out; and `verdict: take` under a REFUSED banner
+   * invites the reading that the control is broken. So the verdict line now
+   * says which half it belongs to, and the half that actually refused is named.
+   *
+   * It reads ONLY `fileOverlap.conflicts`, checked against the gate's history
+   * rather than assumed: no commit of `register-time-authority.mjs` has ever
+   * emitted a top-level `contended` key — the file-overlap half emitted
+   * `fileOverlap.conflicts` from its first commit (`5e8a42e284`). So the old
+   * read was wrong the day it was written, and keeping it "for compatibility"
+   * would ship an unreachable branch under a comment implying some gate
+   * produces that shape. What actually guards a future key rename is the case
+   * below driving the REAL gate, which fails if the shape moves.
+   */
   const describe = () => {
     if (!report) return stdout.trim() || stderr.trim() || "(the gate produced no report)";
-    const lines = [`verdict: ${report.verdict}`, `reason:  ${report.reason}`];
+    const overlap = report.fileOverlap ?? null;
+    const overlapRefuses = Boolean(overlap?.refuses);
+    const itemLabel = overlapRefuses ? "item verdict:" : "verdict:";
+    const lines = [`${itemLabel} ${report.verdict}`, `reason:  ${report.reason}`];
     if (report.holder) {
       lines.push(`holder:  line ${report.holder.lineNumber} ${report.holder.stamp} ${report.holder.agent}`);
     }
-    if (Array.isArray(report.contended) && report.contended.length) {
-      for (const c of report.contended) lines.push(`file:    ${c.path ?? c} held by ${c.agent ?? "another claim"}`);
+
+    const conflicts = Array.isArray(overlap?.conflicts) ? overlap.conflicts : [];
+    if (conflicts.length) {
+      // `conflicts` is one entry per (path x citing line), on purpose: the
+      // gate's own comment says two runs holding one file is two conflicts,
+      // because collapsing them would report one of the two holders. So its
+      // length is a count of HOLDS, and the sentence below promises a count of
+      // PATHS — "N of M requested path(s)". Putting the hold count in N made a
+      // 3-path request print `4 of 3` on the live register (item T-818), which
+      // is not a near-miss but a statement that cannot be true, and it buried
+      // the fact the reader actually needs: one of those three paths was free.
+      // So N is the number of DISTINCT requested paths that are held, and the
+      // per-holder list below is left whole.
+      const heldPathCount = new Set(conflicts.map((c) => c.path ?? c)).size;
+      lines.push(
+        `REFUSED BY THE FILE HALF — ${heldPathCount} of ` +
+          `${overlap?.requested?.length ?? heldPathCount} requested path(s) ` +
+          `already held by another live claim:`,
+      );
+      for (const c of conflicts) {
+        const where = c.lineNumber === undefined ? "" : ` at line ${c.lineNumber}`;
+        const when = c.stamp === undefined ? "" : ` (${c.stamp})`;
+        lines.push(`file:    ${c.path ?? c} held by ${c.agent ?? "another claim"}${where}${when}`);
+      }
+      lines.push("         Take a different item, or a file list that does not overlap.");
     }
     return lines.join("\n");
   };
@@ -380,12 +655,12 @@ function main(argv) {
   } else if (status === EXIT_REFUSED) {
     console.error(`Pre-claim REFUSED — item ${item} as ${identity}. Nothing was appended.`);
     console.error(describe());
-    process.exit(EXIT_REFUSED);
+    finish(EXIT_REFUSED, VERDICT_REFUSED);
   } else
   if (status === EXIT_USAGE) {
     console.error(`The pre-claim gate rejected the request as unusable. Nothing was appended.`);
     console.error(describe());
-    process.exit(EXIT_USAGE);
+    finish(EXIT_USAGE, VERDICT_REFUSED);
   }
   if (status !== EXIT_OK && !abstainPastRefusal) {
     // An exit this caller does not understand is not a pass. Failing open here
@@ -398,6 +673,37 @@ function main(argv) {
   }
 
   const verdict = report?.verdict ?? "take";
+
+  /*
+   * T-836. An amendment must have something to amend, and it must be YOURS.
+   *
+   * This is also what keeps `--action amend` from being a way around the queue
+   * provenance gate. That gate asks whether the ITEM is a row this backlog
+   * still holds, and it deliberately gates a claim and not a release or an
+   * abstention: the moment a queue is stale is the moment a holder most needs
+   * to record an outcome, and refusing that pushes the correction into a
+   * hand-written line. An amendment is in the same position — the item was
+   * already asserted against a current queue when it was claimed, and making a
+   * holder regenerate before it may widen its own file list would strand it.
+   *
+   * So the amendment is not gated on the queue, and the bypass that would open
+   * is closed here instead: `already-yours` means a live claim of this identity
+   * exists on this item. A verdict of `take` means nothing holds it, so there
+   * is no claim to extend and what was asked for is a claim.
+   *
+   * `held-by-a-sibling` and `held-by-another` never reach this line — the gate
+   * exits non-zero on both and the refusal above is final.
+   */
+  if (action === "amend" && verdict !== "already-yours") {
+    fail(
+      EXIT_REFUSED,
+      `an amendment extends a live claim of your own, and the gate answers \`${verdict}\` for ` +
+        `item ${item} as ${identity} — so there is no claim of yours to extend. ` +
+        "Append a claim first (--action claim), which is the record that asserts the item " +
+        "against a current queue. Nothing was appended.",
+    );
+  }
+
   console.log(`Pre-claim passed — item ${item} as ${identity}: ${verdict}`);
   if (report?.advisory) {
     console.log(
@@ -420,9 +726,55 @@ function main(argv) {
     action,
   });
 
+  /*
+   * C-528. The record this line releases, against the line itself.
+   *
+   * Placed after the line is built and BEFORE anything is written, so --strict
+   * can refuse without leaving a register the refusal contradicts. The default
+   * is advisory on purpose and it is not timidity: the register is audit
+   * history, a release hands work back, and refusing to record an outcome
+   * because a document disagrees with it would strand the claim and push the
+   * correction into a hand-written line — the T-708 shape, reached from the
+   * sanctioned path.
+   */
+  const silentOnProof = reviewReleaseLine({ line, records: [] }).registerSays === SILENT;
+  if (!silentOnProof) {
+    const repo = path.resolve(flag("--repo") ?? path.join(HERE, "..", ".."));
+    const { records, undetermined } = releaseRecordsInBranch({
+      repo,
+      dir: flag("--records") ?? DEFAULT_RECORD_DIR,
+      base: flag("--base") ?? DEFAULT_BASE,
+    });
+    if (undetermined) {
+      // Named, never silent. An unreadable repository is not a clean bill of
+      // health, and reporting it as one is the failure this whole item is about.
+      // Advisory, so stdout — the same channel this file's other advisory uses.
+      // A refusal is the only thing that speaks on stderr here.
+      console.log(
+        "This line speaks about a signed-in proof, and whether it contradicts the record it " +
+          `releases is UNDETERMINED: ${undetermined}\n` +
+          "  Pass --repo/--base to point at the checkout that holds the record.",
+      );
+    } else {
+      const review = reviewReleaseLine({ line, records });
+      if (review.contradicted.length > 0) {
+        const headline =
+          `This line says the signed-in proof is \`${review.registerSays}\`, and ` +
+          `${review.contradicted.length} release record(s) this branch writes say otherwise.`;
+        if (has("--strict")) {
+          fail(
+            EXIT_REFUSED,
+            `${headline} Nothing was appended.\n${describeRecordContradiction(review)}`,
+          );
+        }
+        console.log(`${headline}\n${describeRecordContradiction(review)}`);
+      }
+    }
+  }
+
   if (has("--dry-run")) {
     console.log(`--dry-run; this record was NOT appended:\n${line}`);
-    process.exit(EXIT_OK);
+    finish(EXIT_OK, VERDICT_DRY_RUN);
   }
 
   // Append only. The register is audit history: nothing above this line is
@@ -430,7 +782,7 @@ function main(argv) {
   const current = fs.readFileSync(file, "utf8");
   fs.appendFileSync(file, `${current.endsWith("\n") ? "" : "\n"}\n${line}\n`);
   console.log(`Appended to ${file}:\n${line}`);
-  process.exit(EXIT_OK);
+  finish(EXIT_OK, VERDICT_WROTE(file));
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {

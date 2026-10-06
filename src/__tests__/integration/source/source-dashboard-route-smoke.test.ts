@@ -62,7 +62,7 @@ describe("Source dashboard route smoke", () => {
   it("renders the dashboard component from seeded data", async () => {
     const data = await getSourceDashboardData();
     const html = renderToStaticMarkup(
-      createElement(AbarVaSourceDashboard, { data }),
+      createElement(AbarVaSourceDashboard, { data, canViewFinancialValues: true }),
     );
 
     expect(html).toContain("Source command read");

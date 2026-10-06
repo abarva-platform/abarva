@@ -89,6 +89,18 @@ export interface RenewalShouldCost {
   /** USD the current spend exceeds the benchmark; null when no benchmark. */
   overspendVsBenchmarkUsd: number | null;
   summary: string;
+  /**
+   * One line naming what the range is and what it was built from. The range is
+   * modelled, not read off a signed price, so a reader who sees only the low
+   * and high numbers is missing the half of the claim that qualifies it.
+   */
+  estimateBasis: string;
+  /**
+   * The assumptions the model made, recorded by the code that made them so the
+   * disclosure cannot drift away from the inputs. Each line is derived from a
+   * `RENEWAL_SHOULD_COST_*` constant or from a field of the built estimate.
+   */
+  estimateAssumptions: string[];
 }
 
 /** Incumbent-leverage read, renewal-specific (Slice 1.5 family). */
@@ -160,34 +172,57 @@ const POSTURE_LABELS: Record<RenewalPosture, string> = {
  * is the current annual spend. This is a deliberately conservative framing of
  * the existing should-cost estimator inputs — not new analysis.
  */
+/**
+ * The renewal should-cost inputs, named rather than inlined.
+ *
+ * They are named because they are disclosed: `buildRenewalShouldCost` builds
+ * the reader-facing assumption list out of these same bindings, so a change
+ * here moves the number and the sentence that qualifies it together. Inlined
+ * literals let the two drift, which is how a modelled range comes to read as a
+ * measured one.
+ */
+export const RENEWAL_SHOULD_COST_VENDOR_MARGIN_RATIO = 0.3;
+export const RENEWAL_SHOULD_COST_DURATION_MONTHS = 12;
+export const RENEWAL_SHOULD_COST_OFFSHORE_RATIO = 0.4;
+/**
+ * A renewal carries a modest run-the-service team — kept minimal so the
+ * iceberg reflects a steady-state SaaS contract, not an implementation.
+ */
+export const RENEWAL_SHOULD_COST_ROLE_MIX: ShouldCostModelInput['roleMix'] = [
+  { role: 'engagement_lead', headcount: 0.2 },
+  { role: 'engineer', headcount: 0.5 },
+];
+export const RENEWAL_SHOULD_COST_RATE_CARD: ShouldCostModelInput['rateCard'] = [
+  {
+    role: 'engagement_lead',
+    onshoreAnnualRate: 240_000,
+    offshoreAnnualRate: 90_000,
+  },
+  {
+    role: 'engineer',
+    onshoreAnnualRate: 170_000,
+    offshoreAnnualRate: 60_000,
+  },
+];
+
+function roleMixPhrase(): string {
+  return RENEWAL_SHOULD_COST_ROLE_MIX.map(
+    (r) => `${r.headcount} ${r.role.replaceAll('_', ' ')}`,
+  ).join(' + ');
+}
+
 function buildRenewalShouldCost(
   input: RenewalCockpitInput,
 ): RenewalShouldCost {
   const spend = input.contract.annualSpendUsd ?? input.categoryBenchmarkUsd ?? 0;
-  // A renewal carries a modest run-the-service team — kept minimal so the
-  // iceberg reflects a steady-state SaaS contract, not an implementation.
   const modelInput: ShouldCostModelInput = {
     estimateLabel: `${input.contract.vendorName} — ${input.contract.product} renewal`,
     vendorQuotedCost: spend,
-    vendorMarginRatio: 0.3,
-    roleMix: [
-      { role: 'engagement_lead', headcount: 0.2 },
-      { role: 'engineer', headcount: 0.5 },
-    ],
-    rateCard: [
-      {
-        role: 'engagement_lead',
-        onshoreAnnualRate: 240_000,
-        offshoreAnnualRate: 90_000,
-      },
-      {
-        role: 'engineer',
-        onshoreAnnualRate: 170_000,
-        offshoreAnnualRate: 60_000,
-      },
-    ],
-    durationMonths: 12,
-    offshoreRatio: 0.4,
+    vendorMarginRatio: RENEWAL_SHOULD_COST_VENDOR_MARGIN_RATIO,
+    roleMix: RENEWAL_SHOULD_COST_ROLE_MIX,
+    rateCard: RENEWAL_SHOULD_COST_RATE_CARD,
+    durationMonths: RENEWAL_SHOULD_COST_DURATION_MONTHS,
+    offshoreRatio: RENEWAL_SHOULD_COST_OFFSHORE_RATIO,
     transitionCost: 0,
     consumption: { monthlyCloudCost: 0, monthlyModelCost: 0 },
   };
@@ -216,7 +251,42 @@ function buildRenewalShouldCost(
     )}% of modelled true cost.`;
   }
 
-  return { estimate, benchmarkUsd: benchmark, overspendVsBenchmarkUsd: overspend, summary };
+  const estimateBasis =
+    `Should-cost model v${estimate.modelVersion} run over the current annual ` +
+    `spend of ${formatUsd(spend)}, which the model treats as the vendor quote. ` +
+    `The quote is ~${Math.round(
+      estimate.visibleShareOfTotal * 100,
+    )}% of the modelled total; the remainder is the hidden iceberg, not an ` +
+    `invoice line. No vendor bid, signed price or finance baseline is read here.`;
+
+  const estimateAssumptions = [
+    `Vendor margin assumed at ${Math.round(
+      RENEWAL_SHOULD_COST_VENDOR_MARGIN_RATIO * 100,
+    )}% of the quote — not read from the contract.`,
+    `Run-the-service team assumed at ${roleMixPhrase()} over ${RENEWAL_SHOULD_COST_DURATION_MONTHS} months, blended at ${formatUsd(
+      Math.round(estimate.roleMix.blendedAnnualRate),
+    )}/yr.`,
+    `Delivery assumed ${Math.round(
+      RENEWAL_SHOULD_COST_OFFSHORE_RATIO * 100,
+    )}% offshore; the effective split across the mix is ${Math.round(
+      estimate.roleMix.effectiveOffshoreRatio * 100,
+    )}%.`,
+    'Transition cost and cloud/model consumption assumed zero — a steady-state renewal, not an implementation or a migration.',
+    benchmark === null
+      ? 'No category benchmark is loaded for this contract, so the range is not anchored to peer pricing.'
+      : `Benchmark comparison uses the ${formatUsd(
+          benchmark,
+        )} category benchmark; the range itself is modelled independently of it.`,
+  ];
+
+  return {
+    estimate,
+    benchmarkUsd: benchmark,
+    overspendVsBenchmarkUsd: overspend,
+    summary,
+    estimateBasis,
+    estimateAssumptions,
+  };
 }
 
 // ---------------------------------------------------------------------------

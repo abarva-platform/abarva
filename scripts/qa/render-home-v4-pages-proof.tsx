@@ -42,7 +42,9 @@ for (const tenantKey of tenantKeys) {
   const canonicalBuild = bundle.provenance.canonical_snapshot_hash;
   const signalPacket = bundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
-  const exhibitMeta = buildExhibitMeta(bundle);
+  const vendorContracts = technologyRecords.find(
+    (record) => record.objectType === "vendor_contract",
+  );
 
   bundle.chapters.forEach((chapter, index) => {
     writePage(
@@ -54,7 +56,15 @@ for (const tenantKey of tenantKeys) {
           chapterNumber={index + 1}
           signalPacket={signalPacket}
           visualDatasets={visualDatasets}
-          exhibitMeta={exhibitMeta}
+          estate={
+            chapter.chapterId === "technology_data"
+              ? {
+                  applications: applications?.rows,
+                  vendors: vendorContracts?.rows,
+                  dataAssetCount: integrations?.rows.length,
+                }
+              : undefined
+          }
         />,
       ),
     );
@@ -130,18 +140,6 @@ function shell(title: string, body: string) {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>html,body{margin:0;padding:0;background:#faf7f1;}*{box-sizing:border-box;}button,input,select{font:inherit;}</style>
 </head><body>${body}</body></html>`;
-}
-
-function buildExhibitMeta(bundle: HomeReviewBundle): Record<string, string> {
-  const meta: Record<string, string> = {};
-  const contracts = bundle.technologyEstate?.recordTypes.find((record) => record.objectType === "vendor_contract");
-  if (contracts) {
-    const total = contracts.rows.reduce((sum, row) => sum + (Number(row.annualSpendUsd) || 0), 0);
-    if (total > 0) {
-      meta.vendor_spend_concentration = `${contracts.rows.length} contracts · $${(total / 1_000_000).toFixed(1)}M`;
-    }
-  }
-  return meta;
 }
 
 function escapeHtml(value: string) {

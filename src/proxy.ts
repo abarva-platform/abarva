@@ -134,6 +134,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // handoff route must stay publicly reachable and perform its own checks.
   "/api/auth/demo-code-sign-in(.*)",
   "/api/auth/access-eligibility(.*)",
+  "/api/auth/launch-user(.*)",
   // Private browser proof helper is self-guarded by an opt-in env flag and
   // bearer token, and returns 404 unless explicitly enabled on an isolated
   // proof revision.
@@ -168,6 +169,9 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // route returns 503 (misconfigured) rather than accepting unsigned
   // payloads.
   "/api/webhooks/resend(.*)",
+  // DocuSign demo callbacks are reachable without Clerk. The route verifies
+  // its HMAC before any tenant-scoped envelope or file access.
+  "/api/webhooks/esign",
   // Private-preview lead capture from the public marketing landing page.
   // POST /api/request-access must be reachable without a Clerk session.
   "/api/request-access(.*)",

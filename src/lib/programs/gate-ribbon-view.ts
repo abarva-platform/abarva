@@ -9,6 +9,10 @@
 
 import type { ProgramDetailView, ProgramPhaseId } from './programs-types';
 import { PHASE_LABEL_MAP } from './programs-fixture';
+import {
+  gateCriteriaBadgeLabel,
+  gateCriteriaMetSummary,
+} from './gate-criteria-figure-labels';
 
 // ─── Output types ────────────────────────────────────────────────────────────
 
@@ -77,7 +81,7 @@ export function buildGateRibbonView(
   const unmetCriteria = gateCriteria
     .filter((c) => !c.met)
     .map((c) => c.criterion);
-  const gateSummary = `${metCriteria} of ${totalCriteria} criteria met`;
+  const gateSummary = gateCriteriaMetSummary(metCriteria, totalCriteria);
   const isAllMet = metCriteria === totalCriteria;
 
   const contradictions = (evidenceItems ?? []).filter(
@@ -108,10 +112,10 @@ export function buildGateRibbonView(
 
 /**
  * Returns the short badge label rendered in the gate ribbon criteria chip.
- * e.g. "2 of 5" (without "criteria met")
+ * e.g. "2 of 5 criteria" / "1 of 1 criterion" (without "met")
  */
 export function getGateBadgeLabel(ribbon: GateRibbonView): string {
-  return `${ribbon.metCriteria} of ${ribbon.totalCriteria}`;
+  return gateCriteriaBadgeLabel(ribbon.metCriteria, ribbon.totalCriteria);
 }
 
 /**

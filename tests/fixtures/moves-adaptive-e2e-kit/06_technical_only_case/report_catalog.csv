@@ -1,0 +1,11 @@
+report_id,report_name,business_question,grain,refresh_target,source_domain,metric_owner,acceptance_rule,synthetic_status
+HR-01,Workforce Headcount,How many active workers by organization and location?,Month-end worker,Daily,Worker core,HR Analytics Lead,Reconcile to approved HR control total,synthetic
+HR-02,Vacancy and Requisition Aging,Which approved roles remain open and for how long?,Requisition,Daily,Talent acquisition,Talent Analytics Lead,Exclude canceled and draft requisitions,synthetic
+HR-03,Time-to-Fill,How long from approved requisition to accepted offer?,Requisition cohort,Weekly,Talent acquisition,Talent Analytics Lead,Document start/end event and censoring,synthetic
+HR-04,Attrition Trend,How does voluntary separation vary by month and organization?,Month x organization,Monthly,Worker core,HR Analytics Lead,Use approved separation classification,synthetic
+HR-05,Absence Summary,What is aggregate absence by month and location?,Month x location,Monthly,Time and attendance,Workforce Analytics Lead,Suppress small cells under policy threshold,synthetic
+HR-06,Overtime Trend,Where is overtime increasing?,Month x organization,Weekly,Time and attendance,Workforce Analytics Lead,Reconcile hours to payroll control,synthetic
+HR-07,Learning Completion,Which required learning cohorts are incomplete?,Worker cohort,Weekly,LMS,Learning Analytics Lead,Use course assignment effective dates,synthetic
+HR-08,Span of Control,How many direct reports per leader by organization?,Month-end leader,Monthly,Organization hierarchy,HR Analytics Lead,Exclude vacant positions and validate effective dates,synthetic
+HR-09,Workforce Mix,How does employee/contingent labor mix change?,Month x worker type,Monthly,Worker core and contingent source,HR Analytics Lead,Document contingent source coverage,synthetic
+HR-10,Compensation Range Position,How does aggregate pay compare with approved bands?,Band x organization,Quarterly,Compensation,Compensation Analytics Lead,Aggregate only; no individual compensation display,synthetic

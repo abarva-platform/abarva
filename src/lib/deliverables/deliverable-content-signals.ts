@@ -9,6 +9,7 @@ import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { extractExhibitContent } from "@/lib/deliverables/exhibit-content-extractor";
+import { getGateArtifacts } from "@/lib/programs/deliverable-registry";
 
 export interface DeliverableContentSignal {
   /** Stable key for the signal, e.g. "workstreams", "owners", "metrics". */
@@ -17,6 +18,8 @@ export interface DeliverableContentSignal {
   heading: string;
   /** Real extracted text — never fabricated. */
   snippet: string;
+  /** Canonical deliverable type key that supplied this signal. */
+  sourceDeliverableTypeKey?: string;
 }
 
 /**
@@ -38,6 +41,10 @@ const SIGNAL_KEYWORDS: ReadonlyArray<{ key: string; keywords: readonly string[] 
   { key: "metrics", keywords: ["kpi", "scorecard", "baseline"] },
   { key: "decisions", keywords: ["decision", "tradeoff", "options"] },
   { key: "cost", keywords: ["cost"] },
+  { key: "evidence_limits", keywords: ["evidentiary limits", "evidence confidence", "evidence limitations"] },
+  { key: "readiness_gaps", keywords: ["unvalidated", "readiness gap", "not established"] },
+  { key: "open_inputs", keywords: ["open inputs required"] },
+  { key: "hypotheses", keywords: ["root-cause tree", "hypothesis"] },
 ];
 
 interface LatestDeliverableContentRow {
@@ -48,16 +55,19 @@ interface LatestDeliverableContentRow {
 async function readLatestDeliverableContent(
   moveId: string,
   deliverableTypeKey: string,
+  signedOffOnly = false,
 ): Promise<LatestDeliverableContentRow | null> {
-  // Prefer the client-approved version (d.signed_off_version) over a later,
-  // unreviewed regeneration — approval must actually change what carries
-  // forward, not just decorate the UI. Falls back to the newest version when
-  // nothing has been signed off yet.
+  // Prefer the client-approved version over a later, unreviewed regeneration.
+  // Prior-phase decision inputs can require approval and fail closed if absent.
+  const signedOffClause = signedOffOnly
+    ? "AND d.signed_off_version IS NOT NULL AND dv.version = d.signed_off_version "
+    : "";
   const rows = await azureRead.query<LatestDeliverableContentRow>(
     "SELECT dv.content, dv.version " +
       "FROM deliverable_versions dv " +
       "JOIN deliverables_v2 d ON d.id = dv.deliverable_id " +
       "WHERE d.engagement_id = $1 AND d.deliverable_type_key = $2 " +
+      signedOffClause +
       "ORDER BY (dv.version = d.signed_off_version) DESC, dv.version DESC " +
       "LIMIT 1",
     [moveId, deliverableTypeKey],
@@ -76,8 +86,13 @@ async function readLatestDeliverableContent(
 export async function readDeliverableContentSignals(
   moveId: string,
   deliverableTypeKey: string,
+  options: { signedOffOnly?: boolean } = {},
 ): Promise<DeliverableContentSignal[]> {
-  const latest = await readLatestDeliverableContent(moveId, deliverableTypeKey);
+  const latest = await readLatestDeliverableContent(
+    moveId,
+    deliverableTypeKey,
+    options.signedOffOnly,
+  );
   if (!latest?.content) return [];
 
   const signals: DeliverableContentSignal[] = [];
@@ -85,10 +100,50 @@ export async function readDeliverableContentSignals(
     for (const keyword of keywords) {
       const match = extractExhibitContent(latest.content, keyword);
       if (match) {
-        signals.push({ key, heading: match.heading, snippet: match.snippet });
+        signals.push({
+          key,
+          heading: match.heading,
+          snippet: match.snippet,
+          sourceDeliverableTypeKey: deliverableTypeKey,
+        });
         break;
       }
     }
   }
   return signals;
+}
+
+async function readPhaseGateContentSignalsWithPolicy(
+  moveId: string,
+  phase: number,
+  signedOffOnly: boolean,
+): Promise<DeliverableContentSignal[]> {
+  const gateArtifacts = getGateArtifacts(phase);
+  const signalsByArtifact = await Promise.all(
+    gateArtifacts.map((artifact) =>
+      readDeliverableContentSignals(moveId, artifact.deliverableTypeKey, {
+        signedOffOnly,
+      }),
+    ),
+  );
+  const seenKeys = new Set<string>();
+  return signalsByArtifact.flat().filter((signal) => {
+    if (seenKeys.has(signal.key)) return false;
+    seenKeys.add(signal.key);
+    return true;
+  });
+}
+
+export function readPhaseGateContentSignals(
+  moveId: string,
+  phase: number,
+): Promise<DeliverableContentSignal[]> {
+  return readPhaseGateContentSignalsWithPolicy(moveId, phase, false);
+}
+
+export function readApprovedPhaseGateContentSignals(
+  moveId: string,
+  phase: number,
+): Promise<DeliverableContentSignal[]> {
+  return readPhaseGateContentSignalsWithPolicy(moveId, phase, true);
 }

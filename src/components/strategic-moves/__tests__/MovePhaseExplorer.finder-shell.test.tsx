@@ -88,7 +88,7 @@ describe("MovePhaseExplorer · Finder shell", () => {
       <MovePhaseExplorer moveId="move-1" currentPhase={1} tallies={tallies} />,
     );
     expect(
-      screen.queryByText("Missing sponsor sign-off"),
+      screen.queryByText("Missing authorized-user approval"),
     ).not.toBeInTheDocument();
 
     rerender(
@@ -96,9 +96,13 @@ describe("MovePhaseExplorer · Finder shell", () => {
         moveId="move-1"
         currentPhase={1}
         tallies={tallies}
-        blockedPhases={[{ phase: 1, reason: "Missing sponsor sign-off" }]}
+        blockedPhases={[
+          { phase: 1, reason: "Missing authorized-user approval" },
+        ]}
       />,
     );
-    expect(screen.getByText("Missing sponsor sign-off")).toBeInTheDocument();
+    expect(
+      screen.getByText("Missing authorized-user approval"),
+    ).toBeInTheDocument();
   });
 });

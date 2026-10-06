@@ -76,6 +76,12 @@ export interface SourceNewPhasePositionInput {
 export interface SourceNewOperatorContextInput
   extends SourceNewPhasePositionInput {
   solicitationMotion?: "rfi" | "rfp" | null;
+  /**
+   * The acceptance that qualifies `solicitationMotion`. Both are required to
+   * name the motion — see `sourceNewMarketPackageLabel`.
+   */
+  solicitationMotionAcceptedAt?: string | null;
+  solicitationMotionAcceptedByUserId?: string | null;
 }
 
 export function awaitsIntakeReview(lifecycle: string): boolean {
@@ -97,9 +103,38 @@ export function sourceNewCurrentPhase(event: SourceNewPhasePositionInput): Sourc
   return null;
 }
 
+function recorded(value: string | null | undefined): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/**
+ * The operator-facing name of the market package: `RFI` or `RFP` once a
+ * solicitation motion has been **accepted**, and the neutral `Market package`
+ * otherwise.
+ *
+ * Acceptance is checked here rather than assumed. The live read path cannot
+ * reach this function with an unaccepted motion — `resolveAuthority` in
+ * `event-authority.ts` returns `unavailable` for one, and the Source New page
+ * maps anything but `available` to a null motion — so for a long time this
+ * function could branch on the bare motion and still be right. That made it
+ * correct only by virtue of a fence in another file that nothing here named,
+ * and relaxing the fence would have promoted an unaccepted motion onto the
+ * phase rail and the Files folder with no suite objecting. Stating the
+ * dependency where it can fail costs two field reads; discovering it from a
+ * rendered `RFP` on an unaccepted event would cost considerably more.
+ */
 export function sourceNewMarketPackageLabel(
-  event: Pick<SourceNewOperatorContextInput, "solicitationMotion">,
+  event: Pick<
+    SourceNewOperatorContextInput,
+    | "solicitationMotion"
+    | "solicitationMotionAcceptedAt"
+    | "solicitationMotionAcceptedByUserId"
+  >,
 ): string {
+  const accepted =
+    recorded(event.solicitationMotionAcceptedAt) &&
+    recorded(event.solicitationMotionAcceptedByUserId);
+  if (!accepted) return "Market package";
   if (event.solicitationMotion === "rfi") return "RFI";
   if (event.solicitationMotion === "rfp") return "RFP";
   return "Market package";

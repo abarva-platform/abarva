@@ -9,6 +9,13 @@ import process from 'node:process';
 // tokens and its behavioral test are.
 import { computeRouteReachability } from './lib/route-reachability.mjs';
 
+// `unreachableReason` asserts things about the tree. Until item C-513 the only
+// thing checked about it was that it was forty characters long, and one of its
+// three clauses had already gone false while the gate stayed green.
+import { evaluateUnreachableReason } from './lib/unreachable-reason-claims.mjs';
+import { isDirectInvocation } from '../exec/cli-entry.mjs';
+import { findSharedProvenCases } from './ai-surface-control-cases.mjs';
+
 // The catalog this gate reads. `AI_SURFACE_CONTROL_CATALOG_PATH` is a test
 // seam: it lets a suite run this script against a mutated copy and prove the
 // gate goes red, which is the only way to show a branch can fail. Nothing in
@@ -36,7 +43,7 @@ const LEGAL_CATALOGS = [
     path: 'docs/legal/AI_CONSEQUENTIAL_ACTION_CATALOG.md',
     header: '| Module | Surface / action | Code path | Current control | Required / next control |',
     parseClaims(columns) {
-      const [module, surface, , currentControl] = columns;
+      const [module, surface, codePath, currentControl] = columns;
       if (!currentControl?.startsWith('Covered')) return [];
       return [
         {
@@ -44,6 +51,7 @@ const LEGAL_CATALOGS = [
           catalog: 'consequential',
           module,
           surface,
+          codePaths: parseCodePaths(codePath),
           controlKind: 'human-approval-gate',
         },
       ];
@@ -55,13 +63,15 @@ const LEGAL_CATALOGS = [
     header:
       '| Module | Surface / element | Code path | AI label present? | Citations / evidence present? | Confidence / assumption disclosure present? | Required / next control |',
     parseClaims(columns) {
-      const [module, surface, , aiLabel, citations, confidence] = columns;
+      const [module, surface, codePath, aiLabel, citations, confidence] = columns;
+      const codePaths = parseCodePaths(codePath);
       return [
         aiLabel?.startsWith('Yes') && {
           key: `generated-ui|${module}|${surface}|ai-label`,
           catalog: 'generated-ui',
           module,
           surface,
+          codePaths,
           controlKind: 'ai-label',
         },
         citations?.startsWith('Yes') && {
@@ -69,6 +79,7 @@ const LEGAL_CATALOGS = [
           catalog: 'generated-ui',
           module,
           surface,
+          codePaths,
           controlKind: 'citation',
         },
         confidence?.startsWith('Yes') && {
@@ -76,6 +87,7 @@ const LEGAL_CATALOGS = [
           catalog: 'generated-ui',
           module,
           surface,
+          codePaths,
           controlKind: 'confidence',
         },
       ].filter(Boolean);
@@ -134,6 +146,121 @@ function sameColumns(left, right) {
 
 function isMarkdownDivider(columns) {
   return columns.length > 0 && columns.every((column) => /^:?-{3,}:?$/.test(column));
+}
+
+/**
+ * The `Code path` column is prose with backticked paths in it, and a row may
+ * name more than one. Those paths are the only machine-readable link between a
+ * legal-catalog claim and a `controls[]` entry, so they are parsed rather than
+ * summarised.
+ */
+function parseCodePaths(cell) {
+  if (typeof cell !== 'string') return [];
+  return [...new Set((cell.match(/`([^`]+)`/g) ?? []).map((token) => token.replace(/`/g, '')))];
+}
+
+/**
+ * The join between a legal-catalog claim and a catalogued surface, measured
+ * from the repository rather than read from the coverage row.
+ *
+ * Run over the 18 `covered` rows this reproduces all 18 hand-written
+ * `surfaceId` values, 18 agree and 0 disagree, which is the evidence that it
+ * may be trusted to judge the rows nobody bound.
+ *
+ * `resolved` is the only state a row may not declare: a claim that resolves to
+ * exactly one catalogued surface must carry that `surfaceId`. The other three
+ * are the honest answers to "why is there no single surface to name", and each
+ * one is falsified by the repository improving — which is the point. An
+ * exemption that cannot go stale outlives the defect it was written for.
+ */
+function resolveClaimJoin(claim, surfaces) {
+  const codePaths = Array.isArray(claim?.codePaths) ? claim.codePaths : [];
+  const matched = [
+    ...new Set(
+      codePaths.flatMap((codePath) =>
+        surfaces.filter((surface) => surface?.path === codePath).map((surface) => surface.id),
+      ),
+    ),
+  ].sort();
+  const inTree = codePaths.filter((codePath) => fs.existsSync(path.join(process.cwd(), codePath)));
+  let state;
+  if (matched.length === 1) state = 'resolved';
+  else if (matched.length > 1) state = 'ambiguous';
+  else state = inTree.length === 0 ? 'retired' : 'uncatalogued';
+  return { state, matched, codePaths, inTree };
+}
+
+const SURFACE_JOIN_STATES = ['retired', 'uncatalogued', 'ambiguous'];
+
+/**
+ * Every coverage row must name a join. Until this existed, `surfaceId` was
+ * required of `covered` rows and of nothing else, so all 19 deferrals omitted
+ * it and no deferral could be reconciled against `controls[]` or ever retired.
+ */
+function validateClaimJoin(label, entry, claim, surfaces) {
+  const problems = [];
+  const join = entry.surfaceJoin;
+
+  if (entry.surfaceId && join) {
+    problems.push(`${label}: names both a surfaceId and a surfaceJoin — a row names one or the other`);
+  }
+  if (!entry.surfaceId && !join) {
+    problems.push(
+      `${label}: names no join — give it a surfaceId present in controls[], or a surfaceJoin saying why no single catalogued surface can be named`,
+    );
+  }
+  if (!claim) return problems;
+
+  const measured = resolveClaimJoin(claim, surfaces);
+  const where =
+    `code paths ${measured.codePaths.join(', ') || '(none declared)'}; ` +
+    `in the tree: ${measured.inTree.join(', ') || 'none'}; ` +
+    `controls[] entries naming them: ${measured.matched.join(', ') || 'none'}`;
+
+  if (entry.surfaceId && measured.codePaths.length > 0 && !measured.matched.includes(entry.surfaceId)) {
+    problems.push(
+      `${label}: surfaceId ${entry.surfaceId} is not a controls[] entry naming this claim's code paths — ${where}`,
+    );
+  }
+
+  if (!join) return problems;
+
+  if (measured.codePaths.length === 0) {
+    problems.push(
+      `${label}: the legal catalog row declares no code path, so a surfaceJoin cannot be measured against anything`,
+    );
+    return problems;
+  }
+  if (!SURFACE_JOIN_STATES.includes(join.state)) {
+    problems.push(
+      `${label}: surfaceJoin.state must be one of ${SURFACE_JOIN_STATES.join(', ')} — got ${join.state ?? '(missing)'}`,
+    );
+    return problems;
+  }
+  if (measured.state === 'resolved') {
+    problems.push(
+      `${label}: this claim now resolves to exactly one catalogued surface, ${measured.matched[0]} — ` +
+        `replace surfaceJoin with that surfaceId (${where})`,
+    );
+  } else if (join.state !== measured.state) {
+    problems.push(
+      `${label}: surfaceJoin.state says ${join.state}; the repository says ${measured.state} (${where})`,
+    );
+  }
+
+  if (join.state === 'ambiguous') {
+    const declared = [...(join.candidateSurfaceIds ?? [])].sort();
+    if (declared.join('\u0000') !== measured.matched.join('\u0000')) {
+      problems.push(
+        `${label}: surfaceJoin.candidateSurfaceIds must be exactly the controls[] entries naming this claim's code paths — ` +
+          `${measured.matched.join(', ') || 'none'} (${where})`,
+      );
+    }
+  } else if (join.candidateSurfaceIds !== undefined) {
+    problems.push(`${label}: surfaceJoin.candidateSurfaceIds belongs only on an ambiguous join`);
+  }
+
+  return problems;
 }
 
 function collectLegalCatalogClaims() {
@@ -280,12 +407,99 @@ function indexSuitesReferencing(tokens) {
 }
 
 /**
+ * The tree, as the `unreachableReason` rules need to see it.
+ *
+ * Built once and injected rather than read inside the rules, so the same rules
+ * can be driven over a constructed tree by a suite. A checker that can only be
+ * run against this repository can only be tested by asserting what it happens
+ * to print today.
+ */
+function buildReasonClaimIo() {
+  let productFiles = null;
+
+  const listProductFiles = () => {
+    if (productFiles) return productFiles;
+    productFiles = [];
+    const walk = (relative) => {
+      let entries;
+      try {
+        entries = fs.readdirSync(path.join(process.cwd(), relative), { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const entry of entries) {
+        if (SUITE_SCAN_SKIP.has(entry.name)) continue;
+        const child = `${relative}/${entry.name}`;
+        if (entry.isDirectory()) {
+          walk(child);
+          continue;
+        }
+        if (!/\.[cm]?[jt]sx?$/.test(child) || isTestFile(child)) continue;
+        productFiles.push(child);
+      }
+    };
+    walk(SUITE_SCAN_ROOT);
+    return productFiles;
+  };
+
+  return {
+    exists: (relative) => fs.existsSync(path.join(process.cwd(), relative)),
+    read: (relative) => {
+      try {
+        return fs.readFileSync(path.join(process.cwd(), relative), 'utf8');
+      } catch {
+        return null;
+      }
+    },
+    /*
+     * A test is not an importer for this purpose. "Nothing imports X" is a
+     * claim about the product reaching X, and X's own test importing it is
+     * exactly the state the claim is describing, not a refutation of it.
+     */
+    importersOf: (needles) =>
+      listProductFiles().filter((file) => {
+        let text;
+        try {
+          text = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
+        } catch {
+          return false;
+        }
+        return needles.some((needle) =>
+          new RegExp(
+            `(?:from|require\\()\\s*['"\`][^'"\`]*${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"\`]`,
+          ).test(text),
+        );
+      }),
+  };
+}
+
+/**
  * Behavioral coverage is declared per control kind, not per surface. A surface
  * with four controls and a suite that exercises two of them is two covered and
  * two uncovered — counting it as one covered surface overstates the programme
  * by every control the suite never touched.
  */
-function validateBehavioralTest(control, controlLabel, workflowRuns, surface, suiteIndex) {
+/**
+ * The two things that can be wrong with an uncovered control, and they have
+ * opposite remedies and different owners.
+ *
+ * `render-the-control` — the control is not on the surface at all. A behavioral
+ * test here would pin an absence, not prove a control, and raising the coverage
+ * number for a screen no reader reaches is what closed item 41 ruled out. The
+ * fix is to render it, which is an owner decision.
+ *
+ * `write-a-test` — the control is on the surface and nothing proves it. This is
+ * the only shape a behavioral test fixes, so it is the only shape the report
+ * offers as drawable.
+ *
+ * Until item C-636 the difference lived only in the `reason` prose. The report
+ * cannot act on prose, so it offered all ten uncovered controls on the same
+ * terms and an agent drawing "the next declared control with no behavioral
+ * test" could draw one whose control is not rendered.
+ */
+const UNCOVERED_REMEDIES = new Set(['render-the-control', 'write-a-test']);
+
+function validateBehavioralTest(control, controlLabel, workflowRuns, surface, suiteIndex, reachable) {
   const declared = control.behavioralTest;
   const problems = [];
 
@@ -305,6 +519,28 @@ function validateBehavioralTest(control, controlLabel, workflowRuns, surface, su
     if (typeof declared.reason !== 'string' || declared.reason.trim().length < 40) {
       problems.push(
         `${controlLabel}: an uncovered control needs a concrete reason saying what is not proven`,
+      );
+    }
+
+    // Which remedy applies is a fact about the surface, so it is declared and
+    // checked rather than read out of the reason.
+    if (!UNCOVERED_REMEDIES.has(declared.remedy)) {
+      problems.push(
+        `${controlLabel}: an uncovered control must declare remedy as one of ` +
+          `${Array.from(UNCOVERED_REMEDIES).join(', ')} — got ${
+            declared.remedy === undefined ? '(nothing)' : JSON.stringify(declared.remedy)
+          }. The report offers only write-a-test controls as drawable, so an undeclared ` +
+          `remedy would silently drop this control out of the draw or into it.`,
+      );
+    } else if (declared.remedy === 'write-a-test' && reachable === false) {
+      // The contradiction that makes the field load-bearing rather than
+      // decorative: a test cannot be the remedy for a control on a surface no
+      // route reaches, because the test would mount the component itself and
+      // prove the component rather than the product.
+      problems.push(
+        `${controlLabel}: declares remedy write-a-test, but no route reaches ${
+          surface?.path ?? 'its surface'
+        } — a test there proves the component, not the product. The remedy is render-the-control.`,
       );
     }
 
@@ -382,8 +618,42 @@ function validateBehavioralTest(control, controlLabel, workflowRuns, surface, su
     );
   }
 
+  // Everything above is about the FILE. None of it looks inside, so coverage
+  // was credited per control kind from a file, and a suite named by four kinds
+  // earned four credits whatever it exercised (item C-554).
+  //
+  // Measured before this existed: 10 files carried 25 of the 35 reachable
+  // credits, the worst a 61-case general suite credited for two kinds. Deleting
+  // the one case proving one of them left the suite green and this gate green,
+  // still reporting the control covered inside "35 of 35 (100%)".
+  //
+  // So a credit names the case(s) that prove it. This branch checks only that
+  // the declaration exists and is well formed — whether those cases still RUN
+  // and PASS is not knowable statically, because a case name can be built from
+  // a template literal or a `describe.each` table. That half is
+  // `scripts/audit/ai-surface-control-cases.mjs`, which reads the names back
+  // from jest's own report.
+  if (!Array.isArray(declared.provenCases) || declared.provenCases.length === 0) {
+    problems.push(
+      `${controlLabel}: declares ${declared.path} but no provenCases — name the case(s) in that suite which prove this control, or the credit is a claim about a file rather than about a control`,
+    );
+  } else {
+    for (const caseName of declared.provenCases) {
+      if (typeof caseName !== 'string' || !caseName.trim()) {
+        problems.push(`${controlLabel}: provenCases must be non-empty case names`);
+      }
+    }
+  }
+
   return { problems, covered: problems.length === 0 };
 }
+
+/**
+ * Two kinds on one surface must not point at the same case — see
+ * `findSharedProvenCases`, which is imported rather than reimplemented here so
+ * the rule has exactly one owner. This gate and the case-proof checker both ask
+ * it, and two copies of a rule drift.
+ */
 
 /**
  * A declared control has to be on a screen a user can get to.
@@ -393,7 +663,7 @@ function validateBehavioralTest(control, controlLabel, workflowRuns, surface, su
  * catalog were components no route could reach, already recorded as orphans by
  * a different audit while this one counted them as controls the product has.
  */
-function validateRouteReachability(surface, label, reachable, roots) {
+function validateRouteReachability(surface, label, reachable, roots, reasonClaimIo) {
   const problems = [];
   if (!surface.path) return { problems, reachable: false };
 
@@ -423,6 +693,17 @@ function validateRouteReachability(surface, label, reachable, roots) {
       problems.push(
         `${label}: routeReachable false needs a reason saying what is not on a screen and what would put it there`,
       );
+    } else {
+      // Length was the whole of this check until C-513. Now the clauses that
+      // assert something about the tree are read back off the tree.
+      problems.push(
+        ...evaluateUnreachableReason({
+          label,
+          reason,
+          surfacePath: surface.path,
+          io: reasonClaimIo,
+        }),
+      );
     }
   }
 
@@ -433,7 +714,7 @@ function normalizeEvidence(value) {
   return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.trim()) : [];
 }
 
-function validateCatalogClaimCoverage(catalog, surfacesById) {
+function validateCatalogClaimCoverage(catalog, surfacesById, surfaces) {
   const claims = collectLegalCatalogClaims();
   const claimKeys = new Set(claims.map((claim) => claim.key));
   const entries = normalizeCoverageEntries(catalog);
@@ -467,11 +748,30 @@ function validateCatalogClaimCoverage(catalog, surfacesById) {
         problems.push(`${label}: covered claim references unknown surfaceId ${entry.surfaceId ?? '(missing)'}`);
         continue;
       }
-      const hasControl = (surface.requiredControls ?? []).some(
-        (control) => control.kind === entry.controlKind,
+      const control = (surface.requiredControls ?? []).find(
+        (candidate) => candidate.kind === entry.controlKind,
       );
-      if (!hasControl) {
+      if (!control) {
         problems.push(`${label}: surface ${entry.surfaceId} does not include ${entry.controlKind}`);
+      } else if (control.behavioralTest?.status === 'none') {
+        // `covered` asked two questions — does the surfaceId resolve, and does
+        // the surface declare this kind — and never the one the word means. So
+        // a credit could be claimed over a control this same file records as
+        // having no behavioral test, and the gate had no opinion: measured over
+        // all 22 covered rows, exactly one was in that state — and on the one
+        // surface whose five controls this file all record as unproven, with a
+        // reason each saying no suite mounts the component.
+        //
+        // `covered` is a claim about proof, so it is now refused unless the
+        // joined control names one. The control's own reason is quoted rather
+        // than re-derived: it is the sentence someone has to reconcile, and
+        // `validateBehavioralTest` already keeps it honest against the tree.
+        problems.push(
+          `${label}: claims covered over ${entry.surfaceId} / ${entry.controlKind}, which declares ` +
+            `behavioralTest status "none" — a covered credit needs a proven control. ` +
+            `The control's own reason: ${control.behavioralTest.reason ?? '(none given)'} ` +
+            `Resolve the row as deferred with a concrete reason, or prove the control.`,
+        );
       }
     }
     if (entry.status === 'deferred') {
@@ -479,6 +779,8 @@ function validateCatalogClaimCoverage(catalog, surfacesById) {
         problems.push(`${label}: deferred claims need a concrete reason`);
       }
     }
+
+    problems.push(...validateClaimJoin(label, entry, claim, surfaces));
   }
 
   for (const claim of claims) {
@@ -490,7 +792,7 @@ function validateCatalogClaimCoverage(catalog, surfacesById) {
   return problems;
 }
 
-function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex) {
+function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex, reasonClaimIo) {
   const label = surface?.id ?? `surface[${index}]`;
   const problems = [];
 
@@ -521,8 +823,10 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
     label,
     routeGraph.reachable,
     routeGraph.roots,
+    reasonClaimIo,
   );
   problems.push(...reachability.problems);
+  problems.push(...findSharedProvenCases({ controls: [surface] }));
 
   const seenKinds = new Set();
   for (const control of surface.requiredControls ?? []) {
@@ -537,7 +841,14 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
     }
     seenKinds.add(kind);
 
-    const behavioral = validateBehavioralTest(control, controlLabel, workflowRuns, surface, suiteIndex);
+    const behavioral = validateBehavioralTest(
+      control,
+      controlLabel,
+      workflowRuns,
+      surface,
+      suiteIndex,
+      reachability.reachable,
+    );
     problems.push(...behavioral.problems);
     tally.declared += 1;
     if (!reachability.reachable) {
@@ -547,6 +858,34 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
       tally.unreachable += 1;
     } else if (behavioral.covered) {
       tally.covered += 1;
+    }
+    if (!behavioral.covered) {
+      // Named, not just counted — item C-411. The restocking backlog item was
+      // defined as "the next declared control with no behavioral test", and
+      // until this list existed the report answered only how many there were,
+      // so answering it meant searching the test tree instead of reading the
+      // gate.
+      //
+      // That definition was still wrong, and item C-636 corrected it: uncovered
+      // is not drawable. Ten controls have no behavioral test and for all ten a
+      // test is the wrong remedy — five sit on a surface no route reaches, and
+      // five are measured absent from a surface that is reached. Drawing from
+      // this list wrote tests for controls no reader can see, which raises the
+      // coverage number and changes nothing about the product. So each row
+      // carries its declared remedy and the report states the drawable count
+      // separately; the draw reads that count, not this length.
+      //
+      // Collected in the same pass as the tally rather than recomputed
+      // afterwards: two walks of one catalog can disagree, and then the count
+      // and the names are evidence against each other rather than for the
+      // same fact.
+      tally.uncovered.push({
+        surfaceId: surface?.id ?? label,
+        kind,
+        path: surface?.path ?? null,
+        reachable: reachability.reachable,
+        remedy: control.behavioralTest?.remedy ?? null,
+      });
     }
 
     const evidence = normalizeEvidence(control.evidence);
@@ -573,6 +912,59 @@ function validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteI
   return problems;
 }
 
+/**
+ * The roster of controls with no behavioral test, as the report prints it.
+ *
+ * Exported because the interesting branch is the empty one and the live
+ * catalog cannot reach it. A section that disappears when the roster is empty
+ * cannot be told apart from a section somebody removed, and "no output read as
+ * nothing wrong" is the failure this whole catalog exists against — so zero is
+ * stated in words rather than left as a silence.
+ */
+export function renderUncoveredRoster(uncovered, declared) {
+  if (uncovered.length === 0) {
+    return [
+      `Controls with no behavioral test: 0 of ${declared}. Every declared control names the case that proves it.`,
+    ];
+  }
+  const drawable = uncovered.filter((control) => control.remedy === 'write-a-test');
+  const lines = [
+    `Controls with no behavioral test: ${uncovered.length} of ${declared}. Named here so the next one ` +
+      'can be read off this report rather than searched for in the test tree.',
+  ];
+  for (const control of [...uncovered].sort((a, b) =>
+    `${a.surfaceId}:${a.kind}`.localeCompare(`${b.surfaceId}:${b.kind}`),
+  )) {
+    lines.push(
+      `  - ${control.surfaceId}:${control.kind} — ${control.path ?? 'no path declared'}` +
+        (control.reachable ? '' : ' — not on any screen') +
+        ` — remedy: ${control.remedy ?? 'undeclared'}`,
+    );
+  }
+
+  // The count that answers the question an agent actually asks. "Uncovered" is
+  // not "drawable": for a control whose remedy is render-the-control a test
+  // would pin an absence, so offering it as the next draw turns the coverage
+  // number into the measure instead of the product.
+  lines.push(
+    `Drawable by a behavioral test: ${drawable.length} of ${uncovered.length} uncovered. ` +
+      'A control is drawable only where the control is on the surface and nothing proves it.',
+  );
+  if (drawable.length === 0) {
+    lines.push(
+      '  Nothing is drawable: a behavioral test is not the remedy for any of them, so the draw ' +
+        'stops here rather than writing a test for a control no reader can see.',
+    );
+  } else {
+    for (const control of [...drawable].sort((a, b) =>
+      `${a.surfaceId}:${a.kind}`.localeCompare(`${b.surfaceId}:${b.kind}`),
+    )) {
+      lines.push(`  - draw: ${control.surfaceId}:${control.kind} — ${control.path ?? 'no path declared'}`);
+    }
+  }
+  return lines;
+}
+
 function main() {
   const catalog = readCatalog();
   const surfaces = catalog.controls;
@@ -585,6 +977,7 @@ function main() {
   const problems = [];
   const workflowRuns = readWorkflowJestRuns();
   const routeGraph = computeRouteReachability(process.cwd());
+  const reasonClaimIo = buildReasonClaimIo();
   // Walked once, for the modules that claim to have no behavioral test.
   const suiteIndex = indexSuitesReferencing(
     Array.from(
@@ -601,7 +994,7 @@ function main() {
       ),
     ),
   );
-  const tally = { declared: 0, covered: 0, unreachable: 0 };
+  const tally = { declared: 0, covered: 0, unreachable: 0, uncovered: [] };
   surfaces.forEach((surface, index) => {
     if (surface?.id) {
       if (ids.has(surface.id)) {
@@ -610,9 +1003,9 @@ function main() {
       ids.add(surface.id);
       surfacesById.set(surface.id, surface);
     }
-    problems.push(...validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex));
+    problems.push(...validateSurface(surface, index, workflowRuns, tally, routeGraph, suiteIndex, reasonClaimIo));
   });
-  problems.push(...validateCatalogClaimCoverage(catalog, surfacesById));
+  problems.push(...validateCatalogClaimCoverage(catalog, surfacesById, surfaces));
 
   if (problems.length > 0) {
     fail('AI surface control catalog failed.', problems);
@@ -646,6 +1039,9 @@ function main() {
   console.log(
     `Reachable share of declared controls: ${reachable} of ${tally.declared} (${pct(reachable, tally.declared)}).`,
   );
+  for (const line of renderUncoveredRoster(tally.uncovered, tally.declared)) {
+    console.log(line);
+  }
   if (tally.unreachable > 0) {
     console.log(
       `Not on any screen: ${tally.unreachable} of ${tally.declared} controls sit on surfaces no route reaches. ` +
@@ -658,4 +1054,9 @@ function main() {
   }
 }
 
-main();
+// Guarded because `renderUncoveredRoster` is imported by a behavioral suite and
+// an unguarded `main()` runs the whole audit on import — the same shape as
+// `isDirectInvocation` (item T-723) was written for.
+if (isDirectInvocation(import.meta.url)) {
+  main();
+}

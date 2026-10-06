@@ -1,0 +1,175 @@
+{
+  "item": "T-495",
+  "title": "One suite of T-495's claimable half: ask-anything-bar rewritten from a source-text scanner into a behavioural suite, and wired",
+  "recordedAt": "2026-09-28T10:05:00.000Z",
+  "base": "2fcaa8b3f9c44309e7474bfde234bfeab03be430",
+  "directory": "src/__tests__/integration/agents",
+  "scope": [
+    "One suite, because T-495's acceptance is per suite. It is suite 7 of the 11 in the claimable half; 4 remain, all in src/__tests__/integration/agents: agent-inline-recommendation, agent-mission-panel, agent-mission-surface-wiring, mission-workflow-handoff.",
+    "The gated half of T-495 -- the rows carrying textIsTheSubject -- is NOT touched here.",
+    "This record exists so the T-770 control resolves this path's classification from the LATEST record rather than from the T-492 draw. Measured: with the workflow step extended and this record absent, t770-scanner-wiring-refusal fails 2 of 7 and names this suite."
+  ],
+  "method": [
+    "Re-verified on origin/main 2fcaa8b3f9 by running the suite, not by reading it: 5 failed of 10. Nine of the ten cases read src/components/agent/AskAnythingBar.tsx or src/components/programs/ProgramCanonicalDetail.tsx as text; the tenth checked typeof AskAnythingBar === 'function'.",
+    "The five reds were renames and product evolution, not defects: the key handler is now spelled e.key rather than event.key; the height ceiling constant is MAX_TA_HEIGHT rather than MAX_HEIGHT_PX; the eyebrow renders Ask {cfg.name} rather than Ask {agentName}; the Send button is live, so 'Live ask deferred' is gone on purpose; and the palette case expected a hex the file no longer carries.",
+    "All ten cases were DELETED rather than repaired. Twenty-three cases replace them. They render AskAnythingBar in jsdom with @testing-library/react. The two hooks that reach a model -- the AtlasPageState provider and useAgentStream -- are replaced by recorders, and the global fetch throws, so any direct network call from the component is loud.",
+    "Composer: Enter sends the trimmed text once through the page state, clears the composer and prevents the default; Shift+Enter neither sends nor prevents; another key does not send; whitespace never sends, by Enter or by the button; nothing sends while streaming. Send button: disabled when empty, enabled with text, sends on click. Fallback: with no page state the bar sends through useAgentStream bound to surface, programId and the displayed agent name, scopes to the agent key when no surface is given, and does not send while its own stream is responding. Auto-grow: height follows scrollHeight below the 180px ceiling, stops at it, equals the textarea max-height, and collapses after a send. Render: a spell-checked labelled textarea with the default or supplied placeholder; a position:fixed root at bottom 0 and z-index 50; for each of the four agent keys, data-agent and the eyebrow 'Ask Ava' plus the scope label. Response panel: absent before a send; after a send it shows the response, and dismiss clears the response and closes it.",
+    "Program detail mount: ProgramCanonicalDetail is RENDERED from the real seed plan. Exactly one bar renders, data-agent nexus, scoped to the program code and the phase label the workbench view derives; the content column that holds the footer has 160px bottom padding.",
+    "Thirteen mutations -- eleven against AskAnythingBar.tsx and two against ProgramCanonicalDetail.tsx -- each verified by git diff --numstat to have changed the file before either suite ran. One first attempt (the direct-fetch mutation) did NOT change the file because its pattern did not match; it was recorded as a no-op, corrected, re-applied, verified by numstat, and re-run. Each mutation was run against the new suite and against the deleted scanner restored from origin/main as a sibling file. The deleted scanner is red at 5 of 10 on the base, so a mutation counts as caught by it only when its failures rise above 5."
+  ],
+  "counts": {
+    "suites": 1,
+    "wired": 1,
+    "heldUnwired": 0,
+    "repaired": 1,
+    "deleted": 0
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/integration/agents/ask-anything-bar.test.ts",
+      "priorShape": "never_reached",
+      "priorVia": [],
+      "priorCollected": true,
+      "priorCovered": false,
+      "priorGreen": false,
+      "collected": true,
+      "green": true,
+      "totalTests": 23,
+      "failedTests": 0,
+      "pendingTests": 0,
+      "readFileSyncCount": 0,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "rendersComponent": true,
+      "drivesProductionEntryPoint": "AskAnythingBar",
+      "verdict": "wired",
+      "wiredBy": ".github/workflows/integration-suites.yml",
+      "ownerItem": "T-495",
+      "priorVerdict": {
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "verdict": "rewrite_as_behavior",
+        "ownerItem": "T-495",
+        "sourceTextScanner": true
+      },
+      "priorVerdictStatus": "discharged_here",
+      "rationale": "The deleted cases asserted what two files say. They were red at 5 of 10 on the base for renames alone, so as a CI signal the suite could not have told a regression from a rename. Measured against thirteen mutations that change what the composer does or what the page renders, the deleted scanner's failure count rose on four -- the bar no longer fixed, a direct fetch in submit, the page's bottom padding removed, and the page binding the wrong agent -- and did not move on nine, including Shift+Enter sending, the default not prevented, sends while streaming, the Send button permanently disabled, and spell check turned off. The new suite caught all thirteen.",
+      "subjectReachability": {
+        "reachable": false,
+        "pendingDecision": "T-775",
+        "computedBy": "src/__tests__/behaviors/t770-scanner-wiring-refusal.test.ts, over scripts/audit/lib/route-reachability.mjs (route walk, src/components and src/app) and scripts/audit/lib/module-referrers.mjs (src/lib referrer classes), across the suite import closure with tests and __fixtures__ excluded",
+        "unreachableAtAmendment": [
+          "src/components/abarva/AgentBadge.tsx (no route reaches it)",
+          "src/components/abarva/EvidenceChip.tsx (no route reaches it)",
+          "src/components/abarva/FileTypeChip.tsx (no route reaches it)",
+          "src/components/agent/AgentMissionPanel.tsx (no route reaches it)",
+          "src/components/programs/NexusProgramWorkbench.tsx (no route reaches it)",
+          "src/components/programs/ProgramArtifactCanvas.tsx (no route reaches it)",
+          "src/components/programs/ProgramCanonicalDetail.tsx (no route reaches it)",
+          "src/components/programs/ProgramWorkshopMode.tsx (no route reaches it)",
+          "src/lib/agent/agent-mission-queue.ts (testOnly)",
+          "src/lib/programs/nexus-program-workbench-view.ts (testOnly)",
+          "src/lib/programs/program-artifact-canvas-view.ts (testOnly)",
+          "src/lib/programs/program-workshop-mode-view.ts (testOnly)"
+        ],
+        "note": "Amendment, not a restamp: recordedAt is unchanged. The verdict wired and the mutation scores stand as measurements, but they measure code no user can reach, so the census coverage this row earns is coverage of dead code. T-770 refuses this row unless it is in the T-775 pending set, and holds this field to the live computation. Retire versus mount is the T-775 owner decision; either outcome takes the row out of the pending set by its effect."
+      }
+    }
+  ],
+  "mutations": [
+    {
+      "mutation": "AskAnythingBar.tsx: Enter sends even with Shift held (drop the !e.shiftKey guard)",
+      "result": "1 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "Shift+Enter sending instead of inserting a newline"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: remove e.preventDefault() from the Enter handler",
+      "result": "1 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "Enter leaving a newline behind in the composer"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: submit ignores isStreaming",
+      "result": "2 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "a second question sent over a response that is still streaming"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: send value untrimmed",
+      "result": "2 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "whitespace-only sends and untrimmed questions"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: autoGrow drops the Math.min ceiling",
+      "result": "1 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "the textarea growing without bound"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: local stream always scoped to the agent key, ignoring surface",
+      "result": "1 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "the fallback stream losing its surface binding"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: root position fixed -> sticky",
+      "result": "1 of 23 failed",
+      "deletedScanner": "6 of 10 failed -- caught",
+      "catches": "the bar no longer viewport-fixed"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: Send button permanently disabled",
+      "result": "1 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "a dead Send button"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: submit calls fetch('/api/agent/ask') directly",
+      "result": "4 of 23 failed",
+      "deletedScanner": "6 of 10 failed -- caught",
+      "catches": "the component reaching the network outside the stream hooks"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: spellCheck -> spellCheck={false}",
+      "result": "1 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "spell check turned off; the literal spellCheck is still in the file"
+    },
+    {
+      "mutation": "AskAnythingBar.tsx: dismiss clears the response but leaves the panel open",
+      "result": "1 of 23 failed",
+      "deletedScanner": "5 of 10 failed, unchanged from base -- missed",
+      "catches": "a dismiss that does not close the panel"
+    },
+    {
+      "mutation": "ProgramCanonicalDetail.tsx: content padding 160px -> 24px at the bottom",
+      "result": "1 of 23 failed",
+      "deletedScanner": "6 of 10 failed -- caught",
+      "catches": "the fixed bar covering the page footer"
+    },
+    {
+      "mutation": "ProgramCanonicalDetail.tsx: bar mounted with agent=\"sentinel\"",
+      "result": "1 of 23 failed",
+      "deletedScanner": "6 of 10 failed -- caught",
+      "catches": "the Program page binding the wrong agent"
+    }
+  ],
+  "droppedWithoutReplacement": [
+    "The palette case (expects #132B4F; forbids #14B8A6, #0E9F8C and the words cyber, chatbot, avatar). It asserted a design-token choice over source bytes, and it had been red on the base: the file now carries no #132B4F, and it DOES carry #0E9F8C as the nexus accent. Whether that accent is a banned token today is a design question, not a behaviour this suite can own; it is recorded under observations rather than asserted either way.",
+    "'Live ask deferred' and the deterministically disabled Send button. The Send button is live by design now; the replacement asserts the live behaviour instead.",
+    "The import-denylist case (openai, anthropic, claude, @/lib/models, @/lib/ai, supabase, fetch( in the component text). Replaced by the throwing global fetch and the hook recorders: the component's only paths to a model are the two hooks, and a direct fetch fails four cases."
+  ],
+  "residualsNotClosedHere": [
+    "The directory src/__tests__/integration/agents still cannot be wired whole: agent-mission-surface-wiring is red on base and four suites remain T-495 scanners. This suite is named individually for that reason.",
+    "OBSERVED, not acted on: ProgramCanonicalDetail is imported by no route under src/app, so the Program-detail mount cases prove what that page renders, not that any user sees it. The live mount of AskAnythingBar found by import is SourceAnalyticsCanvas, whose own suites already render it. Delete-versus-mount for the Program page is a product call and not this change's to take.",
+    "OBSERVED, not acted on: AskAnythingBar's AGENT_CFG gives nexus the accent #0E9F8C, which ProgramCanonicalDetail's own comment calls a 'teal-adjacent banned token'. Not changed here: altering product colours is outside a test rewrite."
+  ],
+  "amendments": [
+    {
+      "item": "T-775",
+      "amendedAt": "2026-09-28T12:00:12.985Z",
+      "change": "Added suites[].subjectReachability, computed rather than declared; see the row note."
+    }
+  ]
+}

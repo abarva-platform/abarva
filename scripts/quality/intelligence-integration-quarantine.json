@@ -7,6 +7,7 @@
     "not-a-product-defect": "No failing assertion in this directory describes shipping code behaving wrongly. 107 of 133 are ENOENT from readFileSync, 24 are existsSync(...) === true on a path that is gone, and the remaining 2 were stale literals in a file that does exist \u2014 those 2 were REPAIRED rather than quarantined, and context-corpus-explorer-route.test.ts now runs."
   },
   "missingPathsNote": "Each entry names the paths whose absence is the reason it is quarantined. check-intelligence-integration-quarantine.mjs asserts every one of them is STILL absent. If any comes back, the check fails and says to re-run the suite and clear its entry \u2014 so this list cannot quietly outlive its reason. That is the control the list would otherwise lack: a name-in-a-file exclusion nobody re-measures is how a carve-out becomes permanent.",
+  "scope": "src/__tests__/integration/intelligence",
   "quarantined": [
     {
       "suite": "evidence-dataset-drawer.test.ts",
@@ -279,6 +280,7 @@
       ]
     }
   ],
+  "alsoIgnoredScope": "src/__tests__/integration",
   "alsoIgnored": [],
   "alsoIgnoredNote": "The workflow command names src/__tests__/integration/intelligence without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command. Jest reads that path as a regex against the full path, so it also selects sibling files at the integration root whose names start with \"intelligence\". Both of those siblings were red when the directory was first wired and were named here untriaged; backlog item T-044 triaged them and both now run. intelligence-pattern-manifest.test.ts asserted observationCount >= observations.length over every entry, which was true of the 17-pattern design pack it was written against and became false when the 2026-06-20 expansion merged corpora that use `observations` for source references; the invariant is now asserted on the corpus where the two fields count the same thing. intelligence-chat-shape.test.ts asserted that Tower still compacts, which a deliberate fix had already made false, and separately caught a live rendering path that drops most of a Brief A answer \u2014 that one is an it.failing marker naming backlog item C-009, not an exclusion. This list is EMPTY and should stay empty. An entry is an object whose `path` is REPO-RELATIVE (which is also a valid ignore-pattern suffix, so the generator and the existence check agree on one spelling), plus the `reason` it is out and the `owner` item that gets it back in. check-intelligence-integration-quarantine.mjs enforces all three, that the file still exists, and that the list does not grow past alsoIgnoredCeiling.",
   "alsoIgnoredCeiling": 2,

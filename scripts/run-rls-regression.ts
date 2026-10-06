@@ -24,6 +24,9 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import { CANONICAL_TENANT_KEYS } from '../src/config/tenants/CANONICAL_TENANTS';
+// C-632. The precondition classifier is a module so a test can drive it.
+// A regex living here could only ever be grepped for.
+import { isNotCheckedPrecondition } from '../src/lib/security/rls-precondition-classification';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
@@ -34,13 +37,6 @@ const EXPECTED_TENANTS = [...CANONICAL_TENANT_KEYS];
 function fail(code: number, msg: string): never {
   process.stderr.write(`${msg}\n`);
   process.exit(code);
-}
-
-function isNotCheckedPrecondition(message: string): boolean {
-  return (
-    /Canonical tenant\(s\) .* missing from clients table/.test(message) ||
-    /RLS regression expected tenants were not supplied/.test(message)
-  );
 }
 
 /** Redact the password from a Postgres URL for logging. */

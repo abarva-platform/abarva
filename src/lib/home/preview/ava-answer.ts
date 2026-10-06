@@ -2,12 +2,23 @@ import "server-only";
 
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
+import { splitNarrativeSentences } from "@/lib/home/preview/narrative-sentences";
 import type {
   AvaAnswerPacket,
   AvaArtifact,
   AvaCitation,
 } from "@/lib/ava-answer/contract";
 import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
+import {
+  answerHomeCurrentContext,
+  canAnswerFromCurrentContext,
+  isHomeGraphExhibitRequest,
+} from "@/lib/home/preview/current-context-answer";
+import {
+  homeSourceCoverageGapLabelForVersion,
+  homeSourceDateCoverageLabelForVersion,
+  homeSourceFileReviewLabelForVersion,
+} from "@/lib/home/preview/record-source";
 import type {
   ChapterId,
   ChapterView,
@@ -23,7 +34,7 @@ type AvaAnswerBundleSlice = Pick<
   HomeReviewBundle,
   "chapters" | "technologyEstate"
 > &
-  Partial<Pick<HomeReviewBundle, "thesis">>;
+  Partial<Pick<HomeReviewBundle, "thesis" | "contextVersion" | "provenance">>;
 
 const PROMPT_VERSION = "home-preview-ava-answer-v1";
 const CLAUDE_MODEL = "claude-sonnet-5";
@@ -559,10 +570,7 @@ function dropStaleEvidenceSentences(
   context: StaleClaimContext,
 ): string {
   if (!text) return text;
-  const sentences = text
-    .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
-    ?.map((sentence) => sentence.trim())
-    .filter(Boolean) ?? [text];
+  const sentences = splitNarrativeSentences(text);
   return sentences
     .filter((sentence) => !isStaleAvaClaim(sentence, context))
     .join(" ");
@@ -776,8 +784,6 @@ const ALLOWED_STATUS = new Set(["answered", "partial", "no_data"]);
 const ALLOWED_CHART_KIND = new Set(["bar", "horizontal-bar"]);
 const MAX_DIRECT_ANSWER_WORDS = 55;
 const MAX_PROSE_PARAGRAPH_WORDS = 70;
-const GRAPH_EXHIBIT_REQUEST_RE =
-  /\b(show|draw|render|create|display|visuali[sz]e|graph|map)\b.*\b(graph|network|relationship map|connections?|dependencies)\b|\b(graph|network|relationship map)\b.*\b(risks?|vendors?|applications?|systems?|data|programs?|contracts?|connect|connections?|dependencies)\b/i;
 const INTERNAL_RECOVERY_CAVEAT_RE =
   /\b(advisor model|advisor engine|unparseable|could not be exported|exported safely|packag(?:e|ed|ing)|JSON|parser|parse)\b/i;
 const DEFAULT_RECOVERY_CAVEAT =
@@ -816,6 +822,54 @@ export async function answerHomeAvaQuestion(args: {
   userId?: string | null;
 }): Promise<AvaAnswerPacket> {
   const question = args.question.trim();
+  const currentContext = args.bundle.thesis?.signalPacket.homeEnterpriseContext;
+  if (
+    currentContext &&
+    args.bundle.contextVersion &&
+    canAnswerFromCurrentContext(args.bundle.contextVersion)
+  ) {
+    const currentAnswer = answerHomeCurrentContext({
+      context: currentContext,
+      version: args.bundle.contextVersion,
+      recordMarker: args.bundle.provenance?.canonical_snapshot_hash,
+      tenantKey: args.tenantKey,
+      question,
+    });
+    if (currentAnswer && (!isHomeGraphExhibitRequest(question) ||
+      currentAnswer.artifacts.some((artifact) => artifact.artifact === "graph"))) {
+      return currentAnswer;
+    }
+    if (isHomeGraphExhibitRequest(question)) {
+      return buildFallbackPacket(
+        args.tenantKey,
+        question,
+        "no_data",
+        "A verified relationship graph is not available for this current record. I cannot draw or infer those connections yet.",
+        [],
+      );
+    }
+  }
+  if (
+    args.bundle.contextVersion &&
+    args.bundle.contextVersion.coherence !== "coherent"
+  ) {
+    const coverageGap = homeSourceCoverageGapLabelForVersion(
+      args.bundle.contextVersion,
+    );
+    const sourceReview = homeSourceFileReviewLabelForVersion(
+      args.bundle.contextVersion,
+    );
+    const sourceDates = homeSourceDateCoverageLabelForVersion(
+      args.bundle.contextVersion,
+    );
+    return buildFallbackPacket(
+      args.tenantKey,
+      question,
+      "no_data",
+      `Live rows are available, but their executive narrative has not been verified. I cannot give a cited synthesis yet. ${sourceReview}.${sourceDates ? ` ${sourceDates}.` : ""}${coverageGap ? ` ${coverageGap}` : ""}`,
+      [],
+    );
+  }
   const context = buildGroundingContext(
     args.bundle,
     args.tenantKey,
@@ -823,7 +877,7 @@ export async function answerHomeAvaQuestion(args: {
     question,
   );
 
-  if (isGraphExhibitRequest(question)) {
+  if (isHomeGraphExhibitRequest(question)) {
     return buildGraphUnavailablePacket({
       context,
       tenantKey: args.tenantKey,
@@ -1022,6 +1076,65 @@ function packageModelResponse(
     if (recovered) return recovered;
   }
 
+  if (status !== "no_data" && citations.length === 0 && artifacts.length > 0) {
+    const dataset = datasetRef
+      ? context.plottableDatasets.get(datasetRef)
+      : undefined;
+    const largest = dataset?.rows.reduce(
+      (best, row) => (row.value > best.value ? row : best),
+      dataset.rows[0],
+    );
+    if (dataset && largest && datasetRef) {
+      const citation: AvaCitation = {
+        id: datasetRef,
+        label: dataset.label,
+        sourceClass: "tenant-fact",
+        excerpt: `${dataset.label}: ${largest.label} has the largest count (${largest.value}).`,
+        confidence: "high",
+      };
+      const visualPacket: AvaAnswerPacket = {
+        ...buildFallbackPacket(
+          tenantKey,
+          question,
+          "no_data",
+          `${dataset.label}: ${largest.label} has the largest count (${largest.value}).`,
+          [citation],
+        ),
+        status: "partial",
+        artifacts: artifacts.map((artifact) => ({
+          ...artifact,
+          citationIds: [citation.id],
+        })),
+        gaps: [
+          {
+            id: "home-ava-gap-1",
+            label: "Evidence limit",
+            detail:
+              "The exhibit shows recorded counts; it does not establish a broader business judgment.",
+            severity: "medium",
+          },
+        ],
+        quality: {
+          confidence: "medium",
+          evidenceStrength: "strong",
+          tenantGrounding: "complete",
+          answerCompleteness: "partial",
+        },
+      };
+      if (validateAvaAnswerPacket(visualPacket).passed) return visualPacket;
+    }
+  }
+
+  if (status === "no_data" || citations.length === 0) {
+    return buildFallbackPacket(
+      tenantKey,
+      question,
+      "no_data",
+      "I cannot verify an answer from the cited Home evidence available here.",
+      [],
+    );
+  }
+
   const directAnswer = sanitizeAvaVisibleText(
     directAnswerRaw,
     context,
@@ -1053,25 +1166,10 @@ function packageModelResponse(
     })),
     nextSteps: [],
     quality: {
-      confidence:
-        status === "answered"
-          ? "high"
-          : status === "partial"
-            ? "medium"
-            : "low",
-      evidenceStrength:
-        citations.length > 0
-          ? "strong"
-          : status === "no_data"
-            ? "thin"
-            : "partial",
+      confidence: status === "answered" ? "high" : "medium",
+      evidenceStrength: "strong",
       tenantGrounding: "complete",
-      answerCompleteness:
-        status === "answered"
-          ? "complete"
-          : status === "partial"
-            ? "partial"
-            : "blocked",
+      answerCompleteness: status === "answered" ? "complete" : "partial",
     },
     safety: {
       tenantFencePassed: true,
@@ -1103,10 +1201,6 @@ function packageModelResponse(
       [],
     )
   );
-}
-
-function isGraphExhibitRequest(question: string): boolean {
-  return GRAPH_EXHIBIT_REQUEST_RE.test(question);
 }
 
 function buildGraphUnavailablePacket(input: {
@@ -1217,10 +1311,7 @@ function sanitizeVisibleStaleClaims(
   const replacement =
     "Use the current Vendor Contracts table for supplier concentration; the live record does not support the older supplier-pair concentration wording.";
   const paragraphs = text.split(/\n{2,}/).map((paragraph) => {
-    const sentences = paragraph
-      .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
-      ?.map((sentence) => sentence.trim())
-      .filter(Boolean) ?? [paragraph];
+    const sentences = splitNarrativeSentences(paragraph);
     const next = sentences
       .map((sentence) =>
         isStaleAvaClaim(sentence, context) ? replacement : sentence,
@@ -1318,10 +1409,7 @@ function splitLongParagraph(paragraph: string, maxWords: number): string[] {
     return cleaned ? [cleaned] : [];
   if (/^\s*[-*]\s+/.test(cleaned)) return chunkWords(cleaned, maxWords);
 
-  const sentences = cleaned
-    .match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)
-    ?.map((part) => part.trim())
-    .filter(Boolean) ?? [cleaned];
+  const sentences = splitNarrativeSentences(cleaned);
   const chunks: string[] = [];
   let current = "";
   for (const sentence of sentences) {
@@ -1567,8 +1655,7 @@ function buildFallbackPacket(
       {
         id: "home-ava-gap-1",
         label: "Evidence limit",
-        detail:
-          "The requested answer was not available in a safely exportable form.",
+        detail: "No cited Home evidence supports the requested answer.",
         severity: "high",
       },
     ],

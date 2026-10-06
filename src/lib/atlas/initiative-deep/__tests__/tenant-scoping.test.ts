@@ -6,10 +6,9 @@
 // appears in the result. Then reverse the pair — Apex id + Apex tenancy
 // must not surface Meridian content either.
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { getInitiativeDeepView } from '../retrieve';
 import { mockClient } from '../_test-mock-client';
+import { CANONICAL_TENANT_KEYS, LEGACY_TENANT_ALIASES } from '@/lib/tenant/aliases';
 
 const MERIDIAN = { clientId: 'client-meridian', userId: null };
 const APEX = { clientId: 'client-apex', userId: null };
@@ -187,29 +186,223 @@ describe('tenant scoping — P0 invariant', () => {
     expect(view!.portfolioPosition.valueAttainmentPercentileInTenant).toBe(67);
   });
 
-  it('grep invariant — no hardcoded tenant key in src/lib/atlas/initiative-deep/', () => {
-    const root = resolve(__dirname, '..');
-    const filesToScan = [
-      'types.ts',
-      'retrieve.ts',
-      'joins/ai-initiatives.ts',
-      'joins/tower-metrics.ts',
-      'joins/value-attestation.ts',
-      'joins/business-case.ts',
-      'joins/gates.ts',
-      'joins/signals.ts',
-      'joins/portfolio-position.ts',
+  // Every read the view makes, seeded for BOTH tenants with a marker per
+  // carrier. Each carrier is asserted on its own: a sibling carrier cannot
+  // satisfy it, and the own-tenant marker must be present so an empty join
+  // cannot pass as a fenced one.
+  function everyCarrierFixtures(): Record<string, Record<string, unknown>[]> {
+    const fx = twoTenantFixtures();
+    const tenants = [
+      { clientId: 'client-meridian', initiativeId: 'MR-01', tag: 'MER' },
+      { clientId: 'client-apex', initiativeId: 'AR-02', tag: 'APX' },
     ];
-    const FORBIDDEN = ["'apexretail'", "'meridian'", "'arcturus'", '"apexretail"', '"meridian"', '"arcturus"'];
-    for (const rel of filesToScan) {
-      const text = readFileSync(resolve(root, rel), 'utf8');
-      for (const token of FORBIDDEN) {
-        expect({ file: rel, token, found: text.includes(token) }).toEqual({
-          file: rel,
-          token,
-          found: false,
-        });
-      }
+    fx.clients = tenants.map((t) => ({ id: t.clientId, industry_code: `IND_${t.tag}` }));
+    // Each tenant also holds a hostile engagement tagged with the OTHER
+    // tenant's initiative id, listed first so an unfenced lookup takes it.
+    // Only the client_id fence stands between the caller and those gates.
+    const engagementsOf = (t: (typeof tenants)[number], index: number) => [
+      { id: `eng-${t.tag}`, initiativeId: t.initiativeId, tag: t.tag },
+      { id: `eng-collide-${t.tag}`, initiativeId: tenants[1 - index].initiativeId, tag: t.tag },
+    ];
+    const allEngagements = tenants.flatMap((t, index) =>
+      engagementsOf(t, index).map((e) => ({ ...e, clientId: t.clientId })),
+    );
+    fx.engagements = [
+      ...allEngagements.filter((e) => e.id.startsWith('eng-collide-')),
+      ...allEngagements.filter((e) => !e.id.startsWith('eng-collide-')),
+    ].map((e) => ({
+      id: e.id,
+      client_id: e.clientId,
+      name: `Engagement ${e.tag}`,
+      current_phase: 'build',
+      metadata: { initiative_id: e.initiativeId },
+    }));
+    fx.phase_approvals = allEngagements.map((e) => ({
+      engagement_id: e.id,
+      phase_id: `ph-${e.id}`,
+      approved_at: '2026-01-15T00:00:00Z',
+      approver_role: `Approver ${e.tag}`,
+      phase_name: `Passed gate ${e.tag}`,
+      phase_index: 1,
+    }));
+    fx.engagement_phases = allEngagements.map((e) => ({
+      id: `next-${e.id}`,
+      engagement_id: e.id,
+      phase_index: 2,
+      phase_name: `Upcoming gate ${e.tag}`,
+      due_by: '2026-06-30',
+      status: 'pending',
+    }));
+    fx.signal_firings = tenants.flatMap((t, index) => [
+      // Stray row: this tenant's signal pointing at the OTHER tenant's
+      // engagement. Only the client_id fence on the engagement read drops it.
+      {
+        id: `sig-stray-${t.tag}`,
+        client_id: t.clientId,
+        engagement_id: `eng-${tenants[1 - index].tag}`,
+        severity: 'high',
+        headline: `Stray signal ${t.tag}`,
+        state: 'actioned',
+        fired_at: '2026-02-03T00:00:00Z',
+      },
+      {
+        id: `sig-eng-${t.tag}`,
+        client_id: t.clientId,
+        engagement_id: `eng-${t.tag}`,
+        severity: 'high',
+        headline: `Engagement signal ${t.tag}`,
+        state: 'actioned',
+        fired_at: '2026-02-01T00:00:00Z',
+      },
+      {
+        id: `sig-portfolio-${t.tag}`,
+        client_id: t.clientId,
+        engagement_id: null,
+        severity: 'medium',
+        headline: `Portfolio signal ${t.tag}`,
+        state: 'new',
+        fired_at: '2026-02-02T00:00:00Z',
+      },
+    ]);
+    fx.tower_ai_tool_usage = tenants.map((t) => ({
+      client_id: t.clientId,
+      tool_name: `Tool${t.tag}`,
+      active_users: 10,
+      license_count: 20,
+      observed_at: '2026-03-01T00:00:00Z',
+    }));
+    // DORA surfaces numbers only, so the marker is the value itself.
+    fx.tower_dora_metrics = tenants.map((t, index) => ({
+      client_id: t.clientId,
+      deploy_frequency_per_week: index === 0 ? 111 : 777,
+      lead_time_hours: null,
+      change_failure_rate_pct: null,
+      mttr_hours: null,
+      observed_at: '2026-03-01T00:00:00Z',
+    }));
+    return fx;
+  }
+
+  type Carrier = { name: string; marker: (tag: 'MER' | 'APX') => (view: unknown) => boolean };
+  const carriers: Carrier[] = [
+    {
+      name: 'gates.passed (phase_approvals via engagements)',
+      marker: (tag) => (view) =>
+        (view as { gates: { passed: { name: string }[] } }).gates.passed.some(
+          (gate) => gate.name === `Passed gate ${tag}`,
+        ),
+    },
+    {
+      name: 'gates.upcoming (engagement_phases via engagements)',
+      marker: (tag) => (view) =>
+        (view as { gates: { upcoming: { name: string } | null } }).gates.upcoming?.name ===
+        `Upcoming gate ${tag}`,
+    },
+    {
+      name: 'signals, engagement-scoped read',
+      marker: (tag) => (view) =>
+        (view as { signals: { signalId: string }[] }).signals.some(
+          (signal) => signal.signalId === `sig-eng-${tag}` || signal.signalId === `sig-stray-${tag}`,
+        ),
+    },
+    {
+      name: 'signals, portfolio backfill read',
+      marker: (tag) => (view) =>
+        (view as { signals: { signalId: string }[] }).signals.some(
+          (signal) => signal.signalId === `sig-portfolio-${tag}`,
+        ),
+    },
+    {
+      name: 'baselineMetrics from tower_ai_tool_usage',
+      marker: (tag) => (view) =>
+        (view as { baselineMetrics: { label: string }[] }).baselineMetrics.some(
+          (metric) => metric.label === `Tool${tag} active users`,
+        ),
+    },
+    {
+      name: 'baselineMetrics from tower_dora_metrics',
+      marker: (tag) => (view) =>
+        (view as { baselineMetrics: { key: string; measured: number | null }[] }).baselineMetrics.some(
+          (metric) =>
+            metric.key === 'tower_dora_metrics.deploy_frequency_per_week' &&
+            metric.measured === (tag === 'MER' ? 111 : 777),
+        ),
+    },
+  ];
+
+  const pairs = [
+    { name: 'Meridian caller', id: 'MR-01', tenancy: MERIDIAN, own: 'MER', other: 'APX' },
+    { name: 'Apex caller', id: 'AR-02', tenancy: APEX, own: 'APX', other: 'MER' },
+  ] as const;
+
+  for (const pair of pairs) {
+    for (const carrier of carriers) {
+      it(`${pair.name}: ${carrier.name} carries only the caller tenant's rows`, async () => {
+        const view = await getInitiativeDeepView(pair.id, pair.tenancy, mockClient(everyCarrierFixtures()));
+        expect(view).not.toBeNull();
+        expect({
+          carrier: carrier.name,
+          own: carrier.marker(pair.own)(view),
+          other: carrier.marker(pair.other)(view),
+        }).toEqual({ carrier: carrier.name, own: true, other: false });
+      });
     }
+  }
+
+  it('reads the industry code of the caller tenant only', async () => {
+    // The industry code feeds the kernel business case and is not echoed in
+    // the view, so the probe records which `clients` row the view asked for.
+    const fx = everyCarrierFixtures();
+    const base = mockClient(fx);
+    const asked: unknown[] = [];
+    const spying = {
+      from(table: string) {
+        const builder = base.from(table) as unknown as Record<string, (...args: unknown[]) => unknown>;
+        if (table !== 'clients') return builder;
+        const eq = builder.eq;
+        builder.eq = (col: unknown, val: unknown) => {
+          if (col === 'id') asked.push(val);
+          return eq(col, val);
+        };
+        return builder;
+      },
+    } as unknown as typeof base;
+    await getInitiativeDeepView('AR-02', APEX, spying);
+    expect(asked).toEqual(['client-apex']);
   });
+
+  // The byte scan this replaces asked whether a tenant key is written into the
+  // module. What matters is whether one changes its behaviour, so ask that: the
+  // same data under a tenant key and under a neutral one must produce the same
+  // view, whether the key is special-cased or used as a literal filter. The
+  // keys come from code, canonical and legacy alike, never a typed list.
+  const tenantKeys = [...new Set([...CANONICAL_TENANT_KEYS, ...LEGACY_TENANT_ALIASES])];
+
+  it.each(tenantKeys)(
+    'treats tenant key %s exactly like a neutral key',
+    async (tenantKey) => {
+      const relabel = (from: string, to: string) => {
+        const fx = everyCarrierFixtures();
+        for (const rows of Object.values(fx)) {
+          for (const row of rows) {
+            if (row.client_id === from) row.client_id = to;
+            if (row.id === from) row.id = to;
+          }
+        }
+        return fx;
+      };
+      const named = await getInitiativeDeepView(
+        'MR-01',
+        { clientId: tenantKey, userId: null },
+        mockClient(relabel('client-meridian', tenantKey)),
+      );
+      const neutral = await getInitiativeDeepView(
+        'MR-01',
+        { clientId: 'tenant-neutral', userId: null },
+        mockClient(relabel('client-meridian', 'tenant-neutral')),
+      );
+      expect(neutral).not.toBeNull();
+      expect(named).toEqual(neutral);
+    },
+  );
 });

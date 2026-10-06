@@ -14,9 +14,15 @@ import type {
   DeliverableIntelligenceRequest,
   DeliverableModule,
 } from "./types";
-import { getArchetypePack } from "./briefs/archetype-packs";
-import { getDeliverableStructure } from "./briefs/deliverable-structures";
-import { getDiscoveryBlueprint } from "./briefs/discovery-blueprint";
+import {
+  resolveConfiguredArchetypePack,
+  resolveDiscoveryBlueprintFromConfiguredCatalog,
+} from "./briefs/archetype-config-source";
+import {
+  DELIVERABLE_STRUCTURES,
+  getDeliverableStructure,
+} from "./briefs/deliverable-structures";
+import { composeArtifactAssets } from "./briefs/artifact-asset-composition";
 
 const CITATION_POLICY =
   "Cite every client-specific fact with [n] tied to the Source Register. Do not expose internal source ids, chunk ids, table names, or fact keys.";
@@ -267,7 +273,13 @@ const AMS_RFP_BRIEF: DeliverableArtifactBrief = {
 function buildDiscoveryPlanBrief(
   req: DeliverableIntelligenceRequest,
 ): DeliverableArtifactBrief {
-  const bp = getDiscoveryBlueprint(req.useCaseArchetype);
+  // The archetype is resolved against the EFFECTIVE catalog, so a configured
+  // source can both override a shipped archetype and add a new one a Move
+  // declares. With no source declared this is the seed resolution it has always
+  // been.
+  const bp = resolveDiscoveryBlueprintFromConfiguredCatalog(
+    req.useCaseArchetype,
+  ).blueprint;
   const familyList = bp.evidenceFamilies
     .map(
       (f) =>
@@ -394,6 +406,102 @@ function buildDiscoveryPlanBrief(
       "Covers BOTH business and IT interviews with tailored questions.",
       "Respects what the Charter already establishes (no re-asking known facts); scoped, not exhaustive.",
     ],
+  };
+}
+
+function buildMovesDiscoveryPlanBrief(
+  req: DeliverableIntelligenceRequest,
+): DeliverableArtifactBrief {
+  const structure = getDeliverableStructure("moves", "discovery_plan");
+  if (!structure) return buildDiscoveryPlanBrief(req);
+
+  // Same seam as the generic builder above: the Moves Discovery Plan is the
+  // archetype-configurable surface, so it must honour a configured source too.
+  const blueprint = resolveDiscoveryBlueprintFromConfiguredCatalog(
+    req.useCaseArchetype,
+  ).blueprint;
+  const evidenceBaseline = blueprint.evidenceFamilies
+    .map(
+      (family) =>
+        `- ${family.label} (${family.required ? "required" : "optional"}): ${family.grounds}; likely source: ${family.likelySource}; format: ${family.format}`,
+    )
+    .join("\n");
+  const interviewBaseline = blueprint.interviewRoster
+    .map((role) => {
+      const questions = role.questions.slice(0, 2).join(" | ");
+      return `- ${role.side.toUpperCase()} / ${role.role}: ${role.objectives}. Test with: ${questions}`;
+    })
+    .join("\n");
+
+  const recommendedStructure: BriefSection[] = structure.sections.map(
+    (section) => ({
+      ...section,
+      intent:
+        section.key === "evidence_requests"
+          ? `${section.intent}\nUse this scoped, archetype-specific evidence baseline; tailor owners, periods, and validation with the client:\n${evidenceBaseline}`
+          : section.key === "interview_guide"
+            ? `${section.intent}\nUse these role-specific discovery prompts as a starting point, not as recorded answers:\n${interviewBaseline}`
+            : section.intent,
+      expectedEvidenceFamilies:
+        section.key === "evidence_requests"
+          ? blueprint.evidenceFamilies.map((family) => family.id)
+          : section.expectedEvidenceFamilies,
+    }),
+  );
+
+  return {
+    module: "moves",
+    useCaseArchetype: req.useCaseArchetype,
+    deliverableType: "discovery_plan",
+    purpose: structure.purpose,
+    audience: req.audience.length
+      ? req.audience
+      : ["program_leadership", "steering_committee"],
+    decisionToSupport: structure.decisionToSupport,
+    recommendedStructure,
+    requiredSections: structure.requiredSectionKeys,
+    optionalSections: [],
+    fixedStructure: true,
+    forbiddenSectionTopics: structure.forbiddenSectionTopics,
+    prohibitedContent: structure.prohibitedContent,
+    expectedExhibits: structure.expectedExhibits ?? [],
+    expectedTables: [
+      {
+        key: "evidence_request_table",
+        title: "Evidence Request & Validation Plan",
+        columns: [
+          "Evidence item",
+          "Decision grounded",
+          "Likely owner/source",
+          "Format and period",
+          "Validation test",
+          "Status",
+        ],
+        groundingMode: "mixed",
+        moveToExcelIfWide: false,
+      },
+      {
+        key: "interview_business",
+        title: "Business Stakeholder Interview Plan",
+        columns: ["Role", "Objective", "45-minute prompts", "Capture"],
+        groundingMode: "mixed",
+        moveToExcelIfWide: false,
+      },
+      {
+        key: "interview_it",
+        title: "Technology and Data Stakeholder Interview Plan",
+        columns: ["Role", "Objective", "45-minute prompts", "Capture"],
+        groundingMode: "mixed",
+        moveToExcelIfWide: false,
+      },
+    ],
+    requiredPlaceholders: [],
+    requiredClientDecisions: [],
+    citationPolicy: CITATION_POLICY,
+    allowedExpertKnowledge: ALLOWED_EXPERT_KNOWLEDGE,
+    disallowedFabrication: DISALLOWED_FABRICATION,
+    formattingInstructions: FORMATTING_INSTRUCTIONS,
+    qualityCriteria: BOARD_QUALITY_CRITERIA,
   };
 }
 
@@ -524,11 +632,26 @@ function composeBrief(
 ): DeliverableArtifactBrief | null {
   const structure = getDeliverableStructure(req.module, req.deliverableType);
   if (!structure) return null;
-  const pack = getArchetypePack(req.useCaseArchetype);
+  // Resolved against the EFFECTIVE pack catalog, not the built-in one. With no
+  // configured source declared the effective catalog is a copy of the seed and
+  // this answers exactly what `getArchetypePack` answered; with one declared,
+  // an archetype's configured exhibits and tables reach the composed brief
+  // instead of validating and then being ignored.
+  const pack = resolveConfiguredArchetypePack(req.useCaseArchetype).pack;
 
-  // enrich current-state/baseline sections with the archetype's key evidence families
+  // Enrich the sections that assert client facts with the archetype's key
+  // evidence families. Two ways in, and the declared one is why: the inferred
+  // rule below only matches a key spelled current_state / baseline / signal /
+  // findings / environment, and eight of the shipped structures have no such
+  // key — so for those the archetype's families reached nothing, silently.
+  // `archetypeEvidenceSectionKeys` names the landing sites instead of guessing
+  // them from the spelling. It is ADDITIVE: a structure that already had an
+  // inferred landing site keeps it.
+  const declaredSites = new Set(structure.archetypeEvidenceSectionKeys ?? []);
   const sections: BriefSection[] = structure.sections.map((sec) =>
-    pack && /current_state|baseline|signal|findings|environment/.test(sec.key)
+    pack &&
+    (declaredSites.has(sec.key) ||
+      /current_state|baseline|signal|findings|environment/.test(sec.key))
       ? {
           ...sec,
           expectedEvidenceFamilies: [
@@ -544,6 +667,9 @@ function composeBrief(
   const disallowed = pack?.governanceNote
     ? `${DISALLOWED_FABRICATION} ${pack.governanceNote}`
     : DISALLOWED_FABRICATION;
+  const allowArchetypeAssets =
+    structure.deliverableType !== "charter" &&
+    structure.deliverableType !== "design_workshop_guide";
 
   return {
     module: req.module,
@@ -565,28 +691,41 @@ function composeBrief(
     // archetype pack contributes (use-case-specific exhibits like a dependency
     // map) — a business case and an architecture doc under the same archetype
     // must not get the same exhibit list.
-    expectedExhibits: structure.fixedStructure
-      ? (structure.expectedExhibits ?? [])
-      : [...(structure.expectedExhibits ?? []), ...(pack?.exhibits ?? [])],
-    expectedTables: structure.fixedStructure
-      ? [
-          {
-            key: "risk_register",
-            title: "Risks, Issues & Dependencies",
-            columns: ["Item", "Type", "Impact", "Owner", "Mitigation"],
-            groundingMode: "mixed",
-            moveToExcelIfWide: false,
-          },
-        ]
-      : (pack?.tables ?? [
-          {
-            key: "risk_register",
-            title: "Risks, Issues & Dependencies",
-            columns: ["Item", "Type", "Impact", "Owner", "Mitigation"],
-            groundingMode: "mixed",
-            moveToExcelIfWide: false,
-          },
-        ]),
+    expectedExhibits: composeArtifactAssets(
+      structure.expectedExhibits ?? [],
+      allowArchetypeAssets ? (pack?.exhibits ?? []) : [],
+    ),
+    // Tables are joined by the same rule, which they were not until now: the
+    // structure's tables were ignored entirely, so within one archetype
+    // eighteen of the twenty-one structures received an identical table set.
+    // A structure's tables are a property of the ARTIFACT TYPE, so — exactly
+    // as with its exhibits — they survive `allowArchetypeAssets === false`;
+    // only the pack's side is withheld. The default risk register stands in
+    // for an unresolved pack, unchanged.
+    //
+    // Two properties of these two lines are deliberately unobservable today
+    // and so have no case of their own. (1) Neither withheld instrument
+    // (charter, design workshop guide) declares a table or an exhibit, so
+    // gating the structure's side as well would change no output; the rule is
+    // written to match the exhibit line above, which has always been ungated.
+    // (2) The exhibit join's de-duplication cannot bite while every shipped
+    // pack's exhibit keys are disjoint from every structure's — it becomes
+    // reachable through `composeBrief` once a CONFIGURED pack is resolved
+    // here. `composeArtifactAssets` is exercised directly for both.
+    expectedTables: composeArtifactAssets(
+      structure.expectedTables ?? [],
+      allowArchetypeAssets
+        ? (pack?.tables ?? [
+            {
+              key: "risk_register",
+              title: "Risks, Issues & Dependencies",
+              columns: ["Item", "Type", "Impact", "Owner", "Mitigation"],
+              groundingMode: "mixed",
+              moveToExcelIfWide: false,
+            },
+          ])
+        : [],
+    ),
     requiredPlaceholders: sections
       .filter((s) => s.groundingMode === "client_to_complete")
       .map((s) => s.key),
@@ -605,6 +744,9 @@ export function getArtifactBrief(
   req: DeliverableIntelligenceRequest,
 ): DeliverableArtifactBrief {
   const t = normalizeType(req.deliverableType);
+  if (t === "discovery_plan" && req.module === "moves") {
+    return buildMovesDiscoveryPlanBrief(req);
+  }
   if (t === "discovery_plan" || t === "evidence_request_pack") {
     return buildDiscoveryPlanBrief(req);
   }
@@ -625,4 +767,86 @@ export function hasDedicatedBrief(
 
 export function listArtifactBriefs(): DeliverableArtifactBrief[] {
   return [...REGISTRY];
+}
+
+// ── Where a declared archetype's evidence families actually land ──
+//
+// `composeBrief` grounds the sections a structure names in
+// `archetypeEvidenceSectionKeys`, plus the ones its spelling rule happens to
+// match. Neither is the last word: `getArtifactBrief` resolves a dedicated
+// brief or a type-specific builder BEFORE `composeBrief`, and those builders do
+// not consult the declaration at all — so a structure can declare a landing
+// site that the brief it is served never honours, with nothing to say so.
+//
+// This reports the SERVED brief rather than re-reading the declaration or
+// restating the spelling rule, so it cannot drift from what the model is
+// actually told. It answers, per shipped deliverable, which of the sections
+// that assert client facts are grounded in the archetype's evidence families
+// and which are not.
+
+export interface ArchetypeEvidenceLandingRow {
+  module: DeliverableModule;
+  deliverableType: string;
+  /** Served sections whose grounding mode has them assert client facts. */
+  factAssertingSectionKeys: string[];
+  /** Of those, the ones grounded in every one of the archetype's families. */
+  coveredSectionKeys: string[];
+  /** Of those, the ones grounded in none of them. */
+  uncoveredSectionKeys: string[];
+  /** No section of the served brief carries any of the archetype's families. */
+  landsNowhere: boolean;
+  /** The served brief carries none of the archetype pack's exhibits or tables. */
+  archetypeAssetsWithheld: boolean;
+}
+
+/**
+ * Measure, for one request shape, where the resolved archetype's key evidence
+ * families land across every shipped deliverable structure. `probe` is a real
+ * request minus the two fields this varies, so the report is taken from the
+ * resolver the product uses and not from a request invented here.
+ */
+export function archetypeEvidenceLandingReport(
+  probe: Omit<DeliverableIntelligenceRequest, "module" | "deliverableType">,
+): ArchetypeEvidenceLandingRow[] {
+  // The EFFECTIVE pack, matching `composeBrief`. Taking the seed here would
+  // make the report disagree with generated output on exactly the deployment
+  // the report exists to explain: one that declares a configured source.
+  const pack = resolveConfiguredArchetypePack(probe.useCaseArchetype).pack;
+  const families = pack?.keyEvidenceFamilies ?? [];
+  const packAssetKeys = new Set([
+    ...(pack?.exhibits ?? []).map((e) => e.key),
+    ...(pack?.tables ?? []).map((t) => t.key),
+  ]);
+  // Grounded means carrying EVERY family the pack contributes, not one of them:
+  // `composeBrief` writes the whole set onto a landing site, so a section
+  // holding a strict subset would be a partial spread and not a landing.
+  const grounded = (section: BriefSection) =>
+    families.length > 0 &&
+    families.every((f) => section.expectedEvidenceFamilies.includes(f));
+
+  return DELIVERABLE_STRUCTURES.map((structure) => {
+    const brief = getArtifactBrief({
+      ...probe,
+      module: structure.module,
+      deliverableType: structure.deliverableType,
+    });
+    const factAsserting = brief.recommendedStructure.filter(
+      (s) =>
+        s.groundingMode === "governed_facts" || s.groundingMode === "mixed",
+    );
+    return {
+      module: structure.module,
+      deliverableType: structure.deliverableType,
+      factAssertingSectionKeys: factAsserting.map((s) => s.key),
+      coveredSectionKeys: factAsserting.filter(grounded).map((s) => s.key),
+      uncoveredSectionKeys: factAsserting
+        .filter((s) => !grounded(s))
+        .map((s) => s.key),
+      landsNowhere: !brief.recommendedStructure.some(grounded),
+      archetypeAssetsWithheld: ![
+        ...brief.expectedExhibits,
+        ...brief.expectedTables,
+      ].some((asset) => packAssetKeys.has(asset.key)),
+    };
+  });
 }

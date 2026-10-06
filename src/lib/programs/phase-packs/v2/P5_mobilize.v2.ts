@@ -1,4 +1,4 @@
-// P5 Approval & Mobilization — V2 Training Pack
+// P5 Mobilize & Handoff — V2 Training Pack
 // T-P5 · AGENT_TRAINING_P5_MOBILIZE
 // Schema: 21-field PhasePack V2 (types.v2.ts)
 
@@ -6,14 +6,15 @@ import type { PhasePack } from '../types.v2';
 
 export const P5_MOBILIZE_PACK: PhasePack = {
   phase_id: 5,
-  phase_name: 'P5 Approval & Mobilization',
+  phase_name: 'P5 Mobilize & Handoff',
   phase_intent:
-    'Convert the P4 business case and roadmap into execution-ready state: mobilize the delivery team, secure all approvals, and produce a handoff package that the Tower-side delivery team can accept and execute without returning to the program team for clarification. P5 ends when Tower acceptance is confirmed.',
+    'Prepare the approved P4 roadmap and business case for external delivery: confirm mobilization readiness, close required approvals, and produce a handoff package that the receiving delivery team and Tower can accept without returning to Moves for clarification. P5 organizes the handoff; project execution happens outside Moves after the required approvals. P5 ends when Tower acceptance is confirmed.',
 
   entry_criteria: [
     {
       id: 'EC-P5-1',
-      description: 'P4 gate passed and sponsor funding authorization exists',
+      description:
+        'P4 gate passed and the authorized-user funding decision with supporting authority evidence is recorded',
       type: 'hard',
     },
     {
@@ -23,7 +24,8 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     },
     {
       id: 'EC-P5-3',
-      description: 'Business case approved by sponsor (from P4.5)',
+      description:
+        'Business case approved by an authorized workspace user (from P4.5)',
       type: 'hard',
     },
   ],
@@ -32,7 +34,8 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     {
       step_id: 'P5.1',
       step_name: 'Final approvals',
-      step_goal: 'Secure all remaining approvals required before execution begins: finance, legal, compliance, procurement, and any governance body.',
+      step_goal:
+        'Secure all remaining approvals required before execution begins: finance, legal, compliance, procurement, and any governance body.',
       required_user_inputs: [
         'Business case from P4.3',
         'Funding authorization from P4.5',
@@ -50,7 +53,11 @@ export const P5_MOBILIZE_PACK: PhasePack = {
         'Are there any procurement or contract actions required before the delivery team can start?',
       ],
       artifact_sections_to_update: ['mobilization.approval_status'],
-      evidence_to_capture: ['approvals_required', 'approval_authorities', 'approval_status'],
+      evidence_to_capture: [
+        'approvals_required',
+        'approval_authorities',
+        'approval_status',
+      ],
       quality_checks: [
         'All required approvals are tracked with status',
         'No approval is described as "assumed" without confirmation',
@@ -63,7 +70,8 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     {
       step_id: 'P5.2',
       step_name: 'Delivery team assembly',
-      step_goal: 'Confirm the delivery team: roles filled, names assigned, onboarding path clear. External team (SI/vendor) is contracted and start date is confirmed.',
+      step_goal:
+        'Confirm the delivery team: roles filled, names assigned, onboarding path clear. External team (SI/vendor) is contracted and start date is confirmed.',
       required_user_inputs: ['Resource plan from P4.2'],
       accepted_uploads: ['application/pdf', 'text/plain'],
       patterns_to_load: ['PAT-PRG-001'],
@@ -73,7 +81,11 @@ export const P5_MOBILIZE_PACK: PhasePack = {
         'Is there a kickoff date and venue confirmed for the delivery team?',
       ],
       artifact_sections_to_update: ['mobilization.team_roster'],
-      evidence_to_capture: ['team_roster_with_roles', 'open_roles', 'contract_status'],
+      evidence_to_capture: [
+        'team_roster_with_roles',
+        'open_roles',
+        'contract_status',
+      ],
       quality_checks: [
         'All critical roles have named individuals or a confirmed hiring path',
         'External team contract status is confirmed',
@@ -86,7 +98,8 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     {
       step_id: 'P5.3',
       step_name: 'Handoff package assembly',
-      step_goal: 'Produce the handoff package: the complete set of artifacts the Tower-side delivery team needs to execute without returning to the program team for clarification.',
+      step_goal:
+        'Produce the handoff package: the complete set of artifacts the Tower-side delivery team needs to execute without returning to the program team for clarification.',
       required_user_inputs: ['All P1–P4 artifacts'],
       accepted_uploads: ['application/pdf', 'text/plain', 'text/markdown'],
       patterns_to_load: ['PAT-PRG-001'],
@@ -96,7 +109,11 @@ export const P5_MOBILIZE_PACK: PhasePack = {
         'Has the delivery team lead received and reviewed the handoff package?',
       ],
       artifact_sections_to_update: ['handoff_package'],
-      evidence_to_capture: ['handoff_package_contents', 'open_decisions', 'delivery_team_review_status'],
+      evidence_to_capture: [
+        'handoff_package_contents',
+        'open_decisions',
+        'delivery_team_review_status',
+      ],
       quality_checks: [
         'Handoff package includes all P1–P4 deliverables',
         'No open decisions that require program team re-engagement',
@@ -110,8 +127,12 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     {
       step_id: 'P5.4',
       step_name: 'Tower acceptance confirmation',
-      step_goal: 'Confirm that the Tower-side delivery team has reviewed and accepted the handoff package as executable. This is P5 completion — the program moves to Tower-tracked execution.',
-      required_user_inputs: ['Handoff package from P5.3', 'Explicit acceptance statement from receiving party'],
+      step_goal:
+        'Confirm that the Tower-side delivery team has reviewed and accepted the handoff package as executable. This is P5 completion — the program moves to Tower-tracked execution.',
+      required_user_inputs: [
+        'Handoff package from P5.3',
+        'Explicit acceptance statement from receiving party',
+      ],
       accepted_uploads: ['application/pdf', 'text/plain', 'text/markdown'],
       patterns_to_load: ['PAT-PRG-001'],
       questions_to_ask: [
@@ -120,7 +141,11 @@ export const P5_MOBILIZE_PACK: PhasePack = {
         'Is there a kickoff scheduled — date, participants confirmed?',
       ],
       artifact_sections_to_update: ['mobilization.tower_acceptance'],
-      evidence_to_capture: ['tower_acceptance_statement', 'acceptance_date', 'accepting_individual'],
+      evidence_to_capture: [
+        'tower_acceptance_statement',
+        'acceptance_date',
+        'accepting_individual',
+      ],
       quality_checks: [
         'AH-P5-1: Tower acceptance requires a named individual to confirm the package is executable',
         'Acceptance must come from the receiving party — not the person who assembled the package',
@@ -153,7 +178,8 @@ export const P5_MOBILIZE_PACK: PhasePack = {
   },
 
   agent_posture_coaching_arc: {
-    entry: 'Confirm all P4 approvals are in place before starting P5 work. If approvals are missing, surface them as P5 entry blockers. Do not start team assembly until funding authorization is confirmed.',
+    entry:
+      'Confirm all P4 approvals are in place before starting P5 work. If approvals are missing, surface them as P5 entry blockers. Do not start team assembly until funding authorization is confirmed.',
     mid: 'Drive toward handoff package completeness. The test is: could the delivery team start executing tomorrow from this package without calling the program team? If no: identify the specific gaps.',
     exit: 'Tower acceptance is the final P5 gate. "The handoff was acknowledged" is not acceptance. The required statement is: "[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable as specified." Block the gate until this statement exists.',
   },
@@ -182,7 +208,8 @@ export const P5_MOBILIZE_PACK: PhasePack = {
       label: 'All required approvals obtained',
       type: 'hard',
       source: 'Uploads or session capture of approval confirmations',
-      evaluation_hint: 'Every approval required is tracked with a confirmation — not assumed.',
+      evaluation_hint:
+        'Every approval required is tracked with a confirmation — not assumed.',
     },
     {
       id: 'ER-P5-2',
@@ -193,18 +220,33 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     },
     {
       id: 'ER-P5-3',
-      label: 'Tower acceptance confirmed by named individual from receiving party',
+      label:
+        'Tower acceptance confirmed by named individual from receiving party',
       type: 'hard',
-      source: 'Explicit statement from receiving party (upload or session capture)',
-      evaluation_hint: '"[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable." Acknowledgment without this statement does not satisfy AH-P5-1.',
+      source:
+        'Explicit statement from receiving party (upload or session capture)',
+      evaluation_hint:
+        '"[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable." Acknowledgment without this statement does not satisfy AH-P5-1.',
     },
   ],
 
   exit_criteria: [
-    { id: 'EX-P5-1', description: 'All required approvals obtained', type: 'hard' },
-    { id: 'EX-P5-2', description: 'Delivery team assembled (critical roles filled)', type: 'hard' },
+    {
+      id: 'EX-P5-1',
+      description: 'All required approvals obtained',
+      type: 'hard',
+    },
+    {
+      id: 'EX-P5-2',
+      description: 'Delivery team assembled (critical roles filled)',
+      type: 'hard',
+    },
     { id: 'EX-P5-3', description: 'Handoff package complete', type: 'hard' },
-    { id: 'EX-P5-4', description: 'Tower acceptance confirmed by named receiving party', type: 'hard' },
+    {
+      id: 'EX-P5-4',
+      description: 'Tower acceptance confirmed by named receiving party',
+      type: 'hard',
+    },
   ],
 
   gate_criteria: [
@@ -212,30 +254,35 @@ export const P5_MOBILIZE_PACK: PhasePack = {
       id: 'GC-P5-1',
       label: 'All required approvals obtained',
       type: 'hard',
-      evaluation: 'Every approval required before execution is tracked with a confirmation. No approvals described as "assumed".',
+      evaluation:
+        'Every approval required before execution is tracked with a confirmation. No approvals described as "assumed".',
       gating_rule: 'blocks_promotion',
     },
     {
       id: 'GC-P5-2',
       label: 'Delivery team assembled',
       type: 'hard',
-      evaluation: 'Critical roles have named individuals. External team contract is signed. Start date confirmed.',
+      evaluation:
+        'Critical roles have named individuals. External team contract is signed. Start date confirmed.',
       gating_rule: 'blocks_promotion',
     },
     {
       id: 'GC-P5-3',
       label: 'Handoff package complete',
       type: 'hard',
-      evaluation: 'Handoff package includes all required artifacts. No open decisions requiring program team re-engagement.',
+      evaluation:
+        'Handoff package includes all required artifacts. No open decisions requiring program team re-engagement.',
       gating_rule: 'blocks_promotion',
     },
     {
       id: 'GC-P5-4',
       label: 'Tower acceptance confirmed by receiving party',
       type: 'hard',
-      evaluation: 'Named individual from receiving party (not the package assembler) has explicitly confirmed the package is executable. Acknowledgment without explicit confirmation does not pass AH-P5-1.',
+      evaluation:
+        'Named individual from receiving party (not the package assembler) has explicitly confirmed the package is executable. Acknowledgment without explicit confirmation does not pass AH-P5-1.',
       gating_rule: 'blocks_promotion',
-      pilot_approval_note: 'Must come from the receiving party — not the person who assembled the package.',
+      pilot_approval_note:
+        'Must come from the receiving party — not the person who assembled the package.',
     },
   ],
 
@@ -243,24 +290,33 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     {
       id: 'AP-P5-1',
       label: 'Assumed approvals',
-      detection_hint: 'Approval is described as "in progress" or "expected" without a confirmed status',
-      what_to_flag: 'Approvals cannot be assumed. What is the current status of [approval], and who is the decision authority?',
-      mitigation: 'Track every approval to explicit confirmation. If blocked, identify the specific blocker.',
+      detection_hint:
+        'Approval is described as "in progress" or "expected" without a confirmed status',
+      what_to_flag:
+        'Approvals cannot be assumed. What is the current status of [approval], and who is the decision authority?',
+      mitigation:
+        'Track every approval to explicit confirmation. If blocked, identify the specific blocker.',
     },
     {
       id: 'AP-P5-2',
       label: 'Incomplete delivery team',
-      // dom-integrity-ignore-line — "TBD" is the anti-pattern Nexus detects, not a placeholder
-      detection_hint: 'Critical roles are listed as "TBD" or "to be hired" without a confirmed path',
-      what_to_flag: 'Critical roles without named individuals or a confirmed hiring path are P5 blockers. The delivery team must be assembled before Tower accepts the handoff.',
-      mitigation: 'Require named individuals for critical roles or a confirmed hiring path with a date.',
+      detection_hint:
+        // dom-integrity-ignore-line — classifier vocabulary, not rendered output
+        'Critical roles are listed as "TBD" or "to be hired" without a confirmed path',
+      what_to_flag:
+        'Critical roles without named individuals or a confirmed hiring path are P5 blockers. The delivery team must be assembled before Tower accepts the handoff.',
+      mitigation:
+        'Require named individuals for critical roles or a confirmed hiring path with a date.',
     },
     {
       id: 'AP-P5-3',
       label: 'Acknowledgment passed off as Tower acceptance',
-      detection_hint: '"The handoff was acknowledged" or "the team said they received it"',
-      what_to_flag: 'Acknowledgment is not acceptance. Tower acceptance requires a named individual to confirm the package is executable. Who specifically has confirmed, and what did they say?',
-      mitigation: 'Require explicit acceptance statement: "[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable as specified."',
+      detection_hint:
+        '"The handoff was acknowledged" or "the team said they received it"',
+      what_to_flag:
+        'Acknowledgment is not acceptance. Tower acceptance requires a named individual to confirm the package is executable. Who specifically has confirmed, and what did they say?',
+      mitigation:
+        'Require explicit acceptance statement: "[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable as specified."',
     },
   ],
 
@@ -273,28 +329,33 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     },
     {
       criterion_id: 'GC-P5-2',
-      condition: 'Critical roles filled, external contract signed, start date confirmed',
+      condition:
+        'Critical roles filled, external contract signed, start date confirmed',
       nexus_may_self_approve: false,
       approval_label: 'Team assembly — requires human confirmation',
     },
     {
       criterion_id: 'GC-P5-3',
-      condition: 'Handoff package contains all required artifacts and no open decisions',
+      condition:
+        'Handoff package contains all required artifacts and no open decisions',
       nexus_may_self_approve: false,
       approval_label: 'Handoff package — requires delivery team review',
     },
     {
       criterion_id: 'GC-P5-4',
-      condition: 'Named individual from receiving party has explicitly confirmed package is executable',
+      condition:
+        'Named individual from receiving party has explicitly confirmed package is executable',
       nexus_may_self_approve: false,
-      approval_label: 'Tower acceptance — requires explicit statement from receiving party',
+      approval_label:
+        'Tower acceptance — requires explicit statement from receiving party',
     },
   ],
 
   first_message: [
     {
       variant: 'default',
-      template: 'I am scoped to [Move name], currently in P5 Approval & Mobilization. The P4 business case is approved and funding is authorized. P5 goal: mobilize the delivery team, secure all remaining approvals, and produce a handoff package the Tower side can accept. What approvals are still outstanding?',
+      template:
+        'I am scoped to [Move name], currently in P5 Mobilize & Handoff. The approved P4 roadmap and business-case decision are the basis for mobilization. P5 goal: confirm readiness, close required approvals, and prepare the handoff for external execution and Tower tracking. Moves does not execute the project. What approvals or readiness conditions are still outstanding?',
     },
   ],
 
@@ -303,25 +364,36 @@ export const P5_MOBILIZE_PACK: PhasePack = {
       id: 'FX-P5-1',
       name: 'Acknowledgment without acceptance',
       description: 'Team reports the handoff was acknowledged by delivery team',
-      input: { statement: 'We sent the package to the delivery team and they acknowledged receipt.' },
+      input: {
+        statement:
+          'We sent the package to the delivery team and they acknowledged receipt.',
+      },
       expected_behaviors: [
         'AH-P5-1 fires',
         'Nexus distinguishes acknowledgment from acceptance',
         'Nexus asks for explicit acceptance statement with name and date',
       ],
-      prohibited_behaviors: ['Marking tower_acceptance_confirmed = true on acknowledgment alone'],
+      prohibited_behaviors: [
+        'Marking tower_acceptance_confirmed = true on acknowledgment alone',
+      ],
     },
     {
       id: 'FX-P5-2',
       name: 'Self-acceptance by package assembler',
-      description: 'The person who assembled the handoff package confirms their own acceptance',
-      input: { statement: 'I reviewed the package and it looks good. I am confirming Tower acceptance.' },
+      description:
+        'The person who assembled the handoff package confirms their own acceptance',
+      input: {
+        statement:
+          'I reviewed the package and it looks good. I am confirming Tower acceptance.',
+      },
       expected_behaviors: [
         'AH-P5-1 fires',
         'Nexus blocks self-acceptance',
         'Nexus asks who on the receiving party (delivery team or Tower side) has confirmed',
       ],
-      prohibited_behaviors: ['Marking tower_acceptance_confirmed when the same user confirms both assembly and acceptance'],
+      prohibited_behaviors: [
+        'Marking tower_acceptance_confirmed when the same user confirms both assembly and acceptance',
+      ],
     },
   ],
 
@@ -329,16 +401,22 @@ export const P5_MOBILIZE_PACK: PhasePack = {
     {
       id: 'CR-P5-1',
       rule: 'Block Tower acceptance confirmation when it comes from the package assembler',
-      trigger: 'Same user attempts to confirm both handoff package completion and Tower acceptance',
-      required_behavior: '"Tower acceptance must come from the receiving party — someone from the delivery team or Tower who is accepting the package, not the person who built it. Who on the Tower side has reviewed and accepted?"',
-      prohibited_behavior: 'Allowing the package assembler to confirm Tower acceptance',
+      trigger:
+        'Same user attempts to confirm both handoff package completion and Tower acceptance',
+      required_behavior:
+        '"Tower acceptance must come from the receiving party — someone from the delivery team or Tower who is accepting the package, not the person who built it. Who on the Tower side has reviewed and accepted?"',
+      prohibited_behavior:
+        'Allowing the package assembler to confirm Tower acceptance',
     },
     {
       id: 'CR-P5-2',
       rule: 'Require explicit acceptance statement, not just acknowledgment',
-      trigger: '"Acknowledged", "received", or "confirmed receipt" used as Tower acceptance',
-      required_behavior: '"[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable as specified" is the required statement.',
-      prohibited_behavior: 'Accepting acknowledgment of receipt as Tower acceptance',
+      trigger:
+        '"Acknowledged", "received", or "confirmed receipt" used as Tower acceptance',
+      required_behavior:
+        '"[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable as specified" is the required statement.',
+      prohibited_behavior:
+        'Accepting acknowledgment of receipt as Tower acceptance',
     },
   ],
 
@@ -347,13 +425,17 @@ export const P5_MOBILIZE_PACK: PhasePack = {
       artifact: 'HANDOFF-P5',
       nexus_may_auto_draft: true,
       conditions: ['All P1-P4 artifacts available', 'P5.1-P5.3 complete'],
-      human_direction_required: 'Delivery team must review and confirm completeness.',
+      human_direction_required:
+        'Delivery team must review and confirm completeness.',
     },
     {
       artifact: 'TOWER-ACCEPTANCE-P5',
       nexus_may_auto_draft: false,
-      conditions: ['Named individual from receiving party has explicitly confirmed'],
-      human_direction_required: 'Must come from receiving party — not package assembler.',
+      conditions: [
+        'Named individual from receiving party has explicitly confirmed',
+      ],
+      human_direction_required:
+        'Must come from receiving party — not package assembler.',
     },
   ],
 
@@ -362,22 +444,30 @@ export const P5_MOBILIZE_PACK: PhasePack = {
       id: 'AH-P5-1',
       rule: 'Tower acceptance requires a named individual from the receiving party to confirm the package is executable — acknowledgment is not acceptance',
       trigger: 'Any Tower acceptance claim in P5',
-      required_behavior: 'Required statement: "[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable as specified." If this statement does not exist, Nexus blocks the gate.',
-      prohibited_behavior: '"The handoff was acknowledged" or "the team said they received it" does not satisfy this rule.',
+      required_behavior:
+        'Required statement: "[Name], [Role], confirmed on [date] that the handoff package has been reviewed and is executable as specified." If this statement does not exist, Nexus blocks the gate.',
+      prohibited_behavior:
+        '"The handoff was acknowledged" or "the team said they received it" does not satisfy this rule.',
     },
     {
       id: 'AH-P5-2',
       rule: 'Must not mark tower_acceptance_confirmed when acceptance comes from the package assembler',
-      trigger: 'Tower acceptance attempt from the person who assembled the handoff package',
-      required_behavior: '"Tower acceptance must come from the receiving party. Who on the delivery team or Tower side has confirmed the package is executable?"',
-      prohibited_behavior: 'Accepting self-confirmation of Tower acceptance from the person who assembled the package.',
+      trigger:
+        'Tower acceptance attempt from the person who assembled the handoff package',
+      required_behavior:
+        '"Tower acceptance must come from the receiving party. Who on the delivery team or Tower side has confirmed the package is executable?"',
+      prohibited_behavior:
+        'Accepting self-confirmation of Tower acceptance from the person who assembled the package.',
     },
     {
       id: 'AH-P5-3',
       rule: 'Must not assume approvals are obtained without explicit confirmation',
-      trigger: 'Any approval status described as "expected", "in progress", or "assumed"',
-      required_behavior: 'Approvals must be tracked to explicit confirmation. "Expected" is not confirmed.',
-      prohibited_behavior: 'Marking any approval as obtained without a confirmed status.',
+      trigger:
+        'Any approval status described as "expected", "in progress", or "assumed"',
+      required_behavior:
+        'Approvals must be tracked to explicit confirmation. "Expected" is not confirmed.',
+      prohibited_behavior:
+        'Marking any approval as obtained without a confirmed status.',
     },
   ],
 
@@ -385,7 +475,7 @@ export const P5_MOBILIZE_PACK: PhasePack = {
 
   phase_dependencies: {
     requires_from_prior: [
-      'P4 gate passed (sponsor funding authorization)',
+      'P4 gate passed (authorized-user decision and supporting authority evidence recorded)',
       'Tower metric plan complete (P4.4)',
       'Business case approved (P4.5)',
       'Execution roadmap with milestones (P4.1)',

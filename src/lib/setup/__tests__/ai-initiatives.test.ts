@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import {
   applySetupAiInitiativeFinancialFirewall,
   buildSetupAiInitiativePersistenceRows,
@@ -77,22 +75,76 @@ describe("Setup AI Initiatives private plane", () => {
     ).toContain("clinician");
   });
 
-  it("does not create a common public setup initiative table", () => {
-    const migration = readFileSync(
-      path.resolve(
-        process.cwd(),
-        "supabase/migrations/20260502171000_private_setup_ai_initiatives.sql",
-      ),
-      "utf8",
-    );
-    expect(migration).toContain("client_apex_retail_private");
-    expect(migration).toContain("client_meridian_health_private");
-    expect(migration).toContain("client_first_capital_private");
-    expect(migration).toContain("setup_ai_initiatives");
-    expect(migration).not.toContain("public.setup_ai_initiatives");
-    expect(migration).not.toContain(
-      "CREATE TABLE IF NOT EXISTS setup_ai_initiatives",
-    );
+  // Behavioural, not a byte read of one fixed 2026-05 migration file: that scan
+  // could not fail from any later change to the code that actually writes. This
+  // drives the real persist and read paths against a recording pg double and
+  // asserts every statement lands in the calling tenant's private schema only.
+  it("writes and reads only the calling tenant's private schema, never a common public table", async () => {
+    const planes = listSetupAiInitiativesPrivatePlanes();
+    expect(planes).toHaveLength(3);
+    for (const plane of planes) {
+      const statements: string[] = [];
+      const record = (sql: string) => {
+        statements.push(sql);
+        return Promise.resolve({ rows: [] });
+      };
+      process.env.DATABASE_URL = "postgres://recording-double/none";
+      await jest.isolateModulesAsync(async () => {
+        jest.doMock("pg", () => ({
+          Pool: jest.fn().mockImplementation(() => ({
+            query: jest.fn(record),
+            connect: jest.fn(async () => ({
+              query: jest.fn(record),
+              release: jest.fn(),
+            })),
+          })),
+        }));
+        const persistence = await import("@/lib/setup/ai-initiatives-persistence");
+        const records = getSetupAiInitiatives(plane.tenantKey).slice(0, 2);
+        await expect(
+          persistence.persistSetupAiInitiatives({
+            tenantKey: plane.tenantKey,
+            clientId: plane.tenantKey,
+            documentName: "demo",
+            fileName: "demo.yml",
+            initiatives: records,
+          }),
+        ).resolves.toMatchObject({
+          status: "persisted",
+          privateSchema: plane.privateSchema,
+          acceptedCount: 2,
+        });
+        await expect(
+          persistence.listPersistedSetupAiInitiatives({ tenantKey: plane.tenantKey }),
+        ).resolves.toMatchObject({ status: "private_db", privateSchema: plane.privateSchema });
+      });
+
+      const dataStatements = statements.filter(
+        (sql) => !/^(begin|commit|rollback)$/i.test(sql.trim()),
+      );
+      // 1 batch insert + 2 x (initiative + audit) inserts + 1 select.
+      expect(dataStatements).toHaveLength(6);
+      const targets = dataStatements.map((sql) => {
+        const found = [...sql.matchAll(/\b(?:insert\s+into|from)\s+("?[\w]+"?(?:\."?[\w]+"?)?)/gi)].map(
+          (match) => match[1],
+        );
+        expect(found).toHaveLength(1);
+        return found[0];
+      });
+      const expected = [
+        plane.uploadBatchTable,
+        plane.initiativeTable,
+        plane.auditEventTable,
+      ].map((table) => `"${plane.privateSchema}"."${table}"`);
+      expect(new Set(targets)).toEqual(new Set(expected));
+      for (const sql of dataStatements) {
+        expect(sql).not.toMatch(/\bpublic\b/i);
+        for (const other of planes) {
+          if (other.privateSchema !== plane.privateSchema)
+            expect(sql).not.toContain(other.privateSchema);
+        }
+      }
+    }
   });
 
   it("skips safely without DATABASE_URL and never falls back to public persistence", async () => {

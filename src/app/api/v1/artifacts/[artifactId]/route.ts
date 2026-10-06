@@ -11,8 +11,9 @@ import {
   renderDeliverableDocx,
   renderDeliverableExcelCompanion,
   renderDeliverablePdf,
-  renderDeliverablePptx,
 } from "@/lib/deliverables/orchestrator/renderers";
+import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
+import {} from "@/lib/deliverables/orchestrator/renderers";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
@@ -172,7 +173,38 @@ export async function GET(
   ) {
     try {
       if (requested === "pptx") {
-        const buf = await renderDeliverablePptx(structuredDoc);
+        // Inspect the file we are about to serve. A deck whose content sits
+        // outside the canvas is not a deck the client can read, and used to be
+        // served anyway because nothing opened it.
+        const validated = await renderValidatedDeck(structuredDoc);
+        if (!validated.physicallyIntact) {
+          return Response.json(
+            {
+              error: "deck_failed_physical_integrity",
+              detail: validated.integrityFailures.slice(0, 5),
+              renderedPptxSlides: validated.verdict.renderedPptxSlides,
+            },
+            { status: 500 },
+          );
+        }
+        if (!validated.verdict.ok) {
+          return Response.json(
+            {
+              error: "deck_failed_content_quality",
+              detail: validated.verdict.findings
+                .filter(
+                  (finding) =>
+                    finding.kind !== "off_canvas" && finding.kind !== "canvas",
+                )
+                .slice(0, 5)
+                .map((finding) => finding.message),
+              renderedPptxSlides: validated.verdict.renderedPptxSlides,
+              usedSectionFallback: validated.usedSectionFallback,
+            },
+            { status: 422 },
+          );
+        }
+        const buf = validated.buffer;
         return new Response(new Uint8Array(buf), {
           status: 200,
           headers: attachmentHeaders(

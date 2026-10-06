@@ -37,22 +37,33 @@ jest.mock("@/lib/auth/program-access-policy", () => ({
   loadUserProgramAccessPolicy: jest.fn(async () => ({ canApproveGates: true })),
 }));
 
-jest.mock("@/lib/auth/gate-approval-strict-mode", () => ({
-  isGateApprovalStrictMode: jest.fn(() => false),
-  isStrictModeApprovalRole: jest.fn(() => true),
+jest.mock("@/lib/deliverables/seed-route-resolver", () => ({
+  getSeedPlan: jest.fn(() => ({
+    programs: [
+      { code: "PRG-1", tenantKey: "tenant-a", graphNodeId: "graph-1" },
+    ],
+  })),
+}));
+
+jest.mock("@/lib/data-plane/azureRead", () => ({
+  azureRead: {
+    maybeSingle: jest.fn(async () => ({
+      id: "eng-1",
+      current_phase: 2,
+      gates_passed: [],
+    })),
+  },
 }));
 
 import { POST } from "../route";
 import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
-import { isGateApprovalStrictMode } from "@/lib/auth/gate-approval-strict-mode";
 
 const mockCheckTenantAccess = jest.mocked(checkTenantAccessByKey);
 const mockAccessPolicy = jest.mocked(loadUserProgramAccessPolicy);
-const mockStrictMode = jest.mocked(isGateApprovalStrictMode);
 
 const RATIONALE =
-  "The sponsor confirmed the data readiness evidence and asked to advance the gate today.";
+  "I reviewed the data readiness evidence and approve advancing the gate today.";
 
 function gateRequest(body: Record<string, unknown>) {
   return POST(
@@ -74,7 +85,6 @@ describe("phase-gate route · human approval gate", () => {
     mockCheckTenantAccess.mockResolvedValue({ ok: true } as never);
     mockAccessPolicy.mockClear();
     mockAccessPolicy.mockResolvedValue({ canApproveGates: true } as never);
-    mockStrictMode.mockReturnValue(false);
   });
 
   it("refuses a gate advance with no human rationale, before any tenant lookup", async () => {
@@ -105,20 +115,6 @@ describe("phase-gate route · human approval gate", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toMatchObject({ error: "forbidden" });
-  });
-
-  it("refuses an ordinary approver when strict mode demands an admin", async () => {
-    mockStrictMode.mockReturnValue(true);
-    jest
-      .mocked(
-        jest.requireMock("@/lib/auth/gate-approval-strict-mode")
-          .isStrictModeApprovalRole as jest.Mock,
-      )
-      .mockReturnValue(false);
-
-    const response = await gateRequest({ humanRationale: RATIONALE });
-
-    expect(response.status).toBe(403);
   });
 
   it("refuses a caller whose tenant access does not check out", async () => {

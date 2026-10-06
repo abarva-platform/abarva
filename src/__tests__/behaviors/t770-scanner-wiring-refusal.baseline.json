@@ -1,0 +1,32 @@
+{
+  "subject": "Declared source-text scanner suites that a CI invocation already reaches on main, in breach of the inherited rule that a source-text scanner is never wired into CI.",
+  "rule": "T-550's rule as T-556 narrowed it, quoted from docs/architecture/t492-stale-suite-triage.json: \"a source-text scanner is never wired into CI, and one whose subject genuinely IS the text says so in writing and is still not wired\".",
+  "measuredOn": "be3c7dc27eba7e712108fe386d78598043cc4f08",
+  "measuredAt": "2026-09-27T17:11:00Z",
+  "howMeasured": "The census's own resolver — collectReachableCommands + reachableEntrySelects from scripts/quality/test-ci-coverage-census.mjs — not a grep of .github/workflows. Neither of these two is named by any workflow run: line, which is why a literal workflow match reports zero and this list is not empty.",
+  "closedAndShrinking": "This list may only shrink. The companion suite asserts set EQUALITY, so a third breach fails it, and an entry whose suite has been rewritten or withdrawn from CI must be deleted in the same change. It is a ratchet, in the idiom of product-directory-ci-coverage.baseline.json, and never an allowlist to append to.",
+  "entries": [
+    {
+      "path": "src/app/api/tower/synthesis/route.invariants.test.ts",
+      "declaredBy": "docs/architecture/t479-stale-suite-triage.json",
+      "declaredAt": "2026-09-25T23:49:14.683Z",
+      "verdict": "rewrite_as_behavior",
+      "owningItem": "T-481",
+      "reachedVia": "ratchet-baseline",
+      "reachedFrom": "scripts/ci/test-ratchet.mjs <- docs/ci/tower-test-baseline.json",
+      "selectingPattern": "src/app/api/tower",
+      "note": "Six cases, all regexes over the route's source read at module load. T-481 owns the rewrite. Closing this entry means the rewrite landed, not that the path was removed from this file."
+    },
+    {
+      "path": "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+      "declaredBy": "docs/architecture/t479-stale-suite-triage.json",
+      "declaredAt": "2026-09-25T23:49:14.683Z",
+      "verdict": "rewrite_as_behavior",
+      "owningItem": "T-481",
+      "reachedVia": "ratchet-baseline",
+      "reachedFrom": "scripts/ci/test-ratchet.mjs <- docs/ci/tower-test-baseline.json",
+      "selectingPattern": "src/lib/tower",
+      "note": "Eighty-eight cases, every one a regex over five files read at module load, and the largest scanner in the T-479 draw. T-481 owns the rewrite."
+    }
+  ]
+}

@@ -12,9 +12,10 @@ describe("resolveQualityBar", () => {
     expect(qb.enforceMaxAsBlocker).toBe(true);
     // the Charter's whole point is staying concise — its band must be
     // materially smaller than the architecture doc's.
-    // 9 sections since the 2026-07-25 redesign (Discovery Preparation as its
-    // own first-class section) — see shared/artifact-contracts.ts.
-    expect(qb.minSections).toBe(9);
+    // Seven-section compressed contract keeps authorization conditions in the
+    // Charter while moving detailed Discovery/workshop instructions into a
+    // separate working guide.
+    expect(qb.minSections).toBe(7);
     // Aligned to the shared contract (src/lib/deliverables/shared/
     // artifact-contracts.ts): prose-only counting uses the Charter's explicit
     // prose floor while required tables carry structured decision content.
@@ -25,6 +26,31 @@ describe("resolveQualityBar", () => {
   it("measures Charter length as prose only, so required tables do not consume the band", () => {
     const qb = resolveQualityBar("moves", "charter");
     expect(qb.excludeNonProseFromBody).toBe(true);
+  });
+
+  it("gives the Discovery Workshop Guide its own working-document band", () => {
+    const qb = resolveQualityBar("moves", "discovery_plan");
+    expect(qb.minSections).toBe(4);
+    expect(qb.minBodyWords).toBe(1_200);
+    expect(qb.targetBodyWordsMax).toBe(3_000);
+    expect(qb.enforceMaxAsBlocker).toBe(true);
+    expect(qb.requiresEvidenceGapsNoted).toBe(true);
+  });
+
+  it.each([
+    "discovery_plan",
+    "discovery_workshop_guide",
+    "design_workshop_guide",
+    "planning_workshop_guide",
+    "mobilization_workshop_guide",
+    "execution_kickoff_guide",
+  ])("%s is a working guide, not a decision artifact", (deliverableType) => {
+    const qb = resolveQualityBar("moves", deliverableType);
+    expect(qb.minSections).toBe(4);
+    expect(qb.requiresDecisionSection).toBe(false);
+    expect(qb.requiresRecommendation).toBe(false);
+    expect(qb.requiresRiskTable).toBe(false);
+    expect(qb.enforceMaxAsBlocker).toBe(true);
   });
 
   it("gives Target State Architecture a substantial band whose ceiling only WARNS", () => {
@@ -42,7 +68,7 @@ describe("resolveQualityBar", () => {
     // document's job is the investment ARGUMENT, not carrying the financial
     // reasoning in prose. See P3_P4_WORD_BAND_CONTRACTS.business_case.
     const qb = resolveQualityBar("moves", "business_case");
-    expect(qb.minSections).toBe(9);
+    expect(qb.minSections).toBe(5);
     expect(qb.minBodyWords).toBe(3_000);
     expect(qb.targetBodyWordsMax).toBe(5_000);
     expect(qb.advisoryBandMax).toBe(5_800);
@@ -85,9 +111,9 @@ describe("resolveQualityBar", () => {
   });
 
   it.each([
-    ["solution_design", 8, 2_800, 5_200],
-    ["operating_model_design", 8, 2_400, 4_600],
-    ["sourcing_strategy", 7, 1_800, 3_600],
+    ["solution_design", 4, 2_800, 5_200],
+    ["operating_model_design", 4, 2_400, 4_600],
+    ["sourcing_strategy", 4, 1_800, 3_600],
   ] as const)(
     "gives %s a right-sized hard-blocking band",
     (deliverableType, minSections, minBodyWords, targetBodyWordsMax) => {
@@ -102,16 +128,16 @@ describe("resolveQualityBar", () => {
 
   it("applies the P3 operating-model ceiling to the canonical orchestrator key", () => {
     const qb = resolveQualityBar("moves", "operating_model");
-    expect(qb.minSections).toBe(8);
+    expect(qb.minSections).toBe(4);
     expect(qb.targetBodyWordsMax).toBe(4_600);
     expect(qb.enforceMaxAsBlocker).toBe(true);
   });
 
   it.each([
-    ["roadmap", 6, 5_000, 11_000],
-    ["handoff_pack", 6, 4_800, 11_000],
-    ["estimate_model", 6, 1_600, 4_200],
-    ["value_model", 6, 1_800, 4_600],
+    ["roadmap", 5, 5_000, 11_000],
+    ["handoff_pack", 5, 4_800, 11_000],
+    ["estimate_model", 5, 1_600, 4_200],
+    ["value_model", 5, 1_800, 4_600],
     ["value_measurement_contract", 6, 1_800, 4_200],
   ] as const)(
     "gives %s a phase-close hard ceiling",

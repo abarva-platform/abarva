@@ -10,6 +10,9 @@ const updateArtifactBody = jest.fn(async (input: unknown) => ({
     ...(input as { columns?: Record<string, unknown> }).columns,
   },
 }));
+const uploadBlob = jest.fn(async () => undefined);
+let artifactStateMetadata: Record<string, unknown> = {};
+let listedArtifacts: Array<Record<string, unknown>> = [];
 
 jest.mock("@/app/api/v1/_intel-auth", () => ({
   requireTenancy: jest.fn(async () => ({
@@ -33,8 +36,15 @@ jest.mock("@/lib/agent/tools/intelligence/_shared", () => ({
 
 jest.mock("@/lib/data-plane/objectStorage", () => ({
   getObjectStorageAdapter: jest.fn(() => ({
-    upload: jest.fn(async () => undefined),
+    upload: uploadBlob,
     remove: jest.fn(async () => undefined),
+  })),
+}));
+
+jest.mock("@/lib/auth/source-access-policy", () => ({
+  loadUserSourceAccessPolicy: jest.fn(async () => ({
+    canUploadSourceArtifacts: true,
+    canApproveSourceStages: true,
   })),
 }));
 
@@ -72,7 +82,7 @@ function fluentClient() {
                 status: "draft",
                 tier: "outline",
                 body: "stale generated body",
-                body_generation_metadata: {},
+                body_generation_metadata: artifactStateMetadata,
                 linked_artifact_id: "generated-1",
               },
               error: null,
@@ -123,22 +133,15 @@ jest.mock("@/lib/source/artifact-registry/upload-text-extraction", () => ({
 }));
 
 jest.mock("@/lib/source/file-cabinet/repository", () => ({
-  listSourceArtifacts: jest.fn(async () => [
-    {
-      id: "generated-1",
-      artifactType: "d13_vendor_responses",
-      artifactGroup: "generated",
-      originalName: "generated.docx",
-      version: 1,
-    },
-  ]),
+  listSourceArtifacts: jest.fn(async () => listedArtifacts),
   supersedePriorVersions: jest.fn(async () => undefined),
 }));
 
 jest.mock("@/lib/source/client-final-artifacts", () => ({
   CLIENT_FINAL_GOVERNANCE_MESSAGE: "Client final is authoritative.",
   buildClientFinalChangeSummary: jest.fn(() => "Client final accepted."),
-  resolveAuthoritativeArtifact: jest.fn((rows: unknown[]) => rows[0] ?? null),
+  resolveAuthoritativeArtifact: jest.fn((rows: Array<{ lifecycleState?: string | null }>) =>
+    rows.find((row) => !row.lifecycleState || row.lifecycleState === "current") ?? null),
 }));
 
 jest.mock("@/lib/source/canonical-specs", () => ({
@@ -151,29 +154,67 @@ jest.mock("@/lib/security/sensitive-upload-guard", () => ({
 }));
 
 import { POST } from "../route";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { registerSourceArtifactUpload } from "@/lib/source/artifact-registry";
+import { extractSourceUploadText } from "@/lib/source/artifact-registry/upload-text-extraction";
+
+const policy = jest.mocked(loadUserSourceAccessPolicy);
+const registerArtifact = jest.mocked(registerSourceArtifactUpload);
+const extractText = jest.mocked(extractSourceUploadText);
+
+function clientFinalForm(note?: string): FormData {
+  const form = new FormData();
+  form.set("file", new File(["<h1>Final</h1>"], "response-pack.html", {
+    type: "text/html",
+  }));
+  if (note) form.set("note", note);
+  return form;
+}
+
+function postClientFinal(form: FormData, artifactCode = "d13_vendor_responses") {
+  return POST(new Request("http://localhost", {
+    method: "POST",
+    body: form,
+  }), {
+    params: Promise.resolve({
+      eventId: "11111111-1111-1111-1111-111111111111",
+      artifactCode,
+    }),
+  });
+}
 
 describe("client-final artifact body landing", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    artifactStateMetadata = {};
+    listedArtifacts = [{
+      id: "generated-1",
+      artifactType: "d13_vendor_responses",
+      artifactGroup: "generated",
+      lifecycleState: "current",
+      originalName: "generated.docx",
+      version: 1,
+    }];
+    policy.mockResolvedValue({
+      canUploadSourceArtifacts: true,
+      canApproveSourceStages: true,
+    } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
+  });
 
   it("replaces the generated body with text extracted from the authoritative client final", async () => {
-    const form = new FormData();
-    form.set(
-      "file",
-      new File(["<h1>Final</h1>"], "response-pack.html", {
-        type: "text/html",
-      }),
-    );
-    const response = await POST(new Request("http://localhost", {
-      method: "POST",
-      body: form,
-    }), {
-      params: Promise.resolve({
-        eventId: "11111111-1111-1111-1111-111111111111",
-        artifactCode: "d13_vendor_responses",
-      }),
-    });
+    const response = await postClientFinal(clientFinalForm("Reviewed against the approved draft."));
 
     expect(response.status).toBe(200);
+    expect(policy).toHaveBeenCalledWith(expect.objectContaining({ userId: "user-1" }), {
+      activeClientKey: "meridian-health",
+      sourceEventId: "11111111-1111-1111-1111-111111111111",
+    });
+    expect(registerArtifact).toHaveBeenCalledWith(expect.objectContaining({
+      fileCabinet: expect.objectContaining({
+        clientFinalAcceptedBy: "user-1",
+        clientFinalNote: "Reviewed against the approved draft.",
+      }),
+    }));
     expect(updateArtifactBody).toHaveBeenCalledWith({
       artifactRowId: "state-1",
       columns: expect.objectContaining({
@@ -184,4 +225,232 @@ describe("client-final artifact body landing", () => {
       }),
     });
   });
+
+  it("refuses an RFP Client Final containing buyer-private savings targets before storage", async () => {
+    listedArtifacts = [{
+      id: "generated-1",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      lifecycleState: "current",
+      originalName: "generated.docx",
+      version: 1,
+    }];
+    extractText.mockResolvedValueOnce({
+      text: "The commercial rationale is a 12–15% run-rate improvement planning hypothesis. approval_granted=false.",
+      method: "text",
+      warnings: [],
+    });
+
+    const response = await postClientFinal(
+      clientFinalForm("Reviewed for vendor release."),
+      "d09_rfp_pack",
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual(expect.objectContaining({
+      error: "vendor_disclosure_violation",
+    }));
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+    expect(updateArtifactBody).not.toHaveBeenCalled();
+  });
+
+  it("refuses an RFP Client Final that falsely declares vendor issuance before storage", async () => {
+    listedArtifacts = [{
+      id: "generated-1",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      lifecycleState: "current",
+      originalName: "generated.docx",
+      version: 1,
+    }];
+    extractText.mockResolvedValueOnce({
+      text: "**Document status:** DRAFT\n**Release state:** Initial structural issuance.",
+      method: "text",
+      warnings: [],
+    });
+
+    const response = await postClientFinal(
+      clientFinalForm("Reviewed the RFP draft."),
+      "d09_rfp_pack",
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual(expect.objectContaining({
+      error: "vendor_disclosure_violation",
+    }));
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+    expect(updateArtifactBody).not.toHaveBeenCalled();
+  });
+
+  it("allows a D09 Client Final with ordinary vendor pricing instructions", async () => {
+    extractText.mockResolvedValueOnce({
+      text: "Submit separate run and change prices in the Pricing Response tab.",
+      method: "text",
+      warnings: [],
+    });
+    listedArtifacts = [{
+      id: "generated-1",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      lifecycleState: "current",
+      originalName: "generated.docx",
+      version: 1,
+    }];
+
+    const response = await postClientFinal(
+      clientFinalForm("Reviewed and redlined for vendor use."),
+      "d09_rfp_pack",
+    );
+
+    expect(response.status).toBe(200);
+    expect(uploadBlob).toHaveBeenCalledTimes(1);
+  });
+
+  it("invalidates an earlier quality receipt when different Client Final bytes are accepted", async () => {
+    artifactStateMetadata = {
+      generatedAt: "2026-09-28T10:00:00.000Z",
+      qualityGate: { passed: true, overallScore: 9, finalSummary: "Reviewed older draft." },
+    };
+
+    const response = await postClientFinal(clientFinalForm("Reviewed revised synthetic final."));
+
+    expect(response.status).toBe(200);
+    const update = updateArtifactBody.mock.calls[0]?.[0] as { columns: {
+      body_generation_metadata: Record<string, unknown>;
+    } };
+    expect(update.columns.body_generation_metadata).not.toHaveProperty("qualityGate");
+    expect(update.columns.body_generation_metadata).toHaveProperty("clientFinal");
+  });
+
+  it("accepts a reviewed revision after the first final supersedes its generated draft", async () => {
+    listedArtifacts = [
+      {
+        id: "final-1",
+        artifactType: "d13_vendor_responses",
+        artifactGroup: "approval",
+        lifecycleState: "current",
+        status: "client_final",
+        originalName: "first-final.html",
+        version: 2,
+      },
+      {
+        id: "generated-1",
+        artifactType: "d13_vendor_responses",
+        artifactGroup: "generated",
+        lifecycleState: "superseded",
+        status: "superseded",
+        originalName: "generated.docx",
+        version: 1,
+      },
+    ];
+
+    const response = await postClientFinal(clientFinalForm("Reviewed revised final against the generated draft."));
+
+    expect(response.status).toBe(200);
+    expect(registerArtifact).toHaveBeenCalledWith(expect.objectContaining({
+      supersedesArtifactVersionId: "final-1",
+      fileCabinet: expect.objectContaining({
+        version: 3,
+        sourceGeneratedArtifactId: "generated-1",
+        supersedesArtifactId: "final-1",
+      }),
+    }));
+  });
+
+  it("still refuses a Client Final when no generated draft exists in history", async () => {
+    listedArtifacts = [{
+      id: "final-1",
+      artifactType: "d13_vendor_responses",
+      artifactGroup: "approval",
+      lifecycleState: "current",
+      status: "client_final",
+      version: 2,
+    }];
+
+    const response = await postClientFinal(clientFinalForm("Reviewed revised final."));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual(expect.objectContaining({ error: "generated_draft_required" }));
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+  });
+
+  it("refuses an uploader who lacks named approval authority before any blob or metadata write", async () => {
+    policy.mockResolvedValue({
+      canUploadSourceArtifacts: true,
+      canApproveSourceStages: false,
+    } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
+
+    const response = await postClientFinal(clientFinalForm("Reviewed file."));
+
+    expect(response.status).toBe(403);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+    expect(updateArtifactBody).not.toHaveBeenCalled();
+  });
+
+  it("refuses an approver who lacks artifact upload authority", async () => {
+    policy.mockResolvedValue({
+      canUploadSourceArtifacts: false,
+      canApproveSourceStages: true,
+    } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
+
+    const response = await postClientFinal(clientFinalForm("Reviewed file."));
+
+    expect(response.status).toBe(403);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+    expect(updateArtifactBody).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when Source approval policy cannot be read", async () => {
+    policy.mockRejectedValue(new Error("policy unavailable"));
+
+    const response = await postClientFinal(clientFinalForm("Reviewed file."));
+
+    expect(response.status).toBe(403);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+  });
+
+  it("requires a human rationale before promoting an uploaded file", async () => {
+    const response = await postClientFinal(clientFinalForm());
+
+    expect(response.status).toBe(400);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+  });
+
+  it("rejects whitespace-only approval rationale", async () => {
+    const response = await postClientFinal(clientFinalForm("   "));
+
+    expect(response.status).toBe(400);
+    expect(uploadBlob).not.toHaveBeenCalled();
+    expect(registerArtifact).not.toHaveBeenCalled();
+  });
+
+  it.each([null, "   "])(
+    "does not promote a client final with unreadable extracted content (%p)",
+    async (text) => {
+      extractText.mockResolvedValueOnce({
+        text,
+        method: "pdf-parse",
+        warnings: ["No readable text found"],
+      });
+
+      const response = await postClientFinal(
+        clientFinalForm("Reviewed against the approved draft."),
+      );
+
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual(
+        expect.objectContaining({ error: "unreadable_client_final" }),
+      );
+      expect(uploadBlob).not.toHaveBeenCalled();
+      expect(registerArtifact).not.toHaveBeenCalled();
+      expect(updateArtifactBody).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -49,18 +49,68 @@ describe("agent route · Moves aVa scoped-context gate", () => {
     expect(derivation).toContain("crossProgramSignalsBlock");
   });
 
-  it("counts visible Move context-extract evidence from surfaceContext before building the packet", () => {
+  it("counts context-extract evidence only from a server-verified current extract", () => {
+    expect(source).toContain(
+      'import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract-freshness"',
+    );
     const resolverBlock = source.slice(
-      source.indexOf("const surfaceContextEvidenceCount ="),
+      source.indexOf("const contextExtractFreshness ="),
       source.indexOf("const visibleEvidenceCount =") + 420,
     );
 
+    expect(resolverBlock).toContain("loadCurrentMoveContextExtractFreshness");
     expect(resolverBlock).toContain(
+      "tenantKey: tenancy.clientKey ?? tenancy.clientId",
+    );
+    expect(resolverBlock).toContain("moveId: programId");
+    expect(resolverBlock).toContain("phase: promptPhase");
+    expect(resolverBlock).toContain("contextExtractFreshness,");
+    expect(resolverBlock).not.toContain(
       "surfaceContext.moveContextExtractEvidenceCount",
     );
-    expect(resolverBlock).toContain("surfaceContext.moveEvidenceCount");
-    expect(resolverBlock).toContain("surfaceContextEvidenceCount");
     expect(resolverBlock).toContain("resolveMovesAvaVisibleEvidenceCount");
+  });
+
+  it("loads only approved evidence scoped to the active phase for summaries and later-phase draft disclosures", () => {
+    const modeStart = source.indexOf(
+      'const mode = movesAvaMode ?? "phase_guidance";',
+    );
+    const evidenceLoadBlock = source.slice(
+      modeStart,
+      source.indexOf("const packet = buildMovesAvaChatPacket(", modeStart),
+    );
+
+    expect(modeStart).toBeGreaterThan(-1);
+    expect(evidenceLoadBlock).toContain('mode === "evidence_summary"');
+    expect(evidenceLoadBlock).toContain(
+      'mode === "phase_input_draft" && promptPhase > 1',
+    );
+    expect(evidenceLoadBlock).toContain(
+      "loadedEvidenceItems = await listProgramEvidenceForPrompt(",
+    );
+    expect(evidenceLoadBlock).toContain(
+      "programId,\n                  promptPhase,",
+    );
+    expect(evidenceLoadBlock).toContain(
+      "approvedEvidenceItems = loadedEvidenceItems.slice(0, 8)",
+    );
+    expect(source).toContain("approvedEvidenceCount: approvedEvidenceTotal");
+    expect(source).toContain("approvedEvidenceUnavailable,");
+    expect(source).toContain(
+      "buildDeterministicMovesAvaStatusAnswer(packet, mode)",
+    );
+  });
+
+  it("returns deterministic evidence summaries before Anthropic preflight", () => {
+    const deterministicReturn = source.indexOf(
+      "if (movesAvaDeterministicAnswer)",
+    );
+    const modelPreflight = source.indexOf(
+      "const preflight = await preflightAnthropicDirectClient(",
+    );
+
+    expect(deterministicReturn).toBeGreaterThan(-1);
+    expect(modelPreflight).toBeGreaterThan(deterministicReturn);
   });
 
   it("suppresses the generic tenant system block when Moves scoped grounding is present", () => {

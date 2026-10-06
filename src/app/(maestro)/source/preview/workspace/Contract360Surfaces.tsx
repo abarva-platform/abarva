@@ -11,6 +11,7 @@ import { asSentence, fmtDate, money } from "./viewModel";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { countOrDash } from "./contractPopulations";
 import { contractPurposeSummary } from "./WorkspaceExecutiveShell";
+import { isGeneratedPurposeHeadline } from "@/lib/source/contract-purpose-refusal";
 import {
   evidenceLede,
   relationshipLede,
@@ -32,17 +33,32 @@ import {
 /* shared                                                                     */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * `Open Optimize` is a handoff into the dedicated Optimize journey, not a tab
+ * switch (C-610). It used to call `select("contract", id, "Optimize")`, which
+ * moved the Contract 360 tab row and left the seven-step journey at
+ * `/source/optimize` reachable only by typing its URL — so the one visible
+ * command for "optimize this contract" never carried the contract into it.
+ *
+ * The href comes from `vm.optCtaHref`, the same governed journey URL the
+ * contract header action uses; this component builds no URL of its own, so
+ * there is one place where the handoff's shape is decided. It is a real anchor
+ * rather than a button with a navigating handler, so Back is the browser's and
+ * returns to the contract the workspace already mirrors into the address bar.
+ *
+ * No href means no affordance. A contract-less `/source/optimize` would open
+ * the journey on nothing, which reads as the command having failed silently.
+ */
 export function ContractCaseThreadStrip({
   vm,
-  onOpenOptimize,
   isOptimizeTab = false,
 }: {
   vm: SourceWorkspaceVM;
-  onOpenOptimize: () => void;
   isOptimizeTab?: boolean;
 }) {
   const caseThread = vm.opportunityView?.caseThread;
   if (caseThread === undefined) return null;
+  const optimizeHref = vm.optCtaHref?.trim() ? vm.optCtaHref : null;
 
   return (
     <div className="sw-c3-case-thread" role="region" aria-label="Optimization case">
@@ -56,8 +72,8 @@ export function ContractCaseThreadStrip({
         {caseThread?.owner ? <span>{caseThread.owner}</span> : null}
       </div>
       <p>{caseThread?.nextAction ?? "Review the contract evidence before opening a case."}</p>
-      {isOptimizeTab ? null : (
-        <button type="button" onClick={onOpenOptimize}>Open Optimize</button>
+      {isOptimizeTab || !optimizeHref ? null : (
+        <a href={optimizeHref}>Open Optimize</a>
       )}
     </div>
   );
@@ -135,7 +151,13 @@ export function ContractBriefingHeader({
     story.headline.length <= 60 &&
     !/\b(?:not (?:yet )?reviewed|not established|not loaded|unresolved)\b/i.test(
       story.headline,
-    )
+    ) &&
+    // The phrasing blocklist above went stale: migration `20260911150000`
+    // reworded the generated fallback to "requires reviewed context", which
+    // no listed phrase matches and which is 58 characters for a short vendor
+    // name, so it passed both conditions and rendered as the page heading.
+    // This control keys on the generator's shape instead of its wording.
+    !isGeneratedPurposeHeadline(story.headline, contract.vendor_name)
       ? story.headline
       : null;
   const archetype = vm.contractEducation?.archetypeLabel ?? null;
@@ -340,7 +362,15 @@ export function ContractStoryBriefing({
       required: true,
     },
     {
-      name: "Opportunities",
+      // Item U-518. This counts governed action-candidate rows LOADED as
+      // evidence -- `opportunity_rows` is count(*) over
+      // source.contract_action_candidate_v1. It is not the contract's
+      // optimization opportunity set, which the rest of the page counts from
+      // `vm.opportunityView.opportunities` (source.optimization_opportunity, or
+      // a fallback derived from source.golden_contract_*). The two populations
+      // legitimately differ, so the lane says which one it is rather than
+      // printing a second number under the same word.
+      name: "Opportunity evidence rows",
       value: laneCount(coverage, "opportunity_rows"),
       required: true,
     },

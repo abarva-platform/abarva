@@ -290,11 +290,11 @@ function formatRigorLabel(rigor: SourceRigorLevel): string {
 export function SourcingEventTable({
   events,
   variant = 'dark',
-  canViewFinancialValues = true,
+  canViewFinancialValues,
 }: {
   events: SourcingEventSummary[];
   variant?: SourcingEventTableVariant;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
 }) {
   const lightMode = variant === 'light';
   const textPrimary = lightMode ? LIGHT.ink : SHELL.INK;

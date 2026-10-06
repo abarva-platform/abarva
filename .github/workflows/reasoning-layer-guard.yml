@@ -52,3 +52,17 @@ jobs:
 
       - name: Reasoning-layer Jest tests
         run: npx jest src/lib/reasoning --silent
+
+      # The reasoning ROUTES, not just the library. Added with item C-527,
+      # whose behavioural case for `/api/reasoning/stage-synthesis` landed in a
+      # directory no workflow ran — which the coverage census caught and is the
+      # reason this step exists. A control that CI never executes is the defect
+      # class this guard exists against, so the whole directory is named rather
+      # than one file: a case added beside a future reasoning route is wired by
+      # being written, not by someone remembering to edit this list.
+      #
+      # `src/app/api/reasoning/gate-waiver` is also run by
+      # ai-surface-control-catalog.yml. Running it twice is cheap; leaving a new
+      # sibling directory unrun is not.
+      - name: Reasoning route Jest tests
+        run: npx jest src/app/api/reasoning --silent

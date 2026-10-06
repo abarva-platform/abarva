@@ -3,6 +3,9 @@
 import { execFileSync } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { readWorkerJobNames, WORKER_JOB_NAMES_SOURCE } from './worker-job-names.mjs';
 
 const DEFAULTS = {
   acrName: 'acrabarvalab001',
@@ -10,9 +13,15 @@ const DEFAULTS = {
   containerAppName: 'ca-abarva-web-lab-eastus',
   resourceGroup: 'rg-abarva-controlplane-lab-eastus',
   productionBaseUrl: 'https://app.abarva.ai',
-  workerJobNames: ['job-abarva-deliv-worker', 'job-abarva-deliv-worker-event'],
   workerContainerName: 'worker',
 };
+
+// The enforced worker-job set is NOT listed here. It is derived from
+// `scripts/deploy/update-worker-jobs.sh` — the script that decides which jobs
+// the deploy actually re-images — so the proof's scope cannot drift wider than
+// the deploy's enforcement without a check failing (item C-589). A second
+// hand-typed list in this file is the defect, not a convenience.
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 const FORBIDDEN_TAG_PREFIXES = [
   'source-',
@@ -88,14 +97,34 @@ const productionBaseUrl = argValue(
 ).replace(/\/$/, '');
 const outDir = argValue('--out-dir', process.env.ACA_DRIFT_OUT_DIR || 'audit-artifacts/aca-runtime-drift');
 const skipHealth = boolArg('--skip-health') || process.env.SKIP_HEALTH_CHECK === 'true';
-const workerJobNames = argValue(
-  '--worker-job-names',
-  process.env.WORKER_JOB_NAMES || DEFAULTS.workerJobNames.join(','),
-).split(/[\s,]+/).filter(Boolean);
+const workerJobSource = path.resolve(
+  argValue(
+    '--worker-job-source',
+    process.env.WORKER_JOB_SOURCE || path.join(REPO_ROOT, WORKER_JOB_NAMES_SOURCE),
+  ),
+);
+const explicitWorkerJobNames = argValue('--worker-job-names', process.env.WORKER_JOB_NAMES || '')
+  .split(/[\s,]+/)
+  .filter(Boolean);
+const workerJobNamesOrigin = explicitWorkerJobNames.length > 0 ? 'explicit' : 'derived';
+// A failure to read the source is fatal on purpose: falling back to a list of
+// our own is how the proof's scope silently stopped matching the deploy's.
+const workerJobNames =
+  workerJobNamesOrigin === 'explicit' ? explicitWorkerJobNames : readWorkerJobNames(workerJobSource);
 const workerContainerName = argValue(
   '--worker-container-name',
   process.env.WORKER_CONTAINER_NAME || DEFAULTS.workerContainerName,
 );
+
+// Make the resolution observable without touching Azure, so a test can assert
+// that the enforced set FOLLOWS the deploy script rather than asserting that
+// today's two job names appear somewhere. Must stay above every az/curl call.
+if (boolArg('--print-worker-jobs')) {
+  console.log(
+    JSON.stringify({ workerJobNames, workerJobNamesOrigin, workerJobSource, workerContainerName }, null, 2),
+  );
+  process.exit(0);
+}
 
 const errors = [];
 mkdirSync(outDir, { recursive: true });
@@ -269,6 +298,8 @@ const proof = {
   activeDigestTags: manifest?.tags ?? [],
   traffic,
   health,
+  workerJobNamesOrigin,
+  workerJobSource,
   workerJobs,
   passed: errors.length === 0,
   errors,

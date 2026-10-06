@@ -33,8 +33,30 @@ import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import styles from "./StrategicMoves.module.css";
 import { strategicMoveBriefToDiscoveryShape } from "./strategicMoveBriefToDiscoveryShape";
 import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRedirect";
-import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import {
+  buildOriginateRailRows,
+  formatAnswersCaptured,
+  formatAnswersCapturedNoun,
+  formatOriginateDiscardProgress,
+  formatOriginateNavFootProgress,
+  formatOriginateRailTally,
+  formatOriginateStepPosition,
+  type OriginateRailRow,
+} from "./originate-figure-labels";
 import { MOVE_TIER_OPTIONS } from "@/lib/programs/p0-extended-intake-fields";
+import { getPhaseLabel } from "@/lib/programs/phase-labels";
+import type { DiscoveryArchetypeOption } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import type { ConfiguredBlueprintOrigin } from "@/lib/deliverables/orchestrator/briefs/archetype-config-source";
+
+/**
+ * An archetype the picker may offer. `origin` says who authored the entry, so a
+ * deploying firm's own archetypes can be shown as theirs instead of being mixed
+ * into the shipped catalog. Optional because a caller holding only the shipped
+ * list has nothing to say here, and an absent origin reads as shipped.
+ */
+type DeclarableDiscoveryArchetypeOption = DiscoveryArchetypeOption & {
+  origin?: ConfiguredBlueprintOrigin;
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -132,12 +154,12 @@ const SCAFFOLD_DEFS: ScaffoldDef[] = [
   },
   {
     id: "sponsor-candidate",
-    label: "Executive sponsor and decision authority",
+    label: "Sponsor contact and update preference",
     step: 3,
     group: "Govern",
-    help: "Capture the sponsoring role/title and who has authority to approve scope, investment, and design decisions — no named-person resolution required.",
+    help: "List the sponsor as a progress contact and choose whether they receive phase updates. Product approvals are made by a workspace user with explicit approval permission.",
     placeholder:
-      "COO as executive sponsor; VP Member Operations and Contact Center Director as operating owners; CDIO as data/platform co-sponsor. Decision authority: COO approves scope and investment; CDIO approves architecture.",
+      "COO as executive sponsor; VP Member Operations and Contact Center Director as operating owners; CDIO as data/platform co-sponsor. Organizational decision rights are captured as context; the authorized workspace user records all Moves approvals.",
   },
   {
     id: "scope-in",
@@ -276,7 +298,7 @@ const EXTENDED_SCAFFOLD_DEFS: ScaffoldDef[] = [
     label: "Stakeholders",
     step: 16,
     group: "Segment",
-    help: "Who else needs to be involved — who'd use it, approve it, or push back — beyond the named sponsor?",
+    help: "Who else should provide input, use the solution, or raise concerns beyond the listed sponsor contact?",
     placeholder: "Coding team lead; Actuarial; Compliance.",
   },
   {
@@ -292,7 +314,7 @@ const EXTENDED_SCAFFOLD_DEFS: ScaffoldDef[] = [
 ];
 
 const P0_STAGE_GROUPS: Array<{
-  label: "Frame" | "Govern" | "Readiness" | "Segment" | "Approve";
+  label: "Frame" | "Govern" | "Readiness" | "Segment" | "Submit";
   stepIds: P0StepId[];
 }> = [
   { label: "Frame", stepIds: ["problem-statement", "archetype"] },
@@ -310,7 +332,7 @@ const P0_STAGE_GROUPS: Array<{
       "foundation-readiness",
     ],
   },
-  { label: "Approve", stepIds: ["approve-build"] },
+  { label: "Submit", stepIds: ["approve-build"] },
 ];
 
 const EXTENDED_STAGE_GROUP: { label: "Segment"; stepIds: P0StepId[] } = {
@@ -605,6 +627,8 @@ interface Props {
   /** Tenant's real business-segment names (grounded fact — e.g. Meridian's
    *  own segment taxonomy). Only used when `extendedIntakeFieldsEnabled`. */
   businessSegmentOptions?: string[];
+  discoveryArchetypeOptions?: DeclarableDiscoveryArchetypeOption[];
+  initialDiscoveryArchetypeId?: string | null;
 }
 
 export function StrategicMoveOriginateClient({
@@ -614,6 +638,8 @@ export function StrategicMoveOriginateClient({
   discoveryIntakeEnabled = false,
   extendedIntakeFieldsEnabled = false,
   businessSegmentOptions = [],
+  discoveryArchetypeOptions = [],
+  initialDiscoveryArchetypeId = null,
 }: Props) {
   const router = useRouter();
   // Tenant-conditional field set: off = these three are identical to the
@@ -643,7 +669,7 @@ export function StrategicMoveOriginateClient({
         id: "nexus-open-2a",
         role: "assistant",
         agentName: "Nexus",
-        text: `Describe the business problem or opportunity in plain English. I will help shape it into a Move brief with the right sponsor, scope, evidence, value hypothesis, and readiness checks.`,
+        text: `Describe the business problem or opportunity in plain English. I will help shape it into a Move brief with an outcome owner, scope, evidence, value hypothesis, and readiness checks. We can list a sponsor contact and choose whether to send progress emails; sponsors do not approve product gates.`,
       },
     ],
   );
@@ -651,6 +677,14 @@ export function StrategicMoveOriginateClient({
     programName: "",
     fields: { ...INITIAL_FIELDS },
   });
+  const [discoveryArchetypeId, setDiscoveryArchetypeId] = useState(
+    initialDiscoveryArchetypeId ?? "",
+  );
+  const [discoveryArchetypeSuggestions, setDiscoveryArchetypeSuggestions] =
+    useState<Array<{ blueprintId: string; archetypeLabel: string }>>([]);
+  const [loadingDiscoverySuggestions, setLoadingDiscoverySuggestions] =
+    useState(false);
+  const [sponsorProgressEmails, setSponsorProgressEmails] = useState(false);
   const [draftFields, setDraftFields] = useState<
     Record<ScaffoldFieldId, string>
   >({
@@ -663,6 +697,50 @@ export function StrategicMoveOriginateClient({
   const [canvasTab, setCanvasTab] = useState<P0WorkspaceTab>("steps");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const discoverySuggestionText = [
+    brief.fields["problem-statement"],
+    brief.fields["value-hypothesis"],
+    brief.fields["scope-in"],
+  ]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+  useEffect(() => {
+    if (activeP0Step !== "archetype") return;
+    if (!discoverySuggestionText) {
+      setDiscoveryArchetypeSuggestions([]);
+      setLoadingDiscoverySuggestions(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      setLoadingDiscoverySuggestions(true);
+      void fetch("/api/programs/discovery-archetype-suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: discoverySuggestionText }),
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) return [];
+          const payload = (await response.json()) as {
+            suggestions?: Array<{ blueprintId: string; archetypeLabel: string }>;
+          };
+          return Array.isArray(payload.suggestions) ? payload.suggestions : [];
+        })
+        .then(setDiscoveryArchetypeSuggestions)
+        .catch(() => setDiscoveryArchetypeSuggestions([]))
+        .finally(() => setLoadingDiscoverySuggestions(false));
+    }, 250);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [activeP0Step, discoverySuggestionText]);
 
   const turnsRef = useRef<ChatTurn[]>(turns);
   turnsRef.current = turns;
@@ -690,6 +768,7 @@ export function StrategicMoveOriginateClient({
               targetOutcome: brief.fields["value-hypothesis"] || null,
               timeline: null,
               classification: brief.fields["archetype"] || null,
+              discoveryArchetypeId: discoveryArchetypeId || null,
               matchedPatternId: null,
               sponsor: brief.fields["sponsor-candidate"] || null,
               lead: null,
@@ -707,7 +786,7 @@ export function StrategicMoveOriginateClient({
       });
     }, 500);
     return () => clearTimeout(handle);
-  }, [turns, brief]);
+  }, [turns, brief, sponsorProgressEmails, discoveryArchetypeId]);
 
   const updateTurns = useCallback(
     (updater: ChatTurn[] | ((prev: ChatTurn[]) => ChatTurn[])) => {
@@ -770,6 +849,7 @@ export function StrategicMoveOriginateClient({
       },
     }));
     setDraftFields((prev) => ({ ...prev, [id]: "" }));
+    if (id === "sponsor-candidate") setSponsorProgressEmails(false);
   }, []);
 
   const send = useCallback(
@@ -992,26 +1072,20 @@ export function StrategicMoveOriginateClient({
   const completionPercent = Math.round(
     (requiredFilled / activeRequiredFieldCount) * 100,
   );
-  const originateTallies: PhaseTallyRow[] = [
-    {
-      phase: 0,
-      label: "P0 Originate",
-      met: requiredFilled,
-      total: activeRequiredFieldCount,
-      state: "current",
-    },
-    { phase: 1, label: "P1 Charter", met: 0, total: 5, state: "upcoming" },
-    {
-      phase: 2,
-      label: "P2 Current State",
-      met: 0,
-      total: 5,
-      state: "upcoming",
-    },
-    { phase: 3, label: "P3 Approach", met: 0, total: 4, state: "upcoming" },
-    { phase: 4, label: "P4 Plan", met: 0, total: 4, state: "upcoming" },
-    { phase: 5, label: "P5 Execute", met: 0, total: 4, state: "upcoming" },
-  ];
+  // The P1-P5 rows carry no measurement: this screen holds the P0 brief and
+  // no capture, gate or evidence state for any later phase. They used to carry
+  // hard-coded totals (5/5/4/4/4) matching no contract.
+  const originateRailRows: readonly OriginateRailRow[] = buildOriginateRailRows({
+    requiredFilled,
+    requiredFieldCount: activeRequiredFieldCount,
+    laterPhases: [
+      { phase: 1, label: "P1 Charter" },
+      { phase: 2, label: getPhaseLabel(2) },
+      { phase: 3, label: getPhaseLabel(3) },
+      { phase: 4, label: getPhaseLabel(4) },
+      { phase: 5, label: getPhaseLabel(5) },
+    ],
+  });
   const dockThread: ChatMessage[] = turns.map((turn) => ({
     id: turn.id,
     role: turn.role === "assistant" ? "agent" : "user",
@@ -1093,7 +1167,9 @@ export function StrategicMoveOriginateClient({
             targetOutcome: brief.fields["value-hypothesis"],
             timeline: brief.fields["foundation-readiness"],
             classification: brief.fields["archetype"],
+            discoveryArchetypeId: discoveryArchetypeId || null,
             sponsor: brief.fields["sponsor-candidate"],
+            sponsorProgressEmails,
             lead: brief.fields["sponsor-candidate"],
             matchedPatternId: null,
             // Extended scaffold fields
@@ -1167,7 +1243,7 @@ export function StrategicMoveOriginateClient({
             setActiveP0Step("approve-build");
           }}
           onTabChange={setCanvasTab}
-          tallies={originateTallies}
+          rows={originateRailRows}
           tenantName={tenantName}
         />
         <div className={styles.phaseBodyMain}>
@@ -1208,11 +1284,18 @@ export function StrategicMoveOriginateClient({
                 requiredFilled={requiredFilled}
                 requiredFieldCount={activeRequiredFieldCount}
                 scaffoldDefs={activeScaffoldDefs}
+                sponsorProgressEmails={sponsorProgressEmails}
                 stageGroups={activeStageGroups}
                 setActiveP0Step={setActiveP0Step}
                 setBrief={setBrief}
                 setCanvasTab={setCanvasTab}
                 setDraftFields={setDraftFields}
+                setSponsorProgressEmails={setSponsorProgressEmails}
+                discoveryArchetypeOptions={discoveryArchetypeOptions}
+                discoveryArchetypeId={discoveryArchetypeId}
+                setDiscoveryArchetypeId={setDiscoveryArchetypeId}
+                discoveryArchetypeSuggestions={discoveryArchetypeSuggestions}
+                loadingDiscoverySuggestions={loadingDiscoverySuggestions}
                 submitError={submitError}
                 suggestedName={suggestedName}
                 tenantName={tenantName}
@@ -1246,10 +1329,11 @@ export function StrategicMoveOriginateClient({
               Discard this move?
             </h3>
             <p className={styles.confirmDialogBody}>
-              You&rsquo;ve captured {filledCount} of {activeRequiredFieldCount}{" "}
-              sections ({requiredFilled} of {activeRequiredFieldCount}{" "}
-              required). Save as a draft to come back, or discard and start
-              fresh.
+              {formatOriginateDiscardProgress({
+                requiredFilled,
+                requiredFieldCount: activeRequiredFieldCount,
+              })}{" "}
+              Save as a draft to come back, or discard and start fresh.
             </p>
             <div className={styles.confirmActions}>
               <button
@@ -1297,7 +1381,7 @@ function P0OriginationRail({
   onBack,
   onApprovals,
   onTabChange,
-  tallies,
+  rows,
   tenantName,
 }: {
   activeTab: P0WorkspaceTab;
@@ -1305,13 +1389,13 @@ function P0OriginationRail({
   onBack: () => void;
   onApprovals: () => void;
   onTabChange: (tab: P0WorkspaceTab) => void;
-  tallies: PhaseTallyRow[];
+  rows: readonly OriginateRailRow[];
   tenantName: string;
 }) {
   return (
     <aside
       className={styles.p0ShellRail}
-      aria-label={`Move journey: phase 0 of ${tallies.length - 1}`}
+      aria-label={`Move journey: phase 0 of ${rows.length - 1}`}
     >
       <button type="button" className={styles.p0RailBack} onClick={onBack}>
         &larr; All Moves
@@ -1324,7 +1408,7 @@ function P0OriginationRail({
       <div className={styles.p0RailSection}>
         <div className={styles.p0RailSectionLabel}>Phases</div>
         <div className={styles.p0RailRows}>
-          {tallies.map((row) => {
+          {rows.map((row) => {
             const isCurrent = row.state === "current";
             const isDone = row.state === "done";
             return (
@@ -1343,7 +1427,7 @@ function P0OriginationRail({
                 </span>
                 <span className={styles.p0RailPhaseLabel}>{row.label}</span>
                 <span className={styles.p0RailPhaseTally}>
-                  {row.total > 0 ? `${row.met} of ${row.total}` : "—"}
+                  {formatOriginateRailTally(row)}
                 </span>
               </div>
             );
@@ -1388,7 +1472,7 @@ function P0OriginationRail({
 
       <div className={styles.p0RailFooter}>
         <span>Design contract &rarr;</span>
-        <p>aVa guides P0-P4 · Atlas takes over P5 Execute.</p>
+        <p>aVa guides P0-P5 · Tower tracks execution after handoff.</p>
       </div>
     </aside>
   );
@@ -1405,11 +1489,18 @@ function P0OriginationContractCanvas({
   requiredFilled,
   requiredFieldCount,
   scaffoldDefs,
+  sponsorProgressEmails,
   stageGroups,
   setActiveP0Step,
   setBrief,
   setCanvasTab,
   setDraftFields,
+  setSponsorProgressEmails,
+  discoveryArchetypeOptions,
+  discoveryArchetypeId,
+  setDiscoveryArchetypeId,
+  discoveryArchetypeSuggestions,
+  loadingDiscoverySuggestions,
   submitError,
   suggestedName,
   tenantName,
@@ -1429,11 +1520,18 @@ function P0OriginationContractCanvas({
   requiredFilled: number;
   requiredFieldCount: number;
   scaffoldDefs: ScaffoldDef[];
+  sponsorProgressEmails: boolean;
   stageGroups: Array<{ label: string; stepIds: P0StepId[] }>;
   setActiveP0Step: Dispatch<SetStateAction<P0StepId>>;
   setBrief: Dispatch<SetStateAction<BriefState>>;
   setCanvasTab: Dispatch<SetStateAction<P0WorkspaceTab>>;
   setDraftFields: Dispatch<SetStateAction<Record<ScaffoldFieldId, string>>>;
+  setSponsorProgressEmails: Dispatch<SetStateAction<boolean>>;
+  discoveryArchetypeOptions: DeclarableDiscoveryArchetypeOption[];
+  discoveryArchetypeId: string;
+  setDiscoveryArchetypeId: Dispatch<SetStateAction<string>>;
+  discoveryArchetypeSuggestions: Array<{ blueprintId: string; archetypeLabel: string }>;
+  loadingDiscoverySuggestions: boolean;
   submitError: string | null;
   suggestedName: string;
   tenantName: string;
@@ -1444,6 +1542,22 @@ function P0OriginationContractCanvas({
   cancelFlow: () => void;
 }) {
   const isApproveStep = activeP0Step === "approve-build";
+  const suggestedDiscoveryArchetypeIds = new Set(
+    discoveryArchetypeSuggestions.map((option) => option.blueprintId),
+  );
+  // A suggestion is already offered in its own group above, so it is dropped
+  // from the catalog groups whichever group it would otherwise have fallen in.
+  const unsuggestedDiscoveryArchetypeOptions = discoveryArchetypeOptions.filter(
+    (option) => !suggestedDiscoveryArchetypeIds.has(option.blueprintId),
+  );
+  // Archetypes this deployment configured are listed as the firm's own rather
+  // than mixed into the shipped catalog: an operator has to be able to tell the
+  // archetype they authored from one that shipped with the product. Empty on
+  // every deployment that configures nothing, where this group does not render.
+  const configuredDiscoveryArchetypeOptions =
+    unsuggestedDiscoveryArchetypeOptions.filter(
+      (option) => option.origin != null && option.origin !== "seed",
+    );
   const activeValue = activeP0Def ? brief.fields[activeP0Def.id] : "";
   const activeDraft = activeP0Def ? draftFields[activeP0Def.id] : "";
   const activeFilled = activeP0Def
@@ -1451,9 +1565,13 @@ function P0OriginationContractCanvas({
     : canPromote;
   const readinessFilled =
     brief.fields["foundation-readiness"].trim().length > 0;
-  const activeStepNumber = isApproveStep
-    ? requiredFieldCount
-    : (activeP0Def?.step ?? 1);
+  // The nav's step list is the scaffold fields plus the submit step, so the
+  // position and its total must both count that list. The submit step used to
+  // be numbered `requiredFieldCount`, repeating the last field's position.
+  const activeStepPosition = formatOriginateStepPosition({
+    fieldStep: isApproveStep ? null : (activeP0Def?.step ?? 1),
+    fieldCount: requiredFieldCount,
+  });
   const moveName = deriveStrategicMoveName(brief.programName, brief.fields);
 
   return (
@@ -1489,7 +1607,7 @@ function P0OriginationContractCanvas({
               <span>
                 {requiredFilled} / {requiredFieldCount}
               </span>
-              <small>steps ready</small>
+              <small>{formatAnswersCapturedNoun(requiredFieldCount)}</small>
             </div>
             <div className={styles.p0ProgressTrack} aria-hidden>
               <div
@@ -1497,7 +1615,10 @@ function P0OriginationContractCanvas({
                 style={{ width: `${completionPercent}%` }}
               />
             </div>
-            <small>{completionPercent}% ready · Intake · mandate</small>
+            <small>
+              {completionPercent}% intake answers · P0 evidence review still
+              required
+            </small>
           </div>
         </div>
       </div>
@@ -1546,7 +1667,7 @@ function P0OriginationContractCanvas({
                         : scaffoldDefs.find((item) => item.id === id);
                     const label =
                       id === "approve-build"
-                        ? "Approve and Build the Charter"
+                        ? "Review P0 intake"
                         : (def?.label ?? id);
                     return (
                       <button
@@ -1573,8 +1694,11 @@ function P0OriginationContractCanvas({
               ))}
               <div className={styles.p0ContractNavFoot}>
                 {canPromote
-                  ? "All steps complete · approve in Approvals"
-                  : `${requiredFilled} of ${requiredFieldCount} complete · finish required steps`}
+                  ? "Answers complete · P0 evidence and authorized-user approval remain"
+                  : formatOriginateNavFootProgress({
+                      requiredFilled,
+                      requiredFieldCount,
+                    })}
               </div>
             </aside>
 
@@ -1589,12 +1713,10 @@ function P0OriginationContractCanvas({
                   {activeFilled ? "✓" : ""}
                 </span>
                 <span className={styles.p0ContractStepMeta}>
-                  Step {activeStepNumber} of {requiredFieldCount}
+                  {activeStepPosition}
                 </span>
                 <h2>
-                  {isApproveStep
-                    ? "Approve and Build the Charter"
-                    : activeP0Def?.label}
+                  {isApproveStep ? "Submit P0 for review" : activeP0Def?.label}
                 </h2>
                 <span className={styles.p0ContractProvide}>Provide</span>
                 <span
@@ -1687,6 +1809,18 @@ function P0OriginationContractCanvas({
                       }
                     />
                   )}
+                  {activeP0Def.id === "sponsor-candidate" ? (
+                    <label className={styles.p0SponsorEmailPreference}>
+                      <input
+                        type="checkbox"
+                        checked={sponsorProgressEmails}
+                        onChange={(event) =>
+                          setSponsorProgressEmails(event.target.checked)
+                        }
+                      />
+                      <span>Send this contact phase-progress emails</span>
+                    </label>
+                  ) : null}
                   <div className={styles.scaffoldActions}>
                     <button
                       type="button"
@@ -1706,6 +1840,78 @@ function P0OriginationContractCanvas({
                       </button>
                     ) : null}
                   </div>
+
+                  {activeP0Def.id === "archetype" ? (
+                    <div className={styles.p0FoundationInset}>
+                      <div>
+                        <strong>Discovery blueprint</strong>
+                        <span>Separate from the Move pattern</span>
+                      </div>
+                      <p>
+                        Suggestions are based on the problem, outcome, and scope. They never select a blueprint for you.
+                      </p>
+                      <label htmlFor="orig-discovery-archetype">
+                        Declare a discovery blueprint
+                      </label>
+                      <select
+                        id="orig-discovery-archetype"
+                        className={styles.p0SelectInput}
+                        value={discoveryArchetypeId}
+                        onChange={(event) => setDiscoveryArchetypeId(event.target.value)}
+                        aria-describedby="orig-discovery-archetype-help"
+                      >
+                        <option value="">No declaration yet</option>
+                        {discoveryArchetypeSuggestions.length > 0 ? (
+                          <optgroup label="Suggested from this brief">
+                            {discoveryArchetypeSuggestions.map((option) => (
+                              <option key={option.blueprintId} value={option.blueprintId}>
+                                {option.archetypeLabel}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : null}
+                        <optgroup label="All discovery blueprints">
+                          {unsuggestedDiscoveryArchetypeOptions
+                            .filter(
+                              (option) =>
+                                option.origin == null ||
+                                option.origin === "seed",
+                            )
+                            .map((option) => (
+                              <option
+                                key={option.blueprintId}
+                                value={option.blueprintId}
+                              >
+                                {option.archetypeLabel}
+                              </option>
+                            ))}
+                        </optgroup>
+                        {configuredDiscoveryArchetypeOptions.length > 0 ? (
+                          <optgroup label="Added by your firm">
+                            {configuredDiscoveryArchetypeOptions.map(
+                              (option) => (
+                                <option
+                                  key={option.blueprintId}
+                                  value={option.blueprintId}
+                                >
+                                  {option.archetypeLabel}
+                                </option>
+                              ),
+                            )}
+                          </optgroup>
+                        ) : null}
+                      </select>
+                      <p id="orig-discovery-archetype-help">
+                        {discoveryArchetypeId
+                          ? "Selected by you; used to tailor discovery questions and evidence families."
+                          : loadingDiscoverySuggestions
+                            ? "Checking the reference catalog…"
+                            : discoveryArchetypeSuggestions.length > 0
+                              ? "Choose a suggestion to declare it, or leave this field blank."
+                              : "No keyword match yet. You may choose from the catalog or leave this field blank."}
+                      </p>
+                    </div>
+                  ) : null}
 
                   {activeP0Def.id === "evidence-family" ? (
                     <div className={styles.p0FoundationInset}>
@@ -1766,14 +1972,16 @@ function P0OriginationContractCanvas({
           <section className={styles.p0ContractEmptyPane}>
             <h2>Files</h2>
             <p>
-              P0 does not require uploads before approval. Approve and Build
-              creates the AI-draft Charter, then P1 opens the file workflow for
-              review and client-approved evidence.
+              Intake answers are not evidence and do not approve this Move.
+              Submit the P0 intake to open its review record, then upload one
+              source file in Files & Evidence and approve its extraction. P0
+              stays open until the required evidence is reviewed and an
+              authorized workspace user approves the brief.
             </p>
             <div className={styles.p0EvidencePills}>
-              <span>Move charter (AI draft)</span>
-              <span>Origination transcript</span>
-              <span>P1 evidence plan</span>
+              <span>1 uploaded P0 source file</span>
+              <span>Human-reviewed extraction</span>
+              <span>Authorized user approval unlocks P1</span>
             </div>
           </section>
         ) : (
@@ -1817,12 +2025,14 @@ function P0ApproveDetail({
   return (
     <div className={styles.p0ContractApprove}>
       <p>
-        Approving generates the AI-draft Charter and opens P1. The draft is not
-        authoritative until reviewed.
+        Submit the intake to create a P0 review record. This does not approve or
+        advance the Move. Upload and approve at least one P0 source file in
+        Files &amp; Evidence before an authorized workspace user can approve the
+        brief and unlock P1.
       </p>
       <div className={styles.p0ExpectedEvidence}>
-        <span>Evidence expected</span>
-        <div>Move charter (AI draft)</div>
+        <span>Required before approval</span>
+        <div>One uploaded, human-reviewed P0 source file</div>
       </div>
       <div className={styles.p0ContractActionRow}>
         <button
@@ -1833,12 +2043,15 @@ function P0ApproveDetail({
           aria-disabled={!canPromote}
           onClick={() => void promote()}
         >
-          Approve and Build <span aria-hidden>&rarr;</span>
+          Submit P0 for review <span aria-hidden>&rarr;</span>
         </button>
         <span>
           {canPromote
-            ? "All steps complete — runs Approve and Build."
-            : `${requiredFilled} of ${requiredFieldCount} complete — finish the remaining P0 answers.`}
+            ? "P0 remains open for evidence upload and approval by an authorized workspace user."
+            : formatAnswersCaptured({
+                filled: requiredFilled,
+                total: requiredFieldCount,
+              })}
         </span>
       </div>
       {submitError ? (

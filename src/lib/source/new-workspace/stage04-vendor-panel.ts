@@ -7,6 +7,8 @@ import {
   toVendorPanelContractInput,
 } from "@/lib/source/candidate-suppliers/contract-vendor-repository";
 import { readCandidateSupplierRegistry } from "@/lib/source/candidate-suppliers/candidate-supplier-registry-repository";
+import { resolveArchetypeForEvent } from "@/lib/source/archetypes/event-archetype-resolver";
+import { SOURCE_CATEGORY_IDS } from "@/lib/source/taxonomy/category-taxonomy";
 import {
   buildVendorPanelProjection,
   type VendorPanelGroup,
@@ -84,7 +86,7 @@ export type SourceNewStage04PanelInput = {
   clientKey: string;
   eventId: string;
   categoryId: string | null;
-  archetypeId: string | null;
+  eventType: string | null;
   asOf: string;
 };
 
@@ -120,9 +122,7 @@ function contactReadiness(
   if (!candidate.contactPolicy) return "review_required";
   if (candidate.contactPolicy === "do_not_contact") return "prohibited";
   if (candidate.contactPolicy === "review_required") return "review_required";
-  return activeContacts(candidate.contacts ?? []).some((contact) =>
-    Boolean(contact.email?.trim()),
-  )
+  return (candidate.activeContactCount ?? 0) > 0
     ? "ready"
     : "missing_contact";
 }
@@ -228,14 +228,23 @@ export async function readSourceNewStage04VendorPanel(
     slice,
     ...contractInput,
   });
+  const categoryId = SOURCE_CATEGORY_IDS.find(
+    (id) => id === input.categoryId?.trim(),
+  );
+  const archetype = resolveArchetypeForEvent({
+    categoryId: categoryId ?? null,
+    eventType: input.eventType,
+  });
   const suggestions = buildSourceRequestSupplierSuggestions({
     tenantKey: input.clientKey,
     eventId: input.eventId,
     acceptedMapping:
-      input.categoryId?.trim() && input.archetypeId?.trim()
+      archetype.source === "classifier_category" &&
+      archetype.categoryId &&
+      archetype.archetypeId
         ? {
-            categoryId: input.categoryId.trim(),
-            archetypeId: input.archetypeId.trim(),
+            categoryId: archetype.categoryId,
+            archetypeId: archetype.archetypeId,
           }
         : null,
     registryAvailable: candidateRegistry.registryAvailable,

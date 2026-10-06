@@ -64,7 +64,7 @@ function describeFailure(err: unknown, alreadySignedIn: boolean): string {
     return 'The demo user record is missing in Clerk. Ask Anand to re-run /api/admin/seed-clerk-metadata.'
   }
   if (message === 'clerk_not_configured') {
-    return 'Server is missing CLERK_SECRET_KEY. Ask Anand to check Vercel env vars.'
+    return 'Server is missing CLERK_SECRET_KEY. Ask an AbarVa admin to check runtime auth env vars.'
   }
   if (message === 'clerk_not_ready') {
     return 'Clerk JS did not finish loading. Refresh the page and retry.'
@@ -189,13 +189,13 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
         throw new Error('clerk_not_ready')
       }
 
-      const eligibility = await fetch('/api/auth/access-eligibility', {
+      const bootstrap = await fetch('/api/auth/launch-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: normalizedEmail }),
       })
-      if (!eligibility.ok) {
-        const payload = (await eligibility.json().catch(() => null)) as { error?: string } | null
+      if (!bootstrap.ok) {
+        const payload = (await bootstrap.json().catch(() => null)) as { error?: string } | null
         throw new Error(payload?.error || 'access_not_provisioned')
       }
 

@@ -1,0 +1,6 @@
+layer,source,object,transform_or_contract,quality_check,access_control,owner_role,known_gap
+landing,Workday export,worker feed,immutable raw snapshot with load timestamp,schema and row-count check,restricted service account,HR Data Platform Lead,change notification contract unconfirmed
+bronze,raw HR feed,bronze_worker,retain source columns and ingestion metadata,duplicate key and late-file checks,restricted engineering access,Data Engineering Lead,late corrections policy open
+silver,bronze_worker,worker_current,normalize status org location and effective dates,effective-date overlap and null checks,role-based views,HR Data Steward,contingent labor coverage incomplete
+gold,worker_current plus requisition/time/LMS,workforce marts,certified measures and semantic definitions,control totals and metric tests,HR analyst/leader roles,HR Analytics Lead,10 report definitions need owner approval
+serving,certified gold models,BI semantic layer,10 reports with row/aggregate access policy,refresh and reconciliation monitor,least privilege; suppress small cells,BI Product Owner,refresh SLA and support model not approved

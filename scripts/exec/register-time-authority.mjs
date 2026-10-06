@@ -50,6 +50,8 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 
+import { branchesInClaim } from "./fossil-claims.mjs";
+
 // ---------------------------------------------------------------------------
 // Parsing. Exported so the suite can assert on structure, not on stdout prose.
 // ---------------------------------------------------------------------------
@@ -934,8 +936,51 @@ export function resolveItemClaim(lines, { itemId, identity, nowMs, windowHours }
 const PATH_SUFFIX =
   /\.(?:mjs|cjs|jsx?|tsx?|json|jsonc|md|mdx|ya?ml|sql|css|scss|html|sh|toml|txt|csv|png|svg)$/i;
 
+/**
+ * A segment of a route path that is not spelled in plain path characters
+ * (item T-835).
+ *
+ * The framework writes four of these, and before this item the token class
+ * admitted none of them, so a declared entry naming a route file was not
+ * vetoed by any rule above — it was never seen as a path at all. Measured over
+ * the live register at `3731a69714`: 223 slashed tokens carrying a bracket,
+ * and 0 of them held anything. 357 files under `src/app` carry a bracketed
+ * segment and 341 carry a route group, so this is most of the route tree.
+ *
+ * This is a false PASS, which is the expensive direction: it puts two runs on
+ * one route file and tells neither. T-804, by contrast, was a false REFUSAL,
+ * which costs one reader a second look and names itself.
+ *
+ * The grammar is deliberately the framework's and not "any bracket", because
+ * the register is full of markdown links and a class admitting `[` and `(`
+ * loosely reads `[the record](docs/x.md)` as one token and invents a path
+ * called `text](docs/x.md`. A group must be BALANCED and must hold path
+ * characters only, which a link's target never does — it holds a slash.
+ */
+const DYNAMIC_SEGMENT = "\\[{1,2}(?:\\.{3})?[A-Za-z0-9_.-]+\\]{1,2}"; // [id] [...slug] [[...filter]]
+const ROUTE_GROUP = "\\((?:\\.{1,3})?[A-Za-z0-9_.-]+\\)"; // (maestro) (.)photo (..)feed
+const ROUTE_GROUPING = `(?:${DYNAMIC_SEGMENT}|${ROUTE_GROUP})`;
+
+/**
+ * One path segment over a given class of plain characters.
+ *
+ * Written so that every repetition must consume a bracket or a paren: a plain
+ * run appears once per iteration and never nests inside another quantifier.
+ * The naive `(?:PLAIN+|GROUP)+` is the classic exponential-backtracking shape,
+ * and this reader runs over every line of a 3.8 MB register.
+ */
+const routeSegment = (plain) =>
+  `(?:${plain}+|${ROUTE_GROUPING}${plain}*)(?:${ROUTE_GROUPING}${plain}*)*`;
+
 /** A candidate path token: at least one `/`, path characters only. */
-const PATH_TOKEN = /(?:^|[\s(`'"|,;])((?:\.{0,2}\/)?[A-Za-z0-9_.@-]+(?:\/[A-Za-z0-9_.@*-]+)*\/?(?:\*\*?)?)/g;
+const PATH_TOKEN = new RegExp(
+  "(?:^|[\\s(`'\"|,;])((?:\\.{0,2}\\/)?" +
+    routeSegment("[A-Za-z0-9_.@-]") +
+    "(?:\\/" +
+    routeSegment("[A-Za-z0-9_.@*-]") +
+    ")*\\/?(?:\\*\\*?)?)",
+  "g",
+);
 
 /**
  * Normalise a path as the register writes it: backticked, comma-separated,
@@ -1282,11 +1327,58 @@ const PATH_TAIL_ATTRIBUTION_REACH_TOKENS = 8;
  * recorded, so it is gone rather than left carrying a claim no test can check.
  * The anchor is what does this work, and the suite pins the anchor.
  */
+/**
+ * A collective anaphor — the word that says an attribution governs the WHOLE
+ * list rather than only the member it sits behind.
+ *
+ * This is the entire licence for the skip below (item C-560), so it is written
+ * as vocabulary rather than as a wildcard. Without one of these words the
+ * attribution's subject is the coordinated member alone and the path in front
+ * of it goes on holding, which is the hold-preserving reading: a wrong free
+ * costs another lane its work silently, a wrong hold costs one refusal that
+ * names itself.
+ */
+const PATH_TAIL_LIST_ANAPHOR = "(?:both|all|each|either|neither|these|those|them)";
+
+/**
+ * A list member named in WORDS instead of as a path, and the anaphor behind it.
+ *
+ * `PATH_LIST_JOINER` only ever joins a path to a path, so a list whose members
+ * are one file and one artifact named in prose — `` `<path>` and the coverage
+ * census, both held by <holder> `` — leaves the described member sitting
+ * between the path and its attribution. Both attribution patterns are anchored
+ * at the head of the tail, so they cannot see past it and the holder falls
+ * outside the reach as well; the path holds, and the sentence that REPORTED
+ * somebody else's hold has created one of its own.
+ *
+ * That is a ratchet, which is why it is repaired rather than recorded: a run
+ * documenting why it passed an item over freezes the file it names, outliving
+ * the claim it was describing, so the more carefully runs record refusals the
+ * less of the tree stays claimable. Measured on the live register at
+ * 2026-09-27T20:41Z, one such sentence was the only hold on
+ * `.github/workflows/unit-suites.yml` and it refused a correct claim.
+ *
+ * TWO BOUNDS KEEP THE SKIP HONEST, and both are testable. The member may be at
+ * most `PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS` words, and no word of it may
+ * contain `.`, `;` or `/` — so the skip cannot cross a sentence boundary and
+ * cannot step over a path, which is the joiner's job and not this one's.
+ */
+const PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS = 4;
+
+const PATH_TAIL_COORDINATED_MEMBER = new RegExp(
+  `^(?:(?:and|or|plus)\\s+)?(?:[^.;/\\s]+\\s+){0,${PATH_TAIL_COORDINATED_MEMBER_REACH_TOKENS}}` +
+    `${PATH_TAIL_LIST_ANAPHOR}[,\\s]+`,
+  "i",
+);
+
 function pathAttributionTail(after) {
   const cleaned = String(after)
     .replace(/^[`'")\]*,\s]+/, "")
     .replace(/`[^`]*`/g, "ref");
-  return cleaned.split(/\s+/).slice(0, PATH_TAIL_ATTRIBUTION_REACH_TOKENS).join(" ");
+  // The skip runs BEFORE the reach is counted, so the eight-token budget is
+  // spent on the attribution itself rather than on the list it governs.
+  const governed = cleaned.replace(PATH_TAIL_COORDINATED_MEMBER, "");
+  return governed.split(/\s+/).slice(0, PATH_TAIL_ATTRIBUTION_REACH_TOKENS).join(" ");
 }
 
 /** Whether an attribution behind the list hands the whole list to somebody else. */
@@ -1343,7 +1435,76 @@ function pathOccurrences(line) {
  * and hold the other two — a reading nobody chose, produced by a character
  * bound that cannot cross the full stop inside a filename.
  */
+/**
+ * The `files:` label that introduces a line's DECLARED list, if it has one.
+ *
+ * The LAST occurrence is the declaration, and that is a measured choice rather
+ * than a tidy one: 22 lines of the live register write `files:` more than
+ * once, and on every one of them the earlier occurrences are prose ABOUT the
+ * field — including, exactly once, a run arguing that this very rule should
+ * not be adopted. Anchoring on the first would read that argument as the
+ * declaration and lock whatever it happened to cite.
+ */
+const DECLARED_FILE_LIST_LABEL = /\bfiles:\s*/gi;
+
+/**
+ * The paths a line DECLARES, or `null` when it declares none.
+ *
+ * `null` and `[]` are different answers and the caller depends on it: `null`
+ * means there is no declaration to be authoritative, and `[]` means the line
+ * declared a list that names no path — a declaration of nothing, which holds
+ * nothing and does not fall back to the sentence around it.
+ */
+export function declaredFileList(text) {
+  const line = String(text ?? "");
+  DECLARED_FILE_LIST_LABEL.lastIndex = 0;
+  const labels = [...line.matchAll(DECLARED_FILE_LIST_LABEL)];
+  if (labels.length === 0) return null;
+  const last = labels[labels.length - 1];
+  // The same reader, over the declared tail alone. Running it rather than
+  // splitting on commas keeps one normaliser, one notion of `file` versus
+  // `scope`, and one dedupe — and measured over every line of the register it
+  // frees 278 holds and creates ZERO, so no veto fires inside a bare list.
+  return pathsNamedAnywhere(line.slice(last.index + last[0].length));
+}
+
+/**
+ * Every repo path this line HOLDS.
+ *
+ * THE DECLARATION IS THE LOCK (item T-804). Every veto below reads the
+ * sentence AROUND a path and decides from it, and each was added because a
+ * correctly-written claim line was refused on a file nobody claimed. That is
+ * a ratchet rather than a bug list: the more carefully a run records why it
+ * passed an item over, the more of the tree it freezes, and the next shape of
+ * sentence is only ever discovered by the refusal it causes. On 2026-10-05
+ * three accidental holds were created that way, two of them refusing a
+ * correct claim; one was not a disclaimer at all but a plain explanation of
+ * why a measurement read zero, which no reader of prose can be taught to let
+ * through without also letting through a real claim.
+ *
+ * So when a line declares a `files:` list, that list is the whole of its lock
+ * and nothing reads its prose. The protocol already requires the field — a
+ * claim is appended "with the exact files you intend to touch" — and 697 of
+ * the 709 claim lines that hold a path carry one.
+ *
+ * A line that declares NO list is unchanged, and that residual is deliberate:
+ * 170 path-holding lines are `AMEND`-shaped, extending an earlier claim by
+ * naming a file in a sentence, and they mean to hold what they name. Freeing
+ * those would put two runs on one file. A wrong free costs another lane its
+ * work silently; a wrong hold costs one refusal that names itself.
+ */
 export function claimedPaths(text) {
+  const line = String(text ?? "");
+  const declared = declaredFileList(line);
+  return declared === null ? pathsNamedAnywhere(line) : declared;
+}
+
+/**
+ * Every repo path NAMED anywhere on the text, with mere mentions dropped.
+ *
+ * Reached only when no list is declared. Unchanged below this line.
+ */
+function pathsNamedAnywhere(text) {
   const line = String(text ?? "");
   const out = new Map();
   const occurrences = pathOccurrences(line);
@@ -2025,18 +2186,74 @@ export function crossHalfCueMovement(texts) {
   };
 }
 
-export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours }) {
-  const requested = [];
-  const unparsed = [];
-  for (const raw of files ?? []) {
-    const normalised = normalisePath(raw);
-    if (normalised) requested.push(normalised);
-    else if (String(raw).trim()) unparsed.push(String(raw).trim());
+/*
+ * A branch that is gone from `origin` is the register's own definition of a
+ * claim that has landed (item C-559).
+ *
+ * `git ls-remote` is the authority and nothing local is, because a
+ * remote-tracking ref survives the deletion of the branch it tracks until
+ * someone prunes. Reading `refs/remotes/origin/<name>` would therefore answer
+ * "still live" for a branch deleted an hour ago and "landed" for one pushed a
+ * minute ago by a run that never fetched — wrong in BOTH directions, and the
+ * second direction hands a live claim's files to another agent, which is worse
+ * than the freeze this whole item exists to end.
+ *
+ * Fails CLOSED. A network error, a missing remote, a non-zero git — anything
+ * that is not a clear "this head does not exist" — answers `false`, so the
+ * contention stands. The caller cannot turn an unanswerable question into
+ * permission by unplugging the network.
+ */
+export function branchGoneFromOrigin(branch, { repoDir, lsRemote } = {}) {
+  if (typeof branch !== "string" || !branch.trim()) return false;
+  const ask =
+    lsRemote ??
+    ((name) =>
+      execFileSync("git", ["ls-remote", "--heads", "origin", `refs/heads/${name}`], {
+        cwd: repoDir ?? process.cwd(),
+        encoding: "utf8",
+        env: { ...process.env, GH_TOKEN: "" },
+        stdio: ["ignore", "pipe", "pipe"],
+      }));
+  let out;
+  try {
+    out = ask(branch.trim());
+  } catch {
+    return false;
   }
+  if (typeof out !== "string") return false;
+  return out.trim() === "";
+}
 
+/**
+ * Every repo path a LIVE claim holds right now, with its holder and the
+ * instant that hold expires (item C-566).
+ *
+ * This exists because the gate could answer the question and nothing else
+ * could ask it. `resolveFileOverlap` below has read this correctly since
+ * T-706, but only ever for a file list an agent had already chosen — so the
+ * refusal arrived AFTER the agent had picked its row and re-verified it on
+ * `main`, which is the expensive half. Two consecutive scheduled runs paid
+ * that on 2026-09-27. Publishing the holds lets a reader intersect for
+ * itself, before it spends anything.
+ *
+ * It is factored OUT of `resolveFileOverlap` rather than reimplemented beside
+ * it. A second reader of one grammar is the defect T-717 and T-747 both cost,
+ * and the release, abstention, window and ownership rules below are exactly
+ * the ones a published hold has to agree with — if they ever disagreed, the
+ * queue would advertise a hold the gate does not enforce, or stay silent
+ * about one it does.
+ *
+ * `identity` is optional and OMITTING IT IS THE NORMAL CASE for a reader with
+ * no run of its own, such as the queue generator: with no identity every live
+ * hold is reported, including one the asking run placed itself. A caller that
+ * passes an identity gets its own holds dropped, which is what the overlap
+ * gate wants and what a published table must not do.
+ *
+ * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @param {{ nowMs:number, windowHours?:number, identity?:string|null }} opts
+ */
+export function heldPaths(lines, { nowMs, windowHours, identity = null }) {
   const windowMs = (windowHours ?? CLAIM_WINDOW_HOURS) * 3600 * 1000;
-  const conflicts = [];
-  const notes = [];
 
   const inWindow = lines.filter(
     (line) =>
@@ -2061,31 +2278,88 @@ export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours 
     if (prior === undefined || line.stampMs > prior) releasedAt.set(line.agent, line.stampMs);
   }
 
+  const out = [];
   for (const line of inWindow) {
     // An abstention holds nothing. It names files to say who else is on them.
     if (announcesRelease(line.text) || announcesAbstention(line.text)) continue;
     const released = releasedAt.get(line.agent);
     if (released !== undefined && released >= line.stampMs) continue;
-    const ownership = resolveClaimOwnership(line.agent, identity);
+    const ownership = identity === null ? "unowned" : resolveClaimOwnership(line.agent, identity);
     // Only this exact run may hold its own files. A SIBLING contends: that is
     // the distinction base-name keying loses, one level down from T-706.
     if (ownership === "own") continue;
 
-    const held = new Map(claimedPaths(line.text).map((p) => [p.path, p]));
-    for (const want of requested) {
-      const match = held.get(want.path);
-      if (!match) continue;
-      const entry = {
-        path: want.path,
-        lineNumber: line.lineNumber,
-        stamp: line.stamp,
+    // The branches this claim names, carried on every hold so resolveFileOverlap
+    // can tell when a claim whose branch(es) have landed holds nothing (item C-559).
+    const branches = branchesInClaim(line.text);
+    for (const { path: held, kind } of claimedPaths(line.text)) {
+      out.push({
+        path: held,
+        kind,
+        branches,
         agent: line.agent,
         ownership,
+        lineNumber: line.lineNumber,
+        stamp: line.stamp,
+        stampMs: line.stampMs,
+        expiresAtMs: line.stampMs + windowMs,
         excerpt: line.text.slice(0, 200),
-      };
-      // A directory or glob is a SCOPE, not a lock — in either position.
-      if (want.kind === "scope" || match.kind === "scope") notes.push(entry);
-      else conflicts.push(entry);
+      });
+    }
+  }
+
+  return out;
+}
+
+export function resolveFileOverlap(lines, { files, identity, nowMs, windowHours, landedBranches }) {
+  const landed = new Set(
+    Array.from(landedBranches ?? [])
+      .map((b) => String(b).trim())
+      .filter(Boolean),
+  );
+  const requested = [];
+  const unparsed = [];
+  for (const raw of files ?? []) {
+    const normalised = normalisePath(raw);
+    if (normalised) requested.push(normalised);
+    else if (String(raw).trim()) unparsed.push(String(raw).trim());
+  }
+
+  const conflicts = [];
+  const notes = [];
+
+  // One reader (item C-566). The window, the release rule, the abstention
+  // rule, the ownership rule and `claimedPaths` all live in `heldPaths`, so
+  // the queue's published table and this refusal cannot drift apart.
+  //
+  // Every hold is walked, not one per path: two runs holding the same file is
+  // two conflicts, and collapsing them would report one of the two holders.
+  const wanted = new Map(requested.map((want) => [want.path, want]));
+  for (const hold of heldPaths(lines, { nowMs, windowHours, identity })) {
+    const want = wanted.get(hold.path);
+    if (!want) continue;
+    const entry = {
+      path: want.path,
+      lineNumber: hold.lineNumber,
+      stamp: hold.stamp,
+      agent: hold.agent,
+      ownership: hold.ownership,
+      excerpt: hold.excerpt,
+    };
+    // A directory or glob is a SCOPE, not a lock — in either position.
+    if (want.kind === "scope" || hold.kind === "scope") {
+      notes.push(entry);
+    } else if (
+      landed.size > 0 &&
+      Array.isArray(hold.branches) &&
+      hold.branches.length > 0 &&
+      hold.branches.every((b) => landed.has(b))
+    ) {
+      // Item C-559: a claim whose branch(es) have all landed holds nothing; it is
+      // a NOTE (freed), never a lock, so another run may take its files.
+      notes.push({ ...entry, landedBranches: hold.branches });
+    } else {
+      conflicts.push(entry);
     }
   }
 
@@ -2471,6 +2745,159 @@ export const HARD_CODES = new Set([
   "worktree_shared",
 ]);
 
+
+// ---------------------------------------------------------------------------
+// Corrections (item C-579).
+// ---------------------------------------------------------------------------
+
+/**
+ * A line that says it is correcting an earlier one.
+ *
+ * Deliberately only the CORRECT* family, not the AMEND* family: T-457's words
+ * are "append a correction", and an amendment in this register is a claim
+ * widening its file list rather than a figure being sourced. The narrower
+ * vocabulary is the safe direction — a lane that wants a discharge can say
+ * "CORRECTION", which is what the rule already tells it to say.
+ */
+const CORRECTION_MARKER = /\b(?:CORRECTION|CORRECTING|CORRECTS|CORRECTED)\b/i;
+
+/**
+ * Which violation codes an appended line can discharge, and what that line
+ * must itself do to discharge one.
+ *
+ * **The table fails closed: a code absent from it is never correctable.** That
+ * is not laziness, it is the semantics — no sentence appended later can
+ * un-future a stamp or un-share a checkout, so `future_stamp` and
+ * `worktree_shared` have no entry and must not acquire one. Only a defect that
+ * is *a figure missing from the line* can be repaired by a later line
+ * supplying the figure.
+ *
+ * Each predicate asks the same question the audit asked, of the correcting
+ * line, with one exclusion: the stamp it quotes to identify the line it is
+ * correcting is a REFERENCE, not one of the instants it sourced. Counting it
+ * would make "CORRECTION: my 16:04Z line was wrong, it started at 09:30:00Z"
+ * read as two timestamps, which is the cheapest possible way to fake a
+ * correction and the one this exclusion exists to stop.
+ *
+ * The predicate is otherwise the audit's own condition verbatim, duplicates
+ * included. A discharge rule stricter than the rule it discharges would mean a
+ * line the audit calls clean cannot clear another, which is a second
+ * inconsistency to explain rather than a guard.
+ *
+ * Item C-583 added the second entry, and it is the same principle rather than
+ * a widening of it. `drifted_without_authority` fires on a line stamped well
+ * after its merge that does not quote the authoritative instant — and the
+ * audit ALREADY clears it when the same line does quote it (`citesAuthority`).
+ * A later line quoting that same instant supplies exactly the figure the
+ * original omitted, so refusing it meant the identical repair was accepted on
+ * the line and rejected one line below it, which is the inverse of what T-457
+ * instructs a lane to do. Its predicate is narrower than the first entry's on
+ * purpose: not "two instants" and not "any instant the authority holds", but
+ * the `mergedAt` of THE PULL REQUEST THE ORIGINAL ANNOUNCED. That figure is
+ * unavailable to prose and unsatisfiable by another pull request's timestamp,
+ * which is what keeps this from becoming a gate a sentence can pass.
+ *
+ * The resolved authority set is threaded in as context rather than re-read
+ * inside the predicate: the discharge is then decided from the same authority
+ * the audit judged against, and a table of pure functions stays testable
+ * without the network.
+ *
+ * The two predicates therefore differ in one visible way: the first excludes
+ * the flagged line's own stamp from the instants it counts, and the second
+ * does not. That is not an inconsistency. The exclusion exists because an
+ * `unsourced_elapsed` line can be "corrected" by a sentence that names only
+ * the stamp it is referring to; `drifted_without_authority` cannot be, because
+ * it only fires when the stamp is more than the tolerance away from `mergedAt`
+ * and the two are then never the same string.
+ *
+ * @type {Map<string, (correcting: { citedTimes: string[] }, violation: { stamp: string, pr?: number }, context: { authority: Record<string, {mergedAt?: string}> | null }) => boolean>}
+ */
+export const CORRECTABLE_CODES = new Map([
+  [
+    "unsourced_elapsed",
+    (correcting, violation) =>
+      correcting.citedTimes.filter((t) => t !== violation.stamp).length >= 2,
+  ],
+  [
+    "drifted_without_authority",
+    (correcting, violation, context) => {
+      const mergedAt = context?.authority?.[String(violation.pr)]?.mergedAt;
+      // No authority for that pull request is not a discharge. The audit
+      // reports that case as `authority_missing` in its own right, and a
+      // lookup that finds nothing must never read as a pass. Reachable only
+      // through a direct call with an authority set that does not hold the
+      // pull request, which is why the suite asserts it on the predicate
+      // rather than end to end.
+      if (!mergedAt) return false;
+      // No `t !== violation.stamp` exclusion here, and its absence is
+      // deliberate rather than an oversight of the first entry's shape. This
+      // code only fires when the stamp is more than TOLERANCE_SECONDS after
+      // `mergedAt`, so the two can never be the same string and the exclusion
+      // could never run — measured, not reasoned: an authority whose mergedAt
+      // equals the flagged stamp yields driftSeconds 0, citesAuthority true,
+      // and no violation at all. A guard no mutation can kill is the shape
+      // this directory exists against, so it is stated here instead.
+      return correcting.citedTimes.includes(mergedAt);
+    },
+  ],
+]);
+
+/**
+ * Find, for each violation, the appended line that discharges it — and annotate
+ * the violation in place rather than dropping it.
+ *
+ * The defect C-579 was filed against: `auditLines` judged every line in
+ * isolation, so T-457's prescribed repair ("never restamp; append a
+ * correction") could not reach the number the control prints. The only way to
+ * read clean was to restamp, which the rule forbids, so the figure measured
+ * nothing about whether the register had been maintained.
+ *
+ * A discharging line must clear all four conditions. Dropping any one of them
+ * turns this into a gate satisfiable by prose:
+ *
+ *   1. it is BELOW the line it corrects — the register is append-only, so an
+ *      earlier line naming a later stamp is not a correction of it, and
+ *      allowing it would let a lane pre-authorise its own next violation;
+ *   2. it quotes that line's stamp verbatim, so the reader can find the pair;
+ *   3. it says it is a correction; and
+ *   4. it satisfies `CORRECTABLE_CODES` for the code — the half that keeps a
+ *      sentence from being enough.
+ *
+ * Window is deliberately not a condition: a correction is always below the
+ * line it repairs and therefore inside `now`, and a discharge that expired
+ * would reintroduce the permanence this item is about.
+ *
+ * `authority` is passed through to the predicates rather than consulted here:
+ * C-583's discharge needs the `mergedAt` of the pull request the flagged line
+ * announced, and reading it from the set the audit already resolved keeps this
+ * function free of the network and the predicates free of a second authority.
+ *
+ * @param {Array<{code:string, stamp:string, lineNumber:number}>} violations
+ * @param {ReturnType<typeof parseRegisterLines>} lines
+ * @param {{authority?: Record<string, {mergedAt?: string}> | null}} [context]
+ * @returns {Array<{code:string, stamp:string, lineNumber:number, corrected?:{byLine:number, byStamp:string}}>} the same violations
+ */
+export function annotateCorrections(violations, lines, context = {}) {
+  const resolved = { authority: context?.authority ?? null };
+  for (const violation of violations) {
+    const satisfies = CORRECTABLE_CODES.get(violation.code);
+    if (!satisfies) continue;
+    if (!violation.stamp) continue;
+
+    const discharge = lines.find(
+      (line) =>
+        line.lineNumber > violation.lineNumber &&
+        line.text.includes(violation.stamp) &&
+        CORRECTION_MARKER.test(line.text) &&
+        satisfies(line, violation, resolved),
+    );
+    if (discharge) {
+      violation.corrected = { byLine: discharge.lineNumber, byStamp: discharge.stamp };
+    }
+  }
+  return violations;
+}
+
 // ---------------------------------------------------------------------------
 // Authority resolution.
 // ---------------------------------------------------------------------------
@@ -2530,6 +2957,14 @@ function flag(name) {
 }
 function has(name) {
   return process.argv.includes(name);
+}
+/** Every value of a repeatable flag, in argv order. `flag()` returns only the first. */
+function flagAll(name) {
+  const out = [];
+  for (let i = 0; i < process.argv.length; i += 1) {
+    if (process.argv[i] === name && process.argv[i + 1] !== undefined) out.push(process.argv[i + 1]);
+  }
+  return out;
 }
 
 function isMain() {
@@ -2661,7 +3096,7 @@ if (isMain()) {
         // `--files` shipped in T-707 and was never added here, so from the moment
         // T-708 wired the helper up, the file half of this gate could not be run
         // through the sanctioned path at all. Found by execution, not by reading.
-        "usage: --preclaim --file <register.md> --item <id> --identity <base-agent#run-id> [--files a,b,c] [--now ISO] [--window-hours 3] [--strict] [--json]",
+        "usage: --preclaim --file <register.md> --item <id> --identity <base-agent#run-id> [--files a,b,c] [--landed-branch <name>] [--repo-dir <path>] [--now ISO] [--window-hours 3] [--strict] [--json]",
       );
       process.exit(2);
     }
@@ -2678,6 +3113,36 @@ if (isMain()) {
     // Item T-707. The file check is opt-in, and when it does not run it says
     // so: a gate that reports nothing is indistinguishable from a gate that
     // found nothing, which is the substitution this backlog exists against.
+    /*
+     * Item C-559. `--landed-branch` is a REQUEST, and this is where it is
+     * checked rather than believed. The caller names a branch it says has
+     * landed; the gate asks `origin` whether that head still exists and
+     * refuses the whole run as a usage error if it does.
+     *
+     * Refusing rather than ignoring is the point. Ignoring an unverifiable
+     * request would let a caller pass the flag, see the claim still contended,
+     * and read that as "the other agent holds it" — when what happened is that
+     * its own assertion was false. A gate that quietly discards an input it
+     * was asked to act on is the substitution this directory keeps paying for.
+     */
+    const landedRequested = flagAll("--landed-branch").map((b) => b.trim()).filter(Boolean);
+    const repoDir = flag("--repo-dir") ?? process.cwd();
+    const landedBranches = [];
+    const landedRefused = [];
+    for (const branch of landedRequested) {
+      if (branchGoneFromOrigin(branch, { repoDir })) landedBranches.push(branch);
+      else landedRefused.push(branch);
+    }
+    if (landedRefused.length) {
+      console.error(
+        `--landed-branch named ${landedRefused.length} branch(es) that origin still has a head for, ` +
+          "or that could not be resolved against origin at all. A claim is not free until its branch " +
+          "is gone; this check fails closed, so a network error reads the same as a live branch. " +
+          `Not honoured: ${landedRefused.join(", ")}`,
+      );
+      process.exit(2);
+    }
+
     const filesArg = flag("--files");
     let fileOverlap = { checked: false, requested: [], unparsed: [], conflicts: [], notes: [], refuses: false };
     if (filesArg !== undefined) {
@@ -2689,6 +3154,7 @@ if (isMain()) {
         identity,
         nowMs,
         windowHours,
+        landedBranches,
       });
     }
 
@@ -2738,6 +3204,13 @@ if (isMain()) {
           console.log(`      ${c.excerpt}`);
         }
         for (const n of fileOverlap.notes) {
+          if (n.landedBranches) {
+            console.log(
+              `    [landed] ${n.path} was held by line ${n.lineNumber} ${n.stamp} ${n.agent}, ` +
+                `whose branch(es) ${n.landedBranches.join(", ")} are gone from origin — not a lock`,
+            );
+            continue;
+          }
           console.log(`    [note] ${n.path} is a shared scope, not a lock — also named by ${n.agent} on line ${n.lineNumber}`);
         }
         for (const u of fileOverlap.unparsed) {
@@ -2806,8 +3279,15 @@ if (isMain()) {
 
   const strict = has("--strict");
   report.strict = strict;
-  report.failing = report.violations.filter((v) => strict || HARD_CODES.has(v.code));
-  report.advisory = report.violations.filter((v) => !strict && !HARD_CODES.has(v.code));
+  // Item C-579. A violation that a later line corrected, exactly as T-457
+  // prescribes, is still reported — it is moved out of `failing`, never out of
+  // `violations`. Hiding it would make the correction unreadable, and the
+  // point of the register is that the pair is readable.
+  annotateCorrections(report.violations, lines, { authority });
+  report.corrected = report.violations.filter((v) => v.corrected);
+  const undischarged = report.violations.filter((v) => !v.corrected);
+  report.failing = undischarged.filter((v) => strict || HARD_CODES.has(v.code));
+  report.advisory = undischarged.filter((v) => !strict && !HARD_CODES.has(v.code));
   report.driftSummary = summariseDrift(report.drift);
   report.toleranceSeconds = TOLERANCE_SECONDS;
   report.window = { since: sinceIso, now: nowIso };
@@ -2851,11 +3331,16 @@ if (isMain()) {
     }
     console.log(
       `  violations:        ${report.violations.length} ` +
-        `(${report.failing.length} failing, ${report.advisory.length} advisory` +
+        `(${report.failing.length} failing, ${report.advisory.length} advisory, ` +
+        `${report.corrected.length} corrected` +
         `${strict ? ", --strict" : ""})`,
     );
     for (const v of report.violations) {
-      const mark = report.failing.includes(v) ? "" : " [advisory]";
+      const mark = v.corrected
+        ? ` [corrected by line ${v.corrected.byLine} (${v.corrected.byStamp})]`
+        : report.failing.includes(v)
+          ? ""
+          : " [advisory]";
       console.log(`    [${v.code}]${mark} line ${v.lineNumber} ${v.stamp} ${v.agent}: ${v.detail}`);
     }
   }

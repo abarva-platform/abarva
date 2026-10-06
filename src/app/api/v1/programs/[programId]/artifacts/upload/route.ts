@@ -3,12 +3,13 @@
 // registers it in move_artifacts so it appears in the File Cabinet. This is the
 // in-tool entry point for the off-platform evidence (meeting notes, session
 // outputs, data exports, filled templates) that grounds deliverables and closes
-// gates. Fields: file (required), phase, family, title.
+// gates. Fields: file (required), phase, family, title, evidenceFamily.
 
 import { NextRequest } from "next/server";
-import { createHash } from "node:crypto";
 import { requireTenancy, tenancyErrorResponse } from "../../../_auth";
 import {
+  artifactTypeForUpload,
+  safeArtifactSlug,
   saveMoveArtifact,
   type ArtifactFamily,
 } from "@/lib/programs/deliverables/move-artifacts";
@@ -18,7 +19,17 @@ import {
   MAX_ATTACHMENT_SIZE_BYTES,
 } from "@/lib/programs/attachments/mime";
 import { getProgramById } from "@/lib/programs/queries";
-import { ingestUploadedMoveEvidence } from "@/lib/programs/current-state-doc-ingest";
+import {
+  assessMoveUploadSensitivity,
+  ingestUploadedMoveEvidence,
+} from "@/lib/programs/current-state-doc-ingest";
+import { sensitiveUploadRejectedResponse } from "@/lib/security/sensitive-upload-guard";
+import {
+  buildDiscoveryBlueprintInputFromProgram,
+  resolveDeclaredProgramArchetypeId,
+} from "@/lib/programs/discovery/evidence-readiness";
+import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import { resolveMoveUploadEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,31 +42,7 @@ const UPLOAD_FAMILIES = new Set<ArtifactFamily>([
   "approval_artifact",
 ]);
 
-export function safeArtifactSlug(value: string): string {
-  const slug = value
-    .toLowerCase()
-    .replace(/\.[^.]+$/, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 80);
-  return slug || "file";
-}
-
-export function artifactTypeForUpload({
-  body,
-  family,
-  fileName,
-  phase,
-}: {
-  body: Buffer;
-  family: ArtifactFamily;
-  fileName: string;
-  phase: number;
-}): string {
-  if (family !== "uploaded_evidence") return family;
-  const hash = createHash("sha256").update(body).digest("hex").slice(0, 12);
-  return `uploaded_evidence_p${phase}_${safeArtifactSlug(fileName)}_${hash}`;
-}
+export { artifactTypeForUpload, safeArtifactSlug };
 
 export async function POST(
   req: NextRequest,
@@ -99,9 +86,61 @@ export async function POST(
         ? familyRaw
         : "uploaded_evidence"
     ) as ArtifactFamily;
+    // Optional: the required evidence family the uploader says this file
+    // covers. Without it the file is routed by keywords in its name and
+    // opening lines, which credits it to whichever family those words happen
+    // to favour. Validated here, before anything is stored, against the
+    // families this Move's discovery actually requires — an unknown key is
+    // refused rather than silently falling back to inference.
+    let declaredFamilyKey: string | null = null;
+    if (String(form.get("evidenceFamily") ?? "").trim()) {
+      if (family !== "uploaded_evidence") {
+        return Response.json(
+          {
+            error: "evidence_family_requires_evidence_upload",
+            detail: "A required evidence family can only be declared for evidence uploads.",
+          },
+          { status: 400 },
+        );
+      }
+      const uploadProgram = await getProgramById(ctx, programId);
+      const discoveryFamilyIds = getDiscoveryBlueprint(
+        buildDiscoveryBlueprintInputFromProgram(uploadProgram),
+        resolveDeclaredProgramArchetypeId(uploadProgram),
+      ).evidenceFamilies.map((evidenceFamily) => evidenceFamily.id);
+      const declared = resolveMoveUploadEvidenceFamily(
+        form.get("evidenceFamily"),
+        phase,
+        discoveryFamilyIds,
+      );
+      if (!declared.ok) {
+        return Response.json(
+          { error: "unknown_evidence_family", detail: declared.detail },
+          { status: 400 },
+        );
+      }
+      declaredFamilyKey = declared.familyKey;
+    }
     const title = String(form.get("title") ?? "").trim() || file.name;
     const ext = (file.name.split(".").pop() || "bin").toLowerCase();
     const body = Buffer.from(await file.arrayBuffer());
+
+    // Sensitive-data guard, before anything is stored. This route used to
+    // save the bytes first and scan only inside evidence ingestion, where a
+    // hit skipped model enrichment but still left the file stored and open
+    // for ordinary review. Every family is checked: a filled template or an
+    // approval record can carry the same identifiers as an evidence file.
+    const dataProtection = await assessMoveUploadSensitivity({
+      filename: file.name,
+      mimeType: file.type || "application/octet-stream",
+      buffer: body,
+      declaredClassification: form.get("dataClassification"),
+      cacheScope: ctx.clientKey ?? undefined,
+    });
+    if (dataProtection.decision === "quarantine") {
+      return sensitiveUploadRejectedResponse(dataProtection);
+    }
+
     const artifactType = artifactTypeForUpload({
       body,
       family,
@@ -135,8 +174,9 @@ export async function POST(
     // completely invisible to AI generation and phase gates — the exact gap
     // the evidence-context audit found. Best-effort: a failure here never
     // blocks the upload itself, since the blob/artifact record already saved.
-    let evidence: Awaited<ReturnType<typeof ingestUploadedMoveEvidence>> | null =
-      null;
+    let evidence: Awaited<
+      ReturnType<typeof ingestUploadedMoveEvidence>
+    > | null = null;
     let evidenceWarning: string | null = null;
     if (family === "uploaded_evidence" || family === "session_artifact") {
       try {
@@ -157,6 +197,7 @@ export async function POST(
           // IngestUploadedMoveEvidenceArgs.moveArtifactId).
           moveArtifactId: saved.artifactId,
           declaredClassification: form.get("dataClassification"),
+          declaredFamilyKey,
         });
       } catch (err) {
         evidenceWarning =

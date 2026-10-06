@@ -570,6 +570,43 @@ function latestClaimByStampThenAppend(entries) {
 
 const UPDATE_TITLE = /^(closed\b|confirmed\b|deploy verified\b|deployed\b|shipped\b|(?:squash-)?merged\b|pr(?:\s*\/\s*ci)?\b|pr\s*#?\d+\b|live-proven\b|signed-in\b|re-?verified\b|verified\b|misdescribed\b|resolved\b|superseded\b|[-\u2014\s]*closed\b)/i;
 
+/*
+ * ITEM C-584. A definition that retires ITSELF.
+ *
+ * This is deliberately NOT a widening of `UPDATE_TITLE`, and the reason is
+ * measured rather than cautious. `UPDATE_TITLE` decides what is an update
+ * NOTE, which decides what is SUBSTANTIVE, which decides `ambiguous`, which
+ * decides which stage and capability an id may promote. Adding a verb there
+ * moves all four for every id that carries it. This regex decides one thing —
+ * whether a definition says it is dead — and only an id with more than one
+ * substantive definition is asked.
+ *
+ * `withdrawn` is the verb `UPDATE_TITLE` lacks and the one the live corpus
+ * used: `C-634` carries two substantive definitions, the second reading
+ * `WITHDRAWN — false positive`, and because no reader recognised that word the
+ * id stayed at rung 0, stayed ambiguous, and was OFFERED as claimable work in
+ * the generated queue at 2026-10-04T00:05Z and again at 00:57Z. The closure
+ * verbs are here too because a competing definition that closed is the same
+ * hazard by a different word.
+ *
+ * Anchored at the head, after optional bold markup, for the reason every other
+ * rule in this file is anchored: a problem statement that MENTIONS a withdrawal
+ * is not one.
+ */
+const RETIRED_DEFINITION =
+  /^(?:withdrawn|retracted|rescinded|closed|closed-false|superseded|obsolete)\b/i;
+
+/**
+ * Does this definition declare itself withdrawn or closed?
+ *
+ * Read from the definition's own title and the head of its acceptance — the
+ * two cells the backlog's convention puts a verdict in — never from the body,
+ * which routinely narrates the withdrawal of something else.
+ */
+const isRetiredDefinition = (d) =>
+  RETIRED_DEFINITION.test(stripMd(d.title ?? "")) ||
+  RETIRED_DEFINITION.test(stripMd(d.acceptance ?? ""));
+
 /**
  * Every `Item <id> — title` prose item in the backlog, at any heading depth.
  *
@@ -991,7 +1028,165 @@ for (const [sample, num, expected] of [
 }
 
 const BLOCKER_RULES = [
-  { re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i, say: "Signed-in acceptance owed", ownerGate: true },
+  // Item C-534, second reader. The owed half of this pattern had no negation,
+  // so a sentence asserting that NO signed-in proof is owed was filed as one
+  // asserting a debt. The live case is C-534's own row: it is an item ABOUT
+  // this vocabulary, so its body quotes the register sentence "Signed-in
+  // acceptance **NOT owed**", the rule matched `signed-in` ... `owed` across
+  // the quotation, and the queue filed the only item that would repair the
+  // identical gap in `signed-in-proof-reconcile.mjs` as owing a live proof
+  // nobody may run unattended. The defect hid its own fix, and C-534 needs no
+  // signed-in run at all — it changes an operator script that renders nothing.
+  //
+  // A VETO, like the `blocked` rule's below, so it can only REMOVE matches —
+  // which is the direction that takes an item out of the never-claim bucket and
+  // therefore the one to be careful in. Two things keep it narrow, and each has
+  // a case in the suite that fails without it:
+  //
+  //   - The negator must sit ADJACENTLY to the owed word, crossing only the
+  //     emphasis the register writes it in (`**NOT owed**`, `is not owed`,
+  //     `none owed`). The register's most common owed phrasing is "Not
+  //     live-proven — signed-in check owed", where the negator belongs to
+  //     `live-proven`; a span-wide veto reads that as a release owing nothing
+  //     and would silence every row carrying it.
+  //   - It is vetoed per SENTENCE, by `firstUnvetoedMatch`, so a row that
+  //     quotes a not-owed line and ALSO states a real gate in another sentence
+  //     keeps the gate.
+  //
+  // MEASURED ON THE LIVE BACKLOG, and the measurement corrected the sentence
+  // that stood here first. This changes the derived blocker of 31 items, not of
+  // the two that motivated it. Every one of the 31 sits at rung 5, 6 or 7 —
+  // merged, deployed, or signed-in proven — and every one was labelled from a
+  // RELEASE line of its own saying the proof was not owed: "RELEASED item T-510
+  // — merged, DEPLOYED, ACA runtime invariant PROVEN", "`live-proven` is NOT
+  // owed and is not claimed: no product code changed". So the corrections are
+  // real and they are in the safe direction twice over: **zero rung-0 items
+  // move**, and claimability requires rung 0, so the claimable queue is
+  // identical before and after apart from its own generation timestamp —
+  // checked by regenerating it from both summaries and diffing, not by
+  // reasoning about rungs.
+  //
+  // AND IT DOES NOT FREE `C-534` OR `C-535`, which is why it was written. Their
+  // rows are vetoed correctly; what keeps them labelled is a DIFFERENT hole,
+  // found by measuring instead of assuming. Two unvetoed matches come from a
+  // CLAIM line — a sentence quoting the label itself ("the board derived the
+  // blocker \"Signed-in acceptance owed\" for it"), and the `files:` path list
+  // at the end of every claim line, where a release-record filename carrying
+  // the token matches `signed-in` ... `owed` across it. A filename is not a
+  // gate: that is the defect this file already pins for the `blocked` rule, and
+  // the signed-in rule still has it. Neither is a polarity question, so neither
+  // is fixed here; both are filed, each with the live line that produced it.
+  //
+  // ITEM C-563 — THE IMPERATIVE FORM, and it is the same miss T-596 repaired
+  // one rule below for the same stated reason.
+  //
+  // Every branch above reads a STATUS: a word like `pending`, `owed` or `not
+  // proven` within 80 characters of the token. That is how a RELEASE LINE
+  // reports a proof gap, and the register is full of it. An ACCEPTANCE states
+  // the same gate as an INSTRUCTION and carries no status word anywhere —
+  // "Run a signed-in phase build for one authorized tenant", "Generate one
+  // deliverable …, signed in, and record" — so no branch above could reach it.
+  //
+  // MEASURED by execution over the live operator root frozen at 19:50Z on
+  // 2026-09-27, from a scratch copy: the generated queue offered **7 claimable
+  // rows and 3 of them named work an agent is forbidden to do**. Two were this
+  // hole — `U-525` and `U-527`, both `blocker: null` while both acceptances
+  // direct a signed-in run that the queue's own *Blocked on Anand* section
+  // says an agent must not attempt. The watcher had already written that
+  // finding into the operator document at 18:15Z and again at 19:15Z, in
+  // prose, with no control; a narrated finding is the shape this file exists
+  // against.
+  //
+  // Three bounds keep it in the safe direction, each with a case in the suite
+  // that FAILS without it:
+  //
+  //   - The verb must ANCHOR — start of text, after a sentence terminator,
+  //     after a newline, or immediately after bold markup. T-762 established
+  //     that the head of the acceptance cell is a `\n` position, which is why
+  //     an instruction written there reaches this rule at all. Unanchored,
+  //     "we should run a signed-in check later" becomes a gate, which is the
+  //     un-narrowing the branches above had to be rescued from once.
+  //   - The span is ONE CLAUSE, `[^.;\n]`. Written `[\s\S]` the imperative
+  //     reaches over a full stop into a later descriptive mention and gates
+  //     ordinary executable work. The SEMICOLON is in that set for a reason
+  //     found by a failing guardrail rather than by reasoning: `sentenceAround`
+  //     — which is what the veto reads — starts at the MATCH INDEX and ends at
+  //     the first `.` or `;` after it. A match that begins at an imperative
+  //     120 characters before the token therefore hands the veto a window that
+  //     can END BEFORE the token, so "Run the exporter …; a signed-in proof is
+  //     not owed here" matched unvetoed. Aligning the span with the veto's own
+  //     window is what makes the veto reach this branch at all; widening the
+  //     veto would have been the wrong half to touch, because every branch
+  //     above shares it.
+  //   - The verb list is CLOSED and each entry is a live acceptance's opening
+  //     verb. `Confirm`, `Assert` and `Check` are deliberately absent: those
+  //     open an assertion about an artifact, which a test can make.
+  //
+  // `signed[- ]in` rather than `signed-in`: the branches above spell only the
+  // hyphenated token and `U-527` writes "signed in" as an aside, so half the
+  // corpus's spelling was unreadable. Measured, admitting the space changes
+  // this rule's verdict for exactly the rows named here.
+  //
+  // Measured on the live corpus, this widening and the `not agent work` term
+  // below move **4 items together and no others** — `C-562`, `U-525`, `U-527`
+  // out of `null`, and `U-401` from the general `Blocked (see source)` to the
+  // specific label its own acceptance names. Blocked-on-Anand goes 377 → 380
+  // and claimable 7 → 4, so **nothing leaves a gate** and no item above rung 0
+  // moves at all.
+  //
+  // ITEM C-417 — A DEFINITION IS NOT A STATUS. The negated alternative
+  // `\bnot\s+signed-in\b` admitted a clause that DEFINES a boundary rather
+  // than reporting an outstanding proof, and nothing could veto it — by
+  // construction, because the negation IS the match. The live row is `D-401`,
+  // the successor filed for an untouched model-row set, whose body reads
+  // *"A completed job is not signed-in acceptance; model readback, stale
+  // behavior and opposite-tenant refusal are three separate captures"*. That
+  // clause distinguishes a finished job from an owner proof; it states no
+  // debt. Its work is authoring-only, in the lane the last three watcher runs
+  // each recorded as idle, and the false gate put it in *Blocked on Anand —
+  // never claim these*.
+  //
+  // So the alternative now requires a RUNG-BEARING PARTICIPLE after the token.
+  // A status verdict says the proof has not happened — "DEPLOYED, NOT
+  // SIGNED-IN PROVEN", "NOT signed-in accepted" — and both keep their gate. A
+  // definition predicates a NOUN, and `acceptance` is deliberately absent from
+  // the list because it is the noun the definition uses.
+  //
+  // This is a NARROWING, which is the direction that frees work, so it is
+  // MEASURED rather than argued: run at `2026-09-28T05:0xZ` over a frozen copy
+  // of the operator root, reading `blocker` per item out of
+  // `source-board-summary.json` for all 668 items before and after. **Exactly
+  // one item moves** — `D-401` — and extras are zero in both directions. The
+  // two known negatives `D-400` and `T-750` each have a case below that passes
+  // on unfixed code, which is what makes a widening visible if one is
+  // attempted.
+  //
+  // THE OTHER HALF OF C-417 IS NOT HERE, AND THE REASON IS A MEASUREMENT.
+  // The item also names a row gated through *"no signed-in proof is owed"*.
+  // The veto's window is not the cause — `sentenceAround` searches BACKWARDS
+  // to the previous `". "`, so the negator is inside it; what defeats the veto
+  // is its adjacency bound `[\s*_]{0,4}`, with a noun phrase between the
+  // negator and `owed`. Both remedies the item offers were measured. Widening
+  // the bound is unsafe for the reason the rule above already carries: the
+  // register's most common OWED phrasing is "Not live-proven — signed-in check
+  // owed", whose negator belongs to `live-proven`. A denial matched as its own
+  // term is safe in shape but **moves 99 rows on the live corpus, one of them
+  // at rung 0 and therefore newly claimable**, which is past this item's own
+  // bound — its acceptance says a change moving more rows than can be named
+  // per item is not this item, and its body already calls that set a candidate
+  // list needing a reading each. Filed as a successor rather than guessed at.
+  //
+  // `D-401` also does not reach a claimable lane on this change alone: with
+  // the signed-in gate gone, the `blocked` rule below matches a DESCRIPTIVE
+  // sentence in the same row about a data object — "it names why it is still
+  // blocked", said of `event_queue_v1`, not of the item. That is a third
+  // shape, separate from both halves this item describes, and it is filed too.
+  {
+    re: /(?:^|[.!?;:]\s+|\n\s*|\*\*)(?:Run|Perform|Capture|Generate|Open|Drive|Execute)\b[^.;\n]{0,120}\bsigned[- ]in\b|\bnot\s+signed-in\s+(?:proven|proved|accepted|verified|confirmed)\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i,
+    veto: /\b(?:not|never|no longer|none)\b[\s*_]{0,4}(?:owed|required|needed)\b/i,
+    say: "Signed-in acceptance owed",
+    ownerGate: true,
+  },
   // The third form is item T-705's, and it sits here rather than in its own
   // change for one measured reason. Correcting the rung-7 veto below drops one
   // row to rung 0 — correctly; its own text reads "not merged, not deployed,
@@ -1022,6 +1217,33 @@ const BLOCKER_RULES = [
   // the owner" and any mid-sentence mention stay out. Measured on the live
   // register, it changes the blocker of EXACTLY ONE item, that one.
   //
+  // ITEM T-761 — the same term, one word later, and the same cost twice more.
+  //
+  // The form above matched the literal noun phrase, so an adjective between
+  // the article and the noun defeated it — and both live rows that state
+  // their gate this way put one there. `C-504`'s acceptance opens "A product
+  // decision, not a code decision, and it is stated that way on purpose";
+  // `D-044`'s opens "A disambiguation decision precedes the code and an agent
+  // must not guess it". Measured by execution on `origin/main` `e47dd94e5`,
+  // both derived `blocker: null`, and `EXECUTION_QUEUE.md` offered both as
+  // claimable — 2 of the 9 rows it had to offer. That is precisely the
+  // outcome the paragraph above names as the reason this term exists.
+  //
+  // The slot is BOUNDED at two words and the anchor is untouched, which is
+  // what keeps this from becoming the un-narrowing the `signed-in` detector
+  // had to be rescued from: "A test that pins the decision boundary" has four
+  // words in the slot and stays out, and a mid-sentence "took a product
+  // decision" has no anchor and stays out. Both are cases in the suite, and
+  // both FAIL if the slot is written unbounded or the anchor is dropped.
+  //
+  // `An` is admitted for symmetry and is measured to change NOTHING on the
+  // live corpus today: no row states a gate in that form. It is here so the
+  // next row that writes "An architectural decision precedes the code" is not
+  // this same item a third time.
+  //
+  // Measured on the live corpus, this widening changes the blocker of exactly
+  // the two items named above and no others — extras zero, in both
+  // directions.
   // This is a WIDENING, and the detector was narrowed once before for good
   // reason: re-scanning raw prose made every descriptive use of "signed-in"
   // an owner gate. So both forms are anchored. `Decide` must open a sentence
@@ -1029,7 +1251,75 @@ const BLOCKER_RULES = [
   // owner to decide anything" and "Deciding which suite to wire was settled"
   // out; and the deferral form names who does the deciding rather than
   // matching the verb anywhere it appears.
-  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)A decision\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
+  //
+  // ITEM C-563 — THE ROLE FORM, WITHOUT AN ARTICLE.
+  //
+  // T-761 bounded a two-word slot between `A`/`An` and `decision`, which is
+  // what catches "A product decision" and "A disambiguation decision".
+  // `C-562` writes the role and no article — its acceptance opens "Owner
+  // decision, not agent work — do not edit the required gate from a feature
+  // branch" — so nothing above anchors and it derived `blocker: null` while
+  // the queue offered it as claimable.
+  //
+  // THE ARTICLE IS NOT MADE OPTIONAL, and that is the whole care in this
+  // term. `(?:An?\s+)?` would admit "The decision was taken in #8123", which
+  // this rule's own comment names as a form that must stay out, and the slot
+  // is bounded precisely so a sharper pattern is not the answer. What is
+  // added instead is the categorical phrase the same sentence carries: a row
+  // saying it is `not agent work` is not describing anything, it is declaring
+  // who may act, and there is no descriptive use of those three words.
+  //
+  // The phrase is matched WHOLE. Written `\bnot\s+\w+\s+work\b` it would
+  // match any negated kind of work, so a row saying "This is agent work, not
+  // owner work" would acquire an owner gate — a false gate, and the direction
+  // that hides live work. That case is in the suite and it is green on
+  // unfixed code, by design.
+  //
+  // Measured on the live corpus, this term moves EXACTLY ONE item, `C-562`,
+  // from `null` to `Decision needed`. Extras zero, in both directions.
+  // ITEM T-819 — A ROW MAY NAME WHO MAY ACT INSTEAD OF NAMING A DECISION, and
+  // two live phrasings did while nothing here anchored. The live row is a
+  // `[P0]` whose body says both of these, and nothing else that any rule here
+  // reads: that the remaining step "is an operator action, so `no agent may
+  // close this`", and a shouted `DECISION AND ACTION NEEDED` headline. It
+  // derived `blocker: null`, `partialGate: null`, `quote: null`, and the
+  // generated queue offered it as lane C's only claimable row. The row's
+  // subject is deliberately not restated here: this file is public and the
+  // defect is in the phrasing, not in what the row is about.
+  //
+  // Neither half was close. `decision needed` wants the two words adjacent and
+  // this row writes `AND ACTION` between them; the article term above wants an
+  // article, which a shouted headline has not got — the identical hole `C-563`
+  // found on "Owner decision" and closed by adding the categorical phrase the
+  // sentence carried rather than by making the article optional. THE ARTICLE
+  // STAYS REQUIRED, for the reason stated above it. And `not agent work` is a
+  // CATEGORY; a row can state the same thing as a PERMISSION, naming the actor
+  // and the modal, which is what `no agent may` is.
+  //
+  // THE COST WAS PAID THREE TIMES BEFORE IT WAS FILED. The pulse records three
+  // runs reaching this row, finding it unworkable and each calling it a queue
+  // defect — the first 2026-10-03 ~15:15Z — and none filed an item. A lane
+  // whose only row is one it may not touch counts as a lane with work in it,
+  // so the next run spends its opening on the same dead end.
+  //
+  // Both terms are bounded like every term above. `decision and action needed`
+  // is matched WHOLE: the lazy form, `decision` within N characters of
+  // `needed`, is satisfied by "The decision is taken and no approval is
+  // needed", which is a row that must stay claimable and has a case. `no agent
+  // may` requires the modal: written `\bno\s+agent\b` it matches the noun
+  // phrase in "no agent-owned configuration file changes" and would gate a row
+  // whose acceptance says an agent MAY close it — the direction that hides
+  // live work, and also a case.
+  //
+  // Measured on the live corpus at `2026-10-05T23:1xZ`, reading `blocker` per
+  // item out of `source-board-summary.json` for all 668 items before and
+  // after, over one frozen copy of the operator root so the only variable is
+  // this file: the pair moves EXACTLY ONE item, `C-577`, from `null` to
+  // `Decision needed`, and its rung does not move. Extras zero in both
+  // directions, and no item at a rung above 0 moves at all. Downstream, the
+  // generated queue goes 11 claimable to 10 and blocked-on-Anand 128 to 129 —
+  // lane C from one row to none, which is the true state of that lane.
+  { re: /decision needed|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy|(?:^|[.!?;:]\s+|\n\s*|\*\*)Decide\b|\b(?:until|before)\s+(?:a human|an owner|a person|the owner|Anand|someone)\s+decides\b|(?:^|[.!?;:]\s+|\n\s*|\*\*)An?\s+(?:[a-z][a-z-]*\s+){0,2}decision\b|\bnot\s+agent\s+work\b|\bdecision\s+and\s+action\s+needed\b|\bno\s+agent\s+may\b/i, say: "Decision needed", decisionGate: true, ownerGate: true },
   // Item T-703. This was a bare `\bblocked\b` — no anchoring, no veto — while
   // the decision rule directly above has both, added after raw prose made
   // every descriptive use of a word into an owner gate. T-700 gave this rule
@@ -1139,12 +1429,134 @@ function deriveBlocker(body, claims = "", rung = null) {
     if (r.ownerGate) {
       const bodyMatch = firstUnvetoedMatch(bodyText, r);
       if (bodyMatch) {
-        return { say: r.say, quote: sentenceAround(bodyText, bodyMatch.index ?? 0) };
+        return { say: r.say, ownerGate: true, quote: sentenceAround(bodyText, bodyMatch.index ?? 0) };
       }
     }
-    fromClaims ??= { say: r.say, quote: sentenceAround(t, m.index ?? 0) };
+    fromClaims ??= { say: r.say, ownerGate: r.ownerGate === true, quote: sentenceAround(t, m.index ?? 0) };
   }
   return fromClaims;
+}
+
+/* ------------------------------------------------------------------------ *
+ * A GATE DECLARED OVER PART OF AN ITEM — item C-552.
+ *
+ * `deriveBlocker` above returns at most one blocker, and it is a per-ITEM
+ * field. An acceptance written in halves has nowhere to say that one half is
+ * owner-gated while the other is ordinary executable work, so the first true
+ * sentence about the gated half labels the whole item and the queue files it
+ * where an agent is told never to look. The executable half stops being work.
+ *
+ * MEASURED, on the live documents at `912a1c593c`. `U-406` is explicitly two
+ * halves — state the terminal Value contract in code, which needs nobody, and
+ * read the approver role back on a live Value surface, which needs a human. A
+ * register line at `2026-09-27T03:05:20Z` stated the second and was right to;
+ * `U-406`'s derived blocker went from `null` to `Signed-in acceptance owed` and
+ * the generated queue's claimable count went 4 to 3. Removing that one line
+ * from a scratch copy of the operator root returned the blocker to `null`, so
+ * the line is the whole cause and the row's own body gates nothing.
+ *
+ * AND THE REGISTER HAD NO REMEDY OF ITS OWN. It is append-only, and
+ * `firstUnvetoedMatch` scans an item's whole corpus, so one unvetoed sentence
+ * anywhere is enough and a later line saying the executable half is free does
+ * not move the blocker. A single badly-scoped sentence gated an item
+ * permanently and by construction.
+ *
+ * THIS IS A DECLARATION, NOT A NARROWER PATTERN, and the distinction is the
+ * item's own instruction: `T-703` and `T-761` each paid for the current breadth
+ * of these rules, and the live sentence is a correct match that must go on
+ * matching. Nothing above changes. An item may instead DECLARE that the gate it
+ * carries covers a named half, in its row or in an appended register line, and
+ * the board then records the gate as partial — the item carries no per-item
+ * blocker and the gated half travels with it so the reader cannot miss it.
+ *
+ * Four properties keep this in the safe direction, each with a case in the
+ * behavioural suite that fails without it:
+ *
+ *   DECLARED, NEVER INFERRED. With no declaration the gate covers the whole
+ *   item exactly as before. Nothing is read from the shape of an acceptance,
+ *   the word "half", or an absent value — the constitution's rule for identity
+ *   applied to a gate's scope.
+ *
+ *   IT FAILS CLOSED. Both halves must be named. A declaration that names the
+ *   gated half and no claimable half says nothing about what is takeable, so
+ *   the gate stays where it is.
+ *
+ *   IT CANNOT INVENT A GATE. The scope is consulted only when a rule has
+ *   already matched, so a row that WRITES ABOUT partial gates does not acquire
+ *   one. That is `C-538`'s disease, and it has now reproduced live twice.
+ *
+ *   `Unclaimed` IS NOT SCOPABLE. It is the fallback and it asserts the ABSENCE
+ *   of a gate; only an `ownerGate` rule can be scoped, for the same reason the
+ *   `T-418` note gives for never promoting it.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * The declaration, written so a human reading the row sees it first and the
+ * parser second. Both halves are required and each stops at the next field, at
+ * a table-cell boundary or at end of line — never at a bare full stop, because
+ * a scope sentence routinely contains one.
+ *
+ * NO LENGTH BOUND DECIDES WHETHER THIS MATCHES — item C-568. Each half was
+ * capped at 300 characters, and because that cap sat in the pattern it was a
+ * MATCH PRECONDITION rather than a truncation: a half one character over it did
+ * not shorten, the whole declaration failed, and `declaredGateScope` returned
+ * null, so the row lost its gate with nothing reporting the loss. The same
+ * bound already existed a second time, as `tidy`'s 240-character slice below,
+ * where it truncates for display and is harmless. One bound written twice, once
+ * fatally.
+ *
+ * Measured over the live operator root at 2026-09-28T03:44Z: of the 3 backlog
+ * item rows declaring this form, only ONE parsed. It failed in both directions
+ * at once — `T-497` overran on its claimable half (354) and kept a whole-item
+ * `Decision needed`, hiding a half its own row calls delivered; `C-416` overran
+ * on both (404 and 1534) and, having no derived owner gate to keep, was offered
+ * as the single claimable lane-T row with no gate annotation anywhere in the
+ * queue, while its gated half says not to touch the file it names.
+ *
+ * The cap is therefore the ONLY thing removed: the terminators are untouched,
+ * so what ends each half is what ended it before — the next field, a surviving
+ * cell boundary, or end of line. Narrowing the character class to `[^\n|]` as
+ * well was tried and reverted: the mutation that widens it back leaves all 103
+ * cases green, because the trailing `(?:\||\n|$)` alternation already stops a
+ * half at the first surviving pipe. An unfalsifiable guard is the shape this
+ * directory exists against, so it is not here.
+ *
+ * Do not read `\n` in the class as a cell bound either. `bodyCorpus` is
+ * `title\n${acceptance} ${raw}`, and the `\s*` before `Claimable half:`
+ * matches a newline, so a declaration whose halves are written in DIFFERENT
+ * cells of one row still parses — measured, and correct on both halves. It can
+ * absorb one token of table text after the second half (the row id, via
+ * `raw`), which is cosmetic and pre-existing; it is recorded on the item rather
+ * than repaired here, because tightening it changes which rows are freed and
+ * that is a wider change than removing a cap.
+ */
+const PARTIAL_GATE_DECLARATION =
+  /\*\*Gate scope\s*[—–-]\s*partial\.?\*\*\s*Gated half:\s*([^\n]+?)\s*Claimable half:\s*([^\n]+?)\s*(?:\||\n|$)/i;
+
+function declaredGateScope(text) {
+  const m = PARTIAL_GATE_DECLARATION.exec(text ?? "");
+  if (!m) return null;
+  const tidy = (s) => s.trim().replace(/[.;,]+$/, "").trim().replace(/\s+/g, " ").slice(0, 240);
+  const gated = tidy(m[1]);
+  const open = tidy(m[2]);
+  if (!gated || !open) return null;
+  return { gated, open };
+}
+
+/**
+ * Scope a derived blocker to a declared half, or leave it alone.
+ *
+ * Returns the pair the item carries: `blocker` is what gates the WHOLE item and
+ * decides claimability, `partialGate` is a gate over a named part and does not.
+ */
+function scopeBlocker(blocker, corpus) {
+  if (!blocker?.ownerGate) return { blocker, partialGate: null };
+  const scope = declaredGateScope(corpus);
+  if (!scope) return { blocker, partialGate: null };
+  return {
+    blocker: null,
+    partialGate: { say: blocker.say, quote: blocker.quote, gated: scope.gated, open: scope.open },
+  };
 }
 
 /**
@@ -1506,10 +1918,39 @@ function buildItem(ref) {
    * it would have to be attributed first, the way T-704 attributed the rung
    * corpus, and doing both at once makes neither movement attributable.
    */
+  /*
+   * ITEM T-762. The three cells are joined by a NEWLINE, not a space, because
+   * a space is not a boundary and every anchored rule below needs one.
+   *
+   * `deriveBlocker`'s terms all anchor: a gate phrase must sit at `^`, after a
+   * sentence terminator, after a newline, or immediately after bold markup.
+   * That anchoring is deliberate and was added twice, after raw prose made
+   * every descriptive mention of "signed-in", "blocked" and "decision" into an
+   * owner gate. Joined by a space, the head of the acceptance cell — the field
+   * that states what an item NEEDS — is none of those positions, so nothing
+   * written there could ever anchor. A row reached the rule only by accident,
+   * when its TITLE happened to end in a full stop and supplied the anchor.
+   *
+   * Measured over the live corpus rather than argued: repairing this moves 33
+   * items, and 32 of them anchor on the imperative `Decide` at the head of
+   * their acceptance — the form the rule's own comment names as the one an
+   * acceptance usually writes. `C-504` is the 33rd. Eleven of the 33 REPLACE a
+   * blocker rather than fill an empty one, and ten of those eleven were
+   * labelled from the CLAIM LOG, which is item T-700's rule ("the body wins")
+   * failing for want of a reachable body match.
+   *
+   * ONLY THE ACCEPTANCE BOUNDARY MOVES, and that is measured rather than
+   * chosen for restraint. Joining `raw` the same way moves EXACTLY the same 33
+   * ids and no others, because `raw` for a table row is the whole row joined
+   * by " | " and its head is the id — never a gate. A prose definition reaches
+   * the same repair through this separator already: its acceptance is empty,
+   * so the join leaves `\n` immediately before the body. A change nothing can
+   * distinguish is a change no case can hold, so it is left alone.
+   */
   const bodyCorpus = defs
     .map((d) => (d.statusScope === "heading"
       ? `${d.title}`
-      : `${d.title} ${d.acceptance} ${d.raw}`))
+      : `${d.title}\n${d.acceptance} ${d.raw}`))
     .join("\n");
   const claimCorpus = claims.map((c) => c.status).join("\n");
   // Item T-704: the corpus is unchanged, and the id is passed so a sentence
@@ -1518,10 +1959,31 @@ function buildItem(ref) {
   // rules T-700 reworked read that one, and narrowing both in one change would
   // make the rung movement unattributable.
   const rung = deriveRung(statusCorpus, num);
+  // Item C-552. The declaration may come from either corpus: a row is edited,
+  // and the register — which cannot be — can only append one.
+  const { blocker, partialGate } = scopeBlocker(
+    deriveBlocker(bodyCorpus, claimCorpus, rung),
+    claimCorpus ? `${bodyCorpus}\n${claimCorpus}` : bodyCorpus,
+  );
   return {
     num,
     definedIn,
     ambiguous: collisionNums.has(num) && !pinnedCleanly,
+    /*
+     * ITEM C-584. The sections of the SUBSTANTIVE definitions that retired
+     * themselves.
+     *
+     * Substantive only, and that is the whole scope of the rule. An item's
+     * ordinary shape in this backlog is one live definition followed by its
+     * own `CLOSED — deployed` progress notes; those are update notes, they are
+     * not substantive, and counting them here would suppress most of the
+     * claimable queue on the strength of a note about one shipped slice.
+     *
+     * What this names is the other shape: two different items competing for
+     * one number, one of them dead. An agent taking that row cannot tell which
+     * definition it just claimed, and one of the two answers is closed work.
+     */
+    retiredDefinitions: substantive.filter(isRetiredDefinition).map((d) => d.section),
     sections: defs.map((d) => d.section),
     // Only the substantive definitions disambiguate. `sections` carries the
     // verdict notes too, and listing those in a queue row would name four
@@ -1540,7 +2002,8 @@ function buildItem(ref) {
     ),
     owner: claims.map((c) => c.owner).find(Boolean) ?? "",
     rung,
-    blocker: deriveBlocker(bodyCorpus, claimCorpus, rung),
+    blocker,
+    partialGate,
   };
 }
 
@@ -1823,7 +2286,54 @@ const barePipeRows = [...byNum.entries()]
   .map(([num]) => num)
   .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 
-const tracks = sideTracks.map((t) => ({
+/**
+ * The track the generator builds rather than the map declaring it — item
+ * C-515.
+ *
+ * `placedRefs` above is the structure map alone, so an id the backlog DEFINES
+ * and the map does not place became no item at all: absent from `tracks`,
+ * absent from the summary, and therefore absent from every bucket of
+ * `EXECUTION_QUEUE.md` — not claimable, not blocked, not held. The gate below
+ * names that state and fails the run, and its comment calls the harm by its
+ * name: "An unmapped id is invisible to the queue: it is not offered to any
+ * agent."
+ *
+ * Failing the run has not fixed it, and cannot. Filing is a local edit to an
+ * operator-owned document; mapping is a pull request against this repository.
+ * The two come apart the instant an item is filed, so the gate is red by
+ * construction — `build-execution-queue.mjs` records exactly that. Measured
+ * twice on the live corpus: `C-509` placed 17 such ids at 15:50Z on
+ * 2026-09-24, and 12 more had accumulated eight hours later. On both
+ * occasions the queue offered zero rows in lanes U, C and T while filed,
+ * unclaimed, executable work sat in the backlog behind the drop.
+ *
+ * So the id is built and offered, and mapping stays owed. Three things are
+ * deliberately NOT touched, because "whether an unmapped id should FAIL the
+ * board" is reserved to the operator and this is not that decision: the exit
+ * code, the stderr line, and `unmapped` in the summary. `mappedNums` is
+ * computed above from `sideTracks` and is not extended here, so this track
+ * cannot make an id read as placed.
+ *
+ * It carries no capability and belongs to no stage, so it credits nothing:
+ * `coverageOf` reads capabilities alone and the vision figure cannot move for
+ * this reason. And it exists only when something is unplaced — a section
+ * rendered empty on every run would say nothing about whether mapping is
+ * owed, and would be a branch exercised only in the failing case.
+ */
+const unplacedTrack = unmapped.length
+  ? {
+      name: "Unplaced — filed, not yet on the structure map",
+      why:
+        "Defined in the backlog and placed by no entry of the repo-owned "
+        + "`scripts/exec/source-stage-map.json`. Offered here so filed work is not hidden "
+        + "behind a pull request, and still reported as unmapped: mapping these onto the "
+        + "stage or track they belong to is owed, and this run exits non-zero until it is done.",
+      items: unmapped,
+      unplaced: true,
+    }
+  : null;
+
+const tracks = [...sideTracks, unplacedTrack].filter(Boolean).map((t) => ({
   ...t,
   built: (t.items ?? []).map(buildItem).filter(Boolean),
 }));
@@ -2125,7 +2635,13 @@ function itemRow(i) {
     <td>${esc(i.title).slice(0, 230)}</td>
     <td>${i.lane ? `<span class="lane">${esc(i.lane)}</span>` : "—"}</td>
     <td>${rungChip(i.rung)}</td>
-    <td>${i.blocker ? esc(i.blocker.say) : "—"}</td>
+    <td>${i.blocker
+      ? esc(i.blocker.say)
+      : i.partialGate
+        // Item C-552: a partial gate is not a blocker and does not stop the
+        // item being claimed, but the page must not render it as "none".
+        ? `partly gated — ${esc(i.partialGate.say)} over: ${esc(i.partialGate.gated)}`
+        : "—"}</td>
     <td>${esc(i.acceptance).slice(0, 220) || "—"}</td>
   </tr>`;
 }
@@ -2426,9 +2942,12 @@ if (process.argv.includes("--json")) {
       } : null,
       items: s.items.map((i) => ({
         num: i.num, rung: i.rung.rung, rungLabel: RUNG_LABEL[i.rung.key],
-        blocker: i.blocker?.say ?? null, lane: i.lane || null,
+        blocker: i.blocker?.say ?? null, partialGate: i.partialGate ?? null, lane: i.lane || null,
         title: i.title, acceptance: i.acceptance || null, ambiguous: i.ambiguous,
         substantiveSections: i.ambiguous ? i.substantiveSections : undefined,
+        // Item C-584. Written whenever it is non-empty, on both item shapes,
+        // because the queue filters on it and a missing field is not a zero.
+        retiredDefinitions: i.retiredDefinitions?.length ? i.retiredDefinitions : undefined,
       })),
     })),
     tracks: tracks.map((t) => ({
@@ -2443,18 +2962,31 @@ if (process.argv.includes("--json")) {
         rung: i.rung.rung,
         rungLabel: RUNG_LABEL[i.rung.key],
         blocker: i.blocker?.say ?? null,
+        // Item C-552. A gate over a named half. It is NOT a per-item blocker
+        // and must never be counted as one; the queue renders it beside the
+        // claimable row so the half nobody may take travels with the work.
+        partialGate: i.partialGate ?? null,
         quote: i.rung.quote || null,
         lane: i.lane || null,
         title: i.title,
         acceptance: i.acceptance || null,
         ambiguous: i.ambiguous,
         substantiveSections: i.ambiguous ? i.substantiveSections : undefined,
+        // Item C-584. See the note on the stage-item shape above.
+        retiredDefinitions: i.retiredDefinitions?.length ? i.retiredDefinitions : undefined,
       })),
     })),
     allItemsByRung: [...stages.flatMap((s) => s.items), ...tracks.flatMap((t) => t.built)]
       .reduce((a, i) => { a[RUNG_LABEL[i.rung.key]] = (a[RUNG_LABEL[i.rung.key]] ?? 0) + 1; return a; }, {}),
     allBlockers: [...stages.flatMap((s) => s.items), ...tracks.flatMap((t) => t.built)]
       .reduce((a, i) => { if (i.blocker) a[i.blocker.say] = (a[i.blocker.say] ?? 0) + 1; return a; }, {}),
+    // Item C-552. Written on EVERY run including empty — a missing field is not
+    // a zero, the rule item T-746 set for the residual. These items are NOT in
+    // `allBlockers`: a gate over a named half does not gate the item, and
+    // counting it there is the per-item field this item exists to stop.
+    partialGates: [...stages.flatMap((s) => s.items), ...tracks.flatMap((t) => t.built)]
+      .filter((i) => i.partialGate)
+      .map((i) => ({ num: i.num, lane: i.lane || null, ...i.partialGate })),
     duplicateNums,
     unmapped,
     // Item T-746. The queue renders these; a MISSING FIELD IS NOT A ZERO

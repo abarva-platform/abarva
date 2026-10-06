@@ -3,6 +3,7 @@ import {
   applyPhaseDigest,
   contextReadyForPhase,
   architectureMayProceed,
+  countSolutionContextEvidenceSignals,
 } from "../solution-context";
 
 describe("SolutionContext — cumulative phase memory", () => {
@@ -43,5 +44,37 @@ describe("SolutionContext — cumulative phase memory", () => {
     expect(architectureMayProceed(ctx).ready).toBe(false);
     ctx = applyPhaseDigest(ctx, { chosenOption: "Option C — Databricks" });
     expect(architectureMayProceed(ctx).ready).toBe(true);
+  });
+
+  it("counts governed context evidence signals without counting presentation artifacts", () => {
+    const ctx = applyPhaseDigest(emptySolutionContext("m1", "t"), {
+      baselineMetrics: {
+        "Manual hours": "2,345",
+      },
+      metricsThatMatter: [
+        { label: "Manual hours", value: "2,345" },
+        { label: "Resolution days", value: "7.4" },
+      ],
+      evidenceTaxonomy: [
+        { category: "Payment hold / control review", riskLevel: "High" },
+      ],
+      evidenceMap: [{ claim: "Control risk is concentrated", source: "P2 diagnostic" }],
+      evidencePackets: [
+        {
+          evidenceId: "evid-1",
+          title: "P2 workshop readout",
+          evidenceType: "workshop",
+          phase: 2,
+          summary: "Workshop confirmed the control path.",
+          observations: [],
+          assumptions: [],
+          openQuestions: [],
+          citations: [],
+          approvedAt: "2026-09-27T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(countSolutionContextEvidenceSignals(ctx)).toBe(6);
   });
 });

@@ -2,7 +2,11 @@
 // mandate actually reach the generated prompt — the audit's recurring failure
 // mode was well-written contracts that no prompt ever saw.
 
-import { buildPassPrompt } from "../prompt-builder";
+import {
+  buildPassPrompt,
+  deckLengthInstruction,
+  requiredExhibitsInstruction,
+} from "../prompt-builder";
 import { getArtifactBrief } from "../artifact-brief-registry";
 import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
@@ -136,5 +140,102 @@ describe("size discipline reflects how length is actually measured", () => {
     const prompt = promptFor("solution_design");
     expect(prompt).toMatch(/body words for this artifact type/);
     expect(prompt).not.toMatch(/body words of PROSE/);
+  });
+});
+
+// The slide band is enforced by the quality gate. These pin that the pass
+// which authors the deck is told the band it will be judged against.
+describe("deck length reaches the pass that authors the deck", () => {
+  function synthesisPrompt(req: DeliverableIntelligenceRequest): string {
+    return buildPassPrompt("synthesis", {
+      req,
+      brief: getArtifactBrief(req),
+      evidence: req.governedEvidenceBundle,
+      sectionSummaries: [],
+    } as never).user;
+  }
+
+  it("states the band for a deck deliverable built as PPTX", () => {
+    const req = {
+      ...movesRequest("target_state_architecture"),
+      outputFormats: ["docx", "pptx"],
+    } as DeliverableIntelligenceRequest;
+    const instruction = deckLengthInstruction(req);
+    expect(instruction).toContain("between 10 and 16 slides");
+    expect(instruction).toContain("the design and its control points");
+    expect(synthesisPrompt(req)).toContain(instruction);
+  });
+
+  it("says nothing when no deck is being built, or the deliverable is not a deck", () => {
+    expect(
+      deckLengthInstruction({
+        ...movesRequest("target_state_architecture"),
+        outputFormats: ["docx"],
+      } as DeliverableIntelligenceRequest),
+    ).toBe("");
+    expect(
+      deckLengthInstruction({
+        ...movesRequest("charter"),
+        outputFormats: ["docx", "pptx"],
+      } as DeliverableIntelligenceRequest),
+    ).toBe("");
+  });
+});
+
+// The quality contract identifies an exhibit by its key. These pin that the
+// pass which authors exhibits is told the keys it will be checked against.
+describe("required exhibit keys reach the pass that authors exhibits", () => {
+  it("names the contract's keys for a roadmap, spelled exactly", () => {
+    const req = movesRequest("roadmap");
+    const instruction = requiredExhibitsInstruction(req);
+    expect(instruction).toContain(
+      "roadmap_lanes, dependency_map, decision_calendar",
+    );
+    const synthesis = buildPassPrompt("synthesis", {
+      req,
+      brief: getArtifactBrief(req),
+      evidence: req.governedEvidenceBundle,
+      sectionDrafts: [],
+    } as never).user;
+    expect(synthesis).toContain(instruction);
+  });
+
+  it("states the rule an exhibit must meet to be kept", () => {
+    // An authored exhibit is discarded unless it has typed data and a
+    // description of at least three statements. The writer was told neither.
+    const instruction = requiredExhibitsInstruction(movesRequest("roadmap"));
+    expect(instruction).toContain("at least two nodes and one edge");
+    expect(instruction).toContain("at least two cells");
+    expect(instruction).toContain("at least three distinct statements");
+    expect(instruction).toContain("a RACI");
+  });
+
+  it("leaves out exhibits another step produces", () => {
+    // The open-inputs exhibit is the open-inputs table and checklist.
+    const businessCase = requiredExhibitsInstruction(
+      movesRequest("business_case"),
+    );
+    expect(businessCase).toContain("value_tree, decision_box.");
+    expect(businessCase).not.toContain("open_inputs_required");
+    // Architecture exhibits come from the structured architecture model.
+    expect(
+      requiredExhibitsInstruction(movesRequest("target_state_architecture")),
+    ).toBe("");
+    // Discovery exhibits are projected from the fixed deck outline.
+    expect(requiredExhibitsInstruction(movesRequest("discovery_report"))).toBe(
+      "",
+    );
+  });
+
+  it("says nothing for a deliverable the contract does not cover", () => {
+    expect(
+      requiredExhibitsInstruction(movesRequest("requirements_traceability")),
+    ).toBe("");
+    expect(
+      requiredExhibitsInstruction({
+        ...movesRequest("roadmap"),
+        module: "source",
+      } as DeliverableIntelligenceRequest),
+    ).toBe("");
   });
 });

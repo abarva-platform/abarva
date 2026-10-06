@@ -2,7 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { EXPERT_PACKS } from "@/lib/intelligence/expert-pack/registry";
-import { corpus } from "@/lib/intelligence";
+// The corpus comes from the module that defines it rather than from the
+// `@/lib/intelligence` barrel. The barrel also re-exports the tenant metric
+// persistence module, which is `server-only` and depends on installed packages;
+// the release check runs this script under plain `tsx` with no packages
+// installed, where importing the barrel throws before any gate is evaluated.
+import { corpus } from "@/lib/intelligence/loader";
+import { isDirectInvocation } from "../../../scripts/exec/cli-entry.mjs";
 
 export interface DatasetTenant {
   tenantKey: string;
@@ -99,7 +105,14 @@ export async function runTruthGates(args: {
 }
 
 async function main() {
-  if (!process.argv.includes("--static-only")) return;
+  // Only the static mode is implemented. A run in any other mode would check
+  // nothing, so it is refused instead of exiting 0.
+  if (!process.argv.includes("--static-only")) {
+    console.error(
+      "scb-truth-gates: only --static-only is implemented; a run without it checks nothing.",
+    );
+    process.exit(2);
+  }
   const rootDir = process.cwd();
   const snapshot: TruthGateSnapshot = {
     enterpriseContextRecords: Object.fromEntries(
@@ -118,4 +131,6 @@ async function main() {
   }
 }
 
-void main();
+// The gate suite imports this module, so the checks run only when this file is
+// the entry point.
+if (isDirectInvocation(import.meta.url)) void main();

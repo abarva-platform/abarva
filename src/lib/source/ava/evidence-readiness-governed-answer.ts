@@ -40,7 +40,19 @@ import {
   avaCitationsFromGovernedCandidates,
   governedClientKeyForSourceClientKey,
 } from "@/lib/source/ava/vendor-coverage-governed-answer";
-import { governedCandidateFromSourceArtifact } from "@/lib/source/ava/artifact-quality-governed-answer";
+import {
+  acceptedArtifactVersionsFor,
+  eventContextCandidatesForArtifactQuality,
+  governedCandidateFromSourceArtifact,
+} from "@/lib/source/ava/artifact-quality-governed-answer";
+import {
+  getLatestArtifactAcceptancesByArtifactIds,
+  type ArtifactAcceptanceRecord,
+} from "@/lib/source/artifact-acceptances";
+import {
+  buildGovernedEventContextBundle,
+  type EventContextCandidate,
+} from "@/lib/source/ava/event-context-bundle";
 import { stageArtifactReadinessFor } from "@/lib/source/stage-artifact-readiness";
 import type { SourceStageKey } from "@/lib/source/types";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
@@ -128,6 +140,36 @@ function artifactMatchesEventAndTenant(args: {
     artifactEventIds.some((eventId) => args.eventAliases.has(eventId)) &&
     args.tenantAliases.has(normalizedKey(args.artifact.tenantKey))
   );
+}
+
+/**
+ * Map every listed registry row to an event-context candidate for the fence.
+ *
+ * A row reaches this mode through any of the event's aliases (row id or event
+ * code), so a row naming one of them is canonicalised here, at the boundary, to
+ * the asked event — and only such a row: one naming another event keeps its own
+ * id and is refused by the fence's rule, not dropped by a filter above it.
+ * Tenant keys need no step here: every alias key of a governed tenant already
+ * resolves to that governed key in `eventContextCandidatesForArtifactQuality`.
+ */
+export function eventContextCandidatesForEvidenceReadiness(
+  listed: readonly SourceArtifactRegistryRecordWithContent[],
+  acceptances: ReadonlyMap<string, ArtifactAcceptanceRecord>,
+  scope: { tenantId: string; eventId: string; eventAliases: readonly string[] },
+): EventContextCandidate[] {
+  const eventAliases = new Set(scope.eventAliases.map(normalizedKey));
+  const candidates = eventContextCandidatesForArtifactQuality(
+    listed,
+    acceptances,
+    { tenantId: scope.tenantId },
+  );
+  return candidates.map((candidate, index) => {
+    const artifact = listed[index]!;
+    const namesThisEvent = [artifact.sourceEventId, artifact.sourceEventRowId]
+      .filter((value): value is string => Boolean(value?.trim()))
+      .some((value) => eventAliases.has(normalizedKey(value)));
+    return namesThisEvent ? { ...candidate, eventId: scope.eventId } : candidate;
+  });
 }
 
 async function listArtifactsForAliases(
@@ -539,23 +581,62 @@ export async function buildEvidenceReadinessGovernedAnswer(
     })),
     ...artifacts,
   ];
-  const candidates: GovernedCandidate[] = artifacts.map((artifact) =>
+  // The render gate is unchanged: when the corpus policy refuses every one of
+  // this event's files (for example restricted ones), nothing renders — not
+  // even their names in the readiness table. It must run over the reported
+  // files themselves, not over the fence's survivors: an unaccepted
+  // restricted file is refused by the fence first and would never reach it.
+  const renderCandidates: GovernedCandidate[] = artifacts.map((artifact) =>
     governedCandidateFromSourceArtifact(artifact, {
       clientKey: governedClientKey,
       tenantId: input.tenantId,
     }),
   );
-  const bundle = buildValidatedAgentContextBundle(candidates, {
+  const renderGate = buildValidatedAgentContextBundle(renderCandidates, {
     requireAgentReady: false,
   });
-
-  if (bundle.decision === "block") {
+  if (renderGate.decision === "block") {
     return blockedAnswer({
       governedClientKey,
       question: input.question,
-      bundle,
+      bundle: renderGate,
     });
   }
+
+  // The readiness report counts what is stored; it quotes nothing. The
+  // evidence path — what the answer cites — runs through the acceptance-bound
+  // event fence (C-506), over every listed row so its tenant and event rules
+  // decide rather than the filter above.
+  const acceptances = await getLatestArtifactAcceptancesByArtifactIds(
+    listedArtifacts.map((artifact) => artifact.id),
+  );
+  const declaredTenantId = input.tenantId ?? "";
+  const fenced = buildGovernedEventContextBundle(
+    eventContextCandidatesForEvidenceReadiness(listedArtifacts, acceptances, {
+      tenantId: declaredTenantId,
+      eventId: input.eventId,
+      eventAliases: aliases,
+    }),
+    {
+      tenantId: declaredTenantId,
+      clientKey: governedClientKey,
+      eventId: input.eventId,
+      contractId: null,
+      // No `stage_plan` candidate is produced here, so no rule reads this.
+      currentStageKey: "",
+      acceptedArtifactVersions: acceptedArtifactVersionsFor(acceptances),
+    },
+    { requireAgentReady: false },
+  );
+  // Citations come only from files the fence admitted AND the policy seam
+  // passed; an accepted file the seam refuses is simply not cited.
+  const bundle = fenced.bundle;
+  // Only this tenant's own files on this event are reportable as a gap: a
+  // refusal for another tenant's or event's file is an isolation result.
+  const reportedArtifactIds = new Set(artifacts.map((artifact) => artifact.id));
+  const unboundEvidenceCount = fenced.refused.filter((refusal) =>
+    reportedArtifactIds.has(refusal.candidate.id),
+  ).length;
 
   const report = buildSourceArtifactParseBacklogReport({
     clientKey: governedClientKey,
@@ -609,18 +690,29 @@ export async function buildEvidenceReadinessGovernedAnswer(
           },
         ]
       : [],
-    gaps:
-      projection.totalArtifacts === 0
+    gaps: [
+      ...(projection.totalArtifacts === 0
         ? [
             {
               id: "evidence-readiness-files-missing",
               label: "No registered evidence files",
               detail:
                 "Upload or capture workshop notes, session outputs, and client files before asking aVa to reason from persisted Source evidence.",
-              severity: "high",
+              severity: "high" as const,
             },
           ]
-        : [],
+        : []),
+      ...(unboundEvidenceCount > 0
+        ? [
+            {
+              id: "evidence-readiness-evidence-not-acceptance-bound",
+              label: "Some files are not attributable yet",
+              detail: `${unboundEvidenceCount} of this event's files are not bound to an accepted, current version, so nothing in this answer is attributed to them. Accept the current version of each file to make it quotable.`,
+              severity: "medium" as const,
+            },
+          ]
+        : []),
+    ],
     caveats: [
       {
         id: "evidence-readiness-read-only",

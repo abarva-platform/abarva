@@ -8,6 +8,7 @@ import type { TenancyCtx } from "@/lib/programs/types.db";
 import {
   STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
   type StageReadinessAcceptedWorkbookResponse,
+  type StageReadinessWorkbookProposal,
   type StageReadinessProposalReview,
 } from "./proposals";
 
@@ -17,6 +18,7 @@ export interface AcceptedStageReadinessContext {
   targetPhase: number;
   reviewArtifactId: string;
   reviewArtifactVersion: number;
+  proposals: StageReadinessWorkbookProposal[];
   acceptedResponses: StageReadinessAcceptedWorkbookResponse[];
   readiness: StageReadinessProposalReview["summary"]["readiness"];
 }
@@ -72,6 +74,7 @@ export async function loadAcceptedStageReadinessContext(
     targetPhase,
     reviewArtifactId: reviewArtifact.artifact_id,
     reviewArtifactVersion: reviewArtifact.version,
+    proposals: review.proposals,
     acceptedResponses: review.acceptedResponses,
     readiness: review.summary.readiness,
   };

@@ -18,6 +18,7 @@
 import { startTransition, useEffect, useState } from 'react';
 
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
+import { buildGateSummaryLine } from '@/lib/reasoning/gate-summary-line';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type {
   ExplanationCascadeRow,
@@ -307,8 +308,7 @@ function SummaryBar({ payload }: { payload: ExplanationPayload }) {
         </span>
       </div>
       <div style={{ fontFamily: SHELL.MONO, fontSize: 10.5, color: SHELL.INK_MUTED }}>
-        Gates: {payload.gateSummary.met} of {payload.gateSummary.total} met
-        {payload.gateSummary.unmet > 0 ? ` · ${payload.gateSummary.unmet} unmet` : ''}
+        {buildGateSummaryLine(payload.gateSummary)}
       </div>
     </section>
   );

@@ -3965,6 +3965,188 @@ const T747_LIVE_LINE_SHA256 =
   );
 }
 
+// ---------------------------------------------------------------------------
+// Item C-560 — an attribution whose subject is a COORDINATED NON-PATH member
+// of the same list was invisible, so a sentence REPORTING somebody else's hold
+// created a fresh one.
+//
+// T-747 gave the path half a right-governing attribution veto, and both of its
+// patterns are anchored at the head of the tail. That anchor is load-bearing
+// and stays. But the register routinely writes a list whose members are one
+// path and one artifact named in words — `` `<path>` and the coverage census,
+// both held by <holder> `` — and `PATH_LIST_JOINER` only ever joins a path to
+// a path, so the described member is left sitting between the path and its
+// attribution. The anchored patterns cannot see past it, the holder falls
+// outside the eight-token reach as well, and the path holds.
+//
+// The consequence is a ratchet, which is why this is a defect and not a
+// cosmetic miss: a run that documents WHY it passed an item over — naming the
+// file and the run that held it — creates a hold of its own on that file,
+// outliving the original claim's release. The more carefully runs record their
+// refusals, the more of the tree becomes unclaimable, and nothing declared it.
+//
+// THE REAL LINE IS THE KNOWN POSITIVE (item T-718). The fragment below is a
+// byte copy from the live register at 2026-09-27T20:43Z, line 3260, whose
+// whole-line sha256 is recorded beside it. It is the line that refused this
+// item's own run a claim on `T-495` at 2026-09-27T20:41:02Z: its declared
+// `files:` list is `scripts/exec/build-source-board.mjs` and that file's test,
+// and the workflow it froze appears only in the narrative before the marker.
+// ---------------------------------------------------------------------------
+
+/** Byte copy from live EXECUTION_CLAIMS.md line 3260 (stamp 2026-09-27T19:47:24Z). */
+const C560_LIVE_FRAGMENT =
+  "Passed over T-772/T-774/T-495 (my measured first choice was T-772): all three must wire a " +
+  "directory, so all three need .github/workflows/unit-suites.yml and the coverage census, " +
+  "both held by a live T-771 claim at 19:29:45Z with PR 8577 open.";
+/** sha256 of the WHOLE register line that fragment was cut from. */
+const C560_LIVE_LINE_SHA256 =
+  "e08218ac42e3f95374b541b27dc9e7012fbf106f3f30600092b02829ae324523";
+
+{
+  const reported = claimedPaths(C560_LIVE_FRAGMENT).map((p) => p.path);
+  check(
+    "THE REAL LINE — a coordinated described member does not hide the attribution behind it",
+    !reported.includes(".github/workflows/unit-suites.yml"),
+    `paths=${JSON.stringify(reported)}`,
+  );
+
+  // End to end through the gate, on the shape that actually refused: the same
+  // narrative plus the line's own declared list. Asserting `claimedPaths`
+  // alone would leave the two halves free to disagree.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | claude-code#20260927T193346Z | item C-563 claimed — " +
+      C560_LIVE_FRAGMENT +
+      " files: scripts/exec/build-source-board.mjs,scripts/exec/build-source-board.test.mjs",
+  ]);
+  const freed = preclaimFiles(
+    file,
+    "T-495",
+    "source-backlog-executor#20260927T2032Z",
+    ".github/workflows/unit-suites.yml",
+  );
+  check(
+    "the gate no longer refuses the workflow that line only REPORTED as held",
+    freed.status === 0 && freed.report.fileOverlap?.refuses === false,
+    `status=${freed.status} overlap=${JSON.stringify(freed.report.fileOverlap)}`,
+  );
+  // The repair reversed would be a line that frees everything, so the same
+  // line's own declared list must still refuse a third party.
+  const own = preclaimFiles(
+    file,
+    "T-495",
+    "source-backlog-executor#20260927T2032Z",
+    "scripts/exec/build-source-board.mjs",
+  );
+  check(
+    "the same line's DECLARED list still holds against another run",
+    own.status === 1,
+    `status=${own.status} overlap=${JSON.stringify(own.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE COLLECTIVE ANAPHOR IS THE WHOLE LICENCE, and these cases are what stop
+  // the widening from becoming "any coordinator frees the path in front of it".
+  //
+  // `both`/`all`/`each`/`either`/`neither`/`these`/`those`/`them` say the
+  // attribution governs every member of the list, the path included. Without
+  // one, the attribution's subject is the described member alone and the path
+  // in front of it goes on holding — the hold-preserving reading, chosen
+  // because a wrong free costs a lane its work silently while a wrong hold
+  // costs one refusal that names itself.
+  const noAnaphor = claimedPaths(
+    "this run needs scripts/exec/probe-a.mjs and the coverage census, held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "a coordinated member with NO collective anaphor does not free the path in front of it",
+    noAnaphor.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(noAnaphor)}`,
+  );
+  const withAnaphor = claimedPaths(
+    "this run needs scripts/exec/probe-a.mjs and the coverage census, both held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "the same sentence WITH the anaphor frees it — the pair differs in one word",
+    !withAnaphor.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(withAnaphor)}`,
+  );
+
+  // THE HOLDER MUST STILL BE A THIRD PARTY. `both held by me` is the form a
+  // run uses to declare an extra hold of its own, and the pronoun-cue case
+  // above (item T-7xx family) exists because that must keep holding.
+  const firstPerson = claimedPaths(
+    "this run needs scripts/exec/probe-a.mjs and the coverage census, both held by me",
+  ).map((p) => p.path);
+  check(
+    "a coordinated attribution naming NO third party keeps the path",
+    firstPerson.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(firstPerson)}`,
+  );
+
+  // A SENTENCE BOUNDARY still ends the reach. Without this the coordinator
+  // skip would reach into the next clause and free a path the line holds.
+  const acrossSentence = claimedPaths(
+    "this run rewrites scripts/exec/probe-a.mjs and the census. Both held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "the coordinator skip does not cross a full stop",
+    acrossSentence.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(acrossSentence)}`,
+  );
+  const acrossSemicolon = claimedPaths(
+    "this run rewrites scripts/exec/probe-a.mjs and the census; both held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "the coordinator skip does not cross a semicolon either",
+    acrossSemicolon.includes("scripts/exec/probe-a.mjs"),
+    `paths=${JSON.stringify(acrossSemicolon)}`,
+  );
+
+  // A SECOND PATH is a list member the existing joiner already reads, so the
+  // skip must not be what handles it. This pair is the negative control on the
+  // skip itself: delete the joiner and this case, not the skip, is what fails.
+  const twoPaths = claimedPaths(
+    "this run needs scripts/exec/probe-a.mjs and docs/architecture/probe-b.json, both held by `codex-other#1`",
+  ).map((p) => p.path);
+  check(
+    "a two-PATH list is still freed by the joiner the skip does not touch",
+    twoPaths.length === 0,
+    `paths=${JSON.stringify(twoPaths)}`,
+  );
+}
+
+{
+  // THE FRAGMENT IS FAITHFUL, proven against the live file when it is there.
+  // Absent — which is every CI runner — this reports and asserts nothing, so a
+  // missing corpus cannot manufacture a pass.
+  const live = path.join(os.homedir(), "Downloads", "EXECUTION_CLAIMS.md");
+  if (fs.existsSync(live)) {
+    const lines = fs.readFileSync(live, "utf8").split("\n");
+    const hit = lines.find((l) => l.includes(C560_LIVE_FRAGMENT));
+    check(
+      "the C-560 fragment is byte-present in the live register",
+      hit !== undefined,
+      "the fragment was cut from register line 3260; the register is append-only, " +
+        "so its absence means the line was rewritten, not that the defect is fixed",
+    );
+    if (hit !== undefined) {
+      const sha = crypto.createHash("sha256").update(hit).digest("hex");
+      check(
+        "the C-560 register line the fragment was cut from is unchanged (sha256)",
+        sha === C560_LIVE_LINE_SHA256,
+        `sha256=${sha} expected=${C560_LIVE_LINE_SHA256}`,
+      );
+    }
+  } else {
+    console.log(
+      "  ....  NOT RUN  C-560 live-register faithfulness — no ~/Downloads/EXECUTION_CLAIMS.md " +
+        "on this runner; the behavioural cases above do not depend on it",
+    );
+  }
+}
+
+
 {
   // THE TWO HALVES' CUE SURFACE, recomputed rather than narrated (T-717's ask).
   // Every row's `covered` flag is re-derived by running that row's own probe
@@ -4288,6 +4470,993 @@ const T747_LIVE_LINE_SHA256 =
     "register was modified",
   );
   fs.rmSync(fx.dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// C-559. A claim whose branch has landed must stop holding its files.
+//
+// THE DEFECT, measured on the live register rather than imagined: `T-493`
+// merged on 2026-09-27 at 14:32:03Z as `efb5587e60` (PR #8561) and its branch
+// `claude/exec-20260927T1255Z` was gone from `origin` within the minute. At
+// 14:34Z the file gate still reported `.github/workflows/unit-suites.yml` and
+// `src/__tests__/behaviors/product-directory-ci-coverage.baseline.json`
+// contended by its 12:59 and 13:42 lines, which refused `T-494`, `T-495`,
+// `T-496` and `T-497` — every claimable lane-T row in that day's queue — over
+// work already on `main`. There was no exit: `resolveFileOverlap` frees a hold
+// only on a release by its own author, and `resolveItemClaim` refuses a
+// release written by anyone else (item T-713, correctly). The alternatives
+// were the holder waking up or three hours.
+//
+// Every assertion below runs the control as a child process over a FIXTURE
+// register and a REAL git remote built in a temp directory, so the branch
+// question is answered by `git ls-remote` and not by a stub that agrees.
+// ---------------------------------------------------------------------------
+
+/**
+ * A real origin, on disk, with exactly the heads named. No network, and no
+ * mock of the thing under test: the gate shells out to `git ls-remote` here
+ * exactly as it does against GitHub.
+ */
+function repoWithOriginHeads(heads) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "c559-git-"));
+  const originDir = path.join(dir, "origin.git");
+  const workDir = path.join(dir, "work");
+  const git = (cwd, args) =>
+    execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+
+  fs.mkdirSync(originDir);
+  git(originDir, ["init", "--quiet", "--bare", "--initial-branch=main"]);
+  fs.mkdirSync(workDir);
+  git(workDir, ["init", "--quiet", "--initial-branch=main"]);
+  git(workDir, ["config", "user.email", "c559@example.invalid"]);
+  git(workDir, ["config", "user.name", "c559"]);
+  fs.writeFileSync(path.join(workDir, "seed.txt"), "seed\n");
+  git(workDir, ["add", "seed.txt"]);
+  git(workDir, ["commit", "--quiet", "-m", "seed"]);
+  git(workDir, ["remote", "add", "origin", originDir]);
+  git(workDir, ["push", "--quiet", "origin", "main"]);
+  for (const head of heads) {
+    git(workDir, ["push", "--quiet", "origin", `main:refs/heads/${head}`]);
+  }
+  return { dir, repoDir: workDir };
+}
+
+const C559_LINES = [
+  "2026-09-22T18:05:00Z | lane-a#run-1 | item T-880 claimed on branch `claude/landed-one` | files: scripts/exec/a.mjs",
+];
+
+{
+  // THE DEFECT. The holder's branch is gone from origin; its files must be free.
+  const { dir, file } = fixture(C559_LINES);
+  const origin = repoWithOriginHeads([]);
+  const r = preclaimFiles(file, "T-881", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "THE DEFECT — a claim whose branch is gone from origin no longer holds its files",
+    r.status === 0 && r.report.fileOverlap?.refuses === false,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  check(
+    "the dropped hold is REPORTED as a note, not silently discarded",
+    r.report.fileOverlap?.notes?.length === 1 &&
+      r.report.fileOverlap.notes[0].path === "scripts/exec/a.mjs" &&
+      r.report.fileOverlap.notes[0].landedBranches?.includes("claude/landed-one"),
+    JSON.stringify(r.report.fileOverlap?.notes),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // THE NEGATIVE CONTROL, and it is the whole reason the flag is a request
+  // rather than an instruction: origin STILL has that head, so the assertion
+  // is false and the run is refused as a usage error. Without this the flag
+  // is a bulldozer any agent can point at a live claim.
+  const { dir, file } = fixture(C559_LINES);
+  const origin = repoWithOriginHeads(["claude/landed-one"]);
+  const r = preclaimFiles(file, "T-881", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "THE CONTROL — a --landed-branch origin still has is REFUSED as a usage error, not honoured",
+    r.status === 2 && /origin still has a head/.test(r.stderr),
+    `status=${r.status} stderr=${r.stderr.slice(0, 200)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // FAILS CLOSED. No origin remote at all, so the question cannot be answered.
+  // An unanswerable question must not read as permission.
+  const dirNoRemote = fs.mkdtempSync(path.join(os.tmpdir(), "c559-noremote-"));
+  execFileSync("git", ["init", "--quiet", "--initial-branch=main"], { cwd: dirNoRemote });
+  const { dir, file } = fixture(C559_LINES);
+  const r = preclaimFiles(file, "T-881", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    dirNoRemote,
+  ]);
+  check(
+    "an unresolvable origin fails CLOSED — the request is refused, the hold stands",
+    r.status === 2,
+    `status=${r.status} stderr=${r.stderr.slice(0, 200)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(dirNoRemote, { recursive: true, force: true });
+}
+
+{
+  // NO REGRESSION. The same register, the same files, no --landed-branch:
+  // today's behaviour, unchanged. A default that quietly freed holds would
+  // turn every existing caller into the bulldozer above.
+  const { dir, file } = fixture(C559_LINES);
+  const r = preclaimFiles(file, "T-881", "lane-b#run-2", "scripts/exec/a.mjs");
+  check(
+    "without --landed-branch the hold stands exactly as before",
+    r.status === 1 && r.report.fileOverlap?.refuses === true,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // EVERY BRANCH, NOT ANY. A record naming two branches with one still live
+  // has live work. Freeing it on the strength of the other is the direction
+  // that loses an edit, so it must stay contended.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-882 claimed on branch `claude/landed-one`, continued on branch `claude/still-live` | files: scripts/exec/a.mjs",
+  ]);
+  const origin = repoWithOriginHeads(["claude/still-live"]);
+  const r = preclaimFiles(file, "T-883", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "a claim naming a landed branch AND a live one still holds its files",
+    r.status === 1 && r.report.fileOverlap?.refuses === true,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // A landed branch frees the FILES and says nothing about the ITEM. The two
+  // halves are separate gates (item T-713), and a landed branch is evidence
+  // about work, not authority to take someone's id.
+  const { dir, file } = fixture(C559_LINES);
+  const origin = repoWithOriginHeads([]);
+  const r = preclaim(file, "T-880", "lane-b#run-2", [
+    "--files",
+    "scripts/exec/a.mjs",
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "the item gate is untouched — the id is still held by its claimant",
+    r.status === 1 && r.report.verdict === "held-by-another" && r.report.holder?.agent === "lane-a#run-1",
+    `status=${r.status} report=${JSON.stringify(r.report.verdict)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // FAIL CLOSED ON SILENCE, and this is the limit of the mechanism rather
+  // than an oversight. A claim line that names NO branch offers no evidence
+  // that anything landed, so it keeps its hold even when a sibling line by
+  // the same agent named a branch that did.
+  //
+  // In practice every line written through `append-claim.mjs` carries
+  // ``on branch `<name>` `` in its machine-generated head, so this case is
+  // reached by hand-written lines. Pinned here so the conservative reading is
+  // a decision with a case behind it, not an accident of `branchesInClaim`
+  // returning an empty array.
+  const { dir, file } = fixture([
+    "2026-09-22T18:05:00Z | lane-a#run-1 | item T-884 claimed on branch `claude/landed-one` | files: scripts/exec/a.mjs",
+    "2026-09-22T18:09:00Z | lane-a#run-1 | item T-884 IN FLIGHT: PR #9999 open | files: scripts/exec/a.mjs",
+  ]);
+  const origin = repoWithOriginHeads([]);
+  const r = preclaimFiles(file, "T-885", "lane-b#run-2", "scripts/exec/a.mjs", [
+    "--landed-branch",
+    "claude/landed-one",
+    "--repo-dir",
+    origin.repoDir,
+  ]);
+  check(
+    "a follow-up line naming no branch keeps its hold — silence is not evidence of landing",
+    r.status === 1 &&
+      r.report.fileOverlap?.conflicts?.length === 1 &&
+      r.report.fileOverlap.conflicts[0].lineNumber === 6 &&
+      r.report.fileOverlap.notes?.length === 1,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(origin.dir, { recursive: true, force: true });
+}
+
+{
+  // THE ADVERTISEMENT CONTRACT. `append-claim.mjs` probes this usage text to
+  // decide whether a flag it forwards would actually run, and refuses the
+  // claim when a flag is unadvertised — because Node ignores flags it does
+  // not recognise and the check would pass silently. `--files` shipped in
+  // T-707 unadvertised and was unrunnable through the sanctioned path for a
+  // day because of exactly this.
+  const usage = run(["--preclaim"]);
+  check(
+    "--preclaim usage advertises --landed-branch and --repo-dir, so append-claim can forward them",
+    usage.status === 2 &&
+      usage.stderr.includes("--landed-branch") &&
+      usage.stderr.includes("--repo-dir"),
+    usage.stderr.slice(0, 300),
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// C-579. A line corrected exactly as T-457 prescribes still read as
+//        violating, forever.
+//
+//        T-457 says "Never restamp an existing line. The register is audit
+//        history; append a correction instead." The audit decided
+//        `unsourced_elapsed` from one line in isolation, so no later line
+//        could discharge it: on the real register the 2026-10-03T14:10:17Z
+//        line stayed flagged after its own correction was appended one minute
+//        later, and the only way to make the control read clean was the one
+//        thing the rule forbids. A number you can only reach by breaking the
+//        rule is not a measure of whether the rule was followed.
+//
+//        The discharge is deliberately narrow, because the failure mode on the
+//        other side is the one this whole backlog exists against: a gate
+//        satisfied by a sentence. A correcting line has to (a) come after the
+//        line it corrects, (b) name that line's stamp, (c) say it is a
+//        correction, and (d) ITSELF satisfy the code it discharges, counting
+//        the referenced stamp as a reference rather than as a figure.
+// ---------------------------------------------------------------------------
+{
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line quoted an elapsed figure and named neither instant. The span is from 2026-09-21T09:30:00Z to 2026-09-21T15:38:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  const unsourced = (report.violations ?? []).filter((v) => v.code === "unsourced_elapsed");
+  check(
+    "a corrected line is still REPORTED — the correction discharges it, it does not erase it",
+    unsourced.length === 1 && unsourced[0].stamp === "2026-09-21T16:04Z",
+    `violations=${JSON.stringify(report.violations)}`,
+  );
+  check(
+    "a corrected line carries the line and stamp that corrected it",
+    unsourced[0]?.corrected?.byStamp === "2026-09-21T16:05Z" &&
+      unsourced[0]?.corrected?.byLine === 6,
+    `corrected=${JSON.stringify(unsourced[0]?.corrected)}`,
+  );
+  check(
+    "a corrected violation is counted as corrected, not as failing",
+    (report.corrected ?? []).length === 1 &&
+      (report.failing ?? []).every((v) => v.code !== "unsourced_elapsed"),
+    `corrected=${(report.corrected ?? []).length} failing=${JSON.stringify(report.failing)}`,
+  );
+  check(
+    "a register whose only violation is corrected exits 0 — a maintained register can reach zero uncorrected",
+    r.status === 0,
+    `exit=${r.status}\nstdout=${r.stdout}\nstderr=${r.stderr}`,
+  );
+  check(
+    "the human-readable report names the corrected count and the line that discharged it",
+    (() => {
+      const text = run(["--file", file, "--now", NOW, "--since", SINCE]).stdout;
+      return text.includes("1 corrected") && text.includes("[corrected by line 6");
+    })(),
+    run(["--file", file, "--now", NOW, "--since", SINCE]).stdout,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE MUTATION-FACING HALF. A flagged line with NO correction must stay
+  // failing — the acceptance names this one explicitly, and it is what keeps
+  // the discharge from being a blanket amnesty.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-101 — unrelated, and it names 2026-09-21T15:00:00Z and 2026-09-21T15:38:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "an uncorrected flagged line stays failing and still exits 1",
+    r.status === 1 &&
+      (report.failing ?? []).some(
+        (v) => v.code === "unsourced_elapsed" && v.stamp === "2026-09-21T16:04Z",
+      ) &&
+      (report.corrected ?? []).length === 0,
+    `exit=${r.status} failing=${JSON.stringify(report.failing)} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A SENTENCE IS NOT A CORRECTION. The correcting line names the stamp and
+  // says CORRECTION, and that is all it does: the figure it was supposed to
+  // source is still missing. If this discharged the violation, the control
+  // would be satisfiable by prose — the 18 Sep failure mode verbatim.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line was wrong about that.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a correction that names the line but sources no instants discharges nothing",
+    r.status === 1 &&
+      (report.corrected ?? []).length === 0 &&
+      (report.failing ?? []).some((v) => v.stamp === "2026-09-21T16:04Z"),
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE REFERENCED STAMP IS A REFERENCE, NOT A FIGURE. This line names the
+  // flagged stamp and exactly one other instant. Counting the reference would
+  // make it two and discharge the violation, which is the cheapest way to
+  // fake a correction and the reason the reference is excluded.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line quoted an elapsed figure. It started at 2026-09-21T09:30:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a correction naming the referenced stamp plus one instant is one instant short, not two",
+    r.status === 1 && (report.corrected ?? []).length === 0,
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // APPEND ORDER IS THE AUTHORITY. The register is append-only, so a
+  // correction is a line BELOW the one it corrects. An earlier line that
+  // happens to name a later stamp is not a correction of it — otherwise a
+  // lane could pre-authorise its own future violations.
+  const { dir, file } = fixture([
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line quoted an elapsed figure. The span is 2026-09-21T09:30:00Z to 2026-09-21T15:38:00Z.",
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a correction appended ABOVE the line it names discharges nothing",
+    r.status === 1 && (report.corrected ?? []).length === 0,
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A CODE NOT DECLARED CORRECTABLE STAYS FAILING. No appended sentence can
+  // un-future a stamp or un-share a checkout, so the discharge table fails
+  // closed: a code absent from it is never correctable, however the
+  // correcting line is worded.
+  const { dir, file } = fixture([
+    "2026-09-21T18:30Z lane-a item T-100 — stamped in the future of the clock that read it.",
+    "2026-09-21T18:31Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T18:30Z line was stamped wrong. Read at 2026-09-21T16:00:00Z against 2026-09-21T16:04:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a future_stamp violation is not correctable by any appended line",
+    r.status === 1 &&
+      (report.failing ?? []).some((v) => v.code === "future_stamp") &&
+      (report.corrected ?? []).every((v) => v.code !== "future_stamp"),
+    `exit=${r.status} failing=${JSON.stringify(report.failing)} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+{
+  // SAYING IT IS A CORRECTION IS ONE OF THE FOUR CONDITIONS, AND IS LOAD-
+  // BEARING ON ITS OWN. This line names the flagged stamp and sources two
+  // instants, but never claims to be correcting anything — so it is a lane
+  // quoting an earlier line in passing, which happens constantly in this
+  // register, and must not silently discharge it.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:05Z lane-a item T-100 — following on from my 2026-09-21T16:04Z line: the window ran 2026-09-21T09:30:00Z to 2026-09-21T15:38:00Z and nothing changed.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a later line that quotes the stamp without claiming to correct it discharges nothing",
+    r.status === 1 && (report.corrected ?? []).length === 0,
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // A CORRECTION OF SOME OTHER LINE IS NOT A CORRECTION OF THIS ONE. This
+  // line is a perfectly good correction — marker, two sourced instants, below
+  // the flagged line — and it names a DIFFERENT stamp. Without the verbatim
+  // stamp reference, one well-formed correction anywhere below would discharge
+  // every flagged line above it.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 — the gap T-099 closed six hours ago is still open.",
+    "2026-09-21T16:06Z lane-b item T-200 — CORRECTION, appended not restamped: my 2026-09-21T16:03Z line was wrong. The span is 2026-09-21T09:30:00Z to 2026-09-21T15:38:00Z.",
+  ]);
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "a well-formed correction naming a DIFFERENT line discharges nothing here",
+    r.status === 1 && (report.corrected ?? []).length === 0,
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+// ---------------------------------------------------------------------------
+// C-583. `drifted_without_authority` was correctable on exactly the principle
+//        C-579 established, and was not declared correctable.
+//
+//        The control already clears the code when the SAME line quotes
+//        GitHub's `mergedAt` (`citesAuthority`). A later line quoting that
+//        same instant sources precisely what the original left out — so the
+//        asymmetry lived in the implementation, not in the rule: measured on
+//        main 815cec3b15, the identical repair read clean ON the line (0
+//        violations) and stayed failing ONE LINE BELOW it (failing 1,
+//        corrected 0). T-457 tells a lane to append a correction rather than
+//        restamp; before this, doing as instructed changed nothing the
+//        control printed, and the only way to read clean was the one thing
+//        the rule forbids.
+//
+//        The discharge is narrower than C-579's, and deliberately so. It is
+//        not "quotes two instants" and not "quotes any instant": it must
+//        quote the authoritative `mergedAt` FOR THE PULL REQUEST THE ORIGINAL
+//        ANNOUNCED, which is a figure no prose can supply and no other PR's
+//        timestamp can satisfy. The authority set is threaded into the
+//        predicate rather than re-read from the network inside it, so the
+//        discharge is decided from the same injected authority the audit used
+//        and the test never reaches GitHub.
+// ---------------------------------------------------------------------------
+{
+  // The item's own case: late announcement, then a correction quoting the
+  // authoritative instant for that same pull request.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 MERGED `aaaaaaa` (PR #8141) — reconciled late, naming no authoritative instant.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line named no authoritative instant. GitHub's mergedAt for that pull request is 2026-09-21T13:38:07Z.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(authority, JSON.stringify({ 8141: { mergedAt: "2026-09-21T13:38:07Z" } }));
+  const args = ["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--json"];
+  const strict = run([...args, "--strict"]);
+  const report = JSON.parse(strict.stdout || "{}");
+  const drifted = (report.violations ?? []).filter((v) => v.code === "drifted_without_authority");
+  check(
+    "C-583: a drifted line is still REPORTED after its correction — discharged, not erased",
+    drifted.length === 1 && drifted[0].stamp === "2026-09-21T16:04Z" && drifted[0].pr === 8141,
+    `violations=${JSON.stringify(report.violations)}`,
+  );
+  check(
+    "C-583: an appended line quoting the authoritative mergedAt for the announced PR discharges it",
+    drifted[0]?.corrected?.byStamp === "2026-09-21T16:05Z" &&
+      drifted[0]?.corrected?.byLine === 6,
+    `corrected=${JSON.stringify(drifted[0]?.corrected)}`,
+  );
+  check(
+    "C-583: the discharge moves the exit code under --strict, where this code is the failing verdict",
+    strict.status === 0 && (report.failing ?? []).every((v) => v.code !== "drifted_without_authority"),
+    `exit=${strict.status} failing=${JSON.stringify(report.failing)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // NECESSITY, HALF ONE: ANOTHER PULL REQUEST'S INSTANT IS NOT THIS ONE'S.
+  // A correction otherwise perfect — below the line, quoting its stamp,
+  // marked CORRECTION, carrying a real authoritative instant — discharges
+  // nothing when the instant it quotes belongs to a different pull request.
+  // Without the per-PR lookup this would pass, and the discharge would be
+  // "quotes any timestamp the authority happens to hold".
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 MERGED `aaaaaaa` (PR #8141) — reconciled late, naming no authoritative instant.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line named no authoritative instant. The authoritative instant is 2026-09-21T13:58:07Z.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(
+    authority,
+    JSON.stringify({
+      8141: { mergedAt: "2026-09-21T13:38:07Z" },
+      8142: { mergedAt: "2026-09-21T13:58:07Z" },
+    }),
+  );
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "C-583: a correction quoting a DIFFERENT pull request's mergedAt discharges nothing",
+    r.status === 1 &&
+      (report.corrected ?? []).length === 0 &&
+      (report.failing ?? []).some((v) => v.code === "drifted_without_authority"),
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)} failing=${JSON.stringify(report.failing)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // NECESSITY, HALF TWO: NAMING THE PULL REQUEST IS NOT QUOTING THE INSTANT.
+  // The figure the audit said was missing is a timestamp. This correction has
+  // the marker, sits below the line, quotes its stamp verbatim and names the
+  // pull request whose authority would discharge it — and supplies no instant
+  // at all. If the predicate stopped at resolving the authority entry, this
+  // would pass and the discharge would be "says CORRECTION near a PR number".
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 MERGED `aaaaaaa` (PR #8141) — reconciled late, naming no authoritative instant.",
+    "2026-09-21T16:05Z lane-a item T-100 — CORRECTION, appended not restamped: my 2026-09-21T16:04Z line named no authoritative instant for PR #8141, and GitHub is the authority for it.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(authority, JSON.stringify({ 8141: { mergedAt: "2026-09-21T13:38:07Z" } }));
+  const r = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
+  const report = JSON.parse(r.stdout || "{}");
+  check(
+    "C-583: a correction naming the pull request but quoting no instant discharges nothing",
+    r.status === 1 &&
+      (report.corrected ?? []).length === 0 &&
+      (report.failing ?? []).some((v) => v.code === "drifted_without_authority"),
+    `exit=${r.status} corrected=${JSON.stringify(report.corrected)} failing=${JSON.stringify(report.failing)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE ABSENT-AUTHORITY GUARD, ASSERTED WHERE IT IS REACHABLE.
+  // End to end this branch cannot be reached: the audit only raises
+  // `drifted_without_authority` after reading `mergedAt` out of the authority
+  // set, so by then the entry exists — an authority that lacks the pull
+  // request produces `authority_missing` instead. The predicate is exported
+  // and callable, though, so the guard is asserted directly rather than
+  // through a fixture that cannot express the case. Stated plainly because the
+  // alternative is a guard no mutation can kill.
+  const predicate = control.CORRECTABLE_CODES.get("drifted_without_authority");
+  const correcting = { citedTimes: ["2026-09-21T13:38:07Z"] };
+  const violation = { stamp: "2026-09-21T16:04Z", pr: 8141 };
+  check(
+    "C-583: the predicate discharges nothing when the authority set is empty",
+    typeof predicate === "function" &&
+      predicate(correcting, violation, { authority: {} }) === false &&
+      predicate(correcting, violation, { authority: null }) === false,
+    `empty=${predicate?.(correcting, violation, { authority: {} })} null=${predicate?.(correcting, violation, { authority: null })}`,
+  );
+  check(
+    "C-583: the same predicate discharges when that authority holds the announced PR",
+    typeof predicate === "function" &&
+      predicate(correcting, violation, { authority: { 8141: { mergedAt: "2026-09-21T13:38:07Z" } } }) === true,
+    "the positive half, so the assertion above cannot pass by always being false",
+  );
+}
+
+{
+  // REGRESSION GUARD, NOT A NECESSITY PROOF — labelled as such because no
+  // mutation of the predicate can kill it: this fixture has no second line, so
+  // `lines.find` has no candidate and the predicate never runs. What it pins
+  // is that the repair did not take the REPORTING with it, which is the half a
+  // too-eager discharge would quietly remove.
+  const { dir, file } = fixture([
+    "2026-09-21T16:04Z lane-a item T-100 MERGED `aaaaaaa` (PR #8141) — reconciled late, naming no authoritative instant.",
+  ]);
+  const authority = path.join(dir, "authority.json");
+  fs.writeFileSync(authority, JSON.stringify({ 8141: { mergedAt: "2026-09-21T13:38:07Z" } }));
+  const lax = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--json"]);
+  const strict = run(["--file", file, "--now", NOW, "--since", SINCE, "--authority", authority, "--strict", "--json"]);
+  const laxReport = JSON.parse(lax.stdout || "{}");
+  const strictReport = JSON.parse(strict.stdout || "{}");
+  check(
+    "C-583: an undischarged drifted line stays reported and stays advisory by default",
+    lax.status === 0 &&
+      (laxReport.corrected ?? []).length === 0 &&
+      (laxReport.advisory ?? []).some((v) => v.code === "drifted_without_authority"),
+    `exit=${lax.status} advisory=${JSON.stringify(laxReport.advisory)}`,
+  );
+  check(
+    "C-583: an undischarged drifted line still fails under --strict",
+    strict.status === 1 &&
+      (strictReport.failing ?? []).some((v) => v.code === "drifted_without_authority"),
+    `exit=${strict.status} failing=${JSON.stringify(strictReport.failing)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  // THE TABLE STILL FAILS CLOSED. C-583 adds one entry; it must not be read
+  // as opening the table. No sentence appended later can un-future a stamp or
+  // un-share a checkout, so these two must never acquire a predicate, and
+  // this asserts the table rather than the comment above it.
+  check(
+    "C-583: CORRECTABLE_CODES declares drifted_without_authority correctable",
+    control.CORRECTABLE_CODES.has("drifted_without_authority"),
+    `codes=${JSON.stringify([...control.CORRECTABLE_CODES.keys()])}`,
+  );
+  check(
+    "C-583: the table still fails closed — future_stamp and worktree_shared are not correctable",
+    !control.CORRECTABLE_CODES.has("future_stamp") &&
+      !control.CORRECTABLE_CODES.has("worktree_shared"),
+    `codes=${JSON.stringify([...control.CORRECTABLE_CODES.keys()])}`,
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Item T-804 — a path named in a claim line's PROSE is not a lock.
+//
+// Every veto above reads the sentence AROUND a path and decides from it, and
+// each was added because a correctly-written claim line was refused on a file
+// nobody claimed. That is a ratchet rather than a bug list: the more carefully
+// a run records why it passed an item over, the more of the tree it freezes,
+// and the next shape of sentence is only ever discovered by the refusal it
+// causes. Reproduced three times on 2026-10-05, twice costing a lane its row.
+//
+// So the rule here is structural and reads no prose at all: when a line
+// DECLARES a `files:` list, that list is the whole of its lock. The protocol
+// already requires the field — "append your claim line with the exact files
+// you intend to touch" — and measured over the live register, 697 of the 709
+// claim lines that hold a path carry one. Measured over every line, the rule
+// frees 278 holds (203 of them `file`-kind locks) and creates ZERO, in either
+// direction: no path on a declared list was being missed, so making the field
+// authoritative strips no line of authority it was exercising.
+//
+// A line that declares NO list is left exactly as it is, and that is the
+// residual, named rather than implied: 170 path-holding lines that are not
+// claim openings carry no field, nearly all of them `AMEND` lines that extend
+// an earlier claim in prose and mean to hold what they name. Freeing those would be a false PASS — two runs
+// on one file — and this module's standing preference is the other way round:
+// a wrong free costs another lane its work silently, a wrong hold costs one
+// refusal that names itself.
+// ---------------------------------------------------------------------------
+{
+  // KNOWN POSITIVE 1 — 2026-10-05T17:35:30Z, verbatim but for its length. A
+  // run claiming U-569 explained why it was NOT taking T-793, naming the two
+  // census files two siblings had locked; that sentence created a THIRD hold
+  // on both under the declining run's own identity, and the run had to append
+  // an abstention at 18:52:02Z to correct a hold it never intended.
+  const DECLINED_IN_PROSE =
+    "2026-10-05T17:35:30Z | source-backlog-executor#20261005T1732Z | item U-569 claimed on " +
+    "branch `exec/run-20261005T1732Z` — T-793 was the higher-value lane-T row and is REFUSED " +
+    "by the file half: both scripts/quality/test-ci-coverage-census.mjs (held to 20:18Z) and " +
+    "docs/architecture/test-ci-coverage-census.json (held to 20:29Z) are locked by two sibling " +
+    "runs, and the item cannot be done without either. " +
+    "files: docs/acceptance/signed-in-wave-acceptance-matrix.md," +
+    "docs/releases/records/u569-eighteenth-signed-in-wave.md";
+  const declined = claimedPaths(DECLINED_IN_PROSE).map((p) => p.path);
+  check(
+    "T-804 KNOWN POSITIVE — a path named only to say somebody ELSE holds it holds nothing",
+    !declined.includes("scripts/quality/test-ci-coverage-census.mjs") &&
+      !declined.includes("docs/architecture/test-ci-coverage-census.json"),
+    `paths=${JSON.stringify(declined)}`,
+  );
+  check(
+    "T-804 NEGATIVE CONTROL — the same line's declared list still holds, both members",
+    declined.includes("docs/acceptance/signed-in-wave-acceptance-matrix.md") &&
+      declined.includes("docs/releases/records/u569-eighteenth-signed-in-wave.md"),
+    `paths=${JSON.stringify(declined)}`,
+  );
+
+  // KNOWN POSITIVE 2 — 2026-10-05T17:18:51Z, item D-402. This one is NOT a
+  // disclaimer: the census script appears once, inside a sentence explaining
+  // why a measurement read zero. A reader taught to recognise disclaiming
+  // prose would still lock it, which is the second reason that remedy was
+  // refused.
+  const EXPLAINED_IN_PROSE =
+    "2026-10-05T17:18:51Z | source-backlog-executor#20261005T1652Z | item D-402 claimed on " +
+    "branch `exec/run-20261005T1652Z` — the census delta came back ZERO on every count -- " +
+    "collectTestFiles in scripts/quality/test-ci-coverage-census.mjs is rooted at `src`, so a " +
+    "test file under scripts/ is invisible to the instrument the acceptance names as the proof. " +
+    "files: src/lib/source/contract-depth-package/clause-text-basis.ts," +
+    "src/lib/governance/dataset-manifest.ts";
+  const explained = claimedPaths(EXPLAINED_IN_PROSE).map((p) => p.path);
+  check(
+    "T-804 KNOWN POSITIVE — a path named in an EXPLANATION, disclaiming nothing, holds nothing",
+    !explained.includes("scripts/quality/test-ci-coverage-census.mjs"),
+    `paths=${JSON.stringify(explained)}`,
+  );
+  check(
+    "T-804 NEGATIVE CONTROL — that line's two declared paths both still hold",
+    explained.includes("src/lib/source/contract-depth-package/clause-text-basis.ts") &&
+      explained.includes("src/lib/governance/dataset-manifest.ts"),
+    `paths=${JSON.stringify(explained)}`,
+  );
+
+  // THE LABEL IS THE LAST ONE, not the first. 22 live lines write `files:`
+  // more than once, and on every one of them the earlier occurrences are
+  // PROSE about the field — including, exactly once, a run arguing that the
+  // `files:`-only rule should not be adopted. Anchoring on the first would
+  // read that argument as the declaration.
+  const DISCUSSES_THE_FIELD =
+    "2026-10-05T12:00:00Z | a#run-1 | item T-801 claimed — only 9 of 62 live lines carry a " +
+    "`files:` label, and scripts/quality/test-ci-coverage-census.mjs is what counted them. " +
+    "files: scripts/exec/register-time-authority.mjs";
+  const discussed = claimedPaths(DISCUSSES_THE_FIELD).map((p) => p.path);
+  check(
+    "T-804 the LAST `files:` label is the declaration; an earlier mention is prose",
+    discussed.length === 1 && discussed[0] === "scripts/exec/register-time-authority.mjs",
+    `paths=${JSON.stringify(discussed)}`,
+  );
+
+  // A declared list that parses to nothing is a declaration of nothing. The
+  // line holds no file, and it does not fall back to its own prose.
+  const EMPTY_FIELD =
+    "2026-10-05T12:00:00Z | a#run-1 | item T-801 claimed — read-only audit, I touch " +
+    "scripts/exec/build-source-board.mjs nowhere. files:";
+  check(
+    "T-804 a declared-but-empty list holds nothing, and does not fall back to prose",
+    claimedPaths(EMPTY_FIELD).length === 0,
+    `paths=${JSON.stringify(claimedPaths(EMPTY_FIELD))}`,
+  );
+
+  // THE RESIDUAL, pinned. A line with no declaration keeps today's reading,
+  // because `AMEND` lines extend a claim in prose and hold what they name.
+  // If this ever changes, it must change deliberately and here.
+  const NO_FIELD =
+    "2026-10-05T12:00:00Z | a#run-1 | AMEND #8807 narrow claim by adjacent " +
+    "`src/components/source/canvas/__tests__/SourceAnalyticsCanvas.chat.test.tsx`";
+  check(
+    "T-804 RESIDUAL — a line declaring no list still holds the path its prose names",
+    claimedPaths(NO_FIELD).some(
+      (p) => p.path === "src/components/source/canvas/__tests__/SourceAnalyticsCanvas.chat.test.tsx",
+    ),
+    `paths=${JSON.stringify(claimedPaths(NO_FIELD))}`,
+  );
+}
+
+{
+  // BOTH DIRECTIONS, THROUGH THE GATE — not on the predicate. The acceptance
+  // asks for exactly this: a path genuinely on the list must still refuse a
+  // second run, and a path only in prose must not.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | a#run-1 | item T-704 claimed — T-705 is refused because " +
+      "scripts/quality/test-ci-coverage-census.mjs is locked by a sibling run. " +
+      "files: scripts/exec/build-source-board.mjs",
+  ]);
+  const onTheList = preclaimFiles(file, "T-705", "b#run-2", "scripts/exec/build-source-board.mjs");
+  check(
+    "T-804 THROUGH THE GATE — a path on the declared list still refuses the next run",
+    onTheList.status !== 0 && onTheList.report.fileOverlap?.conflicts?.length === 1,
+    `status=${onTheList.status} overlap=${JSON.stringify(onTheList.report.fileOverlap)}`,
+  );
+  const inProseOnly = preclaimFiles(
+    file,
+    "T-705",
+    "b#run-2",
+    "scripts/quality/test-ci-coverage-census.mjs",
+  );
+  check(
+    "T-804 THROUGH THE GATE — a path named only in prose refuses nobody",
+    inProseOnly.status === 0 && inProseOnly.report.fileOverlap?.conflicts?.length === 0,
+    `status=${inProseOnly.status} overlap=${JSON.stringify(inProseOnly.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Item T-835. A declared path carrying a DYNAMIC ROUTE SEGMENT holds nothing.
+//
+// `PATH_TOKEN`'s character class admits no `[`, `]`, `(` or `)`, so a declared
+// entry naming a Next.js route file is not recognised as a path at all. It is
+// not vetoed by any of the cue rules above — it is never seen, which is why no
+// refusal ever named it and why this was found while measuring T-804 rather
+// than by anybody being refused.
+//
+// That is the opposite direction from T-804 and the more expensive one. T-804
+// was a false REFUSAL: it costs one reader a second look and announces itself.
+// This is a false PASS: it puts two runs on one route file and tells neither.
+//
+// Measured over the live register at `3731a69714`: 223 slashed tokens carrying
+// a bracket, 0 of them held. 357 route files under `src/app` carry a bracketed
+// segment and 341 carry a route group, so the shape is not rare.
+//
+// Every case here drives the real CLI as a child process over a fixture and
+// reads its exit status, because the acceptance is about what the GATE does.
+// ---------------------------------------------------------------------------
+{
+  // The failing case, stated in the item's own terms: a real route file in the
+  // tree, declared on a live claim's `files:` list, and a second run asking
+  // for exactly that path.
+  const ROUTE = "src/app/api/v1/source/[eventId]/stage/route.ts";
+  const { dir, file } = fixture([
+    `2026-09-22T18:20:29Z | runner-one#A | item T-900 claimed | files: ${ROUTE}`,
+  ]);
+  const r = preclaimFiles(file, "T-901", "runner-two#B", ROUTE);
+  check(
+    "T-835 a declared BRACKETED route path refuses the next run asking for it",
+    r.status === 1 && r.report.fileOverlap?.refuses === true,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  check(
+    "T-835 the refusal names the bracketed path and its holder",
+    (r.report.fileOverlap?.conflicts ?? []).some(
+      (c) => c.path === ROUTE && c.agent === "runner-one#A",
+    ),
+    JSON.stringify(r.report.fileOverlap?.conflicts),
+  );
+  // A ROUTE GROUP is the same defect by a different character: `(maestro)`
+  // fails the class for its parentheses alone, with no bracket anywhere. Worse
+  // than invisible — the tokenizer stops at the paren and reads the prefix
+  // `src/app/` as a SCOPE, which the gate treats as a note and waves through.
+  const GROUPED = "src/app/(maestro)/source/events/[eventId]/page.tsx";
+  const grouped = fixture([
+    `2026-09-22T18:20:29Z | runner-one#A | item T-900 claimed | files: ${GROUPED}`,
+  ]);
+  const g = preclaimFiles(grouped.file, "T-901", "runner-two#B", GROUPED);
+  check(
+    "T-835 a declared ROUTE-GROUP path refuses the next run asking for it",
+    g.status === 1 && g.report.fileOverlap?.refuses === true,
+    `status=${g.status} overlap=${JSON.stringify(g.report.fileOverlap)}`,
+  );
+  check(
+    "T-835 the grouped path is read as a FILE, not as the `src/app/` prefix scope",
+    claimedPaths(`files: ${GROUPED}`).some((p) => p.path === GROUPED && p.kind === "file") &&
+      !claimedPaths(`files: ${GROUPED}`).some((p) => p.path === "src/app/"),
+    JSON.stringify(claimedPaths(`files: ${GROUPED}`)),
+  );
+  // THE DISCRIMINATOR. Widening the class can only ADD refusals, so the thing
+  // that must not change is what it refuses on. A bracketed token that is not
+  // a path must stay invisible: a markdown link is the shape the register
+  // writes most, and reading `[text](docs/x.md)` as one token would invent a
+  // path called `text](docs/x.md`.
+  // The link text carries NO SPACE, and that is the whole point of the case.
+  // Written as `[the record](...)` the space alone makes one token impossible
+  // whatever the grammar admits, so the control passed without testing the
+  // grammar at all — a mutation letting a group's contents cross a slash
+  // survived it. `[record](...)` is the shape that can actually collapse.
+  const LINK = "see [record](docs/releases/records/t804.md) for the measurement";
+  check(
+    "T-835 NEGATIVE CONTROL — a space-free markdown link is not read as one bracketed path",
+    !claimedPaths(LINK).some((p) => /[\[\]()]/.test(p.path)),
+    JSON.stringify(claimedPaths(LINK)),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — the link's TARGET is still read, as it was before",
+    claimedPaths(LINK).some((p) => p.path === "docs/releases/records/t804.md"),
+    JSON.stringify(claimedPaths(LINK)),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — a bracketed token with no path suffix holds nothing",
+    claimedPaths("files: notes/[draft]/scratch").length === 0,
+    JSON.stringify(claimedPaths("files: notes/[draft]/scratch")),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — `Product/Lab`, `and/or` and `24/7` are still not paths",
+    claimedPaths("the Product/Lab lane runs and/or 24/7 on [eventId]/shaped routes").length === 0,
+    JSON.stringify(claimedPaths("the Product/Lab lane runs and/or 24/7 on [eventId]/shaped routes")),
+  );
+  check(
+    "T-835 a bracketed SCOPE is still a note rather than a lock",
+    (() => {
+      const scoped = `files: src/app/api/v1/source/[eventId]/nexus/ask/__tests__/`;
+      const read = claimedPaths(scoped);
+      return (
+        read.length === 1 &&
+        read[0].kind === "scope" &&
+        read[0].path === "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/"
+      );
+    })(),
+    JSON.stringify(claimedPaths("files: src/app/api/v1/source/[eventId]/nexus/ask/__tests__/")),
+  );
+  // A catch-all and an optional catch-all segment are the other two shapes the
+  // framework writes, and a class that admits `[id]` but not `[...slug]` would
+  // leave the same false pass on a narrower set.
+  check(
+    "T-835 a catch-all segment is read as a file",
+    claimedPaths("files: src/app/docs/[...slug]/page.tsx").some(
+      (p) => p.path === "src/app/docs/[...slug]/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/docs/[...slug]/page.tsx")),
+  );
+  check(
+    "T-835 an optional catch-all segment is read as a file",
+    claimedPaths("files: src/app/shop/[[...filter]]/page.tsx").some(
+      (p) => p.path === "src/app/shop/[[...filter]]/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/shop/[[...filter]]/page.tsx")),
+  );
+  // A segment must be NON-EMPTY. Allowing it to match nothing costs both
+  // directions at once: measured over the live register it invents `/` and
+  // `//` as scopes and LOSES 21 real files, because an empty head lets the
+  // token start inside a path and end before its extension.
+  check(
+    "T-835 a bare separator is never read as a path",
+    claimedPaths("files: / and // are not paths").length === 0,
+    JSON.stringify(claimedPaths("files: / and // are not paths")),
+  );
+  check(
+    "T-835 a path after a bare separator is still read whole",
+    claimedPaths("files: see / then src/lib/source/esign/provider.ts").some(
+      (p) => p.path === "src/lib/source/esign/provider.ts",
+    ),
+    JSON.stringify(claimedPaths("files: see / then src/lib/source/esign/provider.ts")),
+  );
+  // One segment may carry MORE THAN ONE group. Next.js intercepting routes
+  // write exactly that — `(..)(..)feed` is a single directory name — and a
+  // grammar admitting only the first group reads the segment as far as the
+  // second and stops, which is this item's own defect on a narrower set.
+  check(
+    "T-835 a segment carrying two route groups is read as a file",
+    claimedPaths("files: src/app/(..)(..)feed/page.tsx").some(
+      (p) => p.path === "src/app/(..)(..)feed/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/(..)(..)feed/page.tsx")),
+  );
+  check(
+    "T-835 a group followed by plain characters in one segment is read as a file",
+    claimedPaths("files: src/app/(.)photo/page.tsx").some(
+      (p) => p.path === "src/app/(.)photo/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/(.)photo/page.tsx")),
+  );
+  // The veto rules must keep governing these paths exactly as they govern any
+  // other: a widened token class must not become a way past the disclaimers.
+  check(
+    "T-835 a disclaimed bracketed path is still freed by its cue",
+    claimedPaths(
+      "this claim does not touch `src/app/api/v1/source/[eventId]/stage/route.ts`",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths("this claim does not touch `src/app/api/v1/source/[eventId]/stage/route.ts`"),
+    ),
+  );
+  check(
+    "T-835 a bracketed path attributed to a sibling is not read as this line's hold",
+    claimedPaths(
+      "that sibling holds `src/app/api/v1/source/[eventId]/stage/route.ts`",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths("that sibling holds `src/app/api/v1/source/[eventId]/stage/route.ts`"),
+    ),
+  );
+  // THE SECOND DIRECTION, found by measuring this change rather than by
+  // reasoning about it. An unreadable segment did not only fail to hold its
+  // own path — it SPLIT the list it sat in. `PATH_LIST_JOINER` requires list
+  // punctuation between consecutive occurrences, and the unread
+  // `(maestro)/source/setup/page.tsx` is not punctuation, so the cue at the
+  // head of a `Files released:` list stopped governing everything after it and
+  // the tail stayed HELD on a line that said in words it was releasing it.
+  //
+  // Measured on the live register: two release lines held 9 and 7 paths each
+  // this way. Neither reached `heldPaths`, which drops release lines in any
+  // case, so no refusal ever came of it — but the reading was wrong and the
+  // same split would land on a CLAIM line's disclaimer just as readily.
+  check(
+    "T-835 a route segment inside a released list no longer splits the cue's reach",
+    claimedPaths(
+      "Files released: src/lib/a.ts, src/app/(maestro)/source/setup/page.tsx, src/lib/b.ts",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths(
+        "Files released: src/lib/a.ts, src/app/(maestro)/source/setup/page.tsx, src/lib/b.ts",
+      ),
+    ),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — the same list without a route segment released all of it before and after",
+    claimedPaths("Files released: src/lib/a.ts, src/lib/c.ts, src/lib/b.ts").length === 0,
+    JSON.stringify(claimedPaths("Files released: src/lib/a.ts, src/lib/c.ts, src/lib/b.ts")),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(grouped.dir, { recursive: true, force: true });
 }
 
 console.log(`\n${passes} passed, ${failures} failed`);

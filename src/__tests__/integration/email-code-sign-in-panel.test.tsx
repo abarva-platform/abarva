@@ -63,6 +63,14 @@ function installClerkMock() {
 }
 
 describe('EmailCodeSignIn', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ ok: true }),
+    }) as jest.Mock;
+  });
+
   it('asks only for email before sending a one-time code', () => {
     render(<EmailCodeSignIn redirectUrl="/auth-redirect" />);
 
@@ -88,6 +96,11 @@ describe('EmailCodeSignIn', () => {
     fireEvent.click(screen.getByRole('button', { name: /send email code/i }));
 
     await screen.findByText(/we sent a code to/i);
+    expect(global.fetch).toHaveBeenCalledWith('/api/auth/launch-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'anand.sundaram+apex@thesundaram.com' }),
+    });
     expect(signIn.create).toHaveBeenCalledWith({
       identifier: 'anand.sundaram+apex@thesundaram.com',
     });
@@ -134,5 +147,43 @@ describe('EmailCodeSignIn', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toMatch(/not configured for email-code sign-in/i);
+  });
+
+  it('does not ask Clerk to send a code when launch provisioning rejects the email', async () => {
+    const { signIn } = installClerkMock();
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      json: jest.fn().mockResolvedValue({ error: 'access_not_provisioned' }),
+    });
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    render(<EmailCodeSignIn redirectUrl="/auth-redirect" />);
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'person@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /send email code/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/approved AbarVa workspace identity/i);
+    expect(signIn.create).not.toHaveBeenCalled();
+  });
+
+  it('does not mislabel Clerk provisioning failures as approval failures', async () => {
+    const { signIn } = installClerkMock();
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      json: jest.fn().mockResolvedValue({ error: 'clerk_user_provisioning_failed' }),
+    });
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    render(<EmailCodeSignIn redirectUrl="/auth-redirect" />);
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'anand@abarva.ai' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /send email code/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/could not provision this approved account/i);
+    expect(signIn.create).not.toHaveBeenCalled();
   });
 });

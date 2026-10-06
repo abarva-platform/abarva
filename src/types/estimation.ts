@@ -100,11 +100,12 @@ export interface StallScenarioEstimate {
   owner: string;
 }
 
-export interface SponsorApproval {
+export interface WorkspaceApproval {
   approved: boolean;
+  approved_by: string;
   approval_date: string;
   approval_percentile_commitment: EstimatePercentile;
-  approval_signature_method: string;
+  approval_record_method: string;
   dissent_captured: boolean;
 }
 
@@ -134,5 +135,5 @@ export interface TimelineResourceEstimate {
   flex_modes_applied: EstimateFlexModeApplied[];
   political_decision_moments: PoliticalDecisionMoment[];
   stall_scenarios: StallScenarioEstimate[];
-  sponsor_approval: SponsorApproval;
+  workspace_approval: WorkspaceApproval;
 }

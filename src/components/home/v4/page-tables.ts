@@ -118,8 +118,7 @@ export interface Finding {
   claim: string;
   owner: string;
   because: string;
-  /** The file, the rule and the grain behind the figure in the claim. A finding a reader cannot
-   * reproduce is an assertion, and an assertion with an owner's name on it is worse than none. */
+  /** Legacy file hint plus deterministic rule and grain. The file is not verified source lineage. */
   trace?: { file: string; grain: string; rule: string };
   /** The rows behind the finding, openable in the record browser with a filter already applied. */
   openRows?: { objectType: string; filter: string };

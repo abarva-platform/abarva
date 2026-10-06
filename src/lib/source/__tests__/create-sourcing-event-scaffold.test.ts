@@ -36,7 +36,12 @@ function setupMockSupabase(insertedEvent: {
 }) {
   // Records calls to .from(table).upsert so the test can assert on
   // what was scaffolded.
-  const calls: Array<{ table: string; method: "upsert"; rows: unknown }> = [];
+  const calls: Array<{
+    table: string;
+    method: "upsert";
+    rows: unknown;
+    ignoreDuplicates?: boolean;
+  }> = [];
 
   const fromImpl = (table: string) => {
     if (table === "source_events") {
@@ -61,9 +66,9 @@ function setupMockSupabase(insertedEvent: {
         },
         error: null,
       });
-      const select = jest.fn(() => ({ single }));
-      const upsert = jest.fn((row: unknown) => {
-        calls.push({ table, method: "upsert", rows: row });
+      const select = jest.fn(() => ({ single, maybeSingle: single }));
+      const upsert = jest.fn((row: unknown, options?: { ignoreDuplicates?: boolean }) => {
+        calls.push({ table, method: "upsert", rows: row, ignoreDuplicates: options?.ignoreDuplicates });
         return { select };
       });
       return { upsert };
@@ -155,6 +160,64 @@ describe("createSourcingEvent scaffolding", () => {
     expect(insertedRow.current_stage_entered_at).toBeTruthy();
     expect(typeof insertedRow.current_stage_entered_at).toBe("string");
     expect(insertedRow.current_stage_key).toBe("strategy");
+    expect(insertedRow.approval_policy_code).toBe("self_v1");
+  });
+
+  it("does not overwrite an existing event policy or stage on a duplicate create", async () => {
+    const calls = setupMockSupabase({
+      id: "evt-existing",
+      client_key: "apexretail",
+      event_code: "APEX-EXISTING-2026",
+    });
+
+    await createSourcingEvent({
+      clientKey: "apexretail",
+      eventName: "Existing Event",
+      eventType: "managed_service",
+      triggerDescription: "Retry",
+      creationRequestId: "retry-1",
+    });
+
+    const eventInsert = calls.find((call) => call.table === "source_events")!;
+    expect(eventInsert).toBeDefined();
+    expect(eventInsert.rows).toMatchObject({ approval_policy_code: "self_v1" });
+    // The database conflict path must preserve the original row, including
+    // its policy and progressed stage, rather than upserting over it.
+    expect(eventInsert).toMatchObject({ ignoreDuplicates: true });
+  });
+
+  it("returns the original tenant event without scaffolding when the insert conflicts", async () => {
+    const existing = {
+      id: "evt-existing",
+      client_key: "apexretail",
+      event_code: `APEX-EXISTING-${new Date().getFullYear()}`,
+      current_stage_key: "evaluation",
+      approval_policy_code: "legacy_signed_scope_v1",
+    };
+    const getEventByCodeForClient = jest.fn().mockResolvedValue(existing);
+    selectSourceEventsReadAdapter.mockReturnValue({ getEventByCodeForClient });
+    const from = jest.fn(() => ({
+      upsert: jest.fn(() => ({
+        select: jest.fn(() => ({
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
+    }));
+    getAzureWriteFluentClient.mockReturnValue({ from });
+
+    const row = await createSourcingEvent({
+      clientKey: "apexretail",
+      eventName: "Existing Event",
+      eventType: "managed_service",
+      triggerDescription: "Retried request",
+    });
+
+    expect(row).toBe(existing);
+    expect(getEventByCodeForClient).toHaveBeenCalledWith(
+      existing.event_code,
+      "apexretail",
+    );
+    expect(from).toHaveBeenCalledTimes(1);
   });
 
   it("persists explicit sourcing motion for Door 1-created events", async () => {
@@ -287,7 +350,7 @@ describe("createSourcingEvent scaffolding", () => {
       },
       error: null,
     });
-    const select = jest.fn(() => ({ single }));
+    const select = jest.fn(() => ({ single, maybeSingle: single }));
     const upsertEvent = jest.fn(() => ({ select }));
     // Substrate tables fail with an RLS error.
     const upsert = jest.fn(async () => ({

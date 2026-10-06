@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -88,8 +89,10 @@ export function TaskChecklist({
       ),
   );
 
-  const done = tasks.filter(
-    (t) => t.state === "done" || locallyDone.has(t.id),
+  const done = tasks.filter((t) =>
+    t.id === "strategy.confirm"
+      ? t.state === "done" || t.evidenceComplete === true
+      : t.state === "done" || locallyDone.has(t.id),
   ).length;
 
   return (
@@ -121,7 +124,9 @@ export function TaskChecklist({
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {tasks.map((task) => {
-          const isDone = task.state === "done" || locallyDone.has(task.id);
+          const isDone = task.id === "strategy.confirm"
+            ? task.state === "done" || task.evidenceComplete === true
+            : task.state === "done" || locallyDone.has(task.id);
           const isOpen = openId === task.id;
           return (
             <TaskRow
@@ -287,24 +292,33 @@ function TaskRow({
 
           {task.rows ? <ReviewRows rows={task.rows} /> : null}
           {task.type === "provide" ? (
-            <EvidenceRequestPanel
-              task={task}
-              isDone={isDone}
-              eventId={eventId}
-              factTemplateCode={factTemplateCode}
-            >
-              {task.file ? (
-                <FileChip file={task.file} />
-              ) : (
-                <TaskProvideUpload
-                  signed={/letter|commit/i.test(task.title)}
-                  eventId={eventId}
-                  stageKey={stageKey}
-                  factTemplateCode={factTemplateCode}
-                  onUploaded={onComplete}
-                />
-              )}
-            </EvidenceRequestPanel>
+            <>
+              <EvidenceRequestPanel
+                task={task}
+                isDone={isDone}
+                eventId={eventId}
+                factTemplateCode={factTemplateCode}
+              >
+                {task.file ? (
+                  <FileChip file={task.file} />
+                ) : (
+                  <TaskProvideUpload
+                    signed={/letter|commit/i.test(task.title)}
+                    eventId={eventId}
+                    stageKey={stageKey}
+                    factTemplateCode={factTemplateCode}
+                    evidenceRequirementId={task.id === "scope.app-inventory" ? evidenceRequirementId ?? undefined : undefined}
+                    onUploaded={task.id === "scope.sponsor" || task.id === "scope.app-inventory" ? () => router.refresh() : onComplete}
+                  />
+                )}
+              </EvidenceRequestPanel>
+              {task.id === "scope.sponsor" && stageKey === "scope" && eventId ? (
+                <>
+                  <SponsorDelegationControl eventId={eventId} />
+                  <SponsorReviewRequest eventId={eventId} />
+                </>
+              ) : null}
+            </>
           ) : (
             <>
               {task.template ? <TemplateChip template={task.template} /> : null}
@@ -352,7 +366,15 @@ function TaskRow({
               </div>
             ) : null}
 
-            {effectiveState === "done" ? (
+            {task.id === "scope.sponsor" && stageKey === "scope" && eventId && !isDone ? (
+              <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+                Completion is read back from verified commitment evidence.
+              </span>
+            ) : task.id === "strategy.confirm" && eventId && !task.confirmationVersion && !isDone ? (
+              <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+                This strategy decision requires the governed Event Owner approval path.
+              </span>
+            ) : effectiveState === "done" ? (
               <span
                 style={{
                   fontSize: 13,
@@ -366,6 +388,33 @@ function TaskRow({
               <button
                 type="button"
                 onClick={async () => {
+                  if (task.id === "strategy.confirm") {
+                    if (!eventId || stageKey !== "strategy" || !task.confirmationVersion) return;
+                    setIsCompleting(true);
+                    setCompletionError(null);
+                    try {
+                      const response = await fetch(
+                        `/api/v1/source/${encodeURIComponent(eventId)}/strategy-confirmation`,
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ version: task.confirmationVersion, confirmed: true }),
+                        },
+                      );
+                      const result = (await response.json().catch(() => null)) as {
+                        ok?: boolean; detail?: string; error?: string;
+                      } | null;
+                      if (!response.ok || !result?.ok) {
+                        throw new Error(result?.detail ?? result?.error ?? "Strategy confirmation could not be saved.");
+                      }
+                      router.refresh();
+                    } catch (error) {
+                      setCompletionError(error instanceof Error ? error.message : "Strategy confirmation could not be saved.");
+                    } finally {
+                      setIsCompleting(false);
+                    }
+                    return;
+                  }
                   if (!canPersistAnswer) {
                     onComplete();
                     return;
@@ -958,6 +1007,7 @@ interface DropZoneProps {
    * LIVE. Absent → registry-only upload (the current behavior).
    */
   factTemplateCode?: string;
+  evidenceRequirementId?: string;
   onUploaded?: () => void;
   onUploadReadback?: (readback: TaskProvideUploadReadback) => void;
 }
@@ -976,6 +1026,7 @@ export function TaskProvideUpload({
   eventId,
   stageKey,
   factTemplateCode,
+  evidenceRequirementId,
   onUploaded,
   onUploadReadback,
 }: DropZoneProps) {
@@ -1000,6 +1051,7 @@ export function TaskProvideUpload({
         eventId,
         stageKey,
         file,
+        evidenceRequirementId,
       });
 
       // 2) When this task binds a template, ALSO parse the file into typed facts.
@@ -1238,6 +1290,171 @@ export function TaskProvideUpload({
           {status.message}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+interface SponsorDelegationReadback {
+  verified: boolean;
+  available: boolean;
+  sponsorAssigned: boolean;
+  sponsorName: string | null;
+  recipientReady: boolean;
+  scopeArtifact: { id: string; sha256: string } | null;
+  canDelegate: boolean;
+  currentStage: string | null;
+}
+
+export function SponsorDelegationControl({ eventId }: { eventId: string }) {
+  const router = useRouter();
+  const [readback, setReadback] = useState<SponsorDelegationReadback | null>(null);
+  const [accepted, setAccepted] = useState(false);
+  const [status, setStatus] = useState<"loading" | "ready" | "saving" | "verified" | "pending" | "error">("loading");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/v1/source/events/${encodeURIComponent(eventId)}/sponsor-delegation`, {
+      credentials: "include",
+    }).then(async (response) => {
+      if (!response.ok) throw new Error("Could not read delegated commitment status.");
+      return response.json() as Promise<SponsorDelegationReadback>;
+    }).then((value) => {
+      if (!alive) return;
+      setReadback(value);
+      setStatus(value.verified ? "verified" : "ready");
+    }).catch(() => {
+      if (alive) {
+        setStatus("error");
+        setMessage("Could not read delegated commitment status.");
+      }
+    });
+    return () => { alive = false; };
+  }, [eventId]);
+
+  const acknowledge = async () => {
+    if (!accepted || !readback?.canDelegate || !readback.scopeArtifact || status === "saving") return;
+    if (!window.confirm(`Record your own acknowledgement as sponsor delegate and notify ${readback.sponsorName}? This is not the sponsor's signature.`)) return;
+    setStatus("saving");
+    setMessage("");
+    try {
+      const response = await fetch(`/api/v1/source/events/${encodeURIComponent(eventId)}/sponsor-delegation`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          acknowledged: true,
+          scopeArtifactId: readback.scopeArtifact.id,
+          scopeArtifactSha256: readback.scopeArtifact.sha256,
+        }),
+      });
+      const result = await response.json() as { verified?: boolean; notification?: string; error?: string };
+      if (!response.ok) {
+        setStatus("error");
+        setMessage(result.error === "current_approved_scope_artifact_required"
+          ? "The approved Scope memo changed. Reload before acknowledging."
+          : "Could not record delegated commitment.");
+        return;
+      }
+      if (result.verified) {
+        setStatus("verified");
+        setMessage("Your delegated acknowledgement is recorded and the sponsor email was sent.");
+        router.refresh();
+      } else {
+        setStatus("pending");
+        setMessage(result.notification === "logged_fallback"
+          ? "Acknowledgement recorded, but email was only logged. Scope remains blocked."
+          : "Acknowledgement recorded, but sponsor email was not delivered. Scope remains blocked.");
+      }
+    } catch {
+      setStatus("error");
+      setMessage("Could not verify the acknowledgement outcome. Reload before trying again.");
+    }
+  };
+
+  return (
+    <section aria-label="Delegated sponsor commitment" style={{ marginTop: 12, padding: "12px 0", borderTop: `1px solid ${ANALYTICS.LINE_SOFT}` }}>
+      <div style={{ color: ANALYTICS.INK, fontSize: 13, fontWeight: 600 }}>Acknowledge for sponsor</div>
+      <p style={{ color: ANALYTICS.MUTED, fontSize: 12, lineHeight: 1.5, margin: "6px 0 10px" }}>
+        Your name is recorded as the delegate. The named sponsor receives an email; this does not record their personal signature or complete other Scope approvals.
+      </p>
+      {status === "loading" ? <span role="status">Checking commitment status...</span> : null}
+      {status === "verified" ? <span role="status">{message || "Delegated acknowledgement and sponsor notice verified."}</span> : null}
+      {readback && status !== "verified" ? (
+        !readback.available ? <span role="status">Delegated acknowledgement is not configured in this environment.</span> :
+        !readback.sponsorAssigned ? <span role="status">Assign one named sponsor to this event first.</span> :
+        !readback.scopeArtifact ? <span role="status">Approve the Scope memo and attach its final file first.</span> :
+        !readback.recipientReady ? <span role="status">Sponsor email is not enabled for this environment.</span> :
+        !readback.canDelegate ? <span role="status">A client admin or assigned sponsor delegate must acknowledge.</span> :
+        <>
+          <p style={{ color: ANALYTICS.INK_2, fontSize: 12.5, margin: "0 0 8px" }}>Sponsor: {readback.sponsorName}</p>
+          <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12.5, color: ANALYTICS.INK_2 }}>
+            <input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} />
+            I acknowledge the current scope and resourcing as an authorized delegate.
+          </label>
+          <button type="button" disabled={!accepted || status === "saving"} onClick={() => void acknowledge()}
+            style={{ marginTop: 10, border: 0, borderRadius: ANALYTICS.RADIUS_SM, background: ANALYTICS.INK, color: "#fff", padding: "8px 12px", fontSize: 12.5, fontWeight: 600 }}>
+            {status === "saving" ? "Recording..." : "Acknowledge and notify sponsor"}
+          </button>
+        </>
+      ) : null}
+      {message && status !== "verified" ? <p role="status" style={{ margin: "8px 0 0", fontSize: 12, color: ANALYTICS.MUTED }}>{message}</p> : null}
+    </section>
+  );
+}
+
+export function SponsorReviewRequest({ eventId }: { eventId: string }) {
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "logged" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("Could not request sponsor review.");
+
+  const requestReview = async () => {
+    if (status !== "idle" && status !== "error") return;
+    setStatus("sending");
+    try {
+      const response = await fetch(
+        `/api/v1/source/events/${encodeURIComponent(eventId)}/request-approval`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approvalKind: "sponsor_commitment" }),
+        },
+      );
+      const result = await response.json() as { channel?: string; error?: string };
+      if (!response.ok) {
+        setErrorMessage(result.error === "sponsor_assignment_required"
+          ? "Assign one sponsor to this event before requesting review."
+          : result.error === "test_recipient_not_allowed"
+            ? "Sponsor email is not enabled in this environment."
+            : "Could not request sponsor review.");
+        setStatus("error");
+        return;
+      }
+      setStatus(result.channel === "email_sent"
+        ? "sent"
+        : result.channel === "logged_fallback"
+          ? "logged"
+          : "error");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+      <button
+        type="button"
+        onClick={() => void requestReview()}
+        disabled={status === "sending" || status === "sent" || status === "logged"}
+        style={{ border: `1px solid ${ANALYTICS.LINE_STRONG}`, borderRadius: 8, background: ANALYTICS.CARD, color: ANALYTICS.INK, padding: "8px 12px", fontSize: 12, fontWeight: 600 }}
+      >
+        {status === "sending" ? "Requesting..." : "Request sponsor review"}
+      </button>
+      <span role="status" style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+        {status === "sent" ? "Review email sent." : null}
+        {status === "logged" ? "Notification logged; no email sent." : null}
+        {status === "error" ? errorMessage : null}
+      </span>
     </div>
   );
 }

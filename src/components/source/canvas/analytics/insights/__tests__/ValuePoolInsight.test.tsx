@@ -103,4 +103,19 @@ describe('ValuePoolInsight', () => {
     expect(countBars(container)).toBe(0);
     expect(screen.queryByText(/\$0\b/)).not.toBeInTheDocument();
   });
+
+  it('names unsized levers in the empty state without showing sample money', () => {
+    const { container } = render(
+      <ValuePoolInsight
+        insight={{
+          ...EMPTY_POOL,
+          needsEvidenceLevers: ['Service capacity', 'Contract economics'],
+        }}
+      />,
+    );
+    expect(screen.getByText('Service capacity')).toBeInTheDocument();
+    expect(screen.getByText('Contract economics')).toBeInTheDocument();
+    expect(countBars(container)).toBe(0);
+    expect(container.textContent).not.toMatch(/\$\s*\d/);
+  });
 });

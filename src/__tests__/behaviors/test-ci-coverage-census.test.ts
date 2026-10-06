@@ -54,12 +54,25 @@ type Census = {
     directoriesPartiallyCovered: number;
     directoriesUncovered: number;
     directoriesWithUnrunTestFiles: number;
+    directoriesWithUntriagedUnrunTestFiles: number;
     declaredQuarantineTestFiles: number;
     untriagedUnrunTestFiles: number;
     indeterminateInvocations: number;
     criticalGovernedRiskDirectories: number;
     highGovernedRiskDirectories: number;
     unclassifiedRiskDirectories: number;
+    // The two halves of that word. `unclassified` means either "the census
+    // resolved this directory's product modules and none of the three signals
+    // matched" or "the census resolved nothing, so it is saying something about
+    // its own reach". These separate them, and they sum to the line above.
+    unclassifiedRiskDirectoriesWithResolvedProductSources: number;
+    unclassifiedRiskDirectoriesWithNoResolvedProductSource: number;
+    // The ranking's own two numbers, published because C-555's whole finding
+    // was that the ranking's denominator was the classified subset and nobody
+    // could see it: these are directories and files IN the ranking, against
+    // `untriagedUnrunTestFiles` above as the pool.
+    rankedDirectories: number;
+    rankedUntriagedUnrunTestFiles: number;
   };
   indeterminateInvocations: { source: string; invocation: string }[];
   unresolvedIgnoreArguments: { script: string; source: string; reason: string }[];
@@ -78,6 +91,7 @@ type Census = {
       score: number;
       band: "critical" | "high";
       signals: string[];
+      productSourceCount: number;
       controlIds?: string[];
       approvalOrLifecycleSourceCount?: number;
       approvalOrLifecycleSources?: string[];
@@ -91,11 +105,35 @@ type Census = {
     unrunTestFiles: number;
     declaredQuarantineTestFiles: number;
     untriagedUnrunTestFiles: number;
+    // Which admission path put the row in the queue. `governed_risk_signal` is
+    // a non-zero score; `untriaged_unrun_work` is a directory holding untriaged
+    // unrun files that matched no signal, which before C-555 was in no ordering
+    // at all. Named on the row rather than derived from the score so a reader —
+    // and a test — can separate the two populations without re-deriving the
+    // rule (C-555).
+    admittedBy: "governed_risk_signal" | "untriaged_unrun_work";
     governedRisk: {
       rank: number;
       score: number;
       band: "critical" | "high" | "unclassified";
       signals: string[];
+      productSourceCount: number;
+    };
+  }[];
+  // Every directory holding an untriaged unrun file that the ranking does not
+  // carry, because its score is zero. Published so the zero can be read: a
+  // directory here with `productSourceCount: 0` is unmeasured, not safe.
+  unclassifiedRiskDirectories: {
+    directory: string;
+    testFiles: number;
+    unrunTestFiles: number;
+    declaredQuarantineTestFiles: number;
+    untriagedUnrunTestFiles: number;
+    governedRisk: {
+      score: 0;
+      band: "unclassified";
+      signals: [];
+      productSourceCount: number;
     };
   }[];
   governedRiskFiles: {
@@ -114,13 +152,30 @@ type Census = {
     green: "unknown";
     covered: boolean;
     declaredQuarantine: boolean;
+    declaredQuarantineShape:
+      | "excluded-by-naming-command"
+      | "declared-in-quarantine-list"
+      | null;
     untriaged: boolean;
+    governedRisk: {
+      rank: number;
+      score: number;
+      band: "critical" | "high";
+      signals: string[];
+      productSourceCount: number;
+    };
   }[];
   uncoveredDirectories: {
     directory: string;
     testFiles: number;
     declaredQuarantineTestFiles: number;
     untriagedUnrunTestFiles: number;
+  }[];
+  quarantineLists: {
+    list: string;
+    declaredSuites: number;
+    resolvedTestFiles: string[];
+    unresolvedDeclarations: string[];
   }[];
 };
 
@@ -258,6 +313,58 @@ const PR_WORKFLOW = (run: string) =>
   );
 
 const TEST_FILE = "it('x', () => { expect(1).toBe(1); });\n";
+
+/**
+ * What Jest itself selects, in `cwd`, when handed these path arguments — the
+ * oracle for every case below. Jest is spawned rather than re-implemented: a
+ * second copy of its pattern rules here would be free to agree with a census
+ * that had the rules wrong, which is the failure these cases exist to catch.
+ */
+function jestSelects(cwd: string, paths: readonly string[]): string[] {
+  const stdout = execFileSync(
+    process.execPath,
+    [path.join(cwd, "node_modules", "jest", "bin", "jest.js"), "--listTests", ...paths],
+    { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  );
+  return stdout
+    .split("\n")
+    .map((line) => line.trim())
+    // Jest prints its own diagnostics on this stream — "Invalid testPattern …
+    // supplied. Running all tests instead." is one of them, and a case below
+    // provokes it deliberately. Only a line that is an absolute path inside
+    // `cwd` is a selected file.
+    .filter((line) => line.startsWith(`${cwd}${path.sep}`))
+    .map((absolute) => path.relative(cwd, absolute))
+    .sort();
+}
+
+/**
+ * The test files the census credits through a ratchet baseline, decided by the
+ * census's own exported matcher so the case measures the shipped reading
+ * rather than a paraphrase of it. Run out of process because the script is an
+ * ES module and this suite is transpiled to CommonJS.
+ */
+function ratchetBaselineSelection(root: string): string[] {
+  const probe = [
+    'import { readFileSync } from "node:fs";',
+    'import { collectTestFiles, collectReachableCommands, reachableEntrySelects }',
+    `  from ${JSON.stringify(path.join(root, CENSUS_SCRIPT))};`,
+    `const root = ${JSON.stringify(root)};`,
+    'const scripts = JSON.parse(readFileSync(`${root}/package.json`, "utf8")).scripts ?? {};',
+    "const { reachable } = collectReachableCommands(root, scripts);",
+    'const baseline = reachable.filter((entry) => entry.via === "ratchet-baseline");',
+    "const selected = collectTestFiles(root).filter((file) =>",
+    "  baseline.some((entry) => reachableEntrySelects(root, entry, file)),",
+    ");",
+    "console.log(JSON.stringify(selected.sort()));",
+  ].join("\n");
+  const stdout = execFileSync(process.execPath, ["--input-type=module", "-e", probe], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return JSON.parse(stdout) as string[];
+}
 
 const fixtures: string[] = [];
 function fixture(files: Record<string, string>, scripts?: Record<string, string>): string {
@@ -474,19 +581,43 @@ describe("test CI coverage census", () => {
     });
 
     const { census } = runCensus(dir);
+    // `src/lib/helpers/__tests__` is the larger inert directory this case is
+    // named for — three unrun files against one apiece for the governed three.
+    // It used to be absent rather than last, because admission was on a
+    // non-zero score; since C-555 the ranking carries the whole untriaged pool
+    // and the assertion can finally say what the case is called: governed
+    // surfaces AHEAD of it, not instead of it. Updated rather than relaxed — it
+    // still pins the exact order of every row, and it now also pins that the
+    // larger inert directory cannot outrank a one-file governed one.
     expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
       "src/components/agent/__tests__",
       "src/app/api/source/action/__tests__",
       "src/lib/data/__tests__",
+      "src/lib/helpers/__tests__",
     ]);
     expect(census.governedRiskRanking.map((row) => row.governedRisk.signals)).toEqual([
       ["declared_ai_surface_control"],
       ["approval_or_lifecycle_write"],
       ["tenant_scoped_read"],
+      [],
     ]);
     expect(census.governedRiskRanking.map((row) => row.governedRisk.rank)).toEqual([
-      1, 2, 3,
+      1, 2, 3, 4,
     ]);
+    // Which path admitted each row, per directory. The three signalled ones are
+    // admitted as they always were; the inert one is admitted only by the new
+    // path, which is what makes it removable by reverting that path alone.
+    expect(census.governedRiskRanking.map((row) => row.admittedBy)).toEqual([
+      "governed_risk_signal",
+      "governed_risk_signal",
+      "governed_risk_signal",
+      "untriaged_unrun_work",
+    ]);
+    // Admission did not buy the inert directory a score or a band.
+    expect(census.governedRiskRanking[3].governedRisk).toMatchObject({
+      score: 0,
+      band: "unclassified",
+    });
     expect(census.counts).toMatchObject({
       criticalGovernedRiskDirectories: 2,
       highGovernedRiskDirectories: 1,
@@ -503,9 +634,14 @@ describe("test CI coverage census", () => {
     // every unrun file to only the untriaged ones — a directory whose unrun
     // set is entirely declared quarantine is no longer ranked, so "by unrun
     // tests" would now overstate what the list is ordered on. The assertion is
-    // updated rather than relaxed: it still pins an exact heading.
+    // updated rather than relaxed: it still pins an exact heading. It moved a
+    // third time under C-555, because the list stopped being only governed-risk
+    // directories — an unscored one is ranked now — so the old heading would
+    // name a list that mostly is not one. The heading also carries the ranking's
+    // coverage of its own pool, which is the number whose absence let the queue
+    // sit at 2.9% of it unnoticed.
     expect(summary).toContain(
-      "top governed-risk directories by untriaged unrun tests:",
+      "next to wire, by governed risk then untriaged unrun tests (4 ranked, 6 of 6 untriaged files):",
     );
     expect(summary.indexOf("src/components/agent/__tests__")).toBeLessThan(
       summary.indexOf("src/app/api/source/action/__tests__"),
@@ -513,7 +649,18 @@ describe("test CI coverage census", () => {
     expect(summary.indexOf("src/app/api/source/action/__tests__")).toBeLessThan(
       summary.indexOf("src/lib/data/__tests__"),
     );
-    expect(summary).not.toContain("src/lib/helpers/__tests__");
+    // The inert directory is printed LAST rather than not printed. It used to be
+    // absent from this list, which is the state C-555 was filed against: three
+    // unrun files in a queue of one apiece, invisible to whoever reads the
+    // summary to decide what to wire next.
+    expect(summary.indexOf("src/lib/data/__tests__")).toBeLessThan(
+      summary.indexOf("src/lib/helpers/__tests__"),
+    );
+    // And it is labelled as unscored where a signal list would otherwise be, so
+    // a reader cannot mistake its place in the queue for a matched signal.
+    expect(summary).toContain(
+      "4. src/lib/helpers/__tests__ (unclassified; 3 untriaged of 3 unrun of 3 tests; no governed-risk signal matched; ranked as untriaged unrun work)",
+    );
   });
 
   /**
@@ -806,6 +953,325 @@ describe("test CI coverage census", () => {
     );
     expect(riskFor("src/app/api/epsilon/__tests__")?.signals ?? []).toEqual([]);
   });
+  /**
+   * `unclassified` is two different facts wearing one word, and until this case
+   * existed the census could not tell them apart.
+   *
+   * A directory scores zero either because the census resolved the product
+   * modules its tests import and none of the three signals matched — genuinely
+   * low risk, as far as this measurement reaches — or because it resolved no
+   * product module at all, in which case the census knows nothing about the
+   * directory and `unclassified` is a statement about the resolver rather than
+   * about the code. 180 of the 190 directories holding an untriaged unrun file
+   * land in that word, so which of the two it means decides whether a
+   * triage queue built from this file is ordered or merely short (T-758).
+   *
+   * The two arms below are identical in every published field the census had
+   * before this case: same band, same score, same empty signal list, both
+   * absent from `governedRiskRanking` because that list is filtered on a
+   * non-zero score. The ONLY thing that separates them is how many product
+   * modules resolved, which is why that number has to be on the face of the
+   * output rather than inferable from it.
+   *
+   * Both test files are named so the census's inferred sibling
+   * (`.../<name>.ts` beside `.../__tests__/<name>.test.ts`) does not exist:
+   * without that discipline the unresolved arm picks up an edge for free and
+   * the case proves nothing.
+   */
+  it("separates an unclassified directory that resolved product sources from one that resolved none", () => {
+    const dir = fixture({
+      // Arm A — resolves one real product module. It matches no signal: no
+      // catalog entry, no approval or lifecycle write, no tenant-scoped read.
+      "src/lib/plain/format.ts": "export const format = (s: string) => s.trim();\n",
+      "src/lib/plain/__tests__/formatting.test.ts": [
+        'import { format } from "../format";',
+        'it("formats", () => expect(format(" x ")).toBe("x"));',
+      ].join("\n"),
+      // Arm B — resolves nothing. The specifier is a bare package, which is a
+      // dependency rather than a product module, so the census follows no edge
+      // out of this directory at all.
+      "src/lib/opaque/__tests__/opacity.test.ts": [
+        'import path from "node:path";',
+        'it("opaque", () => expect(typeof path.join).toBe("function"));',
+      ].join("\n"),
+      // Arm C — a directory that DOES score, present so the two lists can be
+      // shown to partition the population rather than merely to be non-empty.
+      // Without it, a filter that swept every directory into the unclassified
+      // list would look identical to one that took the complement of the
+      // ranking, because the ranking would be empty either way.
+      "src/app/api/theta/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/theta/__tests__/approving.test.ts": [
+        'import { POST } from "../route";',
+        'it("approves", () => expect(typeof POST).toBe("function"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+
+    // Three directories hold an untriaged unrun file; one scores and two do
+    // not. The unclassified list is the zero-score half of that population,
+    // which is the property the counts below are arithmetic on.
+    expect(census.counts.directoriesWithUntriagedUnrunTestFiles).toBe(3);
+    expect(census.counts.unclassifiedRiskDirectories).toBe(2);
+    // The ranking holds all three since C-555, with the scoring one first. This
+    // case is about the two KINDS of zero, and the ranking is where both now
+    // appear — so the order is pinned here rather than the membership being
+    // asserted as a one-element list that the wider admission would break.
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/theta/__tests__",
+      "src/lib/opaque/__tests__",
+      "src/lib/plain/__tests__",
+    ]);
+    expect(census.governedRiskRanking.map((row) => row.admittedBy)).toEqual([
+      "governed_risk_signal",
+      "untriaged_unrun_work",
+      "untriaged_unrun_work",
+    ]);
+
+    // The split, by number.
+    expect(census.counts).toMatchObject({
+      unclassifiedRiskDirectoriesWithResolvedProductSources: 1,
+      unclassifiedRiskDirectoriesWithNoResolvedProductSource: 1,
+    });
+    // The two are exhaustive of the word, asserted rather than assumed: a third
+    // bucket appearing later must not quietly leave part of the 180 unexplained.
+    expect(
+      census.counts.unclassifiedRiskDirectoriesWithResolvedProductSources +
+        census.counts.unclassifiedRiskDirectoriesWithNoResolvedProductSource,
+    ).toBe(census.counts.unclassifiedRiskDirectories);
+
+    // The per-directory count, which is what makes a single row readable rather
+    // than only the population.
+    const unclassified = new Map(
+      census.unclassifiedRiskDirectories.map((row) => [row.directory, row]),
+    );
+    expect([...unclassified.keys()].sort()).toEqual([
+      "src/lib/opaque/__tests__",
+      "src/lib/plain/__tests__",
+    ]);
+    // Stated as its own assertion rather than left implicit in the list above:
+    // a directory that SCORES appears in the ranking and in nothing else. The
+    // two lists stopped being complements at C-555 — every unclassified row is
+    // now also a ranked row — but this direction of the split is unchanged and
+    // is the one that would break if the zero-score filter ever widened.
+    expect(unclassified.has("src/app/api/theta/__tests__")).toBe(false);
+    // And the new relationship in the other direction, per directory: an
+    // unclassified row is a ranked row admitted by the wider path, carrying the
+    // same untriaged count in both places. Before C-555 this loop would have
+    // found nothing at all, which is the defect it now guards.
+    const rankedByDirectory = new Map(
+      census.governedRiskRanking.map((row) => [row.directory, row]),
+    );
+    for (const row of census.unclassifiedRiskDirectories) {
+      const ranked = rankedByDirectory.get(row.directory);
+      expect(ranked).toBeDefined();
+      expect(ranked!.admittedBy).toBe("untriaged_unrun_work");
+      expect(ranked!.untriagedUnrunTestFiles).toBe(row.untriagedUnrunTestFiles);
+      expect(ranked!.governedRisk.score).toBe(0);
+    }
+    expect(unclassified.get("src/lib/plain/__tests__")).toMatchObject({
+      untriagedUnrunTestFiles: 1,
+      governedRisk: { band: "unclassified", score: 0, signals: [], productSourceCount: 1 },
+    });
+    expect(unclassified.get("src/lib/opaque/__tests__")).toMatchObject({
+      untriagedUnrunTestFiles: 1,
+      governedRisk: { band: "unclassified", score: 0, signals: [], productSourceCount: 0 },
+    });
+    // The list and the count are two computations over the same population, so
+    // they are checked against each other. A header that disagrees with its own
+    // body is the shape this census has already been caught in once.
+    expect(census.unclassifiedRiskDirectories.length).toBe(
+      census.counts.unclassifiedRiskDirectories,
+    );
+
+    // The summary says it in words, because the JSON is not what a person reads
+    // when they are deciding what to triage next.
+    expect(runSummary(dir)).toContain(
+      "unclassified: 2 (1 resolved no product source, so the band is the resolver's silence)",
+    );
+  });
+
+  /**
+   * The companion to the case above, and the reason `productSourceCount` is
+   * published on every directory rather than only on the unclassified ones: a
+   * RANKED directory carries it too, so the number that explains a zero score
+   * is the same number, read the same way, on a row that scored.
+   */
+  it("publishes the resolved product source count on a ranked directory as well", () => {
+    const dir = fixture({
+      "src/app/api/zeta/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/zeta/__tests__/posting.test.ts": [
+        'import { POST } from "../route";',
+        'it("posts", () => expect(typeof POST).toBe("function"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const ranked = census.governedRiskRanking.find(
+      (row) => row.directory === "src/app/api/zeta/__tests__",
+    );
+    expect(ranked?.governedRisk.band).toBe("critical");
+    expect(ranked?.governedRisk.productSourceCount).toBe(1);
+    expect(
+      census.governedRiskFiles.find(
+        (row) => row.testPath === "src/app/api/zeta/__tests__/posting.test.ts",
+      )?.governedRisk.productSourceCount,
+    ).toBe(1);
+  });
+
+  /**
+   * The ranking's denominator is the untriaged pool, not the subset the signal
+   * classifier managed to score (C-555).
+   *
+   * `governedRiskRanking` answers one question: which stale test directory gets
+   * wired next. It was admitted on `governedRisk.score > 0`, so a directory the
+   * classifier reached and matched no signal in was not ranked LOW — it was
+   * absent. Measured on `origin/main` `cc2d13f2bc`: the ranking held 7
+   * directories covering 11 of the 385 untriaged unrun test files (2.9%), while
+   * `unclassifiedRiskDirectories` held 179 directories and 374 files, 172 of
+   * them with resolved product sources, and the two lists had zero overlap. So
+   * the queue read as exhausted at 7 entries while 374 files waited in a list
+   * nothing ordered.
+   *
+   * The classifier is not what changed. Its three signals stay exactly as they
+   * are, every band and score is untouched, and no directory's risk is raised —
+   * a score-0 directory enters the ranking BELOW every scored one and keeps
+   * `band: "unclassified"`, `score: 0` and an empty signal list. What changed is
+   * admission, and `admittedBy` says per row which path put it there, so the two
+   * populations stay legible on the face of the output instead of being inferred
+   * from a score.
+   *
+   * Asserted per directory throughout, never on a count: the ranking's length
+   * also moves when a directory is wired, so a length ratchet would go green for
+   * the wrong reason.
+   */
+  it("ranks every directory holding untriaged unrun work, and says which path admitted it", () => {
+    const dir = fixture({
+      // Scores: an approval write. Must keep rank 1 — a directory with a real
+      // signal cannot lose its place to the wider admission.
+      "src/app/api/omicron/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/omicron/__tests__/approving.test.ts": [
+        'import { POST } from "../route";',
+        'it("approves", () => expect(typeof POST).toBe("function"));',
+      ].join("\n"),
+      // Scores zero WITH a resolved product source: the census followed an edge
+      // out of here and matched none of the three signals. This is the
+      // population C-555 is about — 172 directories of it.
+      "src/lib/measured/format.ts": "export const format = (s: string) => s.trim();\n",
+      "src/lib/measured/__tests__/formatting.test.ts": [
+        'import { format } from "../format";',
+        'it("formats", () => expect(format(" x ")).toBe("x"));',
+        'it("trims", () => expect(format("y ")).toBe("y"));',
+      ].join("\n"),
+      "src/lib/measured/__tests__/second.test.ts": [
+        'import { format } from "../format";',
+        'it("second", () => expect(format("z")).toBe("z"));',
+      ].join("\n"),
+      // Scores zero with NO resolved product source: the band is the resolver's
+      // silence. Named so the inferred sibling does not exist, or the arm picks
+      // up an edge for free and proves nothing (the T-758 discipline).
+      "src/lib/opaque/__tests__/opacity.test.ts": [
+        'import path from "node:path";',
+        'it("opaque", () => expect(typeof path.join).toBe("function"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const ranked = new Map(
+      census.governedRiskRanking.map((row) => [row.directory, row]),
+    );
+
+    // The signalled directory keeps rank 1 and its admission path is the old
+    // one. If the wider admission ever reorders a scored row, this fails.
+    expect(ranked.get("src/app/api/omicron/__tests__")).toMatchObject({
+      admittedBy: "governed_risk_signal",
+      governedRisk: {
+        rank: 1,
+        band: "critical",
+        signals: ["approval_or_lifecycle_write"],
+      },
+    });
+
+    // Both score-0 directories are now IN the work order, each named, each
+    // still unclassified and unscored. Nothing is reclassified upward.
+    expect(ranked.get("src/lib/measured/__tests__")).toMatchObject({
+      admittedBy: "untriaged_unrun_work",
+      untriagedUnrunTestFiles: 2,
+      governedRisk: {
+        rank: 2,
+        score: 0,
+        band: "unclassified",
+        signals: [],
+        productSourceCount: 1,
+      },
+    });
+    expect(ranked.get("src/lib/opaque/__tests__")).toMatchObject({
+      admittedBy: "untriaged_unrun_work",
+      untriagedUnrunTestFiles: 1,
+      governedRisk: {
+        rank: 3,
+        score: 0,
+        band: "unclassified",
+        signals: [],
+        productSourceCount: 0,
+      },
+    });
+
+    // The denominator property itself, stated over the population rather than
+    // over these three names: every directory the census says holds untriaged
+    // unrun work appears in the ranking exactly once, and nothing else does.
+    const untriagedDirectories = [
+      "src/app/api/omicron/__tests__",
+      "src/lib/measured/__tests__",
+      "src/lib/opaque/__tests__",
+    ];
+    expect([...ranked.keys()].sort()).toEqual([...untriagedDirectories].sort());
+    expect(census.governedRiskRanking.length).toBe(
+      census.counts.directoriesWithUntriagedUnrunTestFiles,
+    );
+    // Ranks are a dense ordering over that whole population, so a row cannot
+    // be admitted and left without a place in the queue.
+    expect(census.governedRiskRanking.map((row) => row.governedRisk.rank)).toEqual([
+      1, 2, 3,
+    ]);
+
+    // `governedRiskFiles` and `governedRiskEvidence` still mean governed risk,
+    // and are unchanged by the admission: they carry the signalled directory
+    // and neither score-0 one. Widening them would have quietly redefined
+    // "governed-risk evidence" as "every unrun file".
+    expect(census.governedRiskEvidence.map((row) => row.directory)).toEqual([
+      "src/app/api/omicron/__tests__",
+    ]);
+    expect([
+      ...new Set(census.governedRiskFiles.map((row) => row.directory)),
+    ]).toEqual(["src/app/api/omicron/__tests__"]);
+
+    // The unclassified list keeps its own meaning — which zeros the resolver
+    // reached and which it did not — and is now a view ON the ranking rather
+    // than its complement. Asserted as that relationship, per directory, so the
+    // two cannot drift apart unnoticed.
+    for (const row of census.unclassifiedRiskDirectories) {
+      const rankedRow = ranked.get(row.directory);
+      expect(rankedRow).toBeDefined();
+      expect(rankedRow!.admittedBy).toBe("untriaged_unrun_work");
+      expect(rankedRow!.governedRisk.score).toBe(0);
+      expect(rankedRow!.untriagedUnrunTestFiles).toBe(row.untriagedUnrunTestFiles);
+    }
+
+    // The three numbers C-555 asks for, on the face of the output rather than
+    // recomputed by whoever reads it.
+    expect(census.counts).toMatchObject({
+      rankedDirectories: 3,
+      rankedUntriagedUnrunTestFiles: 4,
+      untriagedUnrunTestFiles: 4,
+    });
+  });
 
   it("does not promote comments and literals into governed source signals", () => {
     const dir = fixture({
@@ -854,6 +1320,113 @@ describe("test CI coverage census", () => {
       "approval_or_lifecycle_write",
       "tenant_scoped_read",
     ]);
+  });
+
+  it("reads tenant scope from a module named for tenancy, not only from a read-ish path", () => {
+    // T-793. The tenant half of the heuristic is two-part on purpose: a path
+    // gate AND a tenant key in the executable source. But the path gate's
+    // alternation was `read|query|queries|adapter|route|repository|lookup|
+    // search|fetch` — nine words, none of them `tenant` — so a module that
+    // announces tenant scope in its own filename could not match it. Measured
+    // on the live tree at the time of filing: 22 of 53 unclassified
+    // directories held at least one such source, and the excluded modules
+    // included ones literally named `tenant-scoped-session.ts`,
+    // `tenant-identity-pin.ts` and `tenant-key-resolution.ts`.
+    //
+    // Both halves are still required. The negative control for that is the
+    // `does not promote comments and literals` case above, whose fixture path
+    // DOES match the gate and which stays unsignalled on the source half
+    // alone — so widening the path side cannot be what makes this case pass
+    // unless the source side still holds.
+    const dir = fixture({
+      "src/lib/fenced/tenant-identity-pin.ts": [
+        "export function pin(tenantKey: string) {",
+        "  return { pinned: tenantKey };",
+        "}",
+      ].join("\n"),
+      "src/lib/fenced/__tests__/tenant-identity-pin.test.ts": [
+        'import { pin } from "../tenant-identity-pin";',
+        'it("pins", () => expect(pin("tenant-a").pinned).toBe("tenant-a"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const row = census.governedRiskRanking.find(
+      (candidate) => candidate.directory === "src/lib/fenced/__tests__",
+    );
+    expect(row?.governedRisk.signals).toContain("tenant_scoped_read");
+    expect(row?.governedRisk.band).toBe("high");
+    expect(row?.admittedBy).toBe("governed_risk_signal");
+    // The directory must leave the zero bucket, not merely gain a signal:
+    // `unclassifiedRiskDirectories` is the number four backlog items read.
+    expect(
+      census.unclassifiedRiskDirectories.map((candidate) => candidate.directory),
+    ).not.toContain("src/lib/fenced/__tests__");
+  });
+
+  it("still requires a tenant key in the executable source of a tenancy-named module", () => {
+    // The other side of the two-part test, pinned in its own case so that
+    // widening the path alternation cannot quietly become a one-part rule. The
+    // path here matches the gate by its `tenant-` prefix; the source carries
+    // the key only inside an interface and a comment, both of which
+    // `sourceWithoutNonExecutableSignalText` blanks. Narrowing the alternation
+    // back cannot make this case fail, and dropping the source half cannot
+    // make it pass.
+    const dir = fixture({
+      "src/lib/fenced-type-only/tenant-row-shape.ts": [
+        "export interface TenantRow { tenantKey: string }",
+        "// client_key is the column this used to read",
+        "export function shape(): string { return \"shape\"; }",
+      ].join("\n"),
+      "src/lib/fenced-type-only/__tests__/tenant-row-shape.test.ts": [
+        'import { shape } from "../tenant-row-shape";',
+        'it("shapes", () => expect(shape()).toBe("shape"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const row = census.governedRiskRanking.find(
+      (candidate) => candidate.directory === "src/lib/fenced-type-only/__tests__",
+    );
+    expect(row?.governedRisk.signals ?? []).not.toContain("tenant_scoped_read");
+    expect(row?.governedRisk.band).toBe("unclassified");
+  });
+
+  it("will not signal a tenant key alone — the path half of the gate is load-bearing", () => {
+    // Found by mutation while widening the path alternation for T-793:
+    // deleting the path half outright and keeping only `TENANT_KEY_SOURCE_RE`
+    // left all 58 of this suite's other cases green. Every existing negative
+    // case rests on the SOURCE half — their fixture paths match the gate and
+    // fail on the sanitizer — so nothing here could tell the two-part rule
+    // from a one-part one. That is the shape the census was written against: a
+    // guard you cannot fail. This case fails the one-part reading.
+    //
+    // The fixture's path carries no read-ish word and no tenancy word; its
+    // source carries `tenantKey` in a real, executable signature. The acceptance
+    // for T-793 says in as many words not to drop the path gate, and this is
+    // what makes that cost a red test rather than a code review.
+    const dir = fixture({
+      "src/lib/plain/row-shape.ts": [
+        "export function shape(tenantKey: string) {",
+        "  return { shape: tenantKey };",
+        "}",
+      ].join("\n"),
+      "src/lib/plain/__tests__/row-shape.test.ts": [
+        'import { shape } from "../row-shape";',
+        'it("shapes", () => expect(shape("a").shape).toBe("a"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const row = census.governedRiskRanking.find(
+      (candidate) => candidate.directory === "src/lib/plain/__tests__",
+    );
+    expect(row?.governedRisk.signals ?? []).not.toContain("tenant_scoped_read");
+    expect(row?.governedRisk.band).toBe("unclassified");
+    expect(row?.admittedBy).toBe("untriaged_unrun_work");
   });
 
   it("subtracts a command's own --testPathIgnorePatterns from what it selects", () => {
@@ -1198,6 +1771,7 @@ describe("test CI coverage census", () => {
         ');',
       ].join("\n"),
       "scripts/quality/iota-quarantine.json": `${JSON.stringify({
+        scope: "src/lib/iota/__tests__",
         quarantined: ["quarantined\\.test\\.ts"],
       })}\n`,
     });
@@ -1243,6 +1817,382 @@ describe("test CI coverage census", () => {
     expect(census.unresolvedIgnoreArguments).toEqual([
       expect.objectContaining({ script: "scripts/quality/absent-ignore-args.mjs" }),
     ]);
+  });
+
+
+  /**
+   * T-615. `declaredQuarantine` recognised one shape — a command that NAMES a
+   * file and then subtracts it through its own `--testPathIgnorePatterns` — and
+   * that shape needs the naming for the subtraction to have something to
+   * subtract. A directory whose default is EXCLUDED expresses its carve-out the
+   * other way round: it enumerates the files it runs, so a file left out is
+   * named by nothing at all and no ignore pattern mentions it.
+   *
+   * `src/__tests__/integration` is that directory, deliberately, and three files
+   * declared in `scripts/quality/integration-root-quarantine.json` on 2026-09-23
+   * with a reason, an owner and a verdict were reported `untriaged` two days
+   * later. `untriagedUnrunTestFiles` is the sole input to `governedRiskRanking`,
+   * so those three were the entire reason that directory sat at rank 1 of the
+   * critical band, and two backlog items drew work from that rank.
+   *
+   * Measured on the real tree before this changed, with one root file unwired
+   * from the workflow's enumeration AND declared in the list: the census at
+   * `406b24498` reported 398 untriaged, 49 declared quarantines, and the root at
+   * rank 1 `critical`; with this reading it reports 397, 50, and the root
+   * unranked. The fixture below is that state, minimised.
+   *
+   * The fixture has to disagree with itself or it cannot fail. `runs.test.ts` is
+   * enumerated and covered; `declared.test.ts` is enumerated by nothing and named
+   * in the list; nothing anywhere passes an ignore pattern, so the first shape
+   * has no way to be true and only the second reading can credit the file.
+   */
+  it("credits a quarantine a directory expresses by enumeration, not by an ignore pattern", () => {
+    const dir = fixture({
+      "src/app/api/rho/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/rho/action/__tests__/runs.test.ts":
+        'import "../route";\nit("runs", () => expect(true).toBe(true));\n',
+      "src/app/api/rho/action/__tests__/ignored.test.ts":
+        'import "../route";\nit("ignored", () => expect(true).toBe(true));\n',
+      "src/app/api/rho/action/__tests__/declared.test.ts":
+        'import "../route";\nit("declared", () => expect(true).toBe(true));\n',
+      "src/app/api/rho/action/__tests__/dark.test.ts":
+        'import "../route";\nit("dark", () => expect(true).toBe(true));\n',
+      // Enumeration, not a directory. `declared.test.ts` and `dark.test.ts` are
+      // named by nothing, which is what makes the first shape unable to see
+      // either of them; `ignored.test.ts` is named and then subtracted, so both
+      // shapes are present in one directory and a reading that conflated them
+      // would publish the wrong reason for one of the two.
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        [
+          "npx jest",
+          "src/app/api/rho/action/__tests__/runs.test.ts",
+          "src/app/api/rho/action/__tests__/ignored.test.ts",
+          "--testPathIgnorePatterns action/__tests__/ignored\\.test\\.ts$",
+          "--ci",
+        ].join(" "),
+      ),
+      "scripts/quality/rho-quarantine.json": `${JSON.stringify(
+        {
+          scope: "src/app/api/rho/action/__tests__",
+          quarantined: [
+            {
+              suite: "declared.test.ts",
+              owner: "T-615",
+              reason: "Declared with a reason, and named by no command.",
+              verdict: "update",
+            },
+          ],
+        },
+        null,
+        2,
+      )}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    // Three unrun files, two of them triaged by different evidence, one dark.
+    // The total must not move: only the classification changed.
+    expect(census.counts.uncoveredTestFiles).toBe(3);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(2);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+
+    // Per file, naming WHICH shape credited it. A count cannot tell the two
+    // apart: widening the first shape instead of adding the second would satisfy
+    // the three numbers above and still report the wrong reason here.
+    const shapes = Object.fromEntries(
+      census.governedRiskFiles
+        .filter((row) => row.directory === "src/app/api/rho/action/__tests__")
+        .map((row) => [
+          row.testPath.split("/").pop(),
+          { declaredQuarantine: row.declaredQuarantine, shape: row.declaredQuarantineShape, untriaged: row.untriaged },
+        ]),
+    );
+    expect(shapes).toEqual({
+      "runs.test.ts": { declaredQuarantine: false, shape: null, untriaged: false },
+      "ignored.test.ts": {
+        declaredQuarantine: true,
+        shape: "excluded-by-naming-command",
+        untriaged: false,
+      },
+      "declared.test.ts": {
+        declaredQuarantine: true,
+        shape: "declared-in-quarantine-list",
+        untriaged: false,
+      },
+      "dark.test.ts": { declaredQuarantine: false, shape: null, untriaged: true },
+    });
+
+    expect(
+      census.quarantineLists.find(
+        (row) => row.list === "scripts/quality/rho-quarantine.json",
+      ),
+    ).toEqual({
+      list: "scripts/quality/rho-quarantine.json",
+      declaredSuites: 1,
+      resolvedTestFiles: ["src/app/api/rho/action/__tests__/declared.test.ts"],
+      unresolvedDeclarations: [],
+    });
+
+    // The consequence the item is about: the directory is still ranked, because
+    // one dark file remains — and it is ranked on ONE untriaged file rather than
+    // on two, so the next drawer is not sent to work already done.
+    const ranked = census.governedRiskRanking.find(
+      (row) => row.directory === "src/app/api/rho/action/__tests__",
+    );
+    expect(ranked).toMatchObject({
+      unrunTestFiles: 3,
+      declaredQuarantineTestFiles: 2,
+      untriagedUnrunTestFiles: 1,
+    });
+  });
+
+  /**
+   * The same tree with the declaration removed, which is the state before
+   * anybody triaged the file. Without this the case above passes for a census
+   * that called every unrun file a quarantine, and the ranking would stop
+   * offering real work.
+   */
+  it("still reports an enumerated-out file as untriaged when no list declares it", () => {
+    const dir = fixture({
+      "src/app/api/rho/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/rho/action/__tests__/runs.test.ts":
+        'import "../route";\nit("runs", () => expect(true).toBe(true));\n',
+      "src/app/api/rho/action/__tests__/declared.test.ts":
+        'import "../route";\nit("declared", () => expect(true).toBe(true));\n',
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/app/api/rho/action/__tests__/runs.test.ts --ci",
+      ),
+      // The list exists and is EMPTY, which is the state the real root list is in
+      // today. An empty carve-out is the strongest state of the control, not a
+      // missing one, so it must still appear in the published inventory.
+      "scripts/quality/rho-quarantine.json": `${JSON.stringify(
+        { scope: "src/app/api/rho/action/__tests__", quarantined: [] },
+        null,
+        2,
+      )}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.declaredQuarantineTestFiles).toBe(0);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/rho/action/__tests__",
+    ]);
+    expect(census.quarantineLists).toEqual([
+      {
+        list: "scripts/quality/rho-quarantine.json",
+        declaredSuites: 0,
+        resolvedTestFiles: [],
+        unresolvedDeclarations: [],
+      },
+    ]);
+  });
+
+  /**
+   * Why scope is declared and never inferred, held as a case rather than as a
+   * comment. Resolving an entry's basename against the walked tree looks like it
+   * would save the field, and it is ambiguous on this repository TODAY:
+   * `ai-program-failure-modes.test.ts` exists under both
+   * `src/lib/intelligence/__tests__` and `src/__tests__/integration/intelligence`
+   * while `intelligence-library-quarantine.json` declares that name, and 40
+   * basenames in the tree are non-unique. Crediting the wrong file is the
+   * over-stating direction: an untriaged suite would read as triaged and drop out
+   * of the ranking.
+   *
+   * Two files, same basename, two directories, one declaration. A basename match
+   * credits both and puts `untriagedUnrunTestFiles` at 0.
+   */
+  it("credits only the declared scope when two directories hold the same suite name", () => {
+    const dir = fixture({
+      "src/app/api/sigma/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/sigma/action/__tests__/same-name.test.ts":
+        'import "../route";\nit("in scope", () => expect(true).toBe(true));\n',
+      "src/app/api/tau/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/tau/action/__tests__/same-name.test.ts":
+        'import "../route";\nit("out of scope", () => expect(true).toBe(true));\n',
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/app/api/absent --ci"),
+      "scripts/quality/sigma-quarantine.json": `${JSON.stringify(
+        {
+          scope: "src/app/api/sigma/action/__tests__",
+          quarantined: [
+            { suite: "same-name.test.ts", owner: "T-615", reason: "Declared in sigma only." },
+          ],
+        },
+        null,
+        2,
+      )}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.uncoveredTestFiles).toBe(2);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(1);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+    expect(
+      census.quarantineLists.find(
+        (row) => row.list === "scripts/quality/sigma-quarantine.json",
+      )?.resolvedTestFiles,
+    ).toEqual(["src/app/api/sigma/action/__tests__/same-name.test.ts"]);
+    // The out-of-scope namesake is still work somebody has to triage.
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/tau/action/__tests__",
+    ]);
+  });
+
+  /**
+   * The same fence, on the OTHER resolution branch. An entry whose scoped path
+   * is not a file in the tree is read as the regex fragment the
+   * `*-ignore-args.mjs` scripts turn it into — that is how this repository's
+   * lists are consumed — and a fragment must not reach outside the directory its
+   * list guards.
+   *
+   * This case exists because the first fence case could not prove it: its entry
+   * resolved through the exact-path branch and returned before the fragment
+   * branch ran, so inverting the fence left the suite green. Both branches now
+   * have a namesake outside scope to credit if the fence is dropped.
+   */
+  it("keeps a declared regex fragment inside its own scope", () => {
+    const dir = fixture({
+      "src/app/api/psi/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/psi/action/__tests__/swept.test.ts":
+        'import "../route";\nit("in scope", () => expect(true).toBe(true));\n',
+      "src/app/api/omega/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/app/api/omega/action/__tests__/swept.test.ts":
+        'import "../route";\nit("out of scope", () => expect(true).toBe(true));\n',
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/app/api/absent --ci"),
+      "scripts/quality/psi-quarantine.json": `${JSON.stringify(
+        {
+          scope: "src/app/api/psi/action/__tests__",
+          // A fragment, not a filename: no file is called `swept\\.test\\.ts`,
+          // so this can only resolve through the regex branch.
+          quarantined: ["swept\\.test\\.ts"],
+        },
+        null,
+        2,
+      )}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.uncoveredTestFiles).toBe(2);
+    expect(census.counts.declaredQuarantineTestFiles).toBe(1);
+    expect(census.counts.untriagedUnrunTestFiles).toBe(1);
+    expect(
+      census.quarantineLists.find(
+        (row) => row.list === "scripts/quality/psi-quarantine.json",
+      )?.resolvedTestFiles,
+    ).toEqual(["src/app/api/psi/action/__tests__/swept.test.ts"]);
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/omega/action/__tests__",
+    ]);
+  });
+
+  /**
+   * Discovery is a glob, so a new list cannot be missed; a list the census
+   * cannot RESOLVE is the remaining way to go silent, and it refuses to measure
+   * instead. The item that found this named five quarantine lists and
+   * `scripts/quality` holds seven, which is the argument: a list of lists rots,
+   * and an unscoped list would otherwise be read as declaring nothing at all —
+   * under-stating triage, with no row to read.
+   */
+  it("refuses to measure when a quarantine list declares suites with no scope", () => {
+    const dir = fixture({
+      "src/lib/upsilon/__tests__/only.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/upsilon --ci"),
+      "scripts/quality/upsilon-quarantine.json": `${JSON.stringify({
+        quarantined: [{ suite: "only.test.ts", reason: "no scope declared" }],
+      })}\n`,
+    });
+
+    const { status, stdout } = runCensus(dir);
+    expect(status).not.toBe(0);
+    expect(stdout).toContain("scripts/quality/upsilon-quarantine.json");
+    expect(stdout).toContain('"scope"');
+  });
+
+  /**
+   * A sibling array carries its own scope, because `alsoIgnored` entries are
+   * swept in from a DIFFERENT directory than the one their list guards — the
+   * integration root, reached by an un-slashed directory pattern — so sharing
+   * the list's scope would file them under the wrong directory. Both such arrays
+   * in the repository are empty today; this is the case that makes the next
+   * entry declare where it belongs rather than being credited to the wrong row.
+   */
+  it("requires a sibling declaration array to carry its own scope", () => {
+    const dir = fixture({
+      "src/lib/phi/__tests__/only.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/phi --ci"),
+      "scripts/quality/phi-quarantine.json": `${JSON.stringify({
+        scope: "src/lib/phi/__tests__",
+        quarantined: [],
+        alsoIgnored: [{ suite: "swept-in.test.ts", reason: "from another directory" }],
+      })}\n`,
+    });
+
+    const { status, stdout } = runCensus(dir);
+    expect(status).not.toBe(0);
+    expect(stdout).toContain("scripts/quality/phi-quarantine.json");
+    expect(stdout).toContain('"alsoIgnoredScope"');
+  });
+
+  /**
+   * A declaration naming a file that is not in the tree credits nobody and is
+   * published as such. It is a stale entry, and every one of these lists has a
+   * checker that re-runs its entries and fails on a name that no longer resolves;
+   * that finding belongs there. A census that threw on it would stop measuring
+   * over somebody else's bookkeeping, and one that dropped it silently would let
+   * a list shrink to nothing without a row changing.
+   */
+  it("records a declaration that names no file in the tree and credits it to nobody", () => {
+    const dir = fixture({
+      "src/lib/chi/__tests__/present.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/chi --ci"),
+      "scripts/quality/chi-quarantine.json": `${JSON.stringify({
+        scope: "src/lib/chi/__tests__",
+        quarantined: [{ suite: "deleted.test.ts", reason: "the file was removed" }],
+      })}\n`,
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts.declaredQuarantineTestFiles).toBe(0);
+    expect(census.quarantineLists).toEqual([
+      {
+        list: "scripts/quality/chi-quarantine.json",
+        declaredSuites: 1,
+        resolvedTestFiles: [],
+        unresolvedDeclarations: [
+          "quarantined:src/lib/chi/__tests__/deleted.test.ts",
+        ],
+      },
+    ]);
+  });
+
+  /**
+   * The repository's own lists, read through the census rather than described
+   * here. Every `*-quarantine.json` in `scripts/quality` must reach the census's
+   * inventory: the count is derived from the directory on both sides, so a list
+   * added tomorrow is covered without editing this case, and a list the glob
+   * stops finding fails it.
+   */
+  it("reads every quarantine list this repository holds", () => {
+    const onDisk = readdirSync(path.join(repoRoot, "scripts", "quality"))
+      .filter((name) => name.endsWith("-quarantine.json"))
+      .map((name) => `scripts/quality/${name}`)
+      .sort();
+    expect(onDisk.length).toBeGreaterThan(0);
+
+    const committed = JSON.parse(
+      readFileSync(path.join(repoRoot, "docs/architecture/test-ci-coverage-census.json"), "utf8"),
+    ) as Census;
+    expect(committed.quarantineLists.map((row) => row.list)).toEqual(onDisk);
   });
 
   it("subtracts every quarantined suite this repository excludes by name", () => {
@@ -1431,6 +2381,169 @@ function runExplain(cwd: string): string {
     stdio: ["ignore", "pipe", "pipe"],
   });
 }
+
+/**
+ * A bare Jest path argument is a REGULAR EXPRESSION, and a ratchet baseline's
+ * `paths` are spread into one. The census resolved them as literal prefixes,
+ * so `src/app/(maestro)/home` credited every suite inside that directory while
+ * Jest read `(maestro)` as a capture group, looked for `src/app/maestro/home`,
+ * and selected nothing (item T-487).
+ *
+ * The direction matters more than the size. A census that is more generous
+ * than the run is invisible from its own output — the directory name is right
+ * there in the baseline — and this census is the instrument the triage ranking
+ * is drawn from, so an over-credit removes a directory from the queue that
+ * decides what gets wired next.
+ *
+ * These cases fix the reading, not the baselines. Escaping the three real
+ * baseline paths is `T-486`, it is blocked on a decision about the failures
+ * the escape reveals, and doing it here would turn this control green with the
+ * census reading still wrong.
+ */
+describe("test CI coverage census — a ratchet baseline path is a Jest regex", () => {
+  const GROUP_SUITE = "src/app/(group)/home/__tests__/home.test.ts";
+  const ratchetFixture = (declaredPath: string) => ({
+    [GROUP_SUITE]: TEST_FILE,
+    ".github/workflows/gate.yml": PR_WORKFLOW(
+      "node scripts/ci/test-ratchet.mjs docs/ci/group-test-baseline.json",
+    ),
+    "scripts/ci/test-ratchet.mjs": [
+      'import { spawnSync } from "node:child_process";',
+      "const { paths } = JSON.parse(process.argv[2]);",
+      'spawnSync("npx", ["jest", ...paths, "--json"], { stdio: "inherit" });',
+    ].join("\n"),
+    "docs/ci/group-test-baseline.json": `${JSON.stringify({
+      name: "group",
+      paths: [declaredPath],
+    })}\n`,
+  });
+
+  it("credits nothing for a parenthesised path Jest reads as a capture group", () => {
+    // Ground truth is Jest's own selection over the same fixture, taken first
+    // and independently of anything the census says. `(group)` is a group, so
+    // the pattern looks for `src/app/group/home`, which is not in the tree.
+    const dir = fixture(ratchetFixture("src/app/(group)/home"));
+    expect(jestSelects(dir, ["src/app/(group)/home"])).toEqual([]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.testFiles).toBe(1);
+    expect(census.counts.coveredTestFiles).toBe(0);
+    expect(census.counts.uncoveredTestFiles).toBe(1);
+    expect(census.uncoveredDirectories.map((row) => row.directory)).toEqual([
+      "src/app/(group)/home/__tests__",
+    ]);
+  });
+
+  it("credits the files under the escaped form of that same path", () => {
+    // The other direction, and the one that keeps the fix from being "call
+    // every parenthesised path uncovered": escaped, the pattern reaches the
+    // directory, Jest runs the suite, and the census must say so.
+    const dir = fixture(ratchetFixture("src/app/\\(group\\)/home"));
+    expect(jestSelects(dir, ["src/app/\\(group\\)/home"])).toEqual([GROUP_SUITE]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.coveredTestFiles).toBe(1);
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+    expect(census.counts.indeterminateInvocations).toBe(0);
+  });
+
+  it("reads an unanchored path the way Jest does, including the sibling it reaches", () => {
+    // Not a correction in the generous direction only. `src/lib/tower` is an
+    // unanchored regex, so Jest also selects `src/lib/tower-extras`; the
+    // literal-prefix reading required the parent directory to be exactly
+    // `src/lib/tower` and called that sibling uncovered when the gate runs it.
+    const dir = fixture({
+      "src/lib/tower/__tests__/tower.test.ts": TEST_FILE,
+      "src/lib/tower-extras/__tests__/extras.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "node scripts/ci/test-ratchet.mjs docs/ci/tower-test-baseline.json",
+      ),
+      "scripts/ci/test-ratchet.mjs": [
+        'import { spawnSync } from "node:child_process";',
+        "const { paths } = JSON.parse(process.argv[2]);",
+        'spawnSync("npx", ["jest", ...paths, "--json"], { stdio: "inherit" });',
+      ].join("\n"),
+      "docs/ci/tower-test-baseline.json": `${JSON.stringify({
+        name: "tower",
+        paths: ["src/lib/tower"],
+      })}\n`,
+    });
+    expect(jestSelects(dir, ["src/lib/tower"])).toEqual([
+      "src/lib/tower-extras/__tests__/extras.test.ts",
+      "src/lib/tower/__tests__/tower.test.ts",
+    ]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.coveredTestFiles).toBe(2);
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+  });
+
+  it("credits every suite for a baseline path that is not a valid regex", () => {
+    // Not the answer that reads as obvious. A broken pattern looks like a run
+    // that selects nothing, and this reading was written that way first; Jest
+    // prints "Invalid testPattern … supplied. Running all tests instead." and
+    // runs the whole tree, so the honest census says every file is covered.
+    // The case exists because a mutation of that line moved no count — the
+    // branch is unreachable from the real baselines, so nothing on this
+    // repository could have told the two answers apart.
+    const dir = fixture(ratchetFixture("src/lib/alpha["));
+    const other = path.join(dir, "src/lib/beta/__tests__/beta.test.ts");
+    mkdirSync(path.dirname(other), { recursive: true });
+    writeFileSync(other, TEST_FILE);
+
+    expect(jestSelects(dir, ["src/lib/alpha["])).toEqual([
+      GROUP_SUITE,
+      "src/lib/beta/__tests__/beta.test.ts",
+    ]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.testFiles).toBe(2);
+    expect(census.counts.coveredTestFiles).toBe(2);
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+  });
+
+  it("agrees file for file with Jest's own selection over this repository's real baselines", () => {
+    // The acceptance, measured against the real baselines rather than against
+    // a fixture: whatever the census credits through a ratchet baseline must
+    // be exactly what Jest selects when handed those same `paths`. Jest is
+    // spawned here, so the oracle is the runner itself and not a second copy
+    // of the reading under test — a re-implementation that agreed with the
+    // census would agree with it when both were wrong.
+    const baselines = readdirSync(path.join(repoRoot, "docs", "ci"))
+      .filter((name) => /-test-baseline\.json$/.test(name))
+      .sort();
+    expect(baselines.length).toBeGreaterThan(0);
+
+    const declared = baselines.flatMap((name) =>
+      (
+        JSON.parse(readFileSync(path.join(repoRoot, "docs", "ci", name), "utf8")) as {
+          paths?: string[];
+        }
+      ).paths ?? [],
+    );
+    const selectedByJest = new Set(jestSelects(repoRoot, declared));
+    const creditedByCensus = new Set(ratchetBaselineSelection(repoRoot));
+
+    expect([...creditedByCensus].filter((file) => !selectedByJest.has(file)).sort()).toEqual([]);
+    expect([...selectedByJest].filter((file) => !creditedByCensus.has(file)).sort()).toEqual([]);
+
+    // Not vacuous in either direction: the baselines do name suites, and the
+    // three unescaped paths on `main` do reach a real directory that Jest
+    // nonetheless cannot select. Both sets must be non-empty for the equality
+    // above to mean anything.
+    expect(selectedByJest.size).toBeGreaterThan(0);
+    const unreachable = declared.filter(
+      (declaredPath) => /[()[\]]/.test(declaredPath) && !/\\[()[\]]/.test(declaredPath),
+    );
+    for (const declaredPath of unreachable) {
+      expect(existsSync(path.join(repoRoot, declaredPath))).toBe(true);
+      expect(jestSelects(repoRoot, [declaredPath])).toEqual([]);
+      expect(
+        [...creditedByCensus].filter((file) => file.startsWith(`${declaredPath}/`)),
+      ).toEqual([]);
+    }
+  }, 120_000);
+});
 
 describe("test CI coverage census --explain", () => {
   it("names the unrun file and not the covered one beside it", () => {

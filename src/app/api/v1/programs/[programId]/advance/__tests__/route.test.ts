@@ -1,10 +1,11 @@
 const mockRequireTenancy = jest.fn();
 const mockLoadUserProgramAccessPolicy = jest.fn();
 const mockGetProgramById = jest.fn();
+const mockGetModuleState = jest.fn();
 const mockEvaluateGate = jest.fn();
-const mockRequestFounderApproval = jest.fn();
+const mockListApprovedPhaseEvidence = jest.fn();
+const mockDecideApproval = jest.fn();
 const mockAdvancePhase = jest.fn();
-const mockSupabaseMaybeSingle = jest.fn();
 const mockResolvePhaseGateActorPersonId = jest.fn();
 
 jest.mock("../../../_auth", () => ({
@@ -22,6 +23,13 @@ jest.mock("@/lib/auth/program-access-policy", () => ({
 jest.mock("@/lib/programs/queries", () => ({
   getProgramById: (ctx: unknown, programId: string, opts: unknown) =>
     mockGetProgramById(ctx, programId, opts),
+  getModuleState: (ctx: unknown, programId: string) =>
+    mockGetModuleState(ctx, programId),
+}));
+
+jest.mock("@/lib/programs/approved-phase-evidence", () => ({
+  listApprovedPhaseEvidence: (ctx: unknown, programId: string, phase: number) =>
+    mockListApprovedPhaseEvidence(ctx, programId, phase),
 }));
 
 jest.mock("@/lib/programs/governance", () => ({
@@ -32,12 +40,7 @@ jest.mock("@/lib/programs/governance", () => ({
     toPhase: number,
     opts: unknown,
   ) => mockEvaluateGate(ctx, programId, fromPhase, toPhase, opts),
-  requestFounderApproval: (
-    ctx: unknown,
-    programId: string,
-    input: unknown,
-    opts: unknown,
-  ) => mockRequestFounderApproval(ctx, programId, input, opts),
+  decideApproval: (...args: unknown[]) => mockDecideApproval(...args),
 }));
 
 jest.mock("@/lib/programs/mutations", () => ({
@@ -50,13 +53,17 @@ jest.mock("@/lib/programs/phase-gate-actor", () => ({
     mockResolvePhaseGateActorPersonId(ctx),
 }));
 
+jest.mock("@/lib/programs/move-progress-notifications", () => ({
+  sendMoveProgressUpdate: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
   getProgramsRouteSupabase: () => ({
     supabase: {
       from: () => ({
         select: () => ({
           eq: () => ({
-            eq: () => ({ maybeSingle: mockSupabaseMaybeSingle }),
+            eq: () => ({ maybeSingle: jest.fn() }),
           }),
         }),
       }),
@@ -101,10 +108,12 @@ beforeEach(() => {
     email: "maya@example.com",
   });
   mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 0 });
+  mockGetModuleState.mockResolvedValue([]);
+  mockListApprovedPhaseEvidence.mockResolvedValue([]);
   mockEvaluateGate.mockResolvedValue({
     failedChecks: [],
     requiresApproval: true,
-    approverRole: "sponsor",
+    approverRole: "approver",
   });
   mockAdvancePhase.mockResolvedValue({
     programId: "prog-1",
@@ -118,6 +127,48 @@ beforeEach(() => {
 });
 
 describe("POST /api/v1/programs/[programId]/advance", () => {
+  it("blocks direct P1 advancement when capture evidence is not approved", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 1 });
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_1_sponsor_commitment", status: "completed" },
+      { moduleKey: "phase_1_scope_boundary", status: "completed" },
+      { moduleKey: "phase_1_success_criteria", status: "completed" },
+      { moduleKey: "phase_1_stakeholder_map", status: "completed" },
+      { moduleKey: "phase_1_decision_rights", status: "completed" },
+      { moduleKey: "phase_1_evidence_plan", status: "completed" },
+      {
+        moduleKey: "phase_1_business_change_assessment",
+        status: "completed",
+      },
+    ]);
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        toPhase: 2,
+        selfApproveIfAuthorized: true,
+        humanRationale: "P1 fields were reviewed before advancing.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "capture_incomplete",
+      phase: 1,
+      missing: expect.arrayContaining([
+        "Sponsor contact and progress updates",
+        "Scope boundary",
+      ]),
+    });
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
   it("self-approves phase advancement for callers with gate approval rights", async () => {
     mockLoadUserProgramAccessPolicy.mockResolvedValue({
       programIdsAllowed: null,
@@ -138,7 +189,6 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ ok: true, newPhase: 1 });
-    expect(mockRequestFounderApproval).not.toHaveBeenCalled();
     expect(mockResolvePhaseGateActorPersonId).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "person-1" }),
     );
@@ -161,13 +211,34 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     );
   });
 
-  it("creates an approval request when the caller cannot self-approve the gate", async () => {
+  it("requires the authorized user to submit an explicit approval action", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        toPhase: 1,
+        humanRationale:
+          "The authorized workspace user reviewed the current gate evidence.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "explicit_approval_required",
+    });
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("does not create a second approver path for a user without gate permission", async () => {
     mockLoadUserProgramAccessPolicy.mockResolvedValue({
       programIdsAllowed: null,
       canApproveGates: false,
     });
-    mockRequestFounderApproval.mockResolvedValue("approval-1");
-
     const { POST } = await import("../route");
     const res = await POST(
       req({
@@ -179,12 +250,12 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
       { params },
     );
 
-    expect(res.status).toBe(202);
+    expect(res.status).toBe(403);
     await expect(res.json()).resolves.toMatchObject({
-      error: "approval_required",
-      approvalId: "approval-1",
+      error: "forbidden",
+      detail: "Only an authorized workspace user can approve a phase gate.",
     });
-    expect(mockRequestFounderApproval).toHaveBeenCalled();
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
@@ -222,11 +293,10 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     await expect(res.json()).resolves.toMatchObject({
       error: "operator_person_required",
     });
-    expect(mockRequestFounderApproval).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
-  it("requires a human rationale before stage advance or approval request", async () => {
+  it("requires a human rationale before stage advance", async () => {
     mockLoadUserProgramAccessPolicy.mockResolvedValue({
       programIdsAllowed: null,
       canApproveGates: true,
@@ -242,7 +312,6 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     await expect(res.json()).resolves.toMatchObject({
       error: "human_rationale_required",
     });
-    expect(mockRequestFounderApproval).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
@@ -280,17 +349,22 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
       detail:
         "Hard-gate checks must pass before advance: P0 seed artifact must be signed off",
     });
-    expect(mockRequestFounderApproval).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
   it("rejects an unauthorized bypassGate attempt from a caller without gate-approval rights", async () => {
     // Phase Advancement Control audit, scenario "unauthorized override":
-    // bypassGate must require canApproveGates (or founder) regardless of
-    // gate state.
+    // bypassGate must require the explicit workspace permission regardless
+    // of gate state or role name.
     mockLoadUserProgramAccessPolicy.mockResolvedValue({
       programIdsAllowed: null,
       canApproveGates: false,
+    });
+    mockRequireTenancy.mockResolvedValue({
+      ...ctx,
+      clientKey: "apex-retail",
+      email: "maya@example.com",
+      role: "founder",
     });
     mockEvaluateGate.mockResolvedValue({
       failedChecks: [],
@@ -311,8 +385,9 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     expect(res.status).toBe(403);
     await expect(res.json()).resolves.toMatchObject({
       error: "forbidden",
-      detail: "phase-gate approval permission is required to bypass a gate",
+      detail: "Only an authorized workspace user can approve a phase gate.",
     });
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
@@ -352,6 +427,31 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
+  it("does not let a founder role name replace workspace gate permission on legacy approval decisions", async () => {
+    mockRequireTenancy.mockResolvedValue({
+      ...ctx,
+      clientKey: "apex-retail",
+      email: "maya@example.com",
+      role: "founder",
+    });
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: false,
+    });
+
+    const { POST: decideApproval } =
+      await import("@/app/api/v1/programs/[programId]/approvals/[approvalId]/decide/route");
+    const res = await decideApproval(req({ decision: "approved" }) as never, {
+      params: Promise.resolve({
+        programId: "prog-1",
+        approvalId: "approval-1",
+      }),
+    });
+
+    expect(res.status).toBe(403);
+    expect(mockDecideApproval).not.toHaveBeenCalled();
+  });
+
   it("labels a soft-carry-only advance as softGapsCarried, never as an override", async () => {
     // Phase Advancement Control audit, scenario "misleading override
     // labeling": a normal, hard-gate-clean pass with an unmet soft
@@ -377,6 +477,7 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     const res = await POST(
       req({
         toPhase: 1,
+        selfApproveIfAuthorized: true,
         humanRationale: "Reviewed and approved with a soft gap noted.",
       }) as never,
       { params },
@@ -390,6 +491,29 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
         hardGateOverride: null,
         carriedGaps: ["optional_stakeholder_review"],
       }),
+    });
+  });
+});
+
+describe("POST /api/v1/programs/[programId]/approvals", () => {
+  it("retires separate sponsor approval requests after workspace authorization", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    const { POST } = await import("../../approvals/route");
+    const res = await POST(
+      req({
+        requestType: "phase_gate",
+        headline: "Please ask the sponsor to approve",
+        approverRole: "sponsor",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(410);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "approval_requests_retired",
     });
   });
 });

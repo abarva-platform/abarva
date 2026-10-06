@@ -33,6 +33,35 @@ export type ArtifactFamily =
   | "approval_artifact"
   | "historical_version";
 
+export function safeArtifactSlug(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80);
+  return slug || "file";
+}
+
+export function artifactTypeForUpload({
+  body,
+  family,
+  fileName,
+  phase,
+}: {
+  body: Buffer;
+  family: ArtifactFamily;
+  fileName: string;
+  phase: number;
+}): string {
+  if (family === "session_artifact") {
+    return `session_artifact_p${phase}_${safeArtifactSlug(fileName)}`;
+  }
+  if (family !== "uploaded_evidence") return family;
+  const hash = createHash("sha256").update(body).digest("hex").slice(0, 12);
+  return `uploaded_evidence_p${phase}_${safeArtifactSlug(fileName)}_${hash}`;
+}
+
 export interface SaveMoveArtifactInput {
   moveId: string;
   phase: number;
@@ -282,15 +311,18 @@ export async function getMoveArtifactForTenant(
 export async function downloadArtifactBytes(
   ctx: TenancyCtx,
   artifactId: string,
+  moveId?: string,
 ): Promise<{ bytes: Buffer; fileName: string; fileFormat: string } | null> {
   const tenantKey = ctx.clientKey ?? "";
   try {
     const sb = getAzureWriteFluentClient();
-    const { data, error } = await sb
+    let query = sb
       .from("move_artifacts")
       .select("blob_container, blob_path, file_name, file_format, tenant_key")
       .eq("artifact_id", artifactId)
-      .maybeSingle();
+      .eq("tenant_key", tenantKey);
+    if (moveId) query = query.eq("move_id", moveId);
+    const { data, error } = await query.maybeSingle();
     if (error || !data) return null;
     const row = data as {
       blob_container: string;

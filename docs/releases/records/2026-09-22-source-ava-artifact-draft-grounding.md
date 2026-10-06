@@ -90,3 +90,29 @@ migration rollback or data correction is required.
 - This does not prove the signed-in production path.
 - This does not change Source New UI adapters, workspace rendering, artifact lifecycle records, or
   missing-input persistence.
+
+## Post-deployment signed-in replay
+
+**Appended 2026-09-26 (item `C-528`). Every line above is left exactly as
+written: this record is audit history, and a correction to it is an addition,
+never an edit.** What those lines said was true when they were written — the
+record is authored before the merge, and the replay happens after the deploy.
+
+- The signed-in post-deployment replay was run. This section is the record of
+  its outcome; the line above is the state as of the candidate, not the result.
+- Recorded in the execution register at `2026-09-22T02:38:54Z` by `codex-source-ava-artifact-draft-grounding`.
+- What it found: a real residual, and this is the half worth reading. Repeating
+  the exact signed-in readiness question showed the structured governed answer no
+  longer repeats the stale artifact gap — while the primary advisor answer still
+  reported an artifact as unregistered when its own cited evidence for the same
+  artifact said it was a draft awaiting review.
+- Residual: the primary advisor path. The next release in this family,
+  [#8215](https://github.com/abarva-platform/abarva/pull/8215), targets exactly
+  that path and its register line is stamped 44 minutes later. **That is a
+  sequence, not a closure**: nothing records whether it settled this residual.
+  Item `C-543`, filed by this correction, carries that question.
+- **Scope is UNDETERMINED and is not claimed here.** The register settles the
+  structured answer and names the residual; it does not enumerate what else the
+  replay covered.
+- No signed-in run was performed by this correction. It reconciles two existing
+  accounts of one run, and the appended-to record is the durable one.

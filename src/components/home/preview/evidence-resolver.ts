@@ -52,6 +52,7 @@ export function resolveEvidence(
         statement: context.statement,
         origin: "context",
         domains: context.domains,
+        evidenceRefs: context.evidenceRefs,
       };
     }
     return {

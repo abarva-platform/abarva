@@ -234,6 +234,7 @@ export function mapTemplateUploadToFacts(
     readonly sourceEventId: string;
     readonly clientKey: string;
     readonly validLeverKeys?: ReadonlySet<string>;
+    readonly sourceFile?: { readonly name: string; readonly sha256: string };
   },
 ): StructuredMapResult {
   const facts: SourceEventFactInsert[] = [];
@@ -244,6 +245,8 @@ export function mapTemplateUploadToFacts(
   const knownHeaders = new Set<string>([
     ...mappedHeaders,
     ...entityRefColumnsOf(template),
+    ...(template.contextColumns ?? []),
+    ...(template.optionalContextColumns ?? []),
   ]);
 
   // Columns present in the upload the template does not know about.
@@ -327,11 +330,25 @@ export function mapTemplateUploadToFacts(
         unit: col.unit,
         source_method: STRUCTURED_MAP_METHOD,
         source_citation: {
-          doc: template.templateCode,
+          doc: ctx.sourceFile?.name ?? template.templateCode,
           locator: `column '${col.header}', row ${rowIndex + 1}`,
           entity_ref_column: entityRefLabel,
           entity_ref: entityRefValue,
           row_index: rowIndex,
+          ...(ctx.sourceFile ? { source_sha256: ctx.sourceFile.sha256 } : {}),
+          ...(template.templateCode === 'TICKET_HISTORY_V1'
+            ? {
+                source_file: ctx.sourceFile?.name ?? '',
+                source_row: rowIndex + 1,
+                source_system: String(row['Source Basis'] ?? '').trim(),
+                value_source: 'ITSM ticket export',
+                support_tier: String(row['Support Tier'] ?? '').trim().toUpperCase(),
+                month: String(row['Month'] ?? '').trim(),
+                time_window: String(row['Time Window'] ?? '').trim(),
+                source_basis: String(row['Source Basis'] ?? '').trim(),
+                fixture_status: String(row['Fixture Status'] ?? '').trim(),
+              }
+            : {}),
         },
         confidence: STRUCTURED_MAP_CONFIDENCE,
       });

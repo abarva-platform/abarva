@@ -75,7 +75,21 @@ const LIST = path.join(HERE, "integration-root-quarantine.json");
 // now asserted non-empty, which is what keeps the filter assertions from
 // passing over an empty array. Lowered in the SAME change that removed the
 // entry and named the file in the integration-suites jest command.
-const CEILING = 3;
+//
+// 3 -> 0 (T-477). The last three entries cleared together, all verdict
+// `update`, all repaired rather than deleted, and all three wired into the
+// integration-suites jest command in this same change:
+// `atlas-ask-route.test.ts`, `marketing-nav-dropdowns.test.tsx` and
+// `sign-in-shell.test.tsx`. Every root-level file under the integration root is
+// now run by a pull-request job, so the carve-out is empty.
+//
+// A ceiling of 0 is the point of the ratchet, not the end of it. The list going
+// empty removes nothing from this file's job: case 1 — a root file that is
+// unrun and UNDECLARED — is the control the enumeration cannot supply, and with
+// the default inverted it is the only thing standing between a newly added root
+// file and silence. It fires against an empty list exactly as it fired against
+// a list of five.
+const CEILING = 0;
 
 /** The only triage verdicts item 26 recognises. */
 const VERDICTS = ["update", "delete", "real"];

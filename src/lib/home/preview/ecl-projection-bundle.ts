@@ -1,8 +1,27 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
+import {
+  selectHomeAssessment,
+  type HomeAssessmentSelection,
+  type HomeDeclaredProjection,
+} from "./home-assessment-selection";
+import {
+  HomeProjectionFault,
+  homeProjectionFaultReason,
+  reportHomeProjectionFault,
+} from "./home-projection-fault";
 import { normalizeHomeReviewBundle } from "./bundle-normalization";
+import { buildHomeEnterpriseContext } from "./ecl-enterprise-context";
+import { homeProjectionPayload } from "./projection-row-payload";
+import {
+  hashHomeNarrativeValue,
+  homeNarrativeSourceLineageHash,
+  verifiedHomeNarrativePacketArtifact,
+} from "./home-narrative-packet";
 
 import {
   getHomeReviewBundle,
@@ -17,6 +36,7 @@ import type {
   HomeExecutiveStoryPlanV1,
   HomeExecutiveStorySectionId,
   HomeExecutiveStoryTerminalState,
+  HomeContextVersion,
   GroundedClaim,
   HomeRecordRenderSource,
   HomeReviewBundle,
@@ -50,9 +70,112 @@ export interface HomeProjectionRow {
   title: string;
   summary: string | null;
   display_payload_json: JsonRecord | null;
+  source_hash?: string | null;
+  source_refs_json?: unknown;
+  projection_entry_id?: string | null;
+  primary_object_id?: string | null;
+  admission_status?: string | null;
+}
+
+export type HomeSourceFileReviewRow = {
+  id: string;
+  file_name: string;
+  file_hash: string;
+  source_date: string | null;
+  quality_state: string;
+  /** The approval a load records on the file it loaded. Absent on a file loaded without one. */
+  load_approval?: unknown;
+};
+
+/**
+ * The approval recorded for a file's load: who approved it, when, and the release record that
+ * carries it. All three or it is not an approval -- a name with no date and no record is a
+ * string somebody typed.
+ */
+function recordedLoadApproval(
+  value: unknown,
+): { approvedBy: string; approvedAt: string; releaseRecord: string } | null {
+  let approval = value;
+  if (typeof approval === "string") {
+    try {
+      approval = JSON.parse(approval);
+    } catch {
+      return null;
+    }
+  }
+  if (!approval || typeof approval !== "object" || Array.isArray(approval))
+    return null;
+  const field = (key: string) => {
+    const raw = (approval as JsonRecord)[key];
+    return typeof raw === "string" ? raw.trim() : "";
+  };
+  const approvedBy = field("approved_by");
+  const approvedAt = field("approved_at");
+  const releaseRecord = field("release_record");
+  return approvedBy && approvedAt && releaseRecord
+    ? { approvedBy, approvedAt, releaseRecord }
+    : null;
+}
+
+/**
+ * The one test of "accepted", for the label and for the gate that depends on it.
+ *
+ * The accepted state is what a load writes about the files it just loaded. It becomes acceptance
+ * only when an approval is recorded beside it; without one the file is counted as not reviewed.
+ */
+export function isHomeSourceFileAccepted(
+  row: HomeSourceFileReviewRow,
+): boolean {
+  return (
+    row.quality_state === "accepted" &&
+    recordedLoadApproval(row.load_approval) !== null
+  );
 }
 
 const COLUMN_ORDER: Record<TechObjectType, string[]> = {
+  business_segment: [
+    "segmentName",
+    "segmentKey",
+    "revenueSharePct",
+    "revenueUsd",
+    "pnlOwnerRole",
+    "businessCaseSponsorRole",
+    "governanceCouncil",
+    "regulatoryRegime",
+    "classificationBasis",
+  ],
+  business_function: [
+    "functionName",
+    "businessSegment",
+    "businessSegmentKey",
+    "parentFunction",
+    "executiveOwner",
+    "businessCapabilities",
+    "criticality",
+    "annualBudgetUsd",
+    "fteCount",
+    "outsourcedSupport",
+  ],
+  workforce_role: [
+    "personaOrRole",
+    "functionName",
+    "roleCount",
+    "locationModel",
+    "employmentType",
+    "vendorSupported",
+    "skills",
+  ],
+  operational_process: [
+    "processName",
+    "businessFunction",
+    "processOwner",
+    "systemsUsed",
+    "volumeMetric",
+    "cycleTime",
+    "painPoints",
+    "controlPoints",
+    "automationCandidate",
+  ],
   // An edge reads as a sentence: this object, this verb, that object. The endpoints sit either side
   // of the verb rather than being grouped as "from" fields and "to" fields, because that is how a
   // reader parses it.
@@ -227,6 +350,10 @@ const COLUMN_ORDER: Record<TechObjectType, string[]> = {
 };
 
 const LABELS: Record<TechObjectType, string> = {
+  business_segment: "Business Segments",
+  business_function: "Business Functions",
+  workforce_role: "Workforce & Roles",
+  operational_process: "Operating Processes",
   application_system: "Applications & Systems",
   vendor_contract: "Vendor Contracts",
   infrastructure_platform: "Infrastructure & Platforms",
@@ -241,6 +368,10 @@ const LABELS: Record<TechObjectType, string> = {
 };
 
 const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
+  business_segment: "pnlOwnerRole",
+  business_function: "businessSegment",
+  workforce_role: "functionName",
+  operational_process: "businessFunction",
   executive_interview: "executiveArea",
   relationship_edge: "relationshipType",
   application_system: "businessFunction",
@@ -258,6 +389,22 @@ const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<
   TechObjectType,
   { domain: string; sourcePath: string; authority?: string[] }
 > = {
+  business_segment: {
+    domain: "business_segment",
+    sourcePath: "serving.home_business_unit_profile",
+  },
+  business_function: {
+    domain: "business_function",
+    sourcePath: "serving.home_business_unit_profile",
+  },
+  workforce_role: {
+    domain: "workforce_role",
+    sourcePath: "serving.home_business_unit_profile",
+  },
+  operational_process: {
+    domain: "operational_process",
+    sourcePath: "serving.home_business_unit_profile",
+  },
   metric_outcome: {
     domain: "metric_outcome",
     sourcePath: "serving.home_metrics_outcomes",
@@ -383,27 +530,126 @@ function endpointLabelsFromRows(
 }
 
 function rowPayload(row: HomeProjectionRow): JsonRecord {
-  if (!row.display_payload_json || typeof row.display_payload_json !== "object")
-    return {};
-  const payload = row.display_payload_json;
-  const nestedPayload = payload.display_payload_json;
-  if (
-    !nestedPayload ||
-    typeof nestedPayload !== "object" ||
-    Array.isArray(nestedPayload)
-  )
-    return payload;
-  return { ...payload, ...(nestedPayload as JsonRecord) };
+  return homeProjectionPayload(row.display_payload_json);
 }
 
-/**
- * The five intake families the projection now carries.
- *
- * The loader puts the whole intake row into the payload, so the keys here are the CSV's own column
- * names. Each mapper renames to camelCase and does nothing else: no defaulting, no deriving, no
- * filling. A field the intake did not record stays undefined, which is what lets a surface say the
- * view cannot be built rather than showing a zero that reads as an assessment.
- */
+function sourceRefIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const refs = value
+    .map((item) => {
+      if (typeof item === "string") return text(item);
+      if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+      const ref = item as JsonRecord;
+      return (
+        text(ref.source_record_id) ??
+        text(ref.sourceRecordId) ??
+        text(ref.record_id)
+      );
+    })
+    .filter((ref): ref is string => Boolean(ref));
+  return [...new Set(refs)];
+}
+
+type VerifiedSourceRefs = Map<string, Map<string, Set<string>>>;
+
+function admittedSourceRefs(
+  row: HomeProjectionRow,
+  verifiedSourceRefs: VerifiedSourceRefs,
+): string[] {
+  if (
+    !["admitted", "not_applicable"].includes(row.admission_status ?? "") ||
+    !text(row.source_hash)
+  )
+    return [];
+  const linked = verifiedSourceRefs
+    .get(row.projection_entry_id ?? "")
+    ?.get(row.source_hash ?? "");
+  if (!linked) return [];
+  return sourceRefIds(row.source_refs_json).filter((ref) => linked.has(ref));
+}
+
+function enterpriseRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  switch (row.row_type) {
+    case "business_segment":
+      return {
+        segmentKey: text(payload.segment_key),
+        segmentName: text(payload.segment_name),
+        revenueSharePct: numberValue(payload.revenue_share_pct),
+        revenueUsd: numberValue(payload.revenue_usd),
+        pnlOwnerRole: text(payload.pnl_owner_role),
+        businessCaseSponsorRole: text(payload.business_case_sponsor_role),
+        governanceCouncil: text(payload.governance_council),
+        regulatoryRegime: text(payload.regulatory_regime),
+        classificationBasis: text(payload.classification_basis),
+      };
+    case "business_function":
+      return {
+        functionId: text(payload.function_id),
+        functionName: text(payload.function_name),
+        businessSegment: text(payload.business_segment),
+        businessSegmentKey: text(payload.business_segment_key),
+        parentFunction: text(payload.parent_function),
+        executiveOwner: text(payload.executive_owner),
+        businessCapabilities: text(payload.business_capabilities),
+        criticality: text(payload.criticality),
+        annualBudgetUsd: numberValue(payload.annual_budget_usd),
+        fteCount: numberValue(payload.fte_count),
+        outsourcedSupport: text(payload.outsourced_support),
+      };
+    case "workforce_role":
+      return {
+        personaOrRole: text(payload.persona_or_role),
+        functionName: text(payload.function_name),
+        roleCount: numberValue(payload.role_count),
+        locationModel: text(payload.location_model),
+        employmentType: text(payload.employment_type),
+        vendorSupported: text(payload.vendor_supported),
+        skills: text(payload.skills),
+      };
+    case "operational_process":
+      return {
+        processName: text(payload.process_name),
+        businessFunction: text(payload.business_function),
+        processOwner: text(payload.process_owner),
+        systemsUsed: text(payload.systems_used),
+        volumeMetric: text(payload.volume_metric),
+        cycleTime: text(payload.cycle_time),
+        painPoints: text(payload.pain_points),
+        controlPoints: text(payload.control_points),
+        automationCandidate: text(payload.automation_candidate),
+      };
+    default:
+      return {};
+  }
+}
+
+function isFactualHomeRow(row: HomeProjectionRow): boolean {
+  if (row.admission_status === "refused") return false;
+  if (row.page_key !== "business_unit_profile") return true;
+  if (!["admitted", "not_applicable"].includes(row.admission_status ?? "")) {
+    return false;
+  }
+  const payload = rowPayload(row);
+  switch (row.row_type) {
+    case "enterprise_profile":
+      return Boolean(
+        text(payload.business_model) && text(payload.business_model_basis),
+      );
+    case "business_segment":
+      return Boolean(text(payload.segment_key) && text(payload.segment_name));
+    case "business_function":
+      return Boolean(text(payload.function_name));
+    case "workforce_role":
+      return Boolean(text(payload.persona_or_role));
+    case "operational_process":
+      return Boolean(text(payload.process_name));
+    default:
+      return false;
+  }
+}
+
+/** Map serving payload fields without filling absent intake values. */
 function metricOutcomeRow(row: HomeProjectionRow): JsonRecord {
   const payload = rowPayload(row);
   return {
@@ -428,7 +674,10 @@ function metricOutcomeRow(row: HomeProjectionRow): JsonRecord {
   };
 }
 
-function riskControlRow(row: HomeProjectionRow): JsonRecord {
+function riskControlRow(
+  row: HomeProjectionRow,
+  ownerById: Map<string, string>,
+): JsonRecord {
   const payload = rowPayload(row);
   return {
     riskOrControlName:
@@ -442,7 +691,7 @@ function riskControlRow(row: HomeProjectionRow): JsonRecord {
     systemsImpacted: text(payload.systems_impacted),
     severity: text(payload.severity),
     likelihood: text(payload.likelihood),
-    controlOwner: text(payload.control_owner),
+    controlOwner: text(payload.control_owner) ?? ownerById.get(text(payload.owner_id) ?? ""),
     controlStatus: text(payload.control_status ?? payload.control_state),
     inherentRiskScore: numberValue(payload.inherent_risk_score),
     residualRiskScore: numberValue(payload.residual_risk_score),
@@ -456,6 +705,8 @@ function riskControlRow(row: HomeProjectionRow): JsonRecord {
 function programInitiativeRow(row: HomeProjectionRow): JsonRecord {
   const payload = rowPayload(row);
   return {
+    priorityId: text(payload.priority_id),
+    sponsorFunctionId: text(payload.sponsor_function_id),
     programName:
       text(payload.program_name ?? payload.initiative_name) ?? row.title,
     businessSponsor: text(payload.business_sponsor ?? payload.sponsor_function),
@@ -591,6 +842,8 @@ function applicationRow(row: HomeProjectionRow): JsonRecord {
   const payload = rowPayload(row);
   return {
     systemName: text(payload.application_name) ?? row.title,
+    segmentId: text(payload.segment_id),
+    businessFunctionId: text(payload.business_function_id),
     businessFunction: text(payload.business_function),
     systemCategory: text(payload.application_category),
     criticality: criticalityValue(payload.criticality_tier),
@@ -1010,8 +1263,13 @@ function buildCategorySummaries(args: {
 function recordType(
   objectType: TechObjectType,
   rows: Array<Record<string, string | number | boolean | null>>,
+  sourceRows?: HomeProjectionRow[],
+  verifiedSourceRefs?: VerifiedSourceRefs,
 ): TechRecordType | null {
   if (rows.length === 0) return null;
+  if (sourceRows && sourceRows.length !== rows.length) {
+    throw new Error(`Source-row alignment failed for ${objectType}`);
+  }
   const populated = (column: string) =>
     rows.some(
       (row) =>
@@ -1038,9 +1296,19 @@ function recordType(
     : null;
   return {
     objectType,
-    label: LABELS[objectType],
+    label: objectType === "relationship_edge" && sourceRows?.length && sourceRows.every((row) =>
+      rowPayload(row).scope === "risk_and_program_dependency_slice")
+      ? "Priority Dependency Links"
+      : LABELS[objectType],
     columns,
     rows,
+    ...(sourceRows && verifiedSourceRefs
+      ? {
+          rowSourceRefs: sourceRows.map((row) =>
+            admittedSourceRefs(row, verifiedSourceRefs),
+          ),
+        }
+      : {}),
     primaryDimension,
     dimensionCounts: primaryDimension
       ? dimensionCounts(rows, primaryDimension)
@@ -1050,29 +1318,38 @@ function recordType(
 
 export function buildTechnologyEstateFromHomeProjectionRows(
   rows: HomeProjectionRow[],
+  verifiedSourceRefs?: VerifiedSourceRefs,
 ): TechnologyEstateBundle {
-  const applicationRows = rows.filter(
+  const factualRows = rows.filter(isFactualHomeRow);
+  const enterpriseFamilyRows = (rowType: TechObjectType) =>
+    factualRows.filter(
+      (row) =>
+        row.page_key === "business_unit_profile" && row.row_type === rowType,
+    );
+  const segmentRows = enterpriseFamilyRows("business_segment");
+  const functionRows = enterpriseFamilyRows("business_function");
+  const workforceRows = enterpriseFamilyRows("workforce_role");
+  const processRows = enterpriseFamilyRows("operational_process");
+  const segments = segmentRows.map((row) => stripEmpty(enterpriseRow(row)));
+  const functions = functionRows.map((row) => stripEmpty(enterpriseRow(row)));
+  const workforce = workforceRows.map((row) => stripEmpty(enterpriseRow(row)));
+  const processes = processRows.map((row) => stripEmpty(enterpriseRow(row)));
+  const applicationRows = factualRows.filter(
     (row) =>
       row.page_key === "applications_systems" && row.row_type === "application",
   );
-  const infrastructureRows = rows.filter(
+  const infrastructureRows = factualRows.filter(
     (row) =>
       row.page_key === "infrastructure_platforms" &&
       row.row_type === "infrastructure",
   );
-  const applications = rows
-    .filter(
-      (row) =>
-        row.page_key === "applications_systems" &&
-        row.row_type === "application",
-    )
-    .map((row) => stripEmpty(applicationRow(row)));
-  const contracts = rows
-    .filter(
-      (row) =>
-        row.page_key === "vendor_contracts" && row.row_type === "contract",
-    )
-    .map((row) => stripEmpty(contractRow(row)));
+  const applications = applicationRows.map((row) =>
+    stripEmpty(applicationRow(row)),
+  );
+  const contractRows = factualRows.filter(
+    (row) => row.page_key === "vendor_contracts" && row.row_type === "contract",
+  );
+  const contracts = contractRows.map((row) => stripEmpty(contractRow(row)));
   const infrastructure = infrastructureRows.map((row) =>
     stripEmpty(infrastructureRow(row)),
   );
@@ -1089,56 +1366,127 @@ export function buildTechnologyEstateFromHomeProjectionRows(
     const label = text(mapped.platformName);
     if (ref && label) labelsByRef.set(ref, label);
   }
-  const dataFlows = rows
-    .filter(
-      (row) =>
-        row.page_key === "current_state_data_flow" &&
-        row.row_type === "data_flow",
-    )
-    .map((row) => stripEmpty(dataFlowRow(row, labelsByRef)));
-  const dataWorkloads = rows
-    .filter(
-      (row) =>
-        row.page_key === "data_assets_integrations" &&
-        row.row_type === "data_analytics_workload",
-    )
-    .map((row) => stripEmpty(dataAnalyticsWorkloadRow(row)));
+  const dataFlowRows = factualRows.filter(
+    (row) =>
+      row.page_key === "current_state_data_flow" &&
+      row.row_type === "data_flow",
+  );
+  const dataWorkloadRows = factualRows.filter(
+    (row) =>
+      row.page_key === "data_assets_integrations" &&
+      row.row_type === "data_analytics_workload",
+  );
+  const dataFlows = dataFlowRows.map((row) =>
+    stripEmpty(dataFlowRow(row, labelsByRef)),
+  );
+  const dataWorkloads = dataWorkloadRows.map((row) =>
+    stripEmpty(dataAnalyticsWorkloadRow(row)),
+  );
 
   // The five intake families the projection carries as of the active-intake page-key slice. Each
   // builds only when its page key has rows: a family the projection has not loaded yet produces no
   // record type at all, which is what lets a surface report the absence rather than an empty table.
-  const intakeFamily = (
-    pageKey: string,
-    map: (row: HomeProjectionRow) => JsonRecord,
-  ) =>
-    rows
-      .filter((row) => row.page_key === pageKey)
-      .map((row) => stripEmpty(map(row)));
-
-  const metrics = intakeFamily("metrics_outcomes", metricOutcomeRow);
-  const risks = intakeFamily("risks_controls", riskControlRow);
-  const programs = intakeFamily("programs_initiatives", programInitiativeRow);
-  const orgUnits = intakeFamily("org_ownership", organizationOwnershipRow);
-  const aiUseCases = intakeFamily("ai_use_cases", aiUseCaseRow);
-  const interviews = intakeFamily(
-    "executive_interviews",
-    executiveInterviewRow,
+  const intakeFamilyRows = (pageKey: string) =>
+    factualRows.filter((row) => row.page_key === pageKey);
+  const metricRows = intakeFamilyRows("metrics_outcomes");
+  const riskRows = intakeFamilyRows("risks_controls");
+  const programRows = intakeFamilyRows("programs_initiatives");
+  const orgRows = intakeFamilyRows("org_ownership");
+  const aiRows = intakeFamilyRows("ai_use_cases");
+  const interviewRows = intakeFamilyRows("executive_interviews");
+  const relationshipRows = intakeFamilyRows("relationships");
+  const ownerById = new Map<string, string>(orgRows.map((row): [string, string] => {
+    const data = rowPayload(row);
+    return [text(data.owner_id) ?? "", text(data.owner_role) ?? row.title];
+  }));
+  const metrics = metricRows.map((row) => stripEmpty(metricOutcomeRow(row)));
+  const risks = riskRows.map((row) => stripEmpty(riskControlRow(row, ownerById)));
+  const programs = programRows.map((row) =>
+    stripEmpty(programInitiativeRow(row)),
   );
-  const relationships = intakeFamily("relationships", relationshipEdgeRow);
+  const orgUnits = orgRows.map((row) =>
+    stripEmpty(organizationOwnershipRow(row)),
+  );
+  const aiUseCases = aiRows.map((row) => stripEmpty(aiUseCaseRow(row)));
+  const interviews = interviewRows.map((row) =>
+    stripEmpty(executiveInterviewRow(row)),
+  );
+  const relationships = relationshipRows.map((row) =>
+    stripEmpty(relationshipEdgeRow(row)),
+  );
 
   return {
     recordTypes: [
-      recordType("application_system", applications),
-      recordType("vendor_contract", contracts),
-      recordType("infrastructure_platform", infrastructure),
-      recordType("data_asset_or_integration", [...dataFlows, ...dataWorkloads]),
-      recordType("metric_outcome", metrics),
-      recordType("risk_control", risks),
-      recordType("program_initiative", programs),
-      recordType("organization_ownership", orgUnits),
-      recordType("ai_use_case", aiUseCases),
-      recordType("executive_interview", interviews),
-      recordType("relationship_edge", relationships),
+      recordType("business_segment", segments, segmentRows, verifiedSourceRefs),
+      recordType(
+        "business_function",
+        functions,
+        functionRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "workforce_role",
+        workforce,
+        workforceRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "operational_process",
+        processes,
+        processRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "application_system",
+        applications,
+        applicationRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "vendor_contract",
+        contracts,
+        contractRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "infrastructure_platform",
+        infrastructure,
+        infrastructureRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "data_asset_or_integration",
+        [...dataFlows, ...dataWorkloads],
+        [...dataFlowRows, ...dataWorkloadRows],
+        verifiedSourceRefs,
+      ),
+      recordType("metric_outcome", metrics, metricRows, verifiedSourceRefs),
+      recordType("risk_control", risks, riskRows, verifiedSourceRefs),
+      recordType(
+        "program_initiative",
+        programs,
+        programRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "organization_ownership",
+        orgUnits,
+        orgRows,
+        verifiedSourceRefs,
+      ),
+      recordType("ai_use_case", aiUseCases, aiRows, verifiedSourceRefs),
+      recordType(
+        "executive_interview",
+        interviews,
+        interviewRows,
+        verifiedSourceRefs,
+      ),
+      recordType(
+        "relationship_edge",
+        relationships,
+        relationshipRows,
+        verifiedSourceRefs,
+      ),
     ].filter((row): row is TechRecordType => Boolean(row)),
   };
 }
@@ -1303,6 +1651,8 @@ function contextIdForRow(row: HomeProjectionRow): string {
 
 function rowDomains(row: HomeProjectionRow): string[] {
   switch (row.page_key) {
+    case "business_unit_profile":
+      return [row.row_type];
     case "applications_systems":
       return ["application_system"];
     case "vendor_contracts":
@@ -1313,6 +1663,20 @@ function rowDomains(row: HomeProjectionRow): string[] {
       return ["data_asset_or_integration", "application_system"];
     case "data_assets_integrations":
       return ["data_asset_or_integration", "infrastructure_platform"];
+    case "metrics_outcomes":
+      return ["metric_outcome"];
+    case "risks_controls":
+      return ["risk_control"];
+    case "programs_initiatives":
+      return ["program_initiative"];
+    case "org_ownership":
+      return ["organization_ownership"];
+    case "ai_use_cases":
+      return ["ai_use_case"];
+    case "executive_interviews":
+      return ["executive_interview"];
+    case "relationships":
+      return ["relationship_edge"];
     default:
       return ["evidence_sources"];
   }
@@ -1323,6 +1687,21 @@ function rowContextStatement(
   labelsByRef: Map<string, string> = new Map(),
 ): string {
   switch (row.page_key) {
+    case "business_unit_profile": {
+      const record = enterpriseRow(row);
+      switch (row.row_type) {
+        case "business_segment":
+          return `${text(record.segmentName)} is a declared business segment${text(record.pnlOwnerRole) ? ` with ${text(record.pnlOwnerRole)} named as P&L owner` : ""}.`;
+        case "business_function":
+          return `${text(record.functionName)} is a declared business function${text(record.businessSegment) ? ` within ${text(record.businessSegment)}` : ""}.`;
+        case "workforce_role":
+          return `${text(record.personaOrRole)} is a declared workforce role${text(record.functionName) ? ` supporting ${text(record.functionName)}` : ""}.`;
+        case "operational_process":
+          return `${text(record.processName)} is a declared operating process${text(record.businessFunction) ? ` within ${text(record.businessFunction)}` : ""}.`;
+        default:
+          return row.summary ?? row.title;
+      }
+    }
     case "applications_systems": {
       const app = applicationRow(row);
       const parts = [
@@ -1419,7 +1798,10 @@ function rowContextStatement(
   }
 }
 
-function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
+function projectionContextItems(
+  rows: HomeProjectionRow[],
+  verifiedSourceRefs: VerifiedSourceRefs,
+): ContextItem[] {
   const labelsByRef = endpointLabelsFromRows(rows);
   return rows
     .filter(
@@ -1429,6 +1811,7 @@ function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
       id: contextIdForRow(row),
       statement: rowContextStatement(row, labelsByRef),
       domains: rowDomains(row),
+      evidenceRefs: admittedSourceRefs(row, verifiedSourceRefs),
     }));
 }
 
@@ -1436,12 +1819,29 @@ function buildEclSignalPacket(
   rows: HomeProjectionRow[],
   estate: TechnologyEstateBundle,
   assessmentId: string,
+  verifiedSourceRefs: VerifiedSourceRefs,
+  withheldRowCount = 0,
 ): EnterpriseSignalPacket {
+  const segments = rowsForType(estate, "business_segment");
+  const programs = rowsForType(estate, "program_initiative");
   const applications = rowsForType(estate, "application_system");
   const contracts = rowsForType(estate, "vendor_contract");
   const infrastructure = rowsForType(estate, "infrastructure_platform");
   const dataRecords = rowsForType(estate, "data_asset_or_integration");
   const interviews = rowsForType(estate, "executive_interview");
+  const missingEnterpriseFamilies = (
+    [
+      "business_segment",
+      "business_function",
+      "workforce_role",
+      "operational_process",
+    ] as const
+  )
+    .filter(
+      (objectType) =>
+        !estate.recordTypes.some((type) => type.objectType === objectType),
+    )
+    .map((objectType) => LABELS[objectType]);
   const dataFlows = dataRecords.filter(
     (row) => row.recordKind !== "data_analytics_workload",
   );
@@ -1685,7 +2085,9 @@ function buildEclSignalPacket(
     {
       id: "ctx_ecl_scope_business_economics_001",
       statement:
-        "Segment revenue, customer/channel economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited to cited technology, commercial, infrastructure, and data-movement facts.",
+        segments.length > 0
+          ? "Business-segment records are present in the served Home record. Customer and channel economics still require their own cited evidence; do not infer them from segment totals."
+          : "Business-segment records are not supplied by the current Home read. Do not infer the business model from technology and vendor counts.",
       domains: [
         "enterprise_profile",
         "spend_value_fact",
@@ -1696,9 +2098,29 @@ function buildEclSignalPacket(
     {
       id: "ctx_ecl_scope_strategy_programs_001",
       statement:
-        "Declared strategic priorities, funded programs, and program-to-outcome linkage are not supplied by the current Home narrative input; strategy chapters should treat strategy as an evidence gap rather than infer a transformation agenda.",
+        programs.length > 0
+          ? "Program records are present in the served Home record. Priority-to-program and program-to-outcome links still require explicit cited relationships."
+          : "Program records are not supplied by the current Home read. Do not infer an execution portfolio from chapter prose.",
       domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
     },
+    ...(missingEnterpriseFamilies.length > 0
+      ? [
+          {
+            id: "ctx_ecl_gap_enterprise_families_001",
+            statement: `The served Home record does not yet include ${missingEnterpriseFamilies.join(", ")}. That is a coverage gap, not evidence the enterprise lacks them.`,
+            domains: ["evidence_sources"],
+          },
+        ]
+      : []),
+    ...(withheldRowCount > 0
+      ? [
+          {
+            id: "ctx_ecl_gap_withheld_rows_001",
+            statement: `${withheldRowCount} record${withheldRowCount === 1 ? " was" : "s were"} excluded from Home facts because source review or identifying fields were insufficient.`,
+            domains: ["evidence_sources"],
+          },
+        ]
+      : []),
     interviews.length > 0
       ? {
           id: "ctx_ecl_scope_leadership_001",
@@ -1711,7 +2133,7 @@ function buildEclSignalPacket(
             "Leadership interview excerpts are not supplied by the current Home narrative input; leadership perspective should remain deferred until cited interview evidence is loaded.",
           domains: ["evidence_sources"],
         },
-    ...projectionContextItems(rows),
+    ...projectionContextItems(rows, verifiedSourceRefs),
   ];
   const sourceSummaries = buildEclSourceSummaries(estate);
 
@@ -1758,6 +2180,10 @@ function buildEclSourceSummaries(
       const exampleRecords = recordType.rows
         .map(
           (row) =>
+            text(row.segmentName) ??
+            text(row.functionName) ??
+            text(row.personaOrRole) ??
+            text(row.processName) ??
             text(row.systemName) ??
             text(row.vendorName) ??
             text(row.platformName) ??
@@ -2241,30 +2667,262 @@ function buildPublishedChapters(
   });
 }
 
+function contextVersionForRows(
+  base: HomeReviewBundle,
+  rows: HomeProjectionRow[],
+  assessmentId: string,
+  /** The packet the narrative was written against, before any reader-only addition. */
+  writtenPacket: EnterpriseSignalPacket,
+  claims: Map<ChapterId, GroundedClaim[]>,
+  hasPublishedClaims: boolean,
+  verifiedSourceRefs: VerifiedSourceRefs,
+  sourceCatalogRows: readonly HomeSourceFileReviewRow[] | null,
+  hasVerifiedNarrativePacketArtifact: boolean,
+): HomeContextVersion {
+  const hash = (value: unknown) =>
+    createHash("sha256").update(JSON.stringify(value)).digest("hex");
+  const summaries = [...chapterSummaryRows(rows).values()];
+  const writers = summaries
+    .map((row) => rowPayload(row).writer)
+    .filter((value): value is JsonRecord =>
+      Boolean(value && typeof value === "object" && !Array.isArray(value)),
+    );
+  const writerHashes = new Set(
+    writers
+      .map((writer) => text(writer.signal_packet_hash))
+      .filter((value): value is string => Boolean(value)),
+  );
+  const writerDates = new Set(
+    writers
+      .map((writer) => text(writer.generated_at))
+      .filter((value): value is string => Boolean(value)),
+  );
+  const deterministicPacketHash = hashHomeNarrativeValue(writtenPacket);
+  const citableRows = rows.filter(
+    (row) =>
+      row.row_type !== "summary" &&
+      row.row_type !== "chapter_claim" &&
+      row.row_type !== STORY_PLAN_ROW_TYPE,
+  );
+  const sourceRows = citableRows.map((row) => ({
+    pageKey: row.page_key,
+    sourceRefs: admittedSourceRefs(row, verifiedSourceRefs),
+  }));
+  const sourceLineageHash = homeNarrativeSourceLineageHash(rows, verifiedSourceRefs);
+  const familyCoverage = new Map<
+    string,
+    { pageKey: string; totalRows: number; linkedRows: number }
+  >();
+  for (const sourceRow of sourceRows) {
+    const family = familyCoverage.get(sourceRow.pageKey) ?? {
+      pageKey: sourceRow.pageKey,
+      totalRows: 0,
+      linkedRows: 0,
+    };
+    family.totalRows += 1;
+    if (sourceRow.sourceRefs.length > 0) family.linkedRows += 1;
+    familyCoverage.set(sourceRow.pageKey, family);
+  }
+  const sourceCoverage = {
+    totalRecordRows: sourceRows.length,
+    linkedRecordRows: sourceRows.filter((row) => row.sourceRefs.length > 0)
+      .length,
+    families: [...familyCoverage.values()].sort((a, b) =>
+      a.pageKey.localeCompare(b.pageKey),
+    ),
+  };
+  const sourceCatalogHash = sourceCatalogRows
+    ? hash(
+        [...sourceCatalogRows]
+          .map((row) => {
+            const loadApproval = recordedLoadApproval(row.load_approval);
+            return {
+              id: row.id,
+              fileName: row.file_name,
+              fileHash: row.file_hash,
+              sourceDate: row.source_date,
+              qualityState: row.quality_state,
+              // Present only once recorded, so recording an approval is itself a new version.
+              ...(loadApproval ? { loadApproval } : {}),
+            };
+          })
+          .sort((left, right) => left.id.localeCompare(right.id)),
+      )
+    : null;
+  const sourceFileReview = sourceCatalogRows
+    ? {
+        totalFiles: sourceCatalogRows.length,
+        acceptedFiles: sourceCatalogRows.filter(isHomeSourceFileAccepted)
+          .length,
+        notReviewedFiles: sourceCatalogRows.filter(
+          (row) =>
+            row.quality_state === "accepted" && !isHomeSourceFileAccepted(row),
+        ).length,
+        partialFiles: sourceCatalogRows.filter(
+          (row) => row.quality_state === "partial",
+        ).length,
+        blockedFiles: sourceCatalogRows.filter(
+          (row) => row.quality_state === "blocked",
+        ).length,
+        supersededFiles: sourceCatalogRows.filter(
+          (row) => row.quality_state === "superseded",
+        ).length,
+      }
+    : null;
+  const sourceDates = sourceCatalogRows
+    ?.map((row) => row.source_date)
+    .filter((date): date is string =>
+      Boolean(date && /^\d{4}-\d{2}-\d{2}$/.test(date)),
+    )
+    .sort();
+  const sourceDateCoverage =
+    sourceCatalogRows && sourceDates?.length
+      ? {
+          earliest: sourceDates[0]!,
+          latest: sourceDates[sourceDates.length - 1]!,
+          datedFiles: sourceDates.length,
+          totalFiles: sourceCatalogRows.length,
+        }
+      : null;
+  const sourceSetHash =
+    citableRows.length > 0 &&
+    citableRows.every(
+      (row) => admittedSourceRefs(row, verifiedSourceRefs).length > 0,
+    )
+      ? sourceLineageHash
+      : null;
+  const narrativePacketHash =
+    writerHashes.size === 1 ? [...writerHashes][0]! : null;
+  const evidenceIds = new Set([
+    ...writtenPacket.signals.map((signal) => signal.id),
+    ...writtenPacket.contextItems.map((item) => item.id),
+  ]);
+  // Scope notes and aggregate signals orient a claim; only a linked serving row traces it to source.
+  const sourceBackedContextIds = new Set(
+    citableRows
+      .filter((row) => admittedSourceRefs(row, verifiedSourceRefs).length > 0)
+      .map(contextIdForRow),
+  );
+  const claimEvidenceResolved = [...claims.values()]
+    .flat()
+    .every(
+      (claim) =>
+        claim.evidence_ids.length > 0 &&
+        claim.evidence_ids.every((id) => evidenceIds.has(id)) &&
+        claim.evidence_ids.some((id) => sourceBackedContextIds.has(id)),
+    );
+  const writerMatchesRead =
+    hasVerifiedNarrativePacketArtifact &&
+    writers.length === summaries.length &&
+    writerHashes.size === 1 &&
+    narrativePacketHash === deterministicPacketHash &&
+    writerDates.size === 1 &&
+    claimEvidenceResolved &&
+    sourceSetHash !== null &&
+    Boolean(
+      sourceCatalogRows?.length &&
+      sourceCatalogRows.every(
+        (row) =>
+          isHomeSourceFileAccepted(row) && /^[a-f0-9]{64}$/.test(row.file_hash),
+      ),
+    );
+  const hasCurrentStoryPlan =
+    Boolean(storyPlanRow(rows)) || !base.executiveStoryPlan;
+
+  return {
+    assessmentId,
+    projectionContentHash: hash(
+      [...rows].sort((a, b) =>
+        `${a.page_key}:${a.row_key}:${a.row_type}`.localeCompare(
+          `${b.page_key}:${b.row_key}:${b.row_type}`,
+        ),
+      ),
+    ),
+    sourceSetHash,
+    sourceLineageHash,
+    sourceCoverage,
+    sourceCatalogHash,
+    sourceFileReview,
+    sourceDateCoverage,
+    deterministicPacketHash,
+    narrativePacketHash,
+    narrativeGeneratedAt: hasPublishedClaims
+      ? writerDates.size === 1
+        ? [...writerDates][0]!
+        : null
+      : base.provenance.generated_at,
+    dataAsOf: null,
+    coherence: !hasPublishedClaims
+      ? "stored_narrative"
+      : writerMatchesRead && hasCurrentStoryPlan
+        ? "coherent"
+        : "unverified",
+  };
+}
+
 export function buildHomeReviewBundleFromEclProjectionRows(
   base: HomeReviewBundle,
   rows: HomeProjectionRow[],
   assessmentId = denseAssessmentIdForTenant(base.tenantKey),
+  verifiedSourceRefs: VerifiedSourceRefs = new Map(),
+  sourceCatalogRows: readonly HomeSourceFileReviewRow[] | null = null,
 ): HomeReviewBundle {
-  const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(rows);
-  const signalPacket = buildEclSignalPacket(
-    rows,
-    technologyEstate,
-    assessmentId,
+  const factualRows = rows.filter(isFactualHomeRow);
+  const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(
+    factualRows,
+    verifiedSourceRefs,
   );
-  const claims = chapterClaimsByPage(rows);
+  const storyRow = storyPlanRow(factualRows);
+  const narrativePacketArtifact = storyRow ? verifiedHomeNarrativePacketArtifact(
+    rowPayload(storyRow).narrative_packet_artifact,
+    { tenantKey: base.tenantKey, assessmentId, rows, verifiedSourceRefs },
+  ) : null;
+  // The packet as the narrative was written against it. Its hash is what a published narrative
+  // is compared with, so nothing this reader adds for the page may be part of it.
+  const writtenPacket: EnterpriseSignalPacket =
+    narrativePacketArtifact?.packet ??
+    buildEclSignalPacket(
+      factualRows,
+      technologyEstate,
+      assessmentId,
+      verifiedSourceRefs,
+      rows.length - factualRows.length,
+    );
+  // What the page and the export read: the written packet, plus the context this reader derives.
+  // Attached here, after the packet above has been set aside for hashing.
+  const signalPacket: EnterpriseSignalPacket = {
+    ...writtenPacket,
+    homeEnterpriseContext: buildHomeEnterpriseContext(
+      factualRows,
+      (row) => admittedSourceRefs(row, verifiedSourceRefs),
+    ),
+  };
+  const claims = chapterClaimsByPage(factualRows);
   const hasPublishedClaims = hasPublishedChapterClaims(claims);
+  const contextVersion = contextVersionForRows(
+    base,
+    rows,
+    assessmentId,
+    writtenPacket,
+    claims,
+    hasPublishedClaims,
+    verifiedSourceRefs,
+    sourceCatalogRows,
+    Boolean(narrativePacketArtifact),
+  );
   const thesis = hasPublishedClaims
-    ? publishedThesisFromRows(rows)
+    ? publishedThesisFromRows(factualRows)
     : base.thesis.publishedGeneration;
   const chapters = hasPublishedClaims
-    ? buildPublishedChapters(rows, claims)
+    ? buildPublishedChapters(factualRows, claims)
     : base.chapters;
-  const executiveStoryPlan = storyPlanRow(rows)
-    ? storyPlanFromRows(base.tenantKey, assessmentId, rows, claims)
+  const executiveStoryPlan = storyPlanRow(factualRows)
+    ? storyPlanFromRows(base.tenantKey, assessmentId, factualRows, claims)
     : base.executiveStoryPlan;
   return normalizeHomeReviewBundle({
     tenantKey: base.tenantKey,
+    declaredSyntheticDemo: base.declaredSyntheticDemo,
+    contextVersion,
     provenance: {
       ...base.provenance,
       home_synthesis_contract_version: `${base.provenance.home_synthesis_contract_version}+ecl-projection-v1`,
@@ -2359,11 +3017,18 @@ export interface HomeProjectionRead {
 async function readHomeProjectionRows(
   tenantKey: string,
   assessmentId: string,
+  declared: HomeDeclaredProjection | null = null,
 ): Promise<HomeProjectionRead> {
   const present = await presentServingViews();
   const usable = HOME_SERVING_VIEWS.filter((view) => present.has(view));
   const absentViews = HOME_SERVING_VIEWS.filter((view) => !present.has(view));
   if (usable.length === 0) return { rows: [], absentViews };
+  // A declared assessment is read as the projection its declaration names, not as every row the
+  // tenant holds under that assessment: a row written later under another manifest or another
+  // projection version is not part of what was declared, and is not served.
+  const declaredOnly = declared
+    ? " and projection_manifest_id = $3::uuid and projection_version = $4"
+    : "";
   const sql =
     usable
       .map(
@@ -2374,21 +3039,92 @@ async function readHomeProjectionRows(
         row_type,
         title,
         summary,
+        projection_entry_id,
+        source_hash,
+        source_refs_json,
+        primary_object_id,
+        admission_status,
         payload_json as display_payload_json
       from ${view}
-      where tenant_key = $1 and assessment_id = $2`,
+      where tenant_key = $1 and assessment_id = $2${declaredOnly}`,
       )
       .join("\n      union all\n") + "\n      order by page_key, row_key";
   const rows = await azureRead.query<HomeProjectionRow>(
     sql,
-    [tenantKey, assessmentId],
+    declared
+      ? [
+          tenantKey,
+          assessmentId,
+          declared.manifestId,
+          declared.projectionVersion,
+        ]
+      : [tenantKey, assessmentId],
     { missingTable: "empty" },
   );
   return { rows, absentViews };
 }
 
+async function readVerifiedSourceRefs(
+  tenantKey: string,
+  assessmentId: string,
+): Promise<VerifiedSourceRefs> {
+  try {
+    const links = await azureRead.query<{
+      projection_entry_id: string;
+      source_record_id: string;
+      source_hash: string;
+    }>(
+      `select link.projection_entry_id::text, link.source_record_id::text, link.source_hash
+       from ecl_projection.projection_entry_source_record_ref link
+       join ecl_projection.projection_entry entry
+         on entry.tenant_key = link.tenant_key
+        and entry.assessment_id = link.assessment_id
+        and entry.id = link.projection_entry_id
+        and entry.source_hash = link.source_hash
+       join ecl_source.source_record source
+         on source.tenant_key = link.tenant_key
+        and source.assessment_id = link.assessment_id
+        and source.id = link.source_record_id
+       where link.tenant_key = $1 and link.assessment_id = $2`,
+      [tenantKey, assessmentId],
+      { missingTable: "empty" },
+    );
+    const verified: VerifiedSourceRefs = new Map();
+    for (const link of links) {
+      const byHash = verified.get(link.projection_entry_id) ?? new Map();
+      const refs = byHash.get(link.source_hash) ?? new Set<string>();
+      refs.add(link.source_record_id);
+      byHash.set(link.source_hash, refs);
+      verified.set(link.projection_entry_id, byHash);
+    }
+    return verified;
+  } catch (error) {
+    console.warn("[home] source-reference resolution unavailable", error);
+    return new Map();
+  }
+}
+
+async function readHomeSourceCatalog(
+  tenantKey: string,
+  assessmentId: string,
+): Promise<HomeSourceFileReviewRow[] | null> {
+  try {
+    return await azureRead.query<HomeSourceFileReviewRow>(
+      `select id::text, file_name, file_hash, source_date::text, quality_state,
+              metadata_json->'load_approval' as load_approval
+       from ecl_source.source_file
+       where tenant_key = $1 and assessment_id = $2`,
+      [tenantKey, assessmentId],
+    );
+  } catch (error) {
+    console.warn("[home] source-file review state unavailable", error);
+    return null;
+  }
+}
+
 export async function getHomeEclProjectionBundle(
   tenantKey: HomePreviewTenantKey,
+  selected?: HomeAssessmentSelection,
 ): Promise<HomeReviewBundle> {
   const base = getHomeReviewBundle(tenantKey);
   if (!base) {
@@ -2397,10 +3133,19 @@ export async function getHomeEclProjectionBundle(
     );
   }
 
-  const assessmentId = denseAssessmentIdForTenant(tenantKey);
+  const { assessmentId, declared, retired } =
+    selected ?? (await selectHomeAssessment(tenantKey));
+  if (retired) {
+    throw new HomeProjectionFault(
+      "retired_declaration",
+      `Home ECL preview: the declared assessment for ${tenantKey} is retired.`,
+      { assessmentId },
+    );
+  }
   const { rows, absentViews } = await readHomeProjectionRows(
     tenantKey,
     assessmentId,
+    declared,
   );
   if (rows.length === 0) {
     // Naming the absent views in the message. The same failure used to read as "no rows", which
@@ -2408,9 +3153,38 @@ export async function getHomeEclProjectionBundle(
     const missing = absentViews.length
       ? ` No serving view for: ${absentViews.join(", ")}.`
       : "";
-    throw new Error(
+    throw new HomeProjectionFault(
+      declared
+        ? "declared_assessment_has_no_rows"
+        : "default_assessment_has_no_rows",
       `Home ECL preview: no serving Home rows for ${tenantKey}/${assessmentId}.${missing}`,
+      { assessmentId },
     );
+  }
+  if (!rows.some(isFactualHomeRow)) {
+    throw new HomeProjectionFault(
+      "no_admissible_rows",
+      `Home ECL preview: no admissible Home rows for ${tenantKey}/${assessmentId}.`,
+      { assessmentId },
+    );
+  }
+  if (
+    declared &&
+    absentViews.length === 0 &&
+    rows.length !== declared.rowCount
+  ) {
+    // The rows carry the declared manifest and version, and their number is not the number that
+    // manifest recorded. Rows can be added or removed under a manifest after it was declared, and
+    // nothing in the schema ties a row to the proof. They are still served -- refusing them is a
+    // decision about what Home shows -- and the difference is reported rather than left unseen.
+    // Not judged when a view is absent: the read is then known to be short for another reason.
+    reportHomeProjectionFault({
+      tenantKey,
+      reason: "declared_row_count_differs",
+      served: "declared_projection",
+      assessmentId,
+      detail: `read ${rows.length} rows; the declared manifest records ${declared.rowCount}`,
+    });
   }
   if (absentViews.length > 0) {
     // Served, but not completely. Recorded rather than swallowed: a family this environment cannot
@@ -2420,8 +3194,22 @@ export async function getHomeEclProjectionBundle(
     );
   }
 
+  const verifiedSourceRefs = await readVerifiedSourceRefs(
+    tenantKey,
+    assessmentId,
+  );
+  const sourceCatalogRows = await readHomeSourceCatalog(
+    tenantKey,
+    assessmentId,
+  );
   return {
-    ...buildHomeReviewBundleFromEclProjectionRows(base, rows, assessmentId),
+    ...buildHomeReviewBundleFromEclProjectionRows(
+      base,
+      rows,
+      assessmentId,
+      verifiedSourceRefs,
+      sourceCatalogRows,
+    ),
   };
 }
 
@@ -2439,19 +3227,38 @@ export async function getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
   }
 
   try {
-    const bundle = await getHomeEclProjectionBundle(tenantKey);
+    const selection = await selectHomeAssessment(tenantKey);
+    if (selection.retired) {
+      return {
+        bundle: base,
+        recordSource: {
+          kind: "reviewed_snapshot",
+          canonicalSnapshotHash: base.provenance.canonical_snapshot_hash,
+        },
+      };
+    }
+    const bundle = await getHomeEclProjectionBundle(tenantKey, selection);
     return {
       bundle,
       recordSource: {
         kind: "ecl_serving_projection",
         canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+        contextVersion: bundle.contextVersion,
       },
     };
   } catch (error) {
-    console.warn(
-      `[home] ECL projection unavailable for ${tenantKey}; rendering reviewed Home snapshot.`,
-      error,
-    );
+    reportHomeProjectionFault({
+      tenantKey,
+      reason: homeProjectionFaultReason(error),
+      served: "reviewed_snapshot",
+      assessmentId:
+        error instanceof HomeProjectionFault ? error.assessmentId : null,
+      detail: error instanceof Error ? error.message : String(error),
+      stack:
+        error instanceof Error && !(error instanceof HomeProjectionFault)
+          ? error.stack
+          : null,
+    });
     return {
       bundle: base,
       recordSource: {

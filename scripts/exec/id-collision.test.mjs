@@ -716,7 +716,14 @@ const realRegister = path.join(operatorRoot, "EXECUTION_CLAIMS.md");
 
 if (!fs.existsSync(realBacklog)) {
   skip("the live backlog reports both collisions", `${realBacklog} is not on this machine`);
-  skip("the live backlog does not report the renumbered one", "same");
+  /*
+   * This label used to read "the live backlog does not report the renumbered
+   * one", naming the absence case C-587 removed. A skip naming a case that no
+   * longer exists reports a coverage state nobody has, so it names the two
+   * cases that stand in its place.
+   */
+  skip("no id is reported as filed twice within a single backlog section", "same");
+  skip("and the collapse is load-bearing on the live corpus, not a precaution", "same");
   skip("a live hold on an ambiguous id replays from the register", "same");
 } else {
   const backlog = fs.readFileSync(realBacklog, "utf8");
@@ -739,11 +746,68 @@ if (!fs.existsSync(realBacklog)) {
     }
   }
 
+  /*
+   * RESTATED 2026-10-04 (item C-587). This case asserted `!byId.has("T-720")`
+   * — that the live backlog does not report the third id the item named,
+   * "because the item names three collisions; two are on disk".
+   *
+   * That reason has drifted, and the drift was measured rather than guessed.
+   * The id IS on disk, in item position, three times: a filing heading at line
+   * 11696, that section's own table row at 11704, and a progress note at 11799.
+   * Two of the three classify as `filing`. What keeps the id out of
+   * `duplicates` is not absence at all — it is `backlogFilings` COLLAPSING a
+   * heading and its own table row within one section into a single filing. The
+   * reader is doing the work the comment credited to the corpus.
+   *
+   * So the case was an absence assertion over a document agents write into,
+   * and the one thing it could not survive is somebody filing that id a second
+   * time — which would make it red for the corpus having been written in,
+   * while the reader was right the whole time. The id is also the WEAKEST
+   * possible witness for the collapse: 80 sections in today's backlog have a
+   * filing-kind id occurring more than once, so singling this one out by name
+   * both narrowed the claim and tied it to a literal.
+   *
+   * The collapse is asserted directly instead, and for every id. The universal
+   * half cannot be falsified by appending — a new section can only add filings,
+   * never make two of them share a section — and the non-vacuity half is a
+   * `> 0` that appending can only push further from zero. Between them they say
+   * what the deleted case was reaching for: a reader that stopped collapsing
+   * would report an id as a duplicate of itself.
+   */
+  const sectionKey = (f) => `${f.id}||${f.sectionIndex}`;
+  const sameSection = new Map();
+  const collisionsWithinASection = [];
+  for (const filing of backlogFilings(backlog)) {
+    const key = sectionKey(filing);
+    if (sameSection.has(key)) {
+      collisionsWithinASection.push(
+        `${filing.id} reported twice in one section, lines ${sameSection.get(key)} and ${filing.lineNumber}`,
+      );
+    } else {
+      sameSection.set(key, filing.lineNumber);
+    }
+  }
   check(
-    "the live backlog does NOT report the id whose second filing was renumbered away",
-    !byId.has("T-720"),
-    "the item names three collisions; two are on disk. Reporting the third " +
-      "would mean reporting a renumber note as a live duplicate",
+    "no id is reported as filed twice within a single backlog section",
+    collisionsWithinASection.length === 0,
+    collisionsWithinASection.slice(0, 5).join("\n") +
+      "\neach of these would be an id reported as colliding with itself — one " +
+      "filing written as a heading plus its own table row",
+  );
+
+  const perSection = new Map();
+  for (const occurrence of backlogOccurrences(backlog)) {
+    if (occurrence.kind !== "filing") continue;
+    const key = `${occurrence.id}||${occurrence.sectionIndex}`;
+    perSection.set(key, (perSection.get(key) ?? 0) + 1);
+  }
+  const collapsed = [...perSection.entries()].filter(([, count]) => count > 1);
+  check(
+    "and the collapse is load-bearing on the live corpus, not a precaution",
+    collapsed.length > 0,
+    `${collapsed.length} (id, section) pairs hold more than one filing-kind ` +
+      "occurrence, so without the collapse the case above would have that many " +
+      "ids reported as duplicates of themselves",
   );
 
   check(
@@ -753,13 +817,62 @@ if (!fs.existsSync(realBacklog)) {
       "this reader and by neither of the sibling reader's two parsers",
   );
 
+  /*
+   * RESTATED 2026-10-04 (item C-585), from an aggregate ratio to a per-channel
+   * one. The old case asserted `update > filing` over the whole corpus, for the
+   * right reason — "a log this size is mostly progress notes; a reader that
+   * thought otherwise would be counting them as findings" — and it was true
+   * when it was written on 2026-09-23.
+   *
+   * It is now false, and the corpus moved rather than the reader. Two controls,
+   * both run on `origin/main` `aa23d2c31f`:
+   *
+   *   - Hold the corpus fixed, vary the reader. The 2026-09-23 reader
+   *     (`abdc6e43a7`), the exact revision that was green when this case was
+   *     written, scores today's backlog at filings=835 updates=653 — identical
+   *     to today's reader, to the occurrence. The classifier has not changed
+   *     its answer about this corpus at all.
+   *   - Hold the reader fixed, vary the corpus. On prefixes of the live backlog
+   *     today's reader gives 437/497 at 40%, 604/618 at 70%, 673/624 at 80%,
+   *     835/653 at 100% — one monotone crossover inside the newest third. A
+   *     regressed classifier would have moved the early prefixes too; they
+   *     still satisfy the old assertion.
+   *
+   * Later sections file many new ids per section and narrate comparatively
+   * little, so the aggregate tipped. What did NOT tip, at any prefix from 20%
+   * to 100%, is WHERE each kind lives: narration is written as headings, and
+   * new items arrive as rows of a filing table. Measured per channel —
+   * heading upd/fil 131/15, 254/48, 301/88, 322/100, 324/105, 325/109 and
+   * table fil/upd 229/99, 389/243, 444/261, 504/296, 568/300, 726/328 — with
+   * no flip in either channel anywhere in the corpus's history.
+   *
+   * So this asserts the structural fact the old sentence was reaching for,
+   * which the aggregate was only ever a proxy for. It keeps the same teeth: a
+   * reader that counted filing-table rows as progress notes, or narrative
+   * headings as findings, flips one of the two.
+   */
   const occurrences = backlogOccurrences(backlog);
+  const channel = (via, kind) =>
+    occurrences.filter((o) => o.via === via && o.kind === kind).length;
+  const headingUpdates = channel("heading", "update");
+  const headingFilings = channel("heading", "filing");
+  const tableFilings = channel("table", "filing");
+  const tableUpdates = channel("table", "update");
+
   check(
-    "the reader classifies far more of the corpus as updates than as filings",
-    occurrences.filter((o) => o.kind === "update").length >
-      occurrences.filter((o) => o.kind === "filing").length,
-    "a log this size is mostly progress notes; a reader that thought otherwise " +
-      "would be counting them as findings",
+    "in the heading channel the reader classifies more of the corpus as updates than as filings",
+    headingUpdates > headingFilings,
+    `headings: ${headingUpdates} updates / ${headingFilings} filings — narration ` +
+      "is written as headings; a reader that thought otherwise would be " +
+      "counting progress notes as findings",
+  );
+
+  check(
+    "and in the table channel more as filings than as updates",
+    tableFilings > tableUpdates,
+    `table rows: ${tableFilings} filings / ${tableUpdates} updates — new items ` +
+      "arrive as rows of a filing table; a reader that thought otherwise " +
+      "would be counting findings as progress notes",
   );
 
   if (!fs.existsSync(realRegister)) {

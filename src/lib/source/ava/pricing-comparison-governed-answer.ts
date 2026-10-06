@@ -8,6 +8,7 @@ import {
   avaCitationsFromGovernedCandidates,
   governedClientKeyForSourceClientKey,
 } from "@/lib/source/ava/vendor-coverage-governed-answer";
+import { vendorResponseGovernedFields } from "@/lib/source/ava/governed-answer-confidence";
 import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import type {
   NormalizedRequirementResponse,
@@ -54,21 +55,12 @@ function pricingReferenceCount(
   ).size;
 }
 
-function governedCandidateFromPackage(
+export function governedCandidateFromPackage(
   responsePackage: NormalizedVendorResponsePackage,
   scope: { clientKey: string; tenantId: string | null },
 ): GovernedCandidate {
   return {
-    id: responsePackage.artifactId,
-    client_key: scope.clientKey,
-    tenant_id: scope.tenantId,
-    source_layer: "vendor",
-    source_basis: responsePackage.originalName,
-    classification: "confidential",
-    retrievability: "not_indexed",
-    agent_readiness_status: "not_reviewed",
-    confidence_level: "high",
-    cited_render_verified_at: null,
+    ...vendorResponseGovernedFields(responsePackage, scope),
     title: `${responsePackage.vendorName} pricing response`,
     citations: [
       `${responsePackage.originalName} contains ${pricingRows(responsePackage).length} normalized commercial or pricing rows and ${pricingReferenceCount(responsePackage)} cited pricing references.`,

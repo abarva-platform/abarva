@@ -207,33 +207,39 @@ describe("MOVES_CHARTER structure (phase discipline)", () => {
     expect(structure).toBeTruthy();
     expect(structure.sections.map((s) => s.key)).not.toContain("current_state");
     expect(structure.requiredSectionKeys).not.toContain("current_state");
-    // decision/commitment sections are present (redesigned 2026-07-25 — see
+    // decision/commitment sections are present (compressed 2026-09-25 — see
     // src/lib/deliverables/shared/artifact-contracts.ts's CHARTER_CONTRACT)
     for (const k of [
       "sponsorship_governance",
       "success_measures",
       "known_constraints_dependencies",
-      "discovery_preparation",
+      "authorization_conditions",
     ]) {
       expect(structure.sections.map((s) => s.key)).toContain(k);
     }
     expect(structure.fixedStructure).toBe(true);
-    expect(structure.sections).toHaveLength(9);
+    expect(structure.sections).toHaveLength(7);
+    expect(structure.sections.map((s) => s.key)).not.toEqual(
+      expect.arrayContaining(["intended_outcomes", "authorization_next_steps"]),
+    );
     expect((structure.forbiddenSectionTopics ?? []).join(" ")).toMatch(
       /target state/i,
     );
   });
 
-  it("gives Discovery Preparation its own first-class section instead of folding it into a generic recommendation", () => {
+  it("keeps the Charter separate from the Discovery Workshop Guide", () => {
     const structure = getDeliverableStructure("moves", "charter")!;
-    const dp = structure.sections.find(
-      (s) => s.key === "discovery_preparation",
+    expect(structure.sections.map((s) => s.key)).not.toContain(
+      "discovery_preparation",
+    );
+    const conditions = structure.sections.find(
+      (s) => s.key === "authorization_conditions",
     )!;
-    expect(dp).toBeTruthy();
-    expect(structure.requiredSectionKeys).toContain("discovery_preparation");
-    expect(dp.intent).toMatch(/Discovery Guidebook/i);
-    expect(dp.intent).toMatch(/Business Process/i);
-    expect(dp.intent).toMatch(/typical Discovery activities/i);
+    expect(conditions).toBeTruthy();
+    expect(structure.requiredSectionKeys).toContain("authorization_conditions");
+    expect(conditions.intent).toMatch(/separate Discovery Workshop Guide/i);
+    expect(conditions.intent).toMatch(/Do not include workshop agendas/i);
+    expect(conditions.intent).not.toMatch(/typical Discovery activities/i);
 
     const success = structure.sections.find(
       (s) => s.key === "success_measures",

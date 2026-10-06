@@ -141,13 +141,13 @@ blocked on demo day.
 | **Purpose**         | AI Control Tower — Atlas's portfolio-level view showing adoption, value, risk, cost-consumption, and DORA dimensions across all active programs. |
 | **Primary Agent**   | Atlas |
 | **Validation Status** | ready |
-| **Expected Component** | `src/components/tower/ProgramPressureCards.tsx` |
-| **Readiness Caveat** | None — Tower renders with the full deterministic read model including proactive pressure-card surfacing from the Atlas FM-10 slice. |
+| **Expected Component** | `src/components/tower/command-center/TowerCommandCenterAvaShell.tsx` |
+| **Readiness Caveat** | The Command Center shell is what this route mounts; the legacy pressure-card component is not part of it, and authenticated current-data acceptance remains a separate gate. |
 | **Fallback If Blocked** | Describe the five Tower dimensions (portfolio inventory, adoption, value, risk, DORA) using the ACT slice documentation in docs/build/slices/. |
 
 **Talking Point**
 
-> This is Atlas's command center. In a single glance the CTO or COO can see where AI investment is generating value, where adoption is lagging, and which programs are carrying the most technical risk. Pressure cards surface the most urgent signals automatically.
+> This is Atlas's command center. In a single glance the CTO or COO can see where AI investment is generating value, where adoption is lagging, and which programs carry the most important evidence gaps.
 
 ---
 

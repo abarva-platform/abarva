@@ -46,6 +46,7 @@ export function ResponsesStageView({
   artifacts = [],
   responseProposalAvailabilityState = null,
   onResponseUploaded,
+  canViewFinancialValues = false,
 }: {
   readiness?: SourceVendorResponseCompleteness;
   profileSet?: VendorResponseProfileSet | null;
@@ -53,6 +54,14 @@ export function ResponsesStageView({
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
   parseReports?: VendorResponseParseReport[];
+  /**
+   * U-520 — pass-through for the one descendant that prints an exact magnitude,
+   * `VendorResponseDecisionProofPanel`. This view does not read it.
+   *
+   * Optional, defaulted `false` — fail-closed. The leaf takes it as required;
+   * see the canvas's copy of this note for why a pass-through does not.
+   */
+  canViewFinancialValues?: boolean;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   decisionBriefDocxHref?: string;
   decisionBriefPdfHref?: string;
@@ -173,7 +182,10 @@ export function ResponsesStageView({
             evaluationDecisionView={evaluationDecisionView}
             parseReports={parseReports}
           />
-          <VendorResponseDecisionProofPanel parseReports={parseReports} />
+          <VendorResponseDecisionProofPanel
+            parseReports={parseReports}
+            canViewFinancialValues={canViewFinancialValues}
+          />
           <VendorResponseProfilesPanel profileSet={profileSet} />
           <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
           <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />

@@ -309,3 +309,37 @@ describe('buildProgramSynthesisContext — cross-instance smoke', () => {
     expect(PROGRAM_LIFECYCLE_PATTERNS.some(p => p.patternId === instance.patternId)).toBe(true);
   });
 });
+
+// ─── gatesSummary.basis — which question the pair answers ─────────────────────
+
+describe('buildProgramSynthesisContext — gatesSummary.basis', () => {
+  /** An instance whose patternId resolves to no pattern takes the shape-only path. */
+  const shapeOnlyInstance: ProgramInstance = {
+    ...APX_CDP_2026_INSTANCE,
+    patternId: 'PAT-PRG-DOES-NOT-EXIST' as ProgramPatternId,
+  };
+
+  it('stamps "criteria" when the gate evaluator ran', () => {
+    const ctx = buildProgramSynthesisContext(APX_CDP_2026_INSTANCE);
+    expect(ctx.gatesSummary.basis).toBe('criteria');
+  });
+
+  it('stamps "gate-standing" on the shape-only fallback', () => {
+    // No typed pattern -> no criteria to count. Without the stamp, `total: 1`
+    // with `met: 0` is indistinguishable from one criterion assessed and failed.
+    const ctx = buildProgramSynthesisContext(shapeOnlyInstance);
+    expect(ctx.gatesSummary.basis).toBe('gate-standing');
+    expect(ctx.gatesSummary.total).toBe(1);
+  });
+
+  it('leaves the shape-only counts untouched', () => {
+    // Readers asking "can this advance?" still get the gate's standing; only
+    // the basis was added, so this pins that the fix did not restate a count.
+    const ctx = buildProgramSynthesisContext(shapeOnlyInstance);
+    const approved = shapeOnlyInstance.phases.find(
+      (p) => p.phaseId === shapeOnlyInstance.currentPhase,
+    )?.gateStatus === 'approved';
+    expect(ctx.gatesSummary.met).toBe(approved ? 1 : 0);
+    expect(ctx.gatesSummary.unmet).toBe(approved ? 0 : 1);
+  });
+});

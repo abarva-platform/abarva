@@ -78,7 +78,6 @@ function normalizeAtlasVisibleText(text: string): string {
       /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi,
       'the referenced portfolio signal',
     )
-    .replace(/\bAtlas\b/g, 'aVa')
     .replace(/\bindustry standard\b/gi, 'market benchmark')
     .replace(/\bbest practice\b/gi, 'strong operating pattern')
     .replace(/\beveryone is doing\b/gi, 'market adoption is moving toward')

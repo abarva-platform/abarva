@@ -11,7 +11,7 @@ function readRepoFile(relativePath: string): string {
 const synthesizer = readRepoFile('src/lib/intelligence/ask/synthesizer.ts');
 const chatAgentRoute = readRepoFile('src/app/api/chat/agent/route.ts');
 const intelligenceAskRoute = readRepoFile('src/app/api/intelligence/ask/route.ts');
-const sentinelStateMachine = readRepoFile('src/lib/agents/sentinel-reasoning/state-machine.ts');
+const sentinelStateMachine = readRepoFile('src/lib/agent/sentinel-reasoning/state-machine.ts');
 
 assert.equal(
   synthesizer.includes('If TENANT or GRAPH sources say the active tenant is Apex Retail'),

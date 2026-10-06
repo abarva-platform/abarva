@@ -20,7 +20,17 @@ import { fileURLToPath } from "node:url";
 import { formatQueueProvenance, queueProvenanceStamp } from "./queue-provenance.mjs";
 import { isDirectInvocation } from "./cli-entry.mjs";
 import { branchesInClaim } from "./fossil-claims.mjs";
-import { announcesAbstention } from "./register-time-authority.mjs";
+import {
+  absentNamedPaths,
+  describePreconditionGap,
+  findRepoRoot,
+} from "./claimable-preconditions.mjs";
+import {
+  announcesAbstention,
+  parseRegisterLines,
+  heldPaths,
+  CLAIM_WINDOW_HOURS,
+} from "./register-time-authority.mjs";
 
 /**
  * Everything below is the CLI, and until item T-728 it ran on `import` (item
@@ -802,6 +812,31 @@ const CLAIMABLE_STAGES = [
   { label: "already has proof (not at rung 0)", keep: (i) => i.rung === 0 },
   // Closed is rung 0 because it proves nothing, but it is not work.
   { label: "closed", keep: (i) => i.rungLabel !== "Closed" },
+  /*
+   * ITEM C-584. An id with more than one substantive definition, one of which
+   * says it is withdrawn or closed.
+   *
+   * The row above cannot catch this, because the rung is derived for the id
+   * and a withdrawal written in one of two competing definitions does not
+   * close the other. `C-634` was the live instance: rung 0, `Open`, flagged
+   * `AMBIGUOUS` by this generator's own row renderer, and OFFERED in the Lane
+   * C table at 2026-10-04T00:05Z and again at 00:57Z. One of its two
+   * definitions reads `WITHDRAWN — false positive` and records the
+   * measurement that withdrew it.
+   *
+   * So the ambiguity warning was present, correct, and not enough. This file
+   * tells an agent "Do not ask which item is next — this file answers that",
+   * and an agent that does as it is told is sent at closed work. A warning the
+   * reader must override is not a control.
+   *
+   * It is NOT a blanket suppression of ambiguous ids: two live definitions of
+   * one number are a real, takeable choice and stay offered. The suite holds
+   * both halves, and the second is what stops this becoming one.
+   */
+  {
+    label: "a definition of it is withdrawn or closed, so which one a claim would take is undecidable",
+    keep: (i) => !(i.ambiguous && (i.retiredDefinitions ?? []).length > 0),
+  },
   { label: "blocked on Anand", keep: (i) => !userBlockerText(i) },
   // An entry with no acceptance criterion states no demonstrable outcome, so
   // there is nothing for an agent to finish or for anyone to check. Item 49 was
@@ -953,6 +988,33 @@ const DUPLICATE_LABEL =
   "placed in more than one stage or track, so it reaches the filter below as more than one row";
 
 /**
+ * Unplaceable is not the same question as removed — item C-515.
+ *
+ * `unmapped` answers "is this id on the structure map". This census spent it
+ * as "was this id removed before the pool existed". Those were one question
+ * only while the board dropped every unmapped id, and it no longer does: it
+ * builds them onto an unplaced track so filed work is not hidden behind a
+ * pull request. The same id was then counted once inside `distinctPlaced` and
+ * once again in the drop row, and the census opened at 525 against 513
+ * scanned on the live corpus — its own reconciliation called the
+ * disagreement rather than closing over it, which is the only reason this was
+ * a visible defect and not a silent one.
+ *
+ * Split by INTERSECTION WITH THE POOL THIS SUMMARY CARRIES, never by asking
+ * which generator wrote it. A summary from a board that still drops unmapped
+ * ids has an empty `unplacedOffered`, and every number below returns to
+ * exactly what item T-745 asserted. That is the compatibility property, and
+ * it is a case in the suite rather than a claim here.
+ */
+const pooledIds = new Set([...placementCounts.keys()]);
+const unplacedOffered = unplaceable === null
+  ? null
+  : unplaceable.filter((id) => pooledIds.has(normalizeItemId(id)));
+const unplacedDropped = unplaceable === null
+  ? null
+  : unplaceable.filter((id) => !pooledIds.has(normalizeItemId(id)));
+
+/**
  * The board's own scan of ids in item position — the number this census is
  * reconciled AGAINST rather than derived from.
  *
@@ -965,9 +1027,9 @@ const DUPLICATE_LABEL =
 const scanned = Array.isArray(s.itemPositionIds) ? s.itemPositionIds.map(String) : null;
 
 /** distinct ids + the two dropped buckets — what the census claims to cover. */
-const derivedTotal = unplaceable === null || unparsed === null
+const derivedTotal = unplacedDropped === null || unparsed === null
   ? null
-  : distinctPlaced + unplaceable.length + unparsed.length;
+  : distinctPlaced + unplacedDropped.length + unparsed.length;
 
 /**
  * Reconcile in BOTH directions, never by count alone.
@@ -985,7 +1047,7 @@ function reconcileCensus() {
   }
   const derivedSet = new Map();
   for (const id of placementCounts.keys()) derivedSet.set(id, "placed on the structure map");
-  for (const id of unplaceable) derivedSet.set(normalizeItemId(id), "dropped as not on the structure map");
+  for (const id of unplacedDropped) derivedSet.set(normalizeItemId(id), "dropped as not on the structure map");
   for (const id of unparsed) derivedSet.set(normalizeItemId(id), "dropped as unparsed");
   const scannedSet = new Set(scanned.map((id) => normalizeItemId(id)));
   const onlyDerived = [...derivedSet.keys()].filter((id) => !scannedSet.has(id)).sort(compareItemIds);
@@ -1034,14 +1096,18 @@ function renderClaimableFunnel() {
   // is where the census hands over to a filter that counts placements (item
   // T-753). `distinctPlaced`, not `all.length`, is therefore what the drop
   // rows close onto.
-  const unplaceableRow = unplaceable === null
+  // Item C-515: what this row removes is the unplaceable ids the pool does NOT
+  // carry. An id the board offers from the unplaced track is still unmapped
+  // and is still named below — it is simply not a removal, and counting it as
+  // one is how the census came to double-count it.
+  const unplaceableRow = unplacedDropped === null
     ? `| ${UNPLACEABLE_LABEL} | not recorded | not recorded |`
-    : `| ${UNPLACEABLE_LABEL} | ${unplaceable.length} | ${distinctPlaced} |`;
+    : `| ${UNPLACEABLE_LABEL} | ${unplacedDropped.length} | ${distinctPlaced} |`;
 
   // Rendered above the unplaceable row because it happens first: an id the
   // reader never produced cannot then be placed or not placed. At zero it
   // still renders, for the reason the comment above the unplaceable row gives.
-  const afterUnparsed = unplaceable === null ? null : distinctPlaced + unplaceable.length;
+  const afterUnparsed = unplacedDropped === null ? null : distinctPlaced + unplacedDropped.length;
   const unparsedRow = unparsed === null
     ? `| ${UNPARSED_LABEL} | not recorded | not recorded |`
     : `| ${UNPARSED_LABEL} | ${unparsed.length} | ${afterUnparsed === null ? "not recorded" : afterUnparsed} |`;
@@ -1065,7 +1131,7 @@ function renderClaimableFunnel() {
   const opening = unplaceable === null
     ? `${all.length} items reach the filter. The board that wrote this summary recorded no count of ids it could not place, so the population this table starts from is **not recorded** and the census below cannot claim to be complete.`
     : truePopulation === null
-      ? `${distinctPlaced + unplaceable.length} items reach the filter. The board recorded no count of ids it could not PARSE, so the population above that number is **not recorded** and this census cannot claim to be complete.`
+      ? `${distinctPlaced + unplacedDropped.length} items reach the filter. The board recorded no count of ids it could not PARSE, so the population above that number is **not recorded** and this census cannot claim to be complete.`
       : scanned === null
         ? `${truePopulation} ids are accounted for by this census — placed, unplaceable, or unparsed — and each row says what the next rule removed. The population is derived here rather than scanned, for the reason directly below.`
         : `${truePopulation} ids sit in item position in the backlog; each row says what the next rule removed.`;
@@ -1076,11 +1142,49 @@ function renderClaimableFunnel() {
       ? "No id was dropped before the reader: every id in item position in the backlog parsed into an item."
       : `**${unparsed.length} id${unparsed.length === 1 ? " is" : "s are"} in item position in the backlog and were never parsed into an item at all:** ${unparsed.map((id) => `\`${id}\``).join(" ")}. They are in no bucket of this file, claimable or blocked, and mapping them changes nothing — the board's reader has to learn the shape they are written in first.`;
 
-  const named = unplaceable === null
+  /*
+   * Two sentences, because there are now two states and they say opposite
+   * things to the reader — item C-515. An id the board DROPPED is offered to
+   * nobody and the reader must go and map it before it can be worked. An id
+   * the board OFFERS from the unplaced track is takeable right now, and the
+   * map entry is still owed. Rendering one sentence for both would either
+   * hide reachable work or tell the reader that reachable work is unreachable.
+   *
+   * Both are written on every run, including at zero, for the reason the
+   * unplaceable ROW's comment already gives.
+   */
+  const namedDropped = unplacedDropped === null
     ? "**Which ids those are is not recorded** by the board that wrote this summary, so this file cannot name them. Run the board and read its own output."
-    : unplaceable.length === 0
-      ? "No id was dropped before the table: every id in the backlog is placed on the structure map."
-      : `**${unplaceable.length} id${unplaceable.length === 1 ? " was" : "s were"} dropped before the table and ${unplaceable.length === 1 ? "is" : "are"} offered to nobody:** ${unplaceable.map((id) => `\`${id}\``).join(" ")}. They are in the backlog and in no entry of \`scripts/exec/source-stage-map.json\`, which is repo-owned — mapping a copy in the operator root changes nothing. Until one is placed it cannot appear in any bucket of this file, claimable or blocked.`;
+    : unplacedDropped.length === 0
+      ? "No id was dropped before the table: every id in the backlog reached the pool this census counts."
+      : `**${unplacedDropped.length} id${unplacedDropped.length === 1 ? " was" : "s were"} dropped before the table and ${unplacedDropped.length === 1 ? "is" : "are"} offered to nobody:** ${unplacedDropped.map((id) => `\`${id}\``).join(" ")}. They are in the backlog and in no entry of \`scripts/exec/source-stage-map.json\`, which is repo-owned — mapping a copy in the operator root changes nothing. Until one is placed it cannot appear in any bucket of this file, claimable or blocked.`;
+
+  const namedOffered = unplacedOffered === null || unplacedOffered.length === 0
+    ? "No id is being offered from the unplaced track: every id this file offers is placed on the structure map."
+    : `**${unplacedOffered.length} id${unplacedOffered.length === 1 ? " is" : "s are"} not on the structure map and ${unplacedOffered.length === 1 ? "is" : "are"} offered anyway, from the board's unplaced track:** ${unplacedOffered.map((id) => `\`${id}\``).join(" ")}. They are filed in the backlog and in no entry of \`scripts/exec/source-stage-map.json\`, which is repo-owned. They appear in the buckets below on the same terms as every other row, so the work is takeable now — **and the map entry is still owed**: the board exits non-zero while any of them is unplaced, and placing them on the stage or track they belong to is a pull request someone still has to open.`;
+
+  /*
+   * ITEM C-584. Name the ids the withdrawn-definition rule removed.
+   *
+   * The funnel row above gives the COUNT, and a count is enough for the
+   * arithmetic to close and not enough for the reader: the whole defect was an
+   * agent being sent at `C-634` without being told the id was contested. An id
+   * suppressed here is still filed, and whoever maintains the backlog has to
+   * settle it — pin the live definition with `definedIn`, or record the
+   * withdrawal on the id itself — so it is named rather than quietly dropped.
+   *
+   * Written on every run including at zero, the rule item T-746 set: a line
+   * that appears only when the count is non-zero cannot be distinguished from
+   * a generator that stopped emitting it.
+   */
+  const withdrawnSuppressed = claimableFunnel
+    .find((f) => f.label.startsWith("a definition of it is withdrawn"))
+    ?.removed ?? [];
+  const namedWithdrawn = withdrawnSuppressed.length === 0
+    ? "No id was suppressed for a withdrawn definition: every ambiguous id this file offers has two live definitions, and choosing between them is the claimant's call."
+    : `**${withdrawnSuppressed.length} id${withdrawnSuppressed.length === 1 ? " was" : "s were"} suppressed because one of ${withdrawnSuppressed.length === 1 ? "its" : "their"} competing definitions is withdrawn or closed:** ${withdrawnSuppressed.map((i) => `\`${displayId(i.num)}\` (${(i.retiredDefinitions ?? []).map((sec) => `"${String(sec).slice(0, 60)}"`).join(", ")})`).join("; ")}. The id is still filed and the collision is still unsettled — pin the live definition with \`definedIn\` on the structure map, or record the withdrawal against the number itself. Until then no agent is offered the row, because which of the two definitions a claim would take is undecidable.`;
+
+  const named = `${namedDropped}\n\n${namedOffered}\n\n${namedWithdrawn}`;
 
   return `## Why that number
 
@@ -1090,7 +1194,7 @@ ${censusReconciliation.say}
 
 | removed because it is | removed | left |
 |---|---|---|
-| — | — | ${truePopulation ?? (unplaceable === null ? all.length : distinctPlaced + unplaceable.length)} |
+| — | — | ${truePopulation ?? (unplacedDropped === null ? all.length : distinctPlaced + unplacedDropped.length)} |
 ${unparsedRow}
 ${unplaceableRow}
 ${duplicateRow}
@@ -1129,6 +1233,247 @@ for (const i of claimable) {
  */
 const isFinished = (i) => i.rung === 7 || i.rungLabel === "Closed";
 
+/* ------------------------------------------------------------------------ *
+ * RESIDUAL WORK A PROOF RUNG CANNOT CLOSE — item C-549 half (1).
+ *
+ * The first claimable stage is `rung === 0`, so an item leaves every claimable
+ * bucket the moment its FIRST slice merges. For most items that is right: the
+ * rung is the item's proof. For an item whose acceptance is explicitly
+ * per-unit — "one row at a time", "per row, never as a count" — it is not. The
+ * rung then describes the slice that shipped and says nothing about the rest of
+ * the row set, and with no owner blocker the item is not in *Blocked on Anand*
+ * either. It is in NO bucket of this file, and its remainder goes dark.
+ *
+ * That has now happened three times in three days, each time repaired by hand:
+ * `C-544` closed 3 of 13 rows and reached rung 5; `C-547` was filed to carry
+ * the residual, closed 2 of 10 and reached rung 6; `C-549` was filed to carry
+ * that one. Each slice had to hand-file a successor id or the remainder would
+ * have been invisible to every later run — and a mechanism that depends on an
+ * agent remembering to file its own successor is not a mechanism.
+ *
+ * This does not make such an item claimable. It is above rung 0 and its
+ * shipped slice is real, so offering it in a lane would invite a second agent
+ * to redo the slice. It is emitted as its own bucket, named in the numbered
+ * instructions above, saying what the rung can and cannot evidence.
+ *
+ * THE PHRASE LIST IS MEASURED, NOT GUESSED. On the live summary at `813537a0f`
+ * (617 items, 451 at rung 1-6 and not closed) it selects 9, of which 3 carry no
+ * blocker: `T-062`, `D-030` and `C-547`. The first draft of the list MISSED
+ * `C-547` — the real known positive this row was filed for — because C-547
+ * writes "one surface at a time" where its predecessor wrote "one row at a
+ * time". A narrower draft that matched only literal rows would have shipped
+ * green and blind. Widening it with per-DIRECTION proof language ("prove each
+ * in both directions") was measured and rejected: it takes the set from 9 to
+ * 21, which is proof obligation rather than per-unit settlement.
+ * ------------------------------------------------------------------------ */
+const PER_UNIT_PHRASES = [
+  /\bper row\b/i,
+  /\beach row\b/i,
+  /\bone [a-z]+ at a time\b/i,
+  /\bnever as a count\b/i,
+  /\b(?:rather than|not) in aggregate\b/i,
+  /\bsettle each\b/i,
+  /\bper record rather than\b/i,
+  /\bwhich [a-z]+ you took\b/i,
+];
+
+/** The phrase that selected an item, so the bucket can show its own reason. */
+function perUnitPhrase(item) {
+  const acceptance = item.acceptance ?? "";
+  for (const re of PER_UNIT_PHRASES) {
+    const m = acceptance.match(re);
+    if (m) return m[0];
+  }
+  return "";
+}
+
+const residualAtRung = all
+  .filter((i) => !isFinished(i) && i.rung > 0 && Boolean(perUnitPhrase(i)))
+  .sort((a, b) => compareItemIds(normalizeItemId(a.num), normalizeItemId(b.num)));
+
+/**
+ * Render the bucket on EVERY run, including at zero.
+ *
+ * A section that appears only when it has rows is exercised only when it has
+ * rows, and this directory has already paid twice for branches nothing ever
+ * ran. At zero it says so in words, which is also the only way a reader can
+ * tell "nothing is residual" from "this generator no longer looks".
+ */
+function renderResidualAtRung() {
+  const n = residualAtRung.length;
+  const head = `## Residual work a proof rung cannot close — read this before you stop
+
+**${n} item${n === 1 ? "" : "s"}** reached a proof rung while carrying a per-unit
+acceptance, so the rung describes the slice that shipped and cannot evidence
+that the row set is closed.`;
+
+  if (!n) {
+    return `${head}
+
+_None right now. Every item at a proof rung states an acceptance the rung can
+answer for. This section is rendered at zero on purpose: an empty bucket and a
+generator that stopped looking are not the same thing._
+`;
+  }
+
+  const free = residualAtRung.filter((i) => !userBlockerText(i));
+  const gated = residualAtRung.filter((i) => userBlockerText(i));
+  const rows = residualAtRung
+    .map((i) => `| ${formatItemId(i.num)} | ${i.rung} ${i.rungLabel ?? ""} | ${i.lane ?? "?"} | ${userBlockerText(i) || "—"} | \`${perUnitPhrase(i)}\` | ${(i.title || "").replace(/\|/g, "\\|").slice(0, 110)} |`)
+    .join("\n");
+
+  return `${head}
+
+**These are NOT claimable and must not be re-taken as a whole.** The shipped
+slice is real; taking the item again invites a second agent to redo it. Read the
+item, settle what its own text says is still open, and either close it or file
+the successor id — which is the step that has been missed three times.
+
+| # | Rung | Lane | Owner blocker | Selected by | Item |
+|---|---|---|---|---|---|
+${rows}
+
+${free.length
+  ? `**${free.length} of ${n} carr${free.length === 1 ? "ies" : "y"} no owner blocker**, so ${free.length === 1 ? "it appears" : "they appear"} in no other bucket of this file at all: ${free.map((i) => formatItemId(i.num)).join(" ")}. That is the state this section exists for.`
+  : "**All of them carry an owner blocker**, so each is also counted under *Blocked on Anand*."}${gated.length
+  ? `\n\n**${gated.length} carr${gated.length === 1 ? "ies" : "y"} an owner blocker** — ${gated.map((i) => formatItemId(i.num)).join(" ")} — so the residual is open but the item is owner-gated. Surface it; do not claim it.`
+  : ""}
+`;
+}
+
+/**
+ * Items carrying a gate declared over ONE HALF of themselves — item C-552.
+ *
+ * These are claimable and they are NOT counted in *Blocked on Anand*, which is
+ * the point: before this, one true sentence about the gated half removed the
+ * item from every lane table and its executable half stopped being work. The
+ * risk now runs the other way, so this section carries the half nobody may
+ * take beside the work somebody should.
+ *
+ * Rendered on EVERY run, including at zero. A block that appears only in the
+ * interesting case is exercised only in the interesting case, and this
+ * directory exists because a control nobody ran looked exactly like one that
+ * did.
+ */
+const partlyGated = all.filter((i) => !isFinished(i) && i.partialGate);
+
+/**
+ * Which claimable rule, if any, withholds a partly-gated row from the lane
+ * tables — standing item 26.
+ *
+ * This section used to say, of every row it printed, that the claimable half
+ * "is offered in the lane tables above". MEASURED on the live documents at
+ * 2026-10-05T03:58Z: **0 of its 6 rows appeared in any lane table.** Four were
+ * already delivered — two print `DELIVERED ... NOT to be re-taken` inside the
+ * offered cell itself — one was closed on `main`, and the single live row was
+ * blocked on another item.
+ *
+ * The filter above is the whole mechanism, and it is why the same observation
+ * was recorded three times without being repaired. It tests `isFinished` and
+ * `partialGate` and nothing else, so the section bypasses `CLAIMABLE_STAGES`
+ * entirely — and the very first of those stages, `already has proof (not at
+ * rung 0)`, is what correctly keeps a shipped item out of the lane tables. For
+ * any item carrying proof the referral could therefore never be true. That is
+ * not a wording defect: it is a sentence with no state of the world that
+ * falsifies it, printed over the one table in this file an agent is told to
+ * act on.
+ *
+ * So the referral is DERIVED per row, from `CLAIMABLE_STAGES` itself. Not from
+ * a second copy of its rules and not from membership in `claimable`: the list
+ * is declared once because "a report re-deriving the rules a second time can
+ * disagree with the filter it claims to describe", and a row withheld here is
+ * shown under the stage's own label so a generator that starts disagreeing
+ * with its own filter cannot stay green.
+ *
+ * `find` returns the FIRST rejecting stage, which is the funnel's own removal
+ * point, since the funnel applies the stages in this order. Returning `null`
+ * is exactly membership in `claimable` — every stage keeps — so there is no
+ * third outcome to defend and no unreachable branch here to pretend to test.
+ */
+function withholdingStage(item) {
+  return CLAIMABLE_STAGES.find((stage) => !stage.keep(item))?.label ?? null;
+}
+
+const partlyGatedOffered = partlyGated.filter((i) => withholdingStage(i) === null);
+const partlyGatedWithheld = partlyGated.filter((i) => withholdingStage(i) !== null);
+
+function renderPartlyGated() {
+  const n = partlyGated.length;
+  const offered = partlyGatedOffered.length;
+  const withheld = partlyGatedWithheld.length;
+  const head = "## Partly gated — claimable, with a half you must not take";
+
+  if (!n) {
+    return `${head}
+
+**0 items** carry a gate declared over part of themselves. An item stating a
+gate with no declared scope is gated whole and is in *Blocked on Anand*; this
+section renders at zero on purpose, so an empty bucket and a generator that
+stopped looking are not the same thing.
+`;
+  }
+
+  const renderRows = (items, withReason) => items
+    .map((i) => {
+      const cells = [
+        formatItemId(i.num),
+        i.lane ?? "?",
+        String(i.partialGate.say),
+        String(i.partialGate.gated).replace(/\|/g, "\\|").slice(0, 160),
+        String(i.partialGate.open).replace(/\|/g, "\\|").slice(0, 160),
+      ];
+      // The stage's own words, never a paraphrase — see `withholdingStage`.
+      if (withReason) cells.splice(2, 0, String(withholdingStage(i)));
+      return `| ${cells.join(" | ")} |`;
+    })
+    .join("\n");
+
+  const offeredTable = offered
+    ? `**${offered} of ${n} ${offered === 1 ? "is" : "are"} offered in the lane tables above**, and for ${offered === 1 ? "that row" : "those rows"} the
+other half is ordinary executable work. Take the claimable half; do not attempt
+the gated one, and do not read its appearance here as permission.
+
+| # | Lane | Gate | The half that is GATED | The half that is CLAIMABLE |
+|---|---|---|---|---|
+${renderRows(partlyGatedOffered, false)}
+`
+    : `**0 of ${n} ${n === 1 ? "is" : "are"} offered in the lane tables above.** Every row below was
+removed from the claimable filter by a rule this file already applies, so there
+is no takeable half here at all. That is a real state and it is reported rather
+than implied: it was the live state of this section on 2026-10-05, when all six
+of its rows were withheld and the text still told an agent to take one.
+`;
+
+  const withheldTable = withheld
+    ? `\n**${withheld} of ${n} ${withheld === 1 ? "is" : "are"} withheld** — the claimable filter removes ${withheld === 1 ? "it" : "them"} from
+every lane table, so the half named below is NOT on offer and taking it means
+redoing finished or blocked work. The rule that removed each row is its own, as
+\`CLAIMABLE_STAGES\` words it, and the commonest is \`already has proof (not at
+rung 0)\`: an item whose claimable half already shipped stays here because its
+GATED half is still open, which is correct, and says nothing about the other.
+
+| # | Lane | Why it is NOT offered | Gate | The half that is GATED | The half that was CLAIMABLE |
+|---|---|---|---|---|---|
+${renderRows(partlyGatedWithheld, true)}
+`
+    : `\n**0 of ${n} ${n === 1 ? "is" : "are"} withheld**, so the referral above holds for every row. This
+line renders at zero for the same reason the section does: an empty bucket and a
+generator that stopped checking must not read the same.
+`;
+
+  return `${head}
+
+**${n} item${n === 1 ? "" : "s"}** carr${n === 1 ? "ies" : "y"} a gate that its own row, or a
+register line, declares over a NAMED half.
+
+${offeredTable}${withheldTable}
+A gate with no declared scope still covers the whole item and stays in *Blocked
+on Anand*, unchanged. The declaration is \`**Gate scope — partial.** Gated half:
+<text>. Claimable half: <text>.\`, both halves are required, and a declaration
+naming only one of them frees nothing.
+`;
+}
+
 const blockedOnUser = all.filter(
   (i) => !isFinished(i) && Boolean(userBlockerText(i)),
 );
@@ -1139,6 +1484,65 @@ const blockedCounts = blockedOnUser.reduce((a, i) => {
   a[label] = (a[label] ?? 0) + 1;
   return a;
 }, {});
+
+/*
+ * Is each claimable row BUILDABLE, as distinct from claimable?
+ *
+ * Claimability is decided from the backlog's text and the register. Neither
+ * can see the tree, so a row that describes a file it says already exists is
+ * offered as ordinary work when that file is absent — and the cost lands on
+ * whoever takes it. Measured on two consecutive runs against one row: each
+ * read it, re-derived the absence by hand, recorded it in prose this generator
+ * does not read, and the row was offered again unchanged.
+ *
+ * The scan is resolved against the REPO root, found by walking up from this
+ * script, not against OPERATOR_ROOT — the operator root holds the backlog, and
+ * the paths a row names are repository paths.
+ *
+ * It annotates and never filters. See `claimable-preconditions.mjs` for why:
+ * prose names deliverables as well as preconditions, and suppressing a row on
+ * this signal would hide work that is perfectly takeable.
+ */
+const REPO_ROOT = findRepoRoot(SCRIPT_ROOT);
+const preconditionGaps = new Map(
+  claimable
+    .map((i) => [i.num, absentNamedPaths(`${i.title ?? ""} ${i.acceptance ?? ""}`, REPO_ROOT)])
+    .filter(([, absent]) => absent.length),
+);
+
+/*
+ * Say when the scan DID NOT RUN, rather than letting silence read as "clean".
+ *
+ * With no repo root there is no tree to check against, so every path would
+ * look absent and the honest answer is to report nothing — which is
+ * indistinguishable from a clean scan unless this says so. That ambiguity is
+ * the defect class this backlog exists for: one CI gate proved a control
+ * existed by finding its name in a file.
+ */
+function preconditionCaution() {
+  if (!claimable.length) return "";
+  if (REPO_ROOT === null) {
+    return (
+      "**The precondition scan did not run.** No `.git` was found above " +
+      `\`${SCRIPT_ROOT}\`, so the repository tree the rows' paths resolve against ` +
+      "could not be located. Read the absence of a `⚠ PRECONDITION` marker below as " +
+      "**unmeasured**, not as clean, and run the generator from a checkout."
+    );
+  }
+  if (!preconditionGaps.size) return "";
+  const ids = [...preconditionGaps.keys()].sort();
+  const n = [...preconditionGaps.values()].reduce((t, v) => t + v.length, 0);
+  return (
+    `**Caution, not a filter:** ${preconditionGaps.size} of the ${claimable.length} claimable ` +
+    `row${claimable.length === 1 ? "" : "s"} name${preconditionGaps.size === 1 ? "s" : ""} ` +
+    `${n} repository path${n === 1 ? "" : "s"} that ${n === 1 ? "is" : "are"} not in the checkout ` +
+    `— ${ids.map((id) => `\`${id}\``).join(" ")}. Each is marked \`⚠ PRECONDITION\` in its lane ` +
+    "table with the path named. A row may name a path it asks you to CREATE, so this removes " +
+    "nothing and changes no count; establish which case you are in before you claim. If the row " +
+    "describes the file as already existing, the work is blocked until it lands, and taking the " +
+    "row means building a second copy or editing somebody else's branch."
+  );
+}
 
 function row(i) {
   // An ambiguous row used to say only that the number was ambiguous, which
@@ -1154,7 +1558,21 @@ function row(i) {
           .join(" and ")}. Cite the section in your claim line and verify you are reading the one you claimed.`
       : " ⚠ number is ambiguous — cite it with its section"
     : "";
-  return `| ${i.num} | ${i.track} | ${(i.title || "").replace(/\|/g, "\\|").slice(0, 150)} | ${(i.acceptance || "—").replace(/\|/g, "\\|").slice(0, 190)}${flag} |`;
+  // Item C-552. A gate declared over one half of an item leaves the other half
+  // claimable, so the row is offered again — and the gated half travels with
+  // it. The marker is the QUEUE's own words rather than the row's, because an
+  // agent reading this table must not have to go back to the backlog to find
+  // out what it may not touch.
+  const scoped = i.partialGate
+    ? ` ⚠ PARTLY GATED — ${String(i.partialGate.say)} covers only: ${String(i.partialGate.gated).replace(/\|/g, "\\|")}.`
+      + ` Claimable half: ${String(i.partialGate.open).replace(/\|/g, "\\|")}.`
+      + " Take that half only; the gated half needs Anand and is not yours to attempt."
+    : "";
+  // The precondition marker is LAST so it is the final thing read before the
+  // row is claimed, and it is the queue's own measurement rather than the
+  // row's words — the row cannot know whether the file it names is on disk.
+  const unbuilt = describePreconditionGap(preconditionGaps.get(i.num) ?? []);
+  return `| ${i.num} | ${i.track} | ${(i.title || "").replace(/\|/g, "\\|").slice(0, 150)} | ${(i.acceptance || "—").replace(/\|/g, "\\|").slice(0, 190)}${flag}${scoped}${unbuilt} |`;
 }
 
 const laneSection = (lane) => {
@@ -1208,6 +1626,133 @@ correction pattern is append-only.
 `;
 }
 
+/*
+ * The repo paths a live claim HOLDS, published so a reader can intersect
+ * before it spends anything (item C-566).
+ *
+ * The defect: this queue decided claimability from item-level claims only.
+ * The sanctioned claim path, `scripts/exec/append-claim.mjs`, refuses on a
+ * second condition entirely — a FILE already held by another live run — and
+ * this file said nothing about it. So a row could pass every test here and be
+ * refused at the moment of claiming. The refusal itself is cheap and names
+ * its holder; what it costs is its TIMING, because it arrives after the agent
+ * has chosen the row and re-verified it on `main`. Measured on the
+ * 2026-09-27T20:33Z queue, three rows were offered and none of them was
+ * reachable by a lane-T agent, for that reason or a standing rule.
+ *
+ * WHAT IS PUBLISHED, AND WHAT DELIBERATELY IS NOT. This generator cannot know
+ * which files an item needs — nothing in the backlog declares that, and
+ * guessing it would be an inference dressed as a filter. So it publishes the
+ * half that IS knowable, the holds, and leaves the intersection to the reader
+ * that knows its own file list.
+ *
+ * The holds come from `heldPaths` in `register-time-authority.mjs`, which is
+ * the same function `resolveFileOverlap` refuses from — not a local re-parse
+ * of `files:`. A second reader of one grammar is the defect T-717 and T-747
+ * both cost; here it would be worse than silence, because a table advertising
+ * a hold the gate does not enforce sends agents away from work that is theirs
+ * to take.
+ */
+const heldPathRows = (() => {
+  if (!fs.existsSync(CLAIMS)) return null;
+  const text = fs.readFileSync(CLAIMS, "utf8");
+  const start = text.indexOf("## Claim log");
+  const body = start < 0 ? text : text.slice(start);
+  return heldPaths(parseRegisterLines(body), { nowMs: Date.now() });
+})();
+
+/*
+ * Shared wiring, DECLARED rather than inferred.
+ *
+ * A held path becomes a caution for a whole lane only when it is one of the
+ * few files every item of a kind must edit. Today that is the CI workflow
+ * directory: an item whose acceptance is "wire this suite into CI" cannot be
+ * done without it, whichever suite it names. This list is a declaration, it
+ * is short on purpose, and its ONLY effect is the sentence below — it never
+ * removes a row, never changes a count, and never decides claimability.
+ */
+const SHARED_WIRING = [
+  { prefix: ".github/workflows/", lanes: ["T"], what: "CI wiring" },
+];
+
+function heldWiringCaution() {
+  if (!heldPathRows?.length) return "";
+  const cautions = [];
+  for (const scope of SHARED_WIRING) {
+    const hits = heldPathRows.filter((h) => h.path.startsWith(scope.prefix));
+    if (!hits.length) continue;
+    const rows = scope.lanes.reduce((n, l) => n + (byLane[l]?.length ?? 0), 0);
+    if (!rows) continue;
+    const holders = [...new Set(hits.map((h) => h.agent))].sort();
+    cautions.push(
+      `**Caution, not a filter:** ${rows} of the ${claimable.length} claimable row${claimable.length === 1 ? " is" : "s are"} ` +
+        `in lane${scope.lanes.length === 1 ? "" : "s"} ${scope.lanes.join(", ")}, and ${hits.length} ${scope.what} ` +
+        `path${hits.length === 1 ? " is" : "s are"} held right now by ${holders.join(", ")}. ` +
+        `A row whose change has to touch \`${scope.prefix}\` is **unworkable this hour** — it is not unclaimable, ` +
+        `and it stays in its lane table below. Read the holds, then pick a row that does not need one.`,
+    );
+  }
+  return cautions.join("\n\n");
+}
+
+function renderHeldPaths() {
+  const head = "## Paths held by a live claim";
+  const how =
+    "Derived by running the register through the same `claimedPaths` the claim gate refuses from\n" +
+    "(`heldPaths` in `scripts/exec/register-time-authority.mjs`), not by re-parsing `files:` here.\n" +
+    "A release, an abstention, a path a line attributes to somebody else, and a path outside the\n" +
+    `${CLAIM_WINDOW_HOURS}-hour window all hold nothing, and none of them appears above.\n\n` +
+    "A **scope** — a directory or a glob — is a note, not a lock: the gate warns on it and lets the\n" +
+    "claim through. A **file** is a lock and the gate refuses.\n";
+
+  if (heldPathRows === null) {
+    return (
+      `\n${head}\n\n**NOT MEASURED** — there is no claim register at \`${path.basename(CLAIMS)}\`,\n` +
+      "so this section is empty because nothing was read, which is not the same as nothing being\n" +
+      `held.\n\n${how}`
+    );
+  }
+
+  if (heldPathRows.length === 0) {
+    return (
+      `\n${head}\n\n**0 paths are held.** The register was read and no live claim holds a path, so no row\n` +
+      "below is blocked by the file half of the claim gate. This section is printed empty on\n" +
+      `purpose: "no holds" and "not measured" must not look alike.\n\n${how}`
+    );
+  }
+
+  const byPath = new Map();
+  for (const hold of heldPathRows) {
+    const key = `${hold.path} :: ${hold.agent}`;
+    const prior = byPath.get(key);
+    if (!prior || hold.stampMs > prior.stampMs) byPath.set(key, hold);
+  }
+  const rows = [...byPath.values()].sort(
+    (a, b) => a.path.localeCompare(b.path) || a.agent.localeCompare(b.agent),
+  );
+  const holders = new Set(rows.map((r) => r.agent)).size;
+  const stampOf = (ms) => `${new Date(ms).toISOString().slice(0, 16)}Z`;
+
+  return `
+${head}
+
+**${rows.length} path${rows.length === 1 ? " is" : "s are"} held** by ${holders} live claim holder${holders === 1 ? "" : "s"}. A claim naming any
+file below is refused by \`append-claim.mjs\` until its hold expires — so intersect your intended
+file list with this table **before** you pick a row, not after you have re-verified it on \`main\`.
+
+| Path | Kind | Held by | Claimed | Hold expires |
+|---|---|---|---|---|
+${rows
+  .map(
+    (r) =>
+      `| \`${r.path}\` | ${r.kind === "scope" ? "scope — a note, not a lock" : "file — a lock"} ` +
+      `| \`${r.agent}\` | ${r.stamp} | ${stampOf(r.expiresAtMs)} |`,
+  )
+  .join("\n")}
+
+${how}`;
+}
+
 const out = `# Execution queue — generated
 
 Generated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC from \`source-board-summary.json\`.
@@ -1234,7 +1779,12 @@ SOURCE_EXECUTION_HOME=~/Downloads node scripts/exec/build-execution-queue.mjs
 **${claimable.length} items are claimable right now with no input from Anand.**
 ${Object.entries(byLane).map(([l, v]) => `${l}:${v.length}`).join("  ")}
 
+${heldWiringCaution()}
+
+${preconditionCaution()}
+
 ${renderClaimableFunnel()}
+${renderHeldPaths()}
 
 ## How to take work without asking
 
@@ -1254,6 +1804,10 @@ ${renderClaimableFunnel()}
    the deploy proof. The board reads the backlog, so also record the outcome in
    \`EXECUTION_BACKLOG_20260918.md\`.
 6. Go to step 2. **Do not ask which item is next — this file answers that.**
+7. Before you stop, read **Residual work a proof rung cannot close**. An item
+   whose acceptance is per-unit leaves every claimable bucket as soon as its
+   first slice merges, so its remaining rows are in no lane above. Settle or
+   file them; do not read their absence from the lanes as completion.
 
 ### Filing a new item: take an id from your own band
 
@@ -1289,7 +1843,8 @@ An item that is finished is excluded from this bucket regardless of phrasing,
 because proof that already happened is not proof that is owed.
 
 ${["D", "C", "U", "T", "?"].filter((l) => byLane[l]?.length).map(laneSection).join("\n")}
-
+${renderResidualAtRung()}
+${renderPartlyGated()}
 ## Blocked on Anand — never claim these
 
 ${Object.entries(blockedCounts).map(([b, n]) => `- **${b}** — ${n} item${n === 1 ? "" : "s"}`).join("\n") || "- None"}
@@ -1306,7 +1861,15 @@ ${releasedClaims.length ? `\n**Explicitly released (${releasedClaims.length}):**
 ${renderOrderDisagreements()}`;
 
 fs.writeFileSync(OUT, out);
-console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable, ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${lapsedClaims.length} lapsed, ${releasedClaims.length} released.`);
+console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable (${partlyGated.length} partly gated, ${REPO_ROOT === null ? "precondition scan DID NOT RUN" : `${preconditionGaps.size} naming an absent path`}), ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${lapsedClaims.length} lapsed, ${releasedClaims.length} released.`);
+// Item C-549. On stdout as well as in the file: a run that is tailed rather
+// than read would otherwise never learn that work sits outside every lane.
+console.log(
+  `  residual at a proof rung: ${residualAtRung.length}` +
+    (residualAtRung.length
+      ? ` (${residualAtRung.filter((i) => !userBlockerText(i)).length} in no other bucket: ${residualAtRung.filter((i) => !userBlockerText(i)).map((i) => formatItemId(i.num)).join(" ")})`
+      : ""),
+);
 for (const [l, v] of Object.entries(byLane)) console.log(`  lane ${l}: ${v.length}`);
 for (const band of bands) {
   console.log(

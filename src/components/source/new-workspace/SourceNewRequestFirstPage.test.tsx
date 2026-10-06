@@ -1,6 +1,13 @@
 /** @jest-environment jsdom */
 
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { SourceNewRequestFirstPage } from "./SourceNewRequestFirstPage";
 
 jest.mock("@/components/shell/AppShell", () => ({
@@ -23,8 +30,22 @@ jest.mock("@/components/source/SourceSubNav", () => ({
 }));
 
 jest.mock("@/components/agent/AgentDock", () => ({
-  AgentDock: ({ workspace }: { workspace: React.ReactNode }) => (
-    <div>{workspace}</div>
+  AgentDock: ({
+    workspace,
+    defaultMode,
+    collapsedRestoreMode,
+  }: {
+    workspace: React.ReactNode;
+    defaultMode?: string;
+    collapsedRestoreMode?: string;
+  }) => (
+    <div
+      data-testid="source-request-dock"
+      data-default-mode={defaultMode}
+      data-restore-mode={collapsedRestoreMode}
+    >
+      {workspace}
+    </div>
   ),
 }));
 
@@ -34,6 +55,7 @@ const activeEventWorkspaces = [
     code: "SRC-001",
     name: "Application services event",
     lifecycle: "active",
+    currentStageKey: "strategy",
     currentStageLabel: "Strategy",
     lifecycleLabel: "Active event",
     trigger: "Review the application support model before renewal.",
@@ -43,6 +65,16 @@ const activeEventWorkspaces = [
     href: "/source/new/event-1",
   },
 ];
+
+const pendingEventWorkspace = {
+  ...activeEventWorkspaces[0],
+  id: "event-pending",
+  code: "SRC-PENDING",
+  name: "Infrastructure request awaiting approval",
+  lifecycle: "waiting_on_client",
+  lifecycleLabel: "Waiting on Client",
+  href: "/source/new/event-pending",
+};
 
 const importedRequest = {
   requestId: "servicenow:sn_sourcing_request:request-1",
@@ -70,6 +102,71 @@ const importedRequest = {
 };
 
 describe("SourceNewRequestFirstPage", () => {
+  it("gives the workspace the full mobile width and restores aVa below it", async () => {
+    const originalMatchMedia = window.matchMedia;
+    let compact = true;
+    let onChange: ((event: MediaQueryListEvent) => void) | undefined;
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: jest.fn().mockImplementation((query: string) => ({
+        matches: compact,
+        media: query,
+        addEventListener: (
+          _event: string,
+          listener: (event: MediaQueryListEvent) => void,
+        ) => {
+          onChange = listener;
+        },
+        removeEventListener: jest.fn(),
+      })),
+    });
+    try {
+      render(
+        <SourceNewRequestFirstPage
+          clientName="Example client"
+          clientKey="example-client"
+          requestQueueStatus="empty"
+          importedRequests={[]}
+          eventWorkspaces={[pendingEventWorkspace]}
+        />,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen
+            .getByTestId("source-request-dock")
+            .getAttribute("data-default-mode"),
+        ).toBe("collapsed"),
+      );
+      expect(
+        screen
+          .getByTestId("source-request-dock")
+          .getAttribute("data-restore-mode"),
+      ).toBe("pin-bottom");
+      expect(
+        screen
+          .getByRole("region", { name: "Request queue" })
+          .querySelector("li")
+          ?.getAttribute("style"),
+      ).toContain("repeat(auto-fit, minmax(min(100%, 260px), 1fr))");
+
+      compact = false;
+      act(() => onChange?.({ matches: compact } as MediaQueryListEvent));
+      await waitFor(() =>
+        expect(
+          screen
+            .getByTestId("source-request-dock")
+            .getAttribute("data-default-mode"),
+        ).toBe("side-rail"),
+      );
+    } finally {
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        value: originalMatchMedia,
+      });
+    }
+  });
+
   it("opens on a request queue instead of the legacy create form", () => {
     render(
       <SourceNewRequestFirstPage
@@ -92,9 +189,7 @@ describe("SourceNewRequestFirstPage", () => {
         .getByRole("link", { name: "Start a request" })
         .getAttribute("href"),
     ).toBe("/source/new?mode=intake");
-    expect(screen.getByText("One next action").nextSibling?.textContent).toBe(
-      "Start a request",
-    );
+    expect(screen.queryByText("One next action")).toBeNull();
     expect(screen.queryByTestId("source-originate-canvas")).toBeNull();
   });
 
@@ -122,7 +217,7 @@ describe("SourceNewRequestFirstPage", () => {
         clientKey="example-client"
         requestQueueStatus="unauthorized"
         importedRequests={[importedRequest]}
-        eventWorkspaces={activeEventWorkspaces}
+        eventWorkspaces={[pendingEventWorkspace, ...activeEventWorkspaces]}
       />,
     );
 
@@ -133,6 +228,9 @@ describe("SourceNewRequestFirstPage", () => {
     ).toBeTruthy();
     expect(
       screen.queryByRole("link", { name: "Application services event" }),
+    ).toBeNull();
+    expect(
+      screen.queryByText("Infrastructure request awaiting approval"),
     ).toBeNull();
   });
 
@@ -192,12 +290,141 @@ describe("SourceNewRequestFirstPage", () => {
     expect(
       within(workspaces).getByText("Application services event"),
     ).toBeTruthy();
-    expect(screen.getByText("Open accepted work")).toBeTruthy();
+    expect(within(workspaces).getByText("Other events")).toBeTruthy();
+    expect(screen.queryByText("Open accepted work")).toBeNull();
     expect(
       within(workspaces)
         .getByRole("link", { name: "Open" })
         .getAttribute("href"),
     ).toBe("/source/new/event-1");
+  });
+
+  it("keeps an unapproved event in intake instead of calling it accepted work", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="empty"
+        importedRequests={[]}
+        eventWorkspaces={[pendingEventWorkspace, ...activeEventWorkspaces]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    const workspaces = screen.getByRole("region", {
+      name: "Event workspaces",
+    });
+    expect(
+      within(queue).getByText("Infrastructure request awaiting approval"),
+    ).toBeTruthy();
+    expect(within(queue).getByText("Awaiting decision")).toBeTruthy();
+    expect(
+      within(queue)
+        .getByRole("link", { name: "Review approval" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-pending/approval");
+    expect(
+      within(workspaces).queryByText(
+        "Infrastructure request awaiting approval",
+      ),
+    ).toBeNull();
+    expect(
+      within(workspaces).getByText("Application services event"),
+    ).toBeTruthy();
+    expect(screen.queryByText("Review pending approvals")).toBeNull();
+    expect(
+      screen.queryByText("No imported requests are waiting for intake review."),
+    ).toBeNull();
+    expect(
+      within(queue).getByText("Decision owner: Technology sponsor"),
+    ).toBeTruthy();
+  });
+
+  it("shows two pending decisions once each with their distinct owners", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="empty"
+        importedRequests={[]}
+        eventWorkspaces={[
+          { ...pendingEventWorkspace, decisionOwner: "Anand" },
+          {
+            ...pendingEventWorkspace,
+            id: "event-qa",
+            code: "SRC-QA",
+            name: "Internal sourcing test",
+            decisionOwner: "Production QA",
+          },
+          ...activeEventWorkspaces,
+        ]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    expect(
+      within(queue).getAllByRole("link", { name: "Review approval" }),
+    ).toHaveLength(2);
+    expect(within(queue).getByText("Decision owner: Anand")).toBeTruthy();
+    expect(
+      within(queue).getByText("Decision owner: Production QA"),
+    ).toBeTruthy();
+    expect(within(queue).getByText("2 to review")).toBeTruthy();
+    expect(screen.queryByText("One next action")).toBeNull();
+    expect(
+      screen.queryByText("No imported requests are waiting for intake review."),
+    ).toBeNull();
+  });
+
+  it("still exposes pending approval when the imported-request registry is unavailable", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="unavailable"
+        importedRequests={[importedRequest]}
+        eventWorkspaces={[pendingEventWorkspace]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    expect(
+      within(queue).getByText("Infrastructure request awaiting approval"),
+    ).toBeTruthy();
+    expect(within(queue).getByText(/could not be read/)).toBeTruthy();
+    expect(
+      within(queue).queryByText("Infrastructure services request"),
+    ).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Event workspaces" }).textContent,
+    ).not.toContain("Infrastructure request awaiting approval");
+  });
+
+  it("does not move later-stage client decisions back into intake", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="empty"
+        importedRequests={[]}
+        eventWorkspaces={[
+          {
+            ...pendingEventWorkspace,
+            currentStageKey: "scope",
+            currentStageLabel: "Scope",
+          },
+        ]}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Request queue" });
+    const workspaces = screen.getByRole("region", { name: "Event workspaces" });
+    expect(
+      within(queue).queryByText("Infrastructure request awaiting approval"),
+    ).toBeNull();
+    expect(
+      within(workspaces).getByText("Infrastructure request awaiting approval"),
+    ).toBeTruthy();
   });
 
   it("triages governed request fields and answers the four readiness questions", () => {
@@ -222,7 +449,7 @@ describe("SourceNewRequestFirstPage", () => {
     expect(within(queue).getByText("Proposed routing")).toBeTruthy();
     expect(within(queue).getByText("Supplier pool")).toBeTruthy();
     expect(within(queue).getByText("Review required")).toBeTruthy();
-    expect(screen.getByText("Review pending requests")).toBeTruthy();
+    expect(screen.queryByText("Review pending requests")).toBeNull();
     expect(within(queue).getByText("Nothing required is missing")).toBeTruthy();
     expect(
       within(queue).getByText("AI proposal only · named review required"),

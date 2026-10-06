@@ -297,18 +297,15 @@ describe('buildValuePoolInsight — Strategy', () => {
     expect(Array.isArray(insight.needsEvidenceLevers)).toBe(true);
   });
 
-  it('falls back to a clearly-marked SAMPLE when no facts quantify a lever', () => {
+  it('names unsized levers without inventing dollar ranges when no facts quantify one', () => {
     const insight = buildValuePoolInsight(AMS_MANAGED_SERVICES, {});
     expect(insight.provenance).toBe('sample');
     expect(insight.note).toBeTruthy();
-    // Sample still shows the shape: one bar per declared lever.
-    expect(insight.bars.length).toBe(
-      (AMS_MANAGED_SERVICES.valueLeverRules ?? []).length,
+    expect(insight.bars).toEqual([]);
+    expect(insight.needsEvidenceLevers).toEqual(
+      (AMS_MANAGED_SERVICES.valueLeverRules ?? []).map((rule) => rule.name),
     );
-    // Ranges only — never a bare point (low ≤ high, and a real range).
-    for (const bar of insight.bars) {
-      expect(bar.high).toBeGreaterThan(bar.low);
-    }
+    expect(insight.headline).not.toMatch(/\$|\d+\s*%/);
   });
 });
 

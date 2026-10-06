@@ -14,14 +14,15 @@ import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/con
 /**
  * The record types a product surface can browse.
  *
- * The first four are the technology estate this file was named for. The rest are the intake
- * families the Home projection now carries -- metrics, risks, programs, org ownership and AI use
- * cases -- which are browsable records in exactly the same sense even though "technology estate" is
- * no longer the right name for the set. Renaming the bundle field would ripple through the checked-in
- * snapshots and every type that reads them; adding the types is additive and safe, so the name is
- * left alone deliberately rather than by oversight.
+ * This began as the technology estate but now carries enterprise and operating families too.
+ * Renaming the bundle field would ripple through checked-in snapshots and every reader; the
+ * broader type list is additive until that storage contract can be changed deliberately.
  */
 export const TECH_OBJECT_TYPES = [
+  "business_segment",
+  "business_function",
+  "workforce_role",
+  "operational_process",
   "application_system",
   "vendor_contract",
   "infrastructure_platform",
@@ -37,6 +38,10 @@ export const TECH_OBJECT_TYPES = [
 export type TechObjectType = (typeof TECH_OBJECT_TYPES)[number];
 
 const TECH_OBJECT_TYPE_LABELS: Record<TechObjectType, string> = {
+  business_segment: "Business Segments",
+  business_function: "Business Functions",
+  workforce_role: "Workforce & Roles",
+  operational_process: "Operating Processes",
   application_system: "Applications & Systems",
   vendor_contract: "Vendor Contracts",
   infrastructure_platform: "Infrastructure & Platforms",
@@ -59,6 +64,10 @@ const TECH_OBJECT_TYPE_LABELS: Record<TechObjectType, string> = {
  * are the columns that actually carry that meaning in the source data -- not just any column that
  * happens to have few distinct values. */
 const PRIMARY_DIMENSION_KEY: Record<TechObjectType, string> = {
+  business_segment: "pnlOwnerRole",
+  business_function: "businessSegment",
+  workforce_role: "functionName",
+  operational_process: "businessFunction",
   // Executive area, not stakeholder role: 8 areas against 19 roles, and the question the chapter
   // asks is where the leadership of a function stands, not where one named person does.
   executive_interview: "executiveArea",
@@ -98,7 +107,9 @@ function isNarrativeKey(key: string): boolean {
   return /Narrative$|Notes$/.test(key);
 }
 
-function formatAttributeValue(value: unknown): string | number | boolean | null {
+function formatAttributeValue(
+  value: unknown,
+): string | number | boolean | null {
   if (value === null || value === undefined) return null;
   if (Array.isArray(value)) return value.map((v) => String(v)).join("; ");
   if (typeof value === "object") return JSON.stringify(value);
@@ -127,6 +138,9 @@ export interface TechRecordType {
    * actually declared them. */
   columns: string[];
   rows: Array<Record<string, string | number | boolean | null>>;
+  /** Verified canonical source-record IDs, aligned with rows. Absent on reviewed copies that did
+   * not carry a serving-row source bridge; an empty entry means the row was not linked. */
+  rowSourceRefs?: string[][];
   /** The column this object type's segmentation filter defaults to -- null if that attribute
    * isn't actually present on this tenant's records (a real, honest gap, not an error). */
   primaryDimension: string | null;
@@ -142,10 +156,10 @@ export interface TechnologyEstateBundle {
   recordTypes: TechRecordType[];
 }
 
-/** Extracts and trims the raw canonical records for the four tech object types into a table-ready
- * shape. Deterministic, no model call -- callable directly from build-home-chapters.ts alongside
- * the Claude-generated chapters, or standalone for a quick local check. */
-export function buildTechnologyEstateBundle(records: CanonicalIngestionRecord[]): TechnologyEstateBundle {
+/** Extracts canonical records into table-ready rows without a model call. */
+export function buildTechnologyEstateBundle(
+  records: CanonicalIngestionRecord[],
+): TechnologyEstateBundle {
   const recordTypes: TechRecordType[] = [];
   for (const objectType of TECH_OBJECT_TYPES) {
     const typeRecords = records.filter((r) => r.objectType === objectType);
@@ -155,7 +169,8 @@ export function buildTechnologyEstateBundle(records: CanonicalIngestionRecord[])
     const seen = new Set<string>();
     for (const r of typeRecords) {
       for (const key of Object.keys(r.attributes)) {
-        if (METADATA_KEYS.has(key) || isNarrativeKey(key) || seen.has(key)) continue;
+        if (METADATA_KEYS.has(key) || isNarrativeKey(key) || seen.has(key))
+          continue;
         seen.add(key);
         columns.push(key);
       }
@@ -170,19 +185,35 @@ export function buildTechnologyEstateBundle(records: CanonicalIngestionRecord[])
     });
 
     const dimensionKey = PRIMARY_DIMENSION_KEY[objectType];
-    const primaryDimension = columns.includes(dimensionKey) ? dimensionKey : null;
+    const primaryDimension = columns.includes(dimensionKey)
+      ? dimensionKey
+      : null;
     const dimensionCounts: Array<{ value: string; count: number }> = [];
     if (primaryDimension) {
       const counts = new Map<string, number>();
       for (const row of rows) {
         const value = row[primaryDimension];
-        const key = value === null || value === undefined || value === "" ? "(not specified)" : String(value);
+        const key =
+          value === null || value === undefined || value === ""
+            ? "(not specified)"
+            : String(value);
         counts.set(key, (counts.get(key) ?? 0) + 1);
       }
-      dimensionCounts.push(...Array.from(counts, ([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count));
+      dimensionCounts.push(
+        ...Array.from(counts, ([value, count]) => ({ value, count })).sort(
+          (a, b) => b.count - a.count,
+        ),
+      );
     }
 
-    recordTypes.push({ objectType, label: TECH_OBJECT_TYPE_LABELS[objectType], columns, rows, primaryDimension, dimensionCounts });
+    recordTypes.push({
+      objectType,
+      label: TECH_OBJECT_TYPE_LABELS[objectType],
+      columns,
+      rows,
+      primaryDimension,
+      dimensionCounts,
+    });
   }
   return { recordTypes };
 }

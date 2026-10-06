@@ -16,7 +16,7 @@ import {
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
 import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
-import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getTenantSystemBlock } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
@@ -91,7 +91,13 @@ Visible-output requirements:
 - If commercial evidence is thin or fields are not loaded, use the exact phrase "commercial evidence is DATA-THIN" and name the missing commercial fields in business language: service scope, annual cost, renewal or contract evidence.
 - If commercial facts are loaded, name at least one loaded system, vendor, service, annual cost, renewal, or linked program fact before giving the action.`;
 
-function buildAvaSynthesisPrompt(userContextBlock: string): string {
+// `tenantKey` is the CANONICAL active-tenant key — the same value the instance
+// fence below compares against — so the demo context the model is handed and the
+// tenant the route authorised are decided from one input rather than two.
+function buildAvaSynthesisPrompt(
+  userContextBlock: string,
+  tenantKey: string,
+): string {
   const sourceContractBlock = buildAgentContextContractBlock({
     agent: "ava",
     module: "source",
@@ -111,7 +117,13 @@ function buildAvaSynthesisPrompt(userContextBlock: string): string {
     sourceContractBlock,
     userContextBlock,
     FOUR_LAYER_REASONING_INSTRUCTIONS,
-    AGENT_DEMO_SYSTEM_BLOCK,
+    // Scoped, not unconditional. The fixture tenant keeps its rich demo block;
+    // every other tenant gets the platform context only. Before this, a tenant
+    // whose V6 pack resolved was handed the fixture tenant's programme, pattern,
+    // pressure and sourcing-event inventory in its own system prompt — and the
+    // only thing preventing that was the absence of a dataset directory, which
+    // is a data-loading accident rather than a control.
+    getTenantSystemBlock(tenantKey),
   ]
     .filter((s) => s && s.trim().length > 0)
     .join("\n\n");
@@ -253,7 +265,11 @@ export async function POST(request: Request) {
 
   // Cache check
   const stateHash = instanceStateHash(instance);
-  const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:ava:${MODULE_V6_ANSWER_CONTRACT_VERSION}:${SOURCE_V6_SYNTHESIS_PROMPT_VERSION}`;
+  // The tenant is part of the key because the system prompt above is now a
+  // function of it. Without this, the cache would be safe only while the V6 pack
+  // builder keeps prefixing instance ids with the tenant key — a convention in
+  // another module, not a control here.
+  const cacheKey = `${activeTenantKey}:${instance.id}:${stateHash}:${pattern.version}:ava:${MODULE_V6_ANSWER_CONTRACT_VERSION}:${SOURCE_V6_SYNTHESIS_PROMPT_VERSION}`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
@@ -312,7 +328,7 @@ export async function POST(request: Request) {
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
-  const systemPrompt = buildAvaSynthesisPrompt(userContextBlock);
+  const systemPrompt = buildAvaSynthesisPrompt(userContextBlock, activeTenantKey);
 
   // Shared Context Brain (flag-gated, default OFF). When on for the tenant,
   // ground this sourcing synthesis in the Consilium expert(s) for the event

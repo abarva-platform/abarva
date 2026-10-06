@@ -140,23 +140,73 @@ function isStockInstruction(text: string): boolean {
 // single newlines, no blank lines. Counting paragraphs there would return 1
 // for every input the rebuild can produce.
 //
-// RECORDED RATHER THAN QUIETLY FIXED: today that is true of the line count
-// too. `lines` is capped at `maxParagraphs` entries and every entry is
-// single-line by construction (`trimWords` joins on spaces, the table and
-// bullet summaries join on "; "), so this half of its caller's `&&` has no
-// reachable FALSE case and the gate's real work is the character check
-// beside it. A mutation swapping this for a paragraph count therefore
-// SURVIVES the C-503 suite, and that is reported in the pull request rather
-// than papered over with a test that pins nothing. The one insertion path
-// that could add a line — `normalizeAssemblyArtifacts` rewriting
-// " — Breakdown:" to a newline — was tried against this rebuild and is
-// consumed upstream by `cleanLeadLine`, measured, not assumed. Filed as
-// backlog item C-505; removing a redundant guard is not C-503's change to
-// make, and the line unit is the correct one to leave standing while the
-// thing being measured is spelled in lines.
+// C-505 CORRECTED, BY MEASUREMENT: this is NOT a redundant guard, and the
+// claim that stood here — that its caller's second operand "has no reachable
+// FALSE case" — was wrong. C-503 measured the em-dash form of the
+// `normalizeAssemblyArtifacts` " — Breakdown:" rewrite against the PROSE
+// path, where it is genuinely consumed: `proseOnly` is re-run through
+// `normalizeAssemblyArtifacts` inside `compactForChat`, so the lead, the
+// support bullets and the next line cannot carry it. Two things that
+// measurement did not cover:
+//
+//  - `tableToCompactLines` reads `normalized`, which is the ONE text feeding
+//    the rebuild that is not re-run through `normalizeAssemblyArtifacts`
+//    after `replaceLabels` has substituted caller-supplied label text into
+//    the answer.
+//  - The table branch neutralises the em dash only (`/\s+—\s+/g` to ": "),
+//    while the artifact rule matches a hyphen, an en dash AND an em dash.
+//
+// So a label carrying `" - Breakdown: "` reaches the rebuild live and breaks
+// one entry across two lines. Measured through the public entry point: a
+// first rebuild of 534 characters against a 900-character target — the
+// character half passes it — at six visible lines against a five-line
+// budget, so this half rejects it and the harsher second rebuild answers
+// instead. Pinned by
+// `src/__tests__/behaviors/shared-shaper-compact-line-gate.test.ts`, which
+// also kills the paragraph-count mutation that survived the C-503 suite.
+//
+// Do not delete the operand beside this, and do not widen this function to
+// count paragraphs — the suite turns red on both. Closing the path by
+// widening the table branch to `[-–—]` is a real option and a real behaviour
+// change on table answers; it belongs to its own reviewed item.
 function countCompactLines(text: string): number {
   return lineSplit(text).length;
 }
+
+// Backlog item C-510 — the character class the table branch neutralises must
+// be the one `normalizeAssemblyArtifacts` matches, or the branch defends
+// against one third of what it was written to stop.
+//
+// `tableToCompactLines` joins each row's cells with `" — "`, and the branch
+// below turns that separator into `": "`. It used to match the em dash
+// alone (`/\s+—\s+/g`) while the artifact rule one function down matches a
+// hyphen, an en dash AND an em dash (`/\s+[-–—]\s+Breakdown\s*:/`). Because
+// `tableToCompactLines` reads `normalized` — the one text feeding the
+// rebuild that is NOT re-run through `normalizeAssemblyArtifacts` after
+// `replaceLabels` has substituted caller-supplied label text — the hyphen
+// and en-dash forms arrived at the rebuild live and inserted a line break
+// into a table entry. Measured through the public entry point on the C-505
+// fixture before this change: hyphen and en dash both returned 382 chars in
+// 3 lines, the harsher second rebuild, with the whole table summary lost;
+// the em dash returned 536 chars in 4 lines with the summary intact. Same
+// answer, same labels, different dash character, 154 characters of content
+// difference to the reader.
+//
+// THE COST, TAKEN DELIBERATELY. This rewrites dash-shaped text INSIDE a
+// cell, not only the separator between cells, because the artifact it has to
+// stop lives inside the cell. A cell reading `"Feb 2026 – Jan 2027"` now
+// renders as `"Feb 2026: Jan 2027"` in the compacted summary. That cost
+// cannot be designed away by changing how the cells are joined: the pattern
+// `normalizeAssemblyArtifacts` reacts to is cell content, so anything that
+// leaves cell content untouched leaves the line break in place. The
+// narrower rule was not narrower in kind — it did the same rewriting to the
+// same cells, for one character out of three.
+//
+// Measured over the corpus before landing: of 3328 non-empty markdown table
+// cells in `src`, ZERO render differently under the widened class, and the
+// only differing string found anywhere in `src` is a fiscal-year range in a
+// setup-data markdown file that no shaper caller reads.
+const TABLE_CELL_SEPARATOR_RE = /\s+[-–—]\s+/g;
 
 function tableToCompactLines(text: string): string[] {
   const rows = text
@@ -181,7 +231,7 @@ function tableToCompactLines(text: string): string[] {
 function removeMarkdownTables(text: string): string {
   return text
     .split("\n")
-    .filter((line) => !/^\s*\|.+\|\s*$/.test(line))
+    .filter((line) => !TABLE_ROW_RE.test(line))
     .join("\n");
 }
 
@@ -267,32 +317,69 @@ function dedupeVisibleLines(text: string): string {
   return lines.join("\n");
 }
 
+// One grammar for "this line is markdown table markup, not a sentence", read
+// by both the filter that removes rows and the cleanup that must leave them
+// alone. Item C-511: they were two readings of the same idea in two places,
+// and the cleanup's reading was implicit — it had none, so it rewrote row
+// text as though it were prose.
+const TABLE_ROW_RE = /^\s*\|.+\|\s*$/;
+
+// Item C-511 — the assembly-artifact rewrites run PER LINE and skip a
+// markdown table row.
+//
+// One of them turns `" <dash> Breakdown:"` into a newline. Applied to the
+// whole answer it landed INSIDE a table row whenever caller-supplied label
+// text carried that pattern, and split the row in two: a first half with no
+// trailing `|`, a second with no leading `|`. Neither half then matched
+// `TABLE_ROW_RE`, so `removeMarkdownTables` no longer recognised either, both
+// survived into `proseOnly`, and `sentenceSplit` handed the reader raw pipe
+// markup in a support bullet.
+//
+// Fixing only the pass order inside `compactForChat` would close one of the
+// two places this happens. `shapeSharedAdvisorResponse` runs this function
+// once more AFTER compaction, where an answer that took the early return
+// still has its rows intact — so the same rewrite split them there, on the
+// path that exists precisely to leave a short answer's structure alone.
+// Measured over 18,900 constructed inputs: 3,324 leaked a half-row with a
+// well-formed table, and the pass-order fix alone left every one of them.
+// Guarding the rewrites instead closes both, in one place, with one rule.
+//
+// Deliberately NOT a narrower dash class: that is C-510 undone, and its suite
+// fails if anyone tries. `dedupeVisibleLines` still runs across every line,
+// rows included, so duplicate-row behaviour is unchanged.
+function rewriteAssemblyArtifacts(line: string): string {
+  return line
+    .replace(/\b(supporting)\s+\1\b/gi, "$1")
+    .replace(
+      /\b(Read|Evidence|Implication|Next(?: move)?)\s*:\s*\1\s*:/gi,
+      "$1:",
+    )
+    .replace(/\bNext\s*:\s*Next(?: move)?\s*:/gi, "Next:")
+    .replace(/\bNext\s*:\s*-\s*Next\s*:/gi, "Next:")
+    .replace(/\bBreakdown\s*:\s*;\s*/gi, "Breakdown: ")
+    .replace(/\s*;\s*[-–—]\s*/g, "; ")
+    .replace(/\s+[-–—]\s+Breakdown\s*:\s*[-–—]?\s*/gi, "\nBreakdown: ")
+    // A connector stranded at the end of a line used to be treated as
+    // proof that the sentence had been cut, and the connector plus its
+    // period were deleted. That is only true for a coordinating
+    // conjunction: English strands prepositions freely ("the comparison
+    // you asked for.", "the baseline we measured against.") and uses
+    // several subordinators adverbially ("paused for a while.", "nobody
+    // has raised this before."). The old list carried all of them, so
+    // finished prose was delivered with its last word missing. A
+    // sentence never legitimately ends in "and", "or" or "but", so those
+    // stay — and the cut sentence is closed with a period rather than
+    // left hanging on a comma.
+    .replace(/(?:\s*,)?\s*\b(?:and|or|but)\.(?=\s*(?:\n|$))/gi, ".")
+    .replace(/\s+([,.;:!?])/g, "$1");
+}
+
 function normalizeAssemblyArtifacts(text: string): string {
   return dedupeVisibleLines(
     text
-      .replace(/\b(supporting)\s+\1\b/gi, "$1")
-      .replace(
-        /\b(Read|Evidence|Implication|Next(?: move)?)\s*:\s*\1\s*:/gi,
-        "$1:",
-      )
-      .replace(/\bNext\s*:\s*Next(?: move)?\s*:/gi, "Next:")
-      .replace(/\bNext\s*:\s*-\s*Next\s*:/gi, "Next:")
-      .replace(/\bBreakdown\s*:\s*;\s*/gi, "Breakdown: ")
-      .replace(/\s*;\s*[-–—]\s*/g, "; ")
-      .replace(/\s+[-–—]\s+Breakdown\s*:\s*[-–—]?\s*/gi, "\nBreakdown: ")
-      // A connector stranded at the end of a line used to be treated as
-      // proof that the sentence had been cut, and the connector plus its
-      // period were deleted. That is only true for a coordinating
-      // conjunction: English strands prepositions freely ("the comparison
-      // you asked for.", "the baseline we measured against.") and uses
-      // several subordinators adverbially ("paused for a while.", "nobody
-      // has raised this before."). The old list carried all of them, so
-      // finished prose was delivered with its last word missing. A
-      // sentence never legitimately ends in "and", "or" or "but", so those
-      // stay — and the cut sentence is closed with a period rather than
-      // left hanging on a comma.
-      .replace(/(?:\s*,)?\s*\b(?:and|or|but)\.(?=\s*(?:\n|$))/gi, ".")
-      .replace(/\s+([,.;:!?])/g, "$1"),
+      .split("\n")
+      .map((line) => (TABLE_ROW_RE.test(line) ? line : rewriteAssemblyArtifacts(line)))
+      .join("\n"),
   );
 }
 
@@ -374,7 +461,7 @@ function compactForChat(
     tableLines.length > 0
       ? tableLines
           .slice(0, 3)
-          .map((line) => cleanLeadLine(line).replace(/\s+—\s+/g, ": "))
+          .map((line) => cleanLeadLine(line).replace(TABLE_CELL_SEPARATOR_RE, ": "))
           .join("; ")
       : bulletSummary,
     ...support,
@@ -520,15 +607,35 @@ export function shapeSharedAdvisorResponse(
     normalizeWhitespace(normalizeAssemblyArtifacts(input.text)),
     input.labels ?? [],
   );
+  // Item C-517 — ONE rewrite, and it runs here, before compaction.
+  //
+  // This used to be applied twice: here, and again inside the trailing
+  // normalize below. T-617 found that removing the second one left all 45
+  // tests across the six shared-shaper suites passing, and a survivor is not a
+  // verdict — the second pass saw text this one never did, so if any pass
+  // between them could put a word-bounded name into text that had none, it was
+  // load-bearing and the missing thing was a test.
+  //
+  // Settled by search, not by sample, in
+  // `src/__tests__/behaviors/shared-shaper-brand-window.test.ts`: `\b` depends
+  // on exactly ONE character each side, so sweeping every printable ASCII
+  // character on both sides is complete for the exposure question, and the
+  // sweep is repeated inside one carrier per pass in the window. 0 of 297,825
+  // rows changed output with the second application gone, 33,792 of them
+  // carrying a bounded name; with BOTH gone, 33,738 rows leak and every
+  // carrier leaks, so the sweep has power everywhere it claims to.
+  //
+  // The position matters more than the count: `aVa` is two characters shorter
+  // than `Atlas` and `compactForChat`'s budget is measured in characters, so
+  // the rewrite has to precede it. That is pinned by its own test rather than
+  // by this comment.
   const brandClean = labeled.text.replace(BANNED_BRAND_RE, "aVa");
   const idClean = stripUnmappedRawIds(brandClean);
   const compacted = input.preserveStructure
     ? idClean
     : compactForChat(idClean, targetChars, maxParagraphs);
   const finalText = normalizeWhitespace(
-    normalizeAssemblyArtifacts(
-      stripUnmappedRawIds(compacted).replace(BANNED_BRAND_RE, "aVa"),
-    ),
+    normalizeAssemblyArtifacts(stripUnmappedRawIds(compacted)),
   );
   return {
     text: finalText,

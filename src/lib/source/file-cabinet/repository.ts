@@ -108,6 +108,12 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     v === null || v === undefined ? null : Number(v);
   const strOrNull = (v: unknown) =>
     typeof v === "string" && v.length ? v : null;
+  const acceptedAtOrNull = (v: unknown) => {
+    if (v instanceof Date) {
+      return Number.isNaN(v.getTime()) ? null : v.toISOString();
+    }
+    return strOrNull(v);
+  };
   const jsonObjOrEmpty = (v: unknown): Record<string, unknown> => {
     if (v && typeof v === "object" && !Array.isArray(v)) {
       return v as Record<string, unknown>;
@@ -176,13 +182,15 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     supersededByArtifactId: strOrNull(row.superseded_by_artifact_id),
     lifecycleState: artifactLifecycle(row),
     blobSha256: firstString(row.blob_sha256, row.sha256),
+    malwareScanStatus: strOrNull(row.malware_scan_status),
+    malwareScanReason: strOrNull(row.malware_scan_reason),
     isClientFinal: row.is_client_final === true,
     isCurrentAuthoritative: row.is_current_authoritative === true,
     sourceGeneratedArtifactId: strOrNull(row.source_generated_artifact_id),
     clientFinalUploadedBy: strOrNull(row.client_final_uploaded_by),
     clientFinalUploadedAt: strOrNull(row.client_final_uploaded_at),
     clientFinalAcceptedBy: strOrNull(row.client_final_accepted_by),
-    clientFinalAcceptedAt: strOrNull(row.client_final_accepted_at),
+    clientFinalAcceptedAt: acceptedAtOrNull(row.client_final_accepted_at),
     clientFinalNote: strOrNull(row.client_final_note),
     clientFinalReviewMeetingDate: strOrNull(
       row.client_final_review_meeting_date,
@@ -256,6 +264,19 @@ export interface InsertArtifactRow {
   clientFinalReviewMeetingDate?: string | null;
   clientFinalStakeholderGroup?: string | null;
   clientFinalChangeSummary?: Record<string, unknown>;
+  /**
+   * The malware scan verdict for this file, in Defender's own vocabulary.
+   *
+   * Every path that creates a Source artifact today reads the bytes and parses
+   * them inside the same request, so nothing has scanned the file by the time
+   * the row is written. That is recorded as `not_scanned` rather than left
+   * null: null is ambiguous between "never scanned" and "column added after
+   * this row", and only one of those is a control gap worth seeing.
+   *
+   * A path that does scan first should pass the real verdict.
+   */
+  malwareScanStatus?: string | null;
+  malwareScanReason?: string | null;
 }
 
 export async function insertSourceArtifact(
@@ -293,6 +314,10 @@ export async function insertSourceArtifact(
       assumptions: row.assumptions,
       supersedes_artifact_id: row.supersedesArtifactId,
       blob_sha256: row.blobSha256,
+      malware_scan_status: row.malwareScanStatus ?? "not_scanned",
+      malware_scan_reason:
+        row.malwareScanReason ??
+        "Created through a synchronous Source artifact path, which parses the file in the same request and so never submits it to a scanner.",
       is_client_final: row.isClientFinal ?? false,
       is_current_authoritative: row.isCurrentAuthoritative ?? false,
       source_generated_artifact_id: row.sourceGeneratedArtifactId ?? null,

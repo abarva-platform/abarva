@@ -112,7 +112,7 @@ export function CurrentStateAssessmentMap({
 }): React.ReactElement {
   return (
     <Card
-      kicker="Understand current state"
+      kicker="P2 Discover & Diagnose"
       title="Current-state assessment"
       note="A map of what we understand — dimensions, not just uploaded files."
     >
@@ -192,7 +192,7 @@ export function SolutionOptionsCanvas({
 }): React.ReactElement {
   return (
     <Card
-      kicker="Choose the approach"
+      kicker="P3 Design Future State"
       title="Solution options"
       note="Options come before architecture. AbarVa recommends one and says what it defers."
     >
@@ -228,8 +228,8 @@ export function BlockToWorkstreamPreview({
 }): React.ReactElement {
   return (
     <Card
-      kicker="Build the plan"
-      title="Each block becomes a workstream"
+      kicker="P4 Roadmap & Business Case"
+      title="Each approved building block becomes a roadmap workstream"
       note="The lanes you chose carry forward into owned, measurable workstreams."
     >
       <div className="pw-tablewrap">

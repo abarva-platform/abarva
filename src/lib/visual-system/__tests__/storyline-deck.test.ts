@@ -3,7 +3,6 @@ import {
   validateStorylineDeck,
   deckExhibits,
   renderDeckHtml,
-  renderStorylineDeckPptx,
 } from "../storyline-deck";
 import { FC_HANDOFF } from "../__fixtures__/first-capital-handoff";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
@@ -75,11 +74,5 @@ describe("storyline deck (W3)", () => {
     expect(
       validateStorylineDeck(deck).some((i) => /topic label/i.test(i.message)),
     ).toBe(true);
-  });
-
-  it("renders a native editable PPTX buffer", async () => {
-    const pptx = await renderStorylineDeckPptx(buildHandoffDeck(FC_HANDOFF));
-    expect(Buffer.isBuffer(pptx)).toBe(true);
-    expect(pptx.subarray(0, 2).toString("utf8")).toBe("PK");
   });
 });

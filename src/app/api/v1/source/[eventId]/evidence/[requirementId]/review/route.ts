@@ -162,6 +162,13 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
         notes: existing.notes ? `${existing.notes}\n${reviewNote}` : reviewNote,
         last_synced_at: nowIso,
         updated_at: nowIso,
+        // The reviewer is recorded on the row, not only in the activity log.
+        // A gate can read a row; it cannot read a narrative. Captured at the
+        // time of the decision so a later rename does not rewrite who decided.
+        accepted_by_user_id:
+          currentUser?.personId ?? currentUser?.clerkUserId ?? tenancy.userId ?? null,
+        accepted_by_name: currentUser?.name ?? currentUser?.email ?? null,
+        accepted_at: nowIso,
       })
       .eq("id", existing.id)
       .select("*")

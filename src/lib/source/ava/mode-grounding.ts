@@ -56,6 +56,11 @@ import {
   SOURCE_STAGE_LABELS,
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
+import {
+  SOURCE_TERMINAL_GATE_CONTRACT,
+  isTerminalSourceStage,
+  sourceGateDecisionKindFor,
+} from "@/lib/source/stage-terminal-contract";
 import { confirmationKeysForStage } from "@/lib/source/stage-gate-confirmations";
 import { templateFactsPresent } from "@/lib/source/facts/view/task-evidence-hydration";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
@@ -397,6 +402,66 @@ function buildWorkflowHowToGrounding(
   return { block, quotableFacts: { howToAction: action } };
 }
 
+// ── U-533 · exemplar-content disclosure ───────────────────────────────────────
+//
+// `buildLiveStageView` composes a live waterfall and a live intel beat and then
+// carries the stage exemplar's `tasks` and `gate` through verbatim. Both of the
+// blocks below introduce that content to the model as "authoritative", and the
+// gate block prints `gate.approver` -- which for four of the ten exemplars is a
+// person's name that exists only in `sample-view-model.ts`. The stage view now
+// declares per-beat provenance at the boundary that builds it
+// (`StageAnalyticsView.beatProvenance`); these two helpers turn that declaration
+// into a line the model reads.
+//
+// Fails CLOSED on an ABSENT declaration. A view that declares nothing is treated
+// as undeclared, not as derived, so a future builder that forgets the field
+// discloses too much rather than too little.
+
+function tasksAreExemplarContent(stageView: StageAnalyticsView): boolean {
+  return stageView.beatProvenance?.tasks !== "fact_derived";
+}
+
+function gateIsExemplarContent(stageView: StageAnalyticsView): boolean {
+  return stageView.beatProvenance?.gate !== "fact_derived";
+}
+
+function exemplarSourceSuffix(stageView: StageAnalyticsView): string {
+  const source = stageView.beatProvenance?.scaffoldSource;
+  return source ? ` (${source})` : "";
+}
+
+const EXEMPLAR_TASK_LIST_DISCLOSURE =
+  "SCAFFOLD CONTENT -- the task TITLES on this stage are carried verbatim from " +
+  "the stage exemplar%SOURCE%, not derived from this event's facts. The " +
+  "present/missing verdicts below are real -- they are read from persisted facts " +
+  "and registered artifacts. The LIST is not: do not present it as this event's " +
+  "agreed or required evidence set, and do not tell the user a named task was " +
+  "asked of them.";
+
+const EXEMPLAR_GATE_DISCLOSURE =
+  "SCAFFOLD CONTENT -- the confirm-box labels and the generates-on-approval " +
+  "list below are carried from the stage exemplar%SOURCE%, not from this " +
+  "event's record. The approver label is not a verified actor assignment or " +
+  "evidence that anyone approved or signed. The evidence box's own verdict below is real -- " +
+  "it is computed from this event's task checklist.";
+
+// The wording above deliberately avoids the token `UNMET`.
+// `mode-grounding-phase-c.test.ts` asserts `not.toContain("UNMET")` over the
+// WHOLE general_advisory block to prove the task-derived gate signal has not
+// regressed to unmet, and the first draft of this disclosure said "the
+// MET/UNMET verdict ... is real", which collided with that scan and turned a
+// passing suite red. The existing assertion is blunt rather than stale -- it
+// means "the evidence box is not reported unmet" and says "the block does not
+// contain these five letters" -- so it is left exactly as it is and this prose
+// moves instead. Anything added to these blocks later has the same constraint.
+
+function exemplarDisclosure(
+  template: string,
+  stageView: StageAnalyticsView,
+): string {
+  return template.replace("%SOURCE%", exemplarSourceSuffix(stageView));
+}
+
 // ── evidence_readiness ────────────────────────────────────────────────────────
 
 function buildEvidenceReadinessGrounding(
@@ -440,6 +505,9 @@ function buildEvidenceReadinessGrounding(
   const lines = [
     "EVIDENCE READINESS GROUNDING (authoritative — persisted facts/artifacts for the CURRENT stage's tasks):",
     `Stage: ${stageView.stageName}.`,
+    ...(tasksAreExemplarContent(stageView)
+      ? [exemplarDisclosure(EXEMPLAR_TASK_LIST_DISCLOSURE, stageView)]
+      : []),
     present.length > 0
       ? `Present (evidence already persisted): ${present.join("; ")}.`
       : "Present (evidence already persisted): none yet on this stage.",
@@ -707,6 +775,9 @@ function buildStageGateGrounding(
 
   const lines = [
     "STAGE GATE GROUNDING (authoritative — the same gate the canvas renders for this stage):",
+    ...(gateIsExemplarContent(stageView)
+      ? [exemplarDisclosure(EXEMPLAR_GATE_DISCLOSURE, stageView)]
+      : []),
     `Stage: ${stageView.stageName}. Approver: ${gate.approver}.`,
     `Gate requires ${requiredKeys.length} confirmation(s):`,
   ];
@@ -721,10 +792,20 @@ function buildStageGateGrounding(
       `  ${index + 1}. ${confirm.label}: ${confirm.detail} — ${status}`,
     );
   });
+  /**
+   * ITEM U-406. Keyed to the STAGE, not to whether the gate happens to carry a
+   * label. Read off `gate.nextStageName`, this line said "Next stage on
+   * approval: Closed." for the terminal stage whenever the view arrived with the
+   * exemplar's invented target — the model was told an onward stage existed and
+   * given its name. The stage key is the thing that decides whether one exists,
+   * so the terminal sentence is now unfalsifiable by carried copy.
+   */
   lines.push(
-    gate.nextStageName
-      ? `Next stage on approval: ${gate.nextStageName}.`
-      : "This is the final stage — approval closes the event.",
+    isTerminalSourceStage(stageKey)
+      ? SOURCE_TERMINAL_GATE_CONTRACT.groundingSentence
+      : gate.nextStageName
+        ? `Next stage on approval: ${gate.nextStageName}.`
+        : "The next stage has not been resolved for this gate — do not name one.",
   );
   if (gate.generates.length > 0) {
     lines.push(
@@ -752,6 +833,9 @@ function buildStageGateGrounding(
       taskChecklistTotal: String(stageView.tasks.length),
       gateMetConfirmCount: String(metConfirmCount),
       gateRequiredConfirmCount: String(requiredKeys.length),
+      // ITEM U-406. Stated so a reader of the packet can tell a completion
+      // review from an advance without re-deriving it from a nullable label.
+      gateDecisionKind: sourceGateDecisionKindFor(stageKey),
     },
   };
 }
@@ -1010,6 +1094,9 @@ function buildRiskExposureGrounding(
   const rulesByKey = new Map<string, ValueLeverRule>(
     (archetype.valueLeverRules ?? []).map((r) => [r.key, r]),
   );
+  const unsizedRules = (archetype.valueLeverRules ?? []).filter((rule) =>
+    insight.needsEvidenceLevers.includes(rule.name),
+  );
 
   const lines = [
     "RISK EXPOSURE GROUNDING (authoritative — the same value-pool levers the canvas Strategy tab renders, with each lever's stated commercial risk and confidence):",
@@ -1025,6 +1112,14 @@ function buildRiskExposureGrounding(
       `  ${bar.label} (${valueTypeLabel(bar.valueType)}, confidence ${bar.confidence}): ${fmtUsdRange(bar.low, bar.high)}. Commercial risk: ${riskFrag}`,
     );
   }
+  for (const rule of unsizedRules) {
+    const riskFrag = rule.commercialRisk
+      ? rule.commercialRisk
+      : "no commercial-risk note is declared for this lever in the archetype playbook — do not invent one.";
+    lines.push(
+      `  ${rule.name} (${valueTypeLabel(rule.valueType)}, confidence ${rule.defaultConfidence}): unsized — source evidence required. Commercial risk: ${riskFrag}`,
+    );
+  }
   if (insight.needsEvidenceLevers.length > 0) {
     lines.push(
       `Levers needing evidence before they can be sized (unsized risk, not zero risk): ${insight.needsEvidenceLevers.join(", ")}.`,
@@ -1032,7 +1127,10 @@ function buildRiskExposureGrounding(
   }
   lines.push(
     ...valueTypeClassificationLines(
-      insight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+      [
+        ...insight.bars.map((b) => ({ label: b.label, valueType: b.valueType })),
+        ...unsizedRules.map((rule) => ({ label: rule.name, valueType: rule.valueType })),
+      ],
     ),
   );
 

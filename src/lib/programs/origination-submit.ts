@@ -35,6 +35,10 @@ import {
   embedDiscoveryPlanInCharter,
 } from "@/lib/programs/discovery/charter-transformers";
 import { applyExtendedIntakeFieldsIfEnabled } from "@/lib/programs/p0-extended-intake-fields";
+import {
+  normalizeDiscoveryArchetypeDeclaration,
+  withDeclaredDiscoveryArchetype,
+} from "@/lib/programs/discovery/discovery-archetype-declaration";
 import type { ExtendedIntakeFields } from "@/lib/programs/p0-extended-intake-fields";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import { planFromShape } from "@/lib/programs/discovery/discovery-intake";
@@ -62,7 +66,10 @@ export interface SubmitOriginationBriefInput {
   targetOutcome?: string | null;
   timeline?: string | null;
   classification?: string | null;
+  /** Separate discovery routing choice; never replaces the legacy Move archetype. */
+  discoveryArchetypeId?: string | null;
   sponsor: string;
+  sponsorProgressEmails?: boolean;
   lead?: string | null;
   matchedPatternId?: string | null;
   // Extended scaffold fields (steps 4–9). `scopeBoundary` is the legacy
@@ -421,7 +428,9 @@ async function insertParticipant(input: {
   programId: string;
   person: ResolvedPerson;
   role: string;
-  approvalAuthority: "sponsor" | "contributor";
+  approvalAuthority: "contributor";
+  progressContact?: boolean;
+  sendProgressEmails?: boolean;
 }): Promise<void> {
   const sb = getAzureWriteFluentClient();
   const basePayload = {
@@ -429,18 +438,21 @@ async function insertParticipant(input: {
     user_id: input.person.id,
     user_name: input.person.name,
     role: input.role,
-    notify_on: ["phase_gate", "approval"],
+    notify_on:
+      input.progressContact && input.sendProgressEmails ? ["phase_gate"] : [],
     approval_authority: input.approvalAuthority,
     last_touchpoint_at: new Date().toISOString(),
   };
   const { error } = await sb.from("engagement_participants").insert({
     ...basePayload,
-    program_access_level: "program_member",
+    program_access_level: input.progressContact
+      ? "program_viewer"
+      : "program_member",
     can_view_financial: false,
-    can_upload: true,
-    can_generate_deliverables: true,
-    can_publish_deliverables: input.approvalAuthority === "sponsor",
-    can_approve_phase_gates: input.approvalAuthority === "sponsor",
+    can_upload: !input.progressContact,
+    can_generate_deliverables: !input.progressContact,
+    can_publish_deliverables: false,
+    can_approve_phase_gates: false,
   });
   if (
     error &&
@@ -578,6 +590,10 @@ function buildOriginationCharter(
       function_code: derived.functionCode,
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
+      ...withDeclaredDiscoveryArchetype(
+        {},
+        input.discoveryArchetypeId ?? null,
+      ),
     },
     initiative_context: input.fromInitiativeId
       ? {
@@ -657,7 +673,9 @@ export async function submitOriginationBrief(
     targetOutcome: optionalText(rawInput.targetOutcome),
     timeline: optionalText(rawInput.timeline),
     classification: optionalText(rawInput.classification),
+    discoveryArchetypeId: optionalText(rawInput.discoveryArchetypeId),
     sponsor: requiredText(rawInput.sponsor, "sponsor"),
+    sponsorProgressEmails: rawInput.sponsorProgressEmails === true,
     lead:
       optionalText(rawInput.lead) ?? requiredText(rawInput.sponsor, "sponsor"),
     matchedPatternId: optionalText(rawInput.matchedPatternId),
@@ -843,6 +861,17 @@ export async function submitOriginationBrief(
 
   const derived = classifyBrief(input);
   const programArchetype = normalizeProgramArchetype(input.classification);
+  try {
+    input.discoveryArchetypeId = normalizeDiscoveryArchetypeDeclaration(
+      input.discoveryArchetypeId,
+    );
+  } catch {
+    throw new OriginationSubmitError(
+      "unknown_discovery_archetype",
+      "Choose a discovery blueprint from the available catalog.",
+      400,
+    );
+  }
   const parsedValueRange = parseUsdRangeFromText(input.targetOutcome);
   const valueAssumptions = input.targetOutcome
     ? {
@@ -988,6 +1017,7 @@ export async function submitOriginationBrief(
     });
 
     const briefSnapshot: Record<string, unknown> = {
+      phase: 0,
       program_name: input.programName,
       problem_statement: input.problemStatement,
       sponsor_person_id: sponsor.id,
@@ -1000,6 +1030,7 @@ export async function submitOriginationBrief(
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
       classification: programArchetype,
+      discovery_archetype_id: input.discoveryArchetypeId,
       matched_pattern_id: input.matchedPatternId ?? null,
       submitted_from_surface: input.surface,
       submitted_at: new Date().toISOString(),
@@ -1032,14 +1063,18 @@ export async function submitOriginationBrief(
       programId,
       person: sponsor,
       role: "Sponsor",
-      approvalAuthority: "sponsor",
+      approvalAuthority: "contributor",
+      progressContact: true,
+      sendProgressEmails: input.sponsorProgressEmails,
     });
     if (coSponsor && coSponsor.id !== sponsor.id) {
       await insertParticipant({
         programId,
         person: coSponsor,
         role: "Co-sponsor",
-        approvalAuthority: "sponsor",
+        approvalAuthority: "contributor",
+        progressContact: true,
+        sendProgressEmails: input.sponsorProgressEmails,
       });
     }
     if (lead.id !== sponsor.id) {

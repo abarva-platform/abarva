@@ -61,6 +61,7 @@ const ROW: SourceEventDbRow = {
   event_code: 'SRC-APX-101',
   event_name: 'Contact Center Sourcing',
   event_type: 'managed_service',
+  approval_policy_code: 'self_v1',
   current_stage_key: 'strategy',
   lifecycle_state: 'waiting_on_client',
   linked_program_id: null,
@@ -174,6 +175,35 @@ describe('supabaseSourceEventsReadAdapter', () => {
 });
 
 describe('azureSourceEventsReadAdapter', () => {
+  it('carries the governed event classifier through every scoped read', async () => {
+    const classifiedRow = { ...ROW, classified_category: 'ams' };
+    const adapter = createAzureSourceEventsReadAdapter(
+      fakeSession((sql, params) => {
+        if (params.includes('other-client')) return [];
+        // Model the explicit SQL projection: an omitted column cannot reach
+        // the event mapper even when it exists in the persisted row.
+        return [{
+          ...ROW,
+          ...(sql.split('FROM source_events')[0].includes('classified_category')
+            ? { classified_category: classifiedRow.classified_category }
+            : {}),
+        }];
+      }),
+    );
+
+    const reads = await Promise.all([
+      adapter.getPendingEventsForClient('apexretail'),
+      adapter.getActiveEventsForClient('apexretail'),
+      adapter.getEventByIdForClient('evt-1', 'apexretail'),
+      adapter.getEventByCodeForClient('SRC-APX-101', 'apexretail'),
+    ]);
+    for (const result of reads) {
+      const row = Array.isArray(result) ? result[0] : result;
+      expect(row).toEqual(expect.objectContaining({ classified_category: 'ams' }));
+    }
+    expect(await adapter.getEventByIdForClient('evt-1', 'other-client')).toBeNull();
+  });
+
   it('runs client-scoped SQL for pending events', async () => {
     const seen: { sql: string; params: unknown[] }[] = [];
     const adapter = createAzureSourceEventsReadAdapter(
@@ -186,6 +216,7 @@ describe('azureSourceEventsReadAdapter', () => {
 
     expect(rows).toEqual([ROW]);
     expect(seen[0].sql).toContain('FROM source_events');
+    expect(seen[0].sql).toContain('approval_policy_code');
     expect(seen[0].sql).toContain("lifecycle_state = 'waiting_on_client'");
     expect(seen[0].params).toEqual(['apexretail']);
   });

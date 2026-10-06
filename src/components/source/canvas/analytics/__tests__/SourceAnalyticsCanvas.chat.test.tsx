@@ -180,22 +180,18 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
 
     const needs = screen.getByTestId("source-shell-active-step-needs");
     expect(needs).toHaveTextContent("What Continue needs");
-    expect(needs).toHaveTextContent("Volumetrics file");
-    expect(needs).toHaveTextContent("ITSM / finance baseline");
-    expect(needs).toHaveTextContent("Ravi Menon, IT-Ops");
-    expect(needs).toHaveTextContent("CSV or XLSX");
-    expect(needs).toHaveTextContent("1 required file");
-    expect(needs).toHaveTextContent("Tickets, SLA misses, change orders");
-    expect(needs).toHaveTextContent("Missing");
-    expect(needs).toHaveTextContent(
-      "Download the template, fill one row per tower, then upload.",
-    );
+    expect(needs).toHaveTextContent("L2/L3 ticket history and service volumetrics");
+    expect(needs).toHaveTextContent("Source: ServiceNow ITSM");
+    expect(needs).toHaveTextContent("Needed: Available");
+    expect(needs).toHaveTextContent("Now: Not loaded");
+    expect(needs).toHaveTextContent("Download template");
+    expect(needs).toHaveTextContent("Open Files to upload");
 
     const continueGuidance = screen.getByTestId(
       "source-shell-continue-guidance",
     );
     expect(continueGuidance).toHaveTextContent(
-      "Locked: Download the template, fill one row per tower, then upload.",
+      "Locked: Download the template, fill one row per tower, tier, month, and time window, then upload.",
     );
   });
 
@@ -480,8 +476,10 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(reviewQueue).toHaveTextContent(
       "Clear these artifact actions before opening the gate.",
     );
-    expect(reviewQueue).toHaveTextContent("Review supporting evidence");
-    expect(reviewQueue).toHaveTextContent("Review evidence");
+    expect(reviewQueue).toHaveTextContent("Create a governed draft");
+    expect(
+      screen.getByTestId("source-generate-artifact-d07_ticket_synth"),
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId("source-artifact-review-queue-row-d07_ticket_synth"),
     ).toHaveTextContent("Evidence registered");
@@ -584,6 +582,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-artifact-review-queue-row-d10_rfi_summary"),
     ).toHaveTextContent("Review supporting evidence");
+    expect(
+      screen.queryByTestId("source-generate-artifact-d10_rfi_summary"),
+    ).not.toBeInTheDocument();
   });
 
   it("summarizes Source evidence parsing and search readiness without implying enterprise promotion", () => {
@@ -767,7 +768,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
         ],
       },
     });
-    fireEvent.change(screen.getByLabelText(/optional note/i), {
+    fireEvent.change(screen.getByLabelText(/approval rationale/i), {
       target: { value: "Reviewed by sourcing steering committee." },
     });
     fireEvent.submit(
@@ -948,7 +949,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(readback).toHaveTextContent("volumetrics.csv");
     expect(readback).toHaveTextContent("Typed facts:");
     expect(readback).toHaveTextContent("7 typed facts written");
-    expect(readback).toHaveTextContent("VOLUMETRICS_V1");
+    expect(readback).toHaveTextContent(
+      "written through ITSM ticket history by tier and time window",
+    );
     expect(readback).toHaveTextContent("Issues:");
     expect(readback).toHaveTextContent("None reported by parser.");
     expect(readback).toHaveTextContent("Refresh impact:");
@@ -963,7 +966,7 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     mockAskAnythingBar.mockClear();
   });
 
-  it("does NOT show the stale sample claim when a LIVE stage view says all tasks are complete", () => {
+  it("does not call a stage complete when task badges are done but required evidence is absent", () => {
     const allDoneLiveView: StageAnalyticsView = {
       ...SAMPLE_SCOPE_STAGE,
       tasks: SAMPLE_SCOPE_STAGE.tasks.map((t) => ({
@@ -983,11 +986,9 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
 
     const canvas = screen.getByTestId("source-analytics-canvas");
 
-    // The stale sample claim ("Two steps left on Scope — volumetrics and the
-    // sponsor letter") must NOT appear when the live view says complete.
+    // Task badges alone do not satisfy the newly mapped required evidence.
     expect(canvas.textContent).not.toContain("Two steps left");
-    // And it must say something honest instead.
-    expect(canvas.textContent).toMatch(/complete/i);
+    expect(canvas.textContent).toContain("5 required workflow steps remain");
   });
 
   it("derives an honest 'N of M left' claim from the SAME live task-completion evidence when incomplete", () => {
@@ -1011,7 +1012,7 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     );
 
     const canvas = screen.getByTestId("source-analytics-canvas");
-    expect(canvas.textContent).toContain(`${remaining} steps left`);
+    expect(canvas.textContent).toContain(`${remaining} required workflow steps remain for Scope`);
     expect(canvas.textContent).toContain(`1 / ${total}`);
     expect(canvas.textContent).not.toContain("Two steps left");
   });
@@ -1054,12 +1055,8 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
         tenantName="Lakeshore"
       />,
     );
-    const total = SAMPLE_SCOPE_STAGE.tasks.length;
-    const done = SAMPLE_SCOPE_STAGE.tasks.filter(
-      (task) => task.state === "done",
-    ).length;
     expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
-      `${total - done} steps left`,
+      "6 required workflow steps remain for Scope",
     );
   });
 });

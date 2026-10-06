@@ -11,6 +11,7 @@ import {
   sanitizeAskSynthesis,
 } from "../synthesizer";
 import { buildDeterministicConciseFollowups } from "../followups";
+import { isBlockingIntelligenceRepairEnabled } from "@/lib/intelligence/repair-mode";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -326,11 +327,46 @@ describe("Ask Intelligence guardrails", () => {
       expect(synthesizerCode).toContain("buildFallbackNativeCanvasBlock");
     });
 
+    // Item T-497. This case read `ask/index.ts` and asserted two byte patterns
+    // against it: `isBlockingIntelligenceRepairEnabled` and the trace marker
+    // `consultant.synthesis.skipped`. Commit `6ebe6d4a97` removed the whole
+    // flag-guarded branch from that module, so neither pattern is there. The
+    // control itself was not lost -- it is stronger now, in two ways that the
+    // byte scan could not see:
+    //
+    //   1. The flag moved to `ask/synthesizer.ts`, where `blockingRepairEnabled`
+    //      gates every repair and the skip is traced as `blocking_repairs.skipped`
+    //      carrying the same `reason: "live_no_repair_mode"`. The marker was
+    //      renamed, not deleted.
+    //   2. `synthesizeIntelligenceConsultantText` -- the blocking path the old
+    //      branch gated -- now has no caller anywhere in `src`, so it cannot run on
+    //      the live route under any flag value.
+    //
+    // The two dead assertions are replaced by an executed one. The guard is a pure
+    // function of the environment, so the default-off claim in this case's name can
+    // be run rather than grepped, which is what the byte scan never established.
     it("keeps blocking repair out of the default live route path", () => {
-      const indexCode = readFileSync(join(__dirname, "..", "index.ts"), "utf8");
+      const priorMode = process.env.INTELLIGENCE_LIVE_REPAIR_MODE;
+      const priorDisable = process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR;
+      try {
+        delete process.env.INTELLIGENCE_LIVE_REPAIR_MODE;
+        delete process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR;
+        expect(isBlockingIntelligenceRepairEnabled()).toBe(false);
 
-      expect(indexCode).toContain("isBlockingIntelligenceRepairEnabled");
-      expect(indexCode).toContain("consultant.synthesis.skipped");
+        process.env.INTELLIGENCE_LIVE_REPAIR_MODE = "blocking";
+        expect(isBlockingIntelligenceRepairEnabled()).toBe(true);
+
+        process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR = "true";
+        expect(isBlockingIntelligenceRepairEnabled()).toBe(false);
+      } finally {
+        if (priorMode === undefined) delete process.env.INTELLIGENCE_LIVE_REPAIR_MODE;
+        else process.env.INTELLIGENCE_LIVE_REPAIR_MODE = priorMode;
+        if (priorDisable === undefined)
+          delete process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR;
+        else process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR = priorDisable;
+      }
+
+      expect(synthesizerCode).toContain("blocking_repairs.skipped");
       expect(synthesizerCode).toContain("live_no_repair_mode");
       expect(synthesizerCode).toMatch(
         /if\s*\(\s*blockingRepairEnabled\s*&&\s*missingTabs\.length\s*>\s*0\s*\)/,

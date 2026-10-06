@@ -31,6 +31,9 @@
     "audit:ai-control-schema-drift": {
       "kind": "unclassified"
     },
+    "audit:ai-surface-control-cases": {
+      "kind": "pr-gate"
+    },
     "audit:ai-surface-controls": {
       "kind": "pr-gate"
     },
@@ -512,6 +515,18 @@
     "audit:target-writer-dry-run": {
       "kind": "unclassified"
     },
+    "audit:tenancy-fence-coverage": {
+      "kind": "report",
+      "reason": "Default mode prints the census and the top of the ranking and asserts nothing. It is the mode a person runs to read the current state; the ranking it prints is what the next fence-repair item is drawn from."
+    },
+    "audit:tenancy-fence-coverage:check": {
+      "kind": "pr-gate",
+      "reason": "Runs the census suite and then fails on per-route drift against docs/security/tenancy-fence-coverage.json, in either direction \u2014 a route whose coverage got worse, got better, appeared or disappeared. Invoked by tenancy-fence-coverage.yml. Unlike the test-CI coverage census it is safe to invoke directly from a workflow: this census reads the route tree and the test tree, not the set of commands workflows reach, so running it from CI does not alter the measurement it takes."
+    },
+    "audit:tenancy-fence-coverage:write": {
+      "kind": "operator",
+      "reason": "Regenerates the committed census after a route gains or loses a fence, or gains or loses proof. It carries the executed mutation evidence forward rather than discarding it, and the suite asserts every carried sample still describes the tree, so a stale exemption cannot survive a regeneration quietly. The author of the change owns the refresh."
+    },
     "audit:tenant-candidate-version": {
       "kind": "unclassified"
     },
@@ -597,6 +612,10 @@
     "audit:tower-v3-source-of-truth-alignment": {
       "kind": "unclassified"
     },
+    "audit:triage-record-reconciliation": {
+      "kind": "report",
+      "reason": "Report mode, and deliberately not a gate. It always exits 0: it cross-references the CI coverage census against every docs/architecture/*triage*.json and prints which untriaged unrun test files already carry a verdict, which is the hand-written derivation T-763 exists to stop repeating. The gate on the same subject is the workflow step running check-source-workspace-quarantine.mjs, which is scoped to verdicts that declare a hold; the rows this prints under any other verdict are work that is owed, and failing on them would turn a queue into a red build."
+    },
     "audit:v3-only-active-architecture": {
       "kind": "unclassified"
     },
@@ -613,6 +632,10 @@
     "audit:vercel-production-runtime:check": {
       "kind": "pr-gate"
     },
+    "check:aca-worker-job-set-derived": {
+      "kind": "pr-gate",
+      "reason": "Refuses an ACA runtime invariant whose worker-job scope is wider than what the deploy enforces. The invariant is stated over \"all required worker job images\", and which jobs those are was written twice: scripts/deploy/update-worker-jobs.sh decides which jobs the deploy re-images, and check-aca-runtime-invariant.mjs carried its own hand-typed array deciding which jobs the proof checks. Neither deploy workflow passes --worker-job-names, so that array was the whole of the enforcement and the two lists agreed only because somebody kept them agreeing \u2014 add a job to the deploy script and the proof keeps reporting PASSED over the old set, which is unfalsifiable in the one direction that matters. The enforced set is now derived from the deploy script's own WORKER_JOB_NAMES default, and this runs the suite that proves the derivation FOLLOWS that script rather than that today's two job names appear somewhere: the cases that matter mutate a fixture deploy script, because today's digests agree by accident. It then runs the real checker in --print-worker-jobs mode, which resolves the set and exits before any az or curl call, so the live derivation is proved without touching Azure and the gate is safe to run on every PR. Invoked by release-control.yml, inside the job that produces the required Release record and impact note check."
+    },
     "check:admin-integration-quarantine": {
       "kind": "pr-gate",
       "reason": "Refuses a stale, expired or growing Admin integration quarantine list. The list is what keeps 2 red suites out of the Integration suites workflow while the other 49 run. It differs from the Intelligence list in the control that expires it: those entries name retired paths whose ABSENCE is the reason, while these two name live defects that need a product decision, so this check RE-RUNS each excluded suite and fails if one passes. An exclusion whose cause has been fixed therefore cannot sit in the list quietly. The ceiling is a ratchet in both directions, so clearing an entry cannot leave silent headroom for the next one. Invoked by integration-suites.yml alongside the run it protects."
@@ -625,6 +648,14 @@
       "kind": "pr-gate",
       "reason": "Refuses a component that holds code nothing can reach. A component can lose its mount site and keep compiling, keep linting and keep reading as live product code: no-unused-vars is satisfied the moment one dead declaration references another, so a CLOSURE hides where a single orphan would not \u2014 ten declarations and 567 lines survived a fortnight in WorkspaceExecutiveShell.tsx with thirteen assertions about it green (item U-503). The walk that repaired that shipped inside one test file and read exactly one path; item U-504 moved it to one repo-owned module, measured the corpus, and wired it. It walks each module's own reference graph out from its exports and never asks who imports a FILE, which is what makes it safe over route modules: a Next.js page or layout is reached by the router and a test-only component by a suite, so under an inter-module walk both are false positives, while here an export is a root. The measurement mattered: ported unchanged the walk reported 22 findings of which 15 were FALSE POSITIVES from one mechanism \u2014 a JSX text node containing the glob src/lib/reasoning/* opens a block comment to a hand-written stripper, which blanked the whole component body and with it every reference the page made to its own tables \u2014 and two further errors ran the other way and made it miss dead code via string literals and module-level statements. None is reachable by a better regex, so the walk asks the TypeScript parser; the corrected census is 7 declarations over 1611 component files, every one an unused colour or font constant. Those 7 are recorded per declaration in a baseline rather than as a count, because a count-based ceiling would pass a brand-new dead renderer the moment somebody deleted an unused constant. It fails in BOTH directions: a recorded finding that is no longer unreachable also fails, so an exemption cannot outlive its defect and hide the next one, and a cleanup must delete its line in the same change. A missing or unparseable baseline is refused rather than read as acceptance. Runs its own 19 cases before the check. Invoked by export-reachability.yml, whose paths filter names src/app/** and src/components/** \u2014 the corpus, not just the script, since a gate triggered only by changes to its own file could never see the defect it exists for."
     },
+    "check:fixture-row-identity": {
+      "kind": "pr-gate",
+      "reason": "Refuses an intake file in which two rows share a row name. The depth-pass generator appended rows by spreading the file's first row, so the columns that NAME a row were inherited rather than declared, and one governed tenant's infrastructure file carried 14 rows under one original_row_id while the programmes file carried 11. Home keyed its rendered rows on that identifier, so clicking the 34th platform opened the 1st platform's detail panel in any build. The gate runs the generator's own 4 cases and then invokes it with --check, which reads the COMMITTED bytes and exits non-zero on a duplicate. That is deliberately not the dry run the same script offers: a dry run reports what the repair pass would fix, so it passes on a file that is broken today as long as the repair could fix it, which is exactly the state these files were in. Proven in both directions before wiring: exit 1 against the pre-fix files, exit 0 against the corrected ones, measured from a clean detached worktree rather than a stash. Invoked by fixture-row-identity.yml, whose paths filter names the two CSV globs as well as the script, since a gate triggered only by changes to its own file could never see the defect it exists for."
+    },
+    "check:identity-ledger": {
+      "kind": "pr-gate",
+      "reason": "Refuses an object id in a governed tenant's committed intake that the identity ledger cannot stand behind. scripts/data/assign-stable-identity.mjs is the only minter of object ids and records each in datasets/tenant-inputs/<tenant>/identity-ledger.json, but nothing checked that the files still agreed with it. Measured on main before item D-501: 200 findings in one tenant -- 9 ids each carried by several rows (rows appended from a template inherit its id, so every edge naming any of them resolved to whichever row came first), 133 ids a second generator stamped by sequence that no ledger declares, and 58 named rows carrying no id. Five failure kinds: shared_id, undeclared_id (including a declared id of another type), unstamped_row, edge_id_undeclared, and edge_id_unreached -- an edge whose id is real but belongs to a row other than the one it names. A declared entry no row carries is printed, not failed, because the ledger is append-only by rule. A registered tenant with no ledger is printed as NOT MEASURED rather than passed silently, and the gate refuses when no tenant is measured at all. It reads the COMMITTED files, deliberately not a dry run of the minter, which would pass on exactly the files that need minting. Proven in both directions from clean worktrees: exit 1 against main, exit 0 against the minted files. Runs the minter's 4 cases and its own 10 before the check. Invoked by tenant-identity-ledger.yml, whose paths filter names the intake CSV and ledger globs as well as the scripts, since a gate triggered only by changes to its own file could never see the defect it exists for."
+    },
     "check:integration-root-quarantine": {
       "kind": "pr-gate",
       "reason": "Refuses an undeclared or expired exclusion at the ROOT of src/__tests__/integration. This is the one carve-out whose default is EXCLUDED rather than included: the workflow enumerates root-level files by exact path, deliberately, because naming the directory would also run every red subdirectory under it \u2014 so a root file nobody adds to that command is silently unrun, and the sibling quarantine checks cannot notice that because their directories are named wholesale. Before this gate the carve-out existed only as a workflow comment counting how many files were red, and a comment cannot fail; five root files were unrun and untriaged, one of them red for live content loss on a governed answer surface. Three failure directions: a root file that is unrun and undeclared, a declared file wired back in but left on the list, and a declared suite that PASSES on re-run. It asks the coverage census which root files no workflow runs rather than re-reading the workflow command, so the two cannot disagree about a directory-regex collision. The ceiling is a ratchet in both directions. Runs its own 23 cases before the check, and is invoked by integration-suites.yml alongside the run it protects."
@@ -636,6 +667,10 @@
     "check:qa-integration-quarantine": {
       "kind": "pr-gate",
       "reason": "Refuses a stale, expired or growing QA integration quarantine list. The list is what keeps 6 red suites out of the Integration suites workflow while the other 31 run. src/__tests__/integration/qa held 37 suites and 915 assertions that no workflow ran, because the changed-suite visibility gate fires only on suites a diff touches and a directory never wired is invisible to it. Modelled on the Admin check rather than the Intelligence one: these reasons are measurable states of the repository rather than absent paths, so this RE-RUNS each excluded suite and fails if one passes, and an exclusion whose cause has been fixed cannot sit in the list quietly. The ceiling is a ratchet in both directions, so clearing an entry cannot leave silent headroom for the next one. Invoked by integration-suites.yml alongside the run it protects."
+    },
+    "check:release-check-runs-every-gate": {
+      "kind": "pr-gate",
+      "reason": "Refuses a release check that stops before the end of its gate list. The gates were imported into one process in order, so the first gate that called process.exit(0) on a success path ended the run with status 0 and every gate listed after it was never evaluated, with nothing in the output to say so. The runner now starts each gate as its own process and prints a verdict per gate. This suite copies the real entry point and the real runner into a scratch directory beside a fixture gate list and asserts on what the fixture gates themselves recorded: every listed gate ran whatever the gates before it did; exiting non-zero, throwing, setting process.exitCode, dying to a signal, failing to start, or having no file each fail the check on their own; an empty list fails; and the arguments reach every gate. One case imports the same fixtures into a single process and requires the old behaviour to appear, so the fixtures are known to be able to produce the defect. A last case runs the context truth script the final gate wraps: it must pass in its static mode, refuse any other mode instead of exiting 0 having checked nothing, and not run when imported. Invoked by release-control.yml immediately before the release check it protects."
     },
     "check:release-record-lane-guard": {
       "kind": "pr-gate"
@@ -652,6 +687,14 @@
     },
     "check:tenant-narrative-term-drift": {
       "kind": "pr-gate"
+    },
+    "check:triage-deferral-authority": {
+      "kind": "pr-gate",
+      "reason": "Refuses a triage verdict of already_verdicted_elsewhere that holds a test file out of the stale-suite draw on an authority that does not resolve. That word is one of the verdicts test-ci-coverage-census.mjs treats as owned residual work, so a file carrying it is held out of the draw and listed in triageVerdicts.heldTestPaths; it is the only held verdict that describes no work at all. The other six say what is owed - wire it, repair it, rewrite it. This one says somebody else already said, and the entire weight of the hold rests on that claim being true. Nothing checked it. Measured when this was added: 39 rows defer and hold 36 of the census's 112 held files, while drawableUntriagedUnrunTestFiles reads 0, so a scheduled run reaching fallback step 3 is told there is no stale-suite work by a count these rows are the second-largest contributor to. All 39 resolve today, which was luck rather than a control: a referent could be renamed, re-verdicted, or point at another deferral and the file would stay held with no verdict anywhere and nothing able to say so. Two authority shapes exist and both are legitimate. Record-shaped (alreadyVerdictedIn plus verdictThere, 10 rows) is fully checked here: the record must exist, hold a row for the same path, agree with verdictThere, and not itself be a deferral. Item-shaped (ownerItem alone, 29 rows, 25 of them on T-775) names a backlog item, and the backlog is operator-owned and outside this repository, so the gate requires the field and reports authorityResolvedInRepo false rather than implying it verified what it cannot reach. Scoped to stay disjoint from check:triage-verdict-discharge, which owns the case where the row's own SUBJECT is gone: a row with an absent subject is skipped here by construction, so neither gate reports the other's rows. The two sets do not intersect today (0 of 39), which is exactly the accident the scope exists to stop anyone relying on. Runs the suite that proves all seven refusal branches fail independently over fixtures, then the real audit. Invoked by release-control.yml, inside the job that produces the required Release record and impact note check."
+    },
+    "check:triage-verdict-discharge": {
+      "kind": "pr-gate",
+      "reason": "Refuses a triage verdict that addresses a test file no longer in the tree without saying where the subject went. docs/architecture/*triage*.json rows carry a verdict, an owner item and a currentAction written at a base commit; when the subject is later deleted the row keeps instructing a future reader about a path that cannot be opened, and no amount of executing closes it. The sibling report audit:triage-record-reconciliation already counts these rows and is deliberately classified report, because the rows it prints under an OPEN verdict are work that is owed and failing on owed work turns a queue into a red build. That reasoning is untouched: this gate is scoped to the disjoint sub-case where the subject itself is absent, which is not owed work because there is nothing left to execute. The other gate on this subject, check-source-workspace-quarantine.mjs, reaches only held_unwired verdicts carrying a quarantine entry, so it never sees these rows. Measured when this was added: five rows of t509-stale-suite-triage.json read Leave untouched for T-513 for five files that T-513 itself deleted in the same change that replaced each with a rendering suite, and the instruction outlived its subject by two weeks with nothing able to say so. A discharge must also RESOLVE, meaning movedTo or replacedBy has to name a file that exists, or a dead row is dischargeable by pointing it at another dead row. Runs the suite that proves both branches fail independently over fixtures, then the real audit. Invoked by release-control.yml, inside the job that produces the required Release record and impact note check."
     },
     "validate:context-corpus": {
       "kind": "pr-gate"

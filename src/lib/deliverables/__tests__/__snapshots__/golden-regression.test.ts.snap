@@ -83,7 +83,7 @@ exports[`golden regression — First Capital transformation artifacts (W5) Execu
   <div class="deck"><div class="slide" data-kind="decision_headline">
         <div class="slide-no">1</div>
         <h2>Approve a supervised AI path for L/C processing — automate the document work, keep an officer on every exception.</h2>
-        <div class="exhibit">Exhibit · decision headline</div><div class="notes"><span>Speaker notes</span> Grounded in the 2025 annual report and the model-risk governance policy; baseline facts pending.</div>
+        <div class="exhibit" data-exhibit="decision_headline">Exhibit · decision headline</div><div class="notes"><span>Speaker notes</span> Grounded in the 2025 annual report and the model-risk governance policy; baseline facts pending.</div>
       </div><div class="slide" data-kind="decision_requested">
         <div class="slide-no">2</div>
         <h2>We ask the committee to fund a six-week discovery and a supervised first wave.</h2>
@@ -99,7 +99,7 @@ exports[`golden regression — First Capital transformation artifacts (W5) Execu
       </div><div class="slide" data-kind="value">
         <div class="slide-no">5</div>
         <h2>The value is faster, evidenced L/C decisions at lower unit cost — once the operating baseline is confirmed.</h2>
-        <div class="exhibit">Exhibit · value story</div>
+        <div class="exhibit" data-exhibit="value_story">Exhibit · value story</div>
       </div><div class="slide" data-kind="recommendation">
         <div class="slide-no">6</div>
         <h2>Proceed to a supervised first wave on the bank's set platform; do not commit to scale until the baseline clears.</h2>
@@ -107,15 +107,15 @@ exports[`golden regression — First Capital transformation artifacts (W5) Execu
       </div><div class="slide" data-kind="solution">
         <div class="slide-no">7</div>
         <h2>An agentic workbench extracts and compares clauses; an officer approves every exception.</h2>
-        <div class="exhibit">Exhibit · target state architecture</div>
+        <div class="exhibit" data-exhibit="target_state_architecture">Exhibit · target state architecture</div>
       </div><div class="slide" data-kind="roadmap">
         <div class="slide-no">8</div>
         <h2>Delivery should sequence foundation, proof, then scale</h2>
-        <ul><li>Foundation: ingest and extract, officer workbench in shadow mode.</li><li>Comparison: AI-assisted clause checks, officer-approved.</li><li>Scale: low-risk straight-through with controls hardened.</li></ul><div class="exhibit">Exhibit · roadmap lanes</div>
+        <ul><li>Foundation: ingest and extract, officer workbench in shadow mode.</li><li>Comparison: AI-assisted clause checks, officer-approved.</li><li>Scale: low-risk straight-through with controls hardened.</li></ul><div class="exhibit" data-exhibit="roadmap_lanes">Exhibit · roadmap lanes</div>
       </div><div class="slide" data-kind="risks">
         <div class="slide-no">9</div>
         <h2>Risks must be managed from day one</h2>
-        <ul><li>Model risk → validation and monitoring to examiner standard</li><li>Adoption → officer-in-the-loop from day one</li></ul><div class="exhibit">Exhibit · risks and mitigations</div>
+        <ul><li>Model risk → validation and monitoring to examiner standard</li><li>Adoption → officer-in-the-loop from day one</li></ul><div class="exhibit" data-exhibit="risks_and_mitigations">Exhibit · risks and mitigations</div>
       </div><div class="slide" data-kind="decisions">
         <div class="slide-no">10</div>
         <h2>Leadership needs these decisions today</h2>

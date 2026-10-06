@@ -68,17 +68,16 @@ const COUNT_WORD = [
   "ten",
 ];
 
-/** A finding's trace, in the shape the provenance mark reads. Same contract as Tower's. */
+/** A generated file hint is not a verified canonical source link. */
 function lineageForFinding(finding: Finding): FactLineage | null {
   if (!finding.trace) return null;
   return {
     value: finding.claim,
     label: "this finding",
     grain: finding.trace.grain,
-    sources: [
-      { file: finding.trace.file, rows: 0, filter: finding.trace.rule },
-    ],
-    agreement: "single_source",
+    rule: finding.trace.rule,
+    sources: [],
+    agreement: "unverified",
     openRows: finding.openRows,
   };
 }

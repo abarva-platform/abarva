@@ -142,7 +142,7 @@ const INPUT = {
   clientKey: "t1",
   eventId: "evt-1",
   categoryId: "ams",
-  archetypeId: "AMS_MANAGED_SERVICES",
+  eventType: "infrastructure",
   asOf: "2026-09-19",
 };
 
@@ -247,10 +247,26 @@ describe("the stage 04 panel says what it knows and what it does not", () => {
     expect(panel.suggestions.rows).toEqual([
       expect.objectContaining({
         legalName: "Suggested Supplier LLC",
+        acceptedArchetypeId: "AMS_MANAGED_SERVICES",
         label: "Suggested for review",
         contactActionAvailable: false,
       }),
     ]);
+  });
+
+  it("does not infer supplier eligibility from a coarse event type without a classified category", async () => {
+    authorityReturns([]);
+    contractsReturn("no_contracts");
+
+    const panel = await readSourceNewStage04VendorPanel({
+      ...INPUT,
+      categoryId: null,
+      eventType: "managed_service",
+    });
+
+    expect(panel.suggestions.status).toBe("blocked");
+    expect(panel.suggestions.rows).toEqual([]);
+    expect(panel.suggestions.blockers.join(" ")).toContain("mapping decision");
   });
 
   it("makes no claim about who may be contacted", async () => {
@@ -301,6 +317,15 @@ describe("the stage 04 panel says what it knows and what it does not", () => {
         sourceReferences: ["evt-1/panel/auth-2", "EVID-SUPPLIER-2"],
       }),
     );
+  });
+
+  it("does not call a candidate contact-ready from a stale payload alone", async () => {
+    authorityReturns([{ ...GOVERNED_REGISTRY, activeContactCount: 0 }]);
+    contractsReturn("available", []);
+
+    const panel = await readSourceNewStage04VendorPanel(INPUT);
+    expect(panel.rows[0]?.activeContactCount).toBe(0);
+    expect(panel.rows[0]?.contactBlocker).toContain("No active contact record");
   });
 
   it("says the selected group is empty by evidence, not by outcome", async () => {

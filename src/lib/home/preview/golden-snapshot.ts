@@ -3,6 +3,7 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 
+import { isDeclaredSyntheticDemoTenant } from "@/lib/tenant/declared-synthetic-tenant";
 import { normalizeHomeReviewBundle } from "./bundle-normalization";
 import type { HomeReviewBundle } from "./types";
 
@@ -49,9 +50,12 @@ export function getHomeReviewBundle(
   if (!fs.existsSync(filePath)) return null;
   // Normalised on the way in, so every surface reading this bundle sees the same answer to "does
   // this column vary" rather than each working it out separately.
-  const bundle = normalizeHomeReviewBundle(
-    JSON.parse(fs.readFileSync(filePath, "utf8")) as HomeReviewBundle,
-  );
+  const bundle = normalizeHomeReviewBundle({
+    ...(JSON.parse(fs.readFileSync(filePath, "utf8")) as HomeReviewBundle),
+    // Read from the tenant input registry here, where the tenant is known, so no surface that
+    // renders this bundle has to decide for itself whether it is looking at demonstration data.
+    declaredSyntheticDemo: isDeclaredSyntheticDemoTenant(tenantKey),
+  });
   cache.set(tenantKey, bundle);
   return bundle;
 }

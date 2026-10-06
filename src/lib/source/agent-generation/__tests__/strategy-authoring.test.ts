@@ -58,12 +58,36 @@ describe("strategy-stage authoring (d02_value_target, d03_archetype_decision)", 
 
     const withoutUpstream = template!.buildUserMessage(ctx, {});
     expect(withoutUpstream).toContain("Managed Service sourcing");
-    expect(withoutUpstream).toMatch(/not yet authored/);
+    expect(withoutUpstream).toMatch(/not yet approved/);
     expect(withoutUpstream).toContain(
       "Candidate opportunity / validation target from intake (not contract value or realized savings): $80,000,000",
     );
 
-    const withUpstream = template!.buildUserMessage(ctx, {
+    const reviewedContext: SourceGenerationContext = {
+      ...ctx,
+      artifactStates: [{
+        id: "state-d01",
+        sourceEventId: "evt",
+        tenantKey: "skyharbor",
+        artifactCode: "d01_strategy_memo",
+        stage: "strategy",
+        family: "sourcing_strategy",
+        tier: "stub",
+        status: "approved",
+        requirementLevel: "required",
+        gateDefining: true,
+        linkedArtifactId: null,
+        notes: null,
+        body: "STRATEGY MEMO BODY",
+        bodyFormat: "markdown",
+        bodyAuthoredBy: null,
+        bodyUpdatedAt: null,
+        bodyGenerationMetadata: null,
+        createdAt: "2026-06-12T00:00:00.000Z",
+        updatedAt: "2026-06-12T00:00:00.000Z",
+      }],
+    };
+    const withUpstream = template!.buildUserMessage(reviewedContext, {
       d01_strategy_memo: "STRATEGY MEMO BODY",
     });
     expect(withUpstream).toContain("STRATEGY MEMO BODY");

@@ -6,14 +6,7 @@
 // /api/admin/programs/approvals/[requestId]. On success, redirects
 // back to /admin/programs/approvals so the queue re-renders.
 //
-// PRE-W4-PR-4 · two new admin-initiated actions appear next to
-// Approve/Reject:
-//
-//   • "Notify sponsor" (Tier 1 escalation) — increments notify_count
-//     and bumps escalation_level 0 → 1. Logs `approval_sponsor_notified`
-//     to admin_audit_log. Source of Wave 4 `approval.escalated` Tier 1.
-//
-//   • "Escalate to platform admin" (Tier 2) — flips escalation_level
+// Escalate to platform admin (Tier 2) flips escalation_level
 //     to 2 and re-routes the request. Disabled once already escalated.
 //     Logs `approval_escalated`. Source of Wave 4 `approval.escalated`
 //     Tier 2.
@@ -41,30 +34,16 @@ export interface ApprovalDecisionPanelProps {
   postUrl?: string;
   /** ISO of the original submission, drives the SLA badge in the header. */
   requestedAt?: string;
-  /** Current notify_count from the row. Drives the notify-button palette. */
-  notifyCount?: number;
   /** Current escalation_level. Drives the escalate-button state. */
   escalationLevel?: 0 | 1 | 2;
-  /** ISO of the last reminder. Drives the banner copy after notify. */
-  lastNotifiedAt?: string | null;
   /**
    * Test seams for the server-action calls. In production these
    * default to the real "use server" exports from
    * `src/app/(maestro)/admin/programs/approvals/_actions/*`.
    */
-  notifySponsor?: (requestId: string) => Promise<NotifySponsorClientResult>;
   escalateApproval?: (
     requestId: string,
   ) => Promise<EscalateApprovalClientResult>;
-}
-
-export interface NotifySponsorClientResult {
-  ok: boolean;
-  notifiedAt: string | null;
-  notifyCount: number;
-  escalationLevel: 0 | 1 | 2;
-  error?: string;
-  detail?: string;
 }
 
 export interface EscalateApprovalClientResult {
@@ -141,10 +120,7 @@ export function ApprovalDecisionPanel({
   alreadyDecided = false,
   postUrl,
   requestedAt,
-  notifyCount = 0,
   escalationLevel = 0,
-  lastNotifiedAt = null,
-  notifySponsor,
   escalateApproval,
 }: ApprovalDecisionPanelProps) {
   const router = useRouter();
@@ -152,12 +128,8 @@ export function ApprovalDecisionPanel({
   const [submitting, setSubmitting] = useState<Decision | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [localNotifyCount, setLocalNotifyCount] = useState(notifyCount);
   const [localEscalationLevel, setLocalEscalationLevel] = useState<0 | 1 | 2>(
     escalationLevel,
-  );
-  const [localLastNotifiedAt, setLocalLastNotifiedAt] = useState<string | null>(
-    lastNotifiedAt,
   );
   const [showEscalateConfirm, setShowEscalateConfirm] = useState(false);
   const [actionPending, startActionTransition] = useTransition();
@@ -203,36 +175,6 @@ export function ApprovalDecisionPanel({
     },
     [postUrl, rationale, requestId, router],
   );
-
-  const handleNotifySponsor = useCallback(() => {
-    if (!notifySponsor) {
-      setError("notify-sponsor action is not wired in this surface.");
-      return;
-    }
-    setError(null);
-    setNotice(null);
-    startActionTransition(() => {
-      void (async () => {
-        try {
-          const result = await notifySponsor(requestId);
-          if (!result.ok) {
-            setError(result.detail ?? result.error ?? "notify-sponsor failed");
-            return;
-          }
-          setLocalNotifyCount(result.notifyCount);
-          setLocalEscalationLevel(result.escalationLevel);
-          setLocalLastNotifiedAt(result.notifiedAt);
-          const ts = result.notifiedAt
-            ? new Date(result.notifiedAt).toLocaleString()
-            : new Date().toLocaleString();
-          setNotice(`Reminder logged · sponsor notified at ${ts}`);
-          router.refresh();
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "notify_failed");
-        }
-      })();
-    });
-  }, [notifySponsor, requestId, router]);
 
   const handleEscalateConfirmed = useCallback(() => {
     if (!escalateApproval) {
@@ -480,38 +422,6 @@ export function ApprovalDecisionPanel({
           {submitting === "rejected" ? "Rejecting…" : "Reject"}
         </button>
 
-        {/*
-          PRE-W4-PR-4 · Tier 1 (notify) + Tier 2 (escalate) admin actions.
-          Notify is amber-tinted once at least one reminder has fired so
-          the admin sees "I've already nudged" at a glance.
-        */}
-        <button
-          type="button"
-          data-testid="approval-notify-sponsor-button"
-          aria-label="Notify sponsor"
-          onClick={handleNotifySponsor}
-          disabled={inFlight || actionPending}
-          style={{
-            padding: `${SPACING.sm} ${SPACING.lg}`,
-            background: COLORS.white,
-            color: localNotifyCount > 0 ? COLORS.amberInk : `${COLORS.ink}cc`,
-            border: `1px solid ${
-              localNotifyCount > 0 ? COLORS.amberInk : `${COLORS.ink}40`
-            }`,
-            borderRadius: RADIUS.md,
-            fontFamily: TYPOGRAPHY.sans,
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: inFlight || actionPending ? "progress" : "pointer",
-            opacity: inFlight || actionPending ? 0.7 : 1,
-          }}
-        >
-          {actionPending
-            ? "Notifying…"
-            : localNotifyCount > 0
-              ? `Notify sponsor (${localNotifyCount})`
-              : "Notify sponsor"}
-        </button>
         <button
           type="button"
           data-testid="approval-escalate-button"
@@ -548,20 +458,6 @@ export function ApprovalDecisionPanel({
             : "Escalate to platform admin"}
         </button>
       </div>
-
-      {localLastNotifiedAt ? (
-        <div
-          data-testid="approval-notify-meta"
-          style={{
-            fontFamily: TYPOGRAPHY.sans,
-            fontSize: 12,
-            color: `${COLORS.ink}80`,
-          }}
-        >
-          Last sponsor reminder ·{" "}
-          {new Date(localLastNotifiedAt).toLocaleString()}
-        </div>
-      ) : null}
 
       {showEscalateConfirm ? (
         <div

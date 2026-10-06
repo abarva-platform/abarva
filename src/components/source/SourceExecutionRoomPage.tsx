@@ -21,6 +21,10 @@ import {
   type EvidenceResolutionContext,
 } from '@/lib/source/evidence-trace/evidence-trace';
 import {
+  RESTRICTED_SOURCE_FINANCIAL_LABEL,
+  redactFinancialProseDeep,
+} from '@/lib/source/financial-display';
+import {
   buildSourceExecutionRoomNotifications,
   routeNotification,
   type NotificationEvent,
@@ -78,8 +82,15 @@ const ACTION_STATUS_LABEL: Record<ExecutionActionStatus, string> = {
   pending_external: 'Pending external',
 };
 
-function formatUsd(value: number | null): string {
+/**
+ * U-520 — the exact-magnitude gate for this surface. The flag is a REQUIRED
+ * second parameter so an unanswering call site fails to compile; the granted
+ * branch is byte-for-byte the previous rendering, and only the restricted label
+ * is shared. See `RenewalCockpitView` for the full reasoning.
+ */
+function formatUsd(value: number | null, canViewFinancialValues: boolean): string {
   if (value === null) return 'not priced';
+  if (!canViewFinancialValues) return RESTRICTED_SOURCE_FINANCIAL_LABEL;
   return `$${Math.round(value).toLocaleString('en-US')}`;
 }
 
@@ -550,12 +561,36 @@ function EvidencePack({
 }
 
 export function SourceExecutionRoomPage({
-  room,
+  room: rawRoom,
   evidenceContext,
+  canViewFinancialValues,
 }: {
   room: ExecutionRoom;
   evidenceContext?: EvidenceResolutionContext;
+  /**
+   * U-520 — required, not optional. An optional flag answers "yes" for a caller
+   * that stayed silent, which is the fail-open shape U-508 removed elsewhere.
+   */
+  canViewFinancialValues: boolean;
 }) {
+  /**
+   * U-520, second half — the magnitudes on this surface are mostly PROSE.
+   *
+   * Only one figure here goes through `formatUsd` (the annual-spend metric).
+   * The rest are sentences `buildExecutionRoom` authored — action evidence
+   * bases, the negotiation brief, the vendor email draft, rebid rationale —
+   * rendered by five sub-components that take no entitlement flag. Gating the
+   * single formatter call while leaving those in place produced a surface that
+   * read "Annual spend Restricted" above "Current annual spend is $500,000",
+   * which is a worse outcome than no gate: it tells the reader the figure was
+   * withheld while showing it to them.
+   *
+   * So the room is redacted once, here, before any sub-component sees it. That
+   * is the "redaction applied to its data before it arrives" mechanism, chosen
+   * over threading the flag because this component takes a typed payload and
+   * the alternative is a new prop on five children that none of them would read.
+   */
+  const room = redactFinancialProseDeep(rawRoom, canViewFinancialValues);
   const status = STATUS_META[room.status];
   return (
     <div style={PAGE}>
@@ -615,7 +650,10 @@ export function SourceExecutionRoomPage({
             value={room.daysToNoticeDeadline === null ? 'not recorded' : `${room.daysToNoticeDeadline}d`}
             detail={room.noticeDeadlineDate ?? undefined}
           />
-          <Metric label="Annual spend" value={formatUsd(room.currentAnnualSpendUsd)} />
+          <Metric
+            label="Annual spend"
+            value={formatUsd(room.currentAnnualSpendUsd, canViewFinancialValues)}
+          />
           <Metric label="Term end" value={room.termEndDate ?? 'not recorded'} />
           <Metric label="Owner" value={room.accountableOwner} />
         </div>

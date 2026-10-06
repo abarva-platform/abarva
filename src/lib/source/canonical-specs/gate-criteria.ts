@@ -36,6 +36,7 @@ export interface SourceGateCriterion {
   linkedArtifactCodes: string[];
   /** Lead role accountable for advancing this criterion to `met`. */
   ownerRole:
+    | 'event-owner'
     | 'sourcing-lead'
     | 'sponsor'
     | 'ea-council'
@@ -100,8 +101,8 @@ const SCOPE_TO_RFP: SourceGateCriterion[] = [
     criterionId: 'GATE-SCOPE-02',
     fromStage: 'scope',
     toStage: 'rfp',
-    title: 'Sponsor commitment letter on record',
-    description: 'Sponsor commits to scope decision and resourcing.',
+    title: 'Sponsor commitment on record',
+    description: 'Verified sponsor signer proof or named delegate acknowledgement with provider-accepted sponsor notice for the current Scope memo.',
     severity: 'hard',
     required: true,
     linkedArtifactCodes: ['d05_scope_memo'],

@@ -1,77 +1,246 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+/**
+ * Item T-495 · one suite of the claimable half.
+ *
+ * This suite's first case used to read `synthesizer.ts`, `answer-mode-registry.ts`,
+ * `ask/index.ts` and the Ask route as TEXT and assert 24 substrings of them. It
+ * was red, and for nothing behavioural: it required the literal
+ * `const finalText = applyCxoAnswerModeFallbacks(cleanedText, answerMode)`, and
+ * that call is still made — at `synthesizer.ts:825`, written as a ternary arm.
+ * A byte assertion on a statement's formatting fails when the statement is
+ * reformatted and passes when the whole feature is deleted but the words stay,
+ * so it answered the wrong question in both directions.
+ *
+ * T-495's acceptance says to delete such an assertion rather than sharpen its
+ * pattern — a tighter pattern is the same defect with a longer fuse — and to
+ * assert what the module does instead. So the cases below drive the real
+ * `synthesizeStream`.
+ *
+ * WHAT IS MOCKED AND WHAT IS NOT. Only the audited Anthropic client is mocked;
+ * it is I/O. `classifyAbarvaAnswerMode`, `buildCxoAnswerModeSystemAddendum`,
+ * `buildCxoAnswerModePromptDirective` and `applyCxoAnswerModeFallbacks` all run
+ * for real — they are the subject. The expected strings are produced by calling
+ * those same functions rather than being copied into this file, so the cases
+ * cover whatever the registry says today and cannot drift from it.
+ *
+ * WHY A GENERAL-MODE CASE IS HERE. Every positive case below would also pass if
+ * the synthesizer injected the contract unconditionally, which would defeat the
+ * classification entirely. The general-mode case is the one that fails in that
+ * direction: the contract must be absent when the query does not ask for it.
+ *
+ * WHAT THIS SUITE NO LONGER CLAIMS. The deleted case also asserted that
+ * `ask/index.ts` and `src/app/api/intelligence/ask/route.ts` contain
+ * `applyCxoAnswerModeFallbacks(` and `classifyAbarvaAnswerMode(...)`. Those were
+ * byte assertions over two other modules and proved only that the words were
+ * present; both would have survived the feature being unwired. They are not
+ * replaced here, because driving either module means standing up retrieval and a
+ * Next.js route, which is a larger unit than this suite. The residual is
+ * recorded on T-495 rather than left implied.
+ */
+
+import type { CxoAnswerModeContract } from "../answer-mode-registry";
 import {
   applyCxoAnswerModeFallbacks,
+  buildCxoAnswerModePromptDirective,
+  buildCxoAnswerModeSystemAddendum,
   CXO_ANSWER_MODE_REGISTRY,
   ensureAbarvaSolutionBrief,
   ensureAbarvaSurfacePlan,
   MOVES_EXECUTION_PHASE_LABELS,
 } from "../answer-mode-registry";
 import { classifyAbarvaAnswerMode } from "../response-policy";
+import { cleanIntelligenceModelInputText } from "@/lib/intelligence/model-input-cleaner";
+
+const getAuditedAnthropicClient = jest.fn();
+
+jest.mock("@/lib/agent/stream", () => ({
+  getAuditedAnthropicClient: (...args: unknown[]) =>
+    getAuditedAnthropicClient(...args),
+}));
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { synthesizeStream } = require("../synthesizer") as {
+  synthesizeStream: (args: Record<string, unknown>) => AsyncGenerator<string>;
+};
+
+/** One tenant-shaped source, so retrieval is not the variable under test. */
+const SOURCES = [
+  {
+    type: "TENANT" as const,
+    name: "Contact centre operating record",
+    id: null,
+    detail:
+      "The member service function owns first-call resolution and average handle time; the vendor contract renews next year.",
+    confidence: 0.8,
+  },
+];
+
+/**
+ * Drives the real `synthesizeStream` over a stubbed model stream and returns
+ * both halves of the contract: what was sent to the model, and what the
+ * generator yielded to the caller.
+ */
+async function runSynthesis(args: {
+  query: string;
+  modelText: string;
+}): Promise<{ system: string; user: string; emitted: string }> {
+  const captured: { system: string; user: string } = { system: "", user: "" };
+  getAuditedAnthropicClient.mockReset();
+  getAuditedAnthropicClient.mockResolvedValue({
+    auditId: "audit-t495",
+    client: {
+      messages: {
+        create: async () => ({
+          async *[Symbol.asyncIterator]() {
+            yield {
+              type: "content_block_delta",
+              delta: { type: "text_delta", text: args.modelText },
+            };
+          },
+        }),
+      },
+    },
+  });
+
+  const chunks: string[] = [];
+  for await (const chunk of synthesizeStream({
+    query: args.query,
+    sources: SOURCES,
+    intent: "topic_synthesis",
+    tenantId: "tenant-t495",
+    tenantClientKey: "skyharbor-air",
+    answerOnlyStreaming: true,
+    richText: false,
+    onModelInput: (parts: { system: string; user: string }) => {
+      captured.system = parts.system;
+      captured.user = parts.user;
+    },
+  })) {
+    chunks.push(chunk);
+  }
+
+  return { ...captured, emitted: chunks.join("") };
+}
+
+/**
+ * A query the classifier puts in `strategy_to_moves_execution`, asserted rather
+ * than assumed in the cases below — if the classifier stops agreeing, the case
+ * says so instead of silently testing `general`.
+ */
+const MOVES_EXECUTION_QUERY =
+  "How would we execute this as a Moves program with phase gates?";
+const GENERAL_QUERY = "Who is our largest telecoms vendor?";
+
+/**
+ * The registry read through the interface it is declared against. The object
+ * literal is not annotated, so TypeScript narrows each entry to the fields that
+ * entry happens to carry and `systemContract` is absent from the union. This is
+ * an annotation, not a cast: every entry is assignable to the declared shape.
+ */
+const REGISTRY: Record<string, Partial<CxoAnswerModeContract>> =
+  CXO_ANSWER_MODE_REGISTRY;
 
 describe("strategy-to-AbarVa solution synthesis contract", () => {
-  const synthesizerCode = readFileSync(
-    join(__dirname, "..", "synthesizer.ts"),
-    "utf8",
-  );
-  const registryCode = readFileSync(
-    join(__dirname, "..", "answer-mode-registry.ts"),
-    "utf8",
-  );
-  const askIndexCode = readFileSync(join(__dirname, "..", "index.ts"), "utf8");
-  const routeCode = readFileSync(
-    join(
-      __dirname,
-      "..",
-      "..",
-      "..",
-      "..",
-      "app",
-      "api",
-      "intelligence",
-      "ask",
-      "route.ts",
-    ),
-    "utf8",
-  );
+  const ORIGINAL_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-  it("injects the strategy-to-AbarVa solution contract into the active synthesis path", () => {
-    expect(synthesizerCode).toContain("classifyAbarvaAnswerMode(args.query)");
-    expect(registryCode).toContain("STRATEGY_TO_ABARVA_SOLUTION_CONTRACT");
-    expect(registryCode).toContain("STRATEGY_TO_MOVES_EXECUTION_CONTRACT");
-    expect(registryCode).toContain("strategy_to_abarva_solution");
-    expect(registryCode).toContain("ACTIVE ANSWER MODE:");
-    expect(registryCode).toContain("strategy_to_moves_execution");
-    expect(registryCode).toContain("How AbarVa would solve this");
-    expect(registryCode).toContain("Home for current-state evidence");
-    expect(registryCode).toContain("Source for vendor/commercial levers");
-    expect(registryCode).toContain("compact Moves phase plan");
-    expect(registryCode).toContain("ensureMovesExecutionPhaseTable");
-    expect(registryCode).toContain("P0 Originate");
-    expect(registryCode).toContain("P5 Approval & Mobilization");
-    expect(registryCode).toContain("Tower Track Outcomes");
-    expect(synthesizerCode).toContain(
-      "buildCxoAnswerModeSystemAddendum(answerMode)",
+  beforeAll(() => {
+    // The synthesizer refuses without a key before it reaches any of the
+    // behaviour below. No request is made — the client is mocked.
+    process.env.ANTHROPIC_API_KEY = "test-key-t495";
+  });
+
+  afterAll(() => {
+    if (ORIGINAL_API_KEY === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = ORIGINAL_API_KEY;
+  });
+
+  it("sends the classified answer mode's system contract and prompt directive to the model", async () => {
+    expect(classifyAbarvaAnswerMode(MOVES_EXECUTION_QUERY)).toBe(
+      "strategy_to_moves_execution",
     );
-    expect(synthesizerCode).toContain(
-      "buildCxoAnswerModePromptDirective(answerMode)",
+
+    const { system, user } = await runSynthesis({
+      query: MOVES_EXECUTION_QUERY,
+      modelText: "Run this as a Moves program.",
+    });
+
+    // Both are cleaned by the product before the model call, so the expected
+    // text is put through the same cleaner rather than pattern-matched.
+    expect(system).toContain(
+      cleanIntelligenceModelInputText(
+        buildCxoAnswerModeSystemAddendum("strategy_to_moves_execution"),
+      ).trim(),
     );
-    expect(synthesizerCode).toContain(
-      "applyCxoAnswerModeFallbacks(text, answerMode)",
+    expect(user).toContain(
+      cleanIntelligenceModelInputText(
+        buildCxoAnswerModePromptDirective("strategy_to_moves_execution"),
+      ).trim(),
     );
-    expect(synthesizerCode).toContain(
-      "const finalText = applyCxoAnswerModeFallbacks(cleanedText, answerMode)",
+  });
+
+  it("applies the mode's deterministic fallback to the model's text before the answer leaves the synthesizer", async () => {
+    const modelText = "Run this as a Moves program.";
+
+    const { emitted } = await runSynthesis({
+      query: MOVES_EXECUTION_QUERY,
+      modelText,
+    });
+
+    // The model omitted the phase plan; the synthesizer owes it deterministically.
+    expect(modelText).not.toContain("Moves phase plan");
+    expect(emitted).toBe(
+      applyCxoAnswerModeFallbacks(modelText, "strategy_to_moves_execution"),
     );
-    expect(synthesizerCode).toContain("yield deterministicRemainder");
-    expect(synthesizerCode).toContain(
-      "applyCxoAnswerModeFallbacks(\n      enforceDecisionGradeAnswer(evidenceDisciplined),\n      answerMode,\n    )",
-    );
-    expect(askIndexCode).toContain("applyCxoAnswerModeFallbacks(");
-    expect(askIndexCode).toContain("classifyAbarvaAnswerMode(trimmed)");
-    expect(routeCode).toContain("applyCxoAnswerModeFallbacks(");
-    expect(routeCode).toContain(
-      'classifyAbarvaAnswerMode(context?.query ?? "")',
-    );
+    for (const label of MOVES_EXECUTION_PHASE_LABELS) {
+      expect(emitted).toContain(label);
+    }
+  });
+
+  it("leaves a general-mode answer alone, so the contract follows the classification rather than every query", async () => {
+    expect(classifyAbarvaAnswerMode(GENERAL_QUERY)).toBe("general");
+
+    const modelText = "Your largest telecoms commitment renews next year.";
+    const { system, user, emitted } = await runSynthesis({
+      query: GENERAL_QUERY,
+      modelText,
+    });
+
+    // EVERY contract the registry declares, general included, read off the
+    // registry entries rather than through the two builders. Two reasons, and
+    // the first is a defect this case found:
+    //
+    //  - Leaving `general` out let a mutation that made the injection
+    //    unconditional pass every case in this suite, because `general`
+    //    declares a systemContract and a promptDirective of its own and no
+    //    case looked for them.
+    //  - `CXO_ANSWER_MODE_REGISTRY` holds 11 entries while `AbarvaAnswerMode`
+    //    admits 5, so six keys cannot be passed to the builders at all. Those
+    //    six are `active: false` placeholders that declare neither a
+    //    systemContract nor a promptDirective, so the type is right and nothing
+    //    is missing — but reading the declared fields covers all 11 without a
+    //    cast, and asserts over whichever ones carry a contract today. The
+    //    5 active modes are what make this loop non-vacuous; a placeholder
+    //    contributes no assertion, by the emptiness checks below.
+    for (const [mode, contract] of Object.entries(REGISTRY)) {
+      const systemContract = cleanIntelligenceModelInputText(
+        contract.systemContract ?? "",
+      ).trim();
+      const directive = cleanIntelligenceModelInputText(
+        contract.promptDirective ?? "",
+      ).trim();
+      if (systemContract) {
+        expect({ mode, injected: system.includes(systemContract) }).toEqual({
+          mode,
+          injected: false,
+        });
+      }
+      if (directive) {
+        expect({ mode, injected: user.includes(directive) }).toEqual({
+          mode,
+          injected: false,
+        });
+      }
+    }
+    expect(emitted).toBe(modelText);
   });
 
   it("keeps critical CXO answer modes in one registry", () => {
@@ -197,7 +366,7 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
         "| P1 Charter | Sign the charter. |",
         "| P2 Discover & Diagnose | Ground the evidence. |",
         "| P3 Design Future State | Pick the path. |",
-        "| P5 Approval & Mobilization | Confirm readiness. |",
+        "| P5 Mobilize & Handoff | Confirm readiness. |",
         "| Tower Track Outcomes | Track value. |",
       ].join("\n"),
       "strategy_to_moves_execution",
@@ -219,7 +388,7 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
         "P2 Discover & Diagnose\tGround the evidence.\tBacktest drift.",
         "P3 Design Future State\tPick the path.\tReview options.",
         "P4 Roadmap & Business Case\tBuild milestones.\tSet gates.",
-        "P5 Approval & Mobilization\tConfirm readiness.\tRun cutover.",
+        "P5 Mobilize & Handoff\tConfirm readiness.\tRun cutover.",
         "Tower Track Outcomes\tTrack value.\tReport drift.",
       ].join("\n"),
       "strategy_to_moves_execution",

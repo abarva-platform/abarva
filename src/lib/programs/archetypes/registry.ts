@@ -198,7 +198,7 @@ const AI_PDLC_PHASES: PhaseRequirements[] = [
     gateRequirements: [
       {
         key: "charter_signed_off",
-        describe: "Charter signed off by sponsor",
+        describe: "Charter approved by an authorized workspace user",
         severity: "hard",
       },
     ],
@@ -564,7 +564,7 @@ export const IT_SOURCING_EVENT: StrategicMoveArchetype = {
       gateRequirements: [
         {
           key: "charter_signed_off",
-          describe: "Charter signed off by sponsor",
+          describe: "Charter approved by an authorized workspace user",
           severity: "hard",
         },
       ],
@@ -1246,7 +1246,7 @@ const AI_OPS_PHASES: PhaseRequirements[] = [
     gateRequirements: [
       {
         key: "charter_signed_off",
-        describe: "Charter signed off by sponsor",
+        describe: "Charter approved by an authorized workspace user",
         severity: "hard",
       },
     ],
@@ -1530,7 +1530,7 @@ const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
     whyNeeded:
       "Shows how agents handle eligibility, benefits, claims, prior authorization, CRM history, knowledge lookup, transfers, and escalation today.",
     sourceDocHint: "Current-state process map, SOP, or workshop notes",
-    acceptedFormats: ["docx", "pdf", "pptx"],
+    acceptedFormats: ["docx", "pdf", "pptx", "csv"],
     feedsMethods: ["two_gap", "leverage_ranking"],
   },
   {
@@ -1654,7 +1654,7 @@ const CONTACT_CENTER_AGENT_ASSIST_PHASES: PhaseRequirements[] = [
     gateRequirements: [
       {
         key: "charter_signed_off",
-        describe: "Charter signed off by member-service sponsor",
+        describe: "Charter approved by an authorized workspace user",
         severity: "hard",
       },
     ],
@@ -1892,7 +1892,7 @@ const COMMERCIAL_LENDING_AGENT_ASSIST_PHASES: PhaseRequirements[] = [
     gateRequirements: [
       {
         key: "charter_signed_off",
-        describe: "Charter signed off by commercial-lending sponsor",
+        describe: "Charter approved by an authorized workspace user",
         severity: "hard",
       },
     ],

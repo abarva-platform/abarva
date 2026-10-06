@@ -116,9 +116,91 @@ node scripts/exec/append-claim.mjs \
 ```
 
 The gate decides and **a refusal means nothing is written** — not a warning, not
-a line with a caveat. The helper adds no rules of its own: the verdict is the
-gate's exit status, so a rule that lands in the gate governs the claim step the
-day it merges.
+a line with a caveat. On ownership the helper adds no rules of its own: the
+verdict is the gate's exit status, so a rule that lands in the gate governs the
+claim step the day it merges.
+
+## Widening a claim's file list — `--action amend` (item T-836)
+
+A claim is appended "with the exact files you intend to touch", and sometimes the
+measurement moves afterwards. The protocol's answer is to **append an amendment,
+never to restamp the claim** — and until T-836 the protocol gave that amendment
+no way to say what it covers.
+
+```bash
+node scripts/exec/append-claim.mjs \
+  --file ~/Downloads/EXECUTION_CLAIMS.md \
+  --item T-836 --identity '<base-agent>#<run-id>' \
+  --action amend --branch exec/t-836-amend-declares-files \
+  --files 'scripts/exec/append-claim.mjs,scripts/exec/README.md' \
+  --message 'why the file list moved'
+```
+
+**`--files` is required on an amendment, and on nothing else.** That asymmetry is
+the item. T-804 made a line's `files:` list the whole of its lock and left the
+line that declares none reading its own prose; measured on the live register at
+`91d90ad59f`, **303 of 1325** attributed path-holding lines declare no list and
+**83** of those open `AMEND`. Those lines mean to hold what they name, so the
+residual is deliberate — freeing them would put two runs on one file, and a wrong
+free costs another lane its work silently where a wrong hold costs one refusal
+that names itself. The defect was upstream of the reader: there was no action
+that wrote the field, so the careful thing to do and the declarable thing to do
+were different things. An amendment whose `--files` were optional would be the
+field-less line again, written from the sanctioned path.
+
+Three rules follow, and each is a case in `append-claim.test.mjs`:
+
+- **The head is `AMEND item <id> claim`**, which the register's ownership reader
+  attributes to the item and reads as a hold. It keeps `item <id>` inside it on
+  purpose: a head that said only `AMEND` would write a hold nobody can see.
+- **An amendment may only extend a live claim of your own.** The gate must answer
+  `already-yours`; `take` means nothing holds the item, so there is no claim to
+  extend and what was asked for is a claim. This is also what pays for an
+  amendment being exempt from the queue-provenance gate — the item was already
+  asserted against a current queue when it was claimed, and making a holder
+  regenerate before it may widen its own file list would strand it.
+- **The file half IS asked.** An amendment widens a hold onto paths the original
+  claim did not name, so a path another live claim holds stops it, exactly as it
+  stops a claim. A release and an abstention take nothing and stay exempt.
+
+**Still owed, and not decided by this change:** whether an amendment's declared
+list REPLACES or ADDS TO the list of the claim it amends. Both lines are live and
+each contributes its own declared paths, so the effect today is ADD-TO — that is a
+description of the reader, not a ruling. Replace is the simpler rule and silently
+frees files the original claim holds; add-to matches what amendments are used for.
+The call is Anand's, and the prose fallback for field-less lines cannot be removed
+until it is made — a separate change, with its own measurement.
+
+## The record this line releases (item C-528)
+
+One rule does originate here, and it is about documents rather than ownership.
+Nine release records on `main` declared a post-deployment signed-in proof still
+owed while the register recorded that it had run. None of them was a wrong
+verdict: a release record is authored before the merge, so it can only say the
+proof has not happened; the register line is appended after the deploy, when it
+has; and nothing between the two ever reopens the record.
+
+So when a line says something about a signed-in proof, this helper compares it
+against the release records the branch itself adds — `origin/main...HEAD` under
+`docs/releases/records`, which needs no pull request id, because at that moment
+the squash is on `main` and may not be in the local repository at all. A record
+the line contradicts is named, with both accounts and the append-only repair
+that is owed.
+
+Three properties, and each is the opposite of the ownership gate's for a stated
+reason:
+
+- **Advisory by default**, refusing only under `--strict`, and always *before*
+  the write. A release hands work back; refusing to record an outcome because a
+  document disagrees with it would strand a live claim.
+- **It cannot repair the record** — that file is merged — and it does not
+  pretend to. Opening the follow-up is still a human or agent action.
+- **An unreadable checkout is `UNDETERMINED`, never silence.** "No record
+  contradicts this line" and "I could not look" are different statements.
+
+`--repo`, `--records` and `--base` point it at another checkout. Precision is
+exactly the branch's own diff: a branch carrying several records has all of them
+named, which is harmless as an advisory and wrong under `--strict`.
 
 Three behaviours are worth knowing before you reach for `--force` (there isn't
 one):
@@ -199,6 +281,68 @@ worktree list are not the operator's, and a gate asserting on a subject it
 cannot see is the unfailable kind. So `--check` is an operator control in the
 shape of `--preclaim`: available, and only as good as its being invoked.
 
+## Is this directory swept by something else? Ask before `git worktree add`
+
+The retention control above answers "may I remove this worktree". This answers
+the question underneath it, which nobody had asked: **is the directory the
+protocol sends every agent to being swept by something that never heard of the
+claim protocol?**
+
+At `2026-09-26T00:19Z` a full checkout created per the operator task file's own
+first instruction vanished mid-session between two commands about 90 seconds
+apart, taking uncommitted work with it; the next command died `uv_cwd ENOENT`. A
+second, independent run of the same task lost a worktree in the same window.
+Nothing in the register, the pulse file or the task instructions said who sweeps,
+on what trigger, or with what age bound.
+
+```bash
+node scripts/exec/worktree-sweep-hazard.mjs --check-root /tmp/exec-x
+node scripts/exec/worktree-sweep-hazard.mjs --check-root "$PWD" --json
+```
+
+`0` no declared sweeper reaches it, `1` swept, `2` unknown or misused. Run it on
+the path you are about to pass to `git worktree add`, not after.
+
+**It reads the host's declarations; it does not hold an opinion about `/tmp`.**
+A gate that said "/tmp is unsafe" in prose would be the shape this directory
+exists against — it could not notice the rule changing, it could not be wrong in
+a way anyone sees, and it would say nothing at all about a root nobody had
+thought of. So it parses launchd job definitions and the scripts they run, and
+on a macOS host today that reading finds, unprompted:
+
+```
+SWEPT /private/tmp/exec-item
+  com.apple.tmp_cleaner
+  /System/Library/LaunchDaemons/com.apple.tmp_cleaner.plist
+  StartCalendarInterval Hour 0   ->  /usr/libexec/tmp_cleaner
+  declares /tmp, age bound 3 day(s), on atime AND mtime AND ctime
+```
+
+That job consults no branch, no index and no claim. It is a genuine, scheduled
+hazard to any worktree that outlives an item by three days, and it is **not**
+the actor that removed the checkout at 00:19Z — see the release record for what
+the evidence does and does not settle.
+
+Three inversions it refuses, each held down by a case:
+
+1. **`not_swept` is not `safe`.** It means no *declared* sweeper reaches the
+   root, and it reports how many jobs on the host declare nothing this can read
+   — 421 of them on the machine above — rather than rounding that to zero.
+2. **An unreadable host is `unknown`, never `not_swept`.** Refusing costs one
+   rerun; a false `not_swept` costs the work.
+3. **The age bound is WHEN, not WHETHER.** Every worktree is younger than the
+   bound at the moment it is created, and an item that runs long carries it past
+   the bound with no second warning. A verdict that consulted the candidate's
+   own age would report safe at exactly the moment an agent asks.
+
+Eight mutations, eight caught — and two of them survived their first fixture,
+which is the part worth keeping:
+
+| mutation | first fixture | why it passed anyway |
+|---|---|---|
+| `containsPath` → bare `startsWith` | `/tmpfoo/exec-x` vs a `/tmp` sweeper | after symlink resolution the sweeper's root is `/private/tmp` and `/tmpfoo` resolves to itself, so **no prefix relationship held in either form** — the negative control never reached the boundary. The case now builds two real sibling directories and asserts the textual prefix holds *before* reading the verdict. |
+| shebang bound dropped | any | it changed no verdict, because a Mach-O binary contains no shell assignment. It is a blast-radius bound, not a correctness guard, and it had nothing asserting it. Case 20 now pins what it buys: a program that is not a script declares nothing **even when its bytes carry the declaration text**. |
+
 ## Was I run, or imported? One predicate, not four
 
 Every script here is a module with a CLI attached, so each must answer that
@@ -265,7 +409,17 @@ node scripts/exec/cli-entry.test.mjs
 node scripts/exec/toolchain-manifest.test.mjs
 node scripts/exec/id-collision.test.mjs
 node scripts/exec/fossil-claims.test.mjs
+node scripts/exec/signed-in-proof-reconcile.test.mjs
+node scripts/exec/register-citation-check.test.mjs
+node scripts/exec/deploy-proof-resolver.test.mjs
+node scripts/exec/worktree-sweep-hazard.test.mjs
+node scripts/exec/register-merge-coverage.test.mjs
 ```
+
+Four of those lines were missing from this list while the workflow ran all four
+suites, so the list understated the contract rather than the contract itself. The
+authority is `.github/workflows/execution-queue-toolchain.yml`; this block is a
+convenience and is now equal to it.
 
 The suites run the generators as child processes against synthetic operator documents. CI never reads a local execution backlog.
 
@@ -316,6 +470,52 @@ changes in both.
 the later one moves, renumbered by whoever claims it. That is what the register
 already did once, by hand.
 
+## Did the register notice this merge at all? (item C-556)
+
+```bash
+node scripts/exec/register-merge-coverage.mjs --since 2026-09-26T00:00:00Z
+node scripts/exec/register-merge-coverage.mjs --base origin/main~40 --json
+```
+
+Four controls here ask whether a register line decides a row *correctly*. This
+asks whether **there is a line**. A change can merge to `main`, ship, and alter a
+product surface while nothing in the register names it — and because every
+downstream reader is keyed to a line, it then has no `merged` state, no
+`deployed` state, no signed-in question, and no item reporting it as unfinished.
+The absence of a row and the absence of work look identical.
+
+Three naming states, and the middle one is why a `grep` is not this tool:
+
+| verdict | what it means | what to do |
+|---|---|---|
+| `named` | some line's **subject** pull request is this merge's | nothing |
+| `mentioned-only` | the SHA or the number is on file, and no line is about it | read the printed clause and settle it |
+| `unnamed` | neither appears anywhere | the merge has no reported state; write its line |
+| `unresolved` | `--no-github`, so the question was withheld | re-run with the lookup |
+
+Measured over `--since 2026-09-26T00:00:00Z` on 2026-09-27: **76 merges, 64
+named, 8 mentioned-only, 4 unnamed.** So it detects silence rather than counting
+merges — the failure mode a one-directional check would have.
+
+Two readings the item's own filing got wrong, both repaired here:
+
+- **Match a SHA by prefix, never at a fixed width.** git abbreviates to whatever
+  length is unambiguous and the register quotes whatever git printed — 8, 9, 10
+  and 40 characters all appear. A ten-character probe missed the one merge of the
+  nine that the register does name, at eight.
+- **A SHA in another item's prose is not that merge's line.** Four of the nine do
+  appear, at nine characters, as somebody else's base or another run's SHA. A
+  substring reader calls all four accounted-for, which is `C-551`'s distinction
+  asked about SHAs.
+
+Provenance is three answered states plus one unasked one. A commit whose only
+pull request is **closed without merging** is its own state: the API does not say
+how it reached `main`. `--no-github` answers `pull-request-unresolved`, never
+`no-pull-request`, and `--strict` refuses that run at exit 2 — a run that asked
+nothing has produced silence, not measured it.
+
+Exit codes: `0` clean, `1` a finding, `2` a refusal.
+
 ## The queue says 0 claimable — is the suppression bucket telling the truth?
 
 ```bash
@@ -363,3 +563,43 @@ network and a credential. This is a separate CLI, in the shape of
 becomes executable. The verdict is advisory — it prints the `append-claim.mjs`
 invocation for a fossil and refuses to print one for anything else. Appending
 the line is still a decision someone takes.
+
+## A gate over PART of an item (item C-552)
+
+`deriveBlocker` returns at most one blocker and it is a per-ITEM field, so an
+acceptance written in halves had nowhere to say that one half is owner-gated
+while the other is ordinary executable work. One true sentence about the gated
+half labelled the whole item, the queue filed it where an agent is told never to
+look, and the executable half stopped being work.
+
+Measured on the live documents: one item's derived blocker went from `null` to an
+owner gate and the claimable count went 4 to 3, caused entirely by a single
+register line that was **right** about the half it described. And the register is
+append-only while the match runs over an item's whole corpus, so a later line
+saying the other half is free does not move the blocker — one unvetoed sentence
+anywhere is enough. There was no in-register remedy at all.
+
+**The remedy is a declaration, not a narrower pattern.** The blocker rules are
+unchanged; `T-703` and `T-761` each paid for their current breadth and the
+sentence above is a correct match. An item may instead declare, in its own row
+or in an appended register line:
+
+```
+**Gate scope — partial.** Gated half: <text>. Claimable half: <text>.
+```
+
+The board then records the gate as `partialGate` rather than `blocker`. The item
+is claimable again, its lane row carries a `⚠ PARTLY GATED` marker naming the
+half nobody may take, and the queue renders a *Partly gated* section on every
+run — including at zero, so an empty bucket and a generator that stopped looking
+are not the same thing.
+
+Four properties keep it in the safe direction, each with a case that fails
+without it:
+
+| property | what it refuses |
+|---|---|
+| declared, never inferred | with no declaration the gate covers the whole item, exactly as before |
+| fails closed | both halves are required; naming only the gated one frees nothing |
+| cannot invent a gate | the scope is read only after a rule has matched, so a row *about* partial gates does not acquire one |
+| `Unclaimed` is not scopable | it asserts the ABSENCE of a gate, and promoting it is the one direction this file must never take |

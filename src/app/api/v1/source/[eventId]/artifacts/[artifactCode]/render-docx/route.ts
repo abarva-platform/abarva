@@ -40,6 +40,7 @@ import { buildDemandChallengePayloadFromContext } from "@/lib/source/exports/pay
 import { buildSourcingApproachPayloadFromContext } from "@/lib/source/exports/payloads/sourcing-approach-payload";
 import { buildVendorRiskPackPayloadFromContext } from "@/lib/source/exports/payloads/vendor-risk-pack-payload";
 import { eventCodeFromPayload } from "@/lib/source/exports/metadata";
+import { requireRfpArtifactExport } from "@/lib/source/exports/rfp-export-authority";
 
 const NARRATIVE_CODES = new Set([
   "d01_strategy_memo",
@@ -143,6 +144,13 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
       { status: 403 },
     );
   }
+
+  const rfpExport = await requireRfpArtifactExport(
+    ctx,
+    artifactCode,
+    activeClient?.id ?? null,
+  );
+  if (rfpExport.response) return rfpExport.response;
 
   // Build payload + render. Narrative artifacts (d05/d09/d24/d27) use
   // the shared narrative payload shape; structured-data artifacts

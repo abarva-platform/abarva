@@ -17,6 +17,24 @@ describe("shared artifact contracts", () => {
     );
   });
 
+  it("allocates prose targets across charter sections above the prose quality floor", () => {
+    const sections = CHARTER_CONTRACT.sections;
+    const targets = sections.map((section) => section.targetProseWords);
+
+    expect(targets.every((target) => Number.isFinite(target))).toBe(true);
+    expect(
+      targets.reduce<number>((sum, target) => sum + (target ?? 0), 0),
+    ).toBeGreaterThanOrEqual(
+      (CHARTER_CONTRACT.wordBudget.minProseWords ?? 0) + 30,
+    );
+    expect(
+      targets.reduce<number>((sum, target) => sum + (target ?? 0), 0),
+    ).toBe(810);
+    for (const section of sections) {
+      expect(section.targetProseWords).toBeLessThanOrEqual(section.maxWords);
+    }
+  });
+
   it("keeps the word budget internally consistent (min <= target min <= target max <= hard max)", () => {
     const wb = CHARTER_CONTRACT.wordBudget;
     expect(wb.minWords).toBeLessThanOrEqual(wb.targetWords.min);
@@ -57,25 +75,29 @@ describe("shared artifact contracts", () => {
     );
   });
 
-  it("requires exactly 9 sections (redesigned 2026-07-25 to give Discovery Preparation its own section), matching both pipelines' required-section count", () => {
-    expect(CHARTER_CONTRACT.sections).toHaveLength(9);
+  it("requires exactly 7 sections, with workshop-guide detail split out of the Charter", () => {
+    expect(CHARTER_CONTRACT.sections).toHaveLength(7);
     expect(CHARTER_CONTRACT.sections.map((s) => s.key)).toEqual([
       "charter_decision",
       "opportunity_context",
-      "intended_outcomes",
       "scope",
       "success_measures",
       "sponsorship_governance",
       "known_constraints_dependencies",
-      "discovery_preparation",
-      "authorization_next_steps",
+      "authorization_conditions",
     ]);
+    expect(
+      CHARTER_CONTRACT.sections.some((s) => s.key === "discovery_preparation"),
+    ).toBe(false);
   });
 
   it("declares the boundary statement and table ceiling for the presentation standard", () => {
     expect(CHARTER_CONTRACT.boundaryStatement).toMatch(
       /authorizes and bounds the Discovery phase/i,
     );
-    expect(CHARTER_CONTRACT.maxSubstantiveTables).toBe(4);
+    expect(CHARTER_CONTRACT.boundaryStatement).toMatch(
+      /does not .*provide a Discovery workshop guide/i,
+    );
+    expect(CHARTER_CONTRACT.maxSubstantiveTables).toBe(3);
   });
 });

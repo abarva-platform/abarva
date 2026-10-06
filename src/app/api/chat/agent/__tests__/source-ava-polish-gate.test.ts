@@ -305,7 +305,8 @@ describe("agent route · Source Contract 360 selected-context prompt", () => {
     const blockIdx = source.indexOf("const sourceContract360PromptBlock =");
     const promptIdx = source.indexOf("sourceContract360PromptBlock,");
 
-    expect(source).toContain("buildSourceContract360PromptBlock");
+    expect(source).toContain("buildAuthorizedSourceContract360PromptBlock");
+    expect(source).not.toContain("buildSourceContract360PromptBlock(surfaceContext");
     expect(source).toContain("buildSourcePortfolioFallbackAnswer");
     expect(blockIdx).toBeGreaterThan(-1);
     expect(promptIdx).toBeGreaterThan(blockIdx);

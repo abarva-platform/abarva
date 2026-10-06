@@ -90,3 +90,4 @@ out/
 
 # Generated contract packets (regenerate with npm run packet:check)
 .artifacts/contract-packets/
+__pycache__/

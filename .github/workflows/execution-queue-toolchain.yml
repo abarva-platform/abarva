@@ -1,3 +1,25 @@
+# Execution queue toolchain
+#
+# THIS JOB CANNOT BLOCK A MERGE, and nothing about a green run here says so.
+# `Execution queue behavioral contract` is required by no ruleset: read by name
+# against the rulesets API on 2026-10-04, `main` carried 19 required status
+# contexts and this was not one of them. It triggers on `scripts/exec/**` and it
+# is advisory when it goes red (item C-582).
+#
+# The run that DOES gate these suites is the step `Prove the execution-queue
+# toolchain contracts can fail a merge`, inside `Run hygiene_gate.sh` in
+# `.github/workflows/hygiene-gate.yml`. That is the required context, and
+# that is the run a closure note must quote. Quoting a step below instead is a
+# true sentence about a run that gates nothing -- item T-595's defect exactly,
+# which is why the required sweep echoes each suite path as it goes.
+#
+# The fifteen individually titled steps here are kept deliberately: their
+# comments are the only written record of what each control measured and why it
+# exists, and the required sweep is a glob so a sixteenth suite is gated the day
+# it lands whether or not it is ever named below. The contract that the required
+# sweep still covers this whole directory is
+# `src/__tests__/behaviors/exec-toolchain-requiredness.test.ts`.
+
 name: Execution queue toolchain
 
 on:
@@ -194,6 +216,37 @@ jobs:
       - name: Run the toolchain manifest contract
         run: node scripts/exec/toolchain-manifest.test.mjs
 
+      # C-526. Does a release record's own account of its signed-in proof match
+      # what the register says happened?
+      #
+      # The filed instance: a record on `main` declared a signed-in replay
+      # required and, in QA/Validation, that it was NOT RUN, while the register's
+      # release line for the same pull request said the replay ran, was positive,
+      # and produced a residual now carried by its own item. The durable artifact
+      # in the public repository asserted a debt that did not exist and hid a
+      # finding that did, and nothing compared the two. A false "not run" costs
+      # more than a false "run": an auditor either re-runs a proof already
+      # obtained, or reports a release as owing one it does not owe.
+      #
+      # Measured over 626 records added in the window: 209 declare a signed-in
+      # proof required, and 9 of them DISAGREE with the register after the filed
+      # instance was repaired -- so the item was one case of a class, not an
+      # incident.
+      #
+      # The cases run over REAL records read from `docs/releases/records` at run
+      # time, and over register text quoted in the suite, so CI never reads the
+      # operator root. Calibrated in BOTH directions: the filed disagreement, and
+      # a real known-negative whose replay genuinely was not run and which must
+      # come back `agree` -- a detector calibrated only on the disagreeing case
+      # cannot tell a stale record from a detector that always says stale.
+      #
+      # Red first 2/34 on the repair half; 41 passed / 0 failed after.
+      # Seventeen mutations, seventeen caught. Two guards were DELETED rather
+      # than kept during that sweep, each after measuring that it decided zero
+      # records across the whole corpus.
+      - name: Run the signed-in-proof reconciliation contract
+        run: node scripts/exec/signed-in-proof-reconcile.test.mjs
+
       # T-729. Two findings, one item id -- a detector, not an allocator.
       #
       # Three times in one day two overlapping runs of this scheduled task each
@@ -292,3 +345,124 @@ jobs:
       # filed on a hand measurement of seven that all still resolved.
       - name: Run the register-citation transcription verifier contract
         run: node scripts/exec/register-citation-check.test.mjs
+
+      # Which merges actually deployed (item T-476).
+      #
+      # Eighteen merged items carried a `deploy proof pending` line that had
+      # been stale for three to four days, and the first one checked named a
+      # run that had already completed `success` against its exact merge SHA
+      # before the line claiming it was in flight was written. All eighteen
+      # resolved -- fifteen deployed on their own SHA, three superseded by a
+      # descendant run after the concurrency group cancelled their own, none
+      # genuinely undeployed. A ledger that says `pending` when the proof
+      # exists is a false state, and it is the direction that hides finished
+      # work, so nothing downstream ever trips over it.
+      #
+      # The suite is synthetic -- every run record and every commit graph is
+      # built in the test, including a real two-branch git repository, because
+      # `actions/checkout` is shallow and a case reading this repository's own
+      # `HEAD~1` would pass locally and be unreachable in CI.
+      #
+      # The cases that carry it are the ones where TIME and ANCESTRY disagree:
+      # a later successful run on a sibling branch is not a descendant, and
+      # crediting it writes a false `deployed`. Ten mutations, ten caught.
+      - name: Run the deploy-proof resolver contract
+        run: node scripts/exec/deploy-proof-resolver.test.mjs
+
+      # Is the directory the protocol sends agents to swept by something else?
+      # (item T-489)
+      #
+      # At 2026-09-26T00:19Z a full checkout created per the operator task
+      # file's own first instruction vanished mid-session between two commands
+      # about 90 seconds apart, taking uncommitted work with it; the next
+      # command died `uv_cwd ENOENT`. A second, independent run of the same task
+      # lost a worktree in the same window. Nothing in the register, the pulse
+      # file or the task instructions said who sweeps that directory, on what
+      # trigger, or with what age bound -- so the claim protocol was telling
+      # every agent to work somewhere another process may delete, and no control
+      # could say so.
+      #
+      # The control READS the host's own declarations -- launchd job definitions
+      # and the scripts they run -- rather than asserting a verdict about a path
+      # in prose. A gate that said "/tmp is unsafe" could not notice the rule
+      # changing, could not be wrong in a way anyone sees, and would say nothing
+      # at all about a root nobody thought of.
+      #
+      # Three inversions it refuses, each pinned by a case: an unreadable host
+      # is `unknown`, never `not_swept`; `not_swept` means no DECLARED sweeper
+      # reaches the root and reports the count of jobs that declare nothing, so
+      # it is not read as a proof of safety; and the age bound is WHEN, never
+      # WHETHER -- every worktree is younger than the bound when it is created,
+      # so a verdict consulting the candidate's own age would report safe at
+      # exactly the moment an agent asks.
+      #
+      # Cases 1-13 run the exported functions over fixtures, 14-18 run the real
+      # CLI as a child process, 20 pins the shebang bound, and 21 reads the real
+      # host and is the ONLY case that skips -- a Linux runner has no launchd,
+      # and a gate asserting on a subject it cannot see is the unfailable kind.
+      #
+      # Eight mutations, eight caught -- but two of them survived their first
+      # fixture and both are recorded in the suite. The prefix-boundary case
+      # passed with the boundary check removed, because after symlink resolution
+      # no prefix relationship held in either form; it is now built so the
+      # textual prefix genuinely holds, and asserts that before reading the
+      # verdict. The shebang bound changed no verdict at all until a case
+      # asserted what it actually buys.
+      - name: Run the worktree sweep-hazard contract
+        run: node scripts/exec/worktree-sweep-hazard.test.mjs
+
+      # Does the register account for this merge at all? (item C-556)
+      #
+      # Four controls in this directory ask whether a register line decides a row
+      # correctly. This asks whether there IS a line. A change can merge to
+      # `main`, ship, and alter a product surface while nothing in the register
+      # names it by merge SHA or by pull request -- and every downstream reader is
+      # keyed to a line, so it then carries no merged state, no deployed state, no
+      # signed-in question, and no item reports it as unfinished. The absence of a
+      # row and the absence of work are indistinguishable.
+      #
+      # Measured over --since 2026-09-26T00:00:00Z: 76 merges, 64 named, 8
+      # mentioned-only, 4 unnamed. Both directions, which is what stops this
+      # counting merges instead of detecting silence.
+      #
+      # The item was filed on a grep for ten-character abbreviations, and two of
+      # its nine findings were wrong in opposite directions. One merge IS named --
+      # "PR #8520 merged as 7f0056d1", by pull request and by an EIGHT character
+      # abbreviation that a fixed-width probe cannot see -- so a SHA is matched by
+      # prefix relation. Four more DO appear at nine characters and none of them is
+      # named: they are somebody else's base, another item's merge narrated in
+      # passing, or the SHA of a deploy run a different item queued behind. A
+      # substring reader calls all four accounted-for, which is C-551's
+      # distinction asked about SHAs, so the join is the SUBJECT pull request read
+      # with signed-in-proof-reconcile.mjs's own grammar.
+      #
+      # `mentioned-only` is its own verdict for that reason. Folding it into
+      # `named` hides an unaccounted merge -- the defect, inverted, in the silent
+      # direction -- and folding it into `unnamed` sends an auditor after a thread
+      # that is on file.
+      #
+      # A guard requiring the naming line to ASSERT the merge was built, measured
+      # over the live window, and REMOVED rather than kept: it moved 12 ordinary
+      # release lines out of `named`, because the repo's merge-token reader is
+      # tuned for a different question and an untokenised "squash merge <sha>"
+      # reads as unannounced. Widening the token to fit would be C-529's defect.
+      # The flag is reported on the row instead and decides nothing.
+      #
+      # This step runs the SUITE only. The detector reads the operator register
+      # and the GitHub API, neither of which a runner has, and a control taking
+      # its truth from a subject the pull request never saw cannot fail. Every
+      # pull request lookup in the suite is passed in as data; the one git case
+      # builds its own two-commit repository, because `actions/checkout` is
+      # shallow and a case reading real commits would pass locally and be
+      # unreachable here. The live-corpus cases assert only what an append-only
+      # register cannot undo -- a named merge stays named, a mentioned one stays
+      # at least mentioned -- and deliberately do NOT assert that any merge is
+      # still unnamed, which would go red the day the corpus improved.
+      #
+      # Red first 31 passed / 19 failed against the status-quo reader (fixed-width
+      # substring, two naming states, no subject grammar); 50 / 0 after. Fifteen
+      # mutations, fifteen caught -- one of them only after a first attempt
+      # SURVIVED, and closing it needed a case reaching a line that carries no SHA
+      # at all.
+      - name: Run the merge-coverage detector contract
+        run: node scripts/exec/register-merge-coverage.test.mjs

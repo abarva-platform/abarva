@@ -235,7 +235,7 @@ export const CONTACT_CENTER_AI_PRIMER: ArchetypePrimer = {
       id: 'digital-channel-containment-pull',
       label: 'Digital-channel containment pull (chat / web / SMS, last 90 days)',
       rationale:
-        'Lets the team test whether a digital cohort is the cleaner first pilot than voice; required input for the synthesis-prep cohort-confirmation conversation with the sponsor.',
+        'Lets the team test whether a digital cohort is the cleaner first pilot than voice; required input for the synthesis-prep cohort-confirmation conversation with the workspace team.',
       format: 'spreadsheet',
       neededAt: 'synthesis-prep',
     },

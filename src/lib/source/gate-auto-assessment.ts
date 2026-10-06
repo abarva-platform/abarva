@@ -10,6 +10,7 @@ import type {
   SourceEventGateCriterion,
 } from "./canvas-substrate";
 import { evaluateCriterionMetReadiness } from "./source-governance-enforcement";
+import { criterionForSourceApprovalPolicy, type SourceApprovalPolicyCode } from "./approval-policy";
 import type { GateCriterionSeverity } from "./canonical-specs";
 import type { SourceStageKey } from "./types";
 
@@ -94,6 +95,7 @@ export function assessStageGate(input: {
   criteria: SourceEventGateCriterion[];
   artifacts: SourceEventArtifactState[];
   evidence: SourceEventEvidence[];
+  approvalPolicyCode?: SourceApprovalPolicyCode | null;
 }): GateAssessment {
   const evidenceByRequirement = new Map(
     input.evidence.map((row) => [row.requirementId, row]),
@@ -104,7 +106,7 @@ export function assessStageGate(input: {
     criteria: input.criteria
       .filter((criterion) => criterion.fromStage === input.fromStage)
       .map((criterion) =>
-        assessCriterion(criterion, evidenceByRequirement, input.artifacts),
+        assessCriterion(criterion, evidenceByRequirement, input.artifacts, input.approvalPolicyCode),
       ),
   };
 }
@@ -193,8 +195,12 @@ function assessCriterion(
   criterion: SourceEventGateCriterion,
   evidenceByRequirement: Map<string, SourceEventEvidence>,
   artifacts: SourceEventArtifactState[],
+  approvalPolicyCode?: SourceApprovalPolicyCode | null,
 ): GateCriterionAssessment {
-  const definition = criterionById(criterion.criterionId);
+  const definition = criterionForSourceApprovalPolicy(
+    criterionById(criterion.criterionId),
+    approvalPolicyCode,
+  );
   const mappedRequirementIds = evidenceRequirementsForCriterion(
     criterion.criterionId,
   );
@@ -278,6 +284,7 @@ function assessCriterion(
       evidence: Array.from(evidenceByRequirement.values()),
       reason: "system-auto-assessment",
       skipApprovalReasonCheck: true,
+      approvalPolicyCode,
     });
     if (!readiness.ok) {
       return {

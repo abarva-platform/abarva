@@ -1,7 +1,10 @@
 import {
   buildDiscoveryBlueprintInputFromProgram,
+  declaredDiscoveryFamilies,
   evaluateDiscoveryEvidenceReadiness,
   mapEvidenceToDiscoveryFamily,
+  resolveDeclaredEvidenceFamily,
+  resolveDeclaredProgramArchetypeId,
   type DiscoveryEvidenceReadinessItem,
 } from "../evidence-readiness";
 import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
@@ -26,6 +29,43 @@ function item(
 }
 
 describe("discovery evidence readiness", () => {
+  it("honors a declared charter archetype without replacing legacy program fields", () => {
+    const program = {
+      functionPackKey: null,
+      archetype: "ai_product_enablement",
+      name: "Governed data initiative",
+      problemStatement: "Establish a governed data foundation.",
+      charter: {
+        classification: { archetype: "governed_data_foundation" },
+      },
+    };
+    const declaredId = resolveDeclaredProgramArchetypeId(program);
+    const resolved = getDiscoveryBlueprint(
+      buildDiscoveryBlueprintInputFromProgram(program),
+      declaredId,
+    );
+
+    expect(program.archetype).toBe("ai_product_enablement");
+    expect(program.functionPackKey).toBeNull();
+    expect(declaredId).toBe("governed_data_foundation");
+    expect(resolved.blueprintId).toBe("governed_data_foundation");
+    expect(
+      resolved.evidenceFamilies.filter((family) => family.required).map((family) => family.id),
+    ).toEqual([
+      "data_governance_ownership",
+      "semantic_layer_certification",
+      "data_lineage_audit_trail",
+      "data_quality_rules",
+      "source_system_data_access",
+      "platform_architecture_readiness",
+      "master_identity_resolution",
+      "privacy_security_controls",
+      "model_risk_responsible_ai_controls",
+      "measurement_owner_cadence",
+      "finance_baseline_value_plan",
+    ]);
+  });
+
   it("maps uploads to discovery evidence families", () => {
     expect(
       mapEvidenceToDiscoveryFamily(
@@ -222,5 +262,237 @@ describe("discovery evidence readiness", () => {
     expect(agentAssistBlueprint.blueprintId).toBe(
       "healthcare_contact_center_agent_assist",
     );
+  });
+});
+
+// An upload made against a declared evidence family must be credited to that
+// family. The keyword scorer reads the item's title and summary and awards the
+// item to the single best-scoring family, so a file is routed by whatever
+// words its first rows happen to contain.
+describe("declared evidence family outranks keyword inference", () => {
+  const memberService = getDiscoveryBlueprint(
+    "healthcare member service contact center agent assist",
+  );
+
+  // The shape of a real workflow walkthrough: its opening rows name the systems
+  // the agent visits, so "claims", "eligibility" and "source" all appear.
+  const WALKTHROUGH_SUMMARY =
+    "case_id,contact_intent,step,time_seconds,actor,system_or_artifact,effort_or_wait,exception_or_control,evidence_ref " +
+    "WF-01,status inquiry,1,42,agent,CRM,agent effort,verify caller in approved workflow,SESSION-01 " +
+    "WF-01,status inquiry,2,68,agent,claims status view,agent effort,source timestamp not always visible,SYS-01 " +
+    "WF-01,status inquiry,3,53,agent,eligibility view,agent effort,agent confirms effective date,SYS-01";
+
+  function walkthrough(
+    declaredFamilyKey: string | null,
+  ): DiscoveryEvidenceReadinessItem {
+    return {
+      ...item("wf", "workflow_walkthrough.csv", WALKTHROUGH_SUMMARY),
+      declaredFamilyKey,
+    };
+  }
+
+  it("the keyword scorer alone files a workflow walkthrough under data access", () => {
+    // The defect, pinned: without a declaration this is what inference does.
+    expect(mapEvidenceToDiscoveryFamily(walkthrough(null), memberService)).toBe(
+      "claims_eligibility_benefits_data_access",
+    );
+  });
+
+  it("credits the declared family instead", () => {
+    const readiness = evaluateDiscoveryEvidenceReadiness({
+      blueprint: memberService,
+      evidenceItems: [walkthrough("member_service_process_map")],
+    });
+    const covered = readiness.families
+      .filter((family) => family.status === "covered")
+      .map((family) => family.familyId);
+    expect(covered).toEqual(["current_state_workflow_map"]);
+  });
+
+  it("a declaration is not also keyword-scored into a second family", () => {
+    const readiness = evaluateDiscoveryEvidenceReadiness({
+      blueprint: memberService,
+      evidenceItems: [walkthrough("member_service_process_map")],
+    });
+    expect(
+      readiness.families.find(
+        (family) =>
+          family.familyId === "claims_eligibility_benefits_data_access",
+      )?.status,
+    ).toBe("missing");
+  });
+
+  it("maps a declared family whose label spans two discovery families to both", () => {
+    const systems = {
+      ...item("sys", "system_inventory.csv", "system_id,domain,system_role"),
+      declaredFamilyKey: "member_service_systems_data_landscape",
+    };
+    expect(declaredDiscoveryFamilies(systems, memberService)).toEqual([
+      "crm_contact_center_system_map",
+      "claims_eligibility_benefits_data_access",
+    ]);
+  });
+
+  it("accepts a declared key that is itself a blueprint family id", () => {
+    const direct = {
+      ...item("k", "anything.csv", "no keywords here"),
+      declaredFamilyKey: "knowledge_base_ownership_freshness",
+    };
+    expect(declaredDiscoveryFamilies(direct, memberService)).toEqual([
+      "knowledge_base_ownership_freshness",
+    ]);
+  });
+
+  it("falls back to keyword inference when nothing recognised is declared", () => {
+    for (const declared of [null, undefined, "", "uploaded_move_evidence"]) {
+      const undeclared = {
+        ...item(
+          "kpi",
+          "contact center kpi baseline",
+          "AHT, transfer, repeat contact and CSAT metric baseline.",
+        ),
+        declaredFamilyKey: declared,
+      };
+      expect(declaredDiscoveryFamilies(undeclared, memberService)).toEqual([]);
+      const readiness = evaluateDiscoveryEvidenceReadiness({
+        blueprint: memberService,
+        evidenceItems: [undeclared],
+      });
+      expect(
+        readiness.families.find(
+          (family) => family.familyId === "contact_center_kpis",
+        )?.status,
+      ).toBe("covered");
+    }
+  });
+
+  it("does not infer P1 charter evidence into a P2 discovery family", () => {
+    const charterMetrics = {
+      ...item(
+        "charter-metrics",
+        "Charter success criteria",
+        "Contact center AHT, first contact resolution, baseline KPI targets and CSAT measures.",
+      ),
+      phase: 1,
+      declaredFamilyKey: "charter_success_metrics",
+    };
+    const readiness = evaluateDiscoveryEvidenceReadiness({
+      blueprint: memberService,
+      evidenceItems: [charterMetrics],
+    });
+
+    expect(
+      readiness.families.find(
+        (family) => family.familyId === "contact_center_kpis",
+      )?.status,
+    ).toBe("missing");
+  });
+
+  it("ignores a crosswalk target the blueprint does not contain", () => {
+    const foreign = {
+      ...item("wf", "workflow.csv", "workflow"),
+      declaredFamilyKey: "member_service_process_map",
+    };
+    // `blueprint` above is a different archetype with no member-service families.
+    expect(declaredDiscoveryFamilies(foreign, blueprint)).toEqual([]);
+  });
+});
+
+describe("a family declared at upload", () => {
+  const memberService = getDiscoveryBlueprint(
+    "healthcare member service contact center agent assist",
+  );
+
+  it("accepts a family this Move's discovery requires", () => {
+    expect(
+      resolveDeclaredEvidenceFamily(
+        "model_risk_responsible_ai_controls",
+        memberService,
+      ),
+    ).toEqual({ ok: true, familyKey: "model_risk_responsible_ai_controls" });
+  });
+
+  it("treats empty input as nothing declared", () => {
+    for (const raw of ["", "   ", null, undefined]) {
+      expect(resolveDeclaredEvidenceFamily(raw, memberService)).toEqual({
+        ok: true,
+        familyKey: null,
+      });
+    }
+  });
+
+  it("refuses a family this Move does not require instead of ignoring it", () => {
+    const result = resolveDeclaredEvidenceFamily("cost_pools", memberService);
+    expect(result.ok).toBe(false);
+  });
+
+  it("a declared blueprint family is credited whatever the file's text says", () => {
+    // The observed case: a controls file whose opening rows mention knowledge
+    // and freshness is scored into the knowledge family by keywords.
+    const controls: DiscoveryEvidenceReadinessItem = {
+      ...item(
+        "mr",
+        "controls.csv",
+        "control,guardrail,evaluation test,owner Stale knowledge article presented as authoritative; show source and freshness; knowledge owner; test policy",
+      ),
+    };
+    expect(mapEvidenceToDiscoveryFamily(controls, memberService)).toBe(
+      "knowledge_base_ownership_freshness",
+    );
+    const readiness = evaluateDiscoveryEvidenceReadiness({
+      blueprint: memberService,
+      evidenceItems: [
+        { ...controls, declaredFamilyKey: "model_risk_responsible_ai_controls" },
+      ],
+    });
+    expect(
+      readiness.families
+        .filter((family) => family.status === "covered")
+        .map((family) => family.familyId),
+    ).toEqual(["model_risk_responsible_ai_controls"]);
+  });
+});
+
+describe("resolveDeclaredProgramArchetypeId prefers a known catalog archetype", () => {
+  it("a non-archetype functionPackKey does NOT shadow a charter-declared archetype", () => {
+    const program = {
+      functionPackKey: "some_function_pack", // not a catalog archetype id
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    };
+    expect(resolveDeclaredProgramArchetypeId(program)).toBe(
+      "governed_data_foundation",
+    );
+  });
+
+  it("does not require overloading program.archetype (phase logic) to declare", () => {
+    const program = {
+      archetype: "ai_operations_customer_digital", // phase archetype, kept as-is
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    };
+    // both are catalog ids; the FIRST matching candidate wins by field order
+    // (functionPackKey -> charter.classification -> program.archetype), so the
+    // charter declaration is honored ahead of program.archetype.
+    expect(resolveDeclaredProgramArchetypeId(program)).toBe(
+      "governed_data_foundation",
+    );
+  });
+
+  it("honors a catalog archetype placed in functionPackKey", () => {
+    expect(
+      resolveDeclaredProgramArchetypeId({
+        functionPackKey: "governed_data_foundation",
+      }),
+    ).toBe("governed_data_foundation");
+  });
+
+  it("falls back to the first non-empty value as the inference seed", () => {
+    expect(
+      resolveDeclaredProgramArchetypeId({
+        functionPackKey: "some_function_pack",
+        name: "ignored",
+      }),
+    ).toBe("some_function_pack");
+    expect(resolveDeclaredProgramArchetypeId({})).toBeNull();
+    expect(resolveDeclaredProgramArchetypeId(null)).toBeNull();
   });
 });

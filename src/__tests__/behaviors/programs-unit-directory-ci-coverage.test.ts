@@ -6,6 +6,13 @@ import {
   expandWorkflowCommands,
   extractWorkflowRunCommands,
 } from "../../../scripts/quality/check-integration-ci-visibility.mjs";
+import {
+  DARK_PROGRAMS_BASELINE_PATH,
+  NO_DRIFT_MESSAGE,
+  diffDarkDirectories,
+  formatDarkDirectoryDrift,
+} from "@/testing/dark-directory-ratchet";
+import DARK_PROGRAMS_BASELINE from "./programs-unit-directory-ci-coverage.baseline.json";
 
 /**
  * `src/lib/programs/__tests__` holds 85 suites. Six of them ran in CI, because
@@ -75,6 +82,10 @@ const WIRED_DIRECTORIES = [
     directory: `${PROGRAMS_ROOT}/board-artifacts/__tests__`,
     minimumSuites: 4,
   },
+  {
+    directory: `${PROGRAMS_ROOT}/attachments/__tests__`,
+    minimumSuites: 4,
+  },
 ] as const;
 
 /**
@@ -127,8 +138,50 @@ const WIRED_DIRECTORIES = [
  * set, that one, and none entered. This is a FULL wire — unlike the
  * `archetypes/__tests__` row above, no file in it is quarantined — so the
  * number and "directories now fully wired" agree on this row.
+ *
+ * 19 → 18 on 27 Sep for T-492 wiring `src/lib/programs/ava-chat/__tests__`,
+ * one of the five clean directories in that draw's ten. Proved the same way, by
+ * diffing the two dark lists and not by comparing totals: exactly one directory
+ * left the set, that one, and none entered. A FULL wire — all seven suites are
+ * owned by one step naming the directory, nothing in it is quarantined — so the
+ * number and "directories now fully wired" agree here too.
+ *
+ * 18 → 17 on 27 Sep for T-493 wiring
+ * `src/lib/programs/stage-readiness-workbooks/__tests__`, one of the nine clean
+ * directories in that draw's ten. Proved the same way, by diffing the two dark
+ * lists rather than by comparing totals: exactly one directory under
+ * `src/lib/programs` left the set, that one, and none entered. A FULL wire — all
+ * five suites are owned by one step naming the directory and nothing in it is
+ * quarantined — so the number and "directories now fully wired" agree here too.
+ *
+ * Every one of those diffs had to be taken by hand, because this case held a
+ * COUNT while its sibling `product-directory-ci-coverage.test.ts` held a LIST.
+ * C-414 is that conversion, and it is the last entry written against a number.
+ *
+ * The count was blind to exactly one change, and it is the change a reviewer
+ * waves through: one directory wired INTO CI while another goes dark, which
+ * moves the total by zero. Measured on the real census before the conversion
+ * rather than argued: with `architecture/__tests__` wired out and one new
+ * directory darkened, the observed set stays at 16 and the count assertion
+ * PASSED. The set difference on the same fixture fails and names both sides.
+ * Three of the rows above exist only to narrate, in prose, why a number did or
+ * did not move the way a reader would expect; that narration is what a list
+ * makes unnecessary.
+ *
+ * The list lives in `programs-unit-directory-ci-coverage.baseline.json` and is
+ * still a RATCHET whose entries are a LOG, not a target. Removing a line is
+ * always allowed and is part of wiring a directory; adding one is the
+ * regression this gate refuses. The failure names the directories that entered
+ * and the directories that left, separately, so the two opposite actions a
+ * maintainer must choose between are distinguishable in the failure text
+ * itself rather than in their head.
+ *
+ * The test-file count stays REPORTED and not pinned, for the reason it always
+ * was: adding a suite to an already-dark directory is not a new blind spot,
+ * and failing every such pull request would teach people to raise a number
+ * rather than read it.
  */
-const DARK_DIRECTORY_COUNT = 19;
+const DARK_DIRECTORY_COUNT = DARK_PROGRAMS_BASELINE.length;
 
 type Census = {
   counts: { indeterminateInvocations: number };
@@ -184,6 +237,19 @@ function expandedWorkflowCommands(): string[] {
 }
 
 const census = runCensus();
+
+/**
+ * The observed dark set, sorted, as names. The filter is a path-segment test
+ * rather than a bare `startsWith` on the root alone, so a sibling root whose
+ * name merely begins with `src/lib/programs` cannot be swept in silently.
+ */
+const darkDirectories = census.uncoveredDirectories
+  .map((row) => row.directory)
+  .filter(
+    (directory) =>
+      directory === PROGRAMS_ROOT || directory.startsWith(`${PROGRAMS_ROOT}/`),
+  )
+  .sort();
 
 describe("the Programs unit suite directory a workflow actually reaches", () => {
   it("resolves every jest invocation to literal paths, so the coverage answer is not a guess", () => {
@@ -265,24 +331,90 @@ describe("the Programs unit suite directory a workflow actually reaches", () => 
     },
   );
 
-  it("holds the count of directories under src/lib/programs that still run nowhere", () => {
-    const dark = census.uncoveredDirectories.filter(
-      (row) =>
-        row.directory === PROGRAMS_ROOT ||
-        row.directory.startsWith(`${PROGRAMS_ROOT}/`),
-    );
-    const darkTestFiles = dark.reduce((total, row) => total + row.testFiles, 0);
+  it("keeps the committed baseline sorted, unique and non-empty", () => {
+    // The diff treats both sides as sets, so an unsorted or duplicated
+    // baseline would still compare correctly — but it would review badly, and
+    // a duplicate is refused rather than collapsed.
+    expect(DARK_DIRECTORY_COUNT).toBeGreaterThan(0);
+    expect(new Set(DARK_PROGRAMS_BASELINE).size).toBe(DARK_DIRECTORY_COUNT);
+    expect(DARK_PROGRAMS_BASELINE).toEqual([...DARK_PROGRAMS_BASELINE].sort());
+    // Vacuity floor. If the filter below ever matched nothing — a renamed
+    // root, a changed census shape — an empty observed set would compare
+    // cleanly against an empty baseline and this gate would be decoration.
+    expect(
+      DARK_PROGRAMS_BASELINE.every((directory) =>
+        directory.startsWith(`${PROGRAMS_ROOT}/`),
+      ),
+    ).toBe(true);
+  });
 
-    // The file count is reported rather than pinned — adding a suite to an
-    // already-dark directory is not a new blind spot, and failing every such
-    // pull request would teach people to raise the number rather than read it.
-    // It rides in the assertion so a failure prints both figures at once.
-    expect({
-      directories: dark.length,
-      testFilesInThem: darkTestFiles,
-    }).toEqual({
-      directories: DARK_DIRECTORY_COUNT,
-      testFilesInThem: expect.any(Number),
-    });
+  it("names every directory under src/lib/programs that still runs nowhere", () => {
+    // Equality, per directory rather than by count. See the header: a change
+    // that wires one directory while darkening another moves no count at all,
+    // and that is the change this resolution exists to catch.
+    //
+    // Asserted through the rendered message so the names of what entered and
+    // what left are in the failure text itself, separately.
+    const drift = diffDarkDirectories(DARK_PROGRAMS_BASELINE, darkDirectories);
+
+    expect(formatDarkDirectoryDrift(drift, DARK_PROGRAMS_BASELINE_PATH)).toBe(
+      NO_DRIFT_MESSAGE,
+    );
+  });
+
+  it("reports the test files in the dark set without pinning the number", () => {
+    // Reported, not pinned, and deliberately separate from the equality above
+    // so that adding a suite to an already-dark directory cannot redden this
+    // file. A directory is the unit of blindness; a file inside an already
+    // dark one is not a new blind spot.
+    const darkTestFiles = census.uncoveredDirectories
+      .filter((row) => darkDirectories.includes(row.directory))
+      .reduce((total, row) => total + row.testFiles, 0);
+
+    expect(darkTestFiles).toBeGreaterThanOrEqual(DARK_DIRECTORY_COUNT);
+  });
+
+  /**
+   * The cancelling direction, on the REAL census rather than on invented
+   * names — this is the case the count provably could not see, and the reason
+   * C-414 exists. Measured on `main` before the conversion: the count form
+   * PASSED on this exact fixture.
+   */
+  it("FAILS, naming both, when one directory is wired and another goes dark in the same change", () => {
+    // Perturbs the COMMITTED baseline, not the live observed set. Deriving
+    // the fixture from the census would make this case fail whenever a real
+    // cancelling change is in flight — for a reason that has nothing to do
+    // with the property under test, and on top of the gate case above, which
+    // is the one that is supposed to report it. Measured: it did exactly that
+    // on the first run of this proof.
+    const wired = DARK_PROGRAMS_BASELINE[0];
+    const darkened = `${PROGRAMS_ROOT}/c414-cancelling-fixture/__tests__`;
+    const perturbed = [
+      ...DARK_PROGRAMS_BASELINE.filter((directory) => directory !== wired),
+      darkened,
+    ].sort();
+
+    // The precondition that makes this case meaningful: the count does not
+    // move, so the assertion this file used to carry would have passed.
+    expect(perturbed).toHaveLength(DARK_DIRECTORY_COUNT);
+    expect(darkened).not.toBe(wired);
+    expect(DARK_PROGRAMS_BASELINE).not.toContain(darkened);
+
+    const drift = diffDarkDirectories(DARK_PROGRAMS_BASELINE, perturbed);
+
+    expect(drift.inAgreement).toBe(false);
+    expect(drift.entered).toEqual([darkened]);
+    expect(drift.left).toEqual([wired]);
+
+    const message = formatDarkDirectoryDrift(drift, DARK_PROGRAMS_BASELINE_PATH);
+    expect(message).toContain(darkened);
+    expect(message).toContain(wired);
+    expect(message).toContain("ENTERED");
+    expect(message).toContain("LEFT");
+    // And the file to edit is this ratchet's own, not its sibling's — a
+    // message naming the wrong baseline turns the cheap correct action into a
+    // wrong edit to a gate the change never touched.
+    expect(message).toContain(DARK_PROGRAMS_BASELINE_PATH);
+    expect(message).not.toContain("product-directory-ci-coverage.baseline.json");
   });
 });

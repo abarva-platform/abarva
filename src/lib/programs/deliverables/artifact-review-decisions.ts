@@ -78,7 +78,11 @@ const DECISION_CONFIG: Record<
   ArtifactReviewDecision,
   Pick<
     ArtifactReviewReadiness,
-    "readyForP3Draft" | "readyForP3Final" | "p2FinalApproved" | "allowedNextAction" | "reason"
+    | "readyForP3Draft"
+    | "readyForP3Final"
+    | "p2FinalApproved"
+    | "allowedNextAction"
+    | "reason"
   >
 > = {
   approve_for_p3_draft: {
@@ -87,7 +91,7 @@ const DECISION_CONFIG: Record<
     p2FinalApproved: false,
     allowedNextAction: "generate_p3_draft",
     reason:
-      "P2 is accepted as a diagnostic basis for P3 draft shaping; final sponsor/signoff gates still apply.",
+      "P2 is accepted as a diagnostic basis for P3 draft shaping; final authorized-user approval gates still apply.",
   },
   request_revisions: {
     readyForP3Draft: false,
@@ -115,25 +119,26 @@ function cleanList(values: unknown): string[] {
     .slice(0, 20);
 }
 
-function htmlToText(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function hasText(text: string, pattern: RegExp): boolean {
-  return pattern.test(text);
-}
-
 function unique(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean)));
+}
+
+function metadataList(
+  metadata: Record<string, unknown>,
+  ...keys: string[]
+): string[] {
+  return unique(keys.flatMap((key) => cleanList(metadata[key])));
+}
+
+function metadataText(
+  metadata: Record<string, unknown>,
+  ...keys: string[]
+): string | null {
+  for (const key of keys) {
+    const value = metadata[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
 }
 
 function jsonb(value: unknown): string {
@@ -163,9 +168,9 @@ export function buildReviewPackageFromArtifacts(args: {
       ? artifact.artifact_id
       : pairedOutputRole === "html_visual_review_companion" ||
           paired?.file_format === "html"
-        ? paired?.artifact_id ?? null
-        : metaString(artifactMeta, "pairedVisualCompanionArtifactId") ??
-          metaString(pairedMeta, "pairedVisualCompanionArtifactId");
+        ? (paired?.artifact_id ?? null)
+        : (metaString(artifactMeta, "pairedVisualCompanionArtifactId") ??
+          metaString(pairedMeta, "pairedVisualCompanionArtifactId"));
 
   const docxEditableArtifactId =
     artifactOutputRole === "docx_editable_phase_record" ||
@@ -173,7 +178,7 @@ export function buildReviewPackageFromArtifacts(args: {
       ? artifact.artifact_id
       : pairedOutputRole === "docx_editable_phase_record" ||
           paired?.file_format === "docx"
-        ? paired?.artifact_id ?? null
+        ? (paired?.artifact_id ?? null)
         : null;
 
   return {
@@ -206,63 +211,50 @@ export function readinessForDecision(
 
 export function buildP2ReviewPacket(args: {
   artifact: MoveArtifactRow;
-  artifactHtml?: string | null;
 }): P2ReviewPacket {
-  const text = htmlToText(args.artifactHtml ?? "");
   const meta = args.artifact.metadata ?? {};
-  const metaOpenItems = cleanList(meta.openItems);
-  const missingInputs = cleanList(meta.missingInputs ?? meta.missing_inputs);
-  const caveats = cleanList(meta.clientCompleteItems ?? meta.client_complete_items);
-
-  const quantifiedFacts = unique([
-    hasText(text, /\b1,872\b/) ? "1,872 monthly invoice exceptions" : "",
-    hasText(text, /\b2,345\b/)
-      ? "2,345 manual touch hours per month"
-      : "",
-    hasText(text, /\b7\.4\b/) ? "7.4 average resolution days" : "",
-    hasText(text, /payment hold/i)
-      ? "Payment hold exposure is visible in the diagnostic evidence"
-      : "",
-    hasText(text, /duplicate[-\s]?payment/i)
-      ? "Duplicate-payment control risk is called out as a control implication"
-      : "",
-  ]);
-
-  const strongestEvidence = unique([
-    quantifiedFacts.length
-      ? "The diagnostic contains quantified exception volume, manual effort, and cycle-time evidence."
-      : "The diagnostic artifact is evidence-bound and available for sponsor review.",
-    hasText(text, /invoice|exception|AP|accounts payable/i)
-      ? "The evidence pattern is tied to invoice exception handling and AP operating work."
-      : "",
-    hasText(text, /triage|classification|routing|duplicate/i)
-      ? "The artifact separates AI-assist opportunities from payment-control decisions."
-      : "",
-    hasText(text, /golden bar|quality score|review required/i)
-      ? "Quality and review posture are visible in the artifact governance metadata."
-      : "",
-  ]);
-
+  const metaOpenItems = metadataList(meta, "openItems", "open_items");
+  const missingInputs = metadataList(meta, "missingInputs", "missing_inputs");
+  const caveats = metadataList(
+    meta,
+    "clientCompleteItems",
+    "client_complete_items",
+  );
+  const quantifiedFacts = metadataList(
+    meta,
+    "quantifiedFacts",
+    "quantified_facts",
+  );
+  const strongestEvidence = metadataList(
+    meta,
+    "strongestEvidence",
+    "strongest_evidence",
+  );
   const knownLimitations = unique([
-    "P2 is review-ready, but it is not final sponsor/signoff approval.",
-    "P3 may proceed only as a draft until final gates are satisfied.",
-    hasText(text, /human|approval|control/i)
-      ? "AI can assist classification, triage, duplicate detection, and routing, but should not bypass human-controlled payment decisions without stronger controls."
-      : "AI-fit boundaries must remain explicit in P3 design.",
+    ...metadataList(meta, "knownLimitations", "known_limitations"),
     ...metaOpenItems,
     ...caveats,
+    "This review action authorizes P3 draft shaping only; it does not satisfy final P2 approval by an authorized workspace user.",
+    "P3 remains subject to its own evidence and approval gates.",
   ]);
-
   const missingEvidence = unique([
     ...missingInputs,
-    "Sponsor/signoff evidence for final P2 approval",
-    "Client-confirmed control owner and payment decision approval boundary",
+    ...metaOpenItems,
+    ...metadataList(meta, "missingEvidence", "missing_evidence"),
+    "Evidence required for final P2 gate approval by an authorized workspace user",
   ]);
+  const diagnosticThesis = metadataText(
+    meta,
+    "diagnosticThesis",
+    "diagnostic_thesis",
+  );
+  const p3Implication = metadataText(meta, "p3Implication", "p3_implication");
 
   return {
-    headline: "P2 diagnostic is review-ready.",
+    headline: `${args.artifact.title} · P2 authorized-user review`,
     diagnosticThesis:
-      "The Current Work Diagnostic is strong enough to support P3 future-state draft shaping, provided open evidence and final sponsor/signoff caveats are carried forward.",
+      diagnosticThesis ??
+      `${args.artifact.title} is presented for review. Confirm each conclusion against its cited source evidence and resolve or explicitly carry forward open items before P3 draft shaping.`,
     strongestEvidence,
     quantifiedFacts,
     knownLimitations,
@@ -277,7 +269,7 @@ export function buildP2ReviewPacket(args: {
         decision: "approve_for_p3_draft",
         label: "Approve for P3 draft",
         consequence:
-          "Allows future-state design drafts from this P2 diagnostic. Does not mark P2 final or bypass sponsor/signoff gates.",
+          "Allows future-state design drafts from this P2 diagnostic. Does not mark P2 final or bypass the authorized-user approval gate.",
       },
       {
         decision: "request_revisions",
@@ -293,13 +285,16 @@ export function buildP2ReviewPacket(args: {
       },
     ],
     recommendedNextAction:
-      "Approve for P3 draft shaping if the sponsor accepts the diagnostic caveats; otherwise request revisions or hold for evidence.",
+      "Approve for P3 draft shaping only if the cited P2 evidence and explicit limitations are acceptable; otherwise request revisions or hold for evidence.",
     p3Implication:
-      "P3 should reference this P2 diagnostic as the basis and visibly carry forward all unresolved evidence and final-gate caveats.",
+      p3Implication ??
+      "Use only reviewed, source-cited P2 findings as P3 inputs. Carry all open items and the authorized-user approval record forward; P3 remains subject to its own evidence and approval gates.",
   };
 }
 
-export function normalizeDecision(value: unknown): ArtifactReviewDecision | null {
+export function normalizeDecision(
+  value: unknown,
+): ArtifactReviewDecision | null {
   return value === "approve_for_p3_draft" ||
     value === "request_revisions" ||
     value === "hold_for_evidence"

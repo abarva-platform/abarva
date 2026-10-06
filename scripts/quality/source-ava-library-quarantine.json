@@ -1,5 +1,6 @@
 {
   "ceiling": 1,
+  "scope": "src/lib/source/ava/__tests__",
   "quarantined": [
     {
       "suite": "export-answer-packet.test.ts",

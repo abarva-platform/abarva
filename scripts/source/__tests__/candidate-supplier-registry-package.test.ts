@@ -20,13 +20,38 @@ function validate(csvText: string): CandidateSupplierRegistryValidation {
 }
 
 describe("synthetic candidate-supplier registry package", () => {
-  it("proves two eligible synthetic legal entities for every registered Source archetype", () => {
+  it("scales the fictional panel to five candidates per routed archetype without changing v1 identities", () => {
+    const v1 = fs.readFileSync(csvPath, "utf8");
+    const v2Path = path.join(
+      process.cwd(),
+      "datasets/source/candidate-supplier-registry-synthetic-v2/candidate_supplier_registry.csv",
+    );
+    const v2 = fs.readFileSync(v2Path, "utf8");
+    const result = validate(v2);
+    const v1Rows = v1.trimEnd().split(/\r?\n/u);
+    const v2Rows = v2.trimEnd().split(/\r?\n/u);
+
+    expect(result.status).toBe("pass");
+    expect(result.summary.eligibleCandidateRows).toBe(50);
+    expect(result.summary.negativeControlRows).toBe(5);
+    expect(result.coverageMatrix).toHaveLength(10);
+    expect(result.coverageMatrix.every((item) => item.eligibleRows.length === 5)).toBe(true);
+    expect(v2Rows.slice(0, v1Rows.length)).toEqual(v1Rows);
+    expect(v2).not.toMatch(/@[a-z0-9.-]+\.[a-z]{2,}/iu);
+  });
+
+  it("proves five AMS candidates and at least two for every other archetype", () => {
     const result = validate(fs.readFileSync(csvPath, "utf8"));
 
     expect(result.status).toBe("pass");
     expect(result.summary.expectedArchetypeCount).toBe(10);
     expect(result.summary.coveredArchetypeCount).toBe(10);
-    expect(result.summary.eligibleCandidateRows).toBe(20);
+    expect(result.summary.eligibleCandidateRows).toBe(23);
+    expect(
+      result.coverageMatrix.find(
+        (item) => item.archetypeId === "AMS_MANAGED_SERVICES",
+      )?.eligibleRows,
+    ).toHaveLength(5);
     expect(result.summary.negativeControlRows).toBe(5);
     expect(result.summary.contactPolicies.length).toBeGreaterThanOrEqual(4);
     expect(result.summary.existingContractStatuses).toEqual(
@@ -48,14 +73,14 @@ describe("synthetic candidate-supplier registry package", () => {
     ]);
   });
 
-  it("fails closed when an archetype loses its second eligible candidate", () => {
+  it("fails closed when an archetype loses all but one eligible candidate", () => {
     const lines = fs.readFileSync(csvPath, "utf8").trimEnd().split(/\r?\n/u);
     const header = lines[0];
     const mutated = [
       header,
-      ...lines
-        .slice(1)
-        .filter((line) => !line.startsWith("SYN-SUP-AMS-002,")),
+      ...lines.slice(1).filter(
+        (line) => !/^SYN-SUP-AMS-00[2-5],/u.test(line),
+      ),
     ].join("\n");
 
     const result = validate(`${mutated}\n`);

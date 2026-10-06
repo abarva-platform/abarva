@@ -106,8 +106,9 @@ describe('PROG-E-VIEW · buildOriginationViewModel', () => {
     expect(vm.stewardOpenerCopy).toContain('Steward');
   });
 
-  it('stewardSubmitCopy mentions Nexus', () => {
-    expect(vm.stewardSubmitCopy).toContain('Nexus');
+  it('stewardSubmitCopy explains approval ownership and sponsor communication', () => {
+    expect(vm.stewardSubmitCopy).toContain('authorized workspace user records product approvals');
+    expect(vm.stewardSubmitCopy).toContain('progress updates only when opted in');
   });
 
   // ----------------------------------------------------------------

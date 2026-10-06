@@ -10,6 +10,7 @@ const eventRow = {
   trigger_description: null,
   client_key: "skyharbor-air",
   created_by_user_id: "another-user" as string | null,
+  approval_policy_code: null as "legacy_signed_scope_v1" | "self_v1" | null,
 };
 
 const applyApproval = jest.fn(async () => ({ ok: true }));
@@ -17,6 +18,11 @@ const updateStage = jest.fn(async () => ({ ok: true }));
 const insertActivityLog = jest.fn(
   async () => ({ ok: true }) as { ok: boolean; error?: string },
 );
+const sendStageDecisionUpdates = jest.fn<Promise<void>, [unknown]>(async () => undefined);
+
+jest.mock("@/lib/source/notifications/stage-decision-update", () => ({
+  sendSourceStageDecisionUpdates: (input: unknown) => sendStageDecisionUpdates(input),
+}));
 const requestVersionState = {
   kind: "available" as const,
   currentVersion: {
@@ -24,11 +30,19 @@ const requestVersionState = {
     versionNumber: 1,
     contentHash: "a".repeat(64),
   },
-  approvals: [],
+  approvals: [] as Array<{
+    versionId: string;
+    role: "request_acceptor";
+    actorId: string;
+    decision: "approved";
+  }>,
 };
 
 jest.mock("@/lib/source/new-workspace/authority-version-store", () => ({
   readSourceAuthorityVersionState: jest.fn(async () => requestVersionState),
+}));
+jest.mock("@/lib/source/sponsor-delegation-repository", () => ({
+  hasVerifiedSponsorDelegation: jest.fn(async () => false),
 }));
 const stageSubstrate = {
   criteria: [] as Array<Record<string, unknown>>,
@@ -50,6 +64,10 @@ jest.mock("@/lib/auth/tenancy", () => ({
   tenancyErrorResponse: jest.fn(() => Response.json({ error: "tenancy" })),
 }));
 
+jest.mock("@/lib/auth/current-user", () => ({
+  getCurrentUser: jest.fn(async () => ({ name: "Casey Rivera" })),
+}));
+
 jest.mock("@/lib/active-client", () => ({
   getActiveClientRow: jest.fn(async () => ({ key: "skyharbor" })),
 }));
@@ -57,6 +75,7 @@ jest.mock("@/lib/active-client", () => ({
 jest.mock("@/lib/auth/source-access-policy", () => ({
   loadUserSourceAccessPolicy: jest.fn(async () => ({
     canApproveSourceStages: true,
+    accessLevel: "client_admin",
   })),
 }));
 
@@ -110,8 +129,11 @@ jest.mock("@/lib/source/gate-advance-contract", () => ({
     ok: true,
     status: 200,
     readiness: { ok: true, blockers: [] },
-    bypassedGovernanceBlockers: [],
   })),
+}));
+
+jest.mock("@/lib/source/proposal-intelligence/scorecard-authority-store", () => ({
+  readSourceScorecardAuthorityRecords: jest.fn(async () => ({ kind: "unavailable" as const })),
 }));
 
 jest.mock("@/lib/source/contract-optimization/read", () => ({
@@ -121,21 +143,25 @@ jest.mock("@/lib/source/contract-optimization/read", () => ({
 import { POST } from "../route";
 import { after } from "next/server";
 import { getActiveClientRow } from "@/lib/active-client";
+import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import type { ClientKey } from "@/lib/client-config";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { isGateApprovalStrictMode } from "@/lib/auth/gate-approval-strict-mode";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
 import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 
 const mockAfter = jest.mocked(after);
 const mockAutoDraftOnStageEntry = jest.mocked(autoDraftOnStageEntry);
 const mockGetActiveClientRow = jest.mocked(getActiveClientRow);
+const mockSourceAccessPolicy = jest.mocked(loadUserSourceAccessPolicy);
 const mockGetContractOptimizationProfile = jest.mocked(
   getContractOptimizationProfile,
 );
 const mockIsGateApprovalStrictMode = jest.mocked(isGateApprovalStrictMode);
 const mockGateAdvance = jest.mocked(evaluateSourceGateAdvanceContract);
+const readScorecard = jest.mocked(readSourceScorecardAuthorityRecords);
 
 // `key` is what `getActiveClientRow` returns, which is `tenant.appClientKey` —
 // the app-tier ClientKey, not the canonical key. This helper used to take a
@@ -151,28 +177,89 @@ function activeClientRow(key: ClientKey) {
 
 describe("POST Source event approve", () => {
   beforeEach(() => {
+    readScorecard.mockClear();
+    readScorecard.mockResolvedValue({ kind: "unavailable" });
     mockAutoDraftOnStageEntry.mockClear();
     mockAfter.mockClear();
     applyApproval.mockClear();
     updateStage.mockClear();
     insertActivityLog.mockClear();
+    sendStageDecisionUpdates.mockClear();
     insertActivityLog.mockResolvedValue({ ok: true });
     mockGetActiveClientRow.mockResolvedValue(activeClientRow("skyharbor"));
+    mockSourceAccessPolicy.mockResolvedValue({ canApproveSourceStages: true, accessLevel: "client_admin" } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
     mockGetContractOptimizationProfile.mockResolvedValue(null);
     applyApproval.mockResolvedValue({ ok: true });
     updateStage.mockResolvedValue({ ok: true });
     eventRow.current_stage_key = "rfp";
+    eventRow.lifecycle_state = "waiting_on_client";
     eventRow.client_key = "skyharbor-air";
     eventRow.sourcing_motion = null;
     eventRow.created_by_user_id = "another-user";
+    eventRow.approval_policy_code = null;
     mockIsGateApprovalStrictMode.mockReturnValue(false);
+    mockGateAdvance.mockReset();
+    requestVersionState.approvals.length = 0;
     stageSubstrate.criteria = [];
     mockGateAdvance.mockImplementation(() => ({
       ok: true,
       status: 200,
       readiness: { ok: true, blockers: [] },
-      bypassedGovernanceBlockers: [],
+      }));
+  });
+
+  it("reads scorecard authority before Evaluation approval and refuses to write when unavailable", async () => {
+    eventRow.current_stage_key = "evaluation";
+    mockGateAdvance.mockImplementationOnce((input) => ({
+      ok: false,
+      status: 503,
+      error: input.scorecardRecords?.kind === "unavailable" ? "scorecard_authority_unavailable" : "scorecard_not_read",
+      readiness: { ok: true, blockers: [] },
     }));
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({ action: "approve", notes: "Evaluation review completed.", confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true } }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+    const activeClient = await mockGetActiveClientRow();
+    expect(readScorecard).toHaveBeenCalledWith(eventRow.id, activeClient?.key);
+    expect(response.status).toBe(503);
+    expect((await response.json()).error).toBe("scorecard_authority_unavailable");
+    expect(applyApproval).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+  });
+
+  it("allows an authorized creator to retire a legacy event without recording stage approval", async () => {
+    eventRow.lifecycle_state = "active";
+    eventRow.current_stage_key = "scope";
+    eventRow.created_by_user_id = "user-1";
+    eventRow.approval_policy_code = "legacy_signed_scope_v1";
+    mockIsGateApprovalStrictMode.mockReturnValue(true);
+
+    const response = await POST(
+      new Request("http://localhost/api/v1/source/events/event-1/approve", {
+        method: "POST",
+        body: JSON.stringify({ action: "reject", notes: "Synthetic event superseded by a new event." }),
+      }),
+      { params: Promise.resolve({ eventId: "event-1" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(applyApproval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        approvalAction: "rejected",
+        fromState: "active",
+        toState: "archived",
+        notes: expect.stringContaining("Synthetic event superseded"),
+      }),
+    );
+    expect(applyApproval.mock.calls[0]).toEqual([
+      expect.objectContaining({ notes: expect.not.stringContaining("Self-approval notice") }),
+    ]);
+    expect(insertActivityLog).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: expect.objectContaining({ selfApproval: false }) }),
+    );
+    expect(mockGateAdvance).not.toHaveBeenCalled();
+    expect(sendStageDecisionUpdates).not.toHaveBeenCalled();
   });
 
   it("binds the initial intake approval to the exact current Request version", async () => {
@@ -188,9 +275,7 @@ describe("POST Source event approve", () => {
               "Reviewed the governed intake and accept this exact version.",
             requestAuthorityVersionId: "request-version-1",
             confirmations: {
-              strategyMemoReviewed: true,
-              valueTargetConfirmed: true,
-              archetypeRigorConfirmed: true,
+              requestFactsReviewed: true,
             },
           }),
         },
@@ -201,6 +286,9 @@ describe("POST Source event approve", () => {
     expect(response.status).toBe(200);
     expect(applyApproval).toHaveBeenCalledWith(
       expect.objectContaining({
+        toState: "active",
+        stageKey: null,
+        notes: expect.not.stringContaining("Confirmed review of strategy memo"),
         authorityApproval: {
           authorityKind: "request",
           versionId: "request-version-1",
@@ -211,6 +299,148 @@ describe("POST Source event approve", () => {
         },
       }),
     );
+    expect(updateStage).not.toHaveBeenCalled();
+    expect(mockGateAdvance).not.toHaveBeenCalled();
+    expect(mockAutoDraftOnStageEntry).toHaveBeenCalledWith(
+      { eventId: "event-1", clientKey: "skyharbor", enteredStage: "strategy" },
+      expect.any(Object),
+    );
+    expect(insertActivityLog).toHaveBeenCalledWith(expect.objectContaining({
+      actionLabel: "Approved the Request intake",
+      metadata: expect.objectContaining({ authorityKind: "request" }),
+    }));
+    expect(sendStageDecisionUpdates).toHaveBeenCalledWith(expect.objectContaining({
+      stageLabel: "Request intake",
+    }));
+  });
+
+  it("accepts the Request while the later Strategy memo gate is still pending", async () => {
+    eventRow.current_stage_key = "strategy";
+    eventRow.created_by_user_id = "user-1";
+    eventRow.approval_policy_code = "self_v1";
+    stageSubstrate.criteria = [{
+      criterionId: "GATE-STRATEGY-01",
+      fromStage: "strategy",
+      state: "pending",
+    }];
+    mockGateAdvance.mockImplementationOnce(
+      jest.requireActual<typeof import("@/lib/source/gate-advance-contract")>(
+        "@/lib/source/gate-advance-contract",
+      ).evaluateSourceGateAdvanceContract,
+    );
+
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve",
+        notes: "Synthetic Request facts reviewed for intake acceptance.",
+        requestAuthorityVersionId: "request-version-1",
+        confirmations: {
+          requestFactsReviewed: true,
+          strategyMemoReviewed: true,
+          valueTargetConfirmed: true,
+          archetypeRigorConfirmed: true,
+        },
+      }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      newLifecycleState: "active",
+      stageAdvancedTo: null,
+    });
+    expect(mockGateAdvance).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+    expect(applyApproval).toHaveBeenCalledWith(expect.objectContaining({
+      stageKey: null,
+      authorityApproval: expect.objectContaining({
+        authorityKind: "request",
+        versionId: "request-version-1",
+      }),
+    }));
+  });
+
+  it("does not reinterpret a sent-back Strategy decision as a second Request acceptance", async () => {
+    eventRow.current_stage_key = "strategy";
+    requestVersionState.approvals.push({
+      versionId: "request-version-1",
+      role: "request_acceptor",
+      actorId: "user-1",
+      decision: "approved",
+    });
+    stageSubstrate.criteria = [{
+      criterionId: "GATE-STRATEGY-01",
+      fromStage: "strategy",
+      state: "pending",
+    }];
+    mockGateAdvance.mockImplementationOnce(
+      jest.requireActual<typeof import("@/lib/source/gate-advance-contract")>(
+        "@/lib/source/gate-advance-contract",
+      ).evaluateSourceGateAdvanceContract,
+    );
+
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve",
+        notes: "Reviewing the returned Strategy decision after Request acceptance.",
+        confirmations: {
+          strategyMemoReviewed: true,
+          valueTargetConfirmed: true,
+          archetypeRigorConfirmed: true,
+        },
+      }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(response.status).toBe(409);
+    expect(mockGateAdvance).toHaveBeenCalledTimes(1);
+    expect(applyApproval).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+  });
+
+  it("refuses Request acceptance without its explicit review confirmation", async () => {
+    eventRow.current_stage_key = "strategy";
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve",
+        notes: "Synthetic Request facts were not confirmed by the approver.",
+        requestAuthorityVersionId: "request-version-1",
+        confirmations: { requestFactsReviewed: false },
+      }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).missingConfirmations).toEqual(["requestFactsReviewed"]);
+    expect(applyApproval).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+  });
+
+  it("preserves Strategy-at-P0 promotion for an opted-in tenant", async () => {
+    mockGetActiveClientRow.mockResolvedValue(activeClientRow("lakeshore"));
+    eventRow.client_key = "lakeshore";
+    eventRow.current_stage_key = "strategy";
+    const response = await POST(new Request("https://app.abarva.ai/api/v1/source/events/event-1/approve", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "approve",
+        notes: "Reviewed the Strategy-at-P0 decision and its governed Request version.",
+        requestAuthorityVersionId: "request-version-1",
+        confirmations: {
+          strategyMemoReviewed: true,
+          valueTargetConfirmed: true,
+          archetypeRigorConfirmed: true,
+        },
+      }),
+    }), { params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(response.status).toBe(200);
+    expect(mockGateAdvance).toHaveBeenCalledTimes(1);
+    expect(updateStage).toHaveBeenCalledWith(expect.objectContaining({ stageKey: "scope" }));
+    expect(applyApproval).toHaveBeenCalledWith(expect.objectContaining({
+      stageKey: "strategy",
+      notes: expect.stringContaining("Confirmed review of strategy memo"),
+    }));
   });
 
   it("refuses a stale Request version before writing the intake approval", async () => {
@@ -226,9 +456,7 @@ describe("POST Source event approve", () => {
               "Reviewed the governed intake and accept this exact version.",
             requestAuthorityVersionId: "request-version-old",
             confirmations: {
-              strategyMemoReviewed: true,
-              valueTargetConfirmed: true,
-              archetypeRigorConfirmed: true,
+              requestFactsReviewed: true,
             },
           }),
         },
@@ -245,6 +473,7 @@ describe("POST Source event approve", () => {
 
   it("does not approve or advance past a pending strategy criterion on self-approval", async () => {
     eventRow.current_stage_key = "strategy";
+    eventRow.lifecycle_state = "active";
     stageSubstrate.criteria = [
       {
         criterionId: "GATE-STRATEGY-01",
@@ -451,6 +680,105 @@ describe("POST Source event approve", () => {
       expect(response.status).toBe(403);
       expect(applyApproval).not.toHaveBeenCalled();
     });
+
+    it("allows the creator under explicit SELF policy even when global strict mode is on", async () => {
+      eventRow.created_by_user_id = "user-1";
+      eventRow.approval_policy_code = "self_v1";
+      mockIsGateApprovalStrictMode.mockReturnValue(true);
+
+      const response = await POST(approveRequest(), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(mockGateAdvance).toHaveBeenCalledWith(
+        expect.objectContaining({ approvalPolicyCode: "self_v1" }),
+      );
+      expect(applyApproval).toHaveBeenCalledWith(
+        expect.objectContaining({ notes: expect.stringContaining("Self-approval notice") }),
+      );
+    });
+
+    it("requires sponsor reference and explicit owner acknowledgement for SELF Scope", async () => {
+      eventRow.current_stage_key = "scope";
+      eventRow.approval_policy_code = "self_v1";
+      const response = await POST(approveRequest({ notes: "I reviewed the current Scope memo." }), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+      expect(response.status).toBe(422);
+      expect((await response.json()).error).toBe("sponsor_context_required");
+      expect(applyApproval).not.toHaveBeenCalled();
+    });
+
+    it("records the owner as approver and names the sponsor only as context", async () => {
+      eventRow.current_stage_key = "scope";
+      eventRow.approval_policy_code = "self_v1";
+      const sponsorContext = {
+        name: "Morgan Lee",
+        title: "Chief Technology Officer",
+        role: "Executive sponsor",
+        email: "morgan@example.test",
+        ownerAcknowledged: true,
+      };
+      const response = await POST(approveRequest({
+        notes: "I reviewed the governed Scope memo and evidence.",
+        sponsorContext,
+      }), { params: Promise.resolve({ eventId: "event-1" }) });
+      expect(response.status).toBe(200);
+      expect(applyApproval).toHaveBeenCalledWith(expect.objectContaining({
+        approvedByUserId: "user-1",
+        notes: expect.stringContaining("Sponsor reference: Morgan Lee"),
+      }));
+      expect(applyApproval).toHaveBeenCalledWith(expect.objectContaining({
+        notes: expect.stringContaining("The named sponsor did not approve or sign through this action."),
+      }));
+      expect(insertActivityLog).toHaveBeenCalledWith(expect.objectContaining({
+        actorUserId: "user-1",
+        metadata: expect.objectContaining({ sponsorContext }),
+      }));
+      expect(sendStageDecisionUpdates).toHaveBeenCalledWith(expect.objectContaining({
+        eventId: "event-1", actorUserId: "user-1", stageKey: "scope", sponsorEmail: "morgan@example.test",
+      }));
+    });
+
+    it("does not let legacy signed-scope events smuggle in an owner-only approval", async () => {
+      eventRow.current_stage_key = "scope";
+      const response = await POST(approveRequest({
+        sponsorContext: { name: "Morgan Lee", title: "CTO", role: "Sponsor", ownerAcknowledged: true },
+      }), { params: Promise.resolve({ eventId: "event-1" }) });
+      expect(response.status).toBe(409);
+      expect((await response.json()).error).toBe("sponsor_context_policy_mismatch");
+      expect(applyApproval).not.toHaveBeenCalled();
+    });
+
+    it("does not let a non-owner participant approve a SELF event merely because they can review stages", async () => {
+      eventRow.current_stage_key = "scope";
+      eventRow.approval_policy_code = "self_v1";
+      mockSourceAccessPolicy.mockResolvedValueOnce({
+        canApproveSourceStages: true,
+        accessLevel: "source_member",
+      } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
+      const response = await POST(approveRequest({
+        sponsorContext: { name: "Morgan Lee", title: "CTO", role: "Sponsor", ownerAcknowledged: true },
+      }), { params: Promise.resolve({ eventId: "event-1" }) });
+      expect(response.status).toBe(403);
+      expect((await response.json()).error).toBe("event_owner_or_admin_required");
+      expect(applyApproval).not.toHaveBeenCalled();
+    });
+
+    it("reserves all SELF lifecycle decisions, including send-back, for the owner or admin", async () => {
+      eventRow.approval_policy_code = "self_v1";
+      mockSourceAccessPolicy.mockResolvedValueOnce({
+        canApproveSourceStages: true,
+        accessLevel: "source_member",
+      } as Awaited<ReturnType<typeof loadUserSourceAccessPolicy>>);
+      const response = await POST(approveRequest({ action: "send_back" }), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+      expect(response.status).toBe(403);
+      expect((await response.json()).error).toBe("event_owner_or_admin_required");
+      expect(applyApproval).not.toHaveBeenCalled();
+    });
   });
 
   it("auto-drafts the approved stage's gate artifacts with the signed-in request context", async () => {
@@ -475,7 +803,7 @@ describe("POST Source event approve", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(mockAfter).toHaveBeenCalledTimes(1);
+    expect(mockAfter).toHaveBeenCalledTimes(2);
     expect(mockAutoDraftOnStageEntry).toHaveBeenCalledWith(
       {
         eventId: "event-1",

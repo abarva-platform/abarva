@@ -11,6 +11,8 @@ type MoveEvidenceType =
   | 'solution_options_decision'
   | 'roadmap_estimation'
   | 'adoption_change'
+  | 'evidence_plan'
+  | 'charter_hypothesis'
   | 'approval'
   | 'other';
 
@@ -30,6 +32,7 @@ type MoveArtifactConsumer =
 
 export interface UploadedMoveEvidenceClassification {
   evidenceType: MoveEvidenceType;
+  reviewFamilyKey?: string;
   sourceType: 'real_upload';
   slotIds: string[];
   artifactConsumers: MoveArtifactConsumer[];
@@ -38,6 +41,15 @@ export interface UploadedMoveEvidenceClassification {
 }
 
 const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
+  1: {
+    evidenceType: 'other',
+    reviewFamilyKey: 'p1_uploaded_evidence',
+    sourceType: 'real_upload',
+    slotIds: [],
+    artifactConsumers: [],
+    whatFound: ['P1 working evidence captured; content requires human review'],
+    whereUsed: ['P1 Charter review'],
+  },
   2: {
     evidenceType: 'current_state_systems_data',
     sourceType: 'real_upload',
@@ -60,7 +72,7 @@ const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
     slotIds: ['p4_roadmap_workstreams', 'p4_roadmap_dependencies', 'p4_roadmap_owners'],
     artifactConsumers: ['p4_roadmap', 'execution_roadmap'],
     whatFound: ['roadmap and planning evidence'],
-    whereUsed: ['P4 Roadmap & Business Case', 'P5 Approval & Mobilization'],
+    whereUsed: ['P4 Roadmap & Business Case', 'P5 Mobilize & Handoff'],
   },
   5: {
     evidenceType: 'adoption_change',
@@ -68,9 +80,72 @@ const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
     slotIds: ['p5_raci_owner_model', 'p5_30_60_90_actions'],
     artifactConsumers: ['p5_handoff', 'handoff_package'],
     whatFound: ['execution readiness evidence'],
-    whereUsed: ['P5 Approval & Mobilization', 'Tower Track Outcomes'],
+    whereUsed: ['P5 Mobilize & Handoff', 'Tower Track Outcomes'],
   },
 };
+
+const PHASE_ONE_RULES: Array<[RegExp, UploadedMoveEvidenceClassification]> = [
+  [
+    /charter.{0,40}(red.?line|decision|draft)|decision rights|sponsor.{0,30}(contact|update)/i,
+    {
+      evidenceType: 'charter_hypothesis',
+      reviewFamilyKey: 'p1_uploaded_evidence',
+      sourceType: 'real_upload',
+      slotIds: [],
+      artifactConsumers: [],
+      whatFound: ['draft charter assumptions and decision-rights inputs'],
+      whereUsed: ['P1 Charter review; not an approval'],
+    },
+  ],
+  [
+    /red.?lines?_draft|control.{0,30}(red.?line|proposal)|guardrails?.{0,20}draft/i,
+    {
+      evidenceType: 'control_evidence',
+      reviewFamilyKey: 'p1_uploaded_evidence',
+      sourceType: 'real_upload',
+      slotIds: [],
+      artifactConsumers: [],
+      whatFound: ['proposed red lines and control guardrails'],
+      whereUsed: ['P1 working hypothesis; not an approved control'],
+    },
+  ],
+  [
+    /business.?change.{0,30}hypothes|adoption.{0,30}hypothes/i,
+    {
+      evidenceType: 'adoption_change',
+      reviewFamilyKey: 'p1_uploaded_evidence',
+      sourceType: 'real_upload',
+      slotIds: [],
+      artifactConsumers: [],
+      whatFound: ['proposed business-change hypothesis'],
+      whereUsed: ['P1 working hypothesis; not an approved operating-model change'],
+    },
+  ],
+  [
+    /evidence.{0,30}(plan|request|needed)|planned evidence|evidence_plan/i,
+    {
+      evidenceType: 'evidence_plan',
+      reviewFamilyKey: 'p1_uploaded_evidence',
+      sourceType: 'real_upload',
+      slotIds: [],
+      artifactConsumers: [],
+      whatFound: ['planned evidence requests'],
+      whereUsed: ['P1 planning only; does not establish that requested evidence exists'],
+    },
+  ],
+  [
+    /workshop|interview|meeting notes?/i,
+    {
+      evidenceType: 'business_interview',
+      reviewFamilyKey: 'p1_uploaded_evidence',
+      sourceType: 'real_upload',
+      slotIds: [],
+      artifactConsumers: [],
+      whatFound: ['stakeholder input for charter shaping'],
+      whereUsed: ['P1 Charter review'],
+    },
+  ],
+];
 
 const PHASE_TWO_RULES: Array<[RegExp, UploadedMoveEvidenceClassification]> = [
   [
@@ -243,6 +318,7 @@ const PHASE_FIVE_RULES: Array<[RegExp, UploadedMoveEvidenceClassification]> = [
 ];
 
 function rulesForPhase(phase: number | null | undefined): Array<[RegExp, UploadedMoveEvidenceClassification]> {
+  if (phase === 1) return PHASE_ONE_RULES;
   if (phase === 2) return PHASE_TWO_RULES;
   if (phase === 3) return PHASE_THREE_RULES;
   if (phase === 4) return PHASE_FOUR_RULES;
@@ -285,6 +361,18 @@ export function classifyUploadedMoveEvidence(input: {
     whatFound: ['uploaded evidence captured'],
     whereUsed: ['Move workspace'],
   };
+}
+
+export function reviewFamilyKeyForUploadedMoveEvidence(input: {
+  classification: UploadedMoveEvidenceClassification;
+  declaredFamilyKey?: string | null;
+}): string {
+  return (
+    input.declaredFamilyKey?.trim() ||
+    input.classification.reviewFamilyKey ||
+    input.classification.slotIds[0] ||
+    input.classification.evidenceType
+  );
 }
 
 export function mergeMoveEvidenceClassification<T extends {

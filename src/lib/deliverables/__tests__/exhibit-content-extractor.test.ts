@@ -84,6 +84,68 @@ describe("extractExhibitContent — table match", () => {
   });
 });
 
+// The shape an accepted deliverable is stored in: "# title", the
+// recommendation, then "## section title" + the section's Markdown body.
+const ACCEPTED_DELIVERABLE_MARKDOWN = [
+  "# Discovery Readout",
+  "",
+  "Proceed to solution design with caveats.",
+  "",
+  "## Current-State Findings",
+  "**Handle time.** The series sits within a stated range [8][21].",
+  "",
+  "## Evidence base and its evidentiary limits",
+  "- All values are synthetic and unvalidated.",
+  "- No finance-validated baseline exists.",
+  "",
+  "## Risk / Issues / Dependencies",
+  "| Item | Type | Owner |",
+  "| --- | --- | --- |",
+  "| No finance-validated benefit case | Risk | Finance owner |",
+  "| Interface approval pending | Dependency | Data owner |",
+  "",
+  "## Open Inputs Required",
+  "Reconcile the two handle-time measures and obtain owner-approved access evidence.",
+].join("\n");
+
+describe("extractExhibitContent — Markdown content", () => {
+  it("finds a Markdown heading and returns the body under it as plain text", () => {
+    const result = extractExhibitContent(ACCEPTED_DELIVERABLE_MARKDOWN, "open inputs required");
+    expect(result).toEqual({
+      heading: "Open Inputs Required",
+      snippet:
+        "Reconcile the two handle-time measures and obtain owner-approved access evidence.",
+    });
+  });
+
+  it("stops the body at the next heading and strips list and emphasis markers", () => {
+    const result = extractExhibitContent(ACCEPTED_DELIVERABLE_MARKDOWN, "evidentiary limits");
+    expect(result?.heading).toBe("Evidence base and its evidentiary limits");
+    expect(result?.snippet).toBe(
+      "All values are synthetic and unvalidated.\nNo finance-validated baseline exists.",
+    );
+    const findings = extractExhibitContent(ACCEPTED_DELIVERABLE_MARKDOWN, "findings");
+    expect(findings?.snippet).toBe("Handle time. The series sits within a stated range [8][21].");
+  });
+
+  it("matches a Markdown table by its header row when no heading matches", () => {
+    const result = extractExhibitContent(ACCEPTED_DELIVERABLE_MARKDOWN, "owner");
+    expect(result?.heading).toBe("Item Type Owner");
+    expect(result?.snippet).toContain("No finance-validated benefit case | Risk | Finance owner");
+    expect(result?.snippet).toContain("Interface approval pending | Dependency | Data owner");
+    expect(result?.snippet).not.toContain("---");
+  });
+
+  it("returns null for a keyword the Markdown does not carry", () => {
+    expect(extractExhibitContent(ACCEPTED_DELIVERABLE_MARKDOWN, "raci")).toBeNull();
+  });
+
+  it("does not treat a lone pipe line or a '#' inside prose as structure", () => {
+    const prose = "Issue #4 is open. A | B is not a table.\nOpen inputs required are listed elsewhere.";
+    expect(extractExhibitContent(prose, "open inputs required")).toBeNull();
+  });
+});
+
 describe("extractExhibitContent — edge cases", () => {
   it("returns null for empty html or empty keyword", () => {
     expect(extractExhibitContent("", "compliance")).toBeNull();

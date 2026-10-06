@@ -7,7 +7,11 @@
 // Inert at W0: nothing imports this yet. W1+ wires the synthesis layer and
 // renderers to read it.
 
-import type { DeliverableKey, DeliverableProfile } from "./types";
+import type {
+  DeliverableKey,
+  DeliverableProfile,
+  MovesDeliverableKey,
+} from "./types";
 import { SOURCE_PROFILES } from "./registry-source";
 
 const CURRENT_STATE_VISUAL_STANDARD = {
@@ -190,7 +194,7 @@ const charter: DeliverableProfile = {
   decisionPurpose:
     "Approve a focused discovery/design gate — not build or scale funding.",
   defaultFormat: "docx",
-  supportingFormats: ["html"],
+  supportingFormats: ["pptx", "html"],
   tone: "senior_consultant",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -213,6 +217,97 @@ const charter: DeliverableProfile = {
     "recommendation is explicit and bounded (proceed / hold / stop)",
   ],
 };
+
+const discoveryPlan: DeliverableProfile = {
+  key: "discovery_plan",
+  renderer: "docx_narrative",
+  title: "Discovery Workshop Guide",
+  clientFacing: true,
+  audience: ["program_leadership", "steering_committee"],
+  decisionPurpose:
+    "Prepare the client and delivery team to run the next phase's workshops, evidence collection, and readiness checks.",
+  defaultFormat: "docx",
+  supportingFormats: ["html"],
+  tone: "delivery_lead",
+  visualDensity: "medium",
+  allowPhaseLabels: false,
+  evidenceMode: "appendix_only",
+  sourceRegisterPolicy: "appendix_only",
+  missingInputPolicy: "single_open_inputs_table",
+  requiredExhibits: ["open_inputs_required"],
+  lengthGuidance:
+    "Working guide, not executive charter: practical session plan, evidence requests, owners, and readiness checks.",
+  acceptanceChecks: [
+    "explicitly states which Charter facts are already settled and should not be re-collected",
+    "contains session/workshop instructions, evidence requests, owners, and outputs",
+    "does not make new sponsor decisions or alter the Charter boundary",
+    "missing evidence is consolidated into one Open Inputs Required table",
+  ],
+};
+
+function phaseWorkshopGuideProfile(args: {
+  key:
+    | "design_workshop_guide"
+    | "planning_workshop_guide"
+    | "mobilization_workshop_guide"
+    | "execution_kickoff_guide";
+  title: string;
+  decisionPurpose: string;
+}): DeliverableProfile {
+  return {
+    key: args.key,
+    renderer: "docx_narrative",
+    title: args.title,
+    clientFacing: true,
+    audience: ["program_leadership", "steering_committee"],
+    decisionPurpose: args.decisionPurpose,
+    defaultFormat: "docx",
+    supportingFormats: ["html"],
+    tone: "delivery_lead",
+    visualDensity: "medium",
+    allowPhaseLabels: false,
+    evidenceMode: "appendix_only",
+    sourceRegisterPolicy: "appendix_only",
+    missingInputPolicy: "single_open_inputs_table",
+    requiredExhibits: ["open_inputs_required"],
+    lengthGuidance:
+      "Working guide, not the formal gate artifact: practical session plan, evidence requests, owners, and readiness checks.",
+    acceptanceChecks: [
+      "states which approved phase facts are settled and should not be re-collected",
+      "contains session/workshop instructions, evidence requests, owners, outputs, and next-gate readiness checks",
+      "does not make new sponsor, funding, design, or execution decisions",
+      "missing evidence is consolidated into one Open Inputs Required table",
+    ],
+  };
+}
+
+const designWorkshopGuide = phaseWorkshopGuideProfile({
+  key: "design_workshop_guide",
+  title: "Design Workshop Guide",
+  decisionPurpose:
+    "Prepare the client and delivery team to run future-state design, option, and trade-off sessions from the accepted Discovery record.",
+});
+
+const planningWorkshopGuide = phaseWorkshopGuideProfile({
+  key: "planning_workshop_guide",
+  title: "Planning Workshop Guide",
+  decisionPurpose:
+    "Prepare the client and delivery team to run roadmap, business-case, finance, metrics, readiness, and change sessions from the accepted design.",
+});
+
+const mobilizationWorkshopGuide = phaseWorkshopGuideProfile({
+  key: "mobilization_workshop_guide",
+  title: "Mobilization Workshop Guide",
+  decisionPurpose:
+    "Prepare the client and delivery team to run mobilization, Tower handoff, value-measurement, and execution-readiness sessions from the accepted plan.",
+});
+
+const executionKickoffGuide = phaseWorkshopGuideProfile({
+  key: "execution_kickoff_guide",
+  title: "Execution Kickoff Guide",
+  decisionPurpose:
+    "Prepare accountable owners for the first execution cadence, Tower measurement startup, governance review, and escalation rhythm after planning handoff.",
+});
 
 const discoveryReport: DeliverableProfile = {
   key: "discovery_report",
@@ -288,14 +383,14 @@ const rootCauseWorksheet: DeliverableProfile = {
 
 const solutionApproachOptions: DeliverableProfile = {
   key: "solution_approach_options",
-  renderer: "html_architecture",
+  renderer: "pptx_storyline",
   title: "Solution Approach & Options",
   clientFacing: true,
   audience: ["steering_committee", "cio", "cto"],
   decisionPurpose:
     "Choose the solution approach (and option) that will drive the architecture — before any architecture is designed.",
   defaultFormat: "pptx",
-  supportingFormats: ["docx"],
+  supportingFormats: ["pptx", "docx"],
   tone: "board_grade",
   visualDensity: "high",
   allowPhaseLabels: false,
@@ -330,7 +425,7 @@ const solutionApproachOptions: DeliverableProfile = {
 
 const targetStateArchitecture: DeliverableProfile = {
   key: "target_state_architecture",
-  renderer: "html_architecture",
+  renderer: "pptx_storyline",
   visualStandard: ARCHITECTURE_VISUAL_STANDARD,
   // ── Story-Led / Exhibit-Led Standard (v2 redo) ──
   narrativeQuestion:
@@ -384,7 +479,7 @@ const targetStateArchitecture: DeliverableProfile = {
   decisionPurpose:
     "Align on future-state design, data flow, AI pattern, controls, and integration choices.",
   defaultFormat: "pptx",
-  supportingFormats: ["docx"], // HTML is a preview surface, not a final format.
+  supportingFormats: ["pptx", "docx"], // HTML is a preview surface, not a final format.
   tone: "architecture_lead",
   visualDensity: "high",
   allowPhaseLabels: false,
@@ -417,7 +512,7 @@ const targetStateArchitecture: DeliverableProfile = {
 
 const solutionDesign: DeliverableProfile = {
   key: "solution_design",
-  renderer: "html_architecture",
+  renderer: "pptx_storyline",
   visualRendererRequired: true,
   visualStandard: ARCHITECTURE_VISUAL_STANDARD,
   title: "Solution Design",
@@ -425,7 +520,7 @@ const solutionDesign: DeliverableProfile = {
   audience: ["cto", "program_leadership", "ciso"],
   decisionPurpose: "Explain how the solution actually works.",
   defaultFormat: "pptx",
-  supportingFormats: ["docx"],
+  supportingFormats: ["pptx", "docx"],
   tone: "architecture_lead",
   visualDensity: "high",
   allowPhaseLabels: false,
@@ -490,6 +585,7 @@ const sourcingStrategy: DeliverableProfile = {
   audience: ["procurement", "cio", "program_leadership"],
   decisionPurpose: "Decide the build / buy / partner / hybrid path.",
   defaultFormat: "docx",
+  supportingFormats: ["pptx"],
   tone: "senior_consultant",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -592,7 +688,7 @@ const towerMetricsPlan: DeliverableProfile = {
   audience: ["cfo", "program_leadership"],
   decisionPurpose: "Define how value shows up in ongoing operating metrics.",
   defaultFormat: "docx",
-  supportingFormats: ["html"],
+  supportingFormats: ["pptx", "html"],
   tone: "delivery_lead",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -618,7 +714,7 @@ const readinessAndChangePlan: DeliverableProfile = {
   decisionPurpose:
     "Decide whether the organization is ready to mobilize, ready with conditions, or blocked by adoption/governance gaps.",
   defaultFormat: "docx",
-  supportingFormats: ["html"],
+  supportingFormats: ["pptx", "html"],
   tone: "delivery_lead",
   visualDensity: "medium",
   allowPhaseLabels: false,
@@ -677,6 +773,7 @@ const valueMeasurementContract: DeliverableProfile = {
   decisionPurpose:
     "Prevent fake ROI by defining how value will be measured and governed.",
   defaultFormat: "docx",
+  supportingFormats: ["pptx"],
   tone: "delivery_lead",
   visualDensity: "low",
   allowPhaseLabels: false,
@@ -691,24 +788,52 @@ const valueMeasurementContract: DeliverableProfile = {
   ],
 };
 
+export const MOVES_DELIVERABLE_KEYS = [
+  "charter",
+  "discovery_plan",
+  "discovery_report",
+  "root_cause_worksheet",
+  "design_workshop_guide",
+  "target_state_architecture",
+  "solution_design",
+  "operating_model_design",
+  "sourcing_strategy",
+  "planning_workshop_guide",
+  "execution_roadmap",
+  "business_case",
+  "financial_model",
+  "tower_metrics_plan",
+  "readiness_and_change_plan",
+  "mobilization_workshop_guide",
+  "handoff_package",
+  "value_measurement_contract",
+  "execution_kickoff_guide",
+  "solution_approach_options",
+] as const satisfies ReadonlyArray<MovesDeliverableKey>;
+
 /** The canonical profile registry, keyed by deliverable. */
 export const DELIVERABLE_PROFILES: Readonly<
   Record<DeliverableKey, DeliverableProfile>
 > = {
   charter,
+  discovery_plan: discoveryPlan,
   discovery_report: discoveryReport,
   root_cause_worksheet: rootCauseWorksheet,
+  design_workshop_guide: designWorkshopGuide,
   target_state_architecture: targetStateArchitecture,
   solution_design: solutionDesign,
   operating_model_design: operatingModelDesign,
   sourcing_strategy: sourcingStrategy,
+  planning_workshop_guide: planningWorkshopGuide,
   execution_roadmap: executionRoadmap,
   business_case: businessCase,
   financial_model: financialModel,
   tower_metrics_plan: towerMetricsPlan,
   readiness_and_change_plan: readinessAndChangePlan,
+  mobilization_workshop_guide: mobilizationWorkshopGuide,
   handoff_package: handoffPackage,
   value_measurement_contract: valueMeasurementContract,
+  execution_kickoff_guide: executionKickoffGuide,
   solution_approach_options: solutionApproachOptions,
   ...SOURCE_PROFILES,
 };

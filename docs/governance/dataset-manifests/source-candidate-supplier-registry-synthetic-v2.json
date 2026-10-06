@@ -1,0 +1,18 @@
+{
+  "dataset_id": "source-candidate-supplier-registry-synthetic-v2",
+  "title": "Synthetic Source Candidate Supplier Registry V2",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Product Engineering",
+  "source_basis": "public-safe fictional supplier profiles for Source archetype and scale testing",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 50,
+  "approved_by": "AbarVa Product Engineering",
+  "approved_at": "2026-10-05",
+  "notes": "Declaration for a lab-only fixture: 50 eligible fictional identities across ten category-routed archetypes plus five negative controls. The first 28 CSV rows are byte-identical to v1. No load approval is granted by this declaration. The package contains no contact addresses, invitations, executed NDAs, awards, or client facts. Client supplier intake must use a private owner-supplied extract and separately governed mapping."
+}

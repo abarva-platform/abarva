@@ -2,14 +2,14 @@
 //
 // Backs the DB write of `POST /api/engage/[engagementId]/turn` — the single
 // `turns` insert that persists one conversation turn. The route owns auth, the
-// fail-closed role gate, the LLM stream orchestration, gate-approval detection
-// and every background capture loop; this adapter owns ONLY the physical
+// fail-closed tenant + per-Move access gate and the LLM stream orchestration;
+// this adapter owns ONLY the physical
 // `turns` row insert so the backing store becomes selectable for the Azure
 // parallel-run cutover.
 //
 // Why a per-domain adapter and not `appendTurn` from `@/lib/db/turn`:
-// `appendTurn` is also called by `lib/deliverables/{live-sync,v2-generator,
-// generate}.ts`, which are NOT in Slice 3d. Migrating the shared helper would
+// `appendTurn` is also called by `lib/deliverables/live-sync.ts`, which is NOT
+// in Slice 3d. Migrating the shared helper would
 // reach outside this slice, so per the slice rule the migration happens at the
 // route boundary — the route calls this adapter; other callers keep `appendTurn`.
 //

@@ -14,6 +14,7 @@
 import type { ProgramDetailView, EvidenceItem } from "./programs-types";
 import { PHASE_LABEL_MAP } from "./programs-fixture";
 import type { ProgramPhaseId } from "./programs-types";
+import { formatDeliverableCanvasSummary } from "./portfolio-figure-labels";
 
 // ─── Output types ─────────────────────────────────────────────────────────────
 
@@ -221,7 +222,7 @@ export function buildDeliverablesCanvasView(
   const pendingCount = rawItems.filter((i) => i.status === "pending").length;
   const blockedCount = rawItems.filter((i) => i.status === "blocked").length;
   const totalCount = rawItems.length;
-  const canvasSummary = `${doneCount} of ${totalCount} deliverables complete`;
+  const canvasSummary = formatDeliverableCanvasSummary(doneCount, totalCount);
 
   const honestDisclaimer =
     `Deterministic seed · ${view.displayId} P${view.viewingPhase} ${phaseLabel} deliverables ` +

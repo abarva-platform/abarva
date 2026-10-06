@@ -60,8 +60,8 @@ const SCAFFOLD_STEP_DESCRIPTIONS: Record<
     description: "Classifying this Move into the right AbarVa archetype",
   },
   3: {
-    name: "Sponsor candidate",
-    description: "Identifying who should sponsor this Move",
+    name: "Sponsor progress contact",
+    description: "Listing the contact who may receive phase updates",
   },
   4: {
     name: "Scope / boundary",

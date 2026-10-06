@@ -1,15 +1,16 @@
 // POST /api/v1/programs/:programId/advance · advance one phase
-// Body: { toPhase: number, snapshot?: object, bypassGate?: boolean, approvalId?: string }
-// Runs evaluateGate first; hard-fails (severity='hard') block advance.
-// Soft-fails allowed with bypassGate=true (lead override).
+// Body: { toPhase: number, snapshot?: object, bypassGate?: boolean }
+// P1 capture evidence and evaluateGate must both pass before advance.
+// Soft gate failures may be carried only by an explicit authorized action.
 
 import { NextRequest } from "next/server";
-import { getProgramById } from "@/lib/programs/queries";
+import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { advancePhase } from "@/lib/programs/mutations";
-import {
-  evaluateGate,
-  requestFounderApproval,
-} from "@/lib/programs/governance";
+import { evaluateGate } from "@/lib/programs/governance";
+import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { requireTenancy, tenancyErrorResponse } from "../../_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
@@ -26,6 +27,7 @@ import {
 } from "@/lib/programs/moves-ai-liability";
 import { resolvePhaseGateActorPersonId } from "@/lib/programs/phase-gate-actor";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
+import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,7 +51,6 @@ export async function POST(
       toPhase?: number;
       snapshot?: Record<string, unknown>;
       bypassGate?: boolean;
-      approvalId?: string;
       selfApproveIfAuthorized?: boolean;
       humanRationale?: unknown;
       rationale?: unknown;
@@ -67,6 +68,15 @@ export async function POST(
 
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!accessPolicy.canApproveGates) {
+      return Response.json(
+        {
+          error: "forbidden",
+          detail: "Only an authorized workspace user can approve a phase gate.",
+        },
+        { status: 403 },
+      );
+    }
     const fromPhase = program.currentPhase ?? 0;
     const humanRationale = normalizeMovesHumanRationale(
       body.humanRationale ??
@@ -80,6 +90,36 @@ export async function POST(
         { error: "human_rationale_required", detail: rationaleError },
         { status: 400 },
       );
+    }
+
+    if (fromPhase === 1) {
+      const [modules, approvedEvidence] = await Promise.all([
+        getModuleState(ctx, programId),
+        listApprovedPhaseEvidence(ctx, programId, 1),
+      ]);
+      const requireBasis = isFeatureEnabled(
+        { clientKey: ctx.clientKey, clientId: ctx.clientId },
+        "moves_charter_basis_v1",
+      );
+      const missing = missingP1CaptureSections(
+        getPhaseCaptureSections(1),
+        modules,
+        approvedEvidence,
+        { requireBasis },
+      );
+      if (missing.length > 0) {
+        return Response.json(
+          {
+            error: "capture_incomplete",
+            phase: 1,
+            missing,
+            detail: requireBasis
+              ? "P1 capture requires every Charter field saved with a recorded basis (approved evidence, a workspace assertion, or an owned assumption)."
+              : "P1 capture requires saved fields and matching approved evidence.",
+          },
+          { status: 409 },
+        );
+      }
     }
 
     const gate = await evaluateGate(ctx, programId, fromPhase, body.toPhase, {
@@ -104,16 +144,20 @@ export async function POST(
       );
     }
 
-    // SECURITY (audit 2026-05-22, P1-4): under GATE_APPROVAL_STRICT_MODE
-    // gate approval / self-approval / bypass requires an admin/maestro
-    // role. In pilot (flag off) the canApproveGates capability suffices.
+    // Only an explicit in-product action by an authorized workspace user can
+    // approve a gate; do not create an alternate approver request.
     const strictMode = isGateApprovalStrictMode();
     const strictRoleOk = !strictMode || isStrictModeApprovalRole(ctx.role);
-
-    const canSelfApproveGate =
-      body.selfApproveIfAuthorized === true &&
-      strictRoleOk &&
-      (accessPolicy.canApproveGates || ctx.role === "founder");
+    if (body.selfApproveIfAuthorized !== true) {
+      return Response.json(
+        {
+          error: "explicit_approval_required",
+          detail:
+            "The authorized workspace user must explicitly submit the gate approval in Nexus.",
+        },
+        { status: 409 },
+      );
+    }
 
     const actor = await resolvePhaseGateActorPersonId(ctx);
     if (!actor.ok) {
@@ -127,117 +171,18 @@ export async function POST(
     }
     const writeCtx = { ...ctx, userId: actor.personId };
 
-    if (gate.requiresApproval && !body.approvalId && !canSelfApproveGate) {
-      // Create a pending founder approval request and return it
-      const approvalId = await requestFounderApproval(
-        writeCtx,
-        programId,
-        {
-          requestType: "phase_gate",
-          headline: `Approve phase ${fromPhase} → ${body.toPhase} gate`,
-          approverRole: gate.approverRole ?? "sponsor",
-          deadlineHours: 48,
-          context: {
-            from_phase: fromPhase,
-            to_phase: body.toPhase,
-            bypass_gate: !!body.bypassGate,
-            human_rationale: humanRationale,
-          },
-        },
-        { supabase },
-      );
-      return Response.json(
-        {
-          error: "approval_required",
-          approvalId,
-          gate,
-          detail:
-            "Approval request created · re-send with approvalId once approved",
-        },
-        { status: 202 },
-      );
-    }
-
-    if (
-      (body.bypassGate || canSelfApproveGate) &&
-      !accessPolicy.canApproveGates &&
-      ctx.role !== "founder"
-    ) {
-      return Response.json(
-        {
-          error: "forbidden",
-          detail: "phase-gate approval permission is required to bypass a gate",
-        },
-        { status: 403 },
-      );
-    }
-    // Under strict mode, bypassing a gate also requires an admin/maestro role.
-    if (
-      (body.bypassGate || body.selfApproveIfAuthorized) &&
-      strictMode &&
-      !strictRoleOk
-    ) {
+    // Under strict mode, bypassing a gate still requires an admin/maestro role.
+    if (body.bypassGate && strictMode && !strictRoleOk) {
       return Response.json(
         {
           error: "forbidden",
           detail:
-            "GATE_APPROVAL_STRICT_MODE is enabled — bypassing or self-approving a gate requires an admin or maestro role.",
+            "GATE_APPROVAL_STRICT_MODE is enabled — bypassing a gate requires an admin or maestro role.",
         },
         { status: 403 },
       );
     }
 
-    if (gate.requiresApproval && body.approvalId) {
-      const { data: approval, error: approvalError } = await supabase
-        .from("founder_approval_requests")
-        .select("id, status, engagement_id, request_type, context_jsonb")
-        .eq("id", body.approvalId)
-        .eq("engagement_id", programId)
-        .maybeSingle();
-      if (approvalError || !approval || approval.status !== "approved") {
-        return Response.json(
-          {
-            error: "approval_not_cleared",
-            detail:
-              "Phase gate approval must be approved before the phase can advance",
-          },
-          { status: 409 },
-        );
-      }
-      // SECURITY (audit 2026-05-22, P1-3): bind the consumed approval to
-      // THIS specific transition. Previously any approved approvalId on
-      // the program was accepted, so a stale or unrelated approval (a
-      // budget_change, or a phase_gate for a different transition) could
-      // be replayed to advance a gate it never authorized.
-      const approvalRow = approval as {
-        request_type?: string | null;
-        context_jsonb?: Record<string, unknown> | null;
-      };
-      if (approvalRow.request_type !== "phase_gate") {
-        return Response.json(
-          {
-            error: "approval_type_mismatch",
-            detail:
-              "The supplied approval is not a phase_gate approval and cannot authorize a phase advance.",
-          },
-          { status: 409 },
-        );
-      }
-      const approvalCtx = approvalRow.context_jsonb ?? {};
-      const approvedFromPhase = approvalCtx.from_phase;
-      const approvedToPhase = approvalCtx.to_phase;
-      if (approvedFromPhase !== fromPhase || approvedToPhase !== body.toPhase) {
-        return Response.json(
-          {
-            error: "approval_transition_mismatch",
-            detail:
-              `The supplied approval authorizes phase ${approvedFromPhase} → ${approvedToPhase}, ` +
-              `not ${fromPhase} → ${body.toPhase}. Request a fresh approval for this transition.`,
-          },
-          { status: 409 },
-        );
-      }
-    }
     const evidencePacket = buildMovesPhaseDecisionEvidencePacket({
       programId,
       tenantName: ctx.clientKey ?? ctx.clientId,
@@ -307,7 +252,14 @@ export async function POST(
       })),
       assumptions: coerceDecisionSupportList(body.assumptions),
       missingInputs: coerceDecisionSupportList(body.missingInputs),
-      approvalId: body.approvalId ?? null,
+      approvalId: null,
+    });
+    await sendMoveProgressUpdate({
+      ctx,
+      programId,
+      moveName: program.name ?? `Move ${programId}`,
+      fromPhase,
+      toPhase: result.newPhase,
     });
 
     return Response.json({

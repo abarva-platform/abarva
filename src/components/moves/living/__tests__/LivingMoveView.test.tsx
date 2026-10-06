@@ -19,7 +19,15 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 
+import { LIVING_MOVE_CASES } from '@/lib/programs/expert-kernel/living-move-cases';
 import { LivingMoveView } from '../LivingMoveView';
+
+// The `arcturus` case's switcher label is data owned by the case registry. It
+// was relabelled in #4997 and these expectations still named the old label, so
+// they were red for a reason that was not a regression (item T-799). Read it
+// from the registry so a future relabel cannot strand the test the same way;
+// what is asserted is that the switcher renders the registry's label.
+const ARCTURUS_LABEL = LIVING_MOVE_CASES.arcturus.tenantLabel;
 
 describe('LivingMoveView — the living surface', () => {
   it('renders the answer, the controls, the exhibits and the case switcher', () => {
@@ -48,7 +56,7 @@ describe('LivingMoveView — the living surface', () => {
       within(switcher).getByText('Meridian Health System'),
     ).toBeInTheDocument();
     expect(
-      within(switcher).getByText('First Capital Financial'),
+      within(switcher).getByText(ARCTURUS_LABEL),
     ).toBeInTheDocument();
   });
 
@@ -73,7 +81,7 @@ describe('LivingMoveView — the living surface', () => {
     expect(screen.queryByLabelText('Containment uplift')).not.toBeInTheDocument();
 
     // Switch to First Capital — its loss-takeout lever appears.
-    fireEvent.click(screen.getByText('First Capital Financial'));
+    fireEvent.click(screen.getByText(ARCTURUS_LABEL));
     expect(
       screen.getByLabelText('Card fraud loss takeout'),
     ).toBeInTheDocument();

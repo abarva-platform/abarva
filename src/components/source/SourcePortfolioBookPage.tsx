@@ -33,14 +33,14 @@ import type { SourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v
 interface SourcePortfolioBookPageProps {
   events: SourcingEventSummary[];
   tenantName: string;
-  canViewFinancialValues?: boolean;
+  canViewFinancialValues: boolean;
   governedSnapshot?: SourceV4WorkspaceSnapshot | null;
 }
 
 export function SourcePortfolioBookPage({
   events,
   tenantName,
-  canViewFinancialValues = true,
+  canViewFinancialValues,
   governedSnapshot = null,
 }: SourcePortfolioBookPageProps) {
   const visibleEvents = useMemo(

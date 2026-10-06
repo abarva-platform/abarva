@@ -1,6 +1,6 @@
 {
   "schema": "abarva.ai-surface-control-catalog.v1",
-  "description": "Audit truth source for AI output and consequential-action controls. CI validates every cataloged control has concrete code evidence.",
+  "description": "Audit truth source for AI output and consequential-action controls. CI validates every cataloged control has concrete code evidence. Every requiredControls entry declares behavioralTest: either a path the catalog workflow runs, or status \"none\" with a reason, a tree-checked knownSuites list, and a remedy saying which fix applies — \"write-a-test\" when the control is on the surface and nothing proves it, \"render-the-control\" when the control is not on the surface, where a test would pin an absence. Only write-a-test controls are drawable as the next behavioral test; the gate reports that count separately from the uncovered count (item C-636).",
   "controls": [
     {
       "id": "agent-response-output",
@@ -17,7 +17,10 @@
             "Review before acting"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx",
+            "provenCases": [
+              "agent response · disclosure controls marks every answer as a draft to review before acting"
+            ]
           }
         },
         {
@@ -28,7 +31,18 @@
             "inlineNodes"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.citation-control.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.citation-control.test.tsx",
+            "provenCases": [
+              "agent response · citation control · what the reader sees resolves the placeholder to a citation pill naming the source",
+              "agent response · citation control · what the reader sees leaves no raw placeholder text where a citation resolved",
+              "agent response · citation control · what the reader sees resolves the canonical grammar even when the model emitted another",
+              "agent response · citation control · what the reader sees renders a broken target visibly rather than hiding it",
+              "agent response · citation control · what the reader sees renders an unresolvable placeholder as literal text rather than swallowing it",
+              "agent response · citation control · the map the component builds keys every citation under the placeholder the model actually emitted",
+              "agent response · citation control · the map the component builds also keys it under the canonical {{cite:type:id}} form",
+              "agent response · citation control · the map the component builds keys every citation in a multi-citation answer, not just the first",
+              "agent response · citation control · the map the component builds hands down an empty map when the answer cites nothing"
+            ]
           }
         },
         {
@@ -38,7 +52,12 @@
             "shouldShowRenderedResponseCitationGap"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx",
+            "provenCases": [
+              "agent response · disclosure controls says so when substantive prose arrives with no citation",
+              "agent response · disclosure controls stays quiet about citation gaps when the answer is actually cited",
+              "agent response · disclosure controls does not raise a citation gap when confidence is explicitly none"
+            ]
           }
         },
         {
@@ -48,7 +67,11 @@
             "viewModel.confidence.tier"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx",
+            "provenCases": [
+              "agent response · disclosure controls discloses a confidence tier when the response carries one",
+              "agent response · disclosure controls documents a gap: confidence_signal alone discloses nothing"
+            ]
           }
         },
         {
@@ -58,7 +81,10 @@
             "follow_up_actions"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx",
+            "provenCases": [
+              "agent response · disclosure controls puts an approval notice above follow-up actions a user can fire"
+            ]
           }
         }
       ]
@@ -77,7 +103,10 @@
             "compact"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentDock.test.tsx"
+            "path": "src/components/agent/__tests__/AgentDock.test.tsx",
+            "provenCases": [
+              "AgentDock · default mode renders the persistent AI responsibility footer"
+            ]
           }
         },
         {
@@ -87,7 +116,10 @@
             "compact"
           ],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentDock.test.tsx"
+            "path": "src/components/agent/__tests__/AgentDock.test.tsx",
+            "provenCases": [
+              "AgentDock · default mode renders the in-chat human approval boundary for agent actions"
+            ]
           }
         }
       ]
@@ -107,7 +139,13 @@
             "Review before acting"
           ],
           "behavioralTest": {
-            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx",
+            "provenCases": [
+              "atlas drawer · AI draft label on an answer labels a settled streamed answer as a draft to review",
+              "atlas drawer · AI draft label on an answer labels an answer while it is still generating",
+              "atlas drawer · AI draft label on an answer labels a settled agent turn and leaves the reader's own words unlabelled",
+              "atlas drawer · AI draft label on an answer shows no answer label when the drawer has no answer in it"
+            ]
           }
         },
         {
@@ -118,7 +156,11 @@
             "compact"
           ],
           "behavioralTest": {
-            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx",
+            "provenCases": [
+              "atlas drawer · disclosure controls carries the responsibility footer in the drawer's own tone",
+              "atlas drawer · disclosure controls keeps both notices in the drawer rather than only on the page behind it"
+            ]
           }
         },
         {
@@ -128,7 +170,14 @@
             "shouldShowPlainTextCitationGap"
           ],
           "behavioralTest": {
-            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx",
+            "provenCases": [
+              "atlas drawer · citation gap on an answer warns when a streamed substantive answer carries no source basis",
+              "atlas drawer · citation gap on an answer stays silent when the same answer carries its source basis",
+              "atlas drawer · citation gap on an answer stays silent on an answer that makes no substantive claim",
+              "atlas drawer · citation gap on an answer warns on an uncited settled agent turn, not on the reader's own turn",
+              "atlas drawer · citation gap on an answer stays silent on a cited settled agent turn"
+            ]
           }
         },
         {
@@ -138,7 +187,10 @@
             "tone=\"dark\""
           ],
           "behavioralTest": {
-            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx",
+            "provenCases": [
+              "atlas drawer · disclosure controls states that agent actions need human approval"
+            ]
           }
         }
       ]
@@ -158,7 +210,17 @@
             "MOVES_HUMAN_RATIONALE_MIN_CHARS"
           ],
           "behavioralTest": {
-            "path": "src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx"
+            "path": "src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx",
+            "provenCases": [
+              "program gate approval · human decision control shows the AI-support watermark and the attestation while the human decides",
+              "program gate approval · human decision control will not advance the program with no rationale and no accepted responsibility",
+              "program gate approval · human decision control will not advance on a rationale alone, without accepted responsibility",
+              "program gate approval · human decision control will not advance on accepted responsibility alone, without a rationale",
+              "program gate approval · human decision control will not advance on a rationale shorter than the stated minimum",
+              "program gate approval · human decision control will not accept whitespace padded to reach the minimum",
+              "program gate approval · human decision control advances only once both halves are given, and sends the rationale the human typed",
+              "program gate approval · human decision control names the criteria that are not met before asking for the rationale"
+            ]
           }
         }
       ]
@@ -178,7 +240,11 @@
             "reviewedDecision"
           ],
           "behavioralTest": {
-            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx"
+            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx",
+            "provenCases": [
+              "deliverable approve actions · controls sends the human's edited decision, not the drafted one",
+              "deliverable approve actions · controls refuses to submit an emptied decision"
+            ]
           }
         },
         {
@@ -189,7 +255,11 @@
             "Logs you as approver"
           ],
           "behavioralTest": {
-            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx"
+            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx",
+            "provenCases": [
+              "deliverable approve actions · controls gives a viewer without approval rights no way to approve",
+              "deliverable approve actions · controls tells the approver what approving does before they do it"
+            ]
           }
         }
       ]
@@ -210,12 +280,15 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.watermark on the view model, but nothing mounts ProgramPressureCards, so nothing proves the AI-assisted label reaches a screen.",
+            "reason": "No behavioral test of this control on a reachable screen. MEASURED by execution (item C-416) on the component the Tower route does render, TowerCommandCenterAvaShell: no AI-output label (no AILabel element, no AI-assisted or AI Draft text) in any of 16 states, including an answered aVa turn. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. Nothing mounts this component, so no render test of it can exist; src/__tests__/integration/tower/program-pressure-cards.test.ts proves the field on the view model only, and the other suites listed below name the component without mounting it.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -226,12 +299,15 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.evidenceBasis is non-empty on the view model; no suite mounts the component, so nothing proves the evidence basis is rendered to a reader.",
+            "reason": "No behavioral test of this control on a reachable screen. MEASURED by execution (item C-416) on the component the Tower route does render, TowerCommandCenterAvaShell: no evidence basis and no citation label in any of 16 states, although the answer packet the shell builds carries a trace citation. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. Nothing mounts this component, so no render test of it can exist; src/__tests__/integration/tower/program-pressure-cards.test.ts proves the field on the view model only, and the other suites listed below name the component without mounting it.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -242,12 +318,15 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts pins brief.confidenceLabel to the canonical enum on the view model; no suite mounts the component, so nothing proves the confidence label is displayed.",
+            "reason": "No behavioral test of this control on a reachable screen. MEASURED by execution (item C-416) on the component the Tower route does render, TowerCommandCenterAvaShell: no confidence label in any of 16 states, although the answer packet grades its citation high. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. Nothing mounts this component, so no render test of it can exist; src/__tests__/integration/tower/program-pressure-cards.test.ts proves the field on the view model only, and the other suites listed below name the component without mounting it.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -258,12 +337,15 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.humanApprovalRequired and sanitizedRecommendation on the view model; nothing mounts the component, so nothing proves a reader is told a human must approve.",
+            "reason": "No behavioral test of this control on a reachable screen. MEASURED by execution (item C-416) on the component the Tower route does render, TowerCommandCenterAvaShell: no statement that a person must approve in any of 16 states; only a partial clause, that aVa explains without approving anything on its own, reaches the opened dock. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. Nothing mounts this component, so no render test of it can exist; src/__tests__/integration/tower/program-pressure-cards.test.ts proves the field on the view model only, and the other suites listed below name the component without mounting it.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         },
         {
@@ -274,17 +356,174 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No behavioral test yet. src/__tests__/integration/tower/program-pressure-cards.test.ts asserts brief.accountability.missingDataBanner on the view model; nothing mounts the component, so nothing proves the missing-data caveat is shown alongside the brief.",
+            "reason": "No behavioral test of this control on a reachable screen. MEASURED by execution (item C-416) on the component the Tower route does render, TowerCommandCenterAvaShell: neither the server's gap text nor the packet's decision-support caveat in any of 16 states. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. Nothing mounts this component, so no render test of it can exist; src/__tests__/integration/tower/program-pressure-cards.test.ts proves the field on the view model only, and the other suites listed below name the component without mounting it.",
             "knownSuites": [
+              "src/__tests__/behaviors/catalog-claim-binding.test.ts",
               "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
               "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
               "src/__tests__/integration/tower/program-pressure-cards.test.ts"
-            ]
+            ],
+            "remedy": "render-the-control"
           }
         }
       ],
       "routeReachable": false,
-      "unreachableReason": "The Tower route renders TowerCommandCenterAvaShell; nothing imports ProgramPressureCards. The brief's five controls exist in a component the Tower rebuild left behind. src/lib/qa/route-smoke-inventory.ts and src/lib/qa/founder-demo-route-checklist.ts still name it as the component /tenant/[tenantSlug]/tower renders. Fixed by mounting the accountability block in the command-center shell, or by moving these five controls to the component that now renders there and retiring this entry."
+      "unreachableReason": "The Tower route renders TowerCommandCenterAvaShell; nothing imports ProgramPressureCards. The brief's five controls exist in a component the Tower rebuild left behind. src/lib/qa/route-smoke-inventory.ts, src/lib/qa/founder-demo-route-checklist.ts and docs/demo/ABARVA_FOUNDER_DEMO_ROUTE_CHECKLIST.md now name src/components/tower/command-center/TowerCommandCenterAvaShell.tsx for that route. Fixed by mounting the accountability block in the command-center shell, or by moving these five controls to the component that now renders there and retiring this entry."
+    },
+    {
+      "id": "tower-command-center-ava-dock",
+      "surface": "Tower Command Center aVa dock (answered advisory turns)",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/tower/command-center/TowerCommandCenterAvaShell.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "<AtlasChatPanel",
+            "variant=\"focused\""
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT by execution (item C-416): no AILabel element and no AI-assisted or AI Draft text in any of 16 states, including an answered aVa turn. The shell mounts AtlasChatPanel with variant=\"focused\", which switches the shared dock's review chrome off; mutating it to \"standard\" made this case fail, so the switch is load-bearing. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ],
+            "remedy": "render-the-control"
+          }
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "buildTowerChatAvaAnswerPacket",
+            "traceKey: json.traceKey ?? null"
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT by execution (item C-416): no evidence basis and no citation label in any of 16 states, although the answer packet the shell builds carries a trace citation. Absent in either variant: the dock thread mapping does not forward the packet's citations. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ],
+            "remedy": "render-the-control"
+          }
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "buildTowerChatAvaAnswerPacket",
+            "variant=\"focused\""
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT by execution (item C-416): no confidence text in any of 16 states, although the packet grades its citation high. Mutating variant=\"focused\" to \"standard\" made this case fail. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ],
+            "remedy": "render-the-control"
+          }
+        },
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "without approving anything on its own",
+            "variant=\"focused\""
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT as a statement by execution (item C-416) in all 16 states; only a partial clause, that aVa explains without approving anything on its own, reaches the opened dock, and it does not say a person must approve. Mutating variant=\"focused\" to \"standard\" made this case fail. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ],
+            "remedy": "render-the-control"
+          }
+        },
+        {
+          "kind": "risk-caveat",
+          "evidence": [
+            "buildTowerChatAvaAnswerPacket",
+            "gaps: json.gaps"
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test proves this control on this surface. MEASURED ABSENT by execution (item C-416): neither the server's gap text nor the packet's decision-support caveat reaches the answer in any of 16 states, in either variant. The evidence tokens locate the code on this surface that decides the control's state today; they are not a rendered control and claim none. src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx asserts that state and runs in the required AI surface control catalog job; docs/security/control-measurements/c416-tower-shell-brief-controls.md records the 16 states searched and the mutation evidence. That suite pins the ABSENCE; nothing proves the control reaches a reader, so no coverage is claimed. Whether the dock turns this control on is an open owner decision (item C-574, gated half). The other suites listed below reference the shell module without asserting this control on a rendered answer; src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts proves only that this catalog entry is counted.",
+            "knownSuites": [
+              "src/__tests__/behaviors/c574-tower-dock-catalog-entry.test.ts",
+              "src/__tests__/behaviors/qa-inventory-tower-route-parity.test.ts",
+              "src/__tests__/behaviors/unreachable-reason-claims.test.ts",
+              "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+              "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+              "src/__tests__/integration/tower/tower-db-only-surface.test.ts",
+              "src/__tests__/integration/tower/tower-invariants.test.ts",
+              "src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts",
+              "src/components/atlas/__tests__/atlas-timeout-contract.test.ts",
+              "src/components/shell/__tests__/shell-v2-mode-layout.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.brief-controls.test.tsx",
+              "src/components/tower/command-center/__tests__/TowerCommandCenterAvaShell.test.tsx",
+              "src/lib/tower/__tests__/case-attribute-widening.test.ts",
+              "src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts",
+              "src/lib/tower/__tests__/tower-freshness-provenance.test.ts"
+            ],
+            "remedy": "render-the-control"
+          }
+        }
+      ]
     },
     {
       "id": "source-admin-event-approval-queue",
@@ -301,7 +540,18 @@
             "Self-approval notice"
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx"
+            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx",
+            "provenCases": [
+              "source approval queue · controls refuses to approve before every attestation is ticked",
+              "source approval queue · controls refuses to approve on a reason shorter than the minimum it advertises",
+              "source approval queue · controls sends the attestations the approver actually ticked",
+              "source approval queue · controls send back and reject carry the same rationale weight refuses source-event-send-back-event-1 with no rationale",
+              "source approval queue · controls send back and reject carry the same rationale weight refuses source-event-reject-event-1 with no rationale",
+              "source approval queue · controls send back and reject carry the same rationale weight refuses source-event-send-back-event-1 on a rationale shorter than the minimum",
+              "source approval queue · controls send back and reject carry the same rationale weight refuses source-event-reject-event-1 on a rationale shorter than the minimum",
+              "source approval queue · controls send back and reject carry the same rationale weight sends source-event-send-back-event-1 with the rationale once it meets the minimum",
+              "source approval queue · controls send back and reject carry the same rationale weight sends source-event-reject-event-1 with the rationale once it meets the minimum"
+            ]
           }
         },
         {
@@ -312,7 +562,14 @@
             "Approval action failed."
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx"
+            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx",
+            "provenCases": [
+              "source approval queue · controls tells the approver this is their accountable decision",
+              "source approval queue · controls the self-approval notice states what the record will say names the self-approval when the approver created the event",
+              "source approval queue · controls the self-approval notice states what the record will say does not claim a self-approval when someone else created the event",
+              "source approval queue · controls the self-approval notice states what the record will say states the condition rather than asserting either way when the viewer is unknown",
+              "source approval queue · controls surfaces a failed approval instead of implying it succeeded"
+            ]
           }
         }
       ],
@@ -334,17 +591,17 @@
             "assumptions.map"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "A rendering suite does exist: src/components/source/__tests__/EstimateAssumptionDisclosure.test.tsx mounts the component and proves the assumptions list renders rather than collapsing to an empty node. The reason recorded here before denied that suite existed, and was false. What stays unproven is the control itself: no route mounts this component, so no Source estimate a user sees is shown to carry the caveat.",
-            "knownSuites": [
-              "src/__tests__/behaviors/uncovered-control-known-suites.test.ts",
-              "src/components/source/__tests__/EstimateAssumptionDisclosure.test.tsx"
+            "path": "src/components/source/__tests__/RenewalCockpitView.estimate-disclosure.test.tsx",
+            "provenCases": [
+              "U-507 — the renewal cockpit should-cost estimate carries its disclosure renders the caveat on the cockpit, not only in the component's own suite",
+              "U-507 — the renewal cockpit should-cost estimate carries its disclosure states the assumptions the should-cost model actually made",
+              "U-507 — the renewal cockpit should-cost estimate carries its disclosure puts the disclosure inside the should-cost card and nowhere else",
+              "U-507 — the renewal cockpit should-cost estimate carries its disclosure leaves an ordinary non-estimate Source panel without the caveat"
             ]
           }
         }
       ],
-      "routeReachable": false,
-      "unreachableReason": "No route imports this component; it is already recorded in docs/architecture/unreachable-components.json, and its only importer is its own test. Every Source savings and cost estimate a user sees today is rendered without it. Fixed by mounting it wherever Source presents an estimate, which is where the catalog claims the caveat is shown."
+      "routeReachable": true
     },
     {
       "id": "agent-chat-route-decision-boundary",
@@ -359,11 +616,17 @@
             "createAutonomousDecisionTextStreamer()",
             "autonomousDecisionStreamer.push(",
             "autonomousDecisionStreamer.flush()",
-            "PHASE ADVANCE APPROVALS",
+            "PHASE APPROVALS",
             "Do not claim the user can see, approve"
           ],
           "behavioralTest": {
-            "path": "src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts"
+            "path": "src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts",
+            "provenCases": [
+              "agent visible stream controls scrubs model and tool text",
+              "agent visible stream controls scrubs a phrase split across output chunks",
+              "agent visible stream controls holds a split name and flushes an unfinished sentence",
+              "agent visible stream controls preserves ordinary text while withholding an unfinished control phrase"
+            ]
           }
         }
       ]
@@ -383,7 +646,11 @@
             "aiDecisionEvidencePacket"
           ],
           "behavioralTest": {
-            "path": "src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts"
+            "path": "src/app/api/programs/phase-gate/__tests__/route.test.ts",
+            "provenCases": [
+              "POST /api/programs/phase-gate read plane lets a capability-authorized workspace user approve without a sponsor or admin title",
+              "POST /api/programs/phase-gate read plane rejects phase-gate advances without a human rationale"
+            ]
           }
         }
       ]
@@ -403,7 +670,11 @@
             "aiDecisionEvidencePacket"
           ],
           "behavioralTest": {
-            "path": "src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts"
+            "path": "src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts",
+            "provenCases": [
+              "POST /api/reasoning/gate-waiver decision controls refuses a reason too short to explain a consequential waiver",
+              "POST /api/reasoning/gate-waiver decision controls records an auditable evidence packet for an accepted waiver"
+            ]
           }
         }
       ]
@@ -423,7 +694,13 @@
             "approval_required"
           ],
           "behavioralTest": {
-            "path": "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts"
+            "path": "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts",
+            "provenCases": [
+              "program advance route · human approval gate refuses to advance without a human rationale, and writes nothing",
+              "program advance route · human approval gate requires explicit approval and does not queue a sponsor approval request",
+              "program advance route · human approval gate advances only after the authorized workspace user explicitly approves",
+              "program advance route · human approval gate refuses an unmet hard gate, and writes nothing"
+            ]
           }
         }
       ]
@@ -443,7 +720,13 @@
             "approval_required"
           ],
           "behavioralTest": {
-            "path": "src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts"
+            "path": "src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts",
+            "provenCases": [
+              "advance_phase tool · human approval gate refuses to advance without an explicit human rationale, and writes nothing",
+              "advance_phase tool · human approval gate directs approval to the authorized workspace user without creating a sponsor request",
+              "advance_phase tool · human approval gate refuses a bypass from a session without gate-approval rights",
+              "advance_phase tool · human approval gate still blocks on an unmet hard gate before any rationale question arises"
+            ]
           }
         }
       ]
@@ -463,7 +746,14 @@
             "MOVES_HUMAN_RATIONALE_MIN_CHARS"
           ],
           "behavioralTest": {
-            "path": "src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx"
+            "path": "src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx",
+            "provenCases": [
+              "phase advance button · human decision control will not commit a phase advance with no rationale",
+              "phase advance button · human decision control will not commit a rationale shorter than the stated minimum",
+              "phase advance button · human decision control sends the rationale the human typed",
+              "phase advance button · human decision control shows the attestation the human is making while they make it",
+              "phase advance button · human decision control offers no advance at all when the caller says the gate is closed"
+            ]
           }
         }
       ]
@@ -483,7 +773,14 @@
             "externalActionGate"
           ],
           "behavioralTest": {
-            "path": "src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts"
+            "path": "src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts",
+            "provenCases": [
+              "source work-items route · external action gate refuses an external action with no human confirmation, and writes nothing",
+              "source work-items route · external action gate refuses a confirmation that carries no real rationale",
+              "source work-items route · external action gate refuses a confirmed, justified action with no evidence references",
+              "source work-items route · external action gate records who confirmed, why, and that a human remains responsible for sending",
+              "source work-items route · external action gate does not demand confirmation for an item that stays inside the platform"
+            ]
           }
         }
       ]
@@ -504,7 +801,56 @@
             "evidence_refs"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts"
+            "path": "src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts",
+            "provenCases": [
+              "origination submit · intelligence promotion gate refuses a promotion with no human acceptance, before touching anything",
+              "origination submit · intelligence promotion gate refuses an acceptance with no real rationale",
+              "origination submit · intelligence promotion gate refuses an accepted, justified promotion that names no evidence",
+              "origination submit · intelligence promotion gate does not demand promotion approval for a brief that came from no pattern",
+              "origination submit · intelligence promotion gate lets a fully approved promotion past the gate"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "intelligence-pattern-promotion-brief-panel",
+      "surface": "Intelligence pattern promotion brief panel",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/programs/origination/ProgramBriefPanel.tsx",
+      "requiredControls": [
+        {
+          "kind": "ai-label",
+          "evidence": [
+            "IntelligencePromotionApprovalCard",
+            "Human promotion gate required",
+            "Intelligence pattern promotion approval"
+          ],
+          "behavioralTest": {
+            "path": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx",
+            "provenCases": [
+              "ProgramBriefPanel · declared ai-label control labels an AI-shaped brief as one, in the words the catalog pins",
+              "ProgramBriefPanel · declared ai-label control does not label a brief that no pattern recommendation shaped"
+            ]
+          }
+        },
+        {
+          "kind": "citation",
+          "evidence": [
+            "approval.evidenceRefs.join(', ')",
+            "approval.sourceThreadId",
+            "approval.selectedPatternKey",
+            "promotionApproval.evidenceRefs.length > 0"
+          ],
+          "behavioralTest": {
+            "path": "src/components/programs/origination/__tests__/ProgramBriefPanel.controls.test.tsx",
+            "provenCases": [
+              "ProgramBriefPanel · declared citation control renders every evidence ref the promotion carries, one by one",
+              "ProgramBriefPanel · declared citation control names the source thread and the selected pattern the recommendation came from",
+              "ProgramBriefPanel · declared citation control withholds submit when the promotion carries no evidence ref at all",
+              "ProgramBriefPanel · declared citation control allows submit once the evidence refs are present and accepted"
+            ]
           }
         }
       ]
@@ -523,7 +869,10 @@
             "AI Draft"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts",
+            "provenCases": [
+              "moves deliverable canvas view · disclosure controls marks every deliverable as an AI draft, not just the first"
+            ]
           }
         },
         {
@@ -532,7 +881,12 @@
             "evidenceCitations"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts",
+            "provenCases": [
+              "moves deliverable canvas view · disclosure controls drops low-confidence and contradicted evidence from the trace",
+              "moves deliverable canvas view · disclosure controls documents a gap: the trace silently stops at two citations",
+              "moves deliverable canvas view · disclosure controls documents a gap: a pending deliverable shows no evidence even when it has some"
+            ]
           }
         },
         {
@@ -543,7 +897,11 @@
             "Missing evidence"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts",
+            "provenCases": [
+              "moves deliverable canvas view · disclosure controls gives every deliverable a readiness the reader can act on",
+              "moves deliverable canvas view · disclosure controls documents a gap: readiness reads the phase's evidence, not the deliverable's"
+            ]
           }
         }
       ]
@@ -562,7 +920,12 @@
             "HUMAN_DECISION_ATTESTATION_TEXT"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts",
+            "provenCases": [
+              "moves phase decision evidence packet records who decided and on what, not just that a decision happened",
+              "moves phase decision evidence packet does not let the packet say an agent approved the advance",
+              "moves phase decision evidence packet documents a gap: the scrub covers decision verbs, not action verbs"
+            ]
           }
         },
         {
@@ -572,7 +935,11 @@
             "buildMovesPhaseDecisionAuditRefs"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts",
+            "provenCases": [
+              "moves phase decision evidence packet keeps the caller's own evidence, assumptions and alternatives when given",
+              "moves phase decision evidence packet audit refs point back at the decision and every cited item, without duplicates"
+            ]
           }
         },
         {
@@ -582,7 +949,11 @@
             "alternativesConsidered"
           ],
           "behavioralTest": {
-            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts",
+            "provenCases": [
+              "moves phase decision evidence packet states the assumptions and the alternatives, so the decision can be argued with later",
+              "moves phase decision evidence packet says plainly when the reviewer declared no missing inputs"
+            ]
           }
         }
       ]
@@ -601,7 +972,10 @@
             "draft, not sent"
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
+            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx",
+            "provenCases": [
+              "renewal cockpit · external action control labels a generated vendor email as a draft that was not sent"
+            ]
           }
         },
         {
@@ -612,7 +986,12 @@
             "serveNoticeRationaleReady"
           ],
           "behavioralTest": {
-            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
+            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx",
+            "provenCases": [
+              "renewal cockpit · external action control cannot fire an external action before a human writes a rationale",
+              "renewal cockpit · external action control stays disabled for a rationale shorter than the stated minimum",
+              "renewal cockpit · external action control sends exactly what the screen promised once a rationale is written"
+            ]
           }
         }
       ]
@@ -632,7 +1011,13 @@
             "export_not_eligible"
           ],
           "behavioralTest": {
-            "path": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts"
+            "path": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__/route.test.ts",
+            "provenCases": [
+              "GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render refuses a client-final RFP before checking its linked authority",
+              "GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render refuses a linked approved RFP without active acceptance",
+              "GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render blocks export with a structured 409 when the linked artifact has not cleared the contract's export-eligibility bar",
+              "GET /api/v1/source/[eventId]/artifacts/[artifactCode]/render allows export once the linked artifact is approved for external use and accepted"
+            ]
           }
         }
       ]
@@ -652,7 +1037,78 @@
             "export_not_eligible"
           ],
           "behavioralTest": {
-            "path": "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts"
+            "path": "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__/route.test.ts",
+            "provenCases": [
+              "GET /api/v1/source/artifacts/[artifactId]/download blocks download with a structured 409 when the client-facing artifact has not cleared export eligibility",
+              "GET /api/v1/source/artifacts/[artifactId]/download allows download once the client-facing artifact is approved for external use and accepted"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "moves-nexus-current-state-briefing-panel",
+      "surface": "Moves Nexus current-state briefing panel",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/strategic-moves/NexusCurrentStateBriefingPanel.tsx",
+      "requiredControls": [
+        {
+          "kind": "citation",
+          "evidence": [
+            "citationLabel(briefing.citations, id)",
+            "citationsById.get(id)?.sourceBasis",
+            "section.citationIds.slice(0, 3)",
+            "answer.citationIds.slice(0, 4).map((id) => citationLabel(briefing.citations, id))"
+          ],
+          "behavioralTest": {
+            "path": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx",
+            "provenCases": [
+              "Nexus current-state briefing panel — declared AI surface controls citation renders the cited label for every citation a section cites, not the raw id",
+              "Nexus current-state briefing panel — declared AI surface controls citation carries each citation source basis on the rendered chip",
+              "Nexus current-state briefing panel — declared AI surface controls citation renders the labels an answer cites alongside the answer"
+            ]
+          }
+        },
+        {
+          "kind": "confidence",
+          "evidence": [
+            "Answer · confidence {answer.confidence}",
+            "confidence: 'high' | 'medium' | 'low'"
+          ],
+          "behavioralTest": {
+            "path": "src/components/strategic-moves/__tests__/NexusCurrentStateBriefingPanel.controls.test.tsx",
+            "provenCases": [
+              "Nexus current-state briefing panel — declared AI surface controls confidence states the answer confidence in the words the catalog pins",
+              "Nexus current-state briefing panel — declared AI surface controls confidence discloses the confidence the answer actually carries, not a fixed word",
+              "Nexus current-state briefing panel — declared AI surface controls confidence shows no confidence disclosure before an answer exists, so the label cannot be a constant"
+            ]
+          }
+        }
+      ],
+      "routeReachable": false,
+      "unreachableReason": "The Moves phase Prepare tab mounted this panel until the old phase shell was sunset, and nothing imports NexusCurrentStateBriefingPanel today, so no route reaches it: the citation and confidence disclosures below are real code that no user can open. The unmounted state is recorded in docs/architecture/unreachable-components.json. The endpoint it calls, src/app/api/v1/programs/[programId]/nexus/current-state-brief/route.ts, is still in the tree, so the panel would work the day something mounts it. Fixed by mounting it in the Moves phase shell that renders today, or by moving both controls to that shell and retiring this entry."
+    },
+    {
+      "id": "setup-steward-connector-reconnect-guidance",
+      "surface": "Setup Steward connector reconnect guidance",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/components/setup/ConnectorReconnectPage.tsx",
+      "requiredControls": [
+        {
+          "kind": "confidence",
+          "evidence": [
+            "detail.dataMode === 'seeded' ? 'Seeded fixture' : 'Live signal'",
+            "Mode: {modeLabel} · no live API call is made from this setup surface"
+          ],
+          "behavioralTest": {
+            "path": "src/components/setup/__tests__/ConnectorReconnectPage.assumption-disclosure.test.tsx",
+            "provenCases": [
+              "Steward setup guidance — the assumption disclosure, measured states beside that guidance that the profile is seeded and no live call is made",
+              "Steward setup guidance — the assumption disclosure, measured derives the disclosure from the connector data mode rather than printing a constant",
+              "Steward setup guidance — the assumption disclosure, measured keeps the disclosure on the page once the reader authorizes and Steward's success message appears"
+            ]
           }
         }
       ]
@@ -723,43 +1179,56 @@
       "key": "generated-ui|Intelligence|aVa reasoning cards|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned citation surface before covered status."
+      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned citation surface before covered status.",
+      "surfaceJoin": {
+        "state": "retired"
+      }
     },
     {
       "key": "generated-ui|Intelligence|aVa reasoning cards|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned confidence surface before covered status."
+      "reason": "The old AvaReasoningCards component was retired; current Intelligence rendering needs a fresh machine-pinned confidence surface before covered status.",
+      "surfaceJoin": {
+        "state": "retired"
+      }
     },
     {
       "key": "generated-ui|Intelligence|Atlas synthesis answer|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "The old SynthesisOutput component is no longer the live source path; re-catalog the current shared renderer before claiming covered status."
+      "reason": "The old SynthesisOutput component is no longer the live source path; re-catalog the current shared renderer before claiming covered status.",
+      "surfaceJoin": {
+        "state": "retired"
+      }
     },
     {
       "key": "generated-ui|Intelligence|Sentinel pattern rail replies|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The rail has thin-evidence language, but the current machine catalog does not yet pin a stable confidence control token."
+      "reason": "The rail has thin-evidence language, but the current machine catalog does not yet pin a stable confidence control token.",
+      "surfaceJoin": {
+        "state": "retired"
+      }
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|ai-label",
-      "status": "deferred",
-      "controlKind": "ai-label",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned AI label surface."
+      "status": "covered",
+      "surfaceId": "intelligence-pattern-promotion-brief-panel",
+      "controlKind": "ai-label"
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|citation",
-      "status": "deferred",
-      "controlKind": "citation",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned citation surface."
+      "status": "covered",
+      "surfaceId": "intelligence-pattern-promotion-brief-panel",
+      "controlKind": "citation"
     },
     {
       "key": "generated-ui|Intelligence|Sentinel active pattern recommendations|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The old SentinelActivePatterns component path was retired; the current pattern UI needs a fresh machine-pinned confidence surface."
+      "surfaceId": "intelligence-pattern-promotion-brief-panel",
+      "reason": "The surface is catalogued and its ai-label and citation controls are covered, but it carries no confidence disclosure: the confidence-label half of this legal claim rendered on the pattern-recommendation cards in a component that no longer exists, and the surviving brief panel discloses the promotion gate and its evidence refs without stating a confidence tier. Deferred against the surface rather than against no surface at all, so the gap is now attached to a path a reader can open."
     },
     {
       "key": "generated-ui|Moves|Deliverables canvas|ai-label",
@@ -783,13 +1252,27 @@
       "key": "generated-ui|Moves|Phase advance / gate approval UI|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Rationale prompts ask for reviewed evidence, but this row is not yet represented as a citation control in the machine catalog."
+      "reason": "Rationale prompts ask for reviewed evidence, but this row is not yet represented as a citation control in the machine catalog.",
+      "surfaceJoin": {
+        "state": "ambiguous",
+        "candidateSurfaceIds": [
+          "moves-phase-advance-button",
+          "program-gate-approval"
+        ]
+      }
     },
     {
       "key": "generated-ui|Moves|Phase advance / gate approval UI|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "The UI has rationale and attestation controls, but no dedicated confidence or assumption control is machine-pinned yet."
+      "reason": "The UI has rationale and attestation controls, but no dedicated confidence or assumption control is machine-pinned yet.",
+      "surfaceJoin": {
+        "state": "ambiguous",
+        "candidateSurfaceIds": [
+          "moves-phase-advance-button",
+          "program-gate-approval"
+        ]
+      }
     },
     {
       "key": "generated-ui|Moves|Nexus decision evidence packet view model|ai-label",
@@ -811,27 +1294,35 @@
     },
     {
       "key": "generated-ui|Moves|Nexus current-state briefing panel|citation",
-      "status": "deferred",
+      "status": "covered",
       "controlKind": "citation",
-      "reason": "Briefing citations exist in the component, but AI Draft/edit-before-commit framing still needs a dedicated machine catalog entry."
+      "reason": "Bound to the catalogued surface by C-547. The panel resolves each cited id to its citation label and carries the source basis on the chip; an answer states its own confidence next to the answer text. Both are held to evidence tokens and to a behavioural suite the catalog job runs. The surface is routeReachable: false, so neither control counts toward behavioural coverage of reachable controls — they are in the not-on-any-screen bucket until something mounts the panel.",
+      "surfaceId": "moves-nexus-current-state-briefing-panel"
     },
     {
       "key": "generated-ui|Moves|Nexus current-state briefing panel|confidence",
-      "status": "deferred",
+      "status": "covered",
       "controlKind": "confidence",
-      "reason": "Briefing confidence exists, but the surface is still pending AI Draft/edit-before-commit framing before full coverage."
+      "reason": "Bound to the catalogued surface by C-547. The panel resolves each cited id to its citation label and carries the source basis on the chip; an answer states its own confidence next to the answer text. Both are held to evidence tokens and to a behavioural suite the catalog job runs. The surface is routeReachable: false, so neither control counts toward behavioural coverage of reachable controls — they are in the not-on-any-screen bucket until something mounts the panel.",
+      "surfaceId": "moves-nexus-current-state-briefing-panel"
     },
     {
       "key": "generated-ui|Source|Artifact detail/provenance drawer|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Provenance exists on the artifact detail surface, but generated/AI-assisted labels remain partial before full machine coverage."
+      "reason": "Provenance exists on the artifact detail surface, but generated/AI-assisted labels remain partial before full machine coverage.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Source|Scorecard generated/default state|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Approval counts and blockers exist, but scorecard generated/default state still lacks full BAFO-decision approval coverage."
+      "reason": "Approval counts and blockers exist, but scorecard generated/default state still lacks full BAFO-decision approval coverage.",
+      "surfaceJoin": {
+        "state": "uncatalogued"
+      }
     },
     {
       "key": "generated-ui|Source|Renewal cockpit vendor email draft and serve-notice work item|ai-label",
@@ -840,46 +1331,32 @@
       "controlKind": "ai-label"
     },
     {
-      "key": "generated-ui|Source|Commercial summary surface|confidence",
-      "status": "deferred",
-      "controlKind": "confidence",
-      "reason": "The control is deterministic/no-live-benchmark limitation copy, not a formal confidence control yet."
-    },
-    {
       "key": "generated-ui|Tower|aVa Command Center chat opener|citation",
       "status": "deferred",
+      "surfaceId": "tower-command-center-ava-dock",
       "controlKind": "citation",
-      "reason": "Tower answer packets preserve trace/evidence fields when available, but committed artifact reuse still needs explicit AI-assisted labeling."
+      "reason": "The Tower aVa dock is now catalogued as tower-command-center-ava-dock (item C-574) and its citation control carries behavioralTest status \"none\": C-416 measured no evidence basis or citation label in any of 16 states, although the answer packet carries a trace citation, because the dock thread mapping does not forward it. Deferred until the owner decides whether the dock forwards citations and a render test names the evidence basis."
     },
     {
       "key": "generated-ui|Tower|aVa Command Center chat opener|confidence",
       "status": "deferred",
+      "surfaceId": "tower-command-center-ava-dock",
       "controlKind": "confidence",
-      "reason": "The Command Center aVa shell has unavailable/timeout states, but a formal confidence badge for advisory answers remains follow-on."
-    },
-    {
-      "key": "generated-ui|Tower|Atlas synthesis API response|citation",
-      "status": "deferred",
-      "controlKind": "citation",
-      "reason": "Telemetry records citation counts, but streamed UI response-level watermark and assumption controls remain follow-on."
+      "reason": "The Tower aVa dock is now catalogued as tower-command-center-ava-dock (item C-574) and its confidence control carries behavioralTest status \"none\": C-416 measured no confidence text in any of 16 states, because the shell mounts the dock with variant=\"focused\", which switches the shared review chrome off. Deferred until the owner decides whether the dock turns its review chrome on and a render test names the confidence label."
     },
     {
       "key": "generated-ui|Tower|Pressure/action cards|confidence",
-      "status": "covered",
+      "status": "deferred",
       "surfaceId": "tower-atlas-program-pressure-brief",
-      "controlKind": "confidence"
+      "controlKind": "confidence",
+      "reason": "The surface is catalogued and its confidence control is declared, but that control carries behavioralTest status \"none\": the integration suite pins brief.confidenceLabel on the view model and no suite mounts ProgramPressureCards, so nothing proves the confidence label reaches a reader. This row read covered for that reason-free join until the gate learned to ask about proof. It stays deferred until the mount-or-retire call on the component is made and, if it is mounted, a render test names the label; writing a mount test purely to restore the credit is expressly not the remedy."
     },
     {
       "key": "generated-ui|Setup|Steward setup guidance|confidence",
-      "status": "deferred",
+      "status": "covered",
       "controlKind": "confidence",
-      "reason": "Setup guidance separates seeded/live state, but it is not yet a formal confidence control in the machine catalog."
-    },
-    {
-      "key": "generated-ui|Setup|Agent readiness drill-down|confidence",
-      "status": "deferred",
-      "controlKind": "confidence",
-      "reason": "Agent readiness has deterministic source captions, but factor-level evidence links and formal confidence coverage remain follow-on."
+      "reason": "Bound to the catalogued surface by C-549. The Steward guidance a reader sees from the setup fixture is the connector reconnect flow: its summary, numbered steps and success message render beside \"Mode: Seeded fixture · no live API call is made from this setup surface\", which the page derives from the connector's dataMode. No component reads the fixture's per-connector agentQuote or actions, and nothing imports its index, users, audit or policies agent voices, so that prose reaches no reader and is outside this claim. Held to evidence tokens and to a render suite over the real fixture.",
+      "surfaceId": "setup-steward-connector-reconnect-guidance"
     }
   ]
 }

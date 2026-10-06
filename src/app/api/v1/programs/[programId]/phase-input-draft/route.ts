@@ -1,10 +1,9 @@
 // POST /api/v1/programs/:programId/phase-input-draft
 //
-// Read-only aVa phase-input drafting. This route returns structured proposals
-// from approved upstream phase state; it never writes phase capture, never
-// creates deliverables, and never advances a gate. The Move page may apply a
-// proposal to local draft state, but governed persistence still goes through
-// the explicit phase-capture save path and its revision fence.
+// Read-only aVa phase-input drafting. Only explicit P0-to-P1 mappings create
+// proposals; later phases fail closed until approved evidence is mapped to a
+// specific capture field. This route never writes phase capture, creates
+// deliverables, or advances a gate.
 
 import { NextRequest } from "next/server";
 import {
@@ -21,6 +20,7 @@ import {
   buildAvaPhaseInputProposals,
   describeAvaPhaseInputDraftRefusal,
 } from "@/lib/programs/phase-input-draft-proposals";
+import { listProgramEvidenceForPrompt } from "@/lib/programs/evidence-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,10 +83,23 @@ export async function POST(
 
     const valuesByPhase = await loadCaptureValuesByPhase(ctx, programId);
     const currentValues = valuesByPhase[phase] ?? {};
+    let approvedEvidenceCount = 0;
+    let approvedEvidenceUnavailable = false;
+    if (phase > 1) {
+      try {
+        approvedEvidenceCount = (
+          await listProgramEvidenceForPrompt(ctx, programId, phase)
+        ).length;
+      } catch {
+        approvedEvidenceUnavailable = true;
+      }
+    }
     const proposals = buildAvaPhaseInputProposals({
       phase,
       currentValues,
       upstreamValuesByPhase: valuesByPhase,
+      approvedEvidenceCount,
+      approvedEvidenceUnavailable,
     });
 
     return Response.json({
@@ -103,6 +116,8 @@ export async function POST(
               phase,
               currentValues,
               upstreamValuesByPhase: valuesByPhase,
+              approvedEvidenceCount,
+              approvedEvidenceUnavailable,
             })
           : null,
     });

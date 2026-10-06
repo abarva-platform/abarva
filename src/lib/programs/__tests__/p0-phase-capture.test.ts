@@ -77,7 +77,7 @@ describe("P0 origination charter -> phase capture", () => {
     const evaluation = evaluatePhaseCapture(0, values);
     expect(evaluation.complete).toBe(false);
     expect(evaluation.missing).toContain("Initial value hypothesis");
-    expect(evaluation.missing).toContain("Stakeholder / owner view");
+    expect(evaluation.missing).toContain("Outcome owner and stakeholder view");
     expect(evaluation.missing).toContain("Known evidence");
   });
 });

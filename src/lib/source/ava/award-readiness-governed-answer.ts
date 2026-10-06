@@ -14,6 +14,7 @@ import {
   buildVendorEvaluationDecisionView,
 } from "@/lib/source/proposal-intelligence/mve-profile";
 import { deriveVendorResponseProfilesFromNormalized } from "@/lib/source/vendor-response-completeness-from-normalized";
+import { vendorResponseGovernedFields } from "@/lib/source/ava/governed-answer-confidence";
 import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 
@@ -39,7 +40,7 @@ export function looksLikeAwardReadinessQuestion(
   return hasAwardContext && hasReadinessContext;
 }
 
-function governedCandidateFromPackage(
+export function governedCandidateFromPackage(
   responsePackage: NormalizedVendorResponsePackage,
   scope: { clientKey: string; tenantId: string | null },
 ): GovernedCandidate {
@@ -49,16 +50,7 @@ function governedCandidateFromPackage(
       row.responseDisposition === "Partially Comply",
   );
   return {
-    id: responsePackage.artifactId,
-    client_key: scope.clientKey,
-    tenant_id: scope.tenantId,
-    source_layer: "vendor",
-    source_basis: responsePackage.originalName,
-    classification: "confidential",
-    retrievability: "not_indexed",
-    agent_readiness_status: "not_reviewed",
-    confidence_level: "high",
-    cited_render_verified_at: null,
+    ...vendorResponseGovernedFields(responsePackage, scope),
     title: `${responsePackage.vendorName} evaluation response`,
     citations: [
       `${responsePackage.originalName} contains ${responsePackage.rows.length} normalized requirement rows and ${exceptionRows.length} disclosed exception or partial-compliance rows.`,

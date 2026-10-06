@@ -81,6 +81,19 @@ export interface CrawlComparison {
   };
 }
 
+export function hasBlockingCrawlProofFinding(
+  comparison: Pick<CrawlComparison, "p0" | "findings">,
+): boolean {
+  return (
+    comparison.p0 > 0 ||
+    comparison.findings.some(
+      (finding) =>
+        finding.dimension === "auth-bootstrap" ||
+        finding.dimension === "candidate-preview-auth-bootstrap",
+    )
+  );
+}
+
 export const FORBIDDEN_TENANT_REFERENCES = ["Heliara", "Arcturus"] as const;
 
 const TENANT_SPECIFIC_FORBIDDEN_REFERENCES: Partial<
@@ -365,10 +378,7 @@ export function isAuthAutomationBlockMessage(message: string): boolean {
 
 function normalizedTextIncludes(haystack: string, needle: string): boolean {
   const normalize = (value: string) =>
-    value
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLocaleLowerCase("en-US");
+    value.replace(/\s+/g, " ").trim().toLocaleLowerCase("en-US");
 
   return normalize(haystack).includes(normalize(needle));
 }

@@ -177,7 +177,7 @@ describe('buildMoveDiscoverBrief — a Move with no resolvable function', () => 
     const html = renderMoveDiscoverBriefHtml(UNBOUND_MOVE, GENERATED_ON);
     expect(html.startsWith('<!doctype html>')).toBe(true);
     expect(html).toContain('Honest unbound state');
-    expect(html).toContain('No curated Domain Function Pack');
+    expect(html).toContain('No curated domain reference model');
     // No fabricated verdict — the unbound deck states the gap and stops.
     expect(html).toContain('Not run');
   });

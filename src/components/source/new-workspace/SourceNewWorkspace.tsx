@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/shell/AppShell";
 import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
+import { SourceNewNdaCapture } from "./SourceNewNdaCapture";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AnswerCitation } from "@/lib/ava-answer/contract";
@@ -35,6 +36,15 @@ import {
   buildHistoricalRequestSummary,
   type HistoricalRequestSummary,
 } from "@/lib/source/new-workspace/historical-request-summary";
+import type { StepReadiness } from "@/lib/source/new-workspace/step-readiness";
+import {
+  releaseStateLabel,
+  type ReleaseStateView,
+} from "@/lib/source/new-workspace/release-state-view";
+import {
+  parsedYieldLabel,
+  type ParsedYieldView,
+} from "@/lib/source/artifact-registry/parsed-yield-view";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import {
@@ -113,6 +123,29 @@ export interface SourceNewEventView {
    * render differently and only one of them is a blocker.
    */
   requestVersionApproval?: "accepted" | "pending" | "changes_requested" | null;
+  /**
+   * Strategy-version authority, read the same way and meaning the same thing:
+   * `null`/absent is unread, not unapproved. The Strategy needs two distinct
+   * named approvers, so "approved" here means both, never one.
+   */
+  strategyVersionApproval?:
+    | "approved"
+    | "pending"
+    | "blocked"
+    | "changes_requested"
+    | null;
+  /**
+   * RFx release readback. An unreadable store is `unread`, which renders as
+   * "Not recorded" and is deliberately distinct from `none` — a package that
+   * was never prepared and a store we cannot read are different facts.
+   */
+  releaseState?: ReleaseStateView | null;
+  /**
+   * What parsing extracted from this event's artifacts. Unread renders as
+   * "Not recorded"; an event whose uploads genuinely yielded nothing is a
+   * different statement and says so.
+   */
+  parsedYield?: ParsedYieldView | null;
   /** Current immutable Request authority version used to fence Stage 04 writes. */
   requestAuthorityVersionId?: string | null;
 }
@@ -306,6 +339,12 @@ export type SourceNewWorkspaceProps = {
   responseIntake?: SourceNewResponseIntake;
   /** Governed summary for the historical Request phase. */
   historicalRequestSummary?: HistoricalRequestSummary;
+  /**
+   * One status and one next action for the step the event is working in, from
+   * `assessStepReadiness`. Null when the model does not cover the current step,
+   * in which case nothing renders and the existing panels stand alone.
+   */
+  stepReadiness?: StepReadiness | null;
 };
 
 export function SourceNewWorkspace({
@@ -319,6 +358,7 @@ export function SourceNewWorkspace({
   scorecardAuthority,
   responseIntake,
   historicalRequestSummary,
+  stepReadiness = null,
 }: SourceNewWorkspaceProps) {
   const evidence = useMemo(
     () => phaseEvidence(event, files, stage05NdaCoverage),
@@ -365,10 +405,14 @@ export function SourceNewWorkspace({
   const isCurrentPhase = phase === current;
   const responsesStage = isResponsesStage(event);
   const scorecardAuthorityStage = isScorecardAuthorityStage(event);
+  const [scorecardRefresh, setScorecardRefresh] = useState(0);
   const [scorecardReadback, setScorecardReadback] = useState<{
     eventId: string;
     clientKey: string;
     authority: ScorecardAuthorityView | null;
+    canWrite: boolean;
+    supplierOptions: { id: string; name: string }[];
+    lockableScores: { vendorId: string; criterionId: string; criterionVersion: string }[];
   } | null>(null);
   useEffect(() => {
     if (!scorecardAuthorityStage || typeof fetch !== "function") return;
@@ -382,24 +426,48 @@ export function SourceNewWorkspace({
           eventId?: unknown;
           clientKey?: unknown;
           authority?: unknown;
+          canWrite?: unknown;
+          supplierOptions?: unknown;
+          lockableScores?: unknown;
         } | null;
         const authority = value?.authority as ScorecardAuthorityView | null;
+        const validAuthority =
+          value?.eventId === event.id &&
+          value.clientKey === event.clientKey &&
+          (authority?.state === "ready" || authority?.state === "blocked") &&
+          Array.isArray(authority.criteria) &&
+          Array.isArray(authority.scoreRows) &&
+          Array.isArray(authority.vendorRows) &&
+          Array.isArray(authority.blockers) &&
+          authority.rankAllowed === false &&
+          authority.advanceAllowed === false &&
+          authority.bafoReady === false;
+        const supplierOptions = Array.isArray(value?.supplierOptions)
+          ? value.supplierOptions.filter(
+              (row): row is { id: string; name: string } =>
+                Boolean(row) &&
+                typeof row.id === "string" &&
+                Boolean(row.id.trim()) &&
+                typeof row.name === "string" &&
+                Boolean(row.name.trim()),
+            )
+          : [];
+        const lockableScores = Array.isArray(value?.lockableScores)
+          ? value.lockableScores.filter(
+              (row): row is { vendorId: string; criterionId: string; criterionVersion: string } =>
+                Boolean(row) &&
+                typeof row.vendorId === "string" &&
+                typeof row.criterionId === "string" &&
+                typeof row.criterionVersion === "string",
+            )
+          : [];
         setScorecardReadback({
           eventId: event.id,
           clientKey: event.clientKey,
-          authority:
-            value?.eventId === event.id &&
-            value.clientKey === event.clientKey &&
-            (authority?.state === "ready" || authority?.state === "blocked") &&
-            Array.isArray(authority.criteria) &&
-            Array.isArray(authority.scoreRows) &&
-            Array.isArray(authority.vendorRows) &&
-            Array.isArray(authority.blockers) &&
-            authority.rankAllowed === false &&
-            authority.advanceAllowed === false &&
-            authority.bafoReady === false
-              ? authority
-              : null,
+          authority: validAuthority ? authority : null,
+          canWrite: validAuthority && value?.canWrite === true,
+          supplierOptions: validAuthority ? supplierOptions : [],
+          lockableScores: validAuthority ? lockableScores : [],
         });
       })
       .catch(() => {
@@ -408,11 +476,14 @@ export function SourceNewWorkspace({
             eventId: event.id,
             clientKey: event.clientKey,
             authority: null,
+            canWrite: false,
+            supplierOptions: [],
+            lockableScores: [],
           });
         }
       });
     return () => controller.abort();
-  }, [event.id, event.clientKey, scorecardAuthorityStage]);
+  }, [event.id, event.clientKey, scorecardAuthorityStage, scorecardRefresh]);
   const currentScorecardReadback =
     scorecardReadback?.eventId === event.id &&
     scorecardReadback.clientKey === event.clientKey
@@ -451,6 +522,7 @@ export function SourceNewWorkspace({
   const content = (
     <main className="snw" aria-label="Source New event workspace">
       <div className="snw-inner">
+        <StepReadinessBanner readiness={stepReadiness} />
         <div className="snw-crumb">
           <Link href="/source/new">Source New</Link>
           <span>/</span>
@@ -573,18 +645,14 @@ export function SourceNewWorkspace({
                     Before this phase can open in a real event:{" "}
                     {PREVIEW_UNMET_CONDITIONS[phase]}
                   </p>
-                  {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView
-                      event={event}
-                      panel={stage04VendorPanel}
-                    />
-                  )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage05NdaReadiness
-                      coverage={stage05NdaCoverage}
-                      eventHref={eventHref}
-                    />
-                  )}
+                  <SupplierPhasePanels
+                    phase={phase}
+                    event={event}
+                    panel={stage04VendorPanel}
+                    coverage={stage05NdaCoverage}
+                    eventHref={eventHref}
+                    files={files}
+                  />
                 </>
               ) : stateOf(phase) === "not_open" ? (
                 <>
@@ -608,18 +676,14 @@ export function SourceNewWorkspace({
                     before treating this history as complete.
                   </p>
                   <p className="snw-note">{completedNote}</p>
-                  {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView
-                      event={event}
-                      panel={stage04VendorPanel}
-                    />
-                  )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage05NdaReadiness
-                      coverage={stage05NdaCoverage}
-                      eventHref={eventHref}
-                    />
-                  )}
+                  <SupplierPhasePanels
+                    phase={phase}
+                    event={event}
+                    panel={stage04VendorPanel}
+                    coverage={stage05NdaCoverage}
+                    eventHref={eventHref}
+                    files={files}
+                  />
                 </>
               ) : stateOf(phase) === "no_record" ? (
                 <>
@@ -644,21 +708,22 @@ export function SourceNewWorkspace({
                       />
                     )
                   )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView
-                      event={event}
-                      panel={stage04VendorPanel}
-                    />
-                  )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage05NdaReadiness
-                      coverage={stage05NdaCoverage}
-                      eventHref={eventHref}
-                    />
-                  )}
+                  <SupplierPhasePanels
+                    phase={phase}
+                    event={event}
+                    panel={stage04VendorPanel}
+                    coverage={stage05NdaCoverage}
+                    eventHref={eventHref}
+                    files={files}
+                  />
                   {scorecardAuthorityStage && (
                     <SourceNewStage07ScorecardAuthority
                       authority={displayedScorecardAuthority}
+                      eventId={event.id}
+                      canWrite={currentScorecardReadback?.canWrite ?? false}
+                      supplierOptions={currentScorecardReadback?.supplierOptions ?? []}
+                      lockableScores={currentScorecardReadback?.lockableScores ?? []}
+                      onChanged={() => setScorecardRefresh((value) => value + 1)}
                     />
                   )}
                 </>
@@ -687,21 +752,22 @@ export function SourceNewWorkspace({
                       />
                     )
                   )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage04VendorPanelView
-                      event={event}
-                      panel={stage04VendorPanel}
-                    />
-                  )}
-                  {phase === "suppliers" && (
-                    <SourceNewStage05NdaReadiness
-                      coverage={stage05NdaCoverage}
-                      eventHref={eventHref}
-                    />
-                  )}
+                  <SupplierPhasePanels
+                    phase={phase}
+                    event={event}
+                    panel={stage04VendorPanel}
+                    coverage={stage05NdaCoverage}
+                    eventHref={eventHref}
+                    files={files}
+                  />
                   {scorecardAuthorityStage && (
                     <SourceNewStage07ScorecardAuthority
                       authority={displayedScorecardAuthority}
+                      eventId={event.id}
+                      canWrite={currentScorecardReadback?.canWrite ?? false}
+                      supplierOptions={currentScorecardReadback?.supplierOptions ?? []}
+                      lockableScores={currentScorecardReadback?.lockableScores ?? []}
+                      onChanged={() => setScorecardRefresh((value) => value + 1)}
                     />
                   )}
                 </>
@@ -872,7 +938,94 @@ export function SourceNewWorkspace({
   );
 }
 
-function SourceNewStage04VendorReadiness({
+/**
+ * One status and one next action for the step the operator is working in.
+ *
+ * This is the first product caller of `assessStepReadiness`. The three parallel
+ * counters elsewhere on the page say how much is outstanding; this says what to
+ * do next, and when the action is unavailable it states the reason rather than
+ * presenting a control that silently does nothing.
+ */
+function StepReadinessBanner({ readiness }: { readiness: StepReadiness | null }) {
+  if (!readiness) return null;
+  const { status, nextAction, unmetRequirements } = readiness;
+  return (
+    <section
+      className={`snw-step-readiness is-${status}`}
+      aria-label="What to do next in this step"
+    >
+      <p className="snw-eyebrow">{STEP_READINESS_STATUS_LABELS[status]}</p>
+      <div className="snw-step-readiness-action">
+        <button type="button" className="snw-step-readiness-cta" disabled={nextAction.disabled}>
+          {nextAction.label}
+        </button>
+        {nextAction.disabled && nextAction.disabledReason ? (
+          <p className="snw-step-readiness-reason">{nextAction.disabledReason}</p>
+        ) : null}
+      </div>
+      {nextAction.disabled && unmetRequirements.length ? (
+        <ul className="snw-step-readiness-unmet">
+          {unmetRequirements.map((requirement) => (
+            <li key={requirement}>{requirement}</li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+const STEP_READINESS_STATUS_LABELS: Record<StepReadiness["status"], string> = {
+  needs_work: "Not ready yet",
+  ready_to_submit: "Ready",
+  awaiting_approval: "Waiting on an approval",
+  complete: "Done",
+  blocked: "Blocked",
+};
+
+/**
+ * The supplier-phase pair, rendered wherever the supplier phase has something
+ * to show.
+ *
+ * These two panels appeared at four call sites with identical props, each
+ * wrapped in its own `phase === "suppliers"` guard. Four copies of a guard is
+ * four chances for one of them to drift. Holding the guard inside the component
+ * makes "render this once, and only in the supplier phase" structural rather
+ * than a convention every branch has to remember.
+ *
+ * The `not_open` branch deliberately renders nothing and still does: it never
+ * contained this pair.
+ */
+export function SupplierPhasePanels({
+  phase,
+  event,
+  panel,
+  coverage,
+  eventHref,
+  files,
+}: {
+  phase: Phase;
+  event: SourceNewEventView;
+  panel: SourceNewStage04VendorPanel;
+  coverage: SourceNewStage05NdaCoverage;
+  eventHref: string;
+  files: readonly SourceNewFileRow[];
+}) {
+  if (phase !== "suppliers") return null;
+  return (
+    <>
+      <SourceNewStage04VendorPanelView event={event} panel={panel} />
+      <SourceNewStage05NdaReadiness
+        clientKey={event.clientKey}
+        coverage={coverage}
+        eventHref={eventHref}
+        eventId={event.id}
+        files={files}
+      />
+    </>
+  );
+}
+
+export function SourceNewStage04VendorReadiness({
   event,
   responseRows,
 }: {
@@ -901,6 +1054,17 @@ function SourceNewStage04VendorReadiness({
       ? "Changes are requested on the current Request version."
       : null,
   ].filter((item): item is string => Boolean(item));
+
+  const strategyAuthorityLabel =
+    event.strategyVersionApproval === "approved"
+      ? "Strategy version approved"
+      : event.strategyVersionApproval === "pending"
+        ? "Strategy approval pending"
+        : event.strategyVersionApproval === "changes_requested"
+          ? "Changes requested on the Strategy version"
+          : event.strategyVersionApproval === "blocked"
+            ? "Strategy approval blocked"
+            : "Not recorded";
 
   const requestAuthorityLabel =
     event.requestVersionApproval === "accepted"
@@ -931,6 +1095,26 @@ function SourceNewStage04VendorReadiness({
         <div>
           <dt>Request authority</dt>
           <dd>{requestAuthorityLabel}</dd>
+        </div>
+        <div>
+          <dt>Strategy authority</dt>
+          <dd>{strategyAuthorityLabel}</dd>
+        </div>
+        <div>
+          <dt>RFx release</dt>
+          <dd>
+            {event.releaseState
+              ? releaseStateLabel(event.releaseState)
+              : "Not recorded"}
+          </dd>
+        </div>
+        <div>
+          <dt>Extracted from artifacts</dt>
+          <dd>
+            {event.parsedYield
+              ? parsedYieldLabel(event.parsedYield)
+              : "Not recorded"}
+          </dd>
         </div>
         <div>
           <dt>Solicitation motion</dt>
@@ -1314,11 +1498,17 @@ function SourceNewStage04VendorPanelView({
 }
 
 function SourceNewStage05NdaReadiness({
+  clientKey,
   coverage,
   eventHref,
+  eventId,
+  files,
 }: {
+  clientKey: string;
   coverage: SourceNewStage05NdaCoverage;
   eventHref: string;
+  eventId: string;
+  files: readonly SourceNewFileRow[];
 }) {
   const posture =
     coverage.status === "ready"
@@ -1331,9 +1521,8 @@ function SourceNewStage05NdaReadiness({
       <p className="snw-eyebrow">Stage 05 · NDA readiness</p>
       <h3>Supplier NDA coverage</h3>
       <p>
-        This read-only check summarizes existing NDA evidence. It does not send
-        supplier communications, approve legal terms, or infer supplier identity
-        from filenames.
+        This check summarizes recorded NDA evidence. A completed signing envelope does not
+        grant coverage; a named reviewer must record the executed document or Legal waiver.
       </p>
       <dl className="snw-facts">
         <div>
@@ -1373,6 +1562,7 @@ function SourceNewStage05NdaReadiness({
           <dd>{posture}</dd>
         </div>
       </dl>
+      <SourceNewNdaCapture eventId={eventId} clientKey={clientKey} files={files} coverage={coverage} />
       {coverage.suppliers.length > 0 ? (
         <div
           className="snw-nda-suppliers"
@@ -1432,9 +1622,72 @@ function SourceNewStage05NdaReadiness({
 
 function SourceNewStage07ScorecardAuthority({
   authority,
+  eventId,
+  canWrite,
+  supplierOptions,
+  lockableScores,
+  onChanged,
 }: {
   authority: ScorecardAuthorityView;
+  eventId: string;
+  canWrite: boolean;
+  supplierOptions: readonly { id: string; name: string }[];
+  lockableScores: readonly { vendorId: string; criterionId: string; criterionVersion: string }[];
+  onChanged: () => void;
 }) {
+  const [busy, setBusy] = useState(false);
+  const [writeMessage, setWriteMessage] = useState<string | null>(null);
+  const endpoint = `/api/v1/source/events/${encodeURIComponent(eventId)}/scorecard-authority`;
+  async function submitAction(action: Record<string, unknown>) {
+    if (!canWrite || busy) return;
+    setBusy(true);
+    setWriteMessage(null);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(action),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setWriteMessage((payload.error ?? "Scorecard write failed").replaceAll("_", " "));
+        return;
+      }
+      setWriteMessage("Saved. Authority readback is refreshing.");
+      onChanged();
+    } catch {
+      setWriteMessage("Scorecard write is unavailable.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  function createCriterion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    void submitAction({
+      action: "create_criterion",
+      criterionId: String(data.get("criterionId") ?? "").trim(),
+      criterionVersion: String(data.get("criterionVersion") ?? "").trim(),
+      label: String(data.get("label") ?? "").trim(),
+      weight: Number(data.get("weight")),
+    });
+  }
+  function recordScore(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const criterionId = String(data.get("criterionId") ?? "");
+    const criterion = approvedCriteria.find((row) => row.criterionId === criterionId);
+    if (!criterion) return;
+    void submitAction({
+      action: "record_score",
+      vendorId: String(data.get("vendorId") ?? ""),
+      criterionId,
+      criterionVersion: criterion.criterionVersion,
+      score: Number(data.get("score")),
+      evidenceReference: String(data.get("evidenceReference") ?? "").trim(),
+      overrideReason: String(data.get("overrideReason") ?? "").trim(),
+    });
+  }
   const approvedCriteria = authority.criteria.filter(
     (criterion) =>
       criterion.approvedCriterionVersion === criterion.criterionVersion &&
@@ -1444,10 +1697,9 @@ function SourceNewStage07ScorecardAuthority({
   const frozenWeightTotal = approvedCriteria
     .filter((criterion) => criterion.weightsFrozen)
     .reduce((total, criterion) => total + criterion.weight, 0);
-  const lockedScoreCount = authority.vendorRows.reduce(
-    (total, row) => total + row.lockedScoreCount,
-    0,
-  );
+  const lockedScoreCount = authority.scoreRows.filter(
+    (row) => row.lockState === "locked",
+  ).length;
   return (
     <section
       className="snw-nda-readiness"
@@ -1456,9 +1708,9 @@ function SourceNewStage07ScorecardAuthority({
       <p className="snw-eyebrow">Stage 07 · Scorecard authority</p>
       <h3>Frozen evaluator scorecard</h3>
       <p>
-        This read-only check summarizes whether scorecard authority is ready for
-        governed reviewer inspection. It does not rank vendors, send BAFOs,
-        approve an award or turn an AI suggestion into a final score.
+        Named criterion approvals and evidenced evaluator scores determine the
+        review posture. This view does not rank suppliers, send BAFOs or approve
+        an award.
       </p>
       <dl className="snw-facts">
         <div>
@@ -1500,6 +1752,38 @@ function SourceNewStage07ScorecardAuthority({
                   {criterion.weightsFrozen
                     ? "weights frozen"
                     : "weights not frozen"}
+                  {canWrite && !criterion.approvedAt && (
+                    <>
+                      <button
+                        type="button"
+                        className="snw-text-action"
+                        disabled={busy}
+                        onClick={() => void submitAction({
+                          action: "approve_criterion",
+                          criterionId: criterion.criterionId,
+                          criterionVersion: criterion.criterionVersion,
+                        })}
+                      >
+                        Approve {criterion.label} {criterion.criterionVersion}
+                      </button>
+                      <button
+                        type="button"
+                        className="snw-text-action"
+                        disabled={busy}
+                        onClick={() => {
+                          if (window.confirm(`Retire unapproved criterion ${criterion.label}?`)) {
+                            void submitAction({
+                              action: "retire_criterion",
+                              criterionId: criterion.criterionId,
+                              criterionVersion: criterion.criterionVersion,
+                            });
+                          }
+                        }}
+                      >
+                        Retire {criterion.label} {criterion.criterionVersion}
+                      </button>
+                    </>
+                  )}
                 </li>
               ))
             ) : (
@@ -1523,6 +1807,43 @@ function SourceNewStage07ScorecardAuthority({
           </ul>
         </div>
       </div>
+      {canWrite && !authority.criteria.some((criterion) => criterion.approvedAt) && (
+        <form className="snw-scorecard-form" onSubmit={createCriterion}>
+          <label>Criterion ID<input name="criterionId" required maxLength={100} /></label>
+          <label>Version<input name="criterionVersion" required maxLength={100} /></label>
+          <label>Criterion label<input name="label" required maxLength={500} /></label>
+          <label>Weight %<input name="weight" type="number" required min="0.0001" max="100" step="0.0001" /></label>
+          <button className="snw-primary" type="submit" disabled={busy}>Save criterion</button>
+        </form>
+      )}
+      {canWrite && approvedCriteria.length > 0 && supplierOptions.length > 0 && (
+        <form className="snw-scorecard-form" onSubmit={recordScore}>
+          <label>Supplier
+            <select name="vendorId" required defaultValue="">
+              <option value="" disabled>Select supplier</option>
+              {supplierOptions.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+              ))}
+            </select>
+          </label>
+          <label>Criterion
+            <select name="criterionId" required defaultValue="">
+              <option value="" disabled>Select criterion</option>
+              {approvedCriteria.map((criterion) => (
+                <option key={criterion.criterionId} value={criterion.criterionId}>{criterion.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>Evaluator score / 10<input name="score" type="number" required min="0" max="10" step="0.1" /></label>
+          <label>Evidence artifact ID<input name="evidenceReference" required maxLength={36} /></label>
+          <label>Override reason<input name="overrideReason" maxLength={2000} /></label>
+          <button className="snw-primary" type="submit" disabled={busy}>Save evaluator score</button>
+        </form>
+      )}
+      {canWrite && supplierOptions.length === 0 && (
+        <p className="snw-note">No accepted event suppliers are available for scoring.</p>
+      )}
+      {writeMessage && <p className="snw-note" role="status">{writeMessage}</p>}
       <div className="snw-nda-next">
         <strong>Evaluator authority</strong>
         <ul>
@@ -1542,6 +1863,31 @@ function SourceNewStage07ScorecardAuthority({
             <li>No named evaluator score authority is loaded.</li>
           )}
         </ul>
+        {canWrite && lockableScores.length > 0 && (
+          <div>
+            <strong>Your unlocked scores</strong>
+            <ul>
+              {lockableScores.map((row) => (
+                <li key={`${row.vendorId}:${row.criterionId}:${row.criterionVersion}`}>
+                  {supplierOptions.find((supplier) => supplier.id === row.vendorId)?.name ?? row.vendorId} / {row.criterionId}
+                  <button
+                    type="button"
+                    className="snw-text-action"
+                    disabled={busy}
+                    onClick={() => void submitAction({
+                      action: "lock_score",
+                      vendorId: row.vendorId,
+                      criterionId: row.criterionId,
+                      criterionVersion: row.criterionVersion,
+                    })}
+                  >
+                    Lock score
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       {authority.vendorRows.length > 0 && (
         <div className="snw-nda-next">
@@ -1557,7 +1903,11 @@ function SourceNewStage07ScorecardAuthority({
           </ul>
         </div>
       )}
-      <p className="snw-note">{authority.guardrail}</p>
+      <p className="snw-note">
+        {canWrite
+          ? "AI suggestions remain advisory. Only named evaluator scores with evidence may be locked; this view does not rank, advance, create BAFO rounds or approve awards."
+          : authority.guardrail}
+      </p>
     </section>
   );
 }

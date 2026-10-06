@@ -12,6 +12,7 @@ import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import { SourceNewNdaCapture } from "./SourceNewNdaCapture";
 import type { HistoricalRequestSummary } from "@/lib/source/new-workspace/historical-request-summary";
 import {
   buildScorecardAuthorityView,
@@ -22,6 +23,9 @@ import type { AgentDockProps } from "@/components/agent/AgentDock";
 
 const mockUseAtlasPageState = jest.fn();
 const mockAgentDockProps: AgentDockProps[] = [];
+const mockRefresh = jest.fn();
+
+jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mockRefresh }) }));
 
 jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
@@ -134,9 +138,74 @@ const unavailableScorecardAuthority = buildScorecardAuthorityView({
   scores: [],
 });
 
+describe("Stage 05 executed NDA capture", () => {
+  const ndaFile = {
+    id: "22222222-2222-4222-8222-222222222222",
+    title: "Executed NDA scan", artifactGroup: "upload", artifactType: "nda_executed",
+    lifecycleState: "current", blobSha256: "a".repeat(64),
+  } as SourceNewFileRow;
+  const ndaCoverage = (versions: string[]): SourceNewStage05NdaCoverage => ({
+    status: "blocked", asOf: "2026-10-02T00:00:00Z", publishedTemplateVersions: versions,
+    suppliers: [{
+      legalEntityId: "VEN-001", legalName: "Example supplier", state: "not_covered",
+      reason: "No authority recorded", authorityReference: null,
+      evidenceReference: "candidate-1", evidenceCaveats: [],
+    }],
+    nextAction: { label: "Resolve NDA coverage", detail: "Record evidence." },
+  });
+
+  it("withholds the record action until template and uploaded evidence are present", () => {
+    const { rerender } = render(<SourceNewNdaCapture eventId="event-1" clientKey="synthetic-other" files={[ndaFile]} coverage={ndaCoverage([])} />);
+    expect(screen.queryByRole("button", { name: "Record executed NDA" })).toBeNull();
+    expect(screen.getByText(/Legal must publish/)).toBeTruthy();
+    rerender(<SourceNewNdaCapture eventId="event-1" clientKey="synthetic-other" files={[]} coverage={ndaCoverage(["NDA-V1"])} />);
+    expect(screen.queryByRole("button", { name: "Record executed NDA" })).toBeNull();
+    expect(screen.getByText(/Upload the executed NDA/)).toBeTruthy();
+  });
+
+  it("shows lab-only template publication without presenting it as Legal approval", () => {
+    const templateFile: SourceNewFileRow = { ...ndaFile, artifactType: "nda_template", fileFormat: "pdf", title: "Synthetic template" };
+    const { rerender } = render(<SourceNewNdaCapture eventId="event-1" clientKey="synthetic-other" files={[templateFile]} coverage={ndaCoverage([])} />);
+    expect(screen.queryByRole("form", { name: "Publish synthetic NDA template" })).toBeNull();
+    rerender(<SourceNewNdaCapture eventId="event-1" clientKey="meridian-health" files={[templateFile]} coverage={ndaCoverage([])} />);
+    expect(screen.getByRole("form", { name: "Publish synthetic NDA template" })).toBeTruthy();
+    expect(screen.getByText(/not Legal approval or an executed NDA/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Record executed NDA" })).toBeNull();
+  });
+
+  it("posts the selected governed identities and refreshes coverage on success", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    const priorFetch = global.fetch;
+    global.fetch = fetchMock;
+    try {
+      render(<SourceNewNdaCapture eventId="event-1" clientKey="synthetic-other" files={[ndaFile]} coverage={ndaCoverage(["NDA-V1"])} />);
+      const form = screen.getByRole("form", { name: "Record executed NDA" });
+      for (const input of form.querySelectorAll("input")) {
+        if (input.name === "effectiveFrom") input.value = "2026-09-30";
+        if (input.name === "executedAt") input.value = "2026-09-30T12:00";
+        if (input.name === "supplierSignatoryName") input.value = "Supplier signer";
+        if (input.name === "buyerSignatoryName") input.value = "Buyer signer";
+        if (input.name === "privateEvidenceRef") input.value = "private://nda-evidence";
+        if (input.name === "evidenceReference") input.value = "Reviewed signed pages and private record.";
+      }
+      fireEvent.submit(form);
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      const body = fetchMock.mock.calls[0][1].body as FormData;
+      expect(body.get("vendorId")).toBe("VEN-001");
+      expect(body.get("artifactId")).toBe(ndaFile.id);
+      expect(body.get("templateVersion")).toBe("NDA-V1");
+      expect(body.get("executedAt")).toBe(new Date("2026-09-30T12:00").toISOString());
+      await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+    } finally {
+      global.fetch = priorFetch;
+    }
+  });
+});
+
 beforeEach(() => {
   mockUseAtlasPageState.mockReturnValue(null);
   mockAgentDockProps.length = 0;
+  mockRefresh.mockClear();
 });
 
 // Blocked rather than empty: these cases are about other parts of the
@@ -444,6 +513,108 @@ describe("SourceNewWorkspace", () => {
     }
   });
 
+  it("offers human scorecard actions only after a scoped Evaluation readback", async () => {
+    const originalFetch = global.fetch;
+    const authority = buildScorecardAuthorityView({
+      tenantKey: request.clientKey,
+      sourceEventId: request.id,
+      criteria: [{
+        tenantKey: request.clientKey,
+        sourceEventId: request.id,
+        criterionId: "quality",
+        criterionVersion: "v1",
+        label: "Quality",
+        weight: 100,
+        weightsFrozen: false,
+        approvedCriterionVersion: null,
+        approvedBy: null,
+        approvedAt: null,
+      }],
+      scores: [],
+    });
+    global.fetch = jest.fn(async (_url, options) =>
+      options?.method === "POST"
+        ? { ok: true, json: async () => ({ ok: true }) }
+        : { ok: true, json: async () => ({
+          eventId: request.id,
+          clientKey: request.clientKey,
+          authority,
+          canWrite: true,
+          supplierOptions: [{ id: "supplier-1", name: "Supplier One" }],
+          lockableScores: [],
+        }) },
+    ) as unknown as typeof fetch;
+    try {
+      render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
+      const panel = screen.getByRole("region", { name: "Stage 07 scorecard authority" });
+      await waitFor(() => expect(within(panel).getByRole("button", { name: "Approve Quality v1" })).toBeTruthy());
+      fireEvent.click(within(panel).getByRole("button", { name: "Approve Quality v1" }));
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/events/event-1/scorecard-authority",
+        expect.objectContaining({ method: "POST", body: JSON.stringify({ action: "approve_criterion", criterionId: "quality", criterionVersion: "v1" }) }),
+      ));
+      expect(within(panel).queryByRole("button", { name: /award|bafo/i })).toBeNull();
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it("binds score save and lock to the accepted supplier and session-scoped action", async () => {
+    const originalFetch = global.fetch;
+    const authority = buildScorecardAuthorityView({
+      tenantKey: request.clientKey,
+      sourceEventId: request.id,
+      criteria: [{
+        tenantKey: request.clientKey, sourceEventId: request.id,
+        criterionId: "quality", criterionVersion: "v1", label: "Quality", weight: 100,
+        weightsFrozen: true, approvedCriterionVersion: "v1", approvedBy: "reviewer-1", approvedAt: "2026-09-23T00:00:00Z",
+      }],
+      scores: [{
+        tenantKey: request.clientKey, sourceEventId: request.id,
+        vendorId: "supplier-1", vendorName: "Supplier One", criterionId: "quality", criterionVersion: "v1",
+        evaluatorId: "reviewer-2", evaluatorName: "Reviewer Two", evaluatorScore: 8,
+        evidenceReference: "11111111-1111-4111-8111-111111111111", overrideReason: null, overrideReasonRequired: false,
+        lockState: "unlocked", lockedBy: null, lockedAt: null,
+      }],
+    });
+    global.fetch = jest.fn(async (_url, options) =>
+      options?.method === "POST"
+        ? { ok: true, json: async () => ({ ok: true }) }
+        : { ok: true, json: async () => ({
+          eventId: request.id, clientKey: request.clientKey, authority, canWrite: true,
+          supplierOptions: [{ id: "supplier-1", name: "Supplier One" }],
+          lockableScores: [{ vendorId: "supplier-1", criterionId: "quality", criterionVersion: "v1" }],
+        }) },
+    ) as unknown as typeof fetch;
+    try {
+      render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
+      const panel = screen.getByRole("region", { name: "Stage 07 scorecard authority" });
+      await waitFor(() => expect(within(panel).getByRole("button", { name: "Save evaluator score" })).toBeTruthy());
+      expect(within(panel).getByRole("option", { name: "Supplier One" })).toBeTruthy();
+      fireEvent.change(within(panel).getByRole("combobox", { name: "Supplier" }), { target: { value: "supplier-1" } });
+      fireEvent.change(within(panel).getByRole("combobox", { name: "Criterion" }), { target: { value: "quality" } });
+      fireEvent.change(within(panel).getByRole("spinbutton", { name: "Evaluator score / 10" }), { target: { value: "8" } });
+      fireEvent.change(within(panel).getByRole("textbox", { name: "Evidence artifact ID" }), { target: { value: "11111111-1111-4111-8111-111111111111" } });
+      fireEvent.click(within(panel).getByRole("button", { name: "Save evaluator score" }));
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/events/event-1/scorecard-authority",
+        expect.objectContaining({ method: "POST", body: JSON.stringify({
+          action: "record_score", vendorId: "supplier-1", criterionId: "quality", criterionVersion: "v1",
+          score: 8, evidenceReference: "11111111-1111-4111-8111-111111111111", overrideReason: "",
+        }) }),
+      ));
+      fireEvent.click(within(panel).getByRole("button", { name: "Lock score" }));
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/events/event-1/scorecard-authority",
+        expect.objectContaining({ method: "POST", body: JSON.stringify({
+          action: "lock_score", vendorId: "supplier-1", criterionId: "quality", criterionVersion: "v1",
+        }) }),
+      ));
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   it("refuses a scorecard readback for another event", async () => {
     const originalFetch = global.fetch;
     global.fetch = jest.fn(async () => ({
@@ -728,6 +899,8 @@ describe("SourceNewWorkspace", () => {
           currentStage: "rfp",
           lifecycle: "active",
           solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "user-1",
         }}
         files={[]}
       />,
@@ -759,6 +932,8 @@ describe("SourceNewWorkspace", () => {
           currentStage: "rfp",
           lifecycle: "active",
           solicitationMotion: "rfi",
+          solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "user-1",
         }}
         files={[]}
       />,
@@ -777,14 +952,45 @@ describe("SourceNewWorkspace", () => {
     expect(within(folders).queryByText("RFP")).toBeNull();
   });
 
-  it("keeps unknown or unapplied solicitation authority neutral instead of fabricating RFI or RFP", () => {
+  // The name of this case claims two fixtures and for a long time it carried
+  // one. `solicitationMotion: null` is the *unknown* half only; the *unapplied*
+  // half is a motion that is asserted and not accepted, and that shape renders
+  // through a different branch. Both are listed here so neither can be the
+  // half nobody runs. The three unapplied rows are unreachable from the live
+  // read path today — `resolveAuthority` fences them and the page maps them to
+  // null — which is why this is a latent guard, not a rendering repair.
+  it.each([
+    ["unknown — no motion recorded", { solicitationMotion: null }],
+    [
+      "unapplied — motion asserted, no acceptance recorded",
+      { solicitationMotion: "rfp" as const },
+    ],
+    [
+      "unapplied — motion asserted, acceptance time but no accepting user",
+      {
+        solicitationMotion: "rfp" as const,
+        solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+        solicitationMotionAcceptedByUserId: null,
+      },
+    ],
+    [
+      "unapplied — motion asserted, accepting user but no acceptance time",
+      {
+        solicitationMotion: "rfi" as const,
+        solicitationMotionAcceptedAt: null,
+        solicitationMotionAcceptedByUserId: "user-1",
+      },
+    ],
+  ])(
+    "keeps unknown or unapplied solicitation authority neutral instead of fabricating RFI or RFP (%s)",
+    (_label, motionFields) => {
     render(
       <SourceNewWorkspace
         event={{
           ...request,
           currentStage: "rfp",
           lifecycle: "active",
-          solicitationMotion: null,
+          ...motionFields,
         }}
         files={[]}
       />,
@@ -814,7 +1020,8 @@ describe("SourceNewWorkspace", () => {
     ).toBeTruthy();
     expect(within(folders).queryByText("RFI")).toBeNull();
     expect(within(folders).queryByText("RFP")).toBeNull();
-  });
+    },
+  );
 
   // F4's residual: the phase rail and the folder rail were corrected, but every
   // label case was rendered with an empty cabinet, so nothing exercised what an
@@ -1961,7 +2168,12 @@ describe("SourceNewWorkspace", () => {
     const readiness = screen.getByRole("region", {
       name: "Stage 04 vendor readiness",
     });
-    expect(within(readiness).getByText("Not recorded")).toBeTruthy();
+    // Scoped to the Request row: the Strategy authority renders the same
+    // "Not recorded" when it too is unread, and this case is about Request.
+    expect(
+      within(readiness).getByText("Request authority").nextElementSibling
+        ?.textContent,
+    ).toBe("Not recorded");
     // The negative half, and the point of the case: absence is not a blocker.
     expect(document.body.textContent ?? "").not.toMatch(
       /Changes are requested on the current Request version/,

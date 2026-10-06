@@ -1,0 +1,18 @@
+{
+  "dataset_id": "nexus_moves_adaptive_e2e_synthetic_20260927",
+  "title": "Adaptive Moves End-to-End Synthetic Evidence Kit",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "uploaded_evidence",
+  "classification": "internal",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Synthetic, PHI-free product QA files; not client-attested.",
+  "ingestion_method": "api_upload",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 14,
+  "approved_by": "AbarVa product owner authorization",
+  "approved_at": "2026-09-28",
+  "notes": "Move-scoped uploads only. Files remain pending human review until a reviewer approves the corrected extraction. The prompt path must use approved summaries, structured facts, and source locators; no global search indexing or agent_ready claim is made. QA-only red-line canaries and future-phase output examples are excluded from uploads."
+}

@@ -5,7 +5,7 @@
     "src/components",
     "src/app"
   ],
-  "scannedFiles": 1188,
+  "scannedFiles": 1211,
   "orphanExports": [
     "src/app/(maestro)/admin/_cached-helpers.ts#cachedApprovalQueue",
     "src/app/(maestro)/admin/_cached-helpers.ts#cachedCrossProgramSignals",
@@ -55,6 +55,8 @@
     "src/components/deliverables/SeedRouteShell.tsx#SeedTenantTowerSubsurface",
     "src/components/home/learn/primitives.tsx#Tile",
     "src/components/home/learn/primitives.tsx#TileGrid",
+    "src/components/home/preview/visuals/home-chart-kit.tsx#HOME_SERIES",
+    "src/components/home/preview/visuals/home-chart-kit.tsx#VisualCard",
     "src/components/home/v4/FactLineage.tsx#LineageFigure",
     "src/components/home/v4/TableSet.tsx#LeadNumber",
     "src/components/home/v4/cxo-language.ts#collectChapterRawClaimStatements",

@@ -44,6 +44,7 @@ export {
   isCapturedApprovalFact,
   isReviewableContractScope,
 } from "@/lib/source/contract-optimization-intake";
+import { requesterEstimateFieldLabel } from "@/lib/source/requester-estimate-label";
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
@@ -609,7 +610,9 @@ function intakeStateFromSourceRequest(
     valueTarget:
       request.requestedOutcome ??
       (request.value
-        ? `Requester estimate: ${request.value.currency} ${request.value.amount.toLocaleString("en-US")} (not validated)`
+        ? requesterEstimateFieldLabel(
+            `${request.value.currency} ${request.value.amount.toLocaleString("en-US")}`,
+          )
         : ""),
     baselineOwner: request.baselineOwner ?? "",
   };

@@ -113,12 +113,19 @@ export interface CandidateSupplierRegistryValidation {
     totalRows: number;
     eligibleCandidateRows: number;
     negativeControlRows: number;
+    registeredArchetypeCount: number;
+    routedArchetypeCount: number;
     expectedArchetypeCount: number;
     coveredArchetypeCount: number;
+    unroutedArchetypeCount: number;
     contactPolicies: string[];
     existingContractStatuses: string[];
   };
   coverageMatrix: CandidateSupplierRegistryCoverageItem[];
+  unroutedRegisteredArchetypes: Array<{
+    archetypeId: string;
+    archetypeName: string;
+  }>;
   failClosedControls: Array<{
     recordId: string;
     expectedReason: string;
@@ -251,9 +258,17 @@ export function buildCandidateSupplierRegistryValidation(input: {
   const rows = parseRows(input.csvText);
   const routedArchetypeIds = categoryRoutedArchetypeIds();
   const registeredArchetypes = listSourceArchetypes()
-    .filter((archetype) => routedArchetypeIds.has(archetype.id))
     .map((archetype) => ({ id: archetype.id, name: archetype.name }))
     .sort((left, right) => left.id.localeCompare(right.id));
+  const routedArchetypes = registeredArchetypes.filter((archetype) =>
+    routedArchetypeIds.has(archetype.id),
+  );
+  const unroutedRegisteredArchetypes = registeredArchetypes
+    .filter((archetype) => !routedArchetypeIds.has(archetype.id))
+    .map((archetype) => ({
+      archetypeId: archetype.id,
+      archetypeName: archetype.name,
+    }));
   const categoriesByArchetype = new Map<string, string[]>();
   for (const categoryId of SOURCE_CATEGORY_IDS) {
     const archetypeId = CATEGORY_TO_ARCHETYPE_ID[categoryId];
@@ -331,7 +346,7 @@ export function buildCandidateSupplierRegistryValidation(input: {
     }
   }
 
-  const coverageMatrix = registeredArchetypes.map((archetype) => {
+  const coverageMatrix = routedArchetypes.map((archetype) => {
     const matched = eligibleRows
       .filter((row) => row.eligible_archetype_id === archetype.id)
       .map((row) => ({
@@ -392,12 +407,16 @@ export function buildCandidateSupplierRegistryValidation(input: {
       totalRows: rows.length,
       eligibleCandidateRows: eligibleRows.length,
       negativeControlRows: rows.filter((row) => row.row_kind === "negative_control").length,
-      expectedArchetypeCount: registeredArchetypes.length,
+      registeredArchetypeCount: registeredArchetypes.length,
+      routedArchetypeCount: routedArchetypes.length,
+      expectedArchetypeCount: routedArchetypes.length,
       coveredArchetypeCount,
+      unroutedArchetypeCount: unroutedRegisteredArchetypes.length,
       contactPolicies,
       existingContractStatuses,
     },
     coverageMatrix,
+    unroutedRegisteredArchetypes,
     failClosedControls: failClosedControls.sort((left, right) =>
       left.expectedReason.localeCompare(right.expectedReason),
     ),

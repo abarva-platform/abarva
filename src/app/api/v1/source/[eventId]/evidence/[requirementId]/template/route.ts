@@ -44,7 +44,7 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
 
   const { eventId, requirementId } = await params;
   const requirement = evidenceById(requirementId);
-  if (!requirement) {
+  if (!requirement || requirement.acceptedFileTypes.length === 0) {
     return jsonError(404, "unknown_requirement", "Unknown evidence requirement.");
   }
 

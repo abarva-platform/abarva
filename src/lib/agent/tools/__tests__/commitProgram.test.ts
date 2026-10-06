@@ -79,7 +79,11 @@ interface QueryState {
   insertedRow: Record<string, unknown> | null;
   updatePayload: Record<string, unknown> | null;
   deleted: boolean;
-  filters: Array<{ op: 'eq' | 'gte' | 'limit'; column?: string; value?: unknown }>;
+  filters: Array<{
+    op: 'eq' | 'gte' | 'limit';
+    column?: string;
+    value?: unknown;
+  }>;
   selectColumns: string | null;
   orderBy: { column: string; ascending: boolean } | null;
   singleResult: { data: unknown; error: unknown };
@@ -329,6 +333,7 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
         problem_statement: 'Reduce checkout abandonment',
         target_outcome: 'Lift conversion 4 points',
         sponsor_person_id: SPONSOR_UUID,
+        sponsor_progress_emails: true,
         lead_person_id: LEAD_UUID,
         classification: 'workflow_automation',
         matched_pattern_id: 'PAT-PRG-CDP-001',
@@ -342,7 +347,9 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     expect(result.data.approval_request_id).toBe(APPROVAL_UUID);
     expect(result.data.lifecycle_state).toBe('submitted_for_approval');
     expect(result.data.record_status).toBe('created');
-    expect(result.data.phase_access).toBe('phase_0_pending_tenant_admin_approval');
+    expect(result.data.phase_access).toBe(
+      'phase_0_pending_tenant_admin_approval',
+    );
     expect(result.data.function_code).toBe('FRONT_OFFICE');
     expect(result.data.objective_code).toBe('GROW');
     expect(result.data.topic_code).toBe('test_program');
@@ -371,6 +378,22 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       origin_source: 'user_initiated',
     });
 
+    const sponsorInsert = queryLog.find(
+      (q) =>
+        q.table === 'engagement_participants' &&
+        q.insertedRow?.user_id === SPONSOR_UUID,
+    );
+    expect(sponsorInsert?.insertedRow).toMatchObject({
+      role: 'Sponsor',
+      approval_authority: 'contributor',
+      notify_on: ['phase_gate'],
+      program_access_level: 'program_viewer',
+      can_upload: false,
+      can_generate_deliverables: false,
+      can_publish_deliverables: false,
+      can_approve_phase_gates: false,
+    });
+
     // 2 · submitForApproval was called with the right inputs and a
     //     populated brief_snapshot
     expect(submitForApprovalMock).toHaveBeenCalledTimes(1);
@@ -395,7 +418,9 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
 
     // 3 · navigation sentinel still emitted for the client
     expect(writes.some((w) => w.includes('[[program-created:'))).toBe(true);
-    expect(writes.some((w) => w.includes('[[artifact:brief-progress]]'))).toBe(true);
+    expect(writes.some((w) => w.includes('[[artifact:brief-progress]]'))).toBe(
+      true,
+    );
   });
 
   it('refuses an unpromoted pattern before writing an engagement', async () => {
@@ -464,7 +489,9 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       industry_code: 'healthcare_idn',
       key: 'meridian',
     });
-    submitForApprovalMock.mockResolvedValue(makeApprovalRequest({ tenantKey: 'meridian' }));
+    submitForApprovalMock.mockResolvedValue(
+      makeApprovalRequest({ tenantKey: 'meridian' }),
+    );
 
     const result = await commitProgramTool.handler(
       {
@@ -489,7 +516,9 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       (q) => q.table === 'engagements' && q.insertedRow !== null,
     );
     expect(engagementInsert?.insertedRow).toMatchObject({
-      graph_node_id: expect.stringMatching(/^eng_ai_assisted_engineering_productivity_/),
+      graph_node_id: expect.stringMatching(
+        /^eng_ai_assisted_engineering_productivity_/,
+      ),
       industry_code: 'HEALTHCARE_IDN',
       function_code: 'MIDDLE_OFFICE',
       objective_code: 'OPTIMISE',
@@ -665,7 +694,9 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     expect(result.data.engagement_id).toBe(ENGAGEMENT_UUID);
     expect(result.data.approval_request_id).toBe(APPROVAL_UUID);
     expect(result.data.record_status).toBe('existing_recent_submission');
-    expect(result.data.phase_access).toBe('phase_0_pending_tenant_admin_approval');
+    expect(result.data.phase_access).toBe(
+      'phase_0_pending_tenant_admin_approval',
+    );
     // submitForApproval is NOT called on replay — we already have one.
     expect(submitForApprovalMock).not.toHaveBeenCalled();
   });

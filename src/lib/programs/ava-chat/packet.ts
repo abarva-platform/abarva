@@ -14,6 +14,7 @@ import {
 import {
   MOVES_AVA_ALLOWED_ACTIONS,
   MOVES_AVA_DISALLOWED_ACTIONS,
+  type MovesAvaApprovedEvidenceItem,
   type MovesAvaChatPacket,
   type MovesAvaChecklistStatus,
   type MovesAvaFeedForwardSummary,
@@ -36,6 +37,9 @@ export interface BuildMovesAvaChatPacketInput {
   recommendedSessions?: string[];
   checklistStatus?: MovesAvaChecklistStatus | null;
   evidenceNeedPackets?: string[];
+  approvedEvidence?: MovesAvaApprovedEvidenceItem[];
+  approvedEvidenceTotal?: number;
+  approvedEvidenceUnavailable?: boolean;
   currentStateAssessment?: string | null;
   uploadedTemplateMappings?: string[];
   whatChangedSummary?: string | null;
@@ -83,6 +87,10 @@ export function buildMovesAvaChatPacket(
     evidenceNeedPackets: terminalHandoffComplete
       ? []
       : (input.evidenceNeedPackets ?? []),
+    approvedEvidence: input.approvedEvidence ?? [],
+    approvedEvidenceTotal:
+      input.approvedEvidenceTotal ?? input.approvedEvidence?.length ?? 0,
+    approvedEvidenceUnavailable: input.approvedEvidenceUnavailable ?? false,
     currentStateAssessment: input.currentStateAssessment ?? null,
     uploadedTemplateMappings: input.uploadedTemplateMappings ?? [],
     whatChangedSummary: input.whatChangedSummary ?? null,

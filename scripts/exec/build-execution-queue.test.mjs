@@ -3077,17 +3077,39 @@ const UNPLACED_ROW = /could not place/i;
    */
   const unparsed = boardUnparsed(dir);
   const unplacedRow = funnelRow(rendered, UNPLACED_ROW);
+  /*
+   * UPDATED for item C-515, and the reason matters because the shape of the
+   * edit is the shape a weakening also has.
+   *
+   * Both assertions read `truth.unmapped.length` as the number of ids REMOVED
+   * from the pool. That was true while the board dropped every unmapped id.
+   * It now builds them onto an unplaced track, so `truth.pool` already carries
+   * them and the same ids were being added twice — the opening over-counted by
+   * exactly `offered`, and the drop row claimed a removal that had not
+   * happened.
+   *
+   * What replaces it is not a looser number. `truth.unmapped.length` is a
+   * constant the board hands over; `split.dropped` is an intersection with the
+   * pool the board actually wrote, so these cases now distinguish an id that
+   * was dropped from one that was offered, which the old form could not do at
+   * all. They fail if the queue counts an offered id as removed, and they fail
+   * if it stops counting a genuinely dropped one — the direction the original
+   * case was written to hold, asserted below over `split.dropped` and proven
+   * still reachable by the compatibility case in the C-515 block.
+   */
+  const split = unplacedSplit(dir);
   check(
     "the funnel OPENS at the full population the board saw, not at the pool it handed on",
-    opening === truth.pool + truth.unmapped.length + unparsed.length
+    opening === truth.pool + split.dropped.length + unparsed.length
       && truth.unmapped.length > 0,
-    `rendered opening=${opening}; board pool=${truth.pool} + dropped=${truth.unmapped.length}` +
-      ` + unparsed=${unparsed.length} = ${truth.pool + truth.unmapped.length + unparsed.length}`,
+    `rendered opening=${opening}; board pool=${truth.pool} + dropped=${split.dropped.length}` +
+      ` + unparsed=${unparsed.length} = ${truth.pool + split.dropped.length + unparsed.length}` +
+      `\nunmapped=${JSON.stringify(truth.unmapped)} offered=${JSON.stringify(split.offered)}`,
   );
   check(
     "and the drop row, BY LABEL, removes exactly those ids and closes onto the pool",
-    unplacedRow?.removed === truth.unmapped.length && unplacedRow?.remaining === truth.pool,
-    `drop row=${JSON.stringify(unplacedRow)}; expected removed=${truth.unmapped.length}` +
+    unplacedRow?.removed === split.dropped.length && unplacedRow?.remaining === truth.pool,
+    `drop row=${JSON.stringify(unplacedRow)}; expected removed=${split.dropped.length}` +
       ` remaining=${truth.pool}\nall rows=${JSON.stringify(rows)}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
@@ -3470,6 +3492,1184 @@ const DISAGREE = /\*\*The census and the board's own scan DISAGREE/;
       `add-back row=${JSON.stringify(duplicatePlacementRow(rendered))}; expected added=${p.rows - p.distinct}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
+}
+
+
+/* ------------------------------------------------------------------------ *
+ * An unplaceable id the board OFFERS is not a removal (item C-515).         *
+ *                                                                           *
+ * `unmapped` answers "is this id on the structure map", and the census      *
+ * spent it as "was this id removed from the pool". Those were the same      *
+ * question only for as long as the board dropped every unmapped id. Now it  *
+ * builds them onto an unplaced track, so the same id is counted once inside *
+ * `distinctPlaced` and once again in the drop row: on the live corpus the   *
+ * census opened at 525 against 513 scanned, and its own reconciliation      *
+ * called the disagreement rather than closing.                              *
+ *                                                                           *
+ * The repair is a set intersection with the pool the summary actually       *
+ * carries, never an assumption about which board wrote it. That is what     *
+ * makes these cases hold for BOTH generators: a summary from a board that   *
+ * still drops unmapped ids has an empty intersection, and every number      *
+ * below returns to what T-745 asserted.                                     *
+ * ------------------------------------------------------------------------ */
+
+/** The ids the summary reports unmapped, split by whether its pool carries them. */
+function unplacedSplit(dir) {
+  const s = JSON.parse(fs.readFileSync(path.join(dir, "source-board-summary.json"), "utf8"));
+  const pool = new Set(
+    [...s.stages.flatMap((st) => st.items), ...s.tracks.flatMap((t) => t.items)]
+      .map((i) => String(i.num)),
+  );
+  const unmapped = (s.unmapped ?? []).map(String);
+  return {
+    offered: unmapped.filter((id) => pool.has(id)),
+    dropped: unmapped.filter((id) => !pool.has(id)),
+    distinctPool: pool.size,
+    unmapped,
+  };
+}
+
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-903");
+  addBacklogItem(dir, "T-904");
+  const { board, queue } = buildQueueOverUnplaceableIds(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const split = unplacedSplit(dir);
+  const row = funnelRow(rendered, UNPLACED_ROW);
+
+  check(
+    "the fixture reproduces the state under test: the board reports the ids unmapped AND carries them in its pool",
+    board.status === 1 && queue.status === 0
+      && split.unmapped.length === 2 && split.offered.length === 2,
+    `board exit=${board.status}; queue exit=${queue.status}\nsplit=${JSON.stringify(split)}`,
+  );
+  check(
+    "the drop row removes only the unplaceable ids the pool does NOT carry",
+    row?.removed === split.dropped.length,
+    `drop row=${JSON.stringify(row)}; board dropped=${JSON.stringify(split.dropped)}`
+      + ` offered=${JSON.stringify(split.offered)}`,
+  );
+  check(
+    "so the census reconciles against the board's own scan instead of double-counting them",
+    RECONCILED.test(rendered) && !DISAGREE.test(rendered),
+    `reconciled=${RECONCILED.test(rendered)} disagree=${DISAGREE.test(rendered)}\n`
+      + `opening=${funnelOpeningTotal(rendered)} pool=${split.distinctPool}`,
+  );
+  check(
+    "the file still NAMES them and still says the map entry is owed — offering is not absolution",
+    split.offered.every((id) => rendered.includes(id))
+      && /source-stage-map\.json/.test(rendered)
+      && /offered|unplaced/i.test(rendered),
+    `named=${split.offered.filter((id) => rendered.includes(id)).join(" ") || "none"}`,
+  );
+  check(
+    "and it no longer tells the reader they are offered to nobody, which is now false",
+    !/offered to nobody/i.test(rendered),
+    `matched=${JSON.stringify(rendered.match(/.{0,120}offered to nobody.{0,120}/i)?.[0] ?? null)}`,
+  );
+  check(
+    "an offered unplaced id is reachable in a bucket, which is the whole point of the item",
+    new RegExp(`\\|\\s*T-903\\s*\\|`).test(rendered),
+    `T-903 rows=${JSON.stringify(rendered.split("\n").filter((l) => l.includes("T-903")).slice(0, 4))}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+{
+  /*
+   * The compatibility direction, and the reason the queue reads the pool
+   * rather than trusting the board's version: a summary whose pool does NOT
+   * carry the unmapped ids must still render exactly what T-745 asserted.
+   * Built by hand from a real summary so the case does not depend on an old
+   * generator being available to run.
+   */
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-905");
+  buildQueueOverUnplaceableIds(dir);
+  const file = path.join(dir, "source-board-summary.json");
+  const s = JSON.parse(fs.readFileSync(file, "utf8"));
+  s.tracks = (s.tracks ?? []).filter((t) => !(t.items ?? []).some((i) => String(i.num) === "T-905"));
+  fs.writeFileSync(file, `${JSON.stringify(s, null, 2)}\n`);
+  const queue = run(dir, "build-execution-queue.mjs");
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const split = unplacedSplit(dir);
+  const row = funnelRow(rendered, UNPLACED_ROW);
+
+  check(
+    "a summary that really did drop the id still reports it as a removal, and closes onto the pool",
+    queue.status === 0 && split.dropped.length === 1 && split.offered.length === 0
+      && row?.removed === 1 && row?.remaining === split.distinctPool,
+    `queue=${queue.status}\nsplit=${JSON.stringify(split)}\nrow=${JSON.stringify(row)}`,
+  );
+  check(
+    "and it is the dropped case that says they are offered to nobody",
+    /offered to nobody/i.test(rendered) && rendered.includes("T-905"),
+    `matched=${JSON.stringify(rendered.match(/.{0,80}offered to nobody.{0,80}/i)?.[0] ?? null)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ *
+ * 30. PER-UNIT RESIDUAL — item C-549 half (1).
+ *
+ * The defect: the claimable filter's first stage is `rung === 0`, so the moment
+ * an item's FIRST slice merges it leaves every claimable bucket. For an item
+ * whose acceptance is explicitly per-unit — "one row at a time", "per row,
+ * never as a count" — the rung describes the slice that shipped and says
+ * nothing about the rest of the row set. With no owner blocker such an item is
+ * not in *Blocked on Anand* either, so it sits in NO bucket of this file and
+ * its residual goes dark. That happened three times in three days: C-544
+ * closed 3 of 13, C-547 closed 2 of 10, and each had to hand-file a successor
+ * id or the remainder would have been invisible to every later run.
+ *
+ * Measured on the live summary at `813537a0f`: 617 items, 451 at rung 1-6 and
+ * not closed, 9 of those carry per-unit settlement acceptance, and 3 of the 9
+ * carry no blocker — T-062, D-030 and C-547. C-547 is the real known positive
+ * this row was filed for, and the first pattern written here missed it, which
+ * is why the phrase list is measured rather than guessed.
+ *
+ * Both directions are asserted, because a bucket listing every merged item is
+ * noise and a bucket listing none is the defect unchanged:
+ *   (a) per-unit + rung 1-6            -> MUST appear, and must NOT be claimable
+ *   (b) per-unit + finished (rung 7)   -> must NOT appear
+ *   (c) aggregate acceptance + rung 6  -> must NOT appear
+ *   (d) the stated count equals the ids listed
+ * ------------------------------------------------------------------------ */
+{
+  const PER_UNIT_ACCEPTANCE =
+    "Catalogue them one row at a time and verify per row rather than in aggregate, never as a count.";
+  const AGGREGATE_ACCEPTANCE =
+    "Add the validator and make the whole suite green in one pass.";
+  const RESIDUAL_HEADING = /^## Residual work a proof rung cannot close.*$/m;
+
+  /** Add an item whose body carries `proof` and whose acceptance is `acceptance`. */
+  function addRungItem(dir, id, acceptance, proof) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| ${id} | **Synthetic per-unit residual fixture.** | T | ${acceptance} |\n`,
+    );
+    mapFixtureId(dir, id);
+    /*
+     * The rung comes from the REGISTER, not from the problem statement. The
+     * board's status corpus is an item's own verdict/update text plus its
+     * claim-log lines, and it deliberately excludes the prose that merely
+     * CITES a predecessor's PR or deploy. A first draft of this case wrote
+     * "merged and deployed" into the backlog row instead, which left the item
+     * at rung 0 — so its positive case was asserting against a branch keyed to
+     * rung 1-6 that the fixture could never reach, and the item came back
+     * CLAIMABLE rather than residual.
+     */
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${NOW} | fixture#residual | RELEASED item ${id} on branch \`fixture/${id}\` — ${proof}\n`,
+    );
+  }
+
+  /** The residual section alone, so a match elsewhere in the file cannot pass. */
+  function residualSection(rendered) {
+    const start = rendered.search(RESIDUAL_HEADING);
+    if (start < 0) return "";
+    const rest = rendered.slice(start + 1);
+    const next = rest.search(/^## /m);
+    return next < 0 ? rendered.slice(start) : rendered.slice(start, start + 1 + next);
+  }
+
+  /**
+   * The claimable lane tables alone — up to the next `## ` heading, whichever
+   * it is. Slicing to a NAMED later heading is how this helper first read the
+   * residual section as part of the lane tables and reported the item as
+   * claimable when it was not.
+   */
+  function laneTables(rendered) {
+    const start = rendered.search(/^### Lane [DCUT?] /m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start);
+    const end = rest.search(/^## /m);
+    return end < 0 ? rest : rest.slice(0, end);
+  }
+
+  /* --- (a) THE DEFECT. Per-unit, deployed, no blocker: must be reachable. -- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-911", PER_UNIT_ACCEPTANCE, "The first slice merged and deployed.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = residualSection(rendered);
+    check(
+      "a per-unit item at a proof rung with no blocker is reachable in a bucket of its own",
+      q.status === 0 && section.includes("T-911"),
+      `exit=${q.status}\nsectionFound=${Boolean(section)}\nanywhereInFile=${rendered.includes("T-911")}\nsection=${section.slice(0, 700)}`,
+    );
+    check(
+      "and it is NOT offered as claimable, because it is above rung 0",
+      q.status === 0 && !laneTables(rendered).includes("T-911"),
+      `laneRows=${JSON.stringify(laneTables(rendered).split("\n").filter((l) => l.includes("T-911")))}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) NEGATIVE. Per-unit but FINISHED: must not appear. --------------- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-912", PER_UNIT_ACCEPTANCE, "Merged, deployed and live-proven signed in.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a per-unit item that is FINISHED is not offered as a residual",
+      // The section must EXIST for this to mean anything. Asserting only that
+      // the id is absent passes on a file with no such section at all, which is
+      // the defect state — so the exclusion would read identical to the bug.
+      q.status === 0 && Boolean(residualSection(rendered)) && !residualSection(rendered).includes("T-912"),
+      `exit=${q.status}\nsectionFound=${Boolean(residualSection(rendered))}\nsection=${residualSection(rendered).slice(0, 700)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) NEGATIVE. Deployed but AGGREGATE acceptance: must not appear. --- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-913", AGGREGATE_ACCEPTANCE, "The change merged and deployed.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a merged item with aggregate acceptance is not offered as a residual, so the bucket is not every merged item",
+      q.status === 0 && Boolean(residualSection(rendered)) && !residualSection(rendered).includes("T-913"),
+      `exit=${q.status}\nsectionFound=${Boolean(residualSection(rendered))}\nsection=${residualSection(rendered).slice(0, 700)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (d) The bucket states its own count, and it agrees with the rows. --- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-914", PER_UNIT_ACCEPTANCE, "Slice one merged and deployed.");
+    addRungItem(dir, "T-915", PER_UNIT_ACCEPTANCE, "Slice one merged and deployed.");
+    addRungItem(dir, "T-916", AGGREGATE_ACCEPTANCE, "Merged and deployed.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = residualSection(rendered);
+    const stated = Number(section.match(/\*\*(\d+) items?\*\* reached a proof rung/)?.[1] ?? NaN);
+    const listed = ["T-914", "T-915", "T-916"].filter((id) => section.includes(id));
+    check(
+      "the residual bucket's stated count equals the ids it lists",
+      q.status === 0 && listed.length === 2 && stated === 2,
+      `stated=${stated} listed=${JSON.stringify(listed)}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/* ------------------------------------------------------------------------ *
+ * ITEM C-552 — THE QUEUE MUST OFFER THE UNGATED HALF AND STILL SHOW THE
+ * GATED ONE.
+ *
+ * `userBlockerText` is the third stage of the claimable funnel, and an item
+ * carrying any owner gate is removed there entirely. That is right for a gate
+ * over the whole item and wrong for a gate over half of it: the executable half
+ * disappears from every lane table, and *Blocked on Anand* tells an agent never
+ * to take it.
+ *
+ * The board now records a gate declared over a named half as `partialGate`
+ * rather than `blocker`, so such an item reaches the lane tables. This suite
+ * holds shut the half the queue owns: the row must arrive WITH the gated half
+ * attached, and a section must name it, because an item offered as free work
+ * with its owner-gated half silently dropped is a worse failure than the one
+ * this fixes.
+ *
+ * Both directions are asserted on the same fixture pair, and the negative is
+ * the important one: an item whose gate is NOT scoped must stay out of the lane
+ * tables and stay in *Blocked on Anand*.
+ * ------------------------------------------------------------------------ */
+{
+  console.log("\nbuild-execution-queue — a gate over half an item (C-552)\n");
+
+  const PARTIAL_HEADING = /^## Partly gated/m;
+
+  /** The section alone, so a match elsewhere in the file cannot pass a case. */
+  function partialSection(rendered) {
+    const start = rendered.search(PARTIAL_HEADING);
+    if (start < 0) return "";
+    const rest = rendered.slice(start + 1);
+    const next = rest.search(/^## /m);
+    return next < 0 ? rendered.slice(start) : rendered.slice(start, start + 1 + next);
+  }
+
+  /** The claimable lane tables alone — up to the next `## ` heading. */
+  function laneTables(rendered) {
+    const start = rendered.search(/^### Lane [DCUT?] /m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start);
+    const end = rest.search(/^## /m);
+    return end < 0 ? rest : rest.slice(0, end);
+  }
+
+  function blockedSection(rendered) {
+    const start = rendered.search(/^## Blocked on Anand/m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start + 1);
+    const next = rest.search(/^## /m);
+    return next < 0 ? rendered.slice(start) : rendered.slice(start, start + 1 + next);
+  }
+
+  /** The exact gating sentence from the live register line at 03:05:20Z. */
+  const LIVE_GATE =
+    "The signed-in Value readback the row also asks for was NOT attempted and remains owed"
+    + " -- it needs a human and the row forbids waiving the frozen event's Scope policy to reach Value.";
+
+  const DECLARATION =
+    "**Gate scope — partial.** Gated half: the signed-in Value readback on a live Value surface,"
+    + " which needs a human. Claimable half: state the terminal Value contract in code and test it.";
+
+  function addGatedItem(dir, id, { declare }) {
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| ${id} | **Value is terminal and the surface implies an onward target.**${declare ? ` ${DECLARATION}` : ""} | T |`
+        + " State the terminal Value contract in code and test it, red-first. |\n",
+    );
+    mapFixtureId(dir, id);
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n2026-09-27T03:05:20Z | fixture#abstain | item ${id} NOT TAKEN — ${LIVE_GATE}\n`,
+    );
+  }
+
+  /* --- (a) THE DEFECT. Gate scoped to a half: the item is offered again. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-951", { declare: true });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "C-552 (a) an item whose gate is declared over one half is offered in a claimable lane",
+      q.status === 0 && laneTables(rendered).includes("| T-951 |"),
+      `exit=${q.status}\nlaneRows=${JSON.stringify(laneTables(rendered).split("\n").filter((l) => l.includes("T-951")))}`,
+    );
+    /*
+     * The MARKER, not the words. A first draft asserted only that the row
+     * mentioned the gated half, and it passed on unfixed code: the declaration
+     * is written in the item's own row, so the title the queue prints already
+     * contained those words and the case was testing the fixture rather than
+     * the generator. The marker below is the queue's own, and it exists nowhere
+     * in the fixture documents.
+     */
+    const t951Row = laneTables(rendered).split("\n").filter((l) => l.includes("| T-951 |")).join("\n");
+    check(
+      "C-552 (a) and its claimable row carries the queue's own partly-gated marker with the gated half",
+      q.status === 0
+        && /PARTLY GATED/.test(t951Row)
+        && /signed-in Value readback/i.test(t951Row.split("PARTLY GATED")[1] ?? ""),
+      `row=${JSON.stringify(t951Row)}`,
+    );
+    check(
+      "C-552 (a) and a section of its own names the item and the half that is gated",
+      q.status === 0
+        && partialSection(rendered).includes("T-951")
+        && /signed-in Value readback/i.test(partialSection(rendered)),
+      `sectionFound=${Boolean(partialSection(rendered))}\nsection=${partialSection(rendered).slice(0, 800)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) THE NEGATIVE, and the one that costs if it moves. An identical
+   * item with NO declaration stays gated, out of every lane table and inside
+   * *Blocked on Anand*.                                                     */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-952", { declare: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "C-552 (b) an undeclared gate keeps the whole item out of every claimable lane",
+      q.status === 0 && !laneTables(rendered).includes("| T-952 |"),
+      `exit=${q.status}\nlaneRows=${JSON.stringify(laneTables(rendered).split("\n").filter((l) => l.includes("T-952")))}`,
+    );
+    check(
+      "C-552 (b) and it is still counted under Blocked on Anand — exactly one item, which is this one",
+      q.status === 0 && /\*\*Signed-in acceptance owed\*\*\s+[\u2014-]\s+1 item\b/.test(blockedSection(rendered)),
+      `blocked=${blockedSection(rendered).slice(0, 500)}`,
+    );
+    check(
+      "C-552 (b) and it is NOT reported as partly gated",
+      q.status === 0 && Boolean(partialSection(rendered)) && !partialSection(rendered).includes("T-952"),
+      `sectionFound=${Boolean(partialSection(rendered))}\nsection=${partialSection(rendered).slice(0, 800)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) The section is rendered on EVERY run, including at zero. A block
+   * that appears only in the interesting case is exercised only in the
+   * interesting case, which is how this directory lost a control for ten
+   * weeks. The count it states must agree with the rows it lists.           */
+  {
+    const dir = freshFixture();
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "C-552 (c) the partly-gated section is present with nothing in it",
+      q.status === 0 && Boolean(partialSection(rendered)) && /\b0\b/.test(partialSection(rendered)),
+      `sectionFound=${Boolean(partialSection(rendered))}\nsection=${partialSection(rendered).slice(0, 600)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (d) The stated count equals the ids listed, on two items and one
+   * control that must not be counted.                                       */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-953", { declare: true });
+    addGatedItem(dir, "T-954", { declare: true });
+    addGatedItem(dir, "T-955", { declare: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = partialSection(rendered);
+    const stated = Number(section.match(/\*\*(\d+) items?\*\* carr/)?.[1] ?? NaN);
+    const listed = ["T-953", "T-954", "T-955"].filter((id) => section.includes(id));
+    check(
+      "C-552 (d) the partly-gated count equals the ids it lists, and the undeclared one is not among them",
+      q.status === 0 && stated === 2 && listed.length === 2 && !listed.includes("T-955"),
+      `stated=${stated} listed=${JSON.stringify(listed)}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* C-566. The queue publishes the repo paths live claims HOLD.               */
+/*                                                                          */
+/* The defect: the queue decided claimability from item-level claims alone   */
+/* and never read the file half the sanctioned claim path enforces, so it    */
+/* offered rows `append-claim.mjs` then refused. The refusal is cheap; its   */
+/* TIMING is not, because it lands after the agent has picked the row and    */
+/* re-verified it on `main`.                                                 */
+/*                                                                          */
+/* Every assertion below is on the rendered queue, and the fixtures are      */
+/* written in the register's real grammar — including the two shapes that    */
+/* the gate's own `claimedPaths` does NOT read as a hold. A queue that       */
+/* scraped `files:` with a second reader passes (a) and fails (c), which is  */
+/* the whole point of asserting all three.                                   */
+/* ------------------------------------------------------------------------ */
+{
+  const heldSection = (text) => {
+    const start = text.indexOf("## Paths held by a live claim");
+    if (start < 0) return "";
+    const next = text.indexOf("\n## ", start + 1);
+    return next < 0 ? text.slice(start) : text.slice(start, next);
+  };
+  const liveStamp = (minutesAgo) =>
+    new Date(Date.now() - minutesAgo * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  /* --- (a) A register that holds a path: the queue names the path, the
+   * holder, and the instant the hold expires.                               */
+  {
+    const dir = freshFixture();
+    const stamp = liveStamp(10);
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${stamp} | codex#c566-a | item T-901 claimed on branch \`exec/t-901\` — taking it. ` +
+        `files: .github/workflows/unit-suites.yml\n`,
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = heldSection(rendered);
+    check(
+      "C-566 (a) a held path is named in the queue with its holder and its expiry",
+      q.status === 0 &&
+        section.includes(".github/workflows/unit-suites.yml") &&
+        section.includes("codex#c566-a") &&
+        /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z/.test(section),
+      `exit=${q.status}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) A register that holds nothing: the section is PRESENT and empty.
+   * "No holds" and "not measured" must not render identically.              */
+  {
+    const dir = freshFixture();
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = heldSection(rendered);
+    check(
+      "C-566 (b) with nothing held the section is present and empty, not absent",
+      q.status === 0 && section.length > 0 && /\b0 path/.test(section),
+      `exit=${q.status}\nsectionFound=${section.length > 0}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) The queue's answer is the GATE's answer. Three lines the gate
+   * reads as holding nothing must contribute no path: a release, an
+   * abstention, and a path attributed to somebody else. A local `files:`
+   * scrape would list all three.                                            */
+  {
+    const dir = freshFixture();
+    const held = liveStamp(30);
+    const releasedAt = liveStamp(5);
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${held} | codex#c566-rel | item T-902 claimed on branch \`exec/t-902\` — taking it. ` +
+        `files: scripts/exec/released-one.mjs\n` +
+        `${releasedAt} | codex#c566-rel | RELEASED item T-902 — merged, all files free.\n` +
+        `${liveStamp(20)} | codex#c566-abs | item T-903 NOT TAKEN — abstained. ` +
+        `files: scripts/exec/abstained-one.mjs\n` +
+        `${liveStamp(15)} | codex#c566-att | item T-904 claimed on branch \`exec/t-904\` — ` +
+        `noting that \`scripts/exec/attributed-one.mjs\` is held by codex#someone-else, so I took another row. ` +
+        `files: scripts/exec/mine-only.mjs\n`,
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = heldSection(rendered);
+    check(
+      "C-566 (c) a released, an abstained and an attributed-away path are not published as held",
+      q.status === 0 &&
+        section.includes("scripts/exec/mine-only.mjs") &&
+        !section.includes("scripts/exec/released-one.mjs") &&
+        !section.includes("scripts/exec/abstained-one.mjs") &&
+        !section.includes("scripts/exec/attributed-one.mjs"),
+      `exit=${q.status}\nsection=${section.slice(0, 1400)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (d) The caution beside the claimable count is a CAUTION: the row
+   * whose lane has a held wiring file is still offered in its lane table.   */
+  {
+    const dir = freshFixture();
+    addBacklogItem(dir, "T-905");
+    mapFixtureId(dir, "T-905");
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${liveStamp(10)} | codex#c566-d | item T-906 claimed on branch \`exec/t-906\` — taking it. ` +
+        `files: .github/workflows/unit-suites.yml\n`,
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "C-566 (d) the held-file caution does not filter the row out of its lane table",
+      q.status === 0 && rendered.includes("| T-905 |") && /unworkable this hour/.test(rendered),
+      `exit=${q.status}\nhasRow=${rendered.includes("| T-905 |")}\ncaution=${/unworkable this hour/.test(rendered)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+/* C-584. AN ID WHOSE COMPETING DEFINITION IS WITHDRAWN IS NOT OFFERED.      */
+/*                                                                          */
+/* Observed on the live corpus at 2026-10-04T00:05Z and again at 00:57Z:    */
+/* `C-634` was rendered in the queue's Lane C claimable table carrying the  */
+/* queue's own `AMBIGUOUS — 2 definitions share this number` flag, and one  */
+/* of those two definitions reads `WITHDRAWN — false positive`. The warning */
+/* was present and correct and was not enough: the row was still OFFERED,   */
+/* and this file's instructions tell an agent not to ask which item is next.*/
+/*                                                                          */
+/* The withdrawal is legible text, not a parse failure — `isUpdateNote`     */
+/* does not recognise `WITHDRAWN`, so the dead definition is counted as a   */
+/* second SUBSTANTIVE one, which is what makes the id ambiguous in the      */
+/* first place and simultaneously keeps its rung at 0.                      */
+/*                                                                          */
+/* (b) is the negative control and it is the half that makes (a) mean       */
+/* something: two LIVE definitions of one id must still be offered, so this */
+/* is not a blanket suppression of every ambiguous id.                      */
+/* ------------------------------------------------------------------------ */
+{
+  /** Two substantive definitions of one id; `withdraw` kills the second. */
+  function twoDefinitionFixture(id, secondTitle, secondAcceptance) {
+    const dir = freshFixture();
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `
+## C-584 live definition fixture
+
+| # | Item | Lane | Acceptance |
+|---|---|---|---|
+| ${id} | **Write the behavioural test the catalog declares.** | T | One suite drives the real handler. |
+
+## C-584 second definition fixture
+
+| # | Item | Lane | Acceptance |
+|---|---|---|---|
+| ${id} | **${secondTitle}** | T | ${secondAcceptance} |
+`,
+    );
+    // Mapped as a BARE id, not pinned with `definedIn`. A pin resolves the
+    // collision, and an id the map resolves is not the shape this item is
+    // about: `C-634` is unplaced, reaches the queue through the board's
+    // unplaced track with both definitions merged, and is therefore
+    // `ambiguous`. A pinned fixture would be green before the fix.
+    mapFixtureId(dir, id);
+    return dir;
+  }
+
+  /** Every id rendered in a `### Lane ... claimable` table. */
+  function claimableRowIds(rendered) {
+    const ids = new Set();
+    let inLane = false;
+    for (const line of rendered.split("\n")) {
+      if (/^### Lane /.test(line)) inLane = true;
+      else if (/^## /.test(line)) inLane = false;
+      if (!inLane) continue;
+      const m = line.match(/^\| (#?[A-Z]-?\d+) \|/);
+      if (m) ids.add(m[1]);
+    }
+    return ids;
+  }
+
+  /* --- (a) THE DEFECT. One definition withdrawn: offered to nobody, and
+   * still accounted for, so the census arithmetic closes.                  */
+  {
+    const dir = twoDefinitionFixture(
+      "T-907",
+      "WITHDRAWN — false positive, not \\\"declared, written, unwired\\\".",
+      "The measurement says withdraw: the suite exists and a required job runs it.",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const offered = claimableRowIds(rendered).has("T-907");
+    const censusRow = /\| a definition of it is withdrawn or closed, so which one a claim would take is undecidable \| (\d+) \|/.exec(rendered);
+    check(
+      "C-584 (a) an id with a WITHDRAWN competing definition is in no claimable lane table",
+      q.status === 0 && !offered,
+      `exit=${q.status}\noffered=${offered}\nstderr=${q.stderr.trim()}`,
+    );
+    check(
+      "C-584 (a) and the census says it was removed for that reason, so the arithmetic closes",
+      q.status === 0 && Boolean(censusRow) && Number(censusRow[1]) >= 1 &&
+        /\*\*Reconciled\*\*/.test(rendered),
+      `exit=${q.status}\ncensusRow=${censusRow && censusRow[0]}\n` +
+        `reconciled=${/\*\*Reconciled\*\*/.test(rendered)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) The withdrawal written where this backlog has long written its
+   * verdicts: at the head of the ACCEPTANCE cell, with an ordinary problem
+   * statement still in the title. `attributableStatusText` already names that
+   * convention ("many older table rows were updated in place by putting the
+   * verdict at the start of the Acceptance cell"), so a detector that reads
+   * the title alone misses the older half of the corpus. Mutation M4 — reading
+   * the title only — survives every other case in this block and is caught
+   * here, which is why the case exists rather than the branch being dropped. */
+  {
+    const dir = twoDefinitionFixture(
+      "T-909",
+      "The phase-advance route's approval gate is unproven.",
+      "WITHDRAWN — false positive. The cited suite exists and a required job runs it.",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const offered = claimableRowIds(rendered).has("T-909");
+    check(
+      "C-584 (c) a withdrawal in the ACCEPTANCE cell suppresses the id too",
+      q.status === 0 && !offered && /suppressed because one of its competing definitions/.test(rendered),
+      `exit=${q.status}\noffered=${offered}\nstderr=${q.stderr.trim()}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) THE NEGATIVE CONTROL. Two LIVE definitions: still offered.
+   * Without this, suppressing every ambiguous id would pass (a).           */
+  {
+    const dir = twoDefinitionFixture(
+      "T-908",
+      "Wire the second half of the same control.",
+      "The second suite drives the real handler too.",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const offered = claimableRowIds(rendered).has("T-908");
+    check(
+      "C-584 (b) an ambiguous id whose definitions are BOTH live is still offered",
+      q.status === 0 && offered && rendered.includes("AMBIGUOUS"),
+      `exit=${q.status}\noffered=${offered}\nambiguousFlag=${rendered.includes("AMBIGUOUS")}\n` +
+        `stderr=${q.stderr.trim()}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+
+/* ======================================================================== */
+/* The precondition scan over claimable rows.                               */
+/*                                                                          */
+/* THE DEFECT, measured rather than argued: a row is offered as claimable    */
+/* with nothing saying that a file it describes as ALREADY EXISTING is absent */
+/* from the tree. Two consecutive runs of the execution task took that row,  */
+/* re-derived the absence by hand, wrote it down in prose this generator does */
+/* not read, and handed the row on unchanged to the next run.                */
+/*                                                                          */
+/* Every case here drives the REAL generator over a fixture whose repo root  */
+/* is a `.git` FILE, which is what a git worktree has — and what every run of */
+/* this task works inside. A fixture with a `.git` directory would pass while */
+/* the tool found no root in the only place it is used.                      */
+/* ======================================================================== */
+{
+  function laneRowIdsOf(rendered) {
+    const ids = new Set();
+    let inLane = false;
+    for (const line of rendered.split("\n")) {
+      if (/^### Lane /.test(line)) inLane = true;
+      else if (/^## /.test(line)) inLane = false;
+      if (!inLane) continue;
+      const m = line.match(/^\| (#?[A-Z]-?\d+) \|/);
+      if (m) ids.add(m[1]);
+    }
+    return ids;
+  }
+
+  /*
+   * The LANE ROWS only.
+   *
+   * A document-wide search for the marker is met by a sibling: the "scan did
+   * not run" caution NAMES `⚠ PRECONDITION` in order to tell the reader that
+   * its absence below is unmeasured rather than clean. A whole-file
+   * `!includes(marker)` therefore failed while the rows were correctly
+   * unmarked — the assertion was wrong, not the code. Asserting per row is
+   * what makes "no row is marked" checkable.
+   */
+  function laneRowsOf(rendered) {
+    const rows = [];
+    let inLane = false;
+    for (const line of rendered.split("\n")) {
+      if (/^### Lane /.test(line)) inLane = true;
+      else if (/^## /.test(line)) inLane = false;
+      if (inLane && /^\| (#?[A-Z]-?\d+) \|/.test(line)) rows.push(line);
+    }
+    return rows;
+  }
+
+  const MARKER = "\u26a0 PRECONDITION";
+  const markedRows = (rendered) => laneRowsOf(rendered).filter((r) => r.includes(MARKER));
+
+  /** A fixture whose root is a repo, carrying one claimable item with `text`. */
+  function preconditionFixture(id, text, { repo = true } = {}) {
+    const dir = freshFixture();
+    if (repo) fs.writeFileSync(path.join(dir, ".git"), "gitdir: /elsewhere/.git/worktrees/fx\n");
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| ${id} | **${text}** | T | Close it. |\n`,
+    );
+    // The structure map is repo-owned, so an injected id has to be placed or
+    // the board refuses the whole run.
+    mapFixtureId(dir, id);
+    return dir;
+  }
+
+  /* --- (a) THE DEFECT. A named path that is absent is marked, by name. --- */
+  {
+    const dir = preconditionFixture(
+      "T-910",
+      "scripts/ci/there-is-no-such-scanner.mjs already reads and reports each workflow state",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a claimable row naming an absent repository path is marked PRECONDITION, by name",
+      q.status === 0
+        && markedRows(rendered).length === 1
+        && markedRows(rendered)[0].startsWith("| T-910 |")
+        && markedRows(rendered)[0].includes("scripts/ci/there-is-no-such-scanner.mjs"),
+      `exit=${q.status}\nmarkedRows=${markedRows(rendered).length}\n${markedRows(rendered).join("\n")}\nstderr=${q.stderr.trim()}`,
+    );
+
+    /* The whole point of an annotation over a filter: the row is STILL there.
+     * A prose-extracted path can be a deliverable, so suppressing the row
+     * would hide work — worse than the defect. If this case ever fails, the
+     * scan has started removing rows and must be reverted. */
+    check(
+      "the marked row is STILL offered in its lane table and the count is unchanged",
+      laneRowIdsOf(rendered).has("T-910")
+        && /Wrote EXECUTION_QUEUE\.md: 2 claimable/.test(q.stdout),
+      `laneIds=${[...laneRowIdsOf(rendered)].join(",")}\nstdout=${q.stdout.trim()}`,
+    );
+
+    check(
+      "the caution says it is not a filter, so a reader does not skip takeable work",
+      /Caution, not a filter[\s\S]*not in the checkout/.test(rendered),
+      rendered.slice(rendered.indexOf("Caution, not a filter"), rendered.indexOf("Caution, not a filter") + 300),
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (b) NECESSITY. A path that EXISTS is not marked.
+   * Without this, a scan that marked every row would pass (a) while
+   * measuring nothing — the defect class this whole backlog exists for. --- */
+  {
+    const dir = preconditionFixture(
+      "T-911",
+      "scripts/exec/build-execution-queue.mjs is the generator this row changes",
+    );
+    fs.mkdirSync(path.join(dir, "scripts", "exec"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "scripts", "exec", "build-execution-queue.mjs"), "// present\n");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a claimable row naming a path that EXISTS carries no PRECONDITION marker",
+      q.status === 0
+        && markedRows(rendered).length === 0
+        && laneRowIdsOf(rendered).has("T-911")
+        && /0 naming an absent path/.test(q.stdout),
+      `exit=${q.status}\nmarkedRows=${markedRows(rendered).join("\n")}\nstdout=${q.stdout.trim()}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (c) A relative fragment is not a repository path.
+   * Rows write `intelligence/query/route.ts` meaning `src/app/api/...`, and
+   * `intelligence/` is a real top-level directory in this repository, so a
+   * listing-derived root rule reports the fragment absent. --- */
+  {
+    const dir = preconditionFixture(
+      "T-912",
+      "the two panels canvas/analytics/ValueWaterfall.tsx and intelligence/query/route.ts",
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a relative fragment outside the declared roots raises no marker",
+      q.status === 0 && markedRows(rendered).length === 0 && laneRowIdsOf(rendered).has("T-912"),
+      `exit=${q.status}\nmarkedRows=${markedRows(rendered).join("\n")}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (d) No repo root: the queue says the scan DID NOT RUN.
+   * Silence here would read as a clean scan, which is the inversion this
+   * backlog exists to refuse — one CI gate once proved a control existed by
+   * finding its name in a file. --- */
+  {
+    const dir = preconditionFixture(
+      "T-913",
+      "scripts/ci/there-is-no-such-scanner.mjs already reads the state",
+      { repo: false },
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "with no repo root the queue states the scan did not run and marks nothing",
+      q.status === 0
+        && /precondition scan did not run/i.test(rendered)
+        && /unmeasured/.test(rendered)
+        && markedRows(rendered).length === 0
+        && /precondition scan DID NOT RUN/.test(q.stdout),
+      `exit=${q.status}\nsaid=${/precondition scan did not run/i.test(rendered)}` +
+        `\nunmeasured=${/unmeasured/.test(rendered)}` +
+        `\nnoMarkedRows=${markedRows(rendered).length}` +
+        `\nstdoutSaid=${/precondition scan DID NOT RUN/.test(q.stdout)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (e) The extension alternation, held shut end to end.
+   * `ts|tsx` ordering truncates `.tsx` to `.ts` and `.json` to `.js`, and
+   * both then resolve to nothing — the tool inventing two defects out of two
+   * files that are there. Driven through the generator, not just the module,
+   * because that is where the marker a reader acts on is written. --- */
+  {
+    const dir = preconditionFixture(
+      "T-914",
+      "src/components/home/HomeSurface.tsx and scripts/exec/source-stage-map.json both exist",
+    );
+    fs.mkdirSync(path.join(dir, "src", "components", "home"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "src", "components", "home", "HomeSurface.tsx"), "// present\n");
+    // `source-stage-map.json` is already beside the copied toolchain; the
+    // fixture's repo root is that same directory, so the path resolves.
+    fs.mkdirSync(path.join(dir, "scripts", "exec"), { recursive: true });
+    fs.copyFileSync(
+      path.join(dir, "source-stage-map.json"),
+      path.join(dir, "scripts", "exec", "source-stage-map.json"),
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a .tsx and a .json path that both exist raise no marker (extension order)",
+      q.status === 0
+        && markedRows(rendered).length === 0
+        && !rendered.includes("HomeSurface.ts`")
+        && laneRowIdsOf(rendered).has("T-914"),
+      `exit=${q.status}\nmarkedRows=${markedRows(rendered).join("\n")}\n` +
+        `${rendered.slice(Math.max(0, rendered.indexOf("T-914")), rendered.indexOf("T-914") + 400)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+ * The *Partly gated* section referred the reader to a table that did not hold
+ * the row — standing item 26, filed 2026-10-05.
+ *
+ * The section's own prose says the claimable half "is offered in the lane
+ * tables above" and tells the agent to take it. MEASURED on the live documents
+ * at 03:58Z: **0 of its 6 rows appeared in any lane table.** Four of the six
+ * were already delivered (two print `DELIVERED ... NOT to be re-taken` inside
+ * the offered cell itself), one was closed on `main`, and the single live row
+ * was blocked on another item.
+ *
+ * The MECHANISM is why three separate recordings of the symptom did not repair
+ * it. `partlyGated` filters on `!isFinished(i) && i.partialGate` and nothing
+ * else, so the section bypasses the whole claimable funnel: the very first
+ * stage, `already has proof (not at rung 0)`, correctly withholds a shipped
+ * item from the lane tables and never reaches this section. The referral is
+ * therefore not merely wrong on these rows — for any item carrying proof it
+ * CANNOT be true, which is the unfalsifiable shape this directory exists
+ * against.
+ *
+ * So the fix asserted here is not a wording change. The referral must be
+ * DERIVED per row from `CLAIMABLE_STAGES` — the same list the filter reads —
+ * and a row the filter removes must be shown under the rule that removed it.
+ * Case (c) is the one that stops the fix regressing into a second opinion: the
+ * reason printed has to be the stage's own label, so a generator that starts
+ * disagreeing with its filter cannot stay green.
+ * ------------------------------------------------------------------------ */
+{
+  console.log("\nbuild-execution-queue — a partly-gated row the lane tables do not hold (item 26)\n");
+
+  const LIVE_GATE =
+    "The signed-in readback the row also asks for was NOT attempted and remains owed"
+    + " -- it needs a human.";
+
+  const DECLARATION =
+    "**Gate scope — partial.** Gated half: the signed-in readback, which needs a human."
+    + " Claimable half: state the contract in code and test it.";
+
+  /** The section alone, so a match elsewhere in the file cannot pass a case. */
+  function section(rendered) {
+    const start = rendered.search(/^## Partly gated/m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start + 1);
+    const next = rest.search(/^## /m);
+    return next < 0 ? rendered.slice(start) : rendered.slice(start, start + 1 + next);
+  }
+
+  function laneTables(rendered) {
+    const start = rendered.search(/^### Lane [DCUT?] /m);
+    if (start < 0) return "";
+    const rest = rendered.slice(start);
+    const end = rest.search(/^## /m);
+    return end < 0 ? rest : rest.slice(0, end);
+  }
+
+  /**
+   * The two tables, split on their own headers.
+   *
+   * The ids are read STRUCTURALLY rather than by searching the section for a
+   * phrase, and that is derived from what the DEFECT emits, not from the fixed
+   * output: unfixed, the section holds exactly one table, the five-column one,
+   * and every row sits in it under an affirmative referral. A first draft of
+   * case (a) asserted instead that the phrase "offered in the lane tables
+   * above" did not precede the row, and it FAILED ON CORRECT OUTPUT -- the
+   * withheld branch says "**0 of 1 is offered in the lane tables above.**",
+   * which contains that phrase while asserting its negation. A pattern a true
+   * sentence can trip is not a test of the sentence.
+   */
+  const OFFERED_HEADER = "| # | Lane | Gate | The half that is GATED | The half that is CLAIMABLE |";
+  const WITHHELD_HEADER = "| # | Lane | Why it is NOT offered |";
+
+  function tableRowIds(sec, header) {
+    const at = sec.indexOf(header);
+    if (at < 0) return new Set();
+    const rows = [];
+    for (const line of sec.slice(at + header.length).split("\n")) {
+      if (/^\|\s*-/.test(line)) continue;
+      if (!line.startsWith("|")) {
+        if (rows.length) break;
+        continue;
+      }
+      const id = line.split("|")[1]?.trim();
+      if (id) rows.push(id);
+    }
+    return new Set(rows);
+  }
+
+  const offeredIds = (sec) => tableRowIds(sec, OFFERED_HEADER);
+  const withheldIds = (sec) => tableRowIds(sec, WITHHELD_HEADER);
+
+  /**
+   * `shipped` mirrors C-416 and C-589: a partly-gated item whose row records
+   * that the claimable half already merged. That lands it at rung 5, which the
+   * funnel's first stage removes — exactly the live shape.
+   *
+   * The proof sentence deliberately carries NO `#NNNN` token. A first draft
+   * wrote "PR #8607" the way the live rows do, and the item stayed at rung 0
+   * and reached a lane table: `#8607` is an item reference, so the T-704
+   * attribution rule read the sentence as belonging to a neighbouring id and
+   * dropped it from the rung corpus. The precondition case is what caught it.
+   */
+  function addGatedItem(dir, id, { shipped }) {
+    /*
+     * The verdict goes at the HEAD of the acceptance cell, which is the
+     * convention `attributableStatusText` reads for a table row: only a
+     * title or acceptance whose first word is a verdict verb reaches the rung
+     * corpus at all. Written mid-cell -- as two earlier drafts of this fixture
+     * wrote it -- the row stays at rung 0 and lands in a lane table, and the
+     * case under it tests nothing. The precondition case is what caught that
+     * both times.
+     */
+    const acceptance = shipped
+      ? "Shipped — the claimable half squash-merged 2026-09-28."
+      : "State the contract in code and test it, red-first.";
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+      `\n| ${id} | **Synthetic partly-gated fixture.** ${DECLARATION} | T | ${acceptance} |\n`,
+    );
+    mapFixtureId(dir, id);
+    /*
+     * The gate itself. `scopeBlocker` scopes a blocker that already exists, so
+     * a declaration with nothing to scope produces no `partialGate` at all and
+     * the section renders at zero -- which is how the first draft of this
+     * fixture failed, and the reason the register line is here rather than the
+     * declaration alone.
+     */
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n2026-09-27T03:05:20Z | fixture#abstain | item ${id} NOT TAKEN — ${LIVE_GATE}\n`,
+    );
+  }
+
+  /* --- (a) THE DEFECT: a row the lane tables do not hold is offered as though they do. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-961", { shipped: true });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    const inLane = laneTables(rendered).includes("| T-961 |");
+    /*
+     * The precondition is half the case. If the fixture's item reached a lane
+     * table after all, then this case would be asserting nothing about the
+     * referral and would pass on unfixed code -- the row really would be
+     * offered there. Measured first, then asserted.
+     */
+    check(
+      "item 26 (a) precondition — the shipped partly-gated row is absent from every lane table",
+      q.status === 0 && !inLane,
+      `exit=${q.status}\ninLane=${inLane}`,
+    );
+    check(
+      "item 26 (a) and the section does NOT present it as offered — it is in the withheld table",
+      q.status === 0
+        && !offeredIds(sec).has("T-961")
+        && withheldIds(sec).has("T-961"),
+      `exit=${q.status}\noffered=${[...offeredIds(sec)]}\nwithheld=${[...withheldIds(sec)]}\nsection=\n${sec}`,
+    );
+  }
+
+  /* --- (b) a row the lane tables DO hold keeps its referral and its gated half. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-962", { shipped: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    check(
+      "item 26 (b) an unshipped partly-gated row is still offered, and the lane tables hold it",
+      q.status === 0
+        && laneTables(rendered).includes("| T-962 |")
+        && offeredIds(sec).has("T-962")
+        && !withheldIds(sec).has("T-962")
+        && sec.includes("signed-in readback"),
+      `exit=${q.status}\ninLane=${laneTables(rendered).includes("| T-962 |")}\nsection=\n${sec}`,
+    );
+  }
+
+  /* --- (c) the reason is the FILTER's own label, not a second opinion. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-963", { shipped: true });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    const row = sec.split("\n").filter((l) => l.includes("| T-963 |")).join("\n");
+    check(
+      "item 26 (c) the withheld row names the claimable stage that removed it, in the stage's own words",
+      q.status === 0
+        && withheldIds(sec).has("T-963")
+        && row.includes("already has proof (not at rung 0)"),
+      `exit=${q.status}\nrow=${row}\nsection=\n${sec}`,
+    );
+  }
+
+  /* --- (d) the count sentence is derived, not asserted over the whole bucket. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-964", { shipped: true });
+    addGatedItem(dir, "T-965", { shipped: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    /*
+     * Both counts, as whole sentences. The first draft of this case matched
+     * /\*\*1 of 2 .*?offered/s, and a mutation that made the offered count read
+     * `${n} of ${n}` SURVIVED it: with the `s` flag the lazy gap ran from the
+     * WITHHELD sentence ("**1 of 2 is withheld**") to the word "offered" in the
+     * withheld table's own header, so the case passed on a sentence that was
+     * not the one under test. A count assertion has to name the sentence it
+     * counts.
+     */
+    check(
+      "item 26 (d) with one offered and one withheld, each count sentence states 1 of 2",
+      q.status === 0
+        && sec.includes("**1 of 2 is offered in the lane tables above**")
+        && sec.includes("**1 of 2 is withheld**")
+        && offeredIds(sec).has("T-965")
+        && withheldIds(sec).has("T-964"),
+      `exit=${q.status}\nsection=\n${sec}`,
+    );
+  }
+
+  /* ---
+   * (f) a row withheld by a LATER stage than the first.
+   *
+   * This case exists because a mutation survived without it. Narrowing
+   * `withholdingStage` to consult `CLAIMABLE_STAGES[0]` alone -- `already has
+   * proof (not at rung 0)` -- changed nothing in cases (a)-(e), because every
+   * fixture above is withheld for exactly that reason. Under that narrowing a
+   * row removed by any LATER rule is reported as offered again, which is the
+   * original defect restored for every non-rung reason. The genuine coverage
+   * gap was the mutation's doing, not a false survivor: it is behaviourally
+   * identical on those fixtures and different here.
+   *
+   * A live claim is the cleanest later stage to reach: it leaves the item at
+   * rung 0 with its `partialGate` intact, and a partly-gated item somebody is
+   * already working is precisely one no second agent should be sent at.
+   * --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-967", { shipped: false });
+    fs.appendFileSync(
+      path.join(dir, "EXECUTION_CLAIMS.md"),
+      `\n${NOW} | fixture#holder | item T-967 claimed on branch \`exec/t967-held\` — taken.\n`,
+    );
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    const row = sec.split("\n").filter((l) => l.includes("| T-967 |")).join("\n");
+    check(
+      "item 26 (f) a partly-gated row held by a live claim is withheld, under the claim stage's own label",
+      q.status === 0
+        && !offeredIds(sec).has("T-967")
+        && withheldIds(sec).has("T-967")
+        && row.includes("held by a live claim"),
+      `exit=${q.status}\nrow=${row}\nsection=\n${sec}`,
+    );
+  }
+
+  /* --- (e) the withheld table renders at zero too, same discipline as its parent. --- */
+  {
+    const dir = freshFixture();
+    addGatedItem(dir, "T-966", { shipped: false });
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const sec = section(rendered);
+    check(
+      "item 26 (e) with nothing withheld the section still states that, rather than omitting the block",
+      q.status === 0 && /0 (?:of \d+ )?(?:is|are) withheld/.test(sec),
+      `exit=${q.status}\nsection=\n${sec}`,
+    );
+  }
 }
 
 console.log(`\n${passes} passed, ${failures} failed${skipped ? `, ${skipped} skipped` : ""}`);

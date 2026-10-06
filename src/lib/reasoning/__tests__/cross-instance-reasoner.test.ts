@@ -37,10 +37,10 @@ describe('resolveLinkedProgram', () => {
 });
 
 describe('buildLinkedProgramChip — APX-CDP-2026 (P3 Design with blocker)', () => {
-  test('returns phase 3 with label "P3 Design"', () => {
+  test('returns phase 3 with its canonical label', () => {
     const chip = buildLinkedProgramChip('APX-CDP-2026', 'unblocks');
     expect(chip.phase).toBe(3);
-    expect(chip.phaseLabel).toBe('P3 Design');
+    expect(chip.phaseLabel).toBe('P3 Design Future State');
   });
 
   test('reports blocker presence and amber status', () => {
@@ -80,7 +80,7 @@ describe('buildLinkedProgramChip — phase changes flow through', () => {
   });
 });
 
-describe('buildLinkedProgramChip — APX-DFV2-2025 (P6 Tower Handoff, no blockers)', () => {
+describe('buildLinkedProgramChip — phase 6, no blockers', () => {
   test('returns green status when no open blockers exist', () => {
     // APX-DFV2-2025 has flags: [], no linkedSourceEvents — should be clean.
     expect(APX_DFV2_INSTANCE.flags).toHaveLength(0);
@@ -89,7 +89,7 @@ describe('buildLinkedProgramChip — APX-DFV2-2025 (P6 Tower Handoff, no blocker
     expect(chip.status).toBe('green');
     expect(chip.blockerLabel).toBeUndefined();
     expect(chip.phase).toBe(6);
-    expect(chip.phaseLabel).toBe('P6 Tower Handoff');
+    expect(chip.phaseLabel).toBe('P6 Tower Track Outcomes');
   });
 });
 

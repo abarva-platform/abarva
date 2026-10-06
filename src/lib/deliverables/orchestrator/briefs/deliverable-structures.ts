@@ -8,6 +8,7 @@ import type {
   BriefSection,
   DeliverableModule,
   ExpectedExhibit,
+  ExpectedTable,
   SectionGroundingMode,
 } from "../types";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
@@ -56,6 +57,47 @@ export interface DeliverableStructure {
    * use-case-specific exhibits (a dependency map, a rollout-wave timeline, etc.).
    */
   expectedExhibits?: ExpectedExhibit[];
+  /**
+   * Tables required BY THIS DELIVERABLE TYPE, regardless of archetype — the
+   * mirror of `expectedExhibits`, and for the same reason.
+   *
+   * Until this field existed, `composeBrief` took its tables from the archetype
+   * pack alone, so within one archetype eighteen of the twenty-one shipped
+   * structures received the IDENTICAL table set: a Target State Architecture
+   * was asked for a vendor pricing template and a volume baseline, a Roadmap
+   * for an application inventory, and a Requirements Traceability document for
+   * neither of the two tables its own sections are built around. Exhibits had
+   * never had that problem because the structure's exhibits are concatenated
+   * with the pack's; tables simply never got the same treatment. Measured over
+   * the shipped catalogs: 7 distinct table signatures across the 105
+   * composable briefs against 37 distinct exhibit signatures.
+   *
+   * Joined with the pack's tables by `composeArtifactAssets` (structure first,
+   * first entry per key wins), so a configured pack that names a key a
+   * structure already declares cannot produce a duplicate expectation.
+   *
+   * Declare a table the artifact TYPE is built around, not one a use case
+   * happens to want — use-case tables stay with the archetype pack.
+   */
+  expectedTables?: ExpectedTable[];
+  /**
+   * Section keys that carry the archetype pack's `keyEvidenceFamilies`, in
+   * ADDITION to the ones `composeBrief` infers from the key's spelling.
+   *
+   * The inferred rule only matches keys containing current_state / baseline /
+   * signal / findings / environment, which was written for the P2 diagnostic
+   * deliverables and never revisited. Eight of the shipped structures have no
+   * such key, so for those a declared archetype contributed no evidence
+   * grounding at all — four of them (solution design, operating model,
+   * sourcing strategy, readiness and change plan) declare no families on any
+   * section either, so they were generating with none.
+   *
+   * Name the sections that assert CLIENT facts here — not the executive
+   * decision, recommendation, or forward plan sections, which are judgment and
+   * should not pull a use case's baseline evidence. Every key listed must be a
+   * section key this structure actually declares.
+   */
+  archetypeEvidenceSectionKeys?: string[];
 }
 
 const s = (
@@ -77,46 +119,34 @@ const s = (
 // ── Moves deliverables (strategic transformation artifacts) ──
 
 // A P1 Charter is a COMMITMENT instrument — it authorizes and bounds Discovery,
-// names the sponsor, and prepares the client for what Discovery will need. It
+// names the sponsor, and records the known facts and conditions for proceeding. It
 // must NOT pre-empt later phases: no current-state evidence analysis (that is
 // P2 Discovery), no target/future-state or solution/architecture design (that
-// is P3). Redesigned 2026-07-25: the Charter ends with a first-class
-// "Discovery Preparation" section (two tables + a short pointer to the
-// separate, detailed Discovery Guidebook generated after approval) instead of
-// folding that content as bullets inside a generic recommendation section —
-// see the shared contract (src/lib/deliverables/shared/artifact-contracts.ts)
-// for the canonical 9-section list both pipelines read from.
+// is P3). Detailed workshop/session instructions belong in the separate phase
+// guide, not in the executive charter.
 const MOVES_CHARTER: DeliverableStructure = {
   module: "moves",
   deliverableType: "charter",
   purpose:
-    "Authorize a strategic move with a clear mandate, sponsor commitment, scope, value hypothesis, governance, and kill criterion — and fund the move into discovery & design.",
+    "Authorize a strategic move with a clear mandate, accountable owner, scope, value hypothesis, governance, and kill criterion — and fund the move into discovery & design.",
   decisionToSupport:
     "Approve chartering of the move (a funded discovery & design gate, NOT a build authorization).",
   sections: [
     s(
       "charter_decision",
-      "Charter Decision",
-      "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus a concise executive decision summary. Framing only — NOT a current-state analysis, solution design, or implementation plan.",
+      "Charter Decision & Immediate Next Steps",
+      "State one of: Authorize Discovery / Authorize Discovery with Conditions / Do Not Authorize Discovery, plus immediate owner actions and conditions. Framing only — NOT a current-state analysis, solution design, or implementation plan.",
       "mixed",
       [],
       `Keep this section under ${charterSectionMaxWords("charter_decision")} words. Use one short paragraph plus a small decision box; do not add subsections.`,
     ),
     s(
       "opportunity_context",
-      "Opportunity & Business Context",
-      "Why this Move is being considered, why it matters now, the business opportunity or challenge, and expected business value direction. Only approved P0 capture, sponsor input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
+      "Opportunity, Context & Intended Outcomes",
+      "Why this Move is being considered, why it matters now, the business opportunity or challenge, expected business value direction, and the outcomes Discovery is intended to evaluate. Only approved P0 capture, workspace-team input, and approved enterprise context — do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
       "mixed",
       [],
       `Keep this section under ${charterSectionMaxWords("opportunity_context")} words. This is hypothesis framing, not P2 findings.`,
-    ),
-    s(
-      "intended_outcomes",
-      "Intended Outcomes",
-      "The business outcomes Discovery is intended to evaluate — objectives, not commitments or validated findings.",
-      "mixed",
-      [],
-      `Keep this section under ${charterSectionMaxWords("intended_outcomes")} words. Do not state these as validated results.`,
     ),
     s(
       "scope",
@@ -151,35 +181,114 @@ const MOVES_CHARTER: DeliverableStructure = {
       `Keep this section under ${charterSectionMaxWords("known_constraints_dependencies")} words. Include only constraints/dependencies actually supported by evidence.`,
     ),
     s(
-      "discovery_preparation",
-      "Discovery Preparation",
-      "Sets expectations for the Discovery phase — not the assessment itself. An executive table (Area / What to Expect / What We Need From You / Priority) across Business Process, People & Governance, Technology, Data, Performance, and Risk & Controls; a second table of typical Discovery activities and durations; then a short closing paragraph noting that a detailed Discovery Guidebook, tailored to this Move, will be generated after Charter approval. Do not embed that detailed material here.",
+      "authorization_conditions",
+      "Authorization Conditions & Open Inputs",
+      "State the sponsor conditions for authorizing Discovery and the few open inputs that carry into the separate Discovery Workshop Guide. Do not include workshop agendas, data-request tables, interview scripts, session instructions, or guidebook detail in this Charter.",
       "mixed",
       [],
-      `Keep this section under ${charterSectionMaxWords("discovery_preparation")} words. Two tables plus one short closing paragraph — no interview questionnaires or workshop agendas here.`,
-    ),
-    s(
-      "authorization_next_steps",
-      "Authorization & Immediate Next Steps",
-      "Charter decision, immediate actions, conditions (if any), and the expected transition into P2.",
-      "mixed",
-      [],
-      `Keep this section under ${charterSectionMaxWords("authorization_next_steps")} words. Use bullets grouped by decision, actions, and conditions.`,
+      `Keep this section under ${charterSectionMaxWords("authorization_conditions")} words. One compact table plus a short closing paragraph; explicitly refer detailed workshop/session instructions to the separate guide.`,
     ),
   ],
   requiredSectionKeys: [
     "charter_decision",
     "opportunity_context",
-    "intended_outcomes",
     "scope",
     "success_measures",
     "sponsorship_governance",
     "known_constraints_dependencies",
-    "discovery_preparation",
-    "authorization_next_steps",
+    "authorization_conditions",
   ],
   fixedStructure: true,
   forbiddenSectionTopics: [...CHARTER_CONTRACT.forbiddenTopics],
+};
+
+const MOVES_DISCOVERY_PLAN: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "discovery_plan",
+  purpose:
+    "Prepare the client and delivery team to conduct P2 discovery, interviews, and evidence validation against the approved Charter.",
+  decisionToSupport:
+    "Authorize and prepare the discovery workplan; do not report findings that have not yet been gathered.",
+  sections: [
+    s(
+      "charter_recap",
+      "Charter Recap & Decision Boundaries",
+      "Summarize only the approved mandate, scope, success measures, decisions, assumptions, and open questions that P2 must validate. Keep hypotheses explicitly labeled.",
+      "mixed",
+      [],
+      "Keep under 350 words. Do not restate the full Charter or turn hypotheses into findings.",
+    ),
+    s(
+      "discovery_workplan",
+      "Discovery Workplan",
+      "Sequence the P2 workshops and interviews with objectives, participants by role, facilitator, duration, and expected outputs. Distinguish confirmed participants from roles still to be assigned.",
+      "mixed",
+      [],
+      "Use one compact session table. Include a practical 45-minute stakeholder interview agenda with time-boxed segments.",
+    ),
+    s(
+      "evidence_requests",
+      "Evidence Requests & Validation Plan",
+      "List the files, extracts, system records, and metric definitions to request, why each matters, likely owner, date range, validation method, and sensitivity/access conditions.",
+      "mixed",
+      ["current state process", "kpi baseline", "it systems landscape"],
+      "Use one compact evidence-request table. Mark owner or period as Client Decision Required when it is not established.",
+    ),
+    s(
+      "interview_guide",
+      "Workshop & Interview Guide",
+      "Provide open, neutral questions for operations, technology, data, security/privacy, finance, and sponsor stakeholders. Capture answers as observations with source and confidence, not as established facts.",
+      "mixed",
+      ["stakeholder input", "current state process"],
+      "Group questions by role and purpose. Include prompts to test conflicting metrics, stale sources, red lines, and unsupported value hypotheses without assuming their resolution.",
+    ),
+    s(
+      "p2_readiness",
+      "P2 Readiness & Open Inputs",
+      "State the minimum evidence and human decisions required to close discovery, including unresolved transcript governance, API validation, platform readiness, metric ownership, and finance validation when not yet evidenced.",
+      "mixed",
+      ["governance", "data quality", "cost baseline"],
+      "Use a concise checklist. Do not imply the evidence has been collected or approved; identify the owner and acceptance test for each open item.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "charter_recap",
+    "discovery_workplan",
+    "evidence_requests",
+    "interview_guide",
+    "p2_readiness",
+  ],
+  fixedStructure: true,
+  forbiddenSectionTopics: [
+    "current-state findings",
+    "root-cause conclusion",
+    "target architecture",
+    "solution design",
+    "investment estimate",
+    "implementation roadmap",
+  ],
+  prohibitedContent: [
+    "This is a P1 preparation guide, not the P2 discovery report. Do not invent workshop outcomes, interview quotes, measured baselines, validated value, or resolved governance decisions.",
+    "Do not include P2 findings, P3 architecture or solution design, P4 pricing or business case, or P5 execution commitments. The guide must request and test evidence, not claim it has been collected.",
+    "Keep the complete guide within the 3,000-word artifact ceiling. Prefer compact session and evidence-request tables to repeated explanatory prose.",
+  ],
+  expectedExhibits: [
+    {
+      key: "open_inputs_required",
+      title: "Open Inputs Required",
+      kind: "matrix",
+      purpose:
+        "Make uncollected evidence, owners, validation tests, and gate implications explicit before the discovery work begins.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "input",
+        "owner",
+        "validation",
+        "status",
+        "gate implication",
+      ],
+    },
+  ],
 };
 
 const MOVES_BUSINESS_CASE: DeliverableStructure = {
@@ -191,52 +300,56 @@ const MOVES_BUSINESS_CASE: DeliverableStructure = {
     "Approve funding for the move at the proposed investment level.",
   prohibitedContent: [
     "This document argues WHY to fund and HOW value is created — it does not re-litigate the target architecture or write the execution plan; reference them, do not repeat their content.",
+    "Do not add separate Problem / Opportunity, Cost Model, Financial Summary, or Recommendation sections; those belong inside the six-section business-case flow.",
   ],
   sections: [
     s(
       "exec_summary",
-      "Executive Summary",
-      "The investment thesis in brief — this must tell one coherent argument (why change now, what economic leakage the problem creates, what the solution changes, where value comes from, what investment is required, what must hold, what the downside looks like, what leadership is being asked to approve), not a list of disconnected subsection summaries.",
+      "Executive Answer",
+      "The investment answer in brief — why change now, what economic leakage the problem creates, what the solution changes, where value comes from, what investment is required, what must hold, what the downside looks like, and what leadership is being asked to approve. Do not write a list of disconnected subsection summaries.",
       "mixed",
+      [],
+      "Keep under 350 words. State the thesis, decision, investment posture, expected value, material conditions, and recommendation once.",
     ),
-    s("decision_required", "Decision Required", "The funding ask.", "mixed"),
     s(
-      "problem_opportunity",
-      "Problem / Opportunity",
-      "The case for change.",
+      "decision_required",
+      "Funding Decision & Recommendation",
+      "The decision being requested, the recommended posture, and the immediate next action.",
       "mixed",
+      [],
+      "Keep under 250 words. Use one decision box; do not restate the executive answer.",
     ),
     s(
       "current_state",
-      "Current-State Baseline",
-      "Cost/performance baseline.",
+      "Baseline, Problem & Opportunity",
+      "The governed baseline, the performance/cost problem it reveals, and the opportunity created by changing it.",
       "governed_facts",
+      [],
+      "Keep under 650 words plus baseline tables. Cite the source for every number; render insufficient evidence instead of filling gaps.",
     ),
-    s("options", "Options Considered", "Alternatives and trade-offs.", "mixed"),
+    s(
+      "options",
+      "Options, Trade-Offs & Recommended Path",
+      "Credible alternatives, rejected paths, and why the recommended path is fundable now.",
+      "mixed",
+      [],
+      "Keep under 550 words plus an options table. Do not invent three options when only one credible pattern exists.",
+    ),
     s(
       "value_hypothesis",
-      "Value Hypothesis & Benefits",
-      "Quantified benefits and KPIs.",
-      "mixed",
-    ),
-    s(
-      "cost_model",
-      "Cost Model",
-      "Investment and run-cost view.",
+      "Economics & Value Case",
+      "Benefits, investment, run-cost, payback, sensitivity, and evidence confidence as one integrated economics spine.",
       "governed_facts",
+      [],
+      "Keep under 800 words plus economics exhibits/tables. The deterministic pricing and value model owns the numbers; do not compute, total, interpolate, or fabricate figures in prose.",
     ),
     s(
-      "financials",
-      "Financial Summary (NPV/Payback)",
-      "The financial case.",
+      "risks",
+      "Risks, Conditions & Evidence Gaps",
+      "Risk-adjusted view, funding conditions, evidence gaps, and what would change the recommendation.",
       "mixed",
-    ),
-    s("risks", "Risks, Issues & Dependencies", "Risk-adjusted view.", "mixed"),
-    s(
-      "recommendation",
-      "Recommendation & Next Actions",
-      "Fund / shape / decline.",
-      "mixed",
+      [],
+      "Keep under 550 words using a compact risk/condition table. Do not bury hard blockers in narrative.",
     ),
   ],
   requiredSectionKeys: [
@@ -244,8 +357,7 @@ const MOVES_BUSINESS_CASE: DeliverableStructure = {
     "decision_required",
     "current_state",
     "value_hypothesis",
-    "cost_model",
-    "recommendation",
+    "risks",
   ],
 };
 
@@ -260,13 +372,7 @@ const MOVES_ROADMAP: DeliverableStructure = {
     s(
       "exec_summary",
       "Executive Summary",
-      "The shape of the journey.",
-      "mixed",
-    ),
-    s(
-      "objectives",
-      "Objectives & Guiding Principles",
-      "What the roadmap optimizes for.",
+      "The shape of the journey, objectives, and guiding principles.",
       "mixed",
     ),
     s(
@@ -278,21 +384,15 @@ const MOVES_ROADMAP: DeliverableStructure = {
     s("phases", "Phases & Work Packages", "Phase plan with outcomes.", "mixed"),
     s(
       "sequencing",
-      "Sequencing & Dependencies",
-      "Critical path and dependencies.",
+      "Sequencing, Dependencies & Gates",
+      "Critical path, dependencies, phase gates, and milestones.",
       "mixed",
     ),
     s(
-      "resourcing",
-      "Resourcing & Operating Model",
-      "Teams and capacity.",
+      "resourcing_governance",
+      "Resourcing, Owners & Governance",
+      "Teams, capacity, ownership, and governance cadence.",
       "mixed",
-    ),
-    s(
-      "gates",
-      "Phase Gates & Milestones",
-      "Decision gates.",
-      "expert_template",
     ),
     s("risks", "Risks, Issues & Dependencies", "Delivery risks.", "mixed"),
     s(
@@ -304,10 +404,15 @@ const MOVES_ROADMAP: DeliverableStructure = {
   ],
   requiredSectionKeys: [
     "exec_summary",
-    "objectives",
+    "current_state",
     "phases",
     "sequencing",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add standalone Objectives or Phase Gates sections; objectives live in the executive summary and gates live in sequencing.",
+    "Do not become a project plan, implementation manual, or second business case. Keep the roadmap to the sequence, owners, dependencies, gates, risks, and next action.",
   ],
   // Added 2026-07-25 (REF_EXECUTIVE_ROADMAP pilot) — previously this brief had
   // NO expectedExhibits at all, so the roadmap rendered as a generic
@@ -342,6 +447,10 @@ const MOVES_ROADMAP: DeliverableStructure = {
 const MOVES_DISCOVERY: DeliverableStructure = {
   module: "moves",
   deliverableType: "discovery_report",
+  // Maturity scoring against a benchmark and the use-case gaps are findings
+  // about the client; the readiness implications and the recommendation are
+  // judgment over them. `current_state` is also a landing site by spelling.
+  archetypeEvidenceSectionKeys: ["maturity_gaps"],
   purpose:
     "Report discovery findings — maturity, gaps, readiness — to frame the move.",
   decisionToSupport: "Agree the diagnosis and the priority gaps to address.",
@@ -360,19 +469,17 @@ const MOVES_DISCOVERY: DeliverableStructure = {
       "governed_facts",
     ),
     s(
-      "maturity",
-      "Maturity & Benchmark",
-      "Maturity scoring vs benchmark.",
+      "maturity_gaps",
+      "Maturity, Benchmark & Gaps",
+      "Maturity scoring vs benchmark, plus the foundation and use-case gaps that matter.",
       "mixed",
     ),
-    s("gaps", "Gap Analysis", "Foundation vs use-case gaps.", "mixed"),
     s(
-      "readiness",
-      "Change & Adoption Readiness",
-      "Assess the client's ability AND willingness to make the business-process changes the outcome needs, and to stand up the measurement (per the charter's success criteria). Validate the metric baselines and whether each is measurable today. A high-value outcome with no process-change commitment is not ready — say so.",
+      "readiness_implications",
+      "Readiness & Implications",
+      "Assess the client's ability AND willingness to make the business-process changes the outcome needs, stand up measurement, and act on the implications. Validate metric baselines and whether each is measurable today. A high-value outcome with no process-change commitment is not ready — say so.",
       "mixed",
     ),
-    s("implications", "Implications", "What it means for the move.", "mixed"),
     s(
       "recommendation",
       "Recommended Move & Next Steps",
@@ -383,14 +490,103 @@ const MOVES_DISCOVERY: DeliverableStructure = {
   requiredSectionKeys: [
     "exec_summary",
     "current_state",
-    "gaps",
+    "maturity_gaps",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not split maturity, benchmark, and gap findings into separate essays; use one integrated diagnostic section.",
+    "Do not split readiness and implications into separate essays; readiness only matters through the implication it creates for the next phase.",
+  ],
+};
+
+const MOVES_DESIGN_WORKSHOP_GUIDE: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "design_workshop_guide",
+  purpose:
+    "Prepare a focused set of future-state decision sessions using accepted discovery evidence, without turning the guide into a completed solution, operating model, or process redesign.",
+  decisionToSupport:
+    "Run the design work needed to produce an estimate-ready scope, surface material trade-offs, and identify what remains for roadmap execution.",
+  sections: [
+    s(
+      "discovery_carry_forward",
+      "Discovery Carry-Forward & Decision Boundary",
+      "Summarize only accepted findings, confirmed constraints, unresolved evidence gaps, and the selected solution route needed to prepare design. Preserve confidence and source status; do not restate the Discovery Report or reopen decisions without new evidence.",
+      "mixed",
+      ["source_register", "evidence_gaps", "solution_route"],
+      "Keep under 350 words. Use a compact fact / status / design implication table. State explicitly that this guide prepares design and is not the completed target state.",
+    ),
+    s(
+      "design_session_plan",
+      "Design Sessions & Decisions",
+      "Define the smallest set of workshops needed to reach estimate-ready scope: session objective, decision question, participants by role, evidence to review, output, and accountable decision owner. Tailor technical depth to the use case and approved route.",
+      "mixed",
+      ["stakeholder_input", "solution_route", "technology_landscape"],
+      "Keep under 700 words. Use one compact session table. Separate what must be decided now to estimate from detailed design and implementation work that belongs in roadmap execution.",
+    ),
+    s(
+      "evidence_carry_forward",
+      "Evidence & Assumptions to Carry into Design",
+      "Identify the specific accepted evidence, source files, assumptions, and open inputs each design decision depends on. Show evidence status and a named owner role for validation; never elevate unvalidated material to fact.",
+      "mixed",
+      [
+        "source_register",
+        "evidence_gaps",
+        "baseline_metrics",
+        "technology_landscape",
+      ],
+      "Keep under 500 words. Use one concise evidence / decision / status / owner table; point back to citations rather than repeating source narratives.",
+    ),
+    s(
+      "facilitation_tradeoffs",
+      "Facilitation & Trade-Off Questions",
+      "Provide neutral prompts to test only the decisions that change scope, estimate, risk, or accountability. Capture selected option, alternatives, rationale, owner, evidence, and follow-up; preserve business ownership of training and adoption when no material operating-model shift is established.",
+      "expert_template",
+      [],
+      "Keep under 850 words. Organize a short question set by business/process, technology/data/security, and delivery ownership. Do not prescribe a complete future-state process, role catalogue, training plan, or low-level build specification.",
+    ),
+    s(
+      "design_gate_readiness",
+      "Design Exit & Roadmap Handoff Readiness",
+      "Set the minimum evidence and human decisions required for an estimate-ready design package, distinguishing design outputs from the detailed work, validation, and change execution that will be scheduled in the approved roadmap.",
+      "mixed",
+      ["evidence_gaps", "decision_log", "estimate_inputs"],
+      "Keep under 400 words. Use a compact readiness checklist with acceptance test, owner role, and status. Do not imply execution approval or that open items are complete.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "discovery_carry_forward",
+    "design_session_plan",
+    "evidence_carry_forward",
+    "facilitation_tradeoffs",
+    "design_gate_readiness",
+  ],
+  fixedStructure: true,
+  forbiddenSectionTopics: [
+    "completed solution design",
+    "full future-state process",
+    "complete operating model",
+    "detailed implementation plan",
+    "execution backlog",
+    "detailed training curriculum",
+    "final ROI",
+  ],
+  prohibitedContent: [
+    "This is a workshop and decision guide, not a second Discovery Report and not a completed future-state solution. Carry forward findings with their actual evidence status; do not repeat discovery analysis.",
+    "Design only to the level needed to compare the route, clarify estimate scope, expose material trade-offs, and identify assumptions. Defer detailed process, operating-model, build, testing, and adoption work to the approved roadmap unless evidence shows it is necessary to estimate.",
+    "Do not invent client facts, quantified benefits, cost, effort, rates, timing, or vendor/internal sourcing decisions. Preserve explicit assumptions and open inputs for human review.",
   ],
 };
 
 const MOVES_ROOT_CAUSE_WORKSHEET: DeliverableStructure = {
   module: "moves",
   deliverableType: "root_cause_worksheet",
+  // The two sections that map the client's observed symptoms to causes; the
+  // thesis, the gap list and the P3 implications are judgment over them.
+  archetypeEvidenceSectionKeys: [
+    "symptom_cause_table",
+    "root_cause_tree",
+  ],
   purpose:
     "Explain the small set of evidence-backed root causes behind the current-state symptoms and what they imply for P3 design.",
   decisionToSupport:
@@ -521,6 +717,8 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
   fixedStructure: true,
   prohibitedContent: [
     "This is an architecture approval, not a build plan — do not commit to vendor pricing, contract terms, or a detailed project schedule here; those belong to Sourcing Strategy and the Execution Roadmap.",
+    "Do not split one architecture argument across many headings. Seven sections is the ceiling, not a target to fill.",
+    "Conceptual, logical, physical, and orchestration views should be exhibits with decision implications, not separate prose essays unless a specific open decision requires it.",
   ],
   expectedExhibits: [
     {
@@ -614,19 +812,11 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
   sections: [
     s(
       "exec_summary",
-      "Executive Summary",
-      "Architecture decision in brief.",
+      "Executive Answer",
+      "The architecture decision, why it matters now, and the material open inputs in one answer-first read.",
       "mixed",
       [],
-      "Keep under 450 words. Lead with the architecture decision, why now, and material open inputs.",
-    ),
-    s(
-      "decision_required",
-      "Decision Required",
-      "The architecture approval ask.",
-      "mixed",
-      [],
-      "Keep under 350 words using a compact decision box.",
+      "Keep under 450 words. State the decision once; do not preview every later section.",
     ),
     s(
       "options_considered",
@@ -634,87 +824,39 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
       "The real alternatives considered, why the selected architecture wins, and what trade-offs remain.",
       "mixed",
       [],
-      "Keep under 700 words using an options matrix. Compare at least maintain-status-quo, point-solution automation, and governed intelligence-layer options.",
+      "Keep under 650 words using an options matrix. Do not invent three options when only one credible pattern exists.",
     ),
     s(
       "current_state",
-      "Current-State Technology Baseline",
-      "What the recorded estate shows today.",
+      "Current-State Drivers",
+      "Only the baseline facts and constraints that materially shape the architecture decision.",
       "governed_facts",
       [],
-      "Keep under 650 words. State only the baseline facts that change the architecture decision.",
+      "Keep under 500 words. State only facts that change the architecture decision; put missing facts in open inputs.",
     ),
     s(
       "target_state",
-      "Target-State Architecture",
-      "Frame the architecture thesis: the core components, responsibilities, and how the three views below (conceptual, logical, physical) answer the questions 'what is it conceptually', 'how is it logically composed', and 'what exactly gets deployed, where'.",
+      "Architecture on a Page",
+      "The architecture thesis and the exhibits that show conceptual, logical, physical, integration, and orchestration implications.",
       "mixed",
       [],
-      "Keep under 800 words. Summarize the architecture thesis; do not repeat the exhibits.",
+      "Keep under 750 words plus the required architecture exhibits. Explain what each exhibit proves; do not repeat its labels as prose.",
     ),
     s(
-      "conceptual_architecture",
-      "Conceptual Architecture",
-      "The business/capability view: users and personas, business capabilities, channels, major solution domains, trust and governance boundaries, and the business outcomes this supports. This is the CONCEPTUAL_ARCHITECTURE exhibit rendered with its narrative.",
+      "platform_controls",
+      "Platform, Data & Controls",
+      "Data, integration, security, privacy, governance, and human-control implications that affect the architecture decision.",
       "mixed",
       [],
-      "Keep under 900 words plus the conceptual architecture exhibit.",
+      "Keep under 650 words using one compact controls/integration table. Mark provider/service choices as selected, illustrative, or open input.",
     ),
     s(
-      "logical_architecture",
-      "Logical Architecture",
-      "The solution-composition view: experience layer, workflow/orchestration, agents, models, knowledge/context, integration, data products, identity and security, observability, governance, and human-in-the-loop controls. This is the LOGICAL_ARCHITECTURE exhibit rendered with its narrative.",
+      "implementation_risks",
+      "Implementation Risks & Conditions",
+      "Sequencing, migration posture, dependencies, and architecture risks that must be handled before roadmap planning.",
       "mixed",
       [],
-      "Keep under 950 words plus the logical architecture exhibit.",
-    ),
-    s(
-      "physical_architecture",
-      "Physical Architecture",
-      "The deployable-services view: cloud subscription/account boundaries, regions, networks, runtime services, model endpoints, data platforms, vector/search services, queues/events, databases, secrets, monitoring, CI/CD, private endpoints, client evidence environment, resilience and recovery. This is the PHYSICAL_ARCHITECTURE exhibit rendered with its narrative — mark each service illustrative, selected, or client-confirmed.",
-      "mixed",
-      [],
-      "Keep under 1,000 words plus the physical architecture exhibit. Mark unknown provider/service choices as open inputs, not defaults.",
-    ),
-    s(
-      "agent_orchestration",
-      "Agentic Orchestration",
-      "Do not show 'AI agent' as a single floating box. Show the explicit flow: trigger → intent router → planner → context assembler → tool/retrieval selection → model execution → evidence challenge → policy/control gate → human approval where required → action execution → trace/monitoring/feedback — and map each logical step to a physical service from the Physical Architecture.",
-      "mixed",
-      [],
-      "Keep under 900 words plus one orchestration flow exhibit.",
-    ),
-    s(
-      "data_integration",
-      "Data, Integration & Platform Implications",
-      "Data products, interfaces, and dependency posture.",
-      "mixed",
-      [],
-      "Keep under 750 words using an integration-contract table.",
-    ),
-    s(
-      "security_controls",
-      "Security, Privacy & Control Model",
-      "Control families and required approvals.",
-      "mixed",
-      [],
-      "Keep under 700 words using a controls table.",
-    ),
-    s(
-      "implementation_path",
-      "Implementation Path",
-      "Sequencing, migration posture, and transition risk.",
-      "mixed",
-      [],
-      "Keep under 650 words. Sequence architecture decisions only; do not become a project plan.",
-    ),
-    s(
-      "risks",
-      "Risks, Issues & Dependencies",
-      "Architecture risks and mitigations.",
-      "mixed",
-      [],
-      "Keep under 650 words using a risk/dependency table.",
+      "Keep under 600 words using a risk/dependency table. Sequence architecture decisions only; do not become a project plan.",
     ),
     s(
       "recommendation",
@@ -727,14 +869,8 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
   ],
   requiredSectionKeys: [
     "exec_summary",
-    "decision_required",
-    "options_considered",
     "current_state",
     "target_state",
-    "conceptual_architecture",
-    "logical_architecture",
-    "physical_architecture",
-    "agent_orchestration",
     "recommendation",
   ],
 };
@@ -742,6 +878,13 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
 const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
   module: "moves",
   deliverableType: "solution_design",
+  // The client's actual workflow, systems and controls — not the decision or
+  // the acceptance/recommendation sections.
+  archetypeEvidenceSectionKeys: [
+    "journey_workflow",
+    "solution_components",
+    "controls_operability",
+  ],
   purpose:
     "Translate the accepted Target Architecture into an implementable solution design without reopening the approved solution approach.",
   decisionToSupport:
@@ -750,6 +893,7 @@ const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
   prohibitedContent: [
     "Do not repeat the full current-state diagnosis or Target Architecture narrative. Summarize only the implications needed to understand this design.",
     "Do not select a new solution option, vendor, cloud, model, or deployment fact that is not present in the accepted architecture or an explicitly proposed ADR.",
+    "Do not split the same design argument across separate service, data, control, and operability essays. Use compact tables and exhibits; missing contracts become open decisions.",
   ],
   expectedExhibits: [
     {
@@ -820,36 +964,20 @@ const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
       "Keep under 450 words plus one workflow exhibit.",
     ),
     s(
-      "service_design",
-      "Service & Component Design",
-      "Responsibilities, interfaces, and interaction of the reusable services inherited from the accepted architecture.",
+      "solution_components",
+      "Solution Components, Data & Integration",
+      "Responsibilities, interfaces, data/context contracts, system-of-record boundaries, and unresolved integration decisions inherited from the accepted architecture.",
       "mixed",
       [],
-      "Keep under 550 words plus a component interaction exhibit.",
+      "Keep under 700 words plus a component interaction exhibit. Use one compact responsibility/contract table; do not write separate component and data essays.",
     ),
     s(
-      "data_integration",
-      "Data, Context & Integration Contracts",
-      "Inputs, outputs, system-of-record boundaries, data products, interface patterns, and unresolved contracts.",
+      "controls_operability",
+      "Controls, Exceptions & Operability",
+      "Human checkpoints, policy enforcement, exception handling, security, privacy, resilience, observability, support, and model operations requirements.",
       "mixed",
       [],
-      "Keep under 500 words; use a compact contract table.",
-    ),
-    s(
-      "controls_exceptions",
-      "Controls, Exceptions & Decision Rights",
-      "Human checkpoints, policy enforcement, exception handling, audit evidence, and prohibited autonomous actions.",
-      "mixed",
-      [],
-      "Keep under 450 words plus one exception/control exhibit.",
-    ),
-    s(
-      "nfr_operability",
-      "Non-Functional Design & Operability",
-      "Security, privacy, resilience, observability, performance, support, and model operations requirements.",
-      "mixed",
-      [],
-      "Keep under 450 words; distinguish confirmed requirements from open decisions.",
+      "Keep under 650 words plus one exception/control exhibit. Distinguish confirmed requirements from open decisions.",
     ),
     s(
       "acceptance_traceability",
@@ -870,11 +998,7 @@ const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
   ],
   requiredSectionKeys: [
     "exec_decision",
-    "journey_workflow",
-    "service_design",
-    "data_integration",
-    "controls_exceptions",
-    "nfr_operability",
+    "solution_components",
     "acceptance_traceability",
     "recommendation",
   ],
@@ -887,6 +1011,12 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
   // contract on the canonical key so the live worker cannot fall through to a
   // generic operating-model binder.
   deliverableType: "operating_model",
+  // Who does the work today and which roles and forums exist; adoption and the
+  // recommendation are forward-looking.
+  archetypeEvidenceSectionKeys: [
+    "work_split_controls",
+    "roles_cadence",
+  ],
   purpose:
     "Define the human, AI, governance, and service-management model required to operate the accepted solution safely.",
   decisionToSupport:
@@ -895,6 +1025,7 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
   prohibitedContent: [
     "Do not repeat the solution specification or invent a different architecture.",
     "Do not create named people, organization units, staffing quantities, or approval authorities that are not evidenced or explicitly client-to-confirm.",
+    "Do not create separate prose sections for every operating-model dimension. Collapse work split, decision rights, roles, cadence, adoption, and risks into the few decisions leadership must approve.",
   ],
   expectedExhibits: [
     {
@@ -940,36 +1071,20 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
       "Keep under 300 words.",
     ),
     s(
-      "human_ai_split",
-      "Human/AI Work Split",
-      "Work allocation across the priority journey, including prohibited autonomous decisions and exceptions.",
+      "work_split_controls",
+      "Human/AI Work Split, Decision Rights & Controls",
+      "Work allocation, prohibited autonomous decisions, approval thresholds, override rights, forums, and escalation paths.",
       "mixed",
       [],
-      "Keep under 500 words plus one exhibit.",
+      "Keep under 750 words plus both operating exhibits. Use one compact work-split table and one decision-rights table.",
     ),
     s(
-      "roles_raci",
-      "Roles, Accountabilities & RACI",
-      "Retained business, technology, risk, data, service, and partner roles with explicit accountability.",
+      "roles_cadence",
+      "Roles, Accountabilities & Run Cadence",
+      "Retained business, technology, risk, data, service, and partner roles, plus operating forums, telemetry, incident/model handling, policy refresh, and continuous-improvement cadence.",
       "mixed",
       [],
-      "Keep under 600 words using role and RACI tables.",
-    ),
-    s(
-      "decision_controls",
-      "Decision Rights, Controls & Escalation",
-      "Approval thresholds, control ownership, override rights, forums, and escalation paths.",
-      "mixed",
-      [],
-      "Keep under 550 words plus one decision-rights exhibit.",
-    ),
-    s(
-      "run_cadence",
-      "Run Cadence, Monitoring & Service Management",
-      "Operating forums, telemetry, incident/model handling, policy refresh, and continuous-improvement cadence.",
-      "mixed",
-      [],
-      "Keep under 500 words using a cadence table.",
+      "Keep under 700 words using role/RACI and cadence tables; no narrative role biographies.",
     ),
     s(
       "adoption",
@@ -998,12 +1113,8 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
   ],
   requiredSectionKeys: [
     "exec_decision",
-    "human_ai_split",
-    "roles_raci",
-    "decision_controls",
-    "run_cadence",
-    "adoption",
-    "risks_open",
+    "work_split_controls",
+    "roles_cadence",
     "recommendation",
   ],
 };
@@ -1011,6 +1122,45 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
 const MOVES_REQUIREMENTS_TRACEABILITY: DeliverableStructure = {
   module: "moves",
   deliverableType: "requirements_traceability",
+  // The trace matrix maps requirements to the evidence that supports them, and
+  // the gaps section states which of that evidence is still unresolved — both
+  // need the archetype's families named. The verdict and the next actions are
+  // judgment. `requirements_baseline` is also a landing site by spelling.
+  archetypeEvidenceSectionKeys: ["evidence_design_trace", "gaps_controls"],
+  // The two tables this document's own sections are built around. Neither is
+  // in any archetype pack, so before a structure could declare its tables this
+  // deliverable was composed with the use case's commercial and inventory
+  // tables and no traceability matrix at all.
+  expectedTables: [
+    {
+      key: "requirements_traceability_matrix",
+      title: "Requirement → Evidence → Design → Control Traceability",
+      columns: [
+        "Requirement",
+        "Source Evidence",
+        "Design Element",
+        "Control / Acceptance Test",
+        "Owner",
+        "Status",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: true,
+    },
+    {
+      key: "traceability_gap_register",
+      title: "Traceability Gaps & Holding Conditions",
+      columns: [
+        "Gap",
+        "Requirement Affected",
+        "Why It Is Open",
+        "Closing Action",
+        "Owner",
+        "Gate Impact",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: false,
+    },
+  ],
   purpose:
     "Prove that approved requirements, evidence, design choices, controls, and open decisions remain traceable before the design gate closes.",
   decisionToSupport:
@@ -1075,6 +1225,12 @@ const MOVES_REQUIREMENTS_TRACEABILITY: DeliverableStructure = {
 const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
   module: "moves",
   deliverableType: "sourcing_strategy",
+  // The scope inherited from the estate and the retained ownership it implies;
+  // the guardrails and the recommendation are judgment.
+  archetypeEvidenceSectionKeys: [
+    "scope_options",
+    "delivery_risks",
+  ],
   purpose:
     "Decide how the capabilities in the accepted architecture and operating model should be built, bought, configured, or partnered.",
   decisionToSupport:
@@ -1083,6 +1239,7 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
   prohibitedContent: [
     "Do not reopen or replace the approved solution approach.",
     "Do not invent vendors, prices, contract facts, shortlist status, or platform selections. Unknowns remain open decisions or market-test requirements.",
+    "Do not create a separate sourcing section for every procurement topic. If there is no real vendor, partner, build/buy, or configure decision, the artifact should be omitted by applicability rather than padded.",
   ],
   expectedExhibits: [
     {
@@ -1112,23 +1269,15 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
       "Keep under 200 words.",
     ),
     s(
-      "capability_boundary",
-      "Capability & Sourcing Boundary",
-      "Capabilities inherited from the architecture, what is reusable, what requires market capacity, and explicit exclusions.",
+      "scope_options",
+      "Capability Boundary & Sourcing Options",
+      "Capabilities inherited from the architecture, what is reusable, what requires market capacity, explicit exclusions, and build/buy/configure/partner options assessed without naming unsupported vendors.",
       "mixed",
       [],
-      "Keep under 325 words using a capability table.",
+      "Keep under 650 words plus one options matrix. Use a capability/options table; do not split capability boundary and options into separate essays.",
     ),
     s(
-      "options",
-      "Sourcing Options & Trade-Offs",
-      "Build, buy, configure, partner, and hybrid options assessed without naming unsupported vendors.",
-      "mixed",
-      [],
-      "Keep under 425 words plus one options matrix.",
-    ),
-    s(
-      "evaluation_commercial",
+      "evaluation_guardrails",
       "Evaluation & Commercial Guardrails",
       "Decision criteria, evidence required, commercial principles, risk protections, and market-test questions.",
       "mixed",
@@ -1136,20 +1285,12 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
       "Keep under 350 words using compact criteria and guardrail tables.",
     ),
     s(
-      "delivery_governance",
-      "Delivery Model, Governance & Dependencies",
-      "Retained ownership, partner boundaries, transition responsibilities, architecture conformance, and dependencies.",
+      "delivery_risks",
+      "Delivery Model, Risks & Required Inputs",
+      "Retained ownership, partner boundaries, transition responsibilities, architecture conformance, material sourcing risks, unresolved decisions, and evidence required before an event or award.",
       "mixed",
       [],
-      "Keep under 325 words.",
-    ),
-    s(
-      "risks_open",
-      "Risks, Open Decisions & Required Inputs",
-      "Material sourcing risks, unresolved platform/vendor decisions, and evidence required before an event or award.",
-      "mixed",
-      [],
-      "Keep under 275 words using a single table.",
+      "Keep under 500 words using one delivery/risk/input table.",
     ),
     s(
       "recommendation",
@@ -1162,11 +1303,8 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
   ],
   requiredSectionKeys: [
     "exec_decision",
-    "capability_boundary",
-    "options",
-    "evaluation_commercial",
-    "delivery_governance",
-    "risks_open",
+    "scope_options",
+    "evaluation_guardrails",
     "recommendation",
   ],
 };
@@ -1174,6 +1312,26 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
 const MOVES_ESTIMATE: DeliverableStructure = {
   module: "moves",
   deliverableType: "estimate_model",
+  // An estimate's basis of estimate is the artifact, not a use-case asset. The
+  // packs' nearest tables are a vendor pricing template and a current-run cost
+  // baseline — neither states how a forward number was built or how confident
+  // it is.
+  expectedTables: [
+    {
+      key: "estimate_basis_buildup",
+      title: "Estimate Build-Up & Basis of Estimate",
+      columns: [
+        "Cost / Effort Component",
+        "Basis of Estimate",
+        "Quantity or Effort",
+        "Rate Basis",
+        "Confidence",
+        "Assumption to Validate",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: true,
+    },
+  ],
   purpose:
     "Estimate investment, run-cost change, resourcing, and confidence for the move.",
   decisionToSupport:
@@ -1182,18 +1340,10 @@ const MOVES_ESTIMATE: DeliverableStructure = {
     s(
       "exec_summary",
       "Executive Summary",
-      "Estimate and confidence in brief.",
+      "Estimate, confidence, and the approval ask in brief.",
       "mixed",
       [],
-      "Keep under 350 words. State whether a finance-grade model exists; if not, summarize the input-register status without repeating the business case.",
-    ),
-    s(
-      "decision_required",
-      "Decision Required",
-      "The estimate approval ask.",
-      "mixed",
-      [],
-      "Keep under 250 words. Name the approval condition and missing inputs; do not add narrative background.",
+      "Keep under 450 words. State whether a finance-grade model exists, name the approval condition, and summarize input-register status without repeating the business case.",
     ),
     s(
       "current_state",
@@ -1212,20 +1362,12 @@ const MOVES_ESTIMATE: DeliverableStructure = {
       "Keep under 450 words. Describe the model formula and evidence requirements, not a full methodology essay.",
     ),
     s(
-      "cost_model",
-      "Investment & Run-Cost Model",
-      "Cost pools, assumptions, ranges.",
+      "cost_resource_model",
+      "Investment, Run-Cost & Resource Model",
+      "Cost pools, assumptions, ranges, human/agent/SI/platform capacity, and confirmation owners.",
       "mixed",
       [],
-      "Keep under 700 words. Prefer a compact input-register table. If inputs are absent, mark them open rather than filling numeric placeholders.",
-    ),
-    s(
-      "resource_model",
-      "Resource Model",
-      "Human, agent, SI, and platform capacity.",
-      "mixed",
-      [],
-      "Keep under 550 words. Name resource categories and confirmation owners; avoid staffing arithmetic without evidence.",
+      "Keep under 850 words. Prefer compact cost/resource input-register tables. If inputs are absent, mark them open rather than filling numeric placeholders; avoid staffing arithmetic without evidence.",
     ),
     s(
       "confidence",
@@ -1248,7 +1390,7 @@ const MOVES_ESTIMATE: DeliverableStructure = {
     "exec_summary",
     "current_state",
     "estimate_method",
-    "cost_model",
+    "cost_resource_model",
     "recommendation",
   ],
   fixedStructure: true,
@@ -1262,6 +1404,11 @@ const MOVES_ESTIMATE: DeliverableStructure = {
 const MOVES_VALUE: DeliverableStructure = {
   module: "moves",
   deliverableType: "value_model",
+  // Benefit pools carry an owner, a measure, a source and a baseline status
+  // per pool, so they assert client facts. The measurement model and the
+  // recommendation are forward design. `current_state` is a landing site by
+  // spelling.
+  archetypeEvidenceSectionKeys: ["value_pools"],
   purpose:
     "Define the CFO-facing value model, measurement logic, and realization controls.",
   decisionToSupport:
@@ -1270,18 +1417,10 @@ const MOVES_VALUE: DeliverableStructure = {
     s(
       "exec_summary",
       "Executive Summary",
-      "Value thesis in brief.",
+      "Value thesis and approval ask in brief.",
       "mixed",
       [],
-      "Keep under 250 words. State the measurement posture, readiness verdict, and immediate owner action; do not repeat the business case.",
-    ),
-    s(
-      "decision_required",
-      "Decision Required",
-      "The value approval ask.",
-      "mixed",
-      [],
-      "Keep under 180 words. State the measurement approval decision and do not repeat the business case.",
+      "Keep under 325 words. State the measurement posture, value approval decision, readiness verdict, and immediate owner action; do not repeat the business case.",
     ),
     s(
       "current_state",
@@ -1308,20 +1447,12 @@ const MOVES_VALUE: DeliverableStructure = {
       "Keep under 425 words. Use one compact table for metrics, owner, source, baseline status, cadence, and acceptance rule. No methodology essay.",
     ),
     s(
-      "controls",
-      "Finance Controls & Attestation",
-      "Approval and variance controls.",
+      "controls_risks",
+      "Finance Controls, Risks & Dependencies",
+      "Approval controls, variance controls, leakage risks, and dependencies that could erode value.",
       "mixed",
       [],
-      "Keep under 275 words. Focus on attestation gates and variance controls in a table.",
-    ),
-    s(
-      "risks",
-      "Risks, Leakage & Dependencies",
-      "What could erode value.",
-      "mixed",
-      [],
-      "Keep under 250 words. Consolidate risks and mitigations; do not repeat predecessor-document dependencies.",
+      "Keep under 425 words. Use one controls/risk/dependency table; focus on attestation gates, variance controls, mitigations, and owner actions.",
     ),
     s(
       "recommendation",
@@ -1351,6 +1482,31 @@ const MOVES_VALUE: DeliverableStructure = {
 const MOVES_READINESS_AND_CHANGE_PLAN: DeliverableStructure = {
   module: "moves",
   deliverableType: "readiness_and_change_plan",
+  // Who holds which decision is what a readiness verdict rests on, and the
+  // structure already names `stakeholders_decision_rights` as an evidence
+  // landing site — it had nowhere to put the result.
+  expectedTables: [
+    {
+      key: "stakeholder_decision_rights",
+      title: "Stakeholders, Decision Rights & Readiness",
+      columns: [
+        "Stakeholder Group",
+        "Role in the Move",
+        "Decision Rights",
+        "Named Owner",
+        "Readiness Signal",
+        "Open Condition",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: false,
+    },
+  ],
+  // Who actually owns the seats and what the estate depends on; the verdict,
+  // the workplan and the cadence are judgment.
+  archetypeEvidenceSectionKeys: [
+    "stakeholders_decision_rights",
+    "dependencies_risks",
+  ],
   purpose:
     "Confirm organizational readiness, adoption path, governance cadence, and mobilization conditions before the move advances into execution.",
   decisionToSupport:
@@ -1418,7 +1574,6 @@ const MOVES_READINESS_AND_CHANGE_PLAN: DeliverableStructure = {
     "stakeholders_decision_rights",
     "adoption_workplan",
     "governance_cadence",
-    "dependencies_risks",
     "mobilization_conditions",
     "recommendation",
   ],
@@ -1457,26 +1612,14 @@ const MOVES_MOBILIZATION: DeliverableStructure = {
     ),
     s(
       "workstreams",
-      "Workstreams & Milestones",
-      "The mobilization plan.",
+      "Workstreams, Milestones & Governance",
+      "The mobilization plan, owners, decision rights, and governance cadence.",
       "mixed",
     ),
     s(
-      "raci",
-      "RACI & Governance",
-      "Named owners and decision rights.",
-      "mixed",
-    ),
-    s(
-      "controls",
-      "Controls, Gates & Reporting",
-      "How execution is governed.",
-      "mixed",
-    ),
-    s(
-      "risks",
-      "Risks, Issues & Dependencies",
-      "Launch risks and mitigations.",
+      "controls_risks",
+      "Controls, Gates, Risks & Reporting",
+      "How execution is governed and which launch risks/dependencies need active management.",
       "mixed",
     ),
     s(
@@ -1490,8 +1633,13 @@ const MOVES_MOBILIZATION: DeliverableStructure = {
     "exec_summary",
     "go_decision",
     "workstreams",
-    "raci",
+    "controls_risks",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add standalone RACI, milestone, governance, or risk sections; workstreams and controls carry those details.",
+    "Do not become a second roadmap, handoff pack, or implementation manual.",
   ],
 };
 
@@ -1603,26 +1751,14 @@ const MOVES_EXECUTIVE_PLAYBACK: DeliverableStructure = {
     ),
     s(
       "solution",
-      "Solution / Architecture / Operating Model",
-      "How the move works.",
-      "mixed",
-    ),
-    s(
-      "value",
-      "Value, Cost & Confidence",
-      "The value and cost posture.",
+      "Solution, Architecture, Operating Model & Value",
+      "How the move works, what it changes, and the value/cost/confidence posture.",
       "mixed",
     ),
     s(
       "mobilization",
-      "Mobilization & Controls",
-      "How execution starts and stays governed.",
-      "mixed",
-    ),
-    s(
-      "risks",
-      "Risks, Issues & Dependencies",
-      "The honest risk view.",
+      "Mobilization, Controls & Risk",
+      "How execution starts, stays governed, and manages the honest risk view.",
       "mixed",
     ),
     s(
@@ -1636,8 +1772,13 @@ const MOVES_EXECUTIVE_PLAYBACK: DeliverableStructure = {
     "exec_summary",
     "current_state",
     "solution",
-    "value",
+    "mobilization",
     "recommendation",
+  ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add standalone Value, Architecture, Operating Model, Risk, or Roadmap sections; the executive playback is a synthesized story, not a binder.",
+    "Do not repeat predecessor artifacts section by section. Show the decision story and the open conditions.",
   ],
 };
 
@@ -1658,8 +1799,8 @@ const SOURCE_STRATEGY_MEMO: DeliverableStructure = {
     ),
     s(
       "event_archetype",
-      "Event Archetype & Scope",
-      "The type of event and scope.",
+      "Event Archetype, Scope & Market Context",
+      "The type of event, scope, market structure, and candidates.",
       "mixed",
     ),
     s(
@@ -1667,12 +1808,6 @@ const SOURCE_STRATEGY_MEMO: DeliverableStructure = {
       "Current-State Baseline",
       "Today's baseline.",
       "governed_facts",
-    ),
-    s(
-      "market",
-      "Vendor Landscape",
-      "Market structure and candidates.",
-      "expert_template",
     ),
     s(
       "commercial_model",
@@ -1702,11 +1837,34 @@ const SOURCE_STRATEGY_MEMO: DeliverableStructure = {
     "evaluation",
     "recommendation",
   ],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add a standalone vendor landscape section; market context belongs in the event archetype and scope decision.",
+  ],
 };
 
 const SOURCE_EVAL_WORKBOOK: DeliverableStructure = {
   module: "source",
   deliverableType: "evaluation_workbook",
+  // A scoring workbook with no scoring model is not a workbook. Declared
+  // `client_to_complete` because the weights and scores are the evaluation
+  // panel's to set, not ours to assert.
+  expectedTables: [
+    {
+      key: "evaluation_scoring_model",
+      title: "Evaluation Criteria, Weights & Scoring Basis",
+      columns: [
+        "Criterion",
+        "Weight",
+        "Scoring Basis",
+        "Evidence Required",
+        "Scored By",
+        "Score",
+      ],
+      groundingMode: "client_to_complete",
+      moveToExcelIfWide: true,
+    },
+  ],
   purpose: "Provide the proposal evaluation framework and scoring workbook.",
   decisionToSupport:
     "Adopt the evaluation framework and select the preferred vendor.",
@@ -1760,14 +1918,8 @@ const SOURCE_EXEC_REC: DeliverableStructure = {
   sections: [
     s(
       "exec_summary",
-      "Executive Summary",
-      "The recommendation in brief.",
-      "mixed",
-    ),
-    s(
-      "decision_required",
-      "Decision Required",
-      "The award/negotiation ask.",
+      "Executive Summary & Decision Required",
+      "The recommendation, award/negotiation ask, and decision required in brief.",
       "mixed",
     ),
     s("process", "Process Run", "How the event was run.", "expert_template"),
@@ -1787,19 +1939,20 @@ const SOURCE_EXEC_REC: DeliverableStructure = {
       "mixed",
     ),
   ],
-  requiredSectionKeys: [
-    "exec_summary",
-    "decision_required",
-    "evaluation",
-    "recommendation",
+  requiredSectionKeys: ["exec_summary", "evaluation", "recommendation"],
+  fixedStructure: true,
+  prohibitedContent: [
+    "Do not add a standalone Decision Required section; the decision belongs in the executive summary and recommendation.",
   ],
 };
 
 export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_CHARTER,
+  MOVES_DISCOVERY_PLAN,
   MOVES_BUSINESS_CASE,
   MOVES_ROADMAP,
   MOVES_DISCOVERY,
+  MOVES_DESIGN_WORKSHOP_GUIDE,
   MOVES_ROOT_CAUSE_WORKSHEET,
   MOVES_TARGET_ARCHITECTURE,
   MOVES_SOLUTION_DESIGN,

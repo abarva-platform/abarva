@@ -1,3 +1,4 @@
+import { formatWorkshopCoverageNote } from "@/lib/programs/portfolio-figure-labels";
 import {
   buildProgramsIndexView,
   filterProgramRowsForIndex,
@@ -58,7 +59,7 @@ describe("Programs index linked-state and filters", () => {
     expect(view.name).toBe("Agentic Care Data Accelerator");
     expect(view.currentPhase).toBe(3);
     expect(view.gateStatus).toBe("pending");
-    expect(view.workbench.title).toBe("P3 Design · Simulation Evidence Review");
+    expect(view.workbench.title).toBe("P3 Design Future State · Simulation Evidence Review");
     expect(
       view.phasePanel.gateCriteria?.some((criterion) =>
         criterion.criterion.includes("Live corpus IDs captured"),
@@ -152,6 +153,63 @@ describe("Programs index linked-state and filters", () => {
     );
     expect(getProgramsIndexFilterSummary("gated", 1, 6)).toBe(
       "1 of 6 moves shown · gated filter",
+    );
+  });
+});
+
+// ─── Figure/noun agreement ───────────────────────────────────────────────────
+//
+// The filter summary joined its count to a hard-coded plural. This half is
+// CONSTRUCTION-ONLY today, and the record says so: the host passes
+// `view.programs.length`, which the live catalog fixes at 3 for one tenant and
+// 0 for the other, so no catalog path yields a total of 1. It becomes
+// user-visible the moment a tenant carries exactly one Move, which is why it
+// is fixed rather than left.
+
+describe("programs index · filter summary agrees with its own count", () => {
+  it("uses the singular noun when the total is one", () => {
+    expect(getProgramsIndexFilterSummary("all", 1, 1)).toBe("1 move shown");
+    expect(getProgramsIndexFilterSummary("gated", 1, 1)).toBe(
+      "1 of 1 move shown · gated filter",
+    );
+  });
+
+  it("agrees the noun to the TOTAL, not to the numerator", () => {
+    expect(getProgramsIndexFilterSummary("gated", 1, 6)).toBe(
+      "1 of 6 moves shown · gated filter",
+    );
+  });
+
+  it("keeps the plural for a zero total", () => {
+    expect(getProgramsIndexFilterSummary("all", 0, 0)).toBe("0 moves shown");
+  });
+});
+
+// ─── Workshop coverage note (same module, construction-only) ─────────────────
+//
+// `formatWorkshopCoverageNote` joined TWO counts to two hard-coded plurals.
+// CONSTRUCTION-ONLY and recorded as such: buildProgramHealthScorecard /
+// buildProgramHealthSummary have NO product consumer — they are referenced
+// only inside their own module, so no reader has seen a wrong figure here.
+// Its cases sit beside the other portfolio-figure cases because all three
+// formatters come from one shared module and are pinned as one contract.
+
+describe("portfolio figure labels · workshop coverage note", () => {
+  it("agrees both nouns to their own totals", () => {
+    expect(formatWorkshopCoverageNote(1, 1, 1)).toBe(
+      "1 of 1 workshop category covered across 1 library template.",
+    );
+    expect(formatWorkshopCoverageNote(4, 6, 12)).toBe(
+      "4 of 6 workshop categories covered across 12 library templates.",
+    );
+  });
+
+  it("agrees each noun independently of the other count", () => {
+    expect(formatWorkshopCoverageNote(1, 6, 1)).toBe(
+      "1 of 6 workshop categories covered across 1 library template.",
+    );
+    expect(formatWorkshopCoverageNote(1, 1, 12)).toBe(
+      "1 of 1 workshop category covered across 12 library templates.",
     );
   });
 });

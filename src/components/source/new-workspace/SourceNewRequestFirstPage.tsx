@@ -12,7 +12,8 @@ import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import type { SourceIntakeRequestSummary } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import type { CSSProperties, ReactNode } from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { requesterEstimateCardLabel } from "@/lib/source/requester-estimate-label";
 
 export type SourceNewRequestQueueStatus =
   | "loading"
@@ -26,6 +27,7 @@ export interface SourceNewEventWorkspaceSummary {
   code: string;
   name: string;
   lifecycle: string;
+  currentStageKey: string;
   currentStageLabel: string;
   lifecycleLabel: string;
   trigger: string | null;
@@ -58,32 +60,14 @@ export function SourceNewRequestFirstPage({
   const requests = canShowRequests
     ? importedRequests.filter((request) => request.eventLink === null)
     : [];
-  const activeWorkspaces = visibleWorkspaces;
-  const nextAction =
-    requestQueueStatus === "unauthorized"
-      ? {
-          label: "Sign in to review requests",
-          note: "Request details remain hidden until access is confirmed.",
-        }
-      : requestQueueStatus === "unavailable"
-        ? {
-            label: "Retry the request queue",
-            note: "An unavailable queue is not treated as an empty queue.",
-          }
-        : requests.length > 0
-          ? {
-              label: "Review pending requests",
-              note: "Each request shows its missing information and next owner.",
-            }
-          : activeWorkspaces.length > 0
-            ? {
-                label: "Open accepted work",
-                note: "No request is waiting for intake review.",
-              }
-            : {
-                label: "Start a request",
-                note: "Capture the need before creating event work.",
-              };
+  const pendingApprovals = visibleWorkspaces.filter(
+    (event) =>
+      event.lifecycle === "waiting_on_client" &&
+      event.currentStageKey === "strategy",
+  );
+  const activeWorkspaces = visibleWorkspaces.filter(
+    (event) => !pendingApprovals.includes(event),
+  );
   const workspace = (
     <main aria-label="Source New request-first workspace" style={PAGE}>
       <section style={HERO}>
@@ -92,45 +76,77 @@ export function SourceNewRequestFirstPage({
           <h1 style={TITLE}>Source requests</h1>
           <p style={LEDE}>
             Review what was requested, close any gaps, and confirm whether the
-            request is ready for Define. This page does not approve, advance,
-            or send anything.
+            request is ready for Define. This page does not approve, advance, or
+            send anything.
           </p>
         </div>
-        <div style={STATUS_BOX}>
-          <span style={STATUS_LABEL}>One next action</span>
-          <strong style={STATUS_VALUE}>{nextAction.label}</strong>
-          <span style={STATUS_NOTE}>{nextAction.note}</span>
-        </div>
+        {requestQueueStatus !== "unauthorized" ? (
+          <Link href={intakeHref} style={PRIMARY_ACTION}>
+            Start a request
+          </Link>
+        ) : null}
       </section>
 
-      <div style={GRID}>
-        <section aria-label="Request queue" style={PANEL}>
+      <div style={SECTIONS}>
+        <section aria-label="Request queue" style={SECTION}>
           <div style={PANEL_HEADER}>
             <div>
               <p style={EYEBROW}>Stage 01</p>
               <h2 style={PANEL_TITLE}>Request queue</h2>
             </div>
-            <span style={CHIP}>Triage</span>
+            {pendingApprovals.length + requests.length > 0 ? (
+              <span style={COUNT}>
+                {pendingApprovals.length + requests.length} to review
+              </span>
+            ) : null}
           </div>
+          {pendingApprovals.length > 0 ? (
+            <div style={{ marginBottom: requests.length > 0 ? 20 : 0 }}>
+              <h3 style={PENDING_TITLE}>Awaiting decision</h3>
+              <ol style={EVENT_LIST}>
+                {pendingApprovals.map((event) => (
+                  <li key={event.id} style={EVENT_ROW}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={EVENT_LINK}>{event.name}</div>
+                      <div style={EVENT_META}>
+                        {event.code} · {event.lifecycleLabel}
+                      </div>
+                      <div style={EVENT_META}>
+                        Decision owner: {event.decisionOwner || "Not recorded"}
+                      </div>
+                    </div>
+                    <Link
+                      href={`/source/events/${encodeURIComponent(event.id)}/approval`}
+                      style={OPEN_LINK}
+                    >
+                      Review approval
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
           <RequestQueueState
             status={requestQueueStatus}
-            intakeHref={intakeHref}
             requests={requests}
+            hasPendingApprovals={pendingApprovals.length > 0}
             onRetryRequestQueue={onRetryRequestQueue}
           />
         </section>
 
-        <section aria-label="Event workspaces" style={PANEL}>
+        <section aria-label="Event workspaces" style={SECTION}>
           <div style={PANEL_HEADER}>
             <div>
-              <p style={EYEBROW}>Accepted work</p>
+              <p style={EYEBROW}>Other events</p>
               <h2 style={PANEL_TITLE}>Event workspaces</h2>
             </div>
-            <span style={CHIP}>Accepted work</span>
+            {activeWorkspaces.length > 0 ? (
+              <span style={COUNT}>{activeWorkspaces.length} events</span>
+            ) : null}
           </div>
           {activeWorkspaces.length > 0 ? (
             <ol style={EVENT_LIST}>
-              {activeWorkspaces.slice(0, 6).map((event) => (
+              {activeWorkspaces.map((event) => (
                 <li key={event.id} style={EVENT_ROW}>
                   <div style={{ minWidth: 0 }}>
                     <div style={EVENT_LINK}>{event.name}</div>
@@ -177,13 +193,13 @@ export function SourceNewRequestFirstPage({
 
 function RequestQueueState({
   status,
-  intakeHref,
   requests,
+  hasPendingApprovals,
   onRetryRequestQueue,
 }: {
   status: SourceNewRequestQueueStatus;
-  intakeHref: string;
   requests: readonly SourceIntakeRequestSummary[];
+  hasPendingApprovals: boolean;
   onRetryRequestQueue: () => void;
 }) {
   if (status === "loading") {
@@ -219,23 +235,19 @@ function RequestQueueState({
   if (requests.length > 0) {
     return (
       <ol style={REQUEST_LIST}>
-        {requests.slice(0, 6).map((request) => (
+        {requests.map((request) => (
           <RequestTriageRow key={request.requestId} request={request} />
         ))}
       </ol>
     );
   }
+  if (hasPendingApprovals) return null;
   return (
     <div style={STATE_BOX}>
-      <p style={EMPTY_COPY}>
-        No requests are waiting for intake review.
-      </p>
+      <p style={EMPTY_COPY}>No requests are waiting for intake review.</p>
       <p style={NOTE_COPY}>
         New requests stay here until their intake review is complete.
       </p>
-      <Link href={intakeHref} style={PRIMARY_ACTION}>
-        Start a request
-      </Link>
     </div>
   );
 }
@@ -323,7 +335,9 @@ function RequestTriageRow({
 
       {request.value ? (
         <p style={NOTE_COPY}>
-          Requester estimate: {formatMoney(request.value.amount, request.value.currency)} · Not validated
+          {requesterEstimateCardLabel(
+            formatMoney(request.value.amount, request.value.currency),
+          )}
         </p>
       ) : null}
       <Link href={actionHref} style={PRIMARY_ACTION}>
@@ -349,7 +363,9 @@ function humanize(value: string): string {
     .toLowerCase()
     .split(" ")
     .map((word) =>
-      acronyms.has(word) ? word.toUpperCase() : `${word[0]?.toUpperCase() ?? ""}${word.slice(1)}`,
+      acronyms.has(word)
+        ? word.toUpperCase()
+        : `${word[0]?.toUpperCase() ?? ""}${word.slice(1)}`,
     )
     .join(" ");
 }
@@ -369,6 +385,16 @@ function SourceNewRequestDock({
   clientName: string;
   workspace: ReactNode;
 }) {
+  const [compactViewport, setCompactViewport] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia?.("(max-width: 899px)");
+    if (!media) return;
+    setCompactViewport(media.matches);
+    const onChange = (event: MediaQueryListEvent) =>
+      setCompactViewport(event.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
   const pageState = useAtlasPageState();
   const thread: ChatMessage[] = useMemo(
     () =>
@@ -400,7 +426,8 @@ function SourceNewRequestDock({
         role: "Source request advisor",
       }}
       surface="source/new"
-      defaultMode="side-rail"
+      defaultMode={compactViewport ? "collapsed" : "side-rail"}
+      collapsedRestoreMode={compactViewport ? "pin-bottom" : undefined}
       disableStoredMode
       defaultLeftPercent={34}
       minLeftPx={320}
@@ -422,10 +449,11 @@ const PAGE: CSSProperties = {
 };
 
 const HERO: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+  display: "flex",
+  flexWrap: "wrap",
   gap: 18,
-  alignItems: "stretch",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
   marginBottom: 18,
 };
 
@@ -453,46 +481,14 @@ const LEDE: CSSProperties = {
   color: SHELL.INK_SOFT,
 };
 
-const STATUS_BOX: CSSProperties = {
+const SECTIONS: CSSProperties = {
   display: "grid",
-  alignContent: "center",
-  gap: 5,
-  border: `1px solid ${SHELL.CARD_LINE}`,
-  borderRadius: 8,
-  background: SHELL.CARD_WHITE,
-  padding: 16,
+  gap: 22,
 };
 
-const STATUS_LABEL: CSSProperties = {
-  fontFamily: SHELL.MONO,
-  fontSize: 10,
-  color: SHELL.INK_MUTED,
-  textTransform: "uppercase",
-};
-
-const STATUS_VALUE: CSSProperties = {
-  fontSize: 16,
-  color: SHELL.INK,
-};
-
-const STATUS_NOTE: CSSProperties = {
-  fontSize: 12,
-  lineHeight: 1.45,
-  color: SHELL.INK_MUTED,
-};
-
-const GRID: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
-  gap: 14,
-};
-
-const PANEL: CSSProperties = {
-  border: `1px solid ${SHELL.CARD_LINE}`,
-  borderRadius: 8,
-  background: SHELL.CARD_WHITE,
-  padding: 16,
-  minHeight: 260,
+const SECTION: CSSProperties = {
+  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+  paddingTop: 14,
 };
 
 const PANEL_HEADER: CSSProperties = {
@@ -510,15 +506,17 @@ const PANEL_TITLE: CSSProperties = {
   letterSpacing: 0,
 };
 
-const CHIP: CSSProperties = {
+const PENDING_TITLE: CSSProperties = {
+  margin: "0 0 10px",
+  fontSize: 14,
+  lineHeight: 1.3,
+};
+
+const COUNT: CSSProperties = {
   flex: "0 0 auto",
-  border: `1px solid ${SHELL.CARD_LINE}`,
-  borderRadius: 999,
-  padding: "4px 8px",
   fontFamily: SHELL.MONO,
   fontSize: 10,
   color: SHELL.INK_MUTED,
-  background: SHELL.PAPER_SOFT,
 };
 
 const STATE_BOX: CSSProperties = {
@@ -666,7 +664,7 @@ const MISSING_LIST: CSSProperties = {
 
 const EVENT_ROW: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) auto",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
   gap: 12,
   alignItems: "center",
   border: `1px solid ${SHELL.CARD_LINE}`,
@@ -676,14 +674,12 @@ const EVENT_ROW: CSSProperties = {
 };
 
 const EVENT_LINK: CSSProperties = {
-  display: "block",
   color: SHELL.INK,
   fontSize: 13,
   fontWeight: 700,
   textDecoration: "none",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
+  overflowWrap: "anywhere",
+  lineHeight: 1.35,
 };
 
 const EVENT_META: CSSProperties = {
@@ -693,8 +689,10 @@ const EVENT_META: CSSProperties = {
 };
 
 const OPEN_LINK: CSSProperties = {
+  justifySelf: "end",
   color: SHELL.INK,
   fontSize: 12,
   fontWeight: 700,
   textDecoration: "none",
+  whiteSpace: "nowrap",
 };

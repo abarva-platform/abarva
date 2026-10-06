@@ -22,6 +22,50 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
     /^\s*(?:qa|codex|agent|proof|test)(?:[-_\s]+(?:synthetic|fixture|sandbox|proof|canary))?\s*[-:]\s*/i,
     "",
   ],
+  // The prefix stripper above catches a leading "qa:/test-synthetic:" tag; the
+  // two rules below catch the end-to-end run or build identifier that leaks
+  // from synthetic run names. Both are anchored on the harness token `E2E`,
+  // which appears in no client name, business function or move vocabulary, so
+  // neither can reach a real title.
+  //
+  // U-553. This was one rule, `/\s*\b(?:Claude\s+)?E2E\s+\d+\b/gi`, fitted to
+  // one example and asserted with one crafted string. On the real corpus it was
+  // worse than insufficient: on a board title of the form
+  // "<tenant> Synthetic Rich Evidence E2E <YYYY>-<MM>-<DD>T<HH>-<MM>" the `\d+`
+  // matched the YEAR alone, so the rule removed "E2E <YYYY>" and rendered
+  // "<tenant> Synthetic Rich Evidence-<MM>-<DD>T<HH>-<MM>" — turning a leak that
+  // still carried the token into one that no longer did, which no second pass
+  // anchored on `E2E` could ever clean. A stamp must therefore be consumed
+  // whole, longest shape first, which is what the alternation order below is
+  // for. The other observed shape, "Synthetic <tenant> E2E Smoke - <stamp>",
+  // survived untouched because `E2E` was followed by a word rather than a digit.
+  [
+    /\s*[-–—:]?\s*\b(?:Claude\s+)?E2E(?:\s+Smoke)?\s*[-–—:]?\s*(?:\d{4}-\d{2}-\d{2}T\d{2}[-:]\d{2}(?:[-:]\d{2})?|\d{8}T\d{6}Z?|\d+)\b/gi,
+    "",
+  ],
+  // The token with no stamp after it is still a harness identifier, and leaving
+  // it renders "… Claims Platform E2E Smoke" to an executive.
+  [/\s*\b(?:Claude\s+)?E2E(?:\s+Smoke)?\b/gi, ""],
+  // U-556. Every rule above is anchored on the harness token `E2E`, which is
+  // what made them safe — and also what made them blind. A compact run stamp
+  // can reach a client-visible label with no harness token anywhere near it,
+  // and from our own code rather than from a synthetic name:
+  // `deriveDisplayCode` in `src/lib/programs/transformers.ts` builds the middle
+  // segment of every rendered move display code from the first slug piece of
+  // the move name, copied verbatim, so a move whose name begins with a stamp
+  // renders `<SLUG>-20260622161738-2026` on the board. The stamp is consumed
+  // together with the separator that attached it, so no doubled separator is
+  // left where it was.
+  //
+  // Two bounds, both deliberate and both pinned by a named case in
+  // `src/__tests__/behaviors/moves-title-identifier-corpus.test.ts`. The date
+  // half must carry a plausible century, so a 14-digit account or contract
+  // number that cannot be a date survives whole — the rule identifies a stamp
+  // rather than counting digits. And all 14 digits are required, so an 8-digit
+  // date standing on its own in a title is left alone. The `T` is optional
+  // because both forms occur: our stamp helpers mint `20260923T222629Z`, and
+  // the shape this rule was written for carries no `T` at all.
+  [/\s*[-–—:]?\s*\b(?:19|20)\d{6}T?\d{6}Z?\b/g, ""],
   [
     /\bApex Retail Group(?:\s+Retail Group|\s+Group)+\b/gi,
     DEMO_SAFE_CLIENT_NAMES.apexretail,

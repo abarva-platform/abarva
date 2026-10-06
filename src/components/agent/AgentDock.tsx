@@ -109,11 +109,17 @@ function shouldRenderAvaArtifactsInDock(
   return hasRenderableAvaArtifacts(answer);
 }
 
-function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {
+function avaAnswerTextForDock(surface: string, answer?: AvaAnswerPacket | null): string {
   if (!answer) return "";
+  const directAnswer = answer.directAnswer?.trim();
+  const prose = answer.prose?.trim();
   const text =
-    answer.prose?.trim() ||
-    answer.directAnswer?.trim() ||
+    (surface === "home-preview"
+      ? [directAnswer, prose === directAnswer ? "" : prose]
+          .filter(Boolean)
+          .join("\n\n")
+      : prose) ||
+    directAnswer ||
     [answer.interpretation, answer.businessImplication, answer.recommendation]
       .filter((part): part is string => Boolean(part?.trim()))
       .join("\n\n")
@@ -205,8 +211,7 @@ function visibleAgentDockBody(
   agentAnswer?: AvaAnswerPacket | null,
   preserveVisibleText = false,
 ): string {
-  void surface;
-  const packetText = avaAnswerTextForDock(agentAnswer);
+  const packetText = avaAnswerTextForDock(surface, agentAnswer);
   const bodyText =
     agentAnswer &&
     hasRenderableAvaArtifacts(agentAnswer) &&
@@ -771,7 +776,7 @@ export function AgentDock(props: AgentDockProps) {
     : safeThread;
   const focused = variant === "focused";
   const chatOnly = layout === "chat-only";
-  const showReviewChrome = !focused && !quietReviewChrome;
+  const showReviewChrome = (!focused || surface === "home-preview") && !quietReviewChrome;
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
   // it will be nice to show a spinning icon / throbber or similar to show
@@ -2271,6 +2276,12 @@ const AGENT_ROLE_STYLE: CSSProperties = {
   fontSize: 12,
   color: CANVAS.INK_SOFT,
   lineHeight: 1.3,
+  // Keep the eyebrow on one line in a narrow dock: truncate rather than wrap
+  // under the wordmark and crowd the mode controls. The grid parent already
+  // sets min-width:0 so this can shrink and ellipsize.
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
 
 const MODE_PICKER_STYLE: CSSProperties = {

@@ -13,7 +13,6 @@ import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
-import { hasAuthority } from "@/lib/programs/governance";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
 import { signOffDeliverable } from "@/lib/programs/mutations";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
@@ -38,18 +37,18 @@ import {
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
 import {
-  renderDeliverableDocx,
-  renderDeliverablePptx,
-} from "@/lib/deliverables/orchestrator/renderers";
+  approvedMoveEvidenceRevisionForPhase,
+  isApprovedMoveEvidenceBasisCurrent,
+  loadApprovedMoveEvidenceSnapshot,
+} from "@/lib/programs/approved-move-evidence-snapshot";
+import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
+import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
+import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
-
-type ProgramMutationClient = Awaited<
-  ReturnType<typeof getProgramsRouteSupabase>
->["supabase"];
 
 const DOCX_CONTENT_TYPE =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -63,53 +62,6 @@ const PHASE_TO_MODULE_KEY: Record<number, string> = {
   4: "roadmap",
   5: "mobilize",
 };
-
-async function ensureSponsorAuthorityForP1ClientApproval(
-  sb: ProgramMutationClient,
-  programId: string,
-  ctx: Awaited<ReturnType<typeof requireTenancy>>,
-): Promise<void> {
-  const { data: sponsorRows, error: sponsorError } = await sb
-    .from("engagement_participants")
-    .select("id")
-    .eq("engagement_id", programId)
-    .eq("approval_authority", "sponsor")
-    .limit(1);
-  if (sponsorError) throw sponsorError;
-  if (((sponsorRows as Array<{ id: string }> | null) ?? []).length > 0) return;
-
-  const { data: currentRows, error: currentError } = await sb
-    .from("engagement_participants")
-    .select("id")
-    .eq("engagement_id", programId)
-    .eq("user_id", ctx.userId)
-    .limit(1);
-  if (currentError) throw currentError;
-
-  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ??
-    [])[0];
-  if (currentParticipant) {
-    const { error } = await sb
-      .from("engagement_participants")
-      .update({
-        role: "Sponsor",
-        approval_authority: "sponsor",
-      })
-      .eq("id", currentParticipant.id)
-      .eq("engagement_id", programId);
-    if (error) throw error;
-    return;
-  }
-
-  const { error } = await sb.from("engagement_participants").insert({
-    engagement_id: programId,
-    user_id: ctx.userId,
-    user_name: ctx.email ?? ctx.userId,
-    role: "Sponsor",
-    approval_authority: "sponsor",
-  });
-  if (error) throw error;
-}
 
 function stripHtml(html: string): string {
   return html
@@ -289,9 +241,19 @@ async function renderAcceptedGeneratedDraft(args: {
   if (!args.doc) return null;
   const structuredDoc = args.doc as unknown as RenderableDeliverable;
   if (args.artifact.outputFormat === "pptx") {
-    const pptx = await renderDeliverablePptx(structuredDoc);
+    const validated = await renderValidatedDeck(structuredDoc);
+    if (!validated.physicallyIntact || !validated.verdict.ok) {
+      const details = validated.physicallyIntact
+        ? validated.verdict.findings
+            .map((finding) => finding.message)
+            .slice(0, 3)
+        : validated.integrityFailures.slice(0, 3);
+      throw new Error(
+        `generated_artifact_pptx_quality_failed: ${details.join("; ")}`,
+      );
+    }
     return {
-      body: Buffer.from(pptx),
+      body: Buffer.from(validated.buffer),
       fileName: safeArtifactFileName(args.title, "pptx"),
       fileFormat: "pptx",
       mimeType: PPTX_CONTENT_TYPE,
@@ -369,6 +331,63 @@ export async function POST(
     }
 
     let verifiedGenerationLineage: Record<string, unknown> | null = null;
+    if (!ctx.clientKey) {
+      return Response.json(
+        {
+          error: "evidence_snapshot_not_current",
+          detail:
+            "The active tenant key is unavailable; the evidence snapshot cannot be verified.",
+        },
+        { status: 409 },
+      );
+    }
+    const currentEvidenceSnapshot = await loadApprovedMoveEvidenceSnapshot({
+      tenantKey: ctx.clientKey,
+      moveId: programId,
+    });
+    const artifactSnapshotHash =
+      typeof artifact.metadata.phaseEvidenceSnapshotHash === "string"
+        ? artifact.metadata.phaseEvidenceSnapshotHash
+        : typeof artifact.metadata.evidenceSnapshotHash === "string"
+          ? artifact.metadata.evidenceSnapshotHash
+          : null;
+    if (
+      !currentEvidenceSnapshot ||
+      !artifactSnapshotHash ||
+      !isApprovedMoveEvidenceBasisCurrent({
+        snapshot: currentEvidenceSnapshot,
+        phase,
+        recordedRevision: artifactSnapshotHash,
+        scope:
+          typeof artifact.metadata.evidenceSnapshotScope === "string"
+            ? artifact.metadata.evidenceSnapshotScope
+            : null,
+        generatedAt: artifact.renderedAt,
+      })
+    ) {
+      return Response.json(
+        {
+          error: "stale_evidence_snapshot",
+          detail:
+            "Approved evidence changed after this document was generated, or its evidence revision cannot be verified. Rebuild the phase outputs before approval.",
+        },
+        { status: 409 },
+      );
+    }
+    verifiedGenerationLineage = {
+      ...((artifact.metadata.generationLineage &&
+      typeof artifact.metadata.generationLineage === "object" &&
+      !Array.isArray(artifact.metadata.generationLineage)
+        ? artifact.metadata.generationLineage
+        : {}) as Record<string, unknown>),
+      evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+      phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+        currentEvidenceSnapshot,
+        phase,
+      ),
+      evidenceSnapshotScope: "phase",
+    };
+
     if (
       phase === 3 &&
       P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)
@@ -391,7 +410,11 @@ export async function POST(
         moveId: programId,
         phase: 3,
       });
-      if (!approved || !freshness?.evidenceFingerprint) {
+      if (
+        !approved ||
+        !freshness?.evidenceFingerprint ||
+        freshness.freshnessStatus !== "fresh"
+      ) {
         return Response.json(
           {
             error: "architecture_lineage_not_current",
@@ -415,26 +438,27 @@ export async function POST(
           { status: 409 },
         );
       }
-      verifiedGenerationLineage = validation.lineage as unknown as Record<
-        string,
-        unknown
-      >;
+      verifiedGenerationLineage = {
+        ...(validation.lineage as unknown as Record<string, unknown>),
+        evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+        phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+          currentEvidenceSnapshot,
+          phase,
+        ),
+        evidenceSnapshotScope: "phase",
+      };
     }
 
-    if (phase === 1) {
-      await ensureSponsorAuthorityForP1ClientApproval(supabase, programId, ctx);
-    }
     const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
-    const canApprove =
-      accessPolicy.canApproveGates ||
-      (await hasAuthority(ctx, programId, "approver", { supabase })) ||
-      ctx.role === "founder" ||
-      ctx.role === "maestro";
-    if (!canApprove) {
+    if (
+      !accessPolicy.canApproveGates ||
+      (Array.isArray(accessPolicy.programIdsAllowed) &&
+        !accessPolicy.programIdsAllowed.includes(programId))
+    ) {
       return Response.json(
         {
           error: "forbidden",
-          detail: "approver authority or higher required",
+          detail: "Authorized Move approval permission required.",
         },
         { status: 403 },
       );
@@ -524,6 +548,22 @@ export async function POST(
         );
       }
 
+      const unsupportedFinancialClaims = findUnsupportedFinancialClaimDeltas(
+        generatedContent,
+        parsedText,
+      );
+      if (unsupportedFinancialClaims.length > 0) {
+        return Response.json(
+          {
+            error: "unsupported_financial_claim_delta",
+            detail:
+              "The reviewed file adds or strengthens financial claims that are not established by the generated source. Attach and approve supporting financial evidence, rebuild the deliverable, then review it again.",
+            unsupportedClaims: unsupportedFinancialClaims,
+          },
+          { status: 422 },
+        );
+      }
+
       const ext = (file.name.split(".").pop() || "bin").toLowerCase();
       const saved = await saveMoveArtifact(ctx, {
         moveId: programId,
@@ -537,9 +577,9 @@ export async function POST(
         fileFormat: ext,
         body,
         status: "approved",
-        sourceBasis: "client_upload",
-        confidence: "high",
-        citationReady: true,
+        sourceBasis: "client_approved_deliverable",
+        confidence: "medium",
+        citationReady: false,
         generatedBy: ctx.email ?? "client-approval",
         metadata: {
           uploadedBy: ctx.email ?? null,
@@ -547,9 +587,17 @@ export async function POST(
           deliverableTypeKey,
           generatedArtifactId: artifact.id,
           clientApprovedReplacement: true,
+          factualClaimsIndependentlyEvidenceVerified: false,
           approvalReason: reason,
           parseMethod: parsed.extractedStructured.parse_method,
           parseWarnings: parsed.extractedStructured.warnings,
+          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
+          evidenceSnapshotScope: "phase",
+          generationLineage: verifiedGenerationLineage,
         },
       });
       approvedArtifactId = saved.artifactId;
@@ -559,6 +607,9 @@ export async function POST(
         mimeType: file.type || "application/octet-stream",
         parseMethod: parsed.extractedStructured.parse_method,
         warnings: parsed.extractedStructured.warnings,
+        ...(verifiedGenerationLineage
+          ? { generationLineage: verifiedGenerationLineage }
+          : {}),
       };
     } else {
       const body = (await req.json().catch(() => ({}))) as {
@@ -636,6 +687,12 @@ export async function POST(
             ...(verifiedGenerationLineage
               ? { generationLineage: verifiedGenerationLineage }
               : {}),
+            evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+            phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+              currentEvidenceSnapshot,
+              phase,
+            ),
+            evidenceSnapshotScope: "phase",
           },
         });
       } catch (err) {
@@ -668,6 +725,12 @@ export async function POST(
         generatedArtifactId: artifact.id,
         generatedArtifactType: artifact.artifactType,
         sourceArtifactRef: artifact.sourceArtifactRef,
+        evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+        phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+          currentEvidenceSnapshot,
+          phase,
+        ),
+        evidenceSnapshotScope: "phase",
         approvalReason: reason,
         mode: isFileUploadApproval
           ? "client_approved_replacement"
@@ -692,6 +755,19 @@ export async function POST(
         supabase,
         approvedArtifactId,
         approvedContent,
+        approvalLineage: {
+          source: "generated_artifact_acceptance",
+          generatedArtifactId: artifact.id,
+          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
+          evidenceSnapshotScope: "phase",
+          approvalMode: isFileUploadApproval
+            ? "client_approved_replacement"
+            : "accept_ai_draft_as_authoritative",
+        },
       },
     );
     if (!signedOff) {

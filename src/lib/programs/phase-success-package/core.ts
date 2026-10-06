@@ -4,6 +4,7 @@ import { templatesForPhase } from "@/lib/programs/phase-templates/catalog";
 import type { MovePhaseCode } from "@/lib/programs/phase-templates/types";
 import { buildFeedForwardPack } from "@/lib/programs/phase-templates/feed-forward";
 import type { PhasePack } from "@/lib/programs/phase-packs/types.v2";
+import { PHASE_LABELS } from "@/lib/programs/phase-labels";
 
 export type PhaseSuccessPackageKind =
   | "phase_execution_package"
@@ -27,7 +28,11 @@ export type PhaseSuccessPackageStatus =
   | "approved"
   | "superseded";
 
-export type RuntimeEvidenceStatus = "received" | "parsed" | "approved" | "missing";
+export type RuntimeEvidenceStatus =
+  | "received"
+  | "parsed"
+  | "approved"
+  | "missing";
 
 export interface RuntimeEvidenceSummary {
   id: string;
@@ -124,10 +129,10 @@ const PHASE_CODE_BY_NUM: Partial<Record<number, MovePhaseCode>> = {
 
 const NEXT_PHASE_LABEL: Record<number, string> = {
   0: "P1 Charter",
-  1: "P2 Discover & Diagnose",
-  2: "P3 Design Future State",
-  3: "P4 Roadmap & Business Case",
-  4: "P5 Approval & Mobilization",
+  1: PHASE_LABELS[2],
+  2: PHASE_LABELS[3],
+  3: PHASE_LABELS[4],
+  4: PHASE_LABELS[5],
   5: "Tower Track Outcomes",
 };
 
@@ -147,7 +152,9 @@ function renderPhaseExecutionPackage(
   const phaseLabel = phasePack?.phase_name ?? playbook?.label ?? `P${phase}`;
   const phaseCode = PHASE_CODE_BY_NUM[phase];
   const templates = phaseCode ? templatesForPhase(phaseCode) : [];
-  const fileName = safeFileName(`${move.name}_P${phase}_Phase_Execution_Package.md`);
+  const fileName = safeFileName(
+    `${move.name}_P${phase}_Phase_Execution_Package.md`,
+  );
 
   const lines = [
     `# ${move.name} - ${phaseLabel} Phase Execution Package`,
@@ -221,7 +228,10 @@ function renderPhaseExecutionPackage(
           `- Feeds: ${session.feedsDeliverables.map((item) => item.replace(/_/g, " ")).join(", ")}`,
           "",
         ])
-      : ["- No facilitated-session playbook is configured for this phase.", ""]),
+      : [
+          "- No facilitated-session playbook is configured for this phase.",
+          "",
+        ]),
     "## Workflow Steps",
     ...(phasePack?.workflow_steps ?? []).flatMap((step) => [
       `### ${step.step_id} - ${step.step_name}`,
@@ -237,7 +247,9 @@ function renderPhaseExecutionPackage(
           (template) =>
             `- ${template.label}: ${template.clientPurpose} (session: ${template.recommendedSessionType}, format: ${template.fileFormat})`,
         )
-      : ["- No phase-template catalog entries are configured for this phase yet."]),
+      : [
+          "- No phase-template catalog entries are configured for this phase yet.",
+        ]),
     "",
     "## Templates And Files Still Required",
     ...listOrNone(runtime.missingInputIds),
@@ -259,8 +271,10 @@ function renderPhaseExecutionPackage(
     ...listOrNone([
       runtime.packageStatus === "evidence_incomplete"
         ? "Evidence is incomplete; use this package to close the active phase, not to approve it."
-        : "Package is ready for sponsor review against the evidence cutoff above.",
-      ...runtime.unresolvedQuestions.map((question) => `Open question: ${question}`),
+        : "Package is ready for authorized workspace-user review against the evidence cutoff above.",
+      ...runtime.unresolvedQuestions.map(
+        (question) => `Open question: ${question}`,
+      ),
     ]),
     "",
     "## Exact Actions Required To Close Phase",
@@ -319,14 +333,19 @@ function renderNextPhaseReadinessPackage(
     openGateCriteria: openGates,
     hardGaps: hardEvidence,
     softGaps: softEvidence,
-    gaps: hardEvidence.map((label) => ({ capability: label, severity: "foundational" })),
+    gaps: hardEvidence.map((label) => ({
+      capability: label,
+      severity: "foundational",
+    })),
     controlConstraints: phasePack?.phase_scope_boundary?.out ?? [],
   });
   const blocked =
     runtime.gateStatus !== "passed" ||
     runtime.evidenceMissing.length > 0 ||
     openGates.length > 0;
-  const fileName = safeFileName(`${move.name}_P${phase}_Next_Phase_Readiness_Package.md`);
+  const fileName = safeFileName(
+    `${move.name}_P${phase}_Next_Phase_Readiness_Package.md`,
+  );
 
   const lines = [
     `# ${move.name} - ${nextPhaseLabel} Readiness Package`,
@@ -389,7 +408,11 @@ function renderNextPhaseReadinessPackage(
     ...listOrNone(runtime.controlRequirements),
     "",
     "## Evidence That Must Carry Forward",
-    ...listEvidence(runtime.evidenceReceived.filter((evidence) => evidence.status !== "missing")),
+    ...listEvidence(
+      runtime.evidenceReceived.filter(
+        (evidence) => evidence.status !== "missing",
+      ),
+    ),
     "",
     "## Not Ready For Next Phase Blockers",
     ...listOrNone([
@@ -424,8 +447,9 @@ function renderNextPhaseReadinessPackage(
     "",
     "## Recommended P3 Workshops",
     ...listOrNone(
-      playbook?.sessions.map((session) => session.label) ??
-        ["Resolve current phase blockers before scheduling next-phase workshops."],
+      playbook?.sessions.map((session) => session.label) ?? [
+        "Resolve current phase blockers before scheduling next-phase workshops.",
+      ],
     ),
     "",
     "## Next Action",
@@ -465,7 +489,9 @@ export function buildDefaultPhaseSuccessRuntimeTruth(args: {
     generatedAt?: string | null;
   }>;
 }): PhaseSuccessRuntimeTruth {
-  const openGates = args.move.gateCriteria.filter((criterion) => !criterion.completed);
+  const openGates = args.move.gateCriteria.filter(
+    (criterion) => !criterion.completed,
+  );
   const missingRequirements = (args.phasePack?.evidence_requirements ?? []).map(
     (requirement) => ({
       id: requirement.id,
@@ -477,7 +503,8 @@ export function buildDefaultPhaseSuccessRuntimeTruth(args: {
   const targetPhase = args.phase >= 5 ? "TOWER" : args.phase + 1;
   const sourceArtifacts = args.sourceArtifacts ?? [];
   const sourceArtifactIds = sourceArtifacts.map((artifact) => artifact.id);
-  const evidenceCutoffAt = latestArtifactTimestamp(sourceArtifacts) ?? args.generatedAt;
+  const evidenceCutoffAt =
+    latestArtifactTimestamp(sourceArtifacts) ?? args.generatedAt;
   const evidenceReceived = sourceArtifacts.map((artifact) => ({
     id: artifact.id,
     label: artifact.title,
@@ -540,7 +567,12 @@ export function buildDefaultPhaseSuccessRuntimeTruth(args: {
       {
         key: "evidence",
         label: "Evidence coverage",
-        status: missingRequirements.length > 0 ? "at_risk" : evidenceReceived.length > 0 ? "in_progress" : "unknown",
+        status:
+          missingRequirements.length > 0
+            ? "at_risk"
+            : evidenceReceived.length > 0
+              ? "in_progress"
+              : "unknown",
         summary:
           missingRequirements.length > 0
             ? `${missingRequirements.length} evidence requirement(s) remain missing at cutoff.`
@@ -562,14 +594,18 @@ export function buildDefaultPhaseSuccessRuntimeTruth(args: {
       ...missingRequirements.map(
         (requirement) => `Provide evidence requirement: ${requirement.label}`,
       ),
-      ...openGates.map((criterion) => `Close gate criterion: ${criterion.label}`),
+      ...openGates.map(
+        (criterion) => `Close gate criterion: ${criterion.label}`,
+      ),
     ],
   };
 }
 
 function latestArtifactTimestamp(
   artifacts: NonNullable<
-    Parameters<typeof buildDefaultPhaseSuccessRuntimeTruth>[0]["sourceArtifacts"]
+    Parameters<
+      typeof buildDefaultPhaseSuccessRuntimeTruth
+    >[0]["sourceArtifacts"]
   >,
 ): string | null {
   let latest: { value: string; epochMs: number } | null = null;
@@ -585,9 +621,7 @@ function latestArtifactTimestamp(
   return latest?.value ?? null;
 }
 
-function valueBasis(
-  move: Pick<StrategicMove, "valueAtStake">,
-): string {
+function valueBasis(move: Pick<StrategicMove, "valueAtStake">): string {
   const projected = move.valueAtStake.projected;
   if (!projected) return "No projected value range recorded";
   return `${projected.currency} ${projected.low.toLocaleString()}-${projected.high.toLocaleString()} projected`;
@@ -615,7 +649,9 @@ function listEvidence(items: RuntimeEvidenceSummary[]): string[] {
 }
 
 function formatTargetPhase(target: number | "TOWER"): string {
-  return target === "TOWER" ? "Tower Track Outcomes" : (NEXT_PHASE_LABEL[target - 1] ?? `P${target}`);
+  return target === "TOWER"
+    ? "Tower Track Outcomes"
+    : (NEXT_PHASE_LABEL[target - 1] ?? `P${target}`);
 }
 
 function baseMetadata(

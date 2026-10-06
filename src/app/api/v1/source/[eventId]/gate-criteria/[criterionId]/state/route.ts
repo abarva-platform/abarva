@@ -37,10 +37,15 @@ import {
   gateCriterionStateRowToView,
   type SourceEventArtifactStateRow,
   type SourceEventEvidenceStateRow,
+  type SourceEventFactRow,
   type SourceEventGateCriterion,
   type SourceEventGateCriterionState,
   type SourceEventGateCriterionStateRow,
 } from "@/lib/source/canvas-substrate/types";
+import {
+  deriveFactBackedEvidenceStates,
+  mergeFactBackedEvidenceStates,
+} from "@/lib/source/canvas-substrate/fact-derived-evidence";
 import {
   evaluateCriterionMetReadiness,
   firstGovernanceBlocker,
@@ -48,7 +53,9 @@ import {
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
 import { scaffoldNewEventSubstrate } from "@/lib/source/queries";
-import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
+import { repairLegacyClientStatedTriggerEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
+import { hasVerifiedSponsorDelegation } from "@/lib/source/sponsor-delegation-repository";
+import { criterionForSourceApprovalPolicy, resolveSourceApprovalPolicy } from "@/lib/source/approval-policy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -130,7 +137,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const { data: persistedEvent, error: fetchError } = await supabase
       .from("source_events")
       .select(
-        "id, client_key, event_name, event_code, decision_owner, created_by_user_id, trigger_description",
+        "id, client_key, event_name, event_code, decision_owner, created_by_user_id, trigger_description, approval_policy_code",
       )
       .eq("id", eventId)
       .maybeSingle();
@@ -168,6 +175,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         { status: 404 },
       );
     }
+    let approvalPolicy;
+    try {
+      approvalPolicy = resolveSourceApprovalPolicy(persistedEvent.approval_policy_code);
+    } catch {
+      return Response.json({ error: "invalid_approval_policy" }, { status: 409 });
+    }
 
     await scaffoldNewEventSubstrate(
       persistedEvent.id,
@@ -178,13 +191,9 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         error instanceof Error ? error.message : String(error),
       );
     });
-    await syncEventIntakeEvidence({
+    await repairLegacyClientStatedTriggerEvidence({
       sourceEventId: persistedEvent.id,
       tenantKey: persistedEvent.client_key,
-      triggerDescription:
-        typeof persistedEvent.trigger_description === "string"
-          ? persistedEvent.trigger_description
-          : null,
     });
 
     const accessPolicy =
@@ -211,6 +220,19 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         { status: 403 },
       );
     }
+    if (
+      approvalPolicy.selfApprovalAllowed &&
+      accessPolicy?.accessLevel !== "client_admin" &&
+      persistedEvent.created_by_user_id !== tenancy?.userId
+    ) {
+      return Response.json(
+        {
+          error: "event_owner_or_admin_required",
+          detail: "The event creator or client admin must record this criterion decision.",
+        },
+        { status: 403 },
+      );
+    }
 
     // SECURITY (audit 2026-05-22, P1-4): GATE_APPROVAL_STRICT_MODE. Per
     // Memory · Gate self-approval model, production hardens criterion
@@ -218,6 +240,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     // any stage-approver may mark a criterion met.
     if (
       isGateApprovalStrictMode() &&
+      !approvalPolicy.selfApprovalAllowed &&
       !isStrictModeApprovalRole(tenancy?.role)
     ) {
       return Response.json(
@@ -256,6 +279,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       const [
         { data: artifactRows, error: artifactFetchError },
         { data: evidenceRows, error: evidenceFetchError },
+        { data: factRows, error: factFetchError },
       ] = await Promise.all([
         supabase
           .from("source_event_artifact_states")
@@ -267,6 +291,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           .select("*")
           .eq("source_event_id", persistedEvent.id)
           .eq("stage_key", criterionRow.from_stage),
+        supabase
+          .from("source_event_facts")
+          .select("*")
+          .eq("source_event_id", persistedEvent.id)
+          .eq("client_key", effectiveClientKey)
+          .eq("is_stale", false),
       ]);
       if (artifactFetchError) {
         return Response.json(
@@ -280,16 +310,37 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           { status: 500 },
         );
       }
+      if (factFetchError) {
+        return Response.json(
+          { error: "lookup_failed", detail: factFetchError.message },
+          { status: 500 },
+        );
+      }
+
+      const persistedEvidence = ((evidenceRows ?? []) as SourceEventEvidenceStateRow[])
+        .map(evidenceStateRowToView);
+      const eventFacts = ((factRows ?? []) as SourceEventFactRow[]).filter(
+        (fact) => fact.source_event_id === persistedEvent.id && fact.client_key === effectiveClientKey,
+      );
 
       const readiness = evaluateCriterionMetReadiness({
         criterion: gateCriterionStateRowToView(criterionRow),
         artifacts: ((artifactRows ?? []) as SourceEventArtifactStateRow[]).map(
           artifactStateRowToView,
         ),
-        evidence: ((evidenceRows ?? []) as SourceEventEvidenceStateRow[]).map(
-          evidenceStateRowToView,
+        evidence: mergeFactBackedEvidenceStates(
+          persistedEvidence,
+          deriveFactBackedEvidenceStates(eventFacts),
         ),
         reason,
+        approvalPolicyCode: approvalPolicy.code,
+        verifiedDelegatedSponsorAcknowledgement:
+          criterionId === "GATE-SCOPE-02"
+            ? await hasVerifiedSponsorDelegation({
+                eventId: persistedEvent.id,
+                tenantKey: effectiveClientKey,
+              })
+            : false,
       });
       if (!readiness.ok) {
         const blocker = firstGovernanceBlocker(readiness);
@@ -319,7 +370,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     // DB write routed through the data-plane write seam (Slice 3b).
     const sourceWrite = selectSourceWriteAdapter(undefined, effectiveClientKey);
     const nowIso = new Date().toISOString();
-    const definition = criterionById(criterionId);
+    const definition = criterionForSourceApprovalPolicy(criterionById(criterionId), approvalPolicy.code);
     const ownerRole = definition?.ownerRole ?? "sourcing-lead";
     const approverResolution = resolveApprover(
       {
@@ -332,6 +383,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           typeof persistedEvent.created_by_user_id === "string"
             ? persistedEvent.created_by_user_id
             : null,
+        actingUserId: actorUserId,
       },
       ownerRole,
     );

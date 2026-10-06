@@ -211,6 +211,7 @@ const ROOT_FILES_WIRED_BY_FILE = [
   "src/__tests__/integration/atlas-page-state-timeout.test.ts",
   "src/__tests__/integration/email-code-sign-in-panel.test.tsx",
   "src/__tests__/integration/evidence-registry.test.ts",
+  "src/__tests__/integration/launch-user-route.test.ts",
   "src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx",
   "src/__tests__/integration/pack-j-realistic-portfolio.test.ts",
   "src/__tests__/integration/pattern-deliverable-api.test.ts",
@@ -248,7 +249,15 @@ const KNOWN_DARK_ROOT_FILES = new Set([
  * subdirectory below it.
  */
 const KNOWN_DARK_DIRECTORIES = new Set([
-  "",
+  // 2026-09-25 (T-477) - the integration ROOT itself, `""`, is no longer dark.
+  // It was the last entry standing for a directory rather than a subdirectory:
+  // the root is enumerated file by file, so it stayed partially covered for as
+  // long as any root file was unwired. The last three were repaired and wired
+  // into the integration-suites jest command, `integration-root-quarantine.json`
+  // is empty and its ceiling is 0, so every root-level file runs on every PR
+  // and the root is fully covered. Cleared here in the same change that did the
+  // wiring, which is the friction the two-directional check below asks for and
+  // the reason it found this one line rather than leaving it to mean nothing.
   // 2026-09-19 (T-032) - `admin` and `admin/data` are no longer dark. The
   // workflow names `src/__tests__/integration/admin` without a trailing slash,
   // which as a regex covers the `data/` subdirectory too, so wiring the parent
@@ -547,7 +556,7 @@ describe("integration directories a workflow actually reaches", () => {
         !KNOWN_DARK_ROOT_FILES.has(file),
     );
 
-    expect(rootFiles).toHaveLength(45);
+    expect(rootFiles).toHaveLength(46);
     expect(unclassified).toEqual([]);
   });
 

@@ -39,6 +39,36 @@ describe("Move artifact upload route helpers", () => {
     expect(artifactTypeForUpload(args)).toBe(artifactTypeForUpload(args));
   });
 
+  it("keeps distinct session files current and versions a revision by filename", () => {
+    const operations = {
+      family: "session_artifact" as const,
+      fileName: "operations_workshop_45m.md",
+      phase: 2,
+      body: Buffer.from("operations session v1"),
+    };
+    const security = {
+      ...operations,
+      fileName: "security_controls_session_20m.md",
+      body: Buffer.from("security session v1"),
+    };
+    const revisedOperations = {
+      ...operations,
+      body: Buffer.from("operations session v2 with a human correction"),
+    };
+
+    const operationsType = artifactTypeForUpload(operations);
+    const securityType = artifactTypeForUpload(security);
+
+    expect(operationsType).not.toBe(securityType);
+    expect(operationsType).toMatch(
+      /^session_artifact_p2_operations_workshop_45m$/,
+    );
+    expect(securityType).toMatch(
+      /^session_artifact_p2_security_controls_session_20m$/,
+    );
+    expect(artifactTypeForUpload(revisedOperations)).toBe(operationsType);
+  });
+
   it("does not change non-evidence artifact family keys", () => {
     expect(
       artifactTypeForUpload({

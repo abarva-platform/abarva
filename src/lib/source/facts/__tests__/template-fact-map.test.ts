@@ -51,7 +51,12 @@ describe('template → fact map — catalog binding integrity', () => {
 
   it('no duplicate header within a single template', () => {
     for (const tpl of listTemplateFactMaps()) {
-      const headers = tpl.columns.map((c) => c.header);
+      const headers = [
+        ...(tpl.entityRefColumn ? [tpl.entityRefColumn] : tpl.entityRefColumns ?? []),
+        ...(tpl.contextColumns ?? []),
+        ...(tpl.optionalContextColumns ?? []),
+        ...tpl.columns.map((c) => c.header),
+      ];
       expect(new Set(headers).size).toBe(headers.length);
     }
   });
@@ -61,6 +66,10 @@ describe('template → fact map — worked examples present', () => {
   it('ships the app-inventory, volumetrics, contract-terms, rfp-clauses, committed-value, bafo-concessions, response-coverage, and vendor-bids templates', () => {
     expect(templateFactMapByCode('APP_INVENTORY_V1')).toBeDefined();
     expect(templateFactMapByCode('VOLUMETRICS_V1')).toBeDefined();
+    expect(templateFactMapByCode('TICKET_HISTORY_V1')).toMatchObject({
+      rowEntity: 'tower',
+      contextColumns: ['Support Tier', 'Month', 'Time Window', 'Source Basis'],
+    });
     expect(templateFactMapByCode('CONTRACT_TERMS_V1')).toBeDefined();
     expect(templateFactMapByCode('RFP_CLAUSES_V1')).toBeDefined();
     expect(templateFactMapByCode('COMMITTED_VALUE_V1')).toBeDefined();
@@ -240,6 +249,27 @@ describe('template → fact map — worked examples present', () => {
   it('registry keys match each template code', () => {
     for (const [code, tpl] of Object.entries(TEMPLATE_FACT_MAPS)) {
       expect(tpl.templateCode).toBe(code);
+    }
+  });
+
+  /**
+   * Item U-523. Three cells on the Source canvas used to render the raw
+   * template code to a client; they now render `label` instead, and fall
+   * through to the code when the rail publishes none. That fallback is a
+   * correct failure mode — it shows the gap rather than hiding it behind a
+   * vague phrase — but it is only ever reachable through a template that
+   * shipped without a label. This asserts none does, per code, so the message
+   * names the offender instead of a count going down by one.
+   */
+  it('every shipped template publishes a non-empty client-facing label', () => {
+    for (const [code, tpl] of Object.entries(TEMPLATE_FACT_MAPS)) {
+      expect(
+        tpl.label.trim().length > 0
+          ? ''
+          : `Template ${code} ships no client-facing label, so a Source cell ` +
+            `rendering it falls back to the code itself — which is the ` +
+            `builder vocabulary U-400 forbids on a client surface.`,
+      ).toBe('');
     }
   });
 });

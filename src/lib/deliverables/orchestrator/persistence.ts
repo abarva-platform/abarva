@@ -8,6 +8,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { Packer } from "docx";
 import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
 import type {
   BoardPackRenderInput,
@@ -20,15 +21,21 @@ import {
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
 import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import { renderDeliverableHtml } from "./renderers";
+import { renderDeliverableDocx, renderDeliverableHtml } from "./renderers";
+import { renderValidatedDeck } from "./render-validated-deck";
 import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
 import type { OrchestrationResult } from "./orchestrator";
+import { completeDeliverable } from "@/lib/programs/mutations";
+import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import type { TenancyCtx } from "@/lib/programs/types.db";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
 import {
   buildContractInput,
   deliverableKeyForRegistryKey,
   deliverableKeyForOrchestratorType,
+  renderedContractExhibitsFromDocument,
 } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import {
@@ -45,11 +52,28 @@ import {
   deckExhibits,
   type StorylineDeck,
 } from "@/lib/visual-system/storyline-deck";
-import type { ExhibitId } from "@/lib/deliverables/profiles/types";
-import type { OutputFormat } from "./types";
+import type {
+  DeliverableKey,
+  ExhibitId,
+} from "@/lib/deliverables/profiles/types";
+import type {
+  OutputFormat,
+  QualityValidationResult,
+  RenderableDeliverable,
+} from "./types";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const STRUCTURED_ARCHITECTURE_KEYS = new Set<DeliverableKey>([
+  "target_state_architecture",
+]);
+
+function usesStructuredArchitecturePreview(
+  deliverableKey: DeliverableKey | undefined,
+): boolean {
+  return !!deliverableKey && STRUCTURED_ARCHITECTURE_KEYS.has(deliverableKey);
+}
 
 export interface PersistDeliverableOptions {
   clientId: string;
@@ -60,6 +84,10 @@ export interface PersistDeliverableOptions {
   outputFormat?: GeneratedArtifactFormat; // default 'docx'
   /** governed evidence ledger ids used (for the artifact's audit trail). */
   evidenceLedgerIds?: string[];
+  /** Approved Move evidence revision captured for this generated artifact. */
+  evidenceSnapshotHash?: string;
+  /** Phase-scoped approved evidence used directly by this generated artifact. */
+  phaseEvidenceSnapshotHash?: string;
   /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
   deliverableTypeKey?: string;
   userId?: string;
@@ -100,7 +128,16 @@ export interface PersistDeliverableOptions {
 
 export interface PersistDeps {
   save?: typeof saveGeneratedArtifact;
+  materializeDeliverableDraft?: typeof completeDeliverable;
+  saveGeneratedOfficeCompanion?: typeof saveMoveArtifact;
+  renderOfficeCompanion?: typeof renderOfficeCompanion;
 }
+
+type GeneratedOfficeCompanion = {
+  body: Buffer;
+  fileFormat: "docx" | "pptx";
+  fileName: string;
+};
 
 function artifactTypeFor(module: string): GeneratedArtifactType {
   if (module === "source") return "source_board_pack";
@@ -108,11 +145,92 @@ function artifactTypeFor(module: string): GeneratedArtifactType {
   return "dossier_board_pack";
 }
 
+const COMPOSITION_SIGNAL_REASON =
+  "a pass/fail composition signal whose failure already reaches the record as a blocker or warning and is counted there; persisting the signal itself is a metric-series change, declared here rather than shown by absence";
+
 /** Quality → 0..1 score: starts at 1.0, small penalty per advisory warning. */
 function qualityScore(result: OrchestrationResult): number {
   const warnings = result.quality?.warnings.length ?? 0;
   return Math.max(0.5, Math.round((1 - warnings * 0.1) * 100) / 100);
 }
+
+type QualityMetrics = QualityValidationResult["metrics"];
+
+/**
+ * Whether a quality metric is written to the per-generation metrics record, and
+ * when it is not, the reason — stated here rather than shown by absence.
+ */
+export type QualityMetricPersistence =
+  | { readonly persist: true }
+  | { readonly persist: false; readonly reason: string };
+
+/**
+ * The persistence policy for every field the quality gate measures.
+ *
+ * This is a `Record<keyof QualityMetrics, …>`, so a field added to the metrics
+ * type and not named here does not compile. That is the point of the shape. The
+ * previous writer was a hand-written object literal naming ten fields, and an
+ * allowlist over a growing type cannot fail: three fields were added to the
+ * metrics type for the expected-exhibit shortfall and were dropped here in
+ * silence, so a generation that asked for three exhibits and received one
+ * recorded a docked `qualityScore` and an incremented `warningCount` with no
+ * record of how many were asked for or which did not arrive — the omission rate
+ * was not trendable. The mechanism, not that instance, is what this closes: the
+ * next field added to the metrics type must state its intent here or fail the
+ * build, and a field deliberately not persisted says so in one place.
+ */
+export const QUALITY_METRIC_PERSISTENCE: Readonly<
+  Record<keyof QualityMetrics, QualityMetricPersistence>
+> = {
+  sectionCount: { persist: true },
+  bodyWordCount: { persist: true },
+  tableCount: { persist: true },
+  readingTimeMinutes: { persist: true },
+  manualEditNeeded: { persist: true },
+  wordBand: { persist: true },
+
+  // How many exhibits the brief asked for, how many of those arrived, and which
+  // did not. Persisted so the omission rate can be trended: the synthesis pass
+  // may legitimately omit an exhibit rather than emit a placeholder one, so an
+  // absence nobody counted reads exactly like a deliverable that never wanted
+  // the visual.
+  expectedExhibitCount: { persist: true },
+  receivedExpectedExhibitCount: { persist: true },
+  missingExpectedExhibits: { persist: true },
+
+  // The values ARE the leaked internal identifiers. Persisting them would copy
+  // internal tags into a stored artifact record, which is the thing the check
+  // exists to keep out of one; the count of the leak reaches the record through
+  // `blockerCount`.
+  leakedInternalTags: {
+    persist: false,
+    reason:
+      "the values are the leaked internal identifiers themselves; persisting them would copy internal tags into a stored artifact record",
+  },
+
+  // Composition checks. Each one that fails raises a blocker or a warning, and
+  // that failure is already counted in `blockerCount` / `warningCount` and
+  // docked from `qualityScore`. Persisting the individual signal is a
+  // metric-series change and is outside the item that introduced this policy;
+  // it is named here so the omission is declared rather than silent.
+  hasSourceRegister: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasDecisionSection: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasRecommendation: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasRiskTable: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasCentralTension: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasOptionsConsidered: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  hasEvidenceGapsNoted: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  clientCompleteCount: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  unsupportedClaimCount: { persist: false, reason: COMPOSITION_SIGNAL_REASON },
+  requiredEvidenceSignalCount: {
+    persist: false,
+    reason: COMPOSITION_SIGNAL_REASON,
+  },
+  missingRequiredEvidenceSignalCount: {
+    persist: false,
+    reason: COMPOSITION_SIGNAL_REASON,
+  },
+};
 
 /**
  * Per-generation metrics captured on every artifact, regardless of pass/block
@@ -120,34 +238,94 @@ function qualityScore(result: OrchestrationResult): number {
  * reviewed empirically before the word-count bands are tightened further
  * (see advisoryBandMax in quality-bar-registry.ts). `pageEstimate` is a rough
  * ~500-words-per-executive-page heuristic, not a real pagination result.
+ *
+ * The metric fields are copied by walking QUALITY_METRIC_PERSISTENCE rather
+ * than by naming them, so this function cannot drift from the type again.
  */
 function buildGenerationMetrics(
   result: OrchestrationResult,
 ): Record<string, unknown> | undefined {
   const m = result.quality?.metrics;
   if (!m) return undefined;
+
+  const persisted: Record<string, unknown> = {};
+  for (const key of Object.keys(QUALITY_METRIC_PERSISTENCE) as Array<
+    keyof QualityMetrics
+  >) {
+    if (!QUALITY_METRIC_PERSISTENCE[key].persist) continue;
+    const value = m[key];
+    // Absent stays absent. A brief that declared no expected exhibits must not
+    // record `expectedExhibitCount: 0` — "not measured" and "measured, none
+    // expected" are different facts, and a zero here reads as the second.
+    if (value === undefined) continue;
+    persisted[key] = value;
+  }
+
   return {
-    bodyWordCount: m.bodyWordCount,
-    sectionCount: m.sectionCount,
-    tableCount: m.tableCount,
+    ...persisted,
     pageEstimate: Math.max(1, Math.ceil(m.bodyWordCount / 500)),
-    readingTimeMinutes: m.readingTimeMinutes,
     qualityScore: qualityScore(result),
-    wordBand: m.wordBand,
-    manualEditNeeded: m.manualEditNeeded,
     warningCount: result.quality?.warnings.length ?? 0,
     blockerCount: result.quality?.blockers.length ?? 0,
   };
 }
 
+/**
+ * The reason an artifact is held, with what each blocking finding found.
+ *
+ * The reason used to be the state and the finding names only — "blocked_
+ * missing_exhibits: exhibit_enforcement" — which says an exhibit is missing
+ * and not which. The finding already carries that; it is now included.
+ */
+export function quarantineReasonWithDetail(
+  state: string,
+  blockingFindings: ReadonlyArray<{
+    dimension?: string;
+    detail?: ReadonlyArray<string>;
+  }>,
+): string {
+  const parts = blockingFindings.map((finding) => {
+    const name = finding.dimension ?? "unnamed";
+    const detail = (finding.detail ?? []).slice(0, 8).join(", ");
+    return detail ? `${name} (${detail})` : name;
+  });
+  return `${state}: ${parts.join(", ")}`;
+}
+
 function renderedVisualsPresent(html: string): boolean {
-  return (
-    /class=["'][^"']*\bvisual-exhibit\b/i.test(html) ||
-    /<svg\b/i.test(html) ||
-    /<table\b/i.test(html) ||
-    /data-exhibit=/i.test(html) ||
-    /class=["'][^"']*\bdeck-exhibit\b/i.test(html)
+  return /<(?:svg|img|table)\b/i.test(html);
+}
+
+function nativePptxDeckSatisfiesVisualContract(
+  doc: RenderableDeliverable,
+  deliverableKey: DeliverableKey,
+  outputFormat: GeneratedArtifactFormat,
+): boolean {
+  if (outputFormat !== "pptx" || !doc.deckSlides?.length) return false;
+  const profile = DELIVERABLE_PROFILES[deliverableKey];
+  if (profile.renderer !== "pptx_storyline") return false;
+  const rendered = new Set(
+    renderedContractExhibitsFromDocument(doc, deliverableKey),
   );
+  return profile.requiredExhibits.every((id) => rendered.has(id));
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function deckExhibitsRenderedAsVisual(
+  html: string,
+  deck: StorylineDeck,
+): ExhibitId[] {
+  return deckExhibits(deck).filter((exhibitId) => {
+    const pattern = new RegExp(
+      `<div\\b[^>]*\\bdata-exhibit=["']${escapeRegExp(exhibitId)}["'][^>]*>[\\s\\S]*?<\\/div>`,
+      "i",
+    );
+    const match = html.match(pattern);
+    return match ? renderedVisualsPresent(match[0]) : false;
+  });
 }
 
 function visibleTextFromHtml(html: string): string {
@@ -163,6 +341,70 @@ function visibleTextFromHtml(html: string): string {
     .replace(/&#39;/gi, "'")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function safeFileStem(value: string): string {
+  return (
+    value
+      .replace(/[\\/:*?"<>|]+/g, " ")
+      .replace(/[^\x20-\x7e]+/g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase()
+      .slice(0, 80) || "deliverable"
+  );
+}
+
+async function renderOfficeCompanion(
+  doc: RenderableDeliverable,
+  outputFormat: GeneratedArtifactFormat,
+): Promise<GeneratedOfficeCompanion | null> {
+  if (outputFormat === "pptx") {
+    const rendered = await renderValidatedDeck(doc);
+    if (!rendered.physicallyIntact) {
+      throw new Error(
+        `generated_pptx_failed_physical_integrity: ${rendered.integrityFailures
+          .slice(0, 3)
+          .join("; ")}`,
+      );
+    }
+    if (!rendered.verdict.ok) {
+      const qualityFailures = rendered.verdict.findings
+        .filter(
+          (finding) =>
+            finding.kind !== "off_canvas" && finding.kind !== "canvas",
+        )
+        .slice(0, 3)
+        .map((finding) => finding.message);
+      throw new Error(
+        `generated_pptx_failed_content_quality: ${qualityFailures.join("; ")}`,
+      );
+    }
+    return {
+      body: rendered.buffer,
+      fileFormat: "pptx",
+      fileName: `${safeFileStem(doc.title)}.pptx`,
+    };
+  }
+
+  if (outputFormat === "docx") {
+    return {
+      body: await Packer.toBuffer(renderDeliverableDocx(doc)),
+      fileFormat: "docx",
+      fileName: `${safeFileStem(doc.title)}.docx`,
+    };
+  }
+
+  return null;
+}
+
+function phaseForDeliverableType(deliverableTypeKey: string): number {
+  return (
+    DELIVERABLE_REGISTRY.find(
+      (spec) => spec.deliverableTypeKey === deliverableTypeKey,
+    )?.phase ?? 0
+  );
 }
 
 export async function persistDeliverable(
@@ -207,8 +449,7 @@ export async function persistDeliverable(
     const profile = DELIVERABLE_PROFILES[contractDeliverableKey];
     const models = opts.structuredModels;
     if (
-      profile.renderer === "html_architecture" &&
-      contractDeliverableKey === "target_state_architecture" &&
+      usesStructuredArchitecturePreview(contractDeliverableKey) &&
       models?.architectureModel
     ) {
       html = renderArchitectureHtml(models.architectureModel);
@@ -275,10 +516,15 @@ export async function persistDeliverable(
     const additionalExhibits: ExhibitId[] = [];
     if (architectureSignals.exhibitsRenderedAsVisual === true)
       additionalExhibits.push(...ARCHITECTURE_RENDERED_EXHIBITS);
-    if (opts.structuredModels?.storylineDeck)
-      additionalExhibits.push(
-        ...deckExhibits(opts.structuredModels.storylineDeck),
-      );
+    const renderedDeckExhibits = opts.structuredModels?.storylineDeck
+      ? deckExhibitsRenderedAsVisual(html, opts.structuredModels.storylineDeck)
+      : [];
+    const nativePptxDeckVisualsPresent = nativePptxDeckSatisfiesVisualContract(
+      doc,
+      contractDeliverableKey,
+      outputFormat,
+    );
+    additionalExhibits.push(...renderedDeckExhibits);
 
     const contractInput = buildContractInput({
       doc,
@@ -298,7 +544,10 @@ export async function persistDeliverable(
       ...contractInput,
       exhibitsRenderedAsVisual:
         architectureSignals.exhibitsRenderedAsVisual ??
-        renderedVisualsPresent(html),
+        (nativePptxDeckVisualsPresent ||
+          (opts.structuredModels?.storylineDeck
+            ? renderedDeckExhibits.length > 0
+            : renderedVisualsPresent(html))),
       ...architectureSignals,
       deliverableKey: contractDeliverableKey,
     });
@@ -347,7 +596,10 @@ export async function persistDeliverable(
       );
       if (opts.enforceQualityContract || profile.visualRendererRequired) {
         qualityQuarantined = true;
-        qualityQuarantineReason = `${assessment.state}: ${reasons}`;
+        qualityQuarantineReason = quarantineReasonWithDetail(
+          assessment.state,
+          blockingFindings,
+        );
       }
     }
   }
@@ -417,7 +669,7 @@ export async function persistDeliverable(
   // without guessing from a generated title.
   const generationMetrics = buildGenerationMetrics(result);
 
-  return save(input, rendered, {
+  const record = await save(input, rendered, {
     deliverableTypeKey: resolvedDeliverableTypeKey,
     deliverableType: result.brief.deliverableType,
     registryKey: resolvedDeliverableTypeKey,
@@ -426,6 +678,15 @@ export async function persistDeliverable(
     ...(generationMetrics ? { generationMetrics } : {}),
     ...(opts.generationLineage
       ? { generationLineage: opts.generationLineage }
+      : {}),
+    ...(opts.evidenceSnapshotHash
+      ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+      : {}),
+    ...(opts.phaseEvidenceSnapshotHash
+      ? {
+          phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
+          evidenceSnapshotScope: "phase",
+        }
       : {}),
     ...(opts.structuredModels?.architectureModel
       ? { architectureModel: opts.structuredModels.architectureModel }
@@ -437,4 +698,102 @@ export async function persistDeliverable(
         }
       : {}),
   });
+
+  if (result.brief.module === "moves" && UUID_RE.test(opts.sourceArtifactRef)) {
+    const renderCompanion = deps.renderOfficeCompanion ?? renderOfficeCompanion;
+    const officeCompanion = await renderCompanion(
+      renderableDocWithType,
+      outputFormat,
+    );
+    const materialize = deps.materializeDeliverableDraft ?? completeDeliverable;
+    const materialized = await materialize(
+      {
+        clientId: opts.clientId,
+        userId: opts.userId ?? opts.renderedBy,
+        ...(opts.tenantKey ? { clientKey: opts.tenantKey } : {}),
+      } satisfies TenancyCtx,
+      opts.sourceArtifactRef,
+      {
+        deliverableTypeKey: resolvedDeliverableTypeKey,
+        title: doc.title,
+        content: html,
+        moduleKey: "moves",
+        signOff: false,
+        structuredData: {
+          source: "generated_by_orchestrator",
+          generated_artifact_id: record.id,
+          output_format: outputFormat,
+          render_engine: "internal",
+          requiresOfficeCompanionScan: Boolean(officeCompanion),
+          ...(opts.generationLineage
+            ? { generationLineage: opts.generationLineage }
+            : {}),
+          ...(opts.evidenceSnapshotHash
+            ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+            : {}),
+          ...(opts.phaseEvidenceSnapshotHash
+            ? {
+                phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
+                evidenceSnapshotScope: "phase",
+              }
+            : {}),
+        },
+      },
+    );
+
+    if (officeCompanion) {
+      if (!materialized.versionId) {
+        throw new Error(
+          "generated_deliverable_version_missing_for_office_companion",
+        );
+      }
+      const saveCompanion =
+        deps.saveGeneratedOfficeCompanion ?? saveMoveArtifact;
+      await saveCompanion(
+        {
+          clientId: opts.clientId,
+          userId: opts.userId ?? opts.renderedBy,
+          ...(opts.tenantKey ? { clientKey: opts.tenantKey } : {}),
+        } satisfies TenancyCtx,
+        {
+          moveId: opts.sourceArtifactRef,
+          phase: phaseForDeliverableType(resolvedDeliverableTypeKey),
+          artifactType: `${resolvedDeliverableTypeKey}_editable_${officeCompanion.fileFormat}`,
+          artifactFamily: "generated_deliverable",
+          title: doc.title,
+          description:
+            "Generated Office companion for governed deliverable sign-off scanning.",
+          fileName: officeCompanion.fileName,
+          fileFormat: officeCompanion.fileFormat,
+          body: officeCompanion.body,
+          status: "draft",
+          generatedBy: opts.userId ?? opts.renderedBy,
+          qualityScore: rendered.qualityScore,
+          sourceBasis: "governed_generation",
+          confidence: "medium",
+          citationReady: true,
+          requireBlobStored: true,
+          metadata: {
+            deliverableId: materialized.deliverableId,
+            versionId: materialized.versionId,
+            generatedArtifactId: record.id,
+            outputFormat,
+            ...(opts.evidenceSnapshotHash
+              ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
+              : {}),
+            ...(opts.phaseEvidenceSnapshotHash
+              ? {
+                  phaseEvidenceSnapshotHash:
+                    opts.phaseEvidenceSnapshotHash,
+                  evidenceSnapshotScope: "phase",
+                }
+              : {}),
+            outputRole: `${officeCompanion.fileFormat}_editable_phase_record`,
+          },
+        },
+      );
+    }
+  }
+
+  return record;
 }

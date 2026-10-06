@@ -56,6 +56,16 @@ const APPROVAL: ApprovalsInboxItem = {
   actionLabel: "Review & decide",
 };
 
+it("carries persisted SELF policy into the mounted stage shell", () => {
+  const view = buildSourceEventShellView({
+    event: { ...EVENT, approvalPolicyCode: "self_v1" },
+    tenantName: "FS Demo",
+    viewedStageKey: "scope",
+    stageView: SAMPLE_SCOPE_STAGE as StageAnalyticsView,
+  });
+  expect(view.event.approvalPolicyCode).toBe("self_v1");
+});
+
 describe("journey stage completion evidence", () => {
   // A stage sitting before the current one has only moved past in position.
   // That is not proof it was completed, so the rail may only claim completion
@@ -339,6 +349,36 @@ describe("buildSourceEventShellView", () => {
       title: "Confirm strategy & sponsor",
       sourceBasis: "missing",
     });
+
+    const governed = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "strategy",
+      stageView: {
+        ...SAMPLE_STRATEGY_STAGE,
+        tasks: SAMPLE_STRATEGY_STAGE.tasks.map((task) => ({
+          ...task,
+          confirmationVersion: "current-event-version",
+        })),
+      },
+    });
+    expect(governed.stage.activeStep?.confirmationVersion).toBe("current-event-version");
+
+    const misleadingDone = buildSourceEventShellView({
+      event: { ...EVENT, approvalPolicyCode: "self_v1" },
+      tenantName: "FS Demo",
+      viewedStageKey: "strategy",
+      stageView: {
+        ...SAMPLE_STRATEGY_STAGE,
+        tasks: SAMPLE_STRATEGY_STAGE.tasks.map((task) => ({
+          ...task,
+          state: "done" as const,
+          evidenceComplete: false,
+          confirmationVersion: "current-event-version",
+        })),
+      },
+    });
+    expect(misleadingDone.stage.groups[0]?.steps[0]?.status).not.toBe("captured");
   });
 
   it("uses a purpose-first RFP group so the left tree names the release package", () => {
@@ -448,6 +488,41 @@ describe("buildSourceEventShellView", () => {
       complianceReviewLabel: null,
       complianceReviewMessage: null,
     });
+  });
+
+  it("does not mistake canvas artifact slots for stored or parsed files", () => {
+    const view = buildSourceEventShellView({
+      event: { ...EVENT, currentStageKey: "strategy" },
+      tenantName: "FS Demo",
+      viewedStageKey: "strategy",
+      stageView: SAMPLE_STRATEGY_STAGE,
+      artifacts: [
+        {
+          id: "canvas-d01",
+          artifactCode: "d01_strategy_memo",
+          stageKey: "strategy",
+          status: "drafting",
+          recordKind: "canvas_state",
+        },
+        {
+          id: "canvas-d02",
+          artifactCode: "d02_value_target",
+          stageKey: "strategy",
+          status: "not_started",
+          recordKind: "canvas_state",
+        },
+      ],
+    });
+
+    expect(view.files.items).toEqual([]);
+    expect(
+      view.files.lifecycle.rows.find((row) => row.code === "d01_strategy_memo")
+        ?.lifecycleState,
+    ).toBe("not_registered");
+    expect(
+      view.files.lifecycle.rows.find((row) => row.code === "d02_value_target")
+        ?.lifecycleState,
+    ).toBe("not_registered");
   });
 
   it("flags a file item for compliance review when the registry description carries the marker, without leaking the raw text", () => {
@@ -727,6 +802,7 @@ describe("buildSourceEventShellView", () => {
         expect.stringContaining("Vendor Shortlist: not registered"),
       ]),
     );
+    expect(view.files.items[0]?.sourceOrigin).toBe("generated");
     expect(view.stage.gateReadinessLine).toContain(
       "required/gate artifacts still need",
     );
@@ -769,6 +845,7 @@ describe("buildSourceEventShellView", () => {
     expect(view.files.items).toEqual([
       expect.objectContaining({
         id: "rfp-client-final",
+        sourceOrigin: "reuploaded",
         artifactRole: "authoritative",
         latestAcceptance: null,
         acceptedAsAuthoritative: true,
@@ -991,11 +1068,58 @@ describe("mergeSourceShellArtifactsWithArtifactStateBodies", () => {
       artifactState({
         artifactCode: "d01_strategy_memo",
         body: passingStrategyMemoBody,
+        bodyGenerationMetadata: {
+          qualityGate: { passed: true, finalSummary: "Receipt belongs to a different body." },
+        },
       }),
     ]);
 
     expect(merged[0]?.bodyMarkdown).toBe("Registry body wins.");
+    expect(merged[0]?.bodyGenerationMetadata).toBeUndefined();
     expect(merged[0]?.body).toBeUndefined();
+  });
+
+  it("preserves the persisted quality receipt on registry-backed and state-only drafts", () => {
+    const receipt = {
+      qualityGate: {
+        passed: false,
+        finalSummary: "Failed: unsupported claims remain.",
+        unsupportedClaims: ["Unbound value estimate."],
+      },
+    };
+    const merged = mergeSourceShellArtifactsWithArtifactStateBodies(
+      [
+        { id: "registry-d01", artifactKind: "d01_strategy_memo", bodyMarkdown: passingStrategyMemoBody },
+        { id: "registry-d02", artifactKind: "d02_value_target", sourceOrigin: "generated" },
+      ],
+      [
+        artifactState({ artifactCode: "d01_strategy_memo", body: passingStrategyMemoBody, bodyGenerationMetadata: receipt }),
+        artifactState({ artifactCode: "d02_value_target", body: "Unreviewed value draft.", bodyGenerationMetadata: receipt }),
+        artifactState({ artifactCode: "d09_rfp_pack", stage: "rfp", body: "Unreviewed package draft.", bodyGenerationMetadata: receipt }),
+      ],
+    );
+
+    expect(merged).toHaveLength(3);
+    expect(merged[0]?.bodyMarkdown).toBe(passingStrategyMemoBody);
+    expect(merged.map((item) => item.bodyGenerationMetadata)).toEqual([receipt, receipt, receipt]);
+
+    const summary = buildSourceArtifactLifecycleSummary(merged);
+    for (const code of ["d01_strategy_memo", "d02_value_target", "d09_rfp_pack"]) {
+      const row = summary.rows.find((item) => item.code === code);
+      expect(row?.consultingGate.state).toBe("failed");
+      expect(row?.consultingGate.findings.join(" ")).toContain("unsupported claims remain");
+    }
+  });
+
+  it("does not invent a review receipt when no generation metadata exists", () => {
+    const merged = mergeSourceShellArtifactsWithArtifactStateBodies(
+      [{ id: "registry-d01", artifactKind: "d01_strategy_memo" }],
+      [artifactState({ artifactCode: "d01_strategy_memo", body: passingStrategyMemoBody })],
+    );
+    expect(merged[0]?.bodyGenerationMetadata).toBeUndefined();
+    expect(buildSourceArtifactLifecycleSummary(merged).rows.find(
+      (item) => item.code === "d01_strategy_memo",
+    )?.consultingGate.state).toBe("required_not_run");
   });
 
   it("adds authored state-only artifacts and ignores blank state bodies", () => {

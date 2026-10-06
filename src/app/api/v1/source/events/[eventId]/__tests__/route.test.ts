@@ -67,7 +67,7 @@ jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
 }));
 
 jest.mock("@/lib/source/canvas-substrate/event-intake-sync", () => ({
-  syncEventIntakeEvidence: jest.fn(async () => true),
+  repairLegacyClientStatedTriggerEvidence: jest.fn(async () => true),
 }));
 
 jest.mock("@/lib/source/queries", () => ({
@@ -77,10 +77,12 @@ jest.mock("@/lib/source/queries", () => ({
 import { PATCH } from "../route";
 import type { NextRequest } from "next/server";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
-import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
+import { repairLegacyClientStatedTriggerEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
 
 const mockLoadUserSourceAccessPolicy = jest.mocked(loadUserSourceAccessPolicy);
-const mockSyncEventIntakeEvidence = jest.mocked(syncEventIntakeEvidence);
+const mockRepairLegacyClientStatedTriggerEvidence = jest.mocked(
+  repairLegacyClientStatedTriggerEvidence,
+);
 
 function correctionRequest(body: Record<string, unknown>) {
   return new Request("https://app.abarva.ai/api/v1/source/events/event-1", {
@@ -96,7 +98,7 @@ describe("PATCH Source event intake", () => {
     insertActivityLog.mockClear();
     maybeSingle.mockClear();
     maybeSingle.mockResolvedValue({ data: eventRow, error: null });
-    mockSyncEventIntakeEvidence.mockClear();
+    mockRepairLegacyClientStatedTriggerEvidence.mockClear();
     mockLoadUserSourceAccessPolicy.mockResolvedValue({
       canApproveSourceStages: true,
       accessLevel: "client_admin",
@@ -140,11 +142,10 @@ describe("PATCH Source event intake", () => {
       }),
     );
     expect(updateEventIntake).not.toHaveBeenCalled();
-    expect(mockSyncEventIntakeEvidence).toHaveBeenCalledWith(
+    expect(mockRepairLegacyClientStatedTriggerEvidence).toHaveBeenCalledWith(
       expect.objectContaining({
         sourceEventId: "event-1",
         tenantKey: "apex-retail",
-        triggerDescription: "Corrected renewal trigger.",
       }),
     );
     expect(insertActivityLog).toHaveBeenCalledWith(

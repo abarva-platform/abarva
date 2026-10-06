@@ -3,6 +3,8 @@ const persistedEvent = {
   client_key: "skyharbor-air",
   current_stage_key: "rfp",
   lifecycle_state: "active",
+  approval_policy_code: null as "legacy_signed_scope_v1" | "self_v1" | null,
+  created_by_user_id: "another-user" as string | null,
 };
 
 const updateStage = jest.fn(async () => ({ ok: true }));
@@ -72,8 +74,11 @@ jest.mock("@/lib/source/gate-advance-contract", () => ({
     ok: true,
     status: 200,
     readiness: { ok: true, blockers: [] },
-    bypassedGovernanceBlockers: [],
   })),
+}));
+
+jest.mock("@/lib/source/proposal-intelligence/scorecard-authority-store", () => ({
+  readSourceScorecardAuthorityRecords: jest.fn(async () => ({ kind: "unavailable" as const })),
 }));
 
 jest.mock("@/lib/source/stage-entry-autodraft", () => ({
@@ -123,20 +128,82 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 import { PATCH } from "../route";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
+import { readSourceScorecardAuthorityRecords } from "@/lib/source/proposal-intelligence/scorecard-authority-store";
+
+const readScorecard = jest.mocked(readSourceScorecardAuthorityRecords);
 
 const mockAutoDraftOnStageEntry = jest.mocked(autoDraftOnStageEntry);
 
 describe("PATCH /api/v1/source/[eventId]/stage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    readScorecard.mockResolvedValue({ kind: "unavailable" });
     criterionRows = [];
     persistedEvent.current_stage_key = "rfp";
+    persistedEvent.approval_policy_code = null;
+    persistedEvent.created_by_user_id = "another-user";
     jest.mocked(evaluateSourceGateAdvanceContract).mockImplementation(() => ({
       ok: true,
       status: 200,
       readiness: { ok: true, blockers: [] },
-      bypassedGovernanceBlockers: [],
+      }));
+  });
+
+  it("reads the tenant-scoped scorecard before Evaluation promotion and makes no write when unavailable", async () => {
+    persistedEvent.current_stage_key = "evaluation";
+    jest.mocked(evaluateSourceGateAdvanceContract).mockImplementationOnce((input) => ({
+      ok: false,
+      status: 503,
+      error: input.scorecardRecords?.kind === "unavailable" ? "scorecard_authority_unavailable" : "scorecard_not_read",
+      readiness: { ok: true, blockers: [] },
     }));
+    const response = await PATCH(new Request("https://app.abarva.ai/api/v1/source/event-1/stage", {
+      method: "PATCH",
+      body: JSON.stringify({ stageKey: "pricing", reason: "Evaluation review completed.", confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true } }),
+    }) as never, { params: Promise.resolve({ eventId: "event-1" }) });
+    expect(readScorecard).toHaveBeenCalledWith(persistedEvent.id, persistedEvent.client_key);
+    expect(response.status).toBe(503);
+    expect((await response.json()).error).toBe("scorecard_authority_unavailable");
+    expect(updateStage).not.toHaveBeenCalled();
+    expect(insertActivityLog).not.toHaveBeenCalled();
+  });
+
+  it("routes SELF stage decisions through the audited event approval endpoint", async () => {
+    persistedEvent.approval_policy_code = "self_v1";
+    const response = await PATCH(new Request("https://app.abarva.ai/api/v1/source/event-1/stage", {
+      method: "PATCH",
+      body: JSON.stringify({
+        stageKey: "responses",
+        reason: "Event Owner reviewed this stage and its evidence.",
+        selfApproveIfAuthorized: true,
+        confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true },
+      }),
+    }) as never, { params: Promise.resolve({ eventId: "event-1" }) });
+    expect(response.status).toBe(409);
+    expect((await response.json()).error).toBe("use_event_approval_route");
+    expect(evaluateSourceGateAdvanceContract).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
+  });
+
+  it("rejects a legacy strict-mode creator even when the caller omits the self flag", async () => {
+    const previous = process.env.GATE_APPROVAL_STRICT_MODE;
+    process.env.GATE_APPROVAL_STRICT_MODE = "true";
+    persistedEvent.created_by_user_id = "user-1";
+    try {
+      const response = await PATCH(new Request("https://app.abarva.ai/api/v1/source/event-1/stage", {
+        method: "PATCH",
+        body: JSON.stringify({
+          stageKey: "responses",
+          reason: "The stage evidence was reviewed by the creator.",
+          confirmations: { evidenceComplete: true, exclusionsReviewed: true, stageFinal: true },
+        }),
+      }) as never, { params: Promise.resolve({ eventId: "event-1" }) });
+      expect(response.status).toBe(403);
+      expect(updateStage).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.GATE_APPROVAL_STRICT_MODE;
+      else process.env.GATE_APPROVAL_STRICT_MODE = previous;
+    }
   });
 
   it("does not advance a strategy event with a pending hard criterion on self-approval", async () => {

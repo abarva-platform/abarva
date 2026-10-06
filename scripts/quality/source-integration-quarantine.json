@@ -7,6 +7,7 @@
     "stale-copy-assertions": "Suites asserting literal on-screen copy that has since changed, e.g. 'Capture the five basics' and 'Captured facts checklist'.",
     "unverified-remainder": "The remaining `toContain` / `toBe` / `toMatch` failures have not been clustered individually. They are counted, not explained, and saying so is more useful than implying a triage that has not happened."
   },
+  "scope": "src/__tests__/integration/source",
   "quarantined": [
     {
       "suite": "source-event-canvas-shell.test.ts",
@@ -80,6 +81,7 @@
       ]
     }
   ],
+  "alsoIgnoredScope": "src/__tests__/integration",
   "alsoIgnored": [],
   "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command — a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it can also match sibling files at the integration root whose names start with \"source\". That sweep-in is still how this list can acquire an entry, so the mechanism is kept here. The list is now EMPTY and the ceiling is 0: source-chat-shape.test.ts was the only entry, it was excluded for the Brief C vendor-shortlist shaping contract, and C-502 fixed the shaper so it passes. Both moved in the same change because the ratchet refuses headroom — clearing an entry without lowering the ceiling would have left room for the next exclusion to arrive unexamined.",
   "alsoIgnoredCeiling": 0

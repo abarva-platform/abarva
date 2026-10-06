@@ -2408,6 +2408,106 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 });
 
+describe("supplemental contract value lineage", () => {
+  const contract = {
+    contract_id: "CTR-SUPPLEMENTAL",
+    contract_name: "Supplemental renewal evidence",
+    vendor_ref: "VEN-SUPPLEMENTAL",
+    vendor_name: "Example Vendor",
+    annual_value: null,
+    resolved_annual_value: null,
+    actual_annual_spend: null,
+  };
+  const coverage = {
+    contract_id: "CTR-SUPPLEMENTAL",
+    vendor_ref: "VEN-SUPPLEMENTAL",
+    vendor_name: "Example Vendor",
+    committed_spend_usd: 6_600_000,
+    actual_spend_usd: 6_600_000,
+    candidate_amount_usd: 4_000_000,
+    spend_rows: 1,
+    scope_rows: 0,
+    performance_rows: 0,
+    opportunity_rows: 1,
+    document_page_text_rows: 0,
+  } as never;
+
+  it("keeps committed spend distinct from missing annual contract value in Story", () => {
+    const narrative = contractTabNarrative(
+      "Story",
+      { detailState: "ready", opportunityView: { opportunities: [] } } as never,
+      contract as never,
+      coverage,
+      [],
+      undefined,
+    );
+    const purpose = contractPurposeSummary(contract as never, coverage);
+
+    expect(narrative.headline).toContain("annual contract value is not established");
+    expect(narrative.headline).not.toContain("contract header is governed");
+    expect(narrative.body).toContain("$6.6M committed spend");
+    expect(narrative.body).not.toContain("$6.6M in annual value");
+    expect(purpose.evidence).toContain("$6.6M committed spend");
+    expect(purpose.evidence).not.toContain("$6.6M annual value");
+  });
+
+  it("does not rank supplemental spend or candidate amount as vendor annual value", () => {
+    const vendor = resolveSelectedVendor(
+      {
+        tenantKey: "tenant-a",
+        contracts: [],
+        impact: {
+          evidenceCoverage: [coverage],
+          actionCandidates: [{
+            contract_id: "CTR-SUPPLEMENTAL",
+            vendor_ref: "VEN-SUPPLEMENTAL",
+            vendor_name: "Example Vendor",
+            candidate_amount_usd: 4_000_000,
+          }],
+          claimCards: [],
+        },
+      } as never,
+      [],
+      "VEN-SUPPLEMENTAL",
+    );
+
+    expect(vendor).toMatchObject({
+      annual_value: null,
+      total_committed_value: null,
+    });
+  });
+
+  it("preserves a governed annual value without converting it to total commitment", () => {
+    const recordedContract = { ...contract, annual_value: 2_000_000 };
+    const vendor = resolveSelectedVendor(
+      {
+        tenantKey: "tenant-a",
+        contracts: [recordedContract],
+        impact: {
+          evidenceCoverage: [coverage],
+          actionCandidates: [],
+          claimCards: [],
+        },
+      } as never,
+      [],
+      "VEN-SUPPLEMENTAL",
+    );
+    const narrative = contractTabNarrative(
+      "Story",
+      { detailState: "ready", opportunityView: { opportunities: [] } } as never,
+      recordedContract as never,
+      coverage,
+      [],
+      undefined,
+    );
+
+    expect(vendor).toMatchObject({ annual_value: 2_000_000, total_committed_value: null });
+    expect(narrative.headline).toContain("spend is running above the recorded annual contract value");
+    expect(narrative.body).toContain("$2.0M in annual value");
+    expect(narrative.body).not.toContain("$6.6M in annual value");
+  });
+});
+
 /*
  * The scanner that the HYGIENE controls above now depend on, proved in both
  * directions. Without this block, `stripComments` is itself an unproved

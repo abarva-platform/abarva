@@ -92,6 +92,7 @@ import {
   getContractOptimizationOpportunitySet,
   listContract360,
 } from "@/lib/source/data-model/read-adapter";
+import { buildContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
 
 const mockRequireTenancy = jest.mocked(requireTenancy);
 const mockGetActiveClientRow = jest.mocked(getActiveClientRow);
@@ -101,6 +102,7 @@ const mockListContract360 = jest.mocked(listContract360);
 const mockGetContract360 = jest.mocked(getContract360);
 const mockGetOpportunitySet = jest.mocked(getContractOptimizationOpportunitySet);
 const mockGetEvidencePack = jest.mocked(getContractOptimizationEvidencePack);
+const mockBuildSpine = jest.mocked(buildContractOptimizationSpine);
 
 describe("Source Optimize Contract route financial access", () => {
   beforeEach(() => {
@@ -144,6 +146,121 @@ describe("Source Optimize Contract route financial access", () => {
         opportunitySet: null,
         evidencePack: null,
       }),
+    );
+  });
+});
+
+
+/**
+ * C-610. The Contract 360 `Open Optimize` affordance now hands a contract id to
+ * this route in a query parameter, so the route is where the handoff's tenant
+ * scoping has to hold. A parameter arrives from a URL and is therefore an
+ * attacker-controlled string, not a fact: these cases assert the id is
+ * re-resolved against the signed-in tenant's own register on every request, and
+ * that an id the tenant does not hold yields no contract and no downstream
+ * optimization read rather than a contract belonging to someone else.
+ *
+ * They live in this file rather than a new one because this suite already
+ * carries the route's mock harness and is already named by exact path in
+ * `.github/workflows/unit-suites.yml`. A new file would have needed its runner
+ * established first, and an unrun guard is the shape this backlog exists about.
+ */
+describe("Source Optimize Contract route contract-id scoping", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequireTenancy.mockResolvedValue({
+      userId: "user-1",
+      clientId: "client-skyharbor",
+      clientKey: "skyharbor_global",
+      role: "client_admin",
+    } as never);
+    mockGetActiveClientRow.mockResolvedValue({
+      id: "client-skyharbor",
+      key: "skyharbor_global",
+      name: "SkyHarbor Global",
+      industry_code: "AIRLINE",
+    } as never);
+    mockLoadUserSourceAccessPolicy.mockResolvedValue({
+      canViewFinancialData: true,
+    } as never);
+    mockBuildSpine.mockReturnValue({
+      selected: null,
+      candidates: [],
+      topCandidates: [],
+      sourceConnections: [],
+      missingEvidenceSources: [],
+      contractStory: [],
+      missingEvidenceStory: [],
+    } as never);
+  });
+
+  it("opens the journey on a contract the signed-in tenant's own register holds", async () => {
+    mockListContract360.mockResolvedValue([
+      { contract_id: "CTR-OWNED", contract_name: "Owned agreement" },
+    ] as never);
+    mockGetOpportunitySet.mockResolvedValue(null as never);
+    mockGetEvidencePack.mockResolvedValue(null as never);
+
+    await SourceOptimizeContractRoute({
+      searchParams: Promise.resolve({ contractId: "CTR-OWNED" }),
+    });
+
+    expect(mockListContract360).toHaveBeenCalledWith("skyharbor_global");
+    // Resolved from the tenant's own list, so no second read is needed.
+    expect(mockGetContract360).not.toHaveBeenCalled();
+    // Every downstream read is tenant-scoped, with the id from the query.
+    expect(mockGetOpportunitySet).toHaveBeenCalledWith(
+      "skyharbor_global",
+      "CTR-OWNED",
+      expect.objectContaining({ contract_id: "CTR-OWNED" }),
+    );
+    expect(mockGetEvidencePack).toHaveBeenCalledWith(
+      "skyharbor_global",
+      "CTR-OWNED",
+    );
+    expect(mockBuildSpine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contract: expect.objectContaining({ contract_id: "CTR-OWNED" }),
+      }),
+    );
+  });
+
+  it("resolves a contract id the tenant does not hold to nothing, and reads no optimization data for it", async () => {
+    // The tenant's register holds one contract, and it is not the one asked for.
+    mockListContract360.mockResolvedValue([
+      { contract_id: "CTR-OWNED", contract_name: "Owned agreement" },
+    ] as never);
+    // A tenant-scoped point read of another tenant's contract finds nothing.
+    mockGetContract360.mockResolvedValue(null as never);
+
+    await SourceOptimizeContractRoute({
+      searchParams: Promise.resolve({ contractId: "CTR-OTHER-TENANT" }),
+    });
+
+    // The id is re-resolved against this tenant, never trusted as given.
+    expect(mockGetContract360).toHaveBeenCalledWith(
+      "skyharbor_global",
+      "CTR-OTHER-TENANT",
+    );
+    expect(mockGetOpportunitySet).not.toHaveBeenCalled();
+    expect(mockGetEvidencePack).not.toHaveBeenCalled();
+    expect(mockBuildSpine).toHaveBeenCalledWith(
+      expect.objectContaining({ contract: null }),
+    );
+  });
+
+  it("opens the journey with no contract when the handoff carries no id", async () => {
+    mockListContract360.mockResolvedValue([] as never);
+
+    await SourceOptimizeContractRoute({
+      searchParams: Promise.resolve({}),
+    });
+
+    expect(mockGetContract360).not.toHaveBeenCalled();
+    expect(mockGetOpportunitySet).not.toHaveBeenCalled();
+    expect(mockGetEvidencePack).not.toHaveBeenCalled();
+    expect(mockBuildSpine).toHaveBeenCalledWith(
+      expect.objectContaining({ contract: null }),
     );
   });
 });

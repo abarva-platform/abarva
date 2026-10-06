@@ -1133,6 +1133,28 @@ export async function listSourceContractEvidenceCoverage(
   return rows.map(normalizeSourceContractEvidenceCoverageRow);
 }
 
+export async function getSourceContractEvidenceCoverage(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractEvidenceCoverageRow | null> {
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractEvidenceCoverageRow>(
+      tenantKey,
+      `SELECT *
+       FROM source.contract_evidence_coverage_v1
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      LIMIT 1`,
+      [contractId],
+    );
+  const row = rows[0];
+  return row &&
+    row.contract_id === contractId &&
+    tenantKeyAliases(tenantKey).includes(row.tenant_key)
+    ? normalizeSourceContractEvidenceCoverageRow(row)
+    : null;
+}
+
 export async function listSourceContractActionCandidates(
   tenantKey: string,
 ): Promise<SourceContractActionCandidateRow[]> {
@@ -1145,6 +1167,29 @@ export async function listSourceContractActionCandidates(
 	    ORDER BY candidate_amount_usd DESC NULLS LAST, action_candidate_id`,
     );
   return rows.map(normalizeSourceContractActionCandidateRow);
+}
+
+export async function getSourceContractActionCandidate(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractActionCandidateRow | null> {
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractActionCandidateRow>(
+      tenantKey,
+      `SELECT *
+       FROM source.contract_action_candidate_v1
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      ORDER BY candidate_amount_usd DESC NULLS LAST, action_candidate_id
+      LIMIT 1`,
+      [contractId],
+    );
+  const row = rows[0];
+  return row &&
+    row.contract_id === contractId &&
+    tenantKeyAliases(tenantKey).includes(row.tenant_key)
+    ? normalizeSourceContractActionCandidateRow(row)
+    : null;
 }
 
 export async function listSourceContractClaimCards(

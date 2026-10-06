@@ -1251,6 +1251,12 @@ export function WorkspaceExecutiveShell({
                 <ContractDetailLoadState
                   contractId={selectedContractId}
                   state={fetchedContractDetail}
+                  actionCandidate={portfolio.impact.actionCandidates.find(
+                    (candidate) => candidate.contract_id === selectedContractId,
+                  )}
+                  onReviewAction={(candidateId) =>
+                    setOpenActionCandidateId(candidateId)
+                  }
                 />
               )
             ) : (
@@ -1285,6 +1291,10 @@ export function WorkspaceExecutiveShell({
         </section>
         <SourceActionDrawer
           candidate={openActionCandidate}
+          contractDetailFailed={Boolean(
+            openActionCandidate &&
+              logic.state.contractDetail[openActionCandidate.contract_id] === "error",
+          )}
           coverage={
             openActionCandidate
               ? coverageForContract(portfolio, openActionCandidate.contract_id)
@@ -1410,12 +1420,14 @@ export function SourceCommandKpiStrip({
 
 function SourceActionDrawer({
   candidate,
+  contractDetailFailed,
   coverage,
   asOfDateIso,
   onClose,
   onOpenContract,
 }: {
   candidate: SourceContractActionCandidateRow | null;
+  contractDetailFailed: boolean;
   coverage: SourceContractEvidenceCoverageRow | null;
   asOfDateIso: string;
   onClose: () => void;
@@ -1489,16 +1501,20 @@ function SourceActionDrawer({
           </section>
         ) : null}
         <div className="sw-v2-action-drawer-foot">
-          <button
-            type="button"
-            className="sw-v2-primary"
-            onClick={() => {
-              onOpenContract(candidate.contract_id, "Optimize");
-              onClose();
-            }}
-          >
-            Open Contract 360
-          </button>
+          {contractDetailFailed ? (
+            <span>Contract detail unavailable</span>
+          ) : (
+            <button
+              type="button"
+              className="sw-v2-primary"
+              onClick={() => {
+                onOpenContract(candidate.contract_id, "Optimize");
+                onClose();
+              }}
+            >
+              Open Contract 360
+            </button>
+          )}
         </div>
       </aside>
     </div>
@@ -3291,9 +3307,13 @@ function ContractFinancialPostureTable({
 function ContractDetailLoadState({
   contractId,
   state,
+  actionCandidate,
+  onReviewAction,
 }: {
   contractId: string | null;
   state: Contract360Response | "loading" | "error" | undefined;
+  actionCandidate?: SourceContractActionCandidateRow;
+  onReviewAction: (candidateId: string) => void;
 }) {
   const failed = state === "error";
   return (
@@ -3313,6 +3333,17 @@ function ContractDetailLoadState({
           ? `Source could not load ${contractId ?? "the selected contract"}. No substitute contract is being shown.`
           : `Loading ${contractId ?? "the selected contract"} from the governed contract-detail service.`}
       </p>
+      {failed && actionCandidate ? (
+        <div>
+          <p>{actionCandidate.title ?? actionCandidate.finding_summary}</p>
+          <button
+            type="button"
+            onClick={() => onReviewAction(actionCandidate.action_candidate_id)}
+          >
+            Review action
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -3387,11 +3418,7 @@ function ContractPage({
 
   return (
     <div className="sw-v2-grid sw-v2-contract-detail-grid">
-      <ContractCaseThreadStrip
-        vm={vm}
-        onOpenOptimize={() => logic.select("contract", contract.contract_id, "Optimize")}
-        isOptimizeTab={tab === "Optimize"}
-      />
+      <ContractCaseThreadStrip vm={vm} isOptimizeTab={tab === "Optimize"} />
       <section
         className={`sw-v2-panel ${
           tab === "Optimize" ? "sw-v2-span-3" : "sw-v2-span-2"
@@ -3776,15 +3803,17 @@ export function contractPurposeSummary(
     .join(" ")
     .toLowerCase();
   const kind = contractPurposeKind(classificationText);
-  const annualValue =
-    contractBookAnnualValueForContract(contract) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
+  const committedSpend = numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
   const evidenceParts = [
     archetype ? `${archetype} archetype` : null,
     annualValue != null ? `${money(annualValue)} annual value` : null,
+    annualValue == null && committedSpend != null
+      ? `${money(committedSpend)} committed spend`
+      : null,
     actualSpend != null ? `${money(actualSpend)} observed spend` : null,
     positiveCount(numberFromDb(coverage?.scope_rows) ?? scopeRows.length)
       ? `${numberFromDb(coverage?.scope_rows) ?? scopeRows.length} scope rows`
@@ -4326,9 +4355,7 @@ function ContractStoryContextStack({
   scopeRows: readonly SourceContractApplicationScopeRow[];
   vm: SourceWorkspaceVM;
 }) {
-  const annualValue =
-    contractBookAnnualValueForContract(contract) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
@@ -5582,7 +5609,38 @@ function OptimizeActionQueue({
   );
 }
 
-function EvidencePage({
+/**
+ * Total one evidence lane across the loaded coverage rows.
+ *
+ * Null, not zero, when no coverage row was loaded at all: nothing was read, so
+ * the lane has no measured total and renders as a dash. A loaded lane that
+ * genuinely holds nothing still totals 0 and still prints 0.
+ *
+ * The distinction is carried by the absence of a coverage ROW, not by a null
+ * field on one. `SourceContractEvidenceCoverageRow` declares every lane as
+ * `readonly number`, and the only producer of `impact.evidenceCoverage`
+ * COALESCEs each lane to 0 in SQL, so a loaded lane never arrives as null —
+ * but the impact read yields an empty array when it returns nothing or throws,
+ * while the contract register is filled by a separate read. The register can
+ * therefore hold contracts with nothing loaded to look in.
+ *
+ * This is the rule `evidenceArchetypeRows` states for its "No evidence loaded"
+ * group and the one `Contract360Surfaces.laneCount` applies per contract; the
+ * posture panel used to drop it and keep the digit. `numberFromDb` stays in the
+ * sum because the lanes arrive from pg as `bigint` strings.
+ */
+function postureLaneTotal(
+  coverage: readonly SourceContractEvidenceCoverageRow[],
+  field: "spend_rows" | "performance_rows" | "document_page_text_rows",
+): number | null {
+  if (coverage.length === 0) return null;
+  return coverage.reduce(
+    (sum, row) => sum + (numberFromDb(row[field]) ?? 0),
+    0,
+  );
+}
+
+export function EvidencePage({
   portfolio,
   showLineage,
   onToggleLineage,
@@ -5747,30 +5805,16 @@ function EvidencePage({
           />
           <Fact
             label="Spend rows"
-            value={String(
-              coverage.reduce(
-                (sum, row) => sum + (numberFromDb(row.spend_rows) ?? 0),
-                0,
-              ),
-            )}
+            value={countOrDash(postureLaneTotal(coverage, "spend_rows"))}
           />
           <Fact
             label="Performance rows"
-            value={String(
-              coverage.reduce(
-                (sum, row) => sum + (numberFromDb(row.performance_rows) ?? 0),
-                0,
-              ),
-            )}
+            value={countOrDash(postureLaneTotal(coverage, "performance_rows"))}
           />
           <Fact
             label="Document page text"
-            value={String(
-              coverage.reduce(
-                (sum, row) =>
-                  sum + (numberFromDb(row.document_page_text_rows) ?? 0),
-                0,
-              ),
+            value={countOrDash(
+              postureLaneTotal(coverage, "document_page_text_rows"),
             )}
           />
           <Fact label="Finance confirmed" value="Not established" />
@@ -6666,8 +6710,7 @@ function vendorsWithImpactEvidence(
         vendor_category: existing.vendor_category ?? vendorCategory,
         contract_count: Math.max(existing.contract_count, contractRefs.length),
         annual_value: numberFromDb(existing.annual_value) ?? annualValue,
-        total_committed_value:
-          numberFromDb(existing.total_committed_value) ?? annualValue,
+        total_committed_value: numberFromDb(existing.total_committed_value),
         contract_refs: contractRefs,
         vendor_refs: uniqueRefs([
           existing.vendor_ref,
@@ -6684,7 +6727,7 @@ function vendorsWithImpactEvidence(
       vendor_category: vendorCategory,
       contract_count: contractRefs.length,
       annual_value: annualValue,
-      total_committed_value: annualValue,
+      total_committed_value: null,
       auto_renew_contracts: 0,
       next_end_date: null,
       contract_refs: contractRefs,
@@ -6694,10 +6737,7 @@ function vendorsWithImpactEvidence(
 
   for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
     const contract = contractsById.get(coverage.contract_id);
-    const annualValue =
-      contractBookAnnualValueForContract(contract) ??
-      numberFromDb(coverage.candidate_amount_usd) ??
-      numberFromDb(coverage.actual_spend_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: coverage.contract_id,
       vendorName: coverage.vendor_name || contract?.vendor_name || "",
@@ -6715,9 +6755,7 @@ function vendorsWithImpactEvidence(
 
   for (const action of portfolio.impact?.actionCandidates ?? []) {
     const contract = contractsById.get(action.contract_id);
-    const annualValue =
-      contractBookAnnualValueForContract(contract) ??
-      numberFromDb(action.candidate_amount_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: action.contract_id,
       vendorName: action.vendor_name || contract?.vendor_name || "",
@@ -6731,9 +6769,7 @@ function vendorsWithImpactEvidence(
 
   for (const claim of portfolio.impact?.claimCards ?? []) {
     const contract = contractsById.get(claim.contract_id);
-    const annualValue =
-      contractBookAnnualValueForContract(contract) ??
-      numberFromDb(claim.candidate_amount_usd);
+    const annualValue = contractBookAnnualValueForContract(contract);
     upsert({
       contractId: claim.contract_id,
       vendorName: claim.vendor_name || contract?.vendor_name || "",
@@ -7785,17 +7821,18 @@ function contractStoryHeadline(
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
-  const annualValue =
-    contractBookAnnualValueForContract(contract) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
   if (opportunityTotal > 0) {
     return `${vendor}: ${money(opportunityTotal)} of governed optimization levers are ready to work.`;
   }
   if (annualValue != null && actualSpend != null && annualValue > actualSpend) {
-    return `${vendor}: commitment is ahead of observed use.`;
+    return `${vendor}: annual contract value is above observed spend.`;
   }
   if (annualValue != null && actualSpend != null && actualSpend > annualValue) {
-    return `${vendor}: spend is running above the recorded commitment.`;
+    return `${vendor}: spend is running above the recorded annual contract value.`;
+  }
+  if (annualValue == null) {
+    return `${vendor}: annual contract value is not established; action depends on loaded evidence.`;
   }
   return `${vendor}: contract header is governed; action depends on loaded evidence.`;
 }
@@ -7806,9 +7843,8 @@ function contractStoryBody(
   scopeRows: readonly SourceContractApplicationScopeRow[],
   vm: SourceWorkspaceVM,
 ) {
-  const annualValue =
-    contractBookAnnualValueForContract(contract) ??
-    numberFromDb(coverage?.committed_spend_usd);
+  const annualValue = contractBookAnnualValueForContract(contract);
+  const committedSpend = numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
@@ -7817,7 +7853,12 @@ function contractStoryBody(
     ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
     : 0;
   const phrases = [
-    `${contract.contract_name} carries ${money(annualValue)} in annual value`,
+    annualValue != null
+      ? `${contract.contract_name} carries ${money(annualValue)} in annual value`
+      : `${contract.contract_name} has no established annual contract value`,
+    annualValue == null && committedSpend != null
+      ? `${money(committedSpend)} committed spend`
+      : null,
     actualSpend != null
       ? `${money(actualSpend)} of observed annual spend`
       : null,

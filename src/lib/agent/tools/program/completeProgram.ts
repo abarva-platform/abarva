@@ -33,7 +33,10 @@ export const completeProgramTool: AgentTool<CompleteProgramInput> = {
     type: 'object',
     properties: {
       program_id: { type: 'string', description: 'Engagement UUID.' },
-      completion_notes: { type: 'string', description: 'Optional closing notes to record.' },
+      completion_notes: {
+        type: 'string',
+        description: 'Optional closing notes to record.',
+      },
     },
     required: ['program_id'],
   },
@@ -57,16 +60,19 @@ export const completeProgramTool: AgentTool<CompleteProgramInput> = {
     // phase=6). Per the tool-registry fail-closed contract it must check
     // a capability — require gate-approval rights before the write.
     const completeProgramPolicy =
-      ctx.accessPolicy ?? (await loadUserProgramAccessPolicy(tenancy, {
+      ctx.accessPolicy ??
+      (await loadUserProgramAccessPolicy(tenancy, {
         programId: input.program_id,
       }).catch(() => null));
-    if (!completeProgramPolicy || completeProgramPolicy.canApproveGates !== true) {
+    if (
+      !completeProgramPolicy ||
+      completeProgramPolicy.canApproveGates !== true
+    ) {
       return {
         success: false,
         error: 'forbidden:can_approve_gates_required',
         recovery:
-          'Closing a program is a gate-level action that needs gate-approval rights. Ask a sponsor ' +
-          'or client admin to complete the P6 handoff, or to grant can_approve_gates.',
+          'Closing a program is a gate-level action. Ask an authorized workspace user with gate-approval rights to complete the P6 handoff, or ask a workspace administrator to grant can_approve_gates.',
       };
     }
 

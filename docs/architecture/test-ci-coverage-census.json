@@ -7,34 +7,137 @@
     "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
     "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
     "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
-    "governedRiskFiles reports each file in a ranked governed-risk directory: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, and untriaged means no command reaches it and no naming command quarantines it.",
+    "A quarantine is also read where it is expressed by ENUMERATION: a directory whose default is EXCLUDED names its files one by one, so a file left out is named by nothing and no ignore pattern subtracts it. Such a file is a declared quarantine when a scoped entry in a scripts/quality/*-quarantine.json names it; declaredQuarantineShape says which of the two shapes credited each file. Discovery is a glob over that directory and scope is declared in the list, because basenames are not unique in this tree: a list the census cannot resolve fails the run rather than being skipped.",
+    "governedRiskFiles reports each file in a ranked directory that carries a governed-risk signal — not every ranked directory, since C-555 admitted the unscored ones to the ranking and deliberately not to this list: enumerated means the census walked the tree and found the file, collected means a workflow-reachable command named it before ignore subtraction, covered means that command still reaches it after ignore subtraction, untriaged means no command reaches it and no quarantine declares it, and declaredQuarantineShape names which of the two quarantine shapes credited a file that is not untriaged.",
     "This census executes no test, so it publishes no pass or fail for any file: green is \"unknown\" for every row without exception, and run is false only where no reachable command selects the file — the one execution fact reachability settles — and \"unknown\" otherwise, because selection is not execution. A file that was never executed cannot appear as green.",
-    "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
+    "Every directory holding an UNTRIAGED unrun file is ranked, and admittedBy on each row says which path admitted it: governed_risk_signal for a non-zero governed-risk score, untriaged_unrun_work for a directory that matched no signal and would have been absent before C-555. Order is governed-surface risk first — declared AI controls, approval or lifecycle writes, then tenant-scoped reads — so every signalled directory precedes every zero and keeps the rank it had; the count of unrun files is a tie-breaker, and it is what orders the zero tier among itself. Admission raises no score and no band. A directory whose unrun set is entirely declared quarantine is still not ranked, because it has already been triaged.",
     "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
     "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
+    "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them. Since C-555 it is a view ON the ranking rather than the ranking's complement: a zero-score row is also a ranked row with admittedBy untriaged_unrun_work unless a triage verdict holds every untriaged file in it (T-773), and rankedDirectories against untriagedUnrunTestFiles is how far the work order reaches into its own pool. Since T-805 it also carries every row the ranking does not, whatever that row scored, so governedRiskRanking and unclassifiedRiskDirectories together name every directory in directoriesWithUntriagedUnrunTestFiles and none falls between them. A row here may therefore read band critical or high: that is a directory the ranking omits because a verdict holds its every untriaged file, not a reclassification of its risk, and the band on the row is how the two are told apart.",
+    "A triage verdict in a docs/architecture/*triage*.json record is read per file, the latest recordedAt winning (an undated record sorts first; on equal stamps the later record file wins). It never changes untriagedUnrunTestFiles, because a verdict runs nothing. It changes what the ranking ADMITS: an untriaged file whose latest verdict names owned residual work (wire_into_ci, repair, rewrite_as_behavior, update_with_reason_recorded, real, vacuous_control_proof, held_unwired, already_verdicted_elsewhere) is held out of the draw and listed in triageVerdicts.heldTestPaths with its verdict, record and owner, and a directory is ranked only while drawableUnrunTestFiles is above zero. drawableTestPaths on each ranked row names the files a draw may offer. A completion verdict (wired, rewritten_as_behavior_and_wired, already_selected_no_action, deleted_and_replaced) on a file the census measures as unrun is contradicted and stays drawable, as does a verdict word in neither list; both are listed. unclassifiedRiskDirectories is still drawn from the untriaged pool, so a directory whose every untriaged file is held appears there without a ranked row whatever its score (T-805), and its owed work stays readable in triageVerdicts.heldTestPaths rather than being admitted back into the draw.",
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2422,
-    "coveredTestFiles": 1971,
-    "pullRequestCoveredTestFiles": 1968,
-    "uncoveredTestFiles": 451,
-    "directoriesWithTests": 487,
-    "directoriesFullyCovered": 287,
-    "directoriesPartiallyCovered": 24,
-    "directoriesUncovered": 176,
-    "directoriesWithUnrunTestFiles": 200,
-    "directoriesWithUntriagedUnrunTestFiles": 190,
-    "declaredQuarantineTestFiles": 49,
-    "untriagedUnrunTestFiles": 402,
+    "testFiles": 2739,
+    "coveredTestFiles": 2575,
+    "pullRequestCoveredTestFiles": 2574,
+    "uncoveredTestFiles": 164,
+    "directoriesWithTests": 504,
+    "directoriesFullyCovered": 434,
+    "directoriesPartiallyCovered": 27,
+    "directoriesUncovered": 43,
+    "directoriesWithUnrunTestFiles": 70,
+    "directoriesWithUntriagedUnrunTestFiles": 59,
+    "declaredQuarantineTestFiles": 52,
+    "untriagedUnrunTestFiles": 112,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
-    "criticalGovernedRiskDirectories": 1,
-    "highGovernedRiskDirectories": 9,
-    "unclassifiedRiskDirectories": 180
+    "criticalGovernedRiskDirectories": 0,
+    "highGovernedRiskDirectories": 0,
+    "unclassifiedRiskDirectories": 59,
+    "rankedDirectories": 0,
+    "rankedUntriagedUnrunTestFiles": 0,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 53,
+    "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
+  "quarantineLists": [
+    {
+      "list": "scripts/quality/admin-integration-quarantine.json",
+      "declaredSuites": 2,
+      "resolvedTestFiles": [
+        "src/__tests__/integration/admin/admin-visible-vocabulary.test.ts",
+        "src/__tests__/integration/admin/admin7-visual-lock.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/integration-root-quarantine.json",
+      "declaredSuites": 0,
+      "resolvedTestFiles": [],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/intelligence-integration-quarantine.json",
+      "declaredSuites": 15,
+      "resolvedTestFiles": [
+        "src/__tests__/integration/intelligence/evidence-dataset-drawer.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-canvas-modes.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-i3.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-i4.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-i5.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-i7.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-library-foundation.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-pattern-detail-i2.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-route-shell-wiring.test.ts",
+        "src/__tests__/integration/intelligence/intelligence-workflow-canvas.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-active-patterns-page.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-evidence-brief.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-interaction-rail.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-pattern-content.test.ts",
+        "src/__tests__/integration/intelligence/sentinel-pattern-detail.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/intelligence-library-quarantine.json",
+      "declaredSuites": 5,
+      "resolvedTestFiles": [
+        "src/lib/intelligence/__tests__/ai-program-failure-modes.test.ts",
+        "src/lib/intelligence/__tests__/decision-route-mode.test.ts",
+        "src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts",
+        "src/lib/intelligence/__tests__/j0-failure-mode-cards.test.ts",
+        "src/lib/intelligence/__tests__/j1-topics.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/qa-integration-quarantine.json",
+      "declaredSuites": 1,
+      "resolvedTestFiles": [
+        "src/__tests__/integration/qa/wireframe-compliance-audit.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/source-ava-library-quarantine.json",
+      "declaredSuites": 1,
+      "resolvedTestFiles": [
+        "src/lib/source/ava/__tests__/export-answer-packet.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/source-integration-quarantine.json",
+      "declaredSuites": 8,
+      "resolvedTestFiles": [
+        "src/__tests__/integration/source/source-event-canvas-shell.test.ts",
+        "src/__tests__/integration/source/source-executive-decision-summary-panel.test.ts",
+        "src/__tests__/integration/source/source-originate-page.test.ts",
+        "src/__tests__/integration/source/source-rfp-readiness-panel.test.ts",
+        "src/__tests__/integration/source/source-scope-stage-workspace.test.ts",
+        "src/__tests__/integration/source/source-vendor-pricing-smoke.test.ts",
+        "src/__tests__/integration/source/source-vendor-response-completeness-panel.test.ts",
+        "src/__tests__/integration/source/source-vendor-selection-readiness-panel.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    },
+    {
+      "list": "scripts/quality/source-workspace-quarantine.json",
+      "declaredSuites": 3,
+      "resolvedTestFiles": [
+        "src/app/(maestro)/source/preview/workspace/__tests__/sourceFreshness.test.tsx",
+        "src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts",
+        "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts"
+      ],
+      "unresolvedDeclarations": []
+    }
+  ],
   "indeterminateInvocations": [],
   "mentionedInvocations": [
+    {
+      "source": "scripts/audit/ai-surface-control-cases.mjs",
+      "mention": "/** * Does the suite credited with a control still contain the case that proves it? * (item C-554) * * `scripts/audit/ai-surface-control-catalog.mjs` checks a declared behavioral * test hard — the path exists, the catalog workflow runs it, and the name * filter the workflow uses is the one the catalog declares. What it never did * was look inside the suite. Coverage was credited **per control kind** from a * **file**, so a suite named by four kinds earned four credits whatever it * actually exercised. * * Measured on `912a1c593c` before this existed: 10 test files carried 25 of the * 35 reachable credits, and the worst case was a 61-case general suite * (`src/components/agent/__tests__/AgentDock.test.tsx`) credited for two kinds. * Deleting the one case that proves one of them — * `renders the persistent AI responsibility footer`, the only proof of * `agent-dock-chat-turns/responsibility-footer` — left the suite green at 60 * cases and left the gate green at exit 0, still reporting that control covered * inside \"35 of 35 (100%)\". Nothing anywhere went red. That is the founding * defect of this whole programme in a new dress: a control proved by a name * rather than by something that runs. * * So each credited control now declares `provenCases`: the exact jest case * names that prove that kind, and this script reconciles them against the * suites themselves. * * ## Why jest's own output, and not a scan of the test file * * A case name is a runtime value. It can be built from a template literal, a * `describe.each` table, a loop variable, or a constant imported from another * module — four shapes a grep reads wrong in both directions, and one of them * (`describe.each`) is already used by the surfaces in this catalog. Reading * the names back from `jest --json` asks jest what it ran, which is the only * authority on the question, and it carries each case's **status** as well, so * a case that was renamed, deleted, skipped or marked `todo` is a failure * rather than a silence. * * All 23 credited suites run in one invocation in a few seconds, so this is a * single jest boot and not 23. */"
+    },
     {
       "source": "scripts/quality/admin-integration-ignore-args.mjs",
       "mention": "/** * Print the `--testPathIgnorePatterns` arguments for the Admin integration * directory, derived from admin-integration-quarantine.json. * * The workflow runs jest directly and names the directory literally: * * npx jest ... src/__tests__/integration/admin ... $(node scripts/quality/admin-integration-ignore-args.mjs) * * That shape is deliberate, and it is the same one source-integration.yml and * the Intelligence step already use. The \"Changed integration suites have a CI * owner\" gate counts a suite as registered only when a workflow command * mentions a test runner AND names the suite or a containing directory. Moving * the run behind a wrapper script satisfies neither, so wrapping it would leave * every new Admin integration suite failing that gate while the workflow * appeared to work. Only the flags come from here; the runner and the path stay * in the command where the gate can see them. */"
@@ -54,14 +157,22 @@
     {
       "source": "scripts/quality/source-integration-ignore-args.mjs",
       "mention": "/** * Print the `--testPathIgnorePatterns` arguments for the Source integration * workflow, derived from source-integration-quarantine.json. * * The workflow runs jest directly and names the suite directory literally: * * npx jest src/__tests__/integration/source ... $(node scripts/quality/source-integration-ignore-args.mjs) * * That shape is deliberate. The \"Changed integration suites have a CI owner\" * gate counts a suite as registered only when a workflow command mentions a * test runner AND names the suite or a containing directory. Moving the run * behind a wrapper script satisfies neither, so wrapping it would have left * every new Source integration suite failing that gate while the workflow * appeared to work. Only the flags come from here; the runner and the path * stay in the command where the gate can see them. * * Keeping the list in JSON rather than as a 24-line literal in the YAML means * it has one home, and the sibling checker can refuse it when it goes stale. */"
+    },
+    {
+      "source": "scripts/quality/test-ci-coverage-census.mjs",
+      "mention": "/** * A shell script has no tree, so position is the line: the runner has to sit * where the shell would execute it. A `#` comment is a comment — one of them * carrying `&& jest src/…` matched the command-position rule through the `&&`. */"
+    },
+    {
+      "source": "scripts/quality/test-ci-coverage-census.mjs",
+      "mention": "/** The runner at the head of a whole command line — `npx jest src/…`. */"
     }
   ],
   "unresolvedIgnoreArguments": [],
   "partiallyCoveredDirectories": [
     {
       "directory": "src/__tests__/integration/source",
-      "testFiles": 105,
-      "coveredTestFiles": 97,
+      "testFiles": 111,
+      "coveredTestFiles": 103,
       "declaredQuarantineTestFiles": 8,
       "untriagedUnrunTestFiles": 0,
       "via": [
@@ -74,16 +185,6 @@
       "coveredTestFiles": 45,
       "declaredQuarantineTestFiles": 2,
       "untriagedUnrunTestFiles": 0,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testFiles": 45,
-      "coveredTestFiles": 42,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
       "via": [
         "command"
       ]
@@ -111,13 +212,23 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 35,
-      "coveredTestFiles": 30,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
+      "testFiles": 37,
+      "coveredTestFiles": 34,
+      "declaredQuarantineTestFiles": 3,
+      "untriagedUnrunTestFiles": 0,
       "via": [
         "command",
         "script-file"
+      ]
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testFiles": 24,
+      "coveredTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 19,
+      "via": [
+        "command"
       ]
     },
     {
@@ -151,11 +262,21 @@
       ]
     },
     {
+      "directory": "src/__tests__/integration/ops",
+      "testFiles": 14,
+      "coveredTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 11,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/lib/enterprise-context/__tests__",
       "testFiles": 9,
-      "coveredTestFiles": 7,
+      "coveredTestFiles": 8,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
+      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]
@@ -171,9 +292,39 @@
       ]
     },
     {
-      "directory": "src/lib/source/new-workspace",
+      "directory": "src/__tests__/integration/agents",
+      "testFiles": 8,
+      "coveredTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 6,
       "coveredTestFiles": 5,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/intelligence/canonical",
+      "testFiles": 6,
+      "coveredTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/intelligence/synthesis/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "via": [
@@ -191,9 +342,9 @@
       ]
     },
     {
-      "directory": "src/lib/source/new-workspace/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 3,
+      "directory": "src/app/(maestro)/home/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
       "via": [
@@ -206,16 +357,6 @@
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/lib/eval/answer-quality/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
       "via": [
         "command"
       ]
@@ -233,9 +374,9 @@
     {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testFiles": 4,
-      "coveredTestFiles": 1,
+      "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
+      "untriagedUnrunTestFiles": 2,
       "via": [
         "command"
       ]
@@ -251,7 +392,7 @@
       ]
     },
     {
-      "directory": "src/app/(maestro)/source/__tests__",
+      "directory": "src/components/agent-answer/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
@@ -261,7 +402,7 @@
       ]
     },
     {
-      "directory": "src/components/source/new-workspace",
+      "directory": "src/components/context-broker/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
@@ -271,27 +412,27 @@
       ]
     },
     {
-      "directory": "src/lib/atlas",
+      "directory": "src/lib/shell/__tests__",
       "testFiles": 3,
-      "coveredTestFiles": 1,
+      "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
+      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]
     },
     {
-      "directory": "src/lib/observability/__tests__",
-      "testFiles": 3,
+      "directory": "src/components/__tests__",
+      "testFiles": 2,
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
+      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]
     },
     {
-      "directory": "src/lib/agent/quality/__tests__",
+      "directory": "src/lib/instruments/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
@@ -301,2933 +442,1660 @@
       ]
     }
   ],
-  "governedRiskFiles": [
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/admin-context-uploads-tabs.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/agent-column-agent-answer.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/app-rail-home-nav.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/app-topbar-prefetch-guard.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/atlas-ask-route.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/atlas-page-state-timeout.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/canonical-routes.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/composite-disclaimer-presence.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/deliverable-render-contract.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/demo-code-sign-in-panel.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/demo-code-sign-in-route.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/demo-p0-graceful-degradation.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/email-code-sign-in-panel.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/evidence-citation-resolution.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/evidence-registry.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/findings-harness.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/intelligence-chat-shape.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/intelligence-pattern-manifest.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/marketing-nav-dropdowns.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/pack-j-realistic-portfolio.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/pattern-deliverable-api.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/pattern-graph-validation.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/pattern-observation-pipeline.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/programs-api-contracts.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/programs-demo-beats.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/programs-enhancement-seed-planner.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/programs-enhancement-seed-writer.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/programs-enhancement-spec.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/programs-nexus-ask-route.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/programs-nexus-free-text.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/programs-quality-gates.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/seed-integrity-report.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/shell-topbar-auth.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/sign-in-route-contract.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/sign-in-shell.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/source-chat-shape.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/strategic-moves-chat-shape.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/supabase.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/tenant-empty-states.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/tenant-rescope-validation.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration",
-      "testPath": "src/__tests__/integration/tower-subsurface-stubs.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/avaComposerGate.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/compositionInvariants.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Briefing.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Economics.coverage.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contract360Ledes.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/Contract360Surfaces.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractAnatomy.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractDetailRetry.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractEvidenceFamilies.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/ContractLeverTable.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractOptimizeMethod.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractPerformanceCards.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractPopulations.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeGuard.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractPurposeProse.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/contractStoryDuplication.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "script-file"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "script-file"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/sourceFreshness.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/VendorCanvas.cockpit.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.browser.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.shell-behaviour.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspaceNavigation.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testPath": "src/app/(maestro)/source/preview/workspace/__tests__/workspaceUrlState.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 2
-      }
-    },
-    {
-      "directory": "src/lib/source/contract-evidence/__tests__",
-      "testPath": "src/lib/source/contract-evidence/__tests__/evidence-review.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 3
-      }
-    },
-    {
-      "directory": "src/lib/source/contract-evidence/__tests__",
-      "testPath": "src/lib/source/contract-evidence/__tests__/persistence.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 3
-      }
-    },
-    {
-      "directory": "src/lib/source/contract-evidence/__tests__",
-      "testPath": "src/lib/source/contract-evidence/__tests__/read-model.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 3
-      }
-    },
-    {
-      "directory": "src/lib/source/contract-evidence/__tests__",
-      "testPath": "src/lib/source/contract-evidence/__tests__/templates.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 3
-      }
-    },
-    {
-      "directory": "src/lib/__tests__",
-      "testPath": "src/lib/__tests__/active-client.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/__tests__",
-      "testPath": "src/lib/__tests__/client-config-canonical.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/__tests__",
-      "testPath": "src/lib/__tests__/control-plane-tenant-purity.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/__tests__",
-      "testPath": "src/lib/__tests__/supabase-server.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/chunking.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/client-enterprise-context-datasets.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/derived-enterprise-read.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/intelligence-read-model.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/meridian-ingestion-plan.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/meridian-refresh-simulator.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/meridian-synthetic-dataset.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/schema.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testPath": "src/lib/enterprise-context/__tests__/template-schema.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
-      "directory": "src/lib/source/contract-intelligence/__tests__",
-      "testPath": "src/lib/source/contract-intelligence/__tests__/cloud-adapter.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 6
-      }
-    },
-    {
-      "directory": "src/lib/source/contract-intelligence/__tests__",
-      "testPath": "src/lib/source/contract-intelligence/__tests__/education.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 6
-      }
-    },
-    {
-      "directory": "src/lib/source/contract-intelligence/__tests__",
-      "testPath": "src/lib/source/contract-intelligence/__tests__/prompt.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 6
-      }
-    },
-    {
-      "directory": "src/lib/source/contract-intelligence/__tests__",
-      "testPath": "src/lib/source/contract-intelligence/__tests__/provenance.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 6
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testPath": "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 7
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testPath": "src/app/(maestro)/source/__tests__/not-found-source.test.tsx",
-      "enumerated": true,
-      "collected": true,
-      "run": "unknown",
-      "green": "unknown",
-      "covered": true,
-      "pullRequestCovered": true,
-      "declaredQuarantine": false,
-      "untriaged": false,
-      "via": [
-        "command"
-      ],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 7
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testPath": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 7
-      }
-    },
-    {
-      "directory": "src/app/api/programs/synthesis/__tests__",
-      "testPath": "src/app/api/programs/synthesis/__tests__/route.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 8
-      }
-    },
-    {
-      "directory": "src/app/api/source/synthesis/__tests__",
-      "testPath": "src/app/api/source/synthesis/__tests__/route.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 9
-      }
-    },
-    {
-      "directory": "src/lib/source/nda/__tests__",
-      "testPath": "src/lib/source/nda/__tests__/nda-authority-repository.test.ts",
-      "enumerated": true,
-      "collected": false,
-      "run": false,
-      "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
-      "declaredQuarantine": false,
-      "untriaged": true,
-      "via": [],
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 10
-      }
-    }
-  ],
-  "governedRiskRanking": [
-    {
-      "directory": "src/__tests__/integration",
-      "testFiles": 45,
-      "unrunTestFiles": 3,
+  "governedRiskFiles": [],
+  "governedRiskRanking": [],
+  "triageVerdicts": {
+    "heldUntriagedUnrunTestFiles": 112,
+    "drawableUntriagedUnrunTestFiles": 0,
+    "heldByVerdict": {
+      "already_verdicted_elsewhere": 36,
+      "real": 1,
+      "repair": 11,
+      "rewrite_as_behavior": 9,
+      "update_with_reason_recorded": 10,
+      "vacuous_control_proof": 3,
+      "wire_into_ci": 42
+    },
+    "heldTestPaths": [
+      {
+        "testPath": "src/__tests__/guardrails/anthropic-only-reasoning.test.ts",
+        "verdict": "real",
+        "record": "docs/architecture/t758-zero-product-source-triage.json",
+        "recordedAt": "2026-09-24T12:48:05.000Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/__tests__/hygiene/admin-routes-resolve.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/__tests__/hygiene/canonical-paths.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-496"
+      },
+      {
+        "testPath": "src/__tests__/hygiene/duplicate-route-files.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/__tests__/hygiene/no-apex-literal-leak.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-495"
+      },
+      {
+        "testPath": "src/__tests__/integration/agents/agent-mission-queue.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-495"
+      },
+      {
+        "testPath": "src/__tests__/integration/agents/cross-agent-handoff.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/__tests__/integration/agents/mission-workflow-handoff.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-495"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/agent-dispatch-queue.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/build-run-retrospective.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/build-wave-progress.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/cherry-resolve-build-waves.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/cherry-resolve-helper.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/hygiene-gate-contract.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/lane-report-validator.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/pack-spec-validator.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/route-registry.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/stash-safety-check.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/__tests__/integration/ops/wave-runner-model.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-774"
+      },
+      {
+        "testPath": "src/app/(maestro)/admin/context-layer/__tests__/layout-source.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/t758-zero-product-source-triage.json",
+        "recordedAt": "2026-09-24T12:48:05.000Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/app/(maestro)/admin/context-layer/templates/__tests__/page-source.test.ts",
+        "verdict": "vacuous_control_proof",
+        "record": "docs/architecture/t758-zero-product-source-triage.json",
+        "recordedAt": "2026-09-24T12:48:05.000Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/app/(maestro)/admin/data-layer-explorer/__tests__/page-source.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t758-zero-product-source-triage.json",
+        "recordedAt": "2026-09-24T12:48:05.000Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-481"
+      },
+      {
+        "testPath": "src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-481"
+      },
+      {
+        "testPath": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-557"
+      },
+      {
+        "testPath": "src/app/api/chat/step/__tests__/route-boundary.test.ts",
+        "verdict": "vacuous_control_proof",
+        "record": "docs/architecture/t758-zero-product-source-triage.json",
+        "recordedAt": "2026-09-24T12:48:05.000Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/app/api/intelligence/query/__tests__/route-boundary.test.ts",
+        "verdict": "vacuous_control_proof",
+        "record": "docs/architecture/t758-zero-product-source-triage.json",
+        "recordedAt": "2026-09-24T12:48:05.000Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/components/__tests__/legacy-setup-links.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t786-abarvanav-render-triage.json",
+        "recordedAt": "2026-09-30T14:40:00Z",
+        "ownerItem": "T-786"
+      },
+      {
+        "testPath": "src/components/agent-answer/__tests__/AvaAsk.test.tsx",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t780-named-file-triage.json",
+        "recordedAt": "2026-09-30T09:35:15Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/components/context-broker/__tests__/FourModeDemoSurface.test.tsx",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t780-named-file-triage.json",
+        "recordedAt": "2026-09-30T09:35:15Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/components/evidence/__tests__/ProofPointFooter.test.tsx",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t799-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T22:37:45Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/components/tenant/__tests__/TenantIdentityStrip.test.tsx",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw15-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T01:49:59Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/__tests__/control-plane-tenant-purity.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-560"
+      },
+      {
+        "testPath": "src/lib/__tests__/supabase-server.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-557"
+      },
+      {
+        "testPath": "src/lib/admin/overview-data.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw15-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T01:49:59Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/adversarial/__tests__/adversarial-safety-harness.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw15-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T01:49:59Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/artifact-excellence/__tests__/cxo-artifact-excellence-framework.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t785-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T13:19:02Z",
+        "ownerItem": "T-787"
+      },
+      {
+        "testPath": "src/lib/artifact-excellence/__tests__/packet34-artifact-standards.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t785-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T13:19:02Z",
+        "ownerItem": "T-787"
+      },
+      {
+        "testPath": "src/lib/compliance/__tests__/ofac-screening.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw15-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T01:49:59Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/cxo-canvas/__tests__/cxo-canvas-renderer.test.tsx",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw15-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T01:49:59Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/deliverables/synthesis/__tests__/charter-shaper.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw15-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T01:49:59Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/enterprise-context/__tests__/derived-enterprise-read.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-757"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/candidate-version-build/__tests__/candidate-version-build.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/data-quality/__tests__/all-tenant-data-quality-audit.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/enterprise-profile/__tests__/enterprise-profile-foundation.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/module-context-serving/__tests__/module-context-serving.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/remediation/__tests__/skyharbor-applications-candidate-regeneration.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-data/tower-candidate-load/__tests__/tower-governed-candidate-load.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/enterprise-knowledge/tower/__tests__/tower-v3-context-pack-from-tenant-inputs.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/evidence/__tests__/ledger.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/instruments/__tests__/instrument-data-layer-migration.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t789-instruments-render-triage.json",
+        "recordedAt": "2026-09-30T21:20:00Z",
+        "ownerItem": "T-789"
+      },
+      {
+        "testPath": "src/lib/integrations/ai-egress/__tests__/ai-egress-migration.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-495"
+      },
+      {
+        "testPath": "src/lib/integrations/ai-egress/__tests__/ai-egress.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/integrations/ai-egress/__tests__/anthropic-key-lanes.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/integrations/ai-egress/__tests__/anthropic-prompt-cache.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/integrations/ai-egress/__tests__/tenant-client-resolver.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/integrations/ai-egress/__tests__/tenant-usage-cap-policy.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/advisory-packet/__tests__/advisory-packet.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/analytics/__tests__/portfolio.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/answer/evals/__tests__/harness.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/answer/evals/live-answer/__tests__/live-answer-bank.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-497"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/cio-backoffice-retirement.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/client-grounding-packet.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/companion-canvas.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/decision-table-gate.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/ecl-consultant-proof-answer.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/followups.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/industry-outlook-classification.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/moves-phase-name-sync.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/no-fabrication.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/portfolio-prioritization-mode.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/retired-fact-gate.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/sentinel-intel-360-eval.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/session-memory-contract-history.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/surface-context-domains.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/tenant-fence-answer.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/tenant-key-resolution.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/ask/__tests__/tenant-safety-policy.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/canonical/agent-grounding-disclosure.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/canonical/persistence-contract.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-495"
+      },
+      {
+        "testPath": "src/lib/intelligence/canonical/runtime-pattern-index.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/canonical/scoped-corpus-pattern-index.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      {
+        "testPath": "src/lib/intelligence/canvas/__tests__/governed-canvas-pack-registry.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw16-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T04:39:29Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/expert-pack/store.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw17-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T06:17:09Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/exposure/shared-engine-policy.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw17-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T06:17:09Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/intelligence/synthesis/__tests__/violationsMigration.test.ts",
+        "verdict": "rewrite_as_behavior",
+        "record": "docs/architecture/t493-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T13:54:40.745Z",
+        "ownerItem": "T-495"
+      },
+      {
+        "testPath": "src/lib/lakeshore/__tests__/corpus-activation.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t788-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T14:44:02Z",
+        "ownerItem": "T-790"
+      },
+      {
+        "testPath": "src/lib/lakeshore/__tests__/load-rehearsal.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/t788-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T14:44:02Z",
+        "ownerItem": "T-790"
+      },
+      {
+        "testPath": "src/lib/onboarding/__tests__/apex-p18-pack-ingestion.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw17-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T06:17:09Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/programs/mobilization/__tests__/mobilization-plan.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw17-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T06:17:09Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts",
+        "verdict": "repair",
+        "record": "docs/architecture/item26-draw17-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T06:17:09Z",
+        "ownerItem": "26"
+      },
+      {
+        "testPath": "src/lib/sentinel/__tests__/canonical-grounding.test.ts",
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t781-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T10:32:27Z",
+        "ownerItem": "T-783"
+      },
+      {
+        "testPath": "src/lib/sentinel/__tests__/orchestrator.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t781-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T10:32:27Z",
+        "ownerItem": "T-783"
+      },
+      {
+        "testPath": "src/lib/sentinel/__tests__/tense-guard-allowlist.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t781-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T10:32:27Z",
+        "ownerItem": "T-784"
+      },
+      {
+        "testPath": "src/lib/shell/__tests__/atrium-contract.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t784-shell-named-file-triage.json",
+        "recordedAt": "2026-09-30T12:24:00Z",
+        "ownerItem": "T-784"
+      },
+      {
+        "testPath": "src/lib/source/analytics/__tests__/source-analytics.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw17-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T06:17:09Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/source/contract-evidence/__tests__/persistence.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-755"
+      },
+      {
+        "testPath": "src/lib/source/contract-evidence/__tests__/read-model.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-754"
+      },
+      {
+        "testPath": "src/lib/source/contract-intelligence/__tests__/prompt.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-754"
+      },
+      {
+        "testPath": "src/lib/source/contract-intelligence/__tests__/provenance.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t771-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T19:10:49.000Z",
+        "ownerItem": "T-754"
+      },
+      {
+        "testPath": "src/lib/source/deliverables/__tests__/stage-deliverables.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw17-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T06:17:09Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/source/handoff/__tests__/source-to-move-handoff.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw18-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T08:37:48Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/source/negotiation/__tests__/negotiation-posture.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw18-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T08:37:48Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/source/proposal-normalization/__tests__/proposal-normalization.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw18-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T08:37:48Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/source/queue/__tests__/triage-banding.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/item26-draw18-stale-suite-triage.json",
+        "recordedAt": "2026-10-01T08:37:48Z",
+        "ownerItem": "T-775"
+      },
+      {
+        "testPath": "src/lib/source/vendor-proposals/__tests__/extract-vendor-proposal-facts.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "item 51"
+      },
+      {
+        "testPath": "src/lib/source/vendor-proposals/__tests__/governed-vendor-proposal-facts.test.ts",
+        "verdict": "already_verdicted_elsewhere",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "item 51"
+      },
+      {
+        "testPath": "src/lib/source/vendor-proposals/__tests__/tenant-scoped-session.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "item 51"
+      },
+      {
+        "testPath": "src/lib/source/vendor-proposals/__tests__/vendor-proposal-facts.test.ts",
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t779-stale-suite-triage.json",
+        "recordedAt": "2026-09-30T08:39:08Z",
+        "ownerItem": "item 51"
+      }
+    ],
+    "contradictedVerdicts": [],
+    "unrecognisedVerdicts": [],
+    "verdictsNamingNoFile": [
+      {
+        "testPath": "src/__tests__/hygiene/learn-layout-single-nav.test.ts",
+        "records": [
+          "docs/architecture/t492-stale-suite-triage.json",
+          "docs/architecture/t495-learn-shell-chrome-triage.json"
+        ]
+      },
+      {
+        "testPath": "src/__tests__/hygiene/shell-v2-mode-layout.test.ts",
+        "records": [
+          "docs/architecture/t492-stale-suite-triage.json",
+          "docs/architecture/t495-shell-v2-mode-layout-triage.json"
+        ]
+      },
+      {
+        "testPath": "src/__tests__/integration/app-rail-home-nav.test.ts",
+        "records": [
+          "docs/architecture/t509-stale-suite-triage.json"
+        ]
+      },
+      {
+        "testPath": "src/__tests__/integration/app-topbar-prefetch-guard.test.ts",
+        "records": [
+          "docs/architecture/t509-stale-suite-triage.json"
+        ]
+      },
+      {
+        "testPath": "src/__tests__/integration/ask-anything-bar-agent-answer.test.ts",
+        "records": [
+          "docs/architecture/t509-stale-suite-triage.json"
+        ]
+      },
+      {
+        "testPath": "src/__tests__/integration/learn-welcome-cxo-toggle.test.ts",
+        "records": [
+          "docs/architecture/t509-stale-suite-triage.json"
+        ]
+      },
+      {
+        "testPath": "src/__tests__/integration/shell-topbar-auth.test.ts",
+        "records": [
+          "docs/architecture/t509-stale-suite-triage.json"
+        ]
+      },
+      {
+        "testPath": "src/app/(maestro)/source/__tests__/not-found-source.test.ts",
+        "records": [
+          "docs/architecture/t550-stale-suite-triage.json"
+        ]
+      },
+      {
+        "testPath": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.ts",
+        "records": [
+          "docs/architecture/t550-stale-suite-triage.json"
+        ]
+      }
+    ],
+    "unreadableRecords": []
+  },
+  "unclassifiedRiskDirectories": [
+    {
+      "directory": "src/__tests__/guardrails",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
+      "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 1
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0
       }
     },
     {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 35,
-      "unrunTestFiles": 5,
+      "directory": "src/app/(maestro)/admin/context-layer/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/admin/context-layer/templates/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/admin/data-layer-explorer/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0
+      }
+    },
+    {
+      "directory": "src/app/api/chat/step/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0
+      }
+    },
+    {
+      "directory": "src/app/api/intelligence/query/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 0
+      }
+    },
+    {
+      "directory": "src/components/evidence/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/components/tenant/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/adversarial/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/compliance/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/candidate-version-build/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/data-quality/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
       "governedRisk": {
         "score": 10,
         "band": "high",
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 2
+        "productSourceCount": 1
       }
     },
     {
-      "directory": "src/lib/source/contract-evidence/__tests__",
+      "directory": "src/lib/enterprise-data/enterprise-profile/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/remediation/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-data/tower-candidate-load/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-knowledge/tower/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/canvas/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/exposure",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/onboarding/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/semantic-dossiers/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/source/analytics/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/lib/source/queue/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 1
+      }
+    },
+    {
+      "directory": "src/__tests__/hygiene",
       "testFiles": 4,
-      "unrunTestFiles": 3,
+      "unrunTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
+      "untriagedUnrunTestFiles": 4,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 3
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
-      "directory": "src/lib/__tests__",
-      "testFiles": 4,
+      "directory": "src/lib/artifact-excellence/__tests__",
+      "testFiles": 2,
       "unrunTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 4
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testFiles": 9,
-      "unrunTestFiles": 2,
+      "directory": "src/components/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
+      "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 5
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
-      "directory": "src/lib/source/contract-intelligence/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 6
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
+      "directory": "src/components/agent-answer/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 7
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
-      "directory": "src/app/api/programs/synthesis/__tests__",
+      "directory": "src/lib/cxo-canvas/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 8
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
-      "directory": "src/app/api/source/synthesis/__tests__",
+      "directory": "src/lib/enterprise-data/module-context-serving/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 9
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
-      "directory": "src/lib/source/nda/__tests__",
+      "directory": "src/lib/evidence/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 10
-      }
-    }
-  ],
-  "governedRiskEvidence": [
-    {
-      "directory": "src/__tests__/integration",
-      "testFiles": 45,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 1110,
-        "band": "critical",
-        "signals": [
-          "declared_ai_surface_control",
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "controlIds": [
-          "moves-phase-advance-route"
-        ],
-        "approvalOrLifecycleSourceCount": 4,
-        "approvalOrLifecycleSources": [
-          "src/app/api/v1/programs/[programId]/advance/route.ts",
-          "src/app/api/v1/programs/[programId]/approvals/[approvalId]/decide/route.ts",
-          "src/app/api/v1/programs/[programId]/approvals/route.ts",
-          "src/lib/programs/mutations.ts"
-        ],
-        "tenantScopedReadSourceCount": 30,
-        "tenantScopedReadSources": [
-          "src/app/(maestro)/source/value/page.tsx",
-          "src/app/api/v1/deliverables/[deliverableId]/patterns/route.ts",
-          "src/app/api/v1/patterns/[patternSlug]/deliverables/route.ts",
-          "src/app/api/v1/programs/[programId]/advance/route.ts",
-          "src/app/api/v1/programs/[programId]/approvals/[approvalId]/decide/route.ts"
-        ],
-        "rank": 1
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
-      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 35,
-      "unrunTestFiles": 5,
+      "directory": "src/lib/intelligence/answer/evals/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 5,
-        "tenantScopedReadSources": [
-          "src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts",
-          "src/app/api/source/workspace/contract/[contractId]/optimization/route.ts",
-          "src/app/api/source/workspace/contract/[contractId]/route.ts",
-          "src/lib/auth/tenancy.ts",
-          "src/lib/source/data-model/read-adapter.ts"
-        ],
-        "rank": 2
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
-      "directory": "src/lib/source/contract-evidence/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 3,
+      "directory": "src/lib/intelligence/expert-pack",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
       "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/source/contract-evidence/read-model.ts"
-        ],
-        "rank": 3
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
+      }
+    },
+    {
+      "directory": "src/lib/source/deliverables/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
+      }
+    },
+    {
+      "directory": "src/lib/source/handoff/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
+      }
+    },
+    {
+      "directory": "src/lib/source/negotiation/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
+      }
+    },
+    {
+      "directory": "src/lib/source/proposal-normalization/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 2
       }
     },
     {
       "directory": "src/lib/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
       "governedRisk": {
         "score": 10,
         "band": "high",
         "signals": [
           "tenant_scoped_read"
         ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/active-client.ts"
-        ],
-        "rank": 4
+        "productSourceCount": 3
       }
     },
     {
-      "directory": "src/lib/enterprise-context/__tests__",
-      "testFiles": 9,
+      "directory": "src/lib/lakeshore/__tests__",
+      "testFiles": 2,
       "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3
+      }
+    },
+    {
+      "directory": "src/lib/admin",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3
+      }
+    },
+    {
+      "directory": "src/lib/deliverables/synthesis/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3
+      }
+    },
+    {
+      "directory": "src/lib/instruments/__tests__",
+      "testFiles": 2,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/advisory-packet/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/analytics/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3
+      }
+    },
+    {
+      "directory": "src/lib/shell/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 3
+      }
+    },
+    {
+      "directory": "src/lib/source/vendor-proposals/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
       "governedRisk": {
         "score": 10,
         "band": "high",
         "signals": [
           "tenant_scoped_read"
         ],
-        "tenantScopedReadSourceCount": 2,
-        "tenantScopedReadSources": [
-          "src/lib/enterprise-context/derived-enterprise-read.ts",
-          "src/lib/enterprise-context/intelligence-read-model.ts"
+        "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/lib/sentinel/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 3,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 3,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
         ],
-        "rank": 5
+        "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/components/context-broker/__tests__",
+      "testFiles": 3,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/answer/evals/live-answer/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/synthesis/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/app/(maestro)/home/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 5
       }
     },
     {
       "directory": "src/lib/source/contract-intelligence/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/source/contract-intelligence/cloud-adapter.ts"
-        ],
-        "rank": 6
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/source/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 5,
-        "tenantScopedReadSources": [
-          "src/app/(maestro)/source/new/page.tsx",
-          "src/app/(maestro)/source/workspace/page.tsx",
-          "src/lib/source/intake/servicenow-sourcing-request-repository.ts",
-          "src/lib/source/queries.ts",
-          "src/lib/tenant/resolveTenant.ts"
-        ],
-        "rank": 7
-      }
-    },
-    {
-      "directory": "src/app/api/programs/synthesis/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/app/api/programs/synthesis/route.ts"
-        ],
-        "rank": 8
-      }
-    },
-    {
-      "directory": "src/app/api/source/synthesis/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/app/api/source/synthesis/route.ts"
-        ],
-        "rank": 9
-      }
-    },
-    {
-      "directory": "src/lib/source/nda/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/source/nda/nda-authority-repository.ts"
-        ],
-        "rank": 10
-      }
-    }
-  ],
-  "uncoveredDirectories": [
-    {
-      "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 23,
-      "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 23,
-      "via": []
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 5
+      }
+    },
+    {
+      "directory": "src/lib/programs/mobilization/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5
+      }
     },
     {
       "directory": "src/__tests__/integration/ops",
       "testFiles": 14,
-      "coveredTestFiles": 0,
+      "unrunTestFiles": 11,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 14,
-      "via": []
+      "untriagedUnrunTestFiles": 11,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7
+      }
     },
     {
-      "directory": "src/lib/visual-system/__tests__",
-      "testFiles": 10,
-      "coveredTestFiles": 0,
+      "directory": "src/lib/integrations/ai-egress/__tests__",
+      "testFiles": 6,
+      "unrunTestFiles": 6,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 10,
-      "via": []
+      "untriagedUnrunTestFiles": 6,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 7
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/canonical",
+      "testFiles": 6,
+      "unrunTestFiles": 4,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 4,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 8
+      }
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testFiles": 9,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 8
+      }
     },
     {
       "directory": "src/__tests__/integration/agents",
       "testFiles": 8,
-      "coveredTestFiles": 0,
+      "unrunTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 8,
-      "via": []
+      "untriagedUnrunTestFiles": 4,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 16
+      }
     },
     {
-      "directory": "src/lib/programs/ava-chat/__tests__",
-      "testFiles": 7,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 7,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/hygiene",
+      "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 6,
-      "coveredTestFiles": 0,
+      "unrunTestFiles": 1,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 18
+      }
     },
     {
-      "directory": "src/components/setup/__tests__",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testFiles": 24,
+      "unrunTestFiles": 19,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
-    },
-    {
-      "directory": "src/lib/atlas/iac/__tests__",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
-    },
+      "untriagedUnrunTestFiles": 19,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 27
+      }
+    }
+  ],
+  "governedRiskEvidence": [],
+  "uncoveredDirectories": [
     {
       "directory": "src/lib/integrations/ai-egress/__tests__",
       "testFiles": 6,
@@ -3237,167 +2105,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/intelligence/canonical",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/contracts/__tests__",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 6,
-      "via": []
-    },
-    {
-      "directory": "src/components/knowledge/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/components/programs/origination/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/lib/ava-answer/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/answer/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/ask/retrievers",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/synthesis/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/stage-readiness-workbooks/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/artifact-registry/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/door1/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/proposal-intelligence/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/scripts/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 5,
-      "via": []
-    },
-    {
-      "directory": "src/components/intelligence-advisory/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/agent/output-discipline",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/agent/voice-doctrine/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/attachments/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/deliverables/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/security/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/expert-judgment/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/reasoning/__tests__",
+      "directory": "src/__tests__/hygiene",
       "testFiles": 4,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -3413,54 +2121,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/workspace-explorer/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 4,
-      "via": []
-    },
-    {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/components/context-broker/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/components/programs/discovery/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/lib/atlas/composition/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/lib/atlas/initiative-deep/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
       "directory": "src/lib/sentinel/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 0,
@@ -3469,71 +2129,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/shell/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/renewal-cockpit/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 3,
-      "via": []
-    },
-    {
-      "directory": "src/components/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/components/source/learn/case-study/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/agent-grounding/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
       "directory": "src/lib/artifact-excellence/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/artifacts/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/ava-answer/export/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/instruments/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -3546,102 +2142,6 @@
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/patternops",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/deliverables/orchestrated/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/phase-success-package/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/playbook/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/source-trigger/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/suitability/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/setup/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/decision-queue/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/disclosure-flag/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/execution-room/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/pricing-submissions/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/features",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
       "via": []
     },
     {
@@ -3677,47 +2177,7 @@
       "via": []
     },
     {
-      "directory": "src/app/(maestro)/docs/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/app/api/chat/step/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/cron/board-pack/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/cron/notifications-tick/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/health/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/health/postgres-disruption/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -3733,70 +2193,6 @@
       "via": []
     },
     {
-      "directory": "src/app/api/knowledge/chunk/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/programs/expert-kernel/export/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/programs/synthesis/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/request-access/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/source/synthesis/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/webhooks/resend/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/ava-chat/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/chrome/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/components/evidence/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
@@ -3805,95 +2201,7 @@
       "via": []
     },
     {
-      "directory": "src/components/moves/living/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/navigation/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/programs/attachments/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/setup/loader/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/source/setup/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/strategic-moves/cost-effort/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/strategic-moves/risk-assessment/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/strategic-moves/solutioning/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/components/tenant/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/components/workspace-explorer/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/config/tenants/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/data/apexretail/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -3917,87 +2225,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/agent",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/agent/streaming",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/agents/sentinel-reasoning/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/ai/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/answer/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/atlas/initiative-deep/joins/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/azure-connectivity/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/compliance/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/context-trust/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/corpus/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/crawl/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -4013,22 +2241,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/cxo-intel/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/decisions/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/deliverables/synthesis/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
@@ -4037,31 +2249,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/dependencies/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/email/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/enterprise-data/candidate-version-build/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/enterprise-data/contracts/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -4109,14 +2297,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/enterprise-knowledge/assembler/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/enterprise-knowledge/tower/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
@@ -4126,14 +2306,6 @@
     },
     {
       "directory": "src/lib/evidence/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/features/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -4173,31 +2345,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/intelligence/ask",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/binding/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/intelligence/canvas/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/dossiers/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -4221,71 +2369,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/intelligence/insight-engine/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/onboarding/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/parallel-run/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/pilot-dashboard/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/architecture/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/controls/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/decomposition/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/evidence-readiness/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/learning-writeback/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -4301,71 +2385,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/programs/regulatory/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/taxonomy/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/tower-trigger/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/vendor-platform-intelligence/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/prompts/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/runtime/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/semantic-dossiers/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/semantic2/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/semantic2/dossiers/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -4381,22 +2401,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/source/classifier/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/context-writeback/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/source/deliverables/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
@@ -4405,63 +2409,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/source/delivery-model/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/documentation-standards/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/evidence-trace/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/exports/deal-pack/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
       "directory": "src/lib/source/handoff/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/industry-intelligence/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/mrm-screen/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/nda/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
@@ -4486,86 +2434,6 @@
     },
     {
       "directory": "src/lib/source/queue/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/should-cost/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/sourcing/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/stage-gate/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/stage-packs/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/taxonomy/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/telemetry/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/workforce-economics/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/lib/workshops/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/scripts/governance/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/scripts/qa/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
