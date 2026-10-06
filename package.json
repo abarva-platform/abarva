@@ -535,6 +535,7 @@
     "test:home-summary-snapshot": "jest src/lib/home/__tests__/home-summary-snapshot.test.ts --runInBand",
     "test:moves-context-extract": "jest src/lib/programs/__tests__/move-context-extract.test.ts src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts --runInBand",
     "test:moves:adaptive-e2e-kit": "node --test scripts/qa/__tests__/moves-adaptive-kit.test.mjs && node scripts/qa/validate-moves-adaptive-e2e-kit.mjs",
+    "test:moves:gdf-e2e-pack": "node --test scripts/qa/__tests__/moves-gdf-e2e-pack.test.mjs && node scripts/qa/validate-moves-gdf-e2e-pack.mjs",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
     "audit:architecture-rules:full": "node scripts/audit/architecture-rules.mjs --mode=full",
     "audit:architecture-rules:self-test": "node scripts/audit/architecture-rules.mjs --self-test",

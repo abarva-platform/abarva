@@ -309,7 +309,21 @@ export function resolveDiscoveryBlueprintFromConfiguredCatalog(
   };
 }
 
-function configuredBlueprintOrigin(
+/**
+ * Which set authored the entry behind a blueprint id: the shipped seed, a
+ * configured replacement of a shipped archetype, or a configured addition.
+ *
+ * Read off what the source reported as APPLIED, never by comparing an entry's
+ * values against the seed's. The two coincide today and stop coinciding the
+ * moment a source declares an entry identical to a shipped one, which a value
+ * comparison would call `seed` — the one reading that is wrong, since the
+ * firm's source is what is in force.
+ *
+ * Exported because the declaration surface asks the same question of a catalog
+ * entry that a resolution asks of its answer, and two derivations of "whose
+ * archetype is this" would drift.
+ */
+export function configuredBlueprintOrigin(
   blueprintId: string,
   applied: readonly string[],
 ): ConfiguredBlueprintOrigin {

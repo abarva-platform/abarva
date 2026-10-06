@@ -11,7 +11,7 @@ import {
 import { AppShell } from "@/components/shell/AppShell";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { listDiscoveryArchetypeOptions } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import { listEffectiveDiscoveryArchetypeOptions } from "@/lib/deliverables/orchestrator/briefs/archetype-declaration-surface";
 import { getOpenDraft } from "@/lib/programs/origination-drafts";
 import { normalizeDiscoveryArchetypeDeclaration } from "@/lib/programs/discovery/discovery-archetype-declaration";
 
@@ -162,7 +162,7 @@ export default async function StrategicMoveOriginatePage({
         discoveryIntakeEnabled={discoveryIntakeEnabled}
         extendedIntakeFieldsEnabled={extendedIntakeFieldsEnabled}
         businessSegmentOptions={businessSegmentOptions}
-        discoveryArchetypeOptions={listDiscoveryArchetypeOptions()}
+        discoveryArchetypeOptions={listEffectiveDiscoveryArchetypeOptions()}
         initialDiscoveryArchetypeId={initialDiscoveryArchetypeId}
       />
     </AppShell>
