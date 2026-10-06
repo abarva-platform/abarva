@@ -268,8 +268,26 @@ const RULES: ModeRule[] = [
   {
     mode: "workflow_how_to",
     id: "workflow_how_to.how_do_i",
+    /*
+     * A bare `how do i` was an alternative here and captured any question
+     * opening that way, including commercial ones: "how do i justify this
+     * renewal to finance", "how do i know this pricing is competitive", "how
+     * do i read the exit clause", "how do i compare this against what the plan
+     * side pays". All four were answered as product how-tos — the last of them
+     * a cross-segment vendor comparison answered as which button to press.
+     *
+     * The alternative was also redundant. A question about operating the
+     * product names a product verb or a place, which the two remaining
+     * alternatives already match: "how do i upload the signed NDA" still
+     * resolves here. A `how do i` naming neither is a commercial question, and
+     * its home is `general_advisory` — reached by falling through, which is
+     * what the no-match fallback is for.
+     *
+     * Removed rather than narrowed. This router is a keyword classifier and
+     * tightening one pattern with another pattern is what produced the
+     * over-capture; the fix is one fewer alternative, not a better one.
+     */
     test: (q) =>
-      /\bhow do i\b/.test(q) ||
       /\bhow (can|do) (i|we) (upload|submit|advance|approve|attach|provide|review|confirm)\b/.test(
         q,
       ) ||
