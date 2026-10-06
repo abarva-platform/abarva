@@ -1547,8 +1547,8 @@ export function SourceOriginatePage({
                     : "Record mapping review"}
               </button>
               <span style={REQUEST_REVIEW_HINT}>
-                Create event unlocks after this current source version is
-                recorded.
+                Event creation also requires an accepted intake decision for
+                this request version.
               </span>
             </div>
             {reviewSubmitState.status === "error" ? (
