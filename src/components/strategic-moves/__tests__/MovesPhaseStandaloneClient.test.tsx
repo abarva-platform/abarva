@@ -1256,6 +1256,194 @@ describe("MovesPhaseStandaloneClient", () => {
       ).not.toBeInTheDocument();
     });
 
+    // ─── P3's solution-option choice on the redesigned flow ───
+    // P3 cannot be approved until one assembled option is the chosen one: the
+    // build blocker is "Select the solution option that architecture should
+    // implement before Approve & Build", and the approval payload carries the
+    // chosen option forward into P4. The legacy canvas offers option cards; the
+    // redesigned flow offered no selector, so a P3 with every question answered
+    // was a dead end — the blocker named a control that was not on the page and
+    // the only way past it was a recommendation whose prose happened to name an
+    // option. These cases pin the chooser on both steps that need it and pin
+    // that choosing actually releases the build.
+    //
+    // The recommendation text here deliberately names no option, so the choice
+    // cannot come from inference.
+    const p3Answers = {
+      solution_approach: "Weighed three paths with the sponsor.",
+      operating_model: "Ops and data co-own the pilot.",
+      process_design: "One exception queue with human approval.",
+      controls_governance: "Human approval on anything customer-facing.",
+      architecture_integration: "Read-only integration over the event feed.",
+      evidence_confidence: "Medium-high operationally.",
+      recommendation: "Back the governed workflow path for P4 planning.",
+    };
+
+    function renderP3Capture() {
+      return render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+          initialPhaseCaptureValues={p3Answers}
+          move={makeMove({
+            currentPhase: 3,
+            phaseLabel: "P3 Design Future State",
+          })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+    }
+
+    it("P3 on the redesigned flow offers the solution-option choice beside the build control", () => {
+      renderP3Capture();
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      // A fully answered P3 resumes on the final step, which is where the
+      // blocker is stated — so the chooser has to be reachable from there.
+      expect(
+        screen.getByText(
+          /Select the solution option that architecture should implement/i,
+        ),
+      ).toBeInTheDocument();
+      const chooser = screen.getByTestId("solution-option-chooser");
+      expect(within(chooser).getAllByRole("radio").length).toBeGreaterThan(1);
+    });
+
+    it("P3 on the redesigned flow releases the build once an option is chosen", () => {
+      renderP3Capture();
+      expect(
+        screen.getByRole("button", {
+          name: /Complete phase inputs before build/i,
+        }),
+      ).toBeDisabled();
+      const chooser = screen.getByTestId("solution-option-chooser");
+      fireEvent.click(within(chooser).getAllByRole("radio")[0]);
+      expect(
+        screen.queryByRole("button", {
+          name: /Complete phase inputs before build/i,
+        }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: /Approve & Build P3 Design Future State/i,
+        }),
+      ).toBeEnabled();
+    });
+
+    // A choice can already be standing without anyone clicking here: a recorded
+    // gate approval names it, and failing that the recommendation text is read
+    // for it. The chooser has to show that one as chosen, or a reload would
+    // present an unmade decision and invite a second, different answer.
+    it("P3's chooser shows the option a standing recommendation already names", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+          initialPhaseCaptureValues={{
+            ...p3Answers,
+            recommendation:
+              "Choose Option B: governed recommendation workflow for P4 planning.",
+          }}
+          move={makeMove({
+            currentPhase: 3,
+            phaseLabel: "P3 Design Future State",
+          })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const chooser = screen.getByTestId("solution-option-chooser");
+      const radios = within(chooser).getAllByRole(
+        "radio",
+      ) as HTMLInputElement[];
+      const standing = radios.filter((radio) => radio.checked);
+      expect(standing.map((radio) => radio.value)).toEqual(["B"]);
+      // And it is not blocking the build, since a choice is standing.
+      expect(
+        screen.getByRole("button", {
+          name: /Approve & Build P3 Design Future State/i,
+        }),
+      ).toBeEnabled();
+    });
+
+    it("P3's recommendation question carries the same choice on its own step", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+          initialPhaseCaptureValues={{
+            ...p3Answers,
+            recommendation:
+              "Choose Option B: governed recommendation workflow for P4 planning.",
+          }}
+          move={makeMove({
+            currentPhase: 3,
+            phaseLabel: "P3 Design Future State",
+          })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Step 1 "The approach" holds solution_approach + recommendation.
+      fireEvent.click(screen.getByRole("button", { name: /The approach/i }));
+      expect(
+        screen.getByRole("textbox", { name: "Recommended approach" }),
+      ).toBeInTheDocument();
+      const chooser = screen.getByTestId("solution-option-chooser");
+      const radios = within(chooser).getAllByRole(
+        "radio",
+      ) as HTMLInputElement[];
+      expect(radios.length).toBeGreaterThan(1);
+      // The same standing choice, not a blank group beside the question.
+      expect(
+        radios.filter((radio) => radio.checked).map((radio) => radio.value),
+      ).toEqual(["B"]);
+    });
+
+    // P4 asks a `recommendation` question of its own, and its build control is
+    // the same one. Answered in full so the flow resumes on the step that holds
+    // that question — otherwise a mount that forgot to check the phase would
+    // still look correct here, because the question would be off-screen.
+    it("a phase other than P3 gets no solution-option choice", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={{
+            roadmap_sequencing:
+              "Three waves, starting with the exception queue.",
+            estimates_capacity: completeEstimateModelValue,
+            value_plan: "Measured against the P2 baseline at day 90.",
+            funding_governance: "Funded from the existing programme envelope.",
+            risks_dependencies: "Source freshness is the main dependency.",
+            handoff_plan: "Hands to the platform team with the runbook.",
+            recommendation: "Proceed to mobilisation on the agreed sequence.",
+          }}
+          move={makeMove({
+            currentPhase: 4,
+            phaseLabel: "P4 Roadmap & Business Case",
+          })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.getByRole("textbox", { name: "Recommendation to fund" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("solution-option-chooser"),
+      ).not.toBeInTheDocument();
+    });
+
     // ─── moves_capture_p0_v1: P0 Originate on the redesigned 3-step flow ───
     // The flow shipped mounted for phases 1-5 only, so P0 stayed on the legacy
     // finder-columns canvas. These cases pin BOTH halves of the two-flag gate
@@ -1907,10 +2095,9 @@ describe("MovesPhaseStandaloneClient", () => {
       );
 
       fireEvent.click(
-        within(screen.getByTestId("charter-basis-sponsor_commitment")).getByRole(
-          "radio",
-          { name: "I'm asserting this" },
-        ),
+        within(
+          screen.getByTestId("charter-basis-sponsor_commitment"),
+        ).getByRole("radio", { name: "I'm asserting this" }),
       );
       expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
 
@@ -2557,7 +2744,9 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.queryByTestId("charter-assumptions-carry-forward"),
       ).not.toBeInTheDocument();
       // and no "0 assumptions" consolation prize anywhere on the screen
-      expect(screen.queryByText(/still an assumption/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/still an assumption/i),
+      ).not.toBeInTheDocument();
     });
 
     it("moves_charter_assumptions_discover_v1 ON without moves_capture_v2: the legacy canvas grows no carry-forward band", () => {
@@ -3463,9 +3652,7 @@ describe("MovesPhaseStandaloneClient", () => {
       // the mocked row's met/total fields.
       expect(screen.getByText("Not yet submitted")).toBeInTheDocument();
       expect(screen.getAllByText("0 of 2 met").length).toBeGreaterThan(0);
-      expect(
-        within(overview).queryByText(/0\/2 met/),
-      ).not.toBeInTheDocument();
+      expect(within(overview).queryByText(/0\/2 met/)).not.toBeInTheDocument();
       // P4/P5 are "upcoming" -> Not reached.
       expect(screen.getAllByText("Not reached").length).toBe(2);
       expect(within(overview).queryByText("Sponsor")).not.toBeInTheDocument();
@@ -3844,7 +4031,9 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Open Tower →")).toBeInTheDocument();
     expect(
-      screen.getByText(/P5's gate has passed and the Move handed off to Tower/i),
+      screen.getByText(
+        /P5's gate has passed and the Move handed off to Tower/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen
@@ -5087,7 +5276,7 @@ describe("MovesPhaseStandaloneClient", () => {
         exampleContent: [],
         whyItMatters:
           "The business case and financial model need traceable cost and value assumptions before funding-grade estimates.",
-        guidanceBasis: 'generic',
+        guidanceBasis: "generic",
         blockedArtifacts: [
           {
             artifactType: "execution_roadmap",
@@ -5130,10 +5319,10 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getAllByText("Cost baseline").length).toBeGreaterThan(0);
     expect(screen.getByText(/Format: CSV, XLSX/i)).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.getAllByText(
         /traceable cost and value assumptions before funding-grade estimates/i,
-      ),
-    ).toBeInTheDocument();
+      ).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(
         "Suggested working sessions for P4 Roadmap & Business Case",
@@ -6325,7 +6514,7 @@ describe("MovesPhaseStandaloneClient", () => {
             exampleContent: [],
             whyItMatters:
               "The design lane needs real architecture constraints.",
-            guidanceBasis: 'generic',
+            guidanceBasis: "generic",
             blockedArtifacts: [],
             canDraftBoundary: {
               canDraft: false,
@@ -6368,11 +6557,17 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/1 required evidence item open/i),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/1 required evidence item open/i));
     expect(
-      screen.getByText(
-        /This phase build is unavailable until these required evidence items are reviewed and covered/i,
-      ),
+      screen.getByText("Solution architecture constraints"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("Upload the architecture constraints memo."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Likely source owner: Client owner \/ evidence steward/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Accepted formats: DOCX")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
         name: /Approve & Build P3 Design Future State/i,
