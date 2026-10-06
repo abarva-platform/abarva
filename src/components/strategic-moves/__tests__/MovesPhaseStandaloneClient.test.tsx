@@ -5319,10 +5319,10 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getAllByText("Cost baseline").length).toBeGreaterThan(0);
     expect(screen.getByText(/Format: CSV, XLSX/i)).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.getAllByText(
         /traceable cost and value assumptions before funding-grade estimates/i,
-      ),
-    ).toBeInTheDocument();
+      ).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(
         "Suggested working sessions for P4 Roadmap & Business Case",
@@ -6557,11 +6557,17 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/1 required evidence item open/i),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/1 required evidence item open/i));
     expect(
-      screen.getByText(
-        /This phase build is unavailable until these required evidence items are reviewed and covered/i,
-      ),
+      screen.getByText("Solution architecture constraints"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("Upload the architecture constraints memo."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Likely source owner: Client owner \/ evidence steward/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Accepted formats: DOCX")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
         name: /Approve & Build P3 Design Future State/i,
