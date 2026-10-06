@@ -354,6 +354,7 @@ function coveredEvidencePacketsForPhase(
       exampleTemplate: "Phase evidence package",
       exampleContent: [],
       whyItMatters: "The phase decision must be grounded in reviewed evidence.",
+      guidanceBasis: "generic",
       blockedArtifacts: [],
       canDraftBoundary: {
         canDraft: false,
@@ -4959,6 +4960,7 @@ describe("MovesPhaseStandaloneClient", () => {
         exampleContent: [],
         whyItMatters:
           "The business case and financial model need traceable cost and value assumptions before funding-grade estimates.",
+        guidanceBasis: 'generic',
         blockedArtifacts: [
           {
             artifactType: "execution_roadmap",
@@ -5027,6 +5029,7 @@ describe("MovesPhaseStandaloneClient", () => {
         exampleTemplate: "Workflow evidence",
         exampleContent: [],
         whyItMatters: "The target state needs an approved current-state basis.",
+        guidanceBasis: "generic",
         blockedArtifacts: [],
         canDraftBoundary: {
           canDraft: false,
@@ -5078,6 +5081,7 @@ describe("MovesPhaseStandaloneClient", () => {
       exampleTemplate: "Workflow evidence",
       exampleContent: [],
       whyItMatters: "The target design needs an evidence-backed current state.",
+      guidanceBasis: "generic",
       blockedArtifacts: [],
       canDraftBoundary: {
         canDraft: false,
@@ -6194,6 +6198,7 @@ describe("MovesPhaseStandaloneClient", () => {
             exampleContent: [],
             whyItMatters:
               "The design lane needs real architecture constraints.",
+            guidanceBasis: 'generic',
             blockedArtifacts: [],
             canDraftBoundary: {
               canDraft: false,
@@ -7591,6 +7596,7 @@ describe("MovesPhaseStandaloneClient", () => {
               exampleTemplate: "Systems landscape extract",
               exampleContent: [],
               whyItMatters: "P3 solution options need the real systems map.",
+              guidanceBasis: "generic",
               blockedArtifacts: [
                 {
                   artifactType: "solution_options",
