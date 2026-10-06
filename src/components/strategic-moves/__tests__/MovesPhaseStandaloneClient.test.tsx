@@ -1207,6 +1207,55 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    // ─── the structured `facts` question on the redesigned flow ───
+    // P2's "Baseline metrics" is a required capture section whose input is
+    // structured (`structured: "facts"`). Every other structured section —
+    // business change, solution route, estimate model — reaches the flow as an
+    // editor with an onChange; facts reached it as a read-only table, so the
+    // required question had no writable input at all and P2 capture could never
+    // complete. These cases pin that it is writable, and that the value the
+    // host would store is the facts contract's own form.
+    it("P2 on the redesigned flow renders the structured baseline question as a writable editor", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      const editor = screen.getByTestId("diagnosis-facts-editor");
+      expect(editor).toBeInTheDocument();
+      const metric = within(editor).getByLabelText(
+        /metric, row 1$/,
+      ) as HTMLInputElement;
+      expect(metric).toBeEnabled();
+      fireEvent.change(metric, { target: { value: "Intake cycle time" } });
+      expect(metric.value).toBe("Intake cycle time");
+    });
+
+    it("P2 on the redesigned flow does not render the baseline question read-only", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // The read-only table's own empty state is what the question used to show.
+      expect(
+        screen.queryByText("No baseline metrics captured yet."),
+      ).not.toBeInTheDocument();
+    });
+
     // ─── moves_capture_p0_v1: P0 Originate on the redesigned 3-step flow ───
     // The flow shipped mounted for phases 1-5 only, so P0 stayed on the legacy
     // finder-columns canvas. These cases pin BOTH halves of the two-flag gate
