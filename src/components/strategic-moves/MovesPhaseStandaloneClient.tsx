@@ -42,6 +42,7 @@ import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntell
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
 import { DiagnosisFactsEditor } from "@/components/strategic-moves/DiagnosisFactsEditor";
+import { SolutionOptionChooser } from "@/components/strategic-moves/SolutionOptionChooser";
 import {
   MovesCaptureFlow,
   type MovesCaptureFlowPhase,
@@ -1288,8 +1289,10 @@ export function MovesPhaseStandaloneClient({
   const [charterBasisSaveError, setCharterBasisSaveError] = useState<
     Record<string, string>
   >({});
-  const [charterBasisSavePendingBySection, setCharterBasisSavePendingBySection] =
-    useState<Record<string, boolean>>({});
+  const [
+    charterBasisSavePendingBySection,
+    setCharterBasisSavePendingBySection,
+  ] = useState<Record<string, boolean>>({});
 
   const captureBasisForSection = useCallback(
     (sectionKey: string) => {
@@ -2467,6 +2470,20 @@ export function MovesPhaseStandaloneClient({
   // slot below so they keep working unchanged.
   const captureSectionInput = (section: PhaseCaptureSection): ReactNode => {
     const value = displayPhaseCaptureValues[section.key] ?? "";
+    // P3's build blocker asks for the solution option architecture should
+    // implement. The legacy canvas offers that choice as option cards; the
+    // redesigned flow rendered none, so the blocker named a control that was
+    // not on the page and a fully answered P3 could not be approved. The
+    // chooser belongs with "the one you'd back" — the recommendation question —
+    // and reports through the SAME `selectP3Option` the cards use.
+    const routeChoice =
+      phase.phase === 3 && section.key === "recommendation" ? (
+        <SolutionOptionChooser
+          options={p3OptionSet.options}
+          selectedOptionId={effectiveSelectedOption}
+          onSelect={selectP3Option}
+        />
+      ) : null;
     const input =
       section.structured === "facts" ? (
         <DiagnosisFactsEditor
@@ -2509,9 +2526,19 @@ export function MovesPhaseStandaloneClient({
     // "Filled by aVa · review"). Propose → human inserts/dismisses; nothing
     // is written until the person acts.
     const proposal = avaDraftProposalsByKey.get(section.key);
-    if (!proposal) return input;
+    if (!proposal) {
+      return routeChoice ? (
+        <>
+          {routeChoice}
+          {input}
+        </>
+      ) : (
+        input
+      );
+    }
     return (
       <>
+        {routeChoice}
         <div className="mcf-ava-draft" data-testid={`ava-draft-${section.key}`}>
           <div className="mcf-ava-draft-head">
             <span className="mcf-ava-badge">aVa draft · review</span>
@@ -2901,26 +2928,41 @@ export function MovesPhaseStandaloneClient({
     )
   ) : phase.phase >= 1 && phase.phase <= 5 ? (
     canApproveGates ? (
-      <PhaseApproveAndBuild
-        archetype={move.archetype}
-        approverLabel={approverLabel}
-        clientDisplayName={move.tenant.name}
-        disabledReason={phaseCaptureBlocker}
-        deliverableKeys={phaseCanonicalKeysForRoute(
-          phase.phase,
-          confirmedSolutionRoute,
-        )}
-        evidenceNeedPackets={evidenceNeedPackets}
-        inputCount={phaseCaptureCompleteCount}
-        initialArtifacts={visiblePhaseBuildArtifacts}
-        moveId={move.id}
-        moveName={displayMoveName}
-        onBeforeBuild={finalizePhaseCapture}
-        onBuildSettled={approvePhaseGateAfterBuild}
-        blockOnEvidenceGaps
-        phaseLabel={`${phase.code} ${phase.title}`}
-        phaseNum={phase.phase}
-      />
+      <>
+        {/* P3's build blocker is "select the solution option ..." and it is
+            stated right here, on the final step. The chooser is rendered
+            beside it so the stated blocker is actionable without navigating
+            back to the recommendation question. Only one step renders at a
+            time, so this and the step-1 copy are never both on screen; they
+            share the radio-group name and read the same standing choice. */}
+        {phase.phase === 3 ? (
+          <SolutionOptionChooser
+            options={p3OptionSet.options}
+            selectedOptionId={effectiveSelectedOption}
+            onSelect={selectP3Option}
+          />
+        ) : null}
+        <PhaseApproveAndBuild
+          archetype={move.archetype}
+          approverLabel={approverLabel}
+          clientDisplayName={move.tenant.name}
+          disabledReason={phaseCaptureBlocker}
+          deliverableKeys={phaseCanonicalKeysForRoute(
+            phase.phase,
+            confirmedSolutionRoute,
+          )}
+          evidenceNeedPackets={evidenceNeedPackets}
+          inputCount={phaseCaptureCompleteCount}
+          initialArtifacts={visiblePhaseBuildArtifacts}
+          moveId={move.id}
+          moveName={displayMoveName}
+          onBeforeBuild={finalizePhaseCapture}
+          onBuildSettled={approvePhaseGateAfterBuild}
+          blockOnEvidenceGaps
+          phaseLabel={`${phase.code} ${phase.title}`}
+          phaseNum={phase.phase}
+        />
+      </>
     ) : (
       <span className="mcf-gate-note">
         Approval is available to an authorized workspace user.
@@ -4197,16 +4239,15 @@ function phaseCaptureStatusForSection(
   }
   const basisSatisfied = Boolean(
     p1Basis &&
-      !p1Basis.savePending &&
-      !p1Basis.saveFailed &&
-      (p1Basis.value?.kind !== "assumption" ||
-        (p1Basis.value.owner.trim() &&
-          p1Basis.value.p2ValidationPlan.trim())) &&
-      isP1CharterBasisValidForSection({
-        sectionKey: section.key,
-        basis: p1Basis.value,
-        approvedEvidence: p1Basis.approvedEvidence,
-      }),
+    !p1Basis.savePending &&
+    !p1Basis.saveFailed &&
+    (p1Basis.value?.kind !== "assumption" ||
+      (p1Basis.value.owner.trim() && p1Basis.value.p2ValidationPlan.trim())) &&
+    isP1CharterBasisValidForSection({
+      sectionKey: section.key,
+      basis: p1Basis.value,
+      approvedEvidence: p1Basis.approvedEvidence,
+    }),
   );
   if (p1Basis && !basisSatisfied) {
     return { label: "Basis open", complete: false, tone: "open" };
@@ -5956,13 +5997,13 @@ function PhaseBody({
       `${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}`,
     ) ??
     (isGateBlocked
-        ? !evidenceReadinessAvailable
-          ? "Evidence readiness could not be verified. Refresh this phase before approval."
-          : openRequiredEvidence.length > 0
-            ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
-            : (phaseCaptureBlocker ??
-              `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
-        : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.");
+      ? !evidenceReadinessAvailable
+        ? "Evidence readiness could not be verified. Refresh this phase before approval."
+        : openRequiredEvidence.length > 0
+          ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
+          : (phaseCaptureBlocker ??
+            `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
+      : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.");
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
       ? "complete"
@@ -6354,8 +6395,7 @@ function PhaseBody({
         {isHistoricalPhase ? (
           <div className="mxw-approved">
             <strong>
-              ✓{" "}
-              {phaseApprovalCompletionHeadline(approvalStanding, phase.code)}
+              ✓ {phaseApprovalCompletionHeadline(approvalStanding, phase.code)}
             </strong>
             <span>
               {terminalComplete
@@ -9688,6 +9728,22 @@ function MovesStandaloneStyles() {
 .mxw-facts-editor-remove{width:28px;height:32px;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#5b6c8a;font-size:15px;line-height:1;cursor:pointer}
 .mxw-facts-editor-remove:hover:not(:disabled){background:#f1f3f8;color:#0c1a3a}
 .mxw-facts-editor-remove:disabled{opacity:.4;cursor:default}
+.mxw-route-choice{display:block;width:100%;margin:0 0 12px;padding:10px 12px 12px;border:1px solid rgba(12,26,58,.14);border-radius:10px;background:#f8fafd;min-width:0}
+.mxw-route-choice-legend{padding:0 4px;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5b6c8a;font-weight:800}
+.mxw-route-choice-note{margin:2px 0 8px;font-size:12px;line-height:1.45;color:#5b6c8a}
+.mxw-route-choice-empty{margin:2px 0 0;font-size:12px;line-height:1.45;color:#8a3b3b}
+.mxw-route-choice-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mxw-route-choice-option{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:1px solid rgba(12,26,58,.16);border-radius:8px;background:#fff;cursor:pointer}
+.mxw-route-choice-option:hover{border-color:rgba(42,90,168,.45)}
+.mxw-route-choice-option.is-chosen{border-color:rgba(42,90,168,.65);box-shadow:inset 0 0 0 1px rgba(42,90,168,.35);background:#f3f7fe}
+.mxw-route-choice-option input{margin:3px 0 0;flex:0 0 auto}
+.mxw-route-choice-body{display:grid;gap:3px;min-width:0}
+.mxw-route-choice-head{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}
+.mxw-route-choice-head b{font-size:13px;line-height:1.35;color:#0c1a3a;font-weight:800}
+.mxw-route-choice-rec{font-size:11px;font-style:normal;font-weight:800;color:#1f6b45;background:rgba(31,107,69,.1);border-radius:999px;padding:1px 7px}
+.mxw-route-choice-body small{font-size:12px;line-height:1.45;color:#44557a}
+.mxw-route-choice-meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:1px}
+.mxw-route-choice-meta i{font-style:normal;font-size:11px;color:#5b6c8a;font-weight:700}
 .mxw-facts-editor-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .mxw-facts-editor-actions{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px}
 .mxw-facts-editor-add{border:1px dashed rgba(12,26,58,.28);border-radius:8px;background:#fff;color:#2a5aa8;font:inherit;font-size:12px;font-weight:700;padding:7px 11px;cursor:pointer}
