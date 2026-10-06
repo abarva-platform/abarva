@@ -423,6 +423,10 @@ const MOVES_ROADMAP: DeliverableStructure = {
 const MOVES_DISCOVERY: DeliverableStructure = {
   module: "moves",
   deliverableType: "discovery_report",
+  // Maturity scoring against a benchmark and the use-case gaps are findings
+  // about the client; the readiness implications and the recommendation are
+  // judgment over them. `current_state` is also a landing site by spelling.
+  archetypeEvidenceSectionKeys: ["maturity_gaps"],
   purpose:
     "Report discovery findings — maturity, gaps, readiness — to frame the move.",
   decisionToSupport: "Agree the diagnosis and the priority gaps to address.",
@@ -1094,6 +1098,11 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
 const MOVES_REQUIREMENTS_TRACEABILITY: DeliverableStructure = {
   module: "moves",
   deliverableType: "requirements_traceability",
+  // The trace matrix maps requirements to the evidence that supports them, and
+  // the gaps section states which of that evidence is still unresolved — both
+  // need the archetype's families named. The verdict and the next actions are
+  // judgment. `requirements_baseline` is also a landing site by spelling.
+  archetypeEvidenceSectionKeys: ["evidence_design_trace", "gaps_controls"],
   purpose:
     "Prove that approved requirements, evidence, design choices, controls, and open decisions remain traceable before the design gate closes.",
   decisionToSupport:
@@ -1317,6 +1326,11 @@ const MOVES_ESTIMATE: DeliverableStructure = {
 const MOVES_VALUE: DeliverableStructure = {
   module: "moves",
   deliverableType: "value_model",
+  // Benefit pools carry an owner, a measure, a source and a baseline status
+  // per pool, so they assert client facts. The measurement model and the
+  // recommendation are forward design. `current_state` is a landing site by
+  // spelling.
+  archetypeEvidenceSectionKeys: ["value_pools"],
   purpose:
     "Define the CFO-facing value model, measurement logic, and realization controls.",
   decisionToSupport:
