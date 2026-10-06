@@ -3359,7 +3359,9 @@ export function MovesPhaseStandaloneClient({
                               name: nextCapturePhase.navLabel,
                             }
                           : null,
-                        initialStep: Math.min(substepIndex, 2) as 0 | 1 | 2,
+                        initialStep: initialSubstepKey
+                          ? (Math.min(substepIndex, 2) as 0 | 1 | 2)
+                          : undefined,
                         approveSlot: captureApproveSlot,
                         allowReviewBeforeSubmit: captureHandoffRecapEnabled,
                       }}

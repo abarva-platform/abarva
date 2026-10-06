@@ -1614,6 +1614,7 @@ describe("MovesPhaseStandaloneClient", () => {
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           initialP1CharterBasisBySection={Object.fromEntries(
             SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
               sectionKey,
@@ -1634,6 +1635,79 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     });
 
+    it("resumes at the first incomplete P1 step when earlier answers are durably complete", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={{
+            sponsor_commitment:
+              "Synthetic role alias: executive sponsor; progress updates stay in-app.",
+            scope_boundary:
+              "Synthetic scope: aggregated reporting; no operating-model redesign.",
+            success_criteria:
+              "Validate report ownership, lineage, quality, and access controls.",
+          }}
+          initialP1CharterBasisBySection={Object.fromEntries(
+            SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
+              sectionKey,
+              { kind: "workspace_assertion" as const },
+            ]),
+          )}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.getByRole("heading", { name: "People & decisions" }),
+      ).toBeInTheDocument();
+      const steps = within(screen.getByRole("navigation", { name: "Steps" }));
+      expect(
+        steps.getByRole("button", { name: /Scope the bet/ }),
+      ).toHaveTextContent("✓");
+      expect(
+        steps.getByRole("button", { name: /People & decisions/ }),
+      ).toHaveAttribute("aria-current", "step");
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
+    it("does not resume past a P1 step with any uncaptured required answer", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={{
+            sponsor_commitment:
+              "Synthetic role alias: executive sponsor; progress updates stay in-app.",
+            scope_boundary:
+              "Synthetic scope: aggregated reporting; no operating-model redesign.",
+          }}
+          initialP1CharterBasisBySection={Object.fromEntries(
+            SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
+              sectionKey,
+              { kind: "workspace_assertion" as const },
+            ]),
+          )}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.getByRole("heading", { name: "Scope the bet" }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
     it("allows the next P1 step after each saved answer has a recorded workspace assertion", () => {
       render(
         <MovesPhaseStandaloneClient
@@ -1643,6 +1717,7 @@ describe("MovesPhaseStandaloneClient", () => {
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           initialP1CharterBasisBySection={Object.fromEntries(
             SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
               sectionKey,
@@ -1672,6 +1747,7 @@ describe("MovesPhaseStandaloneClient", () => {
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           initialP1CharterBasisBySection={{
             sponsor_commitment: {
               kind: "assumption",
@@ -1702,6 +1778,7 @@ describe("MovesPhaseStandaloneClient", () => {
             "charter_sponsor",
           )}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           initialP1CharterBasisBySection={{
             sponsor_commitment: {
               kind: "approved_evidence",
@@ -1732,6 +1809,7 @@ describe("MovesPhaseStandaloneClient", () => {
             "charter_success_metrics",
           )}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           move={charterMove()}
           phaseNum={1}
           phaseTallies={[...phaseTallies]}

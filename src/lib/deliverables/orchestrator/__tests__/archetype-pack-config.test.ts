@@ -13,6 +13,8 @@ import {
   nearestDeclaredPackEvidenceFamily,
   unknownPackEvidenceFamilies,
 } from "../briefs/evidence-family-vocabulary";
+import { GOVERNED_DATA_FOUNDATION_PACK } from "../briefs/archetype-pack-governed-data-foundation";
+import { getDiscoveryBlueprint } from "../briefs/discovery-blueprint";
 
 const VALID_CONFIG_PACK = {
   archetype: "MANUFACTURING_QUALITY_OPS",
@@ -446,20 +448,37 @@ describe("the two halves' evidence-family id spaces, as measured", () => {
     expect(discoveryOnly.filter((id) => shared.includes(id))).toEqual([]);
   });
 
-  it("finds the two halves fully disjoint today", () => {
-    // A deliberate tripwire, not an invariant. A Move resolves BOTH catalogs
-    // off one declared archetype, and today they ask for evidence under two
-    // vocabularies with nothing in common — so the same underlying evidence is
-    // requested twice under two names, and neither half can tell. Which
-    // families the halves should share is a product decision; when it is taken
-    // this case should fail and be updated to the new number, rather than the
-    // disjointness quietly persisting as a sentence in a gap list.
+  it("finds the halves sharing ids for exactly the one archetype that declares them shared", () => {
+    // A deliberate tripwire, not an invariant. The five original archetypes
+    // asked for evidence under two vocabularies with nothing in common, so the
+    // same underlying evidence was requested twice under two names and neither
+    // half could tell. Which families the halves should share is a product
+    // decision, and it has now been taken once: the governed-data-foundation
+    // pack names the family ids its discovery blueprint collects under, which
+    // is what lets the evidence approved in P2 ground the sections of the
+    // deliverables built after it. Written out as the id list rather than a
+    // count, because a count is satisfied by the wrong eleven ids.
     const { shared, packOnly, discoveryOnly } =
       evidenceFamilyVocabularyOverlap();
-    expect(shared).toEqual([]);
-    expect(packOnly.length).toBe(
-      Object.keys(PACK_EVIDENCE_FAMILY_VOCABULARY).length,
+    expect(shared).toEqual(
+      [...GOVERNED_DATA_FOUNDATION_PACK.keyEvidenceFamilies].sort(),
     );
-    expect(discoveryOnly.length).toBeGreaterThan(packOnly.length);
+    expect(packOnly.length).toBe(
+      Object.keys(PACK_EVIDENCE_FAMILY_VOCABULARY).length - shared.length,
+    );
+    // The shared set is exactly the blueprint's REQUIRED families for that
+    // archetype — not its optional twelfth, which the gate never asks for and
+    // which a pack naming it would still send a retrieval query for. This is
+    // the assertion that catches a blueprint growing a required family the
+    // pack half never learns about.
+    expect(shared).toEqual(
+      getDiscoveryBlueprint("", "governed_data_foundation")
+        .evidenceFamilies.filter((family) => family.required)
+        .map((family) => family.id)
+        .sort(),
+    );
+    // The discovery half still names families no pack asks for; the halves
+    // overlapping for one archetype is not the two vocabularies merging.
+    expect(discoveryOnly.length).toBeGreaterThan(0);
   });
 });

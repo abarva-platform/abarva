@@ -650,3 +650,59 @@ describe("resolveServingApproval", () => {
     ).toBe("serving_approval is for home, not tower");
   });
 });
+
+describe("resolveLoadApproval — Move-scoped (move_registry) loads", () => {
+  function moveScopedManifest(moveId: string): DatasetManifest {
+    return loadableManifest({
+      client_key: null,
+      tenant_scope: "move_registry",
+      load_approval: loadApproval({ move_id: moveId }),
+    });
+  }
+
+  it("approves a Move-scoped load when the approval pins the same Move", () => {
+    const decision = resolveLoadApproval(
+      [moveScopedManifest("move-abc")],
+      binding({ move_id: "move-abc", tenant_key: "another-tenant" }),
+    );
+    // client_key is null (not re-pinned to a tenant); tenancy is the loader's
+    // authenticated binding.tenant_key, and the approval pins this exact Move.
+    expect(decision.approved).toBe(true);
+  });
+
+  it("refuses when the approval is pinned to a DIFFERENT Move (no cross-Move reuse)", () => {
+    expect(
+      refusal(
+        [moveScopedManifest("move-abc")],
+        binding({ move_id: "move-xyz", tenant_key: "meridian-health" }),
+      ),
+    ).toBe("load_approval is not pinned to this Move");
+  });
+
+  it("refuses a Move-scoped binding against a tenant-pinned manifest", () => {
+    expect(
+      refusal([loadableManifest()], binding({ move_id: "move-abc" })),
+    ).toContain("a move-scoped load (move_id) requires a move_registry manifest");
+  });
+
+  it("refuses a move_registry manifest whose approval names no Move", () => {
+    const noMoveId = loadableManifest({
+      client_key: null,
+      tenant_scope: "move_registry",
+    });
+    expect(
+      refusal(
+        [noMoveId],
+        binding({ move_id: "move-abc", tenant_key: "meridian-health" }),
+      ),
+    ).toBe("load_approval is not pinned to this Move");
+  });
+
+  it("without a move_id binding, a move_registry manifest is still refused on the tenant path", () => {
+    // Preserves the existing guard: the Move-scoped path activates ONLY when the
+    // loader supplies a move_id binding.
+    expect(
+      refusal([moveScopedManifest("move-abc")], binding({ tenant_key: "x" })),
+    ).toBe("manifest client_key is not the tenant being loaded");
+  });
+});
