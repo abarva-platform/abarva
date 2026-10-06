@@ -1,6 +1,7 @@
 import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   resolveDeclaredDiscoveryBlueprint,
   resolveDiscoveryBlueprintWithBasis,
@@ -604,7 +605,10 @@ export async function loadDiscoveryEvidenceReadiness(
     resolveDeclaredProgramArchetypeId(program),
   );
   const blueprint = resolution.blueprint;
-  const tenantKey = ctx.clientKey ?? "";
+  // Match any representation of the tenant (app client key + its canonical
+  // substrate alias), so approved evidence loaded under either is counted. The
+  // alias set is per-tenant, so this cannot widen to another tenant.
+  const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
   const rows = await azureRead
     .query<{
       id: string;
@@ -630,14 +634,14 @@ export async function loadDiscoveryEvidenceReadiness(
         INNER JOIN program_evidence_items pei
           ON pei.id = per.evidence_id
         WHERE per.program_id = $1
-          AND per.tenant_key = $2
+          AND per.tenant_key = ANY($2)
           AND per.decision = 'approved'
           AND pei.program_id = per.program_id
           AND pei.tenant_key = per.tenant_key
         ORDER BY COALESCE(per.reviewed_at, per.updated_at, per.created_at) DESC
         LIMIT 200
       `,
-      [programId, tenantKey],
+      [programId, tenantKeys],
       { missingTable: "empty" },
     )
     .catch(() => []);
