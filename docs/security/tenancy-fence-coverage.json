@@ -3882,7 +3882,9 @@
           "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
           "src/app/api/source/workspace/contract/[contractId]/__tests__/route.test.ts"
         ],
-        "byteScanner": []
+        "byteScanner": [
+          "src/__tests__/behaviors/source-contract-detail-load-trace.test.ts"
+        ]
       }
     },
     {

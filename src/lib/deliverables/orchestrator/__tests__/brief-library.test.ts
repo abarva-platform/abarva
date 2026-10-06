@@ -5,11 +5,20 @@ import {
   getArtifactBrief,
   hasDedicatedBrief,
 } from "../artifact-brief-registry";
-import { ARCHETYPE_PACKS, getArchetypePack } from "../briefs/archetype-packs";
+import {
+  ARCHETYPE_PACKS,
+  getArchetypePack,
+  loadArchetypePackCatalog,
+} from "../briefs/archetype-packs";
+import {
+  assetKeyCollisions,
+  composeArtifactAssets,
+} from "../briefs/artifact-asset-composition";
 import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "../briefs/deliverable-structures";
+import type { DeliverableStructure } from "../briefs/deliverable-structures";
 import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
 import type { DeliverableIntelligenceRequest } from "../types";
@@ -677,5 +686,278 @@ describe("target_state_architecture key resolution (regression)", () => {
       }),
     );
     expect(brief.prohibitedContent?.join(" ")).toMatch(/not a build plan/i);
+  });
+});
+
+// ── a deliverable TYPE may declare the tables it needs ──
+//
+// `composeBrief` concatenated the structure's exhibits with the pack's but took
+// its tables from the pack ALONE. The consequence was measurable and is pinned
+// below: within one archetype, eighteen of the twenty-one shipped structures
+// received an identical table set, so a Target State Architecture was asked for
+// a vendor pricing template and a Requirements Traceability document for no
+// traceability matrix. `expectedTables` reaches the model prompt
+// (prompt-builder) and the retrieval queries (generate-service), so this is the
+// instruction the document is written against, not a label.
+//
+// These cases fix the populations and assert what follows. None of them asserts
+// a string the implementation also produces from a constant.
+
+function tableSignature(
+  module: DeliverableStructure["module"],
+  deliverableType: string,
+  archetype: string,
+): string {
+  return getArtifactBrief(req({ module, deliverableType, useCaseArchetype: archetype }))
+    .expectedTables.map((t) => t.key)
+    .sort()
+    .join("+");
+}
+
+const ALL_ARCHETYPES = Object.keys(ARCHETYPE_PACKS);
+
+const STRUCTURE_DECLARED_TABLES = DELIVERABLE_STRUCTURES.filter(
+  (s) => (s.expectedTables ?? []).length > 0,
+);
+
+describe("structure-declared expected tables", () => {
+  it("declares tables on the deliverable types built around one, and no others", () => {
+    // Four structures, not an empty declaration anywhere: a structure with no
+    // type-specific table must not carry an empty array, because that changes
+    // nothing and no case could kill it.
+    expect(
+      STRUCTURE_DECLARED_TABLES.map((s) => `${s.module}/${s.deliverableType}`).sort(),
+    ).toEqual([
+      "moves/estimate_model",
+      "moves/readiness_and_change_plan",
+      "moves/requirements_traceability",
+      "source/evaluation_workbook",
+    ]);
+    for (const s of DELIVERABLE_STRUCTURES)
+      expect(s.expectedTables?.length === 0).toBe(false);
+  });
+
+  it("names a table no archetype pack supplies — the declaration is needed, not a copy", () => {
+    const packTableKeys = new Set(
+      ALL_ARCHETYPES.flatMap((a) => getArchetypePack(a)!.tables.map((t) => t.key)),
+    );
+    const declared = STRUCTURE_DECLARED_TABLES.flatMap((s) =>
+      (s.expectedTables ?? []).map((t) => t.key),
+    );
+    expect(declared.length).toBeGreaterThan(0);
+    for (const key of declared) expect(packTableKeys.has(key)).toBe(false);
+  });
+
+  it("carries each declared table into the brief under EVERY archetype", () => {
+    // The expected keys are written out here rather than read back off
+    // `s.expectedTables`. Reading them off the declaration makes the assertion
+    // self-referential: renaming a key in the catalog renames it in the
+    // expectation too, and the case passes while the table the deliverable is
+    // built around has silently become something else.
+    const DECLARED: Array<[DeliverableStructure["module"], string, string[]]> = [
+      [
+        "moves",
+        "requirements_traceability",
+        ["requirements_traceability_matrix", "traceability_gap_register"],
+      ],
+      ["moves", "estimate_model", ["estimate_basis_buildup"]],
+      ["moves", "readiness_and_change_plan", ["stakeholder_decision_rights"]],
+      ["source", "evaluation_workbook", ["evaluation_scoring_model"]],
+    ];
+    expect(DECLARED.map(([m, d]) => `${m}/${d}`).sort()).toEqual(
+      STRUCTURE_DECLARED_TABLES.map((s) => `${s.module}/${s.deliverableType}`).sort(),
+    );
+    for (const [module, deliverableType, want] of DECLARED) {
+      const structure = DELIVERABLE_STRUCTURES.find(
+        (s) => s.module === module && s.deliverableType === deliverableType,
+      )!;
+      expect((structure.expectedTables ?? []).map((t) => t.key)).toEqual(want);
+      for (const a of ALL_ARCHETYPES) {
+        const keys = getArtifactBrief(
+          req({ module, deliverableType, useCaseArchetype: a }),
+        ).expectedTables.map((t) => t.key);
+        expect(keys.slice(0, want.length)).toEqual(want);
+      }
+    }
+  });
+
+  it("puts the artifact type's own tables before the use case's", () => {
+    const keys = getArtifactBrief(
+      req({
+        module: "moves",
+        deliverableType: "requirements_traceability",
+        useCaseArchetype: "AMS_IT_OUTSOURCING",
+      }),
+    ).expectedTables.map((t) => t.key);
+    expect(keys.slice(0, 2)).toEqual([
+      "requirements_traceability_matrix",
+      "traceability_gap_register",
+    ]);
+    expect(keys.length).toBeGreaterThan(2);
+  });
+
+  it("loses no table the archetype pack already supplied", () => {
+    for (const s of DELIVERABLE_STRUCTURES) {
+      if (s.deliverableType === "charter" || s.deliverableType === "design_workshop_guide")
+        continue;
+      if (s.deliverableType === "discovery_plan") continue; // routed to its own builder
+      for (const a of ALL_ARCHETYPES) {
+        const keys = new Set(
+          getArtifactBrief(
+            req({ module: s.module, deliverableType: s.deliverableType, useCaseArchetype: a }),
+          ).expectedTables.map((t) => t.key),
+        );
+        for (const packTable of getArchetypePack(a)!.tables)
+          expect([...keys]).toContain(packTable.key);
+      }
+    }
+  });
+
+  it("still withholds the ARCHETYPE's tables from the approval instruments", () => {
+    for (const deliverableType of ["charter", "design_workshop_guide"])
+      for (const a of ALL_ARCHETYPES)
+        expect(
+          getArtifactBrief(req({ module: "moves", deliverableType, useCaseArchetype: a }))
+            .expectedTables,
+        ).toEqual([]);
+  });
+
+  it("makes a deliverable type's table set differ from its neighbours' under one archetype", () => {
+    // The defect, stated as the number it produced. Under a single archetype
+    // the four declaring structures now differ from the generic set; before
+    // this field every non-withheld structure shared one signature.
+    const a = "AMS_IT_OUTSOURCING";
+    const generic = tableSignature("moves", "business_case", a);
+    expect(tableSignature("moves", "target_state_architecture", a)).toBe(generic);
+    for (const s of STRUCTURE_DECLARED_TABLES)
+      expect(tableSignature(s.module, s.deliverableType, a)).not.toBe(generic);
+
+    const distinct = new Set(
+      DELIVERABLE_STRUCTURES.flatMap((s) =>
+        ALL_ARCHETYPES.map((arch) => tableSignature(s.module, s.deliverableType, arch)),
+      ),
+    );
+    expect(distinct.size).toBe(27);
+  });
+});
+
+// ── the join rule itself ──
+//
+// `composeArtifactAssets` is exported and callable without `composeBrief`, and
+// it is the ONLY place either asset kind is joined, so its cases are written
+// against it directly. The collision it resolves is reachable through shipped
+// code: `loadArchetypePackCatalog` validates a configured pack's shape and
+// cannot know which keys a structure already declares.
+
+describe("composeArtifactAssets", () => {
+  const t = (key: string, title: string) => ({
+    key,
+    title,
+    columns: ["A"],
+    groundingMode: "mixed" as const,
+    moveToExcelIfWide: false,
+  });
+
+  it("concatenates structure-first when nothing collides, and mutates neither input", () => {
+    const fromStructure = [t("own_one", "Own One")];
+    const fromPack = [t("pack_one", "Pack One"), t("pack_two", "Pack Two")];
+    expect(composeArtifactAssets(fromStructure, fromPack).map((x) => x.key)).toEqual([
+      "own_one",
+      "pack_one",
+      "pack_two",
+    ]);
+    expect(fromStructure).toHaveLength(1);
+    expect(fromPack).toHaveLength(2);
+  });
+
+  it("keeps one entry per key, and the structure's wins", () => {
+    const composed = composeArtifactAssets(
+      [t("estimate_basis_buildup", "Estimate Build-Up & Basis of Estimate")],
+      [t("estimate_basis_buildup", "Vendor Pricing Sheet"), t("risk_register", "Risks")],
+    );
+    expect(composed.map((x) => x.key)).toEqual(["estimate_basis_buildup", "risk_register"]);
+    expect(composed[0].title).toBe("Estimate Build-Up & Basis of Estimate");
+  });
+
+  it("de-duplicates within one side too", () => {
+    expect(
+      composeArtifactAssets([t("a", "A1"), t("a", "A2")], [t("a", "A3")]).map((x) => x.key),
+    ).toEqual(["a"]);
+  });
+
+  it("keeps key-less assets rather than collapsing them into one", () => {
+    // A blank key is a contract defect for the schemas to refuse. Folding two
+    // of them together would delete an expectation and hide it.
+    const composed = composeArtifactAssets(
+      [t("", "First Unkeyed")],
+      [t("  ", "Second Unkeyed")],
+    );
+    expect(composed).toHaveLength(2);
+  });
+
+  it("reports the collision as well as resolving it", () => {
+    expect(
+      assetKeyCollisions(
+        [t("estimate_basis_buildup", "Mine"), t("only_mine", "Mine Too")],
+        [t("estimate_basis_buildup", "Theirs"), t("risk_register", "Risks")],
+      ),
+    ).toEqual(["estimate_basis_buildup"]);
+  });
+
+  it("reports no collision for any shipped structure × pack pair", () => {
+    for (const s of DELIVERABLE_STRUCTURES)
+      for (const a of ALL_ARCHETYPES) {
+        const pack = getArchetypePack(a)!;
+        expect(assetKeyCollisions(s.expectedTables ?? [], pack.tables)).toEqual([]);
+        expect(assetKeyCollisions(s.expectedExhibits ?? [], pack.exhibits)).toEqual([]);
+      }
+  });
+
+  it("resolves a collision that a CONFIGURED pack makes reachable today", () => {
+    // The door, through shipped code: the pack contract accepts this source
+    // (its own keys are unique) and the structure already declares the key.
+    const structure = DELIVERABLE_STRUCTURES.find(
+      (s) => s.deliverableType === "estimate_model",
+    )!;
+    const loaded = loadArchetypePackCatalog([
+      {
+        archetype: "AMS_IT_OUTSOURCING",
+        label: "AMS / IT Outsourcing",
+        keyEvidenceFamilies: ["service_tower_scope"],
+        exhibits: [
+          {
+            key: "service_tower_scope_map",
+            title: "Service Tower Scope Map",
+            kind: "matrix",
+            purpose: "Show the towers in scope.",
+            preferredFormat: "pptx",
+          },
+        ],
+        tables: [
+          {
+            key: "estimate_basis_buildup",
+            title: "Vendor Pricing Sheet",
+            columns: ["Tower", "Unit", "Rate"],
+            groundingMode: "mixed",
+            moveToExcelIfWide: false,
+          },
+        ],
+      },
+    ]);
+    expect(loaded.errors).toEqual([]);
+    expect(loaded.applied).toEqual([
+      { archetype: "AMS_IT_OUTSOURCING", outcome: "overrode" },
+    ]);
+
+    const configured = loaded.catalog.AMS_IT_OUTSOURCING;
+    expect(assetKeyCollisions(structure.expectedTables ?? [], configured.tables)).toEqual([
+      "estimate_basis_buildup",
+    ]);
+    const composed = composeArtifactAssets(
+      structure.expectedTables ?? [],
+      configured.tables,
+    );
+    expect(composed.map((x) => x.key)).toEqual(["estimate_basis_buildup"]);
+    expect(composed[0].title).toBe("Estimate Build-Up & Basis of Estimate");
   });
 });
