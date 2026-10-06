@@ -17,6 +17,7 @@
     "typecheck": "node scripts/quality/typecheck.mjs",
     "audit:enum-reachability": "node scripts/quality/enum-reachability.mjs",
     "audit:named-suite-requiredness": "node scripts/quality/check-named-suite-requiredness.mjs",
+    "moves:archetype-config-preflight": "npx tsx scripts/moves/archetype-config-preflight.ts",
     "moves:scan-artifacts": "npx tsx scripts/moves/scan-artifacts.ts",
     "moves:measure-golden-bar-signals": "npx tsx scripts/moves/measure-golden-bar-signals.ts",
     "moves:audit-golden-exemplars": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/moves/audit-golden-exemplars.ts",
