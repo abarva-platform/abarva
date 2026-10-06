@@ -11,6 +11,7 @@ import { asSentence, fmtDate, money } from "./viewModel";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { countOrDash } from "./contractPopulations";
 import { contractPurposeSummary } from "./WorkspaceExecutiveShell";
+import { isGeneratedPurposeHeadline } from "@/lib/source/contract-purpose-refusal";
 import {
   evidenceLede,
   relationshipLede,
@@ -150,7 +151,13 @@ export function ContractBriefingHeader({
     story.headline.length <= 60 &&
     !/\b(?:not (?:yet )?reviewed|not established|not loaded|unresolved)\b/i.test(
       story.headline,
-    )
+    ) &&
+    // The phrasing blocklist above went stale: migration `20260911150000`
+    // reworded the generated fallback to "requires reviewed context", which
+    // no listed phrase matches and which is 58 characters for a short vendor
+    // name, so it passed both conditions and rendered as the page heading.
+    // This control keys on the generator's shape instead of its wording.
+    !isGeneratedPurposeHeadline(story.headline, contract.vendor_name)
       ? story.headline
       : null;
   const archetype = vm.contractEducation?.archetypeLabel ?? null;

@@ -78,8 +78,31 @@ const TENANT_RESOLVER_SOURCE_RE =
   /\b(?:requireTenancy|resolveTenant|canAccessTenant|getActiveClient|assertTenant)\s*\(/;
 const TENANT_KEY_SOURCE_RE =
   /\b(?:tenantKey|clientKey|requestedClientKey|tenant_key|client_key)\b/;
+// The path half of the tenant heuristic. The nine read-ish words name the
+// shape of a tenant-scoped READ; `tenant` and `client[-_]?key` name the shape
+// of a module that announces tenant scope in its own filename, which the nine
+// could not match — so modules literally called `tenant-scoped-session.ts`,
+// `tenant-identity-pin.ts` and `tenant-key-resolution.ts` were excluded from
+// the signal by their names alone (T-793).
+//
+// Both halves of the heuristic remain required: this gate decides nothing on
+// its own, `TENANT_KEY_SOURCE_RE` must also match the file's executable source,
+// and `sourceWithoutNonExecutableSignalText` has already blanked its types,
+// interfaces and comments by then. That is why the gate is widened rather than
+// dropped — a module mentioning `tenantKey` only in an interface is exactly
+// what the two-part test exists to exclude, and removing the gate would move
+// the whole judgment onto the sanitizer.
+//
+// Each added alternative is measured, not guessed. Over `src` at `e2d5096330`,
+// counting only sources that carry a tenant key in executable source, raise no
+// resolver call, and match none of the nine shipped words: `tenant` matches 63,
+// `client[-_]?key` matches 1. `tenancy` matches ZERO and is deliberately NOT
+// here — an alternative that can never fire reads as coverage and is not.
+// `client` on its own was rejected for the opposite reason: it matches 22, but
+// they are React clients (`WorkspaceClient.tsx`, `consent-client-name.ts`),
+// not tenants, and the word would make the gate mean something else.
 const TENANT_READ_PATH_RE =
-  /(?:read|query|queries|adapter|route|repository|lookup|search|fetch)/i;
+  /(?:read|query|queries|adapter|route|repository|lookup|search|fetch|tenant|client[-_]?key)/i;
 
 function scriptKindFor(fileName) {
   const lowerFileName = fileName.toLowerCase();
@@ -1823,8 +1846,38 @@ export function buildCensus(
   // filter is the exact complement of `governedRiskRows`, over the exact same
   // denominator, so the two partition that population rather than approximating
   // it (T-758).
+  //
+  // Widened at T-805 from `score === 0` to "every row the ranking does not
+  // carry". The zero-score rule left one cell of the grid published nowhere: a
+  // directory that SCORES is out of the zero list by that rule, and a directory
+  // whose every untriaged file is held by a triage verdict is out of the ranking
+  // by T-773, so a directory that is both appeared in neither. Measured on
+  // `fbfd62b50c`: 59 directories held an untriaged unrun file, 49 were in this
+  // list and 0 in the ranking, so 10 were in nothing — four of them the four
+  // most governed directories the T-793 signal change had just correctly
+  // reclassified. Giving a directory a governed-risk signal made it LESS
+  // visible, and every future widening of any signal would have moved more
+  // directories out of sight, in an artifact whose purpose is to be the input to
+  // what gets wired next.
+  //
+  // Expressed against the RANKING's membership rather than against
+  // `drawableUnrunTestFiles` directly, so a later change to what the ranking
+  // admits carries this view with it instead of reopening the same gap. The two
+  // lists are now exhaustive of `directoriesWithUntriagedUnrunTestFiles` by
+  // construction, and they still overlap rather than partition: a zero-score
+  // drawable row is in both, which is the C-555 "view ON the ranking" reading.
+  //
+  // A row here may therefore carry `band: critical` or `high`. That reads oddly
+  // against the field's name and is deliberate: the alternative was renaming a
+  // field four backlog items and four workflow comments cite, and the band is on
+  // every row precisely so a reader can tell the two populations apart.
+  // `governedRiskFiles`, `governedRiskEvidence` and the two band counts are
+  // untouched and still mean what they say.
+  const rankedDirectorySet = new Set(rankedRows.map((row) => row.directory));
+  const isUnclassifiedRiskRow = (row) =>
+    row.governedRisk.score === 0 || !rankedDirectorySet.has(row.directory);
   const unclassifiedRiskDirectories = directoriesWithUntriagedUnrunTestFiles
-    .filter((row) => row.governedRisk.score === 0)
+    .filter(isUnclassifiedRiskRow)
     .sort(
       (a, b) =>
         a.governedRisk.productSourceCount - b.governedRisk.productSourceCount ||
@@ -1864,8 +1917,8 @@ export function buildCensus(
       "Every directory holding an UNTRIAGED unrun file is ranked, and admittedBy on each row says which path admitted it: governed_risk_signal for a non-zero governed-risk score, untriaged_unrun_work for a directory that matched no signal and would have been absent before C-555. Order is governed-surface risk first — declared AI controls, approval or lifecycle writes, then tenant-scoped reads — so every signalled directory precedes every zero and keeps the rank it had; the count of unrun files is a tie-breaker, and it is what orders the zero tier among itself. Admission raises no score and no band. A directory whose unrun set is entirely declared quarantine is still not ranked, because it has already been triaged.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
-      "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them. Since C-555 it is a view ON the ranking rather than the ranking's complement: each of its rows is also a ranked row with admittedBy untriaged_unrun_work unless a triage verdict holds every untriaged file in it (T-773), and rankedDirectories against untriagedUnrunTestFiles is how far the work order reaches into its own pool.",
-      "A triage verdict in a docs/architecture/*triage*.json record is read per file, the latest recordedAt winning (an undated record sorts first; on equal stamps the later record file wins). It never changes untriagedUnrunTestFiles, because a verdict runs nothing. It changes what the ranking ADMITS: an untriaged file whose latest verdict names owned residual work (wire_into_ci, repair, rewrite_as_behavior, update_with_reason_recorded, real, vacuous_control_proof, held_unwired, already_verdicted_elsewhere) is held out of the draw and listed in triageVerdicts.heldTestPaths with its verdict, record and owner, and a directory is ranked only while drawableUnrunTestFiles is above zero. drawableTestPaths on each ranked row names the files a draw may offer. A completion verdict (wired, rewritten_as_behavior_and_wired, already_selected_no_action, deleted_and_replaced) on a file the census measures as unrun is contradicted and stays drawable, as does a verdict word in neither list; both are listed. unclassifiedRiskDirectories is still drawn from the untriaged pool, so a directory whose every untriaged file is held can appear there without a ranked row.",
+      "productSourceCount is the number of product modules the directory's tests resolved at run time, published on every directory including the unranked ones. An unclassified directory with a non-zero count was measured and matched no signal; one with zero resolved no import at all, so its band describes this census's reach rather than that directory's risk. unclassifiedRiskDirectories lists every such directory and the two counts beside it split them. Since C-555 it is a view ON the ranking rather than the ranking's complement: a zero-score row is also a ranked row with admittedBy untriaged_unrun_work unless a triage verdict holds every untriaged file in it (T-773), and rankedDirectories against untriagedUnrunTestFiles is how far the work order reaches into its own pool. Since T-805 it also carries every row the ranking does not, whatever that row scored, so governedRiskRanking and unclassifiedRiskDirectories together name every directory in directoriesWithUntriagedUnrunTestFiles and none falls between them. A row here may therefore read band critical or high: that is a directory the ranking omits because a verdict holds its every untriaged file, not a reclassification of its risk, and the band on the row is how the two are told apart.",
+      "A triage verdict in a docs/architecture/*triage*.json record is read per file, the latest recordedAt winning (an undated record sorts first; on equal stamps the later record file wins). It never changes untriagedUnrunTestFiles, because a verdict runs nothing. It changes what the ranking ADMITS: an untriaged file whose latest verdict names owned residual work (wire_into_ci, repair, rewrite_as_behavior, update_with_reason_recorded, real, vacuous_control_proof, held_unwired, already_verdicted_elsewhere) is held out of the draw and listed in triageVerdicts.heldTestPaths with its verdict, record and owner, and a directory is ranked only while drawableUnrunTestFiles is above zero. drawableTestPaths on each ranked row names the files a draw may offer. A completion verdict (wired, rewritten_as_behavior_and_wired, already_selected_no_action, deleted_and_replaced) on a file the census measures as unrun is contradicted and stays drawable, as does a verdict word in neither list; both are listed. unclassifiedRiskDirectories is still drawn from the untriaged pool, so a directory whose every untriaged file is held appears there without a ranked row whatever its score (T-805), and its owed work stays readable in triageVerdicts.heldTestPaths rather than being admitted back into the draw.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
     ],
     counts: {
@@ -1899,8 +1952,13 @@ export function buildCensus(
       // this number to zero while 179 rows sat in the list below it. A count
       // derived from the ranking's length cannot survive a change to what the
       // ranking admits, and this number is the one four backlog items read.
+      // Still counted over the denominator by the rule, NOT as
+      // `unclassifiedRiskDirectories.length`, so the list and its header stay
+      // two computations a test can hold against each other. Since T-805 the
+      // rule lives in one predicate both of them call, which is what keeps them
+      // from drifting while leaving the disagreement observable.
       unclassifiedRiskDirectories: directoriesWithUntriagedUnrunTestFiles.filter(
-        (row) => row.governedRisk.score === 0,
+        isUnclassifiedRiskRow,
       ).length,
       // The ranking's own two numbers. C-555's finding was that the ranking
       // covered 11 of 385 untriaged unrun files and nothing in this artifact

@@ -4,6 +4,7 @@ import {
   evaluateDiscoveryEvidenceReadiness,
   mapEvidenceToDiscoveryFamily,
   resolveDeclaredEvidenceFamily,
+  resolveDeclaredProgramArchetypeId,
   type DiscoveryEvidenceReadinessItem,
 } from "../evidence-readiness";
 import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
@@ -28,6 +29,43 @@ function item(
 }
 
 describe("discovery evidence readiness", () => {
+  it("honors a declared charter archetype without replacing legacy program fields", () => {
+    const program = {
+      functionPackKey: null,
+      archetype: "ai_product_enablement",
+      name: "Governed data initiative",
+      problemStatement: "Establish a governed data foundation.",
+      charter: {
+        classification: { archetype: "governed_data_foundation" },
+      },
+    };
+    const declaredId = resolveDeclaredProgramArchetypeId(program);
+    const resolved = getDiscoveryBlueprint(
+      buildDiscoveryBlueprintInputFromProgram(program),
+      declaredId,
+    );
+
+    expect(program.archetype).toBe("ai_product_enablement");
+    expect(program.functionPackKey).toBeNull();
+    expect(declaredId).toBe("governed_data_foundation");
+    expect(resolved.blueprintId).toBe("governed_data_foundation");
+    expect(
+      resolved.evidenceFamilies.filter((family) => family.required).map((family) => family.id),
+    ).toEqual([
+      "data_governance_ownership",
+      "semantic_layer_certification",
+      "data_lineage_audit_trail",
+      "data_quality_rules",
+      "source_system_data_access",
+      "platform_architecture_readiness",
+      "master_identity_resolution",
+      "privacy_security_controls",
+      "model_risk_responsible_ai_controls",
+      "measurement_owner_cadence",
+      "finance_baseline_value_plan",
+    ]);
+  });
+
   it("maps uploads to discovery evidence families", () => {
     expect(
       mapEvidenceToDiscoveryFamily(
@@ -412,5 +450,49 @@ describe("a family declared at upload", () => {
         .filter((family) => family.status === "covered")
         .map((family) => family.familyId),
     ).toEqual(["model_risk_responsible_ai_controls"]);
+  });
+});
+
+describe("resolveDeclaredProgramArchetypeId prefers a known catalog archetype", () => {
+  it("a non-archetype functionPackKey does NOT shadow a charter-declared archetype", () => {
+    const program = {
+      functionPackKey: "some_function_pack", // not a catalog archetype id
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    };
+    expect(resolveDeclaredProgramArchetypeId(program)).toBe(
+      "governed_data_foundation",
+    );
+  });
+
+  it("does not require overloading program.archetype (phase logic) to declare", () => {
+    const program = {
+      archetype: "ai_operations_customer_digital", // phase archetype, kept as-is
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    };
+    // both are catalog ids; the FIRST matching candidate wins by field order
+    // (functionPackKey -> charter.classification -> program.archetype), so the
+    // charter declaration is honored ahead of program.archetype.
+    expect(resolveDeclaredProgramArchetypeId(program)).toBe(
+      "governed_data_foundation",
+    );
+  });
+
+  it("honors a catalog archetype placed in functionPackKey", () => {
+    expect(
+      resolveDeclaredProgramArchetypeId({
+        functionPackKey: "governed_data_foundation",
+      }),
+    ).toBe("governed_data_foundation");
+  });
+
+  it("falls back to the first non-empty value as the inference seed", () => {
+    expect(
+      resolveDeclaredProgramArchetypeId({
+        functionPackKey: "some_function_pack",
+        name: "ignored",
+      }),
+    ).toBe("some_function_pack");
+    expect(resolveDeclaredProgramArchetypeId({})).toBeNull();
+    expect(resolveDeclaredProgramArchetypeId(null)).toBeNull();
   });
 });

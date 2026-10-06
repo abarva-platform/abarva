@@ -9,6 +9,8 @@ const readiness: DiscoveryEvidenceReadiness = {
   blueprintId: "test_blueprint",
   blueprintVersion: "2026-08-20",
   archetypeLabel: "Data-Intensive Predictive Use Case",
+  blueprintBasis: "declared",
+  unknownDeclaredArchetype: null,
   requiredTotal: 2,
   requiredCovered: 1,
   requiredMissing: 1,

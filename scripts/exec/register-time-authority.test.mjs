@@ -5099,5 +5099,365 @@ const C559_LINES = [
   );
 }
 
+
+// ---------------------------------------------------------------------------
+// Item T-804 — a path named in a claim line's PROSE is not a lock.
+//
+// Every veto above reads the sentence AROUND a path and decides from it, and
+// each was added because a correctly-written claim line was refused on a file
+// nobody claimed. That is a ratchet rather than a bug list: the more carefully
+// a run records why it passed an item over, the more of the tree it freezes,
+// and the next shape of sentence is only ever discovered by the refusal it
+// causes. Reproduced three times on 2026-10-05, twice costing a lane its row.
+//
+// So the rule here is structural and reads no prose at all: when a line
+// DECLARES a `files:` list, that list is the whole of its lock. The protocol
+// already requires the field — "append your claim line with the exact files
+// you intend to touch" — and measured over the live register, 697 of the 709
+// claim lines that hold a path carry one. Measured over every line, the rule
+// frees 278 holds (203 of them `file`-kind locks) and creates ZERO, in either
+// direction: no path on a declared list was being missed, so making the field
+// authoritative strips no line of authority it was exercising.
+//
+// A line that declares NO list is left exactly as it is, and that is the
+// residual, named rather than implied: 170 path-holding lines that are not
+// claim openings carry no field, nearly all of them `AMEND` lines that extend
+// an earlier claim in prose and mean to hold what they name. Freeing those would be a false PASS — two runs
+// on one file — and this module's standing preference is the other way round:
+// a wrong free costs another lane its work silently, a wrong hold costs one
+// refusal that names itself.
+// ---------------------------------------------------------------------------
+{
+  // KNOWN POSITIVE 1 — 2026-10-05T17:35:30Z, verbatim but for its length. A
+  // run claiming U-569 explained why it was NOT taking T-793, naming the two
+  // census files two siblings had locked; that sentence created a THIRD hold
+  // on both under the declining run's own identity, and the run had to append
+  // an abstention at 18:52:02Z to correct a hold it never intended.
+  const DECLINED_IN_PROSE =
+    "2026-10-05T17:35:30Z | source-backlog-executor#20261005T1732Z | item U-569 claimed on " +
+    "branch `exec/run-20261005T1732Z` — T-793 was the higher-value lane-T row and is REFUSED " +
+    "by the file half: both scripts/quality/test-ci-coverage-census.mjs (held to 20:18Z) and " +
+    "docs/architecture/test-ci-coverage-census.json (held to 20:29Z) are locked by two sibling " +
+    "runs, and the item cannot be done without either. " +
+    "files: docs/acceptance/signed-in-wave-acceptance-matrix.md," +
+    "docs/releases/records/u569-eighteenth-signed-in-wave.md";
+  const declined = claimedPaths(DECLINED_IN_PROSE).map((p) => p.path);
+  check(
+    "T-804 KNOWN POSITIVE — a path named only to say somebody ELSE holds it holds nothing",
+    !declined.includes("scripts/quality/test-ci-coverage-census.mjs") &&
+      !declined.includes("docs/architecture/test-ci-coverage-census.json"),
+    `paths=${JSON.stringify(declined)}`,
+  );
+  check(
+    "T-804 NEGATIVE CONTROL — the same line's declared list still holds, both members",
+    declined.includes("docs/acceptance/signed-in-wave-acceptance-matrix.md") &&
+      declined.includes("docs/releases/records/u569-eighteenth-signed-in-wave.md"),
+    `paths=${JSON.stringify(declined)}`,
+  );
+
+  // KNOWN POSITIVE 2 — 2026-10-05T17:18:51Z, item D-402. This one is NOT a
+  // disclaimer: the census script appears once, inside a sentence explaining
+  // why a measurement read zero. A reader taught to recognise disclaiming
+  // prose would still lock it, which is the second reason that remedy was
+  // refused.
+  const EXPLAINED_IN_PROSE =
+    "2026-10-05T17:18:51Z | source-backlog-executor#20261005T1652Z | item D-402 claimed on " +
+    "branch `exec/run-20261005T1652Z` — the census delta came back ZERO on every count -- " +
+    "collectTestFiles in scripts/quality/test-ci-coverage-census.mjs is rooted at `src`, so a " +
+    "test file under scripts/ is invisible to the instrument the acceptance names as the proof. " +
+    "files: src/lib/source/contract-depth-package/clause-text-basis.ts," +
+    "src/lib/governance/dataset-manifest.ts";
+  const explained = claimedPaths(EXPLAINED_IN_PROSE).map((p) => p.path);
+  check(
+    "T-804 KNOWN POSITIVE — a path named in an EXPLANATION, disclaiming nothing, holds nothing",
+    !explained.includes("scripts/quality/test-ci-coverage-census.mjs"),
+    `paths=${JSON.stringify(explained)}`,
+  );
+  check(
+    "T-804 NEGATIVE CONTROL — that line's two declared paths both still hold",
+    explained.includes("src/lib/source/contract-depth-package/clause-text-basis.ts") &&
+      explained.includes("src/lib/governance/dataset-manifest.ts"),
+    `paths=${JSON.stringify(explained)}`,
+  );
+
+  // THE LABEL IS THE LAST ONE, not the first. 22 live lines write `files:`
+  // more than once, and on every one of them the earlier occurrences are
+  // PROSE about the field — including, exactly once, a run arguing that the
+  // `files:`-only rule should not be adopted. Anchoring on the first would
+  // read that argument as the declaration.
+  const DISCUSSES_THE_FIELD =
+    "2026-10-05T12:00:00Z | a#run-1 | item T-801 claimed — only 9 of 62 live lines carry a " +
+    "`files:` label, and scripts/quality/test-ci-coverage-census.mjs is what counted them. " +
+    "files: scripts/exec/register-time-authority.mjs";
+  const discussed = claimedPaths(DISCUSSES_THE_FIELD).map((p) => p.path);
+  check(
+    "T-804 the LAST `files:` label is the declaration; an earlier mention is prose",
+    discussed.length === 1 && discussed[0] === "scripts/exec/register-time-authority.mjs",
+    `paths=${JSON.stringify(discussed)}`,
+  );
+
+  // A declared list that parses to nothing is a declaration of nothing. The
+  // line holds no file, and it does not fall back to its own prose.
+  const EMPTY_FIELD =
+    "2026-10-05T12:00:00Z | a#run-1 | item T-801 claimed — read-only audit, I touch " +
+    "scripts/exec/build-source-board.mjs nowhere. files:";
+  check(
+    "T-804 a declared-but-empty list holds nothing, and does not fall back to prose",
+    claimedPaths(EMPTY_FIELD).length === 0,
+    `paths=${JSON.stringify(claimedPaths(EMPTY_FIELD))}`,
+  );
+
+  // THE RESIDUAL, pinned. A line with no declaration keeps today's reading,
+  // because `AMEND` lines extend a claim in prose and hold what they name.
+  // If this ever changes, it must change deliberately and here.
+  const NO_FIELD =
+    "2026-10-05T12:00:00Z | a#run-1 | AMEND #8807 narrow claim by adjacent " +
+    "`src/components/source/canvas/__tests__/SourceAnalyticsCanvas.chat.test.tsx`";
+  check(
+    "T-804 RESIDUAL — a line declaring no list still holds the path its prose names",
+    claimedPaths(NO_FIELD).some(
+      (p) => p.path === "src/components/source/canvas/__tests__/SourceAnalyticsCanvas.chat.test.tsx",
+    ),
+    `paths=${JSON.stringify(claimedPaths(NO_FIELD))}`,
+  );
+}
+
+{
+  // BOTH DIRECTIONS, THROUGH THE GATE — not on the predicate. The acceptance
+  // asks for exactly this: a path genuinely on the list must still refuse a
+  // second run, and a path only in prose must not.
+  const { dir, file } = fixture([
+    "2026-09-22T18:20:29Z | a#run-1 | item T-704 claimed — T-705 is refused because " +
+      "scripts/quality/test-ci-coverage-census.mjs is locked by a sibling run. " +
+      "files: scripts/exec/build-source-board.mjs",
+  ]);
+  const onTheList = preclaimFiles(file, "T-705", "b#run-2", "scripts/exec/build-source-board.mjs");
+  check(
+    "T-804 THROUGH THE GATE — a path on the declared list still refuses the next run",
+    onTheList.status !== 0 && onTheList.report.fileOverlap?.conflicts?.length === 1,
+    `status=${onTheList.status} overlap=${JSON.stringify(onTheList.report.fileOverlap)}`,
+  );
+  const inProseOnly = preclaimFiles(
+    file,
+    "T-705",
+    "b#run-2",
+    "scripts/quality/test-ci-coverage-census.mjs",
+  );
+  check(
+    "T-804 THROUGH THE GATE — a path named only in prose refuses nobody",
+    inProseOnly.status === 0 && inProseOnly.report.fileOverlap?.conflicts?.length === 0,
+    `status=${inProseOnly.status} overlap=${JSON.stringify(inProseOnly.report.fileOverlap)}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// Item T-835. A declared path carrying a DYNAMIC ROUTE SEGMENT holds nothing.
+//
+// `PATH_TOKEN`'s character class admits no `[`, `]`, `(` or `)`, so a declared
+// entry naming a Next.js route file is not recognised as a path at all. It is
+// not vetoed by any of the cue rules above — it is never seen, which is why no
+// refusal ever named it and why this was found while measuring T-804 rather
+// than by anybody being refused.
+//
+// That is the opposite direction from T-804 and the more expensive one. T-804
+// was a false REFUSAL: it costs one reader a second look and announces itself.
+// This is a false PASS: it puts two runs on one route file and tells neither.
+//
+// Measured over the live register at `3731a69714`: 223 slashed tokens carrying
+// a bracket, 0 of them held. 357 route files under `src/app` carry a bracketed
+// segment and 341 carry a route group, so the shape is not rare.
+//
+// Every case here drives the real CLI as a child process over a fixture and
+// reads its exit status, because the acceptance is about what the GATE does.
+// ---------------------------------------------------------------------------
+{
+  // The failing case, stated in the item's own terms: a real route file in the
+  // tree, declared on a live claim's `files:` list, and a second run asking
+  // for exactly that path.
+  const ROUTE = "src/app/api/v1/source/[eventId]/stage/route.ts";
+  const { dir, file } = fixture([
+    `2026-09-22T18:20:29Z | runner-one#A | item T-900 claimed | files: ${ROUTE}`,
+  ]);
+  const r = preclaimFiles(file, "T-901", "runner-two#B", ROUTE);
+  check(
+    "T-835 a declared BRACKETED route path refuses the next run asking for it",
+    r.status === 1 && r.report.fileOverlap?.refuses === true,
+    `status=${r.status} overlap=${JSON.stringify(r.report.fileOverlap)}`,
+  );
+  check(
+    "T-835 the refusal names the bracketed path and its holder",
+    (r.report.fileOverlap?.conflicts ?? []).some(
+      (c) => c.path === ROUTE && c.agent === "runner-one#A",
+    ),
+    JSON.stringify(r.report.fileOverlap?.conflicts),
+  );
+  // A ROUTE GROUP is the same defect by a different character: `(maestro)`
+  // fails the class for its parentheses alone, with no bracket anywhere. Worse
+  // than invisible — the tokenizer stops at the paren and reads the prefix
+  // `src/app/` as a SCOPE, which the gate treats as a note and waves through.
+  const GROUPED = "src/app/(maestro)/source/events/[eventId]/page.tsx";
+  const grouped = fixture([
+    `2026-09-22T18:20:29Z | runner-one#A | item T-900 claimed | files: ${GROUPED}`,
+  ]);
+  const g = preclaimFiles(grouped.file, "T-901", "runner-two#B", GROUPED);
+  check(
+    "T-835 a declared ROUTE-GROUP path refuses the next run asking for it",
+    g.status === 1 && g.report.fileOverlap?.refuses === true,
+    `status=${g.status} overlap=${JSON.stringify(g.report.fileOverlap)}`,
+  );
+  check(
+    "T-835 the grouped path is read as a FILE, not as the `src/app/` prefix scope",
+    claimedPaths(`files: ${GROUPED}`).some((p) => p.path === GROUPED && p.kind === "file") &&
+      !claimedPaths(`files: ${GROUPED}`).some((p) => p.path === "src/app/"),
+    JSON.stringify(claimedPaths(`files: ${GROUPED}`)),
+  );
+  // THE DISCRIMINATOR. Widening the class can only ADD refusals, so the thing
+  // that must not change is what it refuses on. A bracketed token that is not
+  // a path must stay invisible: a markdown link is the shape the register
+  // writes most, and reading `[text](docs/x.md)` as one token would invent a
+  // path called `text](docs/x.md`.
+  // The link text carries NO SPACE, and that is the whole point of the case.
+  // Written as `[the record](...)` the space alone makes one token impossible
+  // whatever the grammar admits, so the control passed without testing the
+  // grammar at all — a mutation letting a group's contents cross a slash
+  // survived it. `[record](...)` is the shape that can actually collapse.
+  const LINK = "see [record](docs/releases/records/t804.md) for the measurement";
+  check(
+    "T-835 NEGATIVE CONTROL — a space-free markdown link is not read as one bracketed path",
+    !claimedPaths(LINK).some((p) => /[\[\]()]/.test(p.path)),
+    JSON.stringify(claimedPaths(LINK)),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — the link's TARGET is still read, as it was before",
+    claimedPaths(LINK).some((p) => p.path === "docs/releases/records/t804.md"),
+    JSON.stringify(claimedPaths(LINK)),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — a bracketed token with no path suffix holds nothing",
+    claimedPaths("files: notes/[draft]/scratch").length === 0,
+    JSON.stringify(claimedPaths("files: notes/[draft]/scratch")),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — `Product/Lab`, `and/or` and `24/7` are still not paths",
+    claimedPaths("the Product/Lab lane runs and/or 24/7 on [eventId]/shaped routes").length === 0,
+    JSON.stringify(claimedPaths("the Product/Lab lane runs and/or 24/7 on [eventId]/shaped routes")),
+  );
+  check(
+    "T-835 a bracketed SCOPE is still a note rather than a lock",
+    (() => {
+      const scoped = `files: src/app/api/v1/source/[eventId]/nexus/ask/__tests__/`;
+      const read = claimedPaths(scoped);
+      return (
+        read.length === 1 &&
+        read[0].kind === "scope" &&
+        read[0].path === "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/"
+      );
+    })(),
+    JSON.stringify(claimedPaths("files: src/app/api/v1/source/[eventId]/nexus/ask/__tests__/")),
+  );
+  // A catch-all and an optional catch-all segment are the other two shapes the
+  // framework writes, and a class that admits `[id]` but not `[...slug]` would
+  // leave the same false pass on a narrower set.
+  check(
+    "T-835 a catch-all segment is read as a file",
+    claimedPaths("files: src/app/docs/[...slug]/page.tsx").some(
+      (p) => p.path === "src/app/docs/[...slug]/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/docs/[...slug]/page.tsx")),
+  );
+  check(
+    "T-835 an optional catch-all segment is read as a file",
+    claimedPaths("files: src/app/shop/[[...filter]]/page.tsx").some(
+      (p) => p.path === "src/app/shop/[[...filter]]/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/shop/[[...filter]]/page.tsx")),
+  );
+  // A segment must be NON-EMPTY. Allowing it to match nothing costs both
+  // directions at once: measured over the live register it invents `/` and
+  // `//` as scopes and LOSES 21 real files, because an empty head lets the
+  // token start inside a path and end before its extension.
+  check(
+    "T-835 a bare separator is never read as a path",
+    claimedPaths("files: / and // are not paths").length === 0,
+    JSON.stringify(claimedPaths("files: / and // are not paths")),
+  );
+  check(
+    "T-835 a path after a bare separator is still read whole",
+    claimedPaths("files: see / then src/lib/source/esign/provider.ts").some(
+      (p) => p.path === "src/lib/source/esign/provider.ts",
+    ),
+    JSON.stringify(claimedPaths("files: see / then src/lib/source/esign/provider.ts")),
+  );
+  // One segment may carry MORE THAN ONE group. Next.js intercepting routes
+  // write exactly that — `(..)(..)feed` is a single directory name — and a
+  // grammar admitting only the first group reads the segment as far as the
+  // second and stops, which is this item's own defect on a narrower set.
+  check(
+    "T-835 a segment carrying two route groups is read as a file",
+    claimedPaths("files: src/app/(..)(..)feed/page.tsx").some(
+      (p) => p.path === "src/app/(..)(..)feed/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/(..)(..)feed/page.tsx")),
+  );
+  check(
+    "T-835 a group followed by plain characters in one segment is read as a file",
+    claimedPaths("files: src/app/(.)photo/page.tsx").some(
+      (p) => p.path === "src/app/(.)photo/page.tsx" && p.kind === "file",
+    ),
+    JSON.stringify(claimedPaths("files: src/app/(.)photo/page.tsx")),
+  );
+  // The veto rules must keep governing these paths exactly as they govern any
+  // other: a widened token class must not become a way past the disclaimers.
+  check(
+    "T-835 a disclaimed bracketed path is still freed by its cue",
+    claimedPaths(
+      "this claim does not touch `src/app/api/v1/source/[eventId]/stage/route.ts`",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths("this claim does not touch `src/app/api/v1/source/[eventId]/stage/route.ts`"),
+    ),
+  );
+  check(
+    "T-835 a bracketed path attributed to a sibling is not read as this line's hold",
+    claimedPaths(
+      "that sibling holds `src/app/api/v1/source/[eventId]/stage/route.ts`",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths("that sibling holds `src/app/api/v1/source/[eventId]/stage/route.ts`"),
+    ),
+  );
+  // THE SECOND DIRECTION, found by measuring this change rather than by
+  // reasoning about it. An unreadable segment did not only fail to hold its
+  // own path — it SPLIT the list it sat in. `PATH_LIST_JOINER` requires list
+  // punctuation between consecutive occurrences, and the unread
+  // `(maestro)/source/setup/page.tsx` is not punctuation, so the cue at the
+  // head of a `Files released:` list stopped governing everything after it and
+  // the tail stayed HELD on a line that said in words it was releasing it.
+  //
+  // Measured on the live register: two release lines held 9 and 7 paths each
+  // this way. Neither reached `heldPaths`, which drops release lines in any
+  // case, so no refusal ever came of it — but the reading was wrong and the
+  // same split would land on a CLAIM line's disclaimer just as readily.
+  check(
+    "T-835 a route segment inside a released list no longer splits the cue's reach",
+    claimedPaths(
+      "Files released: src/lib/a.ts, src/app/(maestro)/source/setup/page.tsx, src/lib/b.ts",
+    ).length === 0,
+    JSON.stringify(
+      claimedPaths(
+        "Files released: src/lib/a.ts, src/app/(maestro)/source/setup/page.tsx, src/lib/b.ts",
+      ),
+    ),
+  );
+  check(
+    "T-835 NEGATIVE CONTROL — the same list without a route segment released all of it before and after",
+    claimedPaths("Files released: src/lib/a.ts, src/lib/c.ts, src/lib/b.ts").length === 0,
+    JSON.stringify(claimedPaths("Files released: src/lib/a.ts, src/lib/c.ts, src/lib/b.ts")),
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(grouped.dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

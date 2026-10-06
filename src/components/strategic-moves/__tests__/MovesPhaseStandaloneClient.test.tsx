@@ -354,6 +354,7 @@ function coveredEvidencePacketsForPhase(
       exampleTemplate: "Phase evidence package",
       exampleContent: [],
       whyItMatters: "The phase decision must be grounded in reviewed evidence.",
+      guidanceBasis: "generic",
       blockedArtifacts: [],
       canDraftBoundary: {
         canDraft: false,
@@ -1206,6 +1207,243 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    // ─── the structured `facts` question on the redesigned flow ───
+    // P2's "Baseline metrics" is a required capture section whose input is
+    // structured (`structured: "facts"`). Every other structured section —
+    // business change, solution route, estimate model — reaches the flow as an
+    // editor with an onChange; facts reached it as a read-only table, so the
+    // required question had no writable input at all and P2 capture could never
+    // complete. These cases pin that it is writable, and that the value the
+    // host would store is the facts contract's own form.
+    it("P2 on the redesigned flow renders the structured baseline question as a writable editor", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      const editor = screen.getByTestId("diagnosis-facts-editor");
+      expect(editor).toBeInTheDocument();
+      const metric = within(editor).getByLabelText(
+        /metric, row 1$/,
+      ) as HTMLInputElement;
+      expect(metric).toBeEnabled();
+      fireEvent.change(metric, { target: { value: "Intake cycle time" } });
+      expect(metric.value).toBe("Intake cycle time");
+    });
+
+    it("P2 on the redesigned flow does not render the baseline question read-only", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // The read-only table's own empty state is what the question used to show.
+      expect(
+        screen.queryByText("No baseline metrics captured yet."),
+      ).not.toBeInTheDocument();
+    });
+
+    // ─── P3's solution-option choice on the redesigned flow ───
+    // P3 cannot be approved until one assembled option is the chosen one: the
+    // build blocker is "Select the solution option that architecture should
+    // implement before Approve & Build", and the approval payload carries the
+    // chosen option forward into P4. The legacy canvas offers option cards; the
+    // redesigned flow offered no selector, so a P3 with every question answered
+    // was a dead end — the blocker named a control that was not on the page and
+    // the only way past it was a recommendation whose prose happened to name an
+    // option. These cases pin the chooser on both steps that need it and pin
+    // that choosing actually releases the build.
+    //
+    // The recommendation text here deliberately names no option, so the choice
+    // cannot come from inference.
+    const p3Answers = {
+      solution_approach: "Weighed three paths with the sponsor.",
+      operating_model: "Ops and data co-own the pilot.",
+      process_design: "One exception queue with human approval.",
+      controls_governance: "Human approval on anything customer-facing.",
+      architecture_integration: "Read-only integration over the event feed.",
+      evidence_confidence: "Medium-high operationally.",
+      recommendation: "Back the governed workflow path for P4 planning.",
+    };
+
+    function renderP3Capture() {
+      return render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+          initialPhaseCaptureValues={p3Answers}
+          move={makeMove({
+            currentPhase: 3,
+            phaseLabel: "P3 Design Future State",
+          })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+    }
+
+    it("P3 on the redesigned flow offers the solution-option choice beside the build control", () => {
+      renderP3Capture();
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      // A fully answered P3 resumes on the final step, which is where the
+      // blocker is stated — so the chooser has to be reachable from there.
+      expect(
+        screen.getByText(
+          /Select the solution option that architecture should implement/i,
+        ),
+      ).toBeInTheDocument();
+      const chooser = screen.getByTestId("solution-option-chooser");
+      expect(within(chooser).getAllByRole("radio").length).toBeGreaterThan(1);
+    });
+
+    it("P3 on the redesigned flow releases the build once an option is chosen", () => {
+      renderP3Capture();
+      expect(
+        screen.getByRole("button", {
+          name: /Complete phase inputs before build/i,
+        }),
+      ).toBeDisabled();
+      const chooser = screen.getByTestId("solution-option-chooser");
+      fireEvent.click(within(chooser).getAllByRole("radio")[0]);
+      expect(
+        screen.queryByRole("button", {
+          name: /Complete phase inputs before build/i,
+        }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: /Approve & Build P3 Design Future State/i,
+        }),
+      ).toBeEnabled();
+    });
+
+    // A choice can already be standing without anyone clicking here: a recorded
+    // gate approval names it, and failing that the recommendation text is read
+    // for it. The chooser has to show that one as chosen, or a reload would
+    // present an unmade decision and invite a second, different answer.
+    it("P3's chooser shows the option a standing recommendation already names", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+          initialPhaseCaptureValues={{
+            ...p3Answers,
+            recommendation:
+              "Choose Option B: governed recommendation workflow for P4 planning.",
+          }}
+          move={makeMove({
+            currentPhase: 3,
+            phaseLabel: "P3 Design Future State",
+          })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const chooser = screen.getByTestId("solution-option-chooser");
+      const radios = within(chooser).getAllByRole(
+        "radio",
+      ) as HTMLInputElement[];
+      const standing = radios.filter((radio) => radio.checked);
+      expect(standing.map((radio) => radio.value)).toEqual(["B"]);
+      // And it is not blocking the build, since a choice is standing.
+      expect(
+        screen.getByRole("button", {
+          name: /Approve & Build P3 Design Future State/i,
+        }),
+      ).toBeEnabled();
+    });
+
+    it("P3's recommendation question carries the same choice on its own step", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+          initialPhaseCaptureValues={{
+            ...p3Answers,
+            recommendation:
+              "Choose Option B: governed recommendation workflow for P4 planning.",
+          }}
+          move={makeMove({
+            currentPhase: 3,
+            phaseLabel: "P3 Design Future State",
+          })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Step 1 "The approach" holds solution_approach + recommendation.
+      fireEvent.click(screen.getByRole("button", { name: /The approach/i }));
+      expect(
+        screen.getByRole("textbox", { name: "Recommended approach" }),
+      ).toBeInTheDocument();
+      const chooser = screen.getByTestId("solution-option-chooser");
+      const radios = within(chooser).getAllByRole(
+        "radio",
+      ) as HTMLInputElement[];
+      expect(radios.length).toBeGreaterThan(1);
+      // The same standing choice, not a blank group beside the question.
+      expect(
+        radios.filter((radio) => radio.checked).map((radio) => radio.value),
+      ).toEqual(["B"]);
+    });
+
+    // P4 asks a `recommendation` question of its own, and its build control is
+    // the same one. Answered in full so the flow resumes on the step that holds
+    // that question — otherwise a mount that forgot to check the phase would
+    // still look correct here, because the question would be off-screen.
+    it("a phase other than P3 gets no solution-option choice", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={{
+            roadmap_sequencing:
+              "Three waves, starting with the exception queue.",
+            estimates_capacity: completeEstimateModelValue,
+            value_plan: "Measured against the P2 baseline at day 90.",
+            funding_governance: "Funded from the existing programme envelope.",
+            risks_dependencies: "Source freshness is the main dependency.",
+            handoff_plan: "Hands to the platform team with the runbook.",
+            recommendation: "Proceed to mobilisation on the agreed sequence.",
+          }}
+          move={makeMove({
+            currentPhase: 4,
+            phaseLabel: "P4 Roadmap & Business Case",
+          })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.getByRole("textbox", { name: "Recommendation to fund" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("solution-option-chooser"),
+      ).not.toBeInTheDocument();
+    });
+
     // ─── moves_capture_p0_v1: P0 Originate on the redesigned 3-step flow ───
     // The flow shipped mounted for phases 1-5 only, so P0 stayed on the legacy
     // finder-columns canvas. These cases pin BOTH halves of the two-flag gate
@@ -1613,6 +1851,7 @@ describe("MovesPhaseStandaloneClient", () => {
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           initialP1CharterBasisBySection={Object.fromEntries(
             SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
               sectionKey,
@@ -1633,6 +1872,79 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     });
 
+    it("resumes at the first incomplete P1 step when earlier answers are durably complete", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={{
+            sponsor_commitment:
+              "Synthetic role alias: executive sponsor; progress updates stay in-app.",
+            scope_boundary:
+              "Synthetic scope: aggregated reporting; no operating-model redesign.",
+            success_criteria:
+              "Validate report ownership, lineage, quality, and access controls.",
+          }}
+          initialP1CharterBasisBySection={Object.fromEntries(
+            SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
+              sectionKey,
+              { kind: "workspace_assertion" as const },
+            ]),
+          )}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.getByRole("heading", { name: "People & decisions" }),
+      ).toBeInTheDocument();
+      const steps = within(screen.getByRole("navigation", { name: "Steps" }));
+      expect(
+        steps.getByRole("button", { name: /Scope the bet/ }),
+      ).toHaveTextContent("✓");
+      expect(
+        steps.getByRole("button", { name: /People & decisions/ }),
+      ).toHaveAttribute("aria-current", "step");
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
+    it("does not resume past a P1 step with any uncaptured required answer", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          charterBasisEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={{
+            sponsor_commitment:
+              "Synthetic role alias: executive sponsor; progress updates stay in-app.",
+            scope_boundary:
+              "Synthetic scope: aggregated reporting; no operating-model redesign.",
+          }}
+          initialP1CharterBasisBySection={Object.fromEntries(
+            SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
+              sectionKey,
+              { kind: "workspace_assertion" as const },
+            ]),
+          )}
+          move={charterMove()}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.getByRole("heading", { name: "Scope the bet" }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
     it("allows the next P1 step after each saved answer has a recorded workspace assertion", () => {
       render(
         <MovesPhaseStandaloneClient
@@ -1642,6 +1954,7 @@ describe("MovesPhaseStandaloneClient", () => {
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           initialP1CharterBasisBySection={Object.fromEntries(
             SCOPE_THE_BET_SECTIONS.map((sectionKey) => [
               sectionKey,
@@ -1671,6 +1984,7 @@ describe("MovesPhaseStandaloneClient", () => {
           carriesForwardContent={[]}
           evidenceNeedPackets={[]}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           initialP1CharterBasisBySection={{
             sponsor_commitment: {
               kind: "assumption",
@@ -1701,6 +2015,7 @@ describe("MovesPhaseStandaloneClient", () => {
             "charter_sponsor",
           )}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           initialP1CharterBasisBySection={{
             sponsor_commitment: {
               kind: "approved_evidence",
@@ -1731,6 +2046,7 @@ describe("MovesPhaseStandaloneClient", () => {
             "charter_success_metrics",
           )}
           initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="prepare"
           move={charterMove()}
           phaseNum={1}
           phaseTallies={[...phaseTallies]}
@@ -1779,10 +2095,9 @@ describe("MovesPhaseStandaloneClient", () => {
       );
 
       fireEvent.click(
-        within(screen.getByTestId("charter-basis-sponsor_commitment")).getByRole(
-          "radio",
-          { name: "I'm asserting this" },
-        ),
+        within(
+          screen.getByTestId("charter-basis-sponsor_commitment"),
+        ).getByRole("radio", { name: "I'm asserting this" }),
       );
       expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
 
@@ -2429,7 +2744,9 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.queryByTestId("charter-assumptions-carry-forward"),
       ).not.toBeInTheDocument();
       // and no "0 assumptions" consolation prize anywhere on the screen
-      expect(screen.queryByText(/still an assumption/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/still an assumption/i),
+      ).not.toBeInTheDocument();
     });
 
     it("moves_charter_assumptions_discover_v1 ON without moves_capture_v2: the legacy canvas grows no carry-forward band", () => {
@@ -2452,6 +2769,163 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.queryByTestId("charter-assumptions-carry-forward"),
       ).not.toBeInTheDocument();
       expect(screen.queryByText(carriedRows[0].owner)).not.toBeInTheDocument();
+    });
+
+    // ─── moves_charter_standing_after_discover_v1: the HOST call site ─────
+    // The fold is pure and pinned (charter-standing-after-discover.test.ts)
+    // and the panel has its own suite. What lives only HERE is the same pair
+    // of decisions as the carry-forward above: that the P3+ band is mounted
+    // in the capture flow's `openingBand` slot, and that the host passes the
+    // fold's rows through VERBATIM — it re-reads no flag, re-derives no row
+    // and re-counts nothing.
+    //
+    // As above, pinning the pass-through needs values the host could not have
+    // reconstructed: the assumption owner and Discover's correction live in
+    // the P1 basis and resolution records, neither of which is loaded on a P3
+    // render. A case asserting the band merely EXISTS would survive the prop
+    // being dropped and re-derived empty.
+    const standingRows = [
+      {
+        sectionKey: sponsorFamily.sectionKey,
+        label: sponsorFamily.label,
+        answer: "Weekly written update to the steering group.",
+        owner: "Priya Raman",
+        recordedAt: "2026-10-01T09:00:00.000Z",
+        standing: "unvalidated" as const,
+        plannedValidation: "Confirm the cadence in the sponsor interview.",
+      },
+      {
+        sectionKey: scopeFamily.sectionKey,
+        label: scopeFamily.label,
+        answer: "Member services only; billing stays out.",
+        owner: "Dana Whitfield",
+        recordedAt: "2026-10-01T09:05:00.000Z",
+        standing: "known_wrong" as const,
+        correction: "Discover found billing already inside the same queue.",
+        resolvedAt: "2026-10-02T11:00:00.000Z",
+      },
+    ];
+
+    const designMove = () =>
+      makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
+
+    it("moves_charter_standing_after_discover_v1 OFF: P3 capture opens with no standing band", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={null}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("charter-standing-after-discover"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("moves_charter_standing_after_discover_v1 ON: the band opens P3 capture with the fold's own rows", () => {
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={standingRows}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const band = screen.getByTestId("charter-standing-after-discover");
+      expect(screen.getByTestId("moves-capture-flow")).toContainElement(band);
+
+      // Verbatim pass-through: neither of these is derivable from the capture
+      // state a P3 render holds, so a dropped or re-derived prop fails here.
+      expect(screen.getByText("Priya Raman")).toBeInTheDocument();
+      expect(
+        screen.getByText("Discover found billing already inside the same queue."),
+      ).toBeInTheDocument();
+      expect(band).toHaveAttribute("data-count", "2");
+      expect(band).toHaveAttribute("data-known-wrong", "1");
+      expect(band).toHaveAttribute("data-unvalidated", "1");
+
+      // It qualifies the questions, so it must precede them.
+      const panel = container.querySelector(".mcf-panel");
+      expect(panel).not.toBeNull();
+      expect(
+        band.compareDocumentPosition(panel as Node) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it("renders nothing for an active phase with every charter answer standing clean", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={[]}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("charter-standing-after-discover"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("mounts the two charter bands in the same slot without either displacing the other", () => {
+      // The folds are phase-exclusive (the carry-forward owns P2, this owns
+      // P3+), so in production only one is ever non-null. The host does not
+      // arbitrate that and must not: if it dropped one when the other was
+      // present, a future phase window change would silently lose a band.
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriedCharterAssumptions={carriedRows}
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={standingRows}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByTestId("charter-assumptions-carry-forward"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("charter-standing-after-discover"),
+      ).toBeInTheDocument();
+    });
+
+    it("moves_charter_standing_after_discover_v1 ON without moves_capture_v2: the legacy canvas grows no standing band", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          charterStandingAfterDiscover={standingRows}
+          evidenceNeedPackets={[]}
+          move={designMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Structural, as above: `openingBand` is a slot on the capture flow, so
+      // with v2 off there is nowhere to put the band. Pin the consequence.
+      expect(
+        screen.queryByTestId("charter-standing-after-discover"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Priya Raman")).not.toBeInTheDocument();
     });
 
     it("labels a browsed workflow step as viewed instead of falsely complete", () => {
@@ -2976,6 +3450,150 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
+  // ─── the capture phase strip's SAVED counts, AT THE HOST ─────────────────
+  // `moves_capture_phase_rollup_v1`. The strip can measure exactly one row —
+  // the phase on screen — so the other five state a bare question count. The
+  // rollup lets those five say how much of the phase holds a SAVED answer,
+  // from capture-module rows the route already loaded.
+  //
+  // The derivation and the row's rendering each have their own suite, so what
+  // is untested is the wiring in this component: whether the counts reach the
+  // strip, whether each lands on its OWN row, and whether the two nouns stay
+  // apart. A saved answer is only a persisted non-empty value, while the
+  // viewed row's "answered" additionally requires structured validity,
+  // evidence readiness and a satisfied charter basis — so a host that passed
+  // the rollup where the measured count belongs, or spread one phase's count
+  // across the strip, would report work nobody did under the stronger word.
+  describe("capture phase strip saved counts (moves_capture_phase_rollup_v1)", () => {
+    const P0_TOTAL = getPhaseCaptureSections(0, null).length;
+    const P1_TOTAL = getPhaseCaptureSections(1, null).length;
+    const P2_TOTAL = getPhaseCaptureSections(2, null).length;
+    const P5_TOTAL = getPhaseCaptureSections(5, null).length;
+
+    const renderStrip = (args: {
+      savedAnswerCounts?: Readonly<Record<number, number>>;
+      confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+      viewedPhase?: number;
+    }) => {
+      const viewedPhase = args.viewedPhase ?? 1;
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          capturePhaseSavedAnswerCounts={args.savedAnswerCounts}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialConfirmedSolutionRoute={args.confirmedSolutionRoute ?? null}
+          move={makeMove({ currentPhase: 5, phaseLabel: "P1 Charter" })}
+          phaseNum={viewedPhase}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const bar = screen.getByRole("navigation", { name: "Phases" });
+      return {
+        bar,
+        row: (code: string) =>
+          within(bar).getByRole("button", { name: new RegExp(`^${code}`) }),
+      };
+    };
+
+    it("an unmeasured row states the saved count the host was handed, under that word", () => {
+      const { row } = renderStrip({ savedAnswerCounts: { 0: 4, 2: 6 } });
+
+      // Each count lands on its own phase's row — not one figure repeated, and
+      // not another phase's figure, which is the attribution a host assembling
+      // the strip can get wrong without changing anything else on screen.
+      expect(row("P0")).toHaveTextContent(`4 of ${P0_TOTAL} saved`);
+      expect(row("P2")).toHaveTextContent(`6 of ${P2_TOTAL} saved`);
+      // and never under the stronger noun
+      expect(row("P0")).not.toHaveTextContent("answered");
+      expect(row("P2")).not.toHaveTextContent("answered");
+    });
+
+    it("a row the rollup says nothing about keeps its bare question count", () => {
+      // The vacuity guard for the case above: the counts are read per phase,
+      // so a phase with no entry is unchanged rather than borrowing one.
+      const { row } = renderStrip({ savedAnswerCounts: { 0: 4, 2: 6 } });
+
+      expect(row("P5")).toHaveTextContent(`${P5_TOTAL} questions`);
+      expect(row("P5")).not.toHaveTextContent("saved");
+    });
+
+    it("the viewed row keeps its measured count even when the rollup names it", () => {
+      // One figure per row, and on the row the screen CAN measure it must be
+      // the measured one. Nothing here has been answered, so the live count is
+      // 0 — strictly below the 6 the rollup offers, which is what makes a host
+      // that preferred the rollup visible.
+      const { row } = renderStrip({ savedAnswerCounts: { 1: 6 } });
+
+      expect(row("P1")).toHaveTextContent(`0 of ${P1_TOTAL} answered`);
+      expect(row("P1")).not.toHaveTextContent("saved");
+    });
+
+    it("no rollup supplied (flag off): no row claims a saved count", () => {
+      const { bar, row } = renderStrip({});
+
+      expect(row("P0")).toHaveTextContent(`${P0_TOTAL} questions`);
+      expect(bar).not.toHaveTextContent("saved");
+    });
+
+    it("a fully saved unmeasured row still earns no completion tick", () => {
+      // The invariant that must survive the rollup: a tick is a claim that the
+      // phase is complete, and saved answers are not measured ones. This is the
+      // ticked-but-blank row's defect arriving from the other direction.
+      const { row } = renderStrip({ savedAnswerCounts: { 0: P0_TOTAL } });
+
+      expect(row("P0")).toHaveTextContent(`${P0_TOTAL} of ${P0_TOTAL} saved`);
+      expect(within(row("P0")).queryByLabelText("complete")).toBeNull();
+    });
+
+    it("a saved count is stated against the same route-aware total as its row", () => {
+      // P3 Design is the only phase whose question set depends on the Move's
+      // confirmed route, and the count was derived against that route-aware
+      // set server-side. If the host states the row's total without the route,
+      // the pair disagrees about which questions the phase even asks — the
+      // same dropped argument the totals above guard, now on the weaker noun.
+      const narrower = getPhaseCaptureSections(3, {
+        route: "technical_product",
+        recommendation: "technical_product",
+        solutionOutput: "data_product",
+        workflowChange: "limited",
+        roleAccountabilityChange: "none",
+        adoptionOwner: "Named business owner",
+        adoptionResponsibility: "business",
+        decision: "confirm",
+        evidenceReference: "evidence-ref",
+        validatedBy: "Validator",
+        rationale: "Route confirmed against the evidence reviewed at the gate.",
+      }).length;
+      const defaultTotal = getPhaseCaptureSections(3, null).length;
+      expect(narrower).not.toBe(defaultTotal);
+
+      const { row } = renderStrip({
+        savedAnswerCounts: { 3: narrower - 1 },
+        confirmedSolutionRoute: {
+          route: "technical_product",
+          recommendation: "technical_product",
+          solutionOutput: "data_product",
+          workflowChange: "limited",
+          roleAccountabilityChange: "none",
+          adoptionOwner: "Named business owner",
+          adoptionResponsibility: "business",
+          decision: "confirm",
+          evidenceReference: "evidence-ref",
+          validatedBy: "Validator",
+          rationale:
+            "Route confirmed against the evidence reviewed at the gate.",
+        },
+      });
+
+      expect(row("P3")).toHaveTextContent(
+        `${narrower - 1} of ${narrower} saved`,
+      );
+      expect(row("P3")).not.toHaveTextContent(`of ${defaultTotal} saved`);
+    });
+  });
+
   describe("Moves workspace navigation", () => {
     it("keeps compact phase and workspace controls reachable on narrow screens", () => {
       render(
@@ -3191,9 +3809,7 @@ describe("MovesPhaseStandaloneClient", () => {
       // the mocked row's met/total fields.
       expect(screen.getByText("Not yet submitted")).toBeInTheDocument();
       expect(screen.getAllByText("0 of 2 met").length).toBeGreaterThan(0);
-      expect(
-        within(overview).queryByText(/0\/2 met/),
-      ).not.toBeInTheDocument();
+      expect(within(overview).queryByText(/0\/2 met/)).not.toBeInTheDocument();
       // P4/P5 are "upcoming" -> Not reached.
       expect(screen.getAllByText("Not reached").length).toBe(2);
       expect(within(overview).queryByText("Sponsor")).not.toBeInTheDocument();
@@ -3572,7 +4188,9 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Open Tower →")).toBeInTheDocument();
     expect(
-      screen.getByText(/P5's gate has passed and the Move handed off to Tower/i),
+      screen.getByText(
+        /P5's gate has passed and the Move handed off to Tower/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen
@@ -4815,6 +5433,7 @@ describe("MovesPhaseStandaloneClient", () => {
         exampleContent: [],
         whyItMatters:
           "The business case and financial model need traceable cost and value assumptions before funding-grade estimates.",
+        guidanceBasis: "generic",
         blockedArtifacts: [
           {
             artifactType: "execution_roadmap",
@@ -4857,10 +5476,10 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getAllByText("Cost baseline").length).toBeGreaterThan(0);
     expect(screen.getByText(/Format: CSV, XLSX/i)).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.getAllByText(
         /traceable cost and value assumptions before funding-grade estimates/i,
-      ),
-    ).toBeInTheDocument();
+      ).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(
         "Suggested working sessions for P4 Roadmap & Business Case",
@@ -4883,6 +5502,7 @@ describe("MovesPhaseStandaloneClient", () => {
         exampleTemplate: "Workflow evidence",
         exampleContent: [],
         whyItMatters: "The target state needs an approved current-state basis.",
+        guidanceBasis: "generic",
         blockedArtifacts: [],
         canDraftBoundary: {
           canDraft: false,
@@ -4934,6 +5554,7 @@ describe("MovesPhaseStandaloneClient", () => {
       exampleTemplate: "Workflow evidence",
       exampleContent: [],
       whyItMatters: "The target design needs an evidence-backed current state.",
+      guidanceBasis: "generic",
       blockedArtifacts: [],
       canDraftBoundary: {
         canDraft: false,
@@ -6050,6 +6671,7 @@ describe("MovesPhaseStandaloneClient", () => {
             exampleContent: [],
             whyItMatters:
               "The design lane needs real architecture constraints.",
+            guidanceBasis: "generic",
             blockedArtifacts: [],
             canDraftBoundary: {
               canDraft: false,
@@ -6092,11 +6714,17 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/1 required evidence item open/i),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/1 required evidence item open/i));
     expect(
-      screen.getByText(
-        /This phase build is unavailable until these required evidence items are reviewed and covered/i,
-      ),
+      screen.getByText("Solution architecture constraints"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("Upload the architecture constraints memo."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Likely source owner: Client owner \/ evidence steward/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Accepted formats: DOCX")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
         name: /Approve & Build P3 Design Future State/i,
@@ -7447,6 +8075,7 @@ describe("MovesPhaseStandaloneClient", () => {
               exampleTemplate: "Systems landscape extract",
               exampleContent: [],
               whyItMatters: "P3 solution options need the real systems map.",
+              guidanceBasis: "generic",
               blockedArtifacts: [
                 {
                   artifactType: "solution_options",
@@ -7964,6 +8593,323 @@ describe("MovesPhaseStandaloneClient", () => {
       );
 
       expect(longSentences).toEqual([]);
+    });
+  });
+
+  // ─── moves_capture_handoff_recap_v1: the recap's reachability AT THE HOST ───
+  // `captureHandoffAccess` and the recap's copy are pinned as a pure module and
+  // on the component (MovesCaptureFlow.test.tsx), where the approve slot is a
+  // stub `<button>`. What only the host can answer is whether the flag is wired
+  // to the real surface: the host supplies a NON-NULL governed slot on every
+  // path that mounts the flow — for an approver it is `PhaseApproveAndBuild`
+  // (`button.mxw-phase-progress-button`), for everyone else an authorization
+  // note — so the footer's one forward control is always spent and the flag is
+  // the only thing that can open the recap. These cases pin that call site.
+  describe("hand-off recap reachability at the host (moves_capture_handoff_recap_v1)", () => {
+    // P1's substeps are prepare · decide · approve, so `initialSubstepKey`
+    // "approve" lands the 3-step flow on its last step (`initialStep` is
+    // `min(substepIndex, 2)`) without walking Continue through saved answers.
+    const renderLastCaptureStep = (overrides: Record<string, unknown> = {}) =>
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="approve"
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+          {...overrides}
+        />,
+      );
+
+    const openReview = () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Review what you captured" }),
+      );
+
+    it("flag OFF (default): the host's governed control holds the last step's one forward control, so nothing opens the recap", () => {
+      renderLastCaptureStep();
+
+      expect(screen.getByText("Step 3 of 3")).toBeInTheDocument();
+      // The real governed control is what occupies the slot — not a stub.
+      expect(
+        document.querySelector(".mcf-approve-slot .mxw-phase-progress-button"),
+      ).not.toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Review what you captured" }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("mcf-handoff")).not.toBeInTheDocument();
+    });
+
+    it("flag ON: the review control opens a recap built from the host's own captured answers", () => {
+      renderLastCaptureStep({ captureHandoffRecapEnabled: true });
+      openReview();
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      // `sectionRecap` reads the host's phase-capture values, so a real saved
+      // answer — not a label or a placeholder — has to be what the recap shows.
+      expect(within(handoff).getByText(/Jordan Lee, COO/)).toBeInTheDocument();
+      expect(
+        within(handoff).getByText(/In scope: Airport turnaround operations/),
+      ).toBeInTheDocument();
+    });
+
+    it("flag ON: the real governed control travels onto the recap and the recap claims no submission", () => {
+      renderLastCaptureStep({ captureHandoffRecapEnabled: true });
+      openReview();
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      // The decision still runs through the gate pipeline: it is the host's
+      // own PhaseApproveAndBuild on the recap, not a second submit path.
+      expect(
+        handoff.querySelectorAll(".mxw-phase-progress-button"),
+      ).toHaveLength(1);
+      // Nothing was submitted, so the next phase cannot be begun from here...
+      expect(
+        within(handoff).queryByRole("button", { name: /^Begin / }),
+      ).not.toBeInTheDocument();
+      // ...and no heading may say it was. Assert over text NODES: sibling
+      // spans join with no separator, so a container-wide negative assertion
+      // can be satisfied by a neighbouring string.
+      const claims = Array.from(
+        handoff.querySelectorAll("span, h1, h2, h3"),
+      ).map((node) => node.textContent?.trim() ?? "");
+      expect(claims).not.toContain("Charter submitted");
+      expect(claims.some((text) => /Charter is complete/.test(text))).toBe(
+        false,
+      );
+      expect(handoff.querySelector(".mcf-tick")).toBeNull();
+    });
+
+    it("flag ON for a user who cannot approve: the recap is still reachable, and the authorization note travels in place of the control", () => {
+      // The host's slot is non-null in BOTH authorization states. That is why
+      // the flag — not the viewer's permission — is what makes the recap
+      // reachable, and it is also why the recap must not offer a way around the
+      // gate to someone who cannot approve.
+      renderLastCaptureStep({
+        canApproveGates: false,
+        captureHandoffRecapEnabled: true,
+      });
+      openReview();
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      expect(
+        within(handoff).getByText(
+          "Approval is available to an authorized workspace user.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        handoff.querySelectorAll(".mxw-phase-progress-button"),
+      ).toHaveLength(0);
+      expect(
+        within(handoff).queryByRole("button", { name: /^Begin / }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("the flag cannot manufacture a surface: with moves_capture_v2 off there is no flow to review", () => {
+      // The route conjoins the two flags server-side; this pins that the host
+      // arm agrees, so a tenant enrolled in the recap flag alone sees exactly
+      // today's product.
+      renderLastCaptureStep({
+        captureV2Enabled: false,
+        captureHandoffRecapEnabled: true,
+      });
+
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Review what you captured" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+    });
+
+    it("flag ON with the charter basis recorded: the review carries the host's basis rollup, not only the post-submit recap", () => {
+      // `handoffSummary` is the host's one fold of the declared bases — the
+      // same computation the gate dialog discloses. Reaching the recap as a
+      // review has to carry it, or the person reviews the answers without the
+      // one thing that says how they are known.
+      renderLastCaptureStep({
+        captureHandoffRecapEnabled: true,
+        charterBasisEnabled: true,
+        initialP1CharterBasisBySection: Object.fromEntries(
+          Object.keys(completeP1CaptureValues).map((sectionKey) => [
+            sectionKey,
+            { kind: "workspace_assertion" as const },
+          ]),
+        ),
+      });
+      openReview();
+
+      const handoff = screen.getByTestId("mcf-handoff");
+      expect(
+        within(handoff).getByTestId("charter-basis-rollup"),
+      ).toBeInTheDocument();
+      // And the per-question marks the host supplies through
+      // `renderSectionRecapMark`: every question row the review lists states
+      // its own basis, so no answer reads back without one.
+      const marks = Array.from(
+        handoff.querySelectorAll('[data-testid="charter-basis-mark"]'),
+      );
+      const questionRows = handoff.querySelectorAll(".mcf-recap dl dt");
+      expect(questionRows.length).toBeGreaterThan(0);
+      expect(marks).toHaveLength(questionRows.length);
+      // Each mark belongs to a question row, not to the rollup above it...
+      expect(marks.filter((mark) => mark.closest("dt"))).toHaveLength(
+        questionRows.length,
+      );
+      // ...and it states the basis that was recorded, not a generic badge.
+      expect(
+        new Set(marks.map((mark) => mark.getAttribute("data-basis"))),
+      ).toEqual(new Set(["workspace_assertion"]));
+      expect(new Set(marks.map((mark) => mark.textContent))).toEqual(
+        new Set(["Asserted"]),
+      );
+    });
+  });
+  // ─── The build hold at P4/P5 states the reason it can act on ─────────────
+  // `phaseCaptureStatusForSection` returns "Evidence open" for any section
+  // with no `evidenceFamily` of its own once the phase's evidence check has
+  // not passed — which is every P4 and P5 section. A fully answered, fully
+  // saved P4 therefore counted as 0/7 inputs, and the build control's reason
+  // was derived from that count alone: "Complete 7 phase inputs before
+  // Approve & Build", for inputs that are complete. The evidence behind the
+  // verdict is the discovery set re-stamped onto the active phase, so it is
+  // closed in Files & Evidence and not on the screen stating the blocker.
+  // `PhaseApproveAndBuild` already knows the right sentence, but the parent
+  // blocker shadows it (`hasParentBlocker` is checked before
+  // `hasRequiredGaps`), so the fix belongs in what the parent passes down.
+  describe("a captured phase held by open evidence says so", () => {
+    const p4Answers = {
+      roadmap_sequencing: "Three waves, starting with the exception queue.",
+      estimates_capacity: completeEstimateModelValue,
+      value_plan: "Measured against the P2 baseline at day 90.",
+      funding_governance: "Funded from the existing programme envelope.",
+      risks_dependencies: "Source freshness is the main dependency.",
+      handoff_plan: "Hands to the platform team with the runbook.",
+      recommendation: "Proceed to mobilisation on the agreed sequence.",
+    };
+    const openEvidencePacketsForPhase = (phase: number) =>
+      coveredEvidencePacketsForPhase(phase).map((packet) => ({
+        ...packet,
+        status: "missing" as const,
+        evidenceSlot: "Data governance ownership",
+        evidenceTitles: [],
+      }));
+
+    it("P4 with every input answered and its required evidence open blames the evidence", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={openEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={p4Answers}
+          move={makeMove({
+            currentPhase: 4,
+            phaseLabel: "P4 Roadmap & Business Case",
+          })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Continue is held even though every question is answered and saved, so
+      // the band is the only thing that can explain the step.
+      expect(
+        screen.getByRole("button", { name: "Continue" }),
+      ).toBeDisabled();
+      const hold = screen.getByTestId("capture-evidence-hold");
+      expect(hold).toHaveTextContent("Phase inputs are captured.");
+      expect(hold).toHaveTextContent("1 required evidence item");
+      expect(hold).toHaveTextContent("Data governance ownership");
+      expect(hold).toHaveTextContent("Files & Evidence");
+      // The defect: a count of held-but-complete sections read as missing
+      // inputs, with no mention of evidence and nothing on screen to do.
+      expect(hold).not.toHaveTextContent(
+        /Complete \d+ phase inputs? before Approve & Build/,
+      );
+      expect(
+        screen.getByRole("button", { name: /Open Files & Evidence/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("P4 with its required evidence covered holds nothing and shows no band", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={p4Answers}
+          move={makeMove({
+            currentPhase: 4,
+            phaseLabel: "P4 Roadmap & Business Case",
+          })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Nothing holds this phase, so the flow resumes on its last step with
+      // the governed approve slot in place of Continue — and no band.
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("capture-evidence-hold"),
+      ).not.toBeInTheDocument();
+    });
+
+    // Unanswered capture is work on the same screen, so it stays the stated
+    // reason and the evidence band must not take its place.
+    it("P4 missing an answer shows no evidence band, even with evidence open", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={openEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={{ ...p4Answers, roadmap_sequencing: "" }}
+          move={makeMove({
+            currentPhase: 4,
+            phaseLabel: "P4 Roadmap & Business Case",
+          })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByTestId("capture-evidence-hold"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("P5 is held the same way, so the fix is not P4-specific", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={openEvidencePacketsForPhase(5)}
+          initialPhaseCaptureValues={{
+            mobilization_plan: "Platform team takes the runbook on day one.",
+            launch_readiness: "Entry criteria signed by the service owner.",
+            value_proof_rules: "Day-90 read against the agreed baseline.",
+            first_90_days: "Three milestones, each with a named owner.",
+            governance_cadence: "Monthly review with the steering group.",
+            risks_open_items: "Source freshness remains the open risk.",
+            recommendation: "Go live on the agreed sequence.",
+          }}
+          move={makeMove({
+            currentPhase: 5,
+            phaseLabel: "P5 Mobilize",
+          })}
+          phaseNum={5}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByTestId("capture-evidence-hold"),
+      ).toHaveTextContent("Phase inputs are captured.");
     });
   });
 });

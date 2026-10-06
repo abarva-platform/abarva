@@ -10,15 +10,15 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 402,
-    "fenced": 226,
-    "fencedDirect": 102,
+    "routes": 404,
+    "fenced": 228,
+    "fencedDirect": 104,
     "fencedIndirect": 124,
     "unfenced": 176,
     "unfencedButReachesFenceModule": 95,
-    "behavioral": 81,
+    "behavioral": 82,
     "byteScannerOnly": 7,
-    "none": 138
+    "none": 139
   },
   "ranking": [
     {
@@ -629,6 +629,12 @@
     },
     {
       "route": "src/app/api/onboarding/upload/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/programs/discovery-archetype-suggestions/route.ts",
       "coverage": "none",
       "fence": "direct",
       "fenceVia": []
@@ -3122,6 +3128,21 @@
       }
     },
     {
+      "route": "src/app/api/programs/discovery-archetype-suggestions/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/programs/expert-kernel/export/route.ts",
       "fence": "none",
       "fenceSymbols": [],
@@ -3861,7 +3882,9 @@
           "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
           "src/app/api/source/workspace/contract/[contractId]/__tests__/route.test.ts"
         ],
-        "byteScanner": []
+        "byteScanner": [
+          "src/__tests__/behaviors/source-contract-detail-load-trace.test.ts"
+        ]
       }
     },
     {
@@ -6582,6 +6605,23 @@
       }
     },
     {
+      "route": "src/app/api/v1/source/[eventId]/solicitation-motion/accept/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/lib/source/new-workspace/__tests__/event-authority.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/v1/source/[eventId]/stage/route.ts",
       "fence": "indirect",
       "fenceSymbols": [
@@ -6600,6 +6640,7 @@
           "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
         ],
         "byteScanner": [
+          "scripts/exec/register-time-authority.test.mjs",
           "src/__tests__/integration/source/source-access-control-static.test.ts"
         ]
       }

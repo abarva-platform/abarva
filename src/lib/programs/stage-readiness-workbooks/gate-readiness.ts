@@ -230,6 +230,8 @@ function readinessWorkbookPacket(
     exampleContent: ["Evidence-backed answers with approved source references"],
     whyItMatters:
       "The next phase must not open on an unreviewed or unsupported evidence posture.",
+    // Not from a family guidance table — this packet's wording is its own.
+    guidanceBasis: "packet_specific",
     blockedArtifacts: [
       {
         artifactType: "stage_readiness_workbook",

@@ -606,6 +606,61 @@ describe("evaluateGate", () => {
     );
   });
 
+  // ── The P4 Tower metric plan: what the Move BUILDS must satisfy the
+  // criterion named after it. `tower_metrics_plan` is a `gateArtifact: true`
+  // registry entry, it is in `PHASE_CANONICAL_KEYS[4]`, and it is what the
+  // generated-artifact acceptance route writes for a "Tower Metrics" document.
+  // The criterion is `tower_metric_plan_drafted` (singular), so a drift of one
+  // character is enough to make the real document invisible to the real gate —
+  // and because the criterion keeps a prose fallback, the drift does not show
+  // up as a blocked Move. It shows up as a satisfied criterion whose basis is
+  // the word "tower" appearing somewhere in capture text. These two cases pin
+  // the document-backed branch so the criterion can be satisfied by the
+  // artifact rather than by vocabulary.
+  it("satisfies the P4 Tower metric-plan criterion from the built Tower metrics plan, with no Tower wording captured anywhere", async () => {
+    deliverablesFixture = [
+      ...deliverablesFixture,
+      {
+        id: "tower-metrics",
+        deliverable_type_key: "tower_metrics_plan",
+        status: "signed_off",
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      4,
+      5,
+    );
+
+    expect(
+      result.failedChecks.map((check) => check.check),
+    ).not.toContain("tower_metric_plan_drafted");
+  });
+
+  it("reports the P4 Tower metric-plan criterion as unmet when neither the plan nor any Tower wording exists", async () => {
+    // The control for the case above: without this, that case would pass on a
+    // prose fallback firing somewhere in the fixture rather than on the
+    // document, and removing the document key from the evaluator would not
+    // fail anything.
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      4,
+      5,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: "tower_metric_plan_drafted",
+          severity: "soft",
+        }),
+      ]),
+    );
+  });
+
   it("keeps P1 blocked when Approve & Build has produced only an unsigned charter draft", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",

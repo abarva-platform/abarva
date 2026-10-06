@@ -31,6 +31,7 @@ export interface OriginationDraftState {
     targetOutcome: string | null;
     timeline: string | null;
     classification: string | null;
+    discoveryArchetypeId?: string | null;
     matchedPatternId: string | null;
     sponsor: string | null;
     lead: string | null;

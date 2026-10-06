@@ -91,7 +91,7 @@ function extractReviewFeedbackItems(args: {
     .map((line) => line.trim())
     .filter(Boolean)
     .filter((line) =>
-      /(change|revise|update|correct|approve|approved|final|decision|assumption|gap|option|architecture|roadmap|kpi)/i.test(
+      /(change|revise|update|correct|approve|approved|final|decision|assumption|gap|option|architecture|roadmap|kpi|risk|blocker)/i.test(
         line,
       ),
     )
@@ -274,6 +274,7 @@ export async function POST(
     "application/pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   ]);
   const scanStatus: AttachmentScanStatus = synchronousTextMimes.has(mimeType)
     ? "skipped"
