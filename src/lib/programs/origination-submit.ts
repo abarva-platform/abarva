@@ -35,6 +35,10 @@ import {
   embedDiscoveryPlanInCharter,
 } from "@/lib/programs/discovery/charter-transformers";
 import { applyExtendedIntakeFieldsIfEnabled } from "@/lib/programs/p0-extended-intake-fields";
+import {
+  normalizeDiscoveryArchetypeDeclaration,
+  withDeclaredDiscoveryArchetype,
+} from "@/lib/programs/discovery/discovery-archetype-declaration";
 import type { ExtendedIntakeFields } from "@/lib/programs/p0-extended-intake-fields";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import { planFromShape } from "@/lib/programs/discovery/discovery-intake";
@@ -62,6 +66,8 @@ export interface SubmitOriginationBriefInput {
   targetOutcome?: string | null;
   timeline?: string | null;
   classification?: string | null;
+  /** Separate discovery routing choice; never replaces the legacy Move archetype. */
+  discoveryArchetypeId?: string | null;
   sponsor: string;
   sponsorProgressEmails?: boolean;
   lead?: string | null;
@@ -584,6 +590,10 @@ function buildOriginationCharter(
       function_code: derived.functionCode,
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
+      ...withDeclaredDiscoveryArchetype(
+        {},
+        input.discoveryArchetypeId ?? null,
+      ),
     },
     initiative_context: input.fromInitiativeId
       ? {
@@ -663,6 +673,7 @@ export async function submitOriginationBrief(
     targetOutcome: optionalText(rawInput.targetOutcome),
     timeline: optionalText(rawInput.timeline),
     classification: optionalText(rawInput.classification),
+    discoveryArchetypeId: optionalText(rawInput.discoveryArchetypeId),
     sponsor: requiredText(rawInput.sponsor, "sponsor"),
     sponsorProgressEmails: rawInput.sponsorProgressEmails === true,
     lead:
@@ -850,6 +861,17 @@ export async function submitOriginationBrief(
 
   const derived = classifyBrief(input);
   const programArchetype = normalizeProgramArchetype(input.classification);
+  try {
+    input.discoveryArchetypeId = normalizeDiscoveryArchetypeDeclaration(
+      input.discoveryArchetypeId,
+    );
+  } catch {
+    throw new OriginationSubmitError(
+      "unknown_discovery_archetype",
+      "Choose a discovery blueprint from the available catalog.",
+      400,
+    );
+  }
   const parsedValueRange = parseUsdRangeFromText(input.targetOutcome);
   const valueAssumptions = input.targetOutcome
     ? {
@@ -1008,6 +1030,7 @@ export async function submitOriginationBrief(
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
       classification: programArchetype,
+      discovery_archetype_id: input.discoveryArchetypeId,
       matched_pattern_id: input.matchedPatternId ?? null,
       submitted_from_surface: input.surface,
       submitted_at: new Date().toISOString(),

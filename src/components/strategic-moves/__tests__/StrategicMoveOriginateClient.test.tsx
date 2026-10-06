@@ -236,6 +236,59 @@ describe("StrategicMoveOriginateClient", () => {
     );
   });
 
+  it("keeps discovery blueprint selection separate and human-declared", () => {
+    render(
+      <StrategicMoveOriginateClient
+        tenantName="Demo tenant"
+        discoveryArchetypeOptions={[
+          {
+            blueprintId: "governed_data_foundation",
+            archetypeLabel: "Governed Data Foundation",
+          },
+        ]}
+      />,
+    );
+    selectP0Tab(2);
+
+    const selection = screen.getByLabelText("Declare a discovery blueprint");
+    expect(selection).toHaveValue("");
+    expect(
+      screen.getByText(/never select a blueprint for you/i),
+    ).toBeInTheDocument();
+
+    fireEvent.change(selection, {
+      target: { value: "governed_data_foundation" },
+    });
+
+    expect(selection).toHaveValue("governed_data_foundation");
+    expect(
+      screen.getByText(/Selected by you; used to tailor discovery questions/i),
+    ).toBeInTheDocument();
+  });
+
+  it("restores a saved discovery blueprint declaration", () => {
+    render(
+      <StrategicMoveOriginateClient
+        tenantName="Demo tenant"
+        initialDiscoveryArchetypeId="governed_data_foundation"
+        discoveryArchetypeOptions={[
+          {
+            blueprintId: "governed_data_foundation",
+            archetypeLabel: "Governed Data Foundation",
+          },
+        ]}
+      />,
+    );
+    selectP0Tab(2);
+
+    expect(screen.getByLabelText("Declare a discovery blueprint")).toHaveValue(
+      "governed_data_foundation",
+    );
+    expect(
+      screen.getByText(/Selected by you; used to tailor discovery questions/i),
+    ).toBeInTheDocument();
+  });
+
   it("lets deterministic extraction override stale brief-progress artifact fields", async () => {
     const staleArtifact =
       "Captured all fields with a stale sponsor. [[artifact:brief-progress]]" +
