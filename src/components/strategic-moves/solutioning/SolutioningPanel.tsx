@@ -10,9 +10,9 @@ import { Card, Chip } from "../phase-workspace/primitives";
 import { PhaseWorkspaceStyles } from "../phase-workspace/styles";
 import {
   SOLUTION_PATTERN_OPTIONS,
-  type SolutionPattern,
   type SolutionPatternFields,
 } from "@/lib/programs/solution-pattern";
+import type { SolutionPatternOption } from "@/lib/programs/solution-pattern-catalog";
 
 export interface SolutioningPanelProps {
   moveId: string;
@@ -50,8 +50,19 @@ function apiUrl(moveId: string) {
 }
 
 export function SolutioningPanel({ moveId }: SolutioningPanelProps) {
-  const [pattern, setPattern] = React.useState<SolutionPattern | "">("");
+  // A plain string, not the catalog's literal union: the set of patterns this
+  // Move may record is decided by the route, and the route re-validates every
+  // save against it. Narrowing here would only duplicate that decision in a
+  // client the server does not trust anyway.
+  const [pattern, setPattern] = React.useState<string>("");
   const [rationale, setRationale] = React.useState("");
+  // The platform-fit set is per-DECLARED-archetype and the route is its
+  // authority (solution-pattern-catalog.ts), so the panel renders what the GET
+  // returns rather than a module constant. The shipped set is the initial value
+  // so the radio group is never momentarily empty, and the fallback for a
+  // response from an older build that carries no `options`.
+  const [options, setOptions] =
+    React.useState<readonly SolutionPatternOption[]>(SOLUTION_PATTERN_OPTIONS);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
@@ -73,8 +84,10 @@ export function SolutioningPanel({ moveId }: SolutioningPanelProps) {
         }
         const data = (await res.json()) as {
           fields: SolutionPatternFields | null;
+          options?: readonly SolutionPatternOption[];
         };
         if (cancelled) return;
+        if (data.options?.length) setOptions(data.options);
         if (data.fields) {
           setPattern(data.fields.pattern);
           setRationale(data.fields.rationale);
@@ -148,7 +161,7 @@ export function SolutioningPanel({ moveId }: SolutioningPanelProps) {
                 role="radiogroup"
                 aria-label="Solution pattern"
               >
-                {SOLUTION_PATTERN_OPTIONS.map((opt) => (
+                {options.map((opt) => (
                   <label
                     key={opt.value}
                     className={`sp-option ${pattern === opt.value ? "selected" : ""}`}
