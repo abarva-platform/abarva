@@ -19,6 +19,7 @@ import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "./briefs/deliverable-structures";
+import { composeArtifactAssets } from "./briefs/artifact-asset-composition";
 import { resolveDiscoveryBlueprintFromConfiguredCatalog } from "./briefs/archetype-config-source";
 
 const CITATION_POLICY =
@@ -683,21 +684,41 @@ function composeBrief(
     // archetype pack contributes (use-case-specific exhibits like a dependency
     // map) — a business case and an architecture doc under the same archetype
     // must not get the same exhibit list.
-    expectedExhibits: [
-      ...(structure.expectedExhibits ?? []),
-      ...(allowArchetypeAssets ? (pack?.exhibits ?? []) : []),
-    ],
-    expectedTables: allowArchetypeAssets
-      ? (pack?.tables ?? [
-          {
-            key: "risk_register",
-            title: "Risks, Issues & Dependencies",
-            columns: ["Item", "Type", "Impact", "Owner", "Mitigation"],
-            groundingMode: "mixed",
-            moveToExcelIfWide: false,
-          },
-        ])
-      : [],
+    expectedExhibits: composeArtifactAssets(
+      structure.expectedExhibits ?? [],
+      allowArchetypeAssets ? (pack?.exhibits ?? []) : [],
+    ),
+    // Tables are joined by the same rule, which they were not until now: the
+    // structure's tables were ignored entirely, so within one archetype
+    // eighteen of the twenty-one structures received an identical table set.
+    // A structure's tables are a property of the ARTIFACT TYPE, so — exactly
+    // as with its exhibits — they survive `allowArchetypeAssets === false`;
+    // only the pack's side is withheld. The default risk register stands in
+    // for an unresolved pack, unchanged.
+    //
+    // Two properties of these two lines are deliberately unobservable today
+    // and so have no case of their own. (1) Neither withheld instrument
+    // (charter, design workshop guide) declares a table or an exhibit, so
+    // gating the structure's side as well would change no output; the rule is
+    // written to match the exhibit line above, which has always been ungated.
+    // (2) The exhibit join's de-duplication cannot bite while every shipped
+    // pack's exhibit keys are disjoint from every structure's — it becomes
+    // reachable through `composeBrief` once a CONFIGURED pack is resolved
+    // here. `composeArtifactAssets` is exercised directly for both.
+    expectedTables: composeArtifactAssets(
+      structure.expectedTables ?? [],
+      allowArchetypeAssets
+        ? (pack?.tables ?? [
+            {
+              key: "risk_register",
+              title: "Risks, Issues & Dependencies",
+              columns: ["Item", "Type", "Impact", "Owner", "Mitigation"],
+              groundingMode: "mixed",
+              moveToExcelIfWide: false,
+            },
+          ])
+        : [],
+    ),
     requiredPlaceholders: sections
       .filter((s) => s.groundingMode === "client_to_complete")
       .map((s) => s.key),

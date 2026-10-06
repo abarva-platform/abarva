@@ -9,6 +9,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { TextDecoder } from "util";
 import { StrategicMoveOriginateClient } from "../StrategicMoveOriginateClient";
@@ -264,6 +265,89 @@ describe("StrategicMoveOriginateClient", () => {
     expect(
       screen.getByText(/Selected by you; used to tailor discovery questions/i),
     ).toBeInTheDocument();
+  });
+
+  it("lists an archetype the firm configured as the firm's own, not as part of the shipped catalog", () => {
+    render(
+      <StrategicMoveOriginateClient
+        tenantName="Demo tenant"
+        discoveryArchetypeOptions={[
+          {
+            blueprintId: "governed_data_foundation",
+            archetypeLabel: "Governed Data Foundation",
+            origin: "seed",
+          },
+          {
+            blueprintId: "regulated_claims_automation",
+            archetypeLabel: "Regulated Claims Automation",
+            origin: "configured_addition",
+          },
+        ]}
+      />,
+    );
+    selectP0Tab(2);
+
+    const selection = screen.getByLabelText("Declare a discovery blueprint");
+    const shipped = within(selection).getByRole("group", {
+      name: "All discovery blueprints",
+    });
+    const firmAuthored = within(selection).getByRole("group", {
+      name: "Added by your firm",
+    });
+
+    // Each archetype appears in exactly one group, and in the right one: an
+    // operator has to be able to tell their own archetype from a shipped one.
+    expect(
+      within(shipped)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Governed Data Foundation"]);
+    expect(
+      within(firmAuthored)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Regulated Claims Automation"]);
+
+    fireEvent.change(selection, {
+      target: { value: "regulated_claims_automation" },
+    });
+    expect(selection).toHaveValue("regulated_claims_automation");
+  });
+
+  it("shows no firm-authored group on a deployment that configures nothing", () => {
+    render(
+      <StrategicMoveOriginateClient
+        tenantName="Demo tenant"
+        discoveryArchetypeOptions={[
+          {
+            blueprintId: "governed_data_foundation",
+            archetypeLabel: "Governed Data Foundation",
+            origin: "seed",
+          },
+          // A caller holding only the shipped list says nothing about origin.
+          // That has to read as shipped, not as the firm's own.
+          {
+            blueprintId: "ai_operations_customer_digital",
+            archetypeLabel: "AI Operations",
+          },
+        ]}
+      />,
+    );
+    selectP0Tab(2);
+
+    const selection = screen.getByLabelText("Declare a discovery blueprint");
+    expect(
+      within(selection).queryByRole("group", { name: "Added by your firm" }),
+    ).toBeNull();
+    expect(
+      within(
+        within(selection).getByRole("group", {
+          name: "All discovery blueprints",
+        }),
+      )
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Governed Data Foundation", "AI Operations"]);
   });
 
   it("restores a saved discovery blueprint declaration", () => {

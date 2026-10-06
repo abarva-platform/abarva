@@ -40,6 +40,7 @@ import type {
   SourceContractOperationalPerformanceRow,
 } from "@/lib/source/data-model/types";
 import { appClientKeyForTenant, canonicalTenantKey } from "@/lib/tenant/aliases";
+import { createLoadTrace } from "@/lib/source/contract-detail-load-trace";
 import {
   loadSourceWorkspacePortfolio,
   loadSourceWorkspaceContractDetailFallback,
@@ -107,74 +108,95 @@ export async function GET(
   }
 
   const eclProvider = sourceWorkspaceProvider(requestedSourceProvider);
+  // Contract detail has no load instrument and has been observed at 50-90s
+  // signed in (A9). The ladder below has two very different cost profiles
+  // depending on which rung answers, so the rung is recorded with the timings.
+  const trace = createLoadTrace();
   let projectionDetail: ProjectionContractDetail | null = null;
   let readFailed = false;
-  let contract = await getContract360(tenantKey, contractId).catch(() => {
-    readFailed = true;
-    return null;
-  });
+  let contract = await trace.step("contract360", () =>
+    getContract360(tenantKey, contractId).catch(() => {
+      readFailed = true;
+      return null;
+    }),
+  );
+  if (contract) trace.resolved("contract360");
   if (!contract && eclProvider !== "legacy") {
-    projectionDetail = await loadSourceWorkspaceContractDetailFallback(
+    projectionDetail = await trace.step("detail-fallback", () =>
+      loadSourceWorkspaceContractDetailFallback(
       tenantKey,
       contractId,
       eclProvider,
     ).catch(() => {
-      readFailed = true;
-      return null;
-    });
+        readFailed = true;
+        return null;
+      }),
+    );
     contract = projectionDetail?.contract ?? null;
+    if (contract) trace.resolved("detail-fallback");
   }
   if (!contract && eclProvider !== "legacy") {
-    projectionDetail = await getProjectionContractDetail(
+    projectionDetail = await trace.step("projection-detail", () =>
+      getProjectionContractDetail(
       tenantKey,
       contractId,
       eclProvider,
     ).catch(() => {
-      readFailed = true;
-      return null;
-    });
+        readFailed = true;
+        return null;
+      }),
+    );
     contract = projectionDetail?.contract ?? null;
+    if (contract) trace.resolved("projection-detail");
   }
   if (!contract && eclProvider !== "legacy") {
-    const action = await getSourceContractActionCandidate(
+    const action = await trace.step("action-candidate", () =>
+      getSourceContractActionCandidate(
       tenantKey,
       contractId,
     ).catch(() => {
-      readFailed = true;
-      return null;
-    });
+        readFailed = true;
+        return null;
+      }),
+    );
     if (
       action &&
       canonicalTenantKey(action.tenant_key) === canonicalTenantKey(tenantKey) &&
       action.contract_id === contractId
     ) {
       contract = supplementalActionContractRow(action);
+      trace.resolved("action-candidate");
     }
   }
   if (!contract && eclProvider !== "legacy") {
-    const coverage = await getSourceContractEvidenceCoverage(
+    const coverage = await trace.step("evidence-coverage", () =>
+      getSourceContractEvidenceCoverage(
       tenantKey,
       contractId,
     ).catch(() => {
-      readFailed = true;
-      return null;
-    });
+        readFailed = true;
+        return null;
+      }),
+    );
     if (
       coverage &&
       canonicalTenantKey(coverage.tenant_key) === canonicalTenantKey(tenantKey) &&
       coverage.contract_id === contractId
     ) {
       contract = supplementalCoverageContractRow(coverage);
+      trace.resolved("evidence-coverage");
     }
   }
   if (!contract && eclProvider !== "legacy") {
-    const direct = await loadSourceWorkspaceDirectImpactContract(
+    const direct = await trace.step("direct-impact", () =>
+      loadSourceWorkspaceDirectImpactContract(
       tenantKey,
       contractId,
     ).catch(() => {
-      readFailed = true;
-      return null;
-    });
+        readFailed = true;
+        return null;
+      }),
+    );
     if (
       direct?.action &&
       direct.action.contract_id === contractId &&
@@ -187,6 +209,7 @@ export async function GET(
       canonicalTenantKey(direct.coverage.tenant_key) === canonicalTenantKey(tenantKey)
     ) {
       contract = supplementalCoverageContractRow(direct.coverage);
+      trace.resolved("direct-impact");
     }
   }
   if (!contract) {
@@ -214,7 +237,7 @@ export async function GET(
     cloudTagQuality,
     contractTabIntelligence,
     contractIntelligence,
-  ] = await Promise.all([
+  ] = await trace.step("detail-batch", () => Promise.all([
     listContractApplicationScope(tenantKey, contractId).catch(() => []),
     listContractFinancialExposure(tenantKey).catch(() => []),
     listContractOperationalPerformance(tenantKey).catch(() => []),
@@ -231,7 +254,7 @@ export async function GET(
     listCloudTagQualityRows(tenantKey, contractId).catch(() => []),
     listContractTabIntelligence(tenantKey, contractId).catch(() => []),
     getContractIntelligence(tenantKey, contractId).catch(() => null),
-  ]);
+  ]));
   const applicationScope =
     storedApplicationScope.length > 0
       ? storedApplicationScope
@@ -250,7 +273,7 @@ export async function GET(
     documentFiles,
     optimizationEvidence,
     optimizationOpportunitySet,
-  ] = await Promise.all([
+  ] = await trace.step("subject-batch", () => Promise.all([
     listLatestTowerObservationsForSubjects(tenantKey, subjectRefs).catch(
       () => [],
     ),
@@ -270,7 +293,7 @@ export async function GET(
       contract.contract_id,
       contract,
     ).catch(() => null),
-  ]);
+  ]));
   const docExtractions = dedupeExtractions([
     ...extractionsByContract,
     ...extractionsByVendor,
@@ -304,7 +327,12 @@ export async function GET(
     contractIntelligence,
   });
 
-  return NextResponse.json(view);
+  // The profile travels on the response, so a signed-in walk reads it from
+  // the request it already makes. A9 asks for p50/p95 before a budget is
+  // agreed; this is what produces the samples.
+  return NextResponse.json(view, {
+    headers: { "Server-Timing": trace.serverTiming() },
+  });
 }
 
 type ProjectionContractDetail = {
