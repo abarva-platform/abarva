@@ -17,56 +17,23 @@
 // extended field in this session's work.
 // =============================================================================
 
-export type SolutionPattern =
-  | "Build on the Platform"
-  | "Point Automation"
-  | "Embedded in a Licensed Product"
-  | "Native to the Core Clinical System"
-  | "New Third-Party Platform";
+import {
+  ALL_SOLUTION_PATTERN_VALUES,
+  DEFAULT_SOLUTION_PATTERN_OPTIONS,
+  type SolutionPattern,
+  type SolutionPatternOption,
+} from "@/lib/programs/solution-pattern-catalog";
 
-export interface SolutionPatternOption {
-  value: SolutionPattern;
-  description: string;
-  /**
-   * The source model's own routing language for this pattern — surfaced in
-   * the UI as context, not enforced as a governance.ts gate check in this
-   * pass (see the release record's Known Gaps).
-   */
-  routingNote: string;
-}
+export type { SolutionPattern, SolutionPatternOption };
 
-export const SOLUTION_PATTERN_OPTIONS: readonly SolutionPatternOption[] = [
-  {
-    value: "Build on the Platform",
-    description:
-      "Core functionality runs on the platform — its compute, its data, its models — inside the tenant's own boundary.",
-    routingNote: "Proceed, standard review.",
-  },
-  {
-    value: "Point Automation",
-    description:
-      "One system the tenant already runs and has already approved. Nothing new enters the estate.",
-    routingNote: "Proceed, standard review.",
-  },
-  {
-    value: "Embedded in a Licensed Product",
-    description:
-      "AI built into something the tenant already licenses for its actual job.",
-    routingNote: "Check coverage first.",
-  },
-  {
-    value: "Native to the Core Clinical System",
-    description:
-      "AI capabilities shipped inside the core system of record itself, running on its own data.",
-    routingNote: "Check coverage first.",
-  },
-  {
-    value: "New Third-Party Platform",
-    description:
-      "Data ships out to a vendor the tenant does not already have this relationship with.",
-    routingNote: "Challenge by default.",
-  },
-];
+/**
+ * The platform-fit options a Move that declares nothing is asked. Kept as a
+ * named re-export so every existing consumer is unchanged; a Move whose
+ * DECLARED archetype has its own set resolves it through
+ * `solutionPatternOptionsFor` instead (solution-pattern-catalog.ts).
+ */
+export const SOLUTION_PATTERN_OPTIONS: readonly SolutionPatternOption[] =
+  DEFAULT_SOLUTION_PATTERN_OPTIONS;
 
 const SOLUTION_PATTERN_KEY = "p3_solution_pattern_v1";
 
@@ -80,9 +47,14 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-const VALID_PATTERNS = new Set(
-  SOLUTION_PATTERN_OPTIONS.map((o) => o.value as string),
-);
+/**
+ * Read validation spans EVERY set the catalog offers, not the Move's resolved
+ * set. A pattern a named owner recorded must stay readable if the Move's
+ * declaration later changes, or the charter silently drops a signed
+ * classification. Write validation is the scoped half — see
+ * `isSolutionPatternAllowedFor`.
+ */
+const VALID_PATTERNS = ALL_SOLUTION_PATTERN_VALUES;
 
 /** Safe read — null unless a recognized pattern and a non-empty rationale are both present. */
 export function readSolutionPatternFromCharter(
