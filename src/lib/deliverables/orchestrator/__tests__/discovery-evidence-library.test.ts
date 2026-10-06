@@ -336,14 +336,19 @@ describe("discoveryCatalogSharedFamilyDrift", () => {
 
   it("pins the drift the seed carries today", () => {
     const drift = discoveryCatalogSharedFamilyDrift()
-      .map((row) => `${row.blueprintId}/${row.familyId}: ${row.restatedFields.join(",")}`)
+      .map(
+        (row) =>
+          `${row.blueprintId}/${row.familyId}: ${row.restatedFields.join(",")}`,
+      )
       .sort();
     expect(drift).toEqual(SEED_DRIFT);
   });
 
   it("reports no drift for the general default archetype", () => {
     const drift = discoveryCatalogSharedFamilyDrift();
-    expect(drift.filter((row) => row.blueprintId === "general_default")).toEqual([]);
+    expect(
+      drift.filter((row) => row.blueprintId === "general_default"),
+    ).toEqual([]);
   });
 });
 
@@ -361,3 +366,54 @@ const SEED_DRIFT: string[] = [
   "healthcare_contact_center_agent_assist/measurement_owner_cadence: grounds,likelySource",
   "healthcare_contact_center_agent_assist/model_risk_responsible_ai_controls: grounds,likelySource",
 ];
+
+describe("a reference resolves only to a family the library holds", () => {
+  // The library is an ordinary object, so these index an inherited
+  // `Object.prototype` member: truthy, and not a family. Spreading one would
+  // compose a family with `id: undefined` and put evidence nobody declared
+  // into a client's request list. This is the resolver's own door — the
+  // configured-source contract refuses the same names before it, but
+  // `composeEvidenceFamilies` is exported and callable without that contract,
+  // including with a caller-supplied library.
+  for (const inherited of [
+    "constructor",
+    "__proto__",
+    "toString",
+    "hasOwnProperty",
+    "valueOf",
+  ]) {
+    it(`treats a ref of \`${inherited}\` as an unknown family`, () => {
+      const { families, errors } = composeEvidenceFamilies([
+        { ref: inherited },
+      ]);
+
+      expect(errors).toEqual([
+        `evidenceFamilies[0]: unknown shared family "${inherited}"`,
+      ]);
+      expect(families).toEqual([]);
+    });
+  }
+
+  it("treats an inherited member of a caller-supplied library the same way", () => {
+    const own: Record<string, EvidenceFamily> = {
+      berth_turn_times: {
+        id: "berth_turn_times",
+        label: "Berth turn times",
+        grounds: "Current-State Assessment",
+        required: true,
+        likelySource: "Port operations",
+        format: "CSV",
+      },
+    };
+
+    const { families, errors } = composeEvidenceFamilies(
+      [{ ref: "constructor" }],
+      own,
+    );
+
+    expect(errors).toEqual([
+      'evidenceFamilies[0]: unknown shared family "constructor"',
+    ]);
+    expect(families).toEqual([]);
+  });
+});
