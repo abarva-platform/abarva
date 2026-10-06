@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import {
-  getPhaseStepGroups,
-  type PhaseStepGroup,
-} from "@/lib/programs/moves-phase-step-groups";
+import { type PhaseStepGroup } from "@/lib/programs/moves-phase-step-groups";
+import { resolvePhaseStepGroups } from "@/lib/programs/moves-phase-step-plan";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
 import {
   captureHandoffAccess,
@@ -154,7 +152,14 @@ export function MovesCaptureFlow({
   approveSlot,
   allowReviewBeforeSubmit = false,
 }: MovesCaptureFlowProps) {
-  const groups = getPhaseStepGroups(phase);
+  // Resolved from the sections this phase DECLARES, not from the phase number:
+  // P3 Design re-shapes its question set once P2 confirms a solution route, and
+  // a route-blind grouping leaves that route's required questions mounted
+  // nowhere. See `moves-phase-step-plan.ts`.
+  const groups = useMemo(
+    () => resolvePhaseStepGroups(phase, sections),
+    [phase, sections],
+  );
   const sectionByKey = useMemo(() => {
     const map = new Map<string, PhaseCaptureSection>();
     for (const section of sections) map.set(section.key, section);
