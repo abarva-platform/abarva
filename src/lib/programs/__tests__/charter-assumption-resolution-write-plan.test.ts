@@ -1,12 +1,10 @@
 import {
   CHARTER_ASSUMPTION_RESOLUTION_STATE_KEY,
+  charterSectionModuleKey,
   createCharterAssumptionResolutionRecord,
+  planCharterAssumptionResolutionWrite,
   readCharterAssumptionResolutionRecord,
 } from "@/lib/programs/charter-assumption-resolution";
-import {
-  charterSectionModuleKey,
-  planCharterAssumptionResolutionWrite,
-} from "@/lib/programs/charter-assumption-resolution-write";
 import {
   P1_CHARTER_EVIDENCE_FAMILIES,
   createP1CharterBasisRecord,

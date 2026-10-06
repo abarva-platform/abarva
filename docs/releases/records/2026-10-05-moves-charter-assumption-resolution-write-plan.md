@@ -18,9 +18,19 @@ nobody can close from the screen it is shown on.
 
 This increment adds the decision half of that write: given the loaded charter
 capture rows and a submitted finding, it says either "persist exactly this
-record onto exactly this row" or names the reason the write is refused. It is a
-pure module with no caller yet — the API persistence and the P2 control are the
-next increments — so no resolution can be recorded by this change alone.
+record onto exactly this row" or names the reason the write is refused. It is
+pure and has no caller yet — the API persistence and the P2 control are the next
+increments — so no resolution can be recorded by this change alone.
+
+The decision ships **inside the module that already owns this record** rather
+than as a sibling file beside it. Two reasons, and the second is the hard one. It
+is written against that module's own record shape, revision pin and read, so it
+is the same object's rules rather than a second concern. And a sibling file would
+be reached by nothing until the API route lands: a module whose only referrer is
+its own suite is an orphan, and a green suite over one is no evidence the code
+ever runs — the reachability audit rejects exactly that, correctly. Folded into a
+module product code already reaches, what is exported is exposed rather than
+stranded, and the suite measures code on a live import path.
 
 The reason the decision is its own module, rather than inline in a route, is
 that every refusal it carries describes a write that would have produced a
@@ -73,12 +83,14 @@ no write of its own.
 
 ## Changes Included
 
-- `src/lib/programs/charter-assumption-resolution-write.ts` (new) — the pure
-  write decision: `planCharterAssumptionResolutionWrite` returning either a
-  write plan (target row, stamped record, the row's full next state) or one of
-  six named refusals, plus `charterSectionModuleKey` for the row a charter
-  section's answer and basis live on.
-- `src/lib/programs/__tests__/charter-assumption-resolution-write.test.ts`
+- `src/lib/programs/charter-assumption-resolution.ts` (modified) — gains the
+  pure write decision alongside the data model and read it is written against:
+  `planCharterAssumptionResolutionWrite` returning either a write plan (target
+  row, stamped record, the row's full next state) or one of six named refusals,
+  plus `charterSectionModuleKey` for the row a charter section's answer and
+  basis live on. The read half is unchanged; the module's own doc comment now
+  states that it carries the write decision and why it is not a sibling file.
+- `src/lib/programs/__tests__/charter-assumption-resolution-write-plan.test.ts`
   (new) — 22 cases: the permitted write and each refusal, including the
   edited-answer and already-resolved cases that a believable-but-wrong write
   would otherwise pass.
@@ -92,18 +104,25 @@ surface catalog nor the test-CI coverage census changes.
 
 ## QA / Validation
 
-- `jest src/lib/programs/__tests__/charter-assumption-resolution-write.test.ts`
-  — **PASS**: 22/22.
-- `jest src/lib/programs/__tests__/` (the whole directory, not only the new
-  suite) — **PASS**: 107 suites, 1010/1010.
-- Mutation check on the new guards — **PASS**, 5 mutations, 5 deaths: dropping
-  the already-resolved refusal fails 1; dropping the unknown-section refusal
-  fails 1; widening the assumption check to "any basis" fails 1; dropping the
-  row-state spread fails 2; dropping the phase conjunct from the activation
-  check fails 1. The mutator asserts its pattern matches exactly once before
-  writing, so none of these is a silently-unapplied mutation read as a survivor.
+- `jest …/charter-assumption-resolution-write-plan.test.ts` plus the read and
+  carry-forward suites that import the same module — **PASS**: 3 suites, 76/76.
+- `jest src/lib/programs/__tests__/` (the whole directory, because this changes
+  a module several suites in it already import, not only the new suite) —
+  **PASS**: 108 suites, 1027/1027.
+- `npm run audit:lib-orphans` — **PASS**: "No change against the baseline",
+  2278 of 3093 `src/lib` modules reached by product code. This is the check the
+  decision's placement is answering: as a sibling file it was reported as a NEW
+  `testOnly` orphan.
+- Mutation check on the guards, re-run against the merged module rather than
+  carried over from the sibling-file version — **PASS**, 5 mutations, 5 deaths:
+  dropping the already-resolved refusal fails 1; dropping the unknown-section
+  refusal fails 1; widening the assumption check to "any basis" fails 1;
+  dropping the row-state spread fails 2; dropping the phase conjunct from the
+  activation check fails 1. The mutator asserts its pattern matches exactly once
+  before writing, so none of these is a silently-unapplied mutation read as a
+  survivor, and it confirmed the file byte-identical after restoring.
 - `tsc -p tsconfig.json --noEmit` — **PASS**: exit 0, whole project.
-- `eslint` — **PASS**: 0 errors, 0 warnings on both new files.
+- `eslint` — **PASS**: 0 errors, 0 warnings on both touched files.
 - `npm run release:check -- --base origin/main --head HEAD` — **PASS**: 11 of 11
   gates.
 - Signed-in live walk — **NOT RUN**. The flag's tenant list is empty and the
@@ -122,9 +141,10 @@ way to submit a finding until then.
 
 ## Rollback Plan
 
-Revert the PR. Nothing imports the module, no schema changed, and no resolution
-can have been written by this code, so there is no data to migrate or clean up
-and no other surface changes behaviour either way.
+Revert the PR. Nothing calls the added decision, no schema changed, and no
+resolution can have been written by this code, so there is no data to migrate or
+clean up. The host module's existing read is byte-identical, so the surfaces that
+already import it behave the same whether this is reverted or not.
 
 ## Deployment Authority
 
@@ -137,6 +157,11 @@ tenant.
 
 ## Known Gaps
 
+- **The host module now carries both halves.** It is the right home while the
+  write is one pure function over the same record, but the read half and the
+  decision will want splitting if either grows — at which point the split is
+  safe, because by then the route reaches the decision and neither half is an
+  orphan.
 - **The persistence is not wired.** This is the decision only. The API route
   that applies `nextState` to the named capture-module row, under the usual
   tenant fencing and capture-revision handling, is the next increment. Deliberate
