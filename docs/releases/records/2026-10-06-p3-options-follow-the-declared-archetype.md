@@ -73,7 +73,7 @@ flag, reachable only through an explicit archetype declaration.
     the coarse column, then the vocabulary scan. Comment records why the coarse column alone could
     never reach the declaration.
   - `ARCHETYPE_USE_CASE_PATTERNS` gains the governed data-foundation key.
-- `src/lib/programs/phase-templates/__tests__/p3-options-declared-archetype.test.ts` — new, 9
+- `src/lib/programs/phase-templates/__tests__/p3-options-declared-archetype.test.ts` — new, 10
   cases.
 - `docs/architecture/test-ci-coverage-census.json` — regenerated.
 
@@ -86,6 +86,9 @@ assembler, and the field this change reads is a field that report already carrie
   suite is swept by the directory step in `.github/workflows/ai-surface-control-catalog.yml`
   (required check *AI surface control catalog*), not by a per-file list, so it is wired on arrival.
   Registration proof: census `coveredTestFiles` +1 with `uncoveredTestFiles` unchanged at 164.
+  One case reads the declared identity from the registry rather than writing it out, so renaming
+  the registry id without adding the new spelling to the pattern map fails here instead of
+  silently returning the Move to the contact-centre options.
 - **PASS** Mutation testing, 7 mutations, 7 killed: removing the declared key; dropping the
   resolved-id arm; removing the new blueprint dispatch; renaming an option label; deleting an
   option from the ladder; flattening an option's time-to-proof score; reversing the precedence of
@@ -123,15 +126,14 @@ including a declared one.
 
 - PR URL and its CI run, including the required *AI surface control catalog* check that executes
   the new suite.
-- The census diff in this PR, which records both this change's +1 and the two pre-existing stale
-  test files described under Known Gaps.
+- The census diff in this PR: `testFiles` 2743 → 2744 and `coveredTestFiles` 2743 → 2744 with
+  `uncoveredTestFiles` unchanged at 164 — the +1 is this change's one test file, and the equal
+  covered delta is its registration. Measured after rebasing onto the base that regenerated the
+  census; an earlier draft of this record described a two-file staleness that base has since
+  removed.
 
 ## Known Gaps
 
-- `docs/architecture/test-ci-coverage-census.json` on `origin/main` is **two test files stale**
-  before this change. Regenerating on a clean tree at this base reproduces 2739 → 2741 with no
-  edit of ours. This PR's census therefore reads +3 where this change contributes +1, and the
-  other two are not test files this PR adds. Said here so the number is not read as a claim.
 - The declaration still has to reach the Move. Until a Move carries the governed data-foundation
   archetype, this change alters nothing a user sees.
 - The design-inputs pack still records the coarse column in its own `assumptions`

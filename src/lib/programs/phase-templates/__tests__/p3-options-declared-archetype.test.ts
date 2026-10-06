@@ -1,6 +1,10 @@
 import { assembleP3SolutionOptions } from '../p3-option-assembler';
 import type { P3DesignInputsPack } from '../types';
 import type { ReadinessReport } from '@/lib/programs/current-state-readiness';
+import {
+  DEFAULT_ARCHETYPE_ID,
+  GOVERNED_DATA_FOUNDATION,
+} from '@/lib/programs/archetypes/registry';
 
 /**
  * The five values `engagements.program_archetype` can hold. The column carries a
@@ -162,6 +166,19 @@ describe('P3 options for a Move whose archetype is declared', () => {
     expect(optionSet.useCasePattern).toBe('governed_data_foundation');
   });
 
+  it('answers to the registry id the archetype actually resolves to', () => {
+    // Read from the registry, not written out, because this is the spelling
+    // `resolveProgramArchetype` really produces and puts in the readiness
+    // report. Renaming the registry id without adding the new spelling to
+    // `ARCHETYPE_USE_CASE_PATTERNS` would otherwise silently return this Move
+    // to the contact-centre options.
+    const optionSet = optionsFor({
+      readiness: readinessReport(GOVERNED_DATA_FOUNDATION.id),
+    });
+
+    expect(optionSet.useCasePattern).toBe('governed_data_foundation');
+  });
+
   it('accepts the declared identity by discovery-blueprint id as well as by registry id', () => {
     // `governed_data_foundation` is the discovery blueprint's id; the
     // strategic-move registry spells the same archetype `GOVERNED_DATA_FOUNDATION`.
@@ -182,7 +199,7 @@ describe('P3 options for a Move whose archetype is declared', () => {
     // not take inference away from Moves that declare nothing.
     const optionSet = optionsFor({
       archetype: 'operational_optimization',
-      readiness: readinessReport('AI_PDLC'),
+      readiness: readinessReport(DEFAULT_ARCHETYPE_ID),
     });
 
     expect(optionSet.useCasePattern).toBe('member_service_agent_assist');
