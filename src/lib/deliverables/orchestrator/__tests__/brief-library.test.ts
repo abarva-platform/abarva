@@ -37,13 +37,14 @@ describe("archetype packs", () => {
       "CLOUD_MODERNIZATION",
       "AI_PDLC",
       "ANALYTICS_CAPABILITY_REPATRIATION",
+      "GOVERNED_DATA_FOUNDATION",
     ]) {
       const pack = getArchetypePack(a)!;
       expect(pack.exhibits.length).toBeGreaterThanOrEqual(4);
       expect(pack.tables.length).toBeGreaterThanOrEqual(4);
       expect(pack.keyEvidenceFamilies.length).toBeGreaterThan(0);
     }
-    expect(Object.keys(ARCHETYPE_PACKS)).toHaveLength(5);
+    expect(Object.keys(ARCHETYPE_PACKS)).toHaveLength(6);
   });
 
   it("AMS exhibits differ from cloud-modernization exhibits", () => {
@@ -837,7 +838,14 @@ describe("structure-declared expected tables", () => {
         ALL_ARCHETYPES.map((arch) => tableSignature(s.module, s.deliverableType, arch)),
       ),
     );
-    expect(distinct.size).toBe(27);
+    // 32 over the six registered archetypes, and it decomposes exactly: one
+    // empty signature shared by the two approval instruments that withhold
+    // tables, one for the discovery plan its own builder serves, one generic
+    // signature per archetype (6), and one per declaring structure per
+    // archetype (4 x 6 = 24). Registering a sixth archetype pack therefore
+    // added five, from 27. Dropping any structure's declaration collapses it
+    // back toward the generic set and fails this case.
+    expect(distinct.size).toBe(32);
   });
 });
 

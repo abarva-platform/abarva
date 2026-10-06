@@ -239,22 +239,43 @@ describe("the archetype evidence landing report", () => {
       }
   });
 
-  it("a deliverable takes the archetype's evidence or withholds its assets — never the assets alone", () => {
-    // The product rule this makes enforceable: an archetype either shapes a
-    // deliverable or it does not. Taking the pack's exhibits and tables while
-    // grounding none of the sections is the silent state #9067 found, and a new
-    // structure whose section keys match nothing would land back in it.
+  it("never carries the archetype's assets into a deliverable it grounds nowhere", () => {
+    // The silent state #9067 found, stated in the one direction that IS a
+    // defect: the pack's exhibits and tables arrive while none of its families
+    // reach a section, so the deliverable looks archetype-shaped and asserts
+    // client facts from nothing. A new structure whose section keys match
+    // nothing would land back in it. Holds for every archetype without
+    // exception, including one whose pack shares ids with its blueprint.
     const offenders: string[] = [];
     for (const archetype of PACK_ARCHETYPES)
       for (const r of archetypeEvidenceLandingReport(probe(archetype)))
-        if (r.landsNowhere !== r.archetypeAssetsWithheld)
-          offenders.push(
-            `${archetype} ${r.module}/${r.deliverableType} nowhere=${r.landsNowhere} assetsWithheld=${r.archetypeAssetsWithheld}`,
-          );
+        if (r.landsNowhere && !r.archetypeAssetsWithheld)
+          offenders.push(`${archetype} ${r.module}/${r.deliverableType}`);
     expect(offenders).toEqual([]);
   });
 
-  it("names the three deliverables an archetype deliberately does not ground", () => {
+  it("grounds without the assets only where a dedicated builder serves the brief", () => {
+    // The other direction — grounded sections, no pack assets — is legitimate
+    // exactly once: `getArtifactBrief` sends moves/discovery_plan to its own
+    // builder, which grounds `evidence_requests` from the discovery BLUEPRINT
+    // and picks its own assets. That reads as grounded-by-the-pack only for an
+    // archetype whose pack NAMES the blueprint's family ids, which is a product
+    // decision one archetype has taken (see the pack module's header). Pinned
+    // as the single permitted shape so a composed brief losing its assets
+    // cannot hide here.
+    const groundedWithoutAssets: string[] = [];
+    for (const archetype of PACK_ARCHETYPES)
+      for (const r of archetypeEvidenceLandingReport(probe(archetype)))
+        if (!r.landsNowhere && r.archetypeAssetsWithheld)
+          groundedWithoutAssets.push(
+            `${archetype} ${r.module}/${r.deliverableType}`,
+          );
+    expect(groundedWithoutAssets).toEqual([
+      "GOVERNED_DATA_FOUNDATION moves/discovery_plan",
+    ]);
+  });
+
+  it("names the deliverables an archetype deliberately does not ground", () => {
     for (const archetype of PACK_ARCHETYPES) {
       const nowhere = archetypeEvidenceLandingReport(probe(archetype))
         .filter((r) => r.landsNowhere)
@@ -263,11 +284,21 @@ describe("the archetype evidence landing report", () => {
       // design workshop guide is a facilitation template; the discovery plan is
       // grounded by the discovery blueprint instead. Anything else appearing
       // here is an archetype reaching a client-fact section with nothing.
-      expect(nowhere).toEqual([
-        "moves/charter",
-        "moves/discovery_plan",
-        "moves/design_workshop_guide",
-      ]);
+      //
+      // The discovery plan drops off this list for the one archetype whose
+      // pack names the blueprint's own family ids: its evidence_requests
+      // section genuinely carries all eleven, so reporting it as grounded
+      // nowhere would be false. Written out per archetype rather than
+      // filtered, so a NEW archetype cannot join the shared-id case silently.
+      expect(nowhere).toEqual(
+        archetype === "GOVERNED_DATA_FOUNDATION"
+          ? ["moves/charter", "moves/design_workshop_guide"]
+          : [
+              "moves/charter",
+              "moves/discovery_plan",
+              "moves/design_workshop_guide",
+            ],
+      );
     }
   });
 

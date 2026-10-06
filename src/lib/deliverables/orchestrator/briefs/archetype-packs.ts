@@ -14,6 +14,7 @@ import {
   nearestDeclaredPackEvidenceFamily,
   unknownPackEvidenceFamilies,
 } from "./evidence-family-vocabulary";
+import { GOVERNED_DATA_FOUNDATION_PACK } from "./archetype-pack-governed-data-foundation";
 
 export interface ArchetypePack {
   archetype: string;
@@ -476,6 +477,8 @@ export const ARCHETYPE_PACKS: Record<string, ArchetypePack> = {
   CLOUD_MODERNIZATION: CLOUD_MOD,
   AI_PDLC,
   ANALYTICS_CAPABILITY_REPATRIATION: ANALYTICS_REPATRIATION,
+  // Content lives beside the contract, not inside it — see that module's header.
+  GOVERNED_DATA_FOUNDATION: GOVERNED_DATA_FOUNDATION_PACK,
 };
 
 /**

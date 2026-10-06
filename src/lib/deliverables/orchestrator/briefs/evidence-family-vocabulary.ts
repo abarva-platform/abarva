@@ -236,6 +236,62 @@ export const PACK_EVIDENCE_FAMILY_VOCABULARY: Readonly<
     "Target operating-model readiness",
     "Operating Model · Change Plan",
   ),
+  // ── governed data foundation ──
+  data_governance_ownership: family(
+    "data_governance_ownership",
+    "Data governance ownership, decision rights and stewardship",
+    "Current-State Assessment · Operating Model · Gate controls",
+  ),
+  semantic_layer_certification: family(
+    "semantic_layer_certification",
+    "Certified semantic layer, entity and metric definitions",
+    "Target Architecture · Value Model",
+  ),
+  data_lineage_audit_trail: family(
+    "data_lineage_audit_trail",
+    "Source-to-use lineage and model audit trail",
+    "Current-State · Responsible-AI controls",
+  ),
+  data_quality_rules: family(
+    "data_quality_rules",
+    "Data quality rules, monitoring and exception owners",
+    "Current-State Assessment · Gate controls",
+  ),
+  source_system_data_access: family(
+    "source_system_data_access",
+    "Source system data access, contracts and SLAs",
+    "Current-State · Target Architecture",
+  ),
+  platform_architecture_readiness: family(
+    "platform_architecture_readiness",
+    "Data platform and curation-layer readiness",
+    "Target Architecture",
+  ),
+  master_identity_resolution: family(
+    "master_identity_resolution",
+    "Master and entity identity resolution spine",
+    "Target Architecture · Value Model",
+  ),
+  privacy_security_controls: family(
+    "privacy_security_controls",
+    "Privacy and security controls over the data foundation",
+    "Risk · Gate controls",
+  ),
+  model_risk_responsible_ai_controls: family(
+    "model_risk_responsible_ai_controls",
+    "Responsible-AI and model-risk controls for downstream automation",
+    "Risk · Responsible-AI controls",
+  ),
+  measurement_owner_cadence: family(
+    "measurement_owner_cadence",
+    "Measurement owners and reporting cadence",
+    "Value Model · Operating Model",
+  ),
+  finance_baseline_value_plan: family(
+    "finance_baseline_value_plan",
+    "Finance baseline and conditional value plan",
+    "Value Model · Business Case",
+  ),
 });
 
 /** Does the shipped vocabulary declare this family id? */
