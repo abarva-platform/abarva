@@ -120,15 +120,23 @@ source, which is all of them today.
   declaration going missing fails the case instead of shrinking the
   expectation.
 - `src/lib/deliverables/orchestrator/__tests__/archetype-config-source.test.ts` —
-  19 cases appended to the suite that already pins the evidence half, so the two
+  20 cases appended to the suite that already pins the evidence half, so the two
   halves of one seam are read together. No new file and no new directory, so no
-  CI wiring question arises.
-- `docs/architecture/test-ci-coverage-census.json` — regenerated. The delta
-  (`testFiles` 2715 → 2719, `coveredTestFiles` 2551 → 2555,
-  `uncoveredTestFiles` unchanged at 164) is **not** this change: no test file was
-  added. It is accumulated drift from other merges, which the committed census
-  does not pick up because its drift guard runs on branches only. Regenerating
-  brings it current.
+  CI wiring question arises. The twentieth is the landing report's own guard,
+  and it exists because the second call site above was otherwise unpinned:
+  nothing failed on the wrong resolver, since the two agree wherever no source
+  is declared. It asserts the report calls a configured deployment grounded,
+  and separately that the built-in pack's families appear in no section of the
+  brief actually served — so the two resolvers provably disagree in that
+  scenario rather than coinciding.
+- `docs/architecture/test-ci-coverage-census.json` — regenerated after merging
+  `main` in. The delta (`testFiles` 2727 → 2728, `coveredTestFiles`
+  2563 → 2564, `uncoveredTestFiles` unchanged) is **not** this change: no test
+  file was added here, and the uncovered count moving would be the signal that
+  one had been added outside a wired directory. It is accumulated drift from
+  other merges, which the committed census does not pick up because its drift
+  guard runs on branches only. The regenerated run then reports
+  `census drift: committed census matches this run`.
 
 ## QA / Validation
 
@@ -136,8 +144,8 @@ Lane: `global-control-lane`.
 
 | check | command | result |
 |---|---|---|
-| the amended suite | `npx jest src/lib/deliverables/orchestrator/__tests__/archetype-config-source.test.ts` | **PASS** — 35/35 (16 pre-existing + 19 new) |
-| whole suite directory (the CI job's own scope) | `npx jest src/lib/deliverables/orchestrator/__tests__` | **PASS** — 49 suites, 629 tests |
+| the amended suite | `npx jest src/lib/deliverables/orchestrator/__tests__/archetype-config-source.test.ts` | **PASS** — 36/36 (16 pre-existing + 20 new) |
+| whole suite directory (the CI job's own scope) | `npx jest src/lib/deliverables/orchestrator/__tests__` | **PASS** — 52 suites, 744 tests, re-run after merging `main` in |
 | typecheck | `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit` | **PASS** — exit 0 |
 | lint | `npx eslint <the four changed source files>` | **PASS** — exit 0 |
 | orphan reachability | `npm run audit:lib-orphans` | **PASS** — no change against baseline |
@@ -150,11 +158,12 @@ Lane: `global-control-lane`.
 the restored baseline, with the mutator asserting a single textual match so a
 silent no-op edit could not read as a survivor. The whole suite directory was
 run each time, not only the amended suite, because the wiring line sits in a
-module several suites compose through. 7 of 7 killed:
+module several suites compose through. 8 of 8 killed:
 
 | mutation | failures |
 |---|---|
 | revert brief composition to the built-in accessor | 2 |
+| revert the landing report to the built-in accessor | 1 |
 | the pack reader reads the evidence half's environment variable | 12 |
 | decide where the entry came from by comparing it with the built-in one | 1 |
 | resolve the declaration against the built-in set, not the effective catalog | 2 |
@@ -162,7 +171,7 @@ module several suites compose through. 7 of 7 killed:
 | a source that fails validation still reports itself as in effect | 2 |
 | drop the short-circuit for a declared path that cannot be read | 1 |
 
-The restored baseline then ran 629/629 green, so the harness was executing the
+The restored baseline then ran 744/744 green, so the harness was executing the
 suites rather than reporting an empty run.
 
 Two guards were considered and **not** added. A helper listing the built-in ids,
@@ -196,8 +205,9 @@ operator act with its own record.
 
 ## Rollback Plan
 
-Revert the squash commit. The only behavioural line is the one resolution call
-in brief composition, and reverting it restores the built-in accessor exactly;
+Revert the squash commit. The only behavioural lines are the two resolution
+calls — brief composition and the evidence-landing report — and reverting them
+restores the built-in accessor exactly;
 the rest is additive exports and test cases. There is no data, migration, flag,
 or deployed artifact to unwind. If an environment had already declared the new
 variable, reverting silently returns it to the built-in set for that

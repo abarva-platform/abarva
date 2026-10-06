@@ -9,7 +9,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { getArtifactBrief } from "../artifact-brief-registry";
+import {
+  archetypeEvidenceLandingReport,
+  getArtifactBrief,
+} from "../artifact-brief-registry";
 import {
   ARCHETYPE_CONFIG_PATH_ENV,
   ARCHETYPE_PACK_CONFIG_PATH_ENV,
@@ -610,6 +613,47 @@ describe("the composed brief honours a configured pack", () => {
     ]);
     // A configured pack the Move does not declare lands nothing.
     expect(landingSites(CONFIGURED_PACK_ARCHETYPE)).toEqual([]);
+  });
+
+  // The landing report is the surface that explains WHERE an archetype's
+  // evidence reaches a deliverable, and it measures the served brief against a
+  // pack. Once composition resolves through the effective catalog there are two
+  // packs it could read, and with no source declared they answer identically —
+  // so nothing here fails on the wrong one. Read against the built-in seed it
+  // answers about an archetype the product is no longer generating from: the
+  // served brief carries the configured families, the seed's land nowhere in
+  // it, and the report calls a fully grounded deployment totally ungrounded.
+  // This is the only shape in which that choice is observable.
+  it("measures the landing report against the pack the product generates from", () => {
+    process.env[ARCHETYPE_PACK_CONFIG_PATH_ENV] = writeSource([
+      configuredPack({ archetype: OVERRIDDEN_PACK_ARCHETYPE }),
+    ]);
+    const row = archetypeEvidenceLandingReport({
+      ...amsRfpRequest(),
+      useCaseArchetype: OVERRIDDEN_PACK_ARCHETYPE,
+    }).find(
+      (r) => r.module === "moves" && r.deliverableType === "discovery_report",
+    );
+
+    expect(row).toBeDefined();
+    expect(row?.coveredSectionKeys).toEqual(
+      expect.arrayContaining(["current_state", "maturity_gaps"]),
+    );
+    expect(row?.landsNowhere).toBe(false);
+    expect(row?.archetypeAssetsWithheld).toBe(false);
+    // And the two resolvers genuinely disagree here rather than coinciding:
+    // the built-in pack's families — what the report would otherwise have been
+    // read against — appear in no section of the brief actually served.
+    const seedFamilies =
+      ARCHETYPE_PACKS[OVERRIDDEN_PACK_ARCHETYPE].keyEvidenceFamilies;
+    const servedFamilies = new Set(
+      getArtifactBrief(packReq()).recommendedStructure.flatMap(
+        (section) => section.expectedEvidenceFamilies,
+      ),
+    );
+    expect(seedFamilies.some((family) => servedFamilies.has(family))).toBe(
+      false,
+    );
   });
 
   it("leaves the brief unchanged when the configured source is rejected", () => {
