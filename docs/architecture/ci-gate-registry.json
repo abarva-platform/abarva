@@ -414,6 +414,10 @@
     "audit:moves-shadow-proof": {
       "kind": "unclassified"
     },
+    "audit:moves:artifact-content": {
+      "kind": "operator",
+      "reason": "Audits one Move's generated artifacts against the phase-aware content contract, and it refuses to start without --move-id, so there is no repository-wide invocation for a workflow to make. The contract it measures against IS gated: scripts/qa/moves-artifact-content-contract.mjs is exercised by test:moves:artifact-content-contract inside npm run wave0:quality-gate, which the required Wave 0 harnesses job runs. Run this one deliberately against a real Move when checking what that Move actually produced."
+    },
     "audit:multi-tenant-cxo-context-proof-gate": {
       "kind": "unclassified"
     },
