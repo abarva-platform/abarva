@@ -19,8 +19,7 @@ import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "./briefs/deliverable-structures";
-import { resolveConfiguredDiscoveryBlueprint } from "./briefs/archetype-config-source";
-import { getDiscoveryBlueprint } from "./briefs/discovery-blueprint";
+import { resolveDiscoveryBlueprintFromConfiguredCatalog } from "./briefs/archetype-config-source";
 
 const CITATION_POLICY =
   "Cite every client-specific fact with [n] tied to the Source Register. Do not expose internal source ids, chunk ids, table names, or fact keys.";
@@ -271,11 +270,12 @@ const AMS_RFP_BRIEF: DeliverableArtifactBrief = {
 function buildDiscoveryPlanBrief(
   req: DeliverableIntelligenceRequest,
 ): DeliverableArtifactBrief {
-  // The seed resolves the archetype; a configured source may then override
-  // that blueprint. With no source declared this is the seed resolution it
-  // has always been.
-  const bp = resolveConfiguredDiscoveryBlueprint(
-    getDiscoveryBlueprint(req.useCaseArchetype),
+  // The archetype is resolved against the EFFECTIVE catalog, so a configured
+  // source can both override a shipped archetype and add a new one a Move
+  // declares. With no source declared this is the seed resolution it has always
+  // been.
+  const bp = resolveDiscoveryBlueprintFromConfiguredCatalog(
+    req.useCaseArchetype,
   ).blueprint;
   const familyList = bp.evidenceFamilies
     .map(
@@ -414,8 +414,8 @@ function buildMovesDiscoveryPlanBrief(
 
   // Same seam as the generic builder above: the Moves Discovery Plan is the
   // archetype-configurable surface, so it must honour a configured source too.
-  const blueprint = resolveConfiguredDiscoveryBlueprint(
-    getDiscoveryBlueprint(req.useCaseArchetype),
+  const blueprint = resolveDiscoveryBlueprintFromConfiguredCatalog(
+    req.useCaseArchetype,
   ).blueprint;
   const evidenceBaseline = blueprint.evidenceFamilies
     .map(

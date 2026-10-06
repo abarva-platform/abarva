@@ -6,7 +6,10 @@
 
 import { z } from "zod";
 
-import { resolveArchetypeCatalogEntry } from "./archetype-identity";
+import {
+  normalizeArchetypeId,
+  resolveArchetypeCatalogEntry,
+} from "./archetype-identity";
 import {
   composeEvidenceFamilies,
   sharedEvidenceFamilyDrift,
@@ -908,18 +911,32 @@ export function discoveryCatalogSharedFamilyDrift(): SharedEvidenceFamilyDrift[]
 }
 
 /**
+ * The shape every blueprint catalog has: archetype id to blueprint. The
+ * built-in seed is one; the effective catalog a configured source produces is
+ * another, and resolution must be able to run against either.
+ */
+export type DiscoveryBlueprintCatalog = Readonly<
+  Record<string, DiscoveryBlueprint>
+>;
+
+/**
  * Resolve a DECLARED archetype to its blueprint — the authoritative path.
  * Returns null when nothing was declared or the declaration does not exactly
  * match a known catalog archetype (so a stale/garbage value falls through to
  * inference rather than silently mis-selecting a blueprint).
+ *
+ * The catalog is a parameter, defaulting to the built-in seed, because a
+ * configured source can ADD an archetype: the id joins the effective catalog
+ * and is listed as applied, but a resolver bound to the seed can never answer
+ * a declaration of it, so the archetype is live in the catalog and unreachable
+ * by the only mechanism that selects one. The artifact-pack half already
+ * resolves against whichever catalog it is handed; this is the same rule.
  */
 export function resolveDeclaredDiscoveryBlueprint(
   declaredArchetypeId: string | null | undefined,
+  catalog: DiscoveryBlueprintCatalog = DISCOVERY_BLUEPRINT_CATALOG,
 ): DiscoveryBlueprint | null {
-  return resolveArchetypeCatalogEntry(
-    DISCOVERY_BLUEPRINT_CATALOG,
-    declaredArchetypeId,
-  );
+  return resolveArchetypeCatalogEntry(catalog, declaredArchetypeId);
 }
 
 export interface DiscoveryArchetypeSuggestion {
@@ -1026,12 +1043,21 @@ export interface DiscoveryBlueprintResolution {
 export function resolveDiscoveryBlueprintWithBasis(
   useCaseArchetype: string,
   declaredArchetypeId?: string | null,
+  catalog: DiscoveryBlueprintCatalog = DISCOVERY_BLUEPRINT_CATALOG,
 ): DiscoveryBlueprintResolution {
   // Declared identity wins over inference. Try the explicit declaration first,
   // then the primary arg in case a caller passed a clean catalog id as the
   // archetype. A multi-word inference blob won't exact-match a catalog key, so
   // this never false-matches.
-  const declaredBlueprint = resolveDeclaredDiscoveryBlueprint(declaredArchetypeId);
+  //
+  // Only the DECLARED branches read the catalog argument. Inference is keyword
+  // branches over the shipped constants and cannot be extended by data, so a
+  // configured archetype is reachable by declaration and never by inference —
+  // which is the rule this product already states: identity is declared.
+  const declaredBlueprint = resolveDeclaredDiscoveryBlueprint(
+    declaredArchetypeId,
+    catalog,
+  );
   if (declaredBlueprint) {
     return {
       blueprint: declaredBlueprint,
@@ -1039,7 +1065,10 @@ export function resolveDiscoveryBlueprintWithBasis(
       unknownDeclaration: null,
     };
   }
-  const declaredViaUseCase = resolveDeclaredDiscoveryBlueprint(useCaseArchetype);
+  const declaredViaUseCase = resolveDeclaredDiscoveryBlueprint(
+    useCaseArchetype,
+    catalog,
+  );
   if (declaredViaUseCase) {
     return {
       blueprint: declaredViaUseCase,
@@ -1341,12 +1370,57 @@ export function loadDiscoveryBlueprintCatalog(
   if (compositionErrors.length > 0) {
     return { catalog, applied: [], errors: compositionErrors };
   }
+  // An id joins the catalog as a key, but it is SELECTED by declaration, and a
+  // declaration is matched in normalized form. `/^[a-z0-9_]+$/` admits ids that
+  // are distinct as keys and identical as declarations (`ai__operations`
+  // collapses to `ai_operations`, `_ai_operations` likewise). Two such ids make
+  // the resolved archetype depend on key order: the configured entry is listed
+  // as applied, while a Move declaring either token resolves the other. Refused
+  // whole, with the collision named, because the alternative is an archetype
+  // that is live in the catalog and unreachable by the only thing that picks
+  // one. The built-in seed is checked too — a configured id that collides with
+  // a SHIPPED archetype it does not equal is the likelier typo of the two.
+  const ambiguityErrors = ambiguousDeclarationErrors(composed);
+  if (ambiguityErrors.length > 0) {
+    return { catalog, applied: [], errors: ambiguityErrors };
+  }
   const applied: string[] = [];
   for (const blueprint of composed) {
     catalog[blueprint.blueprintId] = blueprint;
     applied.push(blueprint.blueprintId);
   }
   return { catalog, applied, errors: [] };
+}
+
+/**
+ * Configured ids that no declaration can pick out, because they normalize onto
+ * a different id already in play — another configured entry, or a shipped one.
+ *
+ * Equality is not a collision: an id that matches a seed id exactly is the
+ * override the seam is built on. Only a DIFFERENT spelling that normalizes the
+ * same is refused.
+ */
+function ambiguousDeclarationErrors(
+  composed: readonly DiscoveryBlueprint[],
+): string[] {
+  const errors: string[] = [];
+  const claimedBy = new Map<string, string>();
+  for (const seedId of Object.keys(DISCOVERY_BLUEPRINT_CATALOG)) {
+    claimedBy.set(normalizeArchetypeId(seedId), seedId);
+  }
+  composed.forEach((blueprint, index) => {
+    const normalized = normalizeArchetypeId(blueprint.blueprintId);
+    const claimant = claimedBy.get(normalized);
+    if (claimant !== undefined && claimant !== blueprint.blueprintId) {
+      errors.push(
+        `${index}.blueprintId: "${blueprint.blueprintId}" cannot be declared ` +
+          `unambiguously — it reads as the same archetype as "${claimant}"`,
+      );
+      return;
+    }
+    claimedBy.set(normalized, blueprint.blueprintId);
+  });
+  return errors;
 }
 
 /**
