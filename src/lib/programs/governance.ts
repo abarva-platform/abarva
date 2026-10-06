@@ -1301,6 +1301,14 @@ export async function evaluateGate(
         pass =
           isPresent(
             findDeliverable(
+              // `tower_metrics_plan` is the registry key this criterion is
+              // about: a `gateArtifact: true` P4 entry, in
+              // `PHASE_CANONICAL_KEYS[4]`, and the key the generated-artifact
+              // acceptance route writes for a Tower metrics document. It was
+              // missing here, so the document the Move builds could not
+              // satisfy the criterion named after it and the check passed only
+              // on the prose fallback below.
+              "tower_metrics_plan",
               "tower_metric_plan",
               "execution_monitoring_plan",
               "control_tower_metrics",
