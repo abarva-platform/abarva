@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import {
-  getPhaseStepGroups,
-  type PhaseStepGroup,
-} from "@/lib/programs/moves-phase-step-groups";
+import { type PhaseStepGroup } from "@/lib/programs/moves-phase-step-groups";
+import { resolvePhaseStepGroups } from "@/lib/programs/moves-phase-step-plan";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
+import {
+  captureHandoffAccess,
+  captureHandoffHeading,
+} from "@/lib/programs/capture-handoff-reachability";
 
 /**
  * The redesigned Moves phase capture: one repeatable 3-step flow for every
@@ -33,6 +35,13 @@ export interface MovesCaptureFlowPhase {
    * unmeasured and must not claim a count. See `capturePhaseAnsweredCount`.
    */
   answered: number | null;
+  /**
+   * For an UNMEASURED row only: how many of the phase's questions hold a saved
+   * answer, or `null` when nothing says. Strictly weaker than `answered` — a
+   * saved answer need not be complete — so it renders under its own noun and
+   * never earns the completion tick. See `capturePhaseSavedAnswers`.
+   */
+  savedAnswers?: number | null;
   total: number;
   /** Whether this phase can be navigated to (<= the Move's current phase). */
   reachable: boolean;
@@ -108,6 +117,15 @@ export interface MovesCaptureFlowProps {
    * existing pipeline, not a reimplementation.
    */
   approveSlot?: ReactNode;
+  /**
+   * `moves_capture_handoff_recap_v1`. When true AND the host supplied an
+   * `approveSlot`, the last step offers a control that opens the hand-off recap
+   * WITHOUT submitting, and the governed approve slot travels onto the recap so
+   * the decision still runs through the gate pipeline. Default false, which
+   * leaves the flow byte-for-byte as it reads today — including the fact that
+   * with an `approveSlot` present the recap is then unreachable (U-564).
+   */
+  allowReviewBeforeSubmit?: boolean;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -130,13 +148,18 @@ export function MovesCaptureFlow({
   nextPhase = null,
   ava,
   requireAnswers = false,
-  initialStep = 0,
+  initialStep,
   approveSlot,
+  allowReviewBeforeSubmit = false,
 }: MovesCaptureFlowProps) {
-  const groups = getPhaseStepGroups(phase);
-  // view: 0..2 = steps, 3 = hand-off.
-  const [view, setView] = useState<number>(initialStep);
-
+  // Resolved from the sections this phase DECLARES, not from the phase number:
+  // P3 Design re-shapes its question set once P2 confirms a solution route, and
+  // a route-blind grouping leaves that route's required questions mounted
+  // nowhere. See `moves-phase-step-plan.ts`.
+  const groups = useMemo(
+    () => resolvePhaseStepGroups(phase, sections),
+    [phase, sections],
+  );
   const sectionByKey = useMemo(() => {
     const map = new Map<string, PhaseCaptureSection>();
     for (const section of sections) map.set(section.key, section);
@@ -148,6 +171,30 @@ export function MovesCaptureFlow({
       .map((key) => sectionByKey.get(key))
       .filter((s): s is PhaseCaptureSection => Boolean(s));
 
+  const firstIncompleteStep = groups.findIndex((group) => {
+    const resolvedSections = groupSections(group);
+    return (
+      resolvedSections.length !== group.sectionKeys.length ||
+      resolvedSections.length === 0 ||
+      resolvedSections.some((section) => !isSectionComplete(section.key))
+    );
+  });
+  // view: 0..2 = steps, 3 = hand-off. A reload resumes at the first step whose
+  // server-backed answers are not complete. When all capture steps are done,
+  // stop at the final step so its governed approval action remains explicit.
+  const resumeStep =
+    firstIncompleteStep >= 0
+      ? firstIncompleteStep
+      : Math.max(groups.length - 1, 0);
+  const [view, setView] = useState<number>(initialStep ?? resumeStep);
+  // Whether this phase was submitted FROM this flow. The recap may be opened as
+  // a review before that happens, and must not claim a submission that has not.
+  const [submitted, setSubmitted] = useState(false);
+  const handoffAccess = captureHandoffAccess({
+    reviewEnabled: allowReviewBeforeSubmit,
+    hasApproveSlot: Boolean(approveSlot),
+  });
+
   const stepComplete = (stepIndex: number): boolean => {
     const group = groups[stepIndex];
     if (!group) return false;
@@ -156,6 +203,12 @@ export function MovesCaptureFlow({
 
   const phaseName =
     phases.find((p) => p.phase === phase)?.name ?? groups[0]?.title ?? "";
+
+  const handoffHeading = captureHandoffHeading({
+    phaseName,
+    nextPhaseName: nextPhase ? nextPhase.name : null,
+    submitted,
+  });
 
   const go = (next: number) => {
     setView(next);
@@ -180,6 +233,21 @@ export function MovesCaptureFlow({
             // actually earns the tick is the equality.
             const measured = p.answered !== null;
             const complete = measured && p.total > 0 && p.answered === p.total;
+            // A row this screen cannot measure may still say how much of the
+            // phase has been SAVED, when the host supplies that rollup. It is
+            // a weaker fact than `answered` and says so in its own words:
+            // never "answered", and never a tick, because a saved answer can
+            // still be incomplete. `complete` above is deliberately not
+            // widened to consider it.
+            //
+            // The `!measured` conjunct is redundant, like `measured &&` above:
+            // the count below reads this branch only when `measured` is false,
+            // so removing it changes nothing a test can see (mutation-checked).
+            // Kept because it states the rule the field encodes at the field.
+            const saved =
+              !measured && typeof p.savedAnswers === "number"
+                ? p.savedAnswers
+                : null;
             return (
               <li key={p.code}>
                 <button
@@ -201,7 +269,9 @@ export function MovesCaptureFlow({
                   <span className="mcf-phase-count">
                     {measured
                       ? `${p.answered} of ${p.total} answered`
-                      : `${p.total} question${p.total === 1 ? "" : "s"}`}
+                      : saved !== null
+                        ? `${saved} of ${p.total} saved`
+                        : `${p.total} question${p.total === 1 ? "" : "s"}`}
                   </span>
                 </button>
               </li>
@@ -291,7 +361,18 @@ export function MovesCaptureFlow({
                     </button>
                   ) : null}
                   {view === 2 && approveSlot ? (
-                    <div className="mcf-approve-slot">{approveSlot}</div>
+                    <>
+                      {handoffAccess.offerReviewBeforeSubmit ? (
+                        <button
+                          type="button"
+                          className="mcf-btn-quiet"
+                          onClick={() => go(3)}
+                        >
+                          Review what you captured
+                        </button>
+                      ) : null}
+                      <div className="mcf-approve-slot">{approveSlot}</div>
+                    </>
                   ) : (
                     <button
                       type="button"
@@ -302,6 +383,7 @@ export function MovesCaptureFlow({
                           go(view + 1);
                         } else {
                           onSubmitPhase();
+                          setSubmitted(true);
                           go(3);
                         }
                       }}
@@ -315,14 +397,19 @@ export function MovesCaptureFlow({
           ) : (
             <section className="mcf-handoff" data-testid="mcf-handoff">
               <div className="mcf-panel-head">
-                <span className="mcf-eyebrow mcf-done-eyebrow">
-                  <span className="mcf-tick">✓</span> {phaseName} submitted
+                <span
+                  className={
+                    handoffHeading.showTick
+                      ? "mcf-eyebrow mcf-done-eyebrow"
+                      : "mcf-eyebrow"
+                  }
+                >
+                  {handoffHeading.showTick ? (
+                    <span className="mcf-tick">✓</span>
+                  ) : null}{" "}
+                  {handoffHeading.eyebrow}
                 </span>
-                <h1 className="mcf-panel-title">
-                  {nextPhase
-                    ? `${phaseName} is complete. Here's what you captured.`
-                    : `${phaseName} is complete. This Move is ready for delivery.`}
-                </h1>
+                <h1 className="mcf-panel-title">{handoffHeading.title}</h1>
               </div>
               {handoffSummary}
               <div className="mcf-recap" aria-label="What you captured">
@@ -363,19 +450,28 @@ export function MovesCaptureFlow({
                   <button
                     type="button"
                     className="mcf-btn-quiet"
-                    onClick={() => go(0)}
+                    onClick={() => (submitted ? go(0) : go(2))}
                   >
-                    Review answers
+                    {submitted ? "Review answers" : "Back to the last step"}
                   </button>
-                  <button
-                    type="button"
-                    className="mcf-btn-primary"
-                    onClick={onAdvanceToNextPhase}
-                  >
-                    {nextPhase
-                      ? `Begin ${nextPhase.name} →`
-                      : "Hand off to delivery →"}
-                  </button>
+                  {submitted || !approveSlot ? (
+                    <button
+                      type="button"
+                      className="mcf-btn-primary"
+                      onClick={onAdvanceToNextPhase}
+                    >
+                      {nextPhase
+                        ? `Begin ${nextPhase.name} →`
+                        : "Hand off to delivery →"}
+                    </button>
+                  ) : (
+                    /* Opened as a review: nothing is submitted yet, so the next
+                       phase cannot be begun from here. The host's governed
+                       approve control travels onto the recap instead, so the
+                       person decides with the basis rollup in front of them and
+                       the decision still runs through the gate pipeline. */
+                    <div className="mcf-approve-slot">{approveSlot}</div>
+                  )}
                 </div>
               </div>
             </section>
@@ -424,6 +520,11 @@ const MCF_CSS = `
 .mcf-q-labelrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px}
 .mcf-q-label{display:block;font-size:16px;font-weight:600}
 .mcf-q-help{font-size:14px;line-height:1.5;color:var(--mcf-muted);margin:0 0 6px}
+.mcf-question{min-width:0}
+.mcf-question>*{max-width:100%}
+.mcf-input{display:block;width:100%;box-sizing:border-box;font-family:var(--mcf-sans);font-size:15px;line-height:1.55;color:var(--mcf-ink);background:var(--mcf-surface);border:1px solid var(--mcf-line-strong);border-radius:10px;padding:12px 14px;resize:vertical;min-height:96px}
+.mcf-input:focus{outline:none;border-color:var(--mcf-accent);box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.mcf-input::placeholder{color:var(--mcf-faint)}
 .mcf-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:40px;padding-top:24px;border-top:1px solid var(--mcf-line)}
 .mcf-footer-count{font-size:14px;color:var(--mcf-faint)}
 .mcf-footer-actions{display:flex;align-items:center;gap:8px}

@@ -107,7 +107,11 @@ export type FeatureFlagKey =
   | "moves_charter_assumptions_discover_v1"
   | "moves_capture_p0_v1"
   | "moves_capture_composition_v1"
-  | "moves_capture_notes_v1";
+  | "moves_capture_notes_v1"
+  | "moves_capture_handoff_recap_v1"
+  | "moves_charter_assumption_resolution_v1"
+  | "moves_capture_phase_rollup_v1"
+  | "moves_charter_standing_after_discover_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -429,6 +433,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     includeTenants: ["meridian"],
   },
   {
+    key: "moves_capture_handoff_recap_v1",
+    summary:
+      "2026-10-05: Makes the redesigned phase capture's hand-off recap reachable. The flow keeps the recap as view 3, but its footer spends its one forward control on the host's governed approve slot and nothing else calls into view 3, so the recap \u2014 which hosts the charter-basis rollup and the per-question basis marks \u2014 is deployed and renders nowhere. When on, the last step offers \"Review what you captured\", which opens the recap WITHOUT submitting; opened that way the recap does not claim the phase was submitted, and the governed approve control travels onto it so the decision still runs through the existing gate pipeline. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; off for every tenant. Env: ABARVA_FEATURE_MOVES_CAPTURE_HANDOFF_RECAP_V1_TENANTS.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
     key: "moves_capture_composition_v1",
     summary:
       "2026-10-04: Composition-only polish for the redesigned phase capture. The workspace surface tabs move into the agent dock's workspace column so they sit with the content they switch, and the legacy stage head stops repeating the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. The blocked-phase notice and the readiness-workbook actions keep rendering. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; enabled for the synthetic demo tenant for signed-in review and off elsewhere.",
@@ -448,6 +459,27 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "2026-10-04: Adds a governed fill-from-notes affordance to the Moves phase-capture dock. A workspace user pastes their own notes from a client conversation; a deterministic matcher (no model call) proposes which unanswered capture question each passage belongs to and shows the VERBATIM passage plus the words that earned the match. Propose -> review -> insert: nothing is written to a field until the person inserts that specific proposal. A note-derived fill is classified as a workspace assertion, never as approved evidence, and the panel never renders evidence-covered wording. Answered fields and structured (JSON) fields are skipped and reported as skipped, so a paste can neither overwrite captured work nor corrupt a structured value. Presentation and local state only; no new canonical field, table, or key. Enabled for the synthetic demo tenant for signed-in review; the dock is unchanged elsewhere.",
     policy: "tenant",
     includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_charter_assumption_resolution_v1",
+    summary:
+      "2026-10-05: Lets P2 Discover close a charter assumption it has validated. The phase already inherits the charter answers P1 left standing on an assumption (moves_charter_assumptions_discover_v1), each with an owner and the plan for validating it, but a person looking at one could not record what Discover found, so an assumption stayed open forever once declared. This adds the resolution data model and the resolution-aware read: an assumption resolved as confirmed, corrected, or superseded by approved evidence stops being listed as open and owed. A resolution is stored on the same capture-module row as the recorded basis under its own key, never nested inside it, and is pinned to the revision of the answer it was written about - edit the answer and the resolution no longer applies, the same rule the basis itself follows. A resolution is never rendered as approved evidence. The write path and its control are a later slice; with nothing writing one yet, on and off read identically today. Deliberately separate from moves_charter_assumptions_discover_v1 so a tenant can inherit the assumptions read-only without the resolve path. Default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_capture_phase_rollup_v1",
+    summary:
+      "2026-10-05: Lets the capture flow's phase strip say how much of a phase has been saved, for the five rows the screen cannot measure. The strip shows one row per phase, but the host holds live capture values only for the phase on screen, so every other row states a bare question count and a person stepping through the flow sees none of the work behind them. The rows needed to fix that are already loaded - the phase route reads every capture-module row for the Move and then discards all but the viewed phase - so this adds no read. An unmeasured row now states how many of its questions hold a SAVED ANSWER, under that word and no other. A saved answer is a persisted non-empty value; the viewed row's answered count additionally requires structured validity, evidence readiness, and on Charter a satisfied basis, so the saved count is strictly weaker and routinely larger. The two therefore never share a row and never share a noun, and a saved count never earns the completion tick - only a live measurement does, which is the invariant that removed an earlier row's claim to be fully answered when all of its questions were blank. Route-aware, because Design is the only phase whose question set depends on the confirmed solution route. Requires the redesigned capture flow to be on to render at all. Default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_charter_standing_after_discover_v1",
+    summary:
+      "2026-10-05: Carries the charter's unresolved assumptions past Discover. P1 lets a charter field be answered from an assumption with an owner and a validation plan, P2 inherits those assumptions and can record what Discover found, and both reads are scoped to their own phase - so from P3 onward a charter answer reads identically whether it was proved, assumed and never checked, or checked and found wrong. P3 routes a solution off that answer, P4 builds a business case on it and P5 mobilises against it. With this on, a phase after Discover can read two standings against a charter answer: unvalidated, where the assumption outlived Discover unresolved; and known-wrong, where Discover recorded a correction and the charter still carries the wording the correction was written about. The known-wrong standing is derived from the same revision pin the rest of the family uses - a correction stops reading the moment the answer is edited - not from a comparison this read invents. Read-only: it resolves, edits and re-classifies nothing, adds no canonical field or key, and never renders a standing in evidence wording. Requires moves_charter_assumption_resolution_v1, because without the resolution read a resolved assumption and a surviving one are indistinguishable and the surface would report work that was really done as work nobody did; it reports nothing rather than reporting that. P2 is excluded and stays with the carry-forward. The consuming surface is the capture flow's opening band on P3+, beside the P2 carry-forward band it mirrors. Default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
   },
 ];
 

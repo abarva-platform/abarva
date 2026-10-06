@@ -20,6 +20,8 @@ export function p0SourceEvidenceNeedPacket(args: {
     exampleContent: ["Executive note", "Workshop record", "Operational record"],
     whyItMatters:
       "P0 approval authorizes Discovery. At least one uploaded, parsed, and human-reviewed source file must support that decision.",
+    // Not from a family guidance table — this packet's wording is its own.
+    guidanceBasis: "packet_specific",
     blockedArtifacts: [],
     canDraftBoundary: {
       canDraft: true,

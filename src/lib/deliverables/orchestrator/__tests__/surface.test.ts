@@ -7,11 +7,16 @@ import { selectRequiredEvidenceSignals } from "../evidence-signals";
 import {
   buildSectionDrivenEvidenceQueries,
   runDeliverableForTenant,
+  spellIdentifiersAsWords,
 } from "../generate-service";
 import { getArtifactBrief } from "../artifact-brief-registry";
+import { ARCHETYPE_PACKS } from "../briefs/archetype-packs";
+import { DELIVERABLE_STRUCTURES } from "../briefs/deliverable-structures";
+import { shouldRunStructuredContextPass } from "@/lib/azure-search/tenant-context-retriever";
 import { FIRST_CAPITAL_ARCHITECTURE } from "@/lib/visual-system/__fixtures__/first-capital-architecture";
 import { ArchitectureRefusalError } from "@/lib/visual-system/architecture-generation";
 import type { GovernedEvidenceItem, OrchestrationResult } from "../index";
+import type { DeliverableArtifactBrief } from "../types";
 import type { TenantContextChunk } from "@/lib/azure-search/tenant-context-retriever";
 import type { DeliverablePlan } from "@/lib/deliverables/planning/deliverable-plan";
 
@@ -1010,6 +1015,210 @@ describe("buildSectionDrivenEvidenceQueries", () => {
         getArtifactBrief(req),
       ),
     ).toEqual(["bespoke retrieval string"]);
+  });
+
+  // ── Declared identifiers are identity; they are not retrieval text ──
+  //
+  // A brief declares identifiers, and should: `run_cost_baseline`, `AI_PDLC`,
+  // `governed_facts`. The query built from them went to the retriever with the
+  // underscores intact, and the underscore is a word character — so the words
+  // inside an identifier were invisible both to a prose index and to the
+  // retriever's own `\b`-anchored topical gate.
+
+  const queriesFor = (
+    module: string,
+    useCaseArchetype: string,
+    deliverableType: string,
+  ): string[] => {
+    const req = buildDeliverableRequest(
+      {
+        module: module as "moves",
+        useCaseArchetype,
+        deliverableType,
+        decisionContext: "probe",
+        clientDisplayName: "Client",
+        initiativeDisplayName: "Initiative",
+      },
+      [],
+      [],
+    );
+    return buildSectionDrivenEvidenceQueries(
+      {
+        deliverableType: req.deliverableType,
+        useCaseArchetype: req.useCaseArchetype,
+      },
+      getArtifactBrief(req),
+    );
+  };
+
+  const IDENTIFIER_TOKEN = /[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+/g;
+
+  it("keeps a declared identifier and adds its words", () => {
+    expect(spellIdentifiersAsWords("run_cost_baseline")).toBe(
+      "run_cost_baseline run cost baseline",
+    );
+  });
+
+  it("splits every underscore in a chain, not only the first", () => {
+    expect(spellIdentifiersAsWords("contract_ip_data_return_exit")).toBe(
+      "contract_ip_data_return_exit contract ip data return exit",
+    );
+    // The shape that discriminates: a ONE-character segment. Consuming the
+    // character to the right of an underscore — rather than looking ahead at it
+    // — eats the character the next pair needs on its left, so `tier_1_cost`
+    // comes back half-spelled as `tier 1_cost`. Every id shipped today has
+    // segments of two characters or more, which hides the difference; a
+    // configured catalog is free to declare `tier_1_cost`.
+    expect(spellIdentifiersAsWords("tier_1_cost")).toBe(
+      "tier_1_cost tier 1 cost",
+    );
+  });
+
+  it("leaves a query that carries no identifier exactly as it was", () => {
+    expect(spellIdentifiersAsWords("current state baseline")).toBe(
+      "current state baseline",
+    );
+  });
+
+  it("the retriever's topical gate cannot see a word inside an identifier", () => {
+    // The mechanism, asserted against the retriever's own rule rather than a
+    // copy of it: `/\bai\b/` finds no boundary inside `AI_PDLC`.
+    expect(shouldRunStructuredContextPass("AI_PDLC target architecture")).toBe(
+      false,
+    );
+    expect(
+      shouldRunStructuredContextPass(
+        spellIdentifiersAsWords("AI_PDLC target architecture"),
+      ),
+    ).toBe(true);
+    // Not special to that one archetype: a family id hides its words too.
+    expect(shouldRunStructuredContextPass("contract_baseline scope")).toBe(
+      false,
+    );
+    expect(
+      shouldRunStructuredContextPass(
+        spellIdentifiersAsWords("contract_baseline scope"),
+      ),
+    ).toBe(true);
+  });
+
+  it("every query the AI archetype builds now earns the structured passes", () => {
+    // The archetype whose declared id is the word the gate looks for, spelled
+    // so the gate could never match it. Measured before the fix: 114 of its 325
+    // queries reached the gate; the other 211 were denied it by the underscore
+    // alone.
+    const queries = DELIVERABLE_STRUCTURES.flatMap((structure) =>
+      queriesFor(structure.module, "AI_PDLC", structure.deliverableType),
+    );
+    expect(queries.length).toBeGreaterThan(300);
+    expect(queries.filter((q) => !shouldRunStructuredContextPass(q))).toEqual(
+      [],
+    );
+  });
+
+  it("carries the words of every identifier it carries, across both catalogs", () => {
+    const offenders: string[] = [];
+    for (const structure of DELIVERABLE_STRUCTURES) {
+      for (const archetype of Object.keys(ARCHETYPE_PACKS)) {
+        for (const query of queriesFor(
+          structure.module,
+          archetype,
+          structure.deliverableType,
+        )) {
+          for (const identifier of query.match(IDENTIFIER_TOKEN) ?? []) {
+            const worded = identifier.replace(/_/g, " ");
+            if (!query.includes(worded)) {
+              offenders.push(
+                `${structure.module}/${structure.deliverableType}/${archetype}: ${identifier}`,
+              );
+            }
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("spells the evidence families a pack declares into the query", () => {
+    const queries = queriesFor(
+      "moves",
+      "AMS_IT_OUTSOURCING",
+      "target_state_architecture",
+    ).join("\n");
+    // The id stays — it is what the brief declared — and the words join it.
+    expect(queries).toContain("application_inventory");
+    expect(queries).toContain("application inventory");
+  });
+
+  it("leaves an authored evidenceQuery alone even when it looks like an id", () => {
+    const req = buildDeliverableRequest(
+      {
+        module: "moves",
+        useCaseArchetype: "AMS_IT_OUTSOURCING",
+        deliverableType: "business_case",
+        decisionContext: "approve",
+        clientDisplayName: "Client",
+        initiativeDisplayName: "Initiative",
+      },
+      [],
+      [],
+    );
+    expect(
+      buildSectionDrivenEvidenceQueries(
+        {
+          deliverableType: req.deliverableType,
+          useCaseArchetype: req.useCaseArchetype,
+          evidenceQuery: "run_cost_baseline",
+        },
+        getArtifactBrief(req),
+      ),
+    ).toEqual(["run_cost_baseline"]);
+  });
+
+  it("spells the fallback query too, when a brief declares nothing to query", () => {
+    // Every brief shipped today declares at least one section, so the fallback
+    // is unreachable through the catalogs — but the function takes the brief as
+    // a parameter, and a configured structure is free to declare none. The
+    // fallback is built from the same prefix, so it carries the same two
+    // identifiers and needs the same treatment.
+    const emptyBrief: DeliverableArtifactBrief = {
+      module: "moves",
+      useCaseArchetype: "AI_PDLC",
+      deliverableType: "target_state_architecture",
+      purpose: "",
+      audience: [],
+      decisionToSupport: "",
+      recommendedStructure: [],
+      requiredSections: [],
+      optionalSections: [],
+      expectedExhibits: [],
+      expectedTables: [],
+      requiredPlaceholders: [],
+      requiredClientDecisions: [],
+      citationPolicy: "",
+      allowedExpertKnowledge: "",
+      disallowedFabrication: "",
+      formattingInstructions: "",
+      qualityCriteria: [],
+    };
+    expect(
+      buildSectionDrivenEvidenceQueries(
+        {
+          deliverableType: "target_state_architecture",
+          useCaseArchetype: "AI_PDLC",
+        },
+        emptyBrief,
+      ),
+    ).toEqual([
+      "target_state_architecture AI_PDLC current state baseline " +
+        "target state architecture AI PDLC current state baseline",
+    ]);
+  });
+
+  it("still returns distinct queries once the identifiers are spelled out", () => {
+    const queries = queriesFor("moves", "AI_PDLC", "discovery_report");
+    expect(queries.length).toBeGreaterThan(1);
+    expect(new Set(queries).size).toBe(queries.length);
   });
 });
 

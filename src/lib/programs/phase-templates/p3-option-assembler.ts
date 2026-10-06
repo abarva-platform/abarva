@@ -85,6 +85,13 @@ export interface P3OptionReadinessInput {
   coverageScore?: number;
   hardGaps?: string[];
   softGaps?: string[];
+  /**
+   * The archetype the Move actually RESOLVED to —
+   * `ReadinessReport.archetypeId`, which honours a declared archetype. Carried
+   * here because it is the only declared identity this assembler can reach:
+   * see `ARCHETYPE_USE_CASE_PATTERNS`.
+   */
+  archetypeId?: string | null;
 }
 
 export interface BuildP3DesignInputsPackInput {
@@ -118,6 +125,7 @@ export type P3UseCasePattern =
   | 'legal_contract_intake'
   | 'finance_close_and_transparency'
   | 'operations_resilience'
+  | 'governed_data_foundation'
   | 'generic_bounded_solution';
 
 interface OptionBlueprint {
@@ -325,7 +333,7 @@ export function assembleP3SolutionOptions({
       readiness?.softGaps?.join(' '),
     ].join(' '),
   );
-  const useCasePattern = inferUseCasePattern(text, archetype);
+  const useCasePattern = inferUseCasePattern(text, archetype, readiness?.archetypeId);
   const missingEvidence = unique([
     ...(designInputs.unresolvedQuestions ?? []),
     ...(designInputs.notReadyConditions ?? []),
@@ -757,6 +765,10 @@ function optionBlueprintsFor(pattern: P3UseCasePattern): OptionBlueprint[] {
     return operationsBlueprints();
   }
 
+  if (pattern === 'governed_data_foundation') {
+    return governedDataFoundationBlueprints();
+  }
+
   return genericBlueprints();
 }
 
@@ -766,6 +778,21 @@ function financeBlueprints(): OptionBlueprint[] {
     genericOption('B', 'Governed finance data product and reporting layer', 'Create a controlled finance data layer for cost, margin, reconciliation, and executive reporting.', ['data_readiness', 'analytics_intelligence_layer', 'controls_governance_risk'], 8, 7, 8),
     genericOption('C', 'End-to-end financial transparency platform', 'Unify GL, contracts, claims/cost, and planning views into a broader management platform.', ['system_platform_implementation', 'analytics_intelligence_layer', 'workflow_automation'], 9, 5, 9),
     genericOption('D', 'Automated close transformation first', 'Start with broad close automation before the control and data foundation is proven.', ['workflow_automation', 'system_platform_implementation', 'controls_governance_risk'], 7, 3, 7),
+  ];
+}
+
+/**
+ * A governed-data-foundation Move's bet is a certified foundation — ownership,
+ * semantic layer, lineage, quality — BEFORE any AI/LLM workflow is claimed. Its
+ * four options therefore ladder the FOUNDATION, not a service workflow; D is the
+ * recognisable overreach of leading with the AI layer instead.
+ */
+function governedDataFoundationBlueprints(): OptionBlueprint[] {
+  return [
+    genericOption('A', 'Data ownership and quality rules first', 'Name stewards, decision rights, and quality rules with exception owners before any platform or AI work.', ['process_redesign', 'controls_governance_risk', 'value_tracking_operating_cadence'], 6, 9, 6),
+    genericOption('B', 'Certified semantic layer on the current platform', 'Certify metric and entity definitions with named owners and source-to-use lineage on the platform already in place.', ['data_readiness', 'analytics_intelligence_layer', 'controls_governance_risk'], 8, 7, 8),
+    genericOption('C', 'Governed data platform and identity spine', 'Extend to platform/architecture readiness and master-entity resolution so the foundation serves more than one downstream use.', ['data_readiness', 'system_platform_implementation', 'analytics_intelligence_layer'], 9, 5, 9),
+    genericOption('D', 'AI and LLM automation layer first', 'Build the automation layer before certification, lineage, and model-risk controls are proven.', ['ai_assisted_decision_support', 'workflow_automation', 'controls_governance_risk'], 7, 3, 7),
   ];
 }
 
@@ -867,6 +894,7 @@ function adjust(scoresRecord: Record<P3OptionScoreDimension, number>, key: P3Opt
  */
 const ARCHETYPE_USE_CASE_PATTERNS: Record<string, P3UseCasePattern> = {
   contact_center_agent_assist: 'member_service_agent_assist',
+  governed_data_foundation: 'governed_data_foundation',
 };
 
 /**
@@ -915,10 +943,29 @@ function hasTerm(text: string, term: string): boolean {
  * another pattern's terms, and a member-service Move was given the
  * operations option set.
  */
-function inferUseCasePattern(text: string, archetype?: string | null): P3UseCasePattern {
-  const archetypeKey = (archetype ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
-  const declared = ARCHETYPE_USE_CASE_PATTERNS[archetypeKey];
-  if (declared) return declared;
+function archetypeUseCaseKey(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+}
+
+function inferUseCasePattern(
+  text: string,
+  archetype?: string | null,
+  resolvedArchetypeId?: string | null,
+): P3UseCasePattern {
+  // `resolvedArchetypeId` first, and this order is the whole point. `archetype`
+  // is the Move's `program_archetype` column, which a CHECK constraint limits to
+  // five coarse values (`strategic_transformation`, `workflow_automation`,
+  // `platform_modernization`, `ai_product_enablement`,
+  // `operational_optimization`) — none of them a key of the map below. Keyed off
+  // that column alone the declaration arm was unreachable in the product: a Move
+  // that declared the data-foundation archetype fell through to the keyword
+  // scan, and clinical/claims vocabulary in its own evidence ("claims",
+  // "clinical", "PHI") scored the member-service pattern, so the Move was
+  // offered four contact-centre options belonging to another archetype.
+  for (const candidate of [resolvedArchetypeId, archetype]) {
+    const declared = ARCHETYPE_USE_CASE_PATTERNS[archetypeUseCaseKey(candidate)];
+    if (declared) return declared;
+  }
 
   let best: { pattern: P3UseCasePattern; hits: number } | null = null;
   for (const { pattern, terms } of USE_CASE_PATTERN_TERMS) {

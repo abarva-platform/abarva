@@ -41,12 +41,16 @@ import { charterGateAssumptionDisclosure } from "@/lib/programs/charter-gate-ass
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { CostEffortWizard } from "@/components/strategic-moves/cost-effort";
 import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
+import { DiagnosisFactsEditor } from "@/components/strategic-moves/DiagnosisFactsEditor";
+import { SolutionOptionChooser } from "@/components/strategic-moves/SolutionOptionChooser";
 import {
   MovesCaptureFlow,
   type MovesCaptureFlowPhase,
 } from "@/components/strategic-moves/MovesCaptureFlow";
 import { CharterAssumptionsCarryForward } from "@/components/strategic-moves/CharterAssumptionsCarryForward";
+import { CharterStandingAfterDiscover } from "@/components/strategic-moves/CharterStandingAfterDiscover";
 import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumptions-carry-forward";
+import type { PostDiscoverCharterAnswer } from "@/lib/programs/charter-standing-after-discover";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
 import {
   CharterAssumptionBadge,
@@ -71,7 +75,25 @@ import {
 } from "@/lib/programs/capture-notes-basis-link";
 import { charterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
 import { capturePhaseProgress } from "@/lib/programs/capture-phase-progress";
+import {
+  approvalsRowStatusBasis,
+  approvalsRowStatusClass,
+  approvalsRowStatusText,
+  formatApproverCell,
+  formatGateCriteriaCell,
+  formatGateCriteriaTitle,
+} from "@/lib/programs/approvals-overview-labels";
 import { phaseStepperStateLabel } from "@/lib/programs/phase-stepper-state-label";
+import type { PhaseApprovalStanding } from "@/lib/programs/phase-approval-standing";
+import {
+  phaseApprovalCompletionHeadline,
+  phaseApprovalDecisionText,
+  phaseApprovalDecisionTitle,
+  phaseApprovalGateNote,
+  phaseApprovalHeaderBasis,
+  phaseApprovalHeaderLabel,
+  resolvePhaseApprovalStanding,
+} from "@/lib/programs/phase-approval-standing";
 import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessment";
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-totals";
@@ -86,7 +108,10 @@ import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
 } from "@/lib/programs/phase-capture-contract";
-import { p1CharterEvidenceFamilyForSection } from "@/lib/programs/p1-charter-evidence";
+import {
+  isP1CharterBasisValidForSection,
+  p1CharterEvidenceFamilyForSection,
+} from "@/lib/programs/p1-charter-evidence";
 import {
   SOLUTION_OUTPUT_TYPES,
   SOLUTION_ROUTE_LABELS,
@@ -103,6 +128,7 @@ import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-pro
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
+import { summariseCapturedBrief } from "./originate-figure-labels";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import {
   assembleP3SolutionOptions,
@@ -162,6 +188,11 @@ interface PhaseProgressHeaderState {
   label: string;
   tone: "ready" | "open" | "complete";
   openEvidenceCount: number;
+  /**
+   * Why the label says what it says, when the label rests on an inference
+   * rather than a read decision. Rendered as the status element's `title`.
+   */
+  basis?: string;
 }
 
 interface PhaseContract {
@@ -234,6 +265,19 @@ interface MovesPhaseStandaloneClientProps {
   captureCompositionEnabled?: boolean;
   /** The basis already recorded per P1 Charter section key, preloaded server-side. Seeds the basis control so a reload shows what was declared rather than an empty choice. */
   initialP1CharterBasisBySection?: Record<string, CharterBasisValue>;
+  /**
+   * `moves_capture_phase_rollup_v1` (flag, default OFF): per-phase SAVED-ANSWER
+   * counts for the capture flow's phase strip, derived server-side from the
+   * capture-module rows the route already loads for the whole Move.
+   *
+   * Only the rows this screen cannot measure use it, and only under the word
+   * "saved" — never "answered", and never a completion tick. Absent (the
+   * default, and whenever the flag is off) ⇒ the strip renders exactly as it
+   * does without this prop.
+   */
+  capturePhaseSavedAnswerCounts?: Readonly<Record<number, number>>;
+  /** `moves_capture_handoff_recap_v1` feature flag, already conjoined server-side with `moves_capture_v2` (tenant-gated, default OFF). When true the capture flow's last step offers "Review what you captured", which opens the hand-off recap WITHOUT submitting — the recap carries the charter-basis rollup and the per-question basis marks, and is otherwise unreachable because the footer's one forward control is spent on the governed approve slot. The approve control travels onto the recap, so submission still runs through the existing gate pipeline. When false the flow behaves exactly as today. */
+  captureHandoffRecapEnabled?: boolean;
   /** `moves_capture_notes_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, the capture dock offers the governed fill-from-notes panel: paste your own notes from a client conversation, review the verbatim passage proposed for each unanswered question, and insert it field by field. Nothing is written until you insert, and a note-derived fill is your assertion, never approved evidence. When false the dock renders exactly as today. */
   captureNotesEnabled?: boolean;
   /**
@@ -243,6 +287,15 @@ interface MovesPhaseStandaloneClientProps {
    * active and nothing renders — the client re-checks no flag of its own.
    */
   carriedCharterAssumptions?: readonly CarriedCharterAssumption[] | null;
+  /**
+   * The charter answers a phase AFTER Discover should carry a caveat on,
+   * folded server-side by `charterStandingAfterDiscover` and already gated
+   * there on P3+ and `moves_charter_standing_after_discover_v1`. `null` means
+   * the surface is not active and nothing renders — the client re-checks no
+   * flag of its own, exactly as with `carriedCharterAssumptions`. The two are
+   * phase-exclusive by construction: the carry-forward owns P2, this owns P3+.
+   */
+  charterStandingAfterDiscover?: readonly PostDiscoverCharterAnswer[] | null;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -856,8 +909,11 @@ export function MovesPhaseStandaloneClient({
   charterBasisEnabled = false,
   captureCompositionEnabled = false,
   initialP1CharterBasisBySection = {},
+  capturePhaseSavedAnswerCounts,
   captureNotesEnabled = false,
+  captureHandoffRecapEnabled = false,
   carriedCharterAssumptions: carriedCharterAssumptionRows = null,
+  charterStandingAfterDiscover: charterStandingAfterDiscoverRows = null,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -933,7 +989,23 @@ export function MovesPhaseStandaloneClient({
   const [selectedOption, setSelectedOption] = useState(
     phase.phase === 3 ? "" : "B",
   );
-  const [gateApproved, setGateApproved] = useState(isHistoricalPhase);
+  // An approval THIS SESSION performed and the server accepted. Seeded false:
+  // it is a record of a decision, and advancing past a phase is not one. The
+  // permissive `gateApproved` below keeps the old seeded meaning so every gate
+  // control behaves exactly as before; only the words the screen renders tell
+  // the two apart. See `phase-approval-standing`.
+  const [gateApprovedThisSession, setGateApproved] = useState(false);
+  const gateApproved = isHistoricalPhase || gateApprovedThisSession;
+  const approvalStanding = resolvePhaseApprovalStanding({
+    terminalComplete,
+    phaseNumber: phase.phase,
+    currentPhase,
+    approvalRecordedThisSession: gateApprovedThisSession,
+  });
+  // Non-null exactly when `isHistoricalPhase || gateApproved` holds, so it is
+  // the header's condition as well as its word — there is no fallback branch
+  // to leave untested.
+  const approvalHeaderLabel = phaseApprovalHeaderLabel(approvalStanding);
   const [gateApprovalStatus, setGateApprovalStatus] = useState<
     "idle" | "approving" | "approved" | "blocked"
   >(isHistoricalPhase ? "approved" : "idle");
@@ -1207,6 +1279,54 @@ export function MovesPhaseStandaloneClient({
     () => getPhaseCaptureSections(phase.phase, confirmedSolutionRoute),
     [confirmedSolutionRoute, phase.phase],
   );
+  // ─── moves_charter_basis_v1 (flag, default OFF): the per-field basis ───
+  // The capture stepper uses these persisted declarations as P1's minimum
+  // viable evidence alternative. Assertions and owned assumptions can complete
+  // a saved answer without being relabelled as approved evidence.
+  const charterBasisActive = charterBasisSurfaceActive({
+    flagEnabled: charterBasisEnabled,
+    phaseNumber: phase.phase,
+  });
+  const charterBasisSectionKeys = useMemo(
+    () =>
+      resolveCharterBasisSectionKeys({
+        active: charterBasisActive,
+        sections: phaseCaptureSections,
+      }),
+    [charterBasisActive, phaseCaptureSections],
+  );
+  const [charterBasisBySection, setCharterBasisBySection] = useState<
+    Record<string, CharterBasisValue>
+  >(() => ({ ...initialP1CharterBasisBySection }));
+  const [charterBasisSaveError, setCharterBasisSaveError] = useState<
+    Record<string, string>
+  >({});
+  const [
+    charterBasisSavePendingBySection,
+    setCharterBasisSavePendingBySection,
+  ] = useState<Record<string, boolean>>({});
+
+  const captureBasisForSection = useCallback(
+    (sectionKey: string) => {
+      if (!charterBasisActive || !charterBasisSectionKeys.has(sectionKey)) {
+        return undefined;
+      }
+      return {
+        value: charterBasisBySection[sectionKey] ?? null,
+        savePending: charterBasisSavePendingBySection[sectionKey] === true,
+        saveFailed: Boolean(charterBasisSaveError[sectionKey]),
+        approvedEvidence: initialApprovedP1CaptureEvidenceReferences,
+      };
+    },
+    [
+      charterBasisActive,
+      charterBasisBySection,
+      charterBasisSaveError,
+      charterBasisSavePendingBySection,
+      charterBasisSectionKeys,
+      initialApprovedP1CaptureEvidenceReferences,
+    ],
+  );
   const inferredSelectedOption = useMemo(
     () =>
       phase.phase === 3
@@ -1328,10 +1448,12 @@ export function MovesPhaseStandaloneClient({
             phaseEvidencePassed,
             evidenceReadinessAvailable,
             initialApprovedP1CaptureEvidenceReferences,
+            captureBasisForSection(section.key),
           ).complete,
       ).length,
     [
       businessChangeAssessment,
+      captureBasisForSection,
       initialApprovedEvidenceReferences,
       initialApprovedP1CaptureEvidenceReferences,
       phaseCaptureSections,
@@ -1478,8 +1600,13 @@ export function MovesPhaseStandaloneClient({
   });
   const phaseProgressHeaderState: PhaseProgressHeaderState | null =
     finderSelectedSectionKey === null && substep.key === "approve"
-      ? isHistoricalPhase || gateApproved
-        ? { label: "Approved", tone: "complete", openEvidenceCount: 0 }
+      ? approvalHeaderLabel !== null
+        ? {
+            label: approvalHeaderLabel,
+            tone: "complete",
+            openEvidenceCount: 0,
+            basis: phaseApprovalHeaderBasis(approvalStanding) ?? undefined,
+          }
         : !phaseEvidenceCheckAvailable
           ? {
               label: phaseEvidenceChecklistConfigured
@@ -2355,9 +2482,27 @@ export function MovesPhaseStandaloneClient({
   // slot below so they keep working unchanged.
   const captureSectionInput = (section: PhaseCaptureSection): ReactNode => {
     const value = displayPhaseCaptureValues[section.key] ?? "";
+    // P3's build blocker asks for the solution option architecture should
+    // implement. The legacy canvas offers that choice as option cards; the
+    // redesigned flow rendered none, so the blocker named a control that was
+    // not on the page and a fully answered P3 could not be approved. The
+    // chooser belongs with "the one you'd back" — the recommendation question —
+    // and reports through the SAME `selectP3Option` the cards use.
+    const routeChoice =
+      phase.phase === 3 && section.key === "recommendation" ? (
+        <SolutionOptionChooser
+          options={p3OptionSet.options}
+          selectedOptionId={effectiveSelectedOption}
+          onSelect={selectP3Option}
+        />
+      ) : null;
     const input =
       section.structured === "facts" ? (
-        <FinderFactsTable rawValue={value} />
+        <DiagnosisFactsEditor
+          label={section.label}
+          value={value}
+          onChange={(v) => setVisiblePhaseCaptureValue(section.key, v)}
+        />
       ) : section.structured === "business-change" ? (
         <BusinessChangeAssessmentForm
           value={value}
@@ -2393,9 +2538,19 @@ export function MovesPhaseStandaloneClient({
     // "Filled by aVa · review"). Propose → human inserts/dismisses; nothing
     // is written until the person acts.
     const proposal = avaDraftProposalsByKey.get(section.key);
-    if (!proposal) return input;
+    if (!proposal) {
+      return routeChoice ? (
+        <>
+          {routeChoice}
+          {input}
+        </>
+      ) : (
+        input
+      );
+    }
     return (
       <>
+        {routeChoice}
         <div className="mcf-ava-draft" data-testid={`ava-draft-${section.key}`}>
           <div className="mcf-ava-draft-head">
             <span className="mcf-ava-badge">aVa draft · review</span>
@@ -2431,33 +2586,6 @@ export function MovesPhaseStandaloneClient({
     );
   };
 
-  // ─── moves_charter_basis_v1 (flag, default OFF): the per-field basis ───
-  // The visible half of the P1 Charter minimum-viable-evidence gate. The gate
-  // and the persistence already exist server-side (`p1BasisBySection` on the
-  // phase-capture route); this is the only surface that lets a workspace user
-  // DECLARE the basis. Flag off ⇒ none of it renders and the legacy
-  // approved-evidence lock is untouched.
-  const charterBasisActive = charterBasisSurfaceActive({
-    flagEnabled: charterBasisEnabled,
-    phaseNumber: phase.phase,
-  });
-
-  const charterBasisSectionKeys = useMemo(
-    () =>
-      resolveCharterBasisSectionKeys({
-        active: charterBasisActive,
-        sections: phaseCaptureSections,
-      }),
-    [charterBasisActive, phaseCaptureSections],
-  );
-
-  const [charterBasisBySection, setCharterBasisBySection] = useState<
-    Record<string, CharterBasisValue>
-  >(() => ({ ...initialP1CharterBasisBySection }));
-  const [charterBasisSaveError, setCharterBasisSaveError] = useState<
-    Record<string, string>
-  >({});
-
   const saveCharterBasis = useCallback(
     async (sectionKey: string, next: CharterBasisValue | null) => {
       // An assumption is only a recordable basis once it names an owner AND how
@@ -2468,8 +2596,16 @@ export function MovesPhaseStandaloneClient({
         next?.kind === "assumption" &&
         (!next.owner.trim() || !next.p2ValidationPlan.trim())
       ) {
+        setCharterBasisSavePendingBySection((prev) => ({
+          ...prev,
+          [sectionKey]: false,
+        }));
         return;
       }
+      setCharterBasisSavePendingBySection((prev) => ({
+        ...prev,
+        [sectionKey]: true,
+      }));
       try {
         const res = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
           method: "POST",
@@ -2517,6 +2653,11 @@ export function MovesPhaseStandaloneClient({
             error instanceof Error
               ? error.message
               : "Could not record how you know this. Try again.",
+        }));
+      } finally {
+        setCharterBasisSavePendingBySection((prev) => ({
+          ...prev,
+          [sectionKey]: false,
         }));
       }
     },
@@ -2638,6 +2779,8 @@ export function MovesPhaseStandaloneClient({
       initialApprovedEvidenceReferences.map((r) => r.evidenceId),
       phaseEvidencePassed,
       phaseEvidenceCheckAvailable,
+      initialApprovedP1CaptureEvidenceReferences,
+      captureBasisForSection(sectionKey),
     ).complete;
   };
 
@@ -2707,6 +2850,10 @@ export function MovesPhaseStandaloneClient({
       viewedPhase: phase.phase,
       currentPhase,
       viewedAnsweredCount: phaseCaptureCompleteCount,
+      // Already route-aware and already loaded; the route passes it only when
+      // `moves_capture_phase_rollup_v1` is on, so an absent value is the
+      // pre-flag behaviour rather than a missing read.
+      savedAnswerCountByPhase: capturePhaseSavedAnswerCounts,
     },
   );
 
@@ -2793,26 +2940,41 @@ export function MovesPhaseStandaloneClient({
     )
   ) : phase.phase >= 1 && phase.phase <= 5 ? (
     canApproveGates ? (
-      <PhaseApproveAndBuild
-        archetype={move.archetype}
-        approverLabel={approverLabel}
-        clientDisplayName={move.tenant.name}
-        disabledReason={phaseCaptureBlocker}
-        deliverableKeys={phaseCanonicalKeysForRoute(
-          phase.phase,
-          confirmedSolutionRoute,
-        )}
-        evidenceNeedPackets={evidenceNeedPackets}
-        inputCount={phaseCaptureCompleteCount}
-        initialArtifacts={visiblePhaseBuildArtifacts}
-        moveId={move.id}
-        moveName={displayMoveName}
-        onBeforeBuild={finalizePhaseCapture}
-        onBuildSettled={approvePhaseGateAfterBuild}
-        blockOnEvidenceGaps
-        phaseLabel={`${phase.code} ${phase.title}`}
-        phaseNum={phase.phase}
-      />
+      <>
+        {/* P3's build blocker is "select the solution option ..." and it is
+            stated right here, on the final step. The chooser is rendered
+            beside it so the stated blocker is actionable without navigating
+            back to the recommendation question. Only one step renders at a
+            time, so this and the step-1 copy are never both on screen; they
+            share the radio-group name and read the same standing choice. */}
+        {phase.phase === 3 ? (
+          <SolutionOptionChooser
+            options={p3OptionSet.options}
+            selectedOptionId={effectiveSelectedOption}
+            onSelect={selectP3Option}
+          />
+        ) : null}
+        <PhaseApproveAndBuild
+          archetype={move.archetype}
+          approverLabel={approverLabel}
+          clientDisplayName={move.tenant.name}
+          disabledReason={phaseCaptureBlocker}
+          deliverableKeys={phaseCanonicalKeysForRoute(
+            phase.phase,
+            confirmedSolutionRoute,
+          )}
+          evidenceNeedPackets={evidenceNeedPackets}
+          inputCount={phaseCaptureCompleteCount}
+          initialArtifacts={visiblePhaseBuildArtifacts}
+          moveId={move.id}
+          moveName={displayMoveName}
+          onBeforeBuild={finalizePhaseCapture}
+          onBuildSettled={approvePhaseGateAfterBuild}
+          blockOnEvidenceGaps
+          phaseLabel={`${phase.code} ${phase.title}`}
+          phaseNum={phase.phase}
+        />
+      </>
     ) : (
       <span className="mcf-gate-note">
         Approval is available to an authorized workspace user.
@@ -3231,15 +3393,21 @@ export function MovesPhaseStandaloneClient({
                         phase: phase.phase,
                         sections: phaseCaptureSections,
                         isSectionComplete: isCaptureSectionComplete,
+                        requireAnswers: true,
                         renderSectionInput: captureSectionInput,
                         renderSectionBasis: captureSectionBasis,
                         renderSectionBadge: captureSectionBadge,
                         renderSectionRecapMark: captureSectionRecapMark,
                         handoffSummary: charterBasisRollup,
                         openingBand: (
-                          <CharterAssumptionsCarryForward
-                            assumptions={carriedCharterAssumptionRows}
-                          />
+                          <>
+                            <CharterAssumptionsCarryForward
+                              assumptions={carriedCharterAssumptionRows}
+                            />
+                            <CharterStandingAfterDiscover
+                              rows={charterStandingAfterDiscoverRows}
+                            />
+                          </>
                         ),
                         sectionRecap: (s) =>
                           displayPhaseCaptureValues[s.key] ?? "",
@@ -3255,8 +3423,11 @@ export function MovesPhaseStandaloneClient({
                               name: nextCapturePhase.navLabel,
                             }
                           : null,
-                        initialStep: Math.min(substepIndex, 2) as 0 | 1 | 2,
+                        initialStep: initialSubstepKey
+                          ? (Math.min(substepIndex, 2) as 0 | 1 | 2)
+                          : undefined,
                         approveSlot: captureApproveSlot,
+                        allowReviewBeforeSubmit: captureHandoffRecapEnabled,
                       }}
                     />
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (
@@ -3304,6 +3475,7 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          approvalStanding={approvalStanding}
                           charterGateDisclosure={charterGateDisclosure}
                           canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
@@ -3405,6 +3577,7 @@ export function MovesPhaseStandaloneClient({
                       selectedSectionKey={finderSelectedSectionKey}
                       substepBody={
                         <PhaseBody
+                          approvalStanding={approvalStanding}
                           charterGateDisclosure={charterGateDisclosure}
                           canApproveGates={canApproveGates}
                           carriesForwardContent={carriesForwardContent}
@@ -3820,27 +3993,13 @@ function WorkspaceSurfaceTabs({
 // already used before this flag existed).
 // ---------------------------------------------------------------------------
 
-function approvalStatusText(row: PhaseTallyRow): string {
-  if (row.state === "done") return "Approved";
-  if (row.state === "current") {
-    return row.met === row.total
-      ? "Ready to submit"
-      : `${row.met}/${row.total} met — not yet submitted`;
-  }
-  return "Not reached";
-}
-
-function approvalStatusClass(row: PhaseTallyRow): string {
-  if (row.state === "done") return "approved";
-  if (row.state === "current") {
-    return row.met === row.total ? "ready" : "pending";
-  }
-  return "upcoming";
-}
-
-function approvalRoleLabelForPhase(_phase: number): string {
-  return "Authorized workspace user";
-}
+// The status, tally and approver cells are decided in
+// `@/lib/programs/approvals-overview-labels` so that no cell of this table can
+// state more than something on the screen measured. In particular there is no
+// `approvalRoleLabelForPhase` any more: the approver column used to be a
+// constant string returned for every phase, and the replacement takes the
+// recorded approver as its argument, so this host cannot name one while no
+// approval record reaches it.
 
 function ApprovalsOverview({
   currentMoveId,
@@ -3869,24 +4028,30 @@ function ApprovalsOverview({
       {phaseTallies.map((row) => {
         const isViewingRow = row.phase === viewingPhase;
         const isReachable = row.phase <= reachablePhase;
-        const approverLabel = approvalRoleLabelForPhase(row.phase);
+        // No gate-approval record reaches this client surface, so the cell
+        // is built from `null` and renders an explicit absence.
+        const approver = formatApproverCell(null);
         return (
           <div className="mxw-approvals-row" key={row.phase}>
             <span className="mxw-approvals-phase">{row.label}</span>
-            <span className="mxw-approvals-tally">
-              {row.met} of {row.total} met
+            <span
+              className="mxw-approvals-tally"
+              title={formatGateCriteriaTitle(row)}
+            >
+              {formatGateCriteriaCell(row)}
             </span>
             <span
-              className={`mxw-approvals-status ${approvalStatusClass(row)}`}
+              className={`mxw-approvals-status ${approvalsRowStatusClass(row)}`}
+              title={approvalsRowStatusBasis(row)}
             >
-              {approvalStatusText(row)}
+              {approvalsRowStatusText(row)}
             </span>
             <span
               className={`mxw-approvals-approver ${
-                approverLabel === "Not yet assigned" ? "unassigned" : ""
+                approver.recorded ? "" : "unassigned"
               }`}
             >
-              {approverLabel}
+              {approver.text}
             </span>
             <span className="mxw-approvals-action">
               {isViewingRow ? (
@@ -4041,6 +4206,12 @@ function phaseCaptureStatusForSection(
   evidencePassed = true,
   evidenceReadinessAvailable = true,
   approvedCaptureEvidenceReferences: readonly ApprovedPhaseEvidenceReference[] = [],
+  p1Basis?: {
+    value: CharterBasisValue | null;
+    savePending: boolean;
+    saveFailed: boolean;
+    approvedEvidence: readonly ApprovedPhaseEvidenceReference[];
+  },
 ): PhaseCaptureStatusView {
   // Delegates to the shared, unit-tested state machine so the badge's meaning
   // is asserted somewhere other than a browser run. See phase-capture-status.ts
@@ -4083,11 +4254,27 @@ function phaseCaptureStatusForSection(
       tone: "open",
     };
   }
+  const basisSatisfied = Boolean(
+    p1Basis &&
+    !p1Basis.savePending &&
+    !p1Basis.saveFailed &&
+    (p1Basis.value?.kind !== "assumption" ||
+      (p1Basis.value.owner.trim() && p1Basis.value.p2ValidationPlan.trim())) &&
+    isP1CharterBasisValidForSection({
+      sectionKey: section.key,
+      basis: p1Basis.value,
+      approvedEvidence: p1Basis.approvedEvidence,
+    }),
+  );
+  if (p1Basis && !basisSatisfied) {
+    return { label: "Basis open", complete: false, tone: "open" };
+  }
   if (
     section.evidenceFamily &&
     !approvedCaptureEvidenceReferences.some(
       (reference) => reference.familyKey === section.evidenceFamily,
-    )
+    ) &&
+    !basisSatisfied
   ) {
     return { label: "Evidence open", complete: false, tone: "open" };
   }
@@ -4569,6 +4756,7 @@ function PhaseContractStepsCanvas({
               ) : (
                 <span
                   className={`mxw-step-progress-status ${progressHeaderState.tone}`}
+                  title={progressHeaderState.basis}
                 >
                   {progressHeaderState.label}
                 </span>
@@ -5060,6 +5248,7 @@ function FinderStepsColumns({
               ) : (
                 <span
                   className={`mxw-step-progress-status ${progressHeaderState.tone}`}
+                  title={progressHeaderState.basis}
                 >
                   {progressHeaderState.label}
                 </span>
@@ -5330,6 +5519,7 @@ function FinderFactsTable({ rawValue }: { rawValue: string }) {
 }
 
 function PhaseBody({
+  approvalStanding,
   canApproveGates,
   charterGateDisclosure,
   carriesForwardContent,
@@ -5376,6 +5566,11 @@ function PhaseBody({
   substep,
   terminalComplete,
 }: {
+  /**
+   * What this screen may claim about the phase's approval — decided once by
+   * the host so the header word and the decision copy cannot disagree.
+   */
+  approvalStanding: PhaseApprovalStanding;
   canApproveGates: boolean;
   /** Advisory basis disclosure for the gate confirm dialog; null-rendering when the basis surface is inactive. */
   charterGateDisclosure: ReactNode;
@@ -5808,29 +6003,24 @@ function PhaseBody({
       openRequiredEvidence.length > 0 ||
       !evidenceReadinessAvailable ||
       Boolean(phaseCaptureBlocker));
-  const approvalDecisionTitle = isHistoricalPhase
-    ? terminalComplete
-      ? "Move handed off to Tower"
-      : `${phase.code} is already approved`
-    : gateApproved
-      ? `${phase.code} approved`
-      : isGateBlocked
-        ? `${phase.code} cannot advance yet`
-        : `${phase.code} is ready for Approve & Build`;
-  const approvalDecisionText = isHistoricalPhase
-    ? terminalComplete
-      ? "Tower is now the execution and value-tracking surface for this Move."
-      : `The approved output is carrying forward into ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}.`
-    : gateApproved
-      ? "The governed build and gate record are on file. Review artifacts in Files & Evidence before using them externally."
-      : isGateBlocked
-        ? !evidenceReadinessAvailable
-          ? "Evidence readiness could not be verified. Refresh this phase before approval."
-          : openRequiredEvidence.length > 0
-            ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
-            : (phaseCaptureBlocker ??
-              `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
-        : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.";
+  const approvalDecisionTitle =
+    phaseApprovalDecisionTitle(approvalStanding, phase.code) ??
+    (isGateBlocked
+      ? `${phase.code} cannot advance yet`
+      : `${phase.code} is ready for Approve & Build`);
+  const approvalDecisionText =
+    phaseApprovalDecisionText(
+      approvalStanding,
+      `${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}`,
+    ) ??
+    (isGateBlocked
+      ? !evidenceReadinessAvailable
+        ? "Evidence readiness could not be verified. Refresh this phase before approval."
+        : openRequiredEvidence.length > 0
+          ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
+          : (phaseCaptureBlocker ??
+            `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
+      : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.");
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
       ? "complete"
@@ -5934,8 +6124,13 @@ function PhaseBody({
         ? `Ready with caveat: ${primarySoftCaveat}.`
         : "Ready with caveats."
       : "No hard blockers are open.";
+  // "the approved record" named a decision this screen does not read, on a
+  // line keyed to READINESS — `isFullyReady` is a statement about open prep
+  // items, and says nothing about an approval at all. Say what the branch
+  // measured. Same class as the standing claims above; see
+  // `phase-approval-standing`.
   const nextPhaseSummaryLine = readinessPack.isFullyReady
-    ? `${readinessPack.nextPhaseLabel} can start from the approved record.`
+    ? `${readinessPack.nextPhaseLabel} can start from this phase's record.`
     : `${readinessPack.openNeeds.length} prep item${
         readinessPack.openNeeds.length === 1 ? "" : "s"
       } will carry into ${readinessPack.nextPhaseLabel}.`;
@@ -5977,19 +6172,12 @@ function PhaseBody({
       <section className="mxw-review">
         <h2>{phase.phase === 0 ? "Decision checks" : "Gate approval"}</h2>
         {isHistoricalPhase ? (
-          terminalComplete ? (
-            <p>
-              This Move has completed P5 and handed off to Tower. The approved
-              output is carrying forward into the execution and value-tracking
-              surface.
-            </p>
-          ) : (
-            <p>
-              This phase is already approved and read-only. The approved output
-              is carrying forward into {nextOpenPhaseContract.code}{" "}
-              {nextOpenPhaseContract.title}.
-            </p>
-          )
+          <p>
+            {phaseApprovalGateNote(
+              approvalStanding,
+              `${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}`,
+            )}
+          </p>
         ) : (
           <p>
             Left-side checks mean the step inputs are captured. This gate
@@ -6224,8 +6412,7 @@ function PhaseBody({
         {isHistoricalPhase ? (
           <div className="mxw-approved">
             <strong>
-              ✓ {phase.code} is already approved
-              {terminalComplete ? " and handed off to Tower" : ""}.
+              ✓ {phaseApprovalCompletionHeadline(approvalStanding, phase.code)}
             </strong>
             <span>
               {terminalComplete
@@ -6530,20 +6717,23 @@ function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
       value: charterText(move.charter, "foundation_readiness"),
     },
   ];
-  const capturedCount = rows.filter((row) => row.value).length;
+  // Both sides of the figure come from the row set above — the denominator was
+  // a literal `7`, a third copy of a fact already stated by the array and by
+  // the heading, so any row added or removed made two of the three lie.
+  const briefReview = summariseCapturedBrief(rows);
 
   return (
     <section className="mxw-p0-brief-review" aria-label="Captured P0 brief">
       <header>
         <div>
           <span>P0 brief captured</span>
-          <h2>Review your seven Originate answers</h2>
+          <h2>Review the Originate answers saved here</h2>
           <p>
             These are the answers saved from Start a Move. Gate criteria below
             are a separate governance checklist.
           </p>
         </div>
-        <strong>{capturedCount} of 7</strong>
+        <strong>{briefReview.tally}</strong>
       </header>
       <div className="mxw-p0-brief-name">
         <span>Move name</span>
@@ -9545,6 +9735,37 @@ function MovesStandaloneStyles() {
 .mxw-finder-detail-panel header h2{margin:0 0 4px;font-family:Fraunces,Georgia,serif;color:#0c1a3a}
 .mxw-finder-detail-panel header p{margin:0 0 14px;color:#5b6c8a;font-size:13px}
 .mxw-finder-detail-input{width:100%;border:1px solid rgba(12,26,58,.16);border-radius:10px;padding:12px;font-size:13.5px;color:#28364f;font-family:inherit}
+.mxw-facts-editor{display:block;width:100%}
+.mxw-facts-editor-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.mxw-facts-editor-table th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5b6c8a;padding:4px 6px 6px;border-bottom:1px solid rgba(12,26,58,.14);font-weight:800}
+.mxw-facts-editor-table th:last-child{width:34px}
+.mxw-facts-editor-table td{padding:5px 6px;vertical-align:top}
+.mxw-facts-editor-table input{width:100%;min-width:0;box-sizing:border-box;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;line-height:1.35;padding:8px 9px}
+.mxw-facts-editor-table input:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
+.mxw-facts-editor-remove{width:28px;height:32px;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#5b6c8a;font-size:15px;line-height:1;cursor:pointer}
+.mxw-facts-editor-remove:hover:not(:disabled){background:#f1f3f8;color:#0c1a3a}
+.mxw-facts-editor-remove:disabled{opacity:.4;cursor:default}
+.mxw-route-choice{display:block;width:100%;margin:0 0 12px;padding:10px 12px 12px;border:1px solid rgba(12,26,58,.14);border-radius:10px;background:#f8fafd;min-width:0}
+.mxw-route-choice-legend{padding:0 4px;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5b6c8a;font-weight:800}
+.mxw-route-choice-note{margin:2px 0 8px;font-size:12px;line-height:1.45;color:#5b6c8a}
+.mxw-route-choice-empty{margin:2px 0 0;font-size:12px;line-height:1.45;color:#8a3b3b}
+.mxw-route-choice-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mxw-route-choice-option{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:1px solid rgba(12,26,58,.16);border-radius:8px;background:#fff;cursor:pointer}
+.mxw-route-choice-option:hover{border-color:rgba(42,90,168,.45)}
+.mxw-route-choice-option.is-chosen{border-color:rgba(42,90,168,.65);box-shadow:inset 0 0 0 1px rgba(42,90,168,.35);background:#f3f7fe}
+.mxw-route-choice-option input{margin:3px 0 0;flex:0 0 auto}
+.mxw-route-choice-body{display:grid;gap:3px;min-width:0}
+.mxw-route-choice-head{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}
+.mxw-route-choice-head b{font-size:13px;line-height:1.35;color:#0c1a3a;font-weight:800}
+.mxw-route-choice-rec{font-size:11px;font-style:normal;font-weight:800;color:#1f6b45;background:rgba(31,107,69,.1);border-radius:999px;padding:1px 7px}
+.mxw-route-choice-body small{font-size:12px;line-height:1.45;color:#44557a}
+.mxw-route-choice-meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:1px}
+.mxw-route-choice-meta i{font-style:normal;font-size:11px;color:#5b6c8a;font-weight:700}
+.mxw-facts-editor-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mxw-facts-editor-actions{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px}
+.mxw-facts-editor-add{border:1px dashed rgba(12,26,58,.28);border-radius:8px;background:#fff;color:#2a5aa8;font:inherit;font-size:12px;font-weight:700;padding:7px 11px;cursor:pointer}
+.mxw-facts-editor-add:hover{background:#f1f3f8}
+.mxw-facts-editor-note{margin:0;flex:1;min-width:180px;font-size:11.5px;line-height:1.45;color:#5b6c8a}
 .mxw-finder-facts-table{width:100%;border-collapse:collapse}
 .mxw-finder-facts-table th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5b6c8a;padding:6px 10px;border-bottom:1px solid rgba(12,26,58,.14)}
 .mxw-finder-facts-table td{padding:8px 10px;border-bottom:1px solid rgba(12,26,58,.08);font-size:13px;color:#28364f;vertical-align:top}
@@ -9655,7 +9876,7 @@ button.mxw-step-progress-status{cursor:pointer}
 .mxw-approvals-phase{font-size:13.5px;font-weight:700;color:#0c1a3a}
 .mxw-approvals-tally{font-size:13px;color:#28364f}
 .mxw-approvals-status{justify-self:start;border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:800}
-.mxw-approvals-status.approved{background:#e1f5ec;color:#1f7a55}
+.mxw-approvals-status.passed{background:#e1f5ec;color:#1f7a55}
 .mxw-approvals-status.ready{background:#e4ecf9;color:#2a5aa8}
 .mxw-approvals-status.pending{background:#fbf1df;color:#ba7517}
 .mxw-approvals-status.upcoming{background:rgba(12,26,58,.06);color:#5b6c8a}

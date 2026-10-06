@@ -2,6 +2,7 @@ import {
   MOVES_PHASE_STEP_GROUPS,
   getPhaseStepGroups,
   phaseSectionKeySet,
+  phaseStepQuestionCounts,
 } from "../moves-phase-step-groups";
 import { getPhaseCaptureSections } from "../phase-capture-contract";
 
@@ -61,5 +62,51 @@ describe("Moves 3-step phase grouping", () => {
       "4",
       "5",
     ]);
+  });
+});
+
+/**
+ * `U-567`. The signed-in wave family used to carry the mount set across all
+ * three steps (`3 + 2 + 2 = 7` for P1) as its structural non-regression figure
+ * for the `moves_capture_v2` path. That reading is no longer obtainable by an
+ * unattended walk: step 1's *Continue* is now correctly gated on saved answers,
+ * and the step bar only navigates backwards, so steps 2 and 3 cannot be reached
+ * without writing. These cases move the figure off the walk and onto the
+ * contract — the per-step counts are DERIVED here, and the rendered step-1 count
+ * is pinned against this derivation in the component suite, so one reachable
+ * step still falsifies a change to the mount set.
+ */
+describe("phaseStepQuestionCounts — the contract-derived mount set", () => {
+  it("returns one count per step and partitions the phase's canonical questions", () => {
+    for (const phase of PHASES) {
+      const counts = phaseStepQuestionCounts(phase);
+      expect(counts).toHaveLength(getPhaseStepGroups(phase).length);
+      expect(counts.reduce((total, n) => total + n, 0)).toBe(
+        getPhaseCaptureSections(phase).length,
+      );
+      for (const n of counts) expect(n).toBeGreaterThan(0);
+    }
+  });
+
+  it("counts only the keys the supplied contract declares, so dropping a question drops it from exactly its own step", () => {
+    // The grouping's key list is NOT the mount set: the capture flow renders a
+    // step's keys filtered through the sections it was given, so a key the
+    // contract no longer declares mounts nothing. A derivation that returned
+    // `group.sectionKeys.length` would over-count here and would then disagree
+    // with what the component renders.
+    const full = getPhaseCaptureSections(1);
+    const firstStepKey = getPhaseStepGroups(1)[0].sectionKeys[1];
+    const trimmed = full.filter((section) => section.key !== firstStepKey);
+
+    const before = phaseStepQuestionCounts(1, full);
+    const after = phaseStepQuestionCounts(1, trimmed);
+
+    expect(after[0]).toBe(before[0] - 1);
+    expect(after.slice(1)).toEqual(before.slice(1));
+    expect(after.reduce((total, n) => total + n, 0)).toBe(trimmed.length);
+  });
+
+  it("is empty for a phase the 3-step model does not cover", () => {
+    expect(phaseStepQuestionCounts(9)).toEqual([]);
   });
 });

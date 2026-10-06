@@ -9,6 +9,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { TextDecoder } from "util";
 import { StrategicMoveOriginateClient } from "../StrategicMoveOriginateClient";
@@ -16,8 +17,14 @@ import {
   agreeNoun,
   buildOriginateRailRows,
   formatAnswersCaptured,
+  formatAnswersCapturedNoun,
   formatOriginateDiscardProgress,
+  formatOriginateNavFootProgress,
   formatOriginateRailTally,
+  formatCapturedBriefTally,
+  formatOriginateStepPosition,
+  originateStepCount,
+  summariseCapturedBrief,
 } from "../originate-figure-labels";
 
 const mockPush = jest.fn();
@@ -215,7 +222,9 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByText(/4 of 10 complete/i)[0]).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/4 of 10 answers captured/i)[0],
+      ).toBeInTheDocument();
     });
 
     expect(approveButton).toBeDisabled();
@@ -226,6 +235,142 @@ describe("StrategicMoveOriginateClient", () => {
       "/api/chat/agent",
       expect.objectContaining({ method: "POST" }),
     );
+  });
+
+  it("keeps discovery blueprint selection separate and human-declared", () => {
+    render(
+      <StrategicMoveOriginateClient
+        tenantName="Demo tenant"
+        discoveryArchetypeOptions={[
+          {
+            blueprintId: "governed_data_foundation",
+            archetypeLabel: "Governed Data Foundation",
+          },
+        ]}
+      />,
+    );
+    selectP0Tab(2);
+
+    const selection = screen.getByLabelText("Declare a discovery blueprint");
+    expect(selection).toHaveValue("");
+    expect(
+      screen.getByText(/never select a blueprint for you/i),
+    ).toBeInTheDocument();
+
+    fireEvent.change(selection, {
+      target: { value: "governed_data_foundation" },
+    });
+
+    expect(selection).toHaveValue("governed_data_foundation");
+    expect(
+      screen.getByText(/Selected by you; used to tailor discovery questions/i),
+    ).toBeInTheDocument();
+  });
+
+  it("lists an archetype the firm configured as the firm's own, not as part of the shipped catalog", () => {
+    render(
+      <StrategicMoveOriginateClient
+        tenantName="Demo tenant"
+        discoveryArchetypeOptions={[
+          {
+            blueprintId: "governed_data_foundation",
+            archetypeLabel: "Governed Data Foundation",
+            origin: "seed",
+          },
+          {
+            blueprintId: "regulated_claims_automation",
+            archetypeLabel: "Regulated Claims Automation",
+            origin: "configured_addition",
+          },
+        ]}
+      />,
+    );
+    selectP0Tab(2);
+
+    const selection = screen.getByLabelText("Declare a discovery blueprint");
+    const shipped = within(selection).getByRole("group", {
+      name: "All discovery blueprints",
+    });
+    const firmAuthored = within(selection).getByRole("group", {
+      name: "Added by your firm",
+    });
+
+    // Each archetype appears in exactly one group, and in the right one: an
+    // operator has to be able to tell their own archetype from a shipped one.
+    expect(
+      within(shipped)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Governed Data Foundation"]);
+    expect(
+      within(firmAuthored)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Regulated Claims Automation"]);
+
+    fireEvent.change(selection, {
+      target: { value: "regulated_claims_automation" },
+    });
+    expect(selection).toHaveValue("regulated_claims_automation");
+  });
+
+  it("shows no firm-authored group on a deployment that configures nothing", () => {
+    render(
+      <StrategicMoveOriginateClient
+        tenantName="Demo tenant"
+        discoveryArchetypeOptions={[
+          {
+            blueprintId: "governed_data_foundation",
+            archetypeLabel: "Governed Data Foundation",
+            origin: "seed",
+          },
+          // A caller holding only the shipped list says nothing about origin.
+          // That has to read as shipped, not as the firm's own.
+          {
+            blueprintId: "ai_operations_customer_digital",
+            archetypeLabel: "AI Operations",
+          },
+        ]}
+      />,
+    );
+    selectP0Tab(2);
+
+    const selection = screen.getByLabelText("Declare a discovery blueprint");
+    expect(
+      within(selection).queryByRole("group", { name: "Added by your firm" }),
+    ).toBeNull();
+    expect(
+      within(
+        within(selection).getByRole("group", {
+          name: "All discovery blueprints",
+        }),
+      )
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Governed Data Foundation", "AI Operations"]);
+  });
+
+  it("restores a saved discovery blueprint declaration", () => {
+    render(
+      <StrategicMoveOriginateClient
+        tenantName="Demo tenant"
+        initialDiscoveryArchetypeId="governed_data_foundation"
+        discoveryArchetypeOptions={[
+          {
+            blueprintId: "governed_data_foundation",
+            archetypeLabel: "Governed Data Foundation",
+          },
+        ]}
+      />,
+    );
+    selectP0Tab(2);
+
+    expect(screen.getByLabelText("Declare a discovery blueprint")).toHaveValue(
+      "governed_data_foundation",
+    );
+    expect(
+      screen.getByText(/Selected by you; used to tailor discovery questions/i),
+    ).toBeInTheDocument();
   });
 
   it("lets deterministic extraction override stale brief-progress artifact fields", async () => {
@@ -607,7 +752,9 @@ describe("StrategicMoveOriginateClient", () => {
       );
 
       expect(approveButton).toBeDisabled();
-      expect(screen.getAllByText(/1 of 10 complete/i)[0]).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/1 of 10 answers captured/i)[0],
+      ).toBeInTheDocument();
     });
   });
 
@@ -992,6 +1139,67 @@ describe("StrategicMoveOriginateClient", () => {
         }),
       ).toBe("You\u2019ve captured 0 of 1 required answer.");
     });
+
+    it("counts the step position and its total over the SAME step list — the submit step is one past the last field, not a repeat of it", () => {
+      // The nav's step list is the scaffold fields plus the submit step.
+      expect(originateStepCount(10)).toBe(11);
+
+      const lastField = formatOriginateStepPosition({
+        fieldStep: 10,
+        fieldCount: 10,
+      });
+      const submit = formatOriginateStepPosition({
+        fieldStep: null,
+        fieldCount: 10,
+      });
+      expect(lastField).toBe("Step 10 of 11");
+      expect(submit).toBe("Step 11 of 11");
+      // The defect: both used to render "Step 10 of 10", so two distinct nav
+      // steps reported one position and the last position was unreachable.
+      expect(submit).not.toBe(lastField);
+    });
+
+    it("tracks the extended scaffold, so the submit step is never pinned to a constant", () => {
+      expect(
+        formatOriginateStepPosition({ fieldStep: null, fieldCount: 17 }),
+      ).toBe("Step 18 of 18");
+      expect(
+        formatOriginateStepPosition({ fieldStep: 1, fieldCount: 17 }),
+      ).toBe("Step 1 of 18");
+    });
+
+    it("states what the nav foot's figure counts, instead of a bare N of M beside a clause that counts a larger set", () => {
+      expect(
+        formatOriginateNavFootProgress({
+          requiredFilled: 4,
+          requiredFieldCount: 10,
+        }),
+      ).toBe("4 of 10 answers captured · finish the required steps");
+      // The old copy was `4 of 10 complete`: no noun, and the clause beside it
+      // named "required steps", a set that includes the submit step the figure
+      // does not measure.
+      expect(
+        formatOriginateNavFootProgress({
+          requiredFilled: 4,
+          requiredFieldCount: 10,
+        }),
+      ).toMatch(/4 of 10 answers/);
+    });
+
+    it("agrees the nav foot's noun to its own denominator", () => {
+      expect(
+        formatOriginateNavFootProgress({
+          requiredFilled: 0,
+          requiredFieldCount: 1,
+        }),
+      ).toBe("0 of 1 answer captured · finish the required steps");
+    });
+
+    it("agrees the progress pill's noun to the total its figure is bounded by", () => {
+      expect(formatAnswersCapturedNoun(1)).toBe("answer captured");
+      expect(formatAnswersCapturedNoun(0)).toBe("answers captured");
+      expect(formatAnswersCapturedNoun(10)).toBe("answers captured");
+    });
   });
 
   describe("the Originate rail's figures at the host call site", () => {
@@ -1021,6 +1229,100 @@ describe("StrategicMoveOriginateClient", () => {
       // one of them cannot be a constant.
       expect(screen.queryByText("0 of 10 answers")).not.toBeInTheDocument();
       expect(screen.getByText("0 of 17 answers")).toBeInTheDocument();
+    });
+  });
+
+  describe("the step position and nav foot at the host call site", () => {
+    it("renders a position bounded by the nav's step list, not by the field count", () => {
+      const { unmount } = render(
+        <StrategicMoveOriginateClient tenantName="Apex Retail" />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /review p0 intake/i }),
+      );
+      // "Review P0 intake" lands on the submit step, which is the 11th of the
+      // nav's 11 steps (10 scaffold fields + submit). It used to render
+      // "Step 10 of 10" — the last field's own position.
+      expect(screen.getByText("Step 11 of 11")).toBeInTheDocument();
+      expect(screen.queryByText("Step 10 of 10")).not.toBeInTheDocument();
+      unmount();
+
+      render(
+        <StrategicMoveOriginateClient
+          tenantName="Apex Retail"
+          extendedIntakeFieldsEnabled
+        />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /review p0 intake/i }),
+      );
+      // Vacuity guard: the two scaffolds differ in size, so the total cannot
+      // be a constant.
+      expect(screen.getByText("Step 18 of 18")).toBeInTheDocument();
+      expect(screen.queryByText("Step 17 of 17")).not.toBeInTheDocument();
+      expect(screen.queryByText("Step 11 of 11")).not.toBeInTheDocument();
+    });
+
+    it("renders the nav foot's nouned figure, and no nounless one", () => {
+      render(<StrategicMoveOriginateClient tenantName="Apex Retail" />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /review p0 intake/i }),
+      );
+      expect(
+        screen.getAllByText(
+          /0 of 10 answers captured · finish the required steps/,
+        )[0],
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/0 of 10 complete/)).not.toBeInTheDocument();
+    });
+  });
+  describe("the captured-brief review's tally (summariseCapturedBrief)", () => {
+    it("states the noun it counts, so the figure is not a bare N of M", () => {
+      expect(formatCapturedBriefTally({ captured: 7, total: 7 })).toBe(
+        "7 of 7 answers captured",
+      );
+      expect(formatCapturedBriefTally({ captured: 3, total: 7 })).toBe(
+        "3 of 7 answers captured",
+      );
+    });
+
+    it("agrees the noun to the denominator, not to the numerator", () => {
+      // Agreeing to `captured` is the plausible wrong fix: it would read
+      // "1 of 7 answer".
+      expect(formatCapturedBriefTally({ captured: 1, total: 7 })).toBe(
+        "1 of 7 answers captured",
+      );
+      expect(formatCapturedBriefTally({ captured: 0, total: 1 })).toBe(
+        "0 of 1 answer captured",
+      );
+    });
+
+    it("derives the denominator from the row set, so no literal can drift from it", () => {
+      const rows = [
+        { value: "Members wait on hold." },
+        { value: "Agent assist" },
+        { value: "" },
+      ];
+      expect(summariseCapturedBrief(rows)).toEqual({
+        captured: 2,
+        total: 3,
+        tally: "2 of 3 answers captured",
+      });
+
+      // Vacuity guard: the total follows the set, so it cannot be a constant.
+      expect(summariseCapturedBrief([...rows, { value: "Q4" }]).total).toBe(4);
+      expect(summariseCapturedBrief([]).total).toBe(0);
+    });
+
+    it("counts a row as captured only when it holds a saved value", () => {
+      expect(
+        summariseCapturedBrief([
+          { value: "Something saved" },
+          { value: "" },
+          { value: null },
+          { value: undefined },
+        ]).captured,
+      ).toBe(1);
     });
   });
 });

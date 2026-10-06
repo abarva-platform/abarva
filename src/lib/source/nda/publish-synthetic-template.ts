@@ -17,7 +17,7 @@ export type PublishSyntheticTemplateInput = {
 
 export type PublishSyntheticTemplateResult =
   | { ok: true; id: string }
-  | { ok: false; code: "invalid_publication" | "template_artifact_unavailable" | "template_bytes_mismatch" | "template_not_synthetic" | "duplicate_version" | "authority_unavailable" };
+  | { ok: false; code: "invalid_publication" | "template_artifact_unavailable" | "template_bytes_mismatch" | "template_text_unavailable" | "template_not_synthetic" | "duplicate_version" | "authority_unavailable" };
 
 type ArtifactRow = {
   id: string;
@@ -93,7 +93,10 @@ export async function publishSyntheticTemplate(
         return { ok: false, code: "template_bytes_mismatch" };
       }
       const text = await extractText(Buffer.from(bytes));
-      if (!text || !/SYNTHETIC TEST FIXTURE/i.test(text)) {
+      if (!text) {
+        return { ok: false, code: "template_text_unavailable" };
+      }
+      if (!/SYNTHETIC TEST FIXTURE/i.test(text)) {
         return { ok: false, code: "template_not_synthetic" };
       }
 

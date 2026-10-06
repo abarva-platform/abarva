@@ -3,10 +3,15 @@
  *
  * The explanation drawer's two gate figures each name the set they count.
  *
- * Before `explanation-gate-figures.ts` the drawer rendered a bare
- * `Gates: {met} of {total} met` headline and a bare row count under the same
- * word "Gates" — two different sets (the current stage's criteria vs every
- * criterion carried into the trace, across stages) shown as one quantity.
+ * The drawer rendered a bare `Gates: {met} of {total} met` headline and a bare
+ * row count under the same word "Gates" — two different sets (the current
+ * stage's criteria vs every criterion carried into the trace, across stages)
+ * shown as one quantity.
+ *
+ * The headline half is now `buildGateSummaryLine`, which landed on main while
+ * this change waited and does strictly more for that figure. The unit cases
+ * here cover only the gates-section count, which is still this module's; the
+ * headline keeps one host case as a wiring proof.
  *
  * The host cases render the real drawer with a stubbed `/api/reasoning/explain`
  * response, because the figures are only wrong where they are read.
@@ -14,10 +19,7 @@
 import { render, screen, within } from "@testing-library/react";
 
 import { ExplainQuoteDrawer } from "@/components/_shared/ExplainQuoteDrawer";
-import {
-  explanationGateRowsLabel,
-  explanationGateSummaryLine,
-} from "@/lib/reasoning/explanation-gate-figures";
+import { explanationGateRowsLabel } from "@/lib/reasoning/explanation-gate-figures";
 import type {
   ExplanationGateRow,
   ExplanationGateStageGroup,
@@ -54,7 +56,7 @@ function payload(over: Partial<ExplanationPayload> = {}): ExplanationPayload {
     patternId: "pattern-x",
     patternVersion: "1.0",
     currentStage: "P2 Discover",
-    gateSummary: { total: 5, met: 2, unmet: 3 },
+    gateSummary: { total: 5, met: 2, partial: 0, waived: 0, unmet: 3 },
     citations: [],
     gates: [group("P1", 4), group("P2", 2)],
     contradictions: [],
@@ -73,33 +75,6 @@ function stubExplain(body: ExplanationPayload) {
   (globalThis as unknown as { fetch: unknown }).fetch = fetchMock;
   return fetchMock;
 }
-
-describe("explanationGateSummaryLine", () => {
-  it("says what it counts, and agrees the noun with the total", () => {
-    expect(explanationGateSummaryLine({ total: 5, met: 2, unmet: 3 })).toBe(
-      "Gates: 2 of 5 criteria met · 3 unmet",
-    );
-  });
-
-  it("renders the singular for a one-criterion total", () => {
-    // Reachable: the programs shape-only fallback hard-codes `total: 1`.
-    expect(explanationGateSummaryLine({ total: 1, met: 0, unmet: 1 })).toBe(
-      "Gates: 0 of 1 criterion met · 1 unmet",
-    );
-    expect(explanationGateSummaryLine({ total: 1, met: 1, unmet: 0 })).toBe(
-      "Gates: 1 of 1 criterion met",
-    );
-  });
-
-  it("drops the unmet clause only when nothing is unmet", () => {
-    expect(explanationGateSummaryLine({ total: 4, met: 4, unmet: 0 })).toBe(
-      "Gates: 4 of 4 criteria met",
-    );
-    expect(
-      explanationGateSummaryLine({ total: 4, met: 3, unmet: 1 }),
-    ).toContain("· 1 unmet");
-  });
-});
 
 describe("explanationGateRowsLabel", () => {
   it("counts the rows it lists and names their stage span", () => {
@@ -144,7 +119,12 @@ describe("ExplainQuoteDrawer gate figures (host)", () => {
     jest.restoreAllMocks();
   });
 
-  it("renders the headline figure with its noun and the unmet clause", async () => {
+  it("renders the headline through the shared gate-summary line, not a local spelling", async () => {
+    // The headline figure belongs to `buildGateSummaryLine`. This is a wiring
+    // proof, not a second opinion on its wording: that function's own clause
+    // and noun behaviour is covered in `gate-summary-line.test.ts`. Asserted
+    // as one whole text node, because a substring match would also pass on a
+    // drawer that had gone back to printing a bare "2 of 5 met".
     stubExplain(payload());
     render(
       <ExplainQuoteDrawer
@@ -156,32 +136,8 @@ describe("ExplainQuoteDrawer gate figures (host)", () => {
     );
 
     const summary = await screen.findByTestId("explain-summary");
-    // One text node, asserted whole: a substring match would pass on the
-    // pre-fix bare "2 of 5 met".
     expect(
-      within(summary).getByText("Gates: 2 of 5 criteria met · 3 unmet"),
-    ).toBeTruthy();
-  });
-
-  it("renders the singular headline on a one-criterion gate", async () => {
-    stubExplain(
-      payload({
-        gateSummary: { total: 1, met: 1, unmet: 0 },
-        gates: [group("P1", 1)],
-      }),
-    );
-    render(
-      <ExplainQuoteDrawer
-        surface="programs"
-        instanceId="prog-1"
-        open
-        onClose={() => {}}
-      />,
-    );
-
-    const summary = await screen.findByTestId("explain-summary");
-    expect(
-      within(summary).getByText("Gates: 1 of 1 criterion met"),
+      within(summary).getByText("2 of 5 gate criteria met · 3 unmet"),
     ).toBeTruthy();
   });
 

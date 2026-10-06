@@ -13,6 +13,10 @@ import type {
   EvidenceFamilySpec,
   PhaseRequirements,
 } from "./types";
+import {
+  GOVERNED_DATA_FOUNDATION_FAMILIES,
+  GOVERNED_DATA_FOUNDATION_PHASES,
+} from "@/lib/programs/archetypes/governed-data-foundation";
 
 // Shared deliverable refinement contract (board-grade, grounded, no fabrication).
 const REFINEMENT = {
@@ -1984,6 +1988,71 @@ export const COMMERCIAL_LENDING_AGENT_ASSIST: StrategicMoveArchetype = {
   },
 };
 
+export const GOVERNED_DATA_FOUNDATION: StrategicMoveArchetype = {
+  id: "GOVERNED_DATA_FOUNDATION",
+  name: "Governed Data Foundation",
+  description:
+    "Certify a governed data foundation — ownership, semantic layer, lineage and audit trail, quality rules, identity spine, platform readiness, privacy and model-risk controls — before any downstream AI or LLM automation is claimed on top of it.",
+  version: "0.1.0",
+  status: "draft",
+  applicableIndustries: [
+    "healthcare",
+    "healthcare payer",
+    "financial services",
+    "insurance",
+  ],
+  applicableFunctions: [
+    "data governance",
+    "data platform",
+    "data management",
+    "analytics",
+    "enterprise architecture",
+  ],
+  phaseModel: GOVERNED_DATA_FOUNDATION_PHASES,
+  evidenceFamilies: GOVERNED_DATA_FOUNDATION_FAMILIES,
+  analysisMethods: [
+    "maturity_scoring",
+    "two_gap",
+    "leverage_ranking",
+    "workpackage_roadmap_estimate",
+  ],
+  deliverablePack: AI_OPERATIONS_DECISION_SUPPORT.deliverablePack,
+  valueModel: {
+    key: "governed_data_foundation_value",
+    label:
+      "Certified-foundation readiness, control quality, and the automation it unlocks",
+    method: "leverage_ranking",
+    baselineFamilies: [
+      "finance_baseline_value_plan",
+      "data_quality_rules",
+      "semantic_layer_certification",
+    ],
+    ratifiedAtPhase: "charter",
+  },
+  riskModel: {
+    key: "governed_data_foundation_risk",
+    label: "Governed data-foundation certification and control risk",
+    dimensions: [
+      "ownership, stewardship, and decision rights",
+      "semantic certification and definition drift",
+      "lineage, auditability, and source citation",
+      "data quality monitoring and exception ownership",
+      "privacy, PHI handling, and access control",
+      "model-risk and responsible-AI controls for downstream use",
+    ],
+  },
+  agentGuidance: {
+    systemFraming:
+      "This Move is a Governed Data Foundation archetype. Reason over data ownership and stewardship, certified semantic definitions, lineage and audit trails, data quality rules and exception owners, source-system access and contracts, platform and environment readiness, identity resolution, privacy and access controls, and model-risk controls for downstream automation. Do not require DORA, CI/CD, or engineering SDLC evidence for P2 strategy discovery; this Move certifies a data foundation, it does not measure a software delivery organisation. Do not quantify value before the finance baseline is signed off.",
+    keyQuestions: [
+      "Which ownership, semantic, lineage, quality, access, platform, identity, privacy, or model-risk evidence is missing or unapproved?",
+      "Which of those gaps actually blocks certifying the foundation, and which is later-phase context?",
+      "What must be true before a downstream AI or LLM workflow may rely on this foundation?",
+    ],
+    requiresGroundedAnswer: true,
+  },
+};
+
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 export const ARCHETYPE_REGISTRY: Record<string, StrategicMoveArchetype> = {
@@ -1993,7 +2062,38 @@ export const ARCHETYPE_REGISTRY: Record<string, StrategicMoveArchetype> = {
   [AI_OPERATIONS_DECISION_SUPPORT.id]: AI_OPERATIONS_DECISION_SUPPORT,
   [CONTACT_CENTER_AGENT_ASSIST.id]: CONTACT_CENTER_AGENT_ASSIST,
   [COMMERCIAL_LENDING_AGENT_ASSIST.id]: COMMERCIAL_LENDING_AGENT_ASSIST,
+  [GOVERNED_DATA_FOUNDATION.id]: GOVERNED_DATA_FOUNDATION,
 };
+
+/**
+ * Discovery-blueprint archetype id -> registry archetype id.
+ *
+ * These are two different id spaces that name the same thing. A Move declares
+ * its archetype with a discovery-blueprint id (`governed_data_foundation`,
+ * written to `charter.classification.archetype` by the declaration job); the
+ * readiness/requirement framework is keyed by registry ids
+ * (`GOVERNED_DATA_FOUNDATION`). Without this bridge a DECLARED identity reaches
+ * `resolveProgramArchetype` only inside the keyword haystack, where it competes
+ * with incidental vocabulary and loses to `DEFAULT_ARCHETYPE_ID`.
+ *
+ * Identity is declared, never inferred — so an entry here outranks every
+ * keyword rule below.
+ */
+const DECLARED_ARCHETYPE_ALIASES: Record<string, string> = {
+  governed_data_foundation: GOVERNED_DATA_FOUNDATION.id,
+};
+
+/** The registry archetype a DECLARED archetype id names, if any. */
+export function archetypeForDeclaredId(
+  declaredId: string | null | undefined,
+): StrategicMoveArchetype | undefined {
+  const key = (declaredId ?? "").trim();
+  if (!key) return undefined;
+  const exact = getArchetype(key);
+  if (exact) return exact;
+  const aliased = DECLARED_ARCHETYPE_ALIASES[key.toLowerCase()];
+  return aliased ? getArchetype(aliased) : undefined;
+}
 
 export const DEFAULT_ARCHETYPE_ID = AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id;
 
@@ -2016,7 +2116,20 @@ export function resolveProgramArchetype(input: {
   archetype?: string | null;
   classification?: string | null;
   name?: string | null;
+  /**
+   * The archetype a human DECLARED for this Move, as a registry id or a
+   * discovery-blueprint id (see `DECLARED_ARCHETYPE_ALIASES`). When it names a
+   * known archetype it wins outright: a declaration is an identity, and the
+   * rules below are inference for Moves that never made one. Passing a declared
+   * id that names nothing is not an error — resolution falls through to the
+   * inference path exactly as before.
+   */
+  declaredArchetypeId?: string | null;
 }): StrategicMoveArchetype {
+  // A declared identity outranks every inference rule below.
+  const declared = archetypeForDeclaredId(input.declaredArchetypeId);
+  if (declared) return declared;
+
   // Exact registry id (e.g. a route that already carries a framework id).
   if (input.archetype) {
     const exact = getArchetype(input.archetype);

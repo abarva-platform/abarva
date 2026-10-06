@@ -10,6 +10,10 @@ import {
   carriedCharterAssumptions,
   charterAssumptionCarryForwardActive,
 } from "@/lib/programs/charter-assumptions-carry-forward";
+import {
+  charterStandingAfterDiscover,
+  charterStandingAfterDiscoverActive,
+} from "@/lib/programs/charter-standing-after-discover";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
@@ -62,6 +66,7 @@ import {
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { resolveEffectiveMovePhase } from "@/lib/programs/effective-move-phase";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
@@ -414,6 +419,21 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_charter_assumptions_discover_v1",
   );
+  // Whether a charter assumption Discover has already resolved still counts as
+  // open. Separate from the flag above on purpose: a tenant may want to inherit
+  // the assumptions read-only without the resolve path acting on them.
+  const charterAssumptionResolutionEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_charter_assumption_resolution_v1",
+  );
+  // What a charter answer is worth once Discover has closed. Its own flag, and
+  // the fold additionally requires the resolution read: without it a resolved
+  // assumption and a surviving one are indistinguishable, and the surface would
+  // report work that was really done as work nobody did.
+  const charterStandingAfterDiscoverEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_charter_standing_after_discover_v1",
+  );
   // Composition-only polish for the redesigned capture. It has nothing to show
   // unless the redesigned capture is what renders, so it is resolved as the
   // conjunction rather than left to the client to remember.
@@ -429,6 +449,25 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_capture_notes_v1",
   );
+  // Reachability-only polish of the redesigned capture, so it is the
+  // CONJUNCTION with `moves_capture_v2`: there is no hand-off recap to reach
+  // unless the redesigned flow is what rendered.
+  const captureHandoffRecapEnabled =
+    captureV2Enabled &&
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_capture_handoff_recap_v1",
+    );
+
+  // CONJUNCTION with `moves_capture_v2`: the phase strip this rollup feeds is
+  // part of the redesigned capture flow, so there is no row to label unless the
+  // flow is what rendered.
+  const capturePhaseRollupEnabled =
+    captureV2Enabled &&
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_capture_phase_rollup_v1",
+    );
 
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
@@ -854,6 +893,17 @@ export default async function StrategicMovePhaseWorkspacePage({
       (item) => item.evidenceId,
     ),
   });
+  // Every phase's saved-answer count, for the capture strip's unmeasured rows.
+  // `captureModules` already holds EVERY capture-module row for the Move — the
+  // loop below then keeps only the viewed phase's — so this is a derivation of
+  // rows in hand, not a second read. Route-aware because P3's question set
+  // depends on the confirmed route.
+  const capturePhaseSavedAnswerCountsForStrip = capturePhaseRollupEnabled
+    ? capturePhaseSavedAnswerCounts(
+        captureModules,
+        initialConfirmedSolutionRoute,
+      )
+    : undefined;
   const initialPhaseCaptureValues: Record<string, string> = {};
   const initialP1CharterBasisBySection: Record<string, P1CharterBasisInput> =
     {};
@@ -897,6 +947,22 @@ export default async function StrategicMovePhaseWorkspacePage({
   const carriedCharterAssumptionRows = carriedCharterAssumptions({
     active: charterAssumptionCarryForwardActive({
       flagEnabled: charterAssumptionsInDiscoverEnabled,
+      phaseNumber: parsedPhase,
+    }),
+    modules: captureModules.map((entry) => ({
+      moduleKey: entry.moduleKey,
+      status: entry.status,
+      state: entry.state ?? null,
+    })),
+    resolutionReadEnabled: charterAssumptionResolutionEnabled,
+  });
+  // The charter answers P3+ should not quote flat. Same Move-wide
+  // `captureModules` as the carry-forward above, so P1's rows are in hand
+  // without a second load; the fold owns the phase window and the flag pair.
+  const charterStandingAfterDiscoverRows = charterStandingAfterDiscover({
+    active: charterStandingAfterDiscoverActive({
+      flagEnabled: charterStandingAfterDiscoverEnabled,
+      resolutionReadEnabled: charterAssumptionResolutionEnabled,
       phaseNumber: parsedPhase,
     }),
     modules: captureModules.map((entry) => ({
@@ -964,8 +1030,11 @@ export default async function StrategicMovePhaseWorkspacePage({
         charterBasisEnabled={charterBasisEnabled}
         captureCompositionEnabled={captureCompositionEnabled}
         initialP1CharterBasisBySection={initialP1CharterBasisBySection}
+        capturePhaseSavedAnswerCounts={capturePhaseSavedAnswerCountsForStrip}
         captureNotesEnabled={captureNotesEnabled}
+        captureHandoffRecapEnabled={captureHandoffRecapEnabled}
         carriedCharterAssumptions={carriedCharterAssumptionRows}
+        charterStandingAfterDiscover={charterStandingAfterDiscoverRows}
       />
     </AppShell>
   );

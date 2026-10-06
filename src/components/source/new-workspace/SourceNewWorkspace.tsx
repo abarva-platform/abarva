@@ -37,6 +37,14 @@ import {
   type HistoricalRequestSummary,
 } from "@/lib/source/new-workspace/historical-request-summary";
 import type { StepReadiness } from "@/lib/source/new-workspace/step-readiness";
+import {
+  releaseStateLabel,
+  type ReleaseStateView,
+} from "@/lib/source/new-workspace/release-state-view";
+import {
+  parsedYieldLabel,
+  type ParsedYieldView,
+} from "@/lib/source/artifact-registry/parsed-yield-view";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import {
@@ -115,6 +123,29 @@ export interface SourceNewEventView {
    * render differently and only one of them is a blocker.
    */
   requestVersionApproval?: "accepted" | "pending" | "changes_requested" | null;
+  /**
+   * Strategy-version authority, read the same way and meaning the same thing:
+   * `null`/absent is unread, not unapproved. The Strategy needs two distinct
+   * named approvers, so "approved" here means both, never one.
+   */
+  strategyVersionApproval?:
+    | "approved"
+    | "pending"
+    | "blocked"
+    | "changes_requested"
+    | null;
+  /**
+   * RFx release readback. An unreadable store is `unread`, which renders as
+   * "Not recorded" and is deliberately distinct from `none` — a package that
+   * was never prepared and a store we cannot read are different facts.
+   */
+  releaseState?: ReleaseStateView | null;
+  /**
+   * What parsing extracted from this event's artifacts. Unread renders as
+   * "Not recorded"; an event whose uploads genuinely yielded nothing is a
+   * different statement and says so.
+   */
+  parsedYield?: ParsedYieldView | null;
   /** Current immutable Request authority version used to fence Stage 04 writes. */
   requestAuthorityVersionId?: string | null;
 }
@@ -994,7 +1025,7 @@ export function SupplierPhasePanels({
   );
 }
 
-function SourceNewStage04VendorReadiness({
+export function SourceNewStage04VendorReadiness({
   event,
   responseRows,
 }: {
@@ -1023,6 +1054,17 @@ function SourceNewStage04VendorReadiness({
       ? "Changes are requested on the current Request version."
       : null,
   ].filter((item): item is string => Boolean(item));
+
+  const strategyAuthorityLabel =
+    event.strategyVersionApproval === "approved"
+      ? "Strategy version approved"
+      : event.strategyVersionApproval === "pending"
+        ? "Strategy approval pending"
+        : event.strategyVersionApproval === "changes_requested"
+          ? "Changes requested on the Strategy version"
+          : event.strategyVersionApproval === "blocked"
+            ? "Strategy approval blocked"
+            : "Not recorded";
 
   const requestAuthorityLabel =
     event.requestVersionApproval === "accepted"
@@ -1053,6 +1095,26 @@ function SourceNewStage04VendorReadiness({
         <div>
           <dt>Request authority</dt>
           <dd>{requestAuthorityLabel}</dd>
+        </div>
+        <div>
+          <dt>Strategy authority</dt>
+          <dd>{strategyAuthorityLabel}</dd>
+        </div>
+        <div>
+          <dt>RFx release</dt>
+          <dd>
+            {event.releaseState
+              ? releaseStateLabel(event.releaseState)
+              : "Not recorded"}
+          </dd>
+        </div>
+        <div>
+          <dt>Extracted from artifacts</dt>
+          <dd>
+            {event.parsedYield
+              ? parsedYieldLabel(event.parsedYield)
+              : "Not recorded"}
+          </dd>
         </div>
         <div>
           <dt>Solicitation motion</dt>

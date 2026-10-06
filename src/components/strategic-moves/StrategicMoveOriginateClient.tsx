@@ -36,12 +36,27 @@ import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRed
 import {
   buildOriginateRailRows,
   formatAnswersCaptured,
+  formatAnswersCapturedNoun,
   formatOriginateDiscardProgress,
+  formatOriginateNavFootProgress,
   formatOriginateRailTally,
+  formatOriginateStepPosition,
   type OriginateRailRow,
 } from "./originate-figure-labels";
 import { MOVE_TIER_OPTIONS } from "@/lib/programs/p0-extended-intake-fields";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
+import type { DiscoveryArchetypeOption } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import type { ConfiguredBlueprintOrigin } from "@/lib/deliverables/orchestrator/briefs/archetype-config-source";
+
+/**
+ * An archetype the picker may offer. `origin` says who authored the entry, so a
+ * deploying firm's own archetypes can be shown as theirs instead of being mixed
+ * into the shipped catalog. Optional because a caller holding only the shipped
+ * list has nothing to say here, and an absent origin reads as shipped.
+ */
+type DeclarableDiscoveryArchetypeOption = DiscoveryArchetypeOption & {
+  origin?: ConfiguredBlueprintOrigin;
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -612,6 +627,8 @@ interface Props {
   /** Tenant's real business-segment names (grounded fact — e.g. Meridian's
    *  own segment taxonomy). Only used when `extendedIntakeFieldsEnabled`. */
   businessSegmentOptions?: string[];
+  discoveryArchetypeOptions?: DeclarableDiscoveryArchetypeOption[];
+  initialDiscoveryArchetypeId?: string | null;
 }
 
 export function StrategicMoveOriginateClient({
@@ -621,6 +638,8 @@ export function StrategicMoveOriginateClient({
   discoveryIntakeEnabled = false,
   extendedIntakeFieldsEnabled = false,
   businessSegmentOptions = [],
+  discoveryArchetypeOptions = [],
+  initialDiscoveryArchetypeId = null,
 }: Props) {
   const router = useRouter();
   // Tenant-conditional field set: off = these three are identical to the
@@ -658,6 +677,13 @@ export function StrategicMoveOriginateClient({
     programName: "",
     fields: { ...INITIAL_FIELDS },
   });
+  const [discoveryArchetypeId, setDiscoveryArchetypeId] = useState(
+    initialDiscoveryArchetypeId ?? "",
+  );
+  const [discoveryArchetypeSuggestions, setDiscoveryArchetypeSuggestions] =
+    useState<Array<{ blueprintId: string; archetypeLabel: string }>>([]);
+  const [loadingDiscoverySuggestions, setLoadingDiscoverySuggestions] =
+    useState(false);
   const [sponsorProgressEmails, setSponsorProgressEmails] = useState(false);
   const [draftFields, setDraftFields] = useState<
     Record<ScaffoldFieldId, string>
@@ -671,6 +697,50 @@ export function StrategicMoveOriginateClient({
   const [canvasTab, setCanvasTab] = useState<P0WorkspaceTab>("steps");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const discoverySuggestionText = [
+    brief.fields["problem-statement"],
+    brief.fields["value-hypothesis"],
+    brief.fields["scope-in"],
+  ]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+  useEffect(() => {
+    if (activeP0Step !== "archetype") return;
+    if (!discoverySuggestionText) {
+      setDiscoveryArchetypeSuggestions([]);
+      setLoadingDiscoverySuggestions(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      setLoadingDiscoverySuggestions(true);
+      void fetch("/api/programs/discovery-archetype-suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: discoverySuggestionText }),
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) return [];
+          const payload = (await response.json()) as {
+            suggestions?: Array<{ blueprintId: string; archetypeLabel: string }>;
+          };
+          return Array.isArray(payload.suggestions) ? payload.suggestions : [];
+        })
+        .then(setDiscoveryArchetypeSuggestions)
+        .catch(() => setDiscoveryArchetypeSuggestions([]))
+        .finally(() => setLoadingDiscoverySuggestions(false));
+    }, 250);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [activeP0Step, discoverySuggestionText]);
 
   const turnsRef = useRef<ChatTurn[]>(turns);
   turnsRef.current = turns;
@@ -698,6 +768,7 @@ export function StrategicMoveOriginateClient({
               targetOutcome: brief.fields["value-hypothesis"] || null,
               timeline: null,
               classification: brief.fields["archetype"] || null,
+              discoveryArchetypeId: discoveryArchetypeId || null,
               matchedPatternId: null,
               sponsor: brief.fields["sponsor-candidate"] || null,
               lead: null,
@@ -715,7 +786,7 @@ export function StrategicMoveOriginateClient({
       });
     }, 500);
     return () => clearTimeout(handle);
-  }, [turns, brief, sponsorProgressEmails]);
+  }, [turns, brief, sponsorProgressEmails, discoveryArchetypeId]);
 
   const updateTurns = useCallback(
     (updater: ChatTurn[] | ((prev: ChatTurn[]) => ChatTurn[])) => {
@@ -1096,6 +1167,7 @@ export function StrategicMoveOriginateClient({
             targetOutcome: brief.fields["value-hypothesis"],
             timeline: brief.fields["foundation-readiness"],
             classification: brief.fields["archetype"],
+            discoveryArchetypeId: discoveryArchetypeId || null,
             sponsor: brief.fields["sponsor-candidate"],
             sponsorProgressEmails,
             lead: brief.fields["sponsor-candidate"],
@@ -1219,6 +1291,11 @@ export function StrategicMoveOriginateClient({
                 setCanvasTab={setCanvasTab}
                 setDraftFields={setDraftFields}
                 setSponsorProgressEmails={setSponsorProgressEmails}
+                discoveryArchetypeOptions={discoveryArchetypeOptions}
+                discoveryArchetypeId={discoveryArchetypeId}
+                setDiscoveryArchetypeId={setDiscoveryArchetypeId}
+                discoveryArchetypeSuggestions={discoveryArchetypeSuggestions}
+                loadingDiscoverySuggestions={loadingDiscoverySuggestions}
                 submitError={submitError}
                 suggestedName={suggestedName}
                 tenantName={tenantName}
@@ -1419,6 +1496,11 @@ function P0OriginationContractCanvas({
   setCanvasTab,
   setDraftFields,
   setSponsorProgressEmails,
+  discoveryArchetypeOptions,
+  discoveryArchetypeId,
+  setDiscoveryArchetypeId,
+  discoveryArchetypeSuggestions,
+  loadingDiscoverySuggestions,
   submitError,
   suggestedName,
   tenantName,
@@ -1445,6 +1527,11 @@ function P0OriginationContractCanvas({
   setCanvasTab: Dispatch<SetStateAction<P0WorkspaceTab>>;
   setDraftFields: Dispatch<SetStateAction<Record<ScaffoldFieldId, string>>>;
   setSponsorProgressEmails: Dispatch<SetStateAction<boolean>>;
+  discoveryArchetypeOptions: DeclarableDiscoveryArchetypeOption[];
+  discoveryArchetypeId: string;
+  setDiscoveryArchetypeId: Dispatch<SetStateAction<string>>;
+  discoveryArchetypeSuggestions: Array<{ blueprintId: string; archetypeLabel: string }>;
+  loadingDiscoverySuggestions: boolean;
   submitError: string | null;
   suggestedName: string;
   tenantName: string;
@@ -1455,6 +1542,22 @@ function P0OriginationContractCanvas({
   cancelFlow: () => void;
 }) {
   const isApproveStep = activeP0Step === "approve-build";
+  const suggestedDiscoveryArchetypeIds = new Set(
+    discoveryArchetypeSuggestions.map((option) => option.blueprintId),
+  );
+  // A suggestion is already offered in its own group above, so it is dropped
+  // from the catalog groups whichever group it would otherwise have fallen in.
+  const unsuggestedDiscoveryArchetypeOptions = discoveryArchetypeOptions.filter(
+    (option) => !suggestedDiscoveryArchetypeIds.has(option.blueprintId),
+  );
+  // Archetypes this deployment configured are listed as the firm's own rather
+  // than mixed into the shipped catalog: an operator has to be able to tell the
+  // archetype they authored from one that shipped with the product. Empty on
+  // every deployment that configures nothing, where this group does not render.
+  const configuredDiscoveryArchetypeOptions =
+    unsuggestedDiscoveryArchetypeOptions.filter(
+      (option) => option.origin != null && option.origin !== "seed",
+    );
   const activeValue = activeP0Def ? brief.fields[activeP0Def.id] : "";
   const activeDraft = activeP0Def ? draftFields[activeP0Def.id] : "";
   const activeFilled = activeP0Def
@@ -1462,9 +1565,13 @@ function P0OriginationContractCanvas({
     : canPromote;
   const readinessFilled =
     brief.fields["foundation-readiness"].trim().length > 0;
-  const activeStepNumber = isApproveStep
-    ? requiredFieldCount
-    : (activeP0Def?.step ?? 1);
+  // The nav's step list is the scaffold fields plus the submit step, so the
+  // position and its total must both count that list. The submit step used to
+  // be numbered `requiredFieldCount`, repeating the last field's position.
+  const activeStepPosition = formatOriginateStepPosition({
+    fieldStep: isApproveStep ? null : (activeP0Def?.step ?? 1),
+    fieldCount: requiredFieldCount,
+  });
   const moveName = deriveStrategicMoveName(brief.programName, brief.fields);
 
   return (
@@ -1500,7 +1607,7 @@ function P0OriginationContractCanvas({
               <span>
                 {requiredFilled} / {requiredFieldCount}
               </span>
-              <small>answers captured</small>
+              <small>{formatAnswersCapturedNoun(requiredFieldCount)}</small>
             </div>
             <div className={styles.p0ProgressTrack} aria-hidden>
               <div
@@ -1588,7 +1695,10 @@ function P0OriginationContractCanvas({
               <div className={styles.p0ContractNavFoot}>
                 {canPromote
                   ? "Answers complete · P0 evidence and authorized-user approval remain"
-                  : `${requiredFilled} of ${requiredFieldCount} complete · finish required steps`}
+                  : formatOriginateNavFootProgress({
+                      requiredFilled,
+                      requiredFieldCount,
+                    })}
               </div>
             </aside>
 
@@ -1603,7 +1713,7 @@ function P0OriginationContractCanvas({
                   {activeFilled ? "✓" : ""}
                 </span>
                 <span className={styles.p0ContractStepMeta}>
-                  Step {activeStepNumber} of {requiredFieldCount}
+                  {activeStepPosition}
                 </span>
                 <h2>
                   {isApproveStep ? "Submit P0 for review" : activeP0Def?.label}
@@ -1730,6 +1840,78 @@ function P0OriginationContractCanvas({
                       </button>
                     ) : null}
                   </div>
+
+                  {activeP0Def.id === "archetype" ? (
+                    <div className={styles.p0FoundationInset}>
+                      <div>
+                        <strong>Discovery blueprint</strong>
+                        <span>Separate from the Move pattern</span>
+                      </div>
+                      <p>
+                        Suggestions are based on the problem, outcome, and scope. They never select a blueprint for you.
+                      </p>
+                      <label htmlFor="orig-discovery-archetype">
+                        Declare a discovery blueprint
+                      </label>
+                      <select
+                        id="orig-discovery-archetype"
+                        className={styles.p0SelectInput}
+                        value={discoveryArchetypeId}
+                        onChange={(event) => setDiscoveryArchetypeId(event.target.value)}
+                        aria-describedby="orig-discovery-archetype-help"
+                      >
+                        <option value="">No declaration yet</option>
+                        {discoveryArchetypeSuggestions.length > 0 ? (
+                          <optgroup label="Suggested from this brief">
+                            {discoveryArchetypeSuggestions.map((option) => (
+                              <option key={option.blueprintId} value={option.blueprintId}>
+                                {option.archetypeLabel}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : null}
+                        <optgroup label="All discovery blueprints">
+                          {unsuggestedDiscoveryArchetypeOptions
+                            .filter(
+                              (option) =>
+                                option.origin == null ||
+                                option.origin === "seed",
+                            )
+                            .map((option) => (
+                              <option
+                                key={option.blueprintId}
+                                value={option.blueprintId}
+                              >
+                                {option.archetypeLabel}
+                              </option>
+                            ))}
+                        </optgroup>
+                        {configuredDiscoveryArchetypeOptions.length > 0 ? (
+                          <optgroup label="Added by your firm">
+                            {configuredDiscoveryArchetypeOptions.map(
+                              (option) => (
+                                <option
+                                  key={option.blueprintId}
+                                  value={option.blueprintId}
+                                >
+                                  {option.archetypeLabel}
+                                </option>
+                              ),
+                            )}
+                          </optgroup>
+                        ) : null}
+                      </select>
+                      <p id="orig-discovery-archetype-help">
+                        {discoveryArchetypeId
+                          ? "Selected by you; used to tailor discovery questions and evidence families."
+                          : loadingDiscoverySuggestions
+                            ? "Checking the reference catalog…"
+                            : discoveryArchetypeSuggestions.length > 0
+                              ? "Choose a suggestion to declare it, or leave this field blank."
+                              : "No keyword match yet. You may choose from the catalog or leave this field blank."}
+                      </p>
+                    </div>
+                  ) : null}
 
                   {activeP0Def.id === "evidence-family" ? (
                     <div className={styles.p0FoundationInset}>

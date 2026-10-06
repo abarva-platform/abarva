@@ -2,11 +2,19 @@
 //
 // Why this module exists
 // ----------------------
-// The explanation drawer renders TWO gate figures, and before this module both
-// were bare numbers under the same word "Gates":
+// The explanation drawer renders TWO gate figures, and both were bare numbers
+// under the same word "Gates":
 //
 //   SummaryBar   `Gates: {met} of {total} met`        (ExplainQuoteDrawer.tsx)
 //   GatesSection `<SectionHeader title="Gates" count={totalRows} />`
+//
+// The headline half is NOT this module's any more. While this change waited,
+// `buildGateSummaryLine` landed on main and does strictly more for that figure:
+// it names the noun, handles a zero total, counts only strictly-met criteria as
+// met, and names partial and waived so every clause reconciles to the total.
+// This module's own headline helper was deleted rather than kept beside it —
+// two spellings of one figure is the defect, not the fix. What remains here is
+// the gates-section count, which main does not address.
 //
 // They count DIFFERENT SETS. `gateSummary.total` is the criterion count for the
 // instance's CURRENT stage (`gateEvals.length` in each synthesis-context
@@ -34,35 +42,11 @@
 // path rendered "Gates: 1 of 1 met" / "Gates: 0 of 1 met". The multi-criterion
 // wording is unchanged apart from gaining its noun.
 
-import {
-  gateCriteriaMetSummary,
-  gateCriterionNoun,
-} from "@/lib/programs/gate-criteria-figure-labels";
-
-/** The headline counts, as the serialized payload carries them. */
-export interface ExplanationGateSummaryCounts {
-  total: number;
-  met: number;
-  unmet: number;
-}
+import { gateCriterionNoun } from "@/lib/programs/gate-criteria-figure-labels";
 
 /** One stage group, narrowed to the only field these figures read. */
 export interface ExplanationGateRowGroup {
   rows: readonly unknown[];
-}
-
-/**
- * The drawer headline: "Gates: 2 of 5 criteria met · 3 unmet".
- *
- * Reuses `gateCriteriaMetSummary` so the noun agrees with the total here
- * exactly as it does on the gate ribbon and the approval drawer — one figure
- * contract for the same quantity across all three surfaces.
- */
-export function explanationGateSummaryLine(
-  summary: ExplanationGateSummaryCounts,
-): string {
-  const base = `Gates: ${gateCriteriaMetSummary(summary.met, summary.total)}`;
-  return summary.unmet > 0 ? `${base} · ${summary.unmet} unmet` : base;
 }
 
 /**

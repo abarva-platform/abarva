@@ -11,8 +11,15 @@ import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { sourceNewFilePhase } from "@/lib/source/new-workspace/phase-state";
 import { readSourceEventAuthority } from "@/lib/source/new-workspace/event-authority";
 import { readSourceAuthorityVersionState } from "@/lib/source/new-workspace/authority-version-store";
-import { evaluateRequestVersionApproval } from "@/lib/source/new-workspace/source-version-authority";
+import {
+  evaluateRequestVersionApproval,
+  evaluateStrategyVersionApprovals,
+} from "@/lib/source/new-workspace/source-version-authority";
 import { readinessForEvent } from "@/lib/source/new-workspace/step-readiness-adapter";
+import { readPreparedRfxPackagesForEvent } from "@/lib/source/rfx-delivery/prepared-package-repository";
+import { describeReleaseState } from "@/lib/source/new-workspace/release-state-view";
+import { readParsedYieldForEvent } from "@/lib/source/artifact-registry/parsed-yield-repository";
+import { describeParsedYield } from "@/lib/source/artifact-registry/parsed-yield-view";
 import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
 import { buildSourceEventStagePlanSnapshot } from "@/lib/source/new-workspace/stage-plan-snapshot";
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
@@ -83,6 +90,9 @@ export default async function SourceNewEventPage({
     activity,
     authority,
     requestVersion,
+    strategyVersion,
+    preparedRfxPackages,
+    parsedYield,
     stage04VendorPanel,
     stage05NdaCoverage,
     responseArtifactsResult,
@@ -99,6 +109,15 @@ export default async function SourceNewEventPage({
     listSourceEventActivityEntries(event.id),
     readSourceEventAuthority(event.id, activeClient.key),
     readSourceAuthorityVersionState(event.id, activeClient.key, "request"),
+    readSourceAuthorityVersionState(event.id, activeClient.key, "strategy"),
+    readPreparedRfxPackagesForEvent({
+      clientKey: activeClient.key,
+      eventId: event.id,
+    }),
+    readParsedYieldForEvent({
+      tenantKey: activeClient.key,
+      eventId: event.id,
+    }),
     readSourceNewStage04VendorPanel({
       clientKey: activeClient.key,
       eventId: event.id,
@@ -137,6 +156,18 @@ export default async function SourceNewEventPage({
         })
       : null;
   const requestVersionApproval = requestVersionApprovalState?.status ?? null;
+
+  // Read exactly like the Request authority above, and meaning the same thing:
+  // an unreadable authority stays null rather than becoming "not approved".
+  // Strategy needs two distinct named approvers, so this reports the pair's
+  // state, never one approver's.
+  const strategyVersionApproval =
+    strategyVersion.kind === "available" && strategyVersion.currentVersion
+      ? evaluateStrategyVersionApprovals({
+          currentVersionId: strategyVersion.currentVersion.id,
+          approvals: strategyVersion.approvals,
+        }).status
+      : null;
 
   const files: SourceNewFileRow[] = artifacts.flatMap((artifact) => {
     // Tenancy is the only reason to drop an artifact here. A stage this
@@ -291,6 +322,9 @@ export default async function SourceNewEventPage({
         solicitationMotionAcceptedByUserId:
           authority.kind === "available" ? authority.acceptedByUserId : null,
         requestVersionApproval,
+        strategyVersionApproval,
+        releaseState: describeReleaseState(preparedRfxPackages),
+        parsedYield: describeParsedYield(parsedYield),
         requestAuthorityVersionId:
           requestVersion.kind === "available"
             ? (requestVersion.currentVersion?.id ?? null)

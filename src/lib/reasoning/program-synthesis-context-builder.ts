@@ -229,6 +229,8 @@ export function buildProgramSynthesisContext(
       met: metCount,
       unmet: gateEvals.length - metCount,
       blocked: hardBlockers,
+      // The evaluator ran, so these are evaluated criteria.
+      basis: 'criteria',
     },
     activeContradictions: contradictions,
     failureModes,
@@ -293,6 +295,11 @@ function buildShapeOnlyContext(
       met: gateApproved ? 1 : 0,
       unmet: gateApproved ? 0 : 1,
       blocked: hardBlockers,
+      // No typed pattern, so no criteria were evaluated: the pair above is the
+      // phase gate's own standing, not a count. Counts left as they were —
+      // readers asking "can this advance?" are right to treat an approved gate
+      // as cleared — but a surface formatting `met / total` must say so.
+      basis: 'gate-standing',
     },
     activeContradictions: [],
     failureModes: [],

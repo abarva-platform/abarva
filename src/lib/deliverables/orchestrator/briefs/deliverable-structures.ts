@@ -8,6 +8,7 @@ import type {
   BriefSection,
   DeliverableModule,
   ExpectedExhibit,
+  ExpectedTable,
   SectionGroundingMode,
 } from "../types";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
@@ -56,6 +57,47 @@ export interface DeliverableStructure {
    * use-case-specific exhibits (a dependency map, a rollout-wave timeline, etc.).
    */
   expectedExhibits?: ExpectedExhibit[];
+  /**
+   * Tables required BY THIS DELIVERABLE TYPE, regardless of archetype — the
+   * mirror of `expectedExhibits`, and for the same reason.
+   *
+   * Until this field existed, `composeBrief` took its tables from the archetype
+   * pack alone, so within one archetype eighteen of the twenty-one shipped
+   * structures received the IDENTICAL table set: a Target State Architecture
+   * was asked for a vendor pricing template and a volume baseline, a Roadmap
+   * for an application inventory, and a Requirements Traceability document for
+   * neither of the two tables its own sections are built around. Exhibits had
+   * never had that problem because the structure's exhibits are concatenated
+   * with the pack's; tables simply never got the same treatment. Measured over
+   * the shipped catalogs: 7 distinct table signatures across the 105
+   * composable briefs against 37 distinct exhibit signatures.
+   *
+   * Joined with the pack's tables by `composeArtifactAssets` (structure first,
+   * first entry per key wins), so a configured pack that names a key a
+   * structure already declares cannot produce a duplicate expectation.
+   *
+   * Declare a table the artifact TYPE is built around, not one a use case
+   * happens to want — use-case tables stay with the archetype pack.
+   */
+  expectedTables?: ExpectedTable[];
+  /**
+   * Section keys that carry the archetype pack's `keyEvidenceFamilies`, in
+   * ADDITION to the ones `composeBrief` infers from the key's spelling.
+   *
+   * The inferred rule only matches keys containing current_state / baseline /
+   * signal / findings / environment, which was written for the P2 diagnostic
+   * deliverables and never revisited. Eight of the shipped structures have no
+   * such key, so for those a declared archetype contributed no evidence
+   * grounding at all — four of them (solution design, operating model,
+   * sourcing strategy, readiness and change plan) declare no families on any
+   * section either, so they were generating with none.
+   *
+   * Name the sections that assert CLIENT facts here — not the executive
+   * decision, recommendation, or forward plan sections, which are judgment and
+   * should not pull a use case's baseline evidence. Every key listed must be a
+   * section key this structure actually declares.
+   */
+  archetypeEvidenceSectionKeys?: string[];
 }
 
 const s = (
@@ -405,6 +447,10 @@ const MOVES_ROADMAP: DeliverableStructure = {
 const MOVES_DISCOVERY: DeliverableStructure = {
   module: "moves",
   deliverableType: "discovery_report",
+  // Maturity scoring against a benchmark and the use-case gaps are findings
+  // about the client; the readiness implications and the recommendation are
+  // judgment over them. `current_state` is also a landing site by spelling.
+  archetypeEvidenceSectionKeys: ["maturity_gaps"],
   purpose:
     "Report discovery findings — maturity, gaps, readiness — to frame the move.",
   decisionToSupport: "Agree the diagnosis and the priority gaps to address.",
@@ -535,6 +581,12 @@ const MOVES_DESIGN_WORKSHOP_GUIDE: DeliverableStructure = {
 const MOVES_ROOT_CAUSE_WORKSHEET: DeliverableStructure = {
   module: "moves",
   deliverableType: "root_cause_worksheet",
+  // The two sections that map the client's observed symptoms to causes; the
+  // thesis, the gap list and the P3 implications are judgment over them.
+  archetypeEvidenceSectionKeys: [
+    "symptom_cause_table",
+    "root_cause_tree",
+  ],
   purpose:
     "Explain the small set of evidence-backed root causes behind the current-state symptoms and what they imply for P3 design.",
   decisionToSupport:
@@ -826,6 +878,13 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
 const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
   module: "moves",
   deliverableType: "solution_design",
+  // The client's actual workflow, systems and controls — not the decision or
+  // the acceptance/recommendation sections.
+  archetypeEvidenceSectionKeys: [
+    "journey_workflow",
+    "solution_components",
+    "controls_operability",
+  ],
   purpose:
     "Translate the accepted Target Architecture into an implementable solution design without reopening the approved solution approach.",
   decisionToSupport:
@@ -952,6 +1011,12 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
   // contract on the canonical key so the live worker cannot fall through to a
   // generic operating-model binder.
   deliverableType: "operating_model",
+  // Who does the work today and which roles and forums exist; adoption and the
+  // recommendation are forward-looking.
+  archetypeEvidenceSectionKeys: [
+    "work_split_controls",
+    "roles_cadence",
+  ],
   purpose:
     "Define the human, AI, governance, and service-management model required to operate the accepted solution safely.",
   decisionToSupport:
@@ -1057,6 +1122,45 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
 const MOVES_REQUIREMENTS_TRACEABILITY: DeliverableStructure = {
   module: "moves",
   deliverableType: "requirements_traceability",
+  // The trace matrix maps requirements to the evidence that supports them, and
+  // the gaps section states which of that evidence is still unresolved — both
+  // need the archetype's families named. The verdict and the next actions are
+  // judgment. `requirements_baseline` is also a landing site by spelling.
+  archetypeEvidenceSectionKeys: ["evidence_design_trace", "gaps_controls"],
+  // The two tables this document's own sections are built around. Neither is
+  // in any archetype pack, so before a structure could declare its tables this
+  // deliverable was composed with the use case's commercial and inventory
+  // tables and no traceability matrix at all.
+  expectedTables: [
+    {
+      key: "requirements_traceability_matrix",
+      title: "Requirement → Evidence → Design → Control Traceability",
+      columns: [
+        "Requirement",
+        "Source Evidence",
+        "Design Element",
+        "Control / Acceptance Test",
+        "Owner",
+        "Status",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: true,
+    },
+    {
+      key: "traceability_gap_register",
+      title: "Traceability Gaps & Holding Conditions",
+      columns: [
+        "Gap",
+        "Requirement Affected",
+        "Why It Is Open",
+        "Closing Action",
+        "Owner",
+        "Gate Impact",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: false,
+    },
+  ],
   purpose:
     "Prove that approved requirements, evidence, design choices, controls, and open decisions remain traceable before the design gate closes.",
   decisionToSupport:
@@ -1121,6 +1225,12 @@ const MOVES_REQUIREMENTS_TRACEABILITY: DeliverableStructure = {
 const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
   module: "moves",
   deliverableType: "sourcing_strategy",
+  // The scope inherited from the estate and the retained ownership it implies;
+  // the guardrails and the recommendation are judgment.
+  archetypeEvidenceSectionKeys: [
+    "scope_options",
+    "delivery_risks",
+  ],
   purpose:
     "Decide how the capabilities in the accepted architecture and operating model should be built, bought, configured, or partnered.",
   decisionToSupport:
@@ -1202,6 +1312,26 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
 const MOVES_ESTIMATE: DeliverableStructure = {
   module: "moves",
   deliverableType: "estimate_model",
+  // An estimate's basis of estimate is the artifact, not a use-case asset. The
+  // packs' nearest tables are a vendor pricing template and a current-run cost
+  // baseline — neither states how a forward number was built or how confident
+  // it is.
+  expectedTables: [
+    {
+      key: "estimate_basis_buildup",
+      title: "Estimate Build-Up & Basis of Estimate",
+      columns: [
+        "Cost / Effort Component",
+        "Basis of Estimate",
+        "Quantity or Effort",
+        "Rate Basis",
+        "Confidence",
+        "Assumption to Validate",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: true,
+    },
+  ],
   purpose:
     "Estimate investment, run-cost change, resourcing, and confidence for the move.",
   decisionToSupport:
@@ -1274,6 +1404,11 @@ const MOVES_ESTIMATE: DeliverableStructure = {
 const MOVES_VALUE: DeliverableStructure = {
   module: "moves",
   deliverableType: "value_model",
+  // Benefit pools carry an owner, a measure, a source and a baseline status
+  // per pool, so they assert client facts. The measurement model and the
+  // recommendation are forward design. `current_state` is a landing site by
+  // spelling.
+  archetypeEvidenceSectionKeys: ["value_pools"],
   purpose:
     "Define the CFO-facing value model, measurement logic, and realization controls.",
   decisionToSupport:
@@ -1347,6 +1482,31 @@ const MOVES_VALUE: DeliverableStructure = {
 const MOVES_READINESS_AND_CHANGE_PLAN: DeliverableStructure = {
   module: "moves",
   deliverableType: "readiness_and_change_plan",
+  // Who holds which decision is what a readiness verdict rests on, and the
+  // structure already names `stakeholders_decision_rights` as an evidence
+  // landing site — it had nowhere to put the result.
+  expectedTables: [
+    {
+      key: "stakeholder_decision_rights",
+      title: "Stakeholders, Decision Rights & Readiness",
+      columns: [
+        "Stakeholder Group",
+        "Role in the Move",
+        "Decision Rights",
+        "Named Owner",
+        "Readiness Signal",
+        "Open Condition",
+      ],
+      groundingMode: "mixed",
+      moveToExcelIfWide: false,
+    },
+  ],
+  // Who actually owns the seats and what the estate depends on; the verdict,
+  // the workplan and the cadence are judgment.
+  archetypeEvidenceSectionKeys: [
+    "stakeholders_decision_rights",
+    "dependencies_risks",
+  ],
   purpose:
     "Confirm organizational readiness, adoption path, governance cadence, and mobilization conditions before the move advances into execution.",
   decisionToSupport:
@@ -1686,6 +1846,25 @@ const SOURCE_STRATEGY_MEMO: DeliverableStructure = {
 const SOURCE_EVAL_WORKBOOK: DeliverableStructure = {
   module: "source",
   deliverableType: "evaluation_workbook",
+  // A scoring workbook with no scoring model is not a workbook. Declared
+  // `client_to_complete` because the weights and scores are the evaluation
+  // panel's to set, not ours to assert.
+  expectedTables: [
+    {
+      key: "evaluation_scoring_model",
+      title: "Evaluation Criteria, Weights & Scoring Basis",
+      columns: [
+        "Criterion",
+        "Weight",
+        "Scoring Basis",
+        "Evidence Required",
+        "Scored By",
+        "Score",
+      ],
+      groundingMode: "client_to_complete",
+      moveToExcelIfWide: true,
+    },
+  ],
   purpose: "Provide the proposal evaluation framework and scoring workbook.",
   decisionToSupport:
     "Adopt the evaluation framework and select the preferred vendor.",

@@ -262,6 +262,62 @@ describe('processDeliverableQueue', () => {
     );
   });
 
+  // C-576. The premium guard reads `!evidenceBasisIsCurrent || !evidenceSnapshot`,
+  // and until this case every one of the suite's fixtures handed the loader a
+  // truthy snapshot — including the stale case above, which falsifies only the
+  // first operand. So the refusal of a run whose approved evidence is ABSENT
+  // rather than merely stale was reachable and asserted by nothing: the branch
+  // ran in production and no case named it.
+  //
+  // It is NOT the second operand that this pins, and that distinction is the
+  // whole point. `isApprovedMoveEvidenceBasisCurrent` returns false on a null
+  // snapshot (approved-move-evidence-snapshot.ts:256), so a null snapshot always
+  // falsifies the FIRST operand too and `|| !evidenceSnapshot` can never be the
+  // deciding one. Deleting it leaves this case and all 14 others green; what it
+  // actually breaks is the narrowing that lines 223 and 225 of the worker need,
+  // which `tsc` catches as TS18047 + TS2345 and a required check already runs.
+  // A case claiming to pin that operand would be vacuous, so none is written.
+  //
+  // The mutation that kills THIS case is the null guard in the predicate:
+  // delete `!snapshot ||` from line 256 and the premium path completes `failed`
+  // instead of `blocked`, because the predicate then reads `revisionByPhase`
+  // off null and throws into the worker's catch.
+  it('blocks a queued phase build when the approved evidence snapshot is absent entirely', async () => {
+    const queuedRun = {
+      ...claimedRow('run-absent-phase-evidence'),
+      clientId: 'client-lake',
+      tenantKey: 'lakeshore-holdings',
+      module: 'moves',
+      deliverableType: 'discovery_report',
+      jobPayload: {
+        kind: 'moves_premium_artifact',
+        module: 'moves',
+        deliverableType: 'discovery_report',
+        sourceArtifactRef: 'move-1',
+        phase: 2,
+        artifact: 'discovery_report',
+        evidenceSnapshotHash: 'revision-current',
+        phaseEvidenceSnapshotHash: 'p2-revision-current',
+      },
+    };
+    claimNextDeliverableRun
+      .mockResolvedValueOnce(queuedRun)
+      .mockResolvedValueOnce(null);
+    approvedEvidence.loadApprovedMoveEvidenceSnapshot.mockResolvedValue(null);
+
+    await processDeliverableQueue({ workerId: 'worker-absent-p2', batchSize: 5 });
+
+    expect(generateArtifact).not.toHaveBeenCalled();
+    expect(persistMoveGeneratedArtifact).not.toHaveBeenCalled();
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-absent-phase-evidence',
+      expect.objectContaining({
+        status: 'blocked',
+        error: 'stale_approved_evidence_snapshot',
+      }),
+    );
+  });
+
   it('sweeps, claims one run, reconstructs input from job_payload, and completes succeeded', async () => {
     claimNextDeliverableRun.mockResolvedValueOnce(claimedRow('run-1')).mockResolvedValueOnce(null); // queue empty → stop
     runDeliverableForTenant.mockResolvedValue({

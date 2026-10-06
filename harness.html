@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mcf-input width fix</title>
+<style>
+body{margin:0;background:#f5f1eb;font-family:Inter,system-ui,sans-serif;color:#2c2c2a;padding:32px}
+.cols{display:flex;gap:40px;align-items:flex-start}
+.panel{flex:1 1 0;min-width:0;background:#fff;border:1px solid rgba(10,10,11,.12);border-radius:14px;padding:28px}
+.panel h3{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 20px}
+.bad h3{color:#ba1b1b}.good h3{color:#147c5b}
+/* ===== real .mcf tokens/classes (scoped) ===== */
+.mcf{--mcf-surface:#fff;--mcf-ink:#2c2c2a;--mcf-muted:#5f5e5a;--mcf-faint:#888780;--mcf-line-strong:rgba(10,10,11,.24);--mcf-accent:#1d9e75;--mcf-sans:Inter,system-ui,sans-serif}
+.mcf-q-label{display:block;font-size:16px;font-weight:600}
+.mcf-q-help{font-size:14px;line-height:1.5;color:var(--mcf-muted);margin:0 0 6px}
+/* NEW rule under test */
+.good .mcf-input{display:block;width:100%;box-sizing:border-box;font-family:var(--mcf-sans);font-size:15px;line-height:1.55;color:var(--mcf-ink);background:var(--mcf-surface);border:1px solid var(--mcf-line-strong);border-radius:10px;padding:12px 14px;resize:vertical;min-height:96px}
+.good .mcf-input:focus{outline:none;border-color:var(--mcf-accent);box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.good .mcf-input::placeholder{color:var(--mcf-faint)}
+</style></head>
+<body>
+<div class="cols mcf">
+  <div class="panel bad">
+    <h3>Before — no .mcf-input rule (browser default cols=20)</h3>
+    <label class="mcf-q-label">Sponsor contact and progress updates</label>
+    <p class="mcf-q-help">The sponsor's name, role, and email. Sponsor sign-off is not required to complete the charter.</p>
+    <textarea class="mcf-input" rows="4" placeholder="e.g. Priya Nair, Chief Data & Analytics Officer — priya.nair@company.example · wants a weekly email"></textarea>
+  </div>
+  <div class="panel good">
+    <h3>After — .mcf-input full width + design-locked styling</h3>
+    <label class="mcf-q-label">Sponsor contact and progress updates</label>
+    <p class="mcf-q-help">The sponsor's name, role, and email. Sponsor sign-off is not required to complete the charter.</p>
+    <textarea class="mcf-input" rows="4" placeholder="e.g. Priya Nair, Chief Data & Analytics Officer — priya.nair@company.example · wants a weekly email"></textarea>
+  </div>
+</div>
+</body></html>

@@ -26,6 +26,7 @@ import type {
   ViewerRole,
 } from "./types.ui";
 import { getClientOption } from "@/lib/client-config";
+import { formatProgramsIndexFilterSummary } from "./portfolio-figure-labels";
 import { getMovesStageName } from "./phase-labels";
 
 // ── Canonical Moves phases plus Tower outcome tracking ────────────────
@@ -338,8 +339,7 @@ export function getProgramsIndexFilterSummary(
   visibleCount: number,
   totalCount: number,
 ): string {
-  if (filter === "all") return `${totalCount} moves shown`;
-  return `${visibleCount} of ${totalCount} moves shown · ${filter} filter`;
+  return formatProgramsIndexFilterSummary(filter, visibleCount, totalCount);
 }
 
 export function buildProgramsIndexView(

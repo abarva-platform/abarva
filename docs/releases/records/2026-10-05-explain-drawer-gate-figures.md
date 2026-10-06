@@ -26,10 +26,20 @@ quantity shown twice, and could not tell from the screen that `5` and `23`
 describe different things — or which of them was the gate they were about to be
 asked to approve.
 
-Both figures now say what they count, and each is built by a tested helper:
+Both figures now say what they count — but only one of them is still this
+change's work, and that is a correction to what this record first claimed.
 
-- `Gates: 2 of 5 criteria met · 3 unmet`, with the noun agreeing with the total,
-- `6 criteria · 2 stages` for the list below it.
+While this change waited, `buildGateSummaryLine` landed on `main` and does
+strictly more for the headline than the helper written here did: it names the
+noun, handles a zero total, counts only strictly-met criteria as met, and names
+partial and waived so every clause reconciles to the total. Keeping both would
+have left two spellings of one figure, which is the defect this change is about.
+So the local headline helper is **deleted** and the host calls main's. What this
+change still contributes is the list figure, which main does not address.
+
+- headline: `2 of 5 gate criteria met · 3 unmet` — **main's**
+  `buildGateSummaryLine`, consumed here.
+- list: `6 criteria · 2 stages` — this change.
 
 Naming the stage span is the part that matters: it is what stops the list's count
 from reading as the headline's current-stage total.
@@ -76,11 +86,9 @@ of construction. It was found by reading the component, not by a walk; see QA.
 ## Changes Included
 
 - **New** `src/lib/reasoning/explanation-gate-figures.ts` —
-  `explanationGateSummaryLine` and `explanationGateRowsLabel`. The headline
-  reuses `gateCriteriaMetSummary` from the existing gate-criteria figure module,
-  so the same quantity is worded identically on the ribbon, the approval drawer
-  and here: one figure contract, three surfaces. The module header records the
-  two-sets argument above so the next reader does not have to redo it.
+  `explanationGateRowsLabel`. The module header records the two-sets argument
+  above, and now also records why the headline half is no longer here, so the
+  next reader does not reintroduce a second spelling of that figure.
 - `src/components/_shared/ExplainQuoteDrawer.tsx` — the summary bar and the gates
   section header consume the helpers. `SectionHeader` gains an optional derived
   `countLabel` alongside its plain numeric `count`; the other four sections keep
@@ -105,7 +113,8 @@ regeneration.
 - **PASS** — `tsc -p tsconfig.json --noEmit`, exit code 0 read from `$?` rather
   than from a piped tail.
 - **PASS** — `eslint` on the three changed files, exit code 0.
-- **PASS** — mutation check, 5 of 5 killed, each run against the whole new suite:
+- **PASS** — mutation check, 5 of 5 killed on the original base, each run
+  against the whole new suite:
   1. the headline reverts to the bare pre-fix template — **5** red.
   2. the stage count includes groups that carry no rows — **1** red.
   3. the list's noun agrees with the stage count instead of the row count —
@@ -114,6 +123,14 @@ regeneration.
      **2** red.
   5. `SectionHeader` ignores the derived label and falls back to the plain count
      — **1** red.
+- **Re-scoped after merging `origin/main`.** Mutations 1 and 4 were about the
+  local headline helper, which is now deleted in favour of main's, so they no
+  longer describe this change. Their subject is covered by main's own
+  `gate-summary-line.test.ts` plus one host case kept here as a wiring proof:
+  the drawer must render the shared line rather than a bare count. Mutations 2,
+  3 and 5 are unaffected — they are the list figure, which is what remains. The
+  suite was re-run on the merged base: **PASS**, with the companion
+  `gate-summary-line.test.ts` — 2 suites, 20 tests.
 - **NOT RUN** — no signed-in walk of this change. The drawer opens behind a
   synthesis quote that has to finish streaming on one of three surfaces, which
   this run did not reach; the fix is owed a walk once it deploys. Recorded as a

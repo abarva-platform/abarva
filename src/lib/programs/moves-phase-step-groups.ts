@@ -1,4 +1,7 @@
-import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import {
+  getPhaseCaptureSections,
+  type PhaseCaptureSection,
+} from "@/lib/programs/phase-capture-contract";
 
 /**
  * The 3-step capture model for the redesigned Moves phase screens.
@@ -173,4 +176,37 @@ export function getPhaseStepGroups(phase: number): readonly PhaseStepGroup[] {
  */
 export function phaseSectionKeySet(phase: number): Set<string> {
   return new Set(getPhaseCaptureSections(phase).map((section) => section.key));
+}
+
+/**
+ * How many questions each step of a phase actually MOUNTS, derived from the
+ * capture contract.
+ *
+ * This is the grouping's key list filtered through the sections the contract
+ * declares — the same rule `MovesCaptureFlow` applies when it renders a step
+ * (`group.sectionKeys` mapped through the sections it was given, dropping the
+ * misses). So a key the contract no longer declares is counted here exactly as
+ * it renders: not at all. Returning `group.sectionKeys.length` instead would
+ * over-count that case and disagree with the screen.
+ *
+ * Why it exists (`U-567`): the signed-in wave family used the full mount set
+ * across all three steps — `3 + 2 + 2 = 7` for P1 Charter — as its structural
+ * non-regression figure for the `moves_capture_v2` path. That reading is no
+ * longer obtainable by an unattended walk, because *Continue* is now gated on
+ * saved step readiness and the step bar advances only backwards, so steps 2 and
+ * 3 cannot be reached without writing answers. The figure therefore moves off
+ * the walk and onto the contract: the component suite pins step 1's RENDERED
+ * mount count against this derivation, so one reachable step still falsifies a
+ * structural change, and the other two steps are evidenced by the derivation
+ * rather than by an observation nobody can make. Do not replace this with a
+ * literal — the counts are the contract's to decide, not this file's.
+ */
+export function phaseStepQuestionCounts(
+  phase: number,
+  sections: readonly PhaseCaptureSection[] = getPhaseCaptureSections(phase),
+): readonly number[] {
+  const declared = new Set(sections.map((section) => section.key));
+  return getPhaseStepGroups(phase).map(
+    (group) => group.sectionKeys.filter((key) => declared.has(key)).length,
+  );
 }

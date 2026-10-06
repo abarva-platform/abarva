@@ -80,6 +80,11 @@ jobs:
       - name: Run the unit suites
         run: npx jest src/__tests__/unit --no-coverage --ci
 
+      - name: Validate Source market candidate research
+        run: >-
+          node --import tsx --test
+          scripts/source/__tests__/market-candidate-research.test.mjs
+
       # `src/lib/admin/broker` is 21 suites / 211 tests that no workflow and no
       # npm script reached. Measured through the census resolver on `b061a6819`,
       # not by reading YAML: three directories, 16 + 4 + 1 test files, 0 covered.
@@ -146,6 +151,9 @@ jobs:
 
       - name: Validate Moves adaptive synthetic evidence kit
         run: npm run test:moves:adaptive-e2e-kit
+
+      - name: Validate Moves governed data foundation synthetic E2E pack
+        run: npm run test:moves:gdf-e2e-pack
 
       - name: Run governed clean-demo Move load suites
         run: npx jest scripts/demo/__tests__ --no-coverage --ci
@@ -978,7 +986,10 @@ jobs:
           src/lib/source/new-workspace/source-version-authority.test.ts
           src/lib/source/new-workspace/phase-state.test.ts
           src/lib/source/new-workspace/step-readiness.test.ts
+          src/lib/source/award/contract-from-award.test.ts
           src/lib/source/new-workspace/step-readiness-adapter.test.ts
+          src/lib/source/new-workspace/release-state-view.test.ts
+          src/lib/source/artifact-registry/parsed-yield-view.test.ts
           src/lib/source/new-workspace/navigation.test.ts
           src/lib/source/new-workspace/event-intelligence.test.ts
           src/lib/source/new-workspace/__tests__/response-intake.test.ts

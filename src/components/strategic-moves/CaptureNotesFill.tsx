@@ -49,7 +49,7 @@ export interface CaptureNotesFillProps {
 
 const CNF_CSS = `
 .cnf{--cnf-cream:#f5f1eb;--cnf-surface:#fff;--cnf-ink:#2c2c2a;--cnf-teal:#1d9e75;--cnf-amber:#ba7517;--cnf-line:rgba(44,44,42,.14);--cnf-muted:rgba(44,44,42,.62);--cnf-mono:"JetBrains Mono",ui-monospace,monospace;--cnf-sans:"Inter",system-ui,sans-serif;font-family:var(--cnf-sans);color:var(--cnf-ink);margin:0 0 14px}
-.cnf-open{border:1px dashed var(--cnf-line);background:var(--cnf-surface);border-radius:10px;padding:9px 14px;font-family:var(--cnf-sans);font-size:12.5px;font-weight:600;color:var(--cnf-ink);cursor:pointer}
+.cnf-open{display:block;width:100%;box-sizing:border-box;text-align:left;border:1px dashed var(--cnf-line);background:var(--cnf-surface);border-radius:10px;padding:11px 16px;font-family:var(--cnf-sans);font-size:12.5px;font-weight:600;color:var(--cnf-ink);cursor:pointer}
 .cnf-open:hover{border-color:var(--cnf-teal);color:#147c5b}
 .cnf-panel{background:var(--cnf-surface);border:1px solid var(--cnf-line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
 .cnf-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
