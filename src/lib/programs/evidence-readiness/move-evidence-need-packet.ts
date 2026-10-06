@@ -492,6 +492,124 @@ const CONTACT_CENTER_AGENT_ASSIST_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
   },
 };
 
+// The governed-data-foundation archetype's own voice, for the eight families
+// that belong to it alone. The four families it shares with other archetypes
+// (`model_risk_responsible_ai_controls`, `measurement_owner_cadence`,
+// `finance_baseline_value_plan`, `change_adoption_owner`) are deliberately NOT
+// written here: the archetype-neutral reading in CROSS_ARCHETYPE_EXAMPLES is
+// correct for them, and wording them twice would be two places to maintain.
+//
+// Registered against the blueprint id in `ARCHETYPE_EXAMPLES`, so a Move that
+// DECLARES this archetype reaches this table regardless of what it is called.
+// Before this existed, all eight of these families resolved to
+// `UNAUTHORED_FAMILY_GUIDANCE` — a declared governed-data-foundation Move was
+// asked for "an owner-attested source extract or document" eight times, with no
+// statement of which extract, from whom, or what would make it sufficient.
+//
+// Deliberately asks for DESIGN and OWNERSHIP evidence, not volume: on this
+// archetype the thing being estimated is a governed pipeline, so what a phase
+// needs is who decides a definition, which fields are permitted, and how a
+// published number can be traced back — not more rows.
+const GOVERNED_DATA_FOUNDATION_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
+  data_governance_ownership: {
+    exampleTemplate: "Data governance ownership and decision rights",
+    exampleContent: [
+      "Named accountable role per decision: who approves a business definition, who grants source access, who certifies a shared measure, who accepts a data-quality exception, who approves release",
+      "The forum that resolves a definition conflict between two domains, and who ratifies its outcome",
+      "Whether each named role is confirmed by that role-holder, or still proposed",
+    ],
+    whyItMatters:
+      "A governed foundation is defined by who gets to decide, not by its technology. Without named decision rights, every later phase estimates a pipeline nobody can approve into production.",
+    nextAction:
+      "Upload a governance charter, decision-rights matrix, or steward register — or record who is still unnamed as an owned assumption.",
+  },
+  semantic_layer_certification: {
+    exampleTemplate: "Certified measure and report definition register",
+    exampleContent: [
+      "Each in-scope report or measure with its business question, grain, and named definition owner",
+      "The agreed formula for every contested term, including the treatment of the edge cases that make it contested",
+      "Whether a definition is ratified, in review, or merely requested — and how an amendment is versioned",
+    ],
+    whyItMatters:
+      "Two teams meaning different things by the same word is the usual reason a data foundation is rebuilt. The design and the business case both depend on which definitions are settled and which are still arguments.",
+    nextAction:
+      "Upload the metric dictionary or definition register, marking which entries are certified and which are candidates.",
+  },
+  data_lineage_audit_trail: {
+    exampleTemplate: "Source-to-report lineage and audit trail",
+    exampleContent: [
+      "The hop-by-hop path from source to published report, and the identifiers preserved at each hop (batch/run id, source version, schema version, transformation version)",
+      "The audit events captured today — extract received, transform run, model build, report refresh, access granted — with the fields each one records",
+      "Whether a published figure can currently be traced back to one approved source batch, and what breaks if it cannot",
+    ],
+    whyItMatters:
+      "Traceability is what makes a governed number defensible and what a later phase's gate asks for. It has to be designed in, because it cannot be added to data that was already published without it.",
+    nextAction:
+      "Upload lineage documentation, a pipeline diagram, or a sample audit record — or state plainly that lineage is not captured today.",
+  },
+  data_quality_rules: {
+    exampleTemplate: "Data quality rule set and exception handling",
+    exampleContent: [
+      "Rule per entity and field: the check, the threshold or policy, and its severity",
+      "What happens on failure — quarantine, reject, publish with a caveat — and who owns the exception",
+      "The escalation path and expected turnaround when a blocking rule stops a publication",
+    ],
+    whyItMatters:
+      "Quality rules decide what is allowed to reach a certified report. Whether a failing rule can block publication is an architecture choice with real cost, and it has to be made before the build is sized.",
+    nextAction:
+      "Upload the rule register or profiling output, including the action taken on failure for each rule.",
+  },
+  source_system_data_access: {
+    exampleTemplate: "Source access scope and authorization record",
+    exampleContent: [
+      "Per source: the access requested, the minimum fields needed, and the fields explicitly excluded",
+      "The role that owns access to each source, and whether authorization has actually been granted or is still to be requested",
+      "The purpose each grant is limited to, and when it expires or is reviewed",
+    ],
+    whyItMatters:
+      "Unobtained source access is the most common reason this kind of Move stalls after it is approved. A field-level scope also keeps the build from ingesting data no report needs.",
+    nextAction:
+      "Upload the access request or entitlement record per source, marking each as granted, requested, or not yet raised.",
+  },
+  platform_architecture_readiness: {
+    exampleTemplate: "Platform readiness: build, extend, or reuse",
+    exampleContent: [
+      "The capabilities that already exist and can be reused — ingestion, storage layers, identity, audit, monitoring, the serving surface",
+      "Per capability, the build / extend / reuse judgement and the proof behind it",
+      "Platform constraints that bound the design: data residency, approved services, environment separation, existing licences",
+    ],
+    whyItMatters:
+      "Most of this estimate is decided by how much already exists. Treating a reusable platform as greenfield is the single largest avoidable error in the business case.",
+    nextAction:
+      "Upload the current platform or reference architecture, and name which capabilities this Move may reuse.",
+  },
+  master_identity_resolution: {
+    exampleTemplate: "Entity identity and crosswalk rules",
+    exampleContent: [
+      "The key proposed as authoritative for each core entity, and whether it is governed, stable, and never reused",
+      "The effective-dated mappings and crosswalks between entities, and the steward who owns each",
+      "The hard cases and their expected handling: duplicates, merges, transfers, concurrent records, retirement, and what happens to an ambiguous match",
+    ],
+    whyItMatters:
+      "Every aggregate in a governed foundation is a count of resolved entities. If identity is unsettled, the measures above it are unsettled too, however clean the pipeline is.",
+    nextAction:
+      "Upload the identity or crosswalk specification, with the steward named for each mapping.",
+  },
+  privacy_security_controls: {
+    exampleTemplate: "Privacy and security control baseline",
+    exampleContent: [
+      "Purpose limitation and data minimisation: the approved purposes, and the field-level allowlist with the rejected fields recorded",
+      "Access and protection controls: the role matrix per layer, encryption and key ownership, retention and verified deletion, environment separation",
+      "Re-identification controls on published aggregates — the suppression or small-cell rule and who approved it",
+      "Per control: whether it is designed, in operation, or still open",
+    ],
+    whyItMatters:
+      "These controls are a precondition for ingesting anything, not a later hardening step, and an open one is a stop condition rather than a risk to accept.",
+    nextAction:
+      "Upload the privacy review, control checklist, or DPIA — and name any control that is still open rather than leaving it blank.",
+  },
+};
+
 // Five family ids in the discovery catalog belong to more than one archetype
 // (`it_systems_landscape`, which GENERIC_EXAMPLES already covers, plus the four
 // below). An archetype-specific table may word a shared family in its own voice
@@ -560,6 +678,7 @@ const CROSS_ARCHETYPE_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
 // declared, never inferred. Adding an archetype's guidance is an entry here.
 const ARCHETYPE_EXAMPLES: Record<string, Partial<typeof GENERIC_EXAMPLES>> = {
   healthcare_contact_center_agent_assist: CONTACT_CENTER_AGENT_ASSIST_EXAMPLES,
+  governed_data_foundation: GOVERNED_DATA_FOUNDATION_EXAMPLES,
 };
 
 function lower(value: string): string {
