@@ -231,3 +231,275 @@ describe("RiskAssessmentPanel", () => {
     ).toBeEnabled();
   });
 });
+
+/**
+ * The declared-archetype vocabulary join, on screen.
+ *
+ * Before it, the thirteen factors were asked in one hardcoded clinical
+ * vocabulary on every Move. The panel will not save until all thirteen are
+ * answered, so a Move that had DECLARED a non-clinical archetype had to rate a
+ * clinical decision and a patient-facing audience to record an assessment at
+ * all. These cases pin the wording to the DECLARATION the GET serves, and pin
+ * that only the wording moved: the same thirteen keys are required, saved and
+ * read back.
+ */
+describe("RiskAssessmentPanel · declared-archetype vocabulary", () => {
+  function mockLoad(archetypeId: string | null, inputs: unknown = null) {
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST") return jsonResponse({ ok: true });
+      return jsonResponse({ inputs, result: null, archetypeId });
+    });
+  }
+
+  it("asks a declared Move's factors in that archetype's words", async () => {
+    mockLoad("governed_data_foundation");
+    render(<RiskAssessmentPanel moveId="move-gdf" />);
+    await waitForLoaded();
+
+    expect(
+      screen.getByRole("combobox", { name: /E3 · Decision Authority/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: /E8 · External-Facing Exposure/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", {
+        name: /E1 · Regulated \/ Sensitive Data Exposure/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("asks a declared Move none of the clinical questions", async () => {
+    mockLoad("governed_data_foundation");
+    const { container } = render(<RiskAssessmentPanel moveId="move-gdf" />);
+    await waitForLoaded();
+
+    // Read the text NODES, not a concatenated textContent: adjacent spans join
+    // with no separator, which would defeat a word-boundary assertion.
+    const nodes: string[] = [];
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      nodes.push(n.textContent ?? "");
+    }
+    const joined = nodes.join(" | ");
+    expect(joined).not.toMatch(/clinical/i);
+    expect(joined).not.toMatch(/patient/i);
+    expect(joined).not.toMatch(/PHI/);
+    // Control: the shipped wording DOES contain all three, so the assertion
+    // above is not vacuously true against an empty render.
+    expect(joined).toMatch(/Data Sensitivity/);
+  });
+
+  it("still asks an undeclared Move the shipped questions", async () => {
+    mockLoad(null);
+    render(<RiskAssessmentPanel moveId="move-plain" />);
+    await waitForLoaded();
+    expect(
+      screen.getByRole("combobox", { name: /E3 · Clinical Decisioning/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: /E8 · Patient-Facing Exposure/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to the shipped questions for an archetype with no vocabulary", async () => {
+    mockLoad("some_archetype_with_no_entry");
+    render(<RiskAssessmentPanel moveId="move-other" />);
+    await waitForLoaded();
+    expect(
+      screen.getByRole("combobox", { name: /E3 · Clinical Decisioning/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("requires and saves the same thirteen keys for a declared Move", async () => {
+    const postBodies: unknown[] = [];
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        postBodies.push(JSON.parse(init.body as string));
+        return jsonResponse({
+          ok: true,
+          result: {
+            dimensionScore: 12,
+            escalatorScore: 6,
+            totalScore: 18,
+            additiveBand: "Moderate",
+            band: "Moderate",
+            escalatorsTriggered: 2,
+            anyEscalatorTriggered: true,
+            governanceCouncilReviewRequired: true,
+            severeConditionOverrideApplied: false,
+          },
+        });
+      }
+      return jsonResponse({
+        inputs: null,
+        result: null,
+        archetypeId: "governed_data_foundation",
+      });
+    });
+
+    render(<RiskAssessmentPanel moveId="move-gdf" />);
+    await waitForLoaded();
+
+    // Save is held until all thirteen are answered, exactly as before — the
+    // re-wording must not make a factor optional.
+    expect(
+      screen.getByRole("button", { name: /save risk assessment/i }),
+    ).toBeDisabled();
+
+    await act(async () => {
+      selectField(/D1 · Data Sensitivity/, "Critical");
+      selectField(/D2 · Human Oversight/, "Low");
+      selectField(/D3 · Integration Impact/, "Critical");
+      selectField(/D4 · Build Origin/, "Moderate");
+      selectField(/D5 · Domain Breadth/, "Low");
+      selectField(/E1 · Regulated/, "Critical");
+      selectField(/E2 · Autonomous/, "NotTriggered");
+      selectField(/E3 · Decision Authority/, "NotTriggered");
+      selectField(/E4 · Organization Readiness/, "Moderate");
+      selectField(/E5 · Cross-Domain/, "NotTriggered");
+      selectField(/E6 · Public/, "NotTriggered");
+      selectField(/E7 · Brand/, "NotTriggered");
+      selectField(/E8 · External-Facing/, "NotTriggered");
+    });
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /save risk assessment/i }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Last saved/i)).toBeInTheDocument();
+    });
+
+    // The STORED keys are the shipped ones whatever the archetype — an
+    // assessment is not re-keyed by the words it was asked in.
+    expect(postBodies).toEqual([
+      {
+        inputs: {
+          d1DataSensitivity: "Critical",
+          d2HumanOversight: "Low",
+          d3IntegrationImpact: "Critical",
+          d4BuildOrigin: "Moderate",
+          d5DomainBreadth: "Low",
+          e1PhiExposure: "Critical",
+          e2AutonomousAction: "NotTriggered",
+          e3ClinicalDecisioning: "NotTriggered",
+          e4OrganizationReadiness: "Moderate",
+          e5CrossDomainIntegration: "NotTriggered",
+          e6PublicRegulatoryExposure: "NotTriggered",
+          e7BrandReputationRisk: "NotTriggered",
+          e8PatientFacingExposure: "NotTriggered",
+        },
+      },
+    ]);
+  });
+
+  it("holds the save until every factor is answered, not just the dimensions", async () => {
+    // The required-key list is assembled from the vocabulary module's two key
+    // arrays. Dropping either one would enable the save on a partial
+    // assessment, which the server then rejects as a bad request — so the
+    // partial fill is asserted, not only the empty and the complete one.
+    mockLoad("governed_data_foundation");
+    render(<RiskAssessmentPanel moveId="move-gdf" />);
+    await waitForLoaded();
+
+    const save = () =>
+      screen.getByRole("button", { name: /save risk assessment/i });
+    expect(save()).toBeDisabled();
+
+    await act(async () => {
+      selectField(/D1 · Data Sensitivity/, "Critical");
+      selectField(/D2 · Human Oversight/, "Low");
+      selectField(/D3 · Integration Impact/, "Critical");
+      selectField(/D4 · Build Origin/, "Moderate");
+      selectField(/D5 · Domain Breadth/, "Low");
+    });
+    expect(save()).toBeDisabled();
+
+    // One escalator short is still short.
+    await act(async () => {
+      selectField(/E1 · Regulated/, "Critical");
+      selectField(/E2 · Autonomous/, "NotTriggered");
+      selectField(/E3 · Decision Authority/, "NotTriggered");
+      selectField(/E4 · Organization Readiness/, "Moderate");
+      selectField(/E5 · Cross-Domain/, "NotTriggered");
+      selectField(/E6 · Public/, "NotTriggered");
+      selectField(/E7 · Brand/, "NotTriggered");
+    });
+    expect(save()).toBeDisabled();
+
+    await act(async () => {
+      selectField(/E8 · External-Facing/, "NotTriggered");
+    });
+    expect(save()).toBeEnabled();
+  });
+
+  it("holds the save on every escalator answered but a dimension missing", async () => {
+    // The mirror of the case above. Asserted in BOTH directions because a
+    // required-key list built from one of the two key arrays satisfies the
+    // other direction's assertions on its own: filling the dimensions first
+    // cannot observe a list that dropped them.
+    mockLoad("governed_data_foundation");
+    render(<RiskAssessmentPanel moveId="move-gdf" />);
+    await waitForLoaded();
+
+    const save = () =>
+      screen.getByRole("button", { name: /save risk assessment/i });
+
+    await act(async () => {
+      selectField(/E1 · Regulated/, "Critical");
+      selectField(/E2 · Autonomous/, "NotTriggered");
+      selectField(/E3 · Decision Authority/, "NotTriggered");
+      selectField(/E4 · Organization Readiness/, "Moderate");
+      selectField(/E5 · Cross-Domain/, "NotTriggered");
+      selectField(/E6 · Public/, "NotTriggered");
+      selectField(/E7 · Brand/, "NotTriggered");
+      selectField(/E8 · External-Facing/, "NotTriggered");
+    });
+    expect(save()).toBeDisabled();
+
+    await act(async () => {
+      selectField(/D1 · Data Sensitivity/, "Critical");
+      selectField(/D2 · Human Oversight/, "Low");
+      selectField(/D3 · Integration Impact/, "Critical");
+      selectField(/D4 · Build Origin/, "Moderate");
+    });
+    expect(save()).toBeDisabled();
+
+    await act(async () => {
+      selectField(/D5 · Domain Breadth/, "Low");
+    });
+    expect(save()).toBeEnabled();
+  });
+
+  it("reads back an assessment saved before the Move was declared", async () => {
+    mockLoad("governed_data_foundation", {
+      d1DataSensitivity: "High",
+      d2HumanOversight: "Low",
+      d3IntegrationImpact: "Moderate",
+      d4BuildOrigin: "Low",
+      d5DomainBreadth: "Low",
+      e1PhiExposure: "Moderate",
+      e2AutonomousAction: "NotTriggered",
+      e3ClinicalDecisioning: "NotTriggered",
+      e4OrganizationReadiness: "NotTriggered",
+      e5CrossDomainIntegration: "NotTriggered",
+      e6PublicRegulatoryExposure: "NotTriggered",
+      e7BrandReputationRisk: "NotTriggered",
+      e8PatientFacingExposure: "NotTriggered",
+    });
+    render(<RiskAssessmentPanel moveId="move-gdf" />);
+    await waitForLoaded();
+
+    // The value was stored under `e1PhiExposure`; it shows against the
+    // re-worded prompt, not blank.
+    expect(
+      screen.getByRole("combobox", { name: /E1 · Regulated/ }),
+    ).toHaveValue("Moderate");
+    expect(
+      screen.getByRole("combobox", { name: /D1 · Data Sensitivity/ }),
+    ).toHaveValue("High");
+  });
+});
