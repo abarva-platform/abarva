@@ -3078,13 +3078,14 @@ export function MovesPhaseStandaloneClient({
                 phaseTallies={phaseTallies}
                 viewingPhase={phase.phase}
               />
-              {/* The same tab row either way. With the composition polish on
-                  and the redesigned capture mounted on this view it is handed
-                  to the dock instead, so it sits in the workspace column with
-                  the content it switches rather than above the whole dock. */}
-              {captureCompositionActive && workspaceView === "phase"
-                ? null
-                : surfaceTabRow}
+              {/* One tab row, one place: always rendered here in the shell,
+                  above the workspace, so its position is identical across the
+                  Steps, Files & Evidence, Intelligence and Approvals views.
+                  (The composition polish used to move it into the dock
+                  workspace on the Steps view only, which shifted and clipped it
+                  relative to the other views — see the capture-workspace call,
+                  which no longer receives a tab row.) */}
+              {surfaceTabRow}
               {workspaceView === "files" ? (
                 <>
                   <div className="mxw-crumb">
@@ -3433,9 +3434,6 @@ export function MovesPhaseStandaloneClient({
                       onAvaMessage={(text) => {
                         void sendAvaMessage(text);
                       }}
-                      tabs={
-                        captureCompositionActive ? surfaceTabRow : undefined
-                      }
                       captureProps={{
                         phases: capturePhases,
                         phase: phase.phase,
