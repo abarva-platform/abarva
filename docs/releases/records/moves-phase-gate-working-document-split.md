@@ -102,8 +102,8 @@ client-scoped.
 
 | Check | Result |
 |---|---|
-| `npx jest src/lib/programs/__tests__` (whole directory) | **PASS** — 121 suites / 1224 tests, 0 failing |
-| `npx jest src/components/strategic-moves/__tests__` (whole directory) | **PASS** — 41 suites / 588 tests, 0 failing |
+| `npx jest src/lib/programs/__tests__` (whole directory) | **PASS** — 122 suites / 1241 tests, 0 failing |
+| `npx jest src/components/strategic-moves/__tests__` (whole directory) | **PASS** — 42 suites / 593 tests, 0 failing |
 | `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit` | **PASS** — exit 0 |
 | `npx eslint` over the five changed files | **PASS** — 0 errors. Two `no-unused-vars` warnings in the phase workspace were measured on the unmodified base first and are pre-existing, not introduced here. |
 | `npm run release:check -- --base origin/main --head HEAD` | see below |
@@ -149,14 +149,18 @@ rests on which documents carry the flag. If a phase's working documents are
 re-declared as gate artifacts, that case fails and the split has to be
 re-justified rather than quietly widening.
 
-**Census.** The standing drift on `main` was measured separately before this
-branch's own delta, in the same tree with the source changes stashed: the
-committed file reads 2755 / 2591 / 2590 and regenerating the unmodified base
-gives 2756 / 2592 / 2591, a +1 on all three counts that this branch did not
-cause. With the change applied it reads 2757 / 2593 / 2592 — exactly +1 over the
-regenerated base, and `uncoveredTestFiles` unchanged at its committed value,
-which is the proof that the new suite is swept by a CI job rather than merely
-present. `audit:tenancy-fence-coverage:write` produced no change.
+**Census.** Re-measured on the merged base, because the first measurement went
+stale: a sibling merged into `main` while this branch was being validated, and
+the base this branch now sits on is that merge. Measured in a **separate,
+pristine `origin/main` worktree** rather than by stashing in this tree — a stash
+taken mid-merge also removes the sibling's files and the resulting count cannot
+be attributed. Regenerating in that pristine worktree produces **no change at
+all**, so `main`'s committed census (2758 / 2594 / 2593) is current and the +1
+standing drift that earlier runs of this lane recorded has been absorbed. This
+branch regenerates to 2759 / 2595 / 2594 — exactly +1 on all three, which is the
+one test file it adds — with `uncoveredTestFiles` unchanged, which is the proof
+that the new suite is swept by a CI job rather than merely present.
+`audit:tenancy-fence-coverage:write` produced no change.
 
 The new suite's directory, `src/lib/programs/__tests__`, is swept wholesale.
 `src/components/strategic-moves/__tests__` is not — its suites are named one by
