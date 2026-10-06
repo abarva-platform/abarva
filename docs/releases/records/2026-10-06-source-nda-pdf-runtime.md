@@ -26,7 +26,7 @@ Release lane: `global-control-lane` for server-side PDF packaging, with a lab-on
 
 ## Changes Included
 
-Next.js server package configuration, synthetic NDA publication result classification, focused tests and CI suite ownership. No migration or data load.
+Next.js server package configuration, synthetic NDA publication result classification and focused tests. The existing Source NDA CI job already owns the test directory. No migration or data load.
 
 ## QA / Validation
 
