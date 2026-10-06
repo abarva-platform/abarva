@@ -923,6 +923,17 @@ export interface DiscoveryArchetypeSuggestion {
   score: number;
 }
 
+export interface DiscoveryArchetypeOption {
+  blueprintId: string;
+  archetypeLabel: string;
+}
+
+export function listDiscoveryArchetypeOptions(): DiscoveryArchetypeOption[] {
+  return Object.values(DISCOVERY_BLUEPRINT_CATALOG)
+    .map(({ blueprintId, archetypeLabel }) => ({ blueprintId, archetypeLabel }))
+    .sort((a, b) => a.archetypeLabel.localeCompare(b.archetypeLabel));
+}
+
 /**
  * Setup-time suggestion only: rank catalog archetypes by how well their
  * `suggestionKeywords` match a Move's text, so an origination/setup flow can
