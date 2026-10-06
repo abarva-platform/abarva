@@ -110,7 +110,8 @@ export type FeatureFlagKey =
   | "moves_capture_notes_v1"
   | "moves_capture_handoff_recap_v1"
   | "moves_charter_assumption_resolution_v1"
-  | "moves_capture_phase_rollup_v1";
+  | "moves_capture_phase_rollup_v1"
+  | "moves_charter_standing_after_discover_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -470,6 +471,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_capture_phase_rollup_v1",
     summary:
       "2026-10-05: Lets the capture flow's phase strip say how much of a phase has been saved, for the five rows the screen cannot measure. The strip shows one row per phase, but the host holds live capture values only for the phase on screen, so every other row states a bare question count and a person stepping through the flow sees none of the work behind them. The rows needed to fix that are already loaded - the phase route reads every capture-module row for the Move and then discards all but the viewed phase - so this adds no read. An unmeasured row now states how many of its questions hold a SAVED ANSWER, under that word and no other. A saved answer is a persisted non-empty value; the viewed row's answered count additionally requires structured validity, evidence readiness, and on Charter a satisfied basis, so the saved count is strictly weaker and routinely larger. The two therefore never share a row and never share a noun, and a saved count never earns the completion tick - only a live measurement does, which is the invariant that removed an earlier row's claim to be fully answered when all of its questions were blank. Route-aware, because Design is the only phase whose question set depends on the confirmed solution route. Requires the redesigned capture flow to be on to render at all. Default OFF for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "moves_charter_standing_after_discover_v1",
+    summary:
+      "2026-10-05: Carries the charter's unresolved assumptions past Discover. P1 lets a charter field be answered from an assumption with an owner and a validation plan, P2 inherits those assumptions and can record what Discover found, and both reads are scoped to their own phase - so from P3 onward a charter answer reads identically whether it was proved, assumed and never checked, or checked and found wrong. P3 routes a solution off that answer, P4 builds a business case on it and P5 mobilises against it. With this on, a phase after Discover can read two standings against a charter answer: unvalidated, where the assumption outlived Discover unresolved; and known-wrong, where Discover recorded a correction and the charter still carries the wording the correction was written about. The known-wrong standing is derived from the same revision pin the rest of the family uses - a correction stops reading the moment the answer is edited - not from a comparison this read invents. Read-only: it resolves, edits and re-classifies nothing, adds no canonical field or key, and never renders a standing in evidence wording. Requires moves_charter_assumption_resolution_v1, because without the resolution read a resolved assumption and a surviving one are indistinguishable and the surface would report work that was really done as work nobody did; it reports nothing rather than reporting that. P2 is excluded and stays with the carry-forward. The consuming surface is the capture flow's opening band on P3+, beside the P2 carry-forward band it mirrors. Default OFF for every tenant.",
     policy: "tenant",
     includeTenants: [],
   },

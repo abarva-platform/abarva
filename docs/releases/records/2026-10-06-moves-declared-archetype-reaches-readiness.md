@@ -118,9 +118,14 @@ No deliverable content, prompt, gate rule, or phase-gate criterion is changed.
   a family given a backing table; the optional family made hard; case-normalisation
   dropped from the alias lookup. The caller mutation is the one a registry-only suite
   would have missed — it leaves every other case green while making the fix inert.
-- **PASS** registration proved by census delta, not asserted: `testFiles` 2738→2740 and
-  `coveredTestFiles` 2574→2576, with `uncoveredTestFiles` **unchanged**. Both suites land
-  in a directory a required check sweeps whole, so neither is dark.
+- **PASS** registration proved by census delta, not asserted: `uncoveredTestFiles` stays
+  **164**, so both suites land in a directory a required check sweeps whole and neither is
+  dark. The committed census moves `testFiles` 2739→2743 and `coveredTestFiles`
+  2575→2579 — **+2 of that is this change, and +2 is pre-existing drift on `main`**.
+  Measured by regenerating on the rebased tree with these two suites moved aside: the
+  census then reads 2741/2577 against a committed 2739/2575. Said explicitly so the
+  larger number does not read as four claimed test files. Same class of drift as the `+1`
+  recorded in the preceding archetype-guidance record.
 - **NOT RUN** live signed-in walk. No Move declares this archetype yet, so there is
   nothing to walk; the behaviour change is unreachable until a declaration exists. This
   record does not claim `live-proven`.

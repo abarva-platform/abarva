@@ -172,13 +172,102 @@ describe("the Move-name heuristics still cover archetypes with no table of their
 });
 
 describe("a family with no authored guidance says so plainly", () => {
+  // Re-pointed when the governed-data-foundation table was written: this case
+  // needs a family NO link in the chain answers, and that archetype's eight
+  // own families are now authored. The lending archetype still owes seven.
   it("uses the neutral fallback verbatim", () => {
     const packet = packetFor(
-      "governed_data_foundation",
+      "financial_services_commercial_lending_agent_assist",
       NEUTRAL_NAME,
-      "data_governance_ownership",
+      "commercial_lending_workflow_map",
     );
     expect(guidanceOf(packet)).toEqual(UNAUTHORED_FAMILY_GUIDANCE);
+  });
+});
+
+/**
+ * The governed-data-foundation table. Its eight own families each used to
+ * resolve to UNAUTHORED_FAMILY_GUIDANCE, so a Move that declared the archetype
+ * was asked for "an owner-attested source extract or document" eight times.
+ */
+describe("the governed-data-foundation archetype reaches its own wording", () => {
+  // Written out rather than read off the table under test: reading the module's
+  // own keys would let a renamed or dropped family pass.
+  const OWN_FAMILY_IDS = [
+    "data_governance_ownership",
+    "semantic_layer_certification",
+    "data_lineage_audit_trail",
+    "data_quality_rules",
+    "source_system_data_access",
+    "platform_architecture_readiness",
+    "master_identity_resolution",
+    "privacy_security_controls",
+  ];
+  /** The four it shares, which the archetype-neutral table answers instead. */
+  const SHARED_FAMILY_IDS = [
+    "model_risk_responsible_ai_controls",
+    "measurement_owner_cadence",
+    "finance_baseline_value_plan",
+    "change_adoption_owner",
+  ];
+
+  it("answers each of its own families from the declared table", () => {
+    for (const familyId of OWN_FAMILY_IDS) {
+      const resolved = resolveFamilyGuidance({
+        familyId,
+        moveName: NEUTRAL_NAME,
+        blueprintId: "governed_data_foundation",
+      });
+      expect(resolved.basis).toBe("declared_archetype");
+      expect(resolved.guidance.exampleContent.length).toBeGreaterThanOrEqual(3);
+      expect(resolved.guidance.exampleTemplate).not.toBe(
+        UNAUTHORED_FAMILY_GUIDANCE.exampleTemplate,
+      );
+    }
+  });
+
+  it("covers exactly the families the archetype declares", () => {
+    const declared = DISCOVERY_BLUEPRINT_CATALOG.governed_data_foundation.evidenceFamilies
+      .map((family) => family.id)
+      .sort();
+    expect([...OWN_FAMILY_IDS, ...SHARED_FAMILY_IDS].sort()).toEqual(declared);
+  });
+
+  it("leaves the shared families to the archetype-neutral reading", () => {
+    // Wording a shared family here too would be a second place to maintain,
+    // and would re-introduce one archetype's voice into a shared id.
+    for (const familyId of SHARED_FAMILY_IDS) {
+      const resolved = resolveFamilyGuidance({
+        familyId,
+        moveName: NEUTRAL_NAME,
+        blueprintId: "governed_data_foundation",
+      });
+      expect(resolved.basis).toBe("cross_archetype");
+    }
+  });
+
+  it("is reached by the declaration, not by what the Move is called", () => {
+    for (const familyId of OWN_FAMILY_IDS) {
+      const neutral = guidanceOf(packetFor("governed_data_foundation", NEUTRAL_NAME, familyId));
+      for (const moveName of [AGENT_ASSIST_NAME, TREASURY_NAME, AP_INVOICE_NAME]) {
+        expect(guidanceOf(packetFor("governed_data_foundation", moveName, familyId))).toEqual(
+          neutral,
+        );
+      }
+    }
+  });
+
+  it("does not hand its wording to an archetype that did not declare it", () => {
+    for (const blueprintId of Object.keys(DISCOVERY_BLUEPRINT_CATALOG)) {
+      if (blueprintId === "governed_data_foundation") continue;
+      for (const familyId of OWN_FAMILY_IDS) {
+        const blueprint = DISCOVERY_BLUEPRINT_CATALOG[blueprintId];
+        if (!blueprint.evidenceFamilies.some((family) => family.id === familyId)) continue;
+        expect(
+          resolveFamilyGuidance({ familyId, moveName: NEUTRAL_NAME, blueprintId }).basis,
+        ).not.toBe("declared_archetype");
+      }
+    }
   });
 });
 
@@ -195,7 +284,7 @@ describe("archetypeGuidanceCoverage", () => {
     };
     expect(shape("healthcare_contact_center_agent_assist")).toEqual([12, 12]);
     expect(shape("general_default")).toEqual([5, 5]);
-    expect(shape("governed_data_foundation")).toEqual([4, 12]);
+    expect(shape("governed_data_foundation")).toEqual([12, 12]);
     expect(shape("financial_services_commercial_lending_agent_assist")).toEqual([1, 8]);
     expect(shape("ai_operations_customer_digital")).toEqual([1, 12]);
   });
