@@ -13,6 +13,8 @@ const readiness: DiscoveryEvidenceReadiness = {
   blueprintId: "test_blueprint",
   blueprintVersion: "2026-08-20",
   archetypeLabel: "Regulated Agent Assist",
+  blueprintBasis: "declared",
+  unknownDeclaredArchetype: null,
   requiredTotal: 2,
   requiredCovered: 0,
   requiredMissing: 2,
