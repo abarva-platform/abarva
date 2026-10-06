@@ -120,6 +120,57 @@ a line with a caveat. On ownership the helper adds no rules of its own: the
 verdict is the gate's exit status, so a rule that lands in the gate governs the
 claim step the day it merges.
 
+## Widening a claim's file list — `--action amend` (item T-836)
+
+A claim is appended "with the exact files you intend to touch", and sometimes the
+measurement moves afterwards. The protocol's answer is to **append an amendment,
+never to restamp the claim** — and until T-836 the protocol gave that amendment
+no way to say what it covers.
+
+```bash
+node scripts/exec/append-claim.mjs \
+  --file ~/Downloads/EXECUTION_CLAIMS.md \
+  --item T-836 --identity '<base-agent>#<run-id>' \
+  --action amend --branch exec/t-836-amend-declares-files \
+  --files 'scripts/exec/append-claim.mjs,scripts/exec/README.md' \
+  --message 'why the file list moved'
+```
+
+**`--files` is required on an amendment, and on nothing else.** That asymmetry is
+the item. T-804 made a line's `files:` list the whole of its lock and left the
+line that declares none reading its own prose; measured on the live register at
+`91d90ad59f`, **303 of 1325** attributed path-holding lines declare no list and
+**83** of those open `AMEND`. Those lines mean to hold what they name, so the
+residual is deliberate — freeing them would put two runs on one file, and a wrong
+free costs another lane its work silently where a wrong hold costs one refusal
+that names itself. The defect was upstream of the reader: there was no action
+that wrote the field, so the careful thing to do and the declarable thing to do
+were different things. An amendment whose `--files` were optional would be the
+field-less line again, written from the sanctioned path.
+
+Three rules follow, and each is a case in `append-claim.test.mjs`:
+
+- **The head is `AMEND item <id> claim`**, which the register's ownership reader
+  attributes to the item and reads as a hold. It keeps `item <id>` inside it on
+  purpose: a head that said only `AMEND` would write a hold nobody can see.
+- **An amendment may only extend a live claim of your own.** The gate must answer
+  `already-yours`; `take` means nothing holds the item, so there is no claim to
+  extend and what was asked for is a claim. This is also what pays for an
+  amendment being exempt from the queue-provenance gate — the item was already
+  asserted against a current queue when it was claimed, and making a holder
+  regenerate before it may widen its own file list would strand it.
+- **The file half IS asked.** An amendment widens a hold onto paths the original
+  claim did not name, so a path another live claim holds stops it, exactly as it
+  stops a claim. A release and an abstention take nothing and stay exempt.
+
+**Still owed, and not decided by this change:** whether an amendment's declared
+list REPLACES or ADDS TO the list of the claim it amends. Both lines are live and
+each contributes its own declared paths, so the effect today is ADD-TO — that is a
+description of the reader, not a ruling. Replace is the simpler rule and silently
+frees files the original claim holds; add-to matches what amendments are used for.
+The call is Anand's, and the prose fallback for field-less lines cannot be removed
+until it is made — a separate change, with its own measurement.
+
 ## The record this line releases (item C-528)
 
 One rule does originate here, and it is about documents rather than ownership.
