@@ -129,11 +129,16 @@ import { buildGateCriteria } from "@/lib/programs/transformers";
 import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import {
+  phaseCaptureModuleValueReader,
+  phaseCaptureValuesByPhase,
+  resolveMoveConfirmedSolutionRoute,
+} from "@/lib/programs/phase-capture-values-for-move";
+import {
   formatSolutionRouteDepthForPrompt,
   resolveConfirmedSolutionRoute,
+  type ConfirmedSolutionRoute,
 } from "@/lib/programs/solution-route-assessment";
 import {
-  getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
 import {
@@ -1003,7 +1008,10 @@ export async function POST(request: Request) {
               ? formatMovesAvaChatPacketForPrompt(packet, mode)
               : "";
             if (mode === "phase_input_draft" && promptPhase >= 1) {
-              const valuesByPhase = await loadPhaseCaptureValuesByPhaseForAva(
+              const {
+                valuesByPhase,
+                confirmedSolutionRoute: draftConfirmedRoute,
+              } = await loadPhaseCaptureValuesByPhaseForAva(
                 tenancy,
                 programId,
               );
@@ -1013,6 +1021,7 @@ export async function POST(request: Request) {
                 upstreamValuesByPhase: valuesByPhase,
                 approvedEvidenceCount: approvedEvidenceTotal,
                 approvedEvidenceUnavailable,
+                confirmedSolutionRoute: draftConfirmedRoute,
               });
               movesAvaPhaseInputDraftAnswer =
                 buildDeterministicPhaseInputDraftAnswer({
@@ -1025,6 +1034,7 @@ export async function POST(request: Request) {
                     upstreamValuesByPhase: valuesByPhase,
                     approvedEvidenceCount: approvedEvidenceTotal,
                     approvedEvidenceUnavailable,
+                    confirmedSolutionRoute: draftConfirmedRoute,
                   }),
                 });
             }
@@ -3089,26 +3099,38 @@ function readPhaseCaptureModuleValue(
   return typeof value === "string" ? value : "";
 }
 
+/**
+ * Saved answers per phase for this Move, read against the capture set the Move
+ * was actually asked for — P3 Design narrows that set once P2 confirms a
+ * solution route, so the route is resolved before the sections are read. The
+ * default P3 list would hide the route's own answer from aVa and show it the
+ * two questions the route dropped as permanently unanswered.
+ */
 async function loadPhaseCaptureValuesByPhaseForAva(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
-): Promise<Record<number, Record<string, string>>> {
+): Promise<{
+  valuesByPhase: Record<number, Record<string, string>>;
+  confirmedSolutionRoute: ConfirmedSolutionRoute | null;
+}> {
   const modules = await getModuleState(ctx, programId);
-  const byPhase: Record<number, Record<string, string>> = {};
-
-  for (let phase = 0; phase <= 5; phase += 1) {
-    const values: Record<string, string> = {};
-    for (const section of getPhaseCaptureSections(phase)) {
-      const capturedModule = modules.find(
-        (entry) =>
-          entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
-      );
-      values[section.key] = readPhaseCaptureModuleValue(capturedModule?.state);
-    }
-    byPhase[phase] = values;
-  }
-
-  return byPhase;
+  const moduleValue = phaseCaptureModuleValueReader(modules);
+  const approvedPhaseTwoEvidence = await listApprovedPhaseEvidence(
+    ctx,
+    programId,
+    2,
+  );
+  const confirmedSolutionRoute = resolveMoveConfirmedSolutionRoute(
+    moduleValue,
+    approvedPhaseTwoEvidence.map((item) => item.evidenceId),
+  );
+  return {
+    valuesByPhase: phaseCaptureValuesByPhase({
+      moduleValue,
+      confirmedSolutionRoute,
+    }),
+    confirmedSolutionRoute,
+  };
 }
 
 function formatMoveEvidenceNeedForAva(
