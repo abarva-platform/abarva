@@ -21,6 +21,11 @@ import {
   type RiskTierInputs,
   type RiskTierResult,
 } from "@/lib/programs/risk-tier-scoring";
+import {
+  RISK_DIMENSION_KEYS,
+  RISK_ESCALATOR_KEYS,
+  resolveRiskFactorVocabulary,
+} from "@/lib/programs/risk-factor-vocabulary";
 
 // Scoped to this component — deliberately not added to the shared
 // phase-workspace/styles.tsx stylesheet, which many other components depend
@@ -59,105 +64,15 @@ const ESCALATOR_OPTIONS: readonly EscalatorSeverity[] = [
   "Critical",
 ];
 
-interface DimensionField {
-  key: keyof RiskTierInputs;
-  label: string;
-  question: string;
-  hint: string;
-}
-
-const DIMENSION_FIELDS: DimensionField[] = [
-  {
-    key: "d1DataSensitivity",
-    label: "D1 · Data Sensitivity",
-    question: "What type of data is involved?",
-    hint: "Low = Public · Moderate = — · High = PII · Critical = PHI or PII+PHI",
-  },
-  {
-    key: "d2HumanOversight",
-    label: "D2 · Human Oversight",
-    question: "What level of independent AI operation is involved?",
-    hint: "Low = Assistive · Moderate = Advisory or Automated · High = — · Critical = Autonomous or Agentic",
-  },
-  {
-    key: "d3IntegrationImpact",
-    label: "D3 · Integration Impact",
-    question: "What does the AI do to core systems?",
-    hint: "Low = None · Moderate = Read-only · High = — · Critical = Write",
-  },
-  {
-    key: "d4BuildOrigin",
-    label: "D4 · Build Origin",
-    question: "Where did the capability come from?",
-    hint: "Low = SaaS · Moderate = Vendor Configured · High = Fine-tuned · Critical = Internally Built",
-  },
-  {
-    key: "d5DomainBreadth",
-    label: "D5 · Domain Breadth",
-    question: "How many domains does this touch?",
-    hint: "Low = Single · Moderate = Multi · High = — · Critical = Enterprise",
-  },
-];
-
-interface EscalatorField {
-  key: keyof RiskTierInputs;
-  label: string;
-  question: string;
-}
-
-const ESCALATOR_FIELDS: EscalatorField[] = [
-  {
-    key: "e1PhiExposure",
-    label: "E1 · PHI / Sensitive Data Exposure",
-    question: "How broadly is the data exposed, and how well protected?",
-  },
-  {
-    key: "e2AutonomousAction",
-    label: "E2 · Autonomous / Agentic Action",
-    question: "Does the AI act on its own, without a human confirming first?",
-  },
-  {
-    key: "e3ClinicalDecisioning",
-    label: "E3 · Clinical Decisioning",
-    question: "Does this influence a clinical decision?",
-  },
-  {
-    key: "e4OrganizationReadiness",
-    label: "E4 · Organization Readiness / Ability to Adopt",
-    question:
-      "Is the vendor/tool sanctioned, and what's the integration impact?",
-  },
-  {
-    key: "e5CrossDomainIntegration",
-    label: "E5 · Cross-Domain Integration Impact",
-    question: "Does this cross domains, and does it write?",
-  },
-  {
-    key: "e6PublicRegulatoryExposure",
-    label: "E6 · Public / Regulatory Exposure",
-    question: "Do specific regulations apply to this use case?",
-  },
-  {
-    key: "e7BrandReputationRisk",
-    label: "E7 · Brand / Reputation Risk",
-    question:
-      "If this use case failed publicly, would it cause reputational harm?",
-  },
-  {
-    key: "e8PatientFacingExposure",
-    label: "E8 · Patient-Facing Exposure",
-    question: "Who is the audience — internal, patient/public, or direct?",
-  },
-];
-
 /**
- * Every answerable key, dimensions and escalators together. Kept as a key list
- * rather than a concatenated field list because `DimensionField` carries a
- * `hint` that `EscalatorField` does not — the two arrays are not one type.
+ * Every answerable key, dimensions and escalators together. Taken from the
+ * vocabulary module's fixed key order rather than from a resolved prompt list:
+ * which thirteen factors are required, and the submit/dirty logic that reads
+ * them, must not depend on which archetype's WORDING is in use.
  */
 const ALL_FIELD_KEYS: ReadonlyArray<keyof RiskTierInputs> = [
-  ...DIMENSION_FIELDS.map((f) => f.key),
-  ...ESCALATOR_FIELDS.map((f) => f.key),
+  ...RISK_DIMENSION_KEYS,
+  ...RISK_ESCALATOR_KEYS,
 ];
 
 const BAND_TONE: Record<
@@ -186,6 +101,10 @@ export function RiskAssessmentPanel({ moveId }: RiskAssessmentPanelProps) {
   );
   const [lastSavedInputs, setLastSavedInputs] =
     React.useState<RiskTierInputs | null>(null);
+  // The archetype the Move has DECLARED, served by the GET above. Selects the
+  // wording of the thirteen factors and nothing else; null until the load
+  // resolves, and no field renders before then.
+  const [archetypeId, setArchetypeId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -202,8 +121,10 @@ export function RiskAssessmentPanel({ moveId }: RiskAssessmentPanelProps) {
         const data = (await res.json()) as {
           inputs: RiskTierInputs | null;
           result: RiskTierResult | null;
+          archetypeId?: string | null;
         };
         if (cancelled) return;
+        setArchetypeId(data.archetypeId ?? null);
         if (data.inputs) {
           setValues(data.inputs);
           setLastSavedInputs(data.inputs);
@@ -221,9 +142,14 @@ export function RiskAssessmentPanel({ moveId }: RiskAssessmentPanelProps) {
     };
   }, [moveId]);
 
-  const allFieldsAnswered =
-    DIMENSION_FIELDS.every((f) => Boolean(values[f.key])) &&
-    ESCALATOR_FIELDS.every((f) => Boolean(values[f.key]));
+  const vocabulary = React.useMemo(
+    () => resolveRiskFactorVocabulary(archetypeId),
+    [archetypeId],
+  );
+
+  const allFieldsAnswered = ALL_FIELD_KEYS.every((key) =>
+    Boolean(values[key]),
+  );
 
   // "Dirty" means the current form values differ from what's actually saved
   // — NOT just "every field happens to be filled." Right after a fresh load
@@ -286,7 +212,7 @@ export function RiskAssessmentPanel({ moveId }: RiskAssessmentPanelProps) {
             <>
               {loadError ? <p role="alert">{loadError}</p> : null}
               <div className="ra-grid" data-testid="risk-dimension-fields">
-                {DIMENSION_FIELDS.map((field) => (
+                {vocabulary.dimensions.map((field) => (
                   <label key={field.key} className="ra-field">
                     <span className="ra-field-label">{field.label}</span>
                     <span className="ra-field-question">{field.question}</span>
@@ -322,7 +248,7 @@ export function RiskAssessmentPanel({ moveId }: RiskAssessmentPanelProps) {
             note="Each escalator adds 0-4 points; any triggered escalator routes to Governance Council regardless of the band."
           >
             <div className="ra-grid" data-testid="risk-escalator-fields">
-              {ESCALATOR_FIELDS.map((field) => (
+              {vocabulary.escalators.map((field) => (
                 <label key={field.key} className="ra-field">
                   <span className="ra-field-label">{field.label}</span>
                   <span className="ra-field-question">{field.question}</span>

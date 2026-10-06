@@ -107,12 +107,14 @@ archetype declaration.
   --noEmit`, exit 0.
 - PASS — `npx eslint` on all three changed source files, exit 0.
 - PASS — `npm run release:check -- --base origin/main --head HEAD`.
-- Census honesty: regenerating the coverage census on an **unmodified**
-  `origin/main` checkout produces the identical `testFiles` 2752→2753,
-  `coveredTestFiles` 2588→2589, `pullRequestCoveredTestFiles` 2587→2588. This
-  change adds no test file and contributes nothing to those counts; the refresh
-  is carried only so the drift guard is satisfied. If a sibling release lands the
-  same counts first, this hunk becomes a no-op.
+- Census honesty: regenerating the coverage census in a separate **unmodified**
+  `origin/main` worktree produces the identical delta this branch carries —
+  `testFiles` 2754→2755, `coveredTestFiles` 2590→2591,
+  `pullRequestCoveredTestFiles` 2589→2590. This change adds no test file and
+  contributes nothing to those counts; the refresh is carried only so the drift
+  guard is satisfied. Verified twice, once on each base this branch has had, and
+  the drift was +1 on all three counts both times. If a sibling release lands
+  the same counts first, this hunk becomes a no-op.
 - NOT RUN — live signed-in verification. This changes what a generated
   deliverable is told to retrieve, and the generated output can only be judged
   against the private data plane with the demo Move's evidence loaded and

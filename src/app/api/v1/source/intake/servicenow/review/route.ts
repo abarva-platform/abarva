@@ -2,7 +2,12 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
-import { recordServiceNowRequestMappingDecision } from "@/lib/source/intake/servicenow-request-event-authority";
+import {
+  readServiceNowRequestDisposition,
+  recordServiceNowRequestDisposition,
+  recordServiceNowRequestMappingDecision,
+  type SourceRequestDispositionState,
+} from "@/lib/source/intake/servicenow-request-event-authority";
 import { buildServiceNowRequestEventHandoff } from "@/lib/source/intake/servicenow-request-event-handoff";
 import { readSourceIntakeRequestQueue } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import {
@@ -16,6 +21,9 @@ interface ReviewServiceNowRequestBody {
   decisionState?: "accepted" | "overridden";
   categoryId?: string;
   rationale?: string;
+  dispositionState?: SourceRequestDispositionState;
+  survivingRequestId?: string;
+  survivingSourceVersion?: string;
 }
 
 function parseOptionalString(value: unknown): string | undefined {
@@ -30,6 +38,11 @@ function parseCategoryId(value: unknown): SourceCategoryId | undefined {
   return (SOURCE_CATEGORY_IDS as readonly string[]).includes(trimmed)
     ? (trimmed as SourceCategoryId)
     : undefined;
+}
+
+function isDispositionState(value: unknown): value is SourceRequestDispositionState {
+  return value === "accepted" || value === "returned" ||
+    value === "merged" || value === "declined";
 }
 
 export async function POST(request: Request) {
@@ -125,6 +138,112 @@ export async function POST(request: Request) {
           "A named canonical person is required to review request routing.",
       },
       { status: 409 },
+    );
+  }
+
+  if (body.dispositionState !== undefined) {
+    if (!isDispositionState(body.dispositionState) || body.decisionState !== undefined || rationale.length < 12) {
+      return Response.json(
+        { error: "invalid_request_disposition" },
+        { status: 400 },
+      );
+    }
+    if (importedRequest.eventLink) {
+      return Response.json(
+        { error: "request_already_linked" },
+        { status: 409 },
+      );
+    }
+    if (
+      body.dispositionState === "accepted" &&
+      (importedRequest.mappingDecision?.sourceVersion !== sourceVersion ||
+        importedRequest.requiredFactGaps.length > 0)
+    ) {
+      return Response.json(
+        { error: "request_not_ready_for_acceptance" },
+        { status: 409 },
+      );
+    }
+
+    const survivingRequestId = parseOptionalString(body.survivingRequestId);
+    const survivingSourceVersion = parseOptionalString(body.survivingSourceVersion);
+    if (body.dispositionState === "merged") {
+      const survivor = queue.requests.find(
+        (candidate) => candidate.requestId === survivingRequestId,
+      );
+      if (
+        !survivor || survivor.requestId === requestId ||
+        survivor.sourceVersion !== survivingSourceVersion
+      ) {
+        return Response.json(
+          { error: "invalid_merge_survivor" },
+          { status: 409 },
+        );
+      }
+    } else if (survivingRequestId || survivingSourceVersion) {
+      return Response.json(
+        { error: "unexpected_merge_survivor" },
+        { status: 400 },
+      );
+    }
+
+    try {
+      const existing = await readServiceNowRequestDisposition({
+        tenantKey: activeClient.key,
+        requestId,
+        sourceVersion,
+      });
+      if (existing) {
+        return Response.json(
+          { error: "request_already_disposed", disposition: existing },
+          { status: 409 },
+        );
+      }
+    } catch {
+      return Response.json(
+        { error: "request_disposition_authority_unavailable" },
+        { status: 503 },
+      );
+    }
+
+    try {
+      await recordServiceNowRequestDisposition({
+        tenantKey: activeClient.key,
+        requestId,
+        sourceVersion,
+        state: body.dispositionState,
+        survivingRequestId,
+        survivingSourceVersion,
+        rationale,
+        decidedByUserId: user.personId,
+        decidedByName: user.name,
+      });
+    } catch {
+      return Response.json(
+        { error: "request_disposition_write_blocked" },
+        { status: 409 },
+      );
+    }
+
+    try {
+      const disposition = await readServiceNowRequestDisposition({
+        tenantKey: activeClient.key,
+        requestId,
+        sourceVersion,
+      });
+      if (
+        disposition?.disposition_state === body.dispositionState &&
+        disposition.source_version === sourceVersion &&
+        disposition.decided_by_user_id === user.personId
+      ) {
+        return Response.json({ ok: true, disposition });
+      }
+    } catch {
+      // A write is not confirmed until the exact authority can be read back.
+    }
+    return Response.json(
+      { error: "request_disposition_not_confirmed" },
+      { status: 503 },
     );
   }
 
