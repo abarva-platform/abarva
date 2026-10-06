@@ -119,3 +119,52 @@ export function usableScopeSummary(value: string | null | undefined) {
   if (!text) return null;
   return text;
 }
+
+/**
+ * The template tails the migrations actually emit after `<vendor>: `.
+ *
+ * Both are generated when `purpose_summary_json` is empty. The wording changed
+ * between migrations — `20260910203000` and `20260910233000` emit the first,
+ * `20260911150000` emits the second — and that change is what defeated the
+ * header's guard, which still blocked only the superseded phrasing.
+ */
+export const GENERATED_PURPOSE_HEADLINE_TAILS = [
+  "contract purpose is not yet reviewed.",
+  "contract purpose requires reviewed context.",
+] as const;
+
+/**
+ * True when a story headline is a generated fallback rather than reviewed
+ * prose about the contract.
+ *
+ * This matches the GENERATOR'S SHAPE, not its wording. Every generated purpose
+ * headline is `<vendor name>: contract purpose …`, so the control keys on that
+ * shape and survives the tail being reworded again — which is exactly how the
+ * previous guard rotted: it listed `not yet reviewed`, a later migration
+ * emitted `requires reviewed context`, and the new sentence passed through as
+ * a page heading. A blocklist of phrasings is a gate that goes stale on
+ * someone else's edit.
+ *
+ * The vendor name is used when it is known, because that makes the match
+ * exact; without it the `: contract purpose` shape still identifies the
+ * generator. A genuinely reviewed purpose that happens to begin "contract
+ * purpose" is not addressed by this control and would be caught by neither —
+ * it is prose, and prose is what the header is for.
+ */
+export function isGeneratedPurposeHeadline(
+  headline: string | null | undefined,
+  vendorName?: string | null,
+): boolean {
+  const text = headline?.trim();
+  if (!text) return false;
+  const vendor = vendorName?.trim();
+  if (vendor) {
+    const escaped = vendor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`^${escaped}\\s*:\\s*contract purpose\\b`, "i").test(text)) {
+      return true;
+    }
+  }
+  // Without a vendor name, or when the stored name differs from the one the
+  // headline was built from, the generator's own separator still identifies it.
+  return /:\s*contract purpose\b/i.test(text);
+}
