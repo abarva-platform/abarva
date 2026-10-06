@@ -8770,4 +8770,146 @@ describe("MovesPhaseStandaloneClient", () => {
       );
     });
   });
+  // ─── The build hold at P4/P5 states the reason it can act on ─────────────
+  // `phaseCaptureStatusForSection` returns "Evidence open" for any section
+  // with no `evidenceFamily` of its own once the phase's evidence check has
+  // not passed — which is every P4 and P5 section. A fully answered, fully
+  // saved P4 therefore counted as 0/7 inputs, and the build control's reason
+  // was derived from that count alone: "Complete 7 phase inputs before
+  // Approve & Build", for inputs that are complete. The evidence behind the
+  // verdict is the discovery set re-stamped onto the active phase, so it is
+  // closed in Files & Evidence and not on the screen stating the blocker.
+  // `PhaseApproveAndBuild` already knows the right sentence, but the parent
+  // blocker shadows it (`hasParentBlocker` is checked before
+  // `hasRequiredGaps`), so the fix belongs in what the parent passes down.
+  describe("a captured phase held by open evidence says so", () => {
+    const p4Answers = {
+      roadmap_sequencing: "Three waves, starting with the exception queue.",
+      estimates_capacity: completeEstimateModelValue,
+      value_plan: "Measured against the P2 baseline at day 90.",
+      funding_governance: "Funded from the existing programme envelope.",
+      risks_dependencies: "Source freshness is the main dependency.",
+      handoff_plan: "Hands to the platform team with the runbook.",
+      recommendation: "Proceed to mobilisation on the agreed sequence.",
+    };
+    const openEvidencePacketsForPhase = (phase: number) =>
+      coveredEvidencePacketsForPhase(phase).map((packet) => ({
+        ...packet,
+        status: "missing" as const,
+        evidenceSlot: "Data governance ownership",
+        evidenceTitles: [],
+      }));
+
+    it("P4 with every input answered and its required evidence open blames the evidence", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={openEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={p4Answers}
+          move={makeMove({
+            currentPhase: 4,
+            phaseLabel: "P4 Roadmap & Business Case",
+          })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Continue is held even though every question is answered and saved, so
+      // the band is the only thing that can explain the step.
+      expect(
+        screen.getByRole("button", { name: "Continue" }),
+      ).toBeDisabled();
+      const hold = screen.getByTestId("capture-evidence-hold");
+      expect(hold).toHaveTextContent("Phase inputs are captured.");
+      expect(hold).toHaveTextContent("1 required evidence item");
+      expect(hold).toHaveTextContent("Data governance ownership");
+      expect(hold).toHaveTextContent("Files & Evidence");
+      // The defect: a count of held-but-complete sections read as missing
+      // inputs, with no mention of evidence and nothing on screen to do.
+      expect(hold).not.toHaveTextContent(
+        /Complete \d+ phase inputs? before Approve & Build/,
+      );
+      expect(
+        screen.getByRole("button", { name: /Open Files & Evidence/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("P4 with its required evidence covered holds nothing and shows no band", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={p4Answers}
+          move={makeMove({
+            currentPhase: 4,
+            phaseLabel: "P4 Roadmap & Business Case",
+          })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Nothing holds this phase, so the flow resumes on its last step with
+      // the governed approve slot in place of Continue — and no band.
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("capture-evidence-hold"),
+      ).not.toBeInTheDocument();
+    });
+
+    // Unanswered capture is work on the same screen, so it stays the stated
+    // reason and the evidence band must not take its place.
+    it("P4 missing an answer shows no evidence band, even with evidence open", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={openEvidencePacketsForPhase(4)}
+          initialPhaseCaptureValues={{ ...p4Answers, roadmap_sequencing: "" }}
+          move={makeMove({
+            currentPhase: 4,
+            phaseLabel: "P4 Roadmap & Business Case",
+          })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByTestId("capture-evidence-hold"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("P5 is held the same way, so the fix is not P4-specific", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={openEvidencePacketsForPhase(5)}
+          initialPhaseCaptureValues={{
+            mobilization_plan: "Platform team takes the runbook on day one.",
+            launch_readiness: "Entry criteria signed by the service owner.",
+            value_proof_rules: "Day-90 read against the agreed baseline.",
+            first_90_days: "Three milestones, each with a named owner.",
+            governance_cadence: "Monthly review with the steering group.",
+            risks_open_items: "Source freshness remains the open risk.",
+            recommendation: "Go live on the agreed sequence.",
+          }}
+          move={makeMove({
+            currentPhase: 5,
+            phaseLabel: "P5 Mobilize",
+          })}
+          phaseNum={5}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByTestId("capture-evidence-hold"),
+      ).toHaveTextContent("Phase inputs are captured.");
+    });
+  });
 });

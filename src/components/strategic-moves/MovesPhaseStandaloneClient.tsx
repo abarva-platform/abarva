@@ -17,6 +17,8 @@ import {
   type PhaseCaptureSaveStatus,
   type PhaseCaptureStatusView,
 } from "@/lib/programs/phase-capture-status";
+import { resolvePhaseCaptureHold } from "@/lib/programs/phase-capture-hold";
+import { CaptureEvidenceHoldNotice } from "@/components/strategic-moves/CaptureEvidenceHoldNotice";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
@@ -1483,6 +1485,51 @@ export function MovesPhaseStandaloneClient({
   ).length;
   const phaseCaptureMissingCount =
     phaseCaptureSections.length - phaseCaptureCompleteCount;
+  // Sections that are answered, saved, and structurally valid and are held
+  // incomplete ONLY by this phase's evidence verdict. Measured by asking the
+  // status machine the same question twice — once with the real verdict and
+  // once with it forced to passed — so the distinction never re-implements
+  // `phaseCaptureStatusForSection`. From P3 on, the evidence behind that
+  // verdict is the discovery set re-stamped onto the active phase, which is
+  // closed in Files & Evidence and not on this screen. See
+  // `resolvePhaseCaptureHold`.
+  const phaseCaptureEvidenceHeldCount = useMemo(
+    () =>
+      phaseCaptureSections.filter((section) => {
+        const completeWith = (evidencePassed: boolean) =>
+          phaseCaptureStatusForSection(
+            section,
+            persistedPhaseCaptureValues,
+            persistedPhaseCaptureValues,
+            phaseCaptureSaveStatus,
+            businessChangeAssessment,
+            initialApprovedEvidenceReferences.map((item) => item.evidenceId),
+            evidencePassed,
+            evidenceReadinessAvailable,
+            initialApprovedP1CaptureEvidenceReferences,
+            captureBasisForSection(section.key),
+          ).complete;
+        return !completeWith(phaseEvidencePassed) && completeWith(true);
+      }).length,
+    [
+      businessChangeAssessment,
+      captureBasisForSection,
+      initialApprovedEvidenceReferences,
+      initialApprovedP1CaptureEvidenceReferences,
+      phaseCaptureSections,
+      persistedPhaseCaptureValues,
+      phaseCaptureSaveStatus,
+      phaseEvidencePassed,
+      evidenceReadinessAvailable,
+    ],
+  );
+  const phaseCaptureHold = resolvePhaseCaptureHold({
+    unansweredCount: phaseCaptureMissingCount - phaseCaptureEvidenceHeldCount,
+    evidenceHeldCount: phaseCaptureEvidenceHeldCount,
+    openRequiredEvidenceSlots: requiredEvidenceGaps.map(
+      (gap) => gap.evidenceSlot,
+    ),
+  });
   const blockedPhaseRequest = phaseNavigationStatus?.blockedRequest ?? null;
   const terminalP5Complete = terminalComplete && phase.phase === 5;
   const nextOpenAction =
@@ -1589,9 +1636,10 @@ export function MovesPhaseStandaloneClient({
                     phaseCaptureDirtyCount === 1 ? "" : "s"
                   } before Approve & Build.`
                 : phase.phase >= 1 && phaseCaptureMissingCount > 0
-                  ? `Complete ${phaseCaptureMissingCount} phase input${
+                  ? (phaseCaptureHold?.message ??
+                    `Complete ${phaseCaptureMissingCount} phase input${
                       phaseCaptureMissingCount === 1 ? "" : "s"
-                    } before Approve & Build.`
+                    } before Approve & Build.`)
                   : null;
   const phaseProgress = phaseProgressReadiness({
     phase: phase.phase,
@@ -3406,6 +3454,15 @@ export function MovesPhaseStandaloneClient({
                             />
                             <CharterStandingAfterDiscover
                               rows={charterStandingAfterDiscoverRows}
+                            />
+                            {/* A step whose questions are all answered can
+                                still hold Continue, because an open phase
+                                evidence check marks every section "Evidence
+                                open". Say which evidence, and where it is
+                                closed — the step itself cannot close it. */}
+                            <CaptureEvidenceHoldNotice
+                              hold={phaseCaptureHold}
+                              onOpenFiles={openFilesWorkspace}
                             />
                           </>
                         ),
