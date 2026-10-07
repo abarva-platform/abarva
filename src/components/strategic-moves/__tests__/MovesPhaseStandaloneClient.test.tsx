@@ -5901,6 +5901,62 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
   });
 
+  it("lets a discovery-phase upload declare the evidence family it covers", async () => {
+    // The checklist beside this uploader names the families P2 needs. While
+    // the picker was gated on P1 this surface offered none of them, so each
+    // file reached coverage with no declared identity and was placed by
+    // keyword inference instead -- which, for an archetype whose families
+    // carry no keyword list, turns on an exact phrase match.
+    const discoveryPackets = coveredEvidencePacketsForPhase(2).map(
+      (packet) => ({
+        ...packet,
+        evidenceSlot: "Data lineage and AI audit trail",
+        familyId: "data_lineage_audit_trail",
+        status: "missing" as const,
+      }),
+    );
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={discoveryPackets}
+        initialSubstepKey="current"
+        move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const picker = screen.getByLabelText("Required evidence family (optional)");
+    expect(picker).toBeEnabled();
+    expect(
+      screen.getByRole("option", { name: "Data lineage and AI audit trail" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(picker, {
+      target: { value: "data_lineage_audit_trail" },
+    });
+    fireEvent.change(screen.getByLabelText("Upload P2 files"), {
+      target: {
+        files: [
+          new File(["lineage"], "lineage-register.md", {
+            type: "text/markdown",
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(uploadedEvidenceRoutes).toEqual([
+        {
+          fileName: "lineage-register.md",
+          phase: 2,
+          evidenceFamily: "data_lineage_audit_trail",
+        },
+      ]);
+    });
+  });
+
   it("does not report an upload as usable evidence when parsing did not create a review record", async () => {
     render(
       <MovesPhaseStandaloneClient

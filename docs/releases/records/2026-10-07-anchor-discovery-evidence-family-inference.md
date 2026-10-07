@@ -111,10 +111,11 @@ No migration, no route, no script, no workflow change.
   kills: removing the anchor gate entirely, and anchoring on the family name but
   not its label (a file named after the label the picker displays is the
   likeliest shape, and that case now has a test).
-- PASS census regenerated after the rebase onto current `main`: test files
-  2798 → 2799, covered 2634 → 2635, uncovered flat at 164. The merge of the
-  counts line had come through clean at a stale 2798/2634; only the regen gave
-  the true figure.
+- PASS census regenerated against current `main`: test files 2798 → 2800,
+  covered 2634 → 2636, uncovered flat at 164. The +2 is this change's one new
+  test file plus one file `main` was already behind on. Regenerated twice, once
+  after a rebase and once after merging `main`: the counts line merged clean
+  both times at a stale figure, and only the regen gave the true one.
 - NOT RUN live signed-in walk. Needs a signed-in session on the deployed
   revision — Anand's step, not available to this lane.
 - NOT RUN the end-to-end discovery-evidence load. The dataset manifest for the
