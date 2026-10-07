@@ -87,10 +87,131 @@ describe("stage readiness gate", () => {
   });
 
   it("fails closed when the current transition workbook has no accepted review", () => {
-    const adjusted = applyStageReadinessToEvidencePackets([packet()], 2, null);
+    const adjusted = applyStageReadinessToEvidencePackets(
+      [packet()],
+      2,
+      null,
+      "move-1",
+    );
 
-    expect(adjusted[0]?.status).toBe("partial");
+    // Still closed, and closed on the artifact that would open it — reported
+    // the way the P1 branch below reports the same condition.
+    expect(currentPhaseRequiredEvidenceGaps(adjusted, 2)).toHaveLength(1);
+    expect(adjusted.at(-1)).toMatchObject({
+      phase: 2,
+      status: "missing",
+      familyId: "stage_readiness_p2_p3",
+      evidenceSlot: "P2 to P3 readiness workbook",
+    });
     expect(adjusted[0]?.nextAction).toMatch(/readiness workbook/i);
+  });
+
+  it("counts an unreviewed transition workbook once, not once per approved family", () => {
+    const families = [
+      "data_governance_ownership",
+      "semantic_layer_certification",
+      "data_lineage_audit_trail",
+      "data_quality_rules",
+      "source_system_data_access",
+      "platform_architecture_readiness",
+      "master_identity_resolution",
+      "privacy_security_controls",
+      "model_risk_responsible_ai_controls",
+      "measurement_owner_cadence",
+      "finance_baseline_value_plan",
+    ];
+    const packets = families.map((familyId) =>
+      packet({ familyId, status: "covered", evidenceIds: [`ev-${familyId}`] }),
+    );
+
+    const adjusted = applyStageReadinessToEvidencePackets(
+      packets,
+      2,
+      null,
+      "move-1",
+    );
+    const gaps = currentPhaseRequiredEvidenceGaps(adjusted, 2);
+
+    // Eleven of eleven families approved and present; the only open item is the
+    // review. Reporting a gap per family told the Move that eleven evidence
+    // items were still open and never named the workbook.
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0]?.familyId).toBe("stage_readiness_p2_p3");
+    expect(
+      adjusted.filter((entry) => families.includes(entry.familyId)),
+    ).toHaveLength(11);
+    for (const entry of adjusted.filter((e) => families.includes(e.familyId))) {
+      expect(entry.status).toBe("covered");
+    }
+  });
+
+  it("treats a workbook with nothing required as an absent review, not a family gap", () => {
+    // `proposals` is non-null here, so the condition cannot be "no workbook
+    // was loaded": what matters is that the transition has no REQUIRED review
+    // to satisfy, which is the same absence from the gate's point of view.
+    const adjusted = applyStageReadinessToEvidencePackets(
+      [packet()],
+      2,
+      [proposal({ requirement: "recommended" })],
+      "move-1",
+    );
+
+    expect(adjusted.at(-1)).toMatchObject({
+      familyId: "stage_readiness_p2_p3",
+      status: "missing",
+    });
+    expect(adjusted[0]?.status).toBe("covered");
+    expect(currentPhaseRequiredEvidenceGaps(adjusted, 2)).toHaveLength(1);
+  });
+
+  it("still refuses to draft from evidence whose transition review is absent", () => {
+    const adjusted = applyStageReadinessToEvidencePackets(
+      [packet()],
+      2,
+      null,
+      "move-1",
+    );
+
+    // Leaving the status alone must not let anything be drafted from it.
+    expect(adjusted[0]).toMatchObject({
+      status: "covered",
+      canDraftBoundary: expect.objectContaining({ canDraft: false }),
+    });
+    expect(adjusted[0]?.preliminaryGenerationCaveat).toMatch(
+      /P2 to P3 readiness review is incomplete/,
+    );
+  });
+
+  it("keeps a family gap per family once the workbook has been reviewed at all", () => {
+    const adjusted = applyStageReadinessToEvidencePackets(
+      [packet({ familyId: "unreviewed_family" })],
+      2,
+      [proposal()],
+      "move-1",
+    );
+
+    // The workbook exists; this family simply has no answer in it. That is this
+    // family's gap, not a missing workbook, so no workbook packet is appended.
+    expect(
+      adjusted.some((entry) => entry.familyId.startsWith("stage_readiness_")),
+    ).toBe(false);
+    expect(adjusted[0]?.status).toBe("partial");
+    expect(currentPhaseRequiredEvidenceGaps(adjusted, 2)).toHaveLength(1);
+  });
+
+  it("opens the phase when the reviewed workbook answers the family", () => {
+    const adjusted = applyStageReadinessToEvidencePackets(
+      [packet()],
+      2,
+      [proposal()],
+      "move-1",
+    );
+
+    expect(
+      adjusted.some((entry) => entry.familyId.startsWith("stage_readiness_")),
+    ).toBe(false);
+    expect(adjusted[0]?.status).toBe("covered");
+    expect(currentPhaseRequiredEvidenceGaps(adjusted, 2)).toEqual([]);
   });
 
   it("keeps P1 discovery-onramp gaps out of the P1 gate", () => {

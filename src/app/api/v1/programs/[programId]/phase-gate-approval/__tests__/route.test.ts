@@ -311,12 +311,16 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     const res = await POST(req({ phase: 3 }) as never, { params });
 
     expect(res.status).toBe(409);
+    // The refusal names the unreviewed workbook, not the approved evidence
+    // family it would otherwise report as still open.
     await expect(res.json()).resolves.toMatchObject({
       error: "transition_evidence_incomplete",
       requiredEvidenceGaps: [
         expect.objectContaining({
-          evidenceSlot: "Contact center KPI baseline",
-          status: "partial",
+          evidenceSlot: "P3 to P4 readiness workbook",
+          status: "missing",
+          nextAction:
+            "Complete the P3 to P4 readiness workbook with an evidence-backed answer and source reference.",
         }),
       ],
     });

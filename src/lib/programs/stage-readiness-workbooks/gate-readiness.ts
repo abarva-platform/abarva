@@ -161,6 +161,29 @@ export function applyStageReadinessToEvidencePackets(
     ];
   }
 
+  // A transition whose workbook has not been reviewed AT ALL is one missing
+  // workbook, not one missing item per required evidence family. Reporting it
+  // per family told a Move with 11 of 11 families approved that "11 required
+  // evidence items are still open" and never named the one artifact that would
+  // clear the phase — the P1 branch above has always reported this as a single
+  // named packet. A workbook that HAS been reviewed, but not for this family,
+  // stays that family's own gap: the answer really is missing there.
+  if (requiredProposalsByDimension.size === 0) {
+    const nextAction = workbookUnreviewedNextAction(phase);
+    return [
+      ...packets.map((packet) =>
+        packet.phase === phase && packet.priority === "required"
+          ? markTransitionNotEstablished(packet, phase, nextAction, false)
+          : packet,
+      ),
+      readinessWorkbookPacket(
+        moveId ?? packets[0]?.moveId ?? "",
+        phase,
+        nextAction,
+      ),
+    ];
+  }
+
   return packets.map((packet) => {
     if (packet.phase !== phase || packet.priority !== "required") return packet;
 
@@ -187,7 +210,7 @@ export function applyStageReadinessToEvidencePackets(
     const reasons = new Set(assessment.blockers.map((blocker) => blocker.reason));
     if (unlinkedSources.length > 0) reasons.add("source_not_linked");
     const nextAction = !dimensionProposals?.length
-      ? `Complete the P${phase} to P${phase + 1} readiness workbook with an evidence-backed answer and source reference.`
+      ? workbookUnreviewedNextAction(phase)
       : reasons.has("source_not_linked")
         ? "Link each required response to an approved uploaded evidence item in this evidence family."
         : reasons.has("source_not_named")
@@ -196,20 +219,50 @@ export function applyStageReadinessToEvidencePackets(
           ? "Replace unknown or insufficient responses with evidence-backed answers before this phase closes."
           : "Review and accept each required readiness-workbook response before this phase closes.";
 
-    return {
-      ...packet,
-      status: packet.status === "covered" ? "partial" : packet.status,
-      canDraftBoundary: {
-        ...packet.canDraftBoundary,
-        canDraft: false,
-        canDraftLabel: "Evidence is present, but transition readiness is not established.",
-        cannotDraftLabel: "Do not treat this evidence family as phase-ready yet.",
-      },
-      preliminaryGenerationCaveat:
-        `The P${phase} to P${phase + 1} readiness review is incomplete for ${packet.evidenceSlot}.`,
-      nextAction,
-    };
+    return markTransitionNotEstablished(packet, phase, nextAction, true);
   });
+}
+
+function workbookUnreviewedNextAction(phase: number): string {
+  return `Complete the P${phase} to P${phase + 1} readiness workbook with an evidence-backed answer and source reference.`;
+}
+
+/**
+ * This evidence family is not phase-ready: nothing may be drafted from it, and
+ * anything generated anyway carries the caveat.
+ *
+ * `downgradeCovered` is the one difference between the two readings this module
+ * keeps, stated here so they cannot drift apart. A family whose OWN required
+ * answers are unresolved, unsourced, or unlinked is a fact about that family,
+ * so its approved evidence stops counting as covered and it is reported as that
+ * family's gap. A transition whose workbook is wholly unreviewed is not a fact
+ * about any one family — the evidence really is approved and present — so the
+ * status is left alone and the missing review is reported once, as its own
+ * required packet. Either way the phase still cannot close: the gate counts the
+ * workbook packet instead of counting the families.
+ */
+function markTransitionNotEstablished(
+  packet: MoveEvidenceNeedPacket,
+  phase: number,
+  nextAction: string,
+  downgradeCovered: boolean,
+): MoveEvidenceNeedPacket {
+  return {
+    ...packet,
+    status:
+      downgradeCovered && packet.status === "covered"
+        ? "partial"
+        : packet.status,
+    canDraftBoundary: {
+      ...packet.canDraftBoundary,
+      canDraft: false,
+      canDraftLabel:
+        "Evidence is present, but transition readiness is not established.",
+      cannotDraftLabel: "Do not treat this evidence family as phase-ready yet.",
+    },
+    preliminaryGenerationCaveat: `The P${phase} to P${phase + 1} readiness review is incomplete for ${packet.evidenceSlot}.`,
+    nextAction,
+  };
 }
 
 function readinessWorkbookPacket(
