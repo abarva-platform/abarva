@@ -19,25 +19,25 @@
   ],
   "counts": {
     "testFiles": 2771,
-    "coveredTestFiles": 2606,
-    "pullRequestCoveredTestFiles": 2605,
-    "uncoveredTestFiles": 165,
+    "coveredTestFiles": 2607,
+    "pullRequestCoveredTestFiles": 2606,
+    "uncoveredTestFiles": 164,
     "directoriesWithTests": 508,
-    "directoriesFullyCovered": 437,
+    "directoriesFullyCovered": 438,
     "directoriesPartiallyCovered": 27,
-    "directoriesUncovered": 44,
-    "directoriesWithUnrunTestFiles": 71,
-    "directoriesWithUntriagedUnrunTestFiles": 60,
+    "directoriesUncovered": 43,
+    "directoriesWithUnrunTestFiles": 70,
+    "directoriesWithUntriagedUnrunTestFiles": 59,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 113,
+    "untriagedUnrunTestFiles": 112,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 60,
-    "rankedDirectories": 1,
-    "rankedUntriagedUnrunTestFiles": 1,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 54,
+    "unclassifiedRiskDirectories": 59,
+    "rankedDirectories": 0,
+    "rankedUntriagedUnrunTestFiles": 0,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 53,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -443,31 +443,10 @@
     }
   ],
   "governedRiskFiles": [],
-  "governedRiskRanking": [
-    {
-      "directory": "src/__tests__/integration/reasoning",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "verdictHeldUntriagedUnrunTestFiles": 0,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/__tests__/integration/reasoning/explanation-gate-figures.test.tsx"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2,
-        "rank": 1
-      }
-    }
-  ],
+  "governedRiskRanking": [],
   "triageVerdicts": {
     "heldUntriagedUnrunTestFiles": 112,
-    "drawableUntriagedUnrunTestFiles": 1,
+    "drawableUntriagedUnrunTestFiles": 0,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 36,
       "real": 1,
@@ -1643,19 +1622,6 @@
       }
     },
     {
-      "directory": "src/__tests__/integration/reasoning",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2
-      }
-    },
-    {
       "directory": "src/components/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 1,
@@ -2180,14 +2146,6 @@
     },
     {
       "directory": "src/__tests__/guardrails",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/integration/reasoning",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "declaredQuarantineTestFiles": 0,
