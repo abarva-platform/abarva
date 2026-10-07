@@ -118,8 +118,11 @@ describe("the governed-data-foundation artifact pack", () => {
     // it grounds — while `composeBrief` still withholds the pack's EXHIBITS
     // and TABLES from it by name, which is the second list below and is the
     // part of "facilitation template" that was right.
+    // 22 rows: one per structure in the catalog. The twenty-second is the
+    // bounded-route process change estimate brief, which grounds and takes the
+    // pack's assets, so it joins neither list below.
     const rows = report();
-    expect(rows).toHaveLength(21);
+    expect(rows).toHaveLength(22);
     expect(
       rows.filter((r) => r.landsNowhere).map((r) => r.deliverableType),
     ).toEqual(["charter"]);
