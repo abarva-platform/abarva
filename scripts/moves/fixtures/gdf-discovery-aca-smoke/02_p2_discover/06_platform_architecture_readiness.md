@@ -1,50 +1,36 @@
 # Platform and architecture readiness
 
-**SYNTHETIC - NOT CLIENT-ATTESTED.** The following is a reference target
-pattern to estimate against. It is not a deployed topology or approved design.
+**SYNTHETIC - NOT CLIENT-ATTESTED.** No real environment inventory, no actual
+architecture diagram, and no production configuration is represented here.
 
-## Candidate target pattern
+## Working model for the scenario
 
-1. **Ingest:** use an approved API or controlled export; land an immutable,
-   encrypted source snapshot with schema/version and batch metadata.
-2. **Bronze:** preserve source fidelity, minimize access, apply retention and
-   deletion controls, and prevent casual analyst access to raw HR data.
-3. **Silver:** validate codes, resolve approved worker/org keys, standardize
-   effective dates, and quarantine exceptions with owners.
-4. **Gold:** publish only purpose-approved aggregates and certified measures;
-   include privacy suppression and freshness status.
-5. **Serve:** expose ten versioned reports through the existing approved BI
-   surface where feasible. Reuse current identity, audit, and monitoring
-   capabilities rather than assuming a new platform is needed.
+A governed data foundation for the synthetic IDN needs a platform that can hold
+PHI safely, separate governed zones, serve certified measures to analytics and
+AI, and keep an auditable boundary between raw clinical/claims data and the
+curated layer that models and reports consume.
 
-## Build / extend / reuse questions
+## Candidate zones and responsibilities
 
-| Capability | Initial hypothesis | Proof required before estimate is final |
+| Zone | Purpose (synthetic) | Control expectation |
 |---|---|---|
-| Landing and orchestration | Extend existing managed data platform if it meets isolation and audit needs | Environment, connector, scheduler, and run log inventory |
-| Bronze/Silver/Gold models | Build a scoped HR domain pipeline | Current medallion conventions, deployment tooling, data tests |
-| Semantic layer | Reuse certified metrics if definitions already exist; otherwise create a versioned HR package | Existing catalog, owner, and semantic model review |
-| Report delivery | Reuse current BI platform and access model | License/capacity, row-level controls, refresh quotas |
-| Identity resolution | Reuse enterprise worker key if governed and stable | Data dictionary, lifecycle and rehire rules, key stewardship |
-| Observability | Reuse platform monitoring plus domain quality dashboard | Alert ownership, retention and incident workflow |
+| Restricted ingestion | Land raw EHR/claims/enrollment extracts | PHI-restricted; access logged; no direct consumer reads |
+| Curated / certified | Governed, versioned certified datasets and measures | Read only via approved definitions; lineage recorded |
+| Serving | Datasets/features served to analytics and AI | Minimum necessary; de-identified where possible |
+| Model context | Governed slices passed to AI/LLM features | No raw PHI to ungoverned models; approved use only |
 
-## Design constraints to validate
+## Readiness questions for design
 
-- Separate lower environments from production; no unapproved production extracts
-  in development.
-- Store secrets in the approved vault; never in a workbook, notebook, prompt,
-  or repository.
-- Keep human approval over report definitions, exception acceptance, and
-  release. Automation may validate; it does not create business authority.
-- Avoid redesigning HR processes or decision rights in this technical scope.
-- No raw HR extract or row-level output is sent to Claude Code, Codex, or any
-  generative service. Coding assistants may accelerate synthetic scaffolding,
-  tests, documentation, and reviewed code only.
+1. Which environments exist today, and which can legally hold PHI under the
+   client's agreements? (Not established here.)
+2. Is there a governed curated layer, or do reports read raw sources directly?
+3. How are non-production environments de-identified or minimized?
+4. What is the current path by which data reaches a model, and is it governed?
+5. Where are the boundaries that keep behavioral-health (42 CFR Part 2) data
+   segmented?
 
-## Estimate boundary
+## Still required before this is a client fact
 
-This architecture is detailed enough to size discovery, access validation,
-pipeline construction, model certification, report build, test, security review,
-and handoff. It is not a complete low-level design: environment diagrams,
-network routes, exact service SKUs, production field mappings, runbook commands,
-and final control evidence belong in roadmap execution.
+The real platform inventory, the data-residency and PHI-handling agreements, the
+existing curated-layer coverage, and the current model-access path are not known
+here and must be confirmed with the client before sizing a build.

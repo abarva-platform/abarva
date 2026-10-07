@@ -1,41 +1,41 @@
-# Source-to-report lineage and audit trail
+# Source-to-measure lineage and AI/model audit trail
 
-**SYNTHETIC - NOT CLIENT-ATTESTED.** This is a candidate lineage design, not a
-record of a running pipeline or a production architecture.
+**SYNTHETIC - NOT CLIENT-ATTESTED.** No real pipeline, no production lineage,
+and no actual model audit record is represented here.
 
-## Proposed lineage path
+## Working model for the scenario
 
-`HR source export/API -> immutable landing (Bronze) -> validated/conformed HR
-entities (Silver) -> governed aggregates and certified measures (Gold) -> ten
-reports -> authorized HR consumers`
+Every certified measure and every AI feature for the synthetic IDN must trace
+from the governed source extract, through the transformation and certification
+steps, to the report or model input that consumes it — and that trail must be
+inspectable after the fact. A number a clinician or executive sees must be
+reproducible from named, dated sources.
 
-Every hop must preserve a stable batch/run identifier, source object/version,
-ingestion time, schema version, transformation commit, quality results, and
-publication decision. The report should be able to identify the Gold model
-version and underlying approved source batch without exposing row-level source
-records to its audience.
+## Candidate lineage contract
 
-## Audit events to capture
+- Each governed dataset records its source system, extract version, the
+  transformation job and version, and the certification decision that released
+  it.
+- A model or AI feature records which certified datasets and measure versions
+  it consumed, the as-of date, and the human who approved its use.
+- A published number carries enough lineage that a reviewer can re-derive it
+  from the source extract without tribal knowledge.
+- A source correction maintains crosswalk and lineage history; it never
+  silently rewrites a previously published figure.
+- PHI never leaves its governed zone through an untracked path; every export is
+  logged with purpose and approver.
 
-| Event | Minimum audit fields | Review question |
+## Audit expectations for design review
+
+| Event | Expected recorded trail | Owner to confirm |
 |---|---|---|
-| Source extract received | source alias, batch id, received time, schema hash | Who authorized the extract and for what purpose? |
-| Bronze write | object path, checksum, row-count band, pipeline run | Is the landing immutable and access restricted? |
-| Silver transform | code/version, input batch, rule results | Can a failed rule stop or quarantine publication? |
-| Gold model build | model version, metric version, publication status | Who certified the semantic contract? |
-| Report refresh | report id/version, run id, row-count band | Can a report be traced to a single approved snapshot? |
-| Access/release | role, purpose, entitlement change, expiry | Can access be revoked and audited? |
+| Certified measure published | Source, transform version, approver, effective date | Analytics platform owner |
+| Model input refreshed | Dataset versions consumed, as-of date | Responsible-AI owner |
+| Source value corrected | Crosswalk entry; prior lineage preserved | Source data owner |
+| PHI export | Purpose, minimum-necessary scope, approver | HIM and security |
 
-## Failure and replay behavior
+## Still required before this is a client fact
 
-Quarantine invalid batches; never overwrite the last certified Gold snapshot in
-place. A replay is a new run with a reason and linked predecessor. A metric
-definition change creates a new semantic version and lists all impacted reports.
-The release log should distinguish a build that completed technically from a
-dataset/report that a business owner approved for use.
-
-## Unknowns to collect
-
-Current platform lineage capabilities, audit retention, source snapshot policy,
-run-id propagation, report refresh logging, and the authority to release or
-revoke a Gold model are not established by this synthetic design.
+The real pipeline inventory, the actual lineage coverage, and the existing model
+audit records are not available here and must be confirmed before production
+sizing.
