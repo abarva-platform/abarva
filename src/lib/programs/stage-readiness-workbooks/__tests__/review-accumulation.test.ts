@@ -8,6 +8,7 @@ jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
 
 import {
   loadPriorStageReadinessReviewProposals,
+  loadStageReadinessStoredReview,
   mergeStageReadinessReviewDecisions,
 } from "../review-accumulation";
 
@@ -242,11 +243,15 @@ describe("loadPriorStageReadinessReviewProposals", () => {
         },
       }),
     ]);
+    downloadArtifactBytes.mockResolvedValue({ bytes: reviewBody() });
 
+    // The body IS read now, and deliberately: the same stored review is what
+    // `loadStageReadinessStoredReview` hands the superseded reading, which
+    // matches its decisions on answer text. This reading still answers null,
+    // which is the contract its callers depend on.
     await expect(
       loadPriorStageReadinessReviewProposals(ctx, "move-1", 1, proposalSetRef),
     ).resolves.toBeNull();
-    expect(downloadArtifactBytes).not.toHaveBeenCalled();
   });
 
   it("returns null when the stored body disagrees with the artifact metadata", async () => {
@@ -291,5 +296,76 @@ describe("loadPriorStageReadinessReviewProposals", () => {
       }),
     ).resolves.toBeNull();
     expect(listMoveArtifacts).not.toHaveBeenCalled();
+  });
+});
+
+describe("loadStageReadinessStoredReview", () => {
+  beforeEach(() => {
+    listMoveArtifacts.mockReset();
+    downloadArtifactBytes.mockReset();
+  });
+
+  it("reports a review of this proposal set as the current one", async () => {
+    listMoveArtifacts.mockResolvedValue([reviewArtifactRow()]);
+    downloadArtifactBytes.mockResolvedValue({ bytes: reviewBody() });
+
+    await expect(
+      loadStageReadinessStoredReview(ctx, "move-1", 1, proposalSetRef),
+    ).resolves.toEqual({
+      kind: "current_set",
+      proposals: [
+        { proposalId: "p1", disposition: "accepted" },
+        { proposalId: "p2", disposition: "pending" },
+      ],
+    });
+  });
+
+  it("reports a review of an earlier proposal set as superseded, with its decisions", async () => {
+    // A re-upload: same transition, different set. Returning the decisions
+    // rather than null is what lets the carry-forward restore the rows whose
+    // answers did not change. Reading them off `null` was the whole cost.
+    listMoveArtifacts.mockResolvedValue([
+      reviewArtifactRow({
+        metadata: {
+          proposalSetId: "a-re-uploaded-set",
+          sourceProposalSetArtifact: {
+            artifactId: proposalSetRef.artifactId,
+            artifactVersion: proposalSetRef.artifactVersion,
+          },
+        },
+      }),
+    ]);
+    downloadArtifactBytes.mockResolvedValue({
+      bytes: reviewBody({ proposalSetId: "a-re-uploaded-set" }),
+    });
+
+    const stored = await loadStageReadinessStoredReview(
+      ctx,
+      "move-1",
+      1,
+      proposalSetRef,
+    );
+    expect(stored?.kind).toBe("superseded_set");
+    expect(stored?.proposals).toEqual([
+      { proposalId: "p1", disposition: "accepted" },
+      { proposalId: "p2", disposition: "pending" },
+    ]);
+  });
+
+  it("reads the stored review once", async () => {
+    listMoveArtifacts.mockResolvedValue([reviewArtifactRow()]);
+    downloadArtifactBytes.mockResolvedValue({ bytes: reviewBody() });
+
+    await loadStageReadinessStoredReview(ctx, "move-1", 1, proposalSetRef);
+    expect(downloadArtifactBytes).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns null when no review sits at this phase", async () => {
+    listMoveArtifacts.mockResolvedValue([reviewArtifactRow({ phase: 2 })]);
+
+    await expect(
+      loadStageReadinessStoredReview(ctx, "move-1", 1, proposalSetRef),
+    ).resolves.toBeNull();
+    expect(downloadArtifactBytes).not.toHaveBeenCalled();
   });
 });
