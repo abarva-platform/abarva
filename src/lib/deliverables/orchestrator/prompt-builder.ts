@@ -31,6 +31,10 @@ import {
   storySpineFor,
 } from "@/lib/deliverables/shared/executive-story-contract";
 import { renderAdaptiveDepthPrompt } from "@/lib/deliverables/adaptive-depth";
+import {
+  inboundArtifactMerges,
+  renderInboundMergeInstruction,
+} from "@/lib/deliverables/adaptive-depth-inbound-merges";
 import type {
   DeliverableKey,
   MovesDeliverableKey,
@@ -280,10 +284,16 @@ function buildContextBlock(
 
 function adaptiveDepthInstruction(req: DeliverableIntelligenceRequest): string {
   if (req.module !== "moves") return "";
-  return `\n${renderAdaptiveDepthPrompt(
-    req.adaptiveDepth,
-    req.deliverableType,
-  )}`;
+  // An artifact resolved to `merge_into_parent` is never built, so the "Merge
+  // into <parent>" line `renderAdaptiveDepthPrompt` puts in ITS prompt reaches
+  // nothing. The parent is the document that survives, so the parent is who has
+  // to be told. See `adaptive-depth-inbound-merges`.
+  const inbound = renderInboundMergeInstruction(
+    inboundArtifactMerges(req.adaptiveDepth, req.deliverableType),
+  );
+  return `\n${renderAdaptiveDepthPrompt(req.adaptiveDepth, req.deliverableType)}${
+    inbound ? `\n${inbound}` : ""
+  }`;
 }
 
 /**
