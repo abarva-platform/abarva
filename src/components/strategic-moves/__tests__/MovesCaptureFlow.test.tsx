@@ -386,6 +386,31 @@ describe("MovesCaptureFlow", () => {
       expect(workbook.closest(".mcf-footer")).not.toBeNull();
     });
 
+    it("marks exactly ONE spine stage aria-current, including on the gate step where GENERATE shares the emphasis", () => {
+      renderFlow({ workspaceV2: true, approveSlot: APPROVE });
+      const steps = () => screen.getByRole("navigation", { name: "Steps" });
+      const current = () =>
+        Array.from(steps().querySelectorAll('[aria-current="step"]'));
+
+      // Step 1 of 3.
+      expect(current()).toHaveLength(1);
+      expect(current()[0]).toHaveTextContent("Scope the bet");
+
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(current()).toHaveLength(1);
+      expect(current()[0]).toHaveTextContent("People & decisions");
+
+      // The last capture step: the GENERATE bridge lights beside it, so TWO
+      // stages carry the accent — but only the capture step is aria-current.
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(
+        steps().querySelectorAll(".mcf-v2-sstep.is-current"),
+      ).toHaveLength(2);
+      expect(current()).toHaveLength(1);
+      expect(current()[0]).toHaveTextContent("Plan the proof");
+      expect(current()[0].className).toContain("kind-capture");
+    });
+
     it("gateExtras is ignored unless workspaceV2 is on", () => {
       renderFlow({
         approveSlot: APPROVE,

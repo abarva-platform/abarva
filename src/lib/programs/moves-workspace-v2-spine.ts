@@ -21,6 +21,11 @@
  * - GATE is the attest/approve action, which lives on the final step's footer
  *   (or travels onto the recap); a marker here, the real control is unchanged.
  *
+ * Two state channels, deliberately distinct: `state` is the VISUAL emphasis
+ * (shared by a marker whose control sits on the current screen) and
+ * `isCurrentView` is the single navigational stage that may carry
+ * `aria-current`. Collapsing them put `aria-current="step"` on two buttons.
+ *
  * Kept out of `MovesCaptureFlow` so the state rule is unit-testable on its own.
  */
 
@@ -33,6 +38,22 @@ export interface MovesV2SpineStage {
   /** 1-based position shown in the dot (or a tick when `state === "done"`). */
   position: number;
   state: "done" | "current" | "upcoming";
+  /**
+   * Whether this stage is the view the flow is CURRENTLY RENDERING — the one
+   * and only stage that may carry `aria-current="step"`.
+   *
+   * Deliberately separate from `state === "current"`, which is the VISUAL
+   * emphasis channel and is shared with a marker whose real control sits on the
+   * current screen: GENERATE lights beside the last capture step (the governed
+   * approve/build lives in that step's footer) and GATE lights beside OUTCOME
+   * (the approve control travels onto the recap). Two accented stages are the
+   * shell's intended look, so emphasis is left alone — but `aria-current`
+   * identifies a SINGLE item within a set, and with it driven off `state` two
+   * buttons in one nav claimed to be the current step, so neither named where
+   * the user actually was. At most one stage carries this, and exactly one
+   * whenever the view maps to a rendered stage.
+   */
+  isCurrentView: boolean;
   /**
    * The capture-flow view this stage selects, or `null` for a non-interactive
    * marker. A capture stage carries its own view index; OUTCOME carries 3 only
@@ -91,6 +112,9 @@ export function movesWorkspaceV2Spine({
       label: title,
       position: position++,
       state,
+      // The rendered panel at a non-recap view is `groups[view]`, so that
+      // capture stage is the navigational current one.
+      isCurrentView: !atRecap && i === view,
       // Backward-only, mirroring the legacy step bar (`if (i < view) go(i)`);
       // from the recap any capture step is behind you, so it stays selectable.
       targetView: atRecap || i < view ? i : null,
@@ -102,6 +126,9 @@ export function movesWorkspaceV2Spine({
     label: "Generate",
     position: position++,
     state: atRecap ? "done" : onLastCapture ? "current" : "upcoming",
+    // A bridge marker, never a view of its own: it lights beside the last
+    // capture step but the user is on that step, not here.
+    isCurrentView: false,
     targetView: null,
   });
 
@@ -110,6 +137,9 @@ export function movesWorkspaceV2Spine({
     label: outcomeFindingsPresent ? "Findings" : "Review",
     position: position++,
     state: atRecap ? "current" : "upcoming",
+    // At the recap the flow renders this screen, so OUTCOME is the
+    // navigational current stage.
+    isCurrentView: atRecap,
     // A findings surface is a no-submit review screen, so it opens the OUTCOME
     // path even where the plain recap stays closed (approveSlot + no review).
     targetView: handoffReachable || outcomeFindingsPresent ? 3 : null,
@@ -120,6 +150,9 @@ export function movesWorkspaceV2Spine({
     label: "Attest",
     position: position++,
     state: atRecap ? "current" : "upcoming",
+    // The attest control travels onto the recap, so GATE shares the emphasis
+    // there — but OUTCOME is the screen being rendered.
+    isCurrentView: false,
     targetView: null,
   });
 
