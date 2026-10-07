@@ -85,13 +85,14 @@ const PHASE_DELIVERABLES: Record<number, string[]> = {
  * exhibits or tables. Each is excluded for a stated reason, so that losing the
  * exclusion reads as a change rather than as noise:
  *
- *  - `charter`, `design_workshop_guide`, `mobilization_workshop_guide` and
- *    `execution_kickoff_guide` are withheld the pack's exhibits and tables by
- *    `withholdsArchetypeAssets` (archetype-asset-withholding.ts, read by
- *    `composeBrief`) — a P1 approval instrument and the three later
- *    facilitation guides are not places to carry a use case's exhibits. The
- *    withholding does not touch evidence families, which is why the three
- *    guides still have to ground the archetype's evidence below.
+ *  - `charter`, `design_workshop_guide`, `planning_workshop_guide`,
+ *    `mobilization_workshop_guide` and `execution_kickoff_guide` are withheld
+ *    the pack's exhibits and tables by `withholdsArchetypeAssets`
+ *    (archetype-asset-withholding.ts, read by `composeBrief`) — a P1 approval
+ *    instrument and the four phase facilitation guides are not places to carry
+ *    a use case's exhibits. The withholding does not touch evidence families,
+ *    which is why the four guides still have to ground the archetype's
+ *    evidence below.
  *  - `discovery_plan` never reaches `composeBrief`: it has a dedicated builder
  *    that grounds its evidence section from the discovery BLUEPRINT instead,
  *    which is the catalog that decides what Discover collects.
@@ -100,6 +101,7 @@ const ASSET_FREE_BY_DESIGN = [
   "charter",
   "design_workshop_guide",
   "discovery_plan",
+  "planning_workshop_guide",
   "mobilization_workshop_guide",
   "execution_kickoff_guide",
 ] as const;
@@ -164,7 +166,6 @@ const PACK_EVIDENCE_FAMILIES = [
  */
 const STRUCTURELESS = [
   "operating_model_design",
-  "planning_workshop_guide",
   "execution_roadmap",
   "financial_model",
   "tower_metrics_plan",
@@ -184,21 +185,19 @@ const STRUCTURELESS = [
  * ungrounded that are in fact grounded, and a fix to one of the genuinely
  * ungrounded ones looks five times smaller than it is.
  *
- * What is left here after the mapping is applied is the real present cost. It
- * was all three working-session guides; the P4 mobilization guide and the P5
- * execution kickoff guide have since been authored
- * (`structure-phase-session-guides.ts`), leaving the P3 planning guide alone.
- * That one is structureless under a stated product decision rather than by
- * omission: what a guide may assert about a design that is still being chosen
- * is a narrower question than either of the later two faced, and the decision
- * is recorded with the key in
- * `moves-process-change-estimate-brief-structure.test.ts`.
+ * What is left here after the mapping is applied is the real present cost, and
+ * it is now EMPTY. It was all three working-session guides; the P4 mobilization
+ * guide and the P5 execution kickoff guide were authored first, and the P3
+ * planning guide has since joined them (all three in
+ * `structure-phase-session-guides.ts`). Every key production sends for a phase
+ * deliverable now resolves a declared structure.
  *
- * Written out as a literal, and held in both directions below, so a guide
- * gaining a structure and a new deliverable arriving without one are both
- * changes rather than noise.
+ * Kept as an empty literal rather than deleted, because the value of this list
+ * is the assertion it anchors in BOTH directions: a new phase deliverable that
+ * arrives without a structure, or an existing structure that is unregistered,
+ * fails the case below instead of silently falling back to the generic brief.
  */
-const PRODUCTION_STRUCTURELESS = ["planning_workshop_guide"] as const;
+const PRODUCTION_STRUCTURELESS: readonly string[] = [];
 
 const ALL_PHASE_DELIVERABLES = Object.values(PHASE_DELIVERABLES).flat();
 
@@ -299,7 +298,7 @@ describe("a Move's phase deliverables and the archetype that should reach them",
   });
 
   describe("the key production actually sends", () => {
-    it("leaves only working-session guides without a structure", () => {
+    it("leaves no phase deliverable without a structure", () => {
       const missing = ALL_PHASE_DELIVERABLES.filter(
         (key) =>
           getDeliverableStructure("moves", orchestratorDeliverableType(key)) ===

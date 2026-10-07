@@ -1,10 +1,10 @@
-// The P4 Mobilization Workshop Guide and P5 Execution Kickoff Guide section
-// flows.
+// The P3 Planning, P4 Mobilization, and P5 Execution Kickoff working-session
+// guide section flows.
 //
 // Authored in their own module rather than inline in
-// `deliverable-structures.ts` so the shared catalog takes a three-line change
-// (one import, two array entries) and these two can be edited without touching
-// a file every deliverable type shares.
+// `deliverable-structures.ts` so the shared catalog takes a four-line change
+// (one import, three array entries) and these three can be edited without
+// touching a file every deliverable type shares.
 //
 // WHY THESE STRUCTURES EXIST AT ALL
 //
@@ -31,11 +31,24 @@
 // Measured across the twenty canonical phase deliverables, resolved the way
 // production resolves them (`orchestratorDeliverableType`, which is what
 // `/api/v1/deliverables/generate-phase` and `PhaseDocumentsPanel` send), three
-// had no structure and all three are working session guides. These are two of
-// the three; `planning_workshop_guide` is left structureless under the stated
-// product decision recorded with it, because what a P3 guide may assert about a
-// design that is still being chosen is a narrower question than either of
-// these faces.
+// had no structure and all three are working session guides. These are those
+// three, and the set is now closed.
+//
+// `planning_workshop_guide` was previously left out under a stated product
+// decision: what a P3 guide may assert about a design that is STILL BEING
+// CHOSEN is a narrower question than either later guide faced. That premise is
+// not what this deliverable declares. Its registry entry opens with a "Design
+// recap (approved target state, option decisions, ...)" section and describes
+// itself as "derived from the accepted design"; its quality profile asks it to
+// prepare sessions "from the accepted design" and to state "which approved
+// phase facts are settled". So it sits AFTER the design decision, in the same
+// post-decision posture as its two siblings — it prepares the P4 roadmap and
+// business-case sessions exactly as the P4 guide prepares mobilization. The
+// unresolved design caveats the registry also names are carried as caveats
+// with their evidence status, which is the same treatment every one of these
+// guides gives an open item. Measured before authoring: the served brief was
+// the twelve-section generic board paper with EMPTY evidence families on all
+// twelve, so the archetype the Move declared reached none of this document.
 //
 // WHERE THE SECTIONS COME FROM
 //
@@ -229,5 +242,80 @@ export const MOVES_EXECUTION_KICKOFF_GUIDE: DeliverableStructure = {
     "This is the execution kickoff working guide, not a new phase-gate approval and not a second handoff package. Carry the accepted handoff forward with its conditions intact; do not re-negotiate the committed measures.",
     "Set up only the first cadence: sessions, owners, evidence checks, escalation rules, and first-review inputs. Delivery planning belongs to the approved roadmap and ongoing measurement to Tower.",
     "Do not invent client facts, quantified benefits, cost, effort, rates, timing, or sourcing decisions, and do not report a measurement as started when its feed is still open. Preserve all caveats and conditions from the approved handoff.",
+  ],
+};
+
+export const MOVES_PLANNING_WORKSHOP_GUIDE: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "planning_workshop_guide",
+  archetypeEvidenceSectionKeys: ["design_carry_forward", "planning_evidence"],
+  purpose:
+    "Prepare the roadmap, business-case, finance, measurement, and readiness/change sessions that turn an accepted design into an approved plan — without becoming the roadmap, the business case, or the financial model itself.",
+  decisionToSupport:
+    "Run the planning work needed to reach an approved roadmap and business case: validate the funding and benefit assumptions, sequence the work, and close the readiness conditions the design approval left open.",
+  sections: [
+    s(
+      "design_carry_forward",
+      "Design Recap & Session Boundary",
+      "Summarize only what the design approval settled: the approved target state, the option decisions taken, their operating implications, and the design caveats recorded with them. Preserve each item's evidence status, and carry an unresolved design caveat forward AS a caveat; do not restate the architecture or reopen approved design decisions without new evidence.",
+      "mixed",
+      ["source_register", "evidence_gaps", "decision_log"],
+      "Keep under 350 words. Use a compact decision / status / planning implication table. State explicitly that this guide prepares the planning sessions and is not itself the roadmap, the business case, or a funding approval.",
+    ),
+    s(
+      "planning_session_plan",
+      "Planning Sessions & Decisions",
+      "Define the smallest set of sessions needed to reach an approved roadmap and business case: sequencing, business case and finance, measurement baselines, and readiness/change. For each, state the objective, the decision question, participants by role, the evidence to review, the output, and the accountable decision owner.",
+      "mixed",
+      ["stakeholder_input", "decision_log"],
+      "Keep under 700 words. Use one compact session table. Separate what must be decided to approve the plan from the delivery work the roadmap will later schedule.",
+    ),
+    s(
+      "planning_evidence",
+      "Planning Evidence Requests",
+      "Identify the specific inputs each planning decision depends on — cost inputs, benefit baselines, dependency evidence, the resource model, metric definitions, and readiness evidence — with evidence status and a named owner role for each. An input that is not yet held is listed as open, never as present, and an unvalidated figure is never elevated to fact.",
+      "mixed",
+      ["source_register", "evidence_gaps", "baseline_metrics"],
+      "Keep under 500 words. Use one concise input / decision / status / owner table; point back to citations rather than repeating source narratives.",
+    ),
+    s(
+      "facilitation_guide",
+      "Workshop Facilitation & Decision Prompts",
+      "Provide neutral prompts to test only the decisions that change sequencing, funding, measurement, or risk. Name the funding and benefit assumptions that must be validated rather than asserting them, and capture the selected option, alternatives, rationale, owner, evidence, and follow-up, with the method for reviewing session notes.",
+      "expert_template",
+      [],
+      "Keep under 850 words. Organize the question set by sequencing, funding and benefit assumptions, and planning risk. Do not prescribe the roadmap, compute the investment case, or set rates.",
+    ),
+    s(
+      "planning_gate_readiness",
+      "Planning-Gate Readiness",
+      "Set the minimum evidence and human decisions required before the planning gate: what must be uploaded, reviewed, and accepted, with an acceptance test, an owner role, and a status for each. Distinguish the planning outputs from the delivery work that follows approval, and name what is still open rather than describing the gate as ready.",
+      "mixed",
+      ["evidence_gaps", "decision_log"],
+      "Keep under 400 words. Use a compact readiness checklist. Do not imply funding approval, and do not report an open item as complete.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "design_carry_forward",
+    "planning_session_plan",
+    "planning_evidence",
+    "facilitation_guide",
+    "planning_gate_readiness",
+  ],
+  fixedStructure: true,
+  forbiddenSectionTopics: [
+    "execution roadmap",
+    "business case",
+    "financial model",
+    "target state architecture",
+    "funding approval",
+    "execution backlog",
+    "detailed training curriculum",
+    "final ROI",
+  ],
+  prohibitedContent: [
+    "This is the planning working guide, not a roadmap, business case, or financial model. Carry the approved design forward with its actual evidence status; do not re-derive the target state or the investment case.",
+    "Plan only to the level needed to run the sessions, validate the funding and benefit assumptions, sequence the work, and close the readiness conditions. Defer delivery execution to the roadmap these sessions produce.",
+    "Do not assert funding approval, and do not invent client facts, quantified benefits, cost, effort, rates, timing, or sourcing decisions. Preserve explicit assumptions and open inputs for human review.",
   ],
 };

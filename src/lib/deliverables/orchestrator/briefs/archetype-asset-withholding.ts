@@ -44,6 +44,11 @@ export const ARCHETYPE_ASSET_WITHHELD: readonly ArchetypeAssetWithholding[] = [
       "A P2 facilitation document — a session plan and an evidence ask, not a readout. It grounds its carry-forward sections in the archetype's evidence families, which is a separate question from whether it carries a deck's exhibits.",
   },
   {
+    deliverableType: "planning_workshop_guide",
+    reason:
+      "A P3 facilitation document, withheld for the same reason as its P2 precedent: it plans the roadmap, business-case, finance, measurement, and readiness sessions and names what must be produced in them. The exhibits belong to the design it reads from and to the roadmap and business case it prepares sessions about.",
+  },
+  {
     deliverableType: "mobilization_workshop_guide",
     reason:
       "A P4 facilitation document, withheld for the same reason as its P2 precedent: it plans the mobilization sessions and names what must be produced in them. The exhibits belong to the roadmap and business case it prepares sessions about.",
