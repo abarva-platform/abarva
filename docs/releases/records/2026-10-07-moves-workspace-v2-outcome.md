@@ -97,6 +97,12 @@ Lane: `global-control-lane`.
 - Tests: `moves-phase-findings.test.ts` (new, read model + gate summarizer),
   `MovesPhaseFindings.test.tsx` (new, surface + gate line), plus OUTCOME-findings
   cases added to `moves-workspace-v2-spine.test.ts` and `MovesCaptureFlow.test.tsx`.
+- `.github/workflows/ai-surface-control-catalog.yml` — names
+  `MovesPhaseFindings.test.tsx` in the Moves visible-controls step. That
+  directory is not swept by a glob, so a new suite beside those controls runs in
+  no job until it is named there; without this line the new component suite was
+  green and reporting to nobody, and the coverage census counted it as an
+  untriaged unrun file.
 
 ## QA / Validation
 
@@ -106,11 +112,18 @@ Lane: `global-control-lane`.
 - `npx eslint` on all changed files — 0 errors (2 pre-existing unused-import
   warnings, not introduced here).
 - `npm run release:check -- --base origin/main --head HEAD` — pass.
+- Re-validated on the current `origin/main` after resolving the merge: the five
+  affected suites (`MovesPhaseFindings.test.tsx`, `moves-phase-findings.test.ts`,
+  `moves-workspace-v2-spine.test.ts`, `MovesCaptureFlow.test.tsx`,
+  `MovesPhaseStandaloneClient.test.tsx`) — 5 suites, 318 tests PASS.
+- `npm run audit:test-ci-coverage:write` after naming the new suite in CI —
+  covered test files 2636 -> 2638 (both new suites counted), uncovered FLAT at
+  164, fully-covered directories unchanged at 439.
 
 ## Rollout Plan
 
-Merge to `main` via squash after human review (auto-merge intentionally NOT
-enabled). No runtime rollout is triggered by this change: the flag is OFF for every
+Merge to `main` via squash; squash auto-merge is armed, so the PR lands once its
+required checks pass. No runtime rollout is triggered by this change: the flag is OFF for every
 tenant, so merging changes no client's behaviour. Enrolment for signed-in review is
 a later, separate flag flip through the normal feature-flag path.
 
