@@ -7,6 +7,7 @@ import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
 import { SourceNewNdaCapture } from "./SourceNewNdaCapture";
+import { SourceNewProspectiveSupplierForm } from "./SourceNewProspectiveSupplierForm";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AnswerCitation } from "@/lib/ava-answer/contract";
@@ -1344,11 +1345,19 @@ function SourceNewStage04VendorPanelView({
       <p className="snw-eyebrow">Stage 04 · Vendor panel</p>
       <h3>{posture}</h3>
       <p>
-        This read-only panel separates accepted candidates the organization is
+        This panel separates accepted candidates the organization is
         already under contract with from those it is not, and names selected
         respondents only when human selection evidence is recorded. It sends
         nothing, contacts nobody, and selects no respondent.
       </p>
+      <SourceNewProspectiveSupplierForm
+        eventId={event.id}
+        requestVersionId={event.requestAuthorityVersionId ?? null}
+        canOriginate={
+          event.requestVersionApproval === "accepted" &&
+          panel.suggestions.status !== "blocked"
+        }
+      />
       <div className="snw-known">
         <h4>Suggested for review</h4>
         {panel.suggestions.status === "blocked" ? (
