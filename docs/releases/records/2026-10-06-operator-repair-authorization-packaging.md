@@ -1,4 +1,4 @@
-# 2026-10-06 — Operator repair authorization packaging
+# 2026-10-06 — Operator repair packaging and evidence rationale
 
 ## Release ID
 
@@ -10,15 +10,15 @@
 
 ## Plain-English Summary
 
-The runtime image now includes committed data-repair authorization files required by scoped operator jobs. The earlier image included the job script but omitted its authorization file, causing the job to fail before reaching the database.
+The runtime image now includes committed data-repair authorization files required by scoped operator jobs. The evidence review editor also lets an authorized reviewer record a rationale with the decision, including when an action is delegated. The earlier image included the job script but omitted its authorization file, causing the job to fail before reaching the database.
 
 ## Layer Impact
 
-Release lane: `client-data-lane` for operator data-plane execution. The runtime image contents change; no product route or data changes automatically.
+Release lanes: `client-data-lane` for operator data-plane execution and `global-control-lane` for the optional evidence-review rationale field. The runtime image and product review form change; no data changes automatically.
 
 ## Client Applicability
 
-- All clients: no automatic data mutation.
+- All clients: an optional rationale field is available during evidence review; no automatic data mutation.
 - Specific clients: only an explicitly authorized operator repair can consume a matching file.
 - Internal only: ACA operator job execution.
 - Public/demo only: the currently committed synthetic repair authorization.
@@ -26,15 +26,15 @@ Release lane: `client-data-lane` for operator data-plane execution. The runtime 
 
 ## Changes Included
 
-The Docker runtime-stage copy rule for `docs/governance/data-repairs` and this release record.
+The Docker runtime-stage copy rule for `docs/governance/data-repairs`, the evidence review form and its two calling surfaces, a regression test, and this release record.
 
 ## QA / Validation
 
-PASS: Dockerfile path inspection, release gate, and local presence of the authorization directory. NOT RUN: ACA image and operator job until merge and repository-owned main deploy.
+PASS: Dockerfile path inspection, targeted review-form regression test, TypeScript, lint, release gate, and local presence of the authorization directory. NOT RUN: ACA image and operator job until merge and repository-owned main deploy.
 
 ## Rollout Plan
 
-Merge through a PR. The repository-owned ACA main workflow builds and deploys a digest-pinned image. Verify the runtime invariant, then retry the exact scoped operator job.
+Merge through a PR. The repository-owned ACA main workflow builds and deploys a digest-pinned image. Verify the runtime invariant, then retry the exact scoped operator job. The reviewer can enter an audit rationale before the in-app approval.
 
 ## Deployment Authority
 
@@ -44,11 +44,11 @@ Merge through a PR. The repository-owned ACA main workflow builds and deploys a 
 - ACA runtime invariant: verify template, 100% traffic revision, and required workers.
 - Worker image invariant: the operator job uses a pinned digest and restores its idle template.
 - Feature/env flag update path: none.
-- Live signed-in proof required: after the repair job, read the product cabinet.
+- Live signed-in proof required: after the repair job, read the product cabinet and confirm a rationale accompanies delegated approval.
 
 ## Rollback Plan
 
-Revert the copy rule through a PR and main deploy if necessary. No database change occurs from this packaging rule alone.
+Revert the copy rule or review-form change through a PR and main deploy if necessary. No database change occurs from this release alone.
 
 ## Audit Evidence
 
