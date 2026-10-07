@@ -286,4 +286,155 @@ describe("stage readiness gate", () => {
     expect(adjusted[0]?.status).toBe("partial");
     expect(adjusted[0]?.nextAction).toMatch(/approved uploaded evidence item/i);
   });
+
+  describe("a reviewed workbook that does not cover a currently-required family", () => {
+    // The workbook's questions are built from the family set at DOWNLOAD time;
+    // the gate re-derives required families at EVALUATION time. A declaration
+    // landing between the two changes the set, and nothing version-stamps it.
+
+    it("does not tell the reviewer to complete a workbook that has no question for the family", () => {
+      const adjusted = applyStageReadinessToEvidencePackets(
+        [
+          packet(),
+          packet({ familyId: "provider_directory", evidenceSlot: "Provider directory baseline" }),
+        ],
+        2,
+        [proposal()],
+        "move-1",
+      );
+
+      const uncovered = adjusted.find((p) => p.familyId === "provider_directory");
+      expect(uncovered?.nextAction).toMatch(/download the current workbook/i);
+      expect(uncovered?.nextAction).toContain("Provider directory baseline");
+      // Completing, re-reviewing, or accepting every response in the reviewed
+      // workbook cannot clear this family, so it must not be the instruction.
+      expect(uncovered?.nextAction).not.toMatch(
+        /^Complete the P2 to P3 readiness workbook/i,
+      );
+      expect(uncovered?.canDraftBoundary.canDraft).toBe(false);
+    });
+
+    it("leaves a family the review does cover judged on its own merits", () => {
+      const adjusted = applyStageReadinessToEvidencePackets(
+        [
+          packet(),
+          packet({ familyId: "provider_directory", evidenceSlot: "Provider directory baseline" }),
+        ],
+        2,
+        [proposal()],
+        "move-1",
+      );
+
+      const covered = adjusted.find((p) => p.familyId === "contact_center_kpis");
+      expect(covered?.status).toBe("covered");
+      expect(covered?.canDraftBoundary.canDraft).toBe(true);
+      expect(covered?.nextAction).not.toMatch(/download the current workbook/i);
+    });
+
+    it("still reports a wholly unreviewed workbook as one missing workbook", () => {
+      const adjusted = applyStageReadinessToEvidencePackets(
+        [packet()],
+        2,
+        [proposal({ disposition: "pending" })],
+        "move-1",
+      );
+
+      const workbook = adjusted.find(
+        (p) => p.familyId === "stage_readiness_p2_p3",
+      );
+      expect(workbook).toBeDefined();
+      expect(workbook?.nextAction).toMatch(
+        /^Complete the P2 to P3 readiness workbook/i,
+      );
+      expect(workbook?.nextAction).not.toMatch(/download the current workbook/i);
+    });
+
+    it("keeps the Charter phase open when a required family was never asked about", () => {
+      const packets = [
+        packet({ phase: 2 }),
+        packet({
+          phase: 2,
+          familyId: "provider_directory",
+          evidenceSlot: "Provider directory baseline",
+        }),
+      ];
+      const adjusted = applyStageReadinessToEvidencePackets(
+        packets,
+        1,
+        [proposal()],
+        "move-1",
+      );
+
+      // Every required response in the review on file is accepted, so the
+      // review is complete on its own terms and used to close P1 regardless.
+      const workbook = adjusted.find(
+        (p) => p.familyId === "stage_readiness_p1_p2",
+      );
+      expect(workbook).toBeDefined();
+      expect(workbook?.nextAction).toContain("Provider directory baseline");
+      expect(workbook?.nextAction).toMatch(/download the current workbook/i);
+    });
+
+    it("closes the Charter review when every required family is covered and accepted", () => {
+      const packets = [
+        packet({ phase: 2 }),
+        packet({
+          phase: 2,
+          familyId: "provider_directory",
+          evidenceSlot: "Provider directory baseline",
+        }),
+      ];
+      const adjusted = applyStageReadinessToEvidencePackets(
+        packets,
+        1,
+        [proposal(), proposal({ dimensionId: "provider_directory", questionId: "q_pd" })],
+        "move-1",
+      );
+
+      expect(adjusted).toHaveLength(packets.length);
+      expect(
+        adjusted.some((p) => p.familyId === "stage_readiness_p1_p2"),
+      ).toBe(false);
+    });
+
+    it("does not demand a workbook question for a family that is not required", () => {
+      // Only REQUIRED families need a required response. Demanding one for an
+      // optional family would hold every Charter phase shut, since the workbook
+      // asks nothing required about them by declaration.
+      const packets = [
+        packet({ phase: 2 }),
+        packet({
+          phase: 2,
+          familyId: "nice_to_have",
+          evidenceSlot: "Nice to have",
+          priority: "optional",
+        }),
+      ];
+      const adjusted = applyStageReadinessToEvidencePackets(
+        packets,
+        1,
+        [proposal()],
+        "move-1",
+      );
+
+      expect(adjusted).toHaveLength(packets.length);
+    });
+
+    it("still reports an unaccepted Charter response as a held review, not a stale workbook", () => {
+      const adjusted = applyStageReadinessToEvidencePackets(
+        [packet({ phase: 2 })],
+        1,
+        [proposal({ disposition: "needs_validation" })],
+        "move-1",
+      );
+
+      const workbook = adjusted.find(
+        (p) => p.familyId === "stage_readiness_p1_p2",
+      );
+      expect(workbook?.nextAction).toMatch(
+        /^Review all required P1 to P2 workbook responses/i,
+      );
+      expect(workbook?.nextAction).not.toMatch(/download the current workbook/i);
+    });
+  });
 });
