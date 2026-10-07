@@ -81,6 +81,45 @@ describe("resolveMoveArchetypeForProgram — a declaration reaches the registry"
     expect(resolved.id).toBe("GOVERNED_DATA_FOUNDATION");
   });
 
+  it("reads the charter declaration past a pack key that names no archetype", async () => {
+    // Both declaration fields populated. `functionPackKey` holds a
+    // function-pack key, a different id space that the bridge answers null
+    // for; reading it unconditionally sent that null-naming value to the
+    // registry's declared arm and dropped the Move onto keyword inference,
+    // which answers AI_PRODUCT_DEVELOPMENT_LIFECYCLE for this prose.
+    mockGetProgramById.mockResolvedValue(
+      program({
+        functionPackKey: "healthcare_member_services",
+        charter: { classification: { archetype: "governed_data_foundation" } },
+      }),
+    );
+    const resolved = await resolveMoveArchetypeForProgram(CTX, "move-1");
+    expect(resolved.id).toBe("GOVERNED_DATA_FOUNDATION");
+  });
+
+  it("still prefers a pack key that DOES name an archetype", async () => {
+    mockGetProgramById.mockResolvedValue(
+      program({
+        functionPackKey: "governed_data_foundation",
+        charter: {
+          classification: { archetype: "healthcare_contact_center_agent_assist" },
+        },
+      }),
+    );
+    const resolved = await resolveMoveArchetypeForProgram(CTX, "move-1");
+    expect(resolved.id).toBe("GOVERNED_DATA_FOUNDATION");
+  });
+
+  it("leaves a Move whose pack key names nothing and declares nothing alone", async () => {
+    // The unchanged half: with no charter declaration the pack key is still
+    // the inference seed, so this Move resolves exactly as it did before.
+    mockGetProgramById.mockResolvedValue(
+      program({ functionPackKey: "healthcare_member_services" }),
+    );
+    const resolved = await resolveMoveArchetypeForProgram(CTX, "move-1");
+    expect(resolved.id).not.toBe("GOVERNED_DATA_FOUNDATION");
+  });
+
   it("tolerates a charter whose classification is a bare string", async () => {
     // `charter.classification` is a string on older Moves. Reading `.archetype`
     // off it must not throw — resolution falls back to inference.
