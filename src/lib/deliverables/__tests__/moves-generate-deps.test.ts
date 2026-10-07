@@ -4,6 +4,8 @@ const buildProgramsContextBundleAsyncMock = jest.fn();
 const formatProgramsBrokerBundleForPromptMock = jest.fn();
 const listProgramEvidenceForPromptMock = jest.fn();
 const formatProgramEvidenceForPromptMock = jest.fn();
+const loadStageReadinessPromptContextMock = jest.fn();
+const formatStageReadinessPromptContextMock = jest.fn();
 
 jest.mock("@/lib/agent/stream", () => ({
   streamAgentTurn: jest.fn(),
@@ -35,6 +37,13 @@ jest.mock("@/lib/programs/evidence-context", () => ({
     formatProgramEvidenceForPromptMock(...args),
 }));
 
+jest.mock("@/lib/programs/stage-readiness-workbooks/prompt-context", () => ({
+  loadStageReadinessPromptContext: (...args: unknown[]) =>
+    loadStageReadinessPromptContextMock(...args),
+  formatStageReadinessPromptContext: (...args: unknown[]) =>
+    formatStageReadinessPromptContextMock(...args),
+}));
+
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { createMovesGenerateArtifactDeps } from "../moves-generate-deps";
@@ -60,6 +69,16 @@ describe("createMovesGenerateArtifactDeps", () => {
         "- LSH_AP_Value_Baseline_Worksheet.xlsx",
         "  Structured signals: Average monthly invoice exceptions: 1,872. | Manual touch hours per month: 2,345. | Average resolution days: 7.4.",
       ].join("\n"),
+    );
+    loadStageReadinessPromptContextMock.mockReset();
+    loadStageReadinessPromptContextMock.mockResolvedValue({
+      context: { sourcePhase: 1, targetPhase: 2 },
+      openResponseCount: 2,
+      reviewOpen: true,
+    });
+    formatStageReadinessPromptContextMock.mockReset();
+    formatStageReadinessPromptContextMock.mockReturnValue(
+      "ACCEPTED STAGE READINESS WORKBOOK RESPONSES (P1 to P2)",
     );
     mockAzureQuery.mockReset();
     mockGetModuleState.mockReset();
@@ -105,6 +124,55 @@ describe("createMovesGenerateArtifactDeps", () => {
     expect(currentState).toContain("1,872");
     expect(currentState).toContain("2,345");
     expect(currentState).toContain("7.4");
+  });
+
+  it("binds accepted transition answers from a review that is still open", async () => {
+    const deps = createMovesGenerateArtifactDeps({
+      clientId: "client-1",
+      clientKey: "lakeshore",
+      userId: "user-1",
+      role: "program_user",
+    });
+
+    const currentState = await deps.contextSources.retrieveCurrentState(
+      "lakeshore",
+      "current state",
+      "move-1",
+      2,
+    );
+
+    expect(loadStageReadinessPromptContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "lakeshore" }),
+      "move-1",
+      2,
+    );
+    expect(formatStageReadinessPromptContextMock).toHaveBeenCalledWith(
+      expect.objectContaining({ openResponseCount: 2, reviewOpen: true }),
+    );
+    expect(currentState).toContain(
+      "ACCEPTED STAGE READINESS WORKBOOK RESPONSES (P1 to P2)",
+    );
+  });
+
+  it("omits the transition block when no review answers this transition", async () => {
+    loadStageReadinessPromptContextMock.mockResolvedValue(null);
+    formatStageReadinessPromptContextMock.mockReturnValue("");
+    const deps = createMovesGenerateArtifactDeps({
+      clientId: "client-1",
+      clientKey: "lakeshore",
+      userId: "user-1",
+      role: "program_user",
+    });
+
+    const currentState = await deps.contextSources.retrieveCurrentState(
+      "lakeshore",
+      "current state",
+      "move-1",
+      2,
+    );
+
+    expect(currentState).not.toContain("STAGE READINESS");
+    expect(currentState).toContain("BROKER CURRENT STATE");
   });
 
   it("loadPriorDigests includes only the exact signed-off version", async () => {
