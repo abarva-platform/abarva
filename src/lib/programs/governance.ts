@@ -1289,7 +1289,24 @@ export async function evaluateGate(
       case "delivery_raci_named":
         pass =
           isPresent(
-            findDeliverable("delivery_raci", "raci", "operating_model"),
+            findDeliverable(
+              "delivery_raci",
+              "raci",
+              // `operating_model_design` is the registry key for the Operating
+              // Model Design — the P3 document that names the work split and
+              // accountability this criterion is about. It is built by the P3
+              // generation set and stored under the REGISTRY spelling, because
+              // the acceptance path maps the orchestrator type back through
+              // `deliverableKeyForOrchestratorType` before writing the row.
+              // Only `operating_model`, the orchestrator alias, was listed, and
+              // nothing ever writes that: the other two spellings are neither
+              // registry keys nor allowed authorship keys either, so a
+              // generated and signed-off Operating Model Design left this
+              // criterion unmet and it passed only on the prose fallbacks
+              // below.
+              "operating_model_design",
+              "operating_model",
+            ),
           ) ||
           briefString.includes("raci") ||
           (fromPhase === 4 &&
