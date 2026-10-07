@@ -62,6 +62,10 @@ const loadApprovedSolutionApproach: jest.Mock = jest.fn(async () => ({
   },
 }));
 const getModuleState: jest.Mock = jest.fn(async () => []);
+// The program row the route reads to resolve what archetype a human DECLARED
+// for this Move. Default: a Move that declares nothing, so the archetype the
+// extract receives is whatever the request carried.
+const getProgramById: jest.Mock = jest.fn(async () => null);
 let evidencePacketsForTest: MoveEvidenceNeedPacket[] = [];
 const buildMoveEvidenceNeedPackets = jest.fn(
   (input: { moveId?: string; currentPhase?: number }) => {
@@ -285,12 +289,19 @@ jest.mock("@/lib/programs/approved-solution-approach", () => ({
 }));
 jest.mock("@/lib/programs/queries", () => ({
   getModuleState: (...args: unknown[]) => getModuleState(...args),
+  getProgramById: (...args: unknown[]) => getProgramById(...args),
 }));
 jest.mock("@/lib/programs/approved-phase-evidence", () => ({
   listApprovedPhaseEvidence: (...args: unknown[]) =>
     listApprovedPhaseEvidence(...args),
 }));
 jest.mock("@/lib/programs/discovery/evidence-readiness", () => ({
+  // `resolveDeclaredProgramArchetypeId` is deliberately NOT stubbed: it is the
+  // shared declaration-precedence rule, and a stub here would let the route keep
+  // its wiring while silently applying a different rule than production does.
+  resolveDeclaredProgramArchetypeId: jest.requireActual(
+    "@/lib/programs/discovery/evidence-readiness",
+  ).resolveDeclaredProgramArchetypeId,
   loadDiscoveryEvidenceReadiness: () => loadDiscoveryEvidenceReadiness(),
 }));
 jest.mock(
@@ -363,6 +374,8 @@ beforeEach(() => {
   loadApprovedSolutionApproach.mockClear();
   getModuleState.mockClear();
   getModuleState.mockResolvedValue(confirmedRouteModules("process_change"));
+  getProgramById.mockClear();
+  getProgramById.mockResolvedValue(null);
   listApprovedPhaseEvidence.mockClear();
   evidencePacketsForTest = [];
   buildMoveEvidenceNeedPackets.mockClear();
@@ -1291,6 +1304,64 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       req({ moveId: "m-3", phase: 1, useCaseArchetype: "ams" }),
     );
     expect(res.status).toBe(500);
+  });
+
+  // The archetype this route is HANDED is the Move's coarse `program.archetype`,
+  // and none of its five possible values names a discovery blueprint. The Move's
+  // DECLARATION has to be resolved here, server-side, or the extract grades the
+  // Move's evidence against a framework nobody declared. These pin the
+  // PASS-THROUGH: the rule itself is covered in
+  // `src/lib/programs/__tests__/move-generation-declared-archetype.test.ts`, and
+  // a rule proven only there would stay green if these two lines were dropped.
+  it("resolves the Move's declared archetype and hands it to the context extract", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    });
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createMoveContextExtract).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // unchanged: the request's own archetype still travels as-is
+        useCaseArchetype: "platform_modernization",
+        declaredArchetypeId: "governed_data_foundation",
+      }),
+    );
+    expect(getProgramById).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-1",
+    );
+  });
+
+  it("hands over the coarse archetype as the inference seed when the Move declares nothing", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: null,
+    });
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createMoveContextExtract).toHaveBeenCalledWith(
+      expect.objectContaining({
+        declaredArchetypeId: "platform_modernization",
+      }),
+    );
+  });
+
+  it("still enqueues when the program read fails — a lost declaration must not fail the build", async () => {
+    getProgramById.mockRejectedValue(new Error("program store unavailable"));
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createMoveContextExtract).toHaveBeenCalledWith(
+      expect.objectContaining({ declaredArchetypeId: null }),
+    );
   });
 
   it("403s before enqueueing when the Move belongs to another tenant", async () => {
