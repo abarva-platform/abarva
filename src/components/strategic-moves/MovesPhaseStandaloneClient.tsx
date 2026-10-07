@@ -556,6 +556,9 @@ interface StageReadinessWorkbookParsePreview {
       rejectedCount?: number;
       needsValidationCount?: number;
       pendingCount?: number;
+      /** Decisions restored from an earlier upload of the same workbook,
+       * matched on the answer rather than the file it arrived in. */
+      carriedForwardFromPriorUpload?: number;
       readiness?: {
         ready?: number;
         partial?: number;
@@ -8343,10 +8346,19 @@ function StageReadinessWorkbookPreviewControl({
   const reviewRevisable =
     anyProposalReviewable &&
     (reviewActionCount > 0 || requiredNotAcceptedCount > 0);
+  // A restored decision is reported as restored. The reviewer is looking at a
+  // workbook they uploaded again, and the difference between "you already
+  // judged these" and "the product decided for you" is the whole reason the
+  // count is carried this far.
+  const carriedForwardCount =
+    proposalReview?.carriedForwardFromPriorUpload ?? 0;
   const proposalReviewMessage = proposalReview
     ? `Workbook review recorded · ${proposalReview.acceptedCount ?? 0} accepted · ${proposalReview.needsValidationCount ?? 0} needs validation · ${proposalReview.rejectedCount ?? 0} rejected · ${proposalReview.pendingCount ?? 0} pending` +
       (proposalReview.readiness
         ? ` · readiness ${proposalReview.readiness.ready ?? 0} ready / ${proposalReview.readiness.insufficientEvidence ?? 0} insufficient / ${proposalReview.readiness.unknown ?? 0} unknown`
+        : "") +
+      (carriedForwardCount > 0
+        ? ` · ${carriedForwardCount} decision${carriedForwardCount === 1 ? "" : "s"} kept from your previous upload of this workbook — review only what changed`
         : "")
     : "";
   const storedProposalMessage =

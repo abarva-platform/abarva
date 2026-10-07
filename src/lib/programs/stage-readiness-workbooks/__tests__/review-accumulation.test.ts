@@ -317,7 +317,37 @@ describe("loadStageReadinessStoredReview", () => {
         { proposalId: "p1", disposition: "accepted" },
         { proposalId: "p2", disposition: "pending" },
       ],
+      artifactStatus: null,
+      artifactMetadata: reviewArtifactRow().metadata,
+      summary: undefined,
     });
+  });
+
+  it("returns the artifact status and the stored summary alongside the decisions", async () => {
+    // The phase workspace needs the review's status, its metadata and the
+    // server-measured readiness split in its `summary`, and it reads all of
+    // them off this one artifact. Returning them here is what keeps that
+    // surface on a single read instead of repeating the lookup.
+    listMoveArtifacts.mockResolvedValue([
+      reviewArtifactRow({ status: "approved" }),
+    ]);
+    downloadArtifactBytes.mockResolvedValue({
+      bytes: reviewBody({
+        summary: { readiness: { ready: 4, insufficientEvidence: 1 } },
+      }),
+    });
+
+    const stored = await loadStageReadinessStoredReview(
+      ctx,
+      "move-1",
+      1,
+      proposalSetRef,
+    );
+    expect(stored?.artifactStatus).toBe("approved");
+    expect(stored?.summary).toEqual({
+      readiness: { ready: 4, insufficientEvidence: 1 },
+    });
+    expect(stored?.artifactMetadata).toEqual(reviewArtifactRow().metadata);
   });
 
   it("reports a review of an earlier proposal set as superseded, with its decisions", async () => {

@@ -3660,6 +3660,112 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeDisabled();
     });
 
+    it.each([
+      [
+        "says how many decisions a re-upload kept",
+        3,
+        /3 decisions kept from your previous upload of this workbook/,
+      ],
+      [
+        "counts one kept decision in the singular",
+        1,
+        /1 decision kept from your previous upload of this workbook/,
+      ],
+    ])("%s", (_label, carriedForward, expected) => {
+      // A reviewer who corrected one cell is looking at a workbook they
+      // uploaded again. Without this line the restored decisions read as
+      // decisions the product made for them.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 3,
+              proposalSetId: "proposal-set-2",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 4,
+              pendingCount: 1,
+              review: {
+                status: "review_required",
+                acceptedCount: 3,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount: 1,
+                carriedForwardFromPriorUpload: carriedForward,
+              },
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  question: "Provide baseline metrics.",
+                  response: "Measured at 30 tickets per week.",
+                  answerState: "answered",
+                  disposition: "accepted",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByText(expected)).toBeInTheDocument();
+    });
+
+    it("says nothing about a previous upload when no decision was kept", () => {
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 1,
+              pendingCount: 0,
+              review: {
+                status: "review_required",
+                acceptedCount: 1,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount: 0,
+                carriedForwardFromPriorUpload: 0,
+              },
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  question: "Provide baseline metrics.",
+                  response: "Measured at 30 tickets per week.",
+                  answerState: "answered",
+                  disposition: "accepted",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.queryByText(/kept from your previous upload/),
+      ).not.toBeInTheDocument();
+    });
+
     it("keeps a blocked P2 request on P1 with the server-derived why, remains, and next action above the fold", () => {
       const move = makeMove({
         currentPhase: 1,

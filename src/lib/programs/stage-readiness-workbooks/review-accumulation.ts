@@ -152,6 +152,17 @@ export type StageReadinessStoredReviewKind = "current_set" | "superseded_set";
 export interface StageReadinessStoredReview {
   kind: StageReadinessStoredReviewKind;
   proposals: PriorReviewedProposal[];
+  /**
+   * The review artifact's own status and metadata, returned because the phase
+   * workspace reads both off the same artifact. Handing them back here is what
+   * keeps that surface on ONE read of the stored review rather than repeating
+   * the lookup for the parts this function does not currently return.
+   */
+  artifactStatus: string | null;
+  artifactMetadata: unknown;
+  /** The stored review body's own `summary`, whose readiness split is measured
+   * server-side and cannot be recomputed from the rows on a page. */
+  summary: unknown;
 }
 
 export async function loadStageReadinessStoredReview(
@@ -205,6 +216,10 @@ export async function loadStageReadinessStoredReview(
       (proposal): proposal is PriorReviewedProposal =>
         typeof proposal === "object" && proposal !== null,
     ),
+    artifactStatus:
+      typeof reviewArtifact.status === "string" ? reviewArtifact.status : null,
+    artifactMetadata: reviewArtifact.metadata,
+    summary: (review as { summary?: unknown }).summary,
   };
 }
 
