@@ -65,6 +65,23 @@ export interface MoveContextExtractInput {
   targetPhase?: number;
   moveName: string;
   useCaseArchetype: string;
+  /**
+   * The archetype id a human DECLARED for this Move, when one was declared.
+   *
+   * Separate from `useCaseArchetype` because the two are different things.
+   * `useCaseArchetype` is the Move's coarse program archetype — one of five
+   * legacy `ArchetypeKey` values — and NONE of them names a discovery blueprint.
+   * Passing only that one made blueprint selection fall through to keyword
+   * inference on every Move, so the evidence this extract maps to families was
+   * graded against a framework nobody declared. Identity is declared, never
+   * inferred.
+   *
+   * `null`/absent reproduces the previous behavior exactly: selection falls
+   * through to inference over `useCaseArchetype`, unchanged. A value that names
+   * no catalog archetype also changes nothing — it is carried as the inference
+   * seed and discarded, which is the blueprint resolver's own rule.
+   */
+  declaredArchetypeId?: string | null;
   phaseLabel: string;
   phasePurpose: string;
   candidatePreview?: MoveContextExtractCandidatePreviewRequest;
@@ -346,7 +363,10 @@ function attachedItemFromEvidenceRow(
   input: MoveContextExtractInput,
   row: MoveEvidenceRow,
 ): MoveContextExtractItem {
-  const blueprint = getDiscoveryBlueprint(input.useCaseArchetype);
+  const blueprint = getDiscoveryBlueprint(
+    input.useCaseArchetype,
+    input.declaredArchetypeId,
+  );
   const family =
     mapEvidenceToDiscoveryFamily(discoveryItemFromRow(row), blueprint) ??
     stringOrNull(row.extractedStructured.evidence_type) ??
@@ -779,7 +799,10 @@ export async function createMoveContextExtract(
     ? "candidate_preview"
     : "active_home_context";
   const artifactType = artifactTypeForPhase(input.phase);
-  const blueprint = getDiscoveryBlueprint(input.useCaseArchetype);
+  const blueprint = getDiscoveryBlueprint(
+    input.useCaseArchetype,
+    input.declaredArchetypeId,
+  );
   const loadMoveEvidence = deps.loadMoveEvidence ?? defaultLoadMoveEvidenceRows;
   const moveEvidenceRows =
     sourceMode === "active_home_context"
