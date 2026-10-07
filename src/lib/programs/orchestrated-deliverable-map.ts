@@ -24,6 +24,7 @@
 // large_package), and normalizeDeliverableKey keeps lookups robust.
 
 import { normalizeDeliverableKey } from "@/lib/ai/document-generation-policy";
+import { canonicalPhaseForDeliverableKey } from "@/lib/programs/deliverable-phase-resolution";
 import {
   DELIVERABLE_REGISTRY,
   getDeliverableSpec,
@@ -79,18 +80,28 @@ export function orchestratorDeliverableType(registryKey: string): string {
   return REGISTRY_TO_ORCHESTRATOR[normalized] ?? normalized;
 }
 
-/** Resolve the unique canonical Moves phase for a registry or orchestrator key. */
+/**
+ * Resolve the unique canonical Moves phase for a registry or orchestrator key.
+ *
+ * Both spellings are accepted, which the orchestrator-only comparison this
+ * replaced did not deliver: it matched the input against the orchestrator type
+ * alone, so the five canonical keys with a non-identity mapping
+ * (`operating_model_design`, `execution_roadmap`, `financial_model`,
+ * `tower_metrics_plan`, `handoff_package`) matched no spec and returned null
+ * when passed their own registry key. A null is a hard stop for both callers —
+ * a 422 at POST /api/v1/deliverables/generate and a `blocked` run in the queue
+ * worker, both `moves_deliverable_phase_unresolved`. See
+ * deliverable-phase-resolution.ts for the rule and what it was measured against.
+ */
 export function phaseForOrchestratorDeliverableType(
   deliverableType: string,
 ): number | null {
-  const normalized = normalizeDeliverableKey(deliverableType);
-  const phases = new Set(
-    DELIVERABLE_REGISTRY.filter(
-      (spec) =>
-        orchestratorDeliverableType(spec.deliverableTypeKey) === normalized,
-    ).map((spec) => spec.phase),
-  );
-  return phases.size === 1 ? [...phases][0] : null;
+  return canonicalPhaseForDeliverableKey({
+    key: deliverableType,
+    specs: DELIVERABLE_REGISTRY,
+    normalize: normalizeDeliverableKey,
+    toOrchestratorType: orchestratorDeliverableType,
+  });
 }
 
 /** Prescribed render/download format the orchestrator should persist a deliverable in. */
