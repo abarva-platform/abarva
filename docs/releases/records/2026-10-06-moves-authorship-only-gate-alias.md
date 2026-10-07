@@ -89,12 +89,14 @@ Lane: `global-control-lane`.
 - **PASS** — `npx eslint` on both changed files, exit 0.
 - **NOT RUN** — any signed-in walk. This criterion is reached by advancing a real Move off the
   private data plane, which a development machine cannot do; it is not live-proven until that walk.
-- Coverage census regenerated: covered test files 2596 → 2599 with uncovered test files unchanged at
-  164, which is the evidence the new suite runs in CI rather than only locally. One of the three is
-  this change's suite. Measured in isolation on the unmodified base, regenerating already moved test
-  files 2760 → 2762, so the committed census was stale by two files before this branch existed; the
-  census stores counts and no file list, so those two cannot be named from the artifact. Stated
-  rather than claimed. The fence census is unchanged — no tenant-scoped file is added.
+- Coverage census regenerated: covered test files 2599 → 2601 with uncovered test files unchanged at
+  164, which is the evidence the new suite runs in CI rather than only locally. One of the two is
+  this change's suite. Measured in isolation on the unmodified base before the branch existed,
+  regenerating already moved test files 2760 → 2762, so the committed census was stale by two files
+  then; two siblings merged while this branch was open, and a regeneration after merging their main
+  leaves it stale by one more. The census stores counts and no file list, so none of those files can
+  be named from the artifact. Stated rather than claimed. The fence census is unchanged — no
+  tenant-scoped file is added.
 
 ## Rollout Plan
 
