@@ -44,7 +44,7 @@ import {
   shouldGenerateArtifact,
   type AdaptiveDepthDecision,
 } from "@/lib/deliverables/adaptive-depth";
-import { getModuleState } from "@/lib/programs/queries";
+import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import {
   approvedMoveEvidenceRevisionForPhase,
@@ -61,7 +61,10 @@ import {
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
 import { formatEstimateModelForPrompt } from "@/lib/programs/estimate-model";
-import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import {
+  loadDiscoveryEvidenceReadiness,
+  resolveDeclaredProgramArchetypeId,
+} from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 import { buildHeldByEvidenceDetail } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
@@ -442,6 +445,26 @@ export async function POST(req: NextRequest) {
       ? formatApprovedSolutionApproach(approvedSolutionApproach)
       : null;
 
+    // The archetype this route is HANDED (`useCaseArchetype`) is the Move's
+    // coarse program archetype, and not one of its five possible values names a
+    // discovery blueprint or an archetype pack. Resolve what a human actually
+    // DECLARED for this Move and pass that alongside, so the context extract
+    // grades evidence against the declared framework instead of one keyword
+    // inference picked. `resolveDeclaredProgramArchetypeId` is the same rule the
+    // upload, solution-pattern and risk-assessment routes already apply — this
+    // path was the one resolving nothing.
+    //
+    // Best-effort on purpose: a failed read must not fail the enqueue, and
+    // `null` is exactly today's behavior.
+    let declaredArchetypeId: string | null = null;
+    try {
+      declaredArchetypeId = resolveDeclaredProgramArchetypeId(
+        await getProgramById(ctx, moveId),
+      );
+    } catch {
+      declaredArchetypeId = null;
+    }
+
     let contextExtract: MoveContextExtractResult | null = null;
     try {
       contextExtract = await createMoveContextExtract({
@@ -452,6 +475,7 @@ export async function POST(req: NextRequest) {
         targetPhase: phase,
         moveName,
         useCaseArchetype,
+        declaredArchetypeId,
         phaseLabel,
         phasePurpose: specs.map((spec) => spec.documentPurpose).join(" "),
         candidatePreview: {
