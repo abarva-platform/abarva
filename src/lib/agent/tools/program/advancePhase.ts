@@ -154,16 +154,20 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     }
 
     const fromPhase = program.currentPhase ?? 0;
-    if (input.to_phase !== fromPhase + 1 && !input.bypass_gate) {
-      return {
-        success: false,
-        error: "non_adjacent_phase",
-        recovery:
-          `The program is at phase ${fromPhase}; you asked for ${input.to_phase}. Phases advance ` +
-          `one at a time unless you explicitly bypass. Want me to advance one step (${fromPhase} → ${fromPhase + 1}) instead?`,
-      };
-    }
 
+    // Which transitions EXIST is declared by governance, not by arithmetic.
+    // The set is not "every from+1 pair": `findGateRule` resolves an opt-in
+    // transition for a Move whose tenant and tier make it eligible, and that
+    // transition is non-adjacent by design — it is the whole point of the
+    // lane. So ask the evaluator for the pair the caller actually requested
+    // and let its own `no_rule` verdict decide adjacency.
+    //
+    // This replaces a `to_phase !== fromPhase + 1` guard that refused such a
+    // transition outright while offering `bypass_gate` as the only way
+    // through — i.e. the lane's single reachable path was the one that SKIPS
+    // the gate declared to govern it. Every pair no rule covers is still
+    // refused here, with the same error and the same recovery; the cost is
+    // one gate evaluation on a request that is about to be refused.
     let gate;
     try {
       gate = await evaluateGate(
@@ -179,6 +183,19 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
         error: `gate_eval_failed: ${message}`,
         recovery:
           "Couldn't evaluate the gate. Want me to retry, or pull the criteria for review?",
+      };
+    }
+
+    const governedTransition = !gate.failedChecks.some(
+      (c) => c.check === "no_rule",
+    );
+    if (!governedTransition && !input.bypass_gate) {
+      return {
+        success: false,
+        error: "non_adjacent_phase",
+        recovery:
+          `The program is at phase ${fromPhase}; you asked for ${input.to_phase}. Phases advance ` +
+          `one at a time unless you explicitly bypass. Want me to advance one step (${fromPhase} → ${fromPhase + 1}) instead?`,
       };
     }
 
