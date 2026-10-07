@@ -126,6 +126,7 @@ COPY --from=build --chown=node:node /app/docs/architecture/meridian-demo-finding
 COPY --from=build --chown=node:node /app/docs/architecture/ecl-retired-code-reference-manifest.json ./docs/architecture/ecl-retired-code-reference-manifest.json
 COPY --from=build --chown=node:node /app/docs/architecture/sql-drafts ./docs/architecture/sql-drafts
 COPY --from=build --chown=node:node /app/docs/governance/dataset-manifests ./docs/governance/dataset-manifests
+COPY --from=build --chown=node:node /app/docs/governance/data-repairs ./docs/governance/data-repairs
 COPY --from=build --chown=node:node /app/docs/source/skyharbor-v4 ./docs/source/skyharbor-v4
 COPY --from=build --chown=node:node /app/runtime-tenant-boundaries ./runtime-tenant-boundaries
 COPY --from=build --chown=node:node /app/datasets ./datasets

@@ -1,0 +1,13 @@
+{
+  "repair_id": "moves-gdf-evidence-client-key-20261006",
+  "dataset_id": "moves_gdf_discovery_aca_smoke_20261006",
+  "move_id": "1557f032-5a5c-4475-abe5-b1a841576649",
+  "source_set_hash": "b06f64dd2c4c2dd6bcfb670f0efd1ecc36d43e56881af806de6cc0eba6df92ff",
+  "from_tenant_key": "meridian-health",
+  "to_tenant_key": "meridian",
+  "expected_evidence_items": 11,
+  "expected_pending_reviews": 11,
+  "approved_by": "Anand Sundaram",
+  "approval_basis": "delegated_automated_smoke_test_user_instruction_2026-10-06",
+  "release_record": "docs/releases/records/2026-10-06-moves-program-evidence-key-repair.md"
+}

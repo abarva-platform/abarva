@@ -1957,6 +1957,7 @@ export function FileCabinetPanel({
       review: PendingEvidenceReview,
       decision: "approved" | "rejected",
       extraction?: ReviewedEvidenceExtraction,
+      rationale?: string,
     ) => {
       setReviewingEvidenceId(review.evidenceId);
       setError(null);
@@ -1970,10 +1971,10 @@ export function FileCabinetPanel({
             body: JSON.stringify({
               decision,
               reviewedExtraction: extraction,
-              rationale:
-                decision === "approved"
+              rationale: rationale?.trim() ||
+                (decision === "approved"
                   ? "Reviewer approved the corrected evidence extraction."
-                  : "Reviewer rejected the parsed evidence.",
+                  : "Reviewer rejected the parsed evidence."),
             }),
           },
         );
@@ -2349,8 +2350,8 @@ export function FileCabinetPanel({
                     programId={moveId}
                     busy={reviewingEvidenceId === review.evidenceId}
                     disabled={reviewingEvidenceId !== null}
-                    onDecision={(decision, extraction) =>
-                      void decideEvidenceReview(review, decision, extraction)
+                    onDecision={(decision, extraction, rationale) =>
+                      void decideEvidenceReview(review, decision, extraction, rationale)
                     }
                   />
                 ))

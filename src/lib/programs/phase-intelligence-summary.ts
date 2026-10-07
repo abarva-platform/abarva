@@ -2,16 +2,11 @@ import "server-only";
 
 import { getDecisionThreadDossier, getThreadForArtifact } from "@/lib/decisions/auto-linker";
 import { resolveFunctionPack } from "@/lib/programs/expert-kernel/domain/function-pack-registry";
-import {
-  classifyFunctionKey,
-  industryKeyForCode,
-  resolveMoveFunctionIdentity,
-} from "@/lib/programs/function-identity";
+import { resolvePhaseIntelligenceFunctionBinding } from "@/lib/programs/phase-intelligence-function-binding";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 import { buildGateCriteria } from "@/lib/programs/transformers";
-import type { MoveFunctionIdentity } from "@/lib/programs/function-identity";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 type StrategicMoveForPhaseIntelligence = NonNullable<
@@ -48,87 +43,6 @@ function compact(value: string | null | undefined, fallback: string): string {
 function formatRange(low: number, high: number, unit: string): string {
   if (unit === "%") return `${low}-${high}%`;
   return `${low}-${high} ${unit}`;
-}
-
-function safeCharterText(charter: unknown): string {
-  if (!charter || typeof charter !== "object") return "";
-  try {
-    return JSON.stringify(charter);
-  } catch {
-    return "";
-  }
-}
-
-function buildMoveFunctionBriefText(move: StrategicMoveForPhaseIntelligence): string {
-  return [
-    move.displayCode,
-    move.name,
-    move.archetype,
-    move.phaseLabel,
-    move.status.text,
-    move.status.description,
-    move.tenant.name,
-    move.tenant.industryCode,
-    safeCharterText(move.charter),
-  ]
-    .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
-    .join(" ");
-}
-
-function resolveKnownLegacyFunctionAlias(
-  industryKey: MoveFunctionIdentity["industryKey"],
-  briefText: string,
-): { functionKey: string; confidence: number } | null {
-  const normalized = briefText.toLowerCase();
-  if (industryKey !== "healthcare-provider") return null;
-
-  const namesAgentAssist =
-    /\b(agent|member|contact|call|service)\b/.test(normalized) &&
-    /\b(ai|assist|assistant|augmentation|copilot)\b/.test(normalized);
-  const namesMemberService =
-    /\b(member|contact|call)\b/.test(normalized) &&
-    /\b(service|center|centre|experience)\b/.test(normalized);
-  if (namesAgentAssist || namesMemberService) {
-    return { functionKey: "member_service_agent_assist", confidence: 0.95 };
-  }
-
-  return null;
-}
-
-function resolvePhaseIntelligenceFunctionIdentity(
-  move: StrategicMoveForPhaseIntelligence,
-): {
-  identity: MoveFunctionIdentity;
-  source: string;
-  confidence: number | null;
-} | null {
-  const storedIdentity = resolveMoveFunctionIdentity({
-    industryCode: move.tenant.industryCode,
-    functionPackKey: move.functionPackKey,
-    charter: move.charter,
-  });
-  if (storedIdentity) {
-    return {
-      identity: storedIdentity,
-      source: "persisted functionPackKey",
-      confidence: null,
-    };
-  }
-
-  const industryKey = industryKeyForCode(move.tenant.industryCode);
-  if (!industryKey) return null;
-
-  const briefText = buildMoveFunctionBriefText(move);
-  const classified =
-    classifyFunctionKey(industryKey, briefText) ??
-    resolveKnownLegacyFunctionAlias(industryKey, briefText);
-  if (!classified) return null;
-
-  return {
-    identity: { industryKey, functionKey: classified.functionKey },
-    source: "deterministic classifier fallback",
-    confidence: classified.confidence,
-  };
 }
 
 async function buildDecisionItem(
@@ -204,7 +118,29 @@ async function buildDecisionItem(
 async function buildStrategicSignalItem(
   move: StrategicMoveForPhaseIntelligence | null,
 ): Promise<PhaseIntelligenceItem> {
-  const binding = move ? resolvePhaseIntelligenceFunctionIdentity(move) : null;
+  const resolved = move ? resolvePhaseIntelligenceFunctionBinding(move) : null;
+
+  // A Move that DECLARED an archetype is reported as declared. Function Pack
+  // keys are a different id space, so there is no pack to guess for it, and a
+  // best-scoring healthcare pack would describe a different kind of work.
+  if (resolved?.kind === "declared_archetype") {
+    return {
+      id: "strategic_signal",
+      eyebrow: "Strategic signal",
+      title: `This Move is declared ${resolved.archetypeName}.`,
+      body:
+        "No curated industry/function pack covers this declared archetype, so Nexus is not showing a function-specific value or pain signal. The declared archetype — not a keyword guess over this Move's text — is what drives its discovery blueprint and evidence requirements.",
+      sourceLabel: "Declared archetype",
+      tone: "default",
+      facts: [
+        `Declared archetype: ${resolved.archetypeId}`,
+        `Industry code: ${move?.tenant.industryCode ?? "not set"}`,
+        "Function pack: none bound (archetype ids and function pack keys are separate)",
+      ],
+    };
+  }
+
+  const binding = resolved?.kind === "bound" ? resolved : null;
   const pack = binding
     ? resolveFunctionPack(binding.identity.industryKey, binding.identity.functionKey)
     : null;
