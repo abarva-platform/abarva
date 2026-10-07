@@ -1353,6 +1353,72 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     );
   });
 
+  // The worker rebuilds the orchestrator request from the PERSISTED PAYLOAD
+  // alone, so it never reaches the in-process precedence rule in
+  // `build-request.ts`. These pin the payload end: the rule itself is covered
+  // in `deliverables/orchestrated/__tests__/phase-build-use-case-archetype.test.ts`,
+  // and a rule proven only there would stay green if this route went back to
+  // posting the coarse label straight into the job.
+  it("carries the declared archetype into the queued job payload, not the posted legacy label", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    });
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const call of createCalls) {
+      expect(
+        (call.jobPayload as { useCaseArchetype: string }).useCaseArchetype,
+      ).toBe("governed_data_foundation");
+      // the run row records the archetype the build actually generated against
+      expect(call.archetype).toBe("governed_data_foundation");
+    }
+  });
+
+  it("leaves the posted archetype in the payload when the Move declares no archetype", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: null,
+    });
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const call of createCalls) {
+      expect(
+        (call.jobPayload as { useCaseArchetype: string }).useCaseArchetype,
+      ).toBe("platform_modernization");
+    }
+  });
+
+  it("keeps a posted archetype that already names one, over a differing declaration", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    });
+    const res = await POST(
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "healthcare_contact_center_agent_assist",
+      }),
+    );
+    expect(res.status).toBe(202);
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const call of createCalls) {
+      expect(
+        (call.jobPayload as { useCaseArchetype: string }).useCaseArchetype,
+      ).toBe("healthcare_contact_center_agent_assist");
+    }
+  });
+
   it("still enqueues when the program read fails — a lost declaration must not fail the build", async () => {
     getProgramById.mockRejectedValue(new Error("program store unavailable"));
     const res = await POST(
