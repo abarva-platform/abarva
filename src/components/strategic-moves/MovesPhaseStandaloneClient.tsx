@@ -88,6 +88,7 @@ import {
   isWorkbookProposalOpenForReview,
   selectableWorkbookProposalIds,
 } from "@/lib/programs/stage-readiness-workbooks/review-selection";
+import { shouldOfferStageReadinessWorkbook } from "@/lib/programs/stage-readiness-workbook-offer";
 import {
   approvalsRowStatusBasis,
   approvalsRowStatusClass,
@@ -2987,6 +2988,21 @@ export function MovesPhaseStandaloneClient({
   const captureCompositionActive =
     captureCompositionEnabled && captureFlowMounted;
 
+  // The accepted stage-readiness workbook review is a HARD precondition for
+  // closing P1 through P4 — the gate refuses `transition_evidence_incomplete`
+  // and the build refuses `required_evidence_open` without it — and the control
+  // below is its only producer. Which screens offer it is therefore a governed
+  // decision, not a layout preference; `shouldOfferStageReadinessWorkbook` owns
+  // it so the legacy canvas's substep rule and the redesigned flow's cannot
+  // drift apart. Under the 3-step flow nothing moves `substepIndex`, so a
+  // substep-keyed rule would hide it for the whole phase.
+  const offerReadinessWorkbook = shouldOfferStageReadinessWorkbook({
+    phase: phase.phase,
+    substepKey: substep.key,
+    captureFlowMounted,
+    hasWorkbookTransition: readinessWorkbookHref !== null,
+  });
+
   const surfaceTabRow: ReactNode = (
     <WorkspaceSurfaceTabs
       activeView={workspaceView}
@@ -3407,8 +3423,7 @@ export function MovesPhaseStandaloneClient({
                         </button>
                       </div>
                     ) : null}
-                    {readinessWorkbookHref &&
-                    (phase.phase < 3 || substep.key === "approve") ? (
+                    {readinessWorkbookHref && offerReadinessWorkbook ? (
                       <div className="mxw-stage-actions">
                         <a
                           className="mxw-stage-download"
