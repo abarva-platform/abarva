@@ -3766,6 +3766,216 @@ describe("MovesPhaseStandaloneClient", () => {
       ).not.toBeInTheDocument();
     });
 
+    /**
+     * A restored decision is shown and is not yet on record. Both halves are
+     * the reviewer's business: the first tells them not to re-judge the row,
+     * the second is why the phase is still held.
+     */
+    function renderRestoredReview(
+      proposals: Array<Record<string, unknown>>,
+      pendingCount = 0,
+    ) {
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 3,
+              proposalSetId: "proposal-set-2",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount,
+              review: {
+                status: "review_required",
+                acceptedCount: proposals.length - pendingCount,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount,
+                carriedForwardFromPriorUpload: proposals.filter(
+                  (proposal) =>
+                    proposal.dispositionRestoredFromPriorUpload === true,
+                ).length,
+              },
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      return move;
+    }
+
+    it("marks the rows whose decision came from the previous upload, and only those", () => {
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "accepted",
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.getByText(
+          /kept from your previous upload, not yet recorded/,
+        ),
+      ).toBeInTheDocument();
+      // One marker, not one per row: the recorded decision is not restored.
+      expect(
+        screen.getAllByText(/kept from your previous upload, not yet recorded/)
+          .length,
+      ).toBe(1);
+    });
+
+    it("offers a control to record the kept decisions when the re-upload left nothing pending", async () => {
+      // The case the gate fix would otherwise strand. Every row reads decided,
+      // so no response is open and no required response is unaccepted, while
+      // the phase stays held because no review of THIS set exists. Before this
+      // control the whole action row was hidden in exactly that state.
+      const move = renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "rejected",
+            dispositionRestoredFromPriorUpload: true,
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.getByText(
+          /review what changed, then record the kept decisions/,
+        ),
+      ).toBeInTheDocument();
+      const record = screen.getByRole("button", {
+        name: "Record 2 kept decisions",
+      });
+      fireEvent.click(record);
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      // Each row is recorded as the disposition that was already made for it.
+      // Sending them all as "accepted" would overturn a human's rejection.
+      expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 3,
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          { proposalId: "proposal-2", disposition: "rejected" },
+        ],
+      });
+      expect(String(move.id).length).toBeGreaterThan(0);
+      // Once recorded, neither the marks nor the control remain.
+      expect(
+        screen.queryByRole("button", { name: /kept decision/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/kept from your previous upload, not yet recorded/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("keeps the review surface open when every restored decision is an acceptance", async () => {
+      // The actual dead end, and the only state in which the kept-decision
+      // term is load-bearing. A restored REJECTION already leaves a required
+      // response unaccepted, which holds the surface open on its own; when
+      // every restored decision is an acceptance, no response is open and none
+      // is unaccepted, so without that term the action row disappears while
+      // the phase is still held for want of a recorded review.
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+        ],
+        0,
+      );
+      const record = screen.getByRole("button", {
+        name: "Record 2 kept decisions",
+      });
+      expect(record).toBeEnabled();
+      fireEvent.click(record);
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          { proposalId: "proposal-2", disposition: "accepted" },
+        ],
+      });
+    });
+
+    it("offers no kept-decision control when every decision is already on record", () => {
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.queryByRole("button", { name: /kept decision/ }),
+      ).not.toBeInTheDocument();
+    });
+
     it("keeps a blocked P2 request on P1 with the server-derived why, remains, and next action above the fold", () => {
       const move = makeMove({
         currentPhase: 1,

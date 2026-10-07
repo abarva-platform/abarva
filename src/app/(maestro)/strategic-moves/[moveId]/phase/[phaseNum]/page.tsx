@@ -39,6 +39,10 @@ import {
 } from "@/lib/programs/stage-readiness-workbooks/proposals";
 import { loadStageReadinessStoredReview } from "@/lib/programs/stage-readiness-workbooks/review-accumulation";
 import { previewStageReadinessStoredReview } from "@/lib/programs/stage-readiness-workbooks/review-preview";
+import {
+  recordedDispositionsOnly,
+  seedProposalsFromReviewPreview,
+} from "@/lib/programs/stage-readiness-workbooks/review-provenance";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import {
@@ -161,6 +165,12 @@ interface StageReadinessProposalSetPreview {
       context?: string;
       answerState?: string;
       disposition?: string;
+      /**
+       * The disposition was restored from an earlier upload of this workbook
+       * and no review of the set under review has recorded it. It is shown,
+       * and `recordedDispositionsOnly` keeps it out of every gate reading.
+       */
+      dispositionRestoredFromPriorUpload?: boolean;
       evidenceOrSource?: string;
     }>;
     message?: string;
@@ -550,13 +560,13 @@ export default async function StrategicMovePhaseWorkspacePage({
           });
 
           if (storedReview && reviewPreview.source !== "none") {
-            const seeded = parsedProposals.map((proposal) => ({
-              ...proposal,
-              disposition: proposal.proposalId
-                ? (reviewPreview.dispositionByProposalId[proposal.proposalId] ??
-                  proposal.disposition)
-                : proposal.disposition,
-            }));
+            // Provenance is set with the disposition it describes. The
+            // gate projection below reads `recordedDispositionsOnly`, so a
+            // restored decision reaches the screen and never the gate.
+            const seeded = seedProposalsFromReviewPreview({
+              proposals: parsedProposals,
+              preview: reviewPreview,
+            });
             const tally = (disposition: string) =>
               seeded.filter((proposal) => proposal.disposition === disposition)
                 .length;
@@ -675,7 +685,9 @@ export default async function StrategicMovePhaseWorkspacePage({
     });
     const readinessProposals: StageReadinessGateProposal[] | null =
       readinessWorkbookPhase === parsedPhase
-        ? (initialStageReadinessPreview?.proposalSet?.proposals ?? []).map(
+        ? recordedDispositionsOnly(
+            initialStageReadinessPreview?.proposalSet?.proposals,
+          ).map(
             (proposal): StageReadinessGateProposal => ({
               questionId: proposal.questionId ?? "",
               dimensionId: proposal.dimensionId ?? "",
