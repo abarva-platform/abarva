@@ -74,14 +74,18 @@ Borrowing it would have gated on a condition this consumer never required.
 - **PASS** — `npx jest src/lib/programs/deliverables/orchestrated/__tests__` (the directory a step
   of the required `AI surface control catalog` check sweeps): 3 suites / 46 tests.
 - **PASS** — `npx jest src/lib/programs/deliverables src/lib/deliverables/orchestrator
-  src/lib/programs/discovery src/lib/programs/archetypes src/lib/programs/__tests__`: 230 suites /
-  2970 tests.
+  src/lib/programs/discovery src/lib/programs/archetypes src/lib/programs/__tests__
+  src/app/api/v1/deliverables`: 234 suites / 3057 tests, re-run after the merge.
 - **PASS** — `npm run test:behaviors`: 202 suites / 2102 tests.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit`, exit 0.
 - **PASS** — `npx eslint src/lib/programs/deliverables/orchestrated/`, exit 0.
-- **PASS** — census regenerated: `testFiles` 2815 → 2816, `coveredTestFiles` 2651 → 2652,
-  `uncoveredTestFiles` flat at 164. The +1 covered with uncovered unchanged is the proof the new
-  suite is reached by a CI runner rather than added dark.
+- **PASS** — census regenerated **after** a mid-run merge of the moving base: `testFiles`
+  2816 → 2817, `coveredTestFiles` 2652 → 2653, `uncoveredTestFiles` flat at 164. The +1 covered
+  with uncovered unchanged is the proof the new suite is reached by a CI runner rather than added
+  dark. Worth recording why the figures were restated once: the pre-merge regeneration produced a
+  census byte-identical to the one the base had meanwhile committed for a *different* added test
+  file, so the merge was clean while the committed count was wrong for the combined tree. The
+  figures above are from a regeneration taken after the merge.
 - **PASS** — mutation testing, 7 mutations, **6 killed**:
   1. restore field-order precedence (the original defect) — killed, 7 cases.
   2. accept keyword inference as naming an archetype — killed, 9 cases.
