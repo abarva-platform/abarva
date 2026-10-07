@@ -6,6 +6,7 @@ import {
   approvedMoveEvidenceRevision,
   type ApprovedMoveEvidenceRevisionRow,
 } from "@/lib/programs/approved-move-evidence-revision";
+import { moveEvidenceReadTenantKeys } from "@/lib/programs/evidence-readiness/tenant-read-scope";
 
 export interface ApprovedMoveEvidenceSnapshot {
   tenantKey: string;
@@ -93,6 +94,14 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
   moveId: string;
 }): Promise<ApprovedMoveEvidenceSnapshot | null> {
   if (!args.tenantKey || !args.moveId) return null;
+  // Approved evidence for one Move can carry either of that tenant's own keys:
+  // the product writes the app client key, a data-plane load job writes the
+  // canonical substrate key. A snapshot scoped to a single key reports the rows
+  // the other producer wrote as NO APPROVED EVIDENCE — indistinguishable here
+  // from a Move whose evidence was never approved, and this snapshot is what
+  // the gate evaluator, the effective-phase resolver and every generation path
+  // read. Per-tenant by construction; see `moveEvidenceReadTenantKeys`.
+  const tenantKeys = moveEvidenceReadTenantKeys(args.tenantKey);
   const db = getAzureReadFluentClient();
   const [reviewResult, reviewActivityResult] = await Promise.all([
     db
@@ -100,7 +109,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
       .select(
         "evidence_id, decision, source_ref, reviewed_at, updated_at, created_at",
       )
-      .eq("tenant_key", args.tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .eq("decision", "approved")
       .order("updated_at", { ascending: false })
@@ -108,7 +117,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     db
       .from("program_evidence_reviews")
       .select("evidence_id, decision, updated_at, reviewed_at, created_at")
-      .eq("tenant_key", args.tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .limit(MAX_REVIEW_ACTIVITY_ROWS + 1),
   ]);
@@ -163,7 +172,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     .select(
       "id, tenant_key, program_id, attachment_id, phase, evidence_type, title, summary, extracted_text, extracted_structured, confidence, created_at",
     )
-    .eq("tenant_key", args.tenantKey)
+    .in("tenant_key", tenantKeys)
     .eq("program_id", args.moveId)
     .in("id", uniqueEvidenceIds);
   if (evidenceError || !Array.isArray(evidence)) return null;

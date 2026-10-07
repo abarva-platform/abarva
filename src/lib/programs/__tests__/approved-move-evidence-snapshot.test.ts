@@ -25,14 +25,26 @@ beforeEach(() => {
   mockFrom.mockReset();
   mockFrom.mockImplementation((table: string) => {
     const queryFilters: Array<{ column: string; value: unknown }> = [];
+    const record = (column: string, value: unknown) => {
+      mockFilters.push({ table, column, value });
+      queryFilters.push({ column, value });
+      return query;
+    };
+    // The review queries end at `.limit(...)`, the evidence-items query ends at
+    // its `.in("id", ...)`, and the tenant scope is now an `.in(...)` mid-chain
+    // — so the builder has to be both chainable and awaitable rather than
+    // resolving from one terminal method.
     const query = {
       select: () => query,
-      eq: (column: string, value: unknown) => {
-        mockFilters.push({ table, column, value });
-        queryFilters.push({ column, value });
-        return query;
-      },
+      eq: (column: string, value: unknown) => record(column, value),
+      in: (column: string, value: unknown) => record(column, value),
       order: () => query,
+      then: (
+        resolve: (result: {
+          data: Array<Record<string, unknown>>;
+          error: null;
+        }) => unknown,
+      ) => resolve({ data: mockEvidenceRows, error: null }),
       limit: async (count?: number) => {
         let rows = mockReviewRows;
         const decision = queryFilters.find(
@@ -53,7 +65,6 @@ beforeEach(() => {
           error: null,
         };
       },
-      in: async () => ({ data: mockEvidenceRows, error: null }),
     };
     return query;
   });
@@ -210,7 +221,9 @@ describe("approved Move evidence snapshot", () => {
         {
           table: "program_evidence_reviews",
           column: "tenant_key",
-          value: "tenant-a",
+          // An unrecognised key widens to itself, so the scope here is the one
+          // key — the alias widening is proven in the tenant-scope suite.
+          value: ["tenant-a"],
         },
         {
           table: "program_evidence_reviews",
@@ -220,7 +233,7 @@ describe("approved Move evidence snapshot", () => {
         {
           table: "program_evidence_items",
           column: "tenant_key",
-          value: "tenant-a",
+          value: ["tenant-a"],
         },
         {
           table: "program_evidence_items",
