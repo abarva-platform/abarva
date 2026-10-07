@@ -17,7 +17,10 @@ import {
 } from "@/lib/source/taxonomy/category-taxonomy";
 import { readSourceIntakeRequestQueue } from "@/lib/source/intake/servicenow-sourcing-request-repository";
 import { buildServiceNowRequestEventHandoffFromPersistedDecision } from "@/lib/source/intake/servicenow-request-event-handoff";
-import { linkServiceNowRequestToEvent } from "@/lib/source/intake/servicenow-request-event-authority";
+import {
+  linkServiceNowRequestToEvent,
+  readServiceNowRequestDisposition,
+} from "@/lib/source/intake/servicenow-request-event-authority";
 import { persistSourceAuthorityVersion } from "@/lib/source/new-workspace/authority-version-store";
 import { buildSourceRequestAuthorityPayload } from "@/lib/source/new-workspace/source-version-authority";
 
@@ -238,6 +241,27 @@ export async function POST(request: Request) {
           },
           { status: 409 },
         );
+      }
+      let disposition;
+      try {
+        disposition = await readServiceNowRequestDisposition({
+          tenantKey: activeClient.key,
+          requestId,
+          sourceVersion,
+        });
+      } catch {
+        return Response.json(
+          {
+            error: "source_request_disposition_authority_unavailable",
+            detail: "The request decision authority could not be read. No event was created.",
+          }, { status: 503 });
+      }
+      if (disposition?.disposition_state !== "accepted" || disposition.source_version !== sourceVersion) {
+        return Response.json(
+          {
+            error: "source_request_disposition_required",
+            detail: "The current request version must be accepted before event creation.",
+          }, { status: 409 });
       }
     }
 

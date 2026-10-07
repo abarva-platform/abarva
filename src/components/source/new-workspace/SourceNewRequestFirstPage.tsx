@@ -22,6 +22,14 @@ export type SourceNewRequestQueueStatus =
   | "unauthorized"
   | "unavailable";
 
+export interface SourceRequestDispositionSummary {
+  requestId: string;
+  sourceVersion: string;
+  state: "accepted" | "returned" | "merged" | "declined";
+  rationale: string | null;
+  survivingRequestId: string | null;
+}
+
 export interface SourceNewEventWorkspaceSummary {
   id: string;
   code: string;
@@ -42,16 +50,22 @@ export function SourceNewRequestFirstPage({
   requestQueueStatus,
   importedRequests,
   eventWorkspaces,
+  dispositionStatus = "unavailable",
+  requestDispositions = [],
   intakeHref = "/source/new?mode=intake",
   onRetryRequestQueue = () => window.location.reload(),
+  onDecisionRecorded = () => window.location.reload(),
 }: {
   clientName: string;
   clientKey: string;
   requestQueueStatus: SourceNewRequestQueueStatus;
   importedRequests: readonly SourceIntakeRequestSummary[];
   eventWorkspaces: readonly SourceNewEventWorkspaceSummary[];
+  dispositionStatus?: "available" | "unavailable";
+  requestDispositions?: readonly SourceRequestDispositionSummary[];
   intakeHref?: string;
   onRetryRequestQueue?: () => void;
+  onDecisionRecorded?: () => void;
 }) {
   const canShowRequests =
     requestQueueStatus === "loaded" || requestQueueStatus === "empty";
@@ -60,6 +74,14 @@ export function SourceNewRequestFirstPage({
   const requests = canShowRequests
     ? importedRequests.filter((request) => request.eventLink === null)
     : [];
+  const dispositionFor = (request: SourceIntakeRequestSummary) =>
+    dispositionStatus === "available"
+      ? requestDispositions.find(
+          (row) => row.requestId === request.requestId && row.sourceVersion === request.sourceVersion,
+        )
+      : undefined;
+  const pendingRequests = requests.filter((request) => !dispositionFor(request));
+  const decidedRequests = requests.filter((request) => dispositionFor(request));
   const pendingApprovals = visibleWorkspaces.filter(
     (event) =>
       event.lifecycle === "waiting_on_client" &&
@@ -75,9 +97,8 @@ export function SourceNewRequestFirstPage({
           <p style={EYEBROW}>Source New</p>
           <h1 style={TITLE}>Source requests</h1>
           <p style={LEDE}>
-            Review what was requested, close any gaps, and confirm whether the
-            request is ready for Define. This page does not approve, advance, or
-            send anything.
+            Review what was requested, close any gaps, and record the intake
+            decision. Event creation and supplier contact are separate.
           </p>
         </div>
         {requestQueueStatus !== "unauthorized" ? (
@@ -94,14 +115,14 @@ export function SourceNewRequestFirstPage({
               <p style={EYEBROW}>Stage 01</p>
               <h2 style={PANEL_TITLE}>Request queue</h2>
             </div>
-            {pendingApprovals.length + requests.length > 0 ? (
+            {pendingApprovals.length + pendingRequests.length > 0 ? (
               <span style={COUNT}>
-                {pendingApprovals.length + requests.length} to review
+                {pendingApprovals.length + pendingRequests.length} to review
               </span>
             ) : null}
           </div>
           {pendingApprovals.length > 0 ? (
-            <div style={{ marginBottom: requests.length > 0 ? 20 : 0 }}>
+            <div style={{ marginBottom: pendingRequests.length > 0 ? 20 : 0 }}>
               <h3 style={PENDING_TITLE}>Awaiting decision</h3>
               <ol style={EVENT_LIST}>
                 {pendingApprovals.map((event) => (
@@ -128,11 +149,43 @@ export function SourceNewRequestFirstPage({
           ) : null}
           <RequestQueueState
             status={requestQueueStatus}
-            requests={requests}
+            requests={pendingRequests}
+            allRequests={requests}
+            dispositionStatus={dispositionStatus}
             hasPendingApprovals={pendingApprovals.length > 0}
             onRetryRequestQueue={onRetryRequestQueue}
+            onDecisionRecorded={onDecisionRecorded}
           />
         </section>
+
+        {decidedRequests.length > 0 ? (
+          <section aria-label="Decided requests" style={SECTION}>
+            <h2 style={PANEL_TITLE}>Decided requests</h2>
+            <ol style={EVENT_LIST}>
+              {decidedRequests.map((request) => {
+                const decision = dispositionFor(request)!;
+                const survivor = requests.find((row) => row.requestId === decision.survivingRequestId);
+                return (
+                  <li key={request.requestId} style={EVENT_ROW}>
+                    <div>
+                      <div style={EVENT_LINK}>{request.title}</div>
+                      <div style={EVENT_META}>{humanize(decision.state)} · {request.requestNumber}</div>
+                      {decision.rationale ? <p style={NOTE_COPY}>{decision.rationale}</p> : null}
+                      {decision.state === "merged" ? (
+                        <p style={NOTE_COPY}>Merged into {survivor?.title ?? decision.survivingRequestId}</p>
+                      ) : null}
+                    </div>
+                    {decision.state === "accepted" ? (
+                      <Link href={`/source/new?mode=intake&requestId=${encodeURIComponent(request.requestId)}`} style={OPEN_LINK}>
+                        Continue request
+                      </Link>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        ) : null}
 
         <section aria-label="Event workspaces" style={SECTION}>
           <div style={PANEL_HEADER}>
@@ -194,13 +247,19 @@ export function SourceNewRequestFirstPage({
 function RequestQueueState({
   status,
   requests,
+  allRequests,
+  dispositionStatus,
   hasPendingApprovals,
   onRetryRequestQueue,
+  onDecisionRecorded,
 }: {
   status: SourceNewRequestQueueStatus;
   requests: readonly SourceIntakeRequestSummary[];
+  allRequests: readonly SourceIntakeRequestSummary[];
+  dispositionStatus: "available" | "unavailable";
   hasPendingApprovals: boolean;
   onRetryRequestQueue: () => void;
+  onDecisionRecorded: () => void;
 }) {
   if (status === "loading") {
     return (
@@ -236,7 +295,13 @@ function RequestQueueState({
     return (
       <ol style={REQUEST_LIST}>
         {requests.map((request) => (
-          <RequestTriageRow key={request.requestId} request={request} />
+          <RequestTriageRow
+            key={request.requestId}
+            request={request}
+            allRequests={allRequests}
+            dispositionStatus={dispositionStatus}
+            onDecisionRecorded={onDecisionRecorded}
+          />
         ))}
       </ol>
     );
@@ -254,12 +319,27 @@ function RequestQueueState({
 
 function RequestTriageRow({
   request,
+  allRequests,
+  dispositionStatus,
+  onDecisionRecorded,
 }: {
   request: SourceIntakeRequestSummary;
+  allRequests: readonly SourceIntakeRequestSummary[];
+  dispositionStatus: "available" | "unavailable";
+  onDecisionRecorded: () => void;
 }) {
-  const mappingAccepted = request.mappingDecision !== null;
+  const [decisionOpen, setDecisionOpen] = useState(false);
+  const [decision, setDecision] = useState<"accepted" | "returned" | "merged" | "declined">("accepted");
+  const [rationale, setRationale] = useState("");
+  const [survivorId, setSurvivorId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const readyForEvent =
-    mappingAccepted && request.requiredFactGaps.length === 0;
+    request.mappingDecision?.sourceVersion === request.sourceVersion && request.requiredFactGaps.length === 0;
+  const survivor = allRequests.find((row) => row.requestId === survivorId && row.requestId !== request.requestId && !row.eventLink);
+  const decisionReady = rationale.trim().length >= 12 &&
+    (decision !== "accepted" || readyForEvent) &&
+    (decision !== "merged" || Boolean(survivor));
   const requested = [
     request.requestedFor,
     request.businessFunction,
@@ -283,7 +363,7 @@ function RequestTriageRow({
           {request.eventLink
             ? "Event created"
             : readyForEvent
-              ? "Ready to create event"
+              ? "Ready for intake decision"
               : "Review required"}
         </span>
       </div>
@@ -340,9 +420,91 @@ function RequestTriageRow({
           )}
         </p>
       ) : null}
-      <Link href={actionHref} style={PRIMARY_ACTION}>
-        {request.eventLink ? "Open event" : "Review request"}
-      </Link>
+      {dispositionStatus === "unavailable" ? (
+        <p style={NOTE_COPY}>Decision authority unavailable</p>
+      ) : null}
+      <div style={REQUEST_ACTIONS}>
+        <Link href={actionHref} style={PRIMARY_ACTION}>
+          {request.eventLink ? "Open event" : "Review request"}
+        </Link>
+        {dispositionStatus === "available" ? (
+          <button type="button" onClick={() => setDecisionOpen((value) => !value)} style={SECONDARY_BUTTON}>
+            Decide request
+          </button>
+        ) : null}
+      </div>
+      {decisionOpen ? (
+        <form
+          aria-label={`Decision for ${request.title}`}
+          style={DECISION_FORM}
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (!decisionReady || submitting) return;
+            setSubmitting(true);
+            setError(null);
+            try {
+              const response = await fetch("/api/v1/source/intake/servicenow/review", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  requestId: request.requestId,
+                  sourceVersion: request.sourceVersion,
+                  dispositionState: decision,
+                  rationale: rationale.trim(),
+                  ...(decision === "merged" && survivor
+                    ? { survivingRequestId: survivor.requestId, survivingSourceVersion: survivor.sourceVersion }
+                    : {}),
+                }),
+              });
+              const result = await response.json();
+              if (!response.ok || result.ok !== true ||
+                result.disposition?.disposition_state !== decision ||
+                result.disposition?.source_version !== request.sourceVersion) {
+                setError(result.detail ?? "Decision was not confirmed. Review the request and retry.");
+                return;
+              }
+              onDecisionRecorded();
+            } catch {
+              setError("Decision authority could not be reached. No decision is confirmed.");
+            } finally {
+              setSubmitting(false);
+            }
+          }}
+        >
+          <label style={FORM_LABEL}>Decision
+            <select value={decision} onChange={(event) => setDecision(event.target.value as typeof decision)} style={FORM_INPUT}>
+              <option value="accepted">Accept for planning</option>
+              <option value="returned">Return for detail</option>
+              <option value="merged">Merge into another request</option>
+              <option value="declined">Decline</option>
+            </select>
+          </label>
+          {decision === "merged" ? (
+            <label style={FORM_LABEL}>Request to keep
+              <select value={survivorId} onChange={(event) => setSurvivorId(event.target.value)} style={FORM_INPUT}>
+                <option value="">Choose a request</option>
+                {allRequests.filter((candidate) => candidate.requestId !== request.requestId && !candidate.eventLink).map((candidate) => (
+                  <option key={candidate.requestId} value={candidate.requestId}>{candidate.requestNumber} · {candidate.title}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <label style={FORM_LABEL}>Decision rationale
+            <textarea value={rationale} onChange={(event) => setRationale(event.target.value)} rows={3} style={FORM_INPUT} />
+          </label>
+          {!decisionReady ? <p style={NOTE_COPY}>
+            {decision === "merged" && !survivor
+              ? "Choose a different request to keep."
+              : decision === "accepted" && !readyForEvent
+                ? "Review the mapping and required facts before accepting."
+                : "Add a rationale of at least 12 characters."}
+          </p> : null}
+          {error ? <p role="alert" style={ERROR_TEXT}>{error}</p> : null}
+          <button type="submit" disabled={!decisionReady || submitting} style={decisionReady && !submitting ? READY_BUTTON : DISABLED_BUTTON}>
+            {submitting ? "Recording..." : "Record decision"}
+          </button>
+        </form>
+      ) : null}
     </li>
   );
 }
@@ -561,6 +723,69 @@ const PRIMARY_BUTTON: CSSProperties = {
   border: 0,
   cursor: "pointer",
   fontFamily: SHELL.SANS,
+};
+
+const REQUEST_ACTIONS: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: 8,
+};
+
+const SECONDARY_BUTTON: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  background: SHELL.PAPER,
+  color: SHELL.INK,
+  padding: "9px 12px",
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
+const DECISION_FORM: CSSProperties = {
+  display: "grid",
+  gap: 10,
+  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+  paddingTop: 12,
+  maxWidth: 520,
+};
+
+const FORM_LABEL: CSSProperties = {
+  display: "grid",
+  gap: 5,
+  color: SHELL.INK_SOFT,
+  fontSize: 12,
+  fontWeight: 700,
+};
+
+const FORM_INPUT: CSSProperties = {
+  width: "100%",
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 6,
+  padding: 9,
+  color: SHELL.INK,
+  background: SHELL.PAPER,
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+};
+
+const READY_BUTTON: CSSProperties = {
+  ...PRIMARY_BUTTON,
+  background: "#137547",
+  justifySelf: "start",
+};
+
+const DISABLED_BUTTON: CSSProperties = {
+  ...READY_BUTTON,
+  background: "#9299a6",
+  cursor: "not-allowed",
+};
+
+const ERROR_TEXT: CSSProperties = {
+  ...NOTE_COPY,
+  color: "#a92728",
 };
 
 const EVENT_LIST: CSSProperties = {

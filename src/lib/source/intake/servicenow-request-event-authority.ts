@@ -70,6 +70,19 @@ export async function readServiceNowRequestDisposition(input: {
   return rows[0] ?? null;
 }
 
+export async function readServiceNowRequestDispositions(
+  tenantKey: string,
+): Promise<Array<SourceRequestDispositionRow & { request_id: string }>> {
+  return azureRead.query<SourceRequestDispositionRow & { request_id: string }>(
+    `SELECT request_id, disposition_state, source_version, decided_by_user_id,
+            decided_by_name, decided_at, rationale,
+            surviving_request_id, surviving_source_version
+       FROM source.intake_request_disposition
+      WHERE tenant_key = $1`,
+    [tenantKey],
+  );
+}
+
 export async function recordServiceNowRequestDisposition(input: {
   tenantKey: string;
   requestId: string;
