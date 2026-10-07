@@ -8,6 +8,13 @@ import {
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
 import { DISCOVERY_BLUEPRINT_CATALOG } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import {
+  blockedUntilSentence,
+  doNotPresentSentence,
+  mustWaitSentence,
+  unauthoredNextActionSentence,
+  waiverOptionSentence,
+} from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 
 export type MoveEvidenceNeedStatus =
   | "missing"
@@ -766,7 +773,7 @@ export const UNAUTHORED_FAMILY_GUIDANCE: Pick<
   ],
   whyItMatters:
     "This input anchors the artifact in client evidence instead of unsupported assumptions.",
-  nextAction: "Upload the source file or record a human waiver with rationale.",
+  nextAction: unauthoredNextActionSentence(),
 };
 
 /**
@@ -907,19 +914,17 @@ export function buildMoveEvidenceNeedPackets(
         canDraft,
         canDraftLabel: canDraft
           ? "Can draft with current evidence."
-          : "Final generation is blocked until this evidence is uploaded or formally waived.",
+          : blockedUntilSentence(),
         cannotDraftLabel:
           family.status === "covered"
             ? "No current block from this evidence slot."
-            : "Do not present final or board-ready output until this evidence is covered or waived.",
+            : doNotPresentSentence(),
       },
       preliminaryGenerationCaveat:
         family.status === "covered"
           ? null
-          : `A preliminary draft lane is not active for this phase. Final generation must wait until ${family.label.toLowerCase()} is uploaded or formally waived.`,
-      waiverOption: required
-        ? "A sponsor or accountable owner may record a waiver, but final artifacts must carry the waiver caveat."
-        : "Optional input; waive only if the team accepts a lower-readiness artifact.",
+          : mustWaitSentence(family.label.toLowerCase()),
+      waiverOption: waiverOptionSentence(required),
       nextAction: guidance.nextAction,
       status,
       evidenceIds: family.evidenceIds,

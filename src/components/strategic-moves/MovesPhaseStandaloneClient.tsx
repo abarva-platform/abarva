@@ -166,6 +166,7 @@ import {
 } from "@/lib/programs/deliverable-registry";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import { getPhaseName } from "@/lib/programs/phase-labels";
+import { requiredEvidenceCompletionNotice } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 
 interface AvaChatMessage {
   id: string;
@@ -8902,9 +8903,8 @@ function PhaseCaptureEditor({
             {phase.phase === 1 ? "Charter inputs" : `${phase.title} inputs`}
           </h2>
           <p>
-            Saved inputs are not phase completion. Required evidence must be
-            approved or formally waived before these inputs can show complete or
-            the phase can advance.
+            Saved inputs are not phase completion.{" "}
+            {requiredEvidenceCompletionNotice()}
           </p>
         </div>
         <strong>
