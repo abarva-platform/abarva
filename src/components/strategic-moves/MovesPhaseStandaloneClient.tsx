@@ -84,6 +84,11 @@ import {
 import { charterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
 import { capturePhaseProgress } from "@/lib/programs/capture-phase-progress";
 import {
+  isWorkbookProposalAcceptable,
+  isWorkbookProposalOpenForReview,
+  selectableWorkbookProposalIds,
+} from "@/lib/programs/stage-readiness-workbooks/review-selection";
+import {
   approvalsRowStatusBasis,
   approvalsRowStatusClass,
   approvalsRowStatusText,
@@ -8102,20 +8107,7 @@ function StageReadinessWorkbookPreviewControl({
   const [preview, setPreview] =
     useState<StageReadinessWorkbookParsePreview | null>(initialPreview);
   const [selectedProposalIds, setSelectedProposalIds] = useState<Set<string>>(
-    () =>
-      new Set(
-        initialPreview?.proposalSet?.proposals
-          ?.filter(
-            (proposal) =>
-              proposal.answerState !== "blank" &&
-              Boolean(proposal.response?.trim()) &&
-              (proposal.disposition === "pending" ||
-                proposal.disposition === "needs_validation"),
-          )
-          .map((proposal) => proposal.proposalId)
-          .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
-          [],
-      ),
+    () => selectableWorkbookProposalIds(initialPreview?.proposalSet?.proposals),
   );
   const [reviewStatus, setReviewStatus] = useState<
     "idle" | "saving" | "saved" | "error"
@@ -8149,12 +8141,9 @@ function StageReadinessWorkbookPreviewControl({
         );
       }
       setPreview(payload);
-      const proposalIds =
-        payload.proposalSet?.proposals
-          ?.map((proposal) => proposal.proposalId)
-          .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
-        [];
-      setSelectedProposalIds(new Set(proposalIds));
+      setSelectedProposalIds(
+        selectableWorkbookProposalIds(payload.proposalSet?.proposals),
+      );
       const summary = payload.summary ?? {};
       const issueCount =
         (summary.errorCount ?? 0) + (summary.warningCount ?? 0);
@@ -8251,18 +8240,7 @@ function StageReadinessWorkbookPreviewControl({
             }
           : current,
       );
-      setSelectedProposalIds(
-        new Set(
-          reviewedProposals
-            .filter(
-              (proposal) =>
-                proposal.disposition === "pending" ||
-                proposal.disposition === "needs_validation",
-            )
-            .map((proposal) => proposal.proposalId)
-            .filter((proposalId): proposalId is string => Boolean(proposalId)),
-        ),
-      );
+      setSelectedProposalIds(selectableWorkbookProposalIds(reviewedProposals));
       setReviewStatus("saved");
       setReviewMessage(
         `Review saved · ${review.acceptedCount ?? 0} accepted · ${review.needsValidationCount ?? 0} needs validation · ${review.rejectedCount ?? 0} rejected`,
@@ -8289,18 +8267,12 @@ function StageReadinessWorkbookPreviewControl({
   const pendingProposalCount = preview?.proposalSet?.pendingCount ?? 0;
   const blankProposalCount =
     preview?.proposalSet?.proposals?.filter(
-      (proposal) =>
-        proposal.answerState === "blank" || !proposal.response?.trim(),
+      (proposal) => !isWorkbookProposalAcceptable(proposal),
     ).length ?? 0;
   const proposalReview = preview?.proposalSet?.review;
   const reviewActionCount =
-    preview?.proposalSet?.proposals?.filter(
-      (proposal) =>
-        proposal.answerState !== "blank" &&
-        Boolean(proposal.response?.trim()) &&
-        (proposal.disposition === "pending" ||
-          proposal.disposition === "needs_validation"),
-    ).length ?? 0;
+    preview?.proposalSet?.proposals?.filter(isWorkbookProposalOpenForReview)
+      .length ?? 0;
   const proposalReviewMessage = proposalReview
     ? `Workbook review recorded · ${proposalReview.acceptedCount ?? 0} accepted · ${proposalReview.needsValidationCount ?? 0} needs validation · ${proposalReview.rejectedCount ?? 0} rejected · ${proposalReview.pendingCount ?? 0} pending` +
       (proposalReview.readiness
@@ -8378,11 +8350,8 @@ function StageReadinessWorkbookPreviewControl({
                     checked={selectedProposalIds.has(proposalId)}
                     disabled={
                       !proposalId ||
-                      proposal.answerState === "blank" ||
-                      !proposal.response?.trim() ||
-                      reviewStatus === "saving" ||
-                      (proposal.disposition !== "pending" &&
-                        proposal.disposition !== "needs_validation")
+                      !isWorkbookProposalOpenForReview(proposal) ||
+                      reviewStatus === "saving"
                     }
                     onChange={(event) => {
                       setSelectedProposalIds((current) => {
@@ -8401,10 +8370,9 @@ function StageReadinessWorkbookPreviewControl({
                     <b>{proposal.question ?? proposal.questionId}</b>
                     <em>
                       {proposal.requirement ?? "required"} ·{" "}
-                      {proposal.answerState === "blank" ||
-                      !proposal.response?.trim()
-                        ? "response required in workbook"
-                        : `${proposal.answerState ?? "answered"} · ${proposal.disposition ?? "pending"}`}
+                      {isWorkbookProposalAcceptable(proposal)
+                        ? `${proposal.answerState ?? "answered"} · ${proposal.disposition ?? "pending"}`
+                        : "response required in workbook"}
                     </em>
                   </span>
                 </label>
