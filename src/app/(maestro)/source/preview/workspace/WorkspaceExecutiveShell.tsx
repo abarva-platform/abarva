@@ -3687,6 +3687,20 @@ export function contractNoticeDays(
   return days >= 0 ? days : null;
 }
 
+export function keepSelectedContractTabVisible(tabList: HTMLElement) {
+  if (tabList.scrollWidth <= tabList.clientWidth) return;
+  const selected = tabList.querySelector<HTMLElement>('[aria-selected="true"]');
+  if (!selected) return;
+
+  const listBounds = tabList.getBoundingClientRect();
+  const selectedBounds = selected.getBoundingClientRect();
+  if (selectedBounds.left < listBounds.left) {
+    tabList.scrollLeft += selectedBounds.left - listBounds.left;
+  } else if (selectedBounds.right > listBounds.right) {
+    tabList.scrollLeft += selectedBounds.right - listBounds.right;
+  }
+}
+
 function ContractCommandBar({
   activeTab,
   onOpenPortfolioPage,
@@ -3696,12 +3710,18 @@ function ContractCommandBar({
   onOpenPortfolioPage: (page: PageLabel) => void;
   onOpenTab: (tab: string) => void;
 }) {
+  const tabListRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (tabListRef.current) keepSelectedContractTabVisible(tabListRef.current);
+  }, [activeTab]);
+
   return (
     <nav
       className="sw-v2-contract-commandbar"
       aria-label="Contract command toolbar"
     >
       <div
+        ref={tabListRef}
         className="sw-v2-contract-commandbar-tabs sw-c3-tabrow"
         role="tablist"
       >
