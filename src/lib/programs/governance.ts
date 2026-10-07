@@ -43,7 +43,10 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
-import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import {
+  reportUnevaluableApprovalCurrencyOnce,
+  resolveDeliverableApprovalCurrencyScope,
+} from "@/lib/programs/deliverable-approval-currency";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -643,9 +646,26 @@ export async function evaluateGate(
       typeof structured.evidenceSnapshotHash === "string"
         ? structured.evidenceSnapshotHash
         : null;
-    const deliverablePhase = DELIVERABLE_REGISTRY.find(
-      (spec) => spec.deliverableTypeKey === row.deliverable_type_key,
-    )?.phase;
+    // A phase this check cannot run at is NOT a stale approval — see
+    // `deliverable-approval-currency.ts`. Return BEFORE the lineage comparisons
+    // rather than computing them and ignoring the result: with the scope resolved
+    // first, `deliverablePhase` below is always the phase the comparison actually
+    // runs at, so there is no branch where a currency verdict is derived from a
+    // phase that does not exist.
+    const currencyScope = resolveDeliverableApprovalCurrencyScope(
+      row.deliverable_type_key,
+    );
+    if (!currencyScope.evaluable) {
+      // Say so rather than silently allowing it: the only way this row's approval
+      // currency becomes checkable again is a registry change, and that is worth
+      // seeing in the logs instead of inferring from a gate that stopped failing.
+      reportUnevaluableApprovalCurrencyOnce(
+        row.deliverable_type_key,
+        currencyScope.reason,
+      );
+      return true;
+    }
+    const deliverablePhase = currencyScope.phase;
     const structuredLineageCurrent = Boolean(
       currentEvidenceSnapshot &&
       deliverablePhase &&

@@ -73,6 +73,7 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 }));
 
 import { evaluateGate } from "@/lib/programs/governance";
+import { __resetUnevaluableApprovalCurrencyReports } from "@/lib/programs/deliverable-approval-currency";
 
 function tableResult(table: string) {
   if (table === "deliverables_v2") {
@@ -1977,6 +1978,170 @@ describe("evaluateGate", () => {
     expect(result.pass).toBe(true);
     expect(result.failedChecks).toEqual([]);
     expect(result.requiresApproval).toBe(true);
+  });
+
+  // ── An approval whose currency cannot be CHECKED is not a stale approval ──
+  // `isSignedOff` phase-scopes its evidence-lineage check through
+  // `resolveDeliverableApprovalCurrencyScope`. `origination_brief` is not a
+  // deliverable-registry key, so no phase resolves and no lineage comparison can
+  // run — while the deliverable sign-off route accepts that key and its
+  // file-upload approval path sets `approved_artifact_id`. Reading "unevaluable"
+  // as "stale" dead-ended the FIRST gate: all three P0 -> P1 hard criteria read
+  // this one row, there is no second P0 gate artifact, and `signOffDeliverable`
+  // only acts on a `draft`/`in_review` row, so the P0 close helper cannot re-sign
+  // it to clear the link.
+  it("opens P0 for a signed origination brief whose approval artifact cannot be lineage-checked", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 0,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      {
+        id: "origination-brief",
+        deliverable_type_key: "origination_brief",
+        status: "signed_off",
+        // Set by the sign-off route when the user approves an edited upload —
+        // the action the blocked-gate message itself tells them to take.
+        approved_artifact_id: "artifact-p0-upload",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "artifact-p0-upload",
+        tenant_key: "tenant-1",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: { deliverableId: "origination-brief" },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+    // The dedupe set is process-wide, so an earlier case in this file may already
+    // have reported this type.
+    __resetUnevaluableApprovalCurrencyReports();
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    deliverableVersionsFixture = [
+      {
+        content:
+          "P0 Origination Brief. Problem trigger: fragmented reporting across the claims estate. " +
+          "Value hypothesis: a governed foundation shortens trusted delivery time. " +
+          "Scope boundary: one cohort first. Sponsor: named operating owner. " +
+          "Discovery capacity time box: four weeks.",
+        structured_data: null,
+        generated_at: "2026-05-02T00:00:00.000Z",
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+      "program-1",
+      0,
+      1,
+    );
+
+    const hard = result.failedChecks
+      .filter((check) => check.severity === "hard")
+      .map((check) => check.check);
+    expect(hard).toEqual([]);
+    // Allowing it silently is how this class of gap survives. The gate reports
+    // the registry gap it just worked around.
+    expect(warn).toHaveBeenCalledWith(
+      "[moves] deliverable approval currency not evaluable",
+      expect.objectContaining({
+        deliverableTypeKey: "origination_brief",
+        reason: "unregistered_deliverable_key",
+      }),
+    );
+    warn.mockRestore();
+  });
+
+  it("still blocks a REGISTERED deliverable whose linked approval artifact is stale", async () => {
+    // The companion to the case above, and the reason the fix is scoped rather
+    // than a blanket allowance: `charter` IS a registry key, so its currency is
+    // evaluable and a link the lineage check refuses must keep vetoing.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "signed_off",
+        approved_artifact_id: "artifact-charter-unbound",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "artifact-charter-unbound",
+        tenant_key: "tenant-1",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: { deliverableId: "charter" },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+      "program-1",
+      1,
+      2,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: "charter_signed_off",
+          severity: "hard",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps an unsigned origination brief blocking P0, link or no link", async () => {
+    // The scope decides whether a currency check may VETO a sign-off; it must
+    // never stand in for the sign-off itself.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 0,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      {
+        id: "origination-brief",
+        deliverable_type_key: "origination_brief",
+        status: "in_review",
+        approved_artifact_id: "artifact-p0-upload",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "artifact-p0-upload",
+        tenant_key: "tenant-1",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: { deliverableId: "origination-brief" },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+      "program-1",
+      0,
+      1,
+    );
+
+    expect(
+      result.failedChecks
+        .filter((check) => check.severity === "hard")
+        .map((check) => check.check),
+    ).toEqual(["program_seed_recorded", "value_hypothesis_seed"]);
   });
 });
 
