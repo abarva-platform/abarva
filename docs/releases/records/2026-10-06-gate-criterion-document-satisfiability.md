@@ -139,10 +139,12 @@ no product module imports it and nothing reads its exports.
   body.** A branch that gained a non-document route expressed some other way
   would read as document-only and be held to the stricter bar. That direction is
   safe — it over-reports rather than under-reports — but it is not exact.
-- **The incoming census was stale by two files.** Two suites merged recently
+- **The incoming census was stale by one file.** A suite merged recently
   without a refresh. This branch's regeneration therefore moves the counts by
-  three: two inherited, one from this change. The inherited two were isolated
-  and measured separately rather than absorbed silently — regenerating on this
-  base without the new file moves the total to 2770, and with it to 2771. The
-  uncovered count is unchanged at 164, which is what says the new suite is
-  swept by the directory rather than left dark.
+  two: one inherited, one from this change. The inherited one was isolated and
+  measured separately rather than absorbed silently — on the rebased base
+  (`testFiles` 2769), regenerating without the new file gives 2770, and with it
+  2771. The uncovered count is unchanged at 164, which is what says the new
+  suite is swept by the directory rather than left dark. The stale count was
+  two when this branch was first measured and fell to one when a sibling
+  refreshed mid-run, so it is reported against the rebased base.
