@@ -17,6 +17,11 @@ import type {
   PlannedSection,
 } from "./types";
 import { renderEvidenceForPrompt } from "./source-register";
+import {
+  planSectionWordBudgets,
+  sectionWordBudgetFor,
+  type SectionWordBudgetPlan,
+} from "./section-word-budget-plan";
 import type { GovernedEvidenceItem } from "./types";
 import { redactExcludedNumericClaims } from "./excluded-numeric-claims";
 import { resolvePassTokenBudget } from "@/lib/ai/document-generation-policy";
@@ -453,6 +458,40 @@ function extractSectionWordBudget(text?: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+/**
+ * The per-section word budget for one document, reconciled with the floor the
+ * quality gate measures against — see section-word-budget-plan.ts for why the
+ * two declarations have to be resolved together rather than read separately.
+ *
+ * Exported so the draft prompt, the repair prompt's cap, and the repair target
+ * the orchestrator asks for are all one reading. They were three.
+ *
+ * Null when this artifact type states no per-section cap to the model (the
+ * concise rules below are gated on the same condition). There is then no cap
+ * for a repair target to contradict, so callers keep the even share.
+ */
+export function sectionWordBudgetPlanFor(
+  req: DeliverableIntelligenceRequest,
+  brief: DeliverableArtifactBrief,
+): SectionWordBudgetPlan | null {
+  const qb = req.qualityBar;
+  if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return null;
+  const sectionCount = Math.max(brief.recommendedStructure.length, 1);
+  return planSectionWordBudgets({
+    sections: brief.recommendedStructure.map((s) => ({
+      key: s.key,
+      declaredCap: extractSectionWordBudget(s.expertLatitude),
+    })),
+    fallbackCap: Math.max(120, Math.floor(qb.targetBodyWordsMax / sectionCount)),
+    minBodyWords: qb.minBodyWords,
+    // The number the quality gate BLOCKS on. Between `targetBodyWordsMax` and
+    // `advisoryBandMax` the validator warns and lets the document through, so
+    // budgeting against the target would tighten every band that carries an
+    // advisory margin on purpose.
+    blockingCeiling: qb.advisoryBandMax ?? qb.targetBodyWordsMax,
+  });
+}
+
 function conciseSectionDraftInstruction(
   req: DeliverableIntelligenceRequest,
   brief: DeliverableArtifactBrief,
@@ -470,8 +509,14 @@ function conciseSectionDraftInstruction(
     120,
     Math.floor(qb.targetBodyWordsMax / sectionCount),
   );
+  // The cap comes from the reconciled plan, not from this section's own
+  // declaration alone: a cap that is honest on its own can still be one of a
+  // set whose total cannot reach the document's floor.
+  const plan = sectionWordBudgetPlanFor(req, brief);
   const wordBudget =
-    extractSectionWordBudget(sectionInstruction) ?? fallbackBudget;
+    (plan ? sectionWordBudgetFor(plan, section?.key)?.cap : null) ??
+    extractSectionWordBudget(sectionInstruction) ??
+    fallbackBudget;
 
   if (req.deliverableType !== "charter") {
     return [
@@ -499,7 +544,11 @@ function conciseSectionDraftInstruction(
     `- This is one section of a concise approval instrument, not a standalone report.`,
     ...(req.deliverableType === "charter" && charterProseTarget
       ? [
-          `- Target approximately ${charterProseTarget} prose words in this section; across all seven sections, the targets total ${charterProseTargetTotal} prose words to clear the ${qb.minBodyWords}-word prose quality floor.`,
+          // The section COUNT is derived like the total beside it. It was the
+          // word "seven" while the total was computed, so adding or removing a
+          // charter section would have told the model there were seven
+          // sections' worth of budget to spend when there were not.
+          `- Target approximately ${charterProseTarget} prose words in this section; across all ${CHARTER_CONTRACT.sections.length} sections, the targets total ${charterProseTargetTotal} prose words to clear the ${qb.minBodyWords}-word prose quality floor.`,
           `- These are completeness targets, not permission to pad. If evidence does not support detail, preserve the gap and explain what must be validated; never add filler or unsupported detail to reach a target.`,
         ]
       : []),

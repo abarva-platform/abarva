@@ -22,7 +22,8 @@ import type {
 import { getArtifactBrief } from "./artifact-brief-registry";
 import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
 import { buildGenerationProgress, type GenerationProgress } from "./progress";
-import { buildPassPrompt } from "./prompt-builder";
+import { buildPassPrompt, sectionWordBudgetPlanFor } from "./prompt-builder";
+import { sectionWordBudgetFor } from "./section-word-budget-plan";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 import {
   countBodyWords,
@@ -307,6 +308,14 @@ export async function runDeliverableOrchestration(
   const excludeNonProse = isMovesCharter
     ? true
     : req.qualityBar.excludeNonProseFromBody === true;
+  // Built once: the plan is a function of the request and the brief, not of the
+  // repair round or the drafted section, and the draft prompt states its caps
+  // from the same reading.
+  const sectionWordBudgets = sectionWordBudgetPlanFor(req, brief);
+  const sectionRepairTargetFor = (key: string): number | null =>
+    sectionWordBudgets
+      ? (sectionWordBudgetFor(sectionWordBudgets, key)?.repairTarget ?? null)
+      : null;
   for (let repairRound = 0; repairRound < maxRepairRounds; repairRound++) {
     if (
       countBodyWords(sections, { excludeNonProse }) >=
@@ -321,10 +330,17 @@ export async function runDeliverableOrchestration(
             .filter((section) => (section.targetProseWords ?? 0) > 0)
             .map((section) => [section.key, section.targetProseWords!]),
         )
-      : new Map(
+      : // Not an even share: the repair target is the section's share of the
+        // floor in proportion to its OWN cap, read from the same plan that
+        // states that cap to the model. An even share asked four of
+        // solution_design's six sections for more words than the hard cap one
+        // line above it allowed — see section-word-budget-plan.ts. A generated
+        // section the brief does not declare keeps the even share.
+        new Map(
           sections.map((section) => [
             section.key,
-            sectionShareOfFloor(req.qualityBar.minBodyWords, sections.length),
+            sectionRepairTargetFor(section.key) ??
+              sectionShareOfFloor(req.qualityBar.minBodyWords, sections.length),
           ]),
         );
     const repairs = sections.flatMap((section) => {
