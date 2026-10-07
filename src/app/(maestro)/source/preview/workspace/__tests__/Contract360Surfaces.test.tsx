@@ -9,6 +9,10 @@ import {
 } from "../Contract360Surfaces";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import type { SourceWorkspaceVM } from "../buildViewModel";
+import {
+  ContractOptimizeContent,
+  contractValueTypeSummary,
+} from "../WorkspaceExecutiveShell";
 
 /**
  * These pin three defects found by live proof rather than by the suite: a
@@ -278,5 +282,124 @@ describe("ContractCaseThreadStrip", () => {
   it("does not render a case line without a contract opportunity read", () => {
     const { container } = render(<ContractCaseThreadStrip vm={vmWith(null)} />);
     expect(container.querySelector(".sw-c3-case-thread")).toBeNull();
+  });
+});
+
+describe("Contract 360 Optimize presentation", () => {
+  it("shows one governed next action when opportunity signals have no negotiation content", () => {
+    const vm = {
+      c: { id: "TEST-001" },
+      detail: { cloudCommitmentPeerCoverage: [] },
+      opportunityView: {
+        opportunities: [{ id: "SIGNAL-1", label: "Scope review", stageRaw: "signal" }],
+        recommendation: "Collect the missing service-scope evidence.",
+        recommendationDetail: "Confirm the run catalog before a buyer ask is written.",
+        caseThread: { state: "Evidence Review" },
+        potential: {
+          recoverable: "Not sized",
+          avoidable: "Not sized",
+          negotiable: "Not sized",
+        },
+        financeConfirmed: "Not established",
+      },
+    } as unknown as SourceWorkspaceVM;
+
+    render(<ContractOptimizeContent vm={vm} />);
+
+    expect(screen.getByText("Next action")).toBeTruthy();
+    expect(screen.getByText("Evidence Review")).toBeTruthy();
+    expect(screen.getByText("Collect the missing service-scope evidence.")).toBeTruthy();
+    expect(screen.getByText("Confirm the run catalog before a buyer ask is written.")).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: "Levers" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Sequence" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
+    expect(screen.queryByText("No negotiation text is loaded for this contract.")).toBeNull();
+  });
+
+  it("retains recorded value even when negotiation text is absent", () => {
+    const vm = {
+      c: { id: "TEST-002" },
+      detail: { cloudCommitmentPeerCoverage: [] },
+      opportunityView: {
+        opportunities: [{ id: "SIGNAL-2", label: "Invoice review", stageRaw: "signal" }],
+        recommendation: "Reconcile the invoices before a vendor ask.",
+        potential: {
+          recoverable: "$37K",
+          avoidable: "$151K",
+          negotiable: "Not established",
+        },
+        financeConfirmed: "Not established",
+      },
+    } as unknown as SourceWorkspaceVM;
+
+    render(<ContractOptimizeContent vm={vm} />);
+
+    expect(screen.getByText("$37K")).toBeTruthy();
+    expect(screen.getByText("$151K")).toBeTruthy();
+    expect(screen.getByText("Reconcile the invoices before a vendor ask.")).toBeTruthy();
+    expect(screen.getByText("No structured negotiation table is available yet.")).toBeTruthy();
+  });
+
+  it("does not promote unsized placeholders to established value", () => {
+    const summary = contractValueTypeSummary({
+      potential: {
+        recoverable: "Not sized",
+        avoidable: "Not sized",
+        negotiable: "Not sized",
+      },
+      financeConfirmed: "Not established",
+    });
+
+    expect(summary.established).toEqual([]);
+    expect(summary.unpriced).toEqual(["recoverable", "avoidable", "negotiable"]);
+    expect(summary.confirmed).toBeNull();
+  });
+
+  it("does not present a discount signal with no loaded rate as a comparator", () => {
+    const vm = {
+      c: { id: "TEST-001" },
+      detail: { cloudCommitmentPeerCoverage: [] },
+      opportunityView: {
+        opportunities: [{ id: "DISCOUNT-1", label: "Discount band review", stageRaw: "signal" }],
+        recommendation: "Collect the accepted price schedule.",
+        potential: {
+          recoverable: "Not sized",
+          avoidable: "Not sized",
+          negotiable: "Not sized",
+        },
+        financeConfirmed: "Not established",
+      },
+    } as unknown as SourceWorkspaceVM;
+
+    render(<ContractOptimizeContent vm={vm} />);
+
+    expect(screen.getByText("Collect the accepted price schedule.")).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
+    expect(screen.queryByText(/No loaded discount percentage/)).toBeNull();
+  });
+
+  it("keeps an authored ask and hides the unsupported comparator", () => {
+    const vm = {
+      c: { id: "TEST-001" },
+      detail: { cloudCommitmentPeerCoverage: [] },
+      opportunityView: {
+        opportunities: [{
+          id: "ASK-1",
+          label: "Scope review",
+          shortLabel: "Re-base scope",
+          buyerAsk: "Move recurring change orders into the base service catalog.",
+          owner: "Sourcing",
+          stageRaw: "signal",
+          amountUsd: null,
+        }],
+      },
+    } as unknown as SourceWorkspaceVM;
+
+    render(<ContractOptimizeContent vm={vm} />);
+
+    expect(screen.getByText("Move recurring change orders into the base service catalog.")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Sequence" })).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
+    expect(screen.queryByText("No negotiation text is loaded for this contract.")).toBeNull();
   });
 });
