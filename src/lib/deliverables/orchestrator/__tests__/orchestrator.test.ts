@@ -278,12 +278,17 @@ describe("multi-pass prompt builder", () => {
         "i",
       ),
     );
+    // The section COUNT is derived here for the same reason it is derived in
+    // the prompt: it was the word "seven" beside a computed total, so a charter
+    // section added or removed would have told the model there were seven
+    // sections' worth of budget when there were not.
     expect(p.user).toMatch(
       new RegExp(
-        `across all seven sections, the targets total ${charterTargetTotal} prose words`,
+        `across all ${CHARTER_CONTRACT.sections.length} sections, the targets total ${charterTargetTotal} prose words`,
         "i",
       ),
     );
+    expect(p.user).not.toMatch(/across all seven sections/i);
     expect(p.user).toMatch(
       /never add filler or unsupported detail to reach a target/i,
     );
