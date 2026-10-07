@@ -452,6 +452,17 @@ export default async function StrategicMovePhaseWorkspacePage({
       { clientKey: ctx.clientKey, clientId: ctx.clientId },
       "moves_capture_composition_v1",
     );
+  // Increment 1 of the phase-workspace v2 shell (one slim phase rail, the
+  // four-stage sub-step spine, workbook on the gate step). CONJUNCTION with
+  // `moves_capture_v2`: there is no capture flow to reshape without it. It
+  // subsumes the composition polish in the host, so it does not also require
+  // the composition flag.
+  const workspaceV2Enabled =
+    captureV2Enabled &&
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_workspace_v2",
+    );
   // Governed fill-from-notes in the capture dock. Gated separately from the
   // capture redesign itself so the dock affordance can be reviewed on its own.
   const captureNotesEnabled = isFeatureEnabled(
@@ -1046,6 +1057,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}
         captureCompositionEnabled={captureCompositionEnabled}
+        workspaceV2Enabled={workspaceV2Enabled}
         initialP1CharterBasisBySection={initialP1CharterBasisBySection}
         capturePhaseSavedAnswerCounts={capturePhaseSavedAnswerCountsForStrip}
         captureNotesEnabled={captureNotesEnabled}

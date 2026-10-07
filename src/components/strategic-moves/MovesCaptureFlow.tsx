@@ -9,6 +9,10 @@ import {
   captureHandoffAccess,
   captureHandoffHeading,
 } from "@/lib/programs/capture-handoff-reachability";
+import {
+  movesWorkspaceV2Spine,
+  type MovesV2SpineStage,
+} from "@/lib/programs/moves-workspace-v2-spine";
 
 /**
  * The redesigned Moves phase capture: one repeatable 3-step flow for every
@@ -127,6 +131,25 @@ export interface MovesCaptureFlowProps {
    * with an `approveSlot` present the recap is then unreachable (U-564).
    */
   allowReviewBeforeSubmit?: boolean;
+  /**
+   * `moves_workspace_v2` (Increment 1 of the phase-workspace redesign). When
+   * true the two navigators are re-presented in the v2 shell: the phase journey
+   * becomes a single slim rail (P0-P5 + a non-interactive hand-off marker) and
+   * the step bar becomes the four-stage sub-step SPINE (CAPTURE steps · GENERATE
+   * · OUTCOME · GATE) in the v3 locked-light palette. Presentation only — the
+   * view-state machine, Continue-gating, resume, recap reachability, the
+   * approveSlot and every handler are byte-for-byte unchanged, so with this
+   * false (the default) the flow renders exactly as it does today.
+   */
+  workspaceV2?: boolean;
+  /**
+   * `moves_workspace_v2` only: host-supplied controls rendered on the GATE
+   * step, beside the governed approve control — today the readiness-workbook
+   * download / upload / preview actions, which the host used to render on the
+   * stage head above every capture step ("across all steps"). Null (the
+   * default) leaves the flow unchanged. Ignored unless `workspaceV2` is true.
+   */
+  gateExtras?: ReactNode;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -152,6 +175,8 @@ export function MovesCaptureFlow({
   initialStep,
   approveSlot,
   allowReviewBeforeSubmit = false,
+  workspaceV2 = false,
+  gateExtras = null,
 }: MovesCaptureFlowProps) {
   // Resolved from the sections this phase DECLARES, not from the phase number:
   // P3 Design re-shapes its question set once P2 confirms a solution route, and
@@ -220,11 +245,79 @@ export function MovesCaptureFlow({
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
 
+  // v2 shell: the four-stage sub-step spine, derived from the real step groups
+  // and the current view. Presentation only — see `moves-workspace-v2-spine`.
+  const v2Spine: MovesV2SpineStage[] = workspaceV2
+    ? movesWorkspaceV2Spine({
+        captureTitles: groups.map((group) => group.title),
+        view,
+        handoffReachable: handoffAccess.reachable,
+      })
+    : [];
+
   return (
-    <div className="mcf" data-testid="moves-capture-flow">
+    <div
+      className={workspaceV2 ? "mcf mcf-v2" : "mcf"}
+      data-testid="moves-capture-flow"
+    >
       <style>{MCF_CSS}</style>
 
-      {/* LEVEL 1 — journey: the six phases */}
+      {/* LEVEL 1 — journey: the six phases. v2 renders ONE slim rail (pips +
+          a non-interactive hand-off marker); the legacy build renders the
+          journey tab strip. Same navigation, reachability and completion
+          rules either way. */}
+      {workspaceV2 ? (
+        <nav className="mcf-v2-rail" aria-label="Phases">
+          {phases.map((p, idx) => {
+            const measured = p.answered !== null;
+            const complete =
+              measured && p.total > 0 && p.answered === p.total;
+            const saved =
+              !measured && typeof p.savedAnswers === "number"
+                ? p.savedAnswers
+                : null;
+            const current = p.phase === phase;
+            const count = measured
+              ? `${p.answered} of ${p.total} answered`
+              : saved !== null
+                ? `${saved} of ${p.total} saved`
+                : `${p.total} question${p.total === 1 ? "" : "s"}`;
+            return (
+              <span className="mcf-v2-rail-item" key={p.code}>
+                {idx > 0 ? (
+                  <span className="mcf-v2-rail-sep" aria-hidden />
+                ) : null}
+                <button
+                  type="button"
+                  className={`mcf-v2-rail-btn${complete ? " is-done" : ""}${
+                    current ? " is-current" : ""
+                  }`}
+                  aria-current={current ? "page" : undefined}
+                  disabled={!p.reachable}
+                  title={`${p.name} · ${count}`}
+                  onClick={() => p.reachable && onSelectPhase(p.phase)}
+                >
+                  <span className="mcf-v2-pip">
+                    {complete ? (
+                      <span aria-label="complete">✓</span>
+                    ) : (
+                      p.code
+                    )}
+                  </span>
+                  <span className="mcf-v2-rail-copy">
+                    <span className="mcf-v2-rail-name">{p.name}</span>
+                    <span className="mcf-v2-rail-count">{count}</span>
+                  </span>
+                </button>
+              </span>
+            );
+          })}
+          <span className="mcf-v2-rail-sep" aria-hidden />
+          <span className="mcf-v2-rail-tower" aria-hidden>
+            → Tower
+          </span>
+        </nav>
+      ) : (
       <nav className="mcf-phasebar" aria-label="Phases">
         <ol>
           {phases.map((p) => {
@@ -284,9 +377,49 @@ export function MovesCaptureFlow({
           })}
         </ol>
       </nav>
+      )}
 
-      {/* LEVEL 2 — the three steps of this phase */}
-      {view < 3 ? (
+      {/* LEVEL 2 — this phase's workflow. v2 renders the four-stage sub-step
+          spine (CAPTURE → GENERATE → OUTCOME → GATE) at every view, including
+          the recap, so the spine stays on screen as a map of the phase. The
+          legacy build renders the three-step bar and only below the recap. */}
+      {workspaceV2 ? (
+        <nav className="mcf-v2-flow" aria-label="Steps">
+          <div className="mcf-v2-stages">
+            {v2Spine.map((stage, i) => {
+              const interactive = stage.targetView !== null;
+              return (
+                <span className="mcf-v2-stage" key={`${stage.kind}-${i}`}>
+                  {i > 0 ? (
+                    <span className="mcf-v2-stage-sep" aria-hidden />
+                  ) : null}
+                  <button
+                    type="button"
+                    className={`mcf-v2-sstep is-${stage.state} kind-${stage.kind}`}
+                    disabled={!interactive}
+                    aria-current={
+                      stage.state === "current" ? "step" : undefined
+                    }
+                    onClick={() => {
+                      if (stage.targetView !== null) go(stage.targetView);
+                    }}
+                  >
+                    <span className="mcf-v2-kind">{stage.kind}</span>
+                    <span className="mcf-v2-lab">
+                      <span className="mcf-v2-dot">
+                        {stage.state === "done"
+                          ? "✓"
+                          : pad(stage.position)}
+                      </span>
+                      {stage.label}
+                    </span>
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        </nav>
+      ) : view < 3 ? (
         <nav className="mcf-stepbar" aria-label="Steps">
           <ol>
             {groups.map((group, i) => {
@@ -367,6 +500,9 @@ export function MovesCaptureFlow({
                   ) : null}
                   {view === 2 && approveSlot ? (
                     <>
+                      {workspaceV2 && gateExtras ? (
+                        <div className="mcf-v2-gate-extras">{gateExtras}</div>
+                      ) : null}
                       {handoffAccess.offerReviewBeforeSubmit ? (
                         <button
                           type="button"
@@ -475,7 +611,12 @@ export function MovesCaptureFlow({
                        approve control travels onto the recap instead, so the
                        person decides with the basis rollup in front of them and
                        the decision still runs through the gate pipeline. */
-                    <div className="mcf-approve-slot">{approveSlot}</div>
+                    <div className="mcf-approve-slot">
+                      {workspaceV2 && gateExtras ? (
+                        <div className="mcf-v2-gate-extras">{gateExtras}</div>
+                      ) : null}
+                      {approveSlot}
+                    </div>
                   )}
                 </div>
               </div>
@@ -558,4 +699,40 @@ const MCF_CSS = `
 .mcf-ava-insert:hover{background:var(--mcf-accent-hover)}
 .mcf-ava-dismiss{border:0;background:none;color:var(--mcf-muted);font-size:12.5px;font-weight:500;padding:7px 8px;cursor:pointer}
 @media (max-width:640px){.mcf-panel-intro{font-size:16px}}
+
+/* ─── moves_workspace_v2: v3 locked-light palette + the single slim phase
+   rail and the four-stage sub-step spine. Scoped to .mcf-v2, so the legacy
+   build is untouched. ─── */
+.mcf-v2{--mcf-bg:#FFFFFF;--mcf-surface:#FBFAF7;--mcf-ink:#1A1A18;--mcf-muted:#525866;--mcf-faint:#9AA3B2;--mcf-line:#E7E3DB;--mcf-line-strong:#D8D3C8;--mcf-accent:#1B2B5C;--mcf-accent-hover:#162449;--mcf-accent-ink:#fff;--mcf-current-bg:#1B2B5C;--mcf-current-ink:#fff;--mcf-serif:'Fraunces',Georgia,serif;--mcf-teal:#1d9e75}
+.mcf-v2 .mcf-tick,.mcf-v2 .mcf-done-eyebrow{color:var(--mcf-teal)}
+/* slim phase rail */
+.mcf-v2-rail{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin:0}
+.mcf-v2-rail-item{display:inline-flex;align-items:center;gap:3px}
+.mcf-v2-rail-sep{width:18px;height:1.5px;background:var(--mcf-line-strong);flex:0 0 auto}
+.mcf-v2-rail-btn{display:inline-flex;align-items:center;gap:8px;background:none;border:0;cursor:pointer;font-family:var(--mcf-mono);font-size:11px;letter-spacing:.03em;color:var(--mcf-faint);padding:5px 4px}
+.mcf-v2-rail-btn:disabled{cursor:not-allowed;opacity:.65}
+.mcf-v2-pip{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mcf-line-strong);display:grid;place-items:center;font-size:10px;color:var(--mcf-faint);flex:0 0 auto}
+.mcf-v2-rail-btn.is-done .mcf-v2-pip{background:var(--mcf-teal);border-color:var(--mcf-teal);color:#fff}
+.mcf-v2-rail-btn.is-current{color:var(--mcf-ink)}
+.mcf-v2-rail-btn.is-current .mcf-v2-pip{background:var(--mcf-accent);border-color:var(--mcf-accent);color:#fff}
+.mcf-v2-rail-copy{display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;text-align:left}
+.mcf-v2-rail-name{font-family:var(--mcf-sans);font-size:13px;font-weight:600;color:inherit}
+.mcf-v2-rail-count{font-size:10.5px;color:var(--mcf-faint);letter-spacing:0}
+.mcf-v2-rail-tower{font-family:var(--mcf-mono);font-size:10px;letter-spacing:.06em;color:var(--mcf-faint)}
+/* four-stage sub-step spine */
+.mcf-v2-flow{border-top:1px solid var(--mcf-line);border-bottom:1px solid var(--mcf-line);padding:14px 0}
+.mcf-v2-stages{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.mcf-v2-stage{display:inline-flex;align-items:center;gap:6px}
+.mcf-v2-stage-sep{width:22px;height:1.5px;background:var(--mcf-line-strong);flex:0 0 auto}
+.mcf-v2-sstep{display:inline-flex;flex-direction:column;gap:5px;background:none;border:0;padding:3px 4px;text-align:left;cursor:pointer}
+.mcf-v2-sstep:disabled{cursor:default}
+.mcf-v2-kind{font-family:var(--mcf-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--mcf-faint)}
+.mcf-v2-lab{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--mcf-muted);white-space:nowrap}
+.mcf-v2-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mcf-line-strong);display:grid;place-items:center;font-family:var(--mcf-mono);font-size:10px;color:var(--mcf-faint);flex:0 0 auto}
+.mcf-v2-sstep.is-done .mcf-v2-dot{background:var(--mcf-teal);border-color:var(--mcf-teal);color:#fff}
+.mcf-v2-sstep.is-done .mcf-v2-lab{color:var(--mcf-muted)}
+.mcf-v2-sstep.is-current .mcf-v2-lab{color:var(--mcf-ink);font-weight:600}
+.mcf-v2-sstep.is-current .mcf-v2-dot{background:var(--mcf-accent);border-color:var(--mcf-accent);color:#fff}
+.mcf-v2-sstep.is-current .mcf-v2-kind{color:var(--mcf-accent)}
+.mcf-v2-gate-extras{display:flex;flex-direction:column;gap:10px;flex-basis:100%;margin-bottom:4px}
 `;

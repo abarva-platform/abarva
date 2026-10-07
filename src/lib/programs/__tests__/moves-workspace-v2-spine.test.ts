@@ -1,0 +1,152 @@
+import {
+  movesWorkspaceV2Spine,
+  type MovesV2SpineStage,
+} from "@/lib/programs/moves-workspace-v2-spine";
+
+const TITLES = ["Scope the bet", "People & decisions", "Plan the proof"];
+
+function byKind(
+  stages: MovesV2SpineStage[],
+  kind: MovesV2SpineStage["kind"],
+): MovesV2SpineStage[] {
+  return stages.filter((s) => s.kind === kind);
+}
+
+describe("movesWorkspaceV2Spine", () => {
+  it("always appends exactly one generate, outcome and gate after the capture stages", () => {
+    const stages = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 0,
+      handoffReachable: false,
+    });
+    expect(stages.map((s) => s.kind)).toEqual([
+      "capture",
+      "capture",
+      "capture",
+      "generate",
+      "outcome",
+      "gate",
+    ]);
+    // Positions are sequential and 1-based across the whole spine.
+    expect(stages.map((s) => s.position)).toEqual([1, 2, 3, 4, 5, 6]);
+    // The capture labels are the phase's real step titles, in order.
+    expect(byKind(stages, "capture").map((s) => s.label)).toEqual(TITLES);
+  });
+
+  it("marks the current capture step and leaves later capture/post stages upcoming", () => {
+    const stages = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 0,
+      handoffReachable: false,
+    });
+    const captures = byKind(stages, "capture");
+    expect(captures.map((s) => s.state)).toEqual([
+      "current",
+      "upcoming",
+      "upcoming",
+    ]);
+    expect(byKind(stages, "generate")[0].state).toBe("upcoming");
+    expect(byKind(stages, "outcome")[0].state).toBe("upcoming");
+    expect(byKind(stages, "gate")[0].state).toBe("upcoming");
+  });
+
+  it("marks passed capture steps done and the current one current", () => {
+    const captures = byKind(
+      movesWorkspaceV2Spine({
+        captureTitles: TITLES,
+        view: 1,
+        handoffReachable: false,
+      }),
+      "capture",
+    );
+    expect(captures.map((s) => s.state)).toEqual([
+      "done",
+      "current",
+      "upcoming",
+    ]);
+  });
+
+  it("lights GENERATE on the last capture step — where the flow produces output", () => {
+    const onLast = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 2,
+      handoffReachable: false,
+    });
+    expect(byKind(onLast, "generate")[0].state).toBe("current");
+    // Not before the last step.
+    const earlier = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 1,
+      handoffReachable: false,
+    });
+    expect(byKind(earlier, "generate")[0].state).toBe("upcoming");
+  });
+
+  it("at the recap, every capture + generate reads done and OUTCOME is current", () => {
+    const stages = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 3,
+      handoffReachable: true,
+    });
+    expect(byKind(stages, "capture").map((s) => s.state)).toEqual([
+      "done",
+      "done",
+      "done",
+    ]);
+    expect(byKind(stages, "generate")[0].state).toBe("done");
+    expect(byKind(stages, "outcome")[0].state).toBe("current");
+    expect(byKind(stages, "gate")[0].state).toBe("current");
+  });
+
+  it("navigates capture stages backward only — never forward", () => {
+    const stages = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 1,
+      handoffReachable: false,
+    });
+    const captures = byKind(stages, "capture");
+    expect(captures[0].targetView).toBe(0); // done → clickable back to view 0
+    expect(captures[1].targetView).toBeNull(); // current → no self-nav
+    expect(captures[2].targetView).toBeNull(); // upcoming → not reachable forward
+  });
+
+  it("lets any capture step be selected from the recap (all are behind you)", () => {
+    const captures = byKind(
+      movesWorkspaceV2Spine({
+        captureTitles: TITLES,
+        view: 3,
+        handoffReachable: true,
+      }),
+      "capture",
+    );
+    expect(captures.map((s) => s.targetView)).toEqual([0, 1, 2]);
+  });
+
+  it("makes OUTCOME navigable to the recap only when the host says it is reachable", () => {
+    const reachable = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 2,
+      handoffReachable: true,
+    });
+    expect(byKind(reachable, "outcome")[0].targetView).toBe(3);
+
+    const closed = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 2,
+      handoffReachable: false,
+    });
+    // Mirrors the product's closed recap (approveSlot present, no review): a
+    // marker, not a new path into view 3.
+    expect(byKind(closed, "outcome")[0].targetView).toBeNull();
+  });
+
+  it("keeps GENERATE and GATE as non-interactive markers", () => {
+    const stages = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 2,
+      handoffReachable: true,
+    });
+    expect(byKind(stages, "generate")[0].targetView).toBeNull();
+    expect(byKind(stages, "gate")[0].targetView).toBeNull();
+  });
+});

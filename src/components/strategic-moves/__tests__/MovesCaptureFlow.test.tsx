@@ -320,6 +320,108 @@ describe("MovesCaptureFlow", () => {
     });
   });
 
+  // ─── moves_workspace_v2 (Increment 1 of the phase-workspace shell) ───
+  // Presentation only: every case pins the v2 chrome while a flag-off control
+  // case pins that the legacy chrome is byte-for-byte unchanged.
+  describe("moves_workspace_v2 shell", () => {
+    const APPROVE = <button type="button">Approve &amp; Build</button>;
+
+    it("renders ONE slim phase rail with a non-interactive hand-off marker", () => {
+      renderFlow({ workspaceV2: true });
+      const rail = screen.getByRole("navigation", { name: "Phases" });
+      // Six phase pips, the current one marked, future ones disabled — the same
+      // navigation contract as the legacy strip, in the slim rail.
+      const pips = within(rail).getAllByRole("button");
+      expect(pips).toHaveLength(6);
+      expect(within(rail).getByRole("button", { current: "page" })).toHaveTextContent(
+        "Charter",
+      );
+      expect(pips.filter((p) => (p as HTMLButtonElement).disabled)).toHaveLength(4);
+      // The hand-off marker is a static label, not a button.
+      expect(within(rail).getByText("→ Tower")).toBeInTheDocument();
+      expect(
+        within(rail).queryByRole("button", { name: /Tower/ }),
+      ).not.toBeInTheDocument();
+      // The legacy journey tab strip is NOT rendered.
+      expect(rail.querySelector(".mcf-phasebar")).toBeNull();
+    });
+
+    it("renders the four-stage sub-step spine: CAPTURE steps, GENERATE, OUTCOME, GATE", () => {
+      renderFlow({ workspaceV2: true });
+      const steps = screen.getByRole("navigation", { name: "Steps" });
+      const kinds = Array.from(
+        steps.querySelectorAll(".mcf-v2-kind"),
+      ).map((n) => n.textContent);
+      // P1 has three capture step groups, then the generate/outcome/gate spine.
+      expect(kinds).toEqual([
+        "capture",
+        "capture",
+        "capture",
+        "generate",
+        "outcome",
+        "gate",
+      ]);
+      // The capture stages carry the phase's real step-group titles.
+      expect(within(steps).getByText("Scope the bet")).toBeInTheDocument();
+      expect(within(steps).getByText("People & decisions")).toBeInTheDocument();
+      expect(within(steps).getByText("Plan the proof")).toBeInTheDocument();
+    });
+
+    it("renders the gateExtras (workbook actions) on the gate step beside the approve control, not on the capture steps", () => {
+      renderFlow({
+        workspaceV2: true,
+        approveSlot: APPROVE,
+        gateExtras: <div data-testid="workbook-actions">Workbook</div>,
+      });
+      // Step 1 is a capture step: the workbook actions are NOT here.
+      expect(screen.queryByTestId("workbook-actions")).not.toBeInTheDocument();
+      // Walk to the last (gate) step, where the approve control lives.
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(
+        screen.getByRole("button", { name: "Approve & Build" }),
+      ).toBeInTheDocument();
+      const workbook = screen.getByTestId("workbook-actions");
+      expect(workbook).toBeInTheDocument();
+      expect(workbook.closest(".mcf-footer")).not.toBeNull();
+    });
+
+    it("gateExtras is ignored unless workspaceV2 is on", () => {
+      renderFlow({
+        approveSlot: APPROVE,
+        gateExtras: <div data-testid="workbook-actions">Workbook</div>,
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(screen.queryByTestId("workbook-actions")).not.toBeInTheDocument();
+    });
+
+    it("keeps the capture state machine: Continue still walks the steps and submits", () => {
+      const { onSubmitPhase } = renderFlow({ workspaceV2: true });
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Submit Charter" }));
+      expect(onSubmitPhase).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId("mcf-handoff")).toBeInTheDocument();
+      // The spine stays on screen at the recap, with OUTCOME current.
+      const steps = screen.getByRole("navigation", { name: "Steps" });
+      const outcome = steps.querySelector(".mcf-v2-sstep.kind-outcome");
+      expect(outcome).not.toBeNull();
+      expect(outcome).toHaveClass("is-current");
+    });
+
+    it("flag OFF renders the legacy journey strip and three-step bar unchanged", () => {
+      renderFlow();
+      const phases = screen.getByRole("navigation", { name: "Phases" });
+      expect(phases).toHaveClass("mcf-phasebar");
+      expect(phases).not.toHaveClass("mcf-v2-rail");
+      const steps = screen.getByRole("navigation", { name: "Steps" });
+      expect(steps).toHaveClass("mcf-stepbar");
+      expect(steps).not.toHaveClass("mcf-v2-flow");
+      expect(screen.queryByText("→ Tower")).not.toBeInTheDocument();
+    });
+  });
+
   describe("captureHandoffAccess / captureHandoffHeading", () => {
     it("calls the recap unreachable exactly in the configuration the product serves", () => {
       expect(

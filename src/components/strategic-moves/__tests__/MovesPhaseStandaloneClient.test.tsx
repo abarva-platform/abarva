@@ -1911,6 +1911,102 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    // ─── moves_workspace_v2 (Increment 1 of the phase-workspace shell) ───────
+    it("moves_workspace_v2 ON: the capture flow renders the single slim phase rail and the four-stage spine", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      const flow = within(dock).getByTestId("moves-capture-flow");
+      // the slim rail and the four-stage spine, not the legacy bars
+      expect(flow.querySelector(".mcf-v2-rail")).not.toBeNull();
+      expect(flow.querySelector(".mcf-v2-flow")).not.toBeNull();
+      expect(flow.querySelector(".mcf-phasebar")).toBeNull();
+      expect(flow.querySelector(".mcf-stepbar")).toBeNull();
+      expect(within(flow).getByText("→ Tower")).toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON: drops the stacked legacy gate stepper on the phase view (subsumes the composition polish)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // composition is implied — the duplicate phase navigator and the repeated
+      // stage head come off the phase view without the composition flag set.
+      expect(
+        screen.queryByRole("navigation", { name: "Phase steps" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { level: 1, name: "Charter" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON: the workspace-view row becomes a secondary control, still reachable", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const tablist = screen.getByRole("tablist", {
+        name: "Move workspace views",
+      });
+      expect(tablist).toHaveClass("mxw-surface-tabs--secondary");
+      // the views are still reachable from it
+      expect(
+        within(tablist).getByRole("tab", { name: /Files/ }),
+      ).toBeInTheDocument();
+      expect(
+        within(tablist).getByRole("tab", { name: /Approvals/ }),
+      ).toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON without moves_capture_v2: changes nothing (no flow to reshape)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // the legacy canvas, head, stepper and standard tab row are all untouched
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+      const tablist = screen.getByRole("tablist", {
+        name: "Move workspace views",
+      });
+      expect(tablist).not.toHaveClass("mxw-surface-tabs--secondary");
+    });
+
     // ─── moves_charter_basis_v1: the HOST call site ─────────────────────────
     // The join itself is pure and pinned (charter-basis-host-join.test.ts), and
     // every rendering half has its own suite. What nothing pinned is the wiring
