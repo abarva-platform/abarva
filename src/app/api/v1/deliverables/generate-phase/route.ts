@@ -66,10 +66,11 @@ import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 import { buildHeldByEvidenceDetail } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
+import { loadAcceptedStageReadinessContext } from "@/lib/programs/stage-readiness-workbooks/accepted-context";
 import {
-  formatAcceptedStageReadinessContextForPrompt,
-  loadAcceptedStageReadinessContext,
-} from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+  formatStageReadinessPromptContext,
+  loadStageReadinessPromptContext,
+} from "@/lib/programs/stage-readiness-workbooks/prompt-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -329,13 +330,16 @@ export async function POST(req: NextRequest) {
         );
       }
       if (phase >= 2 && phase <= 5) {
-        const currentPhaseContext = await loadAcceptedStageReadinessContext(
+        // The prompt gets every accepted answer on the preceding transition's
+        // review, whether or not that review is finished. The finished-review
+        // policy belongs to the forward controls above, not here.
+        const currentPhaseContext = await loadStageReadinessPromptContext(
           ctx,
           moveId,
           phase,
         );
         acceptedStageReadinessPrompt =
-          formatAcceptedStageReadinessContextForPrompt(currentPhaseContext);
+          formatStageReadinessPromptContext(currentPhaseContext);
       }
       requiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(packets, phase);
     } catch (err) {

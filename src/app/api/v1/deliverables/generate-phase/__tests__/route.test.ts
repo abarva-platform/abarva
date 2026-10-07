@@ -134,6 +134,17 @@ const formatAcceptedStageReadinessContextForPrompt = jest.fn(
     return "ACCEPTED STAGE READINESS RESPONSE: contact_center_kpis is supported by ev-kpi.";
   },
 );
+// The PROMPT reading is a different policy from the gate reading above: it
+// accepts a review that is still open. Separate mocks so a case can drive the
+// two apart, which is the only thing that pins the route to the right one.
+const loadStageReadinessPromptContext: jest.Mock = jest.fn(async (...args: unknown[]) => {
+  void args;
+  return null;
+});
+const formatStageReadinessPromptContext = jest.fn((...args: unknown[]) => {
+  void args;
+  return "ACCEPTED STAGE READINESS RESPONSE: contact_center_kpis is supported by ev-kpi.";
+});
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const listApprovedPhaseEvidence: jest.Mock = jest.fn(async () => [
   {
@@ -295,6 +306,12 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
   formatAcceptedStageReadinessContextForPrompt: (...args: unknown[]) =>
     formatAcceptedStageReadinessContextForPrompt(...args),
 }));
+jest.mock("@/lib/programs/stage-readiness-workbooks/prompt-context", () => ({
+  loadStageReadinessPromptContext: (...args: unknown[]) =>
+    loadStageReadinessPromptContext(...args),
+  formatStageReadinessPromptContext: (...args: unknown[]) =>
+    formatStageReadinessPromptContext(...args),
+}));
 
 import { POST } from "../route";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -350,6 +367,39 @@ beforeEach(() => {
     readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
   });
   formatAcceptedStageReadinessContextForPrompt.mockClear();
+  loadStageReadinessPromptContext.mockClear();
+  loadStageReadinessPromptContext.mockResolvedValue({
+    context: {
+      moveId: "move-1",
+      sourcePhase: 1,
+      targetPhase: 2,
+      reviewArtifactId: "review-1",
+      reviewArtifactVersion: 1,
+      proposals: [],
+      acceptedResponses: [
+        {
+          proposalId: "proposal-kpi",
+          questionId: "q_kpi_baseline",
+          dimensionId: "contact_center_kpis",
+          requirement: "required",
+          sourceClass: "client_metric",
+          question: "Provide the KPI baseline.",
+          response: "Confirmed",
+          context: "",
+          evidenceOrSource: "Existing evidence: ev-kpi",
+          owner: "Operations",
+          workbookLocation: { sheetName: "Performance", rowNumber: 2 },
+          answerState: "answered",
+          acceptedAt: "2026-10-07T00:00:00.000Z",
+          acceptedBy: "user-1",
+        },
+      ],
+      readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+    },
+    openResponseCount: 0,
+    reviewOpen: false,
+  });
+  formatStageReadinessPromptContext.mockClear();
   mockLoadApprovedMoveEvidenceSnapshot.mockReset();
   mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
     tenantKey: "skyharbor-air",
@@ -801,6 +851,78 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(decisionContext).toContain("effort × rate arithmetic");
     expect(decisionContext).toContain("Claude Code/Codex");
     expect(decisionContext).toContain("named human reviewer");
+  });
+
+  it("hands the prompt a transition review that is still open for review", async () => {
+    // The two readings of the same review, driven apart: the gate reading
+    // (target phase + 1) stays satisfied, while the finished-review reading of
+    // THIS phase's transition refuses — which is what a single undecided
+    // optional response does. The accepted answers must still reach the job.
+    loadAcceptedStageReadinessContext.mockImplementation(
+      async (...args: unknown[]) =>
+        args[2] === 5
+          ? {
+              moveId: "move-1",
+              sourcePhase: 4,
+              targetPhase: 5,
+              reviewArtifactId: "review-gate",
+              reviewArtifactVersion: 1,
+              proposals: [
+                {
+                  proposalId: "proposal-kpi",
+                  questionId: "q_kpi_baseline",
+                  dimensionId: "contact_center_kpis",
+                  requirement: "required",
+                  answerState: "answered",
+                  disposition: "accepted",
+                  evidenceOrSource: "Existing evidence: ev-kpi",
+                },
+              ],
+              acceptedResponses: [],
+              readiness: {
+                ready: 1,
+                partial: 0,
+                insufficientEvidence: 0,
+                unknown: 0,
+              },
+            }
+          : null,
+    );
+    formatStageReadinessPromptContext.mockReturnValue(
+      "ACCEPTED STAGE READINESS RESPONSE: one response is still open for review.",
+    );
+
+    const res = await POST(
+      req({ moveId: "m-p4-technical", phase: 4, useCaseArchetype: "ams" }),
+    );
+
+    expect(res.status).toBe(202);
+    expect(loadStageReadinessPromptContext).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-p4-technical",
+      4,
+    );
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
+    expect(decisionContext).toContain(
+      "one response is still open for review",
+    );
+  });
+
+  it("asks for no prompt block when the transition has no review at all", async () => {
+    loadStageReadinessPromptContext.mockResolvedValue(null);
+    formatStageReadinessPromptContext.mockReturnValue("");
+
+    const res = await POST(
+      req({ moveId: "m-p4-technical", phase: 4, useCaseArchetype: "ams" }),
+    );
+
+    expect(res.status).toBe(202);
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
+    expect(decisionContext).not.toContain("ACCEPTED STAGE READINESS RESPONSE");
   });
 
   it("separates legitimate P3 reruns with an explicit generation attempt id", async () => {
