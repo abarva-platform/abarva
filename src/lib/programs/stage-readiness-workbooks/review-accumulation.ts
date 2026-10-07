@@ -43,10 +43,22 @@ import {
 } from "./proposals";
 import { isWorkbookProposalAcceptable } from "./review-selection";
 
-/** The two fields a carried-forward disposition needs; read off stored JSON. */
+/**
+ * A reviewed proposal as it sits in stored JSON.
+ *
+ * `proposalId` + `disposition` are what a same-set carry-forward needs. The
+ * four answer fields are what `review-carry-forward` matches on when the
+ * stored review belongs to an EARLIER upload, whose proposal ids are all
+ * different by construction. They are read off the same stored objects, which
+ * are whole proposals, so nothing new has to be persisted for that reading.
+ */
 export interface PriorReviewedProposal {
   proposalId?: string | null;
   disposition?: string | null;
+  questionId?: string | null;
+  response?: string | null;
+  context?: string | null;
+  evidenceOrSource?: string | null;
 }
 
 export interface StageReadinessProposalSetReference {
@@ -125,17 +137,29 @@ function asReviewReference(value: unknown): ReviewSetReference {
 }
 
 /**
- * The dispositions already recorded for this exact proposal set, or null when
- * no current review belongs to it. Both the artifact metadata and the stored
- * review body must reference the set, which is the same pair of checks the
- * phase workspace uses before it seeds a stored review onto the screen.
+ * The current review artifact stored for this move and transition, and whether
+ * it belongs to the proposal set being reviewed now.
+ *
+ * Two readings need the same artifact and the same body, and they differ only
+ * in which set the review has to belong to: a review of THIS set is the
+ * multi-batch baseline, and a review of an EARLIER one is a superseded review
+ * whose decisions may be restored by answer text. Resolving both from a single
+ * lookup keeps them from disagreeing and reads the stored blob once, which is
+ * also why the set policy is applied after the download rather than before it.
  */
-export async function loadPriorStageReadinessReviewProposals(
+export type StageReadinessStoredReviewKind = "current_set" | "superseded_set";
+
+export interface StageReadinessStoredReview {
+  kind: StageReadinessStoredReviewKind;
+  proposals: PriorReviewedProposal[];
+}
+
+export async function loadStageReadinessStoredReview(
   ctx: TenancyCtx,
   moveId: string,
   phase: number,
   proposalSet: StageReadinessProposalSetReference,
-): Promise<PriorReviewedProposal[] | null> {
+): Promise<StageReadinessStoredReview | null> {
   if (!proposalSet.proposalSetId) return null;
   const artifacts = await listMoveArtifacts(ctx, moveId, {
     family: "approval_artifact",
@@ -147,14 +171,6 @@ export async function loadPriorStageReadinessReviewProposals(
       artifact.artifact_type === STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
   );
   if (!reviewArtifact) return null;
-  if (
-    !isReviewForStageReadinessProposalSet({
-      proposalSet,
-      review: asReviewReference(reviewArtifact.metadata),
-    })
-  ) {
-    return null;
-  }
 
   const downloaded = await downloadArtifactBytes(
     ctx,
@@ -167,18 +183,50 @@ export async function loadPriorStageReadinessReviewProposals(
   } catch {
     return null;
   }
-  if (
-    !isReviewForStageReadinessProposalSet({
+  const storedProposals = (review as { proposals?: unknown }).proposals;
+  if (!Array.isArray(storedProposals)) return null;
+
+  // Both the artifact metadata and the stored body must reference the set,
+  // which is the same pair of checks the phase workspace uses before it seeds
+  // a stored review onto the screen.
+  const belongsToThisSet =
+    isReviewForStageReadinessProposalSet({
+      proposalSet,
+      review: asReviewReference(reviewArtifact.metadata),
+    }) &&
+    isReviewForStageReadinessProposalSet({
       proposalSet,
       review: asReviewReference(review),
-    })
-  ) {
-    return null;
-  }
-  const proposals = (review as { proposals?: unknown }).proposals;
-  if (!Array.isArray(proposals)) return null;
-  return proposals.filter(
-    (proposal): proposal is PriorReviewedProposal =>
-      typeof proposal === "object" && proposal !== null,
+    });
+
+  return {
+    kind: belongsToThisSet ? "current_set" : "superseded_set",
+    proposals: storedProposals.filter(
+      (proposal): proposal is PriorReviewedProposal =>
+        typeof proposal === "object" && proposal !== null,
+    ),
+  };
+}
+
+/**
+ * The dispositions already recorded for this exact proposal set, or null when
+ * no current review belongs to it.
+ *
+ * A caller that also wants the superseded reading should use
+ * `loadStageReadinessStoredReview` directly rather than calling this and a
+ * sibling, so the stored review is read once.
+ */
+export async function loadPriorStageReadinessReviewProposals(
+  ctx: TenancyCtx,
+  moveId: string,
+  phase: number,
+  proposalSet: StageReadinessProposalSetReference,
+): Promise<PriorReviewedProposal[] | null> {
+  const stored = await loadStageReadinessStoredReview(
+    ctx,
+    moveId,
+    phase,
+    proposalSet,
   );
+  return stored?.kind === "current_set" ? stored.proposals : null;
 }
