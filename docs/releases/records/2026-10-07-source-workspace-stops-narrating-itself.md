@@ -44,6 +44,21 @@ to the buyer:
   fourth of four ways one screen said "not sized". The action posture and the executive read still
   say it; a buyer acts on those two.
 
+## Also in this change — a unit defect found by QA
+
+A signed-in read-only QA pass found that the service-performance table appended `%` to **every**
+numeric actual. The table is keyed by `metric_name`, and those metrics are not all percentages: a
+response time in minutes rendered as `45.0%`, a resolution time in hours as `8.0%`, a backlog count
+as `120.0%`. That does not merely look wrong — it changes what the SLA evidence says.
+
+The row has carried a `unit` column all along. The formatter ignored it and invented one. It now
+reads the declared unit, and where none is declared it renders the number alone rather than
+guessing. A value at or below 1 with no declared unit is still shown as a percentage, because an
+actual that small is a ratio against a target and rendering `0.995` as `1.0` would lose the fact.
+
+The existing expectation asserted `performanceActual(89, null) === "89.0%"` — it encoded the defect.
+It is conformed, and two cases now pin the unit handling in both directions.
+
 ## Layer Impact
 
 Release lane: **global-control-lane**.
@@ -72,7 +87,8 @@ surfaces.
 | Check | Status |
 |---|---|
 | New suite | PASS — 9 cases |
-| Workspace suites | PASS — 37 suites, 340 tests |
+| Performance suite, with the unit fix | PASS — 66 cases |
+| Workspace suites | PASS — 37 suites, 342 tests |
 | TypeScript `tsc --noEmit`, by exit code | PASS — exit 0, 0 errors |
 | Mutation — restore the ready/partial contradiction | PASS — 2 cases failed as intended |
 | Mutation — restore the timing-gate badge | PASS — failed as intended |

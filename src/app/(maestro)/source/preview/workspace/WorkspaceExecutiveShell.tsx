@@ -3562,7 +3562,7 @@ function ContractPage({
                   <span>{fmtDate(row.period_start)}</span>
                   <span>{row.metric_name}</span>
                   <span>
-                    {performanceActual(row.actual_value, row.value_num)}
+                    {performanceActual(row.actual_value, row.value_num, row.unit)}
                   </span>
                   <span>{money(numberFromDb(row.credit_calculated))}</span>
                 </div>
@@ -7899,9 +7899,39 @@ function detailStateLabel(state: SourceWorkspaceVM["detailState"]) {
   return "Header only";
 }
 
-export function performanceActual(actualValue: unknown, valueNum: unknown) {
-  const formatActual = (actual: number) =>
-    actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
+/** Unit strings that genuinely mean "this number is a percentage". */
+const PERCENT_UNITS = new Set(["%", "pct", "percent", "percentage"]);
+
+/**
+ * A service-performance actual, in the unit the row declares.
+ *
+ * This used to append `%` to every numeric actual. The performance table is
+ * keyed by `metric_name`, and those metrics are not all percentages: a
+ * response time in minutes rendered as "45.0%", a resolution time in hours as
+ * "8.0%", a backlog count as "120.0%". That does not merely look wrong — it
+ * changes what the SLA evidence says.
+ *
+ * The row has carried a `unit` column all along; the formatter ignored it and
+ * invented one instead. It now reads the declared unit, and where no unit is
+ * declared it renders the number alone rather than guessing. A value at or
+ * below 1 with no declared unit is still shown as a percentage: an actual that
+ * small is a ratio against a target, and rendering 0.995 as "1.0" would lose
+ * the fact rather than preserve it.
+ */
+export function performanceActual(
+  actualValue: unknown,
+  valueNum: unknown,
+  unit?: string | null,
+) {
+  const declared = typeof unit === "string" ? unit.trim() : "";
+  const isPercentUnit = PERCENT_UNITS.has(declared.toLowerCase());
+  const formatActual = (actual: number) => {
+    if (isPercentUnit) return actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
+    if (declared) return `${actual.toFixed(1)} ${declared}`;
+    // No declared unit. A sub-unit actual is a ratio; anything larger is a
+    // quantity whose unit this row does not state, so none is asserted.
+    return actual <= 1 ? pct(actual) : `${actual.toFixed(1)}`;
+  };
   if (typeof actualValue === "number" && Number.isFinite(actualValue)) {
     return formatActual(actualValue);
   }
