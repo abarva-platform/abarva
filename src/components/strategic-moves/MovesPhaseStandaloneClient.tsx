@@ -118,6 +118,7 @@ import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-totals";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
+import { declarableEvidenceUploadFamilies } from "@/lib/programs/evidence-readiness/upload-family-declaration";
 import {
   currentPhaseRequiredEvidenceGaps,
   phaseProgressReadiness,
@@ -1244,16 +1245,14 @@ export function MovesPhaseStandaloneClient({
       cancelled = true;
     };
   }, [move.id, phase.phase]);
-  // What the file cabinet's uploader can declare a file as covering: the
-  // evidence families this Move's discovery requires, once each.
-  const declarableEvidenceFamilies = useMemo(() => {
-    const seen = new Set<string>();
-    return evidenceNeedPackets.flatMap((packet) => {
-      if (!packet.familyId || seen.has(packet.familyId)) return [];
-      seen.add(packet.familyId);
-      return [{ id: packet.familyId, label: packet.evidenceSlot }];
-    });
-  }, [evidenceNeedPackets]);
+  // What an uploader can declare a file as covering: the evidence families
+  // this Move's discovery requires, once each. Every upload surface that asks
+  // for these families is handed the same list, so none of them can instruct
+  // the user to supply a family it gives no way to declare.
+  const declarableEvidenceFamilies = useMemo(
+    () => declarableEvidenceUploadFamilies(evidenceNeedPackets),
+    [evidenceNeedPackets],
+  );
   const p3OptionSet = useMemo(
     () =>
       assembleP3SolutionOptions({
@@ -5858,8 +5857,12 @@ function PhaseBody({
 
     return (
       <>
+        {/* The evidence checklist below names the families this phase needs,
+            so this uploader is handed them too — without the list it rendered
+            no picker and every file it took was left for inference to place. */}
         <DecisionEvidenceActionPanel
           buttonLabel={`Upload ${phase.code} files`}
+          evidenceFamilies={declarableEvidenceFamilies}
           heading={`Upload and review evidence for ${phase.code}`}
           moveId={move.id}
           onOpenFiles={onOpenFiles}
@@ -8053,8 +8056,12 @@ function EvidenceUploadControl({
             </select>
           </label>
         ) : null}
+        {/* Offered on every phase that has families to declare, not only P1.
+            The upload route already accepts any of this Move's discovery
+            families at any phase; while this picker was P1-only, a discovery
+            upload could not state what it covered and fell to keyword
+            inference, which decides most families on an exact phrase match. */}
         {!fixedEvidenceFamily &&
-        phase === 1 &&
         uploadFamily === "uploaded_evidence" &&
         evidenceFamilies.length > 0 ? (
           <label className="mxw-upload-family">
