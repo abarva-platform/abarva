@@ -18,10 +18,10 @@ import type {
 } from "./types";
 import { renderEvidenceForPrompt } from "./source-register";
 import {
-  planSectionWordBudgets,
   sectionCapFor,
   type SectionWordBudgetPlan,
 } from "./section-word-budget-plan";
+import { planRealizedSectionWordBudgets } from "./realized-section-word-budget";
 import type { GovernedEvidenceItem } from "./types";
 import { redactExcludedNumericClaims } from "./excluded-numeric-claims";
 import { resolvePassTokenBudget } from "@/lib/ai/document-generation-policy";
@@ -462,6 +462,12 @@ function extractSectionWordBudget(text?: string): number | null {
  * Exported so the draft prompt, the repair prompt's cap, and the repair target
  * the orchestrator asks for are all one reading. They were three.
  *
+ * `plannedSectionKeys` is the key of every section the document will actually
+ * contain. Pass it wherever it is known: the invariants are only worth holding
+ * over the document being written, and the declared set is not it — see
+ * realized-section-word-budget.ts. Omitted, the budget is resolved over the
+ * declared structure, which is the answer this function gave before.
+ *
  * Null when this artifact type states no per-section cap to the model (the
  * concise rules below are gated on the same condition). There is then no cap
  * for a repair target to contradict, so callers keep the even share.
@@ -469,15 +475,21 @@ function extractSectionWordBudget(text?: string): number | null {
 export function sectionWordBudgetPlanFor(
   req: DeliverableIntelligenceRequest,
   brief: DeliverableArtifactBrief,
+  plannedSectionKeys?: readonly string[],
 ): SectionWordBudgetPlan | null {
   const qb = req.qualityBar;
   if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return null;
+  // The fallback cap stays an even share of the DECLARED structure, so the cap a
+  // section that declared nothing is given does not move with the architect's
+  // section count. It is the editorial default for this document, not a
+  // function of how many sections the model happened to plan.
   const sectionCount = Math.max(brief.recommendedStructure.length, 1);
-  return planSectionWordBudgets({
-    sections: brief.recommendedStructure.map((s) => ({
+  return planRealizedSectionWordBudgets({
+    declared: brief.recommendedStructure.map((s) => ({
       key: s.key,
       declaredCap: extractSectionWordBudget(s.expertLatitude),
     })),
+    realizedKeys: plannedSectionKeys ?? [],
     fallbackCap: Math.max(120, Math.floor(qb.targetBodyWordsMax / sectionCount)),
     minBodyWords: qb.minBodyWords,
     // The number the quality gate BLOCKS on. Between `targetBodyWordsMax` and
@@ -492,6 +504,7 @@ function conciseSectionDraftInstruction(
   req: DeliverableIntelligenceRequest,
   brief: DeliverableArtifactBrief,
   section?: PlannedSection,
+  plannedSectionKeys?: readonly string[],
 ): string {
   const qb = req.qualityBar;
   // The cap comes from the reconciled plan, not from this section's own
@@ -500,7 +513,7 @@ function conciseSectionDraftInstruction(
   // exactly the condition that makes these rules inapplicable — no blocking
   // ceiling to budget against — so reading the guard off the plan keeps the two
   // from drifting apart.
-  const plan = sectionWordBudgetPlanFor(req, brief);
+  const plan = sectionWordBudgetPlanFor(req, brief, plannedSectionKeys);
   if (!plan) return "";
   const structureSection = brief.recommendedStructure.find(
     (s) => s.key === section?.key,
@@ -732,6 +745,12 @@ export interface PassInputs {
   };
   /** decomposed: all section titles+intent, so an independent section stays coherent. */
   outlineSummary?: string;
+  /**
+   * decomposed: the key of EVERY section the document will contain, so the
+   * per-section cap stated here is reconciled with the floor over the real
+   * document rather than over the brief's declared structure.
+   */
+  plannedSectionKeys?: readonly string[];
   /** decomposed: section summaries fed to the synthesis pass. */
   sectionDrafts?: { title: string; summary: string }[];
 }
@@ -891,7 +910,7 @@ export function buildPassPrompt(
           ? `REPAIR ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`
           : `WRITE ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`,
         `Intent: ${s?.rationale || s?.title || ""}`,
-        conciseSectionDraftInstruction(req, brief, s),
+        conciseSectionDraftInstruction(req, brief, s, inputs.plannedSectionKeys),
         ...(repair
           ? [
               `SECTION QUALITY REPAIR: the existing draft has ${repair.currentWordCount} prose words; the section completeness target is ${repair.targetProseWords} prose words. Return a complete revised section with at least ${repair.targetProseWords} prose words, while staying under the hard cap above.`,
