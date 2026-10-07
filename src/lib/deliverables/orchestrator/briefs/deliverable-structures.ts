@@ -12,6 +12,10 @@ import type {
   SectionGroundingMode,
 } from "../types";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+import {
+  MOVES_EXECUTION_KICKOFF_GUIDE,
+  MOVES_MOBILIZATION_WORKSHOP_GUIDE,
+} from "./structure-phase-session-guides";
 import { MOVES_PROCESS_CHANGE_ESTIMATE_BRIEF } from "./structure-process-change-estimate-brief";
 import { MOVES_VALUE_MEASUREMENT_CONTRACT } from "./structure-value-measurement-contract";
 
@@ -1993,8 +1997,10 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_VALUE,
   MOVES_READINESS_AND_CHANGE_PLAN,
   MOVES_MOBILIZATION,
+  MOVES_MOBILIZATION_WORKSHOP_GUIDE,
   MOVES_HANDOFF,
   MOVES_VALUE_MEASUREMENT_CONTRACT,
+  MOVES_EXECUTION_KICKOFF_GUIDE,
   MOVES_EXECUTIVE_PLAYBACK,
   MOVES_PROCESS_CHANGE_ESTIMATE_BRIEF,
   SOURCE_STRATEGY_MEMO,

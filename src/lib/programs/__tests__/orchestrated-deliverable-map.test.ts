@@ -59,6 +59,10 @@ describe("orchestrated deliverable map", () => {
       true,
     );
 
+    // The claim is that each later guide keeps its OWN orchestrator type, so
+    // none of them inherits the P1 discovery guide's or the P2 design guide's
+    // scope. Whether a guide has a structure is a separate question, asserted
+    // below per guide.
     for (const registryKey of [
       "planning_workshop_guide",
       "mobilization_workshop_guide",
@@ -66,10 +70,32 @@ describe("orchestrated deliverable map", () => {
     ]) {
       const orchestratorType = orchestratorDeliverableType(registryKey);
       expect(orchestratorType).toBe(registryKey);
-      expect(
-        getDeliverableStructure("moves", orchestratorType),
-      ).toBeUndefined();
+      expect(orchestratorType).not.toBe("discovery_plan");
+      expect(orchestratorType).not.toBe(designGuide);
     }
+
+    // The P4 and P5 guides have their own structures
+    // (structure-phase-session-guides.ts), each distinct from the P2 guide's.
+    for (const registryKey of [
+      "mobilization_workshop_guide",
+      "execution_kickoff_guide",
+    ]) {
+      const structure = getDeliverableStructure(
+        "moves",
+        orchestratorDeliverableType(registryKey),
+      );
+      expect(structure?.deliverableType).toBe(registryKey);
+      expect(structure?.fixedStructure).toBe(true);
+    }
+
+    // The P3 planning guide is structureless under a stated product decision,
+    // not by omission — see moves-process-change-estimate-brief-structure.
+    expect(
+      getDeliverableStructure(
+        "moves",
+        orchestratorDeliverableType("planning_workshop_guide"),
+      ),
+    ).toBeUndefined();
   });
 
   it("routes the P5 value measurement contract to its own quality profile", () => {

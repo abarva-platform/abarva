@@ -118,18 +118,29 @@ describe("the governed-data-foundation artifact pack", () => {
     // it grounds — while `composeBrief` still withholds the pack's EXHIBITS
     // and TABLES from it by name, which is the second list below and is the
     // part of "facilitation template" that was right.
-    // 23 rows: one per structure in the catalog. The twenty-second is the P5
-    // value measurement contract and the twenty-third the bounded-route
-    // process change estimate brief; both ground and take the pack's assets,
-    // so neither joins either list below.
+    // 25 rows: one per structure in the catalog. The last four are the P5
+    // value measurement contract, the bounded-route process change estimate
+    // brief, and the P4 and P5 working-session guides. The first two ground and
+    // take the pack's assets, so neither joins either list below. The two
+    // guides ground — each declares its carry-forward and evidence sections as
+    // landing sites, exactly as the P2 design guide does — but their assets are
+    // withheld, so they join the second list and not the first.
     const rows = report();
-    expect(rows).toHaveLength(23);
+    expect(rows).toHaveLength(25);
     expect(
       rows.filter((r) => r.landsNowhere).map((r) => r.deliverableType),
     ).toEqual(["charter"]);
     expect(
-      rows.filter((r) => r.archetypeAssetsWithheld).map((r) => r.deliverableType),
-    ).toEqual(["charter", "discovery_plan", "design_workshop_guide"]);
+      rows.filter((r) => r.archetypeAssetsWithheld).map((r) => r.deliverableType).sort(),
+    ).toEqual(
+      [
+        "charter",
+        "design_workshop_guide",
+        "discovery_plan",
+        "execution_kickoff_guide",
+        "mobilization_workshop_guide",
+      ].sort(),
+    );
   });
 
   it("grounds every fact-asserting section it covers in the whole family set", () => {
