@@ -26,14 +26,15 @@ The contract Performance table could return a stored text value before checking 
 ## Changes Included
 
 - Apply the metric/unit conflict guard before returning stored actual text.
-- Build a percentage trend from one named metric with distinct periods, excluding incompatible or ungrounded observations.
+- Build a percentage trend from one named metric with distinct periods. For a metric whose name does not declare its unit, require both a percentage unit and percentage-marked actual text; exclude named time and count measures.
 - Name the charted metric and use a full percentage axis; show an empty state when no comparable trend exists.
 
 ## QA / Validation
 
 - Red-first: an existing stored-text row reproduced the erroneous percent suffix; the new assertion failed before the fix.
 - Mutation: removing the chart's metric-name filter failed the two-period negative control; the restored guard passed.
-- Focused Performance suite: 71/71 passed; four workspace suites: 92/92 passed.
+- PR CI found an SLA-compliance label that contains "tickets" but is measured as a percentage. A red-first browser-shaped case now preserves its percent actual and trend, while incompatible named units remain excluded.
+- Focused Performance suite: 71/71 passed; all 11 Source workspace suites: 128/128 passed.
 - TypeScript typecheck: passed. Changed-file ESLint: no errors, one pre-existing warning.
 - `release:check`: 11/11 local gates passed. Applicable PR CI and signed-in replay are required before acceptance.
 

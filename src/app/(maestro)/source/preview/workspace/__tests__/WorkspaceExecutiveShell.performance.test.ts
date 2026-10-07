@@ -923,6 +923,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(performanceActual("8.0%", 8, "%", "p1_p2_resolution_hours")).toBe("8.0");
     expect(performanceActual("12.0%", 12, "%", "problem_backlog_older_30_days")).toBe("12.0");
     expect(performanceActual("98.0%", 98, "%", "batch_completion_by_7am_pct")).toBe("98.0%");
+    expect(performanceActual("90%", 90, "percent", "Priority tickets resolved within SLA")).toBe("90%");
     expect(performanceActual("30.0%", null, "%", "critical_incident_response_minutes"))
       .toBe("Unit needs review");
   });
@@ -941,6 +942,11 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(trend?.points.map((point) => point.actual)).toEqual([98, 99]);
     expect(selectPerformancePercentTrend(rows.slice(0, 3))).toBeNull();
     expect(selectPerformancePercentTrend(rows.filter((row) => row.metric_name.includes("minutes")))).toBeNull();
+    const slaRows = [
+      { metric_name: "Priority tickets resolved within SLA", unit: "percent", actual_value: "90%", value_num: 90, period_start: "2027-01-01" },
+      { metric_name: "Priority tickets resolved within SLA", unit: "percent", actual_value: "97%", value_num: 97, period_start: "2027-02-01" },
+    ];
+    expect(selectPerformancePercentTrend(slaRows)?.points.map((point) => point.actual)).toEqual([90, 97]);
   });
 
   it("keeps a percentage a percentage when name and stored unit agree", () => {

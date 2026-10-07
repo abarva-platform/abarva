@@ -2461,7 +2461,7 @@ function ContractPerformanceTrendChart({
   return (
     <div
       className="sw-v2-recharts-card sw-v2-recharts-card-compact"
-      aria-label={`Contract performance trend: ${metricLabel}`}
+      aria-label="Contract performance trend chart"
     >
       <MeasuredChartFrame className="sw-v2-chart-frame-line" height={224}>
         {(chartWidth, chartHeight) => (
@@ -2553,9 +2553,10 @@ export function selectPerformancePercentTrend<T extends Pick<
 >>(rows: readonly T[]): { metricName: string; points: { row: T; actual: number }[] } | null {
   const byMetric = new Map<string, { row: T; actual: number }[]>();
   for (const row of rows) {
-    if (unitFromMetricName(row.metric_name) !== "percent" ||
-        !PERCENT_UNITS.has(row.unit?.trim().toLowerCase() ?? "")) continue;
     const actualText = row.actual_value?.trim() ?? "";
+    const namedUnit = unitFromMetricName(row.metric_name);
+    if (!PERCENT_UNITS.has(row.unit?.trim().toLowerCase() ?? "") ||
+        (namedUnit !== "percent" && !(namedUnit === null && actualText.endsWith("%")))) continue;
     if (actualText && !/^-?\d+(?:\.\d+)?%?$/u.test(actualText)) continue;
     const rawActual = numberFromDb(row.value_num);
     if (rawActual === null) continue;
@@ -7957,6 +7958,7 @@ function unitFromMetricName(metricName: unknown): string | null {
   if (/\bminutes?\b|_minutes?$/.test(name)) return "minutes";
   if (/\bhours?\b|_hours?$/.test(name)) return "hours";
   if (/\bdays?\b|_days?(_|$)|older_\d+_days/.test(name)) return "days";
+  if (/\bwithin\s+sla\b/.test(name)) return null;
   if (/\bcount\b|\bbacklog\b|\bvolume\b|\btickets?\b/.test(name)) return "count";
   return null;
 }
