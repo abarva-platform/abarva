@@ -1,16 +1,21 @@
 /**
- * The two later working-session guides, and the brief they are actually served.
+ * The three phase working-session guides, and the brief they are actually
+ * served.
  *
- * A Move's P4 Mobilization Workshop Guide and P5 Execution Kickoff Guide had no
- * declared structure, so `composeBrief` returned null for both and the registry
- * fell through to `defaultBrief` — a twelve-section executive board paper with
- * no per-section length guidance, no `fixedStructure`, no
- * `forbiddenSectionTopics` and no `prohibitedContent`. Each guide's own quality
- * profile says the opposite of that document ("Working guide, not the formal
- * gate artifact"), and the generic brief grounded none of the archetype's
- * evidence families, so a Move could collect and approve its required evidence
- * through Discover and still produce two P4/P5 guides that could not cite any
- * of it.
+ * A Move's P3 Planning Workshop Guide, P4 Mobilization Workshop Guide and P5
+ * Execution Kickoff Guide had no declared structure, so `composeBrief` returned
+ * null for each and the registry fell through to `defaultBrief` — a
+ * twelve-section executive board paper with no per-section length guidance, no
+ * `fixedStructure`, no `forbiddenSectionTopics` and no `prohibitedContent`.
+ * Each guide's own quality profile says the opposite of that document ("Working
+ * guide, not the formal gate artifact"), and the generic brief grounded none of
+ * the archetype's evidence families, so a Move could collect and approve its
+ * required evidence through Discover and still produce three P3/P4/P5 guides
+ * that could not cite any of it.
+ *
+ * The P4 and P5 guides were authored first; the P3 guide followed, and this
+ * suite covers all three through the same cases rather than beside them, so an
+ * assertion added for one binds the others.
  *
  * What is pinned here, and why each part is not provable from the sibling suite
  * (`moves-phase-deliverable-archetype-reach`), which pins the structureless SET
@@ -81,6 +86,19 @@ interface GuideExpectation {
 
 const GUIDES: GuideExpectation[] = [
   {
+    registryKey: "planning_workshop_guide",
+    phase: 3,
+    sectionKeys: [
+      "design_carry_forward",
+      "planning_session_plan",
+      "planning_evidence",
+      "facilitation_guide",
+      "planning_gate_readiness",
+    ],
+    groundingSectionKeys: ["design_carry_forward", "planning_evidence"],
+    ungroundedSectionKeys: ["facilitation_guide", "planning_gate_readiness"],
+  },
+  {
     registryKey: "mobilization_workshop_guide",
     phase: 4,
     sectionKeys: [
@@ -121,7 +139,7 @@ function briefForProductionKey(registryKey: string) {
   return getArtifactBrief(req);
 }
 
-describe("the P4 and P5 working-session guides are served their own structure", () => {
+describe("the P3, P4 and P5 working-session guides are served their own structure", () => {
   it.each(GUIDES)(
     "$registryKey still declares the five-section spine this suite was written against",
     ({ registryKey, phase }) => {
@@ -259,11 +277,12 @@ describe("archetype assets are withheld from the facilitation guides", () => {
   const packExhibits = GOVERNED_DATA_FOUNDATION_PACK.exhibits.map((e) => e.key);
   const packTables = GOVERNED_DATA_FOUNDATION_PACK.tables.map((t) => t.key);
 
-  it("the withheld set is exactly the four it declares", () => {
+  it("the withheld set is exactly the five it declares", () => {
     expect(ARCHETYPE_ASSET_WITHHELD.map((entry) => entry.deliverableType)).toEqual(
       [
         "charter",
         "design_workshop_guide",
+        "planning_workshop_guide",
         "mobilization_workshop_guide",
         "execution_kickoff_guide",
       ],
@@ -301,5 +320,76 @@ describe("archetype assets are withheld from the facilitation guides", () => {
     const brief = briefForProductionKey("discovery_report");
     const exhibitKeys = (brief.expectedExhibits ?? []).map((e) => e.key);
     for (const key of packExhibits) expect(exhibitKeys).toContain(key);
+  });
+});
+
+/**
+ * The P3 guide's own boundary, which the shared cases above cannot express.
+ *
+ * It differs from its two siblings in one structural way: the P4 and P5 guides
+ * prepare sessions about artifacts approved in an EARLIER phase, so "do not
+ * restate the roadmap" is a backward-looking rule. The planning guide sits in
+ * the same phase as the design documents it recaps and prepares sessions for
+ * the NEXT phase's roadmap and business case, so it has a boundary in both
+ * directions: it must not re-tell P3's own gate artifact, and it must not
+ * pre-empt the P4 funding decision its sessions exist to inform.
+ *
+ * This was also the stated ground for leaving it structureless — what a guide
+ * may assert about a design still being chosen. The answer this structure takes
+ * is the one the deliverable already declared: the design is approved by the
+ * time this guide is written, and the caveats recorded against it are carried
+ * forward AS caveats rather than resolved.
+ */
+describe("the P3 planning guide's phase boundary", () => {
+  const PLANNING_KEY = "planning_workshop_guide";
+
+  it("forbids the design artifact its own phase produced", () => {
+    const forbidden = (
+      briefForProductionKey(PLANNING_KEY).forbiddenSectionTopics ?? []
+    ).map((topic) => topic.toLowerCase());
+    // Unique to this guide: its siblings recap a prior phase, so neither needs
+    // to be told not to re-tell a document from the phase it is written in.
+    expect(forbidden).toContain("target state architecture");
+  });
+
+  it("forbids asserting the funding approval its sessions exist to inform", () => {
+    const brief = briefForProductionKey(PLANNING_KEY);
+    const forbidden = (brief.forbiddenSectionTopics ?? []).map((topic) =>
+      topic.toLowerCase(),
+    );
+    expect(forbidden).toContain("funding approval");
+    // Stated in the prohibitions too, not only as a topic: the topic list keeps
+    // a SECTION off the subject, while the prohibition is what stops a sentence
+    // elsewhere in the document from claiming the approval happened.
+    const prohibitions = (brief.prohibitedContent ?? [])
+      .join(" ")
+      .toLowerCase();
+    expect(prohibitions).toContain("funding approval");
+  });
+
+  it("carries the design recap, not a design decision, as its first section", () => {
+    const served = briefForProductionKey(PLANNING_KEY).recommendedStructure;
+    const first = served[0];
+    expect(first?.key).toBe("design_carry_forward");
+    // The registry's spine opens on an APPROVED target state. The section's
+    // intent has to preserve an unresolved caveat rather than settle it, which
+    // is the whole of the product judgment that had been left untaken.
+    expect(first?.intent.toLowerCase()).toContain("caveat");
+    expect(first?.expertLatitude.toLowerCase()).not.toContain(
+      "decision required",
+    );
+  });
+
+  it("asks the model for session instructions, which the generic brief never did", () => {
+    // The quality profile's acceptance checks want session instructions,
+    // evidence requests, owners, outputs and next-gate readiness checks. The
+    // generic board spine has no section whose job is any of those.
+    const served = briefForProductionKey(PLANNING_KEY).recommendedStructure;
+    const plan = served.find((s) => s.key === "planning_session_plan");
+    expect(plan).toBeDefined();
+    const intent = plan?.intent.toLowerCase() ?? "";
+    expect(intent).toContain("session");
+    expect(intent).toContain("participants");
+    expect(intent).toContain("output");
   });
 });

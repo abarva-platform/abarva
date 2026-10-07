@@ -74,9 +74,12 @@ describe("orchestrated deliverable map", () => {
       expect(orchestratorType).not.toBe(designGuide);
     }
 
-    // The P4 and P5 guides have their own structures
+    // The P3, P4 and P5 guides each have their own structure
     // (structure-phase-session-guides.ts), each distinct from the P2 guide's.
+    // The P3 planning guide was the last structureless member of the set and
+    // has since been authored, so all three are asserted the same way here.
     for (const registryKey of [
+      "planning_workshop_guide",
       "mobilization_workshop_guide",
       "execution_kickoff_guide",
     ]) {
@@ -87,15 +90,6 @@ describe("orchestrated deliverable map", () => {
       expect(structure?.deliverableType).toBe(registryKey);
       expect(structure?.fixedStructure).toBe(true);
     }
-
-    // The P3 planning guide is structureless under a stated product decision,
-    // not by omission — see moves-process-change-estimate-brief-structure.
-    expect(
-      getDeliverableStructure(
-        "moves",
-        orchestratorDeliverableType("planning_workshop_guide"),
-      ),
-    ).toBeUndefined();
   });
 
   it("routes the P5 value measurement contract to its own quality profile", () => {

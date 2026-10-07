@@ -301,13 +301,20 @@ describe("the archetype's assets", () => {
  */
 describe("every P3 deliverable a route can ask for", () => {
   /**
-   * Structureless on purpose, with the reason stated so that losing the
-   * exclusion reads as a change rather than as noise. A planning workshop
-   * guide is a facilitation agenda; what a guide may assert is a product
-   * judgment that has not been taken, and `design_workshop_guide` is the
-   * precedent for taking it.
+   * Empty: every P3 deliverable a route can ask for now resolves a declared
+   * structure. `planning_workshop_guide` was the last member — structureless
+   * on the stated ground that what a guide may assert about a design still
+   * being chosen was an untaken product judgment. It has since been authored
+   * (`structure-phase-session-guides.ts`), on the basis that the deliverable
+   * does not sit before that decision: its registry entry recaps an "approved
+   * target state" and its quality profile prepares sessions "from the accepted
+   * design", the same post-decision posture as `design_workshop_guide`, which
+   * was always the precedent for taking the judgment.
+   *
+   * Kept as an empty literal rather than deleted so the case below still holds
+   * in both directions: a new P3 route key without a structure fails here.
    */
-  const STRUCTURELESS_BY_DECISION = ["planning_workshop_guide"] as const;
+  const STRUCTURELESS_BY_DECISION: readonly string[] = [];
 
   const routeKeys = (): Set<string> => {
     const keys = new Set<string>();
