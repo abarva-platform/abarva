@@ -92,7 +92,7 @@ No migration, no route, no script, no workflow change.
 ## QA / Validation
 
 - PASS `npx jest src/lib/programs src/lib/deliverables/orchestrator/briefs` —
-  324 suites / 4564 tests.
+  325 suites / 4574 tests.
 - PASS `npx jest src/lib/programs/discovery src/lib/programs/__tests__/move-context-extract`
   — 13 suites / 107 tests.
 - PASS `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json
