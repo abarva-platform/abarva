@@ -9,6 +9,8 @@ import type {
   PhaseFinding,
   PhaseFindingsModel,
 } from "@/lib/programs/moves-phase-findings";
+import type { PhaseChartsModel } from "@/lib/programs/moves-phase-charts";
+import { MovesPhaseCharts } from "@/components/strategic-moves/MovesPhaseCharts";
 
 /**
  * The v2 OUTCOME findings surface (Increment 2). Presentational only: it renders
@@ -25,7 +27,11 @@ import type {
  * findings-attestation store exists it can own `review`/`onReview` without this
  * surface changing.
  *
- * Charts are out of scope for this increment (they arrive in Increment 3).
+ * Increment 3 adds the charts / intelligence layer: when a `charts` model is
+ * passed, the OUTCOME step renders `MovesPhaseCharts` beneath the findings. The
+ * charts are a separate, derived model (`buildPhaseCharts`); this surface only
+ * hosts them so findings and charts read as one OUTCOME. Absent `charts`, the
+ * surface renders exactly as Increment 2.
  */
 export interface MovesPhaseFindingsProps {
   model: PhaseFindingsModel;
@@ -34,6 +40,8 @@ export interface MovesPhaseFindingsProps {
   onReview: (id: string, state: FindingReviewState) => void;
   /** Whether the viewer may record a review (gate authorization). */
   canReview: boolean;
+  /** The OUTCOME charts model (Increment 3), or null/absent for no charts. */
+  charts?: PhaseChartsModel | null;
 }
 
 const STATUS_COPY: Record<InputGeneratedStatus, string> = {
@@ -149,6 +157,7 @@ export function MovesPhaseFindings({
   review,
   onReview,
   canReview,
+  charts = null,
 }: MovesPhaseFindingsProps) {
   return (
     <section className="mpf" data-testid="moves-phase-findings">
@@ -197,6 +206,9 @@ export function MovesPhaseFindings({
 
           {model.structuralHeadline ? (
             <p className="mpf-headline">{model.structuralHeadline}</p>
+          ) : null}
+          {charts && !charts.pending ? (
+            <MovesPhaseCharts model={charts} />
           ) : null}
           {model.confidenceNote ? (
             <p className="mpf-illus">{model.confidenceNote}</p>
