@@ -2438,27 +2438,30 @@ function ContractPerformanceTrendChart({
 }: {
   periods: readonly SourceContractPerformancePeriodRow[];
 }) {
-  const data = periods.slice(0, 12).map((row) => ({
+  const trend = selectPerformancePercentTrend(periods);
+  const data = trend?.points.map(({ row, actual }) => ({
     period: shortMonth(row.period_start),
-    actual: numberFromDb(row.value_num),
+    actual,
     credit: numberFromDb(row.credit_calculated) ?? 0,
-  }));
+  })) ?? [];
 
-  if (data.length === 0) {
+  if (!trend) {
     return (
       <ChartEmptyState
         label="Contract performance trend chart"
-        title="No performance trend chart available."
-        body="This contract has no loaded period-by-period SLA rows, so Source will not draw a performance trend."
+        title="No comparable percentage trend available."
+        body="No single percentage metric has comparable observations across periods."
         compact
       />
     );
   }
 
+  const metricLabel = trend.metricName.replace(/_pct$/u, "").replaceAll("_", " ");
+
   return (
     <div
       className="sw-v2-recharts-card sw-v2-recharts-card-compact"
-      aria-label="Contract performance trend chart"
+      aria-label={`Contract performance trend: ${metricLabel}`}
     >
       <MeasuredChartFrame className="sw-v2-chart-frame-line" height={224}>
         {(chartWidth, chartHeight) => (
@@ -2481,7 +2484,7 @@ function ContractPerformanceTrendChart({
             />
             <YAxis
               yAxisId="actual"
-              domain={[80, 100]}
+              domain={[0, 100]}
               width={38}
               tickLine={false}
               axisLine={false}
@@ -2534,7 +2537,7 @@ function ContractPerformanceTrendChart({
       </MeasuredChartFrame>
       <div className="sw-v2-recharts-legend">
         <span>
-          <b>navy</b> actual SLA %
+          <b>navy</b> {metricLabel} %
         </span>
         <span>
           <b>amber</b> calculated credits
@@ -2542,6 +2545,36 @@ function ContractPerformanceTrendChart({
       </div>
     </div>
   );
+}
+
+export function selectPerformancePercentTrend<T extends Pick<
+  SourceContractPerformancePeriodRow,
+  "metric_name" | "unit" | "actual_value" | "value_num" | "period_start"
+>>(rows: readonly T[]): { metricName: string; points: { row: T; actual: number }[] } | null {
+  const byMetric = new Map<string, { row: T; actual: number }[]>();
+  for (const row of rows) {
+    if (unitFromMetricName(row.metric_name) !== "percent" ||
+        !PERCENT_UNITS.has(row.unit?.trim().toLowerCase() ?? "")) continue;
+    const actualText = row.actual_value?.trim() ?? "";
+    if (actualText && !/^-?\d+(?:\.\d+)?%?$/u.test(actualText)) continue;
+    const rawActual = numberFromDb(row.value_num);
+    if (rawActual === null) continue;
+    const actual = rawActual <= 1 ? rawActual * 100 : rawActual;
+    if (actual < 0 || actual > 100) continue;
+    const points = byMetric.get(row.metric_name) ?? [];
+    points.push({ row, actual });
+    byMetric.set(row.metric_name, points);
+  }
+  const selected = [...byMetric.entries()]
+    .filter(([, points]) => points.length >= 2 &&
+      new Set(points.map(({ row }) => row.period_start)).size === points.length)
+    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))[0];
+  if (!selected) return null;
+  const [metricName, points] = selected;
+  return {
+    metricName,
+    points: points.sort((a, b) => a.row.period_start.localeCompare(b.row.period_start)).slice(-12),
+  };
 }
 
 function OptimizeTypeMixChart({
@@ -7953,6 +7986,8 @@ export function performanceActual(
   const declared = typeof unit === "string" ? unit.trim() : "";
   const storedIsPercent = PERCENT_UNITS.has(declared.toLowerCase());
   const named = unitFromMetricName(metricName);
+  const actualText = actualValue == null ? "" : String(actualValue).trim();
+  const textClaimsPercent = actualText.endsWith("%");
   /*
    * The stored unit and the metric's own name can disagree, and on today's
    * loaded rows they routinely do: the loader stamps "%" on a metric called
@@ -7962,7 +7997,9 @@ export function performanceActual(
    * the truth is "8 hours" understates the fact; showing "8.0%" misstates it.
    */
   const conflicted =
-    named !== null && named !== "percent" && storedIsPercent;
+    (named !== null && declared !== "" && (named === "percent") !== storedIsPercent) ||
+    (textClaimsPercent && ((named !== null && named !== "percent") ||
+      (declared !== "" && !storedIsPercent)));
   const isPercentUnit = !conflicted && (storedIsPercent || named === "percent");
   const effectiveUnit = conflicted
     ? ""
@@ -7977,11 +8014,8 @@ export function performanceActual(
   if (typeof actualValue === "number" && Number.isFinite(actualValue)) {
     return formatActual(actualValue);
   }
-  if (actualValue != null) {
-    const actualText = String(actualValue).trim();
-    if (actualText) return actualText;
-  }
+  if (actualText && !conflicted) return actualText;
   const actual = numberFromDb(valueNum);
-  if (actual == null) return "Not established";
+  if (actual == null) return conflicted ? "Unit needs review" : "Not established";
   return formatActual(actual);
 }
