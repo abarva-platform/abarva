@@ -178,6 +178,7 @@ export function ChapterPage({
           contracts,
           metrics,
           queue,
+          estate,
           signalPacket,
         })}
       />
@@ -296,6 +297,7 @@ function deriveChapterKpis({
   contracts,
   metrics,
   queue,
+  estate,
   signalPacket,
 }: {
   bands: ReturnType<typeof splitChapterIntoBands>;
@@ -306,6 +308,15 @@ function deriveChapterKpis({
     risks?: EstateRow[];
     programs?: EstateRow[];
     contracts?: EstateRow[];
+  };
+  /** Estate scale the chapter already carries. On a briefing/prose chapter -- one with no
+   * deterministic depth -- these counted estate figures lead the rail instead of the provenance
+   * counts below, so the opening numbers are about the enterprise, not the evidence bookkeeping.
+   * Every value is the length of a governed estate row set the bundle already holds. */
+  estate?: {
+    applications?: EstateRow[];
+    vendors?: EstateRow[];
+    dataAssetCount?: number;
   };
   signalPacket: EnterpriseSignalPacket;
 }): KpiTile[] {
@@ -358,7 +369,10 @@ function deriveChapterKpis({
     depth && depth.unsupported.length > 0
       ? {
           value: n(depth.unsupported.length),
-          label: "evidence views pending",
+          label:
+            depth.unsupported.length === 1
+              ? "evidence view pending"
+              : "evidence views pending",
           tone: "absence",
         }
       : null,
@@ -369,7 +383,35 @@ function deriveChapterKpis({
           tone: "blue",
         }
       : null,
+    // Estate scale, where this chapter carries it. On a chapter with deterministic depth the depth
+    // tiles above already fill the rail, so these surface on the briefing/prose chapters -- which is
+    // exactly where the opening numbers should be the enterprise's scale, not the evidence count.
+    estate?.applications && estate.applications.length > 0
+      ? {
+          value: n(estate.applications.length),
+          label:
+            estate.applications.length === 1
+              ? "application in the estate"
+              : "applications in the estate",
+        }
+      : null,
+    estate?.vendors && estate.vendors.length > 0
+      ? {
+          value: n(estate.vendors.length),
+          label:
+            estate.vendors.length === 1
+              ? "vendor in the estate"
+              : "vendors in the estate",
+        }
+      : null,
+    typeof estate?.dataAssetCount === "number" && estate.dataAssetCount > 0
+      ? {
+          value: n(estate.dataAssetCount),
+          label: "data & integration records",
+        }
+      : null,
     // Prose and briefing chapters carry no depth; the record's own scale is still a counted fact.
+    // These stay as the last resort, below the estate scale, for a chapter that carries no estate.
     {
       value: n(signalPacket.signals?.length ?? 0),
       label: "signals on the record",
@@ -812,12 +854,11 @@ function IndustryContextSection({
                   style={{
                     background: V4.surface,
                     padding: "13px 16px",
-                    display: "grid",
-                    gridTemplateColumns: "minmax(0,1fr) auto",
-                    gap: "6px 18px",
-                    alignItems: "baseline",
                   }}
                 >
+                  {/* The group heading and its count already name the kind; a per-row kind tag
+                      repeated down every row of the group is noise, so the row carries only the
+                      lens label (same decluttering the leadership spread made). */}
                   <p
                     style={{
                       margin: 0,
@@ -831,20 +872,6 @@ function IndustryContextSection({
                   >
                     {lens.label}
                   </p>
-                  <span
-                    data-home-industry-tag
-                    style={{
-                      fontFamily: MONO,
-                      fontSize: 10,
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                      color: V4.stone,
-                      whiteSpace: "nowrap",
-                      paddingTop: 2,
-                    }}
-                  >
-                    {group.tag}
-                  </span>
                 </div>
               ))}
             </div>
@@ -1279,7 +1306,7 @@ function LeadershipVoiceStrip({ signals }: { signals: Signal[] }) {
   return (
     <div data-leadership-strip style={voiceStripStyle}>
       <div style={{ minWidth: 0 }}>
-        <span style={eyebrow(V4.amber)}>Leadership voice</span>
+        <span style={eyebrow(V4.navy)}>Leadership voice</span>
         <p style={voiceLeadStyle}>{stripDoubleQuotes(lead.statement)}</p>
       </div>
       <div data-leadership-metrics style={voiceMetricGridStyle}>
@@ -1872,8 +1899,8 @@ const voiceQuoteGridStyle = {
 
 const voiceQuoteStyle = {
   margin: 0,
-  borderLeft: `3px solid ${V4.amber}`,
-  background: "rgba(186,117,23,0.045)",
+  borderLeft: `3px solid ${V4.navy}`,
+  background: "rgba(12,26,58,0.04)",
   padding: "10px 12px",
   fontFamily: SANS,
   fontSize: 13,

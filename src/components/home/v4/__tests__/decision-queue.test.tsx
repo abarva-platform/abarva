@@ -141,6 +141,17 @@ describe("what the queue says about itself", () => {
     const { container } = render(<DecisionQueue />);
     expect(container.innerHTML).toBe("");
   });
+
+  it("names the missing record date when contracts are served without one", () => {
+    // The attention chapter serves contracts but the record carries no as-of date, so the
+    // notice-window test cannot run. The queue must say so, not vanish -- a silent disappearance on
+    // the one chapter whose job is the queue reads as a load failure.
+    const { items, checkedAndEmpty } = buildDecisionQueue({ contracts });
+    expect(items).toHaveLength(0);
+    expect(checkedAndEmpty.some((note) => /as-of date/i.test(note))).toBe(true);
+    const { container } = render(<DecisionQueue contracts={contracts} />);
+    expect(container.querySelector("[data-home-queue-checked]")).not.toBeNull();
+  });
 });
 
 describe("a predicate that has stopped discriminating", () => {

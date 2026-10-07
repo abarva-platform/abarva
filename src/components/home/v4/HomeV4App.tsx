@@ -839,7 +839,12 @@ export function HomeV4App({
                       : undefined
                   }
                   estate={
-                    activeChapter.chapterId === "technology_data"
+                    // Technology & Data reads this as its interactive pivot; the two briefing
+                    // chapters read only its counts, to open their KPI rail on enterprise scale
+                    // (applications, vendors, data records) instead of provenance bookkeeping.
+                    activeChapter.chapterId === "technology_data" ||
+                    activeChapter.chapterId === "executive_brief" ||
+                    activeChapter.chapterId === "our_business"
                       ? {
                           applications: applications?.rows as
                             | EstateRow[]
@@ -949,9 +954,10 @@ export function HomeV4App({
               )
             ) : null}
 
-            {activeChapter?.chapterId === "executive_brief" ? (
-              <BusinessBriefingSections briefing={businessBriefing} />
-            ) : null}
+            {/* The full business-model briefing is the property of Our Business alone. The
+                Executive Brief already carries the synthesis, the bands, and the industry context;
+                rendering the whole briefing there too made the first two chapters repeat the entire
+                "how the money is made / what leadership says" block. */}
             {activeChapter?.chapterId === "leadership_perspective" ? (
               <PerspectiveSections perspective={businessBriefing.perspective} />
             ) : null}

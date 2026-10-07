@@ -154,6 +154,7 @@ export function ArchitecturePage({
         <L2Capability view={view} capability={capability} />
       ) : (
         <L0Landscape
+          tenantDisplayName={tenantDisplayName}
           applications={applications}
           integrations={integrations}
           infrastructure={infrastructure}
@@ -243,11 +244,13 @@ interface ArchitectureSlice {
 }
 
 function L0Landscape({
+  tenantDisplayName,
   applications,
   integrations,
   infrastructure,
   onDrill,
 }: {
+  tenantDisplayName: string;
   applications: TechRecordType;
   integrations?: TechRecordType;
   infrastructure?: TechRecordType;
@@ -354,6 +357,7 @@ function L0Landscape({
       </div>
 
       <ExecutiveRunMap
+        tenantDisplayName={tenantDisplayName}
         applications={rows}
         integrations={integrationRows}
         infrastructure={infrastructureRows}
@@ -411,11 +415,13 @@ interface RunMapBlock {
 }
 
 function ExecutiveRunMap({
+  tenantDisplayName,
   applications,
   integrations,
   infrastructure,
   onDrill,
 }: {
+  tenantDisplayName: string;
   applications: ApplicationRecord[];
   integrations: IntegrationRecord[];
   infrastructure: InfrastructureRecord[];
@@ -499,6 +505,7 @@ function ExecutiveRunMap({
       </div>
 
       <ArchitectureWheel
+        tenantDisplayName={tenantDisplayName}
         blocks={blocks}
         totals={totals}
         selectedKey={selectedBlock?.key ?? ""}
@@ -629,12 +636,14 @@ function ExecutiveRunMap({
 }
 
 function ArchitectureWheel({
+  tenantDisplayName,
   blocks,
   totals,
   selectedKey,
   onSelect,
   onDrill,
 }: {
+  tenantDisplayName: string;
   blocks: RunMapBlock[];
   totals: {
     applications: number;
@@ -691,7 +700,12 @@ function ArchitectureWheel({
             style={{ ...wheelRingStyle, width: "32%", height: "32%" }}
           />
           <div style={wheelCenterStyle}>
-            <span style={wheelCenterNameStyle}>Meridian</span>
+            {/* The wheel centre names the enterprise it maps. It was hardcoded to one tenant, so
+                every tenant's wheel printed that name; it now reads the real display name (first
+                token, to fit the compact centre). */}
+            <span style={wheelCenterNameStyle}>
+              {tenantDisplayName.split(/\s+/)[0] || tenantDisplayName}
+            </span>
             <span style={wheelCenterMetaStyle}>conceptual view</span>
             <span style={wheelCenterMetaStyle}>typed views only</span>
           </div>
@@ -1218,7 +1232,7 @@ function ArchitectureMap({
               label="Recorded flows"
               value={slice.integrations.length}
               detail="source movements"
-              tone={V4.red}
+              tone={V4.blue}
             />
             <ArchitectureNode
               label="Compiled records"
@@ -1230,7 +1244,7 @@ function ArchitectureMap({
               label="Facts + dimensions"
               value={slice.appCategories.length + slice.dataDomains.length}
               detail="recorded groupings"
-              tone={V4.amber}
+              tone={V4.navy}
             />
             <ArchitectureNode
               label="Serving targets"
@@ -1261,7 +1275,7 @@ function ArchitectureMap({
         <ArchitectureStage
           index="4"
           zoneLabel="intelligence zone"
-          tone={V4.amber}
+          tone={V4.green}
           title="Intelligence"
           caption="Analysis and retrieval surfaces"
           items={[
@@ -2343,7 +2357,9 @@ function buildRunMapBlocks(
       rows: dataApps,
       integrations,
       denominator: "applications",
-      tone: V4.amber,
+      // Non-reserved hue: a "Data, Analytics & AI" block is a capability area, not a declared
+      // absence, so it must not spend the amber reserved for absence.
+      tone: V4.navyHover,
       gapOverride: dataFlowGap(integrations),
     }),
     {
@@ -2398,7 +2414,9 @@ function buildRunMapBlocks(
       dependencySignal: `${vendorRows.length.toLocaleString()} application records name a vendor`,
       gapSignal:
         "Use Vendor Contracts for contract terms, spend, renewal, and document proof",
-      tone: V4.red,
+      // Non-reserved hue: a "Vendor & Commercial Spine" block is a capability area, not a risk the
+      // register rates high severity, so it must not spend the reserved red.
+      tone: V4.slate,
     },
   ];
 }
