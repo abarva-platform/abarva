@@ -32,6 +32,7 @@ import {
   MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT,
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 import type { SettledDeliverable } from "@/lib/programs/phase-build-settlement";
@@ -534,9 +535,18 @@ export function PhaseApproveAndBuild({
       const data = (await res.json()) as EnqueueResponse & {
         detail?: string;
         error?: string;
+        requiredEvidenceGaps?: unknown;
       };
       if (!res.ok || !Array.isArray(data.deliverables)) {
-        throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`);
+        // `required_evidence_open` carries the open slots by name. Falling
+        // straight to `detail` reported only their count, so the one item
+        // holding the build was named nowhere.
+        throw new Error(
+          describeRequiredEvidenceRefusal(data) ??
+            data.detail ??
+            data.error ??
+            `HTTP ${res.status}`,
+        );
       }
       setAdaptiveSummary(data.adaptiveDepth ?? null);
       setOmittedDeliverables(data.omittedDeliverables ?? []);

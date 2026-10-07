@@ -271,6 +271,7 @@ jobs:
           src/components/strategic-moves/__tests__/move-list-format.test.ts
           src/components/strategic-moves/__tests__/moves-detail-route-sunset.test.ts
           src/components/strategic-moves/__tests__/phase-approve-and-build-settle.test.tsx
+          src/components/strategic-moves/__tests__/phase-build-required-evidence-refusal.test.tsx
           src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx
           src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts
           src/components/strategic-moves/__tests__/CharterBasisField.test.tsx

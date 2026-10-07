@@ -159,7 +159,7 @@ asserts the clock accumulated by at least that interval, with a mirror case for 
 run that is advancing. Mutation 16 was added at the same time and kills the
 complement.
 
-**Census.** `testFiles` 2782 → 2783 and `coveredTestFiles` 2618 → 2619, with
+**Census.** `testFiles` 2784 → 2785 and `coveredTestFiles` 2620 → 2621, with
 `uncoveredTestFiles` unchanged at 164. Both halves moving by the same +1 with
 uncovered flat is the proof that the new suite is executed by a CI job rather
 than merely present — `src/lib/programs/__tests__` is swept directly by a job in
