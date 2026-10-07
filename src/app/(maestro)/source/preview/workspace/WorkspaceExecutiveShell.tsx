@@ -735,10 +735,21 @@ function daysBetweenIso(
   return Math.ceil((to.getTime() - from.getTime()) / 86_400_000);
 }
 
+/**
+ * When the decision is due, or null when no timing is recorded.
+ *
+ * The missing case used to read "Timing gate not loaded" on every row. That is
+ * the product's own pipeline state, printed on a client surface, directly under
+ * a headline declaring that notice timing is the constraint — so the portfolio
+ * view argued with itself five rows at a time. A row with no timing now says
+ * nothing where the timing would go, and the one place that needs a value in a
+ * definition list says "Not recorded", which is this product's own vocabulary
+ * for an absent fact rather than a description of its loader.
+ */
 function decisionDueLabel(
   candidate: SourceContractActionCandidateRow,
   asOfDateIso: string,
-) {
+): string | null {
   const days = daysBetweenIso(asOfDateIso, candidate.decision_due_date);
   if (days == null)
     return candidate.decision_due_date
@@ -749,7 +760,7 @@ function decisionDueLabel(
           "deadline",
           "next_step",
           "nextStep",
-        ]) ?? "Timing gate not loaded");
+        ]) ?? null);
   if (days < 0) return `${Math.abs(days)} days late`;
   if (days === 0) return "due today";
   return `${days} days`;
@@ -1310,12 +1321,20 @@ export function WorkspaceExecutiveShell({
 }
 
 function ImpactLoadBadge({ state }: { state: ImpactLoadState }) {
+  /*
+   * This badge reports whether the impact layer has finished LOADING. It used
+   * to say "Evidence depth ready", which a reader takes as a statement about
+   * how complete the evidence is — and the same screen says "Evidence depth —
+   * Partial" and "5 of 8 required evidence families" in the body. One screen
+   * cannot call the same thing ready and partial. The load state is named as a
+   * load state; completeness is left to the body, which measures it.
+   */
   const label =
     state === "loading"
-      ? "Evidence depth updating"
+      ? "Loading evidence"
       : state === "error"
-        ? "Evidence depth retry needed"
-        : "Evidence depth ready";
+        ? "Evidence failed to load"
+        : "Evidence loaded";
   return (
     <div
       className={`sw-v2-impact-load-badge is-${state}`}
@@ -1471,7 +1490,7 @@ function SourceActionDrawer({
           </div>
           <div>
             <dt>Deadline</dt>
-            <dd>{decisionDueLabel(candidate, asOfDateIso)}</dd>
+            <dd>{decisionDueLabel(candidate, asOfDateIso) ?? "Not recorded"}</dd>
           </div>
           <div>
             <dt>Accountable</dt>
@@ -1627,7 +1646,9 @@ function PortfolioPage({
                   </small>
                 </span>
                 <strong>{impactCreditMoney(row.candidate_amount_usd)}</strong>
-                <em>{decisionDueLabel(row, portfolio.asOfDateIso)}</em>
+                {decisionDueLabel(row, portfolio.asOfDateIso) ? (
+                  <em>{decisionDueLabel(row, portfolio.asOfDateIso)}</em>
+                ) : null}
               </button>
             ))}
             {actionSet.remainderCount > 0 ? (
@@ -3541,7 +3562,7 @@ function ContractPage({
                   <span>{fmtDate(row.period_start)}</span>
                   <span>{row.metric_name}</span>
                   <span>
-                    {performanceActual(row.actual_value, row.value_num)}
+                    {performanceActual(row.actual_value, row.value_num, row.unit)}
                   </span>
                   <span>{money(numberFromDb(row.credit_calculated))}</span>
                 </div>
@@ -4390,11 +4411,7 @@ function ContractStoryContextStack({
           closes.
         </p>
       ) : null}
-      <p className="sw-v2-muted">
-        Scope is bounded to {scopeRows.length} loaded row
-        {scopeRows.length === 1 ? "" : "s"}; Source will not expand this into
-        tower, CMDB, or ownership claims without matching rows.
-      </p>
+      
     </div>
   );
 }
@@ -4819,7 +4836,7 @@ function SourceLeverSequence({
               </span>
               <span className="sw-v2-lever-sequence-owner">
                 <b>{row.accountable_role ?? "Owner not assigned"}</b>
-                <small>{dueLabel}</small>
+                {dueLabel ? <small>{dueLabel}</small> : null}
               </span>
               <span className="sw-v2-lever-sequence-next">
                 <b>Open the record</b>
@@ -7483,7 +7500,10 @@ function subheadFor(
   if (page === "Evidence") {
     return "Evidence lanes, row counts, and blockers are visible without exposing raw diagnostics by default.";
   }
-  return `${portfolio.contracts.length} contracts · ${portfolio.vendors.length} vendors · unsupported dashboard claims are hidden.`;
+  // The trailing clause used to read "unsupported dashboard claims are hidden".
+  // The filtering is right; narrating it to the buyer is not — it invites the
+  // reader to discount the screen before reading it.
+  return `${portfolio.contracts.length} contracts · ${portfolio.vendors.length} vendors`;
 }
 
 function commandHeadline(
@@ -7879,9 +7899,39 @@ function detailStateLabel(state: SourceWorkspaceVM["detailState"]) {
   return "Header only";
 }
 
-export function performanceActual(actualValue: unknown, valueNum: unknown) {
-  const formatActual = (actual: number) =>
-    actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
+/** Unit strings that genuinely mean "this number is a percentage". */
+const PERCENT_UNITS = new Set(["%", "pct", "percent", "percentage"]);
+
+/**
+ * A service-performance actual, in the unit the row declares.
+ *
+ * This used to append `%` to every numeric actual. The performance table is
+ * keyed by `metric_name`, and those metrics are not all percentages: a
+ * response time in minutes rendered as "45.0%", a resolution time in hours as
+ * "8.0%", a backlog count as "120.0%". That does not merely look wrong — it
+ * changes what the SLA evidence says.
+ *
+ * The row has carried a `unit` column all along; the formatter ignored it and
+ * invented one instead. It now reads the declared unit, and where no unit is
+ * declared it renders the number alone rather than guessing. A value at or
+ * below 1 with no declared unit is still shown as a percentage: an actual that
+ * small is a ratio against a target, and rendering 0.995 as "1.0" would lose
+ * the fact rather than preserve it.
+ */
+export function performanceActual(
+  actualValue: unknown,
+  valueNum: unknown,
+  unit?: string | null,
+) {
+  const declared = typeof unit === "string" ? unit.trim() : "";
+  const isPercentUnit = PERCENT_UNITS.has(declared.toLowerCase());
+  const formatActual = (actual: number) => {
+    if (isPercentUnit) return actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
+    if (declared) return `${actual.toFixed(1)} ${declared}`;
+    // No declared unit. A sub-unit actual is a ratio; anything larger is a
+    // quantity whose unit this row does not state, so none is asserted.
+    return actual <= 1 ? pct(actual) : `${actual.toFixed(1)}`;
+  };
   if (typeof actualValue === "number" && Number.isFinite(actualValue)) {
     return formatActual(actualValue);
   }

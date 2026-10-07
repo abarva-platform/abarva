@@ -879,10 +879,32 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 
   it("renders numeric performance actuals from governed rows without throwing", () => {
-    expect(performanceActual(89, null)).toBe("89.0%");
+    // These used to assert a trailing "%" on every number. The performance
+    // table is keyed by metric name and those metrics are not all percentages,
+    // so a 45-minute response rendered as "45.0%". The row has always carried a
+    // `unit` column; the formatter ignored it and invented one.
+    expect(performanceActual(89, null)).toBe("89.0");
+    expect(performanceActual(null, 96)).toBe("96.0");
+    // A sub-unit actual with no declared unit is a ratio against a target;
+    // rendering 0.91 as "0.9" would lose the fact rather than preserve it.
     expect(performanceActual(null, 0.91)).toBe("91.0%");
-    expect(performanceActual(null, 96)).toBe("96.0%");
     expect(performanceActual("89%", null)).toBe("89%");
+  });
+
+  it("renders a performance actual in the unit its row declares", () => {
+    expect(performanceActual(45, null, "minutes")).toBe("45.0 minutes");
+    expect(performanceActual(8, null, "hours")).toBe("8.0 hours");
+    expect(performanceActual(120, null, "tickets")).toBe("120.0 tickets");
+    // A declared percentage still reads as one, from either shape.
+    expect(performanceActual(99.5, null, "%")).toBe("99.5%");
+    expect(performanceActual(null, 0.995, "percent")).toBe("99.5%");
+  });
+
+  it("asserts no unit the row has not declared", () => {
+    // The defect in one line: a unitless quantity must not acquire a "%".
+    expect(performanceActual(45, null)).not.toContain("%");
+    expect(performanceActual(45, null, "")).not.toContain("%");
+    expect(performanceActual(45, null, null)).not.toContain("%");
   });
 
   it("collapses duplicate supplier display names before ranking concentration", () => {
