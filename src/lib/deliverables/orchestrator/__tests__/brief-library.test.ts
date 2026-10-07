@@ -723,7 +723,7 @@ const STRUCTURE_DECLARED_TABLES = DELIVERABLE_STRUCTURES.filter(
 
 describe("structure-declared expected tables", () => {
   it("declares tables on the deliverable types built around one, and no others", () => {
-    // Four structures, not an empty declaration anywhere: a structure with no
+    // Five structures, not an empty declaration anywhere: a structure with no
     // type-specific table must not carry an empty array, because that changes
     // nothing and no case could kill it.
     expect(
@@ -732,6 +732,7 @@ describe("structure-declared expected tables", () => {
       "moves/estimate_model",
       "moves/readiness_and_change_plan",
       "moves/requirements_traceability",
+      "moves/value_measurement_contract",
       "source/evaluation_workbook",
     ]);
     for (const s of DELIVERABLE_STRUCTURES)
@@ -763,6 +764,15 @@ describe("structure-declared expected tables", () => {
       ],
       ["moves", "estimate_model", ["estimate_basis_buildup"]],
       ["moves", "readiness_and_change_plan", ["stakeholder_decision_rights"]],
+      [
+        "moves",
+        "value_measurement_contract",
+        [
+          "committed_outcome_register",
+          "measurement_method_register",
+          "outcome_accountability",
+        ],
+      ],
       ["source", "evaluation_workbook", ["evaluation_scoring_model"]],
     ];
     expect(DECLARED.map(([m, d]) => `${m}/${d}`).sort()).toEqual(
@@ -825,7 +835,7 @@ describe("structure-declared expected tables", () => {
 
   it("makes a deliverable type's table set differ from its neighbours' under one archetype", () => {
     // The defect, stated as the number it produced. Under a single archetype
-    // the four declaring structures now differ from the generic set; before
+    // the five declaring structures now differ from the generic set; before
     // this field every non-withheld structure shared one signature.
     const a = "AMS_IT_OUTSOURCING";
     const generic = tableSignature("moves", "business_case", a);
@@ -838,14 +848,15 @@ describe("structure-declared expected tables", () => {
         ALL_ARCHETYPES.map((arch) => tableSignature(s.module, s.deliverableType, arch)),
       ),
     );
-    // 32 over the six registered archetypes, and it decomposes exactly: one
+    // 38 over the six registered archetypes, and it decomposes exactly: one
     // empty signature shared by the two approval instruments that withhold
     // tables, one for the discovery plan its own builder serves, one generic
     // signature per archetype (6), and one per declaring structure per
-    // archetype (4 x 6 = 24). Registering a sixth archetype pack therefore
-    // added five, from 27. Dropping any structure's declaration collapses it
-    // back toward the generic set and fails this case.
-    expect(distinct.size).toBe(32);
+    // archetype (5 x 6 = 30). Registering a sixth archetype pack added five,
+    // from 27; the fifth declaring structure added six, from 32. Dropping any
+    // structure's declaration collapses it back toward the generic set and
+    // fails this case.
+    expect(distinct.size).toBe(38);
   });
 });
 
