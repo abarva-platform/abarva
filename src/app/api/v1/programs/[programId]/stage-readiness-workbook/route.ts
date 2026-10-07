@@ -19,6 +19,10 @@ import {
   type StageReadinessProposalDecision,
   type StageReadinessWorkbookProposalSet,
 } from "@/lib/programs/stage-readiness-workbooks/proposals";
+import {
+  loadPriorStageReadinessReviewProposals,
+  mergeStageReadinessReviewDecisions,
+} from "@/lib/programs/stage-readiness-workbooks/review-accumulation";
 import { buildStageReadinessWorkbookSpec } from "@/lib/programs/stage-readiness-workbooks/resolver";
 import { renderStageReadinessWorkbookXlsx } from "@/lib/programs/stage-readiness-workbooks/xlsx";
 
@@ -480,13 +484,30 @@ export async function PATCH(
       );
     }
 
+    // The stored proposal set is always all-pending, so a review recorded in
+    // more than one batch has to carry the current review's dispositions
+    // forward or this batch would discard them. See `review-accumulation`.
+    const priorReviewProposals = await loadPriorStageReadinessReviewProposals(
+      ctx,
+      programId,
+      loaded.proposalSet.transition.fromPhase,
+      {
+        proposalSetId: loaded.proposalSet.proposalSetId,
+        artifactId: proposalSetArtifactId,
+        artifactVersion: loaded.artifactVersion,
+      },
+    );
     const persistedReview = await persistStageReadinessProposalReview({
       ctx,
       program,
       proposalSet: loaded.proposalSet,
       sourceProposalSetArtifactId: proposalSetArtifactId,
       sourceProposalSetArtifactVersion: loaded.artifactVersion,
-      decisions,
+      decisions: mergeStageReadinessReviewDecisions({
+        proposals: loaded.proposalSet.proposals,
+        priorReviewProposals,
+        decisions,
+      }),
     });
 
     return Response.json({
