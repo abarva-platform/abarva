@@ -49,6 +49,16 @@
 // Order is the applicability map's own iteration order, which is the order the
 // route declared the phase's build set — deterministic for a given decision, so
 // the rendered prompt text is stable.
+//
+// One diagnosed false survivor, recorded so the next reader does not re-spend the
+// measurement: broadening the `merge_into_parent` test (for example to "skip only
+// not_applicable") changes nothing any reachable input can observe. `mergeInto` is
+// set in exactly three places in `adaptive-depth.ts` and all three set
+// `applicability: "merge_into_parent"` in the same object literal, so a
+// `required`/`lightweight` entry carrying a parent cannot be produced and the
+// `!value.mergeInto` guard excludes those entries anyway. The two guards are
+// redundant by construction. A case manufacturing that state would assert
+// something the producer cannot emit, which is worse than the honest note.
 
 import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";

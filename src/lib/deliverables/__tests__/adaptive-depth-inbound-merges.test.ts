@@ -89,15 +89,50 @@ describe("inboundArtifactMerges", () => {
     expect(merges[0].artifactKey).toBe("operating_model");
   });
 
-  it("resolves the same inbound set from either spelling of the parent key", () => {
-    const decision = decisionForPhase(3, STRAIGHTFORWARD);
-
-    expect(inboundArtifactMerges(decision, "solution_design")).toEqual(
-      inboundArtifactMerges(
-        decision,
-        orchestratorDeliverableType("solution_design"),
-      ),
+  // Both of today's real merge TARGETS are identity under the orchestrator map,
+  // so comparing `solution_design` against its own canonical form asserts
+  // nothing. These two cases use the one pair in the registry that actually
+  // differs — `operating_model_design` -> `operating_model` — once on each side
+  // of the comparison, so dropping canonicalisation from either side fails.
+  it("matches a parent declared under its non-canonical spelling", () => {
+    expect(orchestratorDeliverableType("operating_model_design")).toBe(
+      "operating_model",
     );
+    const decision: AdaptiveDepthDecision = {
+      ...decisionForPhase(2, STRAIGHTFORWARD),
+      artifactApplicability: {
+        root_cause_worksheet: {
+          applicability: "merge_into_parent",
+          mergeInto: "operating_model_design",
+          reason: "Declared against the registry spelling.",
+        },
+      },
+    };
+
+    expect(
+      inboundArtifactMerges(decision, "operating_model").map(
+        (merge) => merge.artifactKey,
+      ),
+    ).toEqual(["root_cause_worksheet"]);
+  });
+
+  it("matches when the caller asks under the non-canonical spelling", () => {
+    const decision: AdaptiveDepthDecision = {
+      ...decisionForPhase(2, STRAIGHTFORWARD),
+      artifactApplicability: {
+        root_cause_worksheet: {
+          applicability: "merge_into_parent",
+          mergeInto: "operating_model",
+          reason: "Declared against the orchestrator spelling.",
+        },
+      },
+    };
+
+    expect(
+      inboundArtifactMerges(decision, "operating_model_design").map(
+        (merge) => merge.artifactKey,
+      ),
+    ).toEqual(["root_cause_worksheet"]);
   });
 
   it("returns nothing for an artifact nothing merged into", () => {
