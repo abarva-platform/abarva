@@ -17,6 +17,7 @@ import {
   GOVERNED_DATA_FOUNDATION_FAMILIES,
   GOVERNED_DATA_FOUNDATION_PHASES,
 } from "@/lib/programs/archetypes/governed-data-foundation";
+import { registryArchetypeIdForDeclaredId } from "./declared-archetype-bridge";
 
 // Shared deliverable refinement contract (board-grade, grounded, no fabrication).
 const REFINEMENT = {
@@ -2066,24 +2067,15 @@ export const ARCHETYPE_REGISTRY: Record<string, StrategicMoveArchetype> = {
 };
 
 /**
- * Discovery-blueprint archetype id -> registry archetype id.
+ * The registry archetype a DECLARED archetype id names, if any.
  *
- * These are two different id spaces that name the same thing. A Move declares
- * its archetype with a discovery-blueprint id (`governed_data_foundation`,
- * written to `charter.classification.archetype` by the declaration job); the
- * readiness/requirement framework is keyed by registry ids
- * (`GOVERNED_DATA_FOUNDATION`). Without this bridge a DECLARED identity reaches
- * `resolveProgramArchetype` only inside the keyword haystack, where it competes
- * with incidental vocabulary and loses to `DEFAULT_ARCHETYPE_ID`.
- *
- * Identity is declared, never inferred — so an entry here outranks every
- * keyword rule below.
+ * A declaration may be written either as a registry id or as a
+ * discovery-blueprint id; `declared-archetype-bridge.ts` owns the mapping
+ * between those two id spaces and carries the reasoning for it. Returns
+ * undefined when nothing was declared or the declaration names no known
+ * archetype, so the caller falls through to the inference path below exactly
+ * as before.
  */
-const DECLARED_ARCHETYPE_ALIASES: Record<string, string> = {
-  governed_data_foundation: GOVERNED_DATA_FOUNDATION.id,
-};
-
-/** The registry archetype a DECLARED archetype id names, if any. */
 export function archetypeForDeclaredId(
   declaredId: string | null | undefined,
 ): StrategicMoveArchetype | undefined {
@@ -2091,14 +2083,21 @@ export function archetypeForDeclaredId(
   if (!key) return undefined;
   const exact = getArchetype(key);
   if (exact) return exact;
-  const aliased = DECLARED_ARCHETYPE_ALIASES[key.toLowerCase()];
-  return aliased ? getArchetype(aliased) : undefined;
+  const bridged = registryArchetypeIdForDeclaredId(key);
+  return bridged ? getArchetype(bridged) : undefined;
 }
 
 export const DEFAULT_ARCHETYPE_ID = AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id;
 
 export function getArchetype(id: string): StrategicMoveArchetype | undefined {
-  return ARCHETYPE_REGISTRY[id];
+  // `hasOwn`, not a bare index: the registry is a plain object, so an id equal
+  // to an inherited key ("constructor", "toString") answered with a Function
+  // typed as an archetype. Every downstream read of `.id` / `.phases` on that
+  // value is undefined, so a Move whose declared archetype happened to be one
+  // of those strings got a blank requirement framework rather than a fallback.
+  return Object.hasOwn(ARCHETYPE_REGISTRY, id)
+    ? ARCHETYPE_REGISTRY[id]
+    : undefined;
 }
 
 export function listArchetypes(): StrategicMoveArchetype[] {
@@ -2118,7 +2117,7 @@ export function resolveProgramArchetype(input: {
   name?: string | null;
   /**
    * The archetype a human DECLARED for this Move, as a registry id or a
-   * discovery-blueprint id (see `DECLARED_ARCHETYPE_ALIASES`). When it names a
+   * discovery-blueprint id (see `declared-archetype-bridge.ts`). When it names a
    * known archetype it wins outright: a declaration is an identity, and the
    * rules below are inference for Moves that never made one. Passing a declared
    * id that names nothing is not an error — resolution falls through to the
