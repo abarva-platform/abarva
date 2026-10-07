@@ -89,6 +89,10 @@ import {
   isWorkbookProposalReviewable,
   selectableWorkbookProposalIds,
 } from "@/lib/programs/stage-readiness-workbooks/review-selection";
+import {
+  isRestoredDisposition,
+  keptDecisionsToRecord,
+} from "@/lib/programs/stage-readiness-workbooks/review-provenance";
 import { shouldOfferStageReadinessWorkbook } from "@/lib/programs/stage-readiness-workbook-offer";
 import {
   approvalsRowStatusBasis,
@@ -575,6 +579,8 @@ interface StageReadinessWorkbookParsePreview {
       response?: string;
       answerState?: string;
       disposition?: string;
+      /** Restored from an earlier upload and not yet recorded for this set. */
+      dispositionRestoredFromPriorUpload?: boolean;
     }>;
     message?: string;
   } | null;
@@ -8208,18 +8214,47 @@ function StageReadinessWorkbookPreviewControl({
   async function reviewSelectedProposals(
     disposition: "accepted" | "rejected" | "needs_validation",
   ) {
-    const proposalSet = preview?.proposalSet;
-    const artifactId = proposalSet?.artifactId;
-    const selectedIds = Array.from(selectedProposalIds);
-    if (!artifactId || selectedIds.length === 0) return;
-    setReviewStatus("saving");
-    setReviewMessage(
+    await submitReviewDecisions(
+      Array.from(selectedProposalIds).map((proposalId) => ({
+        proposalId,
+        disposition,
+      })),
       disposition === "accepted"
         ? "Accepting selected responses..."
         : disposition === "needs_validation"
           ? "Marking selected responses for validation..."
           : "Rejecting selected responses...",
     );
+  }
+
+  /**
+   * Put the decisions a re-upload kept on record, each as the disposition
+   * already recorded for it.
+   *
+   * A re-upload that changed nothing leaves no response pending, so the
+   * ordinary review controls have nothing to act on while the phase is still
+   * held: the restored decisions are shown but belong to the previous upload,
+   * and no gate may read them until a human submits them. This is that
+   * submission. It re-decides nothing — a kept rejection is sent as a
+   * rejection — and the server's own carry-forward covers any row this batch
+   * does not name.
+   */
+  async function recordKeptDecisions() {
+    await submitReviewDecisions(
+      keptDecisionsToRecord(preview?.proposalSet?.proposals),
+      "Recording the decisions kept from your previous upload...",
+    );
+  }
+
+  async function submitReviewDecisions(
+    decisions: readonly { proposalId: string; disposition: string }[],
+    savingMessage: string,
+  ) {
+    const proposalSet = preview?.proposalSet;
+    const artifactId = proposalSet?.artifactId;
+    if (!artifactId || decisions.length === 0) return;
+    setReviewStatus("saving");
+    setReviewMessage(savingMessage);
     try {
       const res = await fetch(apiPath, {
         method: "PATCH",
@@ -8228,10 +8263,7 @@ function StageReadinessWorkbookPreviewControl({
         body: JSON.stringify({
           proposalSetArtifactId: artifactId,
           proposalSetArtifactVersion: proposalSet.artifactVersion,
-          decisions: selectedIds.map((proposalId) => ({
-            proposalId,
-            disposition,
-          })),
+          decisions,
         }),
       });
       const payload = (await res.json().catch(() => ({}))) as
@@ -8257,11 +8289,24 @@ function StageReadinessWorkbookPreviewControl({
         pendingCount: review.pendingCount ?? 0,
         readiness: review.readiness,
       };
-      const selectedIdsSet = new Set(selectedIds);
-      const reviewedProposals = (proposalSet.proposals ?? []).map((proposal) =>
-        proposal.proposalId && selectedIdsSet.has(proposal.proposalId)
-          ? { ...proposal, disposition }
-          : proposal,
+      // Every restored disposition is now on record, not only the ones this
+      // batch named: the route carries the rest forward onto the same review.
+      // Leaving the marks up would keep telling the reviewer that work is
+      // still unrecorded, and would keep the gate projection discarding it.
+      const submitted = new Map(
+        decisions.map((decision) => [decision.proposalId, decision.disposition]),
+      );
+      const reviewedProposals = (proposalSet.proposals ?? []).map(
+        (proposal) => {
+          const recorded = { ...proposal };
+          delete recorded.dispositionRestoredFromPriorUpload;
+          const submittedDisposition = proposal.proposalId
+            ? submitted.get(proposal.proposalId)
+            : undefined;
+          return submittedDisposition
+            ? { ...recorded, disposition: submittedDisposition }
+            : recorded;
+        },
       );
       setPreview((current) =>
         current?.proposalSet
@@ -8343,9 +8388,20 @@ function StageReadinessWorkbookPreviewControl({
   const anyProposalReviewable =
     preview?.proposalSet?.proposals?.some(isWorkbookProposalReviewable) ??
     false;
+  // Decisions shown on screen that no review of THIS set has recorded. They
+  // are the reason the review surface must stay open on a re-upload that
+  // changed nothing: every row reads decided, so neither count above is
+  // positive, while the gate still holds the phase because nothing is on
+  // record. Without this term the fix that stops the gate reading a preview
+  // would leave the reviewer a blocker and no control.
+  const keptDecisions = keptDecisionsToRecord(
+    preview?.proposalSet?.proposals,
+  );
   const reviewRevisable =
     anyProposalReviewable &&
-    (reviewActionCount > 0 || requiredNotAcceptedCount > 0);
+    (reviewActionCount > 0 ||
+      requiredNotAcceptedCount > 0 ||
+      keptDecisions.length > 0);
   // A restored decision is reported as restored. The reviewer is looking at a
   // workbook they uploaded again, and the difference between "you already
   // judged these" and "the product decided for you" is the whole reason the
@@ -8358,7 +8414,14 @@ function StageReadinessWorkbookPreviewControl({
         ? ` · readiness ${proposalReview.readiness.ready ?? 0} ready / ${proposalReview.readiness.insufficientEvidence ?? 0} insufficient / ${proposalReview.readiness.unknown ?? 0} unknown`
         : "") +
       (carriedForwardCount > 0
-        ? ` · ${carriedForwardCount} decision${carriedForwardCount === 1 ? "" : "s"} kept from your previous upload of this workbook — review only what changed`
+        ? ` · ${carriedForwardCount} decision${carriedForwardCount === 1 ? "" : "s"} kept from your previous upload of this workbook — ` +
+          // Whether those decisions are on record yet is the difference
+          // between "nothing left to do here" and "the phase is still held".
+          // `keptDecisions` is empty once they are recorded, which is why the
+          // same sentence can answer both.
+          (keptDecisions.length > 0
+            ? "review what changed, then record the kept decisions"
+            : "review only what changed")
         : "")
     : "";
   const storedProposalMessage =
@@ -8442,8 +8505,12 @@ function StageReadinessWorkbookPreviewControl({
           >
             {preview.proposalSet.proposals.map((proposal) => {
               const proposalId = proposal.proposalId ?? "";
+              const restored = isRestoredDisposition(proposal);
               return (
-                <label key={proposalId || proposal.questionId}>
+                <label
+                  data-restored-disposition={restored ? "true" : undefined}
+                  key={proposalId || proposal.questionId}
+                >
                   <input
                     checked={selectedProposalIds.has(proposalId)}
                     disabled={
@@ -8478,6 +8545,16 @@ function StageReadinessWorkbookPreviewControl({
                       {isWorkbookProposalAcceptable(proposal)
                         ? `${proposal.answerState ?? "answered"} · ${proposal.disposition ?? "pending"}`
                         : "response required in workbook"}
+                      {/*
+                        Which rows the count in the status line refers to.
+                        Reporting only the total left a reviewer unable to tell
+                        a decision they had just made from one restored off an
+                        earlier upload, which is the difference between a row
+                        they can leave alone and one still to be put on record.
+                      */}
+                      {restored
+                        ? " · kept from your previous upload, not yet recorded"
+                        : ""}
                     </em>
                   </span>
                 </label>
@@ -8486,6 +8563,16 @@ function StageReadinessWorkbookPreviewControl({
           </div>
           {reviewRevisable ? (
             <div className="mxw-workbook-review-actions">
+              {keptDecisions.length > 0 ? (
+                <button
+                  className="mxw-workbook-review-keep"
+                  disabled={reviewStatus === "saving"}
+                  onClick={() => void recordKeptDecisions()}
+                  type="button"
+                >
+                  {`Record ${keptDecisions.length} kept decision${keptDecisions.length === 1 ? "" : "s"}`}
+                </button>
+              ) : null}
               <button
                 disabled={
                   selectedProposalIds.size === 0 || reviewStatus === "saving"
