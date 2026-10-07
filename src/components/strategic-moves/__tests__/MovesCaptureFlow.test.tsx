@@ -16,6 +16,7 @@ import {
   getPhaseStepGroups,
   phaseStepQuestionCounts,
 } from "@/lib/programs/moves-phase-step-groups";
+import { phaseStepPlan } from "@/lib/programs/moves-phase-step-plan";
 
 const PHASES: MovesCaptureFlowPhase[] = [
   { phase: 0, code: "P0", name: "Originate", answered: 11, total: 11, reachable: true },
@@ -531,5 +532,80 @@ describe("MovesCaptureFlow — contract-derived mount set (U-567)", () => {
     // Every question of the phase is NOT on screen — the flow is three steps,
     // and a change that flattened them would pass a bare count on some phases.
     expect(rendered.length).toBeLessThan(contractSections.length);
+  });
+});
+
+describe("a phase whose grouping was repaired", () => {
+  // P3 Design re-shapes its question set once P2 confirms a solution route.
+  // This declared set matches no route variant exactly, so the step plan
+  // repairs P3's DEFAULT grouping — whose second step is exactly
+  // `operating_model` + `process_design`, neither of which is declared here.
+  // Repair preserves the step count, so that step mounts nothing.
+  const REPAIRED_P3_SECTIONS: PhaseCaptureSection[] = [
+    "solution_approach",
+    "business_change_boundary",
+    "controls_governance",
+    "architecture_integration",
+    "evidence_confidence",
+    "recommendation",
+    "estimate_assumptions",
+  ].map((key) => ({ key, label: key, description: "", required: true }));
+
+  const P3_PHASES: MovesCaptureFlowPhase[] = [
+    { phase: 3, code: "P3", name: "Design", answered: 7, total: 7, reachable: true },
+  ];
+
+  function renderRepairedP3(isSectionComplete: () => boolean) {
+    render(
+      <MovesCaptureFlow
+        phases={P3_PHASES}
+        phase={3}
+        sections={REPAIRED_P3_SECTIONS}
+        isSectionComplete={isSectionComplete}
+        renderSectionInput={(section) => (
+          <textarea aria-label={section.label} data-testid={`input-${section.key}`} />
+        )}
+        sectionRecap={() => ""}
+        onSelectPhase={() => {}}
+        onSubmitPhase={() => {}}
+        onAdvanceToNextPhase={() => {}}
+        approveSlot={<button type="button">Approve and build</button>}
+      />,
+    );
+  }
+
+  it("confirms the grouping really does leave a step with no questions", () => {
+    const plan = phaseStepPlan(3, REPAIRED_P3_SECTIONS);
+    expect(plan.basis).toBe("repaired");
+    expect(plan.groups[1].sectionKeys).toEqual([]);
+  });
+
+  it("opens a fully answered phase on its last step, where the governed approval lives", () => {
+    renderRepairedP3(() => true);
+
+    const plan = phaseStepPlan(3, REPAIRED_P3_SECTIONS);
+    const last = plan.groups[plan.groups.length - 1];
+    expect(screen.getByRole("heading", { name: last.title })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Approve and build" }),
+    ).toBeInTheDocument();
+    // Not the empty step, which is what it used to open on: a blank panel with
+    // no question on it and the approval one unexplained Continue away.
+    expect(
+      screen.queryByRole("heading", { name: plan.groups[1].title }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("still opens on the first step that has an unanswered question", () => {
+    renderRepairedP3(() => false);
+
+    const plan = phaseStepPlan(3, REPAIRED_P3_SECTIONS);
+    expect(
+      screen.getByRole("heading", { name: plan.groups[0].title }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("input-solution_approach")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Approve and build" }),
+    ).not.toBeInTheDocument();
   });
 });
