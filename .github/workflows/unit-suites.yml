@@ -1436,6 +1436,14 @@ jobs:
           src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts
           --no-coverage --ci
 
+      - name: Run prospective supplier origination suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/candidate-suppliers/__tests__/originate-prospective-supplier.test.ts
+          "src/app/api/v1/source/[eventId]/candidate-suppliers/originate/__tests__/route.test.ts"
+          src/components/source/new-workspace/SourceNewProspectiveSupplierForm.test.tsx
+          --no-coverage --ci
+
       # T-480 (2026-09-26) wires the two suites `T-479` judged `wire_into_ci`.
       # The item as filed named fourteen; twelve of those are `already_selected
       # _no_action` in that record, because a ratchet baseline already selects
