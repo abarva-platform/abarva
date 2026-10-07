@@ -11,6 +11,7 @@ import {
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   initialReviewedEvidenceExtraction,
   reviewedExtractionFromStoredSourceRef,
@@ -94,11 +95,17 @@ async function loadPendingEvidenceReviews(
 }> {
   try {
     const db = getAzureWriteFluentClient();
-    const tenantKey = ctx.clientKey ?? "";
+    // Program-evidence rows may be stored under any of the tenant's
+    // representations (the app client key, e.g. "meridian", or its canonical
+    // substrate alias, e.g. "meridian-health") depending on which writer
+    // created them. Match all of them so a load under either representation is
+    // visible; the alias set is per-tenant, so this cannot widen to another
+    // tenant.
+    const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
     const { data: reviews, error: reviewError } = await db
       .from("program_evidence_reviews")
       .select("id, evidence_id, family_key, phase, source_ref")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", programId)
       .eq("decision", "pending")
       .order("created_at", { ascending: false })
@@ -115,7 +122,7 @@ async function loadPendingEvidenceReviews(
     const { data: evidenceRows, error: evidenceError } = await db
       .from("program_evidence_items")
       .select("id, title, summary, extracted_text, extracted_structured")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", programId)
       .in("id", evidenceIds);
     if (evidenceError || !Array.isArray(evidenceRows)) {
