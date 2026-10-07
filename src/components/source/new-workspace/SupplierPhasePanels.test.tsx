@@ -5,6 +5,7 @@ import { SupplierPhasePanels, type SourceNewEventView } from "./SourceNewWorkspa
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 
+jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn() }) }));
 
 const panel: SourceNewStage04VendorPanel = {
   status: "blocked",
