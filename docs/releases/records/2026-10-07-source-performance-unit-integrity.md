@@ -10,14 +10,14 @@
 
 ## Plain-English Summary
 
-Contract performance measures now retain their declared measurement unit. A response time is displayed as time, a backlog as a count, and a percentage as a percentage. Previously loaded rows whose metric and stored unit disagree are withheld from the numeric display pending source-record correction.
+The contract-depth loader resolves and validates each performance measure's unit before writing it. A response time is stored as time, a backlog as a count, and a percentage as a percentage on a separately authorized package load. This release does not correct existing rows or change the display.
 
 ## Layer Impact
 
 - Release lane: `client-data-lane`, because the contract-depth loader can write canonical performance observations only through a separately governed data build.
 - Layer 2 Source Adapters: the contract-depth package loader resolves and validates measurement units during preflight, before either adapter or canonical apply.
 - Layer 3 Canonical Model: the existing performance observation's `unit`, numeric value, actual text, and target text are written consistently on a separately authorized load. No schema change or data load is included in this release.
-- Layer 4 Products: Source contract performance refuses to present contradictory units and only charts comparable observations.
+- Layer 4 Products: no display change in this release; the separate Source display change owns rendering of existing observations.
 
 ## Client Applicability
 
@@ -29,16 +29,16 @@ Contract performance measures now retain their declared measurement unit. A resp
 
 ## Changes Included
 
-- Contract performance unit resolution and display guard.
+- Contract performance unit resolution during loader preflight.
 - Contract-depth loader unit persistence, including conflict-update behavior.
 - Behavioral tests for time, count, percentage, unknown units, and legacy unit conflicts.
 
 ## QA / Validation
 
-- Pass: red-first and mutation checks demonstrate that a stored percent for a time metric is refused.
-- Pass: focused loader and display tests, TypeScript typecheck, changed-file lint, release validation, and read-only package plan.
+- Pass: red-first and mutation checks demonstrate that contradictory source units are refused before persistence.
+- Pass: focused loader tests, TypeScript typecheck, changed-file lint, release validation, and read-only package plan.
 - Not run yet: applicable PR CI; green completion is required before merge.
-- Not run yet: signed-in display replay after deploy; code checks alone are not live acceptance.
+- Not run yet: signed-in display replay after the separate display change deploys; code checks alone are not live acceptance.
 
 ## Rollout Plan
 

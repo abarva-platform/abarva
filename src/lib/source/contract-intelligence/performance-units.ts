@@ -83,19 +83,3 @@ export function performanceMeasureFromSource(
     targetText: formatValue(target, unit),
   };
 }
-
-export function formatGovernedPerformanceActual(row: {
-  metricName: string;
-  unit: string | null | undefined;
-  actualValue: unknown;
-  valueNum: unknown;
-}): string {
-  const expected = expectedUnit(row.metricName);
-  const unit = declaredUnit(row.unit);
-  if (!unit || (expected && expected !== unit)) return "Unit needs review";
-  if (unit !== "%" && String(row.actualValue ?? "").includes("%")) {
-    return "Unit needs review";
-  }
-  const actual = normalizedValue(parseNumber(row.valueNum), unit);
-  return formatValue(actual, unit) ?? "Not established";
-}

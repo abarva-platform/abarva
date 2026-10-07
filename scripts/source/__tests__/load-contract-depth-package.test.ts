@@ -3,10 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import Papa from "papaparse";
-import {
-  formatGovernedPerformanceActual,
-  performanceMeasureFromSource,
-} from "../../../src/lib/source/contract-intelligence/performance-units";
+import { performanceMeasureFromSource } from "../../../src/lib/source/contract-intelligence/performance-units";
 
 describe("Source contract depth package loader", () => {
   it("keeps time and backlog measures out of the percentage scale", () => {
@@ -38,21 +35,6 @@ describe("Source contract depth package loader", () => {
     expect(() => performanceMeasureFromSource("unknown_sla", "4", "5")).toThrow(/unit/i);
     expect(() => performanceMeasureFromSource("critical_incident_response_minutes", "35", "30", "%"))
       .toThrow(/unit/i);
-  });
-
-  it("does not relabel previously misloaded canonical rows as time or count", () => {
-    expect(formatGovernedPerformanceActual({
-      metricName: "critical_incident_response_minutes",
-      unit: "%",
-      actualValue: "35.0%",
-      valueNum: 35,
-    })).toBe("Unit needs review");
-    expect(formatGovernedPerformanceActual({
-      metricName: "critical_incident_response_minutes",
-      unit: "minutes",
-      actualValue: "35 min",
-      valueNum: 35,
-    })).toBe("35 min");
   });
 
   it("persists the resolved unit and repairs it on a separately authorized reload", () => {
