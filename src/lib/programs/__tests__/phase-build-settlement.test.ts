@@ -1,5 +1,7 @@
 import {
   classifyPhaseBuildSettlement,
+  heldArtifactBlocker,
+  heldArtifactStatus,
   planPhaseGateSubmitWithoutBuild,
 } from "../phase-build-settlement";
 import { gateCriteriaForPhase } from "../governance";
@@ -421,5 +423,82 @@ describe("planPhaseGateSubmitWithoutBuild", () => {
     if (plan.submittable) throw new Error("expected a refusal");
     expect(plan.reason).toBe("gate_documents_not_built");
     expect(plan.unbuiltGateDocuments).toEqual(["Discovery & Diagnosis Report"]);
+  });
+});
+
+// ─── The held-status rule, read in one place ───────────────────────────────
+//
+// The same stored artifact status is read twice in the phase workspace: by the
+// submission plan above, and by the workspace's own per-document status list.
+// The second reading seeded a row as built from the artifact's mere existence,
+// so a held gate document rendered as "Built" on the same screen where the
+// submission had silently withdrawn itself. These cases pin the shared rule.
+
+describe("heldArtifactStatus", () => {
+  it.each(["quarantined", "blocked", "superseded"])(
+    "reports %s as held",
+    (status) => {
+      expect(heldArtifactStatus(status)).toBe(status);
+    },
+  );
+
+  it.each([
+    ["QUARANTINED", "quarantined"],
+    ["  Superseded  ", "superseded"],
+  ])("normalizes %p to %p", (status, normalized) => {
+    expect(heldArtifactStatus(status)).toBe(normalized);
+  });
+
+  it.each(["approved", "draft", "board_ready", "review_required", "", null, undefined])(
+    "reports %p as a usable build",
+    (status) => {
+      expect(heldArtifactStatus(status)).toBeNull();
+    },
+  );
+});
+
+describe("heldArtifactBlocker", () => {
+  it("tells a reader holding a quarantined document what to do about it", () => {
+    const sentence = heldArtifactBlocker({
+      documentTitle: "Program Charter",
+      heldStatus: "quarantined",
+    });
+    expect(sentence).toContain("Program Charter");
+    expect(sentence).toContain("held below its quality bar");
+    expect(sentence).toContain("Re-run Approve & Build");
+  });
+
+  it("does not call a blocked document a quality hold", () => {
+    const sentence = heldArtifactBlocker({
+      documentTitle: "Program Charter",
+      heldStatus: "blocked",
+    });
+    expect(sentence).toContain("blocked before it could be published");
+    expect(sentence).not.toContain("quality bar");
+    expect(sentence).toContain("Re-run Approve & Build");
+  });
+
+  it("says a superseded document is not the current version, not that it failed", () => {
+    const sentence = heldArtifactBlocker({
+      documentTitle: "Discovery Report",
+      heldStatus: "superseded",
+    });
+    expect(sentence).toContain("Discovery Report");
+    expect(sentence).toContain("superseded");
+    expect(sentence).not.toContain("quality bar");
+    expect(sentence).not.toContain("blocked before");
+  });
+
+  it("names every held status the submission plan screens on", () => {
+    // A status the plan refuses but this says nothing about would leave the
+    // status list with a blocked row and no sentence under it.
+    for (const status of ["quarantined", "blocked", "superseded"]) {
+      const sentence = heldArtifactBlocker({
+        documentTitle: "Program Charter",
+        heldStatus: status,
+      });
+      expect(sentence.length).toBeGreaterThan(40);
+      expect(sentence).toContain("Program Charter");
+    }
   });
 });
