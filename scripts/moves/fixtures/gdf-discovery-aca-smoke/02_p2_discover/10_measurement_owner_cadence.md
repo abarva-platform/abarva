@@ -1,24 +1,35 @@
 # Measurement owners and operating cadence
 
-**SYNTHETIC - NOT CLIENT-ATTESTED.** Owners below are role placeholders. No
-actual baseline, target, or service level has been measured or approved.
+**SYNTHETIC - NOT CLIENT-ATTESTED.** No real owner roster, no approved review
+cadence, and no committed service target is represented here.
 
-| Measure | Candidate definition | Owner role | Cadence | Source required | Status |
-|---|---|---|---|---|---|
-| Report inventory completion | Approved report definitions / 10 requested reports | HR analytics product owner | Weekly during delivery | Decision log | Synthetic target only |
-| Source-to-Gold freshness | Elapsed time from accepted source batch to certified Gold publication | Data platform owner | Each run / monthly review | Pipeline run metadata | Baseline unknown |
-| Critical quality-rule pass rate | Critical rules passed / critical rules executed | Data quality owner | Each run | Rule results | Baseline unknown |
-| Semantic certification coverage | Reports with approved metric contract / 10 | Data Product Council | At each release | Versioned metric registry | Baseline unknown |
-| Access review completion | In-scope grants reviewed / grants due | Security owner | Quarterly | Entitlement review record | Baseline unknown |
-| Report adoption | Authorized users / eligible group, using privacy-safe aggregation | HR business owner | Monthly after launch | Aggregate usage telemetry | Instrumentation unknown |
-| User-reported usefulness | Structured feedback with response rate and sample size | HR business owner | Monthly after launch | Feedback instrument | No survey exists in scenario |
+## Working model for the scenario
 
-The first delivery measure is completeness of the ten-report scope, not a
-business outcome. Adoption is business-owned; this technical project does not
-include HR process redesign, workforce behavior change, or a change-management
-program. A later roadmap may include training support if the business requests
-and funds it.
+A governed data foundation only stays trustworthy if every certified measure has
+a named owner and a recurring review that catches drift, broken lineage, and
+quality exceptions before a clinician or executive relies on the number.
 
-Every target must be paired with a definition, source, population, owner,
-baseline period, and review cadence. Do not present a target as a current-state
-fact or as realized value.
+## Candidate owner and cadence model
+
+| Measure area (synthetic) | Proposed accountable owner | Proposed review cadence |
+|---|---|---|
+| Certified clinical/quality measures | Clinical analytics product owner | Monthly definition + drift review |
+| Member attribution and panels | Population-health analytics owner | Monthly, aligned to enrollment refresh |
+| Data-quality exceptions | Domain data steward | Weekly exception triage |
+| Model inputs and responsible-AI checks | Responsible-AI owner | Each model refresh + quarterly review |
+| Privacy/PHI controls | Privacy owner | Quarterly, plus on any scope change |
+
+## Operating expectations
+
+1. Each certified measure names one accountable owner; an unowned measure is not
+   certified.
+2. A recurring review checks definition currency, lineage integrity, freshness,
+   and open exceptions, and records decisions.
+3. Drift or a broken dependency pauses certification rather than silently
+   publishing a stale number.
+
+## Still required before this is a client fact
+
+The real owner roster, the agreed cadences, and the service targets are not
+established here and must be confirmed with the client's operations and clinical
+leaders.
