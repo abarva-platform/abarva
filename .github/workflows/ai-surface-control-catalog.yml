@@ -894,6 +894,7 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx"
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.shell-behaviour.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/coverageArchetypePanel.test.tsx"
           "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx"
