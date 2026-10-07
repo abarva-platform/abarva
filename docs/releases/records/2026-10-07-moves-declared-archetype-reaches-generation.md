@@ -81,8 +81,11 @@ No other layer changes. No migration.
 - **PASS** `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit` —
   exit 0.
 - **PASS** `npx eslint` over the four changed/added source files — exit 0.
-- **PASS** census regenerated: test files 2814 → 2815, covered 2650 → 2651, uncovered flat
-  at 164. The new suite is CI-covered, not dark.
+- **PASS** census regenerated: test files 2815 → 2816, covered 2651 → 2652, uncovered flat
+  at 164. The new suite is CI-covered, not dark. These figures were re-measured after
+  `main` advanced mid-change: a sibling landed a test file and both census versions then
+  read 2815/2651, so the merge was clean while the committed count was wrong for the
+  combined tree. Regenerating after the merge is what produced 2816/2652.
 - **PASS** mutation testing, 5 of 5 killed:
   1. per-row call site loses the declaration → 1 failure;
   2. reported-framework call site loses the declaration → 23 failures;
