@@ -178,4 +178,90 @@ describe("movesWorkspaceV2Spine", () => {
     expect(byKind(stages, "generate")[0].targetView).toBeNull();
     expect(byKind(stages, "gate")[0].targetView).toBeNull();
   });
+
+  // ─── the navigational stage is distinct from the emphasis channel ──────────
+  // `state === "current"` is shared with a co-located marker by design; only
+  // `isCurrentView` may drive `aria-current`, which names ONE item in a set.
+
+  it("marks exactly one stage as the current VIEW at every view", () => {
+    for (const outcomeFindingsPresent of [false, true]) {
+      for (const view of [0, 1, 2, 3]) {
+        const stages = movesWorkspaceV2Spine({
+          captureTitles: TITLES,
+          view,
+          handoffReachable: false,
+          outcomeFindingsPresent,
+        });
+        expect(stages.filter((s) => s.isCurrentView)).toHaveLength(1);
+      }
+    }
+  });
+
+  it("the current VIEW is the rendered capture step, and the recap screen is OUTCOME", () => {
+    const current = (view: number) =>
+      movesWorkspaceV2Spine({
+        captureTitles: TITLES,
+        view,
+        handoffReachable: false,
+      }).find((s) => s.isCurrentView);
+
+    expect(current(0)).toMatchObject({ kind: "capture", label: TITLES[0] });
+    expect(current(1)).toMatchObject({ kind: "capture", label: TITLES[1] });
+    // The last capture step, NOT the GENERATE bridge that lights beside it.
+    expect(current(2)).toMatchObject({ kind: "capture", label: TITLES[2] });
+    // At the recap the flow renders the OUTCOME screen, not the GATE marker.
+    expect(current(3)).toMatchObject({ kind: "outcome" });
+  });
+
+  it("the GENERATE and GATE markers are never the current view, even when they carry the emphasis", () => {
+    // view 2: GENERATE lights beside the last capture step.
+    const onLast = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 2,
+      handoffReachable: false,
+    });
+    expect(byKind(onLast, "generate")[0].state).toBe("current");
+    expect(byKind(onLast, "generate")[0].isCurrentView).toBe(false);
+
+    // view 3: GATE lights beside OUTCOME (the approve control travels there).
+    const atRecap = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 3,
+      handoffReachable: true,
+    });
+    expect(byKind(atRecap, "gate")[0].state).toBe("current");
+    expect(byKind(atRecap, "gate")[0].isCurrentView).toBe(false);
+  });
+
+  it("leaves the emphasis channel alone: two stages still read current at views 2 and 3", () => {
+    // The shell's intended look is unchanged by the aria fix — this pins that
+    // the fix did not quietly re-style the spine.
+    const emphasis = (view: number) =>
+      movesWorkspaceV2Spine({
+        captureTitles: TITLES,
+        view,
+        handoffReachable: true,
+      })
+        .filter((s) => s.state === "current")
+        .map((s) => s.kind);
+
+    expect(emphasis(0)).toEqual(["capture"]);
+    expect(emphasis(2)).toEqual(["capture", "generate"]);
+    expect(emphasis(3)).toEqual(["outcome", "gate"]);
+  });
+
+  it("never marks more than one current view when the capture set is short or empty", () => {
+    for (const captureTitles of [[], TITLES.slice(0, 1), TITLES.slice(0, 2)]) {
+      for (const view of [0, 1, 2, 3]) {
+        const stages = movesWorkspaceV2Spine({
+          captureTitles,
+          view,
+          handoffReachable: false,
+        });
+        expect(
+          stages.filter((s) => s.isCurrentView).length,
+        ).toBeLessThanOrEqual(1);
+      }
+    }
+  });
 });

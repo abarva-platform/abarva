@@ -414,9 +414,11 @@ export function MovesCaptureFlow({
                     type="button"
                     className={`mcf-v2-sstep is-${stage.state} kind-${stage.kind}`}
                     disabled={!interactive}
-                    aria-current={
-                      stage.state === "current" ? "step" : undefined
-                    }
+                    // `state` is the emphasis channel and a co-located marker
+                    // shares it (GENERATE beside the last capture step, GATE
+                    // beside OUTCOME). `aria-current` names ONE item in a set,
+                    // so it reads the spine's single navigational stage.
+                    aria-current={stage.isCurrentView ? "step" : undefined}
                     onClick={() => {
                       if (stage.targetView !== null) go(stage.targetView);
                     }}
