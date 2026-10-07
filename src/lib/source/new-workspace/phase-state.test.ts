@@ -12,6 +12,10 @@ import {
   sourceNewNextAction,
   sourceNewHistoricalGapPhases,
   sourceNewPhaseState,
+  sourceNewPhaseIsSkipped,
+  sourceNewSkippedPhases,
+  sourceNewJourneyForEvent,
+  SOURCE_NEW_PHASE_STAGE_KEYS,
   sourceNewPhaseStateLabel,
   sourceNewStageLabel,
   type SourceNewPhaseEvidence,
@@ -361,5 +365,147 @@ describe("sourceNewMarketPackageLabel acceptance dependency", () => {
     expect(sourceNewNextAction({ ...unaccepted, ...accepted }).label).toBe(
       "Open RFP",
     );
+  });
+});
+
+/**
+ * A phase the event's journey never visits used to read "Later", which tells an
+ * operator to expect work that will never arrive. A renegotiation does not go
+ * to market, and the rail said it would.
+ *
+ * The journey resolver already decides this: `contract_optimization` declares
+ * `skippedStageKeys` including `rfp`, which is the only canonical stage the
+ * market-package phase stands for. Nothing is inferred here that the resolver
+ * does not already decide.
+ */
+describe("a phase the journey never visits reports itself as off-path", () => {
+  const renegotiation = {
+    currentStage: "strategy",
+    lifecycle: "active",
+    sourcingMotion: "contract_optimization",
+  };
+  const competitive = {
+    currentStage: "strategy",
+    lifecycle: "active",
+    sourcingMotion: "competitive_rfp",
+  };
+  const noEvidence = {
+    request: false,
+    define: false,
+    suppliers: false,
+    rfi: false,
+  };
+
+  it("resolves the two journeys apart", () => {
+    expect(sourceNewJourneyForEvent(renegotiation).id).toBe("contract_optimization");
+    expect(sourceNewJourneyForEvent(competitive).id).toBe("competitive_rfp");
+  });
+
+  it("reports the market package off-path for a renegotiation", () => {
+    expect(sourceNewPhaseState("rfi", renegotiation, noEvidence)).toBe("off_path");
+    expect(sourceNewPhaseStateLabel("off_path")).toBe("Not on this path");
+  });
+
+  // The other half: a competitive event must still be told the phase is coming.
+  // Without this, "mark everything off-path" would pass the case above.
+  it("keeps the market package ahead for a competitive event", () => {
+    expect(sourceNewPhaseState("rfi", competitive, noEvidence)).toBe("not_open");
+  });
+
+  it("never reports define off-path, because no journey skips both its stages", () => {
+    for (const event of [renegotiation, competitive]) {
+      expect(sourceNewSkippedPhases(event)).not.toContain("define");
+    }
+  });
+
+  // `request` and `suppliers` stand for no canonical stage, so a skipped set
+  // can say nothing about them. A phase with no stages must never be skipped,
+  // or an empty `every` would report every such phase as off-path.
+  it("never reports a phase that stands for no stage", () => {
+    expect(SOURCE_NEW_PHASE_STAGE_KEYS.request).toHaveLength(0);
+    expect(SOURCE_NEW_PHASE_STAGE_KEYS.suppliers).toHaveLength(0);
+    for (const phase of ["request", "suppliers"] as const) {
+      expect(sourceNewPhaseIsSkipped(phase, ["strategy", "scope", "rfp"])).toBe(false);
+      expect(sourceNewSkippedPhases(renegotiation)).not.toContain(phase);
+    }
+  });
+
+  // A phase counts as skipped only when EVERY stage it stands for is skipped.
+  // No journey defined today skips a proper subset, so it is exercised here
+  // directly rather than left to an input that cannot distinguish it.
+  it("treats a partly-skipped phase as still on the path", () => {
+    expect(sourceNewPhaseIsSkipped("define", ["strategy"])).toBe(false);
+    expect(sourceNewPhaseIsSkipped("define", ["scope"])).toBe(false);
+    expect(sourceNewPhaseIsSkipped("define", ["strategy", "scope"])).toBe(true);
+  });
+
+  // Where the event actually is beats what its journey predicted. If a stage
+  // resolves to a phase the journey declares skipped, that contradiction must
+  // surface rather than hide behind an off-path label.
+  it("reports the current phase as current even when the journey skips it", () => {
+    const atMarket = {
+      currentStage: "rfp",
+      lifecycle: "active",
+      sourcingMotion: "contract_optimization",
+    };
+    expect(sourceNewPhaseState("rfi", atMarket, noEvidence)).toBe("current");
+  });
+
+  // An unread motion must behave as this surface did before the field existed.
+  it("falls back to the resolver when the motion is unread", () => {
+    const unread = { currentStage: "strategy", lifecycle: "active" };
+    expect(sourceNewPhaseState("rfi", unread, noEvidence)).toBe(
+      sourceNewPhaseState("rfi", { ...unread, sourcingMotion: null }, noEvidence),
+    );
+  });
+
+  /**
+   * The boundary that makes this safe to act on.
+   *
+   * `getSourceJourneyForEvent` infers a motion from free text when none is
+   * recorded, and that inference is not strong enough to tell an operator a
+   * phase will never happen. "A contract is nearing renewal" resolves to a
+   * renegotiation, yet an approaching renewal is the classic trigger for a
+   * competitive re-bid, which does go to market. So an INFERRED skip must not
+   * reach the rail; only a declared motion may.
+   */
+  it("refuses to put a phase off-path on an inferred motion", () => {
+    const inferredRenegotiation = {
+      currentStage: "strategy",
+      lifecycle: "active",
+      trigger: "A contract is nearing renewal.",
+    };
+    // Control: the resolver really does infer the skipping journey from this
+    // text, so the assertion below is measuring the guard and not a journey
+    // that never skipped anything.
+    const journey = sourceNewJourneyForEvent(inferredRenegotiation);
+    expect(journey.id).toBe("contract_optimization");
+    expect(journey.skippedStageKeys).toContain("rfp");
+
+    expect(sourceNewPhaseState("rfi", inferredRenegotiation, noEvidence)).toBe(
+      "not_open",
+    );
+  });
+
+  it("accepts the same skip once the motion is declared", () => {
+    const declared = {
+      currentStage: "strategy",
+      lifecycle: "active",
+      trigger: "A contract is nearing renewal.",
+      sourcingMotion: "contract_optimization",
+    };
+    expect(sourceNewPhaseState("rfi", declared, noEvidence)).toBe("off_path");
+  });
+
+  it("treats a blank declared motion as unread", () => {
+    for (const blank of ["", "   "]) {
+      expect(
+        sourceNewPhaseState(
+          "rfi",
+          { currentStage: "strategy", lifecycle: "active", sourcingMotion: blank },
+          noEvidence,
+        ),
+      ).toBe("not_open");
+    }
   });
 });
