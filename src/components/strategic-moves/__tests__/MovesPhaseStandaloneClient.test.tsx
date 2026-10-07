@@ -1229,7 +1229,9 @@ describe("MovesPhaseStandaloneClient", () => {
       // On a tab without the capture bar (Approvals) the stepper is the only
       // phase navigator and must still render.
       fireEvent.click(workspaceTab(/Approvals/));
-      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
       expect(
         screen.getByRole("navigation", { name: "Phase steps" }),
       ).toBeInTheDocument();
@@ -1285,7 +1287,6 @@ describe("MovesPhaseStandaloneClient", () => {
       fireEvent.change(metric, { target: { value: "Intake cycle time" } });
       expect(metric.value).toBe("Intake cycle time");
     });
-
 
     // ─── P2's route decision: never offer a decision that cannot validate ───
     // `solution_route_validated` is HARD in two consecutive gates (P2 -> P3 and
@@ -1374,7 +1375,9 @@ describe("MovesPhaseStandaloneClient", () => {
     it("P2 keeps the confirm decision, and shows no objection, once a route follows", () => {
       renderP2RouteDecision(RESOLVED_ANSWER);
 
-      expect(screen.getByText("Technical product / data solution")).toBeInTheDocument();
+      expect(
+        screen.getByText("Technical product / data solution"),
+      ).toBeInTheDocument();
       const decision = screen.getByLabelText(
         "Human route decision",
       ) as HTMLSelectElement;
@@ -1410,7 +1413,6 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.getByText(/no recommendation to confirm/i),
       ).toBeInTheDocument();
     });
-
 
     it("P2 on the redesigned flow does not render the baseline question read-only", () => {
       render(
@@ -3024,7 +3026,9 @@ describe("MovesPhaseStandaloneClient", () => {
       // state a P3 render holds, so a dropped or re-derived prop fails here.
       expect(screen.getByText("Priya Raman")).toBeInTheDocument();
       expect(
-        screen.getByText("Discover found billing already inside the same queue."),
+        screen.getByText(
+          "Discover found billing already inside the same queue.",
+        ),
       ).toBeInTheDocument();
       expect(band).toHaveAttribute("data-count", "2");
       expect(band).toHaveAttribute("data-known-wrong", "1");
@@ -3294,54 +3298,59 @@ describe("MovesPhaseStandaloneClient", () => {
       // pre-selected the blanks left the reviewer with a 422 and no way back.
       const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
       const baseFetch = global.fetch as jest.Mock;
-      global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        const url = typeof input === "string" ? input : String(input);
-        if (url.includes("/stage-readiness-workbook") && init?.method === "POST") {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => ({
+      global.fetch = jest.fn(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = typeof input === "string" ? input : String(input);
+          if (
+            url.includes("/stage-readiness-workbook") &&
+            init?.method === "POST"
+          ) {
+            return {
               ok: true,
-              summary: {
-                totalQuestions: 2,
-                answeredQuestions: 1,
-                requiredAnswered: 1,
-                requiredTotal: 2,
-              },
-              proposalSet: {
-                artifactId: "proposal-artifact-1",
-                artifactVersion: 2,
-                status: "review_required",
-                proposalCount: 2,
-                pendingCount: 2,
-                proposals: [
-                  {
-                    proposalId: "answered-1",
-                    questionId: "q-1",
-                    dimensionId: "baseline_metrics",
-                    requirement: "required",
-                    question: "Provide baseline metrics.",
-                    response: "41 days, measured.",
-                    answerState: "answered",
-                    disposition: "pending",
-                  },
-                  {
-                    proposalId: "blank-1",
-                    questionId: "q-2",
-                    dimensionId: "change_adoption_owner",
-                    requirement: "required",
-                    question: "Name the adoption owner.",
-                    response: "",
-                    answerState: "blank",
-                    disposition: "pending",
-                  },
-                ],
-              },
-            }),
-          } as Response;
-        }
-        return baseFetch(input, init);
-      }) as unknown as typeof global.fetch;
+              status: 200,
+              json: async () => ({
+                ok: true,
+                summary: {
+                  totalQuestions: 2,
+                  answeredQuestions: 1,
+                  requiredAnswered: 1,
+                  requiredTotal: 2,
+                },
+                proposalSet: {
+                  artifactId: "proposal-artifact-1",
+                  artifactVersion: 2,
+                  status: "review_required",
+                  proposalCount: 2,
+                  pendingCount: 2,
+                  proposals: [
+                    {
+                      proposalId: "answered-1",
+                      questionId: "q-1",
+                      dimensionId: "baseline_metrics",
+                      requirement: "required",
+                      question: "Provide baseline metrics.",
+                      response: "41 days, measured.",
+                      answerState: "answered",
+                      disposition: "pending",
+                    },
+                    {
+                      proposalId: "blank-1",
+                      questionId: "q-2",
+                      dimensionId: "change_adoption_owner",
+                      requirement: "required",
+                      question: "Name the adoption owner.",
+                      response: "",
+                      answerState: "blank",
+                      disposition: "pending",
+                    },
+                  ],
+                },
+              }),
+            } as Response;
+          }
+          return baseFetch(input, init);
+        },
+      ) as unknown as typeof global.fetch;
 
       render(
         <MovesPhaseStandaloneClient
@@ -7008,7 +7017,9 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByText("Upload the architecture constraints memo."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Likely source owner: Client owner \/ evidence steward/i),
+      screen.getByText(
+        /Likely source owner: Client owner \/ evidence steward/i,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("Accepted formats: DOCX")).toBeInTheDocument();
     expect(
@@ -7319,6 +7330,90 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/approve the draft or upload an edited version/i),
     ).toBeInTheDocument();
+  });
+
+  // `transition_evidence_incomplete` carries no `gate` and no `missing`, so the
+  // ladder used to land on `detail` — which states the CATEGORY of what is
+  // open and never which slot. The payload names them. For a
+  // governed-data-foundation Move a transition can be held by exactly one
+  // thing, and naming it is the difference between a next step and a dead end.
+  it("names the open evidence slot when approval returns 409 on transition evidence", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              error: "transition_evidence_incomplete",
+              phase: 3,
+              detail:
+                "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+              requiredEvidenceGaps: [
+                {
+                  evidenceSlot: "P3 to P4 readiness workbook",
+                  status: "open",
+                  nextAction:
+                    "Complete the P3 to P4 readiness review and accept each answer.",
+                },
+              ],
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    // The route's own category sentence is kept, and the slot is named after
+    // it. The blocked message renders at more than one site, so assert that
+    // each part is present somewhere rather than that it is unique.
+    expect(
+      screen.getAllByText(
+        /Required evidence must be approved, linked to a sourced/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Open: P3 to P4 readiness workbook/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        /Complete the P3 to P4 readiness review and accept each answer/,
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("gates Approve & Build behind a confirmation dialog and does not enqueue a build until confirmed", async () => {
@@ -9104,9 +9199,7 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       // Continue is held even though every question is answered and saved, so
       // the band is the only thing that can explain the step.
-      expect(
-        screen.getByRole("button", { name: "Continue" }),
-      ).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
       const hold = screen.getByTestId("capture-evidence-hold");
       expect(hold).toHaveTextContent("Phase inputs are captured.");
       expect(hold).toHaveTextContent("1 required evidence item");
@@ -9193,9 +9286,9 @@ describe("MovesPhaseStandaloneClient", () => {
           phaseTallies={[...phaseTallies]}
         />,
       );
-      expect(
-        screen.getByTestId("capture-evidence-hold"),
-      ).toHaveTextContent("Phase inputs are captured.");
+      expect(screen.getByTestId("capture-evidence-hold")).toHaveTextContent(
+        "Phase inputs are captured.",
+      );
     });
   });
 });

@@ -111,6 +111,7 @@ import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessmen
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-totals";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
 import {
   currentPhaseRequiredEvidenceGaps,
   phaseProgressReadiness,
@@ -2476,17 +2477,23 @@ export function MovesPhaseStandaloneClient({
       };
       detail?: string;
       error?: string;
+      requiredEvidenceGaps?: unknown;
     };
     if (!approvalRes.ok || !approval.ok) {
       const hard = approval.gate?.failedChecks
         ?.filter((check) => check.severity === "hard")
         .map((check) => check.reason || check.check)
         .join("; ");
+      // `transition_evidence_incomplete` carries no `gate` and no `missing`, so
+      // it used to land on `detail`, which states the category of what is open
+      // and never which slot. The payload names them; read it above `detail`.
+      const namedEvidenceSlots = describeRequiredEvidenceRefusal(approval);
       const blockedMessage =
         hard ||
         (approval.missing?.length
           ? `P${phase.phase} capture is incomplete - missing: ${approval.missing.join(", ")}`
           : "") ||
+        namedEvidenceSlots ||
         approval.detail ||
         approval.error ||
         `Gate approval failed (HTTP ${approvalRes.status})`;
