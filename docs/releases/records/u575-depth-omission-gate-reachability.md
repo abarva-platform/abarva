@@ -147,12 +147,14 @@ so it is green on main as well as against the mutations — it is a guard on an
 invariant that currently holds, not a fix for a live break. Stated plainly
 because a passing new suite can otherwise read as a repair.
 
-**Census.** `origin/main`'s committed census was itself **+1 stale** (committed
-2811, actual 2812 — regenerated on the base with this branch's file removed, to
-measure the base's own drift before attributing a delta). This branch adds
-exactly one test file: **2813 / 2649**. `uncoveredTestFiles` is **flat at 164**,
-which is the proof the new suite is CI-covered rather than dark — a dark suite
-would raise that number.
+**Census.** Measured against the base's own drift before attributing any delta
+to this branch. At first push `origin/main`'s committed census was itself **+1
+stale** (committed 2811, actual 2812 — regenerated on the base with this
+branch's file removed). The base then moved mid-run and was merged in; over the
+merged base the committed figure is 2814, and this branch adds exactly one test
+file: **2815 / 2651**. `uncoveredTestFiles` is **flat at 164** at both
+measurements, which is the proof the new suite is CI-covered rather than dark —
+a dark suite would raise that number.
 
 ## Rollout Plan
 
