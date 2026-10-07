@@ -176,6 +176,55 @@ export type PhaseGateDocumentState = {
  */
 const HELD_ARTIFACT_STATUSES = new Set(["quarantined", "blocked", "superseded"]);
 
+/**
+ * The held status of a stored artifact, normalized — or null when the artifact
+ * is a usable build.
+ *
+ * Exported because the same stored status is read TWICE in the phase workspace,
+ * and the two readings used to disagree. `planPhaseGateSubmitWithoutBuild`
+ * below screens a held document out of the submission, while the workspace's
+ * own per-document status list seeded a row as "succeeded" from the artifact's
+ * mere existence. A quarantined gate document therefore rendered as "Built",
+ * counted toward "documents are built", and offered a download — on the same
+ * screen where the one forward control had silently withdrawn itself because
+ * that document is not on the record. One rule, read in one place.
+ */
+export function heldArtifactStatus(
+  status: string | null | undefined,
+): string | null {
+  const normalized = status?.trim().toLowerCase() ?? "";
+  return HELD_ARTIFACT_STATUSES.has(normalized) ? normalized : null;
+}
+
+/**
+ * What to say about a document whose stored artifact is held below gate.
+ *
+ * A held document is not a build the phase can rely on, and the reader cannot
+ * act on it without being told which state it is in: a quarantined document
+ * needs a re-run, a superseded one is simply not the current version. Saying
+ * "Built" said neither.
+ */
+export function heldArtifactBlocker(args: {
+  documentTitle: string;
+  heldStatus: string;
+}): string {
+  if (args.heldStatus === "superseded") {
+    return (
+      `The stored ${args.documentTitle} has been superseded, so the version on ` +
+      `this phase's record is not the current one. Re-run Approve & Build to ` +
+      `put a current version on the record.`
+    );
+  }
+  const reason =
+    args.heldStatus === "quarantined"
+      ? "held below its quality bar"
+      : "blocked before it could be published";
+  return (
+    `The stored ${args.documentTitle} was ${reason}, so it is not on the ` +
+    `record as a usable build. Re-run Approve & Build to replace it.`
+  );
+}
+
 export type PhaseGateSubmitPlan =
   | {
       submittable: true;
@@ -221,8 +270,7 @@ export function planPhaseGateSubmitWithoutBuild(args: {
   const onRecord = (document: PhaseGateDocument): boolean => {
     const state = stateByKey.get(document.deliverableTypeKey);
     if (!state || state.status !== "succeeded") return false;
-    const artifactStatus = state.artifactStatus?.trim().toLowerCase() ?? "";
-    return !HELD_ARTIFACT_STATUSES.has(artifactStatus);
+    return heldArtifactStatus(state.artifactStatus) === null;
   };
 
   const gateDocuments = args.documents.filter(

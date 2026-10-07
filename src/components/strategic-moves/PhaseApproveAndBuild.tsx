@@ -36,6 +36,8 @@ import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readine
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 import {
+  heldArtifactBlocker,
+  heldArtifactStatus,
   planPhaseGateSubmitWithoutBuild,
   type SettledDeliverable,
 } from "@/lib/programs/phase-build-settlement";
@@ -250,18 +252,28 @@ function buildInitialRows(
 
   return specs.map((s) => {
     const artifact = artifactByKey.get(s.deliverableTypeKey);
+    const documentTitle = artifact?.documentTitle ?? s.documentTitle;
+    // An artifact that EXISTS is not the same as a document that BUILT. A
+    // quarantined, blocked or superseded artifact is present on the record and
+    // is not a usable build, and seeding it as "succeeded" from its mere
+    // existence is what made it render as "Built" beside a withdrawn gate
+    // submission. `heldArtifactStatus` is the same rule the submission plan
+    // screens with, so the row and the control now agree.
+    const heldStatus = artifact ? heldArtifactStatus(artifact.status) : null;
     return {
       deliverableTypeKey: s.deliverableTypeKey,
-      documentTitle: artifact?.documentTitle ?? s.documentTitle,
+      documentTitle,
       gateArtifact: s.gateArtifact,
       runId: null,
-      status: artifact ? "succeeded" : "idle",
-      progressPct: artifact ? 100 : 0,
+      status: !artifact ? "idle" : heldStatus ? "blocked" : "succeeded",
+      progressPct: artifact && !heldStatus ? 100 : 0,
       progressLabel: null,
       artifactId: artifact?.artifactId ?? null,
       blobUrl: artifact?.downloadUrl ?? null,
       packageReadiness: null,
-      blockers: [],
+      blockers: heldStatus
+        ? [heldArtifactBlocker({ documentTitle, heldStatus })]
+        : [],
     };
   });
 }
@@ -678,7 +690,11 @@ export function PhaseApproveAndBuild({
     ? "Final build blocked by required evidence"
     : hasParentBlocker
       ? "Complete phase inputs before build"
-      : builtCount > 0
+      : // A document already on the record makes this a re-run, whether that
+        // document built or is held below gate. A held row's own blocker
+        // sentence tells the reader to re-run, so the control it names has to
+        // read as a re-run rather than as a first build.
+        builtCount > 0 || blockedCount > 0
         ? `Re-run & Build ${phaseLabel} →`
         : `Approve & Build ${phaseLabel} →`;
   const phaseStatusLine = handOffSentence

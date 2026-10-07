@@ -1145,6 +1145,111 @@ describe("PhaseApproveAndBuild gate submission without a rebuild", () => {
     ).not.toBeInTheDocument();
   });
 
+  // A held gate document used to render as "Built" in green, count toward
+  // "P1 Charter documents are built", and offer a download — on the same screen
+  // where the submission button had withdrawn itself because that same document
+  // is not on the record. The reader was told everything was built and given no
+  // forward control and no reason. These cases pin the row against the control.
+
+  it("does not report a held gate document as built", () => {
+    renderWithArtifacts(
+      [{ ...CHARTER_ARTIFACT, status: "quarantined" }],
+      async () => {},
+    );
+    expect(screen.queryByText("Built")).not.toBeInTheDocument();
+    expect(screen.getByText("Build blocked")).toBeInTheDocument();
+  });
+
+  it("does not tell the reader the phase documents are built when one is held", () => {
+    renderWithArtifacts(
+      [{ ...CHARTER_ARTIFACT, status: "quarantined" }],
+      async () => {},
+    );
+    expect(screen.queryByText(/documents are built/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/blocked by evidence or build-quality checks/i),
+    ).toBeInTheDocument();
+  });
+
+  it("states why the held document is not on the record", () => {
+    renderWithArtifacts(
+      [{ ...CHARTER_ARTIFACT, status: "quarantined" }],
+      async () => {},
+    );
+    expect(
+      screen.getByText(/Why this output is blocked/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/held below its quality bar/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Re-run Approve & Build to replace it/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not offer a download of a held document as the final one", () => {
+    renderWithArtifacts(
+      [{ ...CHARTER_ARTIFACT, status: "quarantined" }],
+      async () => {},
+    );
+    expect(screen.queryByText(/Download final/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps the re-run control available on a held document", () => {
+    // The row is blocked, not the phase. Re-running is the remediation the
+    // blocker sentence names, so it must not be disabled by the hold.
+    renderWithArtifacts(
+      [{ ...CHARTER_ARTIFACT, status: "quarantined" }],
+      async () => {},
+    );
+    expect(
+      screen.getByRole("button", { name: /Re-run & Build P1 Charter/i }),
+    ).toBeEnabled();
+  });
+
+  it("names a control that reads as a re-run when a document is held", () => {
+    // The blocker sentence says "Re-run Approve & Build". A held document makes
+    // nothing built, so the button used to read "Approve & Build" — a blocker
+    // naming a control that is not on screen under that name.
+    renderWithArtifacts(
+      [{ ...CHARTER_ARTIFACT, status: "quarantined" }],
+      async () => {},
+    );
+    expect(
+      screen.getByText(/Re-run Approve & Build to replace it/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Re-run & Build P1 Charter/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Approve & Build P1 Charter/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("says a superseded document is not current rather than below quality", () => {
+    renderWithArtifacts(
+      [{ ...CHARTER_ARTIFACT, status: "superseded" }],
+      async () => {},
+    );
+    expect(screen.getByText("Build blocked")).toBeInTheDocument();
+    expect(screen.getByText(/has been superseded/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/held below its quality bar/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("still reports a usable stored document as built", () => {
+    // The guard must not catch the ordinary case: an approved artifact is a
+    // build, and withdrawing "Built" from it would strand the phase.
+    renderWithArtifacts([CHARTER_ARTIFACT], async () => {});
+    expect(screen.getByText("Built")).toBeInTheDocument();
+    expect(screen.queryByText("Build blocked")).not.toBeInTheDocument();
+    expect(screen.getByText(/documents are built/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Submit P1 Charter gate approval/i }),
+    ).toBeInTheDocument();
+  });
+
   it("lets a fresh build overrule a stale held artifact status", async () => {
     mockFetchSequence({
       runId: "run_requalify",
