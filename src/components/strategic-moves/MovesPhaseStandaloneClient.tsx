@@ -288,6 +288,8 @@ interface MovesPhaseStandaloneClientProps {
   charterBasisEnabled?: boolean;
   /** `moves_capture_composition_v1` feature flag, already conjoined server-side with `moves_capture_v2` (tenant-gated, default OFF). When true the workspace surface tabs render inside the agent dock's workspace column instead of above it, and the legacy stage head drops the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. Blocked-phase notice and readiness-workbook actions are unaffected, and no capture field, save, gate or evidence behaviour changes. */
   captureCompositionEnabled?: boolean;
+  /** `moves_workspace_v2` feature flag, already conjoined server-side with `moves_capture_v2` (tenant-gated, default OFF). Increment 1 of the phase-workspace redesign: the capture flow presents ONE slim phase rail (P0–P5 + a non-interactive hand-off marker) and a four-stage sub-step spine (CAPTURE · GENERATE · OUTCOME · GATE) in the v3 locked-light palette; the host drops the stacked legacy gate stepper and the repeated stage head on the phase view (it subsumes the composition polish), de-emphasises the workspace-view row to a secondary control, and moves the readiness-workbook actions off the per-step stage head onto the capture flow's gate step. Presentation and arrangement only — no capture field, structured input, save, gate, evidence, approval or workbook-accept behaviour changes. */
+  workspaceV2Enabled?: boolean;
   /** The basis already recorded per P1 Charter section key, preloaded server-side. Seeds the basis control so a reload shows what was declared rather than an empty choice. */
   initialP1CharterBasisBySection?: Record<string, CharterBasisValue>;
   /**
@@ -938,6 +940,7 @@ export function MovesPhaseStandaloneClient({
   captureP0Enabled = false,
   charterBasisEnabled = false,
   captureCompositionEnabled = false,
+  workspaceV2Enabled = false,
   initialP1CharterBasisBySection = {},
   capturePhaseSavedAnswerCounts,
   captureNotesEnabled = false,
@@ -2995,8 +2998,18 @@ export function MovesPhaseStandaloneClient({
   // and what the stage head stops repeating. It applies only on the phase view
   // and only where the redesigned capture is what renders — the other surface
   // views keep their own heads and their tab row exactly as they are.
+  // `moves_workspace_v2` (flag, default OFF, already conjoined with
+  // moves_capture_v2 server-side). Increment 1 of the phase-workspace redesign.
+  // It only reshapes the redesigned capture flow, so like the composition
+  // polish it applies only where that flow is what renders.
+  const workspaceV2Active = workspaceV2Enabled && captureFlowMounted;
+
+  // The v2 shell subsumes the composition polish — one slim rail means the
+  // legacy gate stepper and the repeated stage head come off the phase view —
+  // so turning on `moves_workspace_v2` implies the composition behaviour
+  // without the operator also having to enable `moves_capture_composition_v1`.
   const captureCompositionActive =
-    captureCompositionEnabled && captureFlowMounted;
+    (captureCompositionEnabled && captureFlowMounted) || workspaceV2Active;
 
   // The accepted stage-readiness workbook review is a HARD precondition for
   // closing P1 through P4 — the gate refuses `transition_evidence_incomplete`
@@ -3018,8 +3031,47 @@ export function MovesPhaseStandaloneClient({
       activeView={workspaceView}
       onSelect={setWorkspaceView}
       tabs={workspaceTabs}
+      // v2 makes the slim phase rail the primary navigator, so the
+      // workspace-view row drops out of the primary phase-flow chrome to a
+      // quieter secondary control. The views themselves stay reachable.
+      variant={workspaceV2Active ? "secondary" : "default"}
     />
   );
+
+  // The readiness-workbook download / upload / preview actions. Built once so
+  // they sit in exactly one place: on the legacy/composition path they stay on
+  // the stage head; under `moves_workspace_v2` they move off that per-step head
+  // (where they read as "across all steps") onto the capture flow's GATE step,
+  // beside the governed approve control — one consistent location per phase.
+  const readinessWorkbookActions: ReactNode =
+    readinessWorkbookHref && offerReadinessWorkbook ? (
+      <div className="mxw-stage-actions">
+        <a className="mxw-stage-download" download href={readinessWorkbookHref}>
+          Download P{phase.phase + 1} readiness workbook
+        </a>
+        {syntheticEvidencePackHref ? (
+          <a
+            className="mxw-stage-download"
+            download
+            href={syntheticEvidencePackHref}
+          >
+            Download sample upload files
+          </a>
+        ) : null}
+        <div ref={workbookReviewRef}>
+          <StageReadinessWorkbookPreviewControl
+            key={
+              phaseScopedStageReadinessPreview?.proposalSet
+                ? `${phaseScopedStageReadinessPreview.proposalSet.artifactId ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.artifactVersion ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.review?.status ?? "unreviewed"}:${phaseScopedStageReadinessPreview.proposalSet.review?.pendingCount ?? ""}`
+                : "no-stored-proposal-set"
+            }
+            apiPath={readinessWorkbookHref}
+            initialPreview={phaseScopedStageReadinessPreview}
+            onReviewSaved={() => router.refresh()}
+          />
+        </div>
+      </div>
+    ) : null;
 
   // The governed submit control for the capture flow's final step: the SAME
   // PhaseApproveAndBuild the canvas uses, so generation + the gate run through
@@ -3433,38 +3485,11 @@ export function MovesPhaseStandaloneClient({
                         </button>
                       </div>
                     ) : null}
-                    {readinessWorkbookHref && offerReadinessWorkbook ? (
-                      <div className="mxw-stage-actions">
-                        <a
-                          className="mxw-stage-download"
-                          download
-                          href={readinessWorkbookHref}
-                        >
-                          Download P{phase.phase + 1} readiness workbook
-                        </a>
-                        {syntheticEvidencePackHref ? (
-                          <a
-                            className="mxw-stage-download"
-                            download
-                            href={syntheticEvidencePackHref}
-                          >
-                            Download sample upload files
-                          </a>
-                        ) : null}
-                        <div ref={workbookReviewRef}>
-                          <StageReadinessWorkbookPreviewControl
-                            key={
-                              phaseScopedStageReadinessPreview?.proposalSet
-                                ? `${phaseScopedStageReadinessPreview.proposalSet.artifactId ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.artifactVersion ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.review?.status ?? "unreviewed"}:${phaseScopedStageReadinessPreview.proposalSet.review?.pendingCount ?? ""}`
-                                : "no-stored-proposal-set"
-                            }
-                            apiPath={readinessWorkbookHref}
-                            initialPreview={phaseScopedStageReadinessPreview}
-                            onReviewSaved={() => router.refresh()}
-                          />
-                        </div>
-                      </div>
-                    ) : null}
+                    {/* Under `moves_workspace_v2` these actions move onto the
+                        capture flow's GATE step (passed as `gateExtras`), so
+                        they leave the stage head here; otherwise they stay on
+                        the head exactly as before. */}
+                    {workspaceV2Active ? null : readinessWorkbookActions}
                     {captureCompositionActive ? null : (
                       <div
                         className="mxw-progress-card"
@@ -3581,6 +3606,10 @@ export function MovesPhaseStandaloneClient({
                           : undefined,
                         approveSlot: captureApproveSlot,
                         allowReviewBeforeSubmit: captureHandoffRecapEnabled,
+                        workspaceV2: workspaceV2Active,
+                        gateExtras: workspaceV2Active
+                          ? readinessWorkbookActions
+                          : null,
                       }}
                     />
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (
@@ -4100,14 +4129,21 @@ function WorkspaceSurfaceTabs({
   activeView,
   onSelect,
   tabs,
+  variant = "default",
 }: {
   activeView: WorkspaceView;
   onSelect: (view: WorkspaceView) => void;
   tabs: Array<{ label: string; view: WorkspaceView }>;
+  /** `secondary` de-emphasises the row (v2 shell), keeping the views reachable. */
+  variant?: "default" | "secondary";
 }) {
   return (
     <div
-      className="mxw-surface-tabs"
+      className={
+        variant === "secondary"
+          ? "mxw-surface-tabs mxw-surface-tabs--secondary"
+          : "mxw-surface-tabs"
+      }
       role="tablist"
       aria-label="Move workspace views"
     >
@@ -9482,6 +9518,10 @@ function MovesStandaloneStyles() {
 .mxw-surface-tabs button:hover{color:var(--ink);background:rgba(255,255,255,.62)}
 .mxw-surface-tabs button.active{color:var(--ink);background:#fff;box-shadow:0 1px 2px rgba(12,26,58,.08)}
 .mxw-surface-tabs button.active::before{content:none}
+.mxw-surface-tabs--secondary{background:transparent;padding:0;gap:4px;margin:0 0 14px;opacity:.9}
+.mxw-surface-tabs--secondary button{font-size:12px;font-weight:500;color:var(--muted);padding:5px 10px;border-radius:7px}
+.mxw-surface-tabs--secondary button.active{background:rgba(12,26,58,.06);color:var(--ink);box-shadow:none}
+.mxw-finder-on .mxw-surface-tabs--secondary button.active::before{content:none}
 .mxw-progress{display:flex;align-items:center;gap:14px;flex:1}
 .mxw-track{flex:1;height:6px;border-radius:3px;background:rgba(20,20,19,.07);overflow:hidden;max-width:260px}
 .mxw-track span{display:block;height:100%;background:var(--green);border-radius:3px;transition:width .35s ease}
