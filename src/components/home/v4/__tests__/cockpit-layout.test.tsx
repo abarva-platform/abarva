@@ -115,7 +115,8 @@ describe("the KPI rail counts from the props and never invents a figure", () => 
     expect(tileNumber("evidence tables").textContent).toBe("2");
     expect(tileNumber("findings in the evidence").textContent).toBe("2");
     // One view could not be supported; the pending-evidence tile reads one, in the absence amber.
-    const pending = tileNumber("evidence views pending");
+    // The label agrees in number with its count (singular here), matching the PageShape line.
+    const pending = tileNumber("evidence view pending");
     expect(pending.textContent).toBe("1");
     expect(pending.getAttribute("style") ?? "").toMatch(
       /ba7517|rgb\(186, 117, 23\)/i,
