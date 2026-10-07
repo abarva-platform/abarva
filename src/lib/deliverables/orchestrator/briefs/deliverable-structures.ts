@@ -12,6 +12,7 @@ import type {
   SectionGroundingMode,
 } from "../types";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+import { MOVES_VALUE_MEASUREMENT_CONTRACT } from "./structure-value-measurement-contract";
 
 /**
  * The Charter's per-section word cap, read from the shared contract
@@ -1992,6 +1993,7 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_READINESS_AND_CHANGE_PLAN,
   MOVES_MOBILIZATION,
   MOVES_HANDOFF,
+  MOVES_VALUE_MEASUREMENT_CONTRACT,
   MOVES_EXECUTIVE_PLAYBACK,
   SOURCE_STRATEGY_MEMO,
   SOURCE_EVAL_WORKBOOK,
