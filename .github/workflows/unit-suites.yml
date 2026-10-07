@@ -85,6 +85,9 @@ jobs:
           node --import tsx --test
           scripts/source/__tests__/market-candidate-research.test.mjs
 
+      - name: Validate Source contract performance unit loading
+        run: npx jest --runInBand --runTestsByPath scripts/source/__tests__/load-contract-depth-package.test.ts --no-coverage --ci
+
       # `src/lib/admin/broker` is 21 suites / 211 tests that no workflow and no
       # npm script reached. Measured through the census resolver on `b061a6819`,
       # not by reading YAML: three directories, 16 + 4 + 1 test files, 0 covered.

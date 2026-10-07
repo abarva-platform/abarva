@@ -13,6 +13,7 @@ import {
 } from "../../src/lib/source/contract-depth-package/adapter";
 import { projectContractDepthPackage } from "../../src/lib/source/contract-depth-package/projection";
 import type { CsvRecord } from "../../src/lib/source/contract-depth-package/projection";
+import { performanceMeasureFromSource } from "../../src/lib/source/contract-intelligence/performance-units";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 import {
   readOpportunityOwnershipManifest,
@@ -1490,8 +1491,12 @@ async function upsertPerformance(
   for (const row of performanceRows) {
     const creditOwed = numberValue(row, "credit_owed_usd") ?? 0;
     const creditClaimed = boolValue(row, "credit_claimed") ? creditOwed : 0;
-    const actualPct = pctValue(row, "actual_result_pct");
-    const thresholdPct = pctValue(row, "committed_threshold_pct");
+    const measure = performanceMeasureFromSource(
+      stringValue(row, "metric_name"),
+      stringValue(row, "actual_result_pct"),
+      stringValue(row, "committed_threshold_pct"),
+      stringValue(row, "unit"),
+    );
     await client.query(
       `INSERT INTO source.contract_performance_observation (
          tenant_key, observation_id, contract_id, service_id, metric_name,
@@ -1502,14 +1507,15 @@ async function upsertPerformance(
          evidence_reference, load_run_id, raw_payload
        )
        VALUES (
-         $1, $2, $3, $4, $5, $6::date, $7::date, $8, $9, $10, '%',
-         $11, $12, $13, $14, $15, 'USD', $16, $2, CURRENT_DATE, 0.9,
-         'reviewed', $17, $18, $19::jsonb
+         $1, $2, $3, $4, $5, $6::date, $7::date, $8, $9, $10, $11,
+         $12, $13, $14, $15, $16, 'USD', $17, $2, CURRENT_DATE, 0.9,
+         'reviewed', $18, $19, $20::jsonb
        )
        ON CONFLICT (tenant_key, observation_id)
        DO UPDATE SET contracted_target = EXCLUDED.contracted_target,
                      actual_value = EXCLUDED.actual_value,
                      value_num = EXCLUDED.value_num,
+                     unit = EXCLUDED.unit,
                      breach_count = EXCLUDED.breach_count,
                      credit_eligible = EXCLUDED.credit_eligible,
                      credit_calculated = EXCLUDED.credit_calculated,
@@ -1527,9 +1533,10 @@ async function upsertPerformance(
         stringValue(row, "metric_name"),
         stringValue(row, "period_start"),
         stringValue(row, "period_end"),
-        thresholdPct === null ? null : `${thresholdPct.toFixed(1)}%`,
-        actualPct === null ? null : `${actualPct.toFixed(1)}%`,
-        actualPct,
+        measure.targetText,
+        measure.actualText,
+        measure.actual,
+        measure.unit,
         stringValue(row, "breach_state") === "breached" ? 1 : 0,
         creditOwed > 0,
         creditOwed,
