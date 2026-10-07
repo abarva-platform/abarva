@@ -30,6 +30,7 @@ import {
   describeUnresolvedBuildSet,
 } from "@/lib/programs/phase-build-set";
 import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
+import { resolvePhaseBuildUseCaseArchetype } from "@/lib/programs/deliverables/orchestrated/phase-build-use-case-archetype";
 import {
   createMoveContextExtract,
   type MoveContextExtractResult,
@@ -465,6 +466,22 @@ export async function POST(req: NextRequest) {
       declaredArchetypeId = null;
     }
 
+    // The archetype this route is HANDED is `move.archetype`, the coarse legacy
+    // UI column, and none of its values names an archetype in either the
+    // archetype-pack or discovery-blueprint catalog. The worker rebuilds the
+    // orchestrator request from the persisted payload alone, so it never
+    // reaches the in-process precedence rule in `build-request.ts` — the
+    // declaration resolved just above has to reach the PAYLOAD or the queued
+    // build composes against no declared archetype at all.
+    //
+    // A request that already names a real archetype still wins, so this is a
+    // no-op for any caller sending one.
+    const buildArchetype = resolvePhaseBuildUseCaseArchetype({
+      requestedArchetype: useCaseArchetype,
+      declaredArchetypeId,
+    });
+    const buildUseCaseArchetype = buildArchetype.useCaseArchetype;
+
     let contextExtract: MoveContextExtractResult | null = null;
     try {
       contextExtract = await createMoveContextExtract({
@@ -649,7 +666,7 @@ export async function POST(req: NextRequest) {
       );
       return {
         module: "moves",
-        useCaseArchetype,
+        useCaseArchetype: buildUseCaseArchetype,
         deliverableTypeKey: spec.deliverableTypeKey,
         deliverableType,
         decisionContext: [
@@ -684,7 +701,7 @@ export async function POST(req: NextRequest) {
             tenantKey: clientKey,
             userId: ctx.userId,
             module: "moves",
-            archetype: useCaseArchetype,
+            archetype: buildUseCaseArchetype,
             deliverableType: orchestratorDeliverableType(
               spec.deliverableTypeKey,
             ),
@@ -738,7 +755,7 @@ export async function POST(req: NextRequest) {
             tenantKey: clientKey,
             userId: ctx.userId,
             module: "moves",
-            archetype: useCaseArchetype,
+            archetype: buildUseCaseArchetype,
             deliverableType,
             jobPayload: payloadFor(spec),
           });
