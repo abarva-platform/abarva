@@ -21,7 +21,11 @@ jest.mock("@/lib/programs/transformers", () => ({
   buildGateCriteria: (...args: unknown[]) => buildGateCriteria(...args),
 }));
 
+// Only the readiness LOAD is mocked. `resolveDeclaredProgramArchetypeId` — the
+// canonical declared-identity precedence, which the function binding reads — is
+// kept real, so a declared Move is resolved here exactly as in production.
 jest.mock("@/lib/programs/discovery/evidence-readiness", () => ({
+  ...jest.requireActual("@/lib/programs/discovery/evidence-readiness"),
   loadDiscoveryEvidenceReadiness: (...args: unknown[]) =>
     loadDiscoveryEvidenceReadiness(...args),
 }));
@@ -319,5 +323,62 @@ describe("buildPhaseIntelligenceSummary", () => {
 
     expect(summary.items[1].sourceLabel).toBe("Member-service Agent Assist Function Pack");
     expect(summary.items[1].facts).toContain("Function key: member_service_agent_assist");
+  });
+
+  it("names the declared archetype instead of a keyword-guessed function pack", async () => {
+    getStrategicMoveById.mockResolvedValue(
+      mockMove({
+        name: "Governed Data Foundation",
+        archetype: "ai_product_enablement",
+        functionPackKey: null,
+        // The declaration the operator job writes, and nothing else: measured on
+        // the prior resolver, this charter alone bound an unrelated healthcare
+        // pack at 0.188 confidence.
+        charter: { classification: { archetype: "governed_data_foundation" } },
+      }),
+    );
+    const { buildPhaseIntelligenceSummary } = await import(
+      "@/lib/programs/phase-intelligence-summary"
+    );
+
+    const summary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 2,
+    });
+
+    const signal = summary.items[1];
+    expect(signal.id).toBe("strategic_signal");
+    expect(signal.sourceLabel).toBe("Declared archetype");
+    expect(signal.title).toBe("This Move is declared Governed Data Foundation.");
+    expect(signal.facts).toContain("Declared archetype: GOVERNED_DATA_FOUNDATION");
+    // No pack is spoken for, so no Function Pack source, function key, or
+    // binding confidence may appear anywhere in the rendered item.
+    const rendered = [signal.title, signal.body, signal.sourceLabel, ...signal.facts].join(" ");
+    expect(rendered).not.toMatch(/Function Pack$/);
+    expect(rendered).not.toMatch(/Function key:/);
+    expect(rendered).not.toMatch(/Binding source:/);
+    expect(rendered).not.toMatch(/agent assist/i);
+    expect(rendered).not.toMatch(/interoperability/i);
+  });
+
+  it("does not treat the coarse program archetype column as a declaration", async () => {
+    getStrategicMoveById.mockResolvedValue(
+      mockMove({
+        name: "Member Service Agent Assist",
+        archetype: "ai_product_enablement",
+        functionPackKey: "member_service_agent_assist",
+        charter: null,
+      }),
+    );
+    const { buildPhaseIntelligenceSummary } = await import(
+      "@/lib/programs/phase-intelligence-summary"
+    );
+
+    const summary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 2,
+    });
+
+    expect(summary.items[1].sourceLabel).toBe("Member-service Agent Assist Function Pack");
   });
 });
