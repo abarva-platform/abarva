@@ -3407,6 +3407,190 @@ describe("MovesPhaseStandaloneClient", () => {
       ]);
     });
 
+    it("lists every stored workbook response, not just the first few, so a long workbook can be judged row by row", () => {
+      // The selection is seeded from EVERY open proposal, but the list used to
+      // render only the first six. A reviewer was told "41/41 selected", shown
+      // six rows, and could accept all forty-one — and could never reject or
+      // flag any row past the sixth, because its checkbox did not exist. A
+      // real workbook carries roughly 33-55 proposals.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const proposals = Array.from({ length: 41 }, (_, index) => ({
+        proposalId: `proposal-${index + 1}`,
+        questionId: `q-${index + 1}`,
+        dimensionId: "baseline_metrics",
+        requirement: "required" as const,
+        question: `Workbook question ${index + 1}.`,
+        response: `Response ${index + 1}.`,
+        answerState: "answered",
+        disposition: "pending",
+      }));
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount: proposals.length,
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const list = screen.getByRole("group", {
+        name: "Stored workbook responses",
+      });
+      expect(within(list).getAllByRole("checkbox")).toHaveLength(41);
+      expect(
+        within(list).getByRole("checkbox", {
+          name: /Workbook question 41\./,
+        }),
+      ).toBeEnabled();
+      expect(screen.getByText(/41\/41 selected/)).toBeInTheDocument();
+    });
+
+    it("clears the seeded selection so one response out of many can be rejected on its own", async () => {
+      // Accept-all is one click because every open response starts ticked.
+      // Rejecting a single response out of forty-one used to mean unticking
+      // forty rows, which is why a reviewer with one bad answer had no
+      // practical move other than accepting it.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const proposals = Array.from({ length: 41 }, (_, index) => ({
+        proposalId: `proposal-${index + 1}`,
+        questionId: `q-${index + 1}`,
+        dimensionId: "baseline_metrics",
+        requirement: "required" as const,
+        question: `Workbook question ${index + 1}.`,
+        response: `Response ${index + 1}.`,
+        answerState: "answered",
+        disposition: "pending",
+      }));
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount: proposals.length,
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+      expect(screen.getByText(/0\/41 selected/)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Reject selected" }),
+      ).toBeDisabled();
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Select all open responses" }),
+      );
+      expect(screen.getByText(/41\/41 selected/)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+      fireEvent.click(
+        screen.getByRole("checkbox", { name: /Workbook question 30\./ }),
+      );
+      expect(screen.getByText(/1\/41 selected/)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Reject selected" }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const patchCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(patchCall?.[1]?.body)).decisions).toEqual([
+        { proposalId: "proposal-30", disposition: "rejected" },
+      ]);
+    });
+    it("survives unticking and re-ticking a response row", () => {
+      // The row handler used to read event.currentTarget INSIDE the state
+      // updater. React can replay an updater on a later render, and the event
+      // is detached by then, so the second tick in one render pass threw a
+      // TypeError out of the whole phase workspace.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 2,
+              pendingCount: 2,
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  questionId: "q-1",
+                  dimensionId: "baseline_metrics",
+                  requirement: "required",
+                  question: "Provide baseline metrics.",
+                  response: "Confirmed in the Q3 close.",
+                  answerState: "answered",
+                  disposition: "pending",
+                },
+                {
+                  proposalId: "proposal-2",
+                  questionId: "q-2",
+                  dimensionId: "delay_volume",
+                  requirement: "required",
+                  question: "Provide addressable delay volume.",
+                  response: "Measured at 1,200 cases.",
+                  answerState: "answered",
+                  disposition: "pending",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const row = screen.getByRole("checkbox", {
+        name: /Provide baseline metrics\./,
+      });
+      expect(row).toBeChecked();
+      fireEvent.click(row);
+      expect(screen.getByText(/1\/2 selected/)).toBeInTheDocument();
+      fireEvent.click(row);
+      expect(screen.getByText(/2\/2 selected/)).toBeInTheDocument();
+    });
+
     it("restores a completed workbook review without reopening pending actions", () => {
       const move = makeMove({
         currentPhase: 1,

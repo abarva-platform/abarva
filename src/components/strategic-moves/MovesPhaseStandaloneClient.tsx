@@ -8374,8 +8374,19 @@ function StageReadinessWorkbookPreviewControl({
                 : `${selectedProposalIds.size}/${preview.proposalSet.proposals.length} selected · upload is not acceptance`}
             </span>
           </div>
-          <div className="mxw-workbook-review-list">
-            {preview.proposalSet.proposals.slice(0, 6).map((proposal) => {
+          {/*
+            Every stored response is listed. Rendering only the first few
+            capped what a reviewer could judge while the selection was still
+            seeded from the whole set, so a 41-proposal workbook offered
+            "41/41 selected" above six rows, and no row past the sixth could
+            be rejected or flagged at all. The list scrolls instead.
+          */}
+          <div
+            aria-label="Stored workbook responses"
+            className="mxw-workbook-review-list"
+            role="group"
+          >
+            {preview.proposalSet.proposals.map((proposal) => {
               const proposalId = proposal.proposalId ?? "";
               return (
                 <label key={proposalId || proposal.questionId}>
@@ -8387,9 +8398,15 @@ function StageReadinessWorkbookPreviewControl({
                       reviewStatus === "saving"
                     }
                     onChange={(event) => {
+                      // Read the event BEFORE the updater: React can replay a
+                      // state updater on a later render, and by then the
+                      // event's currentTarget is null. Reading it inside threw
+                      // a TypeError out of the whole phase workspace on a
+                      // second tick in the same render pass.
+                      const checked = event.currentTarget.checked;
                       setSelectedProposalIds((current) => {
                         const next = new Set(current);
-                        if (event.currentTarget.checked) {
+                        if (checked) {
                           next.add(proposalId);
                         } else {
                           next.delete(proposalId);
@@ -8440,6 +8457,40 @@ function StageReadinessWorkbookPreviewControl({
                 type="button"
               >
                 Reject selected
+              </button>
+              {/*
+                Accept-all is one click because every open response starts
+                ticked. Without these two, singling out one response in a
+                forty-row workbook meant unticking the other thirty-nine, so
+                a reviewer holding one bad answer had no practical move but
+                to accept it.
+              */}
+              <button
+                className="mxw-workbook-review-select"
+                disabled={
+                  selectedProposalIds.size === reviewActionCount ||
+                  reviewStatus === "saving"
+                }
+                onClick={() =>
+                  setSelectedProposalIds(
+                    selectableWorkbookProposalIds(
+                      preview.proposalSet?.proposals,
+                    ),
+                  )
+                }
+                type="button"
+              >
+                Select all open responses
+              </button>
+              <button
+                className="mxw-workbook-review-select"
+                disabled={
+                  selectedProposalIds.size === 0 || reviewStatus === "saving"
+                }
+                onClick={() => setSelectedProposalIds(new Set())}
+                type="button"
+              >
+                Clear selection
               </button>
             </div>
           ) : null}
@@ -9251,7 +9302,7 @@ function MovesStandaloneStyles() {
 .mxw-workbook-review-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .mxw-workbook-review-summary strong{font-size:12.5px;color:var(--ink)}
 .mxw-workbook-review-summary span{font-size:11.5px;color:var(--muted);font-weight:700}
-.mxw-workbook-review-list{display:grid;gap:6px}
+.mxw-workbook-review-list{display:grid;gap:6px;max-height:280px;overflow-y:auto}
 .mxw-workbook-review-list label{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-2)}
 .mxw-workbook-review-list input{margin-top:3px}
 .mxw-workbook-review-list b{display:block;font-size:12px;color:var(--ink);font-weight:750}
@@ -9259,6 +9310,7 @@ function MovesStandaloneStyles() {
 .mxw-workbook-review-actions{display:flex;gap:7px;flex-wrap:wrap}
 .mxw-workbook-review-actions button{border:1px solid rgba(0,87,184,.2);background:#fff;color:var(--blue);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer}
 .mxw-workbook-review-actions button:first-child{background:var(--blue);color:#fff;border-color:var(--blue)}
+.mxw-workbook-review-actions button.mxw-workbook-review-select{border-color:var(--line-2);color:var(--muted);font-weight:750}
 .mxw-workbook-review-actions button:disabled{opacity:.5;cursor:not-allowed}
 .mxw-workbook-review-status{font-size:11.5px;font-weight:800;color:var(--muted)}
 .mxw-workbook-review-status.saved{color:#147c5b}
