@@ -130,6 +130,10 @@ import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/m
 import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
 import { declarableEvidenceUploadFamilies } from "@/lib/programs/evidence-readiness/upload-family-declaration";
 import {
+  declarableCurrentStateFamilies,
+  resolveCurrentStateUploadFamilies,
+} from "@/lib/programs/evidence-readiness/current-state-upload-routing";
+import {
   currentPhaseRequiredEvidenceGaps,
   phaseProgressReadiness,
 } from "@/lib/programs/phase-progress-readiness";
@@ -7464,173 +7468,6 @@ type FamilyUploadResult = {
   detail: string;
 };
 
-function normalizeUploadName(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ");
-}
-
-const CURRENT_STATE_FILENAME_ALIASES: Record<string, readonly string[]> = {
-  member_service_process_map: [
-    "workflow walkthrough",
-    "member service process",
-    "process and escalation map",
-    "agent journey",
-  ],
-  member_service_metrics_baseline: [
-    "monthly kpi baseline",
-    "metric dictionary",
-    "contact center performance baseline",
-    "contact center kpi",
-    "conflict register",
-  ],
-  member_service_systems_data_landscape: [
-    "system inventory",
-    "systems data landscape",
-    "integration inventory",
-    "application inventory",
-    "data source inventory",
-  ],
-  knowledge_policy_content_inventory: [
-    "knowledge inventory",
-    "policy inventory",
-    "script inventory",
-  ],
-  contact_center_transcripts_intents: [
-    "transcript",
-    "intent taxonomy",
-    "speech analytics",
-  ],
-  phi_controls_and_human_approval: [
-    "security control matrix",
-    "phi controls",
-    "privacy control inventory",
-    "human approval control matrix",
-    "human approval boundaries",
-  ],
-  member_service_org_change_readiness: [
-    "org change readiness",
-    "stakeholder map",
-    "training adoption",
-    "change readiness",
-  ],
-  solution_delivery_estimation_context: [
-    "delivery estimation context",
-    "implementation capacity",
-    "delivery cadence",
-  ],
-};
-
-function inferCurrentStateFamilies(
-  fileName: string,
-  instruments: CurrentStateInstrument[],
-): CurrentStateInstrument[] {
-  const normalized = normalizeUploadName(fileName);
-  const explicitMatches = instruments.filter((instrument) =>
-    (CURRENT_STATE_FILENAME_ALIASES[instrument.key] ?? []).some((alias) =>
-      normalized.includes(normalizeUploadName(alias)),
-    ),
-  );
-  if (explicitMatches.length > 0) return explicitMatches;
-
-  const semanticMatches = instruments.filter((instrument) => {
-    const family = normalizeUploadName(
-      `${instrument.key} ${instrument.label} ${instrument.documentFamily ?? ""}`,
-    );
-    if (
-      /\bsla\b|\bservice level\b/.test(family) &&
-      /\bsla\b|\bservice level\b|\bbaseline\b|\btarget\b|\bvendor handler\b/.test(
-        normalized,
-      )
-    ) {
-      return true;
-    }
-    if (
-      /\bvendor\b.*\bspend\b|\bspend\b.*\bvendor\b|\bcost\b/.test(family) &&
-      /\bvendor\b|\bspend\b|\bcost\b|\bexpense\b|\bcompensation\b|\bexpedite\b/.test(
-        normalized,
-      )
-    ) {
-      return true;
-    }
-    if (
-      /\bincumbent\b|\bperformance\b/.test(family) &&
-      /\bincumbent\b|\bperformance\b|\bcase\b|\bscan\b|\bevent\b|\bcontact\b|\bqueue\b|\bmetric\b/.test(
-        normalized,
-      )
-    ) {
-      return true;
-    }
-    const familyTokens = family
-      .split(/\s+/)
-      .filter(
-        (token) =>
-          token.length >= 4 &&
-          !/^(current|state|evidence|family|baseline)$/.test(token),
-      );
-    return familyTokens.some((token) => normalized.includes(token));
-  });
-  if (semanticMatches.length > 0) return semanticMatches;
-
-  const candidateKeys = new Set<string>();
-
-  if (
-    /\b(workshop|process|handoff|workflow|current state|sop|walkthrough)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("commercial_lending_process_map");
-  }
-  if (
-    /\b(metric|metrics|baseline|kpi|cycle|volume|queue|aging|onboarding)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("commercial_lending_metrics_baseline");
-  }
-  if (/\b(kyc|defect|exception|audit|document)\b/.test(normalized)) {
-    candidateKeys.add("kyc_document_defect_log");
-  }
-  if (
-    /\b(system|systems|application|apps|data|inventory|integration|architecture|core|crm|los)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("lending_systems_data_landscape");
-  }
-  if (
-    /\b(policy|knowledge|checklist|covenant|content|procedure|guidance)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("credit_policy_knowledge_inventory");
-  }
-  if (
-    /\b(control|controls|approval|authority|risk|compliance|guardrail|privacy)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("banking_controls_human_approval");
-  }
-  if (
-    /\b(org|organization|stakeholder|change|training|adoption|readiness|role|owner)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("lending_org_change_readiness");
-  }
-  if (
-    /\b(delivery|estimate|estimation|implementation|capacity|release|sdlc|itsm|roadmap)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("solution_delivery_estimation_context");
-  }
-
-  const directMatches = instruments.filter((instrument) =>
-    candidateKeys.has(instrument.key),
-  );
-  return directMatches;
-}
-
 function CurrentStateFamilyUploadPanel({
   moveId,
   onOpenFiles,
@@ -7651,12 +7488,20 @@ function CurrentStateFamilyUploadPanel({
   >("readiness_evidence");
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<FamilyUploadResult[]>([]);
+  // What this batch of files is declared to cover. Empty means "decide from
+  // the file name", which is what this surface used to do for every file with
+  // no way to say otherwise.
+  const [declaredFamilyKey, setDeclaredFamilyKey] = useState("");
   const documentFamilies = readiness.instruments.filter(
     (instrument) => instrument.documentFamily,
   );
   const openFamilies = readiness.instruments.filter(
     (instrument) => instrument.status !== "committed",
   );
+  // Every open family on the readiness map is offered, so the table below and
+  // the control above it ask for the same set: no family is named as needed
+  // while being impossible to declare.
+  const declarableFamilies = declarableCurrentStateFamilies(openFamilies);
   const reviewRequiredCount = documentFamilies.filter(
     (instrument) => instrument.status === "review_required",
   ).length;
@@ -7855,17 +7700,24 @@ function CurrentStateFamilyUploadPanel({
           nextResults.push(await uploadSessionArtifact(file));
           continue;
         }
-        const mappedFamilies = inferCurrentStateFamilies(
-          file.name,
+        // A declared family wins; the file name is the fallback for an
+        // undeclared file only. Before the picker existed, a name the
+        // heuristic could not place was refused here with no way through.
+        const routing = resolveCurrentStateUploadFamilies({
+          declaredFamilyKey,
+          fileName: file.name,
           openFamilies,
-        );
-        if (mappedFamilies.length === 0) {
+        });
+        const mappedFamilies = routing.families;
+        if (routing.basis === null) {
           nextResults.push({
             familyKey: "unmapped",
             familyLabel: "No open current-state family",
             fileName: file.name,
             status: "error",
-            detail: "No open current-state family matched this file.",
+            detail:
+              routing.refusal ??
+              "No open current-state family matched this file.",
           });
           continue;
         }
@@ -7879,11 +7731,20 @@ function CurrentStateFamilyUploadPanel({
           // families go through parse → review → commit. Dispatching on
           // `documentFamily` is what makes the gap card's own instruction
           // ("Upload CMDB export as CSV") true on this step.
-          nextResults.push(
-            family.documentFamily
-              ? await uploadFileForFamily(file, family)
-              : await ingestStructuredForFamily(file, family),
-          );
+          const result = family.documentFamily
+            ? await uploadFileForFamily(file, family)
+            : await ingestStructuredForFamily(file, family);
+          // Say which way the family was decided. A guessed family can place
+          // one file under several families at once, and until this line said
+          // so the only difference an uploader could see between a declared
+          // placement and a guessed one was the number of rows that appeared.
+          nextResults.push({
+            ...result,
+            detail:
+              routing.basis === "declared"
+                ? `Declared as this family. ${result.detail}`
+                : `Family guessed from the file name (${mappedFamilies.length} matched). ${result.detail}`,
+          });
         }
       }
       setResults(nextResults);
@@ -7938,6 +7799,23 @@ function CurrentStateFamilyUploadPanel({
             <option value="session_notes">Workshop / session notes</option>
           </select>
         </label>
+        {uploadMode === "readiness_evidence" ? (
+          <label className="mxw-family-upload-mode">
+            <span>These files cover</span>
+            <select
+              aria-label="Evidence family these files cover"
+              onChange={(event) => setDeclaredFamilyKey(event.target.value)}
+              value={declaredFamilyKey}
+            >
+              <option value="">Decide from the file name</option>
+              {declarableFamilies.map((family) => (
+                <option key={family.key} value={family.key}>
+                  {family.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <input
           aria-label="Upload P2 current-state evidence files"
           className="mxw-hidden-file"
