@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { type PhaseStepGroup } from "@/lib/programs/moves-phase-step-groups";
+import { captureStepResumeIndex } from "@/lib/programs/capture-step-resume";
 import { resolvePhaseStepGroups } from "@/lib/programs/moves-phase-step-plan";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
 import {
@@ -171,21 +172,25 @@ export function MovesCaptureFlow({
       .map((key) => sectionByKey.get(key))
       .filter((s): s is PhaseCaptureSection => Boolean(s));
 
-  const firstIncompleteStep = groups.findIndex((group) => {
-    const resolvedSections = groupSections(group);
-    return (
-      resolvedSections.length !== group.sectionKeys.length ||
-      resolvedSections.length === 0 ||
-      resolvedSections.some((section) => !isSectionComplete(section.key))
-    );
-  });
   // view: 0..2 = steps, 3 = hand-off. A reload resumes at the first step whose
   // server-backed answers are not complete. When all capture steps are done,
   // stop at the final step so its governed approval action remains explicit.
-  const resumeStep =
-    firstIncompleteStep >= 0
-      ? firstIncompleteStep
-      : Math.max(groups.length - 1, 0);
+  //
+  // A step a `repaired` grouping left with no questions is vacuously done, not
+  // forever undone — see `capture-step-resume.ts` for why this rule lives
+  // outside the component and what it used to get wrong.
+  const resumeStep = captureStepResumeIndex(
+    groups.map((group) => {
+      const resolvedSections = groupSections(group);
+      return {
+        mounted: resolvedSections.length,
+        unmounted: group.sectionKeys.length - resolvedSections.length,
+        allComplete: resolvedSections.every((section) =>
+          isSectionComplete(section.key),
+        ),
+      };
+    }),
+  );
   const [view, setView] = useState<number>(initialStep ?? resumeStep);
   // Whether this phase was submitted FROM this flow. The recap may be opened as
   // a review before that happens, and must not claim a submission that has not.
