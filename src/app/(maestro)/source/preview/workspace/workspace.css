@@ -1116,6 +1116,33 @@
   margin: 8px 0 0;
 }
 
+.sw-c3-optimize-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 20px;
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid #d3d1c7;
+}
+
+.sw-c3-optimize-value > span {
+  flex: 1 0 100%;
+  color: #5f5e5a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sw-c3-optimize-value > div {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.sw-c3-optimize-value strong {
+  color: #0a0a0b;
+}
+
 .sw-c3-case-thread {
   grid-column: 1 / -1;
   display: grid;

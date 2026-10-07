@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Contract 360 no longer presents empty negotiation tabs and repeated unsized value cards when the contract has only an evidence-stage opportunity. It shows the governed next action instead. Tabs with authored content remain available, and the contract list no longer promises to open a different page than its click target. Header controls can wrap within the viewport.
+Contract 360 no longer presents empty negotiation tabs and repeated unsized value cards when the contract has only an evidence-stage opportunity. It shows the governed next action instead, while preserving any recorded potential or Finance-confirmed amounts. Tabs with authored content remain available, and the contract list no longer promises to open a different page than its click target. Header controls can wrap within the viewport.
 
 ## Layer Impact
 
@@ -28,6 +28,7 @@ Release lane: `global-control-lane`. Layer 4 Source presentation only. Layer 3 f
 
 - Contract 360 Optimize chooses only tabs with usable content and shows the existing governed action when none qualify.
 - Unsized placeholders are not rendered as established value types.
+- Evidence-stage contracts with recorded value retain those amounts without implying Finance confirmation.
 - Contract list action wording matches the Story landing view.
 - Header controls wrap, and the repeated contract ID is removed from the toolbar.
 - Focused UI regression tests.
@@ -35,7 +36,7 @@ Release lane: `global-control-lane`. Layer 4 Source presentation only. Layer 3 f
 ## QA / Validation
 
 - Red-first UI tests reproduced the empty-tab presentation and unsized placeholders before implementation.
-- Four focused workspace suites: 96 tests passed.
+- Four focused workspace suites: 97 tests passed.
 - TypeScript typecheck passed with an increased Node heap; default heap exhausted before reporting diagnostics.
 - Edited TypeScript files lint without errors; one pre-existing unused-variable warning remains in the workspace component.
 - Signed-in post-deploy review is pending.

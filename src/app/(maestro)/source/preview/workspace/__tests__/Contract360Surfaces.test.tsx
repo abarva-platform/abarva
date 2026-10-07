@@ -294,6 +294,12 @@ describe("Contract 360 Optimize presentation", () => {
         opportunities: [{ id: "SIGNAL-1", label: "Scope review", stageRaw: "signal" }],
         recommendation: "Collect the missing service-scope evidence.",
         recommendationDetail: "Confirm the run catalog before a buyer ask is written.",
+        potential: {
+          recoverable: "Not sized",
+          avoidable: "Not sized",
+          negotiable: "Not sized",
+        },
+        financeConfirmed: "Not established",
       },
     } as unknown as SourceWorkspaceVM;
 
@@ -306,6 +312,30 @@ describe("Contract 360 Optimize presentation", () => {
     expect(screen.queryByRole("tab", { name: "Sequence" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
     expect(screen.queryByText("No negotiation text is loaded for this contract.")).toBeNull();
+  });
+
+  it("retains recorded value even when negotiation text is absent", () => {
+    const vm = {
+      c: { id: "TEST-002" },
+      detail: { cloudCommitmentPeerCoverage: [] },
+      opportunityView: {
+        opportunities: [{ id: "SIGNAL-2", label: "Invoice review", stageRaw: "signal" }],
+        recommendation: "Reconcile the invoices before a vendor ask.",
+        potential: {
+          recoverable: "$37K",
+          avoidable: "$151K",
+          negotiable: "Not established",
+        },
+        financeConfirmed: "Not established",
+      },
+    } as unknown as SourceWorkspaceVM;
+
+    render(<ContractOptimizeContent vm={vm} />);
+
+    expect(screen.getByText("$37K")).toBeTruthy();
+    expect(screen.getByText("$151K")).toBeTruthy();
+    expect(screen.getByText("Reconcile the invoices before a vendor ask.")).toBeTruthy();
+    expect(screen.queryByText("A negotiation position and value are not established yet.")).toBeNull();
   });
 
   it("does not promote unsized placeholders to established value", () => {
@@ -330,6 +360,12 @@ describe("Contract 360 Optimize presentation", () => {
       opportunityView: {
         opportunities: [{ id: "DISCOUNT-1", label: "Discount band review", stageRaw: "signal" }],
         recommendation: "Collect the accepted price schedule.",
+        potential: {
+          recoverable: "Not sized",
+          avoidable: "Not sized",
+          negotiable: "Not sized",
+        },
+        financeConfirmed: "Not established",
       },
     } as unknown as SourceWorkspaceVM;
 

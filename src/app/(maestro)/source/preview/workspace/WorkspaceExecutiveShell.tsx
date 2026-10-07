@@ -4682,6 +4682,7 @@ export function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
 
   const availableTabs = contractOptimizeAvailableTabs(vm);
   if (availableTabs.length === 0) {
+    const value = contractValueTypeSummary(view);
     return (
       <div className="sw-c3-optimize-next-action">
         <PanelHead eyebrow="Evidence review" title="Next action" />
@@ -4691,9 +4692,33 @@ export function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
         {view.recommendationDetail ? (
           <p className="sw-v2-muted">{view.recommendationDetail}</p>
         ) : null}
-        <p className="sw-v2-muted">
-          A negotiation position and value are not established yet.
-        </p>
+        <p className="sw-v2-muted">No authored negotiation position is recorded yet.</p>
+        {value.established.length > 0 || value.confirmed ? (
+          <div className="sw-c3-optimize-value">
+            {value.established.length > 0 ? (
+              <span>Potential value, not booked</span>
+            ) : null}
+            {value.established.map(([label, amount]) => (
+              <div key={label}>
+                <b>{label}</b>
+                <strong>{amount}</strong>
+              </div>
+            ))}
+            {value.confirmed ? (
+              <div>
+                <b>Finance confirmed</b>
+                <strong>{value.confirmed}</strong>
+              </div>
+            ) : (
+              <p className="sw-v2-muted">No Finance-confirmed value is recorded.</p>
+            )}
+          </div>
+        ) : (
+          <p className="sw-v2-muted">
+            No opportunity value has been sized or Finance-confirmed.
+          </p>
+        )}
+        <ContractOptimizeGateStatement vm={vm} />
       </div>
     );
   }
