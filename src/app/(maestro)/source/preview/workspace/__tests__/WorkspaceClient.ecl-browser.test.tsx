@@ -1719,9 +1719,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     });
 
     // The governed Optimize headline is the lever list in prose, and the three
-    // sub-tabs to the left render those levers as tables. Because the statement
+    // available sub-tabs render those levers as tables. Because the statement
     // is keyed on the Contract 360 tab and not the sub-tab, it restated
-    // whichever sub-tab was open, on all three. The evidence gate is the one
+    // whichever sub-tab was open. The evidence gate is the one
     // claim with no other home, so it is what survives in the right column.
     expect(
       screen.queryByText("Two Databricks levers are governed for outreach."),
@@ -1743,7 +1743,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Levers" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Sequence" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Comparator" })).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
+    expect(screen.queryByText("No discount comparator is loaded.")).toBeNull();
     expect(screen.getByText("Serve notice")).toBeTruthy();
     expect(screen.getByText("Rationalize workload scope")).toBeTruthy();
     expect(screen.queryByText("Optimize evidenced opportunities")).toBeNull();

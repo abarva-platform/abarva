@@ -5267,11 +5267,7 @@ function ContractValueTypeStack({
           {unpriced.join(", ")} value is not sized.
         </p>
       ) : null}
-      {confirmed ? (
-        <Fact label="Finance confirmed" value={confirmed} />
-      ) : (
-        <p className="sw-v2-muted">No Finance-confirmed value is recorded.</p>
-      )}
+      <Fact label="Finance confirmed" value={confirmed ?? "Nothing booked yet"} />
       {/*
         A count of deterministic claim cards used to sit here. It is a builder's
         measure of the pipeline, not a fact about the contract, and a reader has

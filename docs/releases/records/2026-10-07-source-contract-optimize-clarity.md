@@ -36,7 +36,7 @@ Release lane: `global-control-lane`. Layer 4 Source presentation only. Layer 3 f
 ## QA / Validation
 
 - Red-first UI tests reproduced the empty-tab presentation and unsized placeholders before implementation.
-- Four focused workspace suites: 97 tests passed.
+- All 37 Source preview workspace suites: 352 tests passed, including the existing contract-surface proof updated to reject an unsupported Comparator tab.
 - TypeScript typecheck passed with an increased Node heap; default heap exhausted before reporting diagnostics.
 - Edited TypeScript files lint without errors; one pre-existing unused-variable warning remains in the workspace component.
 - Signed-in post-deploy review is pending.
