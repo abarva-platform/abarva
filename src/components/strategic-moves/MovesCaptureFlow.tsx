@@ -150,6 +150,18 @@ export interface MovesCaptureFlowProps {
    * default) leaves the flow unchanged. Ignored unless `workspaceV2` is true.
    */
   gateExtras?: ReactNode;
+  /**
+   * `moves_workspace_v2`, Increment 2: the OUTCOME findings surface for an
+   * intelligence phase (P2 Discover, P4 Business case). When provided AND
+   * `workspaceV2` is true, the OUTCOME step (view 3) renders this surface in
+   * place of the hand-off recap, and the OUTCOME stage becomes navigable (the
+   * surface is a no-submit review, so it opens no second submit path). The
+   * governed approve control still travels onto this screen exactly as it does
+   * onto the recap, so the gate decision runs through the existing pipeline.
+   * Null (the default, and for every capture-heavy phase) leaves the OUTCOME
+   * step as the hand-off recap — byte-for-byte Increment 1.
+   */
+  outcomeFindings?: ReactNode;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -177,6 +189,7 @@ export function MovesCaptureFlow({
   allowReviewBeforeSubmit = false,
   workspaceV2 = false,
   gateExtras = null,
+  outcomeFindings = null,
 }: MovesCaptureFlowProps) {
   // Resolved from the sections this phase DECLARES, not from the phase number:
   // P3 Design re-shapes its question set once P2 confirms a solution route, and
@@ -247,11 +260,15 @@ export function MovesCaptureFlow({
 
   // v2 shell: the four-stage sub-step spine, derived from the real step groups
   // and the current view. Presentation only — see `moves-workspace-v2-spine`.
+  // Increment 2: an intelligence phase's OUTCOME is the findings surface, which
+  // is a no-submit review and so opens the OUTCOME path on its own.
+  const hasOutcomeFindings = workspaceV2 && outcomeFindings !== null;
   const v2Spine: MovesV2SpineStage[] = workspaceV2
     ? movesWorkspaceV2Spine({
         captureTitles: groups.map((group) => group.title),
         view,
         handoffReachable: handoffAccess.reachable,
+        outcomeFindingsPresent: hasOutcomeFindings,
       })
     : [];
 
@@ -537,47 +554,64 @@ export function MovesCaptureFlow({
             </>
           ) : (
             <section className="mcf-handoff" data-testid="mcf-handoff">
-              <div className="mcf-panel-head">
-                <span
-                  className={
-                    handoffHeading.showTick
-                      ? "mcf-eyebrow mcf-done-eyebrow"
-                      : "mcf-eyebrow"
-                  }
+              {/* Increment 2: an intelligence phase's OUTCOME is the findings
+                  surface, not the hand-off recap. It carries its own heading,
+                  so the recap head + "what you captured" list give way to it;
+                  the "what's next"/gate block below is unchanged, so the
+                  governed approve control still travels here. Every other phase
+                  keeps the recap exactly as Increment 1. */}
+              {hasOutcomeFindings ? (
+                <div
+                  className="mcf-v2-outcome"
+                  data-testid="mcf-v2-outcome-findings"
                 >
-                  {handoffHeading.showTick ? (
-                    <span className="mcf-tick">✓</span>
-                  ) : null}{" "}
-                  {handoffHeading.eyebrow}
-                </span>
-                <h1 className="mcf-panel-title">{handoffHeading.title}</h1>
-              </div>
-              {handoffSummary}
-              <div className="mcf-recap" aria-label="What you captured">
-                {groups.map((group, gi) => (
-                  <div key={group.title}>
-                    <h3 className="mcf-eyebrow">
-                      {pad(gi + 1)} · {group.title}
-                    </h3>
-                    <dl>
-                      {groupSections(group).map((section) => {
-                        const recap = sectionRecap(section).trim();
-                        return (
-                          <div key={section.key}>
-                            <dt>
-                              {section.label}
-                              {renderSectionRecapMark?.(section) ?? null}
-                            </dt>
-                            <dd className={recap ? "" : "mcf-empty"}>
-                              {recap || "Not answered"}
-                            </dd>
-                          </div>
-                        );
-                      })}
-                    </dl>
+                  {outcomeFindings}
+                </div>
+              ) : (
+                <>
+                  <div className="mcf-panel-head">
+                    <span
+                      className={
+                        handoffHeading.showTick
+                          ? "mcf-eyebrow mcf-done-eyebrow"
+                          : "mcf-eyebrow"
+                      }
+                    >
+                      {handoffHeading.showTick ? (
+                        <span className="mcf-tick">✓</span>
+                      ) : null}{" "}
+                      {handoffHeading.eyebrow}
+                    </span>
+                    <h1 className="mcf-panel-title">{handoffHeading.title}</h1>
                   </div>
-                ))}
-              </div>
+                  {handoffSummary}
+                  <div className="mcf-recap" aria-label="What you captured">
+                    {groups.map((group, gi) => (
+                      <div key={group.title}>
+                        <h3 className="mcf-eyebrow">
+                          {pad(gi + 1)} · {group.title}
+                        </h3>
+                        <dl>
+                          {groupSections(group).map((section) => {
+                            const recap = sectionRecap(section).trim();
+                            return (
+                              <div key={section.key}>
+                                <dt>
+                                  {section.label}
+                                  {renderSectionRecapMark?.(section) ?? null}
+                                </dt>
+                                <dd className={recap ? "" : "mcf-empty"}>
+                                  {recap || "Not answered"}
+                                </dd>
+                              </div>
+                            );
+                          })}
+                        </dl>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
               <div className="mcf-next">
                 <div>
                   <span className="mcf-eyebrow">
@@ -735,4 +769,5 @@ const MCF_CSS = `
 .mcf-v2-sstep.is-current .mcf-v2-dot{background:var(--mcf-accent);border-color:var(--mcf-accent);color:#fff}
 .mcf-v2-sstep.is-current .mcf-v2-kind{color:var(--mcf-accent)}
 .mcf-v2-gate-extras{display:flex;flex-direction:column;gap:10px;flex-basis:100%;margin-bottom:4px}
+.mcf-v2-outcome{margin:0 0 8px}
 `;

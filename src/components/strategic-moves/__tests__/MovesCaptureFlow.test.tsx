@@ -410,6 +410,61 @@ describe("MovesCaptureFlow", () => {
       expect(outcome).toHaveClass("is-current");
     });
 
+    it("renders the OUTCOME findings surface in place of the recap, and opens the stage", () => {
+      const FINDINGS = (
+        <div data-testid="findings-surface">What we found this phase</div>
+      );
+      renderFlow({
+        workspaceV2: true,
+        approveSlot: APPROVE,
+        outcomeFindings: FINDINGS,
+      });
+      // The OUTCOME stage is labelled "Findings" and is navigable even though
+      // an approveSlot with no review would normally close the recap.
+      const steps = screen.getByRole("navigation", { name: "Steps" });
+      const outcome = steps.querySelector(
+        ".mcf-v2-sstep.kind-outcome",
+      ) as HTMLButtonElement;
+      expect(outcome).not.toBeNull();
+      expect(outcome.disabled).toBe(false);
+      expect(outcome).toHaveTextContent("Findings");
+      fireEvent.click(outcome);
+      // The findings surface replaces the "what you captured" recap list.
+      expect(screen.getByTestId("mcf-v2-outcome-findings")).toBeInTheDocument();
+      expect(screen.getByTestId("findings-surface")).toBeInTheDocument();
+      expect(document.querySelector(".mcf-recap")).toBeNull();
+      // The governed approve control travels onto the findings screen.
+      expect(
+        screen.getByRole("button", { name: "Approve & Build" }),
+      ).toBeInTheDocument();
+    });
+
+    it("carries gateExtras (the findings gate summary) onto the findings outcome", () => {
+      renderFlow({
+        workspaceV2: true,
+        approveSlot: APPROVE,
+        outcomeFindings: <div data-testid="findings-surface">x</div>,
+        gateExtras: <div data-testid="gate-summary">2 awaiting</div>,
+      });
+      const outcome = screen
+        .getByRole("navigation", { name: "Steps" })
+        .querySelector(".mcf-v2-sstep.kind-outcome") as HTMLButtonElement;
+      fireEvent.click(outcome);
+      expect(screen.getByTestId("gate-summary")).toBeInTheDocument();
+    });
+
+    it("keeps the hand-off recap as the OUTCOME when no findings surface is given", () => {
+      renderFlow({ workspaceV2: true });
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Submit Charter" }));
+      // No findings slot → the recap renders exactly as Increment 1.
+      expect(document.querySelector(".mcf-recap")).not.toBeNull();
+      expect(
+        screen.queryByTestId("mcf-v2-outcome-findings"),
+      ).not.toBeInTheDocument();
+    });
+
     it("flag OFF renders the legacy journey strip and three-step bar unchanged", () => {
       renderFlow();
       const phases = screen.getByRole("navigation", { name: "Phases" });
