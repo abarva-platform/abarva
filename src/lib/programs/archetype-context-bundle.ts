@@ -35,6 +35,7 @@ import {
 } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
+import { phaseKeyForNumber } from "@/lib/programs/archetypes/phase-key";
 import { resolveArchetypeRequirements } from "@/lib/programs/archetypes/resolver";
 import type { GroundedAnswerEnvelope } from "@/lib/programs/archetypes/types";
 import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
@@ -283,14 +284,35 @@ export function answerGrounded(
 
   // 5) What should be diagnosed in P2?
   if (/diagnose|p2|discover/.test(q)) {
-    const reqs = resolveArchetypeRequirements(
+    // `resolveArchetypeRequirements` returns a severity per family and a
+    // rationale that says, for a soft one, that it "is not a hard blocker".
+    // Flattening both into one list labelled "requires" asserted the opposite
+    // of what the resolver resolved: the governed-data-foundation archetype
+    // declares eleven hard families and an optional twelfth, and the approved
+    // evidence pack supplies the eleven on purpose. Stating twelve as required
+    // sends a reader after evidence no gate asks for, and gives them no way to
+    // tell which of the twelve actually blocks. Say each in its own terms.
+    const resolved = resolveArchetypeRequirements(
       getArchetype(b.archetype.id)!,
       "diagnose",
       b.profile,
-    ).map((r) => r.family.key);
+    );
+    const label = (k: string) => familyLabel(b, k);
+    const hardKeys = resolved
+      .filter((r) => r.severity === "hard")
+      .map((r) => r.family.key);
+    const softKeys = resolved
+      .filter((r) => r.severity !== "hard")
+      .map((r) => r.family.key);
+    const requiredSentence = hardKeys.length
+      ? `P2 Diagnose (archetype-driven) requires: ${hardKeys.map(label).join(", ")}.`
+      : "P2 Diagnose (archetype-driven) requires no evidence family as a hard blocker.";
+    const optionalSentence = softKeys.length
+      ? ` Optional context, not a blocker: ${softKeys.map(label).join(", ")}.`
+      : "";
     return {
       question,
-      answer: `P2 Diagnose (archetype-driven) requires: ${reqs.map((k) => familyLabel(b, k)).join(", ")}. These are computed from the ${b.archetype.name} archetype × this estate — not a fixed list.`,
+      answer: `${requiredSentence}${optionalSentence} These are computed from the ${b.archetype.name} archetype × this estate — not a fixed list.`,
       envelope: envelope(b, {
         citations: ["archetype:" + b.archetype.id],
         missing: [],
@@ -302,11 +324,17 @@ export function answerGrounded(
   // 6) What deliverables should be generated next?
   if (/deliverable|next|generate|artifact/.test(q)) {
     const arch = getArchetype(b.archetype.id)!;
-    const phaseKey =
-      b.phase === 1 ? "charter" : b.phase === 2 ? "diagnose" : "charter";
-    const d = arch.deliverablePack
-      .filter((x) => x.phase === phaseKey)
-      .map((x) => x.label);
+    // Resolve the phase the caller is actually on. This read used to map 1 to
+    // charter, 2 to diagnose and EVERY other phase to charter, so P0, P3, P4
+    // and P5 were answered with the charter entries under the words "at this
+    // phase". Every archetype but one declares design, roadmap/business-case
+    // and mobilize entries, which that fallback could never reach.
+    const phaseKey = phaseKeyForNumber(b.phase);
+    const d = phaseKey
+      ? arch.deliverablePack
+          .filter((x) => x.phase === phaseKey)
+          .map((x) => x.label)
+      : [];
     return {
       question,
       answer: `Next deliverables for the ${arch.name} archetype at this phase: ${d.join(", ") || "none defined"}. Each is generated grounded — claims cited or flagged [MISSING EVIDENCE].`,
