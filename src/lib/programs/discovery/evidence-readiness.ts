@@ -12,6 +12,7 @@ import {
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { getProgramById } from "@/lib/programs/queries";
 import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
+import { gapRemediationSentence } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 
 export interface DiscoveryEvidenceReadinessItem {
   id: string;
@@ -568,7 +569,7 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
       likelySource: family.likelySource,
       format: family.format,
       grounds: family.grounds,
-      remediation: `Upload ${family.format} from ${family.likelySource} or record a human waiver before P3.`,
+      remediation: gapRemediationSentence(family.format, family.likelySource),
     }));
 
   return {

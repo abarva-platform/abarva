@@ -64,6 +64,7 @@ import { formatEstimateModelForPrompt } from "@/lib/programs/estimate-model";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import { buildHeldByEvidenceDetail } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
 import {
   formatAcceptedStageReadinessContextForPrompt,
@@ -356,7 +357,7 @@ export async function POST(req: NextRequest) {
       return Response.json(
         {
           error: "required_evidence_open",
-          detail: `${requiredEvidenceGaps.length} required evidence item${requiredEvidenceGaps.length === 1 ? " is" : "s are"} not yet approved, covered, or formally waived. No phase build was queued.`,
+          detail: buildHeldByEvidenceDetail(requiredEvidenceGaps.length),
           requiredEvidenceGaps: requiredEvidenceGaps.map((gap) => ({
             evidenceSlot: gap.evidenceSlot,
             status: gap.status,
