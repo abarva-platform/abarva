@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Contract 360 no longer presents empty negotiation tabs and repeated unsized value cards when the contract has only an evidence-stage opportunity. It shows the governed next action instead, while preserving any recorded potential or Finance-confirmed amounts. Tabs with authored content remain available, and the contract list no longer promises to open a different page than its click target. Header controls can wrap within the viewport.
+Contract 360 no longer presents empty negotiation tabs and repeated unsized value cards when the contract has only an evidence-stage opportunity. It shows the governed next action instead, while preserving any recorded potential or Finance-confirmed amounts. Tabs with authored content remain available, and the contract list no longer promises to open a different page than its click target.
 
 ## Layer Impact
 
@@ -30,7 +30,7 @@ Release lane: `global-control-lane`. Layer 4 Source presentation only. Layer 3 f
 - Unsized placeholders are not rendered as established value types.
 - Evidence-stage contracts with recorded value retain those amounts without implying Finance confirmation.
 - Contract list action wording matches the Story landing view.
-- Header controls wrap, and the repeated contract ID is removed from the toolbar.
+- The repeated contract ID is removed from the toolbar.
 - Focused UI regression tests.
 
 ## QA / Validation

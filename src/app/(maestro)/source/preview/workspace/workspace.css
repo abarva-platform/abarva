@@ -294,7 +294,7 @@
 
 .sw-v2-topbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 620px);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 22px;
@@ -382,13 +382,12 @@
 .sw-v2-controls {
   align-items: stretch;
   min-width: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .sw-v2-control {
-  flex: 1 1 140px;
   min-height: 48px;
-  min-width: 0;
+  min-width: 148px;
   border: 1px solid #d3d1c7;
   border-radius: 6px;
   background: #fff;
