@@ -23,7 +23,7 @@ import { getArtifactBrief } from "./artifact-brief-registry";
 import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
 import { buildGenerationProgress, type GenerationProgress } from "./progress";
 import { buildPassPrompt, sectionWordBudgetPlanFor } from "./prompt-builder";
-import { sectionWordBudgetFor } from "./section-word-budget-plan";
+import { sectionRepairTargetWithin } from "./section-word-budget-plan";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 import {
   countBodyWords,
@@ -312,9 +312,12 @@ export async function runDeliverableOrchestration(
   // repair round or the drafted section, and the draft prompt states its caps
   // from the same reading.
   const sectionWordBudgets = sectionWordBudgetPlanFor(req, brief);
-  const sectionRepairTargetFor = (key: string): number | null =>
+  const sectionRepairTargetFor = (
+    key: string,
+    evenShare: number,
+  ): number | null =>
     sectionWordBudgets
-      ? (sectionWordBudgetFor(sectionWordBudgets, key)?.repairTarget ?? null)
+      ? sectionRepairTargetWithin(sectionWordBudgets, key, evenShare)
       : null;
   for (let repairRound = 0; repairRound < maxRepairRounds; repairRound++) {
     if (
@@ -324,6 +327,10 @@ export async function runDeliverableOrchestration(
       break;
     }
 
+    const evenShare = sectionShareOfFloor(
+      req.qualityBar.minBodyWords,
+      sections.length,
+    );
     const targetByKey = isMovesCharter
       ? new Map(
           CHARTER_CONTRACT.sections
@@ -335,12 +342,13 @@ export async function runDeliverableOrchestration(
         // states that cap to the model. An even share asked four of
         // solution_design's six sections for more words than the hard cap one
         // line above it allowed — see section-word-budget-plan.ts. A generated
-        // section the brief does not declare keeps the even share.
+        // section the brief does not declare takes the even share clamped to
+        // the plan's fallback cap, which is the cap it will be told to stay
+        // under — so "write at least X, stay under Y" holds for it too.
         new Map(
           sections.map((section) => [
             section.key,
-            sectionRepairTargetFor(section.key) ??
-              sectionShareOfFloor(req.qualityBar.minBodyWords, sections.length),
+            sectionRepairTargetFor(section.key, evenShare) ?? evenShare,
           ]),
         );
     const repairs = sections.flatMap((section) => {

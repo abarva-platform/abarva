@@ -70,6 +70,7 @@ import {
   summarizePhaseFindingsReview,
   type FindingReviewState,
 } from "@/lib/programs/moves-phase-findings";
+import { buildPhaseCharts } from "@/lib/programs/moves-phase-charts";
 import {
   CharterAssumptionBadge,
   CharterBasisField,
@@ -1242,6 +1243,20 @@ export function MovesPhaseStandaloneClient({
         ? summarizePhaseFindingsReview(phaseFindingsModel, findingsReview)
         : null,
     [phaseFindingsModel, findingsReview],
+  );
+  // Increment 3: the OUTCOME charts / intelligence layer for the same
+  // intelligence phases. P2 charts (governed share, root-cause Pareto) are
+  // DERIVED from the real readiness report; P4 charts (cost / value /
+  // sensitivity) have no governed baseline and are rendered as labelled
+  // illustrative placeholders. Null for every non-intelligence phase.
+  const phaseChartsModel = useMemo(
+    () =>
+      buildPhaseCharts({
+        phase: phase.phase,
+        readiness: currentStateReadiness,
+        contentSignals: carriesForwardContent,
+      }),
+    [phase.phase, currentStateReadiness, carriesForwardContent],
   );
 
   const visiblePhaseBuildArtifacts = useMemo(
@@ -3687,6 +3702,7 @@ export function MovesPhaseStandaloneClient({
                               review={findingsReview}
                               onReview={onFindingReview}
                               canReview={canApproveGates}
+                              charts={phaseChartsModel}
                             />
                           ) : null,
                       }}

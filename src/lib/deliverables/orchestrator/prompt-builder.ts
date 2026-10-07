@@ -19,7 +19,7 @@ import type {
 import { renderEvidenceForPrompt } from "./source-register";
 import {
   planSectionWordBudgets,
-  sectionWordBudgetFor,
+  sectionCapFor,
   type SectionWordBudgetPlan,
 } from "./section-word-budget-plan";
 import type { GovernedEvidenceItem } from "./types";
@@ -494,25 +494,23 @@ function conciseSectionDraftInstruction(
   section?: PlannedSection,
 ): string {
   const qb = req.qualityBar;
-  if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return "";
+  // The cap comes from the reconciled plan, not from this section's own
+  // declaration alone: a cap that is honest on its own can still be one of a
+  // set whose total cannot reach the document's floor. The plan is null on
+  // exactly the condition that makes these rules inapplicable — no blocking
+  // ceiling to budget against — so reading the guard off the plan keeps the two
+  // from drifting apart.
+  const plan = sectionWordBudgetPlanFor(req, brief);
+  if (!plan) return "";
   const structureSection = brief.recommendedStructure.find(
     (s) => s.key === section?.key,
   );
-  const sectionInstruction =
-    structureSection?.expertLatitude || section?.rationale || "";
-  const sectionCount = Math.max(brief.recommendedStructure.length, 1);
-  const fallbackBudget = Math.max(
-    120,
-    Math.floor(qb.targetBodyWordsMax / sectionCount),
-  );
-  // The cap comes from the reconciled plan, not from this section's own
-  // declaration alone: a cap that is honest on its own can still be one of a
-  // set whose total cannot reach the document's floor.
-  const plan = sectionWordBudgetPlanFor(req, brief);
-  const wordBudget =
-    (plan ? sectionWordBudgetFor(plan, section?.key)?.cap : null) ??
-    extractSectionWordBudget(sectionInstruction) ??
-    fallbackBudget;
+  // DECLARED prose only. The planned section's `rationale` is authored by the
+  // model in Pass 1; it is stated to this pass on its own `Intent:` line above
+  // and must not supply the size control that line is held to, nor a second
+  // word limit beside the cap. See section-word-budget-plan.ts.
+  const sectionInstruction = structureSection?.expertLatitude || "";
+  const wordBudget = sectionCapFor(plan, section?.key);
 
   if (req.deliverableType !== "charter") {
     return [
