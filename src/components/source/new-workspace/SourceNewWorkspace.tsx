@@ -1386,7 +1386,9 @@ function SourceNewStage04VendorPanelView({
                 {`. Contact policy: ${contactPolicyLabel(row.contactPolicy)}`}
                 {`. Contact readiness: ${row.contactReadiness.replaceAll("_", " ")}`}
                 {`. Source: ${row.sourceReference}.`}
-                {event.requestAuthorityVersionId &&
+                {panel.rows.some((accepted) => accepted.legalEntityId === row.supplierId) ? (
+                  <p className="snw-note">Accepted on this event.</p>
+                ) : event.requestAuthorityVersionId &&
                 event.requestVersionApproval === "accepted" ? (
                   <form
                     className="snw-inline-form"

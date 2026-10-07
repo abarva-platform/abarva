@@ -21,7 +21,7 @@ function transaction(overrides: {
   version?: Record<string, unknown> | null;
   duplicate?: boolean;
 } = {}) {
-  const run = jest.fn(async (sql: string, _params?: readonly unknown[]) => {
+  const run = jest.fn(async (...[sql]: [string, ReadonlyArray<unknown>?]) => {
     if (sql.includes("FROM source_events")) {
       return overrides.event === null ? [] : [{
         id: eventId,
@@ -61,6 +61,8 @@ describe("prospective supplier origination", () => {
     const statements = run.mock.calls.map(([sql]) => sql).join("\n");
     expect(statements).toContain("set_config('app.tenant_key'");
     expect(statements).toContain("pg_advisory_xact_lock");
+    expect(run.mock.calls.find(([sql]) => sql.includes("FROM source_events"))?.[0]).toContain("FOR UPDATE");
+    expect(run.mock.calls.find(([sql]) => sql.includes("FROM source_event_authority_versions"))?.[0]).toContain("FOR UPDATE OF version");
     expect(statements).toContain("INSERT INTO source.vendor (");
     expect(statements).toContain("INSERT INTO source.vendor_contact");
     expect(statements).toContain("INSERT INTO source_event_candidate_supplier_authority");

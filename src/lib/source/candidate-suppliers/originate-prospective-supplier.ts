@@ -110,7 +110,8 @@ export async function originateProspectiveSupplier(
         `SELECT id, event_type, classified_category
            FROM source_events
           WHERE client_key = $1 AND id = $2::uuid
-          LIMIT 1`,
+          LIMIT 1
+          FOR UPDATE`,
         [input.clientKey, input.eventId],
       );
       const category = categoryId(event?.classified_category ?? null);
@@ -146,7 +147,8 @@ export async function originateProspectiveSupplier(
             AND version.event_id = $2::uuid
             AND version.authority_kind = 'request'
             AND version.superseded_at IS NULL
-          LIMIT 1`,
+          LIMIT 1
+          FOR UPDATE OF version`,
         [input.clientKey, input.eventId],
       );
       if (version?.id !== input.expectedEventVersionId) {
