@@ -88,6 +88,14 @@ export type SectionWordBudgetBasis =
 
 export interface SectionWordBudgetPlan {
   sections: SectionWordBudget[];
+  /**
+   * The cap applied to a section that declared none — and so also the cap for a
+   * key this plan does not cover at all. Carried on the plan rather than
+   * recomputed by each caller: the draft prompt, the repair prompt and the
+   * repair target are then one reading of one number, which is the whole point
+   * of this module.
+   */
+  fallbackCap: number;
   /** Total of the caps as declared (with the fallback applied). */
   declaredTotal: number;
   /** Total of the caps actually stated to the model. */
@@ -128,17 +136,14 @@ export function planSectionWordBudgets(input: {
    */
   blockingCeiling: number;
 }): SectionWordBudgetPlan {
+  const fallbackCap = Math.max(1, Math.round(input.fallbackCap));
   const declared = input.sections.map((section) => ({
     key: section.key,
     declaredCap: section.declaredCap,
-    cap: Math.max(
-      1,
-      Math.round(
-        section.declaredCap && section.declaredCap > 0
-          ? section.declaredCap
-          : input.fallbackCap,
-      ),
-    ),
+    cap:
+      section.declaredCap && section.declaredCap > 0
+        ? Math.max(1, Math.round(section.declaredCap))
+        : fallbackCap,
   }));
   const declaredTotal = declared.reduce((sum, section) => sum + section.cap, 0);
   const requiredTotal = requiredCapTotalForFloor(input.minBodyWords);
@@ -150,6 +155,7 @@ export function planSectionWordBudgets(input: {
   if (declared.length === 0) {
     return {
       sections: [],
+      fallbackCap,
       declaredTotal: 0,
       capTotal: 0,
       requiredTotal,
@@ -195,6 +201,7 @@ export function planSectionWordBudgets(input: {
 
   return {
     sections,
+    fallbackCap,
     declaredTotal,
     capTotal,
     requiredTotal,
@@ -248,4 +255,55 @@ export function sectionWordBudgetFor(
 ): SectionWordBudget | null {
   if (!key) return null;
   return plan.sections.find((section) => section.key === key) ?? null;
+}
+
+// ── Sections the brief does not declare ──
+//
+// `sectionWordBudgetFor` answers null for a key this plan does not cover, which
+// happens whenever a generated section is not one the brief declared. That is
+// reachable for any brief whose structure omits `fixedStructure`: plan section
+// keys are filtered to the declared set only when it is present (see
+// generation-plan.ts), and two shipped structures — `business_case` (P4) and
+// `evaluation_workbook` — declare no `fixedStructure` at all, while the generic
+// module fallback brief invites the model to "add sections if they improve the
+// artifact".
+//
+// Such a section still needs a cap and a repair target, and both must come from
+// a DECLARED number. The cap previously fell through to a regex over the planned
+// section's own `rationale` — prose the model itself authored in Pass 1 — so the
+// planning pass could name the size limit the drafting pass was then held to,
+// and the repair prompt's "stay under the hard cap above" could be made to
+// contradict the target asked for in the sentence before it. These two helpers
+// are the only way an uncovered key gets either number.
+
+/**
+ * The hard cap for one section: its reconciled cap when the plan covers the
+ * key, and otherwise the plan's own fallback cap.
+ */
+export function sectionCapFor(
+  plan: SectionWordBudgetPlan,
+  key: string | undefined,
+): number {
+  return sectionWordBudgetFor(plan, key)?.cap ?? plan.fallbackCap;
+}
+
+/**
+ * The repair target for one section, never above the cap that section will be
+ * told to stay under (INV1).
+ *
+ * For a key the plan covers this is the reconciled target. For one it does not,
+ * it is `evenShare` clamped to the fallback cap — asking a section for more
+ * words than its own cap permits is the contradiction this module exists to
+ * remove, and clamping cannot cost the document its floor: the declared
+ * sections' targets already total it (INV2), and an undeclared section's words
+ * are additive on top of them.
+ */
+export function sectionRepairTargetWithin(
+  plan: SectionWordBudgetPlan,
+  key: string | undefined,
+  evenShare: number,
+): number {
+  const covered = sectionWordBudgetFor(plan, key);
+  if (covered) return covered.repairTarget;
+  return Math.max(1, Math.min(plan.fallbackCap, Math.ceil(evenShare)));
 }
