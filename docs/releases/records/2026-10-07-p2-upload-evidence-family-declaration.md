@@ -110,16 +110,17 @@ Lane: `global-control-lane`.
 ## QA / Validation
 
 - `npx jest src/components/strategic-moves src/lib/programs/evidence-readiness`
-  — 55 suites, 838 tests **PASS**.
+  — 56 suites, 859 tests **PASS** on the merged base.
 - `npx jest .../current-state-upload-routing.test.ts` — 22 **PASS**.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit` —
   exit 0, **PASS**.
 - `npx eslint` on all changed files — **PASS**, 0 errors.
 - `npm run release:check -- --base origin/main --head HEAD` — 11 of 11 gates
   **PASS**.
-- `npm run audit:test-ci-coverage:write` — covered test files 2636 -> 2637 for
-  the one new suite, uncovered **FLAT at 164** (the new suite's directory is
-  already CI-wired), fully-covered directories unchanged at 439.
+- `npm run audit:test-ci-coverage:write` — regenerated on the merged base after
+  a sibling landed: covered test files 2638 -> 2639 for the one new suite,
+  uncovered **FLAT at 164** (the new suite's directory is already CI-wired),
+  fully-covered directories unchanged at 439.
 - `npm run audit:tenancy-fence-coverage:write` — no change to the committed
   report; this change adds no route and no tenant-scoped read.
 - **Mutation testing: 9 deliberate mutations, 9 killed.** Removing the
