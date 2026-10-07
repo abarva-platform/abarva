@@ -140,6 +140,35 @@ describe("movesWorkspaceV2Spine", () => {
     expect(byKind(closed, "outcome")[0].targetView).toBeNull();
   });
 
+  it("opens OUTCOME when a findings surface is present, even with the recap closed", () => {
+    // Increment 2: the findings surface is a no-submit review, so it makes
+    // OUTCOME navigable to view 3 where the plain recap would stay a marker.
+    const stages = movesWorkspaceV2Spine({
+      captureTitles: TITLES,
+      view: 2,
+      handoffReachable: false,
+      outcomeFindingsPresent: true,
+    });
+    const outcome = byKind(stages, "outcome")[0];
+    expect(outcome.targetView).toBe(3);
+    // It labels the stage "Findings" rather than the generic "Review".
+    expect(outcome.label).toBe("Findings");
+  });
+
+  it("without a findings surface, OUTCOME stays labelled Review and closed", () => {
+    const outcome = byKind(
+      movesWorkspaceV2Spine({
+        captureTitles: TITLES,
+        view: 2,
+        handoffReachable: false,
+        outcomeFindingsPresent: false,
+      }),
+      "outcome",
+    )[0];
+    expect(outcome.label).toBe("Review");
+    expect(outcome.targetView).toBeNull();
+  });
+
   it("keeps GENERATE and GATE as non-interactive markers", () => {
     const stages = movesWorkspaceV2Spine({
       captureTitles: TITLES,

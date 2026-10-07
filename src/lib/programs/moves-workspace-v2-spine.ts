@@ -48,6 +48,15 @@ export interface MovesV2SpineInput {
   view: number;
   /** Whether the hand-off recap can be navigated to (host `captureHandoffAccess`). */
   handoffReachable: boolean;
+  /**
+   * Increment 2: whether this phase's OUTCOME is a findings surface (an
+   * intelligence phase with derived findings to review). The findings surface
+   * is a read-only review that submits nothing — like the review-before-submit
+   * recap — so when present it makes the OUTCOME stage navigable to view 3 even
+   * if the plain recap would be closed in this configuration. Defaults false,
+   * so a phase without findings behaves exactly as Increment 1.
+   */
+  outcomeFindingsPresent?: boolean;
 }
 
 /**
@@ -58,6 +67,7 @@ export function movesWorkspaceV2Spine({
   captureTitles,
   view,
   handoffReachable,
+  outcomeFindingsPresent = false,
 }: MovesV2SpineInput): MovesV2SpineStage[] {
   const captureCount = captureTitles.length;
   const atRecap = view >= 3;
@@ -97,10 +107,12 @@ export function movesWorkspaceV2Spine({
 
   stages.push({
     kind: "outcome",
-    label: "Review",
+    label: outcomeFindingsPresent ? "Findings" : "Review",
     position: position++,
     state: atRecap ? "current" : "upcoming",
-    targetView: handoffReachable ? 3 : null,
+    // A findings surface is a no-submit review screen, so it opens the OUTCOME
+    // path even where the plain recap stays closed (approveSlot + no review).
+    targetView: handoffReachable || outcomeFindingsPresent ? 3 : null,
   });
 
   stages.push({

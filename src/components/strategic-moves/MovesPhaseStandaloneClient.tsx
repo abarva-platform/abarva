@@ -61,6 +61,16 @@ import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumption
 import type { PostDiscoverCharterAnswer } from "@/lib/programs/charter-standing-after-discover";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
 import {
+  MovesPhaseFindings,
+  FindingsReviewGateSummary,
+} from "@/components/strategic-moves/MovesPhaseFindings";
+import {
+  buildPhaseFindings,
+  isFindingsPhase,
+  summarizePhaseFindingsReview,
+  type FindingReviewState,
+} from "@/lib/programs/moves-phase-findings";
+import {
   CharterAssumptionBadge,
   CharterBasisField,
   CharterBasisMark,
@@ -1192,6 +1202,43 @@ export function MovesPhaseStandaloneClient({
       displayMoveName,
     ],
   );
+  // Increment 2: the v2 OUTCOME findings surface for an intelligence phase
+  // (P2 Discover, P4 Business case), DERIVED from the phase's real governed
+  // content — the archetype-driven current-state readiness report and the
+  // latest generated deliverable's content signals. No finding is invented; a
+  // phase with no governed content yet yields a pending model and a designed
+  // empty state. Null for every capture-heavy phase, where the OUTCOME step
+  // keeps the hand-off recap.
+  const phaseFindingsModel = useMemo(
+    () =>
+      buildPhaseFindings({
+        phase: phase.phase,
+        readiness: currentStateReadiness,
+        contentSignals: carriesForwardContent,
+      }),
+    [phase.phase, currentStateReadiness, carriesForwardContent],
+  );
+  // Accept/Challenge review state. Presentation only (Increment 2 introduces no
+  // new findings-attestation store): the toggle feeds the gate's honesty line
+  // and nothing else. A real review store can later own this without the
+  // surface or the gate summary changing.
+  const [findingsReview, setFindingsReview] = useState<
+    Record<string, FindingReviewState>
+  >({});
+  const onFindingReview = useCallback(
+    (id: string, state: FindingReviewState) => {
+      setFindingsReview((prev) => ({ ...prev, [id]: state }));
+    },
+    [],
+  );
+  const findingsReviewSummary = useMemo(
+    () =>
+      phaseFindingsModel
+        ? summarizePhaseFindingsReview(phaseFindingsModel, findingsReview)
+        : null,
+    [phaseFindingsModel, findingsReview],
+  );
+
   const visiblePhaseBuildArtifacts = useMemo(
     () =>
       mergePhaseBuildArtifacts([
@@ -3607,9 +3654,38 @@ export function MovesPhaseStandaloneClient({
                         approveSlot: captureApproveSlot,
                         allowReviewBeforeSubmit: captureHandoffRecapEnabled,
                         workspaceV2: workspaceV2Active,
-                        gateExtras: workspaceV2Active
-                          ? readinessWorkbookActions
-                          : null,
+                        // The GATE step carries the readiness-workbook actions
+                        // and — for an intelligence phase — the findings review
+                        // honesty line, so the gate names accepted/challenged/
+                        // awaiting counts and the specific open finding.
+                        gateExtras: workspaceV2Active ? (
+                          <>
+                            {readinessWorkbookActions}
+                            {workspaceV2Active &&
+                            isFindingsPhase(phase.phase) &&
+                            phaseFindingsModel &&
+                            !phaseFindingsModel.pending &&
+                            findingsReviewSummary ? (
+                              <FindingsReviewGateSummary
+                                summary={findingsReviewSummary}
+                              />
+                            ) : null}
+                          </>
+                        ) : null,
+                        // The OUTCOME step becomes the findings surface for an
+                        // intelligence phase; capture-heavy phases keep the
+                        // hand-off recap (slot left null).
+                        outcomeFindings:
+                          workspaceV2Active &&
+                          isFindingsPhase(phase.phase) &&
+                          phaseFindingsModel ? (
+                            <MovesPhaseFindings
+                              model={phaseFindingsModel}
+                              review={findingsReview}
+                              onReview={onFindingReview}
+                              canReview={canApproveGates}
+                            />
+                          ) : null,
                       }}
                     />
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (
