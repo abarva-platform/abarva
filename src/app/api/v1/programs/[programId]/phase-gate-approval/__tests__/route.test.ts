@@ -97,6 +97,29 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
     mockLoadAcceptedStageReadinessContext(...args),
 }));
 
+// The gate now reads the stored transition review AS IT STANDS, from its own
+// module, rather than only a finished one. By default one stored review stands
+// behind both readings, so every existing `mockResolvedValueOnce(null)` still
+// means "no review" — and a test can drive the two apart to pin which module
+// the gate actually reads.
+const mockLoadStageReadinessGateProposals = jest.fn(
+  async (...args: unknown[]) => {
+    const context = (await mockLoadAcceptedStageReadinessContext(...args)) as
+      | { proposals?: unknown[] }
+      | null
+      | undefined;
+    return context?.proposals ?? null;
+  },
+);
+
+jest.mock(
+  "@/lib/programs/stage-readiness-workbooks/gate-proposal-context",
+  () => ({
+    loadStageReadinessGateProposals: (...args: unknown[]) =>
+      mockLoadStageReadinessGateProposals(...args),
+  }),
+);
+
 jest.mock("@/lib/programs/governance", () => ({
   evaluateGate: (
     ctx: unknown,
@@ -325,6 +348,50 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       ],
     });
     expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("takes the gate reading from the review as it stands, not from a finished one", async () => {
+    // The two readings are driven apart here on purpose. This is the state a
+    // reviewer can reach and could not leave: every REQUIRED response accepted,
+    // answered and sourced, and one RECOMMENDED response left blank — which the
+    // review surface cannot decide, so it stays pending forever. The
+    // finished-only reading returns null for it, and a null there means the
+    // gate sees no workbook at all, so the phase stayed shut on a workbook that
+    // was complete for everything the gate requires.
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: false,
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValue(null);
+    mockLoadStageReadinessGateProposals.mockResolvedValueOnce([
+      {
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required",
+        answerState: "answered",
+        disposition: "accepted",
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+      {
+        questionId: "q_optional_context",
+        dimensionId: "nice_to_have_context",
+        requirement: "recommended",
+        answerState: "blank",
+        disposition: "pending",
+        evidenceOrSource: "",
+      },
+    ]);
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ ok: true, newPhase: 4 });
+    expect(mockLoadStageReadinessGateProposals).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      4,
+    );
   });
 
   it("blocks approval on a hard gate failure and fabricates nothing", async () => {

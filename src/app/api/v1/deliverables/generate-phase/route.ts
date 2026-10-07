@@ -66,7 +66,7 @@ import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 import { buildHeldByEvidenceDetail } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
-import { loadAcceptedStageReadinessContext } from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
 import {
   formatStageReadinessPromptContext,
   loadStageReadinessPromptContext,
@@ -317,7 +317,9 @@ export async function POST(req: NextRequest) {
         readiness,
       });
       if (phase >= 1 && phase <= 4) {
-        const transitionContext = await loadAcceptedStageReadinessContext(
+        // The gate reading takes the review as it stands, under its own
+        // required-only policy. See `gate-proposal-context`.
+        const transitionProposals = await loadStageReadinessGateProposals(
           ctx,
           moveId,
           phase + 1,
@@ -325,7 +327,7 @@ export async function POST(req: NextRequest) {
         packets = applyStageReadinessToEvidencePackets(
           packets,
           phase,
-          transitionContext?.proposals ?? null,
+          transitionProposals,
           moveId,
         );
       }

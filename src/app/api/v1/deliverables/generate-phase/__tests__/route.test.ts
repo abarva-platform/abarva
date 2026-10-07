@@ -312,6 +312,28 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/prompt-context", () => ({
   formatStageReadinessPromptContext: (...args: unknown[]) =>
     formatStageReadinessPromptContext(...args),
 }));
+// The route reads the stored transition review from two modules, each with its
+// own policy: the gate reading applies a required-only test, the prompt reading
+// takes every accepted answer whether or not the review is finished. By default
+// one stored review stands behind the gate reading, in the same call order, so
+// every `mockResolvedValueOnce` below still lands there — and a test can drive
+// the readings apart to pin which module each caller uses.
+const loadStageReadinessGateProposals: jest.Mock = jest.fn(
+  async (...args: unknown[]) => {
+    const context = (await loadAcceptedStageReadinessContext(...args)) as
+      | { proposals?: unknown[] }
+      | null
+      | undefined;
+    return context?.proposals ?? null;
+  },
+);
+jest.mock(
+  "@/lib/programs/stage-readiness-workbooks/gate-proposal-context",
+  () => ({
+    loadStageReadinessGateProposals: (...args: unknown[]) =>
+      loadStageReadinessGateProposals(...args),
+  }),
+);
 
 import { POST } from "../route";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -536,6 +558,44 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(createMoveContextExtract).not.toHaveBeenCalled();
     expect(createCalls).toHaveLength(0);
     expect(sequentialCalls).toHaveLength(0);
+  });
+
+  it("queues a phase build from the review as it stands, not only from a finished one", async () => {
+    // Every REQUIRED response accepted, answered and sourced, and one
+    // RECOMMENDED response left blank — a state the review surface cannot
+    // decide, so it stays pending. The finished-only reading returns null for
+    // it, and a null gate reading means no workbook at all, so the build stayed
+    // held by a workbook that was complete for everything the gate requires.
+    loadAcceptedStageReadinessContext.mockResolvedValue(null);
+    loadStageReadinessGateProposals.mockResolvedValueOnce([
+      {
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required",
+        answerState: "answered",
+        disposition: "accepted",
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+      {
+        questionId: "q_optional_context",
+        dimensionId: "nice_to_have_context",
+        requirement: "recommended",
+        answerState: "blank",
+        disposition: "pending",
+        evidenceOrSource: "",
+      },
+    ]);
+
+    const res = await POST(
+      req({ moveId: "m-p2", phase: 2, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(202);
+    expect(loadStageReadinessGateProposals).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-p2",
+      3,
+    );
   });
 
   it("blocks a phase build when the accepted workbook still marks required evidence unknown", async () => {
@@ -854,10 +914,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
   });
 
   it("hands the prompt a transition review that is still open for review", async () => {
-    // The two readings of the same review, driven apart: the gate reading
-    // (target phase + 1) stays satisfied, while the finished-review reading of
-    // THIS phase's transition refuses — which is what a single undecided
-    // optional response does. The accepted answers must still reach the job.
+    // The two readings driven apart: the gate reading (target phase + 1) stays
+    // satisfied, while the finished-review policy applied to THIS phase's own
+    // transition refuses — which is what a single undecided response does. The
+    // accepted answers must still reach the job, so reverting the prompt
+    // reading to that policy fails this case.
     loadAcceptedStageReadinessContext.mockImplementation(
       async (...args: unknown[]) =>
         args[2] === 5
