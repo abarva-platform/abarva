@@ -8718,6 +8718,49 @@ describe("MovesPhaseStandaloneClient", () => {
       },
     );
 
+    // The legacy rule above reads the contract-steps substep, which is the
+    // right reading only while that canvas is what renders. Under
+    // `moves_capture_v2` the 3-step flow keeps its own step state and nothing
+    // moves `substepIndex`, so the same rule hid the workbook for the WHOLE of
+    // P3 and P4 — and the accepted workbook review is a hard precondition for
+    // closing either phase (`transition_evidence_incomplete` /
+    // `required_evidence_open`), with this control its only producer.
+    it.each([
+      { phase: 3, workbook: "Download P4 readiness workbook" },
+      { phase: 4, workbook: "Download P5 readiness workbook" },
+    ])(
+      "P$phase offers the readiness workbook on the FIRST step when the redesigned capture flow is mounted",
+      ({ phase, workbook }) => {
+        const move = makeMove({ currentPhase: phase });
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            captureV2Enabled
+            carriesForwardContent={[]}
+            evidenceNeedPackets={coveredEvidencePacketsForPhase(phase)}
+            move={move}
+            phaseNum={phase}
+            phaseTallies={[...phaseTallies]}
+            syntheticEvidencePackHref={`/api/v1/programs/${move.id}/stage-readiness-evidence-pack?phase=${phase}`}
+          />,
+        );
+
+        // The redesigned flow is what renders, and no substep control exists.
+        expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+        expect(
+          screen.queryByTestId("mxw-contract-card"),
+        ).not.toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: workbook })).toBeInTheDocument();
+        expect(
+          screen.getByLabelText("Upload completed readiness workbook"),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("link", { name: "Download sample upload files" }),
+        ).toBeInTheDocument();
+      },
+    );
+
     it.each([
       {
         phase: 3,
