@@ -3104,12 +3104,23 @@ export function MovesPhaseStandaloneClient({
               <Link className="mxw-back" href="/strategic-moves">
                 ← All Moves
               </Link>
-              <MovePhaseTopStepper
-                currentPhase={move.currentPhase}
-                moveId={move.id}
-                phaseTallies={phaseTallies}
-                viewingPhase={phase.phase}
-              />
+              {/* On the Steps view with the composition polish on, the
+                  capture flow renders its OWN phase bar (phase name, tick, and
+                  answered count), so this gate-criteria stepper would be a
+                  second phase navigator stacked right above it in the older
+                  style. Drop it there — the same reason the duplicate stage
+                  head is dropped — and keep it on Files / Intelligence /
+                  Approvals, where the capture bar does not render and this is
+                  the only phase navigator. Gate-criteria status still lives in
+                  the Approvals tab (and the CaptureGateMetNotice). */}
+              {captureCompositionActive && workspaceView === "phase" ? null : (
+                <MovePhaseTopStepper
+                  currentPhase={move.currentPhase}
+                  moveId={move.id}
+                  phaseTallies={phaseTallies}
+                  viewingPhase={phase.phase}
+                />
+              )}
               {/* One tab row, one place: always rendered here in the shell,
                   above the workspace, so its position is identical across the
                   Steps, Files & Evidence, Intelligence and Approvals views.
