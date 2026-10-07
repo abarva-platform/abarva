@@ -6089,6 +6089,213 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
+  // The P2 readiness panel is where the demo Move's discovery evidence is
+  // actually uploaded. It named the families the gate wants in its table while
+  // offering no way to say which family a file covered, so the file NAME
+  // decided — and a name the heuristic could not place was refused outright.
+  describe("the P2 readiness panel's evidence-family declaration", () => {
+    function renderLendingReadinessPanel() {
+      return render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          currentStateReadiness={{
+            ...makeCurrentStateReadiness(),
+            archetypeId: "COMMERCIAL_LENDING_AGENT_ASSIST",
+            archetypeName: "Commercial Lending Agent Assist",
+            hardGaps: [
+              "commercial_lending_metrics_baseline",
+              "lending_systems_data_landscape",
+            ],
+            instruments: [
+              {
+                key: "commercial_lending_metrics_baseline",
+                label: "Commercial lending metrics baseline",
+                kind: "metric_baseline",
+                whyNeeded: "Cycle time, rework, and service-level baseline.",
+                sourceDocHint: "Metrics export",
+                severity: "hard",
+                status: "missing",
+                backingTable: "program_evidence_items",
+                committedRows: 0,
+                rationale: "Baseline metrics are required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+              {
+                key: "lending_systems_data_landscape",
+                label: "Lending systems and data landscape",
+                kind: "document",
+                whyNeeded: "Applications, data stores, and integrations.",
+                sourceDocHint: "Systems inventory",
+                severity: "hard",
+                status: "missing",
+                backingTable: "program_evidence_items",
+                committedRows: 0,
+                rationale: "Systems context is required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+              // Already satisfied, so it is not open. The picker must not
+              // offer it: a declaration naming it would be refused by the
+              // router, which would make the option a dead end of its own.
+              {
+                key: "credit_policy_knowledge_inventory",
+                label: "Credit policy and knowledge inventory",
+                kind: "document",
+                whyNeeded: "Policies, checklists, and covenant guidance.",
+                sourceDocHint: "Policy inventory",
+                severity: "hard",
+                status: "committed",
+                backingTable: "program_evidence_items",
+                committedRows: 4,
+                rationale: "Policy context is required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+            ],
+          }}
+          evidenceNeedPackets={[]}
+          initialSubstepKey="current"
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+    }
+
+    function uploadUnplaceableFile() {
+      fireEvent.change(
+        screen.getByLabelText(
+          "Upload P2 current-state evidence files",
+        ) as HTMLInputElement,
+        {
+          target: {
+            files: [
+              new File(["rows"], "Q3 export.xlsx", {
+                type: "application/vnd.ms-excel",
+              }),
+            ],
+          },
+        },
+      );
+    }
+
+    it("offers a declaration for every open family the readiness table names", () => {
+      renderLendingReadinessPanel();
+
+      const picker = screen.getByLabelText(
+        "Evidence family these files cover",
+      ) as HTMLSelectElement;
+      // Exactly the two open families, in the readiness map's order. The
+      // committed third family is deliberately absent.
+      expect(Array.from(picker.options).map((option) => option.value)).toEqual([
+        "",
+        "commercial_lending_metrics_baseline",
+        "lending_systems_data_landscape",
+      ]);
+      // The default keeps the previous behaviour available rather than forcing
+      // a declaration on a file whose name already places it correctly.
+      expect(picker.value).toBe("");
+      expect(
+        screen.getByRole("option", { name: "Decide from the file name" }),
+      ).toBeInTheDocument();
+    });
+
+    it("files a name the heuristic places nowhere under the declared family", async () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(
+        screen.getByLabelText("Evidence family these files cover"),
+        { target: { value: "lending_systems_data_landscape" } },
+      );
+      uploadUnplaceableFile();
+
+      await waitFor(() => {
+        expect(currentStateFamilyIngests).toEqual([
+          {
+            family: "lending_systems_data_landscape",
+            fileName: "Q3 export.xlsx",
+            phase: 2,
+          },
+        ]);
+      });
+      // Declaring routes review and nothing else: the row still says the
+      // upload is awaiting a human.
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Declared as this family\./),
+        ).toBeInTheDocument();
+      });
+      expect(screen.getByText(/awaiting human review/)).toBeInTheDocument();
+    });
+
+    it("refuses the same file when nothing is declared, and names the picker as the way through", async () => {
+      renderLendingReadinessPanel();
+
+      uploadUnplaceableFile();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Declare the family this file covers/),
+        ).toBeInTheDocument();
+      });
+      expect(currentStateFamilyIngests).toEqual([]);
+    });
+
+    it("says so when the family was guessed from the file name", async () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(
+        screen.getByLabelText(
+          "Upload P2 current-state evidence files",
+        ) as HTMLInputElement,
+        {
+          target: {
+            files: [
+              new File(["rows"], "systems-data-inventory.csv", {
+                type: "text/csv",
+              }),
+            ],
+          },
+        },
+      );
+
+      await waitFor(() => {
+        expect(currentStateFamilyIngests).toEqual([
+          {
+            family: "lending_systems_data_landscape",
+            fileName: "systems-data-inventory.csv",
+            phase: 2,
+          },
+        ]);
+      });
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Family guessed from the file name \(1 matched\)\./),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("hides the family declaration when the upload is session notes, which cover no family", () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(screen.getByLabelText("P2 upload mode"), {
+        target: { value: "session_notes" },
+      });
+
+      expect(
+        screen.queryByLabelText("Evidence family these files cover"),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it("routes contact-center evidence by its declared family and leaves unknown files unmapped", async () => {
     const base = makeCurrentStateReadiness();
     const families = [
