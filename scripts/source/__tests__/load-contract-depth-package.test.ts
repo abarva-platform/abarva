@@ -68,6 +68,19 @@ describe("Source contract depth package loader", () => {
     expect(upsert).not.toContain("$10, '%'");
   });
 
+  it("validates performance units during preflight, before a layer can be applied", () => {
+    const loader = fs.readFileSync(
+      path.resolve(__dirname, "../load-contract-depth-package.ts"),
+      "utf8",
+    );
+    const main = loader.slice(loader.indexOf("async function main():"));
+    const validation = main.indexOf("for (const row of sourceFiles.slaPerformance)");
+    expect(validation).toBeGreaterThan(0);
+    expect(main.slice(validation)).toContain("performanceMeasureFromSource(");
+    expect(validation).toBeLessThan(main.indexOf("if (args.mode === \"plan\")"));
+    expect(validation).toBeLessThan(main.indexOf("const result = await withClient("));
+  });
+
   it("resolves every performance fixture with this loader's source columns", () => {
     const packages = path.resolve(__dirname, "../../../datasets/source/contract-depth");
     let checked = 0;
