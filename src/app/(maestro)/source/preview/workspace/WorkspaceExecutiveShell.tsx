@@ -6254,9 +6254,9 @@ function coverageForContract(
 }
 
 /**
- * Detail rows are the authoritative counts for the selected contract. The
- * portfolio projection can legitimately be thinner, but its zeroes must not
- * make a loaded contract look empty on Evidence or Anatomy.
+ * Detail rows can refresh selected contract coverage, but document extraction
+ * facts are not citable page-text rows. The page-text count keeps its own read
+ * even when the detail payload contains extracted document concepts.
  */
 export function contractCoverageWithDetailLanes(
   coverage: ReturnType<typeof coverageForContract>,
@@ -6286,7 +6286,6 @@ export function contractCoverageWithDetailLanes(
       ? {
           spend_rows: detail.spendMonths.length,
           performance_rows: detail.performancePeriods.length,
-          document_page_text_rows: detail.docExtractions.length,
         }
       : {}),
   };
