@@ -263,6 +263,10 @@ describe("Moves File Cabinet evidence review", () => {
       screen.getByRole("textbox", { name: "baseline.docx reviewed summary" }),
       { target: { value: "Human-confirmed baseline is 18%." } },
     );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "baseline.docx review rationale" }),
+      { target: { value: "Delegated automated smoke review on named operator instruction." } },
+    );
     fireEvent.click(
       screen.getByRole("button", { name: "Approve reviewed version" }),
     );
@@ -271,6 +275,7 @@ describe("Moves File Cabinet evidence review", () => {
     expect(postedBody).toEqual(
       expect.objectContaining({
         decision: "approved",
+        rationale: "Delegated automated smoke review on named operator instruction.",
         reviewedExtraction: expect.objectContaining({
           summary: "Human-confirmed baseline is 18%.",
           structured: expect.objectContaining({
