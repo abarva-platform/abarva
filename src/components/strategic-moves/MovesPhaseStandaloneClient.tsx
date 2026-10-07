@@ -132,6 +132,10 @@ import {
   type ConfirmedSolutionRoute,
   type SolutionOutputType,
 } from "@/lib/programs/solution-route-assessment";
+import {
+  solutionRouteConfirmUnavailableReason,
+  solutionRouteDecisionChoices,
+} from "@/lib/programs/solution-route-decision";
 import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-proposals";
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
@@ -162,6 +166,7 @@ import {
 } from "@/lib/programs/deliverable-registry";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import { getPhaseName } from "@/lib/programs/phase-labels";
+import { requiredEvidenceCompletionNotice } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 
 interface AvaChatMessage {
   id: string;
@@ -3100,12 +3105,23 @@ export function MovesPhaseStandaloneClient({
               <Link className="mxw-back" href="/strategic-moves">
                 ← All Moves
               </Link>
-              <MovePhaseTopStepper
-                currentPhase={move.currentPhase}
-                moveId={move.id}
-                phaseTallies={phaseTallies}
-                viewingPhase={phase.phase}
-              />
+              {/* On the Steps view with the composition polish on, the
+                  capture flow renders its OWN phase bar (phase name, tick, and
+                  answered count), so this gate-criteria stepper would be a
+                  second phase navigator stacked right above it in the older
+                  style. Drop it there — the same reason the duplicate stage
+                  head is dropped — and keep it on Files / Intelligence /
+                  Approvals, where the capture bar does not render and this is
+                  the only phase navigator. Gate-criteria status still lives in
+                  the Approvals tab (and the CaptureGateMetNotice). */}
+              {captureCompositionActive && workspaceView === "phase" ? null : (
+                <MovePhaseTopStepper
+                  currentPhase={move.currentPhase}
+                  moveId={move.id}
+                  phaseTallies={phaseTallies}
+                  viewingPhase={phase.phase}
+                />
+              )}
               {/* One tab row, one place: always rendered here in the shell,
                   above the workspace, so its position is identical across the
                   Steps, Files & Evidence, Intelligence and Approvals views.
@@ -8642,6 +8658,8 @@ function SolutionRouteValidationForm({
         })
       : "unresolved";
   const decision = record.decision;
+  const confirmUnavailableReason =
+    solutionRouteConfirmUnavailableReason(recommendation);
 
   const update = (key: string, next: unknown) => {
     const routeImpactChanged = [
@@ -8778,10 +8796,18 @@ function SolutionRouteValidationForm({
           value={typeof decision === "string" ? decision : ""}
         >
           <option value="">Review before confirming</option>
-          <option value="confirm">Confirm recommendation</option>
-          <option value="correct">Correct recommendation</option>
+          {solutionRouteDecisionChoices(recommendation).map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
         </select>
       </label>
+      {confirmUnavailableReason ? (
+        <p className="mxw-structured-note" role="status">
+          {confirmUnavailableReason}
+        </p>
+      ) : null}
       {decision === "correct" ? (
         <>
           <label>
@@ -8877,9 +8903,8 @@ function PhaseCaptureEditor({
             {phase.phase === 1 ? "Charter inputs" : `${phase.title} inputs`}
           </h2>
           <p>
-            Saved inputs are not phase completion. Required evidence must be
-            approved or formally waived before these inputs can show complete or
-            the phase can advance.
+            Saved inputs are not phase completion.{" "}
+            {requiredEvidenceCompletionNotice()}
           </p>
         </div>
         <strong>

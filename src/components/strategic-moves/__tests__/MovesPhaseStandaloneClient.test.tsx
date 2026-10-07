@@ -1207,6 +1207,54 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    it("drops the legacy gate stepper on the Steps view when the capture composition is active, and restores it on another tab", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureCompositionEnabled
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // On the Steps view the capture flow renders its OWN phase bar, so the
+      // legacy gate stepper must not be a second phase navigator stacked above.
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("navigation", { name: "Phase steps" }),
+      ).not.toBeInTheDocument();
+      // On a tab without the capture bar (Approvals) the stepper is the only
+      // phase navigator and must still render.
+      fireEvent.click(workspaceTab(/Approvals/));
+      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the gate stepper on the Steps view when the composition flag is OFF (capture flow still mounts)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // capture_v2 on, composition off: the flow mounts, but the legacy chrome
+      // (including this stepper) is intentionally kept, as before this change.
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+    });
+
     // ─── the structured `facts` question on the redesigned flow ───
     // P2's "Baseline metrics" is a required capture section whose input is
     // structured (`structured: "facts"`). Every other structured section —
@@ -1237,6 +1285,132 @@ describe("MovesPhaseStandaloneClient", () => {
       fireEvent.change(metric, { target: { value: "Intake cycle time" } });
       expect(metric.value).toBe("Intake cycle time");
     });
+
+
+    // ─── P2's route decision: never offer a decision that cannot validate ───
+    // `solution_route_validated` is HARD in two consecutive gates (P2 -> P3 and
+    // P3 -> P4) and needs `resolveConfirmedSolutionRoute` to return a route.
+    // That resolver rejects `decision: "confirm"` whenever `selectedRoute !==
+    // recommendation`, and `selectedRoute` cannot hold `"unresolved"` — so when
+    // the recommendation is unresolved, confirming is incapable of validating
+    // anything. The form offered "Confirm recommendation" anyway, next to a
+    // recommendation displayed as "Not yet determined", and storing that answer
+    // wrote `selectedRoute: ""`, which the parser rejects outright. Every
+    // select was filled, nothing objected, and the gate then reported the route
+    // unvalidated while naming neither the cause nor the way out.
+    //
+    // `src/lib/programs/__tests__/solution-route-decision.test.ts` pins the
+    // rule against the resolver and enumerates the 4 of 45 form answers that
+    // reach it. These cases pin what the reviewer sees.
+    function renderP2RouteDecision(route: Record<string, unknown>) {
+      return render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+          initialSubstepKey="findings"
+          initialPhaseCaptureValues={{
+            current_state_findings: "Observed intake backlog.",
+            baseline_metrics: JSON.stringify([
+              {
+                metric: "Intake cycle time",
+                value: "9 days median",
+                source: "Intake work queue",
+              },
+            ]),
+            gaps_root_causes: "No single owner for intake triage.",
+            process_handoffs: "Three handoffs between intake and ops.",
+            data_quality_governance: "Ownership unclear on the master record.",
+            evidence_confidence: "Medium-high operationally.",
+            recommendation: "Proceed to design the governed intake path.",
+            solution_route_validation: JSON.stringify(route),
+          }}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+    }
+
+    /** Reaches `recommendSolutionRoute` -> "unresolved". */
+    const UNRESOLVED_ANSWER = {
+      solutionOutput: "mixed",
+      workflowChange: "limited",
+      roleAccountabilityChange: "limited",
+    } as const;
+
+    /** Reaches `recommendSolutionRoute` -> "technical_product". */
+    const RESOLVED_ANSWER = {
+      solutionOutput: "reports_dashboards",
+      workflowChange: "limited",
+      roleAccountabilityChange: "none",
+    } as const;
+
+    it("P2 withholds the confirm decision when no route follows from the answers", () => {
+      renderP2RouteDecision(UNRESOLVED_ANSWER);
+
+      // The state that makes confirming incapable, as the form displays it.
+      expect(screen.getByText("Not yet determined")).toBeInTheDocument();
+
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      const offered = Array.from(decision.options).map(
+        (option) => option.value,
+      );
+      expect(offered).not.toContain("confirm");
+      expect(offered).toContain("correct");
+    });
+
+    it("P2 says why confirming is unavailable and names the decision that is", () => {
+      renderP2RouteDecision(UNRESOLVED_ANSWER);
+
+      const reason = screen.getByText(/no recommendation to confirm/i);
+      expect(reason).toBeInTheDocument();
+      expect(reason).toHaveTextContent(/correct recommendation/i);
+    });
+
+    it("P2 keeps the confirm decision, and shows no objection, once a route follows", () => {
+      renderP2RouteDecision(RESOLVED_ANSWER);
+
+      expect(screen.getByText("Technical product / data solution")).toBeInTheDocument();
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      const offered = Array.from(decision.options).map(
+        (option) => option.value,
+      );
+      expect(offered).toContain("confirm");
+      expect(offered).toContain("correct");
+      expect(
+        screen.queryByText(/no recommendation to confirm/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("P2 does not show a stored confirm as the selected decision once it cannot validate", () => {
+      // A record written before this guard, or by an agent: the decision says
+      // confirm while the answers resolve to no route. Withholding the option
+      // is what makes the control stop presenting that dead answer as the
+      // reviewer's standing decision — a stored value matching no option
+      // cannot be the selected one. Asserted separately from the option set
+      // because this is the consequence a reviewer actually meets on reload.
+      renderP2RouteDecision({ ...UNRESOLVED_ANSWER, decision: "confirm" });
+
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      // `selectedIndex`, not `value`: a controlled select whose value matches
+      // no option reports `value` as "" either way, so only the index shows
+      // whether the placeholder is actually the selected option (0) or the
+      // control renders with nothing selected at all (-1).
+      expect(decision.selectedIndex).toBe(0);
+      expect(decision.options[0]?.textContent).toBe("Review before confirming");
+      expect(
+        screen.getByText(/no recommendation to confirm/i),
+      ).toBeInTheDocument();
+    });
+
 
     it("P2 on the redesigned flow does not render the baseline question read-only", () => {
       render(

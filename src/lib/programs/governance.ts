@@ -43,7 +43,10 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
-import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import {
+  reportUnevaluableApprovalCurrencyOnce,
+  resolveDeliverableApprovalCurrencyScope,
+} from "@/lib/programs/deliverable-approval-currency";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -643,9 +646,26 @@ export async function evaluateGate(
       typeof structured.evidenceSnapshotHash === "string"
         ? structured.evidenceSnapshotHash
         : null;
-    const deliverablePhase = DELIVERABLE_REGISTRY.find(
-      (spec) => spec.deliverableTypeKey === row.deliverable_type_key,
-    )?.phase;
+    // A phase this check cannot run at is NOT a stale approval — see
+    // `deliverable-approval-currency.ts`. Return BEFORE the lineage comparisons
+    // rather than computing them and ignoring the result: with the scope resolved
+    // first, `deliverablePhase` below is always the phase the comparison actually
+    // runs at, so there is no branch where a currency verdict is derived from a
+    // phase that does not exist.
+    const currencyScope = resolveDeliverableApprovalCurrencyScope(
+      row.deliverable_type_key,
+    );
+    if (!currencyScope.evaluable) {
+      // Say so rather than silently allowing it: the only way this row's approval
+      // currency becomes checkable again is a registry change, and that is worth
+      // seeing in the logs instead of inferring from a gate that stopped failing.
+      reportUnevaluableApprovalCurrencyOnce(
+        row.deliverable_type_key,
+        currencyScope.reason,
+      );
+      return true;
+    }
+    const deliverablePhase = currencyScope.phase;
     const structuredLineageCurrent = Boolean(
       currentEvidenceSnapshot &&
       deliverablePhase &&
@@ -1289,7 +1309,24 @@ export async function evaluateGate(
       case "delivery_raci_named":
         pass =
           isPresent(
-            findDeliverable("delivery_raci", "raci", "operating_model"),
+            findDeliverable(
+              "delivery_raci",
+              "raci",
+              // `operating_model_design` is the registry key for the Operating
+              // Model Design — the P3 document that names the work split and
+              // accountability this criterion is about. It is built by the P3
+              // generation set and stored under the REGISTRY spelling, because
+              // the acceptance path maps the orchestrator type back through
+              // `deliverableKeyForOrchestratorType` before writing the row.
+              // Only `operating_model`, the orchestrator alias, was listed, and
+              // nothing ever writes that: the other two spellings are neither
+              // registry keys nor allowed authorship keys either, so a
+              // generated and signed-off Operating Model Design left this
+              // criterion unmet and it passed only on the prose fallbacks
+              // below.
+              "operating_model_design",
+              "operating_model",
+            ),
           ) ||
           briefString.includes("raci") ||
           (fromPhase === 4 &&

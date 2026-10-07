@@ -48,10 +48,13 @@ gate changes.
 ## QA / Validation
 
 - PASS `npm run audit:test-ci-coverage:write` on current `main`: covered
-  2604 → 2606, total 2768 → 2770, **uncovered unchanged at 164**.
+  2609 → 2612, total 2773 → 2776, **uncovered unchanged at 164**.
 - PASS independent cross-check of the tree against the census:
   `git ls-tree -r --name-only origin/main src | grep -cE '\.(test|spec)\.(ts|tsx)$'`
-  returned 2770 against a committed 2768 before this change, and matches after.
+  returned 2776 against a committed 2773 before this change, and matches after.
+- Rebased onto `main` after the original numbers (2768 → 2770) went stale: the
+  drift this record describes kept accruing while the PR sat, so the regeneration
+  was re-run against the current merge base rather than the earlier one.
 - PASS `npm run audit:tenancy-fence-coverage:write` — exit 0, produced no
   change, so the fence census was already current.
 - PASS `npm run release:check -- --base origin/main --head HEAD`.
