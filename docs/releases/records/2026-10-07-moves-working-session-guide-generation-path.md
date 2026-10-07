@@ -198,6 +198,23 @@ intermediate state.
   which is the half that was missing. Nothing checks the finished document
   against them — they remain behavioural assertions in prose. Whether any of
   them should become a measured check is a product decision and is out of scope.
+- **A blocking check for these documents still assumes a decision, and it is
+  observe-only.** The quality contract arms `decision_clarity` — a blocking
+  check that the decision requested is unmistakable on the first page — for
+  every client-facing document that is not an evidence binder, and the five
+  working guides qualify: none of them narrows its rubric, so the default
+  rubric applies. That check's premise is the opposite of what these documents
+  declare, and this change makes them less likely to satisfy it by accident,
+  because they are no longer told to state a decision ask. It cannot quarantine
+  anything today: enforcement is gated on the `deliverable_quality_contract`
+  flag, which is enrolled for no tenant, and none of these profiles requires a
+  visual renderer, so the contract runs observe-only and records the state
+  without blocking. This was measured before deciding not to touch the check
+  here. If that flag is ever enrolled, the contradiction becomes live and the
+  fix belongs in the guides' declared rubric, not in the check — weakening a
+  blocking control is not something to do in the same change that alters the
+  prose it measures.
+
 - **The committed census was already behind.** The regeneration moves test
   files 2,802 → 2,805 and covered 2,638 → 2,641 while this change adds exactly
   one suite, so `main`'s committed counts were two short of its own tree when
