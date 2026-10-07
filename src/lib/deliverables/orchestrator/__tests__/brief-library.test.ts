@@ -723,7 +723,7 @@ const STRUCTURE_DECLARED_TABLES = DELIVERABLE_STRUCTURES.filter(
 
 describe("structure-declared expected tables", () => {
   it("declares tables on the deliverable types built around one, and no others", () => {
-    // Five structures, not an empty declaration anywhere: a structure with no
+    // Six structures, not an empty declaration anywhere: a structure with no
     // type-specific table must not carry an empty array, because that changes
     // nothing and no case could kill it.
     expect(
@@ -733,6 +733,7 @@ describe("structure-declared expected tables", () => {
       "moves/process_change_estimate_brief",
       "moves/readiness_and_change_plan",
       "moves/requirements_traceability",
+      "moves/value_measurement_contract",
       "source/evaluation_workbook",
     ]);
     for (const s of DELIVERABLE_STRUCTURES)
@@ -767,7 +768,20 @@ describe("structure-declared expected tables", () => {
       [
         "moves",
         "process_change_estimate_brief",
-        ["workflow_delta_register", "change_sizing_basis", "adoption_accountability"],
+        [
+          "workflow_delta_register",
+          "change_sizing_basis",
+          "adoption_accountability",
+        ],
+      ],
+      [
+        "moves",
+        "value_measurement_contract",
+        [
+          "committed_outcome_register",
+          "measurement_method_register",
+          "outcome_accountability",
+        ],
       ],
       ["source", "evaluation_workbook", ["evaluation_scoring_model"]],
     ];
@@ -848,11 +862,12 @@ describe("structure-declared expected tables", () => {
     // empty signature shared by the two approval instruments that withhold
     // tables, one for the discovery plan its own builder serves, one generic
     // signature per archetype (6), and one per declaring structure per
-    // archetype (5 x 6 = 30). A fifth declaring structure therefore added six,
-    // from 32 — one per archetype, which is what a type-specific table set
-    // means. Dropping any structure's declaration collapses it back toward the
-    // generic set and fails this case.
-    expect(distinct.size).toBe(38);
+    // archetype (5 x 6 = 30). Registering a sixth archetype pack added five,
+    // from 27; the fifth declaring structure added six, from 32; this change's
+    // sixth added six more, from 38 — one per archetype, which is what a
+    // type-specific table set means. Dropping any structure's declaration
+    // collapses it back toward the generic set and fails this case.
+    expect(distinct.size).toBe(44);
   });
 });
 

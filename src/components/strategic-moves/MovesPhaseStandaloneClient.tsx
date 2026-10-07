@@ -36,8 +36,10 @@ import {
 } from "@/components/strategic-moves/FileCabinetPanel";
 import {
   PhaseApproveAndBuild,
+  type BuildSettledResult,
   type PhaseBuildArtifact,
 } from "@/components/strategic-moves/PhaseApproveAndBuild";
+import { classifyPhaseBuildSettlement } from "@/lib/programs/phase-build-settlement";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { charterGateAssumptionDisclosure } from "@/lib/programs/charter-gate-assumption-disclosure";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
@@ -2402,32 +2404,31 @@ export function MovesPhaseStandaloneClient({
     }
   }
 
-  async function approvePhaseGateAfterBuild(result: {
-    succeededKeys: string[];
-    failedKeys: string[];
-    total: number;
-  }) {
+  async function approvePhaseGateAfterBuild(result: BuildSettledResult) {
     // This only ever runs once every queued deliverable in the batch has
     // reached a terminal status (see PhaseApproveAndBuild's onBuildSettled) —
-    // never while generation is still queued or running, and never when a
-    // required deliverable failed or was held below gate.
-    if (result.failedKeys.length > 0) {
+    // never while generation is still queued or running.
+    //
+    // A failure refuses the submission only when the document that failed is
+    // one a phase gate check actually reads. A working document beside it
+    // (`gateArtifact: false`) is named rather than blocking, because no gate
+    // check reads it and refusing here used to dead-end the phase on a document
+    // the gate never asked for. `classifyPhaseBuildSettlement` owns that split.
+    const settlement = classifyPhaseBuildSettlement({
+      phase: phase.phase,
+      succeeded: result.succeeded,
+      failed: result.failed,
+    });
+    if (settlement.refusal) {
       setGateApprovalStatus("blocked");
-      throw new Error(
-        `${result.failedKeys.length} required output${result.failedKeys.length === 1 ? "" : "s"} ` +
-          `failed to generate or were held below gate (${result.failedKeys.join(", ")}). ` +
-          "Fix the underlying issue and re-run Approve & Build before requesting gate approval.",
-      );
-    }
-    if (result.succeededKeys.length === 0) {
-      setGateApprovalStatus("blocked");
-      throw new Error(
-        "No required deliverables completed generation for this phase.",
-      );
+      throw new Error(settlement.refusal);
     }
     setGateApprovalStatus("approving");
     setGateApprovalMessage(
-      `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. Submitting gate approval...`,
+      `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. ` +
+        (settlement.workingDocumentCaveat
+          ? `${settlement.workingDocumentCaveat} Submitting gate approval...`
+          : "Submitting gate approval..."),
     );
 
     const approvalRes = await fetch(
@@ -2438,7 +2439,11 @@ export function MovesPhaseStandaloneClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phase: phase.phase,
-          rationale: `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.`,
+          rationale:
+            `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.` +
+            (settlement.workingDocumentCaveat
+              ? ` ${settlement.workingDocumentCaveat}`
+              : ""),
         }),
       },
     );
@@ -2509,10 +2514,16 @@ export function MovesPhaseStandaloneClient({
       setGateApproved(false);
       setGateApprovalStatus("approving");
       setGateApprovalMessage("Submitting P0 gate approval...");
+      // P0 has no deliverable build: its gate evidence IS the origination
+      // brief, so it settles as one succeeded gate artifact.
       await approvePhaseGateAfterBuild({
         succeededKeys: ["origination_brief"],
         failedKeys: [],
         total: 1,
+        succeeded: [
+          { deliverableTypeKey: "origination_brief", gateArtifact: true },
+        ],
+        failed: [],
       });
     } catch (err) {
       setGateApproved(false);
@@ -5644,11 +5655,7 @@ function PhaseBody({
   gateApprovalStatus: "idle" | "approving" | "approved" | "blocked";
   isHistoricalPhase: boolean;
   move: StrategicMove;
-  onApproveAfterBuild: (result: {
-    succeededKeys: string[];
-    failedKeys: string[];
-    total: number;
-  }) => Promise<void>;
+  onApproveAfterBuild: (result: BuildSettledResult) => Promise<void>;
   onContinueCurrentPhase: () => void;
   onApproveP0Gate: () => void | Promise<void>;
   approverLabel: string | null;
@@ -6391,10 +6398,20 @@ function PhaseBody({
                 onCancel={() => setP0ConfirmOpen(false)}
                 onConfirm={() => {
                   setP0ConfirmOpen(false);
+                  // Gate-only path: this phase's outputs were already built,
+                  // so it settles as one succeeded gate artifact and nothing
+                  // failed.
                   void onApproveAfterBuild({
                     succeededKeys: ["prebuilt_gate_outputs"],
                     failedKeys: [],
                     total: 1,
+                    succeeded: [
+                      {
+                        deliverableTypeKey: "prebuilt_gate_outputs",
+                        gateArtifact: true,
+                      },
+                    ],
+                    failed: [],
                   });
                 }}
               />
