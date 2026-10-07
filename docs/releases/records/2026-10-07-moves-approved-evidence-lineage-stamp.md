@@ -143,9 +143,9 @@ is the behaviour before this release.
 
 - The committed coverage census on `main` was already one test file short of the true count at this
   branch point. This regeneration absorbs that pre-existing drift as well as the two suites added
-  here: `testFiles` 2818 → 2821 and `coveredTestFiles` 2654 → 2657, where only two of the three are
-  this release's. Measured by regenerating with the two new suites removed, which produced
-  2819 / 2655 against the committed 2818 / 2654. Uncovered test files are unchanged.
+  here: `testFiles` 2820 → 2823 and `coveredTestFiles` 2656 → 2659, where only two of the three are
+  this release's. Measured by regenerating with the two new suites removed, which produced one more
+  test file than the committed count. Uncovered test files are unchanged.
 - The client-approval draft-row stamp has no behavioural pin, for the reason diagnosed under QA.
 - The other route to a currency verdict is unchanged: a document whose linked artifact row exists
   but no longer reads as current is still refused before the document's own lineage is consulted.

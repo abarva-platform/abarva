@@ -2429,13 +2429,14 @@
   }
 
   .sw-v2-contract-commandbar {
+    position: static;
     grid-template-columns: 1fr;
     align-items: stretch;
   }
 
   .sw-v2-contract-commandbar-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .sw-v2-contract-commandbar-tabs button {

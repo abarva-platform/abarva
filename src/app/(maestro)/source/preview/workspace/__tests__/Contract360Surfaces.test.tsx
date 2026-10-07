@@ -12,6 +12,7 @@ import type { SourceWorkspaceVM } from "../buildViewModel";
 import {
   ContractOptimizeContent,
   contractValueTypeSummary,
+  keepSelectedContractTabVisible,
 } from "../WorkspaceExecutiveShell";
 
 /**
@@ -401,5 +402,41 @@ describe("Contract 360 Optimize presentation", () => {
     expect(screen.getByRole("tab", { name: "Sequence" })).toBeTruthy();
     expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
     expect(screen.queryByText("No negotiation text is loaded for this contract.")).toBeNull();
+  });
+});
+
+describe("contract tab visibility", () => {
+  it("brings the selected tab into a horizontally scrolled mobile toolbar", () => {
+    const list = document.createElement("div");
+    const selected = document.createElement("button");
+    selected.setAttribute("aria-selected", "true");
+    list.append(selected);
+    Object.defineProperty(list, "clientWidth", { value: 200 });
+    Object.defineProperty(list, "scrollWidth", { value: 600, configurable: true });
+    list.getBoundingClientRect = () => ({ left: 10, right: 210 }) as DOMRect;
+    selected.getBoundingClientRect = () => ({ left: 300, right: 380 }) as DOMRect;
+
+    keepSelectedContractTabVisible(list);
+
+    expect(list.scrollLeft).toBe(170);
+  });
+
+  it("scrolls back to an earlier selected tab without moving a fully visible toolbar", () => {
+    const list = document.createElement("div");
+    const selected = document.createElement("button");
+    selected.setAttribute("aria-selected", "true");
+    list.append(selected);
+    Object.defineProperty(list, "clientWidth", { value: 200 });
+    Object.defineProperty(list, "scrollWidth", { value: 600, configurable: true });
+    list.scrollLeft = 200;
+    list.getBoundingClientRect = () => ({ left: 10, right: 210 }) as DOMRect;
+    selected.getBoundingClientRect = () => ({ left: -50, right: 20 }) as DOMRect;
+
+    keepSelectedContractTabVisible(list);
+    expect(list.scrollLeft).toBe(140);
+
+    Object.defineProperty(list, "scrollWidth", { value: 200 });
+    keepSelectedContractTabVisible(list);
+    expect(list.scrollLeft).toBe(140);
   });
 });
