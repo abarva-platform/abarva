@@ -169,11 +169,20 @@ revert restores the single-key scope and with it the earlier evidence revisions.
 
 ## Known Gaps
 
-- **Other single-key reads on these tables are not swept by this change.** The approved-evidence
-  snapshot and the generation prompt are fixed here, and the phase evidence reader and the
-  review-promotion path were already widened. Other callers that scope a Move evidence read to a
-  single key — including the artifact routes — were not measured in this change and may carry the
-  same defect.
+- **Three live single-key reads on these tables remain, and they are now named rather than
+  guessed at.** Every file reading `program_evidence_reviews` or `program_evidence_items` was
+  enumerated for this record. The artifact routes turn out to be **already widened** on all four of
+  their reads, as are the phase evidence reader and the review-promotion path. What is left:
+  - `src/lib/programs/deliverables/diagnose-intake.ts` — two reads, reachable from three routes.
+  - `src/lib/programs/approved-inputs-pack-store.ts` — one read.
+
+  These are secondary surfaces rather than the gate and generation core fixed here, and each needs
+  its consumer's intent checked before widening, so they are deliberately left to their own change.
+- **One module's three single-key reads are deliberately left alone because the module is an
+  orphan.** `src/lib/deliverables/orchestrator/evidence-assembler.ts` reads both tables on a single
+  key, and its only export has **no production caller** — it is reached by its own test suite and
+  nothing else. Widening it would record a fix for code that does not run; it should be retired or
+  mounted first.
 - **This does not decide which key a new row should carry.** Both producers keep writing the key
   they write today, so a Move's rows can still be split across two of its tenant's keys. A widened
   read makes that harmless for these consumers; it is not a substitute for settling the storage
