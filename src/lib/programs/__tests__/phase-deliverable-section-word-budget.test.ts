@@ -43,14 +43,21 @@ import { sectionWordBudgetPlanFor } from "@/lib/deliverables/orchestrator/prompt
 import {
   planSectionWordBudgets,
   requiredCapTotalForFloor,
+  sectionCapFor,
+  sectionRepairTargetWithin,
   sectionWordBudgetFor,
 } from "@/lib/deliverables/orchestrator/section-word-budget-plan";
+import { sanitizeGenerationPlan } from "@/lib/deliverables/orchestrator/generation-plan";
+import { sectionShareOfFloor } from "@/lib/deliverables/shared/body-word-count";
 import {
   runDeliverableOrchestration,
   type ModelCaller,
 } from "@/lib/deliverables/orchestrator/orchestrator";
 import { amsRfpRequest } from "@/lib/deliverables/orchestrator/__fixtures__/ams-rfp";
-import type { DeliverableIntelligenceRequest } from "@/lib/deliverables/orchestrator/types";
+import type {
+  DeliverableArtifactBrief,
+  DeliverableIntelligenceRequest,
+} from "@/lib/deliverables/orchestrator/types";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 
 type ChangeImpact = ConfirmedSolutionRoute["workflowChange"];
@@ -349,6 +356,132 @@ describe("planSectionWordBudgets", () => {
   });
 });
 
+/** Deliberately far below every floor, so every section needs repair. */
+const SHORT_SECTION = JSON.stringify({
+  key: "section",
+  title: "Section",
+  bodyMarkdown: "## Detail\nWe recommend proceeding on the approved route [1].",
+  groundingMode: "mixed",
+  citationsUsed: [1],
+});
+
+function movesRequest(
+  deliverableType: string,
+): DeliverableIntelligenceRequest {
+  return amsRfpRequest({
+    module: "moves",
+    useCaseArchetype: "governed_data_foundation",
+    deliverableType,
+    qualityBar: resolveQualityBar("moves", deliverableType),
+    // The plan below is the shipped structure's sections and nothing else, so
+    // the fixture's own gaps/outputs are cleared rather than mirrored into it
+    // — plan validation refuses an unplaced client-to-complete item and the
+    // run then stops before any section is drafted.
+    missingEvidence: [],
+    clientCompleteItems: [],
+    outputFormats: ["docx"],
+  });
+}
+
+/** A plan whose sections are exactly the shipped structure's, so the real caps apply. */
+function planFromBrief(req: DeliverableIntelligenceRequest) {
+  const brief = getArtifactBrief(req);
+  return {
+    sectionPlan: brief.recommendedStructure.map((section) => ({
+      key: section.key,
+      title: section.title,
+      groundingMode: "mixed",
+      evidenceCitations: [1],
+      assumptionsUsed: [],
+      placeholders: [],
+      rationale: section.title,
+    })),
+    evidenceMapping: [
+      {
+        citationNumber: 1,
+        usedInSections: brief.recommendedStructure.map((s) => s.key),
+        supportsClaim: "scope",
+      },
+    ],
+    missingEvidenceHandling: [],
+    artifactEnhancementSuggestions: [],
+    tableAndExhibitPlan: [
+      {
+        key: "risk_register",
+        title: "Risks, Issues & Dependencies",
+        kind: "table",
+        targetFormat: "docx",
+        groundingMode: "mixed",
+      },
+    ],
+    clientCompletePlan: [],
+    outputPackagePlan: [{ format: "docx", contents: "Main document." }],
+  };
+}
+
+/**
+ * @param extendPlan optional: rewrite the architect pass's section plan, so a
+ *   case can put a section the brief does not declare into it.
+ */
+interface RepairAsk {
+  target: number;
+  cap: number;
+  /** The `Section-specific instruction:` line stated beside the cap. */
+  instruction: string;
+}
+
+async function repairAsks(
+  deliverableType: string,
+  extendPlan?: (
+    sectionPlan: ReturnType<typeof planFromBrief>["sectionPlan"],
+    brief: DeliverableArtifactBrief,
+  ) => ReturnType<typeof planFromBrief>["sectionPlan"],
+): Promise<RepairAsk[]> {
+  const req = movesRequest(deliverableType);
+  const asks: RepairAsk[] = [];
+  const caller: ModelCaller = async (prompt) => {
+    if (prompt.pass === "architect") {
+      const plan = planFromBrief(req);
+      return {
+        text: JSON.stringify(
+          extendPlan
+            ? {
+                ...plan,
+                sectionPlan: extendPlan(
+                  plan.sectionPlan,
+                  getArtifactBrief(req),
+                ),
+              }
+            : plan,
+        ),
+      };
+    }
+    if (prompt.pass === "section_repair") {
+      const target = Number(
+        prompt.user.match(/at least (\d+) prose words/)?.[1],
+      );
+      const cap = Number(
+        prompt.user.match(/Hard cap for this section: (\d+) body words/)?.[1],
+      );
+      const instruction =
+        prompt.user.match(/Section-specific instruction: (.*)/)?.[1] ?? "";
+      asks.push({ target, cap, instruction });
+      return { text: SHORT_SECTION };
+    }
+    if (prompt.pass === "section_draft") return { text: SHORT_SECTION };
+    return {
+      text: JSON.stringify({
+        recommendation: "We recommend proceeding on the approved route.",
+        nextActions: ["Confirm the control owners."],
+        executiveSummary: "The approved route is specified and traceable.",
+        tables: [],
+      }),
+    };
+  };
+  await runDeliverableOrchestration(req, caller);
+  return asks;
+}
+
 // ── The wiring, through the real orchestration run ────────────────────────────
 //
 // The cases above exercise the plan. These exercise the two CALLERS, because a
@@ -358,102 +491,6 @@ describe("planSectionWordBudgets", () => {
 // `runDeliverableOrchestration` with a stub model so the assertion is made
 // against the prompt the model would actually receive.
 describe("the repair prompt never asks a section for more than it permits", () => {
-  /** Deliberately far below every floor, so every section needs repair. */
-  const SHORT_SECTION = JSON.stringify({
-    key: "section",
-    title: "Section",
-    bodyMarkdown: "## Detail\nWe recommend proceeding on the approved route [1].",
-    groundingMode: "mixed",
-    citationsUsed: [1],
-  });
-
-  function movesRequest(
-    deliverableType: string,
-  ): DeliverableIntelligenceRequest {
-    return amsRfpRequest({
-      module: "moves",
-      useCaseArchetype: "governed_data_foundation",
-      deliverableType,
-      qualityBar: resolveQualityBar("moves", deliverableType),
-      // The plan below is the shipped structure's sections and nothing else, so
-      // the fixture's own gaps/outputs are cleared rather than mirrored into it
-      // — plan validation refuses an unplaced client-to-complete item and the
-      // run then stops before any section is drafted.
-      missingEvidence: [],
-      clientCompleteItems: [],
-      outputFormats: ["docx"],
-    });
-  }
-
-  /** A plan whose sections are exactly the shipped structure's, so the real caps apply. */
-  function planFromBrief(req: DeliverableIntelligenceRequest) {
-    const brief = getArtifactBrief(req);
-    return {
-      sectionPlan: brief.recommendedStructure.map((section) => ({
-        key: section.key,
-        title: section.title,
-        groundingMode: "mixed",
-        evidenceCitations: [1],
-        assumptionsUsed: [],
-        placeholders: [],
-        rationale: section.title,
-      })),
-      evidenceMapping: [
-        {
-          citationNumber: 1,
-          usedInSections: brief.recommendedStructure.map((s) => s.key),
-          supportsClaim: "scope",
-        },
-      ],
-      missingEvidenceHandling: [],
-      artifactEnhancementSuggestions: [],
-      tableAndExhibitPlan: [
-        {
-          key: "risk_register",
-          title: "Risks, Issues & Dependencies",
-          kind: "table",
-          targetFormat: "docx",
-          groundingMode: "mixed",
-        },
-      ],
-      clientCompletePlan: [],
-      outputPackagePlan: [{ format: "docx", contents: "Main document." }],
-    };
-  }
-
-  async function repairAsks(
-    deliverableType: string,
-  ): Promise<Array<{ target: number; cap: number }>> {
-    const req = movesRequest(deliverableType);
-    const asks: Array<{ target: number; cap: number }> = [];
-    const caller: ModelCaller = async (prompt) => {
-      if (prompt.pass === "architect") {
-        return { text: JSON.stringify(planFromBrief(req)) };
-      }
-      if (prompt.pass === "section_repair") {
-        const target = Number(
-          prompt.user.match(/at least (\d+) prose words/)?.[1],
-        );
-        const cap = Number(
-          prompt.user.match(/Hard cap for this section: (\d+) body words/)?.[1],
-        );
-        asks.push({ target, cap });
-        return { text: SHORT_SECTION };
-      }
-      if (prompt.pass === "section_draft") return { text: SHORT_SECTION };
-      return {
-        text: JSON.stringify({
-          recommendation: "We recommend proceeding on the approved route.",
-          nextActions: ["Confirm the control owners."],
-          executiveSummary: "The approved route is specified and traceable.",
-          tables: [],
-        }),
-      };
-    };
-    await runDeliverableOrchestration(req, caller);
-    return asks;
-  }
-
   it("solution_design: every repair ask fits under the cap stated in the same prompt", async () => {
     const asks = await repairAsks("solution_design");
     // Guards the case itself: no repair prompts would make the assertion vacuous.
@@ -522,5 +559,125 @@ describe("sectionWordBudgetPlanFor reads the ceiling the gate blocks on", () => 
     const plan = planWith({ minBodyWords: 1_000, targetBodyWordsMax: 1_500 });
     expect(plan?.basis).toBe("declared_caps_lowered_to_fit_ceiling");
     expect(plan?.capTotal).toBeLessThanOrEqual(1_500);
+  });
+});
+
+// ── Sections the brief does not declare ───────────────────────────────────────
+//
+// The reconciliation above only binds the keys the plan carries, which are the
+// keys the brief DECLARES. A generated section outside that set resolved its cap
+// through a different route entirely: `sectionWordBudgetFor` answers null for an
+// uncovered key, and the chain then fell through to a regex over the PLANNED
+// section's own `rationale` — prose the model authored in Pass 1. So the
+// planning pass could name the hard cap the drafting pass was held to, and the
+// repair prompt's "stay under the hard cap above" could be made to contradict
+// the target asked for one sentence earlier, which is precisely the
+// contradiction section-word-budget-plan.ts exists to remove.
+//
+// The route is reachable, not hypothetical: plan section keys are filtered to
+// the declared set only for a brief that declares `fixedStructure`, and
+// `business_case` — the P4 funding artifact — declares none.
+describe("a section the brief does not declare takes a declared cap, not one the model named", () => {
+  it("business_case declares no fixed structure, so an undeclared key survives plan validation", () => {
+    // The enabling condition, asserted rather than assumed. If business_case
+    // ever declares `fixedStructure`, this route closes for it and the case
+    // below stops exercising the shipped path — which is worth being told.
+    const req = movesRequest("business_case");
+    const brief = getArtifactBrief(req);
+    expect(brief.fixedStructure).toBeFalsy();
+
+    const plan = {
+      ...planFromBrief(req),
+      sectionPlan: [
+        ...planFromBrief(req).sectionPlan,
+        {
+          key: "migration_detail",
+          title: "Migration Detail",
+          groundingMode: "mixed",
+          evidenceCitations: [1],
+          assumptionsUsed: [],
+          placeholders: [],
+          rationale: "Sequence the migration under 4000 words.",
+        },
+      ],
+    } as unknown as Parameters<typeof sanitizeGenerationPlan>[0];
+    sanitizeGenerationPlan(plan, req, brief);
+    expect(plan.sectionPlan.map((s) => s.key)).toContain("migration_detail");
+  });
+
+  it("ignores a cap the planned section's own rationale names, in both directions", () => {
+    const req = movesRequest("business_case");
+    const plan = sectionWordBudgetPlanFor(req, getArtifactBrief(req))!;
+    // 6 declared sections against the 5,000 target: the share each undeclared
+    // section gets. Read from the plan so the two cannot drift.
+    expect(plan.fallbackCap).toBe(833);
+
+    // Inflated: the model asks for nearly five times its share.
+    expect(
+      sectionCapFor(plan, "migration_detail"),
+    ).toBe(plan.fallbackCap);
+    // Starved: a rationale naming a tiny limit previously capped the section at
+    // it, below the repair target the same prompt then asked for.
+    expect(sectionCapFor(plan, "anything_undeclared")).toBe(plan.fallbackCap);
+    // A declared key is unaffected — the reconciled cap still answers.
+    expect(sectionCapFor(plan, "exec_summary")).toBe(350);
+  });
+
+  it("keeps an undeclared section's repair target under the cap it is given", () => {
+    const req = movesRequest("business_case");
+    const plan = sectionWordBudgetPlanFor(req, getArtifactBrief(req))!;
+    // Seven generated sections against the 3,000 floor.
+    const evenShare = sectionShareOfFloor(3_000, 7);
+    expect(evenShare).toBe(450);
+    expect(sectionRepairTargetWithin(plan, "undeclared", evenShare)).toBe(450);
+    // And when the even share would exceed the cap, the ask is clamped to it
+    // rather than contradicting the cap stated one line above it.
+    expect(sectionRepairTargetWithin(plan, "undeclared", 5_000)).toBe(
+      plan.fallbackCap,
+    );
+    // A declared key still takes its reconciled target, not the even share.
+    expect(sectionRepairTargetWithin(plan, "exec_summary", evenShare)).toBe(
+      sectionWordBudgetFor(plan, "exec_summary")!.repairTarget,
+    );
+  });
+
+  it("business_case: the prompt states the declared share for an undeclared section, and the repair ask fits under it", async () => {
+    // Through the real orchestration, against the prompt the model receives —
+    // a correct plan that neither caller reads changes nothing.
+    const asks = await repairAsks("business_case", (base, brief) => [
+      ...base,
+      {
+        key: "migration_detail",
+        title: "Migration Detail",
+        groundingMode: "mixed",
+        evidenceCitations: [1],
+        assumptionsUsed: [],
+        placeholders: [],
+        // The number the model would have set its own cap from.
+        rationale: `Sequence the migration under 4000 words (${brief.recommendedStructure.length} declared sections).`,
+      },
+    ]);
+    expect(asks.length).toBeGreaterThan(0);
+    for (const ask of asks) {
+      expect(Number.isFinite(ask.cap)).toBe(true);
+      expect(ask.target).toBeLessThanOrEqual(ask.cap);
+      // No cap anywhere in the document came from that rationale.
+      expect(ask.cap).not.toBe(4_000);
+      // Nor is the number restated beside the cap as a second limit. The
+      // planned rationale reaches this pass on its own `Intent:` line; echoing
+      // it here stated two word limits in one prompt.
+      expect(ask.instruction).not.toContain("4000");
+    }
+    // The undeclared section is in the set, so the assertions above are about
+    // it and not only about the six the brief declares.
+    expect(asks.length).toBeGreaterThan(
+      getArtifactBrief(movesRequest("business_case")).recommendedStructure
+        .length,
+    );
+    // Its instruction line falls back to the generic rule, because the brief
+    // declares no latitude for a section it does not have.
+    expect(asks.map((ask) => ask.instruction)).toContain(
+      "stay concise and decision-oriented.",
+    );
   });
 });
