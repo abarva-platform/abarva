@@ -779,6 +779,16 @@ export async function decideEvidenceReview(
   decision: ReviewDecision;
 }> {
   const tenantKey = ctx.clientKey ?? "";
+  // The rows this promotion may MATCH, which is a read-scope question and not
+  // a question about which key a new row carries. `resolveDocFamilyReviews`
+  // already matches every key this tenant's own evidence may be stored under,
+  // so the cabinet shows a canonical-substrate-key row AS pending; scoped to
+  // the app client key alone this update matched nothing, every fallback below
+  // missed the same rows, and the route answered 409 `no_pending_review` for
+  // the very item on screen. Read and match scope have to agree or the control
+  // is a dead end. Per-tenant by construction; see
+  // `moveEvidenceReadTenantKeys`. Written VALUES stay keyed to `ctx.clientKey`.
+  const tenantKeys = moveEvidenceReadTenantKeys(ctx.clientKey);
   const sb = getAzureWriteFluentClient();
   let reviewedSourceRef: Record<string, unknown> | null = null;
   if (args.decision === "approved") {
@@ -796,7 +806,7 @@ export async function decideEvidenceReview(
     const { data: pendingReview, error: pendingReviewError } = await sb
       .from("program_evidence_reviews")
       .select("source_ref")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .eq("evidence_id", args.evidenceId)
       .eq("decision", "pending")
@@ -829,7 +839,7 @@ export async function decideEvidenceReview(
           ? `Approved extraction version 1 after human review by ${ctx.userId}.`
           : `Reviewed ${args.decision} by ${ctx.userId} on the current-state evidence review.`),
     })
-    .eq("tenant_key", tenantKey)
+    .in("tenant_key", tenantKeys)
     .eq("program_id", args.moveId)
     .eq("evidence_id", args.evidenceId)
     .eq("decision", "pending")
@@ -840,7 +850,7 @@ export async function decideEvidenceReview(
     const { data: existingReview, error: existingReviewError } = await sb
       .from("program_evidence_reviews")
       .select("evidence_id, family_key, decision")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .eq("evidence_id", args.evidenceId)
       .maybeSingle();
@@ -872,7 +882,7 @@ export async function decideEvidenceReview(
       .select(
         "id, evidence_type, title, confidence, phase, extracted_structured",
       )
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .eq("id", args.evidenceId)
       .maybeSingle();
