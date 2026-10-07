@@ -19,6 +19,10 @@ import {
 } from "@/lib/programs/phase-capture-status";
 import { resolvePhaseCaptureHold } from "@/lib/programs/phase-capture-hold";
 import { CaptureEvidenceHoldNotice } from "@/components/strategic-moves/CaptureEvidenceHoldNotice";
+import {
+  CaptureGateMetNotice,
+  isGateMetWithCaptureUnfinished,
+} from "@/components/strategic-moves/CaptureGateMetNotice";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
@@ -2918,6 +2922,19 @@ export function MovesPhaseStandaloneClient({
 
   const nextCapturePhase = phase.phase < 5 ? PHASES[phase.phase + 1] : null;
 
+  // Gate vs. capture: a phase the Move has already advanced past (`state:
+  // done`) can show a met gate and an unfinished capture strip at the same
+  // time — a gate is met from existing or migrated origination data (or
+  // approved evidence), not necessarily from working the guided capture
+  // questions here. Surface that so the empty strip does not read as a
+  // contradiction. Informational only; it changes no gate, save, or Continue.
+  const viewedGateTally = phaseTallies.find((row) => row.phase === phase.phase);
+  const viewedCaptureRow = capturePhases.find((p) => p.phase === phase.phase);
+  const gateMetWithCaptureUnfinished = isGateMetWithCaptureUnfinished(
+    viewedGateTally,
+    viewedCaptureRow,
+  );
+
   // P0 Originate renders the redesigned capture flow only when BOTH flags are
   // on: the flow itself (`moves_capture_v2`) and the P0 extension
   // (`moves_capture_p0_v1`). Either off ⇒ P0 keeps the legacy canvas exactly.
@@ -3458,6 +3475,12 @@ export function MovesPhaseStandaloneClient({
                         handoffSummary: charterBasisRollup,
                         openingBand: (
                           <>
+                            {gateMetWithCaptureUnfinished && viewedGateTally ? (
+                              <CaptureGateMetNotice
+                                met={viewedGateTally.met}
+                                total={viewedGateTally.total}
+                              />
+                            ) : null}
                             <CharterAssumptionsCarryForward
                               assumptions={carriedCharterAssumptionRows}
                             />
