@@ -1217,6 +1217,31 @@ describe("Source Workspace visual aVa answer", () => {
     );
   });
 
+  it("names the period and unresolved conflict on a stated full-term commitment", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: { selectedContract: Record<string, unknown> };
+    };
+    context.sourceV4.selectedContract.committedAnnualSpendUsd = 1_550_000;
+    context.sourceV4.selectedContract.totalCommittedValueUsd = 7_750_000;
+    context.sourceV4.selectedContract.totalCommittedValueConflict = true;
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "What is the commitment on CTR-090?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("annual committed spend $1.6M");
+    expect(answer?.directAnswer).toContain("full-term committed value $7.8M");
+    expect(answer?.directAnswer).toContain("full-term commitment conflict unresolved");
+    expect(answer?.directAnswer).toContain(
+      "Annual committed spend is a different period from full-term committed value",
+    );
+    expect(answer?.metricsUsed).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "committed-annual-spend", value: 1_550_000 }),
+      expect.objectContaining({ id: "total-committed-value", value: 7_750_000 }),
+    ]));
+  });
+
   it("uses the Contract 360 stated annual value with conflict wording over a direct page hint", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: { selectedContract: Record<string, unknown> };

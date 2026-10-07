@@ -154,6 +154,61 @@ describe("Source contract answer authority", () => {
     expect(text).toContain("$30K of annual committed capacity not drawn on");
   });
 
+  it("keeps the stated full-term value aligned with the contract page when extraction conflicts", async () => {
+    (getContract360 as jest.Mock).mockResolvedValue({
+      ...ownContract,
+      committed_annual_spend: 1_550_000,
+      actual_annual_spend: 66_100,
+      total_committed_value: 1_600_000,
+      resolved_total_committed_value: 7_800_000,
+      total_committed_value_conflict_flag: true,
+    });
+
+    const { text, answer } = await ask("What is the commitment on CTR-101?", {
+      module: "Source",
+      clientKey: "tenant-one",
+      sourceContract360Mode: true,
+      contractId: "CTR-101",
+    });
+
+    expect(answer?.intent).toBe("source_contract_visual");
+    expect(text).toContain("annual committed spend $1.6M");
+    expect(text).toContain("full-term committed value $1.6M");
+    expect(text).toContain("full-term commitment conflict unresolved");
+    expect(text).not.toContain("$7.8M");
+    expect(answer?.metricsUsed).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "committed-annual-spend", value: 1_550_000 }),
+      expect.objectContaining({ id: "total-committed-value", value: 1_600_000 }),
+    ]));
+  });
+
+  it("withholds a resolved extraction amount when the stated commitment is absent", async () => {
+    (getContract360 as jest.Mock).mockResolvedValue({
+      ...ownContract,
+      total_committed_value: null,
+      resolved_total_committed_value: 7_800_000,
+      total_committed_value_conflict_flag: true,
+    });
+
+    const { text, answer } = await ask("What is the full-term commitment on CTR-101?", {
+      module: "Source",
+      clientKey: "tenant-one",
+      sourceContract360Mode: true,
+      contractId: "CTR-101",
+    });
+
+    expect(text).toContain("full-term committed value Not established");
+    expect(text).not.toContain("$7.8M");
+    expect(answer?.metricsUsed).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "total-committed-value",
+        value: "Not established",
+      }),
+    ]));
+    expect(answer?.metricsUsed.find((metric: { id: string }) => metric.id === "total-committed-value"))
+      .not.toHaveProperty("unit");
+  });
+
   it("keeps a CFO-safe summary on the selected contract", async () => {
     (getContract360 as jest.Mock).mockResolvedValue(ownContract);
 

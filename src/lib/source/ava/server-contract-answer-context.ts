@@ -61,9 +61,9 @@ function contractForAnswer(contract: SourceContract360Row) {
       committedAnnualSpendUsd != null && actualAnnualSpendUsd != null
         ? Math.max(0, committedAnnualSpendUsd - actualAnnualSpendUsd)
         : null,
-    totalCommittedValueUsd: contract.total_committed_value_conflict_flag
-      ? contract.resolved_total_committed_value
-      : contract.total_committed_value,
+    totalCommittedValueUsd: contract.total_committed_value,
+    totalCommittedValueConflict:
+      contract.total_committed_value_conflict_flag === true,
     endDate: calendarDate(contract.end_date),
     noticeDate: calendarDate(
       contract.renewal_notice_date ?? contract.notice_deadline,
