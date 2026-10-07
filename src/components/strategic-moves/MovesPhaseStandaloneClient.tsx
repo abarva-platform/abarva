@@ -86,6 +86,7 @@ import { capturePhaseProgress } from "@/lib/programs/capture-phase-progress";
 import {
   isWorkbookProposalAcceptable,
   isWorkbookProposalOpenForReview,
+  isWorkbookProposalReviewable,
   selectableWorkbookProposalIds,
 } from "@/lib/programs/stage-readiness-workbooks/review-selection";
 import { shouldOfferStageReadinessWorkbook } from "@/lib/programs/stage-readiness-workbook-offer";
@@ -8306,6 +8307,42 @@ function StageReadinessWorkbookPreviewControl({
   const reviewActionCount =
     preview?.proposalSet?.proposals?.filter(isWorkbookProposalOpenForReview)
       .length ?? 0;
+  // Required responses that are not accepted. Every one of these holds both
+  // forward controls, whether it is still pending or was rejected: the P1
+  // branch of `applyStageReadinessToEvidencePackets` requires every required
+  // proposal accepted, and `assessStageReadinessGate` raises a
+  // `review_required` blocker for any required proposal that is not. So the
+  // phase gate keeps returning 409 and so does `generate-phase`.
+  const requiredNotAcceptedCount =
+    preview?.proposalSet?.proposals?.filter(
+      (proposal) =>
+        (proposal.requirement ?? "required") === "required" &&
+        proposal.disposition !== "accepted",
+    ).length ?? 0;
+  // Whether any decision on this set still needs to be changeable.
+  //
+  // Open work is not the only reason. A review can leave NO open work and
+  // still hold the phase, because rejecting a required response is not a
+  // resting state for it. That combination used to close the review surface
+  // completely: the action row rendered only while open work remained, and a
+  // rejected row's checkbox was disabled, so not one control on the page could
+  // revise the single decision that was holding the phase — while the gate's
+  // blocker text went on saying to accept each required response. The server
+  // never locked this; `mergeStageReadinessReviewDecisions` states that
+  // incoming decisions always win.
+  //
+  // A review that holds nothing stays closed, which is what it means for a
+  // review to be finished.
+  // `isWorkbookProposalReviewable` is the per-row half: a blank response can
+  // never be accepted, so a workbook of nothing but blanks must not be offered
+  // an action row whose buttons could never enable. Completing the cells and
+  // uploading again is that workbook's only path, which the blank tally says.
+  const anyProposalReviewable =
+    preview?.proposalSet?.proposals?.some(isWorkbookProposalReviewable) ??
+    false;
+  const reviewRevisable =
+    anyProposalReviewable &&
+    (reviewActionCount > 0 || requiredNotAcceptedCount > 0);
   const proposalReviewMessage = proposalReview
     ? `Workbook review recorded · ${proposalReview.acceptedCount ?? 0} accepted · ${proposalReview.needsValidationCount ?? 0} needs validation · ${proposalReview.rejectedCount ?? 0} rejected · ${proposalReview.pendingCount ?? 0} pending` +
       (proposalReview.readiness
@@ -8373,6 +8410,11 @@ function StageReadinessWorkbookPreviewControl({
                 ? `${preview.proposalSet.proposals.length} responses reviewed · ${reviewActionCount} still open`
                 : `${selectedProposalIds.size}/${preview.proposalSet.proposals.length} selected · upload is not acceptance`}
             </span>
+            {requiredNotAcceptedCount > 0 && reviewRevisable ? (
+              <small>
+                {`${requiredNotAcceptedCount} required response${requiredNotAcceptedCount === 1 ? "" : "s"} not accepted. This phase stays held until each one is accepted; select the response below to change its decision.`}
+              </small>
+            ) : null}
           </div>
           {/*
             Every stored response is listed. Rendering only the first few
@@ -8394,7 +8436,8 @@ function StageReadinessWorkbookPreviewControl({
                     checked={selectedProposalIds.has(proposalId)}
                     disabled={
                       !proposalId ||
-                      !isWorkbookProposalOpenForReview(proposal) ||
+                      !isWorkbookProposalReviewable(proposal) ||
+                      !reviewRevisable ||
                       reviewStatus === "saving"
                     }
                     onChange={(event) => {
@@ -8429,7 +8472,7 @@ function StageReadinessWorkbookPreviewControl({
               );
             })}
           </div>
-          {reviewActionCount > 0 ? (
+          {reviewRevisable ? (
             <div className="mxw-workbook-review-actions">
               <button
                 disabled={

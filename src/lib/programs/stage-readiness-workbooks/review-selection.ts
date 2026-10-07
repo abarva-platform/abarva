@@ -65,3 +65,49 @@ export function selectableWorkbookProposalIds(
     .filter((proposalId): proposalId is string => Boolean(proposalId));
   return new Set(ids);
 }
+
+/**
+ * A response whose recorded decision the reviewer is still allowed to CHANGE.
+ *
+ * This is deliberately wider than `isWorkbookProposalOpenForReview`, and the
+ * difference is the whole point of having two predicates.
+ *
+ * A rejection is not a resting state for a REQUIRED response. Every forward
+ * control reads `disposition === "accepted"`: the P1 branch of
+ * `applyStageReadinessToEvidencePackets` requires every required proposal
+ * accepted, and `assessStageReadinessGate` raises a `review_required` blocker
+ * for any required proposal that is not. So a required response that is
+ * rejected keeps its evidence family's packet open, the phase gate keeps
+ * returning 409 `required_evidence_gaps_open`, and `generate-phase` keeps
+ * returning 409 `required_evidence_open` — the transition AND the phase build
+ * both stay shut.
+ *
+ * Treating `rejected` as closed therefore made the review's own Reject button
+ * a one-way door onto a dead end. Once every response carried a disposition
+ * there was no open work left, so the action row stopped rendering entirely
+ * and the rejected row's checkbox was disabled — not one control on the page
+ * could revise the single decision that was holding the phase, while the
+ * gate's blocker text went on saying "Review and accept each required
+ * readiness-workbook response before this phase closes."
+ *
+ * The server never locked this: `mergeStageReadinessReviewDecisions` states
+ * that incoming decisions always win, and neither the route nor
+ * `buildStageReadinessProposalReview` guards on the current disposition. Only
+ * the client treated a rejection as final.
+ *
+ * A blank response stays excluded. It cannot be accepted at all, so no
+ * decision available here would release it; completing the cell and uploading
+ * the workbook again is still its only path, which is what the preview's blank
+ * tally says.
+ *
+ * This predicate must NOT be used to seed the selection. Pre-selecting a
+ * decided row would let one "Accept selected" silently reverse a deliberate
+ * rejection. Revising a decision is a deliberate act: tick that row, then
+ * choose. `selectableWorkbookProposalIds` stays on
+ * `isWorkbookProposalOpenForReview`.
+ */
+export function isWorkbookProposalReviewable(
+  proposal: ReviewableWorkbookProposal | null | undefined,
+): boolean {
+  return isWorkbookProposalAcceptable(proposal);
+}
