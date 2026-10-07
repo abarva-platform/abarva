@@ -1906,6 +1906,16 @@ export function FileCabinetPanel({
     PendingEvidenceReview[]
   >([]);
   const [evidenceReviewAvailable, setEvidenceReviewAvailable] = useState(true);
+  const [reviewedEvidence, setReviewedEvidence] = useState<
+    Array<{
+      evidenceId: string;
+      reviewId: string;
+      title: string;
+      familyKey: string;
+      phase: number | null;
+      reviewedAt: string | null;
+    }>
+  >([]);
   const [reviewingEvidenceId, setReviewingEvidenceId] = useState<string | null>(
     null,
   );
@@ -1945,6 +1955,9 @@ export function FileCabinetPanel({
         Array.isArray(j.pendingEvidenceReviews) ? j.pendingEvidenceReviews : [],
       );
       setEvidenceReviewAvailable(j.evidenceReviewStatus !== "unavailable");
+      setReviewedEvidence(
+        Array.isArray(j.reviewedEvidence) ? j.reviewedEvidence : [],
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "load failed");
     } finally {
@@ -2378,6 +2391,67 @@ export function FileCabinetPanel({
                   </div>
                 ))}
           </div>
+        </section>
+      )}
+
+      {reviewedEvidence.length > 0 && (
+        <section
+          aria-label="Reviewed evidence"
+          style={{
+            margin: "10px 0 14px",
+            padding: 12,
+            border: "1px solid #cfe3d4",
+            borderRadius: 6,
+            background: "#f7fbf8",
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 14, color: "#1f5134" }}>
+            {reviewedEvidence.length} reviewed evidence item
+            {reviewedEvidence.length === 1 ? "" : "s"}
+          </h3>
+          <p style={{ margin: "4px 0 8px", fontSize: 12, color: "#4a5a50" }}>
+            Human-approved evidence used by phase generation. This is a
+            read-only audit trail of what a reviewer accepted; it is not an
+            editing surface.
+          </p>
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
+            {reviewedEvidence.map((item) => (
+              <li
+                key={item.reviewId || item.evidenceId}
+                style={{
+                  border: "1px solid #cfe3d4",
+                  borderRadius: 6,
+                  padding: 10,
+                  background: "#fff",
+                }}
+              >
+                <strong style={{ fontSize: 12 }}>{item.title}</strong>
+                <div
+                  style={{
+                    margin: "4px 0 0",
+                    fontSize: 11.5,
+                    color: "#4a5a50",
+                    display: "flex",
+                    gap: 10,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span>{item.familyKey.replace(/_/g, " ")}</span>
+                  {item.phase != null && <span>Phase {item.phase}</span>}
+                  {item.reviewedAt && (
+                    <span>
+                      Approved{" "}
+                      {new Date(item.reviewedAt).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
