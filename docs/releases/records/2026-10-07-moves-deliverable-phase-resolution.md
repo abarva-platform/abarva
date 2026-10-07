@@ -140,14 +140,20 @@ rewritten to supply a malformed spec whose key *is* empty, which is the only
 state in which the guard is the thing returning nothing. A guard whose removal
 changes no output is not covered by a test that would pass without it.
 
-**Census.** `testFiles` 2803 → 2806 and `coveredTestFiles` 2639 → 2642, with
-`uncoveredTestFiles` unchanged. One of the +3 is this suite; the other +2 are
-inherited — `main`'s committed census was already two counts behind its own tree
-when this branch was cut, which is measured here rather than absorbed. The
-`uncoveredTestFiles` count holding flat is the proof the new suite is executed by
-a CI job rather than merely present. Two other pull requests in flight carry a
-census hunk over the same lines; if this one lands after them the committed file
-is restored from `origin/main` and regenerated rather than merged by hand.
+**Census.** `testFiles` 2807 → **2808** and `coveredTestFiles` 2643 → **2644**,
+with `uncoveredTestFiles` unchanged — a clean +1/+1 for the one suite this branch
+adds, which is the proof it is executed by a CI job rather than merely present.
+
+These numbers are a correction. On the base this branch was cut from, the same
+regeneration read 2803 → 2806 / 2639 → 2642: a +3 of which only +1 was this
+suite, the other +2 being staleness `main` already carried against its own tree.
+Two other pull requests then merged, each carrying a census hunk over these same
+lines, which both absorbed that inherited drift and put this branch in conflict
+on exactly this file. It was resolved the documented way — the committed file
+restored from `origin/main` and regenerated, never merged by hand — so the delta
+quoted above is measured against the post-merge base and the earlier figures no
+longer describe anything. The conclusion they supported is unchanged; the numbers
+are not, so they are corrected rather than left standing.
 
 ## Rollout Plan
 

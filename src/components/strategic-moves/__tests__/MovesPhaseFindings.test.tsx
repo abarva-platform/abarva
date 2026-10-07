@@ -150,6 +150,65 @@ describe("MovesPhaseFindings", () => {
     expect(screen.getByTestId("findings-pending")).toBeInTheDocument();
     expect(screen.queryByTestId("finding-identity")).not.toBeInTheDocument();
   });
+
+  it("renders no charts layer when no charts model is passed (Increment 2 shape)", () => {
+    renderSurface();
+    expect(screen.queryByTestId("moves-phase-charts")).toBeNull();
+  });
+
+  it("hosts the Increment 3 charts layer beneath the findings when a charts model is passed", () => {
+    render(
+      <MovesPhaseFindings
+        model={MODEL}
+        review={{}}
+        onReview={jest.fn()}
+        canReview
+        charts={{
+          phase: 2,
+          surface: "diagnosis",
+          anyIllustrative: false,
+          honestyNote: null,
+          pending: false,
+          charts: [
+            {
+              kind: "governed_share",
+              id: "governed_share",
+              title: "Governed share by domain",
+              caption: "Readiness-derived.",
+              illustrative: false,
+              provenance: "readiness_derived",
+              provenanceLabel: "Readiness-derived",
+              data: [
+                { key: "identity", label: "Identity", fraction: 1, valueLabel: "100%", statusLabel: "Committed" },
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByTestId("moves-phase-charts")).toBeInTheDocument();
+    expect(screen.getByTestId("chart-governed_share")).toBeInTheDocument();
+  });
+
+  it("does not render the charts layer when the charts model is pending", () => {
+    render(
+      <MovesPhaseFindings
+        model={MODEL}
+        review={{}}
+        onReview={jest.fn()}
+        canReview
+        charts={{
+          phase: 2,
+          surface: "diagnosis",
+          anyIllustrative: false,
+          honestyNote: null,
+          pending: true,
+          charts: [],
+        }}
+      />,
+    );
+    expect(screen.queryByTestId("moves-phase-charts")).toBeNull();
+  });
 });
 
 describe("FindingsReviewGateSummary", () => {
