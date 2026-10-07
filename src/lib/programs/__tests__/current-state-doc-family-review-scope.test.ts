@@ -1,0 +1,201 @@
+const mockReviewRows: Array<Record<string, unknown>> = [];
+const mockEvidenceRows: Array<Record<string, unknown>> = [];
+const mockFilters: Array<{ table: string; column: string; value: unknown }> =
+  [];
+
+jest.mock("server-only", () => ({}));
+jest.mock("@/lib/data-plane/postgresCompat", () => ({
+  getAzureWriteFluentClient: () => ({
+    from: (table: string) => {
+      const filters: Array<{ column: string; value: unknown }> = [];
+      const rowsFor = () =>
+        (table === "program_evidence_reviews"
+          ? mockReviewRows
+          : mockEvidenceRows
+        ).filter((row) =>
+          filters.every((filter) =>
+            Array.isArray(filter.value)
+              ? filter.value.includes(row[filter.column])
+              : row[filter.column] === filter.value,
+          ),
+        );
+      // Thenable, so the chain resolves wherever the reader stops filtering
+      // rather than at a hardcoded terminal call.
+      const query = {
+        select: () => query,
+        eq: (column: string, value: unknown) => {
+          mockFilters.push({ table, column, value });
+          filters.push({ column, value });
+          return query;
+        },
+        in: (column: string, value: unknown[]) => {
+          mockFilters.push({ table, column, value });
+          filters.push({ column, value });
+          return query;
+        },
+        then: (
+          resolve: (result: { data: unknown; error: null }) => unknown,
+        ) => Promise.resolve({ data: rowsFor(), error: null }).then(resolve),
+      };
+      return query;
+    },
+  }),
+}));
+
+import {
+  CANONICAL_TENANT_KEYS,
+  appClientKeyForTenant,
+  canonicalTenantKey,
+} from "@/lib/tenant/aliases";
+import { resolveDocFamilyReviews } from "../current-state-doc-ingest";
+import type { TenancyCtx } from "../types.db";
+
+// Tenant keys come from code, never hand-typed. These cases turn on ONE tenant
+// being stored under more than one of its own keys, so both keys are derived
+// from the alias table itself, and a second, unrelated tenant comes from the
+// same source.
+/** A tenant whose app client key and canonical substrate key differ. */
+const SPLIT_KEY_TENANT = CANONICAL_TENANT_KEYS.find(
+  (key) => appClientKeyForTenant(key) !== key,
+)!;
+const APP_KEY = appClientKeyForTenant(SPLIT_KEY_TENANT)!;
+const CANONICAL_KEY = canonicalTenantKey(SPLIT_KEY_TENANT);
+/** Any other tenant, used to prove the scope set is not a way in. */
+const OTHER_TENANT_KEY = CANONICAL_TENANT_KEYS.find(
+  (key) => key !== SPLIT_KEY_TENANT,
+)!;
+
+const ctxFor = (clientKey: string) => ({ clientKey }) as unknown as TenancyCtx;
+
+const review = (tenantKey: string, decision: string) => ({
+  id: `review-${tenantKey}-${decision}`,
+  evidence_id: `evidence-${tenantKey}-${decision}`,
+  tenant_key: tenantKey,
+  program_id: "move-a",
+  family_key: "data_governance_ownership",
+  decision,
+  source_ref: { filename: "ownership.md" },
+  created_at: "2026-10-07T00:00:00.000Z",
+});
+
+const evidence = (tenantKey: string, decision: string) => ({
+  id: `evidence-${tenantKey}-${decision}`,
+  tenant_key: tenantKey,
+  program_id: "move-a",
+  title: "ownership.md",
+  summary: "Named data owners per domain.",
+  extracted_text: "Owner: domain lead",
+  extracted_structured: null,
+});
+
+beforeEach(() => {
+  mockReviewRows.length = 0;
+  mockEvidenceRows.length = 0;
+  mockFilters.length = 0;
+});
+
+describe("resolveDocFamilyReviews — tenant read scope", () => {
+  it("sees an approved row stored under the tenant's canonical substrate key", async () => {
+    // This is the P2 gate's reader. The product writes the app client key; a
+    // data-plane load writes the canonical substrate key. Scoped to the app
+    // client key alone, an approved family read as `missing`, and the phase
+    // counted it a hard gap.
+    mockReviewRows.push(review(CANONICAL_KEY, "approved"));
+    mockEvidenceRows.push(evidence(CANONICAL_KEY, "approved"));
+
+    const state = await resolveDocFamilyReviews(
+      ctxFor(APP_KEY),
+      "move-a",
+      "data_governance_ownership",
+    );
+
+    expect(state.approved).toBe(1);
+    expect(state.pending).toBe(0);
+    expect(state.committedSignals.length).toBeGreaterThan(0);
+  });
+
+  it("still sees a row stored under the app client key", async () => {
+    mockReviewRows.push(review(APP_KEY, "approved"));
+    mockEvidenceRows.push(evidence(APP_KEY, "approved"));
+
+    const state = await resolveDocFamilyReviews(
+      ctxFor(APP_KEY),
+      "move-a",
+      "data_governance_ownership",
+    );
+
+    expect(state.approved).toBe(1);
+  });
+
+  it("counts a pending row under either key once, and carries its extraction", async () => {
+    mockReviewRows.push(review(CANONICAL_KEY, "pending"));
+    mockEvidenceRows.push(evidence(CANONICAL_KEY, "pending"));
+
+    const state = await resolveDocFamilyReviews(
+      ctxFor(APP_KEY),
+      "move-a",
+      "data_governance_ownership",
+    );
+
+    expect(state.approved).toBe(0);
+    expect(state.pending).toBe(1);
+    expect(state.pendingItems).toHaveLength(1);
+    expect(state.pendingItems[0]?.sourceTextPreview).toBe("Owner: domain lead");
+  });
+
+  it("does not see another tenant's rows for the same Move id", async () => {
+    // Widening is per-tenant: a key outside this tenant's own alias profile
+    // stays unreadable, so the scope set is never a way in.
+    mockReviewRows.push(review(OTHER_TENANT_KEY, "approved"));
+    mockEvidenceRows.push(evidence(OTHER_TENANT_KEY, "approved"));
+
+    const state = await resolveDocFamilyReviews(
+      ctxFor(APP_KEY),
+      "move-a",
+      "data_governance_ownership",
+    );
+
+    expect(state.approved).toBe(0);
+    expect(state.pending).toBe(0);
+  });
+
+  it("reads nothing at all without a tenant", async () => {
+    mockReviewRows.push(review(APP_KEY, "approved"));
+
+    const state = await resolveDocFamilyReviews(
+      ctxFor(""),
+      "move-a",
+      "data_governance_ownership",
+    );
+
+    expect(state.approved).toBe(0);
+    expect(mockFilters).toHaveLength(0);
+  });
+
+  it("fences both reads to the tenant key set and to the Move", async () => {
+    mockReviewRows.push(review(CANONICAL_KEY, "approved"));
+    mockEvidenceRows.push(evidence(CANONICAL_KEY, "approved"));
+
+    await resolveDocFamilyReviews(
+      ctxFor(APP_KEY),
+      "move-a",
+      "data_governance_ownership",
+    );
+
+    const tenantFilters = mockFilters.filter(
+      (filter) => filter.column === "tenant_key",
+    );
+    expect(tenantFilters).toHaveLength(2);
+    for (const filter of tenantFilters) {
+      expect(filter.value).toEqual(expect.arrayContaining([APP_KEY, CANONICAL_KEY]));
+      expect(filter.value).not.toEqual(
+        expect.arrayContaining([OTHER_TENANT_KEY]),
+      );
+    }
+    expect(
+      mockFilters.filter(
+        (filter) => filter.column === "program_id" && filter.value === "move-a",
+      ),
+    ).toHaveLength(2);
+  });
+});

@@ -37,6 +37,7 @@ import {
 import { applyUploadedEvidenceToMove } from "@/lib/programs/mutations";
 import type { ExtractionReceipt } from "@/lib/programs/discovery/extraction-planner";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
+import { moveEvidenceReadTenantKeys } from "@/lib/programs/evidence-readiness/tenant-read-scope";
 import {
   evaluateSensitiveUpload,
   type UploadProtectionResult,
@@ -962,6 +963,12 @@ export async function resolveDocFamilyReviews(
   familyKey: string,
 ): Promise<DocFamilyReviewState> {
   const tenantKey = ctx.clientKey ?? "";
+  // Match any key this tenant's own evidence may be stored under, not just the
+  // app client key. A data-plane load writes the canonical substrate key, and
+  // a reader scoped to one key reported those approved rows as missing
+  // evidence — which is what the P2 readiness gate then counted as a hard gap.
+  // Per-tenant by construction; see `moveEvidenceReadTenantKeys`.
+  const tenantKeys = moveEvidenceReadTenantKeys(ctx.clientKey);
   const empty: DocFamilyReviewState = {
     familyKey,
     approved: 0,
@@ -976,7 +983,7 @@ export async function resolveDocFamilyReviews(
     const { data, error } = await sb
       .from("program_evidence_reviews")
       .select("id, evidence_id, decision, source_ref, created_at")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", moveId)
       .eq("family_key", familyKey);
     if (error || !Array.isArray(data)) return empty;
@@ -1033,7 +1040,7 @@ export async function resolveDocFamilyReviews(
       const { data: evidenceRows } = await sb
         .from("program_evidence_items")
         .select("id, extracted_structured, extracted_text, summary, title")
-        .eq("tenant_key", tenantKey)
+        .in("tenant_key", tenantKeys)
         .eq("program_id", moveId)
         .in("id", allEvidenceIds);
       if (Array.isArray(evidenceRows)) {
