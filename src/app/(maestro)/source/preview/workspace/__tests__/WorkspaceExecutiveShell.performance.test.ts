@@ -157,6 +157,7 @@ import {
   orderedActionRows,
   optimizeTypeRows,
   performanceActual,
+  selectPerformancePercentTrend,
   sizedOpportunityTotalUsd,
   resolveSelectedVendor,
   sourceImpactCoverageRowTotal,
@@ -915,6 +916,37 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     ]) {
       expect(performanceActual(35, null, "%", name)).not.toContain("%");
     }
+  });
+
+  it("does not return contradictory stored actual text before checking its unit", () => {
+    expect(performanceActual("30.0%", 30, "%", "critical_incident_response_minutes")).toBe("30.0");
+    expect(performanceActual("8.0%", 8, "%", "p1_p2_resolution_hours")).toBe("8.0");
+    expect(performanceActual("12.0%", 12, "%", "problem_backlog_older_30_days")).toBe("12.0");
+    expect(performanceActual("98.0%", 98, "%", "batch_completion_by_7am_pct")).toBe("98.0%");
+    expect(performanceActual("90%", 90, "percent", "Priority tickets resolved within SLA")).toBe("90%");
+    expect(performanceActual("30.0%", null, "%", "critical_incident_response_minutes"))
+      .toBe("Unit needs review");
+  });
+
+  it("charts one governed percentage metric across distinct periods", () => {
+    const rows = [
+      { metric_name: "critical_incident_response_minutes", unit: "%", actual_value: "30.0%", value_num: 30, period_start: "2026-07-01" },
+      { metric_name: "batch_completion_by_7am_pct", unit: "%", actual_value: "98.0%", value_num: 98, period_start: "2026-07-01" },
+      { metric_name: "change_success_rate_pct", unit: "%", actual_value: "95.0%", value_num: 95, period_start: "2026-07-01" },
+      { metric_name: "batch_completion_by_7am_pct", unit: "%", actual_value: "99.0%", value_num: 99, period_start: "2026-08-01" },
+      { metric_name: "p1_p2_resolution_hours", unit: "%", actual_value: "8.0%", value_num: 8, period_start: "2026-08-01" },
+      { metric_name: "critical_incident_response_minutes", unit: "%", actual_value: "29.0%", value_num: 29, period_start: "2026-08-01" },
+    ];
+    const trend = selectPerformancePercentTrend(rows);
+    expect(trend?.metricName).toBe("batch_completion_by_7am_pct");
+    expect(trend?.points.map((point) => point.actual)).toEqual([98, 99]);
+    expect(selectPerformancePercentTrend(rows.slice(0, 3))).toBeNull();
+    expect(selectPerformancePercentTrend(rows.filter((row) => row.metric_name.includes("minutes")))).toBeNull();
+    const slaRows = [
+      { metric_name: "Priority tickets resolved within SLA", unit: "percent", actual_value: "90%", value_num: 90, period_start: "2027-01-01" },
+      { metric_name: "Priority tickets resolved within SLA", unit: "percent", actual_value: "97%", value_num: 97, period_start: "2027-02-01" },
+    ];
+    expect(selectPerformancePercentTrend(slaRows)?.points.map((point) => point.actual)).toEqual([90, 97]);
   });
 
   it("keeps a percentage a percentage when name and stored unit agree", () => {
