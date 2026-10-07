@@ -4685,14 +4685,14 @@ export function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
     const value = contractValueTypeSummary(view);
     return (
       <div className="sw-c3-optimize-next-action">
-        <PanelHead eyebrow="Evidence review" title="Next action" />
+        <PanelHead eyebrow={view.caseThread?.state ?? "Optimization"} title="Next action" />
         <p className="sw-c3-optimize-action">
           {view.recommendation || "No next action is recorded for this contract."}
         </p>
         {view.recommendationDetail ? (
           <p className="sw-v2-muted">{view.recommendationDetail}</p>
         ) : null}
-        <p className="sw-v2-muted">No authored negotiation position is recorded yet.</p>
+        <p className="sw-v2-muted">No structured negotiation table is available yet.</p>
         {value.established.length > 0 || value.confirmed ? (
           <div className="sw-c3-optimize-value">
             {value.established.length > 0 ? (

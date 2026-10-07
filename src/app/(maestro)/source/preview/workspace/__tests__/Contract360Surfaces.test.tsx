@@ -294,6 +294,7 @@ describe("Contract 360 Optimize presentation", () => {
         opportunities: [{ id: "SIGNAL-1", label: "Scope review", stageRaw: "signal" }],
         recommendation: "Collect the missing service-scope evidence.",
         recommendationDetail: "Confirm the run catalog before a buyer ask is written.",
+        caseThread: { state: "Evidence Review" },
         potential: {
           recoverable: "Not sized",
           avoidable: "Not sized",
@@ -306,6 +307,7 @@ describe("Contract 360 Optimize presentation", () => {
     render(<ContractOptimizeContent vm={vm} />);
 
     expect(screen.getByText("Next action")).toBeTruthy();
+    expect(screen.getByText("Evidence Review")).toBeTruthy();
     expect(screen.getByText("Collect the missing service-scope evidence.")).toBeTruthy();
     expect(screen.getByText("Confirm the run catalog before a buyer ask is written.")).toBeTruthy();
     expect(screen.queryByRole("tab", { name: "Levers" })).toBeNull();
@@ -335,7 +337,7 @@ describe("Contract 360 Optimize presentation", () => {
     expect(screen.getByText("$37K")).toBeTruthy();
     expect(screen.getByText("$151K")).toBeTruthy();
     expect(screen.getByText("Reconcile the invoices before a vendor ask.")).toBeTruthy();
-    expect(screen.queryByText("A negotiation position and value are not established yet.")).toBeNull();
+    expect(screen.getByText("No structured negotiation table is available yet.")).toBeTruthy();
   });
 
   it("does not promote unsized placeholders to established value", () => {
