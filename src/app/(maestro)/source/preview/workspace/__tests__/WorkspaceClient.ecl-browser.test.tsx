@@ -548,9 +548,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByLabelText("Claim contract")).toBeNull();
     expect(screen.queryByText("What this tab lets you say")).toBeNull();
     expect(screen.queryByText("Blocked without more evidence")).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Back to contracts" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: /All contracts/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Back to contracts" })).toBeNull();
     expect(screen.getByRole("tab", { name: "Scope" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Economics" })).toBeTruthy();
     expect(screen.getAllByRole("tab", { name: "Optimize" })).toHaveLength(1);
@@ -1260,7 +1259,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.getByText("Legacy Claims Analytics")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Back to contracts" }));
+    fireEvent.click(screen.getByRole("button", { name: /All contracts/ }));
     const reopenedContractSearch = screen.getByRole("searchbox", {
       name: "Find a contract",
     });

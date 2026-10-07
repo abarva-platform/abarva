@@ -178,7 +178,7 @@
   top: 0;
   z-index: 25;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   margin: 14px 0 14px;
@@ -207,11 +207,6 @@
   background: #fff;
   border-color: #d3d1c7;
   color: #0a0a0b;
-}
-
-.sw-v2-contract-command {
-  background: #fff !important;
-  border-color: #d3d1c7 !important;
 }
 
 .sw-v2-contract-commandbar-tabs {
@@ -2391,15 +2386,6 @@
 
   .sw-v2-grid {
     grid-template-columns: 1fr;
-  }
-
-  .sw-v2-contract-commandbar {
-    grid-template-columns: 1fr auto;
-  }
-
-  .sw-v2-contract-commandbar-tabs {
-    grid-column: 1 / -1;
-    order: 3;
   }
 
   .sw-v2-contract-context-panel {

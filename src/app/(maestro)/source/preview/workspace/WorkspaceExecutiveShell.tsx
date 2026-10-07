@@ -1173,7 +1173,6 @@ export function WorkspaceExecutiveShell({
             />
             <ContractCommandBar
               activeTab={logic.state.tabs.contract ?? "Story"}
-              onBackToContracts={() => logic.select("contractList", null)}
               onOpenPortfolioPage={selectPage}
               onOpenTab={(tab) => logic.setTab("contract", tab)}
             />
@@ -3690,12 +3689,10 @@ export function contractNoticeDays(
 
 function ContractCommandBar({
   activeTab,
-  onBackToContracts,
   onOpenPortfolioPage,
   onOpenTab,
 }: {
   activeTab: string;
-  onBackToContracts: () => void;
   onOpenPortfolioPage: (page: PageLabel) => void;
   onOpenTab: (tab: string) => void;
 }) {
@@ -3704,13 +3701,6 @@ function ContractCommandBar({
       className="sw-v2-contract-commandbar"
       aria-label="Contract command toolbar"
     >
-      <button
-        type="button"
-        className="sw-v2-contract-command"
-        onClick={onBackToContracts}
-      >
-        Back to contracts
-      </button>
       <div
         className="sw-v2-contract-commandbar-tabs sw-c3-tabrow"
         role="tablist"
