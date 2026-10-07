@@ -119,7 +119,7 @@ describe("the governed-data-foundation artifact pack", () => {
     // and TABLES from it by name, which is the second list below and is the
     // part of "facilitation template" that was right.
     const rows = report();
-    expect(rows).toHaveLength(21);
+    expect(rows).toHaveLength(22);
     expect(
       rows.filter((r) => r.landsNowhere).map((r) => r.deliverableType),
     ).toEqual(["charter"]);
