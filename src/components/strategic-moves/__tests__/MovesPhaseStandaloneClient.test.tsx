@@ -3813,6 +3813,204 @@ describe("MovesPhaseStandaloneClient", () => {
       });
       expect(mockRouterRefresh).toHaveBeenCalled();
     });
+
+    // ─── a rejected required response must stay revisable ────────────────
+    //
+    // Rejecting a required response is not a resting state for it. Every
+    // forward control reads `disposition === "accepted"`: the P1 branch of
+    // `applyStageReadinessToEvidencePackets` requires every required proposal
+    // accepted, and `assessStageReadinessGate` raises a `review_required`
+    // blocker for any required proposal that is not. So the phase gate
+    // returns 409 and so does `generate-phase` — the transition AND the phase
+    // build both stay shut.
+    //
+    // The surface used to close completely in exactly that state. The action
+    // row rendered only while OPEN work remained, and once every response
+    // carried a disposition there was none; the rejected row's own checkbox
+    // was disabled because `rejected` was treated as closed. Not one control
+    // on the page could revise the single decision that was holding the
+    // phase, while the gate's blocker text went on saying to accept each
+    // required response. The server never locked it:
+    // `mergeStageReadinessReviewDecisions` states incoming decisions win.
+    describe("a review that holds the phase with no open work", () => {
+      const renderRejectedRequiredReview = () =>
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            initialStageReadinessPreview={{
+              ok: true,
+              proposalSet: {
+                artifactId: "proposal-artifact-1",
+                artifactVersion: 2,
+                proposalSetId: "proposal-set-1",
+                transition: { fromPhase: 1, toPhase: 2 },
+                status: "review_required",
+                proposalCount: 2,
+                pendingCount: 0,
+                review: {
+                  status: "review_required",
+                  acceptedCount: 1,
+                  rejectedCount: 1,
+                  needsValidationCount: 0,
+                  pendingCount: 0,
+                  readiness: {
+                    ready: 1,
+                    insufficientEvidence: 0,
+                    unknown: 0,
+                  },
+                },
+                proposals: [
+                  {
+                    proposalId: "proposal-1",
+                    questionId: "q-1",
+                    dimensionId: "it_systems_landscape",
+                    requirement: "required",
+                    question: "Which systems hold the record?",
+                    response: "The CMDB extract dated 2026-09-30.",
+                    answerState: "answered",
+                    disposition: "accepted",
+                  },
+                  {
+                    proposalId: "proposal-2",
+                    questionId: "q-2",
+                    dimensionId: "data_analytics_estate",
+                    requirement: "required",
+                    question: "Where does the governed number land?",
+                    response: "The warehouse, per the 2026-09 extract.",
+                    answerState: "answered",
+                    disposition: "rejected",
+                  },
+                ],
+              },
+            }}
+            move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+            phaseNum={1}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+      it("keeps the rejected required response changeable, and names it as holding the phase", () => {
+        renderRejectedRequiredReview();
+
+        expect(
+          screen.getByText("1 required response not accepted. This phase stays held until each one is accepted; select the response below to change its decision."),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        ).toBeEnabled();
+        expect(
+          screen.getByRole("button", { name: "Accept selected" }),
+        ).toBeInTheDocument();
+      });
+
+      it("does not pre-select the rejected response, so one bulk accept cannot silently reverse a deliberate rejection", () => {
+        renderRejectedRequiredReview();
+
+        expect(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        ).not.toBeChecked();
+        expect(
+          screen.getByRole("button", { name: "Accept selected" }),
+        ).toBeDisabled();
+      });
+
+      it("sends only the response the reviewer ticked when the rejection is taken back", async () => {
+        renderRejectedRequiredReview();
+
+        fireEvent.click(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        );
+        fireEvent.click(
+          screen.getByRole("button", { name: "Accept selected" }),
+        );
+
+        await waitFor(() => {
+          expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+        });
+        const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+          ([url, init]) =>
+            String(url).includes("/stage-readiness-workbook") &&
+            init?.method === "PATCH",
+        );
+        expect(reviewCall).toBeTruthy();
+        expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+          proposalSetArtifactId: "proposal-artifact-1",
+          proposalSetArtifactVersion: 2,
+          decisions: [{ proposalId: "proposal-2", disposition: "accepted" }],
+        });
+
+        // The re-seed after a save must stay on the open-work predicate too.
+        // Widening it here would leave every row the reviewer just decided
+        // ticked, so the NEXT click of any action button would re-dispose
+        // decisions nobody reopened.
+        for (const checkbox of screen.getAllByRole("checkbox", {
+          name: /Which systems hold the record|Where does the governed number land/,
+        })) {
+          expect(checkbox).not.toBeChecked();
+        }
+      });
+
+      // A blank response can never be accepted, so reopening the action row
+      // for a workbook of nothing but blanks would offer buttons that could
+      // never enable. Completing the cells and uploading again is that
+      // workbook's only path, which is what the blank tally already says.
+      it("offers no action row for a workbook whose every response is blank", () => {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            initialStageReadinessPreview={{
+              ok: true,
+              proposalSet: {
+                artifactId: "proposal-artifact-1",
+                artifactVersion: 2,
+                proposalSetId: "proposal-set-1",
+                transition: { fromPhase: 1, toPhase: 2 },
+                status: "review_required",
+                proposalCount: 1,
+                pendingCount: 1,
+                proposals: [
+                  {
+                    proposalId: "proposal-1",
+                    questionId: "q-1",
+                    dimensionId: "it_systems_landscape",
+                    requirement: "required",
+                    question: "Which systems hold the record?",
+                    response: "",
+                    answerState: "blank",
+                    disposition: "pending",
+                  },
+                ],
+              },
+            }}
+            move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+            phaseNum={1}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+        expect(
+          screen.getByText(
+            /1 blank response\. Complete the Response cells and upload the workbook again before review\./,
+          ),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Accept selected" }),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Reject selected" }),
+        ).not.toBeInTheDocument();
+      });
+    });
   });
 
   // ─── the capture phase strip's totals, AT THE HOST ──────────────────────

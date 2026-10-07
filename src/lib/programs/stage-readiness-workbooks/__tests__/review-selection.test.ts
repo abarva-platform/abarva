@@ -1,6 +1,7 @@
 import {
   isWorkbookProposalAcceptable,
   isWorkbookProposalOpenForReview,
+  isWorkbookProposalReviewable,
   selectableWorkbookProposalIds,
   type ReviewableWorkbookProposal,
 } from "../review-selection";
@@ -108,6 +109,105 @@ describe("isWorkbookProposalOpenForReview", () => {
         proposal({ answerState: "blank", response: "" }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("isWorkbookProposalReviewable", () => {
+  it("still allows a rejected decision to be changed, because a rejection is not a resting state for a required response", () => {
+    expect(
+      isWorkbookProposalReviewable(proposal({ disposition: "rejected" })),
+    ).toBe(true);
+  });
+
+  it("allows an accepted decision to be changed", () => {
+    expect(
+      isWorkbookProposalReviewable(proposal({ disposition: "accepted" })),
+    ).toBe(true);
+  });
+
+  it("allows a pending or needs-validation decision, so it is never narrower than the open-for-review set", () => {
+    for (const disposition of ["pending", "needs_validation"]) {
+      expect(isWorkbookProposalReviewable(proposal({ disposition }))).toBe(
+        true,
+      );
+      expect(isWorkbookProposalOpenForReview(proposal({ disposition }))).toBe(
+        true,
+      );
+    }
+  });
+
+  it("refuses a blank response, whose only path is completing the cell and uploading again", () => {
+    expect(
+      isWorkbookProposalReviewable(
+        proposal({ answerState: "blank", response: "" }),
+      ),
+    ).toBe(false);
+  });
+
+  it("refuses a missing proposal rather than throwing", () => {
+    expect(isWorkbookProposalReviewable(null)).toBe(false);
+    expect(isWorkbookProposalReviewable(undefined)).toBe(false);
+  });
+
+  it("is strictly wider than the open-for-review set, which is why it must not seed the selection", () => {
+    // Seeding from this predicate would let one "Accept selected" silently
+    // reverse a deliberate rejection.
+    const decided = [
+      proposal({ proposalId: "p-1", disposition: "rejected" }),
+      proposal({ proposalId: "p-2", disposition: "accepted" }),
+    ];
+    expect(decided.every(isWorkbookProposalReviewable)).toBe(true);
+    expect(decided.some(isWorkbookProposalOpenForReview)).toBe(false);
+    expect(selectableWorkbookProposalIds(decided).size).toBe(0);
+  });
+});
+
+describe("a rejected required decision is one the review writer will take back", () => {
+  it("re-accepts a proposal the previous review rejected, because the writer never guards on the current disposition", () => {
+    const proposalSet = {
+      proposalSetId: "set-1",
+      moveId: "move-1",
+      moveName: "Governed data foundation",
+      transition: { fromPhase: 1, toPhase: 2 },
+      generatedAt: "2026-10-07T00:00:00.000Z",
+      summary: {
+        proposalCount: 1,
+        pendingCount: 0,
+        acceptedCount: 0,
+        rejectedCount: 1,
+        needsValidationCount: 0,
+      },
+      proposals: [
+        {
+          proposalId: "p-1",
+          questionId: "q-1",
+          dimensionId: "it_systems_landscape",
+          question: "Which systems hold the record?",
+          requirement: "required",
+          response: "The CMDB extract dated 2026-09-30.",
+          evidenceOrSource: "cmdb-extract.csv",
+          answerState: "answered",
+          sourceClass: "client_document",
+          disposition: "rejected",
+        },
+      ],
+    } as unknown as Parameters<
+      typeof buildStageReadinessProposalReview
+    >[0]["proposalSet"];
+
+    const review = buildStageReadinessProposalReview({
+      ctx: {} as unknown as TenancyCtx,
+      program: { id: "move-1" } as unknown as ProgramCore,
+      proposalSet,
+      sourceProposalSetArtifactId: "proposal-artifact-1",
+      sourceProposalSetArtifactVersion: 2,
+      decisions: [{ proposalId: "p-1", disposition: "accepted" }],
+      reviewedAt: "2026-10-07T01:00:00.000Z",
+    });
+
+    expect(review.proposals[0]?.disposition).toBe("accepted");
+    expect(review.summary.acceptedCount).toBe(1);
+    expect(review.summary.rejectedCount).toBe(0);
   });
 });
 
