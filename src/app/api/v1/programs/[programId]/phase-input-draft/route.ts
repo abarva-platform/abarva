@@ -13,14 +13,17 @@ import {
 import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import {
-  getPhaseCaptureSections,
-  phaseCaptureModuleKey,
-} from "@/lib/programs/phase-capture-contract";
-import {
   buildAvaPhaseInputProposals,
   describeAvaPhaseInputDraftRefusal,
 } from "@/lib/programs/phase-input-draft-proposals";
 import { listProgramEvidenceForPrompt } from "@/lib/programs/evidence-context";
+import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
+import {
+  phaseCaptureModuleValueReader,
+  phaseCaptureValuesByPhase,
+  resolveMoveConfirmedSolutionRoute,
+} from "@/lib/programs/phase-capture-values-for-move";
+import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,31 +35,37 @@ function parsePhase(value: unknown): number | null {
   return parsed;
 }
 
-function readModuleValue(
-  moduleState: Record<string, unknown> | null | undefined,
-): string {
-  const value = moduleState?.value;
-  return typeof value === "string" ? value : "";
-}
-
+/**
+ * Saved answers per phase for this Move, read against the capture set the Move
+ * was actually asked for. P3 Design narrows that set once P2 confirms a
+ * solution route, so the route is resolved first — reading the default P3 list
+ * would miss the route's own question and report two dropped ones as empty.
+ */
 async function loadCaptureValuesByPhase(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
-): Promise<Record<number, Record<string, string>>> {
+): Promise<{
+  valuesByPhase: Record<number, Record<string, string>>;
+  confirmedSolutionRoute: ConfirmedSolutionRoute | null;
+}> {
   const modules = await getModuleState(ctx, programId);
-  const byPhase: Record<number, Record<string, string>> = {};
-  for (let phase = 0; phase <= 5; phase += 1) {
-    const values: Record<string, string> = {};
-    for (const section of getPhaseCaptureSections(phase)) {
-      const capturedModule = modules.find(
-        (entry) =>
-          entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
-      );
-      values[section.key] = readModuleValue(capturedModule?.state);
-    }
-    byPhase[phase] = values;
-  }
-  return byPhase;
+  const moduleValue = phaseCaptureModuleValueReader(modules);
+  const approvedPhaseTwoEvidence = await listApprovedPhaseEvidence(
+    ctx,
+    programId,
+    2,
+  );
+  const confirmedSolutionRoute = resolveMoveConfirmedSolutionRoute(
+    moduleValue,
+    approvedPhaseTwoEvidence.map((item) => item.evidenceId),
+  );
+  return {
+    valuesByPhase: phaseCaptureValuesByPhase({
+      moduleValue,
+      confirmedSolutionRoute,
+    }),
+    confirmedSolutionRoute,
+  };
 }
 
 export async function POST(
@@ -81,7 +90,8 @@ export async function POST(
       );
     }
 
-    const valuesByPhase = await loadCaptureValuesByPhase(ctx, programId);
+    const { valuesByPhase, confirmedSolutionRoute } =
+      await loadCaptureValuesByPhase(ctx, programId);
     const currentValues = valuesByPhase[phase] ?? {};
     let approvedEvidenceCount = 0;
     let approvedEvidenceUnavailable = false;
@@ -100,6 +110,7 @@ export async function POST(
       upstreamValuesByPhase: valuesByPhase,
       approvedEvidenceCount,
       approvedEvidenceUnavailable,
+      confirmedSolutionRoute,
     });
 
     return Response.json({
@@ -118,6 +129,7 @@ export async function POST(
               upstreamValuesByPhase: valuesByPhase,
               approvedEvidenceCount,
               approvedEvidenceUnavailable,
+              confirmedSolutionRoute,
             })
           : null,
     });
