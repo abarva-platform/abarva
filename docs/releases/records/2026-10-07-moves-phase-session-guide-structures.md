@@ -104,12 +104,13 @@ The third guide is left as it is, under the product decision already recorded wi
   (unregister each structure), one renaming a section key, and one reverting
   `composeBrief` to the two inline literals — which is caught because the two new
   guides then receive the pack's exhibits.
-- PASS census regeneration — `audit:test-ci-coverage:write`: files 2775 -> 2776,
-  covered 2611 -> 2612, uncovered flat at 164. The flat uncovered count is the evidence
-  the new suite sits in a CI-reached directory rather than dark. The committed census
-  on the merge base read 2771/2607; a regeneration on an unmodified merge base reads
-  2775/2611, so four of the five-file delta is pre-existing drift from merge order and
-  one file is this change.
+- PASS census regeneration — `audit:test-ci-coverage:write`: files 2776 -> 2777,
+  covered 2612 -> 2613, uncovered flat at 164. The flat uncovered count is the evidence
+  the new suite sits in a CI-reached directory rather than dark. Measured against the
+  merge base rather than against the committed numbers: the committed census reads
+  2773/2609, a regeneration on an unmodified merge base reads 2776/2612, so three files
+  of the four-file delta are pre-existing drift from merge order and one file is this
+  change.
 - PASS `npm run release:check -- --base origin/main --head HEAD`.
 - NOT RUN live generation of either guide. Both are produced by a phase build that
   requires an authorized human to approve the phase first; see Deployment Authority.
