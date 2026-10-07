@@ -74,6 +74,16 @@ export interface SourceArtifactRecord {
   supersededByArtifactId: string | null;
   lifecycleState: ArtifactLifecycle;
   blobSha256: string | null;
+  /**
+   * Malware scan verdict, in Defender's vocabulary. `not_scanned` is the
+   * honest value for an artifact created through a synchronous path, which is
+   * every path today — the file is parsed in the same request, so nothing has
+   * scanned it. Absent means the record was built in memory rather than read from
+   * storage; null means the stored row predates the column. Neither means
+   * clean.
+   */
+  malwareScanStatus?: string | null;
+  malwareScanReason?: string | null;
   isClientFinal: boolean;
   isCurrentAuthoritative: boolean;
   sourceGeneratedArtifactId: string | null;

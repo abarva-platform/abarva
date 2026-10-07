@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import {
-  getPhaseStepGroups,
-  type PhaseStepGroup,
-} from "@/lib/programs/moves-phase-step-groups";
+import { type PhaseStepGroup } from "@/lib/programs/moves-phase-step-groups";
+import { resolvePhaseStepGroups } from "@/lib/programs/moves-phase-step-plan";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
 import {
   captureHandoffAccess,
@@ -37,6 +35,13 @@ export interface MovesCaptureFlowPhase {
    * unmeasured and must not claim a count. See `capturePhaseAnsweredCount`.
    */
   answered: number | null;
+  /**
+   * For an UNMEASURED row only: how many of the phase's questions hold a saved
+   * answer, or `null` when nothing says. Strictly weaker than `answered` — a
+   * saved answer need not be complete — so it renders under its own noun and
+   * never earns the completion tick. See `capturePhaseSavedAnswers`.
+   */
+  savedAnswers?: number | null;
   total: number;
   /** Whether this phase can be navigated to (<= the Move's current phase). */
   reachable: boolean;
@@ -143,21 +148,18 @@ export function MovesCaptureFlow({
   nextPhase = null,
   ava,
   requireAnswers = false,
-  initialStep = 0,
+  initialStep,
   approveSlot,
   allowReviewBeforeSubmit = false,
 }: MovesCaptureFlowProps) {
-  const groups = getPhaseStepGroups(phase);
-  // view: 0..2 = steps, 3 = hand-off.
-  const [view, setView] = useState<number>(initialStep);
-  // Whether this phase was submitted FROM this flow. The recap may be opened as
-  // a review before that happens, and must not claim a submission that has not.
-  const [submitted, setSubmitted] = useState(false);
-  const handoffAccess = captureHandoffAccess({
-    reviewEnabled: allowReviewBeforeSubmit,
-    hasApproveSlot: Boolean(approveSlot),
-  });
-
+  // Resolved from the sections this phase DECLARES, not from the phase number:
+  // P3 Design re-shapes its question set once P2 confirms a solution route, and
+  // a route-blind grouping leaves that route's required questions mounted
+  // nowhere. See `moves-phase-step-plan.ts`.
+  const groups = useMemo(
+    () => resolvePhaseStepGroups(phase, sections),
+    [phase, sections],
+  );
   const sectionByKey = useMemo(() => {
     const map = new Map<string, PhaseCaptureSection>();
     for (const section of sections) map.set(section.key, section);
@@ -168,6 +170,30 @@ export function MovesCaptureFlow({
     group.sectionKeys
       .map((key) => sectionByKey.get(key))
       .filter((s): s is PhaseCaptureSection => Boolean(s));
+
+  const firstIncompleteStep = groups.findIndex((group) => {
+    const resolvedSections = groupSections(group);
+    return (
+      resolvedSections.length !== group.sectionKeys.length ||
+      resolvedSections.length === 0 ||
+      resolvedSections.some((section) => !isSectionComplete(section.key))
+    );
+  });
+  // view: 0..2 = steps, 3 = hand-off. A reload resumes at the first step whose
+  // server-backed answers are not complete. When all capture steps are done,
+  // stop at the final step so its governed approval action remains explicit.
+  const resumeStep =
+    firstIncompleteStep >= 0
+      ? firstIncompleteStep
+      : Math.max(groups.length - 1, 0);
+  const [view, setView] = useState<number>(initialStep ?? resumeStep);
+  // Whether this phase was submitted FROM this flow. The recap may be opened as
+  // a review before that happens, and must not claim a submission that has not.
+  const [submitted, setSubmitted] = useState(false);
+  const handoffAccess = captureHandoffAccess({
+    reviewEnabled: allowReviewBeforeSubmit,
+    hasApproveSlot: Boolean(approveSlot),
+  });
 
   const stepComplete = (stepIndex: number): boolean => {
     const group = groups[stepIndex];
@@ -207,6 +233,21 @@ export function MovesCaptureFlow({
             // actually earns the tick is the equality.
             const measured = p.answered !== null;
             const complete = measured && p.total > 0 && p.answered === p.total;
+            // A row this screen cannot measure may still say how much of the
+            // phase has been SAVED, when the host supplies that rollup. It is
+            // a weaker fact than `answered` and says so in its own words:
+            // never "answered", and never a tick, because a saved answer can
+            // still be incomplete. `complete` above is deliberately not
+            // widened to consider it.
+            //
+            // The `!measured` conjunct is redundant, like `measured &&` above:
+            // the count below reads this branch only when `measured` is false,
+            // so removing it changes nothing a test can see (mutation-checked).
+            // Kept because it states the rule the field encodes at the field.
+            const saved =
+              !measured && typeof p.savedAnswers === "number"
+                ? p.savedAnswers
+                : null;
             return (
               <li key={p.code}>
                 <button
@@ -228,7 +269,9 @@ export function MovesCaptureFlow({
                   <span className="mcf-phase-count">
                     {measured
                       ? `${p.answered} of ${p.total} answered`
-                      : `${p.total} question${p.total === 1 ? "" : "s"}`}
+                      : saved !== null
+                        ? `${saved} of ${p.total} saved`
+                        : `${p.total} question${p.total === 1 ? "" : "s"}`}
                   </span>
                 </button>
               </li>

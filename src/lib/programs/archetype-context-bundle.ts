@@ -34,6 +34,7 @@ import {
   resolveProgramArchetype,
 } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { resolveArchetypeRequirements } from "@/lib/programs/archetypes/resolver";
 import type { GroundedAnswerEnvelope } from "@/lib/programs/archetypes/types";
 import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
@@ -55,21 +56,50 @@ export async function buildArchetypeContextBundle(
   moveId: string,
   phase: number,
 ): Promise<ArchetypeContextBundle> {
-  // Archetype resolved from the Move's own row (best-effort) — never a
+  // Archetype resolved through the canonical per-Move resolver — never a
   // hardcoded default for a Move we can read.
+  //
+  // This used to resolve inline from `move.archetype` + `move.charter
+  // .classification` + `move.name`, which could not see a DECLARATION:
+  //
+  // - `move.archetype` is `engagements.program_archetype`, a column whose DB
+  //   CHECK limits it to five coarse values (`strategic_transformation`,
+  //   `workflow_automation`, `platform_modernization`, `ai_product_enablement`,
+  //   `operational_optimization`). None of them names a registry archetype, so
+  //   the exact-id arm never fired from a stored Move.
+  // - `charter.classification` is the OBJECT that carries the declared id at
+  //   `.archetype` (what `scripts/moves/declare-discovery-archetype-job.ts`
+  //   writes). It was read as if it were a string, and `resolveProgramArchetype`
+  //   keeps only string parts of its haystack, so the object was dropped whole —
+  //   the declaration contributed nothing, not even as inference text.
+  // - `declaredArchetypeId`, the parameter a declaration wins through, was never
+  //   passed at all.
+  //
+  // So a Move DECLARING an archetype resolved here by keyword-guessing its name,
+  // and fell through to the back-compat default. That archetype is what
+  // `resolveCurrentStateReadiness` below is asked for, so the bundle's
+  // instruments, hard gaps, `missingEvidence`, risk dimensions and the
+  // "P2 Diagnose … requires" answer all described the WRONG kind of work.
+  //
+  // `resolveMoveArchetypeForProgram` is the resolver every other
+  // `resolveCurrentStateReadiness` call site already pairs with: it reads the
+  // declaration (`functionPackKey`, `charter.classification.archetype`) and
+  // passes it as `declaredArchetypeId`, and its inference haystack is strictly
+  // wider than the one above. This bundle was the only call site resolving its
+  // own.
+  //
+  // The two reads are caught separately on purpose: a failed name read must not
+  // also cost the archetype (before, one `catch` lost both).
   let moveName = moveId;
   let archetype = resolveProgramArchetype({});
   try {
     const move = await getStrategicMoveById(ctx, moveId);
     if (move?.name) moveName = move.name;
-    if (move) {
-      archetype = resolveProgramArchetype({
-        archetype: move.archetype,
-        classification: (move.charter as { classification?: string } | null)
-          ?.classification,
-        name: move.name,
-      });
-    }
+  } catch {
+    /* best-effort */
+  }
+  try {
+    archetype = await resolveMoveArchetypeForProgram(ctx, moveId);
   } catch {
     /* best-effort */
   }

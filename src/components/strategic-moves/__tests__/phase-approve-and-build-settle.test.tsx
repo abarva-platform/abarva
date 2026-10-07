@@ -13,12 +13,20 @@
 // anything failed.
 
 import "@testing-library/jest-dom";
-import { render, screen, act, waitFor, within } from "@testing-library/react";
+import {
+  render,
+  screen,
+  act,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import {
   PhaseApproveAndBuild,
   type BuildSettledResult,
 } from "../PhaseApproveAndBuild";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { classifyPhaseBuildSettlement } from "@/lib/programs/phase-build-settlement";
 
 async function clickApproveAndBuild(name: RegExp) {
   await act(async () => {
@@ -125,17 +133,60 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
           actionPortalTargetId="phase-progress-test-action"
           evidenceNeedPackets={[
             {
+              moveId: "move-1",
               phase: 1,
+              artifactType: "charter",
+              evidenceSlot: "Charter success measures",
+              familyId: "charter_success_metrics",
               priority: "required",
+              ownerSource: "Finance / FP&A",
+              acceptedFormats: ["XLSX", "CSV"],
+              exampleTemplate: "Baseline and value measurement worksheet",
+              exampleContent: ["Current baseline with period and owner"],
+              whyItMatters:
+                "Funding-grade claims need a traceable baseline.",
+              guidanceBasis: "generic",
+              blockedArtifacts: [],
+              canDraftBoundary: {
+                canDraft: false,
+                canDraftLabel: "",
+                cannotDraftLabel: "",
+              },
+              preliminaryGenerationCaveat: null,
+              waiverOption: null,
+              nextAction:
+                "Upload a finance-validated baseline or label the target as an assumption.",
               status: "missing",
+              evidenceTitles: [],
             } as MoveEvidenceNeedPacket,
           ]}
         />
       </>,
     );
 
+    const evidenceSummary = await screen.findByText(
+      "1 required evidence item open",
+    );
+    await act(async () => {
+      evidenceSummary.click();
+    });
+    expect(screen.getByText("Charter success measures")).toBeInTheDocument();
     expect(
-      await screen.findByText("1 required evidence item open"),
+      screen.getByText(/Upload a finance-validated baseline/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Likely source owner: Finance \/ FP&A/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Accepted formats: XLSX, CSV")).toBeInTheDocument();
+    const examplesSummary = screen.getByText("Why this matters and examples");
+    await act(async () => {
+      examplesSummary.click();
+    });
+    expect(
+      screen.getByText("Funding-grade claims need a traceable baseline."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Examples are guidance, not client evidence."),
     ).toBeInTheDocument();
     expect(
       within(
@@ -174,6 +225,38 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     });
     expect(button).toHaveStyle({ background: "rgb(20, 124, 91)" });
     expect(button).not.toBeDisabled();
+  });
+
+  it("labels non-blocking evidence gaps as preparation, not blockers", () => {
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Example Move"
+        clientDisplayName="Client"
+        evidenceNeedPackets={[
+          {
+            phase: 1,
+            artifactType: "charter",
+            evidenceSlot: "Success measures",
+            familyId: "success_measures",
+            priority: "required",
+            status: "missing",
+            nextAction: "Upload a baseline source.",
+          } as MoveEvidenceNeedPacket,
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("1 prep item carrying forward"));
+
+    expect(
+      screen.getByText("These items inform the next phase and do not block this phase build."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Preparation · Not yet covered")).toBeInTheDocument();
+    expect(screen.queryByText("Required · Not yet covered")).not.toBeInTheDocument();
   });
 
   it("seeds built rows from persisted Move artifacts on a fresh page load", () => {
@@ -558,5 +641,104 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     expect(
       screen.queryByText("Sourcing Strategy Brief", { selector: "span" }),
     ).not.toBeInTheDocument();
+  });
+  // The settled result has to carry the registry's `gateArtifact` flag per key,
+  // not just the key. Without it the parent can only ask "did anything fail?",
+  // which refused the gate on a working document no gate check reads and
+  // dead-ended the phase. Asserted here by feeding the real callback argument
+  // through the classifier that owns the refusal decision.
+  it("reports the gate-artifact flag per settled key, so a failed working document does not refuse the gate", async () => {
+    global.fetch = (async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url === "/api/v1/deliverables/generate-phase") {
+        return fakeResponse(
+          {
+            phase: 4,
+            phaseLabel: "P4 Plan",
+            queued: 2,
+            total: 2,
+            deliverables: [
+              {
+                deliverableTypeKey: "execution_roadmap",
+                documentTitle: "Execution Roadmap",
+                gateArtifact: true,
+                runId: "run-roadmap",
+                status: "queued",
+              },
+              {
+                deliverableTypeKey: "mobilization_workshop_guide",
+                documentTitle: "Mobilization Workshop Guide",
+                gateArtifact: false,
+                runId: "run-guide",
+                status: "queued",
+              },
+            ],
+          },
+          202,
+        );
+      }
+      if (url === "/api/v1/deliverables/runs/run-roadmap") {
+        return fakeResponse({
+          status: "succeeded",
+          artifactId: "artifact-roadmap",
+          blobUrl: "/api/v1/artifacts/artifact-roadmap",
+          progressPct: 100,
+          progressLabel: null,
+          blockers: [],
+        });
+      }
+      if (url === "/api/v1/deliverables/runs/run-guide") {
+        return fakeResponse({
+          status: "blocked",
+          artifactId: null,
+          blobUrl: null,
+          progressPct: 100,
+          progressLabel: null,
+          blockers: ["length_ceiling_exceeded"],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    const onBuildSettled = jest.fn<Promise<void>, [BuildSettledResult]>(
+      async () => {},
+    );
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={4}
+        phaseLabel="P4 Plan"
+        archetype="ai_enabled_sdlc"
+        moveName="Example Move"
+        clientDisplayName="Client"
+        onBuildSettled={onBuildSettled}
+      />,
+    );
+
+    await clickApproveAndBuild(/Approve & Build P4 Plan/i);
+    await waitFor(() => expect(onBuildSettled).toHaveBeenCalledTimes(1), {
+      timeout: 5000,
+    });
+
+    const result = onBuildSettled.mock.calls[0][0];
+    expect(result.succeeded).toEqual([
+      { deliverableTypeKey: "execution_roadmap", gateArtifact: true },
+    ]);
+    expect(result.failed).toEqual([
+      { deliverableTypeKey: "mobilization_workshop_guide", gateArtifact: false },
+    ]);
+    // The bare key lists stay exactly as they were for existing readers.
+    expect(result.succeededKeys).toEqual(["execution_roadmap"]);
+    expect(result.failedKeys).toEqual(["mobilization_workshop_guide"]);
+
+    const settlement = classifyPhaseBuildSettlement({
+      phase: 4,
+      succeeded: result.succeeded,
+      failed: result.failed,
+    });
+    expect(settlement.refusal).toBeNull();
+    expect(settlement.workingDocumentCaveat).toContain(
+      "mobilization_workshop_guide",
+    );
   });
 });

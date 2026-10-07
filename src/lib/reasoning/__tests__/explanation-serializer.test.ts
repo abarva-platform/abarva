@@ -127,6 +127,100 @@ describe('serializeSynthesisExplanation', () => {
     expect(payload.gates[1].rows).toHaveLength(1);
   });
 
+  describe('gateSummary', () => {
+    it('counts every criterion the payload renders, not the current stage only', () => {
+      // The context's own gatesSummary is built from the CURRENT stage
+      // (`evaluateStage`), while the route feeds the serializer every
+      // criterion at every stage (`evaluateAllStages().flatMap(...)`). The
+      // headline used to quote the first over a body listing the second, so
+      // its denominator counted a subset of the list it headed. This fixture
+      // makes the two disagree: 2 in the context, 4 in the evaluations.
+      const payload = serializeSynthesisExplanation({
+        surface: 'source',
+        context: makeContext({ gatesSummary: { total: 2, met: 1, unmet: 1, blocked: [] } }),
+        gateEvaluations: [
+          makeGateEval('c1', 'RFI', 'met'),
+          makeGateEval('c2', 'RFI', 'unmet'),
+          makeGateEval('c3', 'BAFO', 'met'),
+          makeGateEval('c4', 'BAFO', 'unmet'),
+        ],
+        contradictionTemplates: [],
+        failureModeTemplates: [],
+      });
+      const renderedRows = payload.gates.reduce((n, g) => n + g.rows.length, 0);
+      expect(renderedRows).toBe(4);
+      expect(payload.gateSummary.total).toBe(4);
+      // The number it used to quote.
+      expect(payload.gateSummary.total).not.toBe(2);
+    });
+
+    it('is a partition of the rows it heads', () => {
+      const payload = serializeSynthesisExplanation({
+        surface: 'programs',
+        context: makeContext(),
+        gateEvaluations: [
+          makeGateEval('c1', 'RFI', 'met'),
+          makeGateEval('c2', 'RFI', 'partial'),
+          makeGateEval('c3', 'RFI', 'waived'),
+          makeGateEval('c4', 'BAFO', 'unmet'),
+        ],
+        contradictionTemplates: [],
+        failureModeTemplates: [],
+      });
+      const { total, met, partial, waived, unmet } = payload.gateSummary;
+      expect(met + partial + waived + unmet).toBe(total);
+      expect(total).toBe(payload.gates.reduce((n, g) => n + g.rows.length, 0));
+    });
+
+    it('does not fold a waived criterion into met, and the body still shows it', () => {
+      const payload = serializeSynthesisExplanation({
+        surface: 'programs',
+        // The context claims both criteria are cleared, because
+        // `gatesSummary.met` means met-OR-waived for the advancement question.
+        context: makeContext({ gatesSummary: { total: 2, met: 2, unmet: 0, blocked: [] } }),
+        gateEvaluations: [
+          makeGateEval('c1', 'BAFO', 'met'),
+          makeGateEval('c2', 'BAFO', 'waived'),
+        ],
+        contradictionTemplates: [],
+        failureModeTemplates: [],
+      });
+      expect(payload.gateSummary.met).toBe(1);
+      expect(payload.gateSummary.waived).toBe(1);
+      // The row the headline must not claim as proven is still in the trace.
+      expect(payload.gates[0].rows.map((r) => r.status)).toEqual(['met', 'waived']);
+    });
+
+    it('reports a partial criterion as partial, not unmet', () => {
+      const payload = serializeSynthesisExplanation({
+        surface: 'source',
+        context: makeContext(),
+        gateEvaluations: [makeGateEval('c1', 'BAFO', 'partial')],
+        contradictionTemplates: [],
+        failureModeTemplates: [],
+      });
+      expect(payload.gateSummary.partial).toBe(1);
+      expect(payload.gateSummary.unmet).toBe(0);
+    });
+
+    it('counts nothing when no criterion was evaluated', () => {
+      const payload = serializeSynthesisExplanation({
+        surface: 'tower',
+        context: makeContext({ gatesSummary: { total: 3, met: 3, unmet: 0, blocked: [] } }),
+        gateEvaluations: [],
+        contradictionTemplates: [],
+        failureModeTemplates: [],
+      });
+      expect(payload.gateSummary).toEqual({
+        total: 0,
+        met: 0,
+        partial: 0,
+        waived: 0,
+        unmet: 0,
+      });
+    });
+  });
+
   it('enriches gate rows with description from the criterionDescriptions map', () => {
     const evals = [makeGateEval('c1', 'BAFO', 'unmet')];
     const desc = new Map<string, { description: string; evaluationHint: string }>();

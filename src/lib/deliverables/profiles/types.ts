@@ -40,6 +40,8 @@ export type MovesDeliverableKey =
   | "solution_approach_options" // P3a — the decision spine that drives the architecture
   | "target_state_architecture" // P3
   | "solution_design" // P3
+  | "process_change_estimate_brief" // P3 gate artifact, bounded process-change route only
+  | "requirements_traceability" // P3 gate artifact (design → outcome trace)
   | "operating_model_design" // P3
   | "sourcing_strategy" // P3
   | "planning_workshop_guide" // P3 working guide for P4 Roadmap & Business Case

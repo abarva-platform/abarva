@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import yaml from "js-yaml";
 
 const WORKFLOW_PATH =
   ".github/workflows/source-candidate-supplier-registry-import-job.yml";
@@ -23,6 +24,69 @@ describe("candidate supplier registry import workflow", () => {
       /tenant_key:[\s\S]{0,180}default:\s*corpus_global/,
     );
     expect(source).toMatch(/corpus_global is never a writable tenant scope/);
+  });
+
+  it("selects the versioned synthetic fixture for dry runs without opening v2 apply", () => {
+    const source = workflow();
+
+    expect(source).toMatch(/dataset_version:[\s\S]*?type:\s*choice[\s\S]*?options:[\s\S]*?- v1[\s\S]*?- v2/);
+    expect(source).toContain("candidate-supplier-registry-synthetic-v2/candidate_supplier_registry.csv");
+    expect(source).toContain("SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_VERSION=v2");
+    expect(source).not.toMatch(/inputs\.input_path/);
+
+    const parsed = yaml.load(source) as {
+      jobs: Record<string, { steps: Array<{ name?: string; run?: string }> }>;
+    };
+    const scope = parsed.jobs["supplier-registry-import"].steps.find(
+      (step) => step.name === "Validate immutable operator scope",
+    )?.run;
+    expect(scope).toBeTruthy();
+    const runScope = (datasetVersion: string, mode: string) => {
+      const dir = mkdtempSync(path.join(tmpdir(), "supplier-version-scope-"));
+      try {
+        const script = scope!
+          .replaceAll("${{ inputs.dataset_version }}", datasetVersion)
+          .replaceAll("${{ inputs.mode }}", mode)
+          .replaceAll("${{ inputs.confirm_apply }}", "APPLY_CANDIDATE_SUPPLIER_REGISTRY")
+          .replaceAll("${{ inputs.approval_reference }}", "synthetic-test-approval")
+          .replaceAll("${{ inputs.tenant_key }}", "meridian-health")
+          .replaceAll("${{ inputs.input_sha256 }}", "a".repeat(64))
+          .replaceAll("${{ inputs.input_source_version }}", datasetVersion)
+          .replaceAll("${{ inputs.idempotency_key }}", "synthetic-version-test")
+          .replaceAll("${{ inputs.load_run_id }}", "synthetic-version-test-run");
+        const envPath = path.join(dir, "env");
+        const result = spawnSync("bash", ["-c", script], {
+          cwd: dir,
+          env: {
+            ...process.env,
+            GITHUB_ENV: envPath,
+            GITHUB_OUTPUT: path.join(dir, "output"),
+            GITHUB_REF: "refs/heads/main",
+          },
+          encoding: "utf8",
+        });
+        return {
+          status: result.status,
+          stderr: result.stderr,
+          env: result.status === 0 ? readFileSync(envPath, "utf8") : "",
+        };
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+
+    const v2DryRun = runScope("v2", "dry_run");
+    expect(v2DryRun.status).toBe(0);
+    expect(v2DryRun.env).toContain(
+      "SOURCE_CANDIDATE_SUPPLIER_REGISTRY_INPUT_PATH=datasets/source/candidate-supplier-registry-synthetic-v2/candidate_supplier_registry.csv",
+    );
+    expect(v2DryRun.env).toContain("SOURCE_CANDIDATE_SUPPLIER_REGISTRY_DATASET_VERSION=v2");
+    const v2Apply = runScope("v2", "apply");
+    expect(v2Apply.status).not.toBe(0);
+    expect(v2Apply.stderr).toContain("v2 apply requires a separate load approval gate");
+    const v1DryRun = runScope("v1", "dry_run");
+    expect(v1DryRun.status).toBe(0);
+    expect(v1DryRun.env).toContain("candidate-supplier-registry-synthetic-v1/candidate_supplier_registry.csv");
   });
 
   it("keeps human and branch gates around apply", () => {

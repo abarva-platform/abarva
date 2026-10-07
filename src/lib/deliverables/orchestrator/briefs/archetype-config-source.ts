@@ -1,0 +1,513 @@
+// Where a configured archetype source comes from, and whether it reaches the
+// product (Phase 4/5 of the configurable archetype layer).
+//
+// The config CONTRACT and the overlay loader already exist next door in
+// `discovery-blueprint.ts`: a deploying firm can author a JSON source, and
+// `loadDiscoveryBlueprintCatalog` validates it and builds the effective
+// catalog. What was missing is both ends of that seam. Nothing SUPPLIED a
+// configured source — the loader's only argument was `unknown` with no
+// resolver behind it — and nothing CONSUMED the effective catalog, because
+// every live path calls `getDiscoveryBlueprint`, which reads the built-in seed
+// directly. So "configure an archetype without shipping code" was authorable,
+// validatable, and inert: an operator could write a correct source, see it
+// pass, and watch generation ignore it.
+//
+// This module closes the supply end and names the one rule by which a
+// configured source changes generated output:
+//
+//   A configured entry whose `blueprintId` matches the blueprint resolution
+//   already chose REPLACES it.
+//
+// That is an override of a shipped archetype, which is the half that needs no
+// change to resolution. Reaching a BRAND-NEW configured archetype by
+// declaration is the other rule, and it is now here too: see
+// `resolveDiscoveryBlueprintFromConfiguredCatalog`, which resolves the
+// declaration against the EFFECTIVE catalog instead of the seed. Both rules are
+// needed and neither subsumes the other — a declaration reaches an added
+// archetype, and the override still has to apply when nothing was declared and
+// inference chose a shipped archetype the source replaces.
+//
+// Identity is declared, never inferred: there is no search for a config file,
+// no convention path, no directory scan. A source exists when an operator
+// declares its path in the environment, and not otherwise. With the variable
+// unset the module performs no I/O and returns the seed catalog unchanged,
+// which is why this is additive on every environment that exists today.
+
+import fs from "node:fs";
+
+import { resolveArchetypeCatalogKey } from "./archetype-identity";
+import {
+  loadArchetypePackCatalog,
+  type AppliedArchetypePack,
+  type ArchetypePack,
+} from "./archetype-packs";
+import {
+  DISCOVERY_BLUEPRINT_CATALOG,
+  loadDiscoveryBlueprintCatalog,
+  resolveDiscoveryBlueprintWithBasis,
+  type DiscoveryBlueprint,
+  type DiscoveryBlueprintBasis,
+} from "./discovery-blueprint";
+
+/**
+ * The slice of the environment this module reads. Narrower than
+ * `NodeJS.ProcessEnv` on purpose: the only thing it needs is a lookup of one
+ * declared key, and a type that demands the whole process environment forces
+ * every caller — tests included — into a cast.
+ */
+export type ArchetypeConfigEnv = Readonly<Record<string, string | undefined>>;
+
+/**
+ * The environment variable an operator sets to declare a configured archetype
+ * source. Its value is a path to a JSON file holding an array of blueprints
+ * satisfying `DiscoveryBlueprintCatalogSchema`.
+ */
+export const ARCHETYPE_CONFIG_PATH_ENV = "ABARVA_ARCHETYPE_CONFIG_PATH";
+
+/**
+ * What the configured source is doing to the catalog right now.
+ *
+ * `rejected` is reported separately from `not_configured` on purpose. Both
+ * leave the seed in force, so they are indistinguishable in generated output —
+ * and an operator who cannot tell them apart reads a typo as "configuration
+ * does nothing".
+ */
+export type ArchetypeConfigState = "not_configured" | "in_effect" | "rejected";
+
+export interface ConfiguredArchetypeSource {
+  /** The declared path, or null when no source is declared. */
+  sourcePath: string | null;
+  /** Parsed JSON from the declared path; null when unread or unparseable. */
+  raw: unknown;
+  /** Read/parse failures. Non-empty means the declared path yielded nothing. */
+  errors: string[];
+}
+
+/**
+ * Read the configured archetype source the environment declares.
+ *
+ * An undeclared (or blank) variable is not an error — it is the default
+ * deployment, and it short-circuits before any filesystem call. A declared
+ * path that cannot be read or is not JSON IS an error, and it yields no source
+ * rather than a partial one, matching the loader's reject-whole contract.
+ */
+export function readConfiguredArchetypeSource(
+  env: ArchetypeConfigEnv = process.env,
+): ConfiguredArchetypeSource {
+  return readDeclaredJsonSource(ARCHETYPE_CONFIG_PATH_ENV, env);
+}
+
+/**
+ * Read whichever configured source the named environment variable declares.
+ *
+ * Shared by both halves of the configurable archetype layer so that the
+ * declared-path rule, the short-circuit when nothing is declared, and the
+ * reject-whole behaviour on an unreadable or non-JSON path are one
+ * implementation. The env key is reported in the message because an operator
+ * holding two declared paths needs to know which one was wrong.
+ */
+function readDeclaredJsonSource(
+  envKey: string,
+  env: ArchetypeConfigEnv,
+): ConfiguredArchetypeSource {
+  const declaredPath = env[envKey]?.trim();
+  if (!declaredPath) return { sourcePath: null, raw: null, errors: [] };
+
+  let text: string;
+  try {
+    text = fs.readFileSync(declaredPath, "utf8");
+  } catch (error) {
+    return {
+      sourcePath: declaredPath,
+      raw: null,
+      errors: [
+        `${envKey}=${declaredPath} could not be read: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ],
+    };
+  }
+
+  try {
+    return { sourcePath: declaredPath, raw: JSON.parse(text), errors: [] };
+  } catch (error) {
+    return {
+      sourcePath: declaredPath,
+      raw: null,
+      errors: [
+        `${envKey}=${declaredPath} is not valid JSON: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ],
+    };
+  }
+}
+
+export interface EffectiveDiscoveryBlueprintCatalog {
+  /** The seed, with a validated configured source overlaid. */
+  catalog: Record<string, DiscoveryBlueprint>;
+  /** Archetype ids the configured source added or overrode. */
+  applied: string[];
+  /** Read, parse and validation failures, in that order of discovery. */
+  errors: string[];
+  sourcePath: string | null;
+  state: ArchetypeConfigState;
+}
+
+/**
+ * Build the effective catalog from the environment-declared source.
+ *
+ * Deliberately NOT memoised. With no source declared this does no work at all,
+ * and a deployment that declares one is the first deployment that would need a
+ * cache invalidation story — reading once per call keeps this slice free of a
+ * staleness question nothing can yet exercise. Noted as a Known Gap.
+ */
+export function loadEffectiveDiscoveryBlueprintCatalog(
+  env: ArchetypeConfigEnv = process.env,
+): EffectiveDiscoveryBlueprintCatalog {
+  const source = readConfiguredArchetypeSource(env);
+  if (source.sourcePath == null) {
+    return {
+      catalog: { ...DISCOVERY_BLUEPRINT_CATALOG },
+      applied: [],
+      errors: [],
+      sourcePath: null,
+      state: "not_configured",
+    };
+  }
+  if (source.errors.length > 0) {
+    return {
+      catalog: { ...DISCOVERY_BLUEPRINT_CATALOG },
+      applied: [],
+      errors: source.errors,
+      sourcePath: source.sourcePath,
+      state: "rejected",
+    };
+  }
+  const loaded = loadDiscoveryBlueprintCatalog(source.raw);
+  return {
+    catalog: loaded.catalog,
+    applied: loaded.applied,
+    errors: loaded.errors,
+    sourcePath: source.sourcePath,
+    state: loaded.errors.length > 0 ? "rejected" : "in_effect",
+  };
+}
+
+/**
+ * Apply the configured source to a blueprint resolution that has already
+ * happened.
+ *
+ * The override key is `blueprintId`, which both sides guarantee is
+ * `lower_snake` — the seed writes its own ids and the schema's regex admits
+ * nothing else — so this comparison needs no token normalisation and cannot
+ * drift from the normaliser resolution uses.
+ *
+ * `applied` is the test, not catalog membership. Indexing alone looks
+ * equivalent while the argument is one of the catalog's own objects, which is
+ * what `getDiscoveryBlueprint` returns today — but this function is exported,
+ * and a blueprint assembled elsewhere (a composed one, say) can carry a seed
+ * id without being the seed entry. Indexed blindly, such a resolution is
+ * silently REPLACED by the seed on a deployment that configures nothing at
+ * all. Keying on what the configured source actually applied means an absent
+ * source cannot change a resolution, whatever its id.
+ */
+export function applyConfiguredBlueprintOverride(
+  resolved: DiscoveryBlueprint,
+  effective: EffectiveDiscoveryBlueprintCatalog,
+): DiscoveryBlueprint {
+  if (!effective.applied.includes(resolved.blueprintId)) return resolved;
+  return effective.catalog[resolved.blueprintId] ?? resolved;
+}
+
+export interface ConfiguredBlueprintResolution {
+  blueprint: DiscoveryBlueprint;
+  /** True when the configured source replaced what resolution chose. */
+  overrodeSeed: boolean;
+  state: ArchetypeConfigState;
+  sourcePath: string | null;
+  errors: string[];
+}
+
+/**
+ * Apply the configured source to a blueprint a caller has ALREADY resolved by
+ * its own means — a persisted selection, or one composed elsewhere.
+ *
+ * It can only ever override, by construction: it is handed a blueprint, not a
+ * declaration, so there is no token for it to match against an id the source
+ * ADDED. A generation path that holds the Move's declared archetype should call
+ * `resolveDiscoveryBlueprintFromConfiguredCatalog` instead, which resolves the
+ * declaration against the effective catalog and reaches an addition.
+ */
+export function resolveConfiguredDiscoveryBlueprint(
+  resolved: DiscoveryBlueprint,
+  env: ArchetypeConfigEnv = process.env,
+): ConfiguredBlueprintResolution {
+  const effective = loadEffectiveDiscoveryBlueprintCatalog(env);
+  const blueprint = applyConfiguredBlueprintOverride(resolved, effective);
+  return {
+    blueprint,
+    overrodeSeed: blueprint !== resolved,
+    state: effective.state,
+    sourcePath: effective.sourcePath,
+    errors: effective.errors,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// The ARTIFACT-PACK half of the same seam.
+//
+// An archetype is configured through two catalogs. The discovery blueprint
+// above decides what evidence a Move collects and whom it interviews; the
+// artifact pack decides what the Move then PRODUCES — its exhibits, its
+// tables, and the governance note appended to the fabrication rules. The pack
+// half got its contract and overlay loader without either end of the seam, so
+// it was inert exactly as the discovery half was: `loadArchetypePackCatalog`
+// had no caller outside its own test, and the live path resolves
+// `getArchetypePack` against the frozen seed. A deploying firm could author a
+// valid pack source, watch it validate, and then receive the GENERIC exhibits
+// and tables for its configured archetype.
+//
+// One rule differs from the discovery half, and it is a widening rather than a
+// divergence. There, resolution happens inside the blueprint module and the
+// configured source can only OVERRIDE what it already chose; reaching a
+// brand-new configured archetype needs a change in that module. Here,
+// resolution is a normalized walk over whichever catalog it is handed, so
+// resolving against the effective catalog reaches an ADDED archetype too, with
+// no change to the resolver. Both outcomes are reported, because an operator
+// who meant to add and actually overrode a shipped archetype is one typo away
+// from losing it.
+
+/**
+ * The environment variable an operator sets to declare a configured artifact
+ * pack source. Separate from the blueprint path on purpose: the two sources
+ * hold different shapes, and a single file holding both would be a breaking
+ * change to the contract the blueprint half already ships.
+ */
+export const ARCHETYPE_PACK_CONFIG_PATH_ENV =
+  "ABARVA_ARCHETYPE_PACK_CONFIG_PATH";
+
+/**
+ * Read the configured artifact pack source the environment declares. Same
+ * declared-path-only rule as the blueprint source: no convention path, no
+ * scan, and no filesystem call at all when the variable is unset.
+ */
+export function readConfiguredArchetypePackSource(
+  env: ArchetypeConfigEnv = process.env,
+): ConfiguredArchetypeSource {
+  return readDeclaredJsonSource(ARCHETYPE_PACK_CONFIG_PATH_ENV, env);
+}
+
+export interface EffectiveArchetypePackCatalog {
+  /** The built-in packs, with a validated configured source overlaid. */
+  catalog: Record<string, ArchetypePack>;
+  /** Per configured entry, in source order, whether it added or overrode. */
+  applied: AppliedArchetypePack[];
+  /** Read, parse and validation failures, in that order of discovery. */
+  errors: string[];
+  sourcePath: string | null;
+  state: ArchetypeConfigState;
+}
+
+/**
+ * Build the effective pack catalog from the environment-declared source.
+ *
+ * Not memoised, matching the blueprint half: with nothing declared this does
+ * no work and allocates one catalog copy, and the first deployment that
+ * declares a source is also the first that would need an invalidation story.
+ * Noted as a Known Gap rather than guessed at.
+ */
+export function loadEffectiveArchetypePackCatalog(
+  env: ArchetypeConfigEnv = process.env,
+): EffectiveArchetypePackCatalog {
+  const source = readConfiguredArchetypePackSource(env);
+  if (source.sourcePath == null) {
+    return {
+      ...loadArchetypePackCatalog(),
+      sourcePath: null,
+      state: "not_configured",
+    };
+  }
+  if (source.errors.length > 0) {
+    return {
+      ...loadArchetypePackCatalog(),
+      errors: source.errors,
+      sourcePath: source.sourcePath,
+      state: "rejected",
+    };
+  }
+  const loaded = loadArchetypePackCatalog(source.raw);
+  return {
+    ...loaded,
+    sourcePath: source.sourcePath,
+    state: loaded.errors.length > 0 ? "rejected" : "in_effect",
+  };
+}
+
+/** Where the pack a Move generates from came from. */
+export type ArchetypePackOrigin =
+  /** The built-in catalog answered the declaration. */
+  | "built_in"
+  /** A configured entry answered it — see `appliedOutcome` for which way. */
+  | "configured"
+  /** Nothing answered it; the caller falls through to its generic brief. */
+  | "unresolved";
+
+export interface ConfiguredArchetypePackResolution {
+  pack: ArchetypePack | undefined;
+  /** The catalog's own spelling of the matched id, or null when unresolved. */
+  archetypeId: string | null;
+  origin: ArchetypePackOrigin;
+  /**
+   * When `origin` is `configured`, whether that entry added a new archetype or
+   * replaced a shipped one. Null otherwise.
+   */
+  appliedOutcome: AppliedArchetypePack["outcome"] | null;
+  state: ArchetypeConfigState;
+  sourcePath: string | null;
+  errors: string[];
+}
+
+/**
+ * Where the blueprint a Move will be graded against came from.
+ *
+ * `seed` is every deployment that configures nothing. The two configured
+ * outcomes are one typo apart and must not read alike: an OVERRIDE replaces a
+ * shipped archetype's evidence plan and interview roster, an ADDITION leaves
+ * every shipped archetype intact.
+ */
+export type ConfiguredBlueprintOrigin =
+  | "seed"
+  | "configured_override"
+  | "configured_addition";
+
+export interface DeclaredConfiguredBlueprintResolution {
+  blueprint: DiscoveryBlueprint;
+  /** What decided the blueprint — declaration, inference, or the default. */
+  basis: DiscoveryBlueprintBasis;
+  /**
+   * A declaration was supplied and names no archetype in the EFFECTIVE catalog.
+   * Carried through unchanged from resolution: a configured source widens what
+   * counts as known, so this is narrower here than against the seed alone.
+   */
+  unknownDeclaration: string | null;
+  origin: ConfiguredBlueprintOrigin;
+  state: ArchetypeConfigState;
+  sourcePath: string | null;
+  errors: string[];
+}
+
+/**
+ * The entry point a generation path uses in place of `getArchetypePack`:
+ * resolve a Move's declared archetype against the effective catalog.
+ *
+ * `origin` is decided from what the configured source reported applying, not
+ * from comparing the resolved pack against the seed. A configured entry that
+ * restates a shipped pack field-for-field is indistinguishable by value, and
+ * an operator reading `built_in` for an archetype they configured cannot tell
+ * whether their source was ignored.
+ *
+ * With nothing declared the effective catalog is a copy of the seed and this
+ * answers exactly what `getArchetypePack` answers, which is what makes wiring
+ * it in additive on every environment that exists today.
+ */
+export function resolveConfiguredArchetypePack(
+  declaredArchetypeId: string | null | undefined,
+  env: ArchetypeConfigEnv = process.env,
+): ConfiguredArchetypePackResolution {
+  const effective = loadEffectiveArchetypePackCatalog(env);
+  const archetypeId = resolveArchetypeCatalogKey(
+    effective.catalog,
+    declaredArchetypeId,
+  );
+  const applied =
+    archetypeId == null
+      ? undefined
+      : effective.applied.find((entry) => entry.archetype === archetypeId);
+  return {
+    pack: archetypeId == null ? undefined : effective.catalog[archetypeId],
+    archetypeId,
+    origin:
+      archetypeId == null
+        ? "unresolved"
+        : applied
+          ? "configured"
+          : "built_in",
+    appliedOutcome: applied?.outcome ?? null,
+    state: effective.state,
+    sourcePath: effective.sourcePath,
+    errors: effective.errors,
+  };
+}
+
+/**
+ * Resolve a Move's blueprint against the configured catalog — the entry point a
+ * generation path should use.
+ *
+ * Two steps, and both are load-bearing:
+ *
+ * 1. Resolution runs against the EFFECTIVE catalog, so a declaration can name
+ *    an archetype the configured source ADDED. Bound to the seed (as every
+ *    live path was), an added archetype was listed as applied, held in the
+ *    catalog, and selectable by nothing.
+ * 2. The override is then applied to the result, because step 1 only helps the
+ *    DECLARED branches. When nothing is declared, inference answers with a
+ *    shipped constant; if the source overrides that archetype, the Move must
+ *    still get the configured version. Dropping this step silently restores the
+ *    seed for every Move whose archetype was inferred.
+ *
+ * `origin` is keyed on `applied`, never on comparing the resolved blueprint
+ * with the seed: a configured entry that restates a shipped archetype
+ * field-for-field is indistinguishable by value, and would read as `seed`.
+ * Addition-vs-override is a KEY question — does the seed declare this id at
+ * all — which is why that part is a key lookup and not a value comparison.
+ */
+export function resolveDiscoveryBlueprintFromConfiguredCatalog(
+  useCaseArchetype: string,
+  declaredArchetypeId?: string | null,
+  env: ArchetypeConfigEnv = process.env,
+): DeclaredConfiguredBlueprintResolution {
+  const effective = loadEffectiveDiscoveryBlueprintCatalog(env);
+  const resolution = resolveDiscoveryBlueprintWithBasis(
+    useCaseArchetype,
+    declaredArchetypeId,
+    effective.catalog,
+  );
+  const blueprint = applyConfiguredBlueprintOverride(
+    resolution.blueprint,
+    effective,
+  );
+  return {
+    blueprint,
+    basis: resolution.basis,
+    unknownDeclaration: resolution.unknownDeclaration,
+    origin: configuredBlueprintOrigin(blueprint.blueprintId, effective.applied),
+    state: effective.state,
+    sourcePath: effective.sourcePath,
+    errors: effective.errors,
+  };
+}
+
+/**
+ * Which set authored the entry behind a blueprint id: the shipped seed, a
+ * configured replacement of a shipped archetype, or a configured addition.
+ *
+ * Read off what the source reported as APPLIED, never by comparing an entry's
+ * values against the seed's. The two coincide today and stop coinciding the
+ * moment a source declares an entry identical to a shipped one, which a value
+ * comparison would call `seed` — the one reading that is wrong, since the
+ * firm's source is what is in force.
+ *
+ * Exported because the declaration surface asks the same question of a catalog
+ * entry that a resolution asks of its answer, and two derivations of "whose
+ * archetype is this" would drift.
+ */
+export function configuredBlueprintOrigin(
+  blueprintId: string,
+  applied: readonly string[],
+): ConfiguredBlueprintOrigin {
+  if (!applied.includes(blueprintId)) return "seed";
+  return Object.hasOwn(DISCOVERY_BLUEPRINT_CATALOG, blueprintId)
+    ? "configured_override"
+    : "configured_addition";
+}

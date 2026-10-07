@@ -1301,6 +1301,14 @@ export async function evaluateGate(
         pass =
           isPresent(
             findDeliverable(
+              // `tower_metrics_plan` is the registry key this criterion is
+              // about: a `gateArtifact: true` P4 entry, in
+              // `PHASE_CANONICAL_KEYS[4]`, and the key the generated-artifact
+              // acceptance route writes for a Tower metrics document. It was
+              // missing here, so the document the Move builds could not
+              // satisfy the criterion named after it and the check passed only
+              // on the prose fallback below.
+              "tower_metrics_plan",
               "tower_metric_plan",
               "execution_monitoring_plan",
               "control_tower_metrics",
@@ -1326,7 +1334,18 @@ export async function evaluateGate(
         );
         break;
       case "sponsor_alignment_confirmed":
-        pass = isSignedOff(findDeliverable("stakeholder_alignment"));
+        // `sponsor_alignment` is accepted alongside `stakeholder_alignment`
+        // because this criterion has no capture-text fallback and no phase
+        // generation set produces either key, so deliberate authorship
+        // (`complete_deliverable`) is its ONLY producer — and that tool both
+        // allows and advertises the two spellings as interchangeable for this
+        // artifact. Reading only one of them meant an accepted, signed-off
+        // alignment record could satisfy the criterion named after it or be
+        // invisible to it, decided by which spelling the agent happened to
+        // pick. Same class as `tower_metric_plan_drafted` below.
+        pass = isSignedOff(
+          findDeliverable("stakeholder_alignment", "sponsor_alignment"),
+        );
         break;
       case "readiness_and_change_plan_signed_off":
         pass = isSignedOff(changePlanRow);

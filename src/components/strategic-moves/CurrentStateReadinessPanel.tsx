@@ -391,9 +391,11 @@ export function EvidenceReviewEditor({
   onDecision: (
     decision: "approved" | "rejected",
     extraction?: ReviewedEvidenceExtraction,
+    rationale?: string,
   ) => void;
 }) {
   const [extraction, setExtraction] = useState(review.extraction);
+  const [reviewRationale, setReviewRationale] = useState("");
   const [citationText, setCitationText] = useState(
     review.extraction.structured.citations
       .map((citation) => `${citation.quote} | ${citation.locator}`)
@@ -595,6 +597,26 @@ export function EvidenceReviewEditor({
               "No text was extracted from this file."}
           </pre>
         </details>
+        <label
+          style={{ display: "grid", gap: 4, fontSize: 11, fontWeight: 650 }}
+        >
+          Review rationale
+          <textarea
+            aria-label={`${review.title} review rationale`}
+            value={reviewRationale}
+            onChange={(event) => setReviewRationale(event.target.value)}
+            rows={2}
+            placeholder="Record the review basis and any delegated action."
+            style={{
+              width: "100%",
+              font: "inherit",
+              fontWeight: 400,
+              padding: 7,
+              border: "1px solid #d8d4ca",
+              borderRadius: 5,
+            }}
+          />
+        </label>
         <div
           style={{
             display: "flex",
@@ -612,7 +634,7 @@ export function EvidenceReviewEditor({
             <button
               type="button"
               disabled={disabled || busy}
-              onClick={() => onDecision("rejected")}
+              onClick={() => onDecision("rejected", undefined, reviewRationale.trim() || undefined)}
               style={{
                 fontSize: 11,
                 fontWeight: 600,
@@ -629,14 +651,18 @@ export function EvidenceReviewEditor({
               type="button"
               disabled={disabled || busy || !extraction.summary.trim()}
               onClick={() =>
-                onDecision("approved", {
-                  ...extraction,
-                  structured: {
-                    ...extraction.structured,
-                    ...reviewedSignals(),
-                    citations: parsedCitations,
+                onDecision(
+                  "approved",
+                  {
+                    ...extraction,
+                    structured: {
+                      ...extraction.structured,
+                      ...reviewedSignals(),
+                      citations: parsedCitations,
+                    },
                   },
-                })
+                  reviewRationale.trim() || undefined,
+                )
               }
               style={{
                 fontSize: 11,
@@ -788,6 +814,7 @@ export function CurrentStateReadinessPanel({
     evidenceId: string,
     decision: "approved" | "rejected",
     reviewedExtraction?: ReviewedEvidenceExtraction,
+    rationale?: string,
   ) {
     setBusy(`${family}:${evidenceId}`);
     setNote(null);
@@ -797,7 +824,7 @@ export function CurrentStateReadinessPanel({
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ decision, reviewedExtraction }),
+          body: JSON.stringify({ decision, reviewedExtraction, rationale }),
         },
       );
       const j = await res.json();
@@ -1119,8 +1146,8 @@ export function CurrentStateReadinessPanel({
                         programId={programId}
                         busy={busy === `${i.key}:${review.evidenceId}`}
                         disabled={busy !== null}
-                        onDecision={(decision, extraction) =>
-                          decide(i.key, review.evidenceId, decision, extraction)
+                        onDecision={(decision, extraction, rationale) =>
+                          decide(i.key, review.evidenceId, decision, extraction, rationale)
                         }
                       />
                     ))

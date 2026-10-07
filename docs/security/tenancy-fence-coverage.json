@@ -10,14 +10,14 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 401,
-    "fenced": 225,
-    "fencedDirect": 101,
+    "routes": 404,
+    "fenced": 228,
+    "fencedDirect": 104,
     "fencedIndirect": 124,
     "unfenced": 176,
     "unfencedButReachesFenceModule": 95,
-    "behavioral": 80,
-    "byteScannerOnly": 6,
+    "behavioral": 82,
+    "byteScannerOnly": 7,
     "none": 139
   },
   "ranking": [
@@ -476,14 +476,6 @@
       ]
     },
     {
-      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/review/route.ts",
-      "coverage": "none",
-      "fence": "indirect",
-      "fenceVia": [
-        "src/lib/source/queries.ts"
-      ]
-    },
-    {
       "route": "src/app/api/workshops/[id]/render/route.ts",
       "coverage": "none",
       "fence": "indirect",
@@ -637,6 +629,12 @@
     },
     {
       "route": "src/app/api/onboarding/upload/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/programs/discovery-archetype-suggestions/route.ts",
       "coverage": "none",
       "fence": "direct",
       "fenceVia": []
@@ -1065,6 +1063,14 @@
     },
     {
       "route": "src/app/api/v1/source/[eventId]/evidence-requests/route.ts",
+      "coverage": "byte-scanner",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/source/queries.ts"
+      ]
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/review/route.ts",
       "coverage": "byte-scanner",
       "fence": "indirect",
       "fenceVia": [
@@ -1893,6 +1899,7 @@
           "src/app/api/chat/agent/__tests__/source-ava-tenant-broker-leak-gate.test.ts",
           "src/app/api/chat/agent/__tests__/source-l7-discipline.test.ts",
           "src/app/api/chat/agent/__tests__/steward-trust-spine-wiring.test.ts",
+          "src/lib/programs/__tests__/moves-ava-archetype-framing.test.ts",
           "src/lib/source/facts/__tests__/u533-stage-scaffold-provenance.test.ts"
         ]
       }
@@ -3122,6 +3129,21 @@
       }
     },
     {
+      "route": "src/app/api/programs/discovery-archetype-suggestions/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/programs/expert-kernel/export/route.ts",
       "fence": "none",
       "fenceSymbols": [],
@@ -3861,7 +3883,9 @@
           "src/app/(maestro)/source/preview/workspace/__tests__/workspace-explicit-client-api-routing.test.ts",
           "src/app/api/source/workspace/contract/[contractId]/__tests__/route.test.ts"
         ],
-        "byteScanner": []
+        "byteScanner": [
+          "src/__tests__/behaviors/source-contract-detail-load-trace.test.ts"
+        ]
       }
     },
     {
@@ -6085,6 +6109,23 @@
       }
     },
     {
+      "route": "src/app/api/v1/source/[eventId]/award/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/behaviors/source-event-award-route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/v1/source/[eventId]/candidate-suppliers/accept/route.ts",
       "fence": "direct",
       "fenceSymbols": [
@@ -6297,10 +6338,12 @@
         "src/lib/source/queries.ts"
       ],
       "reachesFenceModule": true,
-      "coverage": "none",
+      "coverage": "byte-scanner",
       "suites": {
         "behavioral": [],
-        "byteScanner": []
+        "byteScanner": [
+          "src/__tests__/integration/source/source-evidence-acceptance-actor-migration.test.ts"
+        ]
       }
     },
     {
@@ -6563,6 +6606,23 @@
       }
     },
     {
+      "route": "src/app/api/v1/source/[eventId]/solicitation-motion/accept/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/lib/source/new-workspace/__tests__/event-authority.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/v1/source/[eventId]/stage/route.ts",
       "fence": "indirect",
       "fenceSymbols": [
@@ -6581,6 +6641,7 @@
           "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
         ],
         "byteScanner": [
+          "scripts/exec/register-time-authority.test.mjs",
           "src/__tests__/integration/source/source-access-control-static.test.ts"
         ]
       }

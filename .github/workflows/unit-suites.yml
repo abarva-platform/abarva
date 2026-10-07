@@ -152,6 +152,9 @@ jobs:
       - name: Validate Moves adaptive synthetic evidence kit
         run: npm run test:moves:adaptive-e2e-kit
 
+      - name: Validate Moves governed data foundation synthetic E2E pack
+        run: npm run test:moves:gdf-e2e-pack
+
       - name: Run governed clean-demo Move load suites
         run: npx jest scripts/demo/__tests__ --no-coverage --ci
 
@@ -983,8 +986,10 @@ jobs:
           src/lib/source/new-workspace/source-version-authority.test.ts
           src/lib/source/new-workspace/phase-state.test.ts
           src/lib/source/new-workspace/step-readiness.test.ts
+          src/lib/source/award/contract-from-award.test.ts
           src/lib/source/new-workspace/step-readiness-adapter.test.ts
           src/lib/source/new-workspace/release-state-view.test.ts
+          src/lib/source/artifact-registry/parsed-yield-view.test.ts
           src/lib/source/new-workspace/navigation.test.ts
           src/lib/source/new-workspace/event-intelligence.test.ts
           src/lib/source/new-workspace/__tests__/response-intake.test.ts

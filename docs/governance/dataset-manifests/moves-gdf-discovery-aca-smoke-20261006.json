@@ -1,0 +1,27 @@
+{
+  "dataset_id": "moves_gdf_discovery_aca_smoke_20261006",
+  "title": "Move-scoped governed data foundation discovery smoke evidence",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "uploaded_evidence",
+  "classification": "internal",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Eleven fictional, non-client-attested healthcare integrated-delivery-network (IDN) discovery files (patient/member/provider data-foundation domain) in a separately declared ACA smoke source set, used only for an authorized synthetic smoke test.",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 11,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-10-06",
+  "load_approval": {
+    "approved_by": "Anand Sundaram",
+    "approved_at": "2026-10-06",
+    "assessment_id": "1557f032-5a5c-4475-abe5-b1a841576649",
+    "source_set_hash": "de85a814f469454d7d5888bbdf6310401a6d220ea6db834d80874b4d1d6f91f9",
+    "release_record": "docs/releases/records/2026-10-06-moves-gdf-evidence-domain-regen.md",
+    "move_id": "1557f032-5a5c-4475-abe5-b1a841576649"
+  },
+  "serving_approval": null,
+  "notes": "Anand Sundaram explicitly authorized this delegated automated smoke-test load and, on 2026-10-06, the regeneration of the eleven discovery files into the healthcare IDN data-foundation domain so the P1->P2 readiness workbook can be answered from on-subject synthetic evidence. The content is fictional and not client-attested; the named load approval records that user instruction, it is not an independent human review of the evidence. The binding tenant_key and program-evidence row tenant_key use the authenticated Move's app client key; canonical tenant identity is checked separately against the tenant-input registry and used for governed-object policy. Neither key is inferred from this manifest. The source-set hash covers the exact eleven source file paths, family keys, phases, evidence types, and byte hashes. Rows load with pending review only. No serving, indexing, agent_ready claim, gate approval, or phase transition is authorized by this declaration."
+}

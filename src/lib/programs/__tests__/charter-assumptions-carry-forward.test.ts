@@ -2,6 +2,10 @@ import {
   carriedCharterAssumptions,
   charterAssumptionCarryForwardActive,
 } from "@/lib/programs/charter-assumptions-carry-forward";
+import {
+  CHARTER_ASSUMPTION_RESOLUTION_STATE_KEY,
+  createCharterAssumptionResolutionRecord,
+} from "@/lib/programs/charter-assumption-resolution";
 import { createP1CharterBasisRecord } from "@/lib/programs/p1-charter-evidence";
 import type { P1CharterBasisInput } from "@/lib/programs/p1-charter-evidence";
 
@@ -11,6 +15,10 @@ function moduleRow(args: {
   basis?: P1CharterBasisInput;
   /** Record the basis against a DIFFERENT value, i.e. the answer was edited after. */
   basisRecordedAgainst?: string;
+  /** Discover resolved the assumption. */
+  resolved?: boolean;
+  /** Resolve against a DIFFERENT value, i.e. the answer was edited after. */
+  resolvedAgainst?: string;
 }) {
   const state: Record<string, unknown> = { value: args.value };
   if (args.basis) {
@@ -22,6 +30,20 @@ function moduleRow(args: {
       email: "capture@example.test",
       recordedAt: "2026-10-05T09:00:00.000Z",
     });
+  }
+  if (args.resolved || args.resolvedAgainst) {
+    state[CHARTER_ASSUMPTION_RESOLUTION_STATE_KEY] =
+      createCharterAssumptionResolutionRecord({
+        input: {
+          outcome: "confirmed",
+          note: "Confirmed against the Q3 volume extract.",
+        },
+        sectionKey: args.sectionKey,
+        value: args.resolvedAgainst ?? args.value,
+        userId: "user_2",
+        email: "discover@example.test",
+        resolvedAt: "2026-10-05T11:00:00.000Z",
+      });
   }
   return {
     moduleKey: `phase_1_${args.sectionKey}`,
@@ -207,5 +229,100 @@ describe("carriedCharterAssumptions", () => {
       "sponsor_commitment",
       "decision_rights",
     ]);
+  });
+});
+
+describe("carriedCharterAssumptions and a recorded resolution", () => {
+  /**
+   * The resolution read is its own flag (`moves_charter_assumption_resolution_v1`),
+   * and the write path lands after this read. These pin both halves of the
+   * guard separately, so neither can be removed without a failure: without the
+   * flag a stored resolution changes nothing, and with the flag an assumption
+   * is excluded only when a resolution actually applies to the answer standing
+   * today.
+   */
+  const section = "scope_boundary";
+  const answer = "Two FTE in shared services handle intake today.";
+
+  it("carries a resolved assumption when the resolution read is off", () => {
+    const carried = carriedCharterAssumptions({
+      active: true,
+      modules: [
+        moduleRow({
+          sectionKey: section,
+          value: answer,
+          basis: ownedAssumption,
+          resolved: true,
+        }),
+      ],
+    });
+    expect(carried?.map((row) => row.sectionKey)).toEqual([section]);
+  });
+
+  it("carries an unresolved assumption when the resolution read is on", () => {
+    const carried = carriedCharterAssumptions({
+      active: true,
+      modules: [
+        moduleRow({ sectionKey: section, value: answer, basis: ownedAssumption }),
+      ],
+      resolutionReadEnabled: true,
+    });
+    expect(carried?.map((row) => row.sectionKey)).toEqual([section]);
+  });
+
+  it("stops carrying an assumption Discover has resolved", () => {
+    const carried = carriedCharterAssumptions({
+      active: true,
+      modules: [
+        moduleRow({
+          sectionKey: section,
+          value: answer,
+          basis: ownedAssumption,
+          resolved: true,
+        }),
+      ],
+      resolutionReadEnabled: true,
+    });
+    expect(carried).toEqual([]);
+  });
+
+  it("keeps carrying when the answer was edited after it was resolved", () => {
+    // The basis still stands against the answer as it reads now, so the row is
+    // legitimately open; the resolution was written about the previous wording
+    // and must not close it.
+    const carried = carriedCharterAssumptions({
+      active: true,
+      modules: [
+        moduleRow({
+          sectionKey: section,
+          value: answer,
+          basis: ownedAssumption,
+          resolvedAgainst: "One FTE in shared services handles intake today.",
+        }),
+      ],
+      resolutionReadEnabled: true,
+    });
+    expect(carried?.map((row) => row.sectionKey)).toEqual([section]);
+  });
+
+  it("carries only the assumptions still open across several fields", () => {
+    const carried = carriedCharterAssumptions({
+      active: true,
+      modules: [
+        moduleRow({
+          sectionKey: "scope_boundary",
+          value: answer,
+          basis: ownedAssumption,
+          resolved: true,
+        }),
+        moduleRow({
+          sectionKey: "success_criteria",
+          value: "Intake turnaround under three days.",
+          basis: ownedAssumption,
+        }),
+      ],
+      resolutionReadEnabled: true,
+    });
+    expect(carried?.map((row) => row.sectionKey)).toEqual(["success_criteria"]);
   });
 });

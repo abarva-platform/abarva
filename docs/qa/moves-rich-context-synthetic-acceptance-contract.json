@@ -1,0 +1,37 @@
+{
+  "id": "moves-rich-context-synthetic-acceptance-v1",
+  "version": 1,
+  "minimumArtifactsByPhase": {
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1
+  },
+  "signals": [
+    { "key": "shadow_registry", "label": "shadow registry or database", "pattern": "\\b(shadow\\s+(registry|database)|unsupported\\s+shadow)\\b" },
+    { "key": "unversioned_interfaces", "label": "unversioned interfaces", "pattern": "\\b(41\\s+(of\\s+86\\s+)?(interface|channel)|interface\\s+channels?\\s+not\\s+under\\s+source\\s+control|unversioned\\s+(interface|channel))" },
+    { "key": "unmonitored_interfaces", "label": "unmonitored interfaces", "pattern": "\\b(33\\s+(of\\s+86\\s+)?(?:(?:are\\s+)?(?:unmonitored|not\\s+monitored)(?:\\s+(?:interfaces?|channels?))?|(?:interfaces?|channels?)\\s+(?:are\\s+)?(?:unmonitored|not\\s+monitored))|unmonitored\\s+(interfaces?|channels?))" },
+    { "key": "care_gap_volume", "label": "open care-gap volume", "pattern": "\\b(1,142,000|1142000)\\s+open\\s+(care\\s+)?gaps?\\b" },
+    { "key": "closure_rate", "label": "closure rate baseline", "pattern": "\\b41\\.2\\s*%?\\s*(overall\\s+)?(care[-\\s]?gap\\s+)?closure\\s+rate\\b|\\b(closure\\s+rate|care[-\\s]?gap\\s+closure)[^.\\n]{0,80}41\\.2\\s*%" },
+    { "key": "data_governance_lead", "label": "Data Governance Lead dependency", "pattern": "\\bData\\s+Governance\\s+Lead\\b" },
+    { "key": "scope_caveat", "label": "geographic or feed scope caveat", "pattern": "\\b(?:design[-\\s]?scope[-\\s]?only|design[-\\s]?only|excluded\\s+from\\s+(?:launch|scope)|weekly\\s+feed)\\b" },
+    { "key": "retired_prior_model", "label": "retired prior model", "pattern": "\\b(?:readmission|prior)\\s+model\\b[^.\\n]{0,160}\\bretired\\b|\\bretired\\b[^.\\n]{0,160}\\b(?:readmission|prior)\\s+model\\b" },
+    { "key": "declined_prior_alert", "label": "declined prior alert", "pattern": "\\b(?:sepsis|prior)\\s+alert\\b[^.\\n]{0,160}\\bdeclined\\b|\\bdeclined\\b[^.\\n]{0,160}\\b(?:sepsis|prior)\\s+alert\\b" },
+    { "key": "unvalidated_zero_value", "label": "unvalidated zero-value inputs", "pattern": "\\b(?:UNVALIDATED|unvalidated)\\b[^.\\n]{0,160}\\bzero\\b|\\bzero[-\\s]?value\\b[^.\\n]{0,160}\\b(?:UNVALIDATED|unvalidated)\\b" }
+  ],
+  "phaseRequirements": [
+    { "key": "p1_decision_baseline", "label": "P1 decision baseline", "phase": 1, "signals": ["care_gap_volume", "closure_rate", "scope_caveat", "shadow_registry"] },
+    { "key": "p2_current_state", "label": "P2 current-state evidence", "phase": 2, "signals": ["care_gap_volume", "retired_prior_model", "declined_prior_alert", "unversioned_interfaces", "shadow_registry"] },
+    { "key": "p3_target_controls", "label": "P3 target controls", "phase": 3, "signals": ["care_gap_volume", "retired_prior_model", "declined_prior_alert", "unversioned_interfaces", "unmonitored_interfaces", "data_governance_lead", "shadow_registry"] },
+    { "key": "p4_business_case", "label": "P4 business-case baseline", "phase": 4, "signals": ["care_gap_volume", "closure_rate", "scope_caveat", "unvalidated_zero_value", "shadow_registry"] },
+    { "key": "p5_execution", "label": "P5 execution controls", "phase": 5, "signals": ["care_gap_volume", "closure_rate", "scope_caveat", "unmonitored_interfaces", "unvalidated_zero_value", "shadow_registry"] }
+  ],
+  "prohibited": [
+    { "key": "internal_table_reference", "label": "internal table reference", "pattern": "\\btower_(dora_metrics|cmdb_cis|workforce)\\b" },
+    { "key": "tenant_key_reference", "label": "tenant-key reference", "pattern": "\\btenant[_ -]?key\\b" },
+    { "key": "raw_uuid", "label": "raw UUID", "pattern": "\\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\b" },
+    { "key": "sha256_digest", "label": "SHA-256 digest", "pattern": "\\bsha256:[0-9a-f]{64}\\b" },
+    { "key": "model_name", "label": "model or provider name", "pattern": "\\b(?:anthropic|claude|openai|gpt-[0-9])\\b" }
+  ]
+}

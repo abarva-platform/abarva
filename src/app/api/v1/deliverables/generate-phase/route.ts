@@ -24,11 +24,11 @@ import {
   tenantInvariantHttpStatus,
   validateDeliverableTenantInvariant,
 } from "@/lib/deliverables/orchestrator/tenant-invariant";
+import { type DeliverableSpec } from "@/lib/programs/deliverable-registry";
 import {
-  phaseCanonicalKeysForRoute,
-  DELIVERABLE_REGISTRY,
-  type DeliverableSpec,
-} from "@/lib/programs/deliverable-registry";
+  resolvePhaseBuildSet,
+  describeUnresolvedBuildSet,
+} from "@/lib/programs/phase-build-set";
 import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import {
   createMoveContextExtract,
@@ -371,11 +371,21 @@ export async function POST(req: NextRequest) {
 
     // Resolve the phase's canonical deliverables from the registry. These are the
     // documents an "Approve & Build" for this phase produces.
-    let specs = phaseCanonicalKeysForRoute(phase, confirmedSolutionRoute)
-      .map((key) =>
-        DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
-      )
-      .filter(Boolean) as DeliverableSpec[];
+    // A declared key that does not resolve is NOT dropped. Building the rest would
+    // report success while the phase gate goes on to ask for a document this build
+    // could never produce, so the build refuses and names the keys.
+    const buildSet = resolvePhaseBuildSet(phase, confirmedSolutionRoute);
+    if (buildSet.unresolvedKeys.length > 0) {
+      return Response.json(
+        {
+          error: "phase_build_set_unresolvable",
+          detail: describeUnresolvedBuildSet(phase, buildSet.unresolvedKeys),
+          unresolvedDeliverableKeys: buildSet.unresolvedKeys,
+        },
+        { status: 500 },
+      );
+    }
+    let specs = buildSet.specs;
 
     if (specs.length === 0) {
       return Response.json(

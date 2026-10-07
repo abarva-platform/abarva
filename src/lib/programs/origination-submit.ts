@@ -35,6 +35,11 @@ import {
   embedDiscoveryPlanInCharter,
 } from "@/lib/programs/discovery/charter-transformers";
 import { applyExtendedIntakeFieldsIfEnabled } from "@/lib/programs/p0-extended-intake-fields";
+import { mayGuessFunctionPackForDeclaredArchetype } from "@/lib/programs/declared-archetype-function-identity";
+import {
+  normalizeDiscoveryArchetypeDeclaration,
+  withDeclaredDiscoveryArchetype,
+} from "@/lib/programs/discovery/discovery-archetype-declaration";
 import type { ExtendedIntakeFields } from "@/lib/programs/p0-extended-intake-fields";
 import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import { planFromShape } from "@/lib/programs/discovery/discovery-intake";
@@ -62,6 +67,8 @@ export interface SubmitOriginationBriefInput {
   targetOutcome?: string | null;
   timeline?: string | null;
   classification?: string | null;
+  /** Separate discovery routing choice; never replaces the legacy Move archetype. */
+  discoveryArchetypeId?: string | null;
   sponsor: string;
   sponsorProgressEmails?: boolean;
   lead?: string | null;
@@ -467,12 +474,21 @@ async function insertParticipant(input: {
  * Resolve the Domain Function Pack key for a Move from its brief text and
  * industry code. Additive — runs alongside the legacy `classifyBrief` /
  * `function_code` office bucket, never replaces it. Returns `null` honestly
- * when the industry does not resolve or no pack clears the confidence floor.
+ * when the Move declared an archetype whose work spans every business function,
+ * when the industry does not resolve, or when no pack clears the confidence
+ * floor.
  */
 function deriveFunctionPackIdentity(
   input: SubmitOriginationBriefInput,
   industryCode: string,
 ): { functionPackKey: string; functionPackConfidence: number } | null {
+  // A human who declared a function-spanning archetype has already said what
+  // this Move is; guessing a single business function from its prose can only
+  // contradict them. `input.discoveryArchetypeId` is normalized before the
+  // charter is built, so this reads the canonical declaration.
+  if (!mayGuessFunctionPackForDeclaredArchetype(input.discoveryArchetypeId)) {
+    return null;
+  }
   const industryKey = industryKeyForCode(industryCode);
   if (!industryKey) return null;
 
@@ -584,6 +600,10 @@ function buildOriginationCharter(
       function_code: derived.functionCode,
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
+      ...withDeclaredDiscoveryArchetype(
+        {},
+        input.discoveryArchetypeId ?? null,
+      ),
     },
     initiative_context: input.fromInitiativeId
       ? {
@@ -663,6 +683,7 @@ export async function submitOriginationBrief(
     targetOutcome: optionalText(rawInput.targetOutcome),
     timeline: optionalText(rawInput.timeline),
     classification: optionalText(rawInput.classification),
+    discoveryArchetypeId: optionalText(rawInput.discoveryArchetypeId),
     sponsor: requiredText(rawInput.sponsor, "sponsor"),
     sponsorProgressEmails: rawInput.sponsorProgressEmails === true,
     lead:
@@ -850,6 +871,17 @@ export async function submitOriginationBrief(
 
   const derived = classifyBrief(input);
   const programArchetype = normalizeProgramArchetype(input.classification);
+  try {
+    input.discoveryArchetypeId = normalizeDiscoveryArchetypeDeclaration(
+      input.discoveryArchetypeId,
+    );
+  } catch {
+    throw new OriginationSubmitError(
+      "unknown_discovery_archetype",
+      "Choose a discovery blueprint from the available catalog.",
+      400,
+    );
+  }
   const parsedValueRange = parseUsdRangeFromText(input.targetOutcome);
   const valueAssumptions = input.targetOutcome
     ? {
@@ -1008,6 +1040,7 @@ export async function submitOriginationBrief(
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
       classification: programArchetype,
+      discovery_archetype_id: input.discoveryArchetypeId,
       matched_pattern_id: input.matchedPatternId ?? null,
       submitted_from_surface: input.surface,
       submitted_at: new Date().toISOString(),

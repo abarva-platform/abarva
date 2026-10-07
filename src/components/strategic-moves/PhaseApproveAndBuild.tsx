@@ -34,6 +34,7 @@ import {
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import type { SettledDeliverable } from "@/lib/programs/phase-build-settlement";
 
 const NAVY = "#1B2B5C";
 const INK = "#1A1A18";
@@ -173,6 +174,14 @@ export interface BuildSettledResult {
   failedKeys: string[];
   /** Total deliverables in this batch (succeeded + failed + anything else terminal). */
   total: number;
+  /**
+   * The same two sets, each key carrying the registry's `gateArtifact` flag.
+   * The bare key lists above cannot tell a phase gate document apart from a
+   * working document beside it, and only the gate documents are what a phase
+   * gate check reads — see `classifyPhaseBuildSettlement`.
+   */
+  succeeded: SettledDeliverable[];
+  failed: SettledDeliverable[];
 }
 
 export interface PhaseBuildArtifact {
@@ -402,21 +411,29 @@ export function PhaseApproveAndBuild({
 
     runInFlight.current = false;
     setBuilding(false);
-    const succeededKeys = relevant
+    const succeeded: SettledDeliverable[] = relevant
       .filter((r) => r.status === "succeeded")
-      .map((r) => r.deliverableTypeKey);
-    const failedKeys = relevant
+      .map((r) => ({
+        deliverableTypeKey: r.deliverableTypeKey,
+        gateArtifact: r.gateArtifact,
+      }));
+    const failed: SettledDeliverable[] = relevant
       .filter(
         (r) =>
           r.status === "blocked" ||
           r.status === "failed" ||
           r.status === "error",
       )
-      .map((r) => r.deliverableTypeKey);
+      .map((r) => ({
+        deliverableTypeKey: r.deliverableTypeKey,
+        gateArtifact: r.gateArtifact,
+      }));
     void onBuildSettled?.({
-      succeededKeys,
-      failedKeys,
+      succeededKeys: succeeded.map((entry) => entry.deliverableTypeKey),
+      failedKeys: failed.map((entry) => entry.deliverableTypeKey),
       total: relevant.length,
+      succeeded,
+      failed,
     }).catch((err) => {
       setError(err instanceof Error ? err.message : "Gate approval failed");
     });
@@ -660,10 +677,142 @@ export function PhaseApproveAndBuild({
                 ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} open`
                 : `${requiredGaps.length} prep item${requiredGaps.length === 1 ? "" : "s"} carrying forward`}
             </summary>
-            <div style={{ marginTop: 6 }}>
-              {hasRequiredGaps
-                ? "This phase build is unavailable until these required evidence items are reviewed and covered."
-                : "These items inform the next phase and do not block this phase build."}
+            <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+              {hasRequiredGaps ? (
+                <p style={{ margin: 0 }}>
+                  Final build stays blocked until each required item is reviewed
+                  and covered.
+                </p>
+              ) : (
+                <p style={{ margin: 0 }}>
+                  These items inform the next phase and do not block this phase
+                  build.
+                </p>
+              )}
+              {requiredGaps.map((packet) => {
+                const acceptedFormats =
+                  packet.acceptedFormats?.filter(Boolean) ?? [];
+                const evidenceTitles =
+                  packet.evidenceTitles?.filter(Boolean) ?? [];
+                const exampleContent =
+                  packet.exampleContent?.filter(Boolean) ?? [];
+                const title = packet.evidenceSlot || packet.familyId;
+
+                return (
+                  <section
+                    key={`${packet.familyId}-${packet.phase ?? "unphased"}-${packet.artifactType ?? "evidence"}`}
+                    style={{
+                      padding: "10px 12px",
+                      backgroundColor: "#FFFFFF",
+                      border: `1px solid ${LINE}`,
+                      borderRadius: 6,
+                      color: INK,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "baseline",
+                        justifyContent: "space-between",
+                        gap: 6,
+                      }}
+                    >
+                      <strong>{title}</strong>
+                      <span
+                        style={{
+                          color: ATTENTION,
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {hasRequiredGaps
+                          ? "Required · Not yet covered"
+                          : "Preparation · Not yet covered"}
+                      </span>
+                    </div>
+                    {packet.nextAction && (
+                      <p style={{ margin: "7px 0 0", lineHeight: 1.45 }}>
+                        <strong>Next action:</strong> {packet.nextAction}
+                      </p>
+                    )}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "4px 16px",
+                        marginTop: 6,
+                        color: "#525866",
+                        fontSize: 11,
+                      }}
+                    >
+                      {packet.ownerSource && (
+                        <span>
+                          Likely source owner: {packet.ownerSource}
+                        </span>
+                      )}
+                      {acceptedFormats.length > 0 && (
+                        <span>Accepted formats: {acceptedFormats.join(", ")}</span>
+                      )}
+                    </div>
+                    {evidenceTitles.length > 0 && (
+                      <p
+                        style={{
+                          margin: "6px 0 0",
+                          color: "#525866",
+                          fontSize: 11,
+                        }}
+                      >
+                        On file, not yet cleared: {evidenceTitles.join(", ")}
+                      </p>
+                    )}
+                    {(packet.whyItMatters ||
+                      packet.exampleTemplate ||
+                      exampleContent.length > 0) && (
+                      <details style={{ marginTop: 7 }}>
+                        <summary
+                          style={{
+                            cursor: "pointer",
+                            color: NAVY,
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          Why this matters and examples
+                        </summary>
+                        <div
+                          style={{
+                            marginTop: 6,
+                            color: "#525866",
+                            fontSize: 11,
+                          }}
+                        >
+                          {packet.whyItMatters && (
+                            <p style={{ margin: "0 0 6px" }}>
+                              {packet.whyItMatters}
+                            </p>
+                          )}
+                          {packet.exampleTemplate && (
+                            <p style={{ margin: "0 0 4px" }}>
+                              Example format: {packet.exampleTemplate}
+                            </p>
+                          )}
+                          {exampleContent.length > 0 && (
+                            <ul style={{ margin: 0, paddingLeft: 18 }}>
+                              {exampleContent.map((example) => (
+                                <li key={example}>{example}</li>
+                              ))}
+                            </ul>
+                          )}
+                          <p style={{ margin: "6px 0 0", fontStyle: "italic" }}>
+                            Examples are guidance, not client evidence.
+                          </p>
+                        </div>
+                      </details>
+                    )}
+                  </section>
+                );
+              })}
             </div>
           </details>
         )}

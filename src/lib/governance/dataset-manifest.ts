@@ -61,6 +61,14 @@ export const LoadApprovalSchema = z
         /^docs\/releases\/records\/[A-Za-z0-9._-]+\.md$/,
         "release_record must be a docs/releases/records/*.md path",
       ),
+    /**
+     * For a `move_registry` (Move-scoped) load only: the exact Move this
+     * approval authorizes. It pins the approval to one Move so it cannot carry
+     * to another. Tenancy is authenticated separately, by the loader resolving
+     * this Move to its verified tenant in the Move registry (see
+     * `resolveLoadApproval`). Absent for tenant-pinned loads.
+     */
+    move_id: z.string().min(1).nullable().optional(),
   })
   .strict();
 export type LoadApproval = z.infer<typeof LoadApprovalSchema>;
@@ -254,11 +262,26 @@ export function validateManifestRegistry(
 /** What a loader is about to write, stated by the loader from the data itself. */
 export interface LoadBinding {
   dataset_id: string;
+  /**
+   * The tenant the load writes to. For a Move-scoped load the loader MUST set
+   * this to the Move's AUTHENTICATED tenant — resolved from the Move registry,
+   * never from the request — so a Move cannot be loaded into a tenant it does
+   * not belong to. `resolveLoadApproval` pins the approval to the Move; the
+   * loader is responsible for the authenticated Move→tenant resolution.
+   */
   tenant_key: string;
   assessment_id: string;
   source_set_hash: string;
   object_count: number;
   ingestion_method: (typeof INGESTION_METHODS)[number];
+  /**
+   * Present only for a Move-scoped (`move_registry`) load: the exact Move being
+   * loaded, already authenticated to `tenant_key` by the loader. When set,
+   * `resolveLoadApproval` requires a `move_registry` manifest whose
+   * `load_approval.move_id` equals this, binding the authorization to this one
+   * Move. Absent for tenant-pinned loads (behavior unchanged).
+   */
+  move_id?: string;
 }
 
 export type LoadApprovalDecision =
@@ -300,7 +323,23 @@ export function resolveLoadApproval(
   }
   const m = DatasetManifestSchema.parse(declared[0]);
   const reasons: string[] = [];
-  if (m.client_key !== binding.tenant_key) {
+  const scopeMode =
+    m.tenant_scope ??
+    (m.client_key === CORPUS_GLOBAL_SCOPE ? "corpus_global" : "canonical_tenant");
+  const moveScopedRequested =
+    typeof binding.move_id === "string" && binding.move_id.length > 0;
+  if (moveScopedRequested) {
+    // Move-scoped load: the loader has authenticated this Move to
+    // `binding.tenant_key` via the Move registry, so we do not re-pin the
+    // manifest to a tenant (a move_registry manifest has `client_key: null`).
+    // We DO require a move_registry manifest, and below that its approval pins
+    // this exact Move — together these stop cross-tenant and cross-Move reuse.
+    if (scopeMode !== "move_registry") {
+      reasons.push(
+        "a move-scoped load (move_id) requires a move_registry manifest",
+      );
+    }
+  } else if (m.client_key !== binding.tenant_key) {
     reasons.push("manifest client_key is not the tenant being loaded");
   }
   if (m.ingestion_method !== binding.ingestion_method) {
@@ -317,6 +356,11 @@ export function resolveLoadApproval(
   if (!approval) {
     reasons.push("manifest carries no load_approval");
     return { approved: false, reasons };
+  }
+  if (moveScopedRequested && approval.move_id !== binding.move_id) {
+    // The approval must name this exact Move, so a Move-scoped approval cannot
+    // authorize loading into any other Move.
+    reasons.push("load_approval is not pinned to this Move");
   }
   if (approval.assessment_id !== binding.assessment_id) {
     reasons.push("load_approval is for a different assessment");

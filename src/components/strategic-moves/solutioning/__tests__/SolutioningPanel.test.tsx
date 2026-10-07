@@ -51,6 +51,56 @@ describe("SolutioningPanel", () => {
     ).toBeDisabled();
   });
 
+  it("renders the option set the route serves, not a module constant", async () => {
+    // The route is the authority on which five patterns a Move may be asked,
+    // because the set is per-DECLARED-archetype (solution-pattern-catalog.ts).
+    // Without this case the wiring could be deleted and every other case here
+    // would still pass on the shipped-set fallback.
+    global.fetch = jest.fn(() =>
+      jsonResponse({
+        fields: null,
+        options: [
+          {
+            value: "Govern on the Platform",
+            description: "Governance runs on the platform already in place.",
+            routingNote: "Proceed, standard review.",
+          },
+          {
+            value: "New Third-Party Data Platform",
+            description: "Governed data lands somewhere new.",
+            routingNote: "Challenge by default.",
+          },
+        ],
+      }),
+    );
+    render(<SolutioningPanel moveId="move-1" />);
+    await waitForLoaded();
+
+    expect(screen.getByText("Govern on the Platform")).toBeInTheDocument();
+    expect(
+      screen.getByText("New Third-Party Data Platform"),
+    ).toBeInTheDocument();
+    // The shipped set is gone, not merged in — a Move is asked one set.
+    expect(
+      screen.queryByText("Native to the Core Clinical System"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Build on the Platform")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
+  });
+
+  it("keeps the shipped set when the route serves no option list", async () => {
+    // A response from an older build, or one that omits the field: the panel
+    // must still offer a usable set rather than an empty radio group.
+    global.fetch = jest.fn(() => jsonResponse({ fields: null, options: [] }));
+    render(<SolutioningPanel moveId="move-1" />);
+    await waitForLoaded();
+
+    expect(
+      screen.getByText("Native to the Core Clinical System"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(5);
+  });
+
   it("enables save once a pattern is selected and a rationale is typed, and POSTs both", async () => {
     const postBodies: unknown[] = [];
     global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {

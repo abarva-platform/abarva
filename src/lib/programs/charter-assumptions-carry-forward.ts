@@ -1,3 +1,4 @@
+import { readCharterAssumptionResolutionRecord } from "@/lib/programs/charter-assumption-resolution";
 import {
   P1_CHARTER_EVIDENCE_FAMILIES,
   readP1CharterBasisRecord,
@@ -67,6 +68,10 @@ export function charterAssumptionCarryForwardActive(input: {
  * today. `[]` means the surface IS active and no charter field is standing on
  * an assumption — also rendered as nothing, but for the opposite reason.
  *
+ * With `resolutionReadEnabled`, the list is what is still OPEN: an assumption
+ * Discover has resolved is excluded, because the row's whole content is an
+ * owner and a plan for work that is now done.
+ *
  * A row survives only if `readP1CharterBasisRecord` still accepts the stored
  * basis against the field's CURRENT value. That is the same staleness check
  * P1 itself applies: when someone edits a charter answer, its basis is cleared
@@ -76,6 +81,18 @@ export function charterAssumptionCarryForwardActive(input: {
 export function carriedCharterAssumptions(input: {
   active: boolean;
   modules: readonly CharterCaptureModuleState[];
+  /**
+   * `moves_charter_assumption_resolution_v1`. Off by default, so a caller that
+   * does not pass it reads exactly as before: every open assumption carries,
+   * including any that happens to have a resolution stored against it.
+   *
+   * On, an assumption Discover has already resolved drops out of this list.
+   * That ordering matters more than it looks: the write path lands after this
+   * read, and if the read were not resolution-aware first, the moment anything
+   * recorded a resolution the panel would keep listing the assumption as still
+   * open and still owed to its owner.
+   */
+  resolutionReadEnabled?: boolean;
 }): CarriedCharterAssumption[] | null {
   if (!input.active) return null;
   const carried: CarriedCharterAssumption[] = [];
@@ -92,6 +109,16 @@ export function carriedCharterAssumptions(input: {
       answer,
     );
     if (record?.kind !== "assumption") continue;
+    if (
+      input.resolutionReadEnabled &&
+      readCharterAssumptionResolutionRecord(
+        moduleRow.state,
+        family.sectionKey,
+        answer,
+      )
+    ) {
+      continue;
+    }
     carried.push({
       sectionKey: family.sectionKey,
       label: family.label,
