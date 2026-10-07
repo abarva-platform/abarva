@@ -185,6 +185,93 @@ async function loadPendingEvidenceReviews(
   }
 }
 
+interface CabinetReviewedEvidence {
+  evidenceId: string;
+  reviewId: string;
+  title: string;
+  familyKey: string;
+  phase: number | null;
+  reviewedAt: string | null;
+}
+
+/**
+ * Human-approved program evidence for this Move, as a light read-only list for
+ * the Files & Evidence cabinet. Unlike the pending queue it carries no
+ * extraction/source-text payload — it is an audit trail of what a reviewer
+ * accepted, not an editing surface. Tenant match uses the per-tenant alias set
+ * so rows written under either representation surface (see the pending loader).
+ */
+async function loadReviewedEvidence(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+): Promise<{ items: CabinetReviewedEvidence[]; available: boolean }> {
+  try {
+    const db = getAzureWriteFluentClient();
+    const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
+    const { data: reviews, error: reviewError } = await db
+      .from("program_evidence_reviews")
+      .select("id, evidence_id, family_key, phase, source_ref, reviewed_at")
+      .in("tenant_key", tenantKeys)
+      .eq("program_id", programId)
+      .eq("decision", "approved")
+      .order("reviewed_at", { ascending: false })
+      .limit(200);
+    if (reviewError || !Array.isArray(reviews)) {
+      return { items: [], available: false };
+    }
+    const reviewRows = reviews as Array<Record<string, unknown>>;
+    const evidenceIds = reviewRows
+      .map((row) => row.evidence_id)
+      .filter((id): id is string => typeof id === "string" && Boolean(id));
+    if (!evidenceIds.length) return { items: [], available: true };
+
+    const { data: evidenceRows, error: evidenceError } = await db
+      .from("program_evidence_items")
+      .select("id, title")
+      .in("tenant_key", tenantKeys)
+      .eq("program_id", programId)
+      .in("id", evidenceIds);
+    if (evidenceError || !Array.isArray(evidenceRows)) {
+      return { items: [], available: false };
+    }
+    const titleById = new Map(
+      (evidenceRows as Array<Record<string, unknown>>).map((row) => [
+        row.id,
+        typeof row.title === "string" ? row.title : "",
+      ]),
+    );
+    return {
+      available: true,
+      items: reviewRows.flatMap((review) => {
+        const evidenceId =
+          typeof review.evidence_id === "string" ? review.evidence_id : "";
+        if (!titleById.has(evidenceId)) return [];
+        const sourceRef = objectValue(review.source_ref);
+        return [
+          {
+            evidenceId,
+            reviewId: String(review.id ?? ""),
+            title: String(
+              sourceRef.filename ??
+                sourceRef.title ??
+                titleById.get(evidenceId) ??
+                "Approved evidence",
+            ),
+            familyKey: String(review.family_key ?? "uploaded_move_evidence"),
+            phase: typeof review.phase === "number" ? review.phase : null,
+            reviewedAt:
+              typeof review.reviewed_at === "string"
+                ? review.reviewed_at
+                : null,
+          },
+        ];
+      }),
+    };
+  } catch {
+    return { items: [], available: false };
+  }
+}
+
 interface CabinetContextExtractItem {
   status?: string;
   label?: string;
@@ -514,6 +601,7 @@ export async function GET(
       ctx,
       programId,
     );
+    const reviewedEvidenceList = await loadReviewedEvidence(ctx, programId);
     const approvedSnapshot = ctx.clientKey
       ? await loadApprovedMoveEvidenceSnapshot({
           tenantKey: ctx.clientKey,
@@ -753,6 +841,7 @@ export async function GET(
       count: artifacts.length,
       artifacts,
       pendingEvidenceReviews: evidenceReviewQueue.items,
+      reviewedEvidence: reviewedEvidenceList.items,
       evidenceReviewStatus: evidenceReviewQueue.available
         ? "available"
         : "unavailable",
