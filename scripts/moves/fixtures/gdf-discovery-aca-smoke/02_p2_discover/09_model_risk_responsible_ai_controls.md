@@ -1,38 +1,41 @@
 # Responsible AI and model-risk boundary
 
-**SYNTHETIC - NOT CLIENT-ATTESTED.** This scenario is a reporting data
-foundation, not an approval to deploy a predictive model or automate HR
-decisions.
+**SYNTHETIC - NOT CLIENT-ATTESTED.** No real model inventory, no approved
+model-risk policy, and no production AI control attestation is represented here.
 
-## Intended system boundary
+## Working model for the scenario
 
-The ten requested outputs are descriptive/aggregated reports. This scope does
-not rank employees, screen applicants, recommend compensation, make promotion
-or termination decisions, or infer sensitive traits. Any later predictive or
-generative use is a separate proposal requiring its own purpose, risk review,
-validation, monitoring, and human-accountability design.
+AI and LLM use on a healthcare data foundation must stay inside an explicit
+boundary: it supports governed analytics and decision preparation, it does not
+make autonomous clinical decisions, and it never consumes ungoverned PHI.
 
-## Controls to estimate and validate
+## Candidate control boundary
 
-1. Maintain an inventory of reports, models, prompts, and downstream uses; each
-   has an owner and approved-purpose statement.
-2. Tests assert that excluded personal fields, free text, and direct identifiers
-   do not reach Gold datasets or report extracts.
-3. Data and semantic changes require versioned review and reproducible tests.
-4. A human owner reviews report definitions, exceptions, and publication.
-5. If any model is proposed later, assess population impact, bias, explainability,
-   appeal/recourse, model monitoring, and legal obligations before build.
-6. AI coding assistants may help create synthetic tests or reviewed source code;
-   do not provide real HR records or secrets to Claude Code, Codex, or another
-   assistant.
+- No autonomous clinical or coverage decision: AI output is decision support,
+  reviewed and owned by an accountable human.
+- Models read only certified, versioned datasets and measures; raw PHI never
+  reaches an ungoverned model path.
+- Every model/AI feature records its intended use, its approved data inputs,
+  and the human owner accountable for its output.
+- Bias and fairness are reviewed across protected and clinically relevant
+  populations before and during use; a measure that cannot be fairly computed
+  is not shipped.
+- Behavioral-health (42 CFR Part 2) and other specially protected data require
+  an explicit approved basis before any model use.
+- An AI output that influences care or coverage carries its lineage and a
+  caveat when evidence is thin; it never asserts a savings, ROI, or clinical
+  conclusion the evidence does not support.
 
-## Synthetic test cases
+## Test cases for design review
 
-- Attempt to add a prohibited free-text field: schema test must fail.
-- Attempt to publish a group below the approved suppression threshold: report
-  test must suppress the cell and show a suppression indicator.
-- Change a metric formula without updating its version: release gate must fail.
-- Introduce an unapproved predictive score: scope and model inventory checks
-  must stop publication.
+| Case | Expected behavior | Owner to confirm |
+|---|---|---|
+| Model asked to decide coverage autonomously | Refuse; route to accountable human | Responsible-AI owner |
+| Raw PHI requested as model context | Block; require governed, minimized slice | Privacy owner |
+| Population with too few cases for a measure | Suppress or abstain; do not fabricate | Clinical analytics owner |
 
-No model performance, fairness result, or production control is asserted here.
+## Still required before this is a client fact
+
+The real model inventory, the approved model-risk policy, the fairness review
+process, and the named responsible-AI owner are not established here and must be
+confirmed with the client.

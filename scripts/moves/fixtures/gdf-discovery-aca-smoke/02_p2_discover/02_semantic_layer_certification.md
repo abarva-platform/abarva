@@ -1,44 +1,38 @@
-# Semantic layer and certified report definitions
+# Semantic layer and certified measure definitions
 
-**SYNTHETIC - NOT CLIENT-ATTESTED.** Report names, formulas, cadences, and
-owners below are constructed solely to exercise evidence parsing and review.
+**SYNTHETIC - NOT CLIENT-ATTESTED.** No real metric dictionary, no approved
+clinical measure specification, and no certified definition is included here.
 
-## Candidate report catalog
+## Working model for the scenario
 
-The scenario requests ten reports, all based on governed, aggregated HR data.
-These are requirements for sizing, not evidence that a source already contains
-the fields or that the reports are approved.
+AI and analytics for the synthetic IDN must read from certified measures, not
+ad hoc queries. The semantic layer defines each shared measure once — its
+population, numerator and denominator, inclusion and exclusion logic,
+measurement period, and the governed source it reads from — so a readmission
+rate or a care-gap count means the same thing to every model and report.
 
-| ID | Synthetic report | Candidate question | Candidate grain | Definition owner |
-|---|---|---|---|---|
-| R01 | Workforce composition | How is workforce mix changing? | Month / org unit | HR analytics |
-| R02 | Hiring funnel | Where do candidates exit? | Requisition / month | Talent operations |
-| R03 | Time-to-fill | How long from approved requisition to accepted offer? | Requisition cohort | Talent operations |
-| R04 | Internal mobility | How often are roles filled internally? | Quarter / job family | HR analytics |
-| R05 | Learning participation | Which groups complete assigned learning? | Course / month / org | Learning operations |
-| R06 | Absence trend | What is the aggregate absence trend? | Month / org unit | HR analytics |
-| R07 | Retention trend | How does aggregate retention vary by cohort? | Quarter / org unit | HR analytics |
-| R08 | Span-of-control view | How are manager spans distributed? | Month / org unit | Workforce planning |
-| R09 | Compensation distribution | How do approved compensation bands distribute? | Quarter / job family | Compensation |
-| R10 | Capacity planning | Where are planned role needs changing? | Quarter / scenario | Workforce planning |
+| Candidate certified measure | Definition anchor (synthetic) | Evidence still needed |
+|---|---|---|
+| 30-day all-cause readmission rate | Index acute inpatient discharges; 30-day window; approved exclusions | Signed numerator/denominator spec and owner |
+| Open care gap count (preventive) | Eligible population by measure; gap open at period end | Ratified eligibility and measure version |
+| Member attribution to PCP | Attribution rule and look-back window | Approved attribution model and effective date |
+| Provider panel size | Attributed active members per provider | Confirmed provider master and active rule |
+| ED utilization per 1,000 | ED encounters over attributed member-months | Confirmed denominator source and period |
 
-## Semantic contract proposals
+## Proposed controls
 
-- Define workforce headcount as distinct, active worker keys on the agreed
-  month-end snapshot; decide treatment of leave and contingent labor.
-- Define time-to-fill start/end events, exclusions, paused intervals, and the
-  percentile to report. Averages alone may hide long-tail delays.
-- Define retention denominator, eligible population, event window, and
-  treatment of transfers. Do not equate retention with engagement.
-- Define completion from the learning event system, not assignment status.
-- Define compensation measures at aggregate levels and suppress small cells
-  under a policy chosen by the data owner.
-- Each formula carries a version, owner, source fields, exclusions, test cases,
-  and last approval date. No formula is certified by this synthetic file.
+1. Each certified measure links to exactly one approved semantic version; a
+   report or model that needs a different cut requests a new version, it does
+   not redefine the measure locally.
+2. A measure amendment records author, reviewer, effective date, and the
+   downstream reports and models affected.
+3. Clinical code sets (for example ICD-10, CPT, LOINC — synthetic references
+   only here) are versioned and dated; a code-set change is a measure change.
+4. A measure is not "certified" until its population, logic, source, and owner
+   are all recorded and ratified by the governance council.
 
-## Required certification evidence
+## Still required before this is a client fact
 
-For each of the ten reports, collect a named owner, accepted definition,
-reconciliation sample, filter/suppression rule, and a record of business review.
-The upload supplies a proposed dictionary to critique; it must not be treated as
-a certified semantic layer until an authorized reviewer accepts it.
+The real measure specifications, the authoritative code-set versions, the
+certified population logic, and the named measure owners are not supplied here
+and must be confirmed with the client's clinical and analytics leaders.
