@@ -1,4 +1,5 @@
 import { sourceNewCategoryDisplay } from "./phase-state";
+import { recordedScopeFacts } from "./recorded-scope-facts";
 
 type HistoricalRequestEvent = {
   trigger: string | null;
@@ -107,17 +108,29 @@ export function buildHistoricalRequestSummary(input: {
   event: HistoricalRequestEvent;
   origin: HistoricalRequestOrigin | null;
 }): HistoricalRequestSummary {
+  // The scope column holds four labelled facts, not prose. Rendered whole it
+  // read as one paragraph - "Scope boundary: ... Value target: ... Baseline
+  // owner: ... Category: ..." - with the category repeated from the event's own
+  // field directly beneath it. Split here; the category is dropped because the
+  // event's field below is the authority for it.
+  const scopeFacts = recordedScopeFacts(input.event.scope);
   const requestFacts: SummaryFact[] = [
     {
       key: "need",
       label: "Need",
       value: recordedText(input.event.trigger, "Not recorded"),
     },
-    {
-      key: "scope",
-      label: "Scope",
-      value: recordedText(input.event.scope, "Not recorded"),
-    },
+    // A description that records nothing parses to no facts, and the row still
+    // has to say so rather than disappear.
+    ...(scopeFacts.length > 0
+      ? scopeFacts
+      : [
+          {
+            key: "scope",
+            label: "Scope",
+            value: recordedText(input.event.scope, "Not recorded"),
+          },
+        ]),
     {
       key: "category",
       label: "Category",

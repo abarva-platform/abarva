@@ -32,6 +32,7 @@ import {
 } from "@/lib/source/new-workspace/phase-state";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
+import { recordedScopeFacts } from "@/lib/source/new-workspace/recorded-scope-facts";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewResponseIntake } from "@/lib/source/new-workspace/response-intake";
 import {
@@ -626,10 +627,25 @@ export function SourceNewWorkspace({
                         <dt>Need</dt>
                         <dd>{fact(event.trigger)}</dd>
                       </div>
-                      <div>
-                        <dt>Scope</dt>
-                        <dd>{fact(event.scope)}</dd>
-                      </div>
+                      {/*
+                        The scope column holds four labelled facts, not prose.
+                        Rendered whole it read as one paragraph. Split here, from
+                        the same parser the approval surface uses, so the two
+                        cannot disagree about what the column says.
+                      */}
+                      {recordedScopeFacts(event.scope).length > 0 ? (
+                        recordedScopeFacts(event.scope).map((row) => (
+                          <div key={row.key}>
+                            <dt>{row.label}</dt>
+                            <dd>{row.value}</dd>
+                          </div>
+                        ))
+                      ) : (
+                        <div>
+                          <dt>Scope</dt>
+                          <dd>{fact(event.scope)}</dd>
+                        </div>
+                      )}
                       <div>
                         <dt>Decision owner</dt>
                         <dd>{fact(event.decisionOwner)}</dd>
