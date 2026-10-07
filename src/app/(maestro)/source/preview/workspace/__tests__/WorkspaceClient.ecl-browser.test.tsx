@@ -799,7 +799,13 @@ describe("Source workspace ECL browser-surface proof", () => {
       ).toBeTruthy();
     });
 
-    expect(screen.getByText("Evidence depth updating")).toBeTruthy();
+    // The badge reports the LOAD, not how complete the evidence is. It used to
+    // read "Evidence depth updating" / "Evidence depth ready", and "ready"
+    // contradicted the body, which says "Evidence depth — Partial" and "5 of 8
+    // required evidence families" on the same screen. The behaviour under test
+    // is unchanged: a loading state must still be distinguishable from absence.
+    expect(screen.getByText("Loading evidence")).toBeTruthy();
+    expect(screen.queryByText("Evidence loaded")).toBeNull();
     expect(screen.getByText("Evidence depth is still loading.")).toBeTruthy();
     expect(
       screen.queryByText(
