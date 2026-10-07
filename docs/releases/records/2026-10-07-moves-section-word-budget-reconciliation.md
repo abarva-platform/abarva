@@ -126,9 +126,10 @@ No migration. No route. No script. No workflow change.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json
   --noEmit`, exit 0.
 - **PASS** — `npx eslint` over the changed paths, exit 0.
-- **PASS** — `npm run audit:test-ci-coverage:write`: test files 2,784 → 2,785,
-  covered 2,620 → 2,621, uncovered flat at 164. The new suite sits in a
-  directory swept by a required check.
+- **PASS** — `npm run audit:test-ci-coverage:write`: test files 2,785 → 2,786,
+  covered 2,621 → 2,622, uncovered flat at 164 (regenerated after merging the
+  current `main`, whose own truth moved to 2,785 mid-run). The new suite sits in
+  a directory swept by a required check.
 - **PASS** — `npm run audit:tenancy-fence-coverage:write`: no change.
 - **NOT RUN** — live signed-in walk. This changes what a generation prompt says,
   so proving it end to end needs a real build of a design-phase document for a
@@ -198,6 +199,7 @@ anything in an intermediate state.
   maximum, the plan says so and leaves the declared caps alone instead of
   trading one blocker for the other. No shipped document is in that state; the
   totality guard asserts none enters it.
-- **The census count is contended.** One other open PR asserts the same counts
-  while also adding one test file, so whichever squashes second needs a rebase
-  and a regeneration. Noted on the PR.
+- **The census contention is discharged.** The other PR that asserted the same
+  counts merged during this build; this branch was merged onto the new `main`
+  and the census regenerated at the true counts, so no regeneration is owed
+  behind it.
