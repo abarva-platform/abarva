@@ -3103,6 +3103,14 @@ async function main(): Promise<void> {
     args.tenantKey,
     args.datasetVersion,
   );
+  for (const row of sourceFiles.slaPerformance) {
+    performanceMeasureFromSource(
+      stringValue(row, "metric_name"),
+      stringValue(row, "actual_result_pct"),
+      stringValue(row, "committed_threshold_pct"),
+      stringValue(row, "unit"),
+    );
+  }
   const ownershipManifest = readOpportunityOwnershipManifest(
     args.mode,
     args.opportunityOwnershipManifestOverride,

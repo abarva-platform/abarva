@@ -15,7 +15,7 @@ Contract performance measures now retain their declared measurement unit. A resp
 ## Layer Impact
 
 - Release lane: `client-data-lane`, because the contract-depth loader can write canonical performance observations only through a separately governed data build.
-- Layer 2 Source Adapters: the contract-depth package loader resolves and validates measurement units before canonical write.
+- Layer 2 Source Adapters: the contract-depth package loader resolves and validates measurement units during preflight, before either adapter or canonical apply.
 - Layer 3 Canonical Model: the existing performance observation's `unit`, numeric value, actual text, and target text are written consistently on a separately authorized load. No schema change or data load is included in this release.
 - Layer 4 Products: Source contract performance refuses to present contradictory units and only charts comparable observations.
 
@@ -36,8 +36,8 @@ Contract performance measures now retain their declared measurement unit. A resp
 ## QA / Validation
 
 - Pass: red-first and mutation checks demonstrate that a stored percent for a time metric is refused.
-- Pass: focused loader and display tests, TypeScript typecheck, and changed-file lint.
-- Not run yet: final release validation and applicable CI; both are required before merge.
+- Pass: focused loader and display tests, TypeScript typecheck, changed-file lint, release validation, and read-only package plan.
+- Not run yet: applicable PR CI; green completion is required before merge.
 - Not run yet: signed-in display replay after deploy; code checks alone are not live acceptance.
 
 ## Rollout Plan
