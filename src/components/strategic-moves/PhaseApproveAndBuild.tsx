@@ -34,6 +34,7 @@ import {
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import type { SettledDeliverable } from "@/lib/programs/phase-build-settlement";
 
 const NAVY = "#1B2B5C";
 const INK = "#1A1A18";
@@ -173,6 +174,14 @@ export interface BuildSettledResult {
   failedKeys: string[];
   /** Total deliverables in this batch (succeeded + failed + anything else terminal). */
   total: number;
+  /**
+   * The same two sets, each key carrying the registry's `gateArtifact` flag.
+   * The bare key lists above cannot tell a phase gate document apart from a
+   * working document beside it, and only the gate documents are what a phase
+   * gate check reads — see `classifyPhaseBuildSettlement`.
+   */
+  succeeded: SettledDeliverable[];
+  failed: SettledDeliverable[];
 }
 
 export interface PhaseBuildArtifact {
@@ -402,21 +411,29 @@ export function PhaseApproveAndBuild({
 
     runInFlight.current = false;
     setBuilding(false);
-    const succeededKeys = relevant
+    const succeeded: SettledDeliverable[] = relevant
       .filter((r) => r.status === "succeeded")
-      .map((r) => r.deliverableTypeKey);
-    const failedKeys = relevant
+      .map((r) => ({
+        deliverableTypeKey: r.deliverableTypeKey,
+        gateArtifact: r.gateArtifact,
+      }));
+    const failed: SettledDeliverable[] = relevant
       .filter(
         (r) =>
           r.status === "blocked" ||
           r.status === "failed" ||
           r.status === "error",
       )
-      .map((r) => r.deliverableTypeKey);
+      .map((r) => ({
+        deliverableTypeKey: r.deliverableTypeKey,
+        gateArtifact: r.gateArtifact,
+      }));
     void onBuildSettled?.({
-      succeededKeys,
-      failedKeys,
+      succeededKeys: succeeded.map((entry) => entry.deliverableTypeKey),
+      failedKeys: failed.map((entry) => entry.deliverableTypeKey),
       total: relevant.length,
+      succeeded,
+      failed,
     }).catch((err) => {
       setError(err instanceof Error ? err.message : "Gate approval failed");
     });

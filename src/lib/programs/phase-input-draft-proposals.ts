@@ -1,4 +1,5 @@
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 
 export type AvaPhaseInputSourceClass =
   | "approved_phase_input"
@@ -29,6 +30,14 @@ export interface PhaseInputDraftProposalInput {
   >;
   approvedEvidenceCount?: number;
   approvedEvidenceUnavailable?: boolean;
+  /**
+   * The Move's confirmed solution route, when P2 has resolved one. P3 Design
+   * declares a DIFFERENT, smaller capture set per route, so "what is still
+   * empty" has to be asked of the set this Move was actually asked for — the
+   * route's own question counts, and the questions the route dropped do not.
+   * `null`/omitted means not yet routed: the full default set, as before.
+   */
+  confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
 }
 
 function clean(value: string | null | undefined): string {
@@ -175,9 +184,10 @@ export function buildAvaPhaseInputProposals(
   input: PhaseInputDraftProposalInput,
 ): AvaPhaseInputProposal[] {
   const currentValues = input.currentValues ?? {};
-  const missingSections = getPhaseCaptureSections(input.phase).filter(
-    (section) => !clean(currentValues[section.key]),
-  );
+  const missingSections = getPhaseCaptureSections(
+    input.phase,
+    input.confirmedSolutionRoute ?? null,
+  ).filter((section) => !clean(currentValues[section.key]));
   if (missingSections.length === 0) return [];
 
   if (input.phase === 1) {
@@ -196,9 +206,10 @@ export function describeAvaPhaseInputDraftRefusal(
   input: PhaseInputDraftProposalInput,
 ): string | null {
   const currentValues = input.currentValues ?? {};
-  const missingSections = getPhaseCaptureSections(input.phase).filter(
-    (section) => !clean(currentValues[section.key]),
-  );
+  const missingSections = getPhaseCaptureSections(
+    input.phase,
+    input.confirmedSolutionRoute ?? null,
+  ).filter((section) => !clean(currentValues[section.key]));
 
   if (missingSections.length === 0) {
     return `P${input.phase} inputs already have current values. There is nothing empty for aVa to draft; edit a field manually if you want an override.`;

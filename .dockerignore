@@ -78,6 +78,8 @@ docs/architecture/*
 docs/governance/*
 !docs/governance/dataset-manifests/
 !docs/governance/dataset-manifests/**
+!docs/governance/data-repairs/
+!docs/governance/data-repairs/**
 !docs/source/
 docs/source/*
 !docs/source/skyharbor-v4/

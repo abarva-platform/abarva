@@ -84,6 +84,14 @@ const readSourceIntakeRequestQueue = jest.fn(async (tenantKey: string) => {
   };
 });
 
+const readServiceNowRequestDisposition = jest.fn(async (input: unknown): Promise<{
+  disposition_state: string;
+  source_version: string;
+} | null> => {
+  void input;
+  return { disposition_state: "accepted", source_version: "v1" };
+});
+
 jest.mock("@/lib/source/new-workspace/authority-version-store", () => ({
   persistSourceAuthorityVersion: jest.fn(async () => ({
     action: "create_version",
@@ -101,6 +109,7 @@ jest.mock("@/lib/source/intake/servicenow-sourcing-request-repository", () => ({
 jest.mock("@/lib/source/intake/servicenow-request-event-authority", () => ({
   recordServiceNowRequestMappingDecision: jest.fn(async () => undefined),
   linkServiceNowRequestToEvent: jest.fn(async () => undefined),
+  readServiceNowRequestDisposition: (input: unknown) => readServiceNowRequestDisposition(input),
 }));
 
 jest.mock("@/lib/source/queries", () => ({
@@ -139,6 +148,10 @@ import {
 describe("POST /api/v1/source/events", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    readServiceNowRequestDisposition.mockResolvedValue({
+      disposition_state: "accepted",
+      source_version: "v1",
+    });
     readSourceIntakeRequestQueue.mockResolvedValue({
       registryAvailable: true,
       requests: [importedRequest],
@@ -252,6 +265,49 @@ describe("POST /api/v1/source/events", () => {
         linkedByName: "Procurement Lead",
       }),
     );
+    expect(readServiceNowRequestDisposition).toHaveBeenCalledWith({
+      tenantKey: "skyharbor-air",
+      requestId: importedRequest.requestId,
+      sourceVersion: "v1",
+    });
+  });
+
+  it.each([null, "returned", "merged", "declined"])(
+    "refuses an imported request with %s disposition before creating an event",
+    async (state) => {
+      readServiceNowRequestDisposition.mockResolvedValueOnce(
+        state ? { disposition_state: state, source_version: "v1" } : null,
+      );
+      const res = await POST(new Request("http://localhost/api/v1/source/events", {
+        method: "POST",
+        body: JSON.stringify({
+          sourceRequest: {
+            requestId: importedRequest.requestId,
+            sourceVersion: "v1",
+          },
+        }),
+      }));
+
+      expect(res.status).toBe(409);
+      expect((await res.json()).error).toBe("source_request_disposition_required");
+      expect(createSourcingEvent).not.toHaveBeenCalled();
+    },
+  );
+
+  it("fails closed when imported-request disposition authority is unavailable", async () => {
+    readServiceNowRequestDisposition.mockRejectedValueOnce(new Error("relation unavailable"));
+    const res = await POST(new Request("http://localhost/api/v1/source/events", {
+      method: "POST",
+      body: JSON.stringify({
+        sourceRequest: {
+          requestId: importedRequest.requestId,
+          sourceVersion: "v1",
+        },
+      }),
+    }));
+
+    expect(res.status).toBe(503);
+    expect(createSourcingEvent).not.toHaveBeenCalled();
   });
 
   it("rejects event creation when the current request version has no persisted mapping decision", async () => {

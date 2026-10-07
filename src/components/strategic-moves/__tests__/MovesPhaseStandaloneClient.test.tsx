@@ -1207,6 +1207,54 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    it("drops the legacy gate stepper on the Steps view when the capture composition is active, and restores it on another tab", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureCompositionEnabled
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // On the Steps view the capture flow renders its OWN phase bar, so the
+      // legacy gate stepper must not be a second phase navigator stacked above.
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("navigation", { name: "Phase steps" }),
+      ).not.toBeInTheDocument();
+      // On a tab without the capture bar (Approvals) the stepper is the only
+      // phase navigator and must still render.
+      fireEvent.click(workspaceTab(/Approvals/));
+      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the gate stepper on the Steps view when the composition flag is OFF (capture flow still mounts)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // capture_v2 on, composition off: the flow mounts, but the legacy chrome
+      // (including this stepper) is intentionally kept, as before this change.
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+    });
+
     // ─── the structured `facts` question on the redesigned flow ───
     // P2's "Baseline metrics" is a required capture section whose input is
     // structured (`structured: "facts"`). Every other structured section —
@@ -1656,7 +1704,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByLabelText("Phase progress")).toBeInTheDocument();
     });
 
-    it("moves_capture_composition_v1 ON: the SAME tab row moves inside the dock, rendered once", () => {
+    it("moves_capture_composition_v1 ON: one tab row, rendered once in the shell (not inside the dock), so its position is consistent across views", () => {
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
@@ -1670,13 +1718,15 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       const dock = screen.getByTestId("agent-dock");
-      // exactly one tab row, and it is inside the dock's workspace column
+      // exactly one tab row, rendered in the shell above the dock — NOT moved
+      // into the dock workspace (which made its position differ from the
+      // Files/Intelligence/Approvals views and clip it).
       const tablists = screen.getAllByRole("tablist", {
         name: "Move workspace views",
       });
       expect(tablists).toHaveLength(1);
-      expect(dock).toContainElement(tablists[0]);
-      // and it still switches surfaces from there
+      expect(dock).not.toContainElement(tablists[0]);
+      // and it still switches surfaces
       expect(
         within(tablists[0]).getByRole("tab", { name: /Files/ }),
       ).toBeInTheDocument();

@@ -35,6 +35,7 @@ import {
   embedDiscoveryPlanInCharter,
 } from "@/lib/programs/discovery/charter-transformers";
 import { applyExtendedIntakeFieldsIfEnabled } from "@/lib/programs/p0-extended-intake-fields";
+import { mayGuessFunctionPackForDeclaredArchetype } from "@/lib/programs/declared-archetype-function-identity";
 import {
   normalizeDiscoveryArchetypeDeclaration,
   withDeclaredDiscoveryArchetype,
@@ -473,12 +474,21 @@ async function insertParticipant(input: {
  * Resolve the Domain Function Pack key for a Move from its brief text and
  * industry code. Additive — runs alongside the legacy `classifyBrief` /
  * `function_code` office bucket, never replaces it. Returns `null` honestly
- * when the industry does not resolve or no pack clears the confidence floor.
+ * when the Move declared an archetype whose work spans every business function,
+ * when the industry does not resolve, or when no pack clears the confidence
+ * floor.
  */
 function deriveFunctionPackIdentity(
   input: SubmitOriginationBriefInput,
   industryCode: string,
 ): { functionPackKey: string; functionPackConfidence: number } | null {
+  // A human who declared a function-spanning archetype has already said what
+  // this Move is; guessing a single business function from its prose can only
+  // contradict them. `input.discoveryArchetypeId` is normalized before the
+  // charter is built, so this reads the canonical declaration.
+  if (!mayGuessFunctionPackForDeclaredArchetype(input.discoveryArchetypeId)) {
+    return null;
+  }
   const industryKey = industryKeyForCode(industryCode);
   if (!industryKey) return null;
 

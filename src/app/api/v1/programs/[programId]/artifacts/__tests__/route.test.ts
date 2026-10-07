@@ -43,18 +43,21 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: jest.fn(() => ({
     from: (table: string) => {
-      const query = {
+      const data =
+        table === "program_evidence_reviews"
+          ? mockPendingEvidenceReviewRows
+          : mockPendingEvidenceRows;
+      // Thenable builder: every method chains, and awaiting the chain resolves
+      // to the table's rows regardless of which method terminates it — so this
+      // tolerates the tenant-key filter being `.in(...)` mid-chain.
+      const query: Record<string, unknown> = {
         select: () => query,
         eq: () => query,
+        in: () => query,
         order: () => query,
-        limit: async () => ({
-          data:
-            table === "program_evidence_reviews"
-              ? mockPendingEvidenceReviewRows
-              : mockPendingEvidenceRows,
-          error: null,
-        }),
-        in: async () => ({ data: mockPendingEvidenceRows, error: null }),
+        limit: () => query,
+        then: (resolve: (v: { data: unknown; error: null }) => unknown) =>
+          resolve({ data, error: null }),
       };
       return query;
     },

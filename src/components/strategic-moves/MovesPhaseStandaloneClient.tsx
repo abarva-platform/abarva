@@ -19,6 +19,10 @@ import {
 } from "@/lib/programs/phase-capture-status";
 import { resolvePhaseCaptureHold } from "@/lib/programs/phase-capture-hold";
 import { CaptureEvidenceHoldNotice } from "@/components/strategic-moves/CaptureEvidenceHoldNotice";
+import {
+  CaptureGateMetNotice,
+  isGateMetWithCaptureUnfinished,
+} from "@/components/strategic-moves/CaptureGateMetNotice";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
@@ -36,8 +40,10 @@ import {
 } from "@/components/strategic-moves/FileCabinetPanel";
 import {
   PhaseApproveAndBuild,
+  type BuildSettledResult,
   type PhaseBuildArtifact,
 } from "@/components/strategic-moves/PhaseApproveAndBuild";
+import { classifyPhaseBuildSettlement } from "@/lib/programs/phase-build-settlement";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { charterGateAssumptionDisclosure } from "@/lib/programs/charter-gate-assumption-disclosure";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
@@ -2402,32 +2408,31 @@ export function MovesPhaseStandaloneClient({
     }
   }
 
-  async function approvePhaseGateAfterBuild(result: {
-    succeededKeys: string[];
-    failedKeys: string[];
-    total: number;
-  }) {
+  async function approvePhaseGateAfterBuild(result: BuildSettledResult) {
     // This only ever runs once every queued deliverable in the batch has
     // reached a terminal status (see PhaseApproveAndBuild's onBuildSettled) —
-    // never while generation is still queued or running, and never when a
-    // required deliverable failed or was held below gate.
-    if (result.failedKeys.length > 0) {
+    // never while generation is still queued or running.
+    //
+    // A failure refuses the submission only when the document that failed is
+    // one a phase gate check actually reads. A working document beside it
+    // (`gateArtifact: false`) is named rather than blocking, because no gate
+    // check reads it and refusing here used to dead-end the phase on a document
+    // the gate never asked for. `classifyPhaseBuildSettlement` owns that split.
+    const settlement = classifyPhaseBuildSettlement({
+      phase: phase.phase,
+      succeeded: result.succeeded,
+      failed: result.failed,
+    });
+    if (settlement.refusal) {
       setGateApprovalStatus("blocked");
-      throw new Error(
-        `${result.failedKeys.length} required output${result.failedKeys.length === 1 ? "" : "s"} ` +
-          `failed to generate or were held below gate (${result.failedKeys.join(", ")}). ` +
-          "Fix the underlying issue and re-run Approve & Build before requesting gate approval.",
-      );
-    }
-    if (result.succeededKeys.length === 0) {
-      setGateApprovalStatus("blocked");
-      throw new Error(
-        "No required deliverables completed generation for this phase.",
-      );
+      throw new Error(settlement.refusal);
     }
     setGateApprovalStatus("approving");
     setGateApprovalMessage(
-      `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. Submitting gate approval...`,
+      `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. ` +
+        (settlement.workingDocumentCaveat
+          ? `${settlement.workingDocumentCaveat} Submitting gate approval...`
+          : "Submitting gate approval..."),
     );
 
     const approvalRes = await fetch(
@@ -2438,7 +2443,11 @@ export function MovesPhaseStandaloneClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phase: phase.phase,
-          rationale: `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.`,
+          rationale:
+            `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.` +
+            (settlement.workingDocumentCaveat
+              ? ` ${settlement.workingDocumentCaveat}`
+              : ""),
         }),
       },
     );
@@ -2509,10 +2518,16 @@ export function MovesPhaseStandaloneClient({
       setGateApproved(false);
       setGateApprovalStatus("approving");
       setGateApprovalMessage("Submitting P0 gate approval...");
+      // P0 has no deliverable build: its gate evidence IS the origination
+      // brief, so it settles as one succeeded gate artifact.
       await approvePhaseGateAfterBuild({
         succeededKeys: ["origination_brief"],
         failedKeys: [],
         total: 1,
+        succeeded: [
+          { deliverableTypeKey: "origination_brief", gateArtifact: true },
+        ],
+        failed: [],
       });
     } catch (err) {
       setGateApproved(false);
@@ -2907,6 +2922,19 @@ export function MovesPhaseStandaloneClient({
 
   const nextCapturePhase = phase.phase < 5 ? PHASES[phase.phase + 1] : null;
 
+  // Gate vs. capture: a phase the Move has already advanced past (`state:
+  // done`) can show a met gate and an unfinished capture strip at the same
+  // time — a gate is met from existing or migrated origination data (or
+  // approved evidence), not necessarily from working the guided capture
+  // questions here. Surface that so the empty strip does not read as a
+  // contradiction. Informational only; it changes no gate, save, or Continue.
+  const viewedGateTally = phaseTallies.find((row) => row.phase === phase.phase);
+  const viewedCaptureRow = capturePhases.find((p) => p.phase === phase.phase);
+  const gateMetWithCaptureUnfinished = isGateMetWithCaptureUnfinished(
+    viewedGateTally,
+    viewedCaptureRow,
+  );
+
   // P0 Originate renders the redesigned capture flow only when BOTH flags are
   // on: the flow itself (`moves_capture_v2`) and the P0 extension
   // (`moves_capture_p0_v1`). Either off ⇒ P0 keeps the legacy canvas exactly.
@@ -3072,19 +3100,31 @@ export function MovesPhaseStandaloneClient({
               <Link className="mxw-back" href="/strategic-moves">
                 ← All Moves
               </Link>
-              <MovePhaseTopStepper
-                currentPhase={move.currentPhase}
-                moveId={move.id}
-                phaseTallies={phaseTallies}
-                viewingPhase={phase.phase}
-              />
-              {/* The same tab row either way. With the composition polish on
-                  and the redesigned capture mounted on this view it is handed
-                  to the dock instead, so it sits in the workspace column with
-                  the content it switches rather than above the whole dock. */}
-              {captureCompositionActive && workspaceView === "phase"
-                ? null
-                : surfaceTabRow}
+              {/* On the Steps view with the composition polish on, the
+                  capture flow renders its OWN phase bar (phase name, tick, and
+                  answered count), so this gate-criteria stepper would be a
+                  second phase navigator stacked right above it in the older
+                  style. Drop it there — the same reason the duplicate stage
+                  head is dropped — and keep it on Files / Intelligence /
+                  Approvals, where the capture bar does not render and this is
+                  the only phase navigator. Gate-criteria status still lives in
+                  the Approvals tab (and the CaptureGateMetNotice). */}
+              {captureCompositionActive && workspaceView === "phase" ? null : (
+                <MovePhaseTopStepper
+                  currentPhase={move.currentPhase}
+                  moveId={move.id}
+                  phaseTallies={phaseTallies}
+                  viewingPhase={phase.phase}
+                />
+              )}
+              {/* One tab row, one place: always rendered here in the shell,
+                  above the workspace, so its position is identical across the
+                  Steps, Files & Evidence, Intelligence and Approvals views.
+                  (The composition polish used to move it into the dock
+                  workspace on the Steps view only, which shifted and clipped it
+                  relative to the other views — see the capture-workspace call,
+                  which no longer receives a tab row.) */}
+              {surfaceTabRow}
               {workspaceView === "files" ? (
                 <>
                   <div className="mxw-crumb">
@@ -3433,9 +3473,6 @@ export function MovesPhaseStandaloneClient({
                       onAvaMessage={(text) => {
                         void sendAvaMessage(text);
                       }}
-                      tabs={
-                        captureCompositionActive ? surfaceTabRow : undefined
-                      }
                       captureProps={{
                         phases: capturePhases,
                         phase: phase.phase,
@@ -3449,6 +3486,12 @@ export function MovesPhaseStandaloneClient({
                         handoffSummary: charterBasisRollup,
                         openingBand: (
                           <>
+                            {gateMetWithCaptureUnfinished && viewedGateTally ? (
+                              <CaptureGateMetNotice
+                                met={viewedGateTally.met}
+                                total={viewedGateTally.total}
+                              />
+                            ) : null}
                             <CharterAssumptionsCarryForward
                               assumptions={carriedCharterAssumptionRows}
                             />
@@ -5646,11 +5689,7 @@ function PhaseBody({
   gateApprovalStatus: "idle" | "approving" | "approved" | "blocked";
   isHistoricalPhase: boolean;
   move: StrategicMove;
-  onApproveAfterBuild: (result: {
-    succeededKeys: string[];
-    failedKeys: string[];
-    total: number;
-  }) => Promise<void>;
+  onApproveAfterBuild: (result: BuildSettledResult) => Promise<void>;
   onContinueCurrentPhase: () => void;
   onApproveP0Gate: () => void | Promise<void>;
   approverLabel: string | null;
@@ -6393,10 +6432,20 @@ function PhaseBody({
                 onCancel={() => setP0ConfirmOpen(false)}
                 onConfirm={() => {
                   setP0ConfirmOpen(false);
+                  // Gate-only path: this phase's outputs were already built,
+                  // so it settles as one succeeded gate artifact and nothing
+                  // failed.
                   void onApproveAfterBuild({
                     succeededKeys: ["prebuilt_gate_outputs"],
                     failedKeys: [],
                     total: 1,
+                    succeeded: [
+                      {
+                        deliverableTypeKey: "prebuilt_gate_outputs",
+                        gateArtifact: true,
+                      },
+                    ],
+                    failed: [],
                   });
                 }}
               />

@@ -12,6 +12,8 @@ import type {
   SectionGroundingMode,
 } from "../types";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+import { MOVES_PROCESS_CHANGE_ESTIMATE_BRIEF } from "./structure-process-change-estimate-brief";
+import { MOVES_VALUE_MEASUREMENT_CONTRACT } from "./structure-value-measurement-contract";
 
 /**
  * The Charter's per-section word cap, read from the shared contract
@@ -503,6 +505,34 @@ const MOVES_DISCOVERY: DeliverableStructure = {
 const MOVES_DESIGN_WORKSHOP_GUIDE: DeliverableStructure = {
   module: "moves",
   deliverableType: "design_workshop_guide",
+  // The two sections whose stated job is to ENUMERATE accepted discovery
+  // evidence. Both are `mixed`, so they assert client facts, and a section's
+  // families are what its retrieval query is built from
+  // (`buildSectionDrivenEvidenceQueries`) — so without a landing site here
+  // these two ask the corpus for `source_register` / `evidence_gaps` /
+  // `baseline_metrics` while the approved P2 evidence is filed under the
+  // archetype's own family ids, and get a plausible answer that cites none of
+  // it. Aligning those ids is the whole mechanism the artifact packs are
+  // written around.
+  //
+  // Why this guide and NOT the charter, which also grounds nowhere and stays
+  // that way: the charter's sections instruct the model not to assert P2
+  // findings at all ("hypothesis framing, not P2 findings"), so families it
+  // cannot use would only widen its retrieval. This guide's purpose line is
+  // the opposite — "using accepted discovery evidence".
+  //
+  // The guide's other two fact-asserting sections are deliberately left out.
+  // `design_session_plan` is session logistics and `design_gate_readiness`
+  // states what is still MISSING; neither enumerates accepted evidence, and
+  // adding eleven families to each would widen two retrieval queries to pull
+  // evidence those sections do not cite. The archetype's exhibits and tables
+  // remain withheld from this guide (`allowArchetypeAssets`): it is a
+  // facilitation document, and grounding is a separate question from whether
+  // it carries a deck's exhibits.
+  archetypeEvidenceSectionKeys: [
+    "discovery_carry_forward",
+    "evidence_carry_forward",
+  ],
   purpose:
     "Prepare a focused set of future-state decision sessions using accepted discovery evidence, without turning the guide into a completed solution, operating model, or process redesign.",
   decisionToSupport:
@@ -1964,7 +1994,9 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_READINESS_AND_CHANGE_PLAN,
   MOVES_MOBILIZATION,
   MOVES_HANDOFF,
+  MOVES_VALUE_MEASUREMENT_CONTRACT,
   MOVES_EXECUTIVE_PLAYBACK,
+  MOVES_PROCESS_CHANGE_ESTIMATE_BRIEF,
   SOURCE_STRATEGY_MEMO,
   SOURCE_EVAL_WORKBOOK,
   SOURCE_EXEC_REC,

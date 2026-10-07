@@ -5,6 +5,7 @@ import {
   buildContractOptimizationCandidateHref,
   isCapturedApprovalFact,
   isReviewableContractScope,
+  isSourceRequestCreationAuthorized,
   SOURCE_INTAKE_CATEGORY_PICKER_DEFAULT_OPEN,
   SOURCE_INTAKE_CATEGORIES,
 } from "../SourceOriginatePage";
@@ -32,6 +33,15 @@ jest.mock("@/components/shell/AppShell", () => ({
 }));
 
 describe("SourceOriginatePage contract optimization intake", () => {
+  it("keeps imported request creation blocked until its disposition is accepted", () => {
+    const importedRequest = { requestId: "req-1" } as Parameters<typeof isSourceRequestCreationAuthorized>[0];
+    expect(isSourceRequestCreationAuthorized(importedRequest, null)).toBe(false);
+    expect(isSourceRequestCreationAuthorized(importedRequest, "returned")).toBe(false);
+    expect(isSourceRequestCreationAuthorized(importedRequest, "merged")).toBe(false);
+    expect(isSourceRequestCreationAuthorized(importedRequest, "declined")).toBe(false);
+    expect(isSourceRequestCreationAuthorized(importedRequest, "accepted")).toBe(true);
+    expect(isSourceRequestCreationAuthorized(null, null)).toBe(true);
+  });
   it("renders domain-neutral default intake and advisor context", () => {
     const html = renderToStaticMarkup(
       createElement(SourceOriginatePage, {
