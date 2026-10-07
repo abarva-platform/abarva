@@ -3288,6 +3288,116 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    it("a partly filled uploaded workbook offers only its answered responses for acceptance", async () => {
+      // The review API refuses the whole batch if any accepted response is
+      // blank, and a blank row's checkbox is disabled, so a seed that
+      // pre-selected the blanks left the reviewer with a 422 and no way back.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const baseFetch = global.fetch as jest.Mock;
+      global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === "string" ? input : String(input);
+        if (url.includes("/stage-readiness-workbook") && init?.method === "POST") {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              summary: {
+                totalQuestions: 2,
+                answeredQuestions: 1,
+                requiredAnswered: 1,
+                requiredTotal: 2,
+              },
+              proposalSet: {
+                artifactId: "proposal-artifact-1",
+                artifactVersion: 2,
+                status: "review_required",
+                proposalCount: 2,
+                pendingCount: 2,
+                proposals: [
+                  {
+                    proposalId: "answered-1",
+                    questionId: "q-1",
+                    dimensionId: "baseline_metrics",
+                    requirement: "required",
+                    question: "Provide baseline metrics.",
+                    response: "41 days, measured.",
+                    answerState: "answered",
+                    disposition: "pending",
+                  },
+                  {
+                    proposalId: "blank-1",
+                    questionId: "q-2",
+                    dimensionId: "change_adoption_owner",
+                    requirement: "required",
+                    question: "Name the adoption owner.",
+                    response: "",
+                    answerState: "blank",
+                    disposition: "pending",
+                  },
+                ],
+              },
+            }),
+          } as Response;
+        }
+        return baseFetch(input, init);
+      }) as unknown as typeof global.fetch;
+
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.change(
+        screen.getByLabelText("Upload completed readiness workbook"),
+        {
+          target: {
+            files: [
+              new File([Buffer.from("xlsx")], "partly-filled.xlsx", {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              }),
+            ],
+          },
+        },
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/1\/2 selected/)).toBeInTheDocument();
+      });
+      expect(screen.getByText(/1 blank response\./)).toBeInTheDocument();
+      expect(
+        screen.getByRole("checkbox", { name: /Provide baseline metrics/ }),
+      ).toBeChecked();
+      const blankRow = screen.getByRole("checkbox", {
+        name: /Name the adoption owner/,
+      });
+      expect(blankRow).not.toBeChecked();
+      expect(blankRow).toBeDisabled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Accept selected" }));
+      await waitFor(() => {
+        expect(
+          (global.fetch as jest.Mock).mock.calls.some(
+            ([, init]) => init?.method === "PATCH",
+          ),
+        ).toBe(true);
+      });
+      const patchCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(patchCall?.[1]?.body)).decisions).toEqual([
+        { proposalId: "answered-1", disposition: "accepted" },
+      ]);
+    });
+
     it("restores a completed workbook review without reopening pending actions", () => {
       const move = makeMove({
         currentPhase: 1,
