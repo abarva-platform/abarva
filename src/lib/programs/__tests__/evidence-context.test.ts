@@ -12,9 +12,31 @@ jest.mock("@/lib/data-plane/azureRead", () => ({
 }));
 
 import {
+  CANONICAL_TENANT_KEYS,
+  appClientKeyForTenant,
+} from "@/lib/tenant/aliases";
+import { moveEvidenceReadTenantKeys } from "../evidence-readiness/tenant-read-scope";
+import {
   formatProgramEvidenceForPrompt,
   listProgramEvidenceForPrompt,
 } from "../evidence-context";
+
+// A move-scoped evidence read is scoped to the caller's tenant, and a context
+// without a client key reads nothing at all by design — so these cases, which
+// are about approved-vs-pending filtering rather than about tenancy, need a
+// context that names a real tenant. The key comes from code, never hand-typed.
+// The scope the module is expected to ask for, derived rather than restated so
+// this suite cannot drift from the read-scope contract it does not own.
+const TENANT_SCOPE = moveEvidenceReadTenantKeys(
+  appClientKeyForTenant(CANONICAL_TENANT_KEYS[0]),
+);
+
+const CTX = {
+  clientId: "client-1",
+  clientKey: appClientKeyForTenant(CANONICAL_TENANT_KEYS[0])!,
+  userId: "user-1",
+  role: "program_user",
+};
 
 describe("program evidence context prompt block", () => {
   beforeEach(() => {
@@ -69,12 +91,12 @@ describe("program evidence context prompt block", () => {
       ]);
 
     const items = await listProgramEvidenceForPrompt(
-      { clientId: "client-1", userId: "user-1", role: "program_user" },
+      CTX,
       "program-1",
     );
 
     expect(canReadProgramMock).toHaveBeenCalledWith(
-      { clientId: "client-1", userId: "user-1", role: "program_user" },
+      CTX,
       "program-1",
     );
     expect(items).toEqual([
@@ -106,7 +128,7 @@ describe("program evidence context prompt block", () => {
       expect.objectContaining({
         table: "program_evidence_reviews",
         where: {
-          tenant_key: "",
+          tenant_key: { op: "in", value: TENANT_SCOPE },
           program_id: "program-1",
           decision: "approved",
         },
@@ -118,7 +140,7 @@ describe("program evidence context prompt block", () => {
       expect.objectContaining({
         table: "program_evidence_items",
         where: {
-          tenant_key: "",
+          tenant_key: { op: "in", value: TENANT_SCOPE },
           program_id: "program-1",
           id: { op: "in", value: ["evidence-1"] },
         },
@@ -140,7 +162,7 @@ describe("program evidence context prompt block", () => {
       .mockResolvedValueOnce([]);
 
     await listProgramEvidenceForPrompt(
-      { clientId: "client-1", userId: "user-1", role: "program_user" },
+      CTX,
       "program-1",
       2,
     );
@@ -150,7 +172,7 @@ describe("program evidence context prompt block", () => {
       expect.objectContaining({
         table: "program_evidence_items",
         where: {
-          tenant_key: "",
+          tenant_key: { op: "in", value: TENANT_SCOPE },
           program_id: "program-1",
           id: { op: "in", value: ["evidence-2"] },
           phase: 2,
@@ -162,7 +184,7 @@ describe("program evidence context prompt block", () => {
   it("returns nothing when no evidence has been approved", async () => {
     mockAzureSelect.mockResolvedValueOnce([]);
     const items = await listProgramEvidenceForPrompt(
-      { clientId: "client-1", userId: "user-1", role: "program_user" },
+      CTX,
       "program-1",
     );
     expect(items).toEqual([]);
