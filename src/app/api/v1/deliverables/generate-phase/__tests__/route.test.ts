@@ -295,6 +295,27 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
   formatAcceptedStageReadinessContextForPrompt: (...args: unknown[]) =>
     formatAcceptedStageReadinessContextForPrompt(...args),
 }));
+// The route reads the stored transition review twice from two modules now: the
+// gate reading takes it as it stands, the prompt reading takes only a finished
+// one. By default one stored review stands behind both, in the same call order,
+// so every `mockResolvedValueOnce` below still lands on the gate reading — and
+// a test can drive the two apart to pin which module the gate reads.
+const loadStageReadinessGateProposals: jest.Mock = jest.fn(
+  async (...args: unknown[]) => {
+    const context = (await loadAcceptedStageReadinessContext(...args)) as
+      | { proposals?: unknown[] }
+      | null
+      | undefined;
+    return context?.proposals ?? null;
+  },
+);
+jest.mock(
+  "@/lib/programs/stage-readiness-workbooks/gate-proposal-context",
+  () => ({
+    loadStageReadinessGateProposals: (...args: unknown[]) =>
+      loadStageReadinessGateProposals(...args),
+  }),
+);
 
 import { POST } from "../route";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -486,6 +507,44 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(createMoveContextExtract).not.toHaveBeenCalled();
     expect(createCalls).toHaveLength(0);
     expect(sequentialCalls).toHaveLength(0);
+  });
+
+  it("queues a phase build from the review as it stands, not only from a finished one", async () => {
+    // Every REQUIRED response accepted, answered and sourced, and one
+    // RECOMMENDED response left blank — a state the review surface cannot
+    // decide, so it stays pending. The finished-only reading returns null for
+    // it, and a null gate reading means no workbook at all, so the build stayed
+    // held by a workbook that was complete for everything the gate requires.
+    loadAcceptedStageReadinessContext.mockResolvedValue(null);
+    loadStageReadinessGateProposals.mockResolvedValueOnce([
+      {
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required",
+        answerState: "answered",
+        disposition: "accepted",
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+      {
+        questionId: "q_optional_context",
+        dimensionId: "nice_to_have_context",
+        requirement: "recommended",
+        answerState: "blank",
+        disposition: "pending",
+        evidenceOrSource: "",
+      },
+    ]);
+
+    const res = await POST(
+      req({ moveId: "m-p2", phase: 2, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(202);
+    expect(loadStageReadinessGateProposals).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-p2",
+      3,
+    );
   });
 
   it("blocks a phase build when the accepted workbook still marks required evidence unknown", async () => {

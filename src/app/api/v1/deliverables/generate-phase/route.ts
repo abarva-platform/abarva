@@ -70,6 +70,7 @@ import {
   formatAcceptedStageReadinessContextForPrompt,
   loadAcceptedStageReadinessContext,
 } from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -316,7 +317,9 @@ export async function POST(req: NextRequest) {
         readiness,
       });
       if (phase >= 1 && phase <= 4) {
-        const transitionContext = await loadAcceptedStageReadinessContext(
+        // The gate reading takes the review as it stands; the prompt reading
+        // below stays finished-only. See `gate-proposal-context`.
+        const transitionProposals = await loadStageReadinessGateProposals(
           ctx,
           moveId,
           phase + 1,
@@ -324,7 +327,7 @@ export async function POST(req: NextRequest) {
         packets = applyStageReadinessToEvidencePackets(
           packets,
           phase,
-          transitionContext?.proposals ?? null,
+          transitionProposals,
           moveId,
         );
       }
