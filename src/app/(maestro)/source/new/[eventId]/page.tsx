@@ -315,6 +315,9 @@ export default async function SourceNewEventPage({
         scope: event.scopeDescription ?? null,
         decisionOwner: event.decisionOwner ?? null,
         asOfDate,
+        // The same motion the stage plan snapshot resolves from, so the
+        // workspace and the stage plan cannot be on different journeys.
+        sourcingMotion: event.sourcingMotion ?? null,
         solicitationMotion:
           authority.kind === "available" ? authority.solicitationMotion : null,
         solicitationMotionAcceptedAt:
