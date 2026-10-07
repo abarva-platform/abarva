@@ -14,6 +14,7 @@ import type {
   DeliverableIntelligenceRequest,
   DeliverableModule,
 } from "./types";
+import { withholdsArchetypeAssets } from "./briefs/archetype-asset-withholding";
 import {
   resolveConfiguredArchetypePack,
   resolveDiscoveryBlueprintFromConfiguredCatalog,
@@ -667,9 +668,14 @@ function composeBrief(
   const disallowed = pack?.governanceNote
     ? `${DISALLOWED_FABRICATION} ${pack.governanceNote}`
     : DISALLOWED_FABRICATION;
-  const allowArchetypeAssets =
-    structure.deliverableType !== "charter" &&
-    structure.deliverableType !== "design_workshop_guide";
+  // Declared, with the reason per type, in `archetype-asset-withholding.ts`.
+  // This was an inline two-literal expression; it is a property of the
+  // DELIVERABLE (is this an approval instrument or a facilitation document?),
+  // not of this function, and the reason for each exclusion was recorded
+  // nowhere.
+  const allowArchetypeAssets = !withholdsArchetypeAssets(
+    structure.deliverableType,
+  );
 
   return {
     module: req.module,

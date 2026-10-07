@@ -272,12 +272,17 @@ describe("the archetype evidence landing report", () => {
     //     archetype whose pack NAMES the blueprint's family ids, which is a
     //     product decision one archetype has taken (see the pack header).
     //
-    //  2. moves/design_workshop_guide, for EVERY archetype. `composeBrief`
-    //     withholds the pack's exhibits and tables from it by name
-    //     (`allowArchetypeAssets`) because it is a facilitation document and
-    //     not a deck — while its two carry-forward sections do assert client
-    //     facts out of accepted P2 evidence and so declare landing sites. The
-    //     two questions are independent, and this row is what that looks like.
+    //  2. The three facilitation guides with a structure — the P2 design
+    //     workshop guide, the P4 mobilization workshop guide and the P5
+    //     execution kickoff guide — for EVERY archetype. `composeBrief`
+    //     withholds the pack's exhibits and tables from each by name
+    //     (`withholdsArchetypeAssets`, archetype-asset-withholding.ts) because
+    //     a session plan is not a deck — while each one's carry-forward and
+    //     evidence sections do assert client facts out of accepted evidence and
+    //     so declare landing sites. The two questions are independent, and
+    //     these rows are what that looks like. The P3 planning workshop guide
+    //     is absent because it has no structure at all and so never reaches
+    //     `composeBrief`.
     //
     // Written out per archetype rather than filtered, so a composed brief
     // silently losing its assets cannot hide here.
@@ -290,12 +295,24 @@ describe("the archetype evidence landing report", () => {
           );
     expect(groundedWithoutAssets).toEqual([
       "AMS_IT_OUTSOURCING moves/design_workshop_guide",
+      "AMS_IT_OUTSOURCING moves/mobilization_workshop_guide",
+      "AMS_IT_OUTSOURCING moves/execution_kickoff_guide",
       "ERP_SI_SELECTION moves/design_workshop_guide",
+      "ERP_SI_SELECTION moves/mobilization_workshop_guide",
+      "ERP_SI_SELECTION moves/execution_kickoff_guide",
       "CLOUD_MODERNIZATION moves/design_workshop_guide",
+      "CLOUD_MODERNIZATION moves/mobilization_workshop_guide",
+      "CLOUD_MODERNIZATION moves/execution_kickoff_guide",
       "AI_PDLC moves/design_workshop_guide",
+      "AI_PDLC moves/mobilization_workshop_guide",
+      "AI_PDLC moves/execution_kickoff_guide",
       "ANALYTICS_CAPABILITY_REPATRIATION moves/design_workshop_guide",
+      "ANALYTICS_CAPABILITY_REPATRIATION moves/mobilization_workshop_guide",
+      "ANALYTICS_CAPABILITY_REPATRIATION moves/execution_kickoff_guide",
       "GOVERNED_DATA_FOUNDATION moves/discovery_plan",
       "GOVERNED_DATA_FOUNDATION moves/design_workshop_guide",
+      "GOVERNED_DATA_FOUNDATION moves/mobilization_workshop_guide",
+      "GOVERNED_DATA_FOUNDATION moves/execution_kickoff_guide",
     ]);
   });
 

@@ -18,6 +18,10 @@ import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "../briefs/deliverable-structures";
+import {
+  ARCHETYPE_ASSET_WITHHELD,
+  withholdsArchetypeAssets,
+} from "../briefs/archetype-asset-withholding";
 import type { DeliverableStructure } from "../briefs/deliverable-structures";
 import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
@@ -819,8 +823,11 @@ describe("structure-declared expected tables", () => {
 
   it("loses no table the archetype pack already supplied", () => {
     for (const s of DELIVERABLE_STRUCTURES) {
-      if (s.deliverableType === "charter" || s.deliverableType === "design_workshop_guide")
-        continue;
+      // The withheld set is declared, with a reason per type, in
+      // archetype-asset-withholding.ts; reading it here keeps this skip list
+      // from drifting as the set grows. The exact membership is pinned as a
+      // literal by moves-phase-session-guide-structures.
+      if (withholdsArchetypeAssets(s.deliverableType)) continue;
       if (s.deliverableType === "discovery_plan") continue; // routed to its own builder
       for (const a of ALL_ARCHETYPES) {
         const keys = new Set(
@@ -834,8 +841,12 @@ describe("structure-declared expected tables", () => {
     }
   });
 
-  it("still withholds the ARCHETYPE's tables from the approval instruments", () => {
-    for (const deliverableType of ["charter", "design_workshop_guide"])
+  it("still withholds the ARCHETYPE's tables from every withheld type", () => {
+    // Every declared member, not a pair written out here: a type added to the
+    // withheld set without its tables actually being withheld would otherwise
+    // pass unnoticed.
+    expect(ARCHETYPE_ASSET_WITHHELD.length).toBeGreaterThan(1);
+    for (const { deliverableType } of ARCHETYPE_ASSET_WITHHELD)
       for (const a of ALL_ARCHETYPES)
         expect(
           getArtifactBrief(req({ module: "moves", deliverableType, useCaseArchetype: a }))
