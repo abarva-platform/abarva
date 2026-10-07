@@ -33,8 +33,8 @@ import type { TenancyCtx } from "@/lib/programs/types.db";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
 import {
   buildContractInput,
-  deliverableKeyForRegistryKey,
   deliverableKeyForOrchestratorType,
+  qualityContractDeliverableKey,
   renderedContractExhibitsFromDocument,
 } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
@@ -432,8 +432,10 @@ export async function persistDeliverable(
   const deliverableKey = deliverableKeyForOrchestratorType(
     result.brief.deliverableType,
   );
-  const contractDeliverableKey =
-    deliverableKeyForRegistryKey(opts.deliverableTypeKey) ?? deliverableKey;
+  const contractDeliverableKey = qualityContractDeliverableKey({
+    registryKey: opts.deliverableTypeKey,
+    orchestratorDeliverableType: result.brief.deliverableType,
+  });
   const resolvedDeliverableTypeKey =
     opts.deliverableTypeKey ?? deliverableKey ?? result.brief.deliverableType;
   let profileRenderedHtml = false;
@@ -494,9 +496,17 @@ export async function persistDeliverable(
   html = sanitizeClientFacingArtifactHtml(html);
 
   // ── Stage 5: Deliverable Quality Contract (blocking gate before persistence) ──
-  // Always runs and records the result state. When enforcement is on, a
-  // non-`client_ready` artifact is quarantined (saved as internal draft) so it
-  // cannot be served as client-ready. Tenant-agnostic; runs for every tenant.
+  // Runs for every deliverable whose key resolves a profile, and records the
+  // result state. When enforcement is on, a non-`client_ready` artifact is
+  // quarantined (saved as internal draft) so it cannot be served as
+  // client-ready. Tenant-agnostic; runs for every tenant.
+  //
+  // The guard below is NOT a safe default: when no profile resolves, nothing is
+  // assessed and `quarantined`/`quarantineReason` stay false/null, which reads
+  // downstream exactly like a pass. Every key a Moves phase can generate must
+  // therefore resolve one — enforced by
+  // src/lib/programs/__tests__/phase-deliverable-quality-contract-coverage.test.ts,
+  // which caught two P3 gate artifacts that had been skipping this stage.
   let qualityQuarantined = false;
   let qualityQuarantineReason: string | null = null;
   if (contractDeliverableKey) {
