@@ -6,6 +6,7 @@ import {
   type P0SourceEvidenceItem,
   type P0SourceEvidenceReview,
 } from "@/lib/programs/p0-source-evidence-contract";
+import { moveEvidenceReadTenantKeys } from "@/lib/programs/evidence-readiness/tenant-read-scope";
 
 export interface P0MinimumEvidenceStatus {
   available: boolean;
@@ -45,13 +46,18 @@ export async function loadP0MinimumEvidenceStatus(args: {
     evidenceTitles: [],
   });
   if (!args.tenantKey || !args.moveId) return unavailable();
+  // Same tenant, more than one stored key: the product writes the app client
+  // key and a data-plane load writes the canonical substrate key. Scoped to one
+  // of them, this read reported the other producer's approved files as absent,
+  // and the P0 hard criterion counts absent evidence as unmet. Per-tenant.
+  const tenantKeys = moveEvidenceReadTenantKeys(args.tenantKey);
 
   try {
     const db = getAzureReadFluentClient();
     const { data: reviewData, error: reviewError } = await db
       .from("program_evidence_reviews")
       .select("evidence_id, decision, phase, source_ref")
-      .eq("tenant_key", args.tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .eq("phase", 0)
       .in("decision", ["approved", "pending"])
@@ -68,7 +74,7 @@ export async function loadP0MinimumEvidenceStatus(args: {
         ? await db
             .from("program_evidence_items")
             .select("id, phase, title, summary, extracted_text, attachment_id")
-            .eq("tenant_key", args.tenantKey)
+            .in("tenant_key", tenantKeys)
             .eq("program_id", args.moveId)
             .in("id", uniqueEvidenceIds)
         : { data: [], error: null };
@@ -88,7 +94,7 @@ export async function loadP0MinimumEvidenceStatus(args: {
         ? await db
             .from("move_artifacts")
             .select("artifact_id, artifact_family")
-            .eq("tenant_key", args.tenantKey)
+            .in("tenant_key", tenantKeys)
             .eq("move_id", args.moveId)
             .eq("phase", 0)
             .eq("lifecycle_state", "current")
