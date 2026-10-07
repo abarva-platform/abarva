@@ -1033,3 +1033,316 @@ describe("PhaseApproveAndBuild poll budget", () => {
     expect(onBuildSettled).not.toHaveBeenCalled();
   });
 });
+
+// ─── Submitting the gate approval without a rebuild ─────────────────────────
+//
+// onBuildSettled used to have exactly one trigger: the tail of a fresh build
+// batch. Two HARD gate checks (P1's charter approval, P2's discovery-report
+// sign-off) read a sign-off that can only be recorded after that batch wrote the
+// document, so the first submission always failed them — and re-running the
+// build to submit again regenerates the document as a new unapproved draft,
+// clearing the sign-off. These cases pin the second trigger: a submission that
+// reports the documents already on the record and starts no build.
+
+describe("PhaseApproveAndBuild gate submission without a rebuild", () => {
+  const CHARTER_ARTIFACT = {
+    artifactId: "art_charter",
+    deliverableTypeKey: "charter",
+    documentTitle: "Program Charter",
+    phase: 1,
+    status: "approved",
+    version: 1,
+    downloadUrl: "/api/v1/programs/move-1/artifacts/art_charter/download",
+  };
+
+  function renderWithArtifacts(
+    artifacts: Array<typeof CHARTER_ARTIFACT>,
+    onBuildSettled?: (result: BuildSettledResult) => Promise<void>,
+  ) {
+    return render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Example Move"
+        clientDisplayName="Client"
+        initialArtifacts={artifacts}
+        deliverableKeys={["charter"]}
+        {...(onBuildSettled ? { onBuildSettled } : {})}
+      />,
+    );
+  }
+
+  it("offers the submission once the gate document is on the record, and starts no build", async () => {
+    const settled: BuildSettledResult[] = [];
+    global.fetch = (async (input: RequestInfo | URL) => {
+      throw new Error(
+        `no request expected: ${typeof input === "string" ? input : input.toString()}`,
+      );
+    }) as typeof fetch;
+
+    renderWithArtifacts([CHARTER_ARTIFACT], async (result) => {
+      settled.push(result);
+    });
+
+    const submit = screen.getByRole("button", {
+      name: /Submit P1 Charter gate approval/i,
+    });
+    await act(async () => {
+      submit.click();
+    });
+    await act(async () => {
+      within(screen.getByRole("dialog"))
+        .getByRole("button", { name: /^Submit gate approval$/i })
+        .click();
+    });
+
+    await waitFor(() => expect(settled).toHaveLength(1));
+    expect(settled[0]).toEqual({
+      succeededKeys: ["charter"],
+      failedKeys: [],
+      total: 1,
+      succeeded: [{ deliverableTypeKey: "charter", gateArtifact: true }],
+      failed: [],
+      source: "existing_documents",
+    });
+  });
+
+  it("states in the confirmation that the document is not rebuilt", async () => {
+    renderWithArtifacts([CHARTER_ARTIFACT], async () => {});
+    await act(async () => {
+      screen
+        .getByRole("button", { name: /Submit P1 Charter gate approval/i })
+        .click();
+    });
+    const dialog = screen.getByRole("dialog");
+    expect(
+      within(dialog).getByText(/without rebuilding/i),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/new unapproved draft/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not offer the submission before the gate document is built", () => {
+    renderWithArtifacts([], async () => {});
+    expect(
+      screen.queryByRole("button", { name: /Submit .* gate approval/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Approve & Build P1 Charter/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not offer the submission for a gate document held below its quality bar", () => {
+    renderWithArtifacts(
+      [{ ...CHARTER_ARTIFACT, status: "quarantined" }],
+      async () => {},
+    );
+    expect(
+      screen.queryByRole("button", { name: /Submit .* gate approval/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lets a fresh build overrule a stale held artifact status", async () => {
+    mockFetchSequence({
+      runId: "run_requalify",
+      intermediateStatus: "running",
+      finalStatus: "succeeded",
+    });
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Example Move"
+        clientDisplayName="Client"
+        initialArtifacts={[{ ...CHARTER_ARTIFACT, status: "quarantined" }]}
+        deliverableKeys={["charter"]}
+        onBuildSettled={async () => {}}
+      />,
+    );
+    // Seeded as held, so there is nothing to submit yet.
+    expect(
+      screen.queryByRole("button", { name: /Submit .* gate approval/i }),
+    ).not.toBeInTheDocument();
+
+    await clickApproveAndBuild(/Re-run & Build P1 Charter/i);
+    await waitFor(
+      () =>
+        expect(
+          screen.getByRole("button", {
+            name: /Submit P1 Charter gate approval/i,
+          }),
+        ).toBeInTheDocument(),
+      { timeout: 15000 },
+    );
+  }, 20000);
+
+  it("keeps the submission disabled while the parent reports an open blocker", () => {
+    renderWithArtifacts([CHARTER_ARTIFACT], async () => {});
+    expect(
+      screen.getByRole("button", {
+        name: /Submit P1 Charter gate approval/i,
+      }),
+    ).toBeEnabled();
+
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Example Move"
+        clientDisplayName="Client"
+        initialArtifacts={[CHARTER_ARTIFACT]}
+        deliverableKeys={["charter"]}
+        disabledReason="Complete 2 phase inputs before Approve & Build."
+        onBuildSettled={async () => {}}
+      />,
+    );
+    const disabled = screen.getAllByRole("button", {
+      name: /Submit P1 Charter gate approval/i,
+    });
+    expect(disabled[disabled.length - 1]).toBeDisabled();
+  });
+
+  // The in-flight guard has one case that nothing else covers: a batch where the
+  // gate document has already succeeded while a sibling is still running. Without
+  // the guard the submission would be offered mid-batch, racing the settle effect
+  // that will submit the same gate again when the batch finishes.
+  it("does not offer the submission mid-batch once only the gate document has built", async () => {
+    global.fetch = (async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url === "/api/v1/deliverables/generate-phase") {
+        return fakeResponse(
+          {
+            phase: 1,
+            phaseLabel: "P1 Charter",
+            queued: 2,
+            total: 2,
+            deliverables: [
+              {
+                deliverableTypeKey: "charter",
+                documentTitle: "Program Charter",
+                gateArtifact: true,
+                runId: "run_gate",
+                status: "queued",
+              },
+              {
+                deliverableTypeKey: "discovery_plan",
+                documentTitle: "Discovery Plan",
+                gateArtifact: false,
+                runId: "run_working",
+                status: "queued",
+              },
+            ],
+          },
+          202,
+        );
+      }
+      if (url === "/api/v1/deliverables/runs/run_gate") {
+        return fakeResponse({
+          status: "succeeded",
+          artifactId: "art_gate",
+          blobUrl: "/api/v1/artifacts/art_gate",
+          progressPct: 100,
+          progressLabel: null,
+          blockers: [],
+        });
+      }
+      if (url === "/api/v1/deliverables/runs/run_working") {
+        return fakeResponse({
+          status: "running",
+          artifactId: null,
+          blobUrl: null,
+          progressPct: 40,
+          progressLabel: null,
+          blockers: [],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(
+      <PhaseApproveAndBuild
+        moveId="move-1"
+        phaseNum={1}
+        phaseLabel="P1 Charter"
+        archetype="ai_enabled_sdlc"
+        moveName="Example Move"
+        clientDisplayName="Client"
+        deliverableKeys={["charter", "discovery_plan"]}
+        onBuildSettled={async () => {}}
+      />,
+    );
+
+    await clickApproveAndBuild(/Approve & Build P1 Charter/i);
+    await waitFor(() =>
+      expect(screen.getByText("Built")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("Building")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Submit .* gate approval/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("sends both forward actions through the step-header portal", () => {
+    render(
+      <>
+        <div id="phase-progress-both-actions" />
+        <PhaseApproveAndBuild
+          moveId="move-1"
+          phaseNum={1}
+          phaseLabel="P1 Charter"
+          archetype="ai_enabled_sdlc"
+          moveName="Example Move"
+          clientDisplayName="Client"
+          initialArtifacts={[CHARTER_ARTIFACT]}
+          deliverableKeys={["charter"]}
+          actionPortalTargetId="phase-progress-both-actions"
+          onBuildSettled={async () => {}}
+        />
+      </>,
+    );
+    const portal = within(
+      document.getElementById("phase-progress-both-actions")!,
+    );
+    expect(
+      portal.getByRole("button", { name: /Re-run & Build P1 Charter/i }),
+    ).toBeInTheDocument();
+    expect(
+      portal.getByRole("button", {
+        name: /Submit P1 Charter gate approval/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("reports a failed submission without claiming the gate was approved", async () => {
+    renderWithArtifacts([CHARTER_ARTIFACT], async () => {
+      throw new Error("Charter approved by an authorized Move user");
+    });
+    await act(async () => {
+      screen
+        .getByRole("button", { name: /Submit P1 Charter gate approval/i })
+        .click();
+    });
+    await act(async () => {
+      within(screen.getByRole("dialog"))
+        .getByRole("button", { name: /^Submit gate approval$/i })
+        .click();
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByText("Charter approved by an authorized Move user"),
+      ).toBeInTheDocument(),
+    );
+    // The action must come back, not latch: the reader records the sign-off and
+    // submits again.
+    expect(
+      screen.getByRole("button", { name: /Submit P1 Charter gate approval/i }),
+    ).toBeEnabled();
+  });
+});

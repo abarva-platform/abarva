@@ -35,7 +35,10 @@ import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/m
 import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
-import type { SettledDeliverable } from "@/lib/programs/phase-build-settlement";
+import {
+  planPhaseGateSubmitWithoutBuild,
+  type SettledDeliverable,
+} from "@/lib/programs/phase-build-settlement";
 import {
   deliverableRunObservationKey,
   describeDeliverableRunHandOff,
@@ -192,6 +195,13 @@ export interface BuildSettledResult {
    */
   succeeded: SettledDeliverable[];
   failed: SettledDeliverable[];
+  /**
+   * Where this settlement came from. "build" is the tail of a fresh batch.
+   * "existing_documents" is a re-submission of documents already on the record,
+   * which is the only way to submit a gate whose HARD checks read a sign-off
+   * recorded after the build — see `planPhaseGateSubmitWithoutBuild`.
+   */
+  source?: "build" | "existing_documents";
 }
 
 export interface PhaseBuildArtifact {
@@ -275,6 +285,8 @@ export function PhaseApproveAndBuild({
   deliverableKeys,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [gateSubmitConfirmOpen, setGateSubmitConfirmOpen] = useState(false);
+  const [submittingGate, setSubmittingGate] = useState(false);
   const [actionPortalTarget, setActionPortalTarget] =
     useState<HTMLElement | null>(null);
   const specs = useMemo(
@@ -488,6 +500,7 @@ export function PhaseApproveAndBuild({
       total: relevant.length,
       succeeded,
       failed,
+      source: "build",
     }).catch((err) => {
       setError(err instanceof Error ? err.message : "Gate approval failed");
     });
@@ -595,6 +608,48 @@ export function PhaseApproveAndBuild({
     poll,
   ]);
 
+  // The gate approval must be submittable WITHOUT a rebuild. Rebuilding is the
+  // one thing that undoes the sign-off two HARD gate checks are waiting for, so
+  // "re-run Approve & Build" cannot be the only forward control once the
+  // documents exist. `planPhaseGateSubmitWithoutBuild` owns the decision and the
+  // wording; this component only reports what it knows about each document.
+  const artifactStatusByKey = useMemo(() => {
+    const byKey = new Map<string, string | null>();
+    for (const artifact of initialArtifacts) {
+      if (!artifact.deliverableTypeKey) continue;
+      if (byKey.has(artifact.deliverableTypeKey)) continue;
+      byKey.set(artifact.deliverableTypeKey, artifact.status ?? null);
+    }
+    return byKey;
+  }, [initialArtifacts]);
+  const gateSubmitPlan = useMemo(
+    () =>
+      planPhaseGateSubmitWithoutBuild({
+        phase: phaseNum,
+        phaseLabel,
+        documents: specs.map((spec) => ({
+          deliverableTypeKey: spec.deliverableTypeKey,
+          documentTitle: spec.documentTitle,
+          gateArtifact: spec.gateArtifact,
+        })),
+        states: rows.map((row) => ({
+          deliverableTypeKey: row.deliverableTypeKey,
+          status: row.status,
+          // A row carrying a runId was watched in this session, so its status is
+          // the fresher fact; the seeded artifact status would be stale.
+          artifactStatus: row.runId
+            ? null
+            : (artifactStatusByKey.get(row.deliverableTypeKey) ?? null),
+        })),
+        buildInFlight:
+          building ||
+          rows.some(
+            (row) => row.status === "queued" || row.status === "running",
+          ),
+      }),
+    [phaseNum, phaseLabel, specs, rows, artifactStatusByKey, building],
+  );
+
   if (specs.length === 0) {
     return (
       <div style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>
@@ -640,6 +695,49 @@ export function PhaseApproveAndBuild({
               ? `${phaseLabel} documents are built. Review them before relying on them.`
               : "Capture is separate from gate readiness. Build once the record is ready for review.";
 
+  const submitGateWithoutBuild = async () => {
+    if (!gateSubmitPlan.submittable) return;
+    setError(null);
+    setSubmittingGate(true);
+    try {
+      await onBuildSettled?.({
+        succeededKeys: gateSubmitPlan.settled.map(
+          (entry) => entry.deliverableTypeKey,
+        ),
+        failedKeys: [],
+        total: gateSubmitPlan.total,
+        succeeded: gateSubmitPlan.settled,
+        failed: [],
+        source: "existing_documents",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gate approval failed");
+    } finally {
+      setSubmittingGate(false);
+    }
+  };
+
+  const gateSubmitActionButton = gateSubmitPlan.submittable ? (
+    <button
+      type="button"
+      onClick={() => setGateSubmitConfirmOpen(true)}
+      disabled={submittingGate || hasParentBlocker}
+      style={{
+        padding: "10px 16px",
+        background: submittingGate || hasParentBlocker ? "#D8DDE5" : "#FFFFFF",
+        color: submittingGate || hasParentBlocker ? "#596579" : NAVY,
+        border: `1px solid ${submittingGate || hasParentBlocker ? "#D8DDE5" : "rgba(27,43,92,0.35)"}`,
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: submittingGate || hasParentBlocker ? "default" : "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {submittingGate ? "Submitting gate approval…" : gateSubmitPlan.actionLabel}
+    </button>
+  ) : null;
+
   const buildActionButton = (
     <button
       type="button"
@@ -665,6 +763,18 @@ export function PhaseApproveAndBuild({
     >
       {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
     </button>
+  );
+
+  // Both forward actions travel together: whichever host renders them (inline or
+  // through the step-header portal) must show the no-rebuild submission beside
+  // the build, or the only visible control is the one that clears a sign-off.
+  const phaseActionButtons = gateSubmitActionButton ? (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {buildActionButton}
+      {gateSubmitActionButton}
+    </div>
+  ) : (
+    buildActionButton
   );
 
   return (
@@ -923,8 +1033,8 @@ export function PhaseApproveAndBuild({
       {actionPortalTargetId
         ? !hasRequiredGaps &&
           actionPortalTarget &&
-          createPortal(buildActionButton, actionPortalTarget)
-        : buildActionButton}
+          createPortal(phaseActionButtons, actionPortalTarget)
+        : phaseActionButtons}
 
       <GateApprovalConfirmDialog
         open={confirmOpen}
@@ -939,6 +1049,22 @@ export function PhaseApproveAndBuild({
           void approveAndBuild();
         }}
       />
+
+      {gateSubmitPlan.submittable && (
+        <GateApprovalConfirmDialog
+          open={gateSubmitConfirmOpen}
+          title={`Submit the ${phaseLabel} gate approval?`}
+          summary={gateSubmitPlan.summary}
+          approverLabel={approverLabel}
+          actorLabelPrefix="Submitting as"
+          confirmLabel="Submit gate approval"
+          onCancel={() => setGateSubmitConfirmOpen(false)}
+          onConfirm={() => {
+            setGateSubmitConfirmOpen(false);
+            void submitGateWithoutBuild();
+          }}
+        />
+      )}
 
       {error && <div style={{ fontSize: 12, color: STALE }}>{error}</div>}
 

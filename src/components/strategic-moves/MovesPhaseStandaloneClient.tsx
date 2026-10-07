@@ -2439,8 +2439,14 @@ export function MovesPhaseStandaloneClient({
       throw new Error(settlement.refusal);
     }
     setGateApprovalStatus("approving");
+    // A re-submission of documents already on the record did not just build
+    // them, and saying it did would misreport what the reader authorized.
+    const builtSentence =
+      result.source === "existing_documents"
+        ? `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} already on the record. `
+        : `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. `;
     setGateApprovalMessage(
-      `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. ` +
+      builtSentence +
         (settlement.workingDocumentCaveat
           ? `${settlement.workingDocumentCaveat} Submitting gate approval...`
           : "Submitting gate approval..."),
@@ -2498,8 +2504,13 @@ export function MovesPhaseStandaloneClient({
         approval.error ||
         `Gate approval failed (HTTP ${approvalRes.status})`;
       setGateApprovalStatus("blocked");
+      // Do NOT send the reader back to Approve & Build here. Two HARD gate
+      // checks read a sign-off recorded after the build, and re-running the
+      // build regenerates the document as a fresh unapproved draft — which
+      // clears the very sign-off the gate is waiting for. The no-rebuild
+      // submission is the control that can actually close this.
       setGateApprovalMessage(
-        `Build completed, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, approve the draft or upload an edited version in Files & Evidence, then re-run Approve & Build.`,
+        `${result.source === "existing_documents" ? "Submitted" : "Build completed"}, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, then approve the draft or upload an edited version in Files & Evidence and use "Submit ${phase.code} ${phase.title} gate approval" — re-running Approve & Build would replace the document you just approved with a new unapproved draft.`,
       );
       throw new Error(blockedMessage);
     }

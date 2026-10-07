@@ -7264,6 +7264,132 @@ describe("MovesPhaseStandaloneClient", () => {
     );
   });
 
+  // A phase gate whose HARD check reads a sign-off recorded AFTER the build can
+  // only be closed by a submission that does not rebuild: regeneration writes a
+  // new unapproved draft and clears that sign-off. The documents are already on
+  // the record here, so the host must submit the gate without touching the
+  // generator.
+  it("submits the gate from documents already on the record without starting a build", async () => {
+    const requested: string[] = [];
+    let releaseApproval: (() => void) | null = null;
+    const approvalHeld = new Promise<void>((resolve) => {
+      releaseApproval = resolve;
+    });
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        requested.push(url);
+        if (url.includes("/phase-gate-approval")) {
+          await approvalHeld;
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              error: "gate_blocked",
+              gate: {
+                failedChecks: [
+                  {
+                    severity: "hard",
+                    check: "handoff_package_signed_off",
+                    reason: "Execution handoff package signed off",
+                  },
+                ],
+              },
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(5)}
+        initialPhaseCaptureValues={completeP5CaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 5,
+          phaseLabel: "P5 Mobilize & Handoff",
+        })}
+        phaseBuildArtifacts={[
+          {
+            artifactId: "artifact-1",
+            deliverableTypeKey: "handoff_package",
+            documentTitle: "Execution Handoff Package",
+            phase: 5,
+            status: "board_ready",
+            version: 1,
+            downloadUrl: "/api/v1/programs/move/artifacts/artifact-1/download",
+          },
+          {
+            artifactId: "artifact-2",
+            deliverableTypeKey: "value_measurement_contract",
+            documentTitle: "Value Measurement Contract",
+            phase: 5,
+            status: "board_ready",
+            version: 1,
+            downloadUrl: "/api/v1/programs/move/artifacts/artifact-2/download",
+          },
+        ]}
+        phaseNum={5}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const submit = await screen.findByRole("button", {
+      name: /Submit P5 Mobilize & Handoff gate approval/i,
+    });
+    await act(async () => {
+      fireEvent.click(submit);
+    });
+    const confirmDialog = await screen.findByRole("dialog");
+    await act(async () => {
+      fireEvent.click(
+        within(confirmDialog).getByRole("button", {
+          name: /^Submit gate approval$/i,
+        }),
+      );
+    });
+
+    // While the approval is in flight: the host must not claim it just built
+    // documents it only read off the record.
+    await waitFor(() => {
+      expect(
+        screen.getByText(/already on the record/i),
+      ).toBeInTheDocument();
+    });
+    expect(requested.some((url) => url.includes("/phase-gate-approval"))).toBe(
+      true,
+    );
+    expect(requested.some((url) => url.includes("/generate-phase"))).toBe(
+      false,
+    );
+
+    await act(async () => {
+      releaseApproval?.();
+      await approvalHeld;
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Submitted, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(
+        /use "Submit P5 Mobilize & Handoff gate approval"/i,
+      ),
+    ).toBeInTheDocument();
+    // Still no build: the refusal must not have triggered a regeneration.
+    expect(requested.some((url) => url.includes("/generate-phase"))).toBe(
+      false,
+    );
+  });
+
   it("surfaces the hard gate blocker after generation succeeds but approval returns 409", async () => {
     const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
     (global.fetch as jest.Mock).mockImplementation(
@@ -7329,6 +7455,23 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeGreaterThan(0);
     expect(
       screen.getByText(/approve the draft or upload an edited version/i),
+    ).toBeInTheDocument();
+    // The instruction must not be "re-run Approve & Build": regeneration writes
+    // a new unapproved draft and clears the sign-off the hard check is waiting
+    // for, so following it could never close the gate. The blocked message
+    // names the submission that does not rebuild, and says why.
+    expect(
+      screen.queryByText(/then re-run Approve & Build/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /use "Submit P3 Design Future State gate approval"/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /re-running Approve & Build would replace the document you just approved with a new unapproved draft/i,
+      ),
     ).toBeInTheDocument();
   });
 
