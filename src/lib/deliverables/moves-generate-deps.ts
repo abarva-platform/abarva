@@ -34,9 +34,9 @@ import {
   parseSolutionRouteValidation,
 } from "@/lib/programs/solution-route-assessment";
 import {
-  formatAcceptedStageReadinessContextForPrompt,
-  loadAcceptedStageReadinessContext,
-} from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+  formatStageReadinessPromptContext,
+  loadStageReadinessPromptContext,
+} from "@/lib/programs/stage-readiness-workbooks/prompt-context";
 import type {
   PhaseDigest,
   SolutionDecision,
@@ -231,10 +231,13 @@ export function createMovesGenerateArtifactDeps(
               .then(formatProgramEvidenceForPrompt)
               .catch(() => "")
           : "";
+        // Accepted transition answers reach the prompt from a review that is
+        // still open too; an undecided response excludes itself, not the
+        // answers a human already accepted.
         const stageReadinessBlock =
           moveId && typeof phase === "number"
-            ? await loadAcceptedStageReadinessContext(ctx, moveId, phase)
-                .then(formatAcceptedStageReadinessContextForPrompt)
+            ? await loadStageReadinessPromptContext(ctx, moveId, phase)
+                .then(formatStageReadinessPromptContext)
                 .catch(() => "")
             : "";
         return [promptBlock, evidenceBlock, stageReadinessBlock]
