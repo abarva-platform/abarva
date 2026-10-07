@@ -301,6 +301,7 @@ jobs:
           src/components/strategic-moves/__tests__/phase-documents-panel-route-scope.test.tsx
           src/components/strategic-moves/__tests__/CaptureGateMetNotice.test.tsx
           src/components/strategic-moves/__tests__/MovesPhaseFindings.test.tsx
+          src/components/strategic-moves/__tests__/MovesPhaseCharts.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
