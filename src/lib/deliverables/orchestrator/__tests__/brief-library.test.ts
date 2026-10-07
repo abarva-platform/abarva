@@ -723,13 +723,14 @@ const STRUCTURE_DECLARED_TABLES = DELIVERABLE_STRUCTURES.filter(
 
 describe("structure-declared expected tables", () => {
   it("declares tables on the deliverable types built around one, and no others", () => {
-    // Five structures, not an empty declaration anywhere: a structure with no
+    // Six structures, not an empty declaration anywhere: a structure with no
     // type-specific table must not carry an empty array, because that changes
     // nothing and no case could kill it.
     expect(
       STRUCTURE_DECLARED_TABLES.map((s) => `${s.module}/${s.deliverableType}`).sort(),
     ).toEqual([
       "moves/estimate_model",
+      "moves/process_change_estimate_brief",
       "moves/readiness_and_change_plan",
       "moves/requirements_traceability",
       "moves/value_measurement_contract",
@@ -764,6 +765,15 @@ describe("structure-declared expected tables", () => {
       ],
       ["moves", "estimate_model", ["estimate_basis_buildup"]],
       ["moves", "readiness_and_change_plan", ["stakeholder_decision_rights"]],
+      [
+        "moves",
+        "process_change_estimate_brief",
+        [
+          "workflow_delta_register",
+          "change_sizing_basis",
+          "adoption_accountability",
+        ],
+      ],
       [
         "moves",
         "value_measurement_contract",
@@ -853,10 +863,11 @@ describe("structure-declared expected tables", () => {
     // tables, one for the discovery plan its own builder serves, one generic
     // signature per archetype (6), and one per declaring structure per
     // archetype (5 x 6 = 30). Registering a sixth archetype pack added five,
-    // from 27; the fifth declaring structure added six, from 32. Dropping any
-    // structure's declaration collapses it back toward the generic set and
-    // fails this case.
-    expect(distinct.size).toBe(38);
+    // from 27; the fifth declaring structure added six, from 32; this change's
+    // sixth added six more, from 38 — one per archetype, which is what a
+    // type-specific table set means. Dropping any structure's declaration
+    // collapses it back toward the generic set and fails this case.
+    expect(distinct.size).toBe(44);
   });
 });
 
