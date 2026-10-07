@@ -178,7 +178,7 @@
   top: 0;
   z-index: 25;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   margin: 14px 0 14px;
@@ -251,15 +251,6 @@
   color: #0f6e56;
 }
 
-.sw-v2-contract-commandbar-id {
-  color: #888780;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-}
-
 .sw-v2-impact-load-badge {
   flex: 0 0 auto;
   border: 1px solid rgba(10, 10, 11, 0.14);
@@ -303,7 +294,7 @@
 
 .sw-v2-topbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 620px);
   align-items: flex-start;
   justify-content: space-between;
   gap: 22px;
@@ -391,12 +382,13 @@
 .sw-v2-controls {
   align-items: stretch;
   min-width: 0;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .sw-v2-control {
+  flex: 1 1 140px;
   min-height: 48px;
-  min-width: 148px;
+  min-width: 0;
   border: 1px solid #d3d1c7;
   border-radius: 6px;
   background: #fff;
@@ -1105,6 +1097,23 @@
 
 .sw-v2-contract-detail-grid {
   grid-template-columns: minmax(0, 1.85fr) minmax(280px, 0.75fr);
+}
+
+.sw-c3-optimize-next-action {
+  max-width: 76ch;
+  padding: 4px 0 12px;
+}
+
+.sw-c3-optimize-action {
+  margin: 12px 0 6px;
+  color: #0a0a0b;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.sw-c3-optimize-next-action .sw-v2-muted {
+  margin: 8px 0 0;
 }
 
 .sw-c3-case-thread {
@@ -2365,10 +2374,6 @@
   .sw-v2-contract-commandbar-tabs {
     grid-column: 1 / -1;
     order: 3;
-  }
-
-  .sw-v2-contract-commandbar-id {
-    display: none;
   }
 
   .sw-v2-contract-context-panel {

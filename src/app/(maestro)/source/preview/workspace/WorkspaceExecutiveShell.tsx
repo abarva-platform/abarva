@@ -1173,7 +1173,6 @@ export function WorkspaceExecutiveShell({
             />
             <ContractCommandBar
               activeTab={logic.state.tabs.contract ?? "Story"}
-              contract={selectedContract}
               onBackToContracts={() => logic.select("contractList", null)}
               onOpenPortfolioPage={selectPage}
               onOpenTab={(tab) => logic.setTab("contract", tab)}
@@ -3235,7 +3234,7 @@ function ContractListTable({
               : "Outside book"}
           </span>
           <span>
-            {actionRows > 0 ? "Open Optimize" : "Review Contract 360"}
+            {actionRows > 0 ? "Review action" : "Review contract"}
           </span>
         </button>
       ))}
@@ -3493,27 +3492,9 @@ function ContractPage({
         {tab === "Optimize" ? (
           <>
             <ContractOptimizeContent vm={vm} />
-            {/*
-              The value-type ledger and the evidence gate follow the Optimize
-              body because Optimize no longer has a column for them to sit
-              beside.
-
-              Both used to render in the right-hand context panel. That panel is
-              not built on this tab any more — Optimize took the full three
-              columns — and both Optimize branches were left behind inside it,
-              each under a `tab === "Optimize"` test nested in a
-              `tab !== "Optimize"` one. Neither could run, so the tab lost them
-              silently rather than by decision.
-
-              They are the two claims with no other home here. The lever table
-              renders the levers and the sequence view renders their order, but
-              only the ledger keeps candidate, claimed and realized value in
-              separate columns that never sum, and only the gate names what a
-              signal row still needs before it can carry value at all. Both are
-              standing context for every sub-tab, so they close the tab rather
-              than flanking it.
-            */}
-            {vm.opportunityView ? (
+            {/* Keep the value ledger beside authored Optimize content; an
+                evidence-only next action does not imply a priced lever. */}
+            {vm.opportunityView && contractOptimizeAvailableTabs(vm).length > 0 ? (
               <>
                 <PanelHead
                   eyebrow="Optimization gates"
@@ -3709,13 +3690,11 @@ export function contractNoticeDays(
 
 function ContractCommandBar({
   activeTab,
-  contract,
   onBackToContracts,
   onOpenPortfolioPage,
   onOpenTab,
 }: {
   activeTab: string;
-  contract: SourceContract360Row;
   onBackToContracts: () => void;
   onOpenPortfolioPage: (page: PageLabel) => void;
   onOpenTab: (tab: string) => void;
@@ -3754,9 +3733,6 @@ function ContractCommandBar({
           Evidence map
         </button>
       </div>
-      <span className="sw-v2-contract-commandbar-id">
-        {contract.contract_id}
-      </span>
     </nav>
   );
 }
@@ -4670,7 +4646,24 @@ function ProductShellCommercialPostureStrip({ vm }: { vm: SourceWorkspaceVM }) {
   );
 }
 
-function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
+function contractOptimizeAvailableTabs(vm: SourceWorkspaceVM) {
+  const opportunities = vm.opportunityView?.opportunities ?? [];
+  const hasLevers = leverTableRows(opportunities).length > 0;
+  const hasSequence = negotiationSequenceRows(opportunities).length > 0;
+  const comparator = portfolioDiscountComparatorSummary(
+    vm.c?.id,
+    vm.detail?.cloudCommitmentPeerCoverage ?? [],
+    opportunities,
+  );
+  const hasComparator =
+    comparator?.selectedDiscountPct != null &&
+    comparator.peerMedianPct != null;
+  return CONTRACT_OPTIMIZE_SUBTABS.filter((tab) =>
+    tab === "Levers" ? hasLevers : tab === "Sequence" ? hasSequence : hasComparator,
+  );
+}
+
+export function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
   const [subtab, setSubtab] =
     useState<(typeof CONTRACT_OPTIMIZE_SUBTABS)[number]>("Levers");
   const view = vm.opportunityView;
@@ -4687,26 +4680,42 @@ function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
     );
   }
 
+  const availableTabs = contractOptimizeAvailableTabs(vm);
+  if (availableTabs.length === 0) {
+    return (
+      <div className="sw-c3-optimize-next-action">
+        <PanelHead eyebrow="Evidence review" title="Next action" />
+        <p className="sw-c3-optimize-action">
+          {view.recommendation || "No next action is recorded for this contract."}
+        </p>
+        {view.recommendationDetail ? (
+          <p className="sw-v2-muted">{view.recommendationDetail}</p>
+        ) : null}
+        <p className="sw-v2-muted">
+          A negotiation position and value are not established yet.
+        </p>
+      </div>
+    );
+  }
+
+  const activeTab = availableTabs.includes(subtab)
+    ? subtab
+    : availableTabs[0];
+
   return (
     <>
-      <SubtabBar
-        tabs={CONTRACT_OPTIMIZE_SUBTABS}
-        active={subtab}
-        onSelect={(tab) =>
-          setSubtab(
-            CONTRACT_OPTIMIZE_SUBTABS.includes(
-              tab as (typeof CONTRACT_OPTIMIZE_SUBTABS)[number],
-            )
-              ? (tab as (typeof CONTRACT_OPTIMIZE_SUBTABS)[number])
-              : "Levers",
-          )
-        }
-      />
-      {subtab === "Levers" ? <ContractLeverTableContent vm={vm} /> : null}
-      {subtab === "Sequence" ? (
+      {availableTabs.length > 1 ? (
+        <SubtabBar
+          tabs={availableTabs}
+          active={activeTab}
+          onSelect={setSubtab}
+        />
+      ) : null}
+      {activeTab === "Levers" ? <ContractLeverTableContent vm={vm} /> : null}
+      {activeTab === "Sequence" ? (
         <ContractNegotiationSequenceContent vm={vm} />
       ) : null}
-      {subtab === "Comparator" ? <ContractComparatorContent vm={vm} /> : null}
+      {activeTab === "Comparator" ? <ContractComparatorContent vm={vm} /> : null}
     </>
   );
 }
@@ -4919,13 +4928,17 @@ export function contractValueTypeSummary(view: {
     ["Avoidable", view.potential.avoidable, "stops when you act, unilaterally"],
     ["Negotiable", view.potential.negotiable, "needs the vendor to agree"],
   ] as const;
+  const isUnset = (value: string) => !value || value === VALUE_TYPE_NOT_SET;
   return {
     established: labelled.filter(
-      ([, value]) => Boolean(value) && value !== VALUE_TYPE_NOT_SET,
+      ([, value]) => !isUnset(value) && value !== "Not sized",
     ),
     absent: labelled
       .filter(([label]) => label !== "Negotiable")
-      .filter(([, value]) => !value || value === VALUE_TYPE_NOT_SET)
+      .filter(([, value]) => isUnset(value))
+      .map(([label]) => label.toLowerCase()),
+    unpriced: labelled
+      .filter(([, value]) => value === "Not sized")
       .map(([label]) => label.toLowerCase()),
     confirmed:
       view.financeConfirmed && view.financeConfirmed !== VALUE_TYPE_NOT_SET
@@ -5204,18 +5217,15 @@ export function leverTableRows<
 /**
  * The value-type stack on a contract's evidence panel.
  *
- * Renders the value types that are actually established, then states in one
- * line which ones are not and what that absence means. A contract where
- * nothing was mischarged legitimately has no recoverable or avoidable
- * dollars; listing those as two empty rows made a correct reading look like
- * a data failure.
+ * Renders established value separately from unsized and absent categories.
+ * A placeholder must not look like a priced claim.
  */
 function ContractValueTypeStack({
   view,
 }: {
   view: NonNullable<SourceWorkspaceVM["opportunityView"]>;
 }) {
-  const { established, absent, confirmed } = contractValueTypeSummary(view);
+  const { established, absent, unpriced, confirmed } = contractValueTypeSummary(view);
 
   return (
     <div className="sw-v2-fact-stack">
@@ -5224,15 +5234,19 @@ function ContractValueTypeStack({
       ))}
       {absent.length > 0 ? (
         <p className="sw-v2-muted">
-          No {absent.join(" or ")} dollars on this contract — nothing has
-          been mischarged, so the whole opportunity has to be negotiated rather
-          than simply claimed.
+          No {absent.join(" or ")} value is established for this contract.
         </p>
       ) : null}
-      <Fact
-        label="Finance confirmed"
-        value={confirmed ?? "Nothing booked yet"}
-      />
+      {unpriced.length > 0 ? (
+        <p className="sw-v2-muted">
+          {unpriced.join(", ")} value is not sized.
+        </p>
+      ) : null}
+      {confirmed ? (
+        <Fact label="Finance confirmed" value={confirmed} />
+      ) : (
+        <p className="sw-v2-muted">No Finance-confirmed value is recorded.</p>
+      )}
       {/*
         A count of deterministic claim cards used to sit here. It is a builder's
         measure of the pipeline, not a fact about the contract, and a reader has
