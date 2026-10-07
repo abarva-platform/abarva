@@ -59,6 +59,24 @@ actual that small is a ratio against a target and rendering `0.995` as `1.0` wou
 The existing expectation asserted `performanceActual(89, null) === "89.0%"` — it encoded the defect.
 It is conformed, and two cases now pin the unit handling in both directions.
 
+### The stored unit could not be trusted on its own
+
+Reading the declared `unit` column was not enough, and a parallel QA lane caught it before this
+merged. `scripts/source/load-contract-depth-package.ts` writes `unit: "%"` for **every**
+service-performance row it creates, so the stored unit is `%` even for metrics the package names
+`critical_incident_response_minutes`, `p1_p2_resolution_hours` and `problem_backlog_older_30_days`
+— all three of which are loaded against the contract used in demonstrations.
+
+So the display now consults the metric's own name as well. Where the name and the stored unit
+contradict each other, the row has not established its unit and **none is asserted**: the number
+renders alone. Showing `8.0` where the truth is `8 hours` understates the fact; showing `8.0%`
+misstates it, and misstating is worse.
+
+Where the two agree, or where only one of them speaks, the unit is used. The loader-side correction
+— so that a future authorized load writes the right unit — is a separate change in another lane.
+Existing rows keep their `%` until a separately authorized rebuild; this change stops that value
+being rendered as though it meant something.
+
 ## Layer Impact
 
 Release lane: **global-control-lane**.
@@ -87,8 +105,9 @@ surfaces.
 | Check | Status |
 |---|---|
 | New suite | PASS — 9 cases |
-| Performance suite, with the unit fix | PASS — 66 cases |
-| Workspace suites | PASS — 37 suites, 342 tests |
+| Performance suite, with the unit fix | PASS — 69 cases |
+| Mutation — remove the name/unit conflict guard | PASS — failed as intended |
+| Workspace suites | PASS — 37 suites, 345 tests |
 | TypeScript `tsc --noEmit`, by exit code | PASS — exit 0, 0 errors |
 | Mutation — restore the ready/partial contradiction | PASS — 2 cases failed as intended |
 | Mutation — restore the timing-gate badge | PASS — failed as intended |
