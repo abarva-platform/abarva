@@ -1,5 +1,11 @@
 import type { StageReadinessProposalDisposition } from "./proposals";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import {
+  charterReviewMissingFamiliesNextAction,
+  familyNotInReviewNextAction,
+  stageReadinessReviewHasDecidedRequiredResponse,
+  uncoveredRequiredFamilyIds,
+} from "./review-family-coverage";
 
 export type StageReadinessGateAnswerState =
   | "answered"
@@ -120,16 +126,39 @@ export function applyStageReadinessToEvidencePackets(
     const reviewComplete =
       requiredProposals.length > 0 &&
       requiredProposals.every((proposal) => proposal.disposition === "accepted");
-    return reviewComplete
-      ? packets
-      : [
-          ...packets,
-          readinessWorkbookPacket(
-            moveId ?? packets[0]?.moveId ?? "",
-            1,
-            "Review all required P1 to P2 workbook responses before closing the Charter phase.",
-          ),
-        ];
+
+    // Accepting every response in the review on file is not the same as having
+    // been asked about every family that is required NOW. A review built from
+    // an earlier family set is complete on its own terms and silent about the
+    // rest, so coverage is checked separately — see `review-family-coverage`.
+    const requiredPacketsBySlot = new Map<string, string>();
+    for (const packet of packets) {
+      if (packet.priority !== "required") continue;
+      if (!requiredPacketsBySlot.has(packet.familyId)) {
+        requiredPacketsBySlot.set(packet.familyId, packet.evidenceSlot);
+      }
+    }
+    const uncoveredCharterFamilies = uncoveredRequiredFamilyIds({
+      requiredFamilyIds: [...requiredPacketsBySlot.keys()],
+      proposals,
+    });
+
+    if (reviewComplete && uncoveredCharterFamilies.length === 0) return packets;
+
+    return [
+      ...packets,
+      readinessWorkbookPacket(
+        moveId ?? packets[0]?.moveId ?? "",
+        1,
+        uncoveredCharterFamilies.length > 0
+          ? charterReviewMissingFamiliesNextAction(
+              uncoveredCharterFamilies.map(
+                (familyId) => requiredPacketsBySlot.get(familyId) ?? familyId,
+              ),
+            )
+          : "Review all required P1 to P2 workbook responses before closing the Charter phase.",
+      ),
+    ];
   }
 
   const requiredProposalsByDimension = new Map<
@@ -170,13 +199,8 @@ export function applyStageReadinessToEvidencePackets(
   // whether or not the proposals were loaded. Reading it off the loaded set
   // alone would have reported a workbook reviewed down to one held response as
   // one gap per family again, which is what the comment above exists to stop.
-  const anyRequiredDecided = Array.from(
-    requiredProposalsByDimension.values(),
-  ).some((dimensionProposals) =>
-    dimensionProposals.some(
-      (proposal) => proposal.disposition !== "pending",
-    ),
-  );
+  const anyRequiredDecided =
+    stageReadinessReviewHasDecidedRequiredResponse(proposals);
   if (requiredProposalsByDimension.size === 0 || !anyRequiredDecided) {
     const nextAction = workbookUnreviewedNextAction(phase);
     return [
@@ -218,8 +242,22 @@ export function applyStageReadinessToEvidencePackets(
 
     const reasons = new Set(assessment.blockers.map((blocker) => blocker.reason));
     if (unlinkedSources.length > 0) reasons.add("source_not_linked");
-    const nextAction = !dimensionProposals?.length
-      ? workbookUnreviewedNextAction(phase)
+    // The review HAS been worked — the `anyRequiredDecided` guard above already
+    // established that — so a family with no required response here is one this
+    // workbook does not ask about, not one nobody has reviewed. Telling the
+    // reviewer to complete the workbook would name a control that cannot clear
+    // it: the workbook on file has no question for this family, and only a
+    // fresh download does. See `review-family-coverage`.
+    // Asked through the shared helper rather than off `dimensionProposals`
+    // directly, so this reading and the Charter one above cannot drift on what
+    // "covered" means.
+    const familyNotInReview =
+      uncoveredRequiredFamilyIds({
+        requiredFamilyIds: [packet.familyId],
+        proposals,
+      }).length > 0;
+    const nextAction = familyNotInReview
+      ? familyNotInReviewNextAction(phase, packet.evidenceSlot)
       : reasons.has("source_not_linked")
         ? "Link each required response to an approved uploaded evidence item in this evidence family."
         : reasons.has("source_not_named")
