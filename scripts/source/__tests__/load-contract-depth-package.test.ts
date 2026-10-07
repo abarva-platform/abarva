@@ -5,7 +5,9 @@ import { spawnSync } from "node:child_process";
 import Papa from "papaparse";
 import {
   formatGovernedPerformanceActual,
+  governedPercentPerformanceValue,
   performanceMeasureFromSource,
+  selectGovernedPercentTrend,
 } from "../../../src/lib/source/contract-intelligence/performance-units";
 
 describe("Source contract depth package loader", () => {
@@ -53,6 +55,47 @@ describe("Source contract depth package loader", () => {
       actualValue: "35 min",
       valueNum: 35,
     })).toBe("35 min");
+  });
+
+  it("admits only valid percent observations to a percent trend", () => {
+    expect(governedPercentPerformanceValue({
+      metricName: "batch_completion_by_7am_pct",
+      unit: "%",
+      actualValue: "98.0%",
+      valueNum: 98,
+    })).toBe(98);
+    expect(governedPercentPerformanceValue({
+      metricName: "batch_completion_by_7am_pct",
+      unit: "%",
+      actualValue: "0.98",
+      valueNum: 0.98,
+    })).toBe(98);
+    expect(governedPercentPerformanceValue({
+      metricName: "critical_incident_response_minutes",
+      unit: "%",
+      actualValue: "35.0%",
+      valueNum: 35,
+    })).toBeNull();
+    expect(governedPercentPerformanceValue({
+      metricName: "critical_incident_response_minutes",
+      unit: "minutes",
+      actualValue: "35 min",
+      valueNum: 35,
+    })).toBeNull();
+  });
+
+  it("charts one named metric across periods, never a mixture of SLA units", () => {
+    const rows = [
+      { metric_name: "critical_incident_response_minutes", unit: "%", actual_value: "35.0%", value_num: 35, period_start: "2026-07-01" },
+      { metric_name: "batch_completion_by_7am_pct", unit: "%", actual_value: "98.0%", value_num: 98, period_start: "2026-07-01" },
+      { metric_name: "change_success_rate_pct", unit: "%", actual_value: "95.0%", value_num: 95, period_start: "2026-07-01" },
+      { metric_name: "batch_completion_by_7am_pct", unit: "%", actual_value: "99.0%", value_num: 99, period_start: "2026-08-01" },
+    ];
+    const trend = selectGovernedPercentTrend(rows);
+    expect(trend?.metricName).toBe("batch_completion_by_7am_pct");
+    expect(trend?.points.map((point) => point.actual)).toEqual([98, 99]);
+    expect(trend?.points.map((point) => point.row.period_start)).toEqual(["2026-07-01", "2026-08-01"]);
+    expect(selectGovernedPercentTrend(rows.slice(0, 3))).toBeNull();
   });
 
   it("persists the resolved unit and repairs it on a separately authorized reload", () => {

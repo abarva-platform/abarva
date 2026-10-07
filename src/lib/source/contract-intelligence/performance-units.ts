@@ -99,3 +99,50 @@ export function formatGovernedPerformanceActual(row: {
   const actual = normalizedValue(parseNumber(row.valueNum), unit);
   return formatValue(actual, unit) ?? "Not established";
 }
+
+export function governedPercentPerformanceValue(row: {
+  metricName: string;
+  unit: string | null | undefined;
+  actualValue: unknown;
+  valueNum: unknown;
+}): number | null {
+  if (expectedUnit(row.metricName) !== "%" || declaredUnit(row.unit) !== "%") {
+    return null;
+  }
+  const actualText = String(row.actualValue ?? "").trim();
+  if (actualText && !/^-?\d+(?:\.\d+)?%?$/u.test(actualText)) return null;
+  return normalizedValue(parseNumber(row.valueNum), "%");
+}
+
+export function selectGovernedPercentTrend<T extends {
+  metric_name: string;
+  unit: string | null | undefined;
+  actual_value: unknown;
+  value_num: unknown;
+  period_start: string;
+}>(rows: readonly T[]): {
+  metricName: string;
+  points: { row: T; actual: number }[];
+} | null {
+  const byMetric = new Map<string, { row: T; actual: number }[]>();
+  for (const row of rows) {
+    const actual = governedPercentPerformanceValue({
+      metricName: row.metric_name,
+      unit: row.unit,
+      actualValue: row.actual_value,
+      valueNum: row.value_num,
+    });
+    if (actual === null) continue;
+    const points = byMetric.get(row.metric_name) ?? [];
+    points.push({ row, actual });
+    byMetric.set(row.metric_name, points);
+  }
+  const [metricName, points] = [...byMetric].sort((a, b) => b[1].length - a[1].length)[0] ?? [];
+  if (!metricName || !points || new Set(points.map(({ row }) => row.period_start)).size < 2) {
+    return null;
+  }
+  return {
+    metricName,
+    points: points.sort((a, b) => a.row.period_start.localeCompare(b.row.period_start)).slice(-12),
+  };
+}
