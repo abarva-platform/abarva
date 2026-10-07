@@ -3562,7 +3562,12 @@ function ContractPage({
                   <span>{fmtDate(row.period_start)}</span>
                   <span>{row.metric_name}</span>
                   <span>
-                    {performanceActual(row.actual_value, row.value_num, row.unit)}
+                    {performanceActual(
+                      row.actual_value,
+                      row.value_num,
+                      row.unit,
+                      row.metric_name,
+                    )}
                   </span>
                   <span>{money(numberFromDb(row.credit_calculated))}</span>
                 </div>
@@ -7903,6 +7908,27 @@ function detailStateLabel(state: SourceWorkspaceVM["detailState"]) {
 const PERCENT_UNITS = new Set(["%", "pct", "percent", "percentage"]);
 
 /**
+ * The unit a metric's own name declares, or null when it names none.
+ *
+ * The stored `unit` column cannot be trusted on its own: the contract-depth
+ * loader writes `unit: "%"` for every service-performance row it creates,
+ * including metrics named `critical_incident_response_minutes`,
+ * `p1_p2_resolution_hours` and `problem_backlog_older_30_days`. Reading the
+ * stored unit alone therefore still renders minutes and counts as percentages
+ * — the metric name is the only place those rows record what they measure.
+ */
+function unitFromMetricName(metricName: unknown): string | null {
+  const name = typeof metricName === "string" ? metricName.toLowerCase() : "";
+  if (!name) return null;
+  if (/(^|[^a-z])(pct|percent)([^a-z]|$)|%/.test(name)) return "percent";
+  if (/\bminutes?\b|_minutes?$/.test(name)) return "minutes";
+  if (/\bhours?\b|_hours?$/.test(name)) return "hours";
+  if (/\bdays?\b|_days?(_|$)|older_\d+_days/.test(name)) return "days";
+  if (/\bcount\b|\bbacklog\b|\bvolume\b|\btickets?\b/.test(name)) return "count";
+  return null;
+}
+
+/**
  * A service-performance actual, in the unit the row declares.
  *
  * This used to append `%` to every numeric actual. The performance table is
@@ -7922,15 +7948,31 @@ export function performanceActual(
   actualValue: unknown,
   valueNum: unknown,
   unit?: string | null,
+  metricName?: unknown,
 ) {
   const declared = typeof unit === "string" ? unit.trim() : "";
-  const isPercentUnit = PERCENT_UNITS.has(declared.toLowerCase());
+  const storedIsPercent = PERCENT_UNITS.has(declared.toLowerCase());
+  const named = unitFromMetricName(metricName);
+  /*
+   * The stored unit and the metric's own name can disagree, and on today's
+   * loaded rows they routinely do: the loader stamps "%" on a metric called
+   * `p1_p2_resolution_hours`. When they contradict each other this row does not
+   * establish its unit, so none is asserted — the number renders alone rather
+   * than carrying a unit one of the two sources invented. Showing "8.0" where
+   * the truth is "8 hours" understates the fact; showing "8.0%" misstates it.
+   */
+  const conflicted =
+    named !== null && named !== "percent" && storedIsPercent;
+  const isPercentUnit = !conflicted && (storedIsPercent || named === "percent");
+  const effectiveUnit = conflicted
+    ? ""
+    : declared || (named && named !== "percent" ? named : "");
   const formatActual = (actual: number) => {
     if (isPercentUnit) return actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
-    if (declared) return `${actual.toFixed(1)} ${declared}`;
-    // No declared unit. A sub-unit actual is a ratio; anything larger is a
-    // quantity whose unit this row does not state, so none is asserted.
-    return actual <= 1 ? pct(actual) : `${actual.toFixed(1)}`;
+    if (effectiveUnit) return `${actual.toFixed(1)} ${effectiveUnit}`;
+    // No unit this row establishes. A sub-unit actual is a ratio; anything
+    // larger is a quantity whose unit is not settled, so none is asserted.
+    return actual <= 1 && !conflicted ? pct(actual) : `${actual.toFixed(1)}`;
   };
   if (typeof actualValue === "number" && Number.isFinite(actualValue)) {
     return formatActual(actualValue);

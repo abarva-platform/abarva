@@ -900,6 +900,35 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(performanceActual(null, 0.995, "percent")).toBe("99.5%");
   });
 
+  // The loader stamps unit "%" on every service-performance row it writes,
+  // including metrics named in minutes, hours and counts. Reading the stored
+  // unit alone therefore still renders "45.0%" for a 45-minute response. These
+  // are the real metric names from the loaded LAAMS package.
+  it("refuses a stored unit the metric name contradicts", () => {
+    expect(performanceActual(35, null, "%", "critical_incident_response_minutes")).toBe("35.0");
+    expect(performanceActual(8, null, "%", "p1_p2_resolution_hours")).toBe("8.0");
+    expect(performanceActual(120, null, "%", "problem_backlog_older_30_days")).toBe("120.0");
+    for (const name of [
+      "critical_incident_response_minutes",
+      "p1_p2_resolution_hours",
+      "problem_backlog_older_30_days",
+    ]) {
+      expect(performanceActual(35, null, "%", name)).not.toContain("%");
+    }
+  });
+
+  it("keeps a percentage a percentage when name and stored unit agree", () => {
+    expect(performanceActual(96.2, null, "%", "report_refresh_timeliness_pct")).toBe("96.2%");
+    expect(performanceActual(null, 0.954, "%", "change_success_rate_pct")).toBe("95.4%");
+    // Control: the guard is not simply stripping every percent sign.
+    expect(performanceActual(96.2, null, "%", "batch_completion_by_7am_pct")).toContain("%");
+  });
+
+  it("takes the unit from the metric name when the row declares none", () => {
+    expect(performanceActual(35, null, null, "critical_incident_response_minutes")).toBe("35.0 minutes");
+    expect(performanceActual(8, null, "", "p1_p2_resolution_hours")).toBe("8.0 hours");
+  });
+
   it("asserts no unit the row has not declared", () => {
     // The defect in one line: a unitless quantity must not acquire a "%".
     expect(performanceActual(45, null)).not.toContain("%");
