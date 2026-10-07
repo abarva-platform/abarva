@@ -41,7 +41,7 @@ import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidenc
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
-import { loadAcceptedStageReadinessContext } from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
 import {
   phaseApprovalMatchesEvidence,
   type PhaseGateEvidenceState,
@@ -120,7 +120,11 @@ async function transitionEvidenceReadiness(
       currentPhase: phase,
       readiness,
     });
-    const workbook = await loadAcceptedStageReadinessContext(
+    // The review AS IT STANDS, not only a finished one. A finished-only
+    // reading reported a workbook held by one response as a workbook nobody
+    // had reviewed, and left an undecidable blank on an OPTIONAL question
+    // holding the phase shut with no control able to clear it.
+    const workbookProposals = await loadStageReadinessGateProposals(
       ctx,
       programId,
       phase + 1,
@@ -128,7 +132,7 @@ async function transitionEvidenceReadiness(
     const assessedPackets = applyStageReadinessToEvidencePackets(
       packets,
       phase,
-      workbook?.proposals ?? null,
+      workbookProposals,
       programId,
     );
     return {

@@ -108,19 +108,16 @@ export function applyStageReadinessToEvidencePackets(
   if (phase < 1 || phase > 4) return packets;
 
   if (phase === 1) {
-    const allProposals = proposals ?? [];
     const requiredProposals = (proposals ?? []).filter(
       (proposal) => proposal.requirement === "required",
     );
+    // Required only, which is what this packet's own next action has always
+    // said. Requiring every RECOMMENDED response to be decided too made the
+    // Charter phase unclosable whenever one optional cell was left empty: a
+    // blank response is not reviewable from the review surface, so it could be
+    // neither accepted nor rejected, and the workbook declares a recommended
+    // question optional in the first place.
     const reviewComplete =
-      allProposals.length > 0 &&
-      allProposals.every(
-        (proposal) =>
-          proposal.requirement === "required"
-            ? proposal.disposition === "accepted"
-            : proposal.disposition === "accepted" ||
-              proposal.disposition === "rejected",
-      ) &&
       requiredProposals.length > 0 &&
       requiredProposals.every((proposal) => proposal.disposition === "accepted");
     return reviewComplete
@@ -168,7 +165,19 @@ export function applyStageReadinessToEvidencePackets(
   // clear the phase — the P1 branch above has always reported this as a single
   // named packet. A workbook that HAS been reviewed, but not for this family,
   // stays that family's own gap: the answer really is missing there.
-  if (requiredProposalsByDimension.size === 0) {
+  // "Not reviewed at all" is a question about the REQUIRED responses: a review
+  // in which none of them has been acted on is a workbook nobody has reviewed,
+  // whether or not the proposals were loaded. Reading it off the loaded set
+  // alone would have reported a workbook reviewed down to one held response as
+  // one gap per family again, which is what the comment above exists to stop.
+  const anyRequiredDecided = Array.from(
+    requiredProposalsByDimension.values(),
+  ).some((dimensionProposals) =>
+    dimensionProposals.some(
+      (proposal) => proposal.disposition !== "pending",
+    ),
+  );
+  if (requiredProposalsByDimension.size === 0 || !anyRequiredDecided) {
     const nextAction = workbookUnreviewedNextAction(phase);
     return [
       ...packets.map((packet) =>
