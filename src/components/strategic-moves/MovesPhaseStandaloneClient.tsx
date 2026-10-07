@@ -132,6 +132,10 @@ import {
   type ConfirmedSolutionRoute,
   type SolutionOutputType,
 } from "@/lib/programs/solution-route-assessment";
+import {
+  solutionRouteConfirmUnavailableReason,
+  solutionRouteDecisionChoices,
+} from "@/lib/programs/solution-route-decision";
 import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-proposals";
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
@@ -8642,6 +8646,8 @@ function SolutionRouteValidationForm({
         })
       : "unresolved";
   const decision = record.decision;
+  const confirmUnavailableReason =
+    solutionRouteConfirmUnavailableReason(recommendation);
 
   const update = (key: string, next: unknown) => {
     const routeImpactChanged = [
@@ -8778,10 +8784,18 @@ function SolutionRouteValidationForm({
           value={typeof decision === "string" ? decision : ""}
         >
           <option value="">Review before confirming</option>
-          <option value="confirm">Confirm recommendation</option>
-          <option value="correct">Correct recommendation</option>
+          {solutionRouteDecisionChoices(recommendation).map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
         </select>
       </label>
+      {confirmUnavailableReason ? (
+        <p className="mxw-structured-note" role="status">
+          {confirmUnavailableReason}
+        </p>
+      ) : null}
       {decision === "correct" ? (
         <>
           <label>
