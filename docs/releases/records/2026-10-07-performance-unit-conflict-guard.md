@@ -6,7 +6,7 @@
 
 ## Status
 
-Merged — not deployed and not live-proven by this record.
+Open with auto-merge armed — not deployed and not live-proven by this record.
 
 ## Plain-English Summary
 
@@ -80,7 +80,13 @@ no data step, no migration.
 
 **Note on the preceding deploy:** the deploy of the merge that carried the earlier, insufficient fix
 **failed** (`Build and deploy Azure Container Apps revision: failure`) during a GitHub partial
-system outage. Neither that change nor this one is live until a deploy succeeds.
+system outage. The pipeline has since recovered: a later main deploy succeeded, and the web
+Container App's template image, its single 100%-traffic revision and that revision's image are the
+same digest-pinned reference, healthy and active. So the earlier, insufficient fix is deployed and
+serving; this change is not, until it merges and its own deploy succeeds.
+
+Deployed is not proven. No signed-in walk of the performance surface has been run for either
+change, so neither is live-proven by this record.
 
 ## Deployment Authority
 
