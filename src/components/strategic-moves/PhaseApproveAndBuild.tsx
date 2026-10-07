@@ -35,6 +35,11 @@ import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/m
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 import type { SettledDeliverable } from "@/lib/programs/phase-build-settlement";
+import {
+  deliverableRunObservationKey,
+  describeDeliverableRunHandOff,
+  planDeliverableRunPoll,
+} from "@/lib/programs/deliverable-run-poll-plan";
 
 const NAVY = "#1B2B5C";
 const INK = "#1A1A18";
@@ -56,7 +61,11 @@ type RunStatus =
   | "succeeded"
   | "blocked"
   | "failed"
-  | "error";
+  | "error"
+  // Not a run outcome: the browser stopped following a run the server is still
+  // working on. Distinct from every terminal status so the settle path cannot
+  // read it as either a success or a failure.
+  | "handed_off";
 
 interface DeliverableRow {
   deliverableTypeKey: string;
@@ -194,9 +203,6 @@ export interface PhaseBuildArtifact {
   downloadUrl: string;
 }
 
-const POLL_MS = 4000;
-const MAX_MS = 15 * 60 * 1000;
-
 const STATUS_COLOR: Record<RunStatus | "idle", string> = {
   idle: MUTED,
   queued: RUNNING,
@@ -205,6 +211,7 @@ const STATUS_COLOR: Record<RunStatus | "idle", string> = {
   blocked: ATTENTION,
   failed: STALE,
   error: STALE,
+  handed_off: ATTENTION,
 };
 
 const STATUS_LABEL: Record<RunStatus | "idle", string> = {
@@ -215,6 +222,7 @@ const STATUS_LABEL: Record<RunStatus | "idle", string> = {
   blocked: "Build blocked",
   failed: "Failed",
   error: "Could not start",
+  handed_off: "Still building on the server",
 };
 
 function buildInitialRows(
@@ -297,8 +305,14 @@ export function PhaseApproveAndBuild({
       document.getElementById(actionPortalTargetId) as HTMLElement | null,
     );
   }, [actionPortalTargetId]);
+  const [handOffSentence, setHandOffSentence] = useState<string | null>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const startedAt = useRef<number>(0);
+  // Last time each run's observable state changed, and the last state seen, so
+  // the poll interval can back off on a run that is sitting still (queued behind
+  // a serial worker) without backing off one that is actively advancing.
+  const lastChangeAt = useRef<Record<string, number>>({});
+  const lastSeenState = useRef<Record<string, string>>({});
   const initialArtifactSignature = initialArtifacts
     .map((artifact) =>
       [
@@ -344,6 +358,37 @@ export function PhaseApproveAndBuild({
     [],
   );
 
+  // Stop following a run the server is still working on, and say so. Not a
+  // failure and not a success: the row leaves the pending set (so the action is
+  // usable again) without entering the settle path, and the in-flight guard is
+  // released so a later artifact refresh can repair the view in place.
+  const handOffRun = useCallback(
+    (key: string) => {
+      patchRow(key, { status: "handed_off" });
+      runInFlight.current = false;
+      setBuilding(false);
+      setHandOffSentence(describeDeliverableRunHandOff(phaseLabel));
+    },
+    [patchRow, phaseLabel],
+  );
+
+  const scheduleNextPoll = useCallback(
+    (key: string, runId: string, lastPollFailed: boolean, next: () => void) => {
+      const now = Date.now();
+      const plan = planDeliverableRunPoll({
+        elapsedMs: now - startedAt.current,
+        unchangedMs: now - (lastChangeAt.current[key] ?? startedAt.current),
+        lastPollFailed,
+      });
+      if (plan.kind === "hand_off") {
+        handOffRun(key);
+        return;
+      }
+      timers.current[key] = setTimeout(next, plan.delayMs);
+    },
+    [handOffRun],
+  );
+
   const poll = useCallback(
     async (key: string, runId: string) => {
       try {
@@ -362,12 +407,16 @@ export function PhaseApproveAndBuild({
             packageReadiness: data.packageReadiness ?? null,
             blockers: data.blockers ?? [],
           });
-          if (Date.now() - startedAt.current < MAX_MS) {
-            timers.current[key] = setTimeout(
-              () => void poll(key, runId),
-              POLL_MS,
-            );
+          const seen = deliverableRunObservationKey({
+            status: data.status,
+            progressPct: data.progressPct ?? 0,
+            progressLabel: data.progressLabel ?? null,
+          });
+          if (lastSeenState.current[key] !== seen) {
+            lastSeenState.current[key] = seen;
+            lastChangeAt.current[key] = Date.now();
           }
+          scheduleNextPoll(key, runId, false, () => void poll(key, runId));
           return;
         }
         // terminal
@@ -381,16 +430,12 @@ export function PhaseApproveAndBuild({
           error: data.error ?? undefined,
         });
       } catch {
-        // transient — back off and retry within the window
-        if (Date.now() - startedAt.current < MAX_MS) {
-          timers.current[key] = setTimeout(
-            () => void poll(key, runId),
-            POLL_MS * 2,
-          );
-        }
+        // A failed READ of the run says nothing about the run. Back off once and
+        // keep following it.
+        scheduleNextPoll(key, runId, true, () => void poll(key, runId));
       }
     },
-    [patchRow],
+    [patchRow, scheduleNextPoll],
   );
 
   // Fires onBuildSettled exactly once per batch, only after every queued run
@@ -404,8 +449,16 @@ export function PhaseApproveAndBuild({
       (r) => r.runId !== null || r.status === "error",
     );
     if (relevant.length === 0) return;
+    // A handed-off row has no verdict: the server may still be building it.
+    // Settling on it would submit the phase gate approval against a partial
+    // build set. (`handOffRun` also closes the batch by clearing the in-flight
+    // ref above, so today this membership is belt-and-braces rather than the
+    // branch that fires — it states the rule where the rule is read.)
     const stillPending = relevant.some(
-      (r) => r.status === "queued" || r.status === "running",
+      (r) =>
+        r.status === "queued" ||
+        r.status === "running" ||
+        r.status === "handed_off",
     );
     if (stillPending) return;
 
@@ -447,6 +500,9 @@ export function PhaseApproveAndBuild({
     // reset rows to queued-pending
     setOmittedDeliverables([]);
     setAdaptiveSummary(null);
+    setHandOffSentence(null);
+    lastChangeAt.current = {};
+    lastSeenState.current = {};
     setRows((prev) =>
       prev.map((r) => ({
         ...r,
@@ -560,17 +616,19 @@ export function PhaseApproveAndBuild({
       : builtCount > 0
         ? `Re-run & Build ${phaseLabel} →`
         : `Approve & Build ${phaseLabel} →`;
-  const phaseStatusLine = anyRunning
-    ? `Building ${phaseLabel}. Keep this page open while the governed batch finishes.`
-    : hasParentBlocker
-      ? String(disabledReason)
-      : hasRequiredGaps
-        ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} must be covered before final build.`
-        : blockedCount > 0
-          ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} blocked by evidence or build-quality checks before the phase can advance.`
-          : builtCount === specs.length
-            ? `${phaseLabel} documents are built. Review them before relying on them.`
-            : "Capture is separate from gate readiness. Build once the record is ready for review.";
+  const phaseStatusLine = handOffSentence
+    ? handOffSentence
+    : anyRunning
+      ? `Building ${phaseLabel}. Keep this page open while the governed batch finishes.`
+      : hasParentBlocker
+        ? String(disabledReason)
+        : hasRequiredGaps
+          ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} must be covered before final build.`
+          : blockedCount > 0
+            ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} blocked by evidence or build-quality checks before the phase can advance.`
+            : builtCount === specs.length
+              ? `${phaseLabel} documents are built. Review them before relying on them.`
+              : "Capture is separate from gate readiness. Build once the record is ready for review.";
 
   const buildActionButton = (
     <button
@@ -747,12 +805,12 @@ export function PhaseApproveAndBuild({
                       }}
                     >
                       {packet.ownerSource && (
-                        <span>
-                          Likely source owner: {packet.ownerSource}
-                        </span>
+                        <span>Likely source owner: {packet.ownerSource}</span>
                       )}
                       {acceptedFormats.length > 0 && (
-                        <span>Accepted formats: {acceptedFormats.join(", ")}</span>
+                        <span>
+                          Accepted formats: {acceptedFormats.join(", ")}
+                        </span>
                       )}
                     </div>
                     {evidenceTitles.length > 0 && (
