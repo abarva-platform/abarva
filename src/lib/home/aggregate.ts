@@ -1,4 +1,5 @@
 import { selectHomeAttentionReadAdapter } from '@/lib/data-plane/read-adapters/homeAttentionReadAdapter';
+import { pendingGatePhase } from '@/lib/home/pending-gate-queue';
 
 // Home page attention aggregator — what the signed-in user should look at
 // today. Spec: alerts needing attention + queue of things awaiting their
@@ -73,29 +74,25 @@ export async function loadHomeAttention(limit = 6, clientId?: string | null): Pr
   try {
     const activeRows = await reads.getActiveEngagements(clientId);
 
-    // Pending gates
+    // Pending gates · a Move at phase N is waiting on phase N's gate until
+    // something records that gate as approved. Derived from the phase the Move
+    // is ON rather than from the presence of an unapproved `gates_passed`
+    // entry, which nothing writes — see `pendingGatePhase`.
     for (const e of activeRows) {
-      const passed = Array.isArray(e.gates_passed) ? e.gates_passed : [];
-      for (const g of passed) {
-        if (typeof g !== 'object' || g === null) continue;
-        const gate = g as Record<string, unknown>;
-        const approved =
-          Boolean(gate.approved_at) ||
-          Boolean(gate.approved_by) ||
-          gate.status === 'approved';
-        if (!approved) {
-          queue.push({
-            id: `gate-${e.id}-${String(gate.phase ?? '?')}`,
-            engagementId: e.id,
-            engagementName: e.name,
-            kind: 'gate_pending',
-            detail: `Phase ${gate.phase ?? '?'} gate awaiting approval`,
-            updatedAt: e.updated_at,
-            href: `/engagements/${encodeURIComponent(e.graph_node_id)}`,
-          });
-          break;
-        }
-      }
+      const phase = pendingGatePhase({
+        currentPhase: e.current_phase,
+        gatesPassed: e.gates_passed,
+      });
+      if (phase === null) continue;
+      queue.push({
+        id: `gate-${e.id}-${String(phase)}`,
+        engagementId: e.id,
+        engagementName: e.name,
+        kind: 'gate_pending',
+        detail: `Phase ${phase} gate awaiting approval`,
+        updatedAt: e.updated_at,
+        href: `/engagements/${encodeURIComponent(e.graph_node_id)}`,
+      });
     }
 
     // Most recent turns — flag those where the last turn is user-sent (agent
