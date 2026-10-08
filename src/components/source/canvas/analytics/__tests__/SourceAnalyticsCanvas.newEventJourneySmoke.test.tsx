@@ -103,6 +103,13 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     const toggle = screen.getByRole("button", {
       name: /journey and workspaces/i,
     });
+    const mobileAva = screen.getByTestId("source-mobile-ask-ava-launcher");
+    expect(mobileAva).toHaveAttribute("aria-label", "Ask aVa");
+    fireEvent.click(mobileAva);
+    expect(mobileAva).toHaveAttribute("aria-label", "Close aVa");
+    expect(mobileAva).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(mobileAva);
+    expect(mobileAva).toHaveAttribute("aria-expanded", "false");
     const railContent = document.getElementById("source-shell-mobile-rail-content");
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(railContent).toHaveAttribute("data-open", "false");

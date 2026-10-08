@@ -74,6 +74,7 @@ import {
   type EvidenceFrameworkProvenance,
 } from "@/lib/programs/evidence-framework-provenance";
 import { buildHeldByEvidenceDetail } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
+import { phaseReadsPrecedingTransitionReview } from "@/lib/programs/stage-readiness-prompt-window";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
 import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
 import {
@@ -345,10 +346,15 @@ export async function POST(req: NextRequest) {
           moveId,
         );
       }
-      if (phase >= 2 && phase <= 5) {
+      if (phaseReadsPrecedingTransitionReview(phase)) {
         // The prompt gets every accepted answer on the preceding transition's
         // review, whether or not that review is finished. The finished-review
         // policy belongs to the forward controls above, not here.
+        //
+        // The window starts at P1, not P2: the P0 to P1 workbook is served,
+        // offered and reviewed like any other, so P1 Charter — the first
+        // generating phase — has a preceding transition to read. See
+        // `stage-readiness-prompt-window`.
         const currentPhaseContext = await loadStageReadinessPromptContext(
           ctx,
           moveId,

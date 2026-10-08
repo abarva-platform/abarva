@@ -967,6 +967,8 @@ export function SourceAnalyticsCanvas({
                 journey={journey}
                 workspace={workspace}
                 onWorkspaceChange={setWorkspace}
+                avaOpen={avaOpen}
+                onAvaToggle={() => setAvaOpen((value) => !value)}
               />
             }
             paneTestId="source-workflow-pane"
@@ -1057,11 +1059,15 @@ function SourceShellRail({
   journey,
   workspace,
   onWorkspaceChange,
+  avaOpen,
+  onAvaToggle,
 }: {
   view: SourceEventShellView;
   journey?: SourceJourneyDefinition;
   workspace: SourceShellWorkspace;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
+  avaOpen: boolean;
+  onAvaToggle: () => void;
 }) {
   const readerJourney = sourceReaderJourneyCheckpoints(view, journey);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
@@ -1080,16 +1086,29 @@ function SourceShellRail({
         background: ANALYTICS.PAGE_BG,
       }}
     >
-      <button
-        type="button"
-        className={styles.mobileRailToggle}
-        aria-controls="source-shell-mobile-rail-content"
-        aria-expanded={mobileRailOpen}
-        onClick={() => setMobileRailOpen((open) => !open)}
-      >
-        <span>Journey and workspaces</span>
-        <span aria-hidden="true">{mobileRailOpen ? "−" : "+"}</span>
-      </button>
+      <div className={styles.mobileRailActions}>
+        <button
+          type="button"
+          className={styles.mobileRailToggle}
+          aria-controls="source-shell-mobile-rail-content"
+          aria-expanded={mobileRailOpen}
+          onClick={() => setMobileRailOpen((open) => !open)}
+        >
+          <span>Journey and workspaces</span>
+          <span aria-hidden="true">{mobileRailOpen ? "−" : "+"}</span>
+        </button>
+        <button
+          type="button"
+          data-testid="source-mobile-ask-ava-launcher"
+          className={styles.mobileAvaButton}
+          aria-label={avaOpen ? "Close aVa" : "Ask aVa"}
+          aria-expanded={avaOpen}
+          title={avaOpen ? "Close aVa" : "Ask aVa"}
+          onClick={onAvaToggle}
+        >
+          <span aria-hidden="true">{avaOpen ? "×" : "a"}</span>
+        </button>
+      </div>
       <div
         id="source-shell-mobile-rail-content"
         className={styles.railContents}
