@@ -1525,6 +1525,8 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       advanced: false,
       newPhase: 0,
       blockedBy: ["origination_brief_signed_off"],
+      outcome: "gate_hard_blocked",
+      movePhase: 0,
     });
 
     const { POST } = await import("../route");
@@ -1532,6 +1534,96 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
 
     expect(res.status).toBe(409);
     await expect(res.json()).resolves.toMatchObject({ error: "gate_blocked" });
+  });
+
+  // The P0 close has five ways to stop and only ONE is a gate verdict. Before
+  // this, the other four returned an empty `blockedBy` and this route turned
+  // that emptiness into "Check server logs for the phase close helper." — for
+  // a signed-in product user, on the first step of a Move.
+  const p0AtPhase0 = () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 0,
+      gatesPassed: [],
+    });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "brief", label: "Brief" },
+    ]);
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_0_brief", status: "completed" },
+    ]);
+  };
+
+  it("does not report an already-advanced Move as a blocked gate", async () => {
+    p0AtPhase0();
+    mockCloseP0OnApproval.mockResolvedValue({
+      advanced: false,
+      newPhase: null,
+      blockedBy: [],
+      outcome: "already_past_p0",
+      movePhase: 2,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 0 }) as never, { params });
+    const body = (await res.json()) as { error: string; detail: string };
+
+    expect(body.error).toBe("already_advanced");
+    expect(body.error).not.toBe("gate_blocked");
+    expect(body.detail).toContain("P2");
+    expect(body.detail).not.toMatch(/server log/i);
+  });
+
+  it("names the capture to re-check when the origination brief could not be built", async () => {
+    p0AtPhase0();
+    mockCloseP0OnApproval.mockResolvedValue({
+      advanced: false,
+      newPhase: null,
+      blockedBy: [],
+      outcome: "brief_not_created",
+      movePhase: 0,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 0 }) as never, { params });
+    const body = (await res.json()) as { error: string; detail: string };
+
+    expect(body.error).toBe("brief_not_created");
+    expect(body.detail).toMatch(/problem statement/i);
+    expect(body.detail).not.toMatch(/server log/i);
+  });
+
+  it("never answers an empty blockedBy with a server-log instruction", async () => {
+    for (const outcome of [
+      "move_not_readable",
+      "close_errored",
+      "brief_not_created",
+      "already_past_p0",
+    ] as const) {
+      p0AtPhase0();
+      mockCloseP0OnApproval.mockResolvedValue({
+        advanced: false,
+        newPhase: null,
+        blockedBy: [],
+        outcome,
+        movePhase: 0,
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(req({ phase: 0 }) as never, { params });
+      const body = (await res.json()) as {
+        error: string;
+        detail: string;
+        outcome: string;
+      };
+
+      expect(res.status).toBe(409);
+      expect(body.outcome).toBe(outcome);
+      expect(body.detail).not.toMatch(/server log/i);
+      expect(body.detail.length).toBeGreaterThan(0);
+      // Only a real gate verdict may borrow the word.
+      expect(body.error).not.toBe("gate_blocked");
+    }
   });
 
   it("rejects approval when the caller lacks gate-approval permission", async () => {

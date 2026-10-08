@@ -24,6 +24,10 @@ import {
 import { evaluateGate } from "@/lib/programs/governance";
 import { advancePhase } from "@/lib/programs/mutations";
 import { closeP0OnApproval } from "@/lib/programs/origination-close";
+import {
+  describeOriginationCloseOutcome,
+  originationCloseErrorCode,
+} from "@/lib/programs/origination-close-outcome";
 import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
@@ -746,15 +750,22 @@ export async function POST(
         actorTenancy: ctx,
       });
       if (!closed.advanced) {
+        // Only a real gate verdict may call itself `gate_blocked`, and every
+        // stop names itself. An empty `blockedBy` is no longer reported as an
+        // unexplained failure pointing the reader at a server log.
         return Response.json(
           {
-            error: "gate_blocked",
+            error: originationCloseErrorCode(closed.outcome) ?? "gate_blocked",
             phase,
+            outcome: closed.outcome,
             blockedBy: closed.blockedBy,
+            movePhase: closed.movePhase,
             closeResult: closed,
-            detail: closed.blockedBy.length
-              ? `P0 gate remains blocked by: ${closed.blockedBy.join(", ")}.`
-              : "P0 gate approval could not advance the Move. Check server logs for the phase close helper.",
+            detail: describeOriginationCloseOutcome({
+              outcome: closed.outcome,
+              blockedBy: closed.blockedBy,
+              movePhase: closed.movePhase,
+            }),
           },
           { status: 409 },
         );
