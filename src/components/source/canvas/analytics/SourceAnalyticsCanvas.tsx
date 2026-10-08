@@ -1135,8 +1135,7 @@ function SourceShellRail({
                   placeItems: "center",
                   background:
                     checkpointState === "past" ||
-                    checkpointState === "complete" ||
-                    checkpointState === "recorded"
+                    checkpointState === "complete"
                       ? ANALYTICS.INK
                       : checkpointState === "historical_gap"
                         ? ANALYTICS.AMBER_TINT
@@ -1146,7 +1145,6 @@ function SourceShellRail({
                   color:
                     checkpointState === "past" ||
                     checkpointState === "complete" ||
-                    checkpointState === "recorded" ||
                     checkpointState === "current"
                       ? "#fff"
                       : checkpointState === "historical_gap"
@@ -1155,7 +1153,6 @@ function SourceShellRail({
                   border:
                     checkpointState === "past" ||
                     checkpointState === "complete" ||
-                    checkpointState === "recorded" ||
                     checkpointState === "current"
                       ? "none"
                       : `1px solid ${ANALYTICS.LINE_STRONG}`,
@@ -1165,12 +1162,11 @@ function SourceShellRail({
                 }}
               >
                 {checkpointState === "past" ||
-                checkpointState === "complete" ||
-                checkpointState === "recorded"
+                checkpointState === "complete"
                   ? "✓"
                   : checkpointState === "historical_gap"
                     ? "!"
-                    : checkpointState === "no_record"
+                    : checkpointState === "no_record" || checkpointState === "recorded"
                       ? "–"
                   : String(index + 1).padStart(2, "0")}
               </span>
@@ -1202,7 +1198,7 @@ function SourceShellRail({
                   >
                     Historical gap
                   </span>
-                ) : checkpointState === "no_record" ? (
+                ) : checkpointState === "no_record" || checkpointState === "recorded" ? (
                   <span
                     style={{
                       color: ANALYTICS.MUTED,
@@ -1212,7 +1208,7 @@ function SourceShellRail({
                       textTransform: "uppercase",
                     }}
                   >
-                    No record
+                    {checkpointState === "recorded" ? "Recorded" : "No record"}
                   </span>
                 ) : null}
               </span>
@@ -2295,6 +2291,8 @@ function FocusedWorkPanel({
   const activeMissingEvidence = activeStep
     ? requiredRowsForStep(activeStep).find((row) => row?.ready !== true)
     : null;
+  const firstMissingEvidence = requiredEvidenceRows.find((row) => !row.ready) ?? null;
+  const nextEvidenceBlocker = activeMissingEvidence ?? firstMissingEvidence;
   const canShowNext =
     activeComplete &&
     (activeIndex < flatSteps.length - 1 || stageInputsReady);
@@ -2504,6 +2502,7 @@ function FocusedWorkPanel({
             view={view}
             stageOperatingStatus={stageOperatingStatus}
             requiredEvidenceOpen={requiredEvidenceOpen}
+            firstMissingEvidence={firstMissingEvidence}
             awardSowHandoffReadiness={awardSowHandoffReadiness}
             onOpenApprovalPage={openApprovalPage}
             onOpenFiles={() => onWorkspaceChange("files")}
@@ -2637,10 +2636,16 @@ function FocusedWorkPanel({
                   onClick: goNext,
                   testId: "source-shell-progress-action",
                 } : null}
+                blockedAction={!canShowNext && nextEvidenceBlocker ? {
+                  label: evidenceBlockerActionLabel(nextEvidenceBlocker),
+                  onClick: () => onWorkspaceChange("files"),
+                } : null}
                 status={activeIndex >= flatSteps.length - 1
                   ? "Approval locked"
                   : "Continue locked"}
-                detail={continueGuidance}
+                detail={!canShowNext && nextEvidenceBlocker
+                  ? evidenceBlockerSummary(nextEvidenceBlocker)
+                  : continueGuidance}
               />
             </div>
           </>
@@ -2652,10 +2657,12 @@ function FocusedWorkPanel({
 
 function ProgressActionDock({
   action,
+  blockedAction,
   status,
   detail,
 }: {
   action: { label: string; onClick: () => void; testId: string } | null;
+  blockedAction?: { label: string; onClick: () => void } | null;
   status: string;
   detail?: string | null;
 }) {
@@ -2715,10 +2722,44 @@ function ProgressActionDock({
         >
           <strong style={{ fontSize: 13 }}>{status}</strong>
           {detail ? <span style={{ fontSize: 12, lineHeight: 1.35 }}>{detail}</span> : null}
+          {blockedAction ? (
+            <button
+              type="button"
+              onClick={blockedAction.onClick}
+              style={{
+                background: ANALYTICS.CARD,
+                border: `1px solid ${ANALYTICS.LINE_STRONG}`,
+                borderRadius: 6,
+                color: ANALYTICS.INK,
+                cursor: "pointer",
+                fontFamily: ANALYTICS.SANS,
+                fontSize: 13,
+                fontWeight: 750,
+                marginTop: 6,
+                minHeight: 40,
+                padding: "8px 12px",
+                textAlign: "left",
+              }}
+            >
+              {blockedAction.label}
+            </button>
+          ) : null}
         </div>
       )}
     </div>
   );
+}
+
+function evidenceBlockerSummary(row: StageEvidenceRequirementRow): string {
+  const { requirement, evidence } = row;
+  const currentState = requiresRecordedSource(requirement) && !hasRecordedSource(evidence)
+    ? "Not loaded"
+    : evidence?.currentState ?? "Not Requested";
+  return `${requirement.label} · Now: ${currentState} · Needed: ${requirement.minimumState}`;
+}
+
+function evidenceBlockerActionLabel(row: StageEvidenceRequirementRow): string {
+  return row.lifecycle.parsed ? "Review evidence in Files" : "Open evidence workspace";
 }
 
 function plainStageStepGroupLabel(label: string) {
@@ -2732,6 +2773,7 @@ function StageReadyPanel({
   view,
   stageOperatingStatus,
   requiredEvidenceOpen,
+  firstMissingEvidence,
   awardSowHandoffReadiness,
   onOpenApprovalPage,
   onOpenFiles,
@@ -2739,6 +2781,7 @@ function StageReadyPanel({
   view: SourceEventShellView;
   stageOperatingStatus: StageOperatingStatus | null;
   requiredEvidenceOpen: number;
+  firstMissingEvidence: StageEvidenceRequirementRow | null;
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   onOpenApprovalPage: () => void;
   onOpenFiles: () => void;
@@ -2949,10 +2992,16 @@ function StageReadyPanel({
           onClick: onOpenApprovalPage,
           testId: "source-stage-ready-open-approval",
         } : null}
+        blockedAction={!approvalRecorded && firstMissingEvidence ? {
+          label: evidenceBlockerActionLabel(firstMissingEvidence),
+          onClick: onOpenFiles,
+        } : null}
         status={approvalRecorded ? "Approval recorded" : "Approval locked"}
         detail={approvalRecorded
           ? "The decision is already recorded."
-          : `${gapSummary} remain. Review evidence before approval.`}
+          : firstMissingEvidence
+            ? evidenceBlockerSummary(firstMissingEvidence)
+            : `${gapSummary} remain. Review evidence before approval.`}
       />
       <Link
         href={view.stage.approvalHref}
