@@ -984,6 +984,54 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     );
   });
 
+  // P1 Charter is the FIRST deliverable-generating phase, and its preceding
+  // transition is the P0 to P1 workbook the P0 screen offers, serves and
+  // reviews. The prompt window used to start at P2, so every accepted answer on
+  // that workbook was dropped from the charter build with nothing reporting it.
+  it("reads the P0 to P1 review when building P1, the first generating phase", async () => {
+    loadStageReadinessPromptContext.mockResolvedValue({
+      context: {
+        moveId: "m-1",
+        sourcePhase: 0,
+        targetPhase: 1,
+        reviewArtifactId: "a-p0-p1",
+        reviewArtifactVersion: 2,
+        proposals: [],
+        acceptedResponses: [
+          { questionId: "q1", answer: "Named sponsor", source: "charter.pdf" },
+        ],
+        readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+      },
+      openResponseCount: 0,
+      reviewOpen: false,
+    });
+    formatStageReadinessPromptContext.mockReturnValue(
+      "ACCEPTED STAGE READINESS RESPONSE: Named sponsor.",
+    );
+
+    const res = await POST(
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    // Keyed by the phase being generated, which is the review's targetPhase.
+    expect(loadStageReadinessPromptContext).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-1",
+      1,
+    );
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
+    expect(decisionContext).toContain(
+      "ACCEPTED STAGE READINESS RESPONSE: Named sponsor.",
+    );
+  });
+
   it("asks for no prompt block when the transition has no review at all", async () => {
     loadStageReadinessPromptContext.mockResolvedValue(null);
     formatStageReadinessPromptContext.mockReturnValue("");

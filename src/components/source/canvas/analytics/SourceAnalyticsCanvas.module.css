@@ -1,3 +1,7 @@
+.mobileRailActions {
+  display: none;
+}
+
 .mobileRailToggle {
   display: none;
 }
@@ -23,6 +27,12 @@
     padding: 10px 14px !important;
   }
 
+  .mobileRailActions {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+
   .mobileRailToggle {
     align-items: center;
     background: transparent;
@@ -30,13 +40,29 @@
     color: #0c1a3a;
     cursor: pointer;
     display: flex;
+    flex: 1;
     font:
       700 13px/1.4 Inter,
       sans-serif;
     justify-content: space-between;
     min-height: 44px;
     padding: 0 2px;
-    width: 100%;
+    min-width: 0;
+  }
+
+  .mobileAvaButton {
+    align-items: center;
+    background: #006c62;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex: 0 0 44px;
+    font: 800 20px/1 Georgia, serif;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
   }
 
   .mobileRailToggle span:last-child {
@@ -69,23 +95,8 @@
     width: auto !important;
   }
 
-  .askAvaLauncher {
-    bottom: 16px !important;
-    right: 12px !important;
-  }
-
-  .askAvaWithDock {
-    bottom: 210px !important;
-    right: 12px !important;
-  }
-
-  .askAvaLauncher span:last-child,
-  .askAvaWithDock span:last-child {
-    display: none;
-  }
-
   .askAvaLauncher,
   .askAvaWithDock {
-    padding: 8px !important;
+    display: none !important;
   }
 }

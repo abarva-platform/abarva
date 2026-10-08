@@ -125,12 +125,14 @@ own suite directory is swept only by a non-required job. The wiring suite theref
 `src/lib/programs/__tests__`, which is directory-swept by a required check, and imports the
 consumer from there.
 
-**Census note, measured at both ends.** The census committed on the base was already two files
-behind its own tree: committed `2834 / 2669 / 2668`, and regenerating the base with this branch's
-two new suites moved aside gives `2836 / 2671 / 2670`. With them it gives `2838 / 2673 / 2672`. So
-the +4 in this diff is **+2 inherited from the base and +2 mine**. `uncoveredTestFiles` holds at
-`165` across all three readings, which is the proof that both new suites are CI-covered rather than
-dark.
+**Census note, measured at both ends, and re-measured after the base moved mid-release.** At first
+reading the census committed on the base was two files behind its own tree: committed
+`2834 / 2669 / 2668`, base regenerated with this branch's two new suites moved aside
+`2836 / 2671 / 2670`, and with them `2838 / 2673 / 2672` — so +4, of which +2 was inherited stale
+base and +2 mine. A sibling release then landed and absorbed the inherited pair, so the shipped
+diff is measured against the merged base: base `2837 / 2672 / 2671`, mine `2839 / 2674 / 2673`,
+a clean **+2 mine**. `uncoveredTestFiles` holds at `165` across all five readings, which is the
+proof that both new suites are CI-covered rather than dark.
 
 **Mutation sweep — 7 applied, 7 killed.** The mutator asserts its pattern matches exactly once
 before applying, so a pattern that no longer matches is reported rather than counted as a survivor.
