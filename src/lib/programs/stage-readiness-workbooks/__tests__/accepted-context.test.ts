@@ -188,3 +188,219 @@ describe("accepted stage readiness context", () => {
     ).resolves.toBeNull();
   });
 });
+
+/**
+ * The partial-review sibling, tested beside the strict loader on purpose: the
+ * ONLY difference between them that matters is which dispositions they admit,
+ * and these cases pin that difference against the same fake artifact store.
+ */
+describe("stage readiness gate proposals — the review as it stands", () => {
+  /** The same review, except one RECOMMENDED response was never decided. */
+  const heldByRecommended = {
+    ...acceptedReview,
+    summary: {
+      ...acceptedReview.summary,
+      proposalCount: 3,
+      pendingCount: 1,
+    },
+    proposals: [
+      ...acceptedReview.proposals,
+      {
+        questionId: "q_optional_context",
+        dimensionId: "nice_to_have_context",
+        requirement: "recommended",
+        answerState: "blank",
+        disposition: "pending",
+        evidenceOrSource: "",
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+    listMoveArtifacts.mockResolvedValue([
+      {
+        artifact_id: "review-artifact-1",
+        version: 3,
+        phase: 1,
+        artifact_type: "stage_readiness_workbook_proposal_review",
+        metadata: { acceptedCount: 2, pendingCount: 1, needsValidationCount: 0 },
+      },
+    ]);
+    downloadArtifactBytes.mockResolvedValue({
+      fileName: "review.json",
+      fileFormat: "json",
+      bytes: Buffer.from(JSON.stringify(heldByRecommended)),
+    });
+  });
+
+  it("reads a review the strict loader refuses, which is the whole point", async () => {
+    const { loadStageReadinessGateProposals } = await import(
+      "../gate-proposal-context"
+    );
+    const { loadAcceptedStageReadinessContext } = await import(
+      "../accepted-context"
+    );
+
+    // Strict: one undecided response means the review is not finished, so no
+    // response may feed the next phase's prompt.
+    await expect(
+      loadAcceptedStageReadinessContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+
+    // Gate: the review exists and both required responses are accepted.
+    const proposals = await loadStageReadinessGateProposals(ctx, "move-1", 2);
+    expect(proposals).toHaveLength(3);
+    expect(proposals).toEqual([
+      expect.objectContaining({
+        dimensionId: "baseline_metrics",
+        requirement: "required",
+        disposition: "accepted",
+      }),
+      expect.objectContaining({
+        dimensionId: "delay_volume",
+        requirement: "required",
+        disposition: "accepted",
+      }),
+      expect.objectContaining({
+        dimensionId: "nice_to_have_context",
+        requirement: "recommended",
+        disposition: "pending",
+        answerState: "blank",
+      }),
+    ]);
+  });
+
+  it("is still null when no review artifact exists for the source phase", async () => {
+    listMoveArtifacts.mockResolvedValueOnce([
+      {
+        artifact_id: "other-artifact",
+        version: 1,
+        // A review for a DIFFERENT transition is not this transition's review.
+        phase: 2,
+        artifact_type: "stage_readiness_workbook_proposal_review",
+        metadata: {},
+      },
+    ]);
+    const { loadStageReadinessGateProposals } = await import(
+      "../gate-proposal-context"
+    );
+
+    await expect(
+      loadStageReadinessGateProposals(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+    expect(downloadArtifactBytes).not.toHaveBeenCalled();
+  });
+
+  it("refuses a review whose stored move or transition no longer matches", async () => {
+    const { loadStageReadinessGateProposals } = await import(
+      "../gate-proposal-context"
+    );
+
+    downloadArtifactBytes.mockResolvedValueOnce({
+      fileName: "review.json",
+      fileFormat: "json",
+      bytes: Buffer.from(
+        JSON.stringify({ ...heldByRecommended, moveId: "move-2" }),
+      ),
+    });
+    await expect(
+      loadStageReadinessGateProposals(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+
+    downloadArtifactBytes.mockResolvedValueOnce({
+      fileName: "review.json",
+      fileFormat: "json",
+      bytes: Buffer.from(
+        JSON.stringify({
+          ...heldByRecommended,
+          transition: { fromPhase: 1, toPhase: 3, stage: "wrong" },
+        }),
+      ),
+    });
+    await expect(
+      loadStageReadinessGateProposals(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+  });
+
+  it("treats unreadable or empty review bytes as no review at all", async () => {
+    const { loadStageReadinessGateProposals } = await import(
+      "../gate-proposal-context"
+    );
+
+    downloadArtifactBytes.mockResolvedValueOnce({
+      fileName: "review.json",
+      fileFormat: "json",
+      bytes: Buffer.from("{ not json"),
+    });
+    await expect(
+      loadStageReadinessGateProposals(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+
+    downloadArtifactBytes.mockResolvedValueOnce({
+      fileName: "review.json",
+      fileFormat: "json",
+      bytes: Buffer.from(JSON.stringify({ ...heldByRecommended, proposals: [] })),
+    });
+    await expect(
+      loadStageReadinessGateProposals(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+
+    downloadArtifactBytes.mockResolvedValueOnce(null);
+    await expect(
+      loadStageReadinessGateProposals(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+  });
+
+  it("fails closed on an unrecognised requirement, disposition or answer state", async () => {
+    const { loadStageReadinessGateProposals } = await import(
+      "../gate-proposal-context"
+    );
+
+    downloadArtifactBytes.mockResolvedValueOnce({
+      fileName: "review.json",
+      fileFormat: "json",
+      bytes: Buffer.from(
+        JSON.stringify({
+          ...heldByRecommended,
+          proposals: [
+            {
+              questionId: "q_odd",
+              dimensionId: "odd_family",
+              requirement: "whatever",
+              answerState: "whatever",
+              disposition: "whatever",
+            },
+          ],
+        }),
+      ),
+    });
+
+    // An unreadable requirement must gate, an unreadable decision must not
+    // count as a decision, and an unreadable answer must not count as answered.
+    await expect(
+      loadStageReadinessGateProposals(ctx, "move-1", 2),
+    ).resolves.toEqual([
+      {
+        questionId: "q_odd",
+        dimensionId: "odd_family",
+        requirement: "required",
+        answerState: "blank",
+        disposition: "pending",
+        evidenceOrSource: "",
+      },
+    ]);
+  });
+
+  it("asks the store for nothing when the target phase has no predecessor", async () => {
+    const { loadStageReadinessGateProposals } = await import(
+      "../gate-proposal-context"
+    );
+
+    await expect(
+      loadStageReadinessGateProposals(ctx, "move-1", 0),
+    ).resolves.toBeNull();
+    expect(listMoveArtifacts).not.toHaveBeenCalled();
+  });
+});

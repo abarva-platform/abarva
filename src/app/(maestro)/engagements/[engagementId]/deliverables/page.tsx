@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getActiveClientKey } from '@/lib/active-client';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
 import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
+import { getPhaseChipLabel } from '@/lib/programs/phase-roster';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,6 @@ const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const PANEL_BG = 'rgba(255,255,255,0.02)';
 const MONO = 'JetBrains Mono, monospace';
 
-const PHASE_LABELS = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
 
 interface LegacyDeliverable {
   type: string;
@@ -463,7 +463,7 @@ export default async function DeliverablesPage({
                       letterSpacing: '0.14em',
                     }}
                   >
-                    PHASE {d.phase} · {PHASE_LABELS[d.phase]?.toUpperCase()}
+                    PHASE {d.phase} · {getPhaseChipLabel(d.phase)}
                   </span>
                   <span style={{ fontSize: 14, fontWeight: 500 }}>
                     {legacyTitle(d.type)}

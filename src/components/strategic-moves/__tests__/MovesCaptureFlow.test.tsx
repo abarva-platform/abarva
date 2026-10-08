@@ -16,6 +16,7 @@ import {
   getPhaseStepGroups,
   phaseStepQuestionCounts,
 } from "@/lib/programs/moves-phase-step-groups";
+import { phaseStepPlan } from "@/lib/programs/moves-phase-step-plan";
 
 const PHASES: MovesCaptureFlowPhase[] = [
   { phase: 0, code: "P0", name: "Originate", answered: 11, total: 11, reachable: true },
@@ -319,6 +320,188 @@ describe("MovesCaptureFlow", () => {
     });
   });
 
+  // ─── moves_workspace_v2 (Increment 1 of the phase-workspace shell) ───
+  // Presentation only: every case pins the v2 chrome while a flag-off control
+  // case pins that the legacy chrome is byte-for-byte unchanged.
+  describe("moves_workspace_v2 shell", () => {
+    const APPROVE = <button type="button">Approve &amp; Build</button>;
+
+    it("renders ONE slim phase rail with a non-interactive hand-off marker", () => {
+      renderFlow({ workspaceV2: true });
+      const rail = screen.getByRole("navigation", { name: "Phases" });
+      // Six phase pips, the current one marked, future ones disabled — the same
+      // navigation contract as the legacy strip, in the slim rail.
+      const pips = within(rail).getAllByRole("button");
+      expect(pips).toHaveLength(6);
+      expect(within(rail).getByRole("button", { current: "page" })).toHaveTextContent(
+        "Charter",
+      );
+      expect(pips.filter((p) => (p as HTMLButtonElement).disabled)).toHaveLength(4);
+      // The hand-off marker is a static label, not a button.
+      expect(within(rail).getByText("→ Tower")).toBeInTheDocument();
+      expect(
+        within(rail).queryByRole("button", { name: /Tower/ }),
+      ).not.toBeInTheDocument();
+      // The legacy journey tab strip is NOT rendered.
+      expect(rail.querySelector(".mcf-phasebar")).toBeNull();
+    });
+
+    it("renders the four-stage sub-step spine: CAPTURE steps, GENERATE, OUTCOME, GATE", () => {
+      renderFlow({ workspaceV2: true });
+      const steps = screen.getByRole("navigation", { name: "Steps" });
+      const kinds = Array.from(
+        steps.querySelectorAll(".mcf-v2-kind"),
+      ).map((n) => n.textContent);
+      // P1 has three capture step groups, then the generate/outcome/gate spine.
+      expect(kinds).toEqual([
+        "capture",
+        "capture",
+        "capture",
+        "generate",
+        "outcome",
+        "gate",
+      ]);
+      // The capture stages carry the phase's real step-group titles.
+      expect(within(steps).getByText("Scope the bet")).toBeInTheDocument();
+      expect(within(steps).getByText("People & decisions")).toBeInTheDocument();
+      expect(within(steps).getByText("Plan the proof")).toBeInTheDocument();
+    });
+
+    it("renders the gateExtras (workbook actions) on the gate step beside the approve control, not on the capture steps", () => {
+      renderFlow({
+        workspaceV2: true,
+        approveSlot: APPROVE,
+        gateExtras: <div data-testid="workbook-actions">Workbook</div>,
+      });
+      // Step 1 is a capture step: the workbook actions are NOT here.
+      expect(screen.queryByTestId("workbook-actions")).not.toBeInTheDocument();
+      // Walk to the last (gate) step, where the approve control lives.
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(
+        screen.getByRole("button", { name: "Approve & Build" }),
+      ).toBeInTheDocument();
+      const workbook = screen.getByTestId("workbook-actions");
+      expect(workbook).toBeInTheDocument();
+      expect(workbook.closest(".mcf-footer")).not.toBeNull();
+    });
+
+    it("marks exactly ONE spine stage aria-current, including on the gate step where GENERATE shares the emphasis", () => {
+      renderFlow({ workspaceV2: true, approveSlot: APPROVE });
+      const steps = () => screen.getByRole("navigation", { name: "Steps" });
+      const current = () =>
+        Array.from(steps().querySelectorAll('[aria-current="step"]'));
+
+      // Step 1 of 3.
+      expect(current()).toHaveLength(1);
+      expect(current()[0]).toHaveTextContent("Scope the bet");
+
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(current()).toHaveLength(1);
+      expect(current()[0]).toHaveTextContent("People & decisions");
+
+      // The last capture step: the GENERATE bridge lights beside it, so TWO
+      // stages carry the accent — but only the capture step is aria-current.
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(
+        steps().querySelectorAll(".mcf-v2-sstep.is-current"),
+      ).toHaveLength(2);
+      expect(current()).toHaveLength(1);
+      expect(current()[0]).toHaveTextContent("Plan the proof");
+      expect(current()[0].className).toContain("kind-capture");
+    });
+
+    it("gateExtras is ignored unless workspaceV2 is on", () => {
+      renderFlow({
+        approveSlot: APPROVE,
+        gateExtras: <div data-testid="workbook-actions">Workbook</div>,
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(screen.queryByTestId("workbook-actions")).not.toBeInTheDocument();
+    });
+
+    it("keeps the capture state machine: Continue still walks the steps and submits", () => {
+      const { onSubmitPhase } = renderFlow({ workspaceV2: true });
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Submit Charter" }));
+      expect(onSubmitPhase).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId("mcf-handoff")).toBeInTheDocument();
+      // The spine stays on screen at the recap, with OUTCOME current.
+      const steps = screen.getByRole("navigation", { name: "Steps" });
+      const outcome = steps.querySelector(".mcf-v2-sstep.kind-outcome");
+      expect(outcome).not.toBeNull();
+      expect(outcome).toHaveClass("is-current");
+    });
+
+    it("renders the OUTCOME findings surface in place of the recap, and opens the stage", () => {
+      const FINDINGS = (
+        <div data-testid="findings-surface">What we found this phase</div>
+      );
+      renderFlow({
+        workspaceV2: true,
+        approveSlot: APPROVE,
+        outcomeFindings: FINDINGS,
+      });
+      // The OUTCOME stage is labelled "Findings" and is navigable even though
+      // an approveSlot with no review would normally close the recap.
+      const steps = screen.getByRole("navigation", { name: "Steps" });
+      const outcome = steps.querySelector(
+        ".mcf-v2-sstep.kind-outcome",
+      ) as HTMLButtonElement;
+      expect(outcome).not.toBeNull();
+      expect(outcome.disabled).toBe(false);
+      expect(outcome).toHaveTextContent("Findings");
+      fireEvent.click(outcome);
+      // The findings surface replaces the "what you captured" recap list.
+      expect(screen.getByTestId("mcf-v2-outcome-findings")).toBeInTheDocument();
+      expect(screen.getByTestId("findings-surface")).toBeInTheDocument();
+      expect(document.querySelector(".mcf-recap")).toBeNull();
+      // The governed approve control travels onto the findings screen.
+      expect(
+        screen.getByRole("button", { name: "Approve & Build" }),
+      ).toBeInTheDocument();
+    });
+
+    it("carries gateExtras (the findings gate summary) onto the findings outcome", () => {
+      renderFlow({
+        workspaceV2: true,
+        approveSlot: APPROVE,
+        outcomeFindings: <div data-testid="findings-surface">x</div>,
+        gateExtras: <div data-testid="gate-summary">2 awaiting</div>,
+      });
+      const outcome = screen
+        .getByRole("navigation", { name: "Steps" })
+        .querySelector(".mcf-v2-sstep.kind-outcome") as HTMLButtonElement;
+      fireEvent.click(outcome);
+      expect(screen.getByTestId("gate-summary")).toBeInTheDocument();
+    });
+
+    it("keeps the hand-off recap as the OUTCOME when no findings surface is given", () => {
+      renderFlow({ workspaceV2: true });
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      fireEvent.click(screen.getByRole("button", { name: "Submit Charter" }));
+      // No findings slot → the recap renders exactly as Increment 1.
+      expect(document.querySelector(".mcf-recap")).not.toBeNull();
+      expect(
+        screen.queryByTestId("mcf-v2-outcome-findings"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("flag OFF renders the legacy journey strip and three-step bar unchanged", () => {
+      renderFlow();
+      const phases = screen.getByRole("navigation", { name: "Phases" });
+      expect(phases).toHaveClass("mcf-phasebar");
+      expect(phases).not.toHaveClass("mcf-v2-rail");
+      const steps = screen.getByRole("navigation", { name: "Steps" });
+      expect(steps).toHaveClass("mcf-stepbar");
+      expect(steps).not.toHaveClass("mcf-v2-flow");
+      expect(screen.queryByText("→ Tower")).not.toBeInTheDocument();
+    });
+  });
+
   describe("captureHandoffAccess / captureHandoffHeading", () => {
     it("calls the recap unreachable exactly in the configuration the product serves", () => {
       expect(
@@ -531,5 +714,80 @@ describe("MovesCaptureFlow — contract-derived mount set (U-567)", () => {
     // Every question of the phase is NOT on screen — the flow is three steps,
     // and a change that flattened them would pass a bare count on some phases.
     expect(rendered.length).toBeLessThan(contractSections.length);
+  });
+});
+
+describe("a phase whose grouping was repaired", () => {
+  // P3 Design re-shapes its question set once P2 confirms a solution route.
+  // This declared set matches no route variant exactly, so the step plan
+  // repairs P3's DEFAULT grouping — whose second step is exactly
+  // `operating_model` + `process_design`, neither of which is declared here.
+  // Repair preserves the step count, so that step mounts nothing.
+  const REPAIRED_P3_SECTIONS: PhaseCaptureSection[] = [
+    "solution_approach",
+    "business_change_boundary",
+    "controls_governance",
+    "architecture_integration",
+    "evidence_confidence",
+    "recommendation",
+    "estimate_assumptions",
+  ].map((key) => ({ key, label: key, description: "", required: true }));
+
+  const P3_PHASES: MovesCaptureFlowPhase[] = [
+    { phase: 3, code: "P3", name: "Design", answered: 7, total: 7, reachable: true },
+  ];
+
+  function renderRepairedP3(isSectionComplete: () => boolean) {
+    render(
+      <MovesCaptureFlow
+        phases={P3_PHASES}
+        phase={3}
+        sections={REPAIRED_P3_SECTIONS}
+        isSectionComplete={isSectionComplete}
+        renderSectionInput={(section) => (
+          <textarea aria-label={section.label} data-testid={`input-${section.key}`} />
+        )}
+        sectionRecap={() => ""}
+        onSelectPhase={() => {}}
+        onSubmitPhase={() => {}}
+        onAdvanceToNextPhase={() => {}}
+        approveSlot={<button type="button">Approve and build</button>}
+      />,
+    );
+  }
+
+  it("confirms the grouping really does leave a step with no questions", () => {
+    const plan = phaseStepPlan(3, REPAIRED_P3_SECTIONS);
+    expect(plan.basis).toBe("repaired");
+    expect(plan.groups[1].sectionKeys).toEqual([]);
+  });
+
+  it("opens a fully answered phase on its last step, where the governed approval lives", () => {
+    renderRepairedP3(() => true);
+
+    const plan = phaseStepPlan(3, REPAIRED_P3_SECTIONS);
+    const last = plan.groups[plan.groups.length - 1];
+    expect(screen.getByRole("heading", { name: last.title })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Approve and build" }),
+    ).toBeInTheDocument();
+    // Not the empty step, which is what it used to open on: a blank panel with
+    // no question on it and the approval one unexplained Continue away.
+    expect(
+      screen.queryByRole("heading", { name: plan.groups[1].title }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("still opens on the first step that has an unanswered question", () => {
+    renderRepairedP3(() => false);
+
+    const plan = phaseStepPlan(3, REPAIRED_P3_SECTIONS);
+    expect(
+      screen.getByRole("heading", { name: plan.groups[0].title }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("input-solution_approach")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Approve and build" }),
+    ).not.toBeInTheDocument();
   });
 });

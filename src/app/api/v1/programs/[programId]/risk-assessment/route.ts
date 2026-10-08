@@ -17,6 +17,7 @@ import {
   computeRiskTier,
   type RiskTierInputs,
 } from "@/lib/programs/risk-tier-scoring";
+import { resolveDeclaredProgramArchetypeId } from "@/lib/programs/discovery/evidence-readiness";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,6 +82,11 @@ export async function GET(
       ok: true,
       inputs,
       result: inputs ? computeRiskTier(inputs) : null,
+      // The DECLARED archetype, so the panel can ask the thirteen factors in
+      // that archetype's vocabulary (risk-factor-vocabulary.ts). It selects
+      // prompt WORDING only — the stored keys, the thirteen-field requirement
+      // and the score are identical whatever this resolves to.
+      archetypeId: resolveDeclaredProgramArchetypeId(program),
     });
   } catch (err) {
     return tenancyErrorResponse(err);

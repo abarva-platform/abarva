@@ -9,6 +9,12 @@ import {
   within,
 } from "@testing-library/react";
 import { SourceNewRequestFirstPage } from "./SourceNewRequestFirstPage";
+import { azureRead } from "@/lib/data-plane/azureRead";
+import { readServiceNowRequestDispositions } from "@/lib/source/intake/servicenow-request-event-authority";
+
+jest.mock("@/lib/data-plane/azureRead", () => ({
+  azureRead: { query: jest.fn() },
+}));
 
 jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({
@@ -102,6 +108,23 @@ const importedRequest = {
 };
 
 describe("SourceNewRequestFirstPage", () => {
+  it("loads queue decisions with an explicit tenant predicate", async () => {
+    const query = azureRead.query as jest.Mock;
+    query.mockResolvedValueOnce([{ request_id: "request-1", disposition_state: "declined" }]);
+    await expect(readServiceNowRequestDispositions("tenant-a")).resolves.toEqual([
+      { request_id: "request-1", disposition_state: "declined" },
+    ]);
+    expect(query).toHaveBeenCalledWith(
+      expect.stringMatching(/FROM source\.intake_request_disposition\s+WHERE tenant_key = \$1/),
+      ["tenant-a"],
+    );
+  });
+
+  it("does not turn a missing disposition relation into an empty decision list", async () => {
+    (azureRead.query as jest.Mock).mockRejectedValueOnce(new Error("relation missing"));
+    await expect(readServiceNowRequestDispositions("tenant-a")).rejects.toThrow("relation missing");
+  });
+
   it("gives the workspace the full mobile width and restores aVa below it", async () => {
     const originalMatchMedia = window.matchMedia;
     let compact = true;
@@ -525,7 +548,7 @@ describe("SourceNewRequestFirstPage", () => {
     );
 
     const queue = screen.getByRole("region", { name: "Request queue" });
-    expect(within(queue).getByText("Ready to create event")).toBeTruthy();
+    expect(within(queue).getByText("Ready for intake decision")).toBeTruthy();
     expect(
       within(queue).getByText("Reviewed by Procurement lead"),
     ).toBeTruthy();
@@ -562,5 +585,174 @@ describe("SourceNewRequestFirstPage", () => {
       within(queue).getByText("No requests are waiting for intake review."),
     ).toBeTruthy();
     expect(screen.getByText("Application services event")).toBeTruthy();
+  });
+
+  it("keeps a request visible but refuses decisions when disposition authority is unavailable", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="loaded"
+        dispositionStatus="unavailable"
+        importedRequests={[importedRequest]}
+        eventWorkspaces={[]}
+      />,
+    );
+
+    const row = screen.getByRole("listitem", {
+      name: "Request Infrastructure services request",
+    });
+    expect(within(row).getByText("Decision authority unavailable")).toBeTruthy();
+    expect(within(row).getByRole("link", { name: "Review request" })).toBeTruthy();
+    expect(within(row).queryByRole("button", { name: "Decide request" })).toBeNull();
+  });
+
+  it("records a returned request only after exact-version readback and moves it out of awaiting decision", async () => {
+    const onDecisionRecorded = jest.fn();
+    const originalFetch = global.fetch;
+    const fetchMock = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+          ok: true,
+          disposition: {
+            disposition_state: "returned",
+            source_version: "v1",
+            decided_by_user_id: "person-1",
+          },
+      }),
+    });
+    global.fetch = fetchMock;
+    try {
+      render(
+        <SourceNewRequestFirstPage
+          clientName="Example client"
+          clientKey="example-client"
+          requestQueueStatus="loaded"
+          dispositionStatus="available"
+          importedRequests={[importedRequest]}
+          eventWorkspaces={[]}
+          onDecisionRecorded={onDecisionRecorded}
+        />,
+      );
+      const row = screen.getByRole("listitem", {
+        name: "Request Infrastructure services request",
+      });
+      fireEvent.click(within(row).getByRole("button", { name: "Decide request" }));
+      fireEvent.change(within(row).getByLabelText("Decision"), {
+        target: { value: "returned" },
+      });
+      fireEvent.change(within(row).getByLabelText("Decision rationale"), {
+        target: { value: "More baseline detail is required." },
+      });
+      fireEvent.click(within(row).getByRole("button", { name: "Record decision" }));
+      await waitFor(() => expect(onDecisionRecorded).toHaveBeenCalledTimes(1));
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/source/intake/servicenow/review",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            requestId: importedRequest.requestId,
+            sourceVersion: "v1",
+            dispositionState: "returned",
+            rationale: "More baseline detail is required.",
+          }),
+        }),
+      );
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it("requires a distinct named survivor before a merge can be recorded", () => {
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="loaded"
+        dispositionStatus="available"
+        importedRequests={[importedRequest]}
+        eventWorkspaces={[]}
+      />,
+    );
+    const row = screen.getByRole("listitem", {
+      name: "Request Infrastructure services request",
+    });
+    fireEvent.click(within(row).getByRole("button", { name: "Decide request" }));
+    fireEvent.change(within(row).getByLabelText("Decision"), {
+      target: { value: "merged" },
+    });
+    fireEvent.change(within(row).getByLabelText("Decision rationale"), {
+      target: { value: "Duplicate of the active request." },
+    });
+    expect(within(row).getByRole("button", { name: "Record decision" }).hasAttribute("disabled")).toBe(true);
+    expect(within(row).getByText("Choose a different request to keep.")).toBeTruthy();
+  });
+
+  it("shows resolved reasons and the surviving request without deleting the merged-away request", () => {
+    const survivor = {
+      ...importedRequest,
+      requestId: "servicenow:sn_sourcing_request:request-2",
+      requestNumber: "SRC0010043",
+      title: "Services renewal request",
+    };
+    render(
+      <SourceNewRequestFirstPage
+        clientName="Example client"
+        clientKey="example-client"
+        requestQueueStatus="loaded"
+        dispositionStatus="available"
+        requestDispositions={[{
+          requestId: importedRequest.requestId,
+          sourceVersion: "v1",
+          state: "merged",
+          rationale: "Duplicate of the renewal request.",
+          survivingRequestId: survivor.requestId,
+        }]}
+        importedRequests={[importedRequest, survivor]}
+        eventWorkspaces={[]}
+      />,
+    );
+
+    const decided = screen.getByRole("region", { name: "Decided requests" });
+    expect(within(decided).getByText("Infrastructure services request")).toBeTruthy();
+    expect(within(decided).getByText("Duplicate of the renewal request.")).toBeTruthy();
+    expect(within(decided).getByText("Merged into Services renewal request")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Request queue" }).textContent).toContain("Services renewal request");
+  });
+
+  it("keeps a failed write in the queue and names the refusal", async () => {
+    const onDecisionRecorded = jest.fn();
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ error: "request_disposition_authority_unavailable" }),
+    });
+    try {
+      render(
+        <SourceNewRequestFirstPage
+          clientName="Example client"
+          clientKey="example-client"
+          requestQueueStatus="loaded"
+          dispositionStatus="available"
+          importedRequests={[importedRequest]}
+          eventWorkspaces={[]}
+          onDecisionRecorded={onDecisionRecorded}
+        />,
+      );
+      const row = screen.getByRole("listitem", {
+        name: "Request Infrastructure services request",
+      });
+      fireEvent.click(within(row).getByRole("button", { name: "Decide request" }));
+      fireEvent.change(within(row).getByLabelText("Decision"), { target: { value: "returned" } });
+      fireEvent.change(within(row).getByLabelText("Decision rationale"), {
+        target: { value: "More baseline detail is required." },
+      });
+      fireEvent.click(within(row).getByRole("button", { name: "Record decision" }));
+      await waitFor(() => expect(within(row).getByRole("alert")).toBeTruthy());
+      expect(onDecisionRecorded).not.toHaveBeenCalled();
+      expect(screen.queryByRole("region", { name: "Decided requests" })).toBeNull();
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 });

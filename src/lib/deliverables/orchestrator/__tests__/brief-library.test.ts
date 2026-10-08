@@ -18,6 +18,10 @@ import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "../briefs/deliverable-structures";
+import {
+  ARCHETYPE_ASSET_WITHHELD,
+  withholdsArchetypeAssets,
+} from "../briefs/archetype-asset-withholding";
 import type { DeliverableStructure } from "../briefs/deliverable-structures";
 import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
@@ -723,15 +727,17 @@ const STRUCTURE_DECLARED_TABLES = DELIVERABLE_STRUCTURES.filter(
 
 describe("structure-declared expected tables", () => {
   it("declares tables on the deliverable types built around one, and no others", () => {
-    // Four structures, not an empty declaration anywhere: a structure with no
+    // Six structures, not an empty declaration anywhere: a structure with no
     // type-specific table must not carry an empty array, because that changes
     // nothing and no case could kill it.
     expect(
       STRUCTURE_DECLARED_TABLES.map((s) => `${s.module}/${s.deliverableType}`).sort(),
     ).toEqual([
       "moves/estimate_model",
+      "moves/process_change_estimate_brief",
       "moves/readiness_and_change_plan",
       "moves/requirements_traceability",
+      "moves/value_measurement_contract",
       "source/evaluation_workbook",
     ]);
     for (const s of DELIVERABLE_STRUCTURES)
@@ -763,6 +769,24 @@ describe("structure-declared expected tables", () => {
       ],
       ["moves", "estimate_model", ["estimate_basis_buildup"]],
       ["moves", "readiness_and_change_plan", ["stakeholder_decision_rights"]],
+      [
+        "moves",
+        "process_change_estimate_brief",
+        [
+          "workflow_delta_register",
+          "change_sizing_basis",
+          "adoption_accountability",
+        ],
+      ],
+      [
+        "moves",
+        "value_measurement_contract",
+        [
+          "committed_outcome_register",
+          "measurement_method_register",
+          "outcome_accountability",
+        ],
+      ],
       ["source", "evaluation_workbook", ["evaluation_scoring_model"]],
     ];
     expect(DECLARED.map(([m, d]) => `${m}/${d}`).sort()).toEqual(
@@ -799,8 +823,11 @@ describe("structure-declared expected tables", () => {
 
   it("loses no table the archetype pack already supplied", () => {
     for (const s of DELIVERABLE_STRUCTURES) {
-      if (s.deliverableType === "charter" || s.deliverableType === "design_workshop_guide")
-        continue;
+      // The withheld set is declared, with a reason per type, in
+      // archetype-asset-withholding.ts; reading it here keeps this skip list
+      // from drifting as the set grows. The exact membership is pinned as a
+      // literal by moves-phase-session-guide-structures.
+      if (withholdsArchetypeAssets(s.deliverableType)) continue;
       if (s.deliverableType === "discovery_plan") continue; // routed to its own builder
       for (const a of ALL_ARCHETYPES) {
         const keys = new Set(
@@ -814,8 +841,12 @@ describe("structure-declared expected tables", () => {
     }
   });
 
-  it("still withholds the ARCHETYPE's tables from the approval instruments", () => {
-    for (const deliverableType of ["charter", "design_workshop_guide"])
+  it("still withholds the ARCHETYPE's tables from every withheld type", () => {
+    // Every declared member, not a pair written out here: a type added to the
+    // withheld set without its tables actually being withheld would otherwise
+    // pass unnoticed.
+    expect(ARCHETYPE_ASSET_WITHHELD.length).toBeGreaterThan(1);
+    for (const { deliverableType } of ARCHETYPE_ASSET_WITHHELD)
       for (const a of ALL_ARCHETYPES)
         expect(
           getArtifactBrief(req({ module: "moves", deliverableType, useCaseArchetype: a }))
@@ -825,7 +856,7 @@ describe("structure-declared expected tables", () => {
 
   it("makes a deliverable type's table set differ from its neighbours' under one archetype", () => {
     // The defect, stated as the number it produced. Under a single archetype
-    // the four declaring structures now differ from the generic set; before
+    // the five declaring structures now differ from the generic set; before
     // this field every non-withheld structure shared one signature.
     const a = "AMS_IT_OUTSOURCING";
     const generic = tableSignature("moves", "business_case", a);
@@ -838,14 +869,16 @@ describe("structure-declared expected tables", () => {
         ALL_ARCHETYPES.map((arch) => tableSignature(s.module, s.deliverableType, arch)),
       ),
     );
-    // 32 over the six registered archetypes, and it decomposes exactly: one
+    // 38 over the six registered archetypes, and it decomposes exactly: one
     // empty signature shared by the two approval instruments that withhold
     // tables, one for the discovery plan its own builder serves, one generic
     // signature per archetype (6), and one per declaring structure per
-    // archetype (4 x 6 = 24). Registering a sixth archetype pack therefore
-    // added five, from 27. Dropping any structure's declaration collapses it
-    // back toward the generic set and fails this case.
-    expect(distinct.size).toBe(32);
+    // archetype (5 x 6 = 30). Registering a sixth archetype pack added five,
+    // from 27; the fifth declaring structure added six, from 32; this change's
+    // sixth added six more, from 38 — one per archetype, which is what a
+    // type-specific table set means. Dropping any structure's declaration
+    // collapses it back toward the generic set and fails this case.
+    expect(distinct.size).toBe(44);
   });
 });
 

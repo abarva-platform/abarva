@@ -65,6 +65,17 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  approvedEvidenceBasisRefusalCode,
+  classifyApprovedEvidenceBasisRefusal,
+  describeApprovedEvidenceBasisRefusal,
+  unevaluableApprovedEvidenceBasisRefusal,
+} from "@/lib/programs/approved-evidence-basis-refusal";
+import {
+  stampApprovedEvidenceLineage,
+  type ApprovedEvidenceLineageStamp,
+} from "@/lib/programs/deliverables/approved-evidence-lineage";
+import { resolveApprovedEvidenceBasisPhaseScope } from "@/lib/programs/approved-evidence-basis-phase-scope";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 // Union of every deliberately registered/agent-authorable deliverable type
@@ -267,6 +278,14 @@ export async function POST(
       DELIVERABLE_REGISTRY.find(
         (spec) => spec.deliverableTypeKey === deliverableTypeKey,
       )?.phase ?? 0;
+    // A separate question from the phase this artifact is STAMPED with: whether
+    // an approved-evidence currency comparison can run for this key at all.
+    // `isApprovedMoveEvidenceBasisCurrent` refuses to compare outside P1-P5 and
+    // answers `false` there for every input, so that `false` may not be read as
+    // "superseded". Owned by the component that owns the bounds; this route
+    // used to confine only the lower one.
+    const evidenceBasisPhaseScope =
+      resolveApprovedEvidenceBasisPhaseScope(deliverableTypeKey);
 
     if (!RECOGNIZED_DELIVERABLE_TYPE_KEYS.has(deliverableTypeKey)) {
       return Response.json(
@@ -353,14 +372,11 @@ export async function POST(
     > | null = null;
     let readinessScannedArtifacts: GeneratedOfficeScanArtifact[] = [];
     let generatedApprovalLineage:
-      | {
+      | ({
           source: "moves_program_generate";
           generatedArtifactId?: string;
-          evidenceSnapshotHash: string;
-          phaseEvidenceSnapshotHash: string;
-          evidenceSnapshotScope: "phase";
           approvalMode: "approve_generated_deliverable_as_is";
-        }
+        } & ApprovedEvidenceLineageStamp)
       | undefined;
     let generatedApprovalArtifactId: string | undefined;
 
@@ -415,29 +431,45 @@ export async function POST(
             : typeof versionStructuredData.evidenceSnapshotHash === "string"
               ? versionStructuredData.evidenceSnapshotHash
               : null;
-        if (
-          deliverablePhase < 1 ||
-          !evidenceSnapshot ||
-          !isApprovedMoveEvidenceBasisCurrent({
-            snapshot: evidenceSnapshot,
-            phase: deliverablePhase,
-            recordedRevision,
-            scope:
-              typeof versionStructuredData.evidenceSnapshotScope === "string"
-                ? versionStructuredData.evidenceSnapshotScope
-                : null,
-            generatedAt:
-              typeof (versionRow as { created_at?: string | null } | null)
-                ?.created_at === "string"
-                ? (versionRow as { created_at: string }).created_at
-                : null,
-          })
-        ) {
+        const evidenceBasisRefusal = classifyApprovedEvidenceBasisRefusal({
+          basisEvaluable:
+            Boolean(evidenceSnapshot) && evidenceBasisPhaseScope.evaluable,
+          cause: !ctx.clientKey
+            ? "tenant_scope_unresolved"
+            : !evidenceBasisPhaseScope.evaluable
+              ? evidenceBasisPhaseScope.cause
+              : "snapshot_unreadable",
+          recordedRevision,
+          basisIsCurrent:
+            Boolean(evidenceSnapshot) &&
+            isApprovedMoveEvidenceBasisCurrent({
+              snapshot: evidenceSnapshot,
+              phase: deliverablePhase,
+              recordedRevision,
+              scope:
+                typeof versionStructuredData.evidenceSnapshotScope === "string"
+                  ? versionStructuredData.evidenceSnapshotScope
+                  : null,
+              generatedAt:
+                typeof (versionRow as { created_at?: string | null } | null)
+                  ?.created_at === "string"
+                  ? (versionRow as { created_at: string }).created_at
+                  : null,
+            }),
+        });
+        // The `!evidenceSnapshot` disjunct narrows the snapshot for the lineage
+        // stamp below; a null snapshot already classifies as `basis_unevaluable`,
+        // so the fallback resolves to that same refusal.
+        if (evidenceBasisRefusal || !evidenceSnapshot) {
+          const refusal =
+            evidenceBasisRefusal ?? unevaluableApprovedEvidenceBasisRefusal();
           return Response.json(
             {
-              error: "generated_artifact_evidence_not_current",
-              detail:
-                "This generated version is not bound to the current approved evidence. Rebuild it from the current evidence set before approval.",
+              error: approvedEvidenceBasisRefusalCode(refusal),
+              detail: describeApprovedEvidenceBasisRefusal(
+                refusal,
+                "approval",
+              ),
             },
             { status: 409 },
           );
@@ -482,12 +514,16 @@ export async function POST(
                     versionStructuredData.generated_artifact_id,
                 }
               : {}),
-          evidenceSnapshotHash: evidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-            evidenceSnapshot,
-            deliverablePhase,
-          ),
-          evidenceSnapshotScope: "phase",
+          // Re-read at approval time, so the moment is stamped with them. Without
+          // it the deliverable's own currency check cannot run and this approval
+          // reads as stale wherever no artifact row is linked.
+          ...stampApprovedEvidenceLineage({
+            evidenceSnapshotHash: evidenceSnapshot.revision,
+            phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+              evidenceSnapshot,
+              deliverablePhase,
+            ),
+          }),
           approvalMode: "approve_generated_deliverable_as_is",
         };
       }

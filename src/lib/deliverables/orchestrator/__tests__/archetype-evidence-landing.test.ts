@@ -18,6 +18,7 @@ import {
   archetypeEvidenceLandingReport,
   getArtifactBrief,
 } from "../artifact-brief-registry";
+import { buildSectionDrivenEvidenceQueries } from "../generate-service";
 import { DELIVERABLE_STRUCTURES } from "../briefs/deliverable-structures";
 import { ARCHETYPE_PACKS, getArchetypePack } from "../briefs/archetype-packs";
 import { getDiscoveryBlueprint } from "../briefs/discovery-blueprint";
@@ -71,6 +72,12 @@ describe("a declared archetype's evidence families reach the declared sections",
     [
       "readiness_and_change_plan",
       ["stakeholders_decision_rights", "dependencies_risks"],
+    ],
+    // Added later than the rest: this one was classified as deliberately
+    // ungrounded rather than as a missed landing site. See the structure.
+    [
+      "design_workshop_guide",
+      ["discovery_carry_forward", "evidence_carry_forward"],
     ],
   ];
 
@@ -254,15 +261,31 @@ describe("the archetype evidence landing report", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("grounds without the assets only where a dedicated builder serves the brief", () => {
+  it("grounds without the assets only where that is the stated shape", () => {
     // The other direction — grounded sections, no pack assets — is legitimate
-    // exactly once: `getArtifactBrief` sends moves/discovery_plan to its own
-    // builder, which grounds `evidence_requests` from the discovery BLUEPRINT
-    // and picks its own assets. That reads as grounded-by-the-pack only for an
-    // archetype whose pack NAMES the blueprint's family ids, which is a product
-    // decision one archetype has taken (see the pack module's header). Pinned
-    // as the single permitted shape so a composed brief losing its assets
-    // cannot hide here.
+    // in exactly two shapes, and both are a decision somewhere in the source
+    // rather than an accident:
+    //
+    //  1. moves/discovery_plan. `getArtifactBrief` sends it to its own builder,
+    //     which grounds `evidence_requests` from the discovery BLUEPRINT and
+    //     picks its own assets. That reads as grounded-by-the-pack only for an
+    //     archetype whose pack NAMES the blueprint's family ids, which is a
+    //     product decision one archetype has taken (see the pack header).
+    //
+    //  2. All FOUR phase facilitation guides — the P2 design workshop guide,
+    //     the P3 planning workshop guide, the P4 mobilization workshop guide
+    //     and the P5 execution kickoff guide — for EVERY archetype.
+    //     `composeBrief` withholds the pack's exhibits and tables from each by
+    //     name (`withholdsArchetypeAssets`, archetype-asset-withholding.ts)
+    //     because a session plan is not a deck — while each one's
+    //     carry-forward and evidence sections do assert client facts out of
+    //     accepted evidence and so declare landing sites. The two questions are
+    //     independent, and these rows are what that looks like. The P3 guide
+    //     was previously absent from this list because it had no structure at
+    //     all and so never reached `composeBrief`; it now has one.
+    //
+    // Written out per archetype rather than filtered, so a composed brief
+    // silently losing its assets cannot hide here.
     const groundedWithoutAssets: string[] = [];
     for (const archetype of PACK_ARCHETYPES)
       for (const r of archetypeEvidenceLandingReport(probe(archetype)))
@@ -271,7 +294,31 @@ describe("the archetype evidence landing report", () => {
             `${archetype} ${r.module}/${r.deliverableType}`,
           );
     expect(groundedWithoutAssets).toEqual([
+      "AMS_IT_OUTSOURCING moves/design_workshop_guide",
+      "AMS_IT_OUTSOURCING moves/planning_workshop_guide",
+      "AMS_IT_OUTSOURCING moves/mobilization_workshop_guide",
+      "AMS_IT_OUTSOURCING moves/execution_kickoff_guide",
+      "ERP_SI_SELECTION moves/design_workshop_guide",
+      "ERP_SI_SELECTION moves/planning_workshop_guide",
+      "ERP_SI_SELECTION moves/mobilization_workshop_guide",
+      "ERP_SI_SELECTION moves/execution_kickoff_guide",
+      "CLOUD_MODERNIZATION moves/design_workshop_guide",
+      "CLOUD_MODERNIZATION moves/planning_workshop_guide",
+      "CLOUD_MODERNIZATION moves/mobilization_workshop_guide",
+      "CLOUD_MODERNIZATION moves/execution_kickoff_guide",
+      "AI_PDLC moves/design_workshop_guide",
+      "AI_PDLC moves/planning_workshop_guide",
+      "AI_PDLC moves/mobilization_workshop_guide",
+      "AI_PDLC moves/execution_kickoff_guide",
+      "ANALYTICS_CAPABILITY_REPATRIATION moves/design_workshop_guide",
+      "ANALYTICS_CAPABILITY_REPATRIATION moves/planning_workshop_guide",
+      "ANALYTICS_CAPABILITY_REPATRIATION moves/mobilization_workshop_guide",
+      "ANALYTICS_CAPABILITY_REPATRIATION moves/execution_kickoff_guide",
       "GOVERNED_DATA_FOUNDATION moves/discovery_plan",
+      "GOVERNED_DATA_FOUNDATION moves/design_workshop_guide",
+      "GOVERNED_DATA_FOUNDATION moves/planning_workshop_guide",
+      "GOVERNED_DATA_FOUNDATION moves/mobilization_workshop_guide",
+      "GOVERNED_DATA_FOUNDATION moves/execution_kickoff_guide",
     ]);
   });
 
@@ -280,10 +327,21 @@ describe("the archetype evidence landing report", () => {
       const nowhere = archetypeEvidenceLandingReport(probe(archetype))
         .filter((r) => r.landsNowhere)
         .map((r) => `${r.module}/${r.deliverableType}`);
-      // A charter authorizes discovery and must not pre-empt P2's evidence; a
-      // design workshop guide is a facilitation template; the discovery plan is
-      // grounded by the discovery blueprint instead. Anything else appearing
-      // here is an archetype reaching a client-fact section with nothing.
+      // Only two shapes belong here, and the charter is the only one that is
+      // deliberate for its own sake: it authorizes discovery and its sections
+      // instruct the model not to assert P2 findings, so the archetype's
+      // families would only widen its retrieval. The discovery plan is here
+      // because it is grounded by the discovery BLUEPRINT instead, from its
+      // own builder. Anything else appearing here is an archetype reaching a
+      // client-fact section with nothing.
+      //
+      // The design workshop guide used to sit on this list as "a facilitation
+      // template". That lumped it with the charter, and the two are opposites:
+      // the guide's purpose line is "using accepted discovery evidence" and
+      // two of its sections exist to enumerate that evidence. It now declares
+      // those two as landing sites and so is absent here. Withholding the
+      // pack's EXHIBITS from a facilitation document is still right and still
+      // holds; it is the case above.
       //
       // The discovery plan drops off this list for the one archetype whose
       // pack names the blueprint's own family ids: its evidence_requests
@@ -292,12 +350,8 @@ describe("the archetype evidence landing report", () => {
       // filtered, so a NEW archetype cannot join the shared-id case silently.
       expect(nowhere).toEqual(
         archetype === "GOVERNED_DATA_FOUNDATION"
-          ? ["moves/charter", "moves/design_workshop_guide"]
-          : [
-              "moves/charter",
-              "moves/discovery_plan",
-              "moves/design_workshop_guide",
-            ],
+          ? ["moves/charter"]
+          : ["moves/charter", "moves/discovery_plan"],
       );
     }
   });
@@ -445,4 +499,103 @@ describe("the landing sites declared for a deliverable that already had one", ()
       }
     },
   );
+});
+
+// ── The declaration has to reach the retriever, not just the brief ──
+//
+// A landing site is only worth declaring because a section's families are one
+// of the inputs `buildSectionDrivenEvidenceQueries` builds that section's
+// retrieval query from. Asserting on the brief alone would pass on a change
+// that stopped feeding families to the retriever at all, which is the whole
+// point of them: the approved P2 evidence is filed under the archetype's
+// family ids, so a query that does not name them asks the corpus for
+// `source_register` / `evidence_gaps` / `baseline_metrics` instead and comes
+// back with a plausible answer that cites none of the Move's evidence.
+describe("the design workshop guide's retrieval reaches the archetype's evidence", () => {
+  const GDF = "governed_data_foundation";
+  // Written out rather than mapped off the pack, so a renamed or dropped
+  // family in the pack fails here instead of quietly changing what is asserted.
+  const GDF_FAMILIES = [
+    "data_governance_ownership",
+    "semantic_layer_certification",
+    "data_lineage_audit_trail",
+    "data_quality_rules",
+    "source_system_data_access",
+    "platform_architecture_readiness",
+    "master_identity_resolution",
+    "privacy_security_controls",
+    "model_risk_responsible_ai_controls",
+    "measurement_owner_cadence",
+    "finance_baseline_value_plan",
+  ];
+
+  const briefFor = (archetype: string, deliverableType: string) =>
+    getArtifactBrief({
+      module: "moves",
+      deliverableType,
+      useCaseArchetype: archetype,
+      audience: "executive",
+      decisionContext: "whether to proceed",
+    } as unknown as DeliverableIntelligenceRequest);
+
+  const queriesFor = (archetype: string, deliverableType: string) =>
+    buildSectionDrivenEvidenceQueries(
+      { deliverableType, useCaseArchetype: archetype },
+      briefFor(archetype, deliverableType),
+    );
+
+  it("names every one of the declared archetype's families in its searches", () => {
+    const queries = queriesFor(GDF, "design_workshop_guide").join("\n");
+    for (const family of GDF_FAMILIES) expect(queries).toContain(family);
+  });
+
+  it("keeps the guide's own generic families alongside them", () => {
+    // The enrichment is additive. A section losing `source_register` while
+    // gaining eleven archetype families would read as a success above.
+    const families = familiesOf("design_workshop_guide", "evidence_carry_forward");
+    for (const own of [
+      "source_register",
+      "evidence_gaps",
+      "baseline_metrics",
+      "technology_landscape",
+    ])
+      expect(families).toContain(own);
+  });
+
+  it("leaves the guide's logistics and gate sections out of the retrieval widening", () => {
+    // `design_session_plan` plans sessions and `design_gate_readiness` states
+    // what is still missing. Neither enumerates accepted evidence, so neither
+    // should pull eleven families of it. Asserted on the SECTION's families
+    // rather than the joined query, because the archetype id is in every
+    // query's prefix and would make a substring check on the query pass
+    // trivially for the wrong reason.
+    for (const key of ["design_session_plan", "design_gate_readiness"]) {
+      const families = familiesOf("design_workshop_guide", key);
+      for (const family of GDF_FAMILIES) expect(families).not.toContain(family);
+    }
+  });
+
+  it("does not widen the charter's searches the same way", () => {
+    // The contrast that makes the guide's case a decision rather than a sweep.
+    // The charter's sections instruct the model not to assert P2 findings, so
+    // it stays ungrounded by the pack — and its retrieval stays narrow with it.
+    const queries = queriesFor(GDF, "charter").join("\n");
+    for (const family of GDF_FAMILIES) expect(queries).not.toContain(family);
+  });
+
+  it("still withholds the archetype's exhibits and tables from the guide", () => {
+    // Grounding and asset-carrying are separate decisions; this one is
+    // unchanged. A facilitation document does not carry a deck's exhibits.
+    const served = briefFor(GDF, "design_workshop_guide");
+    const packAssetKeys = [
+      ...getArchetypePack(GDF)!.exhibits.map((e) => e.key),
+      ...getArchetypePack(GDF)!.tables.map((t) => t.key),
+    ];
+    expect(packAssetKeys.length).toBeGreaterThan(0);
+    const servedKeys = [
+      ...served.expectedExhibits,
+      ...served.expectedTables,
+    ].map((a) => a.key);
+    for (const key of packAssetKeys) expect(servedKeys).not.toContain(key);
+  });
 });

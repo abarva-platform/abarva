@@ -62,6 +62,10 @@ const loadApprovedSolutionApproach: jest.Mock = jest.fn(async () => ({
   },
 }));
 const getModuleState: jest.Mock = jest.fn(async () => []);
+// The program row the route reads to resolve what archetype a human DECLARED
+// for this Move. Default: a Move that declares nothing, so the archetype the
+// extract receives is whatever the request carried.
+const getProgramById: jest.Mock = jest.fn(async () => null);
 let evidencePacketsForTest: MoveEvidenceNeedPacket[] = [];
 const buildMoveEvidenceNeedPackets = jest.fn(
   (input: { moveId?: string; currentPhase?: number }) => {
@@ -134,6 +138,17 @@ const formatAcceptedStageReadinessContextForPrompt = jest.fn(
     return "ACCEPTED STAGE READINESS RESPONSE: contact_center_kpis is supported by ev-kpi.";
   },
 );
+// The PROMPT reading is a different policy from the gate reading above: it
+// accepts a review that is still open. Separate mocks so a case can drive the
+// two apart, which is the only thing that pins the route to the right one.
+const loadStageReadinessPromptContext: jest.Mock = jest.fn(async (...args: unknown[]) => {
+  void args;
+  return null;
+});
+const formatStageReadinessPromptContext = jest.fn((...args: unknown[]) => {
+  void args;
+  return "ACCEPTED STAGE READINESS RESPONSE: contact_center_kpis is supported by ev-kpi.";
+});
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const listApprovedPhaseEvidence: jest.Mock = jest.fn(async () => [
   {
@@ -274,12 +289,19 @@ jest.mock("@/lib/programs/approved-solution-approach", () => ({
 }));
 jest.mock("@/lib/programs/queries", () => ({
   getModuleState: (...args: unknown[]) => getModuleState(...args),
+  getProgramById: (...args: unknown[]) => getProgramById(...args),
 }));
 jest.mock("@/lib/programs/approved-phase-evidence", () => ({
   listApprovedPhaseEvidence: (...args: unknown[]) =>
     listApprovedPhaseEvidence(...args),
 }));
 jest.mock("@/lib/programs/discovery/evidence-readiness", () => ({
+  // `resolveDeclaredProgramArchetypeId` is deliberately NOT stubbed: it is the
+  // shared declaration-precedence rule, and a stub here would let the route keep
+  // its wiring while silently applying a different rule than production does.
+  resolveDeclaredProgramArchetypeId: jest.requireActual(
+    "@/lib/programs/discovery/evidence-readiness",
+  ).resolveDeclaredProgramArchetypeId,
   loadDiscoveryEvidenceReadiness: () => loadDiscoveryEvidenceReadiness(),
 }));
 jest.mock(
@@ -295,6 +317,34 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
   formatAcceptedStageReadinessContextForPrompt: (...args: unknown[]) =>
     formatAcceptedStageReadinessContextForPrompt(...args),
 }));
+jest.mock("@/lib/programs/stage-readiness-workbooks/prompt-context", () => ({
+  loadStageReadinessPromptContext: (...args: unknown[]) =>
+    loadStageReadinessPromptContext(...args),
+  formatStageReadinessPromptContext: (...args: unknown[]) =>
+    formatStageReadinessPromptContext(...args),
+}));
+// The route reads the stored transition review from two modules, each with its
+// own policy: the gate reading applies a required-only test, the prompt reading
+// takes every accepted answer whether or not the review is finished. By default
+// one stored review stands behind the gate reading, in the same call order, so
+// every `mockResolvedValueOnce` below still lands there — and a test can drive
+// the readings apart to pin which module each caller uses.
+const loadStageReadinessGateProposals: jest.Mock = jest.fn(
+  async (...args: unknown[]) => {
+    const context = (await loadAcceptedStageReadinessContext(...args)) as
+      | { proposals?: unknown[] }
+      | null
+      | undefined;
+    return context?.proposals ?? null;
+  },
+);
+jest.mock(
+  "@/lib/programs/stage-readiness-workbooks/gate-proposal-context",
+  () => ({
+    loadStageReadinessGateProposals: (...args: unknown[]) =>
+      loadStageReadinessGateProposals(...args),
+  }),
+);
 
 import { POST } from "../route";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
@@ -324,6 +374,8 @@ beforeEach(() => {
   loadApprovedSolutionApproach.mockClear();
   getModuleState.mockClear();
   getModuleState.mockResolvedValue(confirmedRouteModules("process_change"));
+  getProgramById.mockClear();
+  getProgramById.mockResolvedValue(null);
   listApprovedPhaseEvidence.mockClear();
   evidencePacketsForTest = [];
   buildMoveEvidenceNeedPackets.mockClear();
@@ -350,6 +402,39 @@ beforeEach(() => {
     readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
   });
   formatAcceptedStageReadinessContextForPrompt.mockClear();
+  loadStageReadinessPromptContext.mockClear();
+  loadStageReadinessPromptContext.mockResolvedValue({
+    context: {
+      moveId: "move-1",
+      sourcePhase: 1,
+      targetPhase: 2,
+      reviewArtifactId: "review-1",
+      reviewArtifactVersion: 1,
+      proposals: [],
+      acceptedResponses: [
+        {
+          proposalId: "proposal-kpi",
+          questionId: "q_kpi_baseline",
+          dimensionId: "contact_center_kpis",
+          requirement: "required",
+          sourceClass: "client_metric",
+          question: "Provide the KPI baseline.",
+          response: "Confirmed",
+          context: "",
+          evidenceOrSource: "Existing evidence: ev-kpi",
+          owner: "Operations",
+          workbookLocation: { sheetName: "Performance", rowNumber: 2 },
+          answerState: "answered",
+          acceptedAt: "2026-10-07T00:00:00.000Z",
+          acceptedBy: "user-1",
+        },
+      ],
+      readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+    },
+    openResponseCount: 0,
+    reviewOpen: false,
+  });
+  formatStageReadinessPromptContext.mockClear();
   mockLoadApprovedMoveEvidenceSnapshot.mockReset();
   mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
     tenantKey: "skyharbor-air",
@@ -486,6 +571,44 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(createMoveContextExtract).not.toHaveBeenCalled();
     expect(createCalls).toHaveLength(0);
     expect(sequentialCalls).toHaveLength(0);
+  });
+
+  it("queues a phase build from the review as it stands, not only from a finished one", async () => {
+    // Every REQUIRED response accepted, answered and sourced, and one
+    // RECOMMENDED response left blank — a state the review surface cannot
+    // decide, so it stays pending. The finished-only reading returns null for
+    // it, and a null gate reading means no workbook at all, so the build stayed
+    // held by a workbook that was complete for everything the gate requires.
+    loadAcceptedStageReadinessContext.mockResolvedValue(null);
+    loadStageReadinessGateProposals.mockResolvedValueOnce([
+      {
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required",
+        answerState: "answered",
+        disposition: "accepted",
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+      {
+        questionId: "q_optional_context",
+        dimensionId: "nice_to_have_context",
+        requirement: "recommended",
+        answerState: "blank",
+        disposition: "pending",
+        evidenceOrSource: "",
+      },
+    ]);
+
+    const res = await POST(
+      req({ moveId: "m-p2", phase: 2, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(202);
+    expect(loadStageReadinessGateProposals).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-p2",
+      3,
+    );
   });
 
   it("blocks a phase build when the accepted workbook still marks required evidence unknown", async () => {
@@ -803,6 +926,127 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(decisionContext).toContain("named human reviewer");
   });
 
+  it("hands the prompt a transition review that is still open for review", async () => {
+    // The two readings driven apart: the gate reading (target phase + 1) stays
+    // satisfied, while the finished-review policy applied to THIS phase's own
+    // transition refuses — which is what a single undecided response does. The
+    // accepted answers must still reach the job, so reverting the prompt
+    // reading to that policy fails this case.
+    loadAcceptedStageReadinessContext.mockImplementation(
+      async (...args: unknown[]) =>
+        args[2] === 5
+          ? {
+              moveId: "move-1",
+              sourcePhase: 4,
+              targetPhase: 5,
+              reviewArtifactId: "review-gate",
+              reviewArtifactVersion: 1,
+              proposals: [
+                {
+                  proposalId: "proposal-kpi",
+                  questionId: "q_kpi_baseline",
+                  dimensionId: "contact_center_kpis",
+                  requirement: "required",
+                  answerState: "answered",
+                  disposition: "accepted",
+                  evidenceOrSource: "Existing evidence: ev-kpi",
+                },
+              ],
+              acceptedResponses: [],
+              readiness: {
+                ready: 1,
+                partial: 0,
+                insufficientEvidence: 0,
+                unknown: 0,
+              },
+            }
+          : null,
+    );
+    formatStageReadinessPromptContext.mockReturnValue(
+      "ACCEPTED STAGE READINESS RESPONSE: one response is still open for review.",
+    );
+
+    const res = await POST(
+      req({ moveId: "m-p4-technical", phase: 4, useCaseArchetype: "ams" }),
+    );
+
+    expect(res.status).toBe(202);
+    expect(loadStageReadinessPromptContext).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-p4-technical",
+      4,
+    );
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
+    expect(decisionContext).toContain(
+      "one response is still open for review",
+    );
+  });
+
+  // P1 Charter is the FIRST deliverable-generating phase, and its preceding
+  // transition is the P0 to P1 workbook the P0 screen offers, serves and
+  // reviews. The prompt window used to start at P2, so every accepted answer on
+  // that workbook was dropped from the charter build with nothing reporting it.
+  it("reads the P0 to P1 review when building P1, the first generating phase", async () => {
+    loadStageReadinessPromptContext.mockResolvedValue({
+      context: {
+        moveId: "m-1",
+        sourcePhase: 0,
+        targetPhase: 1,
+        reviewArtifactId: "a-p0-p1",
+        reviewArtifactVersion: 2,
+        proposals: [],
+        acceptedResponses: [
+          { questionId: "q1", answer: "Named sponsor", source: "charter.pdf" },
+        ],
+        readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+      },
+      openResponseCount: 0,
+      reviewOpen: false,
+    });
+    formatStageReadinessPromptContext.mockReturnValue(
+      "ACCEPTED STAGE READINESS RESPONSE: Named sponsor.",
+    );
+
+    const res = await POST(
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    // Keyed by the phase being generated, which is the review's targetPhase.
+    expect(loadStageReadinessPromptContext).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-1",
+      1,
+    );
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
+    expect(decisionContext).toContain(
+      "ACCEPTED STAGE READINESS RESPONSE: Named sponsor.",
+    );
+  });
+
+  it("asks for no prompt block when the transition has no review at all", async () => {
+    loadStageReadinessPromptContext.mockResolvedValue(null);
+    formatStageReadinessPromptContext.mockReturnValue("");
+
+    const res = await POST(
+      req({ moveId: "m-p4-technical", phase: 4, useCaseArchetype: "ams" }),
+    );
+
+    expect(res.status).toBe(202);
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
+    expect(decisionContext).not.toContain("ACCEPTED STAGE READINESS RESPONSE");
+  });
+
   it("separates legitimate P3 reruns with an explicit generation attempt id", async () => {
     const first = await POST(
       req({
@@ -1110,6 +1354,130 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(res.status).toBe(500);
   });
 
+  // The archetype this route is HANDED is the Move's coarse `program.archetype`,
+  // and none of its five possible values names a discovery blueprint. The Move's
+  // DECLARATION has to be resolved here, server-side, or the extract grades the
+  // Move's evidence against a framework nobody declared. These pin the
+  // PASS-THROUGH: the rule itself is covered in
+  // `src/lib/programs/__tests__/move-generation-declared-archetype.test.ts`, and
+  // a rule proven only there would stay green if these two lines were dropped.
+  it("resolves the Move's declared archetype and hands it to the context extract", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    });
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createMoveContextExtract).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // unchanged: the request's own archetype still travels as-is
+        useCaseArchetype: "platform_modernization",
+        declaredArchetypeId: "governed_data_foundation",
+      }),
+    );
+    expect(getProgramById).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-1",
+    );
+  });
+
+  it("hands over the coarse archetype as the inference seed when the Move declares nothing", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: null,
+    });
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createMoveContextExtract).toHaveBeenCalledWith(
+      expect.objectContaining({
+        declaredArchetypeId: "platform_modernization",
+      }),
+    );
+  });
+
+  // The worker rebuilds the orchestrator request from the PERSISTED PAYLOAD
+  // alone, so it never reaches the in-process precedence rule in
+  // `build-request.ts`. These pin the payload end: the rule itself is covered
+  // in `deliverables/orchestrated/__tests__/phase-build-use-case-archetype.test.ts`,
+  // and a rule proven only there would stay green if this route went back to
+  // posting the coarse label straight into the job.
+  it("carries the declared archetype into the queued job payload, not the posted legacy label", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    });
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const call of createCalls) {
+      expect(
+        (call.jobPayload as { useCaseArchetype: string }).useCaseArchetype,
+      ).toBe("governed_data_foundation");
+      // the run row records the archetype the build actually generated against
+      expect(call.archetype).toBe("governed_data_foundation");
+    }
+  });
+
+  it("leaves the posted archetype in the payload when the Move declares no archetype", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: null,
+    });
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const call of createCalls) {
+      expect(
+        (call.jobPayload as { useCaseArchetype: string }).useCaseArchetype,
+      ).toBe("platform_modernization");
+    }
+  });
+
+  it("keeps a posted archetype that already names one, over a differing declaration", async () => {
+    getProgramById.mockResolvedValue({
+      id: "m-1",
+      archetype: "platform_modernization",
+      charter: { classification: { archetype: "governed_data_foundation" } },
+    });
+    const res = await POST(
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "healthcare_contact_center_agent_assist",
+      }),
+    );
+    expect(res.status).toBe(202);
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const call of createCalls) {
+      expect(
+        (call.jobPayload as { useCaseArchetype: string }).useCaseArchetype,
+      ).toBe("healthcare_contact_center_agent_assist");
+    }
+  });
+
+  it("still enqueues when the program read fails — a lost declaration must not fail the build", async () => {
+    getProgramById.mockRejectedValue(new Error("program store unavailable"));
+    const res = await POST(
+      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+    );
+    expect(res.status).toBe(202);
+    expect(createMoveContextExtract).toHaveBeenCalledWith(
+      expect.objectContaining({ declaredArchetypeId: null }),
+    );
+  });
+
   it("403s before enqueueing when the Move belongs to another tenant", async () => {
     validateDeliverableTenantInvariant.mockResolvedValueOnce({
       ok: false,
@@ -1130,5 +1498,77 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(createMoveContextExtract).not.toHaveBeenCalled();
     const json = (await res.json()) as Record<string, unknown>;
     expect(json.error).toBe("tenant_mismatch");
+  });
+  /**
+   * The slot list this refusal names comes from a discovery blueprint, and the
+   * readiness pack records what chose that blueprint. The build refusal called
+   * those slots required in the same words whether a human declared the
+   * framework or keyword inference picked it. Nothing here queues a build.
+   */
+  it("does not call an inferred framework's evidence a declared requirement", async () => {
+    loadDiscoveryEvidenceReadiness.mockResolvedValueOnce({
+      blueprintBasis: "inferred",
+      archetypeLabel: "Contact Center Agent Assist",
+      unknownDeclaredArchetype: null,
+    });
+    evidencePacketsForTest = [
+      {
+        phase: 1,
+        priority: "required",
+        status: "missing",
+        evidenceSlot: "Sponsor-backed charter evidence",
+        nextAction: "Upload and approve the source evidence.",
+      } as MoveEvidenceNeedPacket,
+    ];
+
+    const res = await POST(
+      req({ moveId: "m-p1", phase: 1, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(409);
+    const json = (await res.json()) as {
+      detail: string;
+      evidenceFramework: { declared: boolean; origin: string } | null;
+      requiredEvidenceGaps: unknown[];
+    };
+    expect(json.evidenceFramework).toMatchObject({
+      declared: false,
+      origin: "inferred",
+    });
+    expect(json.detail).toMatch(/not a declared requirement/);
+    expect(json.detail).toContain("Contact Center Agent Assist");
+    // The slot list and the count the route already produced are unchanged.
+    expect(json.requiredEvidenceGaps).toHaveLength(1);
+    expect(createCalls).toHaveLength(0);
+  });
+
+  it("leaves a declared framework's build refusal wording unchanged", async () => {
+    loadDiscoveryEvidenceReadiness.mockResolvedValueOnce({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    evidencePacketsForTest = [
+      {
+        phase: 1,
+        priority: "required",
+        status: "missing",
+        evidenceSlot: "Sponsor-backed charter evidence",
+        nextAction: "Upload and approve the source evidence.",
+      } as MoveEvidenceNeedPacket,
+    ];
+
+    const res = await POST(
+      req({ moveId: "m-p1", phase: 1, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(409);
+    const json = (await res.json()) as {
+      detail: string;
+      evidenceFramework: { declared: boolean } | null;
+    };
+    expect(json.evidenceFramework).toMatchObject({ declared: true });
+    expect(json.detail).not.toMatch(/not a declared requirement/);
+    expect(createCalls).toHaveLength(0);
   });
 });

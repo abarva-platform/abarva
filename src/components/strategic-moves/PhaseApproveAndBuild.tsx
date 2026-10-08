@@ -32,8 +32,21 @@ import {
   MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT,
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
+import { DeliverableApprovalAction } from "@/components/strategic-moves/DeliverableApprovalAction";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import {
+  heldArtifactBlocker,
+  heldArtifactStatus,
+  planPhaseGateSubmitWithoutBuild,
+  type SettledDeliverable,
+} from "@/lib/programs/phase-build-settlement";
+import {
+  deliverableRunObservationKey,
+  describeDeliverableRunHandOff,
+  planDeliverableRunPoll,
+} from "@/lib/programs/deliverable-run-poll-plan";
 
 const NAVY = "#1B2B5C";
 const INK = "#1A1A18";
@@ -43,6 +56,8 @@ const FRESH = "#3F7A5B"; // succeeded
 const ATTENTION = "#B5852A"; // blocked / below gate
 const STALE = "#B4513C"; // error / failed
 const RUNNING = "#1D4ED8"; // queued / running
+const SIGNED_TEAL = "#1d9e75"; // gate deliverable signed off (v3 locked-light teal)
+const AMBER = "#ba7517"; // sign-off still owed (v3 locked-light amber)
 
 function finalDownloadUrl(url: string): string {
   if (!url.startsWith("/api/v1/artifacts/")) return url;
@@ -55,7 +70,11 @@ type RunStatus =
   | "succeeded"
   | "blocked"
   | "failed"
-  | "error";
+  | "error"
+  // Not a run outcome: the browser stopped following a run the server is still
+  // working on. Distinct from every terminal status so the settle path cannot
+  // read it as either a success or a failure.
+  | "handed_off";
 
 interface DeliverableRow {
   deliverableTypeKey: string;
@@ -164,6 +183,10 @@ interface Props {
   initialArtifacts?: PhaseBuildArtifact[];
   /** Server-confirmed route-specific package, when the parent has one. */
   deliverableKeys?: readonly string[];
+  /** Whether the signed-in session may approve gates. Gates the sign-off
+   *  buttons in the in-workspace attestation ledger: a non-approver sees
+   *  sign-off state only, never a disabled approve button. */
+  canApproveGates?: boolean;
 }
 
 export interface BuildSettledResult {
@@ -173,6 +196,21 @@ export interface BuildSettledResult {
   failedKeys: string[];
   /** Total deliverables in this batch (succeeded + failed + anything else terminal). */
   total: number;
+  /**
+   * The same two sets, each key carrying the registry's `gateArtifact` flag.
+   * The bare key lists above cannot tell a phase gate document apart from a
+   * working document beside it, and only the gate documents are what a phase
+   * gate check reads — see `classifyPhaseBuildSettlement`.
+   */
+  succeeded: SettledDeliverable[];
+  failed: SettledDeliverable[];
+  /**
+   * Where this settlement came from. "build" is the tail of a fresh batch.
+   * "existing_documents" is a re-submission of documents already on the record,
+   * which is the only way to submit a gate whose HARD checks read a sign-off
+   * recorded after the build — see `planPhaseGateSubmitWithoutBuild`.
+   */
+  source?: "build" | "existing_documents";
 }
 
 export interface PhaseBuildArtifact {
@@ -183,10 +221,13 @@ export interface PhaseBuildArtifact {
   status: string;
   version: number;
   downloadUrl: string;
+  /** deliverables_v2.id — the row DeliverableApprovalAction signs off against. */
+  deliverableId?: string | null;
+  /** deliverables_v2.signed_off_version — equals currentVersion once signed. */
+  signedOffVersion?: number | null;
+  /** deliverables_v2.current_version — the version a sign-off must match. */
+  currentVersion?: number | null;
 }
-
-const POLL_MS = 4000;
-const MAX_MS = 15 * 60 * 1000;
 
 const STATUS_COLOR: Record<RunStatus | "idle", string> = {
   idle: MUTED,
@@ -196,6 +237,7 @@ const STATUS_COLOR: Record<RunStatus | "idle", string> = {
   blocked: ATTENTION,
   failed: STALE,
   error: STALE,
+  handed_off: ATTENTION,
 };
 
 const STATUS_LABEL: Record<RunStatus | "idle", string> = {
@@ -206,6 +248,7 @@ const STATUS_LABEL: Record<RunStatus | "idle", string> = {
   blocked: "Build blocked",
   failed: "Failed",
   error: "Could not start",
+  handed_off: "Still building on the server",
 };
 
 function buildInitialRows(
@@ -222,18 +265,28 @@ function buildInitialRows(
 
   return specs.map((s) => {
     const artifact = artifactByKey.get(s.deliverableTypeKey);
+    const documentTitle = artifact?.documentTitle ?? s.documentTitle;
+    // An artifact that EXISTS is not the same as a document that BUILT. A
+    // quarantined, blocked or superseded artifact is present on the record and
+    // is not a usable build, and seeding it as "succeeded" from its mere
+    // existence is what made it render as "Built" beside a withdrawn gate
+    // submission. `heldArtifactStatus` is the same rule the submission plan
+    // screens with, so the row and the control now agree.
+    const heldStatus = artifact ? heldArtifactStatus(artifact.status) : null;
     return {
       deliverableTypeKey: s.deliverableTypeKey,
-      documentTitle: artifact?.documentTitle ?? s.documentTitle,
+      documentTitle,
       gateArtifact: s.gateArtifact,
       runId: null,
-      status: artifact ? "succeeded" : "idle",
-      progressPct: artifact ? 100 : 0,
+      status: !artifact ? "idle" : heldStatus ? "blocked" : "succeeded",
+      progressPct: artifact && !heldStatus ? 100 : 0,
       progressLabel: null,
       artifactId: artifact?.artifactId ?? null,
       blobUrl: artifact?.downloadUrl ?? null,
       packageReadiness: null,
-      blockers: [],
+      blockers: heldStatus
+        ? [heldArtifactBlocker({ documentTitle, heldStatus })]
+        : [],
     };
   });
 }
@@ -255,8 +308,11 @@ export function PhaseApproveAndBuild({
   approverLabel = null,
   initialArtifacts = [],
   deliverableKeys,
+  canApproveGates = false,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [gateSubmitConfirmOpen, setGateSubmitConfirmOpen] = useState(false);
+  const [submittingGate, setSubmittingGate] = useState(false);
   const [actionPortalTarget, setActionPortalTarget] =
     useState<HTMLElement | null>(null);
   const specs = useMemo(
@@ -288,8 +344,14 @@ export function PhaseApproveAndBuild({
       document.getElementById(actionPortalTargetId) as HTMLElement | null,
     );
   }, [actionPortalTargetId]);
+  const [handOffSentence, setHandOffSentence] = useState<string | null>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const startedAt = useRef<number>(0);
+  // Last time each run's observable state changed, and the last state seen, so
+  // the poll interval can back off on a run that is sitting still (queued behind
+  // a serial worker) without backing off one that is actively advancing.
+  const lastChangeAt = useRef<Record<string, number>>({});
+  const lastSeenState = useRef<Record<string, string>>({});
   const initialArtifactSignature = initialArtifacts
     .map((artifact) =>
       [
@@ -335,6 +397,37 @@ export function PhaseApproveAndBuild({
     [],
   );
 
+  // Stop following a run the server is still working on, and say so. Not a
+  // failure and not a success: the row leaves the pending set (so the action is
+  // usable again) without entering the settle path, and the in-flight guard is
+  // released so a later artifact refresh can repair the view in place.
+  const handOffRun = useCallback(
+    (key: string) => {
+      patchRow(key, { status: "handed_off" });
+      runInFlight.current = false;
+      setBuilding(false);
+      setHandOffSentence(describeDeliverableRunHandOff(phaseLabel));
+    },
+    [patchRow, phaseLabel],
+  );
+
+  const scheduleNextPoll = useCallback(
+    (key: string, runId: string, lastPollFailed: boolean, next: () => void) => {
+      const now = Date.now();
+      const plan = planDeliverableRunPoll({
+        elapsedMs: now - startedAt.current,
+        unchangedMs: now - (lastChangeAt.current[key] ?? startedAt.current),
+        lastPollFailed,
+      });
+      if (plan.kind === "hand_off") {
+        handOffRun(key);
+        return;
+      }
+      timers.current[key] = setTimeout(next, plan.delayMs);
+    },
+    [handOffRun],
+  );
+
   const poll = useCallback(
     async (key: string, runId: string) => {
       try {
@@ -353,12 +446,16 @@ export function PhaseApproveAndBuild({
             packageReadiness: data.packageReadiness ?? null,
             blockers: data.blockers ?? [],
           });
-          if (Date.now() - startedAt.current < MAX_MS) {
-            timers.current[key] = setTimeout(
-              () => void poll(key, runId),
-              POLL_MS,
-            );
+          const seen = deliverableRunObservationKey({
+            status: data.status,
+            progressPct: data.progressPct ?? 0,
+            progressLabel: data.progressLabel ?? null,
+          });
+          if (lastSeenState.current[key] !== seen) {
+            lastSeenState.current[key] = seen;
+            lastChangeAt.current[key] = Date.now();
           }
+          scheduleNextPoll(key, runId, false, () => void poll(key, runId));
           return;
         }
         // terminal
@@ -372,16 +469,12 @@ export function PhaseApproveAndBuild({
           error: data.error ?? undefined,
         });
       } catch {
-        // transient — back off and retry within the window
-        if (Date.now() - startedAt.current < MAX_MS) {
-          timers.current[key] = setTimeout(
-            () => void poll(key, runId),
-            POLL_MS * 2,
-          );
-        }
+        // A failed READ of the run says nothing about the run. Back off once and
+        // keep following it.
+        scheduleNextPoll(key, runId, true, () => void poll(key, runId));
       }
     },
-    [patchRow],
+    [patchRow, scheduleNextPoll],
   );
 
   // Fires onBuildSettled exactly once per batch, only after every queued run
@@ -395,28 +488,45 @@ export function PhaseApproveAndBuild({
       (r) => r.runId !== null || r.status === "error",
     );
     if (relevant.length === 0) return;
+    // A handed-off row has no verdict: the server may still be building it.
+    // Settling on it would submit the phase gate approval against a partial
+    // build set. (`handOffRun` also closes the batch by clearing the in-flight
+    // ref above, so today this membership is belt-and-braces rather than the
+    // branch that fires — it states the rule where the rule is read.)
     const stillPending = relevant.some(
-      (r) => r.status === "queued" || r.status === "running",
+      (r) =>
+        r.status === "queued" ||
+        r.status === "running" ||
+        r.status === "handed_off",
     );
     if (stillPending) return;
 
     runInFlight.current = false;
     setBuilding(false);
-    const succeededKeys = relevant
+    const succeeded: SettledDeliverable[] = relevant
       .filter((r) => r.status === "succeeded")
-      .map((r) => r.deliverableTypeKey);
-    const failedKeys = relevant
+      .map((r) => ({
+        deliverableTypeKey: r.deliverableTypeKey,
+        gateArtifact: r.gateArtifact,
+      }));
+    const failed: SettledDeliverable[] = relevant
       .filter(
         (r) =>
           r.status === "blocked" ||
           r.status === "failed" ||
           r.status === "error",
       )
-      .map((r) => r.deliverableTypeKey);
+      .map((r) => ({
+        deliverableTypeKey: r.deliverableTypeKey,
+        gateArtifact: r.gateArtifact,
+      }));
     void onBuildSettled?.({
-      succeededKeys,
-      failedKeys,
+      succeededKeys: succeeded.map((entry) => entry.deliverableTypeKey),
+      failedKeys: failed.map((entry) => entry.deliverableTypeKey),
       total: relevant.length,
+      succeeded,
+      failed,
+      source: "build",
     }).catch((err) => {
       setError(err instanceof Error ? err.message : "Gate approval failed");
     });
@@ -430,6 +540,9 @@ export function PhaseApproveAndBuild({
     // reset rows to queued-pending
     setOmittedDeliverables([]);
     setAdaptiveSummary(null);
+    setHandOffSentence(null);
+    lastChangeAt.current = {};
+    lastSeenState.current = {};
     setRows((prev) =>
       prev.map((r) => ({
         ...r,
@@ -461,9 +574,18 @@ export function PhaseApproveAndBuild({
       const data = (await res.json()) as EnqueueResponse & {
         detail?: string;
         error?: string;
+        requiredEvidenceGaps?: unknown;
       };
       if (!res.ok || !Array.isArray(data.deliverables)) {
-        throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`);
+        // `required_evidence_open` carries the open slots by name. Falling
+        // straight to `detail` reported only their count, so the one item
+        // holding the build was named nowhere.
+        throw new Error(
+          describeRequiredEvidenceRefusal(data) ??
+            data.detail ??
+            data.error ??
+            `HTTP ${res.status}`,
+        );
       }
       setAdaptiveSummary(data.adaptiveDepth ?? null);
       setOmittedDeliverables(data.omittedDeliverables ?? []);
@@ -512,6 +634,76 @@ export function PhaseApproveAndBuild({
     poll,
   ]);
 
+  // The gate approval must be submittable WITHOUT a rebuild. Rebuilding is the
+  // one thing that undoes the sign-off two HARD gate checks are waiting for, so
+  // "re-run Approve & Build" cannot be the only forward control once the
+  // documents exist. `planPhaseGateSubmitWithoutBuild` owns the decision and the
+  // wording; this component only reports what it knows about each document.
+  const artifactStatusByKey = useMemo(() => {
+    const byKey = new Map<string, string | null>();
+    for (const artifact of initialArtifacts) {
+      if (!artifact.deliverableTypeKey) continue;
+      if (byKey.has(artifact.deliverableTypeKey)) continue;
+      byKey.set(artifact.deliverableTypeKey, artifact.status ?? null);
+    }
+    return byKey;
+  }, [initialArtifacts]);
+  const gateSubmitPlan = useMemo(
+    () =>
+      planPhaseGateSubmitWithoutBuild({
+        phase: phaseNum,
+        phaseLabel,
+        documents: specs.map((spec) => ({
+          deliverableTypeKey: spec.deliverableTypeKey,
+          documentTitle: spec.documentTitle,
+          gateArtifact: spec.gateArtifact,
+        })),
+        states: rows.map((row) => ({
+          deliverableTypeKey: row.deliverableTypeKey,
+          status: row.status,
+          // A row carrying a runId was watched in this session, so its status is
+          // the fresher fact; the seeded artifact status would be stale.
+          artifactStatus: row.runId
+            ? null
+            : (artifactStatusByKey.get(row.deliverableTypeKey) ?? null),
+        })),
+        buildInFlight:
+          building ||
+          rows.some(
+            (row) => row.status === "queued" || row.status === "running",
+          ),
+      }),
+    [phaseNum, phaseLabel, specs, rows, artifactStatusByKey, building],
+  );
+
+  // Per-deliverable sign-off state from the deliverables_v2 projection the
+  // artifacts route now carries through each PhaseBuildArtifact. Keyed like the
+  // other initialArtifacts maps so the gate attestation ledger can show
+  // sign-off state inline. A row the projection does not cover has null
+  // version fields, which the ledger treats as "no sign-off record to target"
+  // (not as unsigned) — so it never blocks a submission the way a known-unsigned
+  // built gate document does.
+  const signOffByKey = useMemo(() => {
+    const byKey = new Map<
+      string,
+      {
+        deliverableId: string | null;
+        signedOffVersion: number | null;
+        currentVersion: number | null;
+      }
+    >();
+    for (const artifact of initialArtifacts) {
+      if (!artifact.deliverableTypeKey) continue;
+      if (byKey.has(artifact.deliverableTypeKey)) continue;
+      byKey.set(artifact.deliverableTypeKey, {
+        deliverableId: artifact.deliverableId ?? null,
+        signedOffVersion: artifact.signedOffVersion ?? null,
+        currentVersion: artifact.currentVersion ?? null,
+      });
+    }
+    return byKey;
+  }, [initialArtifacts]);
+
   if (specs.length === 0) {
     return (
       <div style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>
@@ -529,6 +721,57 @@ export function PhaseApproveAndBuild({
       r.status === "blocked" || r.status === "failed" || r.status === "error",
   ).length;
   const gateCount = specs.filter((s) => s.gateArtifact).length;
+
+  // The attestation ledger: ONE entry per gate deliverable actually in the
+  // current build set (so a merged/omitted deliverable is not listed), joining
+  // its build row (status / download) with its deliverables_v2 sign-off state.
+  // This is the in-workspace equivalent of the /evidence page's "Signed off"
+  // badge + DeliverableApprovalAction, so a presenter can sign off without
+  // leaving the gate step. Reading from `rows` rather than `specs` keeps the
+  // ledger in step with what the build produced.
+  const gateLedgerEntries = rows
+    .filter((row) => row.gateArtifact)
+    .map((row) => {
+      const signOff = signOffByKey.get(row.deliverableTypeKey);
+      const currentVersion = signOff?.currentVersion ?? null;
+      const signedOffVersion = signOff?.signedOffVersion ?? null;
+      const deliverableId = signOff?.deliverableId ?? null;
+      const built = row.status === "succeeded";
+      const hasSignOffRecord = currentVersion != null && Boolean(deliverableId);
+      const isSigned = hasSignOffRecord && signedOffVersion === currentVersion;
+      // State the ledger renders. "unverified" = built but the projection
+      // carries no deliverables_v2 row to sign off against (nothing to show
+      // and nothing to block on). "draft" = built, has a record, not signed.
+      const state: "signed" | "draft" | "unverified" | "blocked" = isSigned
+        ? "signed"
+        : built && hasSignOffRecord
+          ? "draft"
+          : built
+            ? "unverified"
+            : "blocked";
+      // A known-unsigned built gate document is the only thing that must hold
+      // the submission; an unverified or not-yet-built document falls back to
+      // the prior (no-sign-off) behaviour and does not block it.
+      const countsAsSigned = state !== "draft";
+      return {
+        deliverableTypeKey: row.deliverableTypeKey,
+        documentTitle: row.documentTitle,
+        state,
+        deliverableId,
+        signedVersion: currentVersion,
+        countsAsSigned,
+        row,
+      };
+    });
+  const ledgerGateCount = gateLedgerEntries.length;
+  const signedCount = gateLedgerEntries.filter(
+    (entry) => entry.countsAsSigned,
+  ).length;
+  // The submission must not read as actionable while a built gate document is
+  // sitting unsigned. This narrows the existing submit control's feedback only
+  // — it never widens WHEN the gate POST fires beyond refusing an unsigned set.
+  const needsGateSignOff = ledgerGateCount > 0 && signedCount < ledgerGateCount;
+
   const requiredGaps = currentPhaseRequiredEvidenceGaps(
     evidenceNeedPackets,
     phaseNum,
@@ -540,20 +783,103 @@ export function PhaseApproveAndBuild({
     ? "Final build blocked by required evidence"
     : hasParentBlocker
       ? "Complete phase inputs before build"
-      : builtCount > 0
+      : // A document already on the record makes this a re-run, whether that
+        // document built or is held below gate. A held row's own blocker
+        // sentence tells the reader to re-run, so the control it names has to
+        // read as a re-run rather than as a first build.
+        builtCount > 0 || blockedCount > 0
         ? `Re-run & Build ${phaseLabel} →`
         : `Approve & Build ${phaseLabel} →`;
-  const phaseStatusLine = anyRunning
-    ? `Building ${phaseLabel}. Keep this page open while the governed batch finishes.`
-    : hasParentBlocker
-      ? String(disabledReason)
-      : hasRequiredGaps
-        ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} must be covered before final build.`
-        : blockedCount > 0
-          ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} blocked by evidence or build-quality checks before the phase can advance.`
-          : builtCount === specs.length
-            ? `${phaseLabel} documents are built. Review them before relying on them.`
-            : "Capture is separate from gate readiness. Build once the record is ready for review.";
+  const phaseStatusLine = handOffSentence
+    ? handOffSentence
+    : anyRunning
+      ? `Building ${phaseLabel}. Keep this page open while the governed batch finishes.`
+      : hasParentBlocker
+        ? String(disabledReason)
+        : hasRequiredGaps
+          ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} must be covered before final build.`
+          : blockedCount > 0
+            ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} blocked by evidence or build-quality checks before the phase can advance.`
+            : builtCount === specs.length
+              ? `${phaseLabel} documents are built. Review them before relying on them.`
+              : "Capture is separate from gate readiness. Build once the record is ready for review.";
+
+  const submitGateWithoutBuild = async () => {
+    if (!gateSubmitPlan.submittable) return;
+    // A built gate document that is not signed off holds the submission. The
+    // sign-off control lives in the ledger below; submitting here would only
+    // bounce off the gate's HARD sign-off check.
+    if (needsGateSignOff) return;
+    setError(null);
+    setSubmittingGate(true);
+    try {
+      await onBuildSettled?.({
+        succeededKeys: gateSubmitPlan.settled.map(
+          (entry) => entry.deliverableTypeKey,
+        ),
+        failedKeys: [],
+        total: gateSubmitPlan.total,
+        succeeded: gateSubmitPlan.settled,
+        failed: [],
+        source: "existing_documents",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gate approval failed");
+    } finally {
+      setSubmittingGate(false);
+    }
+  };
+
+  const submitUnsignedCount = ledgerGateCount - signedCount;
+  const gateSubmitDisabled =
+    submittingGate || hasParentBlocker || needsGateSignOff;
+  const gateSubmitActionButton = gateSubmitPlan.submittable ? (
+    <button
+      type="button"
+      onClick={() => setGateSubmitConfirmOpen(true)}
+      disabled={gateSubmitDisabled}
+      style={{
+        padding: "10px 16px",
+        background: gateSubmitDisabled ? "#D8DDE5" : "#FFFFFF",
+        color: gateSubmitDisabled ? "#596579" : NAVY,
+        border: `1px solid ${gateSubmitDisabled ? "#D8DDE5" : "rgba(27,43,92,0.35)"}`,
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: gateSubmitDisabled ? "default" : "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {submittingGate
+        ? "Submitting gate approval…"
+        : needsGateSignOff
+          ? `Sign off ${submitUnsignedCount} document${submitUnsignedCount === 1 ? "" : "s"} to submit →`
+          : gateSubmitPlan.actionLabel}
+    </button>
+  ) : null;
+
+  // Amber reason line travelling with the submit button whenever a built gate
+  // document is still unsigned, pointing the user at the ledger that holds the
+  // sign-off control.
+  const gateSubmitBlockedReason =
+    gateSubmitPlan.submittable && needsGateSignOff ? (
+      <div
+        role="note"
+        style={{
+          fontSize: 11.5,
+          lineHeight: 1.45,
+          color: AMBER,
+          fontWeight: 600,
+          maxWidth: 520,
+        }}
+      >
+        {submitUnsignedCount} gate document
+        {submitUnsignedCount === 1 ? "" : "s"} still{" "}
+        {submitUnsignedCount === 1 ? "needs" : "need"} sign-off. Approve{" "}
+        {submitUnsignedCount === 1 ? "it" : "them"} in the sign-off ledger on
+        this step before the gate can be submitted.
+      </div>
+    ) : null;
 
   const buildActionButton = (
     <button
@@ -581,6 +907,179 @@ export function PhaseApproveAndBuild({
       {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
     </button>
   );
+
+  // Both forward actions travel together: whichever host renders them (inline or
+  // through the step-header portal) must show the no-rebuild submission beside
+  // the build, or the only visible control is the one that clears a sign-off.
+  const phaseActionButtons = gateSubmitActionButton ? (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {buildActionButton}
+        {gateSubmitActionButton}
+      </div>
+      {gateSubmitBlockedReason}
+    </div>
+  ) : (
+    buildActionButton
+  );
+
+  // In-workspace attestation ledger: one row per gate deliverable, carrying the
+  // sign-off state and, for a built-but-unsigned document, the SAME
+  // DeliverableApprovalAction the /evidence page mounts. A presenter signs off
+  // here instead of leaving the gate step. Non-approvers see state only.
+  const gateSignOffLedger =
+    ledgerGateCount > 0 ? (
+      <section
+        aria-label="Gate deliverable sign-off"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: "14px 16px",
+          background: "#FFFFFF",
+          border: `1px solid ${LINE}`,
+          borderRadius: 8,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "#61708D",
+              }}
+            >
+              Gate sign-off
+            </div>
+            <div style={{ marginTop: 3, fontSize: 13, color: INK }}>
+              Sign off each gate deliverable here before submitting the phase
+              gate.
+            </div>
+          </div>
+          <StatusPill tone={signedCount >= ledgerGateCount ? "good" : "neutral"}>
+            {signedCount}/{ledgerGateCount} signed off
+          </StatusPill>
+        </div>
+        {gateLedgerEntries.map((entry) => (
+          <div
+            key={entry.deliverableTypeKey}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              padding: "10px 12px",
+              background: "#FFFFFF",
+              border: `1px solid ${LINE}`,
+              borderLeft: `3px solid ${NAVY}`,
+              borderRadius: 8,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>
+                {entry.documentTitle}
+              </span>
+              {entry.state === "signed" ? (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: SIGNED_TEAL,
+                    background: "rgba(29,158,117,0.1)",
+                    border: "1px solid rgba(29,158,117,0.32)",
+                    borderRadius: 999,
+                    padding: "3px 9px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Signed off · v{entry.signedVersion ?? "?"}
+                </span>
+              ) : entry.state === "draft" ? (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: AMBER,
+                    background: "rgba(186,117,23,0.1)",
+                    border: "1px solid rgba(186,117,23,0.32)",
+                    borderRadius: 999,
+                    padding: "3px 9px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Draft · awaiting sign-off
+                </span>
+              ) : (
+                // Ledger-specific wording so these states never collide with
+                // the per-deliverable status list's own "Built"/"Build blocked"
+                // labels (the status list already carries the build state).
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: entry.state === "unverified" ? MUTED : ATTENTION,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {entry.state === "unverified" ? "On record" : "Not on record"}
+                </span>
+              )}
+            </div>
+            {entry.state === "draft" && (
+              <>
+                {entry.row?.blobUrl && (
+                  <Link
+                    href={finalDownloadUrl(entry.row.blobUrl)}
+                    style={{ fontSize: 11, color: NAVY, fontWeight: 600 }}
+                    target="_blank"
+                  >
+                    Download / preview →
+                  </Link>
+                )}
+                {canApproveGates && entry.deliverableId ? (
+                  <DeliverableApprovalAction
+                    moveId={moveId}
+                    deliverableId={entry.deliverableId}
+                    alreadyApproved={false}
+                  />
+                ) : (
+                  <span style={{ fontSize: 11, color: MUTED }}>
+                    Sign-off is available to an authorized workspace user.
+                  </span>
+                )}
+              </>
+            )}
+            {entry.state === "unverified" && (
+              <span style={{ fontSize: 11, color: MUTED }}>
+                On the record. No sign-off version is tracked for this document
+                yet.
+              </span>
+            )}
+            {entry.state === "blocked" && entry.row && (
+              <BlockedOutputDisclosure row={entry.row} />
+            )}
+          </div>
+        ))}
+      </section>
+    ) : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -730,12 +1229,12 @@ export function PhaseApproveAndBuild({
                       }}
                     >
                       {packet.ownerSource && (
-                        <span>
-                          Likely source owner: {packet.ownerSource}
-                        </span>
+                        <span>Likely source owner: {packet.ownerSource}</span>
                       )}
                       {acceptedFormats.length > 0 && (
-                        <span>Accepted formats: {acceptedFormats.join(", ")}</span>
+                        <span>
+                          Accepted formats: {acceptedFormats.join(", ")}
+                        </span>
                       )}
                     </div>
                     {evidenceTitles.length > 0 && (
@@ -838,8 +1337,8 @@ export function PhaseApproveAndBuild({
       {actionPortalTargetId
         ? !hasRequiredGaps &&
           actionPortalTarget &&
-          createPortal(buildActionButton, actionPortalTarget)
-        : buildActionButton}
+          createPortal(phaseActionButtons, actionPortalTarget)
+        : phaseActionButtons}
 
       <GateApprovalConfirmDialog
         open={confirmOpen}
@@ -854,6 +1353,22 @@ export function PhaseApproveAndBuild({
           void approveAndBuild();
         }}
       />
+
+      {gateSubmitPlan.submittable && (
+        <GateApprovalConfirmDialog
+          open={gateSubmitConfirmOpen}
+          title={`Submit the ${phaseLabel} gate approval?`}
+          summary={gateSubmitPlan.summary}
+          approverLabel={approverLabel}
+          actorLabelPrefix="Submitting as"
+          confirmLabel="Submit gate approval"
+          onCancel={() => setGateSubmitConfirmOpen(false)}
+          onConfirm={() => {
+            setGateSubmitConfirmOpen(false);
+            void submitGateWithoutBuild();
+          }}
+        />
+      )}
 
       {error && <div style={{ fontSize: 12, color: STALE }}>{error}</div>}
 
@@ -943,75 +1458,96 @@ export function PhaseApproveAndBuild({
                 Download final →
               </Link>
             )}
-            {r.status === "blocked" &&
-              (r.packageReadiness || r.blockers.length > 0 || r.error) && (
-                <details
-                  style={{
-                    gridColumn: "2 / -1",
-                    marginTop: 2,
-                    color: "#5C4320",
-                    fontSize: 11.5,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <summary style={{ cursor: "pointer", fontWeight: 700 }}>
-                    Why this output is blocked
-                  </summary>
-                  <div
-                    style={{
-                      marginTop: 8,
-                      padding: "10px 12px",
-                      borderRadius: 6,
-                      border: "1px solid rgba(181,133,42,0.24)",
-                      background: "rgba(181,133,42,0.06)",
-                    }}
-                  >
-                    {r.packageReadiness && (
-                      <>
-                        <div style={{ color: ATTENTION, fontWeight: 700 }}>
-                          {r.packageReadiness.headline}
-                        </div>
-                        <div style={{ marginTop: 6 }}>
-                          Evidence retrieved:{" "}
-                          {r.packageReadiness.retrievedEvidence}/
-                          {r.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
-                          {r.packageReadiness.executiveReadinessPct}%
-                        </div>
-                      </>
-                    )}
-                    {(r.blockers.length > 0 || r.error) && (
-                      <div style={{ marginTop: 6 }}>
-                        <span style={{ fontWeight: 700 }}>Build blocker: </span>
-                        {r.blockers.length > 0
-                          ? r.blockers.join("; ")
-                          : r.error}
-                      </div>
-                    )}
-                    {r.packageReadiness?.missing.length ? (
-                      <div style={{ marginTop: 6 }}>
-                        <span style={{ fontWeight: 700 }}>Evidence gaps: </span>
-                        {r.packageReadiness.missing.slice(0, 3).join("; ")}
-                        {r.packageReadiness.missing.length > 3 ? "…" : ""}
-                      </div>
-                    ) : null}
-                    {r.packageReadiness?.recommendedNextStep && (
-                      <div style={{ marginTop: 6 }}>
-                        <span style={{ fontWeight: 700 }}>Next: </span>
-                        {r.packageReadiness.recommendedNextStep}
-                      </div>
-                    )}
-                  </div>
-                </details>
-              )}
+            {/* A gate row's blocked-output detail is shown once, in the gate
+                sign-off ledger below, so it is not duplicated here. */}
+            {!r.gateArtifact && (
+              <BlockedOutputDisclosure row={r} spanGridColumns />
+            )}
           </div>
         ))}
       </div>
+
+      {gateSignOffLedger}
 
       <div style={{ fontSize: 10.5, color: MUTED }}>
         <span>{MOVES_AI_DRAFT_LABEL}</span> — review and edit every document
         before it informs a decision.
       </div>
     </div>
+  );
+}
+
+// The "Why this output is blocked" disclosure, extracted so the per-deliverable
+// status list and the gate attestation ledger show the SAME blocked-output
+// explanation from one definition rather than two copies that can drift.
+function BlockedOutputDisclosure({
+  row,
+  spanGridColumns = false,
+}: {
+  row: DeliverableRow;
+  spanGridColumns?: boolean;
+}) {
+  if (
+    row.status !== "blocked" ||
+    !(row.packageReadiness || row.blockers.length > 0 || row.error)
+  ) {
+    return null;
+  }
+  return (
+    <details
+      style={{
+        ...(spanGridColumns ? { gridColumn: "2 / -1" } : {}),
+        marginTop: 2,
+        color: "#5C4320",
+        fontSize: 11.5,
+        lineHeight: 1.45,
+      }}
+    >
+      <summary style={{ cursor: "pointer", fontWeight: 700 }}>
+        Why this output is blocked
+      </summary>
+      <div
+        style={{
+          marginTop: 8,
+          padding: "10px 12px",
+          borderRadius: 6,
+          border: "1px solid rgba(181,133,42,0.24)",
+          background: "rgba(181,133,42,0.06)",
+        }}
+      >
+        {row.packageReadiness && (
+          <>
+            <div style={{ color: ATTENTION, fontWeight: 700 }}>
+              {row.packageReadiness.headline}
+            </div>
+            <div style={{ marginTop: 6 }}>
+              Evidence retrieved: {row.packageReadiness.retrievedEvidence}/
+              {row.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
+              {row.packageReadiness.executiveReadinessPct}%
+            </div>
+          </>
+        )}
+        {(row.blockers.length > 0 || row.error) && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontWeight: 700 }}>Build blocker: </span>
+            {row.blockers.length > 0 ? row.blockers.join("; ") : row.error}
+          </div>
+        )}
+        {row.packageReadiness?.missing.length ? (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontWeight: 700 }}>Evidence gaps: </span>
+            {row.packageReadiness.missing.slice(0, 3).join("; ")}
+            {row.packageReadiness.missing.length > 3 ? "…" : ""}
+          </div>
+        ) : null}
+        {row.packageReadiness?.recommendedNextStep && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontWeight: 700 }}>Next: </span>
+            {row.packageReadiness.recommendedNextStep}
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
 

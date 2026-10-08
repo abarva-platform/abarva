@@ -73,6 +73,7 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 }));
 
 import { evaluateGate } from "@/lib/programs/governance";
+import { __resetUnevaluableApprovalCurrencyReports } from "@/lib/programs/deliverable-approval-currency";
 
 function tableResult(table: string) {
   if (table === "deliverables_v2") {
@@ -916,6 +917,201 @@ describe("evaluateGate", () => {
         }),
       ]),
     );
+  });
+
+  // An approved-evidence basis that could not be READ is not a stale approval.
+  //
+  // `loadApprovedMoveEvidenceSnapshot` answers `null` for five distinct
+  // "I cannot tell" reasons (a query error, either row cap exceeded, an approved
+  // review whose evidence item the tenant-scoped read did not return), while a
+  // Move with nothing approved comes back as a real snapshot with zero rows. Both
+  // currency legs read `Boolean(currentEvidenceSnapshot && …)`, so a null sent
+  // both false and the veto `if (linkedArtifactId && !linkedArtifactCurrent)`
+  // fired for EVERY deliverable carrying an `approved_artifact_id` — the whole
+  // gate ladder held, with no reason rendered anywhere. Sibling rule, same file:
+  // `resolveDeliverableApprovalCurrencyScope`.
+  //
+  // These are host-level cases on purpose. `isSignedOff` is a closure inside
+  // `evaluateGate`, so the split between the snapshot-independent integrity half
+  // and the evidence half only exists here; a suite over the resolver alone would
+  // pass with the wiring reverted.
+  describe("when the approved-evidence basis cannot be read", () => {
+    function charterSignedOffWithLinkedArtifact(
+      artifact: Partial<(typeof moveArtifactsFixture)[number]> = {},
+    ) {
+      getProgramByIdMock.mockResolvedValue({
+        id: "program-1",
+        currentPhase: 1,
+        archetype: "agent_assist",
+      });
+      deliverablesFixture = [
+        {
+          id: "charter",
+          deliverable_type_key: "charter",
+          status: "signed_off",
+          approved_artifact_id: "artifact-current",
+        },
+      ];
+      moveArtifactsFixture = [
+        {
+          artifact_id: "artifact-current",
+          tenant_key: "tenant-1",
+          move_id: "program-1",
+          artifact_family: "generated_deliverable",
+          lifecycle_state: "current",
+          created_at: "2026-09-29T15:00:00.000Z",
+          metadata: {
+            deliverableId: "charter",
+            evidenceSnapshotHash: "revision-current",
+          },
+          ...artifact,
+        },
+      ];
+      participantsFixture = [{ approval_authority: "sponsor" }];
+    }
+
+    const charterFailed = (result: { failedChecks: Array<{ check: string }> }) =>
+      result.failedChecks.some((check) => check.check === "charter_signed_off");
+
+    it("leaves the recorded sign-off standing when the snapshot is unavailable", async () => {
+      charterSignedOffWithLinkedArtifact();
+      loadApprovedMoveEvidenceSnapshotMock.mockResolvedValue(null);
+
+      const result = await evaluateGate(
+        { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+        "program-1",
+        1,
+        2,
+      );
+
+      expect(charterFailed(result)).toBe(false);
+    });
+
+    it("leaves the recorded sign-off standing when loading the snapshot throws", async () => {
+      charterSignedOffWithLinkedArtifact();
+      loadApprovedMoveEvidenceSnapshotMock.mockRejectedValue(
+        new Error("read replica unreachable"),
+      );
+
+      const result = await evaluateGate(
+        { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+        "program-1",
+        1,
+        2,
+      );
+
+      expect(charterFailed(result)).toBe(false);
+    });
+
+    it("still refuses a FOREIGN linked artifact — integrity does not depend on the snapshot", async () => {
+      // The reason the two halves are separated rather than the whole veto being
+      // dropped. Without the split, an unreadable snapshot would also stop the
+      // tenant/Move/family/lifecycle checks from vetoing.
+      charterSignedOffWithLinkedArtifact({ tenant_key: "another-tenant" });
+      loadApprovedMoveEvidenceSnapshotMock.mockResolvedValue(null);
+
+      const result = await evaluateGate(
+        { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+        "program-1",
+        1,
+        2,
+      );
+
+      expect(result.failedChecks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            check: "charter_signed_off",
+            severity: "hard",
+          }),
+        ]),
+      );
+    });
+
+    it("still refuses a SUPERSEDED linked artifact under an unreadable snapshot", async () => {
+      // `lifecycle_state` is classified as integrity, not currency: it answers
+      // "is this the newest render", which no evidence snapshot is needed to
+      // decide. Pinned so a later move of that check into the currency half is a
+      // deliberate change rather than a silent one.
+      charterSignedOffWithLinkedArtifact({ lifecycle_state: "superseded" });
+      loadApprovedMoveEvidenceSnapshotMock.mockResolvedValue(null);
+
+      const result = await evaluateGate(
+        { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+        "program-1",
+        1,
+        2,
+      );
+
+      expect(result.failedChecks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            check: "charter_signed_off",
+            severity: "hard",
+          }),
+        ]),
+      );
+    });
+
+    it("leaves the recorded sign-off standing when the ctx carries no tenant key", async () => {
+      // `TenancyCtx.clientKey` is optional and `assertTenancy` requires only
+      // clientId + userId, so the gate can reach here without one. The snapshot
+      // load was skipped AND the `move_artifacts` lookup was skipped, so nothing
+      // about this approval was evaluated — the sibling `phase-gate-approval`
+      // route resolves the same snapshot via `ctx.clientKey ?? ctx.clientId`.
+      charterSignedOffWithLinkedArtifact();
+
+      const result = await evaluateGate(
+        { clientId: "client-1", userId: "person-1" },
+        "program-1",
+        1,
+        2,
+      );
+
+      expect(loadApprovedMoveEvidenceSnapshotMock).not.toHaveBeenCalled();
+      expect(charterFailed(result)).toBe(false);
+    });
+
+    it("does not read a foreign artifact as an integrity failure when no read was issued", async () => {
+      // The deliberate difference from the foreign-artifact case above: with no
+      // tenant key the lookup never ran, so there is no observation to refuse on.
+      charterSignedOffWithLinkedArtifact({ tenant_key: "another-tenant" });
+
+      const result = await evaluateGate(
+        { clientId: "client-1", userId: "person-1" },
+        "program-1",
+        1,
+        2,
+      );
+
+      expect(charterFailed(result)).toBe(false);
+    });
+
+    it("keeps vetoing a stale lineage once the snapshot IS readable", async () => {
+      // Not a blanket pass. With a snapshot in hand the comparison runs and an
+      // artifact whose recorded revision does not match still refuses the gate.
+      charterSignedOffWithLinkedArtifact({
+        metadata: {
+          deliverableId: "charter",
+          evidenceSnapshotHash: "revision-before-new-evidence",
+        },
+      });
+
+      const result = await evaluateGate(
+        { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+        "program-1",
+        1,
+        2,
+      );
+
+      expect(result.failedChecks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            check: "charter_signed_off",
+            severity: "hard",
+          }),
+        ]),
+      );
+    });
   });
 
   it("evaluates an earlier gate for reapproval without changing the stored phase", async () => {
@@ -1977,6 +2173,170 @@ describe("evaluateGate", () => {
     expect(result.pass).toBe(true);
     expect(result.failedChecks).toEqual([]);
     expect(result.requiresApproval).toBe(true);
+  });
+
+  // ── An approval whose currency cannot be CHECKED is not a stale approval ──
+  // `isSignedOff` phase-scopes its evidence-lineage check through
+  // `resolveDeliverableApprovalCurrencyScope`. `origination_brief` is not a
+  // deliverable-registry key, so no phase resolves and no lineage comparison can
+  // run — while the deliverable sign-off route accepts that key and its
+  // file-upload approval path sets `approved_artifact_id`. Reading "unevaluable"
+  // as "stale" dead-ended the FIRST gate: all three P0 -> P1 hard criteria read
+  // this one row, there is no second P0 gate artifact, and `signOffDeliverable`
+  // only acts on a `draft`/`in_review` row, so the P0 close helper cannot re-sign
+  // it to clear the link.
+  it("opens P0 for a signed origination brief whose approval artifact cannot be lineage-checked", async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 0,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      {
+        id: "origination-brief",
+        deliverable_type_key: "origination_brief",
+        status: "signed_off",
+        // Set by the sign-off route when the user approves an edited upload —
+        // the action the blocked-gate message itself tells them to take.
+        approved_artifact_id: "artifact-p0-upload",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "artifact-p0-upload",
+        tenant_key: "tenant-1",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: { deliverableId: "origination-brief" },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+    // The dedupe set is process-wide, so an earlier case in this file may already
+    // have reported this type.
+    __resetUnevaluableApprovalCurrencyReports();
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    deliverableVersionsFixture = [
+      {
+        content:
+          "P0 Origination Brief. Problem trigger: fragmented reporting across the claims estate. " +
+          "Value hypothesis: a governed foundation shortens trusted delivery time. " +
+          "Scope boundary: one cohort first. Sponsor: named operating owner. " +
+          "Discovery capacity time box: four weeks.",
+        structured_data: null,
+        generated_at: "2026-05-02T00:00:00.000Z",
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+      "program-1",
+      0,
+      1,
+    );
+
+    const hard = result.failedChecks
+      .filter((check) => check.severity === "hard")
+      .map((check) => check.check);
+    expect(hard).toEqual([]);
+    // Allowing it silently is how this class of gap survives. The gate reports
+    // the registry gap it just worked around.
+    expect(warn).toHaveBeenCalledWith(
+      "[moves] deliverable approval currency not evaluable",
+      expect.objectContaining({
+        deliverableTypeKey: "origination_brief",
+        reason: "unregistered_deliverable_key",
+      }),
+    );
+    warn.mockRestore();
+  });
+
+  it("still blocks a REGISTERED deliverable whose linked approval artifact is stale", async () => {
+    // The companion to the case above, and the reason the fix is scoped rather
+    // than a blanket allowance: `charter` IS a registry key, so its currency is
+    // evaluable and a link the lineage check refuses must keep vetoing.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      {
+        id: "charter",
+        deliverable_type_key: "charter",
+        status: "signed_off",
+        approved_artifact_id: "artifact-charter-unbound",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "artifact-charter-unbound",
+        tenant_key: "tenant-1",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: { deliverableId: "charter" },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+      "program-1",
+      1,
+      2,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: "charter_signed_off",
+          severity: "hard",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps an unsigned origination brief blocking P0, link or no link", async () => {
+    // The scope decides whether a currency check may VETO a sign-off; it must
+    // never stand in for the sign-off itself.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 0,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      {
+        id: "origination-brief",
+        deliverable_type_key: "origination_brief",
+        status: "in_review",
+        approved_artifact_id: "artifact-p0-upload",
+      },
+    ];
+    moveArtifactsFixture = [
+      {
+        artifact_id: "artifact-p0-upload",
+        tenant_key: "tenant-1",
+        move_id: "program-1",
+        artifact_family: "generated_deliverable",
+        lifecycle_state: "current",
+        metadata: { deliverableId: "origination-brief" },
+      },
+    ];
+    participantsFixture = [{ approval_authority: "sponsor" }];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", clientKey: "tenant-1", userId: "person-1" },
+      "program-1",
+      0,
+      1,
+    );
+
+    expect(
+      result.failedChecks
+        .filter((check) => check.severity === "hard")
+        .map((check) => check.check),
+    ).toEqual(["program_seed_recorded", "value_hypothesis_seed"]);
   });
 });
 

@@ -8,6 +8,14 @@ import {
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
 import { DISCOVERY_BLUEPRINT_CATALOG } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import {
+  blockedUntilSentence,
+  doNotPresentSentence,
+  mustWaitSentence,
+  unauthoredNextActionSentence,
+  waiverOptionSentence,
+} from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
+import { resolvePendingAwareNextAction } from "@/lib/programs/evidence-readiness/pending-review-next-action";
 
 export type MoveEvidenceNeedStatus =
   | "missing"
@@ -150,16 +158,16 @@ const FAMILY_TO_ARTIFACTS: Record<string, string[]> = {
     "discovery_report",
     "solution_design",
   ],
-  phi_privacy_security_controls: [
-    "solution_design",
-    "operating_model_design",
-  ],
+  phi_privacy_security_controls: ["solution_design", "operating_model_design"],
   human_in_loop_model: ["operating_model_design", "solution_design"],
   model_risk_responsible_ai_controls: [
     "solution_design",
     "operating_model_design",
   ],
-  measurement_owner_cadence: ["tower_metrics_plan", "value_measurement_contract"],
+  measurement_owner_cadence: [
+    "tower_metrics_plan",
+    "value_measurement_contract",
+  ],
   finance_baseline_value_plan: ["business_case", "financial_model"],
   change_adoption_owner: ["operating_model_design", "handoff_package"],
 };
@@ -383,7 +391,8 @@ const CONTACT_CENTER_AGENT_ASSIST_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
       "Upload a CMDB export, application inventory, or architecture diagram from Enterprise Architecture / Contact Center IT.",
   },
   claims_eligibility_benefits_data_access: {
-    exampleTemplate: "Claims, eligibility, benefits, and prior-auth data access",
+    exampleTemplate:
+      "Claims, eligibility, benefits, and prior-auth data access",
     exampleContent: [
       "Which systems hold claims, eligibility, benefits, and prior-authorization data, and how agent assist would query them",
       "Data freshness, access model, and interface catalog for each source",
@@ -766,7 +775,7 @@ export const UNAUTHORED_FAMILY_GUIDANCE: Pick<
   ],
   whyItMatters:
     "This input anchors the artifact in client evidence instead of unsupported assumptions.",
-  nextAction: "Upload the source file or record a human waiver with rationale.",
+  nextAction: unauthoredNextActionSentence(),
 };
 
 /**
@@ -815,7 +824,11 @@ export function resolveFamilyGuidance(args: {
 }): ResolvedFamilyGuidance {
   const declared = ARCHETYPE_EXAMPLES[args.blueprintId]?.[args.familyId];
   if (declared) {
-    return { guidance: declared, basis: "declared_archetype", nameTableId: null };
+    return {
+      guidance: declared,
+      basis: "declared_archetype",
+      nameTableId: null,
+    };
   }
   const shared = CROSS_ARCHETYPE_EXAMPLES[args.familyId];
   if (shared) {
@@ -825,7 +838,11 @@ export function resolveFamilyGuidance(args: {
     if (!nameTable.matches(args.moveName)) continue;
     const authored = nameTable.table[args.familyId];
     if (authored) {
-      return { guidance: authored, basis: "move_name", nameTableId: nameTable.id };
+      return {
+        guidance: authored,
+        basis: "move_name",
+        nameTableId: nameTable.id,
+      };
     }
   }
   const generic = GENERIC_EXAMPLES[args.familyId];
@@ -907,20 +924,25 @@ export function buildMoveEvidenceNeedPackets(
         canDraft,
         canDraftLabel: canDraft
           ? "Can draft with current evidence."
-          : "Final generation is blocked until this evidence is uploaded or formally waived.",
+          : blockedUntilSentence(),
         cannotDraftLabel:
           family.status === "covered"
             ? "No current block from this evidence slot."
-            : "Do not present final or board-ready output until this evidence is covered or waived.",
+            : doNotPresentSentence(),
       },
       preliminaryGenerationCaveat:
         family.status === "covered"
           ? null
-          : `A preliminary draft lane is not active for this phase. Final generation must wait until ${family.label.toLowerCase()} is uploaded or formally waived.`,
-      waiverOption: required
-        ? "A sponsor or accountable owner may record a waiver, but final artifacts must carry the waiver caveat."
-        : "Optional input; waive only if the team accepts a lower-readiness artifact.",
-      nextAction: guidance.nextAction,
+          : mustWaitSentence(family.label.toLowerCase()),
+      waiverOption: waiverOptionSentence(required),
+      // Pending evidence must not read as covered, so this rewrites the
+      // sentence ALONE — everything the gate layer reads above is untouched.
+      nextAction: resolvePendingAwareNextAction({
+        familyId: family.familyId,
+        familyStatus: family.status,
+        authoredNextAction: guidance.nextAction,
+        familiesAwaitingReview: input.readiness.familiesAwaitingReview,
+      }),
       status,
       evidenceIds: family.evidenceIds,
       evidenceTitles: family.evidenceTitles,

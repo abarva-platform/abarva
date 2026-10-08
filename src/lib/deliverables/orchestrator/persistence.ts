@@ -28,13 +28,13 @@ import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
 import type { OrchestrationResult } from "./orchestrator";
 import { completeDeliverable } from "@/lib/programs/mutations";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
-import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
+import { resolveGeneratedCompanionPhase } from "./generated-companion-phase";
 import {
   buildContractInput,
-  deliverableKeyForRegistryKey,
   deliverableKeyForOrchestratorType,
+  qualityContractDeliverableKey,
   renderedContractExhibitsFromDocument,
 } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
@@ -90,6 +90,12 @@ export interface PersistDeliverableOptions {
   phaseEvidenceSnapshotHash?: string;
   /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
   deliverableTypeKey?: string;
+  /**
+   * Moves phase DECLARED by the generation request. It is the phase the enqueuing
+   * route scoped this run's approved evidence to, so it — not a re-derivation from
+   * the deliverable key — decides which phase the editable companion is filed under.
+   */
+  phase?: number;
   userId?: string;
   /**
    * When true (the `moves_decision_storytelling` flag), render the artifact as the exhibit-led
@@ -399,14 +405,6 @@ async function renderOfficeCompanion(
   return null;
 }
 
-function phaseForDeliverableType(deliverableTypeKey: string): number {
-  return (
-    DELIVERABLE_REGISTRY.find(
-      (spec) => spec.deliverableTypeKey === deliverableTypeKey,
-    )?.phase ?? 0
-  );
-}
-
 export async function persistDeliverable(
   result: OrchestrationResult,
   opts: PersistDeliverableOptions,
@@ -432,10 +430,18 @@ export async function persistDeliverable(
   const deliverableKey = deliverableKeyForOrchestratorType(
     result.brief.deliverableType,
   );
-  const contractDeliverableKey =
-    deliverableKeyForRegistryKey(opts.deliverableTypeKey) ?? deliverableKey;
+  const contractDeliverableKey = qualityContractDeliverableKey({
+    registryKey: opts.deliverableTypeKey,
+    orchestratorDeliverableType: result.brief.deliverableType,
+  });
   const resolvedDeliverableTypeKey =
     opts.deliverableTypeKey ?? deliverableKey ?? result.brief.deliverableType;
+  // Declared phase wins; the key derivation is the fallback. `basis` is persisted
+  // so an unresolved phase is not read back as Originate.
+  const companionPhase = resolveGeneratedCompanionPhase({
+    declaredPhase: opts.phase,
+    deliverableTypeKey: resolvedDeliverableTypeKey,
+  });
   let profileRenderedHtml = false;
   // True whenever a profile/deck renderer creates an HTML preview of the SAME
   // governed document. The persisted outputFormat remains the prescribed final
@@ -494,9 +500,17 @@ export async function persistDeliverable(
   html = sanitizeClientFacingArtifactHtml(html);
 
   // ── Stage 5: Deliverable Quality Contract (blocking gate before persistence) ──
-  // Always runs and records the result state. When enforcement is on, a
-  // non-`client_ready` artifact is quarantined (saved as internal draft) so it
-  // cannot be served as client-ready. Tenant-agnostic; runs for every tenant.
+  // Runs for every deliverable whose key resolves a profile, and records the
+  // result state. When enforcement is on, a non-`client_ready` artifact is
+  // quarantined (saved as internal draft) so it cannot be served as
+  // client-ready. Tenant-agnostic; runs for every tenant.
+  //
+  // The guard below is NOT a safe default: when no profile resolves, nothing is
+  // assessed and `quarantined`/`quarantineReason` stay false/null, which reads
+  // downstream exactly like a pass. Every key a Moves phase can generate must
+  // therefore resolve one — enforced by
+  // src/lib/programs/__tests__/phase-deliverable-quality-contract-coverage.test.ts,
+  // which caught two P3 gate artifacts that had been skipping this stage.
   let qualityQuarantined = false;
   let qualityQuarantineReason: string | null = null;
   if (contractDeliverableKey) {
@@ -757,7 +771,7 @@ export async function persistDeliverable(
         } satisfies TenancyCtx,
         {
           moveId: opts.sourceArtifactRef,
-          phase: phaseForDeliverableType(resolvedDeliverableTypeKey),
+          phase: companionPhase.phase,
           artifactType: `${resolvedDeliverableTypeKey}_editable_${officeCompanion.fileFormat}`,
           artifactFamily: "generated_deliverable",
           title: doc.title,
@@ -778,6 +792,7 @@ export async function persistDeliverable(
             versionId: materialized.versionId,
             generatedArtifactId: record.id,
             outputFormat,
+            companionPhaseBasis: companionPhase.basis,
             ...(opts.evidenceSnapshotHash
               ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
               : {}),

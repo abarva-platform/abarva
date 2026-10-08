@@ -1302,6 +1302,61 @@ describe("runDeliverableForTenant", () => {
     expect(out.contextCoverage?.cited).toBe(0);
   });
 
+  it("passes the declared phase on to persistence, which files the companion under it", async () => {
+    // The phase is declared by the caller and must survive the persist seam:
+    // persistence files the editable Office companion under it instead of
+    // re-deriving it from the deliverable key. Dropping the forward here leaves
+    // the companion's phase derived from the key alone.
+    const generate = (async () =>
+      ({
+        ok: true,
+        brief: {} as never,
+        document: { generatedSections: [{}] } as never,
+        quality: { pass: true, warnings: [] } as never,
+        passTrace: [],
+      }) as OrchestrationResult) as never;
+    let persistedOpts: Record<string, unknown> | undefined;
+    const persist = (async (
+      _result: unknown,
+      opts: Record<string, unknown>,
+    ) => {
+      persistedOpts = opts;
+      return { id: "art-10", blobUrl: "/api/v1/artifacts/art-10" };
+    }) as never;
+    await runDeliverableForTenant(
+      { ...baseInput, module: "moves" as const, phase: 4 },
+      { assemble, loadPolicy, generate, persist },
+    );
+    expect(persistedOpts?.phase).toBe(4);
+  });
+
+  it("omits the phase from persistence options when the caller declared none", async () => {
+    const generate = (async () =>
+      ({
+        ok: true,
+        brief: {} as never,
+        document: { generatedSections: [{}] } as never,
+        quality: { pass: true, warnings: [] } as never,
+        passTrace: [],
+      }) as OrchestrationResult) as never;
+    let persistedOpts: Record<string, unknown> | undefined;
+    const persist = (async (
+      _result: unknown,
+      opts: Record<string, unknown>,
+    ) => {
+      persistedOpts = opts;
+      return { id: "art-11", blobUrl: "/api/v1/artifacts/art-11" };
+    }) as never;
+    await runDeliverableForTenant(baseInput, {
+      assemble,
+      loadPolicy,
+      generate,
+      persist,
+    });
+    expect(persistedOpts).toBeDefined();
+    expect("phase" in (persistedOpts as object)).toBe(false);
+  });
+
   it("passes the requested Moves phase into governed evidence assembly", async () => {
     let assembledParams: Record<string, unknown> | undefined;
     const phaseAssembler = (async (params: Record<string, unknown>) => {

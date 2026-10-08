@@ -27,6 +27,11 @@ const ORCH_TYPE_TO_KEY: Readonly<Record<string, DeliverableKey>> = {
   target_architecture: "target_state_architecture",
   target_state_architecture: "target_state_architecture",
   solution_design: "solution_design",
+  // Neither has a REGISTRY_TO_ORCHESTRATOR entry, so `orchestratorDeliverableType`
+  // returns the registry key itself for both; the identity entries below are what
+  // make the quality contract and the required-exhibits instruction resolve them.
+  process_change_estimate_brief: "process_change_estimate_brief",
+  requirements_traceability: "requirements_traceability",
   operating_model: "operating_model_design",
   operating_model_design: "operating_model_design",
   sourcing_strategy: "sourcing_strategy",
@@ -47,6 +52,25 @@ export function deliverableKeyForOrchestratorType(
   deliverableType: string,
 ): DeliverableKey | undefined {
   return ORCH_TYPE_TO_KEY[deliverableType];
+}
+
+/**
+ * The key the Deliverable Quality Contract is run under: the registry key when it
+ * names a profile, else the profiled key for the orchestrator type. `undefined`
+ * means NO profile covers this deliverable, and `persistDeliverable` then skips
+ * the contract entirely — a skip that reads downstream exactly like a pass. Every
+ * key a Moves phase can generate must therefore resolve one; this function is the
+ * single definition of that resolution so the guard pins what persistence runs
+ * rather than a re-derived copy of it.
+ */
+export function qualityContractDeliverableKey(args: {
+  registryKey?: string | null;
+  orchestratorDeliverableType: string;
+}): DeliverableKey | undefined {
+  return (
+    deliverableKeyForRegistryKey(args.registryKey) ??
+    deliverableKeyForOrchestratorType(args.orchestratorDeliverableType)
+  );
 }
 
 export function deliverableKeyForRegistryKey(

@@ -85,6 +85,9 @@ jobs:
           node --import tsx --test
           scripts/source/__tests__/market-candidate-research.test.mjs
 
+      - name: Validate Source contract performance unit loading
+        run: npx jest --runInBand --runTestsByPath scripts/source/__tests__/load-contract-depth-package.test.ts --no-coverage --ci
+
       # `src/lib/admin/broker` is 21 suites / 211 tests that no workflow and no
       # npm script reached. Measured through the census resolver on `b061a6819`,
       # not by reading YAML: three directories, 16 + 4 + 1 test files, 0 covered.
@@ -161,10 +164,16 @@ jobs:
       - name: Run the deliverables worker boundary suite
         run: npx jest --runTestsByPath src/scripts/__tests__/process-deliverable-queue-worker-boundary.test.ts --no-coverage --ci
 
+      # persist-move-generated-artifact.test.ts was named here and has been
+      # removed: the required ai-surface-control-catalog workflow now sweeps
+      # the directory that holds it, so naming it here put the quotable line
+      # in a job that blocks nothing while the blocking line stayed anonymous
+      # — the defect `named-suite-requiredness` exists to refuse. Read
+      # `PASS <path>` out of the required job's own log instead. The remaining
+      # paths are in directories that no required sweep reaches.
       - name: Run the Moves evidence revision suites
         run: >-
           npx jest --runTestsByPath
-          src/lib/deliverables/__tests__/persist-move-generated-artifact.test.ts
           src/scripts/__tests__/process-deliverable-queue.test.ts
           src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/generate/__tests__/route.test.ts
@@ -419,10 +428,26 @@ jobs:
       # applied one level too high.
       #
       # Still red and still unwired, deliberately:
-      #   src/lib/deliverables/__tests__/golden-regression.test.ts
-      #   src/lib/deliverables/orchestrator/__tests__
       #   src/components/admin/__tests__ and components/admin/context-layer/__tests__
       #   src/lib/admin/__tests__ (5 failed of 62 suites)
+      #
+      # Corrected 8 Oct: golden-regression.test.ts was listed here as red while
+      # the "Run the repaired deliverables suites" step above already named the
+      # directory that holds it. Re-measured on the whole directory, it passes
+      # 3 of 3 and the directory is 36 suites / 303 tests green, so the
+      # quarantine line was describing a state that had already been repaired.
+      # Ownership of that directory has since moved to the required
+      # ai-surface-control-catalog workflow, which is where a merge can fail on
+      # it; naming it here as well is deliberate and harmless.
+      #
+      # Corrected 8 Oct: src/lib/deliverables/orchestrator/__tests__ was listed
+      # here as red while the "Run the repaired deliverables suites" step
+      # earlier in this same file already named it. Re-measured on the current
+      # base, three consecutive runs: 59 suites, 857 tests, all pass in
+      # 6.3-6.7s. The line was describing a state that had already been
+      # repaired. Ownership of that directory has since moved to the required
+      # ai-surface-control-catalog workflow, which is where a merge can fail on
+      # it; naming it earlier in this file as well is deliberate and harmless.
       #
       # And src/lib/deliverables/synthesis is excluded for a different reason:
       # nothing outside its own tree imports its one file except the failing
@@ -1479,6 +1504,14 @@ jobs:
           src/lib/source/candidate-suppliers/__tests__/candidate-supplier-registry-repository.test.ts
           src/lib/source/candidate-suppliers/__tests__/event-candidate-acceptance-repository.test.ts
           src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts
+          --no-coverage --ci
+
+      - name: Run prospective supplier origination suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/candidate-suppliers/__tests__/originate-prospective-supplier.test.ts
+          "src/app/api/v1/source/[eventId]/candidate-suppliers/originate/__tests__/route.test.ts"
+          src/components/source/new-workspace/SourceNewProspectiveSupplierForm.test.tsx
           --no-coverage --ci
 
       # T-480 (2026-09-26) wires the two suites `T-479` judged `wire_into_ci`.

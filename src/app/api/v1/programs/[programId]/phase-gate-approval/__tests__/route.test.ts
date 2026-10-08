@@ -97,6 +97,29 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
     mockLoadAcceptedStageReadinessContext(...args),
 }));
 
+// The gate now reads the stored transition review AS IT STANDS, from its own
+// module, rather than only a finished one. By default one stored review stands
+// behind both readings, so every existing `mockResolvedValueOnce(null)` still
+// means "no review" — and a test can drive the two apart to pin which module
+// the gate actually reads.
+const mockLoadStageReadinessGateProposals = jest.fn(
+  async (...args: unknown[]) => {
+    const context = (await mockLoadAcceptedStageReadinessContext(...args)) as
+      | { proposals?: unknown[] }
+      | null
+      | undefined;
+    return context?.proposals ?? null;
+  },
+);
+
+jest.mock(
+  "@/lib/programs/stage-readiness-workbooks/gate-proposal-context",
+  () => ({
+    loadStageReadinessGateProposals: (...args: unknown[]) =>
+      mockLoadStageReadinessGateProposals(...args),
+  }),
+);
+
 jest.mock("@/lib/programs/governance", () => ({
   evaluateGate: (
     ctx: unknown,
@@ -311,16 +334,64 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     const res = await POST(req({ phase: 3 }) as never, { params });
 
     expect(res.status).toBe(409);
+    // The refusal names the unreviewed workbook, not the approved evidence
+    // family it would otherwise report as still open.
     await expect(res.json()).resolves.toMatchObject({
       error: "transition_evidence_incomplete",
       requiredEvidenceGaps: [
         expect.objectContaining({
-          evidenceSlot: "Contact center KPI baseline",
-          status: "partial",
+          evidenceSlot: "P3 to P4 readiness workbook",
+          status: "missing",
+          nextAction:
+            "Complete the P3 to P4 readiness workbook with an evidence-backed answer and source reference.",
         }),
       ],
     });
     expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("takes the gate reading from the review as it stands, not from a finished one", async () => {
+    // The two readings are driven apart here on purpose. This is the state a
+    // reviewer can reach and could not leave: every REQUIRED response accepted,
+    // answered and sourced, and one RECOMMENDED response left blank — which the
+    // review surface cannot decide, so it stays pending forever. The
+    // finished-only reading returns null for it, and a null there means the
+    // gate sees no workbook at all, so the phase stayed shut on a workbook that
+    // was complete for everything the gate requires.
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: false,
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValue(null);
+    mockLoadStageReadinessGateProposals.mockResolvedValueOnce([
+      {
+        questionId: "q_kpi_baseline",
+        dimensionId: "contact_center_kpis",
+        requirement: "required",
+        answerState: "answered",
+        disposition: "accepted",
+        evidenceOrSource: "Existing evidence: ev-kpi",
+      },
+      {
+        questionId: "q_optional_context",
+        dimensionId: "nice_to_have_context",
+        requirement: "recommended",
+        answerState: "blank",
+        disposition: "pending",
+        evidenceOrSource: "",
+      },
+    ]);
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ ok: true, newPhase: 4 });
+    expect(mockLoadStageReadinessGateProposals).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      4,
+    );
   });
 
   it("blocks approval on a hard gate failure and fabricates nothing", async () => {
@@ -921,6 +992,114 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     );
   });
 
+  it("records the terminal phase it reports, not only the lifecycle", async () => {
+    // The sibling case above asserts the engagements write with
+    // `objectContaining`, which cannot notice a field that is absent. The
+    // handoff wrote `lifecycle_state` and `gates_passed` and left
+    // `current_phase` at 5 while the response said `newPhase: 6`, so the
+    // readers that ask the phase rather than the lifecycle — the advance
+    // control's `isFinal = currentPhase >= 6`, the CXO preview mode, and the
+    // phase-6 deliverable set — all read a completed Move as still at P5.
+    const writes: Array<{ table: string; payload: Record<string, unknown> }> =
+      [];
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      name: "MEMBER AI ASSIST",
+      currentPhase: 5,
+      gatesPassed: [],
+    });
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 4
+          ? [
+              {
+                id: "phase-4-approved",
+                phaseNumber: 4,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "launch_readiness", label: "Launch readiness" },
+    ]);
+    mockGetModuleState.mockResolvedValue([]);
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: true,
+    });
+    mockSbFrom.mockImplementation((table: string) => {
+      if (table === "phase_snapshots") {
+        return {
+          insert: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              select: jest.fn(() => ({
+                single: async () => ({
+                  data: { id: "p5-snap-1" },
+                  error: null,
+                }),
+              })),
+            };
+          }),
+        };
+      }
+      if (table === "engagements") {
+        return {
+          update: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              eq: jest.fn(() => ({
+                eq: async () => ({ error: null }),
+              })),
+            };
+          }),
+        };
+      }
+      if (table === "module_state_log") {
+        return {
+          insert: jest.fn(async (payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return { error: null };
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ limit: async () => ({ data: [], error: null }) }),
+          }),
+        }),
+      };
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ phase: 5, rationale: "Terminal handoff approved." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      newPhase: number;
+      transition: { toPhase: number };
+    };
+    const engagementWrite = writes.find(
+      (write) => write.table === "engagements",
+    );
+    expect(engagementWrite).toBeDefined();
+    // The phase is recorded, not merely reported.
+    expect(engagementWrite?.payload.current_phase).toBe(6);
+    // And the two agree, so one cannot drift from the other again.
+    expect(body.newPhase).toBe(engagementWrite?.payload.current_phase);
+    expect(body.transition.toPhase).toBe(
+      engagementWrite?.payload.current_phase,
+    );
+  });
+
   it("repairs a partial P5 approval snapshot instead of short-circuiting terminal handoff completion", async () => {
     const writes: Array<{ table: string; payload: Record<string, unknown> }> =
       [];
@@ -1454,6 +1633,8 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       advanced: false,
       newPhase: 0,
       blockedBy: ["origination_brief_signed_off"],
+      outcome: "gate_hard_blocked",
+      movePhase: 0,
     });
 
     const { POST } = await import("../route");
@@ -1461,6 +1642,96 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
 
     expect(res.status).toBe(409);
     await expect(res.json()).resolves.toMatchObject({ error: "gate_blocked" });
+  });
+
+  // The P0 close has five ways to stop and only ONE is a gate verdict. Before
+  // this, the other four returned an empty `blockedBy` and this route turned
+  // that emptiness into "Check server logs for the phase close helper." — for
+  // a signed-in product user, on the first step of a Move.
+  const p0AtPhase0 = () => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 0,
+      gatesPassed: [],
+    });
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "brief", label: "Brief" },
+    ]);
+    mockGetModuleState.mockResolvedValue([
+      { moduleKey: "phase_0_brief", status: "completed" },
+    ]);
+  };
+
+  it("does not report an already-advanced Move as a blocked gate", async () => {
+    p0AtPhase0();
+    mockCloseP0OnApproval.mockResolvedValue({
+      advanced: false,
+      newPhase: null,
+      blockedBy: [],
+      outcome: "already_past_p0",
+      movePhase: 2,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 0 }) as never, { params });
+    const body = (await res.json()) as { error: string; detail: string };
+
+    expect(body.error).toBe("already_advanced");
+    expect(body.error).not.toBe("gate_blocked");
+    expect(body.detail).toContain("P2");
+    expect(body.detail).not.toMatch(/server log/i);
+  });
+
+  it("names the capture to re-check when the origination brief could not be built", async () => {
+    p0AtPhase0();
+    mockCloseP0OnApproval.mockResolvedValue({
+      advanced: false,
+      newPhase: null,
+      blockedBy: [],
+      outcome: "brief_not_created",
+      movePhase: 0,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 0 }) as never, { params });
+    const body = (await res.json()) as { error: string; detail: string };
+
+    expect(body.error).toBe("brief_not_created");
+    expect(body.detail).toMatch(/problem statement/i);
+    expect(body.detail).not.toMatch(/server log/i);
+  });
+
+  it("never answers an empty blockedBy with a server-log instruction", async () => {
+    for (const outcome of [
+      "move_not_readable",
+      "close_errored",
+      "brief_not_created",
+      "already_past_p0",
+    ] as const) {
+      p0AtPhase0();
+      mockCloseP0OnApproval.mockResolvedValue({
+        advanced: false,
+        newPhase: null,
+        blockedBy: [],
+        outcome,
+        movePhase: 0,
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(req({ phase: 0 }) as never, { params });
+      const body = (await res.json()) as {
+        error: string;
+        detail: string;
+        outcome: string;
+      };
+
+      expect(res.status).toBe(409);
+      expect(body.outcome).toBe(outcome);
+      expect(body.detail).not.toMatch(/server log/i);
+      expect(body.detail.length).toBeGreaterThan(0);
+      // Only a real gate verdict may borrow the word.
+      expect(body.error).not.toBe("gate_blocked");
+    }
   });
 
   it("rejects approval when the caller lacks gate-approval permission", async () => {
@@ -1477,3 +1748,293 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
 });
 
 export {};
+
+/**
+ * The slot list this route refuses with comes from a discovery blueprint, and
+ * the readiness pack records what chose that blueprint. Both facts stopped at
+ * the packet builder, so a refusal measured against an INFERRED framework
+ * called its slots "Required evidence" in the same words it uses for a declared
+ * one. Nothing here relaxes the gate: the 409 still refuses and no phase
+ * advances. Only the claim about where the list came from changes.
+ */
+describe("the transition refusal states what chose the framework it measured", () => {
+  it("does not call an inferred framework's slots a declared requirement", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "inferred",
+      archetypeLabel: "Contact Center Agent Assist",
+      unknownDeclaredArchetype: null,
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as {
+      error: string;
+      detail: string;
+      evidenceFramework: { declared: boolean; origin: string } | null;
+      requiredEvidenceGaps: unknown[];
+    };
+    expect(body.error).toBe("transition_evidence_incomplete");
+    expect(body.evidenceFramework).toMatchObject({
+      declared: false,
+      origin: "inferred",
+    });
+    expect(body.detail).toMatch(/not a declared requirement/);
+    expect(body.detail).toContain("Contact Center Agent Assist");
+    // The route's own wording still leads, and the named slots are untouched.
+    expect(body.detail.startsWith("Required evidence must be approved")).toBe(
+      true,
+    );
+    expect(body.requiredEvidenceGaps.length).toBeGreaterThan(0);
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("names a discarded declaration in the refusal rather than the framework that replaced it", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "inferred",
+      archetypeLabel: "Contact Center Agent Assist",
+      unknownDeclaredArchetype: "governed_data_foundaton",
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      evidenceFramework: {
+        declared: false,
+        origin: "declaration_discarded",
+        discardedDeclaration: "governed_data_foundaton",
+      },
+    });
+  });
+
+  it("leaves a declared framework's refusal wording exactly as it was", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as {
+      detail: string;
+      evidenceFramework: { declared: boolean } | null;
+    };
+    expect(body.evidenceFramework).toMatchObject({ declared: true });
+    expect(body.detail).toBe(
+      "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+    );
+  });
+
+  it("reports the framework on the readiness read, not only on the refusal", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "default",
+      archetypeLabel: "General Case",
+      unknownDeclaredArchetype: null,
+    });
+    const { GET } = await import("../route");
+    const res = await GET(getReq(3) as never, { params });
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      transitionReadiness: {
+        evidenceFramework: { declared: false, origin: "default" },
+      },
+    });
+  });
+
+  it("reports no framework at all when readiness could not be read", async () => {
+    // `available: false` already says the readiness read failed. The framework
+    // must then be absent rather than defaulted, so a reader cannot mistake
+    // "not asked" for "declared".
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("readiness_unavailable"),
+    );
+    const { GET } = await import("../route");
+    const res = await GET(getReq(3) as never, { params });
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      transitionReadiness: { available: false, evidenceFramework: null },
+    });
+  });
+});
+
+/**
+ * The gate's transition-evidence read is five steps behind one flag.
+ *
+ * It ran under a single bare `try` whose `catch` answered every cause with one
+ * HTTP 503 — a retry instruction — and logged nothing. Two of the five steps are
+ * reads a re-submission can plausibly answer; three are pure reductions over
+ * records already on the Move, where a re-submission recomputes the same inputs
+ * and fails the same way. These cases drive the three causes apart through the
+ * route and pin which refusal each one sends.
+ *
+ * None of them relaxes the gate: `advancePhase` must stay uncalled throughout.
+ */
+describe("a transition-evidence refusal names the step that failed", () => {
+  let errorSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  it("sends an unreadable discovery readiness as a retryable 503", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("pg: connection terminated"),
+    );
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as {
+      error: string;
+      precondition: string;
+      basisUnevaluableCause: string;
+      resubmitCanSatisfy: boolean;
+      detail: string;
+    };
+    expect(body.error).toBe("transition_discovery_readiness_unreadable");
+    // The code a reader of the old refusal matched on is kept.
+    expect(body.precondition).toBe(
+      "transition_evidence_readiness_unavailable",
+    );
+    expect(body.basisUnevaluableCause).toBe("discovery_readiness_unreadable");
+    expect(body.resubmitCanSatisfy).toBe(true);
+    expect(body.detail).toContain("was not reached");
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("distinguishes an unreadable workbook review from an unreadable readiness", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    mockLoadStageReadinessGateProposals.mockRejectedValueOnce(
+      new Error("workbook read failed"),
+    );
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as {
+      error: string;
+      basisUnevaluableCause: string;
+      resubmitCanSatisfy: boolean;
+      detail: string;
+    };
+    expect(body.error).toBe("transition_workbook_review_unreadable");
+    expect(body.basisUnevaluableCause).toBe("workbook_review_unreadable");
+    expect(body.resubmitCanSatisfy).toBe(true);
+    // Readiness DID answer here, so the refusal must say so.
+    expect(body.detail).toContain("discovery evidence readiness was read, but");
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("does not prescribe a re-submission for a failed gap assessment", async () => {
+    // Both reads answered; the reduction threw. This is the case the single 503
+    // got wrong: re-submitting reduces the same records the same way.
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    mockBuildMoveEvidenceNeedPackets.mockImplementationOnce(() => {
+      throw new Error("packet expansion failed");
+    });
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as {
+      error: string;
+      basisUnevaluableCause: string;
+      resubmitCanSatisfy: boolean;
+      detail: string;
+    };
+    expect(body.error).toBe("transition_evidence_assessment_failed");
+    expect(body.basisUnevaluableCause).toBe("gap_assessment_failed");
+    expect(body.resubmitCanSatisfy).toBe(false);
+    expect(body.detail).toContain(
+      "Submitting the gate again will not change the answer",
+    );
+    expect(body.detail).not.toMatch(/submit the gate again;/i);
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("logs the failing step and its error so a stuck Move leaves a trace", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("pg: connection terminated"),
+    );
+    const { POST } = await import("../route");
+    await POST(req({ phase: 3 }) as never, { params });
+
+    const logged = errorSpy.mock.calls.map((call) => String(call[0])).join("\n");
+    expect(logged).toContain("cause=discovery_readiness_unreadable");
+    expect(logged).toContain("phase=3");
+    expect(logged).toContain("pg: connection terminated");
+  });
+
+  it("reports the failing step on the readiness read too", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("pg: connection terminated"),
+    );
+    const { GET } = await import("../route");
+    const res = await GET(getReq(3) as never, { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      transitionReadiness: {
+        available: false,
+        basisUnevaluable: {
+          cause: "discovery_readiness_unreadable",
+          resubmitCanSatisfy: true,
+        },
+      },
+    });
+  });
+
+  it("reports no unevaluable cause when the read succeeded", async () => {
+    // The mirror of the case above: a measured gate must not carry a fault.
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    const { GET } = await import("../route");
+    const res = await GET(getReq(3) as never, { params });
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      transitionReadiness: { available: boolean; basisUnevaluable: unknown };
+    };
+    expect(body.transitionReadiness.available).toBe(true);
+    expect(body.transitionReadiness.basisUnevaluable).toBeNull();
+  });
+
+  it("asks nothing of the transition-evidence read outside P1-P4", async () => {
+    // The early return is the declared not-applicable bound. A phase outside it
+    // must not produce a fault, and must not issue the reads at all.
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("must not be called"),
+    );
+    const { GET } = await import("../route");
+    const res = await GET(getReq(5) as never, { params });
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      transitionReadiness: { available: boolean; basisUnevaluable: unknown };
+    };
+    expect(body.transitionReadiness.available).toBe(true);
+    expect(body.transitionReadiness.basisUnevaluable).toBeNull();
+  });
+});

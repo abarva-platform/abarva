@@ -35,10 +35,14 @@ import {
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import {
-  isReviewForStageReadinessProposalSet,
-  STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
   STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE,
 } from "@/lib/programs/stage-readiness-workbooks/proposals";
+import { loadStageReadinessStoredReview } from "@/lib/programs/stage-readiness-workbooks/review-accumulation";
+import { previewStageReadinessStoredReview } from "@/lib/programs/stage-readiness-workbooks/review-preview";
+import {
+  recordedDispositionsOnly,
+  seedProposalsFromReviewPreview,
+} from "@/lib/programs/stage-readiness-workbooks/review-provenance";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import {
@@ -143,6 +147,7 @@ interface StageReadinessProposalSetPreview {
       rejectedCount?: number;
       needsValidationCount?: number;
       pendingCount?: number;
+      carriedForwardFromPriorUpload?: number;
       readiness?: {
         ready?: number;
         partial?: number;
@@ -157,8 +162,15 @@ interface StageReadinessProposalSetPreview {
       requirement?: "required" | "recommended";
       question?: string;
       response?: string;
+      context?: string;
       answerState?: string;
       disposition?: string;
+      /**
+       * The disposition was restored from an earlier upload of this workbook
+       * and no review of the set under review has recorded it. It is shown,
+       * and `recordedDispositionsOnly` keeps it out of every gate reading.
+       */
+      dispositionRestoredFromPriorUpload?: boolean;
       evidenceOrSource?: string;
     }>;
     message?: string;
@@ -207,6 +219,13 @@ function proposalSetPreviewFromJson(
             response:
               typeof proposal.response === "string"
                 ? proposal.response
+                : undefined,
+            // `context` is the "Tell Us More / Context" column a human fills
+            // in, and `stageReadinessAnswerIdentity` keys on it. Dropping it
+            // here would silently match nothing on every row that has one.
+            context:
+              typeof proposal.context === "string"
+                ? proposal.context
                 : undefined,
             answerState:
               typeof proposal.answerState === "string"
@@ -443,6 +462,17 @@ export default async function StrategicMovePhaseWorkspacePage({
       { clientKey: ctx.clientKey, clientId: ctx.clientId },
       "moves_capture_composition_v1",
     );
+  // Increment 1 of the phase-workspace v2 shell (one slim phase rail, the
+  // four-stage sub-step spine, workbook on the gate step). CONJUNCTION with
+  // `moves_capture_v2`: there is no capture flow to reshape without it. It
+  // subsumes the composition polish in the host, so it does not also require
+  // the composition flag.
+  const workspaceV2Enabled =
+    captureV2Enabled &&
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_workspace_v2",
+    );
   // Governed fill-from-notes in the capture dock. Gated separately from the
   // capture redesign itself so the dock affordance can be reviewed on its own.
   const captureNotesEnabled = isFeatureEnabled(
@@ -485,12 +515,6 @@ export default async function StrategicMovePhaseWorkspacePage({
       family: "approval_artifact",
       currentOnly: true,
     });
-    const currentReview = approvalArtifacts.find(
-      (artifact) =>
-        artifact.phase === readinessWorkbookPhase &&
-        artifact.artifact_type ===
-          STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
-    );
     const currentProposalSet = approvalArtifacts.find(
       (artifact) =>
         artifact.phase === readinessWorkbookPhase &&
@@ -510,107 +534,121 @@ export default async function StrategicMovePhaseWorkspacePage({
           proposalSetJson,
         );
 
-        if (currentReview && initialStageReadinessPreview?.proposalSet) {
-          const reviewDownload = await downloadArtifactBytes(
+        const parsedProposals =
+          initialStageReadinessPreview?.proposalSet?.proposals;
+        if (initialStageReadinessPreview?.proposalSet && parsedProposals) {
+          // One read of the stored review, two readings of it. A review of
+          // THIS set is the one this surface has always seeded. A review of an
+          // EARLIER upload holds decisions the submit path restores by answer
+          // text, and showing none of them is what sent a reviewer back
+          // through every response after correcting a single cell.
+          const storedReview = await loadStageReadinessStoredReview(
             tctx,
-            currentReview.artifact_id,
-          );
-          if (reviewDownload?.fileFormat === "json") {
-            const reviewJson = JSON.parse(
-              reviewDownload.bytes.toString("utf8"),
-            );
-            const reviewMetadata = objectMetadata(currentReview.metadata);
-            const proposalReference = {
+            moveId,
+            readinessWorkbookPhase,
+            {
               proposalSetId:
                 initialStageReadinessPreview.proposalSet.proposalSetId ?? "",
               artifactId: currentProposalSet.artifact_id,
               artifactVersion: currentProposalSet.version,
-            };
-            if (
-              proposalReference.proposalSetId &&
-              isReviewForStageReadinessProposalSet({
-                proposalSet: proposalReference,
-                review: reviewJson,
-              }) &&
-              isReviewForStageReadinessProposalSet({
-                proposalSet: proposalReference,
-                review: reviewMetadata,
-              })
-            ) {
-              const review = objectValue(reviewJson);
-              const reviewSummary = objectValue(review?.summary);
-              const reviewedDispositions = new Map(
-                (Array.isArray(review?.proposals) ? review.proposals : [])
-                  .map((raw) => {
-                    const proposal = objectValue(raw);
-                    return typeof proposal?.proposalId === "string" &&
-                      typeof proposal.disposition === "string"
-                      ? [proposal.proposalId, proposal.disposition]
-                      : null;
-                  })
-                  .filter((item): item is [string, string] => item !== null),
-              );
-              const savedReview = {
+            },
+          );
+          const reviewPreview = previewStageReadinessStoredReview({
+            proposals: parsedProposals.map((proposal) => ({
+              proposalId: proposal.proposalId ?? "",
+              questionId: proposal.questionId ?? "",
+              response: proposal.response ?? "",
+              context: proposal.context ?? "",
+              evidenceOrSource: proposal.evidenceOrSource ?? "",
+              answerState:
+                proposal.answerState === "answered" ||
+                proposal.answerState === "unknown" ||
+                proposal.answerState === "insufficient_evidence"
+                  ? proposal.answerState
+                  : ("blank" as const),
+            })),
+            storedReview,
+          });
+
+          if (storedReview && reviewPreview.source !== "none") {
+            // Provenance is set with the disposition it describes. The
+            // gate projection below reads `recordedDispositionsOnly`, so a
+            // restored decision reaches the screen and never the gate.
+            const seeded = seedProposalsFromReviewPreview({
+              proposals: parsedProposals,
+              preview: reviewPreview,
+            });
+            const tally = (disposition: string) =>
+              seeded.filter((proposal) => proposal.disposition === disposition)
+                .length;
+            const decidedCount =
+              tally("accepted") + tally("rejected") + tally("needs_validation");
+
+            // A superseded review's own stored summary counts a DIFFERENT set
+            // of answers, and only the rows whose text is unchanged carried
+            // over, so those figures are recomputed here from what actually
+            // stands. Its stored readiness split is dropped rather than
+            // restated: it was measured over responses this set may no longer
+            // contain.
+            const fromPriorUpload = reviewPreview.source === "prior_upload";
+            const reviewSummary = fromPriorUpload
+              ? null
+              : objectValue(storedReview.summary);
+
+            initialStageReadinessPreview = {
+              ...initialStageReadinessPreview,
+              proposalSet: {
+                ...initialStageReadinessPreview.proposalSet,
                 status:
-                  currentReview.status === "approved"
+                  !fromPriorUpload &&
+                  storedReview.artifactStatus === "approved"
                     ? "accepted"
                     : "review_required",
-                acceptedCount: numberFromMetadata(
-                  reviewSummary,
-                  "acceptedCount",
-                ),
-                rejectedCount: numberFromMetadata(
-                  reviewSummary,
-                  "rejectedCount",
-                ),
-                needsValidationCount: numberFromMetadata(
-                  reviewSummary,
-                  "needsValidationCount",
-                ),
-                pendingCount: numberFromMetadata(reviewSummary, "pendingCount"),
-                readiness: {
-                  ready: numberFromMetadata(
-                    objectValue(reviewSummary?.readiness),
-                    "ready",
-                  ),
-                  partial: numberFromMetadata(
-                    objectValue(reviewSummary?.readiness),
-                    "partial",
-                  ),
-                  insufficientEvidence: numberFromMetadata(
-                    objectValue(reviewSummary?.readiness),
-                    "insufficientEvidence",
-                  ),
-                  unknown: numberFromMetadata(
-                    objectValue(reviewSummary?.readiness),
-                    "unknown",
-                  ),
+                pendingCount: seeded.length - decidedCount,
+                review: {
+                  status:
+                    !fromPriorUpload &&
+                    storedReview.artifactStatus === "approved"
+                      ? "accepted"
+                      : "review_required",
+                  acceptedCount: tally("accepted"),
+                  rejectedCount: tally("rejected"),
+                  needsValidationCount: tally("needs_validation"),
+                  pendingCount: seeded.length - decidedCount,
+                  carriedForwardFromPriorUpload:
+                    reviewPreview.restoredFromPriorUploadCount,
+                  readiness: fromPriorUpload
+                    ? undefined
+                    : {
+                        ready: numberFromMetadata(
+                          objectValue(reviewSummary?.readiness),
+                          "ready",
+                        ),
+                        partial: numberFromMetadata(
+                          objectValue(reviewSummary?.readiness),
+                          "partial",
+                        ),
+                        insufficientEvidence: numberFromMetadata(
+                          objectValue(reviewSummary?.readiness),
+                          "insufficientEvidence",
+                        ),
+                        unknown: numberFromMetadata(
+                          objectValue(reviewSummary?.readiness),
+                          "unknown",
+                        ),
+                      },
                 },
-              };
-              initialStageReadinessPreview = {
-                ...initialStageReadinessPreview,
-                proposalSet: {
-                  ...initialStageReadinessPreview.proposalSet,
-                  status: savedReview.status,
-                  pendingCount: savedReview.pendingCount,
-                  review: savedReview,
-                  proposals:
-                    initialStageReadinessPreview.proposalSet.proposals?.map(
-                      (proposal) => ({
-                        ...proposal,
-                        disposition:
-                          proposal.proposalId &&
-                          reviewedDispositions.has(proposal.proposalId)
-                            ? reviewedDispositions.get(proposal.proposalId)
-                            : proposal.disposition,
-                      }),
-                    ),
-                },
-              };
-              if (readinessWorkbookPhase === 1) {
-                p1ToP2WorkbookReview =
-                  p1ToP2ReviewStatusFromMetadata(reviewMetadata);
-              }
+                proposals: seeded,
+              },
+            };
+
+            // The P1->P2 gate status reads the review artifact's metadata and
+            // must keep answering only for a review of the set under review;
+            // a superseded review has not cleared this transition.
+            if (readinessWorkbookPhase === 1 && !fromPriorUpload) {
+              p1ToP2WorkbookReview = p1ToP2ReviewStatusFromMetadata(
+                objectMetadata(storedReview.artifactMetadata),
+              );
             }
           }
         }
@@ -658,7 +696,9 @@ export default async function StrategicMovePhaseWorkspacePage({
     });
     const readinessProposals: StageReadinessGateProposal[] | null =
       readinessWorkbookPhase === parsedPhase
-        ? (initialStageReadinessPreview?.proposalSet?.proposals ?? []).map(
+        ? recordedDispositionsOnly(
+            initialStageReadinessPreview?.proposalSet?.proposals,
+          ).map(
             (proposal): StageReadinessGateProposal => ({
               questionId: proposal.questionId ?? "",
               dimensionId: proposal.dimensionId ?? "",
@@ -1029,6 +1069,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}
         captureCompositionEnabled={captureCompositionEnabled}
+        workspaceV2Enabled={workspaceV2Enabled}
         initialP1CharterBasisBySection={initialP1CharterBasisBySection}
         capturePhaseSavedAnswerCounts={capturePhaseSavedAnswerCountsForStrip}
         captureNotesEnabled={captureNotesEnabled}

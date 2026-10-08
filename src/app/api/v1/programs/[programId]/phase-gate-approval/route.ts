@@ -24,6 +24,10 @@ import {
 import { evaluateGate } from "@/lib/programs/governance";
 import { advancePhase } from "@/lib/programs/mutations";
 import { closeP0OnApproval } from "@/lib/programs/origination-close";
+import {
+  describeOriginationCloseOutcome,
+  originationCloseErrorCode,
+} from "@/lib/programs/origination-close-outcome";
 import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
@@ -40,8 +44,19 @@ import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import {
+  appendEvidenceFrameworkProvenance,
+  resolveEvidenceFrameworkProvenance,
+  type EvidenceFrameworkProvenance,
+} from "@/lib/programs/evidence-framework-provenance";
+import {
+  classifyTransitionEvidenceBasisRefusal,
+  describeTransitionEvidenceBasisFault,
+  type TransitionEvidenceBasisCause,
+  type TransitionEvidenceBasisRefusal,
+} from "@/lib/programs/transition-evidence-basis";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
-import { loadAcceptedStageReadinessContext } from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
 import {
   phaseApprovalMatchesEvidence,
   type PhaseGateEvidenceState,
@@ -50,6 +65,21 @@ import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/**
+ * The phase a Move sits at once its P5 gate is approved and the terminal Tower
+ * handoff is recorded.
+ *
+ * It is a constant rather than a literal at each site because the two used to
+ * disagree: the handoff wrote `lifecycle_state` and `gates_passed` and left
+ * `current_phase` at 5, while the response told the client `newPhase: 6`. Three
+ * readers key on the phase and not on the lifecycle — the advance control
+ * (`isFinal = currentPhase >= 6`), the CXO preview mode, and the phase-6
+ * deliverable set — so the walk's last step claimed a phase no reader could
+ * see. `completeTerminalTowerHandoff` now returns the phase it recorded and the
+ * response reports that, so a change to one is a change to both.
+ */
+const TERMINAL_TOWER_HANDOFF_PHASE = 6;
 
 function gateIdFor(programId: string, phase: number): string {
   return `moves-phase-gate:${programId}:P${phase}->P${phase + 1}`;
@@ -110,33 +140,95 @@ async function transitionEvidenceReadiness(
   programId: string,
   moveName: string,
   phase: number,
-): Promise<{ available: boolean; gaps: ReturnType<typeof currentPhaseRequiredEvidenceGaps> }> {
-  if (phase < 1 || phase > 4) return { available: true, gaps: [] };
+): Promise<{
+  available: boolean;
+  gaps: ReturnType<typeof currentPhaseRequiredEvidenceGaps>;
+  // What chose the framework those gaps were measured against. `null` when no
+  // readiness pack was read, so a caller cannot mistake "not asked" for
+  // "declared".
+  evidenceFramework: EvidenceFrameworkProvenance | null;
+  // Which step did not complete, when `available` is false. The five steps fail
+  // for different reasons and only some of them can be answered by submitting
+  // again, so they are caught separately rather than collapsed into one flag.
+  basisRefusal: TransitionEvidenceBasisRefusal | null;
+}> {
+  if (phase < 1 || phase > 4)
+    return {
+      available: true,
+      gaps: [],
+      evidenceFramework: null,
+      basisRefusal: null,
+    };
+
+  const unevaluable = (
+    cause: TransitionEvidenceBasisCause,
+    error: unknown,
+  ) => {
+    // The cause reached neither the operator nor the log before, so a Move stuck
+    // here left no trace of which step to look at.
+    console.error(
+      describeTransitionEvidenceBasisFault({
+        cause,
+        programId,
+        phase,
+        error,
+      }),
+    );
+    return {
+      available: false,
+      gaps: [],
+      evidenceFramework: null,
+      basisRefusal: classifyTransitionEvidenceBasisRefusal(cause),
+    };
+  };
+
+  let readiness: Awaited<ReturnType<typeof loadDiscoveryEvidenceReadiness>>;
   try {
-    const readiness = await loadDiscoveryEvidenceReadiness(ctx, programId);
+    readiness = await loadDiscoveryEvidenceReadiness(ctx, programId);
+  } catch (error) {
+    return unevaluable("discovery_readiness_unreadable", error);
+  }
+
+  let workbookProposals: Awaited<
+    ReturnType<typeof loadStageReadinessGateProposals>
+  >;
+  try {
+    // The review AS IT STANDS, not only a finished one. A finished-only
+    // reading reported a workbook held by one response as a workbook nobody
+    // had reviewed, and left an undecidable blank on an OPTIONAL question
+    // holding the phase shut with no control able to clear it.
+    workbookProposals = await loadStageReadinessGateProposals(
+      ctx,
+      programId,
+      phase + 1,
+    );
+  } catch (error) {
+    return unevaluable("workbook_review_unreadable", error);
+  }
+
+  try {
     const packets = buildMoveEvidenceNeedPackets({
       moveId: programId,
       moveName,
       currentPhase: phase,
       readiness,
     });
-    const workbook = await loadAcceptedStageReadinessContext(
-      ctx,
-      programId,
-      phase + 1,
-    );
     const assessedPackets = applyStageReadinessToEvidencePackets(
       packets,
       phase,
-      workbook?.proposals ?? null,
+      workbookProposals,
       programId,
     );
     return {
       available: true,
       gaps: currentPhaseRequiredEvidenceGaps(assessedPackets, phase),
+      evidenceFramework: resolveEvidenceFrameworkProvenance(readiness),
+      basisRefusal: null,
     };
-  } catch {
-    return { available: false, gaps: [] };
+  } catch (error) {
+    // Pure reduction over records both reads already returned. Submitting the
+    // gate again recomputes it identically, so this must not be sent as a retry.
+    return unevaluable("gap_assessment_failed", error);
   }
 }
 
@@ -266,7 +358,7 @@ async function completeTerminalTowerHandoff(
   gatesPassed: unknown,
   evidenceRevision: string,
   phaseEvidenceRevision: string,
-): Promise<{ snapshotId: string }> {
+): Promise<{ snapshotId: string; newPhase: number }> {
   const nowIso = new Date().toISOString();
   const snapshot = {
     humanRationale: rationale,
@@ -298,6 +390,10 @@ async function completeTerminalTowerHandoff(
     .from("engagements")
     .update({
       lifecycle_state: "completed",
+      // Recorded here and not only reported: every surface that asks how far a
+      // Move has gone reads `current_phase`, so a handoff that moved only the
+      // lifecycle left the Move reading as still sitting at P5.
+      current_phase: TERMINAL_TOWER_HANDOFF_PHASE,
       gates_passed: toJsonbParam(appendGatePassed(gatesPassed, 5)),
       phase_locked_at: nowIso,
       phase_locked_by_user_id: ctx.userId,
@@ -322,7 +418,7 @@ async function completeTerminalTowerHandoff(
   });
   if (logError) throw logError;
 
-  return { snapshotId };
+  return { snapshotId, newPhase: TERMINAL_TOWER_HANDOFF_PHASE };
 }
 
 async function recordReapprovalSnapshot(
@@ -428,6 +524,18 @@ export async function GET(
           status: gap.status,
           nextAction: gap.nextAction,
         })),
+        evidenceFramework: transitionReadiness.evidenceFramework,
+        // Which step did not complete when `available` is false, so a reader
+        // can tell an unmeasured gate from a measured-and-clear one.
+        basisUnevaluable: transitionReadiness.basisRefusal
+          ? {
+              cause: transitionReadiness.basisRefusal.cause,
+              code: transitionReadiness.basisRefusal.code,
+              resubmitCanSatisfy:
+                transitionReadiness.basisRefusal.resubmitCanSatisfy,
+              detail: transitionReadiness.basisRefusal.detail,
+            }
+          : null,
       },
       evidenceSnapshotAvailable: Boolean(evidence),
       p0Evidence,
@@ -604,14 +712,26 @@ export async function POST(
       phase,
     );
     if (!transitionReadiness.available) {
+      // One flag, three causes, two of which a re-submission cannot answer.
+      // The refusal names the step that failed and says whether submitting
+      // again can help; it relaxes nothing.
+      const basisRefusal =
+        transitionReadiness.basisRefusal ??
+        classifyTransitionEvidenceBasisRefusal(
+          "discovery_readiness_unreadable",
+        );
       return Response.json(
         {
-          error: "transition_evidence_readiness_unavailable",
+          error: basisRefusal.code,
+          // The code every client ladder already keys on, kept so a reader that
+          // matched the old refusal still recognises this one.
+          precondition: "transition_evidence_readiness_unavailable",
           phase,
-          detail:
-            "The current transition evidence and workbook review could not be verified. The phase gate was not submitted.",
+          basisUnevaluableCause: basisRefusal.cause,
+          resubmitCanSatisfy: basisRefusal.resubmitCanSatisfy,
+          detail: basisRefusal.detail,
         },
-        { status: 503 },
+        { status: basisRefusal.status },
       );
     }
     if (transitionReadiness.gaps.length > 0) {
@@ -624,8 +744,13 @@ export async function POST(
             status: gap.status,
             nextAction: gap.nextAction,
           })),
-          detail:
+          evidenceFramework: transitionReadiness.evidenceFramework,
+          // The slot list is correct; the sentence that calls it "required" is
+          // only true when a declaration chose the framework it came from.
+          detail: appendEvidenceFrameworkProvenance(
             "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+            transitionReadiness.evidenceFramework,
+          ),
         },
         { status: 409 },
       );
@@ -644,15 +769,22 @@ export async function POST(
         actorTenancy: ctx,
       });
       if (!closed.advanced) {
+        // Only a real gate verdict may call itself `gate_blocked`, and every
+        // stop names itself. An empty `blockedBy` is no longer reported as an
+        // unexplained failure pointing the reader at a server log.
         return Response.json(
           {
-            error: "gate_blocked",
+            error: originationCloseErrorCode(closed.outcome) ?? "gate_blocked",
             phase,
+            outcome: closed.outcome,
             blockedBy: closed.blockedBy,
+            movePhase: closed.movePhase,
             closeResult: closed,
-            detail: closed.blockedBy.length
-              ? `P0 gate remains blocked by: ${closed.blockedBy.join(", ")}.`
-              : "P0 gate approval could not advance the Move. Check server logs for the phase close helper.",
+            detail: describeOriginationCloseOutcome({
+              outcome: closed.outcome,
+              blockedBy: closed.blockedBy,
+              movePhase: closed.movePhase,
+            }),
           },
           { status: 409 },
         );
@@ -742,7 +874,8 @@ export async function POST(
       : phase === 5
         ? {
             programId,
-            newPhase: 6,
+            // `newPhase` comes from the handoff itself, so the number reported
+            // is the number written.
             ...(await completeTerminalTowerHandoff(
               sb,
               ctx,

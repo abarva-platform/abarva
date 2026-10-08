@@ -575,6 +575,70 @@ const operatingModelDesign: DeliverableProfile = {
   ],
 };
 
+// Both P3 gate artifacts below were generatable but carried NO profile, so
+// `persistDeliverable`'s "always runs" quality contract did not run on them and
+// `requiredExhibitsInstruction` told the generation pass nothing — an unassessed
+// document reached the client-ready surface and could be signed off to clear a
+// HARD P3 criterion. Neither profile sets `visualRendererRequired`: these are
+// table-led governance documents, and forcing a visual renderer would quarantine
+// them independently of the enforcement flag every other deliverable lives under.
+// Required exhibits are taken from the registry spec's own sections, nothing
+// invented: one prompted exhibit each, both table-like, plus the open-inputs
+// exhibit the missing-input policy already produces.
+const processChangeEstimateBrief: DeliverableProfile = {
+  key: "process_change_estimate_brief",
+  renderer: "docx_narrative",
+  title: "Process Change Estimate Brief",
+  clientFacing: true,
+  audience: ["program_leadership", "steering_committee"],
+  decisionPurpose:
+    "Decide whether to approve a bounded process change into the roadmap, and on what conditions.",
+  intent: "decision_memo",
+  defaultFormat: "docx",
+  supportingFormats: ["html"],
+  tone: "senior_consultant",
+  visualDensity: "low",
+  allowPhaseLabels: false,
+  evidenceMode: "appendix_only",
+  sourceRegisterPolicy: "appendix_only",
+  missingInputPolicy: "single_open_inputs_table",
+  requiredExhibits: ["decision_box", "open_inputs_required"],
+  lengthGuidance:
+    "4-8 pages; estimate-ready scope only — the affected workflow delta, not a future-state redesign.",
+  acceptanceChecks: [
+    "states the change boundary and what explicitly remains unchanged",
+    "separates approved evidence from labelled assumptions in the delta and the sizing basis",
+    "names the accountable business owner for adoption",
+    "does not produce a full process redesign, work instructions, or an execution plan",
+  ],
+};
+
+const requirementsTraceability: DeliverableProfile = {
+  key: "requirements_traceability",
+  renderer: "docx_narrative",
+  title: "Requirements Traceability Matrix",
+  clientFacing: true,
+  audience: ["program_leadership", "cio", "steering_committee"],
+  decisionPurpose:
+    "Show that every design response traces to an approved finding and an intended outcome, and name what remains gated.",
+  intent: "decision_memo",
+  defaultFormat: "docx",
+  supportingFormats: ["xlsx"],
+  tone: "senior_consultant",
+  visualDensity: "low",
+  allowPhaseLabels: false,
+  evidenceMode: "appendix_only",
+  sourceRegisterPolicy: "appendix_only",
+  missingInputPolicy: "single_open_inputs_table",
+  requiredExhibits: ["known_unknown_table", "open_inputs_required"],
+  lengthGuidance: "Table-led; the matrix is the document, not an appendix.",
+  acceptanceChecks: [
+    "every requirement row names its source finding, design response, owner, and acceptance evidence",
+    "preserves insufficient-evidence labels instead of resolving them",
+    "introduces no new facts and no unsupported value or financial claims",
+  ],
+};
+
 const sourcingStrategy: DeliverableProfile = {
   key: "sourcing_strategy",
   renderer: "docx_narrative",
@@ -796,6 +860,8 @@ export const MOVES_DELIVERABLE_KEYS = [
   "design_workshop_guide",
   "target_state_architecture",
   "solution_design",
+  "process_change_estimate_brief",
+  "requirements_traceability",
   "operating_model_design",
   "sourcing_strategy",
   "planning_workshop_guide",
@@ -822,6 +888,8 @@ export const DELIVERABLE_PROFILES: Readonly<
   design_workshop_guide: designWorkshopGuide,
   target_state_architecture: targetStateArchitecture,
   solution_design: solutionDesign,
+  process_change_estimate_brief: processChangeEstimateBrief,
+  requirements_traceability: requirementsTraceability,
   operating_model_design: operatingModelDesign,
   sourcing_strategy: sourcingStrategy,
   planning_workshop_guide: planningWorkshopGuide,

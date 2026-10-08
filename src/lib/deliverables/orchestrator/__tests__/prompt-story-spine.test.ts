@@ -228,8 +228,15 @@ describe("required exhibit keys reach the pass that authors exhibits", () => {
   });
 
   it("says nothing for a deliverable the contract does not cover", () => {
+    // `executive_playback` is an authored Moves structure that no canonical
+    // phase key requests, so it resolves no profile and the contract never
+    // assesses it. Every key a phase CAN generate must resolve one — including
+    // requirements_traceability, which used to be this case's subject until
+    // src/lib/programs/__tests__/phase-deliverable-quality-contract-coverage.test.ts
+    // established that a generatable key skipping the contract is the defect,
+    // not the rule.
     expect(
-      requiredExhibitsInstruction(movesRequest("requirements_traceability")),
+      requiredExhibitsInstruction(movesRequest("executive_playback")),
     ).toBe("");
     expect(
       requiredExhibitsInstruction({

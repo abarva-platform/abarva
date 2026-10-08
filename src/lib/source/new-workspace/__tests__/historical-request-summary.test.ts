@@ -246,3 +246,55 @@ describe("historical Request summary", () => {
     ]);
   });
 });
+
+/**
+ * A scope column in the labelled form, shaped as the running product writes it:
+ * four labelled facts in one column. `buildSourceScopeDescription` writes it and
+ * `parseSourceScopeDescription` reads it back.
+ */
+const LABELLED = [
+  "Scope boundary: In: inbound member-service agent-assist capability and its",
+  "integration needs. Out: claims decisions, clinical decisions, supplier",
+  "contact, and contract award.",
+  "Value target: Evaluate service quality, handling effort, transfer rate,",
+  "compliance, and cost-to-serve. Any numeric benefit remains an assumption",
+  "until a source-backed baseline is reviewed.",
+  "Baseline owner: Product QA owns synthetic baselines only: call volumes,",
+  "intent mix, average handling time, and current tool context.",
+  "Category: BPO / Contact Centre",
+].join("\n");
+
+describe("the Request record stops repeating the category", () => {
+  const event = {
+    trigger: "The incumbent agreement reaches its notice window.",
+    scope: LABELLED,
+    category: "bpo",
+    decisionOwner: "Director, Member Services",
+  };
+
+  it("lists the scope facts separately and the category exactly once", () => {
+    const summary = buildHistoricalRequestSummary({
+      event: event as never,
+      origin: null,
+    });
+    const keys = summary.requestFacts.map((f) => f.key);
+    expect(keys).toContain("scopeBoundary");
+    expect(keys).toContain("valueTarget");
+    expect(keys).toContain("baselineOwner");
+    // One category row, and no "Scope" blob alongside the split facts.
+    expect(keys.filter((k) => k === "category")).toHaveLength(1);
+    expect(keys).not.toContain("scope");
+    // Control: the builder really produced the row set under test.
+    expect(keys).toContain("need");
+  });
+
+  it("keeps a single Scope row when the column carries no labels", () => {
+    const summary = buildHistoricalRequestSummary({
+      event: { ...event, scope: "Run and maintain the estate." } as never,
+      origin: null,
+    });
+    const keys = summary.requestFacts.map((f) => f.key);
+    expect(keys).toContain("scope");
+    expect(keys).not.toContain("scopeBoundary");
+  });
+});

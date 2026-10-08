@@ -237,6 +237,22 @@ jobs:
       - name: Exercise Source canvas analytics component suites
         run: npx jest src/components/source/canvas/analytics --runInBand
 
+      # Not a catalog control. `src/components/engagement` held NO suites at
+      # all and no workflow named it, while the engagement meta strip it holds
+      # is the Moves nav tab's own progress surface: it states the phase, the
+      # baseline lock, the next gate, and a marker per phase gate. Two
+      # successive defects landed in that strip's gate rail — a hardcoded phase
+      # model, then a blindness to the record that holds a mid-phase approval —
+      # and neither could have been caught here, because the `data-testid` the
+      # first of them added had no assertion behind it anywhere in the tree.
+      #
+      # Wired as a DIRECTORY, like the `src/lib/programs/__tests__` step below:
+      # the directory is the half that covers suites nobody has written yet,
+      # and this one is being created with its first suite, so file-by-file
+      # wiring would guarantee the next suite starts dark.
+      - name: Exercise the engagement console component suites
+        run: npx jest src/components/engagement --runInBand
+
       # Not a catalog control. `src/components/strategic-moves/__tests__` is the
       # second-ranked governed-risk directory in
       # `docs/architecture/test-ci-coverage-census.json` — declared AI surface
@@ -256,6 +272,15 @@ jobs:
       # job hosting this step is a required status check, so the name is one a
       # closure note may honestly quote (T-595). New strategic-moves suites
       # that live beside these controls must be named here deliberately.
+      #
+      # The forty-fourth path below is the phase approve-and-build gate sign-off
+      # suite, named here under that rule. It sat in this directory enumerated
+      # but collected by nothing: the census recorded it `run: false`,
+      # `covered: false`, `untriaged: true` while the directory itself ranks at
+      # the critical governed-risk band on the declared-AI-surface-control and
+      # approval-or-lifecycle-write signals. A dark suite over gate sign-off on
+      # the approve path is precisely the gap this step exists to close. Five of
+      # five pass on this commit.
       - name: Exercise Moves visible AI liability controls
         run: >-
           npx jest --runTestsByPath
@@ -271,6 +296,7 @@ jobs:
           src/components/strategic-moves/__tests__/move-list-format.test.ts
           src/components/strategic-moves/__tests__/moves-detail-route-sunset.test.ts
           src/components/strategic-moves/__tests__/phase-approve-and-build-settle.test.tsx
+          src/components/strategic-moves/__tests__/phase-build-required-evidence-refusal.test.tsx
           src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx
           src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts
           src/components/strategic-moves/__tests__/CharterBasisField.test.tsx
@@ -297,6 +323,11 @@ jobs:
           src/components/strategic-moves/__tests__/DiagnosisFactsEditor.test.tsx
           src/components/strategic-moves/__tests__/SolutionOptionChooser.test.tsx
           src/components/strategic-moves/__tests__/MovesCaptureFlowRouteSteps.test.tsx
+          src/components/strategic-moves/__tests__/phase-documents-panel-route-scope.test.tsx
+          src/components/strategic-moves/__tests__/CaptureGateMetNotice.test.tsx
+          src/components/strategic-moves/__tests__/MovesPhaseFindings.test.tsx
+          src/components/strategic-moves/__tests__/MovesPhaseCharts.test.tsx
+          src/components/strategic-moves/__tests__/phase-approve-and-build-gate-signoff.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
@@ -705,6 +736,69 @@ jobs:
       - name: Exercise the Programs vendor-platform intelligence registry suite
         run: npx jest src/lib/programs/vendor-platform-intelligence/__tests__ --runInBand
 
+      # C-415 slice 14: the Programs stage-readiness transition workbook.
+      #
+      # Measured BEFORE it was wired, the directory executed on its own: 10
+      # suites, 101 tests, GREEN — accepted-context 9, gate-readiness 21,
+      # parser 3, proposals 9, resolver 2, review-accumulation 19,
+      # review-family-coverage 9, review-selection 26,
+      # synthetic-evidence-pack 2, xlsx 1.
+      #
+      # Wired because the census already counted this directory as COVERED and
+      # it was merge-dark anyway: the only workflow that named it was
+      # unit-suites.yml, whose job is in none of the 19 required contexts. The
+      # census asks whether a suite is run by ANY workflow, not by a REQUIRED
+      # one, so a transition-gate regression here could not fail a merge.
+      #
+      # Not coverage of nothing, checked before wiring:
+      # applyStageReadinessToEvidencePackets is imported at runtime by the
+      # strategic-move phase page, the phase-gate-approval route and the phase
+      # deliverable generator. Its gaps decide `canApprove` and are returned as
+      # a 409 `transition_evidence_incomplete`, so this directory guards a hard
+      # precondition on both the Charter and Discover gates.
+      #
+      # The suites read no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs stage-readiness transition workbook suite
+        run: npx jest src/lib/programs/stage-readiness-workbooks/__tests__ --runInBand
+
+      # C-415 slice 15: the deliverable-generation precondition suites.
+      #
+      # Measured BEFORE it was wired, the directory executed on its own: 36
+      # suites, 303 tests, GREEN in 3.0s — golden-bar 32, visual-and-prompt 24,
+      # roadmap-governed-output 18, roadmap-structured-pass 17,
+      # adaptive-depth-inbound-merges 16, roadmap-contract-extractor 14,
+      # exhibit-content-extractor 13, adaptive-depth 12,
+      # client-facing-artifact-sanitize 11, governance-contradiction-validator
+      # 11, roadmap-artifact-persistence 11, generate-artifact 11,
+      # slide-contract 10, and 23 more of 8 or fewer.
+      #
+      # Wired for the same reason as slice 14 above: the census already counted
+      # this directory as COVERED and it was merge-dark anyway. The only
+      # workflow that named it was unit-suites.yml, whose job is in none of the
+      # required contexts, so a regression in the generation preconditions could
+      # not fail a merge. The census asks whether SOME workflow reaches a
+      # directory, never whether a REQUIRED one does.
+      #
+      # Not coverage of nothing, checked before wiring: moves-generate-deps.ts
+      # is imported at runtime by the Moves generate route, the deliverable
+      # queue worker, the deliverable sign-off route and the agent's
+      # draftArtifact tool. It resolves gateApproved, captureComplete,
+      # loadDecisions and loadPhaseCapture — the preconditions that decide
+      # whether a phase deliverable generates at all — so this directory sits on
+      # the last mile of the phase-to-document path. generate-artifact.ts has
+      # six production importers behind the same routes.
+      #
+      # Wired as a DIRECTORY with no trailing slash, so a suite added here is
+      # owned without a workflow edit. Sibling directories under
+      # src/lib/deliverables stay out: each needs its own green measurement
+      # first, and wiring a red directory by naming it in a green command is
+      # the thing this step exists to avoid.
+      - name: Exercise the deliverable-generation precondition suites
+        run: npx jest src/lib/deliverables/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
@@ -812,13 +906,14 @@ jobs:
       # time is zero either way, this job has 66% headroom, and a dedicated
       # workflow pays its own setup — so pick on failure attribution, and do
       # not convert an existing one for consistency alone.
-      - name: Exercise unwired component suites (programs, agent, shell, atlas)
+      - name: Exercise unwired component suites (programs, agent, shell, atlas, sponsor)
         run: >-
           npx jest
           src/components/programs/__tests__
           src/components/agent/__tests__
           src/components/shell/__tests__
           src/components/atlas/__tests__
+          src/components/sponsor/__tests__
           --runInBand
 
       # Shared AI-disclosure primitives and the phase-workspace controls were
@@ -889,9 +984,12 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.evidence.test.tsx"
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.shell-behaviour.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/coverageArchetypePanel.test.tsx"
           "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/unexploitedCreditPanel.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/unexploitedRecoverableCredit.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/workspaceNavigation.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/workspaceUrlState.test.ts"
@@ -952,3 +1050,45 @@ jobs:
       # one appears.
       - name: Exercise the agent-runtime unit suites
         run: npx jest src/lib/agent/__tests__ --runInBand
+
+      # C-415 slice 16: the deliverable RENDERER and orchestration suites.
+      #
+      # Measured BEFORE it was wired, three consecutive runs with identical
+      # results: 59 suites, 857 tests, GREEN in 6.3-6.7s under --runInBand. A
+      # sixtieth suite arrived on main while this change was open and the
+      # directory re-measured 60 suites / 860 tests green in 6.9s, which is the
+      # count the guard's floor is held at. Largest suites: brief-library 63,
+      # renderers 48,
+      # orchestrator 46, slide-text 46, archetype-evidence-landing 41,
+      # archetype-config-source 36, surface 34, archetype-pack-config 33,
+      # discovery-evidence-library 31, discovery-blueprint-config 30,
+      # archetype-identity 28, archetype-config-preflight 27,
+      # quality-bar-registry 26, section-generation 23,
+      # quality-validator-size-range 19, and 30 more of 8 or fewer.
+      #
+      # Wired for the same reason as slices 14 and 15: the census already
+      # counted this directory COVERED, and a merge could not fail on any of
+      # it. The only workflow naming it was unit-suites.yml, whose job is in
+      # none of the required contexts. The census asks whether SOME workflow
+      # reaches a directory, never whether a REQUIRED one does.
+      #
+      # Not coverage of nothing, checked before wiring. renderers.tsx is the
+      # module that produces the file a reader actually opens — DOCX, PPTX,
+      # XLSX, HTML and PDF — and three product routes import it: the artifact
+      # download route, the client-approval route, and the Source file-cabinet
+      # deliverable bridge. orchestrator.ts is imported by both orchestrated
+      # Move runners. section-generation.ts and prompt-builder.ts are reached
+      # through those same modules inside this directory. So these suites sit
+      # on the last mile of the phase-to-document path, one step beyond the
+      # generation preconditions owned by slice 15.
+      #
+      # Wired as a DIRECTORY with no trailing slash, so a suite added here is
+      # owned without a workflow edit. Jest reads a bare path argument as a
+      # regex, so this also selects any sibling whose name STARTS with
+      # `__tests__`; there is none, and the guard suite fails if one appears.
+      #
+      # Sibling directories under src/lib/deliverables stay out: each needs its
+      # own green measurement first, and a red directory is wired by fixing it,
+      # never by adding it to a green command.
+      - name: Exercise the deliverable renderer and orchestration suites
+        run: npx jest src/lib/deliverables/orchestrator/__tests__ --runInBand

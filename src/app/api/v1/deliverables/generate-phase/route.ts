@@ -30,6 +30,7 @@ import {
   describeUnresolvedBuildSet,
 } from "@/lib/programs/phase-build-set";
 import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
+import { resolvePhaseBuildUseCaseArchetype } from "@/lib/programs/deliverables/orchestrated/phase-build-use-case-archetype";
 import {
   createMoveContextExtract,
   type MoveContextExtractResult,
@@ -44,7 +45,7 @@ import {
   shouldGenerateArtifact,
   type AdaptiveDepthDecision,
 } from "@/lib/deliverables/adaptive-depth";
-import { getModuleState } from "@/lib/programs/queries";
+import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import {
   approvedMoveEvidenceRevisionForPhase,
@@ -61,14 +62,25 @@ import {
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
 import { formatEstimateModelForPrompt } from "@/lib/programs/estimate-model";
-import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import {
+  loadDiscoveryEvidenceReadiness,
+  resolveDeclaredProgramArchetypeId,
+} from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
-import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
 import {
-  formatAcceptedStageReadinessContextForPrompt,
-  loadAcceptedStageReadinessContext,
-} from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+  appendEvidenceFrameworkProvenance,
+  resolveEvidenceFrameworkProvenance,
+  type EvidenceFrameworkProvenance,
+} from "@/lib/programs/evidence-framework-provenance";
+import { buildHeldByEvidenceDetail } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
+import { phaseReadsPrecedingTransitionReview } from "@/lib/programs/stage-readiness-prompt-window";
+import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
+import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
+import {
+  formatStageReadinessPromptContext,
+  loadStageReadinessPromptContext,
+} from "@/lib/programs/stage-readiness-workbooks/prompt-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -305,9 +317,14 @@ export async function POST(req: NextRequest) {
     let requiredEvidenceGaps: ReturnType<
       typeof currentPhaseRequiredEvidenceGaps
     >;
+    // What chose the framework the gaps below were measured against. Stays
+    // `null` if readiness never loaded, so the refusal cannot claim a
+    // declaration it did not read.
+    let evidenceFramework: EvidenceFrameworkProvenance | null = null;
     let acceptedStageReadinessPrompt = "";
     try {
       const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
+      evidenceFramework = resolveEvidenceFrameworkProvenance(readiness);
       let packets = buildMoveEvidenceNeedPackets({
         moveId,
         moveName,
@@ -315,7 +332,9 @@ export async function POST(req: NextRequest) {
         readiness,
       });
       if (phase >= 1 && phase <= 4) {
-        const transitionContext = await loadAcceptedStageReadinessContext(
+        // The gate reading takes the review as it stands, under its own
+        // required-only policy. See `gate-proposal-context`.
+        const transitionProposals = await loadStageReadinessGateProposals(
           ctx,
           moveId,
           phase + 1,
@@ -323,18 +342,26 @@ export async function POST(req: NextRequest) {
         packets = applyStageReadinessToEvidencePackets(
           packets,
           phase,
-          transitionContext?.proposals ?? null,
+          transitionProposals,
           moveId,
         );
       }
-      if (phase >= 2 && phase <= 5) {
-        const currentPhaseContext = await loadAcceptedStageReadinessContext(
+      if (phaseReadsPrecedingTransitionReview(phase)) {
+        // The prompt gets every accepted answer on the preceding transition's
+        // review, whether or not that review is finished. The finished-review
+        // policy belongs to the forward controls above, not here.
+        //
+        // The window starts at P1, not P2: the P0 to P1 workbook is served,
+        // offered and reviewed like any other, so P1 Charter — the first
+        // generating phase — has a preceding transition to read. See
+        // `stage-readiness-prompt-window`.
+        const currentPhaseContext = await loadStageReadinessPromptContext(
           ctx,
           moveId,
           phase,
         );
         acceptedStageReadinessPrompt =
-          formatAcceptedStageReadinessContextForPrompt(currentPhaseContext);
+          formatStageReadinessPromptContext(currentPhaseContext);
       }
       requiredEvidenceGaps = currentPhaseRequiredEvidenceGaps(packets, phase);
     } catch (err) {
@@ -356,12 +383,18 @@ export async function POST(req: NextRequest) {
       return Response.json(
         {
           error: "required_evidence_open",
-          detail: `${requiredEvidenceGaps.length} required evidence item${requiredEvidenceGaps.length === 1 ? " is" : "s are"} not yet approved, covered, or formally waived. No phase build was queued.`,
+          // The count and the slot names are correct; what needs saying is
+          // whether a declaration chose the framework they came from.
+          detail: appendEvidenceFrameworkProvenance(
+            buildHeldByEvidenceDetail(requiredEvidenceGaps.length),
+            evidenceFramework,
+          ),
           requiredEvidenceGaps: requiredEvidenceGaps.map((gap) => ({
             evidenceSlot: gap.evidenceSlot,
             status: gap.status,
             nextAction: gap.nextAction,
           })),
+          evidenceFramework,
           nextAction:
             "Upload the minimum required source evidence, review the extracted facts, and approve or formally waive each required item before building.",
         },
@@ -435,6 +468,42 @@ export async function POST(req: NextRequest) {
       ? formatApprovedSolutionApproach(approvedSolutionApproach)
       : null;
 
+    // The archetype this route is HANDED (`useCaseArchetype`) is the Move's
+    // coarse program archetype, and not one of its five possible values names a
+    // discovery blueprint or an archetype pack. Resolve what a human actually
+    // DECLARED for this Move and pass that alongside, so the context extract
+    // grades evidence against the declared framework instead of one keyword
+    // inference picked. `resolveDeclaredProgramArchetypeId` is the same rule the
+    // upload, solution-pattern and risk-assessment routes already apply — this
+    // path was the one resolving nothing.
+    //
+    // Best-effort on purpose: a failed read must not fail the enqueue, and
+    // `null` is exactly today's behavior.
+    let declaredArchetypeId: string | null = null;
+    try {
+      declaredArchetypeId = resolveDeclaredProgramArchetypeId(
+        await getProgramById(ctx, moveId),
+      );
+    } catch {
+      declaredArchetypeId = null;
+    }
+
+    // The archetype this route is HANDED is `move.archetype`, the coarse legacy
+    // UI column, and none of its values names an archetype in either the
+    // archetype-pack or discovery-blueprint catalog. The worker rebuilds the
+    // orchestrator request from the persisted payload alone, so it never
+    // reaches the in-process precedence rule in `build-request.ts` — the
+    // declaration resolved just above has to reach the PAYLOAD or the queued
+    // build composes against no declared archetype at all.
+    //
+    // A request that already names a real archetype still wins, so this is a
+    // no-op for any caller sending one.
+    const buildArchetype = resolvePhaseBuildUseCaseArchetype({
+      requestedArchetype: useCaseArchetype,
+      declaredArchetypeId,
+    });
+    const buildUseCaseArchetype = buildArchetype.useCaseArchetype;
+
     let contextExtract: MoveContextExtractResult | null = null;
     try {
       contextExtract = await createMoveContextExtract({
@@ -445,6 +514,7 @@ export async function POST(req: NextRequest) {
         targetPhase: phase,
         moveName,
         useCaseArchetype,
+        declaredArchetypeId,
         phaseLabel,
         phasePurpose: specs.map((spec) => spec.documentPurpose).join(" "),
         candidatePreview: {
@@ -618,7 +688,7 @@ export async function POST(req: NextRequest) {
       );
       return {
         module: "moves",
-        useCaseArchetype,
+        useCaseArchetype: buildUseCaseArchetype,
         deliverableTypeKey: spec.deliverableTypeKey,
         deliverableType,
         decisionContext: [
@@ -653,7 +723,7 @@ export async function POST(req: NextRequest) {
             tenantKey: clientKey,
             userId: ctx.userId,
             module: "moves",
-            archetype: useCaseArchetype,
+            archetype: buildUseCaseArchetype,
             deliverableType: orchestratorDeliverableType(
               spec.deliverableTypeKey,
             ),
@@ -707,7 +777,7 @@ export async function POST(req: NextRequest) {
             tenantKey: clientKey,
             userId: ctx.userId,
             module: "moves",
-            archetype: useCaseArchetype,
+            archetype: buildUseCaseArchetype,
             deliverableType,
             jobPayload: payloadFor(spec),
           });

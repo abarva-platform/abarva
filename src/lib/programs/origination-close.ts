@@ -30,6 +30,7 @@ import { evaluateGate } from "@/lib/programs/governance";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
 import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import type { OriginationCloseOutcome } from "@/lib/programs/origination-close-outcome";
 
 interface EngagementSeedRow {
   id: string;
@@ -135,6 +136,15 @@ export interface CloseP0Result {
   advanced: boolean;
   newPhase: number | null;
   blockedBy: string[];
+  /**
+   * WHY the close finished the way it did. `blockedBy` alone cannot say:
+   * four of the five stops leave it empty, and an empty `blockedBy` used to
+   * be reported to the user as an unexplained failure. See
+   * `origination-close-outcome.ts`.
+   */
+  outcome: OriginationCloseOutcome;
+  /** The phase the Move is actually on, when the close found it past P0. */
+  movePhase: number | null;
 }
 
 /**
@@ -155,6 +165,10 @@ export async function closeP0OnApproval(input: {
     advanced: false,
     newPhase: null,
     blockedBy: [],
+    // Any return that does not set this explicitly is an error path; the
+    // catch below is the only one, and it owns `close_errored`.
+    outcome: "close_errored",
+    movePhase: null,
   };
   try {
     const sb = getAzureWriteFluentClient();
@@ -164,10 +178,18 @@ export async function closeP0OnApproval(input: {
       .eq("id", input.programId)
       .maybeSingle();
     const row = data as EngagementSeedRow | null;
-    if (!row) return result;
+    if (!row) {
+      result.outcome = "move_not_readable";
+      return result;
+    }
+    result.movePhase = row.current_phase ?? 0;
     // Only the P0 origination approval closes P0. Later-phase approvals
     // (handled elsewhere) must not trigger this path.
-    if ((row.current_phase ?? 0) !== 0) return result;
+    if ((row.current_phase ?? 0) !== 0) {
+      // Not a block. The Move advanced; this call simply had nothing to do.
+      result.outcome = "already_past_p0";
+      return result;
+    }
 
     const ctx: TenancyCtx = {
       ...(input.actorTenancy ?? {}),
@@ -186,7 +208,10 @@ export async function closeP0OnApproval(input: {
       row,
     );
     result.briefEnsured = !!deliverableId;
-    if (!deliverableId) return result;
+    if (!deliverableId) {
+      result.outcome = "brief_not_created";
+      return result;
+    }
 
     // The authorized user's approval is the brief sign-off.
     const signed = await signOffDeliverable(
@@ -204,6 +229,7 @@ export async function closeP0OnApproval(input: {
     const hardFails = gate.failedChecks.filter((c) => c.severity === "hard");
     if (hardFails.length > 0) {
       result.blockedBy = hardFails.map((c) => c.check);
+      result.outcome = "gate_hard_blocked";
       console.error("[origination-close] P0 gate still hard-blocked", {
         programId: input.programId,
         blockedBy: result.blockedBy,
@@ -229,6 +255,7 @@ export async function closeP0OnApproval(input: {
     );
     result.advanced = true;
     result.newPhase = advanced.newPhase;
+    result.outcome = "advanced";
 
     // Durable Phase Gate Decision Record (PR-4): soft gaps stay visible.
     const carried = gate.failedChecks.filter((c) => c.severity === "soft");

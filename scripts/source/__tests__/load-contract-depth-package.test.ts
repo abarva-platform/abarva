@@ -2,8 +2,92 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import Papa from "papaparse";
+import { performanceMeasureFromSource } from "../../../src/lib/source/contract-intelligence/performance-units";
 
 describe("Source contract depth package loader", () => {
+  it("keeps time and backlog measures out of the percentage scale", () => {
+    expect(performanceMeasureFromSource("critical_incident_response_minutes", "35", "30")).toEqual({
+      unit: "minutes",
+      actual: 35,
+      target: 30,
+      actualText: "35 min",
+      targetText: "30 min",
+    });
+    expect(performanceMeasureFromSource("p1_p2_resolution_hours", "0.8", "8")).toMatchObject({
+      unit: "hours",
+      actual: 0.8,
+      actualText: "0.8 hr",
+    });
+    expect(performanceMeasureFromSource("problem_backlog_older_30_days", "12", "12")).toMatchObject({
+      unit: "count",
+      actual: 12,
+      actualText: "12",
+    });
+    expect(performanceMeasureFromSource("batch_completion_by_7am_pct", "0.98", "98")).toMatchObject({
+      unit: "%",
+      actual: 98,
+      actualText: "98.0%",
+    });
+  });
+
+  it("refuses unknown or contradictory source units", () => {
+    expect(() => performanceMeasureFromSource("unknown_sla", "4", "5")).toThrow(/unit/i);
+    expect(() => performanceMeasureFromSource("critical_incident_response_minutes", "35", "30", "%"))
+      .toThrow(/unit/i);
+  });
+
+  it("persists the resolved unit and repairs it on a separately authorized reload", () => {
+    const loader = fs.readFileSync(
+      path.resolve(__dirname, "../load-contract-depth-package.ts"),
+      "utf8",
+    );
+    const start = loader.indexOf("async function upsertPerformance(");
+    const upsert = loader.slice(start, loader.indexOf("async function upsert", start + 1));
+    expect(upsert).toContain("performanceMeasureFromSource(");
+    expect(upsert).toContain("measure.unit,");
+    expect(upsert).toContain("unit = EXCLUDED.unit");
+    expect(upsert).not.toContain("$10, '%'");
+  });
+
+  it("validates performance units during preflight, before a layer can be applied", () => {
+    const loader = fs.readFileSync(
+      path.resolve(__dirname, "../load-contract-depth-package.ts"),
+      "utf8",
+    );
+    const main = loader.slice(loader.indexOf("async function main():"));
+    const validation = main.indexOf("for (const row of sourceFiles.slaPerformance)");
+    expect(validation).toBeGreaterThan(0);
+    expect(main.slice(validation)).toContain("performanceMeasureFromSource(");
+    expect(validation).toBeLessThan(main.indexOf("if (args.mode === \"plan\")"));
+    expect(validation).toBeLessThan(main.indexOf("const result = await withClient("));
+  });
+
+  it("resolves every performance fixture with this loader's source columns", () => {
+    const packages = path.resolve(__dirname, "../../../datasets/source/contract-depth");
+    let checked = 0;
+    for (const packageName of fs.readdirSync(packages)) {
+      const file = path.join(packages, packageName, "source-files/sla_performance.csv");
+      if (!fs.existsSync(file)) continue;
+      const parsed = Papa.parse<Record<string, string>>(fs.readFileSync(file, "utf8"), {
+        header: true,
+        skipEmptyLines: true,
+      });
+      expect(parsed.errors).toEqual([]);
+      if (!parsed.meta.fields?.includes("metric_name")) continue;
+      for (const row of parsed.data) {
+        expect(() => performanceMeasureFromSource(
+          row.metric_name,
+          row.actual_result_pct,
+          row.committed_threshold_pct,
+          row.unit,
+        )).not.toThrow();
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
   it("preserves explicit performance and ticket periods before month fallback", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(

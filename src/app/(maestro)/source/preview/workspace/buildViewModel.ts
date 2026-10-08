@@ -3061,7 +3061,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               : {
                   value: "No sized opportunity",
                   detail:
-                    "Opportunity rows are not sized; Source should ask for evidence before framing value.",
+                    // The screen already says "not sized" three other ways.
+                    // One honest line is credible; four reads as an apology.
+                    "",
                   tone: COL.gray,
                 };
   const evidenceGrades =
@@ -3104,7 +3106,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     ? {
         headline: "Commercial posture",
         summary:
-          "Source projects the existing Contract 360 and optimization rows into a decision strip; it does not create a savings claim.",
+          // Was: "Source projects the existing Contract 360 and optimization
+          // rows into a decision strip; it does not create a savings claim."
+          // The product describing its own pipeline to a buyer.
+          "",
         items: [
           {
             label: "Commitment posture",

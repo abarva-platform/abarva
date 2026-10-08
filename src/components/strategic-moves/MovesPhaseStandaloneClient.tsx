@@ -19,6 +19,10 @@ import {
 } from "@/lib/programs/phase-capture-status";
 import { resolvePhaseCaptureHold } from "@/lib/programs/phase-capture-hold";
 import { CaptureEvidenceHoldNotice } from "@/components/strategic-moves/CaptureEvidenceHoldNotice";
+import {
+  CaptureGateMetNotice,
+  isGateMetWithCaptureUnfinished,
+} from "@/components/strategic-moves/CaptureGateMetNotice";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
@@ -36,8 +40,10 @@ import {
 } from "@/components/strategic-moves/FileCabinetPanel";
 import {
   PhaseApproveAndBuild,
+  type BuildSettledResult,
   type PhaseBuildArtifact,
 } from "@/components/strategic-moves/PhaseApproveAndBuild";
+import { classifyPhaseBuildSettlement } from "@/lib/programs/phase-build-settlement";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { charterGateAssumptionDisclosure } from "@/lib/programs/charter-gate-assumption-disclosure";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
@@ -54,6 +60,17 @@ import { CharterStandingAfterDiscover } from "@/components/strategic-moves/Chart
 import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumptions-carry-forward";
 import type { PostDiscoverCharterAnswer } from "@/lib/programs/charter-standing-after-discover";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
+import {
+  MovesPhaseFindings,
+  FindingsReviewGateSummary,
+} from "@/components/strategic-moves/MovesPhaseFindings";
+import {
+  buildPhaseFindings,
+  isFindingsPhase,
+  summarizePhaseFindingsReview,
+  type FindingReviewState,
+} from "@/lib/programs/moves-phase-findings";
+import { buildPhaseCharts } from "@/lib/programs/moves-phase-charts";
 import {
   CharterAssumptionBadge,
   CharterBasisField,
@@ -78,6 +95,17 @@ import {
 import { charterBasisEditNotice } from "@/lib/programs/charter-basis-edit-notice";
 import { capturePhaseProgress } from "@/lib/programs/capture-phase-progress";
 import {
+  isWorkbookProposalAcceptable,
+  isWorkbookProposalOpenForReview,
+  isWorkbookProposalReviewable,
+  selectableWorkbookProposalIds,
+} from "@/lib/programs/stage-readiness-workbooks/review-selection";
+import {
+  isRestoredDisposition,
+  keptDecisionsToRecord,
+} from "@/lib/programs/stage-readiness-workbooks/review-provenance";
+import { shouldOfferStageReadinessWorkbook } from "@/lib/programs/stage-readiness-workbook-offer";
+import {
   approvalsRowStatusBasis,
   approvalsRowStatusClass,
   approvalsRowStatusText,
@@ -100,10 +128,20 @@ import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessmen
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-totals";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
+import { declarableEvidenceUploadFamilies } from "@/lib/programs/evidence-readiness/upload-family-declaration";
+import {
+  declarableCurrentStateFamilies,
+  resolveCurrentStateUploadFamilies,
+} from "@/lib/programs/evidence-readiness/current-state-upload-routing";
 import {
   currentPhaseRequiredEvidenceGaps,
   phaseProgressReadiness,
 } from "@/lib/programs/phase-progress-readiness";
+import {
+  isP0ApprovalGeneratedCriterion,
+  partitionOpenHardGateCriteria,
+} from "@/lib/programs/p0-approval-generated-gate-criteria";
 import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import type { ApprovedPhaseEvidenceReference } from "@/lib/programs/approved-phase-evidence";
 import {
@@ -126,6 +164,10 @@ import {
   type ConfirmedSolutionRoute,
   type SolutionOutputType,
 } from "@/lib/programs/solution-route-assessment";
+import {
+  solutionRouteConfirmUnavailableReason,
+  solutionRouteDecisionChoices,
+} from "@/lib/programs/solution-route-decision";
 import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-proposals";
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
@@ -156,6 +198,7 @@ import {
 } from "@/lib/programs/deliverable-registry";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import { getPhaseName } from "@/lib/programs/phase-labels";
+import { requiredEvidenceCompletionNotice } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 
 interface AvaChatMessage {
   id: string;
@@ -265,6 +308,8 @@ interface MovesPhaseStandaloneClientProps {
   charterBasisEnabled?: boolean;
   /** `moves_capture_composition_v1` feature flag, already conjoined server-side with `moves_capture_v2` (tenant-gated, default OFF). When true the workspace surface tabs render inside the agent dock's workspace column instead of above it, and the legacy stage head drops the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. Blocked-phase notice and readiness-workbook actions are unaffected, and no capture field, save, gate or evidence behaviour changes. */
   captureCompositionEnabled?: boolean;
+  /** `moves_workspace_v2` feature flag, already conjoined server-side with `moves_capture_v2` (tenant-gated, default OFF). Increment 1 of the phase-workspace redesign: the capture flow presents ONE slim phase rail (P0–P5 + a non-interactive hand-off marker) and a four-stage sub-step spine (CAPTURE · GENERATE · OUTCOME · GATE) in the v3 locked-light palette; the host drops the stacked legacy gate stepper and the repeated stage head on the phase view (it subsumes the composition polish), de-emphasises the workspace-view row to a secondary control, and moves the readiness-workbook actions off the per-step stage head onto the capture flow's gate step. Presentation and arrangement only — no capture field, structured input, save, gate, evidence, approval or workbook-accept behaviour changes. */
+  workspaceV2Enabled?: boolean;
   /** The basis already recorded per P1 Charter section key, preloaded server-side. Seeds the basis control so a reload shows what was declared rather than an empty choice. */
   initialP1CharterBasisBySection?: Record<string, CharterBasisValue>;
   /**
@@ -316,6 +361,9 @@ interface MoveArtifactApiRow {
   lifecycleState: string;
   version: number;
   downloadUrl: string;
+  deliverableId?: string | null;
+  signedOffVersion?: number | null;
+  currentVersion?: number | null;
 }
 
 type WorkspaceView =
@@ -537,6 +585,9 @@ interface StageReadinessWorkbookParsePreview {
       rejectedCount?: number;
       needsValidationCount?: number;
       pendingCount?: number;
+      /** Decisions restored from an earlier upload of the same workbook,
+       * matched on the answer rather than the file it arrived in. */
+      carriedForwardFromPriorUpload?: number;
       readiness?: {
         ready?: number;
         partial?: number;
@@ -553,6 +604,8 @@ interface StageReadinessWorkbookParsePreview {
       response?: string;
       answerState?: string;
       disposition?: string;
+      /** Restored from an earlier upload and not yet recorded for this set. */
+      dispositionRestoredFromPriorUpload?: boolean;
     }>;
     message?: string;
   } | null;
@@ -856,6 +909,9 @@ function mapArtifactApiRowToBuildArtifact(
     status: artifact.status,
     version: artifact.version,
     downloadUrl: artifact.downloadUrl,
+    deliverableId: artifact.deliverableId ?? null,
+    signedOffVersion: artifact.signedOffVersion ?? null,
+    currentVersion: artifact.currentVersion ?? null,
   };
 }
 
@@ -910,6 +966,7 @@ export function MovesPhaseStandaloneClient({
   captureP0Enabled = false,
   charterBasisEnabled = false,
   captureCompositionEnabled = false,
+  workspaceV2Enabled = false,
   initialP1CharterBasisBySection = {},
   capturePhaseSavedAnswerCounts,
   captureNotesEnabled = false,
@@ -1161,6 +1218,57 @@ export function MovesPhaseStandaloneClient({
       displayMoveName,
     ],
   );
+  // Increment 2: the v2 OUTCOME findings surface for an intelligence phase
+  // (P2 Discover, P4 Business case), DERIVED from the phase's real governed
+  // content — the archetype-driven current-state readiness report and the
+  // latest generated deliverable's content signals. No finding is invented; a
+  // phase with no governed content yet yields a pending model and a designed
+  // empty state. Null for every capture-heavy phase, where the OUTCOME step
+  // keeps the hand-off recap.
+  const phaseFindingsModel = useMemo(
+    () =>
+      buildPhaseFindings({
+        phase: phase.phase,
+        readiness: currentStateReadiness,
+        contentSignals: carriesForwardContent,
+      }),
+    [phase.phase, currentStateReadiness, carriesForwardContent],
+  );
+  // Accept/Challenge review state. Presentation only (Increment 2 introduces no
+  // new findings-attestation store): the toggle feeds the gate's honesty line
+  // and nothing else. A real review store can later own this without the
+  // surface or the gate summary changing.
+  const [findingsReview, setFindingsReview] = useState<
+    Record<string, FindingReviewState>
+  >({});
+  const onFindingReview = useCallback(
+    (id: string, state: FindingReviewState) => {
+      setFindingsReview((prev) => ({ ...prev, [id]: state }));
+    },
+    [],
+  );
+  const findingsReviewSummary = useMemo(
+    () =>
+      phaseFindingsModel
+        ? summarizePhaseFindingsReview(phaseFindingsModel, findingsReview)
+        : null,
+    [phaseFindingsModel, findingsReview],
+  );
+  // Increment 3: the OUTCOME charts / intelligence layer for the same
+  // intelligence phases. P2 charts (governed share, root-cause Pareto) are
+  // DERIVED from the real readiness report; P4 charts (cost / value /
+  // sensitivity) have no governed baseline and are rendered as labelled
+  // illustrative placeholders. Null for every non-intelligence phase.
+  const phaseChartsModel = useMemo(
+    () =>
+      buildPhaseCharts({
+        phase: phase.phase,
+        readiness: currentStateReadiness,
+        contentSignals: carriesForwardContent,
+      }),
+    [phase.phase, currentStateReadiness, carriesForwardContent],
+  );
+
   const visiblePhaseBuildArtifacts = useMemo(
     () =>
       mergePhaseBuildArtifacts([
@@ -1216,16 +1324,14 @@ export function MovesPhaseStandaloneClient({
       cancelled = true;
     };
   }, [move.id, phase.phase]);
-  // What the file cabinet's uploader can declare a file as covering: the
-  // evidence families this Move's discovery requires, once each.
-  const declarableEvidenceFamilies = useMemo(() => {
-    const seen = new Set<string>();
-    return evidenceNeedPackets.flatMap((packet) => {
-      if (!packet.familyId || seen.has(packet.familyId)) return [];
-      seen.add(packet.familyId);
-      return [{ id: packet.familyId, label: packet.evidenceSlot }];
-    });
-  }, [evidenceNeedPackets]);
+  // What an uploader can declare a file as covering: the evidence families
+  // this Move's discovery requires, once each. Every upload surface that asks
+  // for these families is handed the same list, so none of them can instruct
+  // the user to supply a family it gives no way to declare.
+  const declarableEvidenceFamilies = useMemo(
+    () => declarableEvidenceUploadFamilies(evidenceNeedPackets),
+    [evidenceNeedPackets],
+  );
   const p3OptionSet = useMemo(
     () =>
       assembleP3SolutionOptions({
@@ -2402,32 +2508,37 @@ export function MovesPhaseStandaloneClient({
     }
   }
 
-  async function approvePhaseGateAfterBuild(result: {
-    succeededKeys: string[];
-    failedKeys: string[];
-    total: number;
-  }) {
+  async function approvePhaseGateAfterBuild(result: BuildSettledResult) {
     // This only ever runs once every queued deliverable in the batch has
     // reached a terminal status (see PhaseApproveAndBuild's onBuildSettled) —
-    // never while generation is still queued or running, and never when a
-    // required deliverable failed or was held below gate.
-    if (result.failedKeys.length > 0) {
+    // never while generation is still queued or running.
+    //
+    // A failure refuses the submission only when the document that failed is
+    // one a phase gate check actually reads. A working document beside it
+    // (`gateArtifact: false`) is named rather than blocking, because no gate
+    // check reads it and refusing here used to dead-end the phase on a document
+    // the gate never asked for. `classifyPhaseBuildSettlement` owns that split.
+    const settlement = classifyPhaseBuildSettlement({
+      phase: phase.phase,
+      succeeded: result.succeeded,
+      failed: result.failed,
+    });
+    if (settlement.refusal) {
       setGateApprovalStatus("blocked");
-      throw new Error(
-        `${result.failedKeys.length} required output${result.failedKeys.length === 1 ? "" : "s"} ` +
-          `failed to generate or were held below gate (${result.failedKeys.join(", ")}). ` +
-          "Fix the underlying issue and re-run Approve & Build before requesting gate approval.",
-      );
-    }
-    if (result.succeededKeys.length === 0) {
-      setGateApprovalStatus("blocked");
-      throw new Error(
-        "No required deliverables completed generation for this phase.",
-      );
+      throw new Error(settlement.refusal);
     }
     setGateApprovalStatus("approving");
+    // A re-submission of documents already on the record did not just build
+    // them, and saying it did would misreport what the reader authorized.
+    const builtSentence =
+      result.source === "existing_documents"
+        ? `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} already on the record. `
+        : `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. `;
     setGateApprovalMessage(
-      `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. Submitting gate approval...`,
+      builtSentence +
+        (settlement.workingDocumentCaveat
+          ? `${settlement.workingDocumentCaveat} Submitting gate approval...`
+          : "Submitting gate approval..."),
     );
 
     const approvalRes = await fetch(
@@ -2438,7 +2549,11 @@ export function MovesPhaseStandaloneClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phase: phase.phase,
-          rationale: `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.`,
+          rationale:
+            `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.` +
+            (settlement.workingDocumentCaveat
+              ? ` ${settlement.workingDocumentCaveat}`
+              : ""),
         }),
       },
     );
@@ -2457,23 +2572,34 @@ export function MovesPhaseStandaloneClient({
       };
       detail?: string;
       error?: string;
+      requiredEvidenceGaps?: unknown;
     };
     if (!approvalRes.ok || !approval.ok) {
       const hard = approval.gate?.failedChecks
         ?.filter((check) => check.severity === "hard")
         .map((check) => check.reason || check.check)
         .join("; ");
+      // `transition_evidence_incomplete` carries no `gate` and no `missing`, so
+      // it used to land on `detail`, which states the category of what is open
+      // and never which slot. The payload names them; read it above `detail`.
+      const namedEvidenceSlots = describeRequiredEvidenceRefusal(approval);
       const blockedMessage =
         hard ||
         (approval.missing?.length
           ? `P${phase.phase} capture is incomplete - missing: ${approval.missing.join(", ")}`
           : "") ||
+        namedEvidenceSlots ||
         approval.detail ||
         approval.error ||
         `Gate approval failed (HTTP ${approvalRes.status})`;
       setGateApprovalStatus("blocked");
+      // Do NOT send the reader back to Approve & Build here. Two HARD gate
+      // checks read a sign-off recorded after the build, and re-running the
+      // build regenerates the document as a fresh unapproved draft — which
+      // clears the very sign-off the gate is waiting for. The no-rebuild
+      // submission is the control that can actually close this.
       setGateApprovalMessage(
-        `Build completed, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, approve the draft or upload an edited version in Files & Evidence, then re-run Approve & Build.`,
+        `${result.source === "existing_documents" ? "Submitted" : "Build completed"}, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, then approve the draft or upload an edited version in the gate step's sign-off ledger above and use "Submit ${phase.code} ${phase.title} gate approval" — re-running Approve & Build would replace the document you just approved with a new unapproved draft.`,
       );
       throw new Error(blockedMessage);
     }
@@ -2509,10 +2635,16 @@ export function MovesPhaseStandaloneClient({
       setGateApproved(false);
       setGateApprovalStatus("approving");
       setGateApprovalMessage("Submitting P0 gate approval...");
+      // P0 has no deliverable build: its gate evidence IS the origination
+      // brief, so it settles as one succeeded gate artifact.
       await approvePhaseGateAfterBuild({
         succeededKeys: ["origination_brief"],
         failedKeys: [],
         total: 1,
+        succeeded: [
+          { deliverableTypeKey: "origination_brief", gateArtifact: true },
+        ],
+        failed: [],
       });
     } catch (err) {
       setGateApproved(false);
@@ -2907,6 +3039,19 @@ export function MovesPhaseStandaloneClient({
 
   const nextCapturePhase = phase.phase < 5 ? PHASES[phase.phase + 1] : null;
 
+  // Gate vs. capture: a phase the Move has already advanced past (`state:
+  // done`) can show a met gate and an unfinished capture strip at the same
+  // time — a gate is met from existing or migrated origination data (or
+  // approved evidence), not necessarily from working the guided capture
+  // questions here. Surface that so the empty strip does not read as a
+  // contradiction. Informational only; it changes no gate, save, or Continue.
+  const viewedGateTally = phaseTallies.find((row) => row.phase === phase.phase);
+  const viewedCaptureRow = capturePhases.find((p) => p.phase === phase.phase);
+  const gateMetWithCaptureUnfinished = isGateMetWithCaptureUnfinished(
+    viewedGateTally,
+    viewedCaptureRow,
+  );
+
   // P0 Originate renders the redesigned capture flow only when BOTH flags are
   // on: the flow itself (`moves_capture_v2`) and the P0 extension
   // (`moves_capture_p0_v1`). Either off ⇒ P0 keeps the legacy canvas exactly.
@@ -2928,16 +3073,80 @@ export function MovesPhaseStandaloneClient({
   // and what the stage head stops repeating. It applies only on the phase view
   // and only where the redesigned capture is what renders — the other surface
   // views keep their own heads and their tab row exactly as they are.
+  // `moves_workspace_v2` (flag, default OFF, already conjoined with
+  // moves_capture_v2 server-side). Increment 1 of the phase-workspace redesign.
+  // It only reshapes the redesigned capture flow, so like the composition
+  // polish it applies only where that flow is what renders.
+  const workspaceV2Active = workspaceV2Enabled && captureFlowMounted;
+
+  // The v2 shell subsumes the composition polish — one slim rail means the
+  // legacy gate stepper and the repeated stage head come off the phase view —
+  // so turning on `moves_workspace_v2` implies the composition behaviour
+  // without the operator also having to enable `moves_capture_composition_v1`.
   const captureCompositionActive =
-    captureCompositionEnabled && captureFlowMounted;
+    (captureCompositionEnabled && captureFlowMounted) || workspaceV2Active;
+
+  // The accepted stage-readiness workbook review is a HARD precondition for
+  // closing P1 through P4 — the gate refuses `transition_evidence_incomplete`
+  // and the build refuses `required_evidence_open` without it — and the control
+  // below is its only producer. Which screens offer it is therefore a governed
+  // decision, not a layout preference; `shouldOfferStageReadinessWorkbook` owns
+  // it so the legacy canvas's substep rule and the redesigned flow's cannot
+  // drift apart. Under the 3-step flow nothing moves `substepIndex`, so a
+  // substep-keyed rule would hide it for the whole phase.
+  const offerReadinessWorkbook = shouldOfferStageReadinessWorkbook({
+    phase: phase.phase,
+    substepKey: substep.key,
+    captureFlowMounted,
+    hasWorkbookTransition: readinessWorkbookHref !== null,
+  });
 
   const surfaceTabRow: ReactNode = (
     <WorkspaceSurfaceTabs
       activeView={workspaceView}
       onSelect={setWorkspaceView}
       tabs={workspaceTabs}
+      // v2 makes the slim phase rail the primary navigator, so the
+      // workspace-view row drops out of the primary phase-flow chrome to a
+      // quieter secondary control. The views themselves stay reachable.
+      variant={workspaceV2Active ? "secondary" : "default"}
     />
   );
+
+  // The readiness-workbook download / upload / preview actions. Built once so
+  // they sit in exactly one place: on the legacy/composition path they stay on
+  // the stage head; under `moves_workspace_v2` they move off that per-step head
+  // (where they read as "across all steps") onto the capture flow's GATE step,
+  // beside the governed approve control — one consistent location per phase.
+  const readinessWorkbookActions: ReactNode =
+    readinessWorkbookHref && offerReadinessWorkbook ? (
+      <div className="mxw-stage-actions">
+        <a className="mxw-stage-download" download href={readinessWorkbookHref}>
+          Download P{phase.phase + 1} readiness workbook
+        </a>
+        {syntheticEvidencePackHref ? (
+          <a
+            className="mxw-stage-download"
+            download
+            href={syntheticEvidencePackHref}
+          >
+            Download sample upload files
+          </a>
+        ) : null}
+        <div ref={workbookReviewRef}>
+          <StageReadinessWorkbookPreviewControl
+            key={
+              phaseScopedStageReadinessPreview?.proposalSet
+                ? `${phaseScopedStageReadinessPreview.proposalSet.artifactId ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.artifactVersion ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.review?.status ?? "unreviewed"}:${phaseScopedStageReadinessPreview.proposalSet.review?.pendingCount ?? ""}`
+                : "no-stored-proposal-set"
+            }
+            apiPath={readinessWorkbookHref}
+            initialPreview={phaseScopedStageReadinessPreview}
+            onReviewSaved={() => router.refresh()}
+          />
+        </div>
+      </div>
+    ) : null;
 
   // The governed submit control for the capture flow's final step: the SAME
   // PhaseApproveAndBuild the canvas uses, so generation + the gate run through
@@ -3005,6 +3214,7 @@ export function MovesPhaseStandaloneClient({
         <PhaseApproveAndBuild
           archetype={move.archetype}
           approverLabel={approverLabel}
+          canApproveGates={canApproveGates}
           clientDisplayName={move.tenant.name}
           disabledReason={phaseCaptureBlocker}
           deliverableKeys={phaseCanonicalKeysForRoute(
@@ -3072,12 +3282,23 @@ export function MovesPhaseStandaloneClient({
               <Link className="mxw-back" href="/strategic-moves">
                 ← All Moves
               </Link>
-              <MovePhaseTopStepper
-                currentPhase={move.currentPhase}
-                moveId={move.id}
-                phaseTallies={phaseTallies}
-                viewingPhase={phase.phase}
-              />
+              {/* On the Steps view with the composition polish on, the
+                  capture flow renders its OWN phase bar (phase name, tick, and
+                  answered count), so this gate-criteria stepper would be a
+                  second phase navigator stacked right above it in the older
+                  style. Drop it there — the same reason the duplicate stage
+                  head is dropped — and keep it on Files / Intelligence /
+                  Approvals, where the capture bar does not render and this is
+                  the only phase navigator. Gate-criteria status still lives in
+                  the Approvals tab (and the CaptureGateMetNotice). */}
+              {captureCompositionActive && workspaceView === "phase" ? null : (
+                <MovePhaseTopStepper
+                  currentPhase={move.currentPhase}
+                  moveId={move.id}
+                  phaseTallies={phaseTallies}
+                  viewingPhase={phase.phase}
+                />
+              )}
               {/* One tab row, one place: always rendered here in the shell,
                   above the workspace, so its position is identical across the
                   Steps, Files & Evidence, Intelligence and Approvals views.
@@ -3340,39 +3561,11 @@ export function MovesPhaseStandaloneClient({
                         </button>
                       </div>
                     ) : null}
-                    {readinessWorkbookHref &&
-                    (phase.phase < 3 || substep.key === "approve") ? (
-                      <div className="mxw-stage-actions">
-                        <a
-                          className="mxw-stage-download"
-                          download
-                          href={readinessWorkbookHref}
-                        >
-                          Download P{phase.phase + 1} readiness workbook
-                        </a>
-                        {syntheticEvidencePackHref ? (
-                          <a
-                            className="mxw-stage-download"
-                            download
-                            href={syntheticEvidencePackHref}
-                          >
-                            Download sample upload files
-                          </a>
-                        ) : null}
-                        <div ref={workbookReviewRef}>
-                          <StageReadinessWorkbookPreviewControl
-                            key={
-                              phaseScopedStageReadinessPreview?.proposalSet
-                                ? `${phaseScopedStageReadinessPreview.proposalSet.artifactId ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.artifactVersion ?? ""}:${phaseScopedStageReadinessPreview.proposalSet.review?.status ?? "unreviewed"}:${phaseScopedStageReadinessPreview.proposalSet.review?.pendingCount ?? ""}`
-                                : "no-stored-proposal-set"
-                            }
-                            apiPath={readinessWorkbookHref}
-                            initialPreview={phaseScopedStageReadinessPreview}
-                            onReviewSaved={() => router.refresh()}
-                          />
-                        </div>
-                      </div>
-                    ) : null}
+                    {/* Under `moves_workspace_v2` these actions move onto the
+                        capture flow's GATE step (passed as `gateExtras`), so
+                        they leave the stage head here; otherwise they stay on
+                        the head exactly as before. */}
+                    {workspaceV2Active ? null : readinessWorkbookActions}
                     {captureCompositionActive ? null : (
                       <div
                         className="mxw-progress-card"
@@ -3447,6 +3640,12 @@ export function MovesPhaseStandaloneClient({
                         handoffSummary: charterBasisRollup,
                         openingBand: (
                           <>
+                            {gateMetWithCaptureUnfinished && viewedGateTally ? (
+                              <CaptureGateMetNotice
+                                met={viewedGateTally.met}
+                                total={viewedGateTally.total}
+                              />
+                            ) : null}
                             <CharterAssumptionsCarryForward
                               assumptions={carriedCharterAssumptionRows}
                             />
@@ -3483,6 +3682,40 @@ export function MovesPhaseStandaloneClient({
                           : undefined,
                         approveSlot: captureApproveSlot,
                         allowReviewBeforeSubmit: captureHandoffRecapEnabled,
+                        workspaceV2: workspaceV2Active,
+                        // The GATE step carries the readiness-workbook actions
+                        // and — for an intelligence phase — the findings review
+                        // honesty line, so the gate names accepted/challenged/
+                        // awaiting counts and the specific open finding.
+                        gateExtras: workspaceV2Active ? (
+                          <>
+                            {readinessWorkbookActions}
+                            {workspaceV2Active &&
+                            isFindingsPhase(phase.phase) &&
+                            phaseFindingsModel &&
+                            !phaseFindingsModel.pending &&
+                            findingsReviewSummary ? (
+                              <FindingsReviewGateSummary
+                                summary={findingsReviewSummary}
+                              />
+                            ) : null}
+                          </>
+                        ) : null,
+                        // The OUTCOME step becomes the findings surface for an
+                        // intelligence phase; capture-heavy phases keep the
+                        // hand-off recap (slot left null).
+                        outcomeFindings:
+                          workspaceV2Active &&
+                          isFindingsPhase(phase.phase) &&
+                          phaseFindingsModel ? (
+                            <MovesPhaseFindings
+                              model={phaseFindingsModel}
+                              review={findingsReview}
+                              onReview={onFindingReview}
+                              canReview={canApproveGates}
+                              charts={phaseChartsModel}
+                            />
+                          ) : null,
                       }}
                     />
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (
@@ -4002,14 +4235,21 @@ function WorkspaceSurfaceTabs({
   activeView,
   onSelect,
   tabs,
+  variant = "default",
 }: {
   activeView: WorkspaceView;
   onSelect: (view: WorkspaceView) => void;
   tabs: Array<{ label: string; view: WorkspaceView }>;
+  /** `secondary` de-emphasises the row (v2 shell), keeping the views reachable. */
+  variant?: "default" | "secondary";
 }) {
   return (
     <div
-      className="mxw-surface-tabs"
+      className={
+        variant === "secondary"
+          ? "mxw-surface-tabs mxw-surface-tabs--secondary"
+          : "mxw-surface-tabs"
+      }
       role="tablist"
       aria-label="Move workspace views"
     >
@@ -5644,11 +5884,7 @@ function PhaseBody({
   gateApprovalStatus: "idle" | "approving" | "approved" | "blocked";
   isHistoricalPhase: boolean;
   move: StrategicMove;
-  onApproveAfterBuild: (result: {
-    succeededKeys: string[];
-    failedKeys: string[];
-    total: number;
-  }) => Promise<void>;
+  onApproveAfterBuild: (result: BuildSettledResult) => Promise<void>;
   onContinueCurrentPhase: () => void;
   onApproveP0Gate: () => void | Promise<void>;
   approverLabel: string | null;
@@ -5764,8 +6000,12 @@ function PhaseBody({
 
     return (
       <>
+        {/* The evidence checklist below names the families this phase needs,
+            so this uploader is handed them too — without the list it rendered
+            no picker and every file it took was left for inference to place. */}
         <DecisionEvidenceActionPanel
           buttonLabel={`Upload ${phase.code} files`}
+          evidenceFamilies={declarableEvidenceFamilies}
           heading={`Upload and review evidence for ${phase.code}`}
           moveId={move.id}
           onOpenFiles={onOpenFiles}
@@ -6044,6 +6284,15 @@ function PhaseBody({
   const openHardCriteria = hardGateCriteria.filter(
     (criterion) => !criterion.completed,
   );
+  // Two of P0's three hard checks read the signed origination brief, and the
+  // P0 gate approval is what signs it — so no control can clear them first.
+  // Blocked-state reckoning below uses only the criteria a reader can act on;
+  // `partitionOpenHardGateCriteria` is a no-op at P1+.
+  const { actionable: actionableOpenHardCriteria } =
+    partitionOpenHardGateCriteria({
+      phase: phase.phase,
+      openHardCriteria,
+    });
   const hardMetCount = hardGateCriteria.filter(
     (criterion) => criterion.completed,
   ).length;
@@ -6054,7 +6303,7 @@ function PhaseBody({
   const isGateBlocked =
     !isHistoricalPhase &&
     !gateApproved &&
-    (openHardCriteria.length > 0 ||
+    (actionableOpenHardCriteria.length > 0 ||
       openRequiredEvidence.length > 0 ||
       !evidenceReadinessAvailable ||
       Boolean(phaseCaptureBlocker));
@@ -6074,7 +6323,7 @@ function PhaseBody({
         : openRequiredEvidence.length > 0
           ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
           : (phaseCaptureBlocker ??
-            `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
+            `Resolve ${actionableOpenHardCriteria.length} hard gate blocker${actionableOpenHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
       : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.");
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
@@ -6095,10 +6344,6 @@ function PhaseBody({
             ? "Refresh evidence status"
             : "Clear hard blockers"
         : "Run Approve & Build";
-  const p0ApprovalGeneratedCriteria = new Set([
-    "program_seed_recorded",
-    "value_hypothesis_seed",
-  ]);
   const readinessPack = buildNextPhaseReadinessPack({
     nextPhaseLabel: nextPhaseContract
       ? `${nextPhaseContract.code} ${nextPhaseContract.title}`
@@ -6168,7 +6413,7 @@ function PhaseBody({
     phase.phase >= 5
       ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
       : gateOnlyConfirmSummaryFor(phase, nextOpenPhaseContract);
-  const primaryHardBlocker = openHardCriteria[0]?.label ?? null;
+  const primaryHardBlocker = actionableOpenHardCriteria[0]?.label ?? null;
   const primarySoftCaveat = openSoftCriteria[0]?.label ?? null;
   const gateSummaryLine = isGateBlocked
     ? primaryHardBlocker
@@ -6338,7 +6583,7 @@ function PhaseBody({
         ) : null}
         {phase.phase === 0 &&
         !isHistoricalPhase &&
-        openHardCriteria.length > 0 ? (
+        actionableOpenHardCriteria.length > 0 ? (
           <div className="mxw-gate-note">
             <strong>Why some checks are still open</strong>
             <span>
@@ -6391,10 +6636,20 @@ function PhaseBody({
                 onCancel={() => setP0ConfirmOpen(false)}
                 onConfirm={() => {
                   setP0ConfirmOpen(false);
+                  // Gate-only path: this phase's outputs were already built,
+                  // so it settles as one succeeded gate artifact and nothing
+                  // failed.
                   void onApproveAfterBuild({
                     succeededKeys: ["prebuilt_gate_outputs"],
                     failedKeys: [],
                     total: 1,
+                    succeeded: [
+                      {
+                        deliverableTypeKey: "prebuilt_gate_outputs",
+                        gateArtifact: true,
+                      },
+                    ],
+                    failed: [],
                   });
                 }}
               />
@@ -6403,6 +6658,7 @@ function PhaseBody({
             <PhaseApproveAndBuild
               archetype={move.archetype}
               approverLabel={approverLabel}
+              canApproveGates={canApproveGates}
               clientDisplayName={move.tenant.name}
               disabledReason={phaseCaptureBlocker}
               deliverableKeys={phaseCanonicalKeysForRoute(
@@ -6514,7 +6770,7 @@ function PhaseBody({
                   <span
                     className={`${criterion.completed ? "met" : ""} ${
                       phase.phase === 0 &&
-                      p0ApprovalGeneratedCriteria.has(criterion.id)
+                      isP0ApprovalGeneratedCriterion(criterion.id)
                         ? "approval-generated"
                         : ""
                     }`}
@@ -6523,7 +6779,7 @@ function PhaseBody({
                     {criterion.completed ? "✓" : "○"} {criterion.label}
                     {phase.phase === 0 &&
                     !criterion.completed &&
-                    p0ApprovalGeneratedCriteria.has(criterion.id) ? (
+                    isP0ApprovalGeneratedCriterion(criterion.id) ? (
                       <em>Completed by approving this gate</em>
                     ) : null}
                   </span>
@@ -7245,173 +7501,6 @@ type FamilyUploadResult = {
   detail: string;
 };
 
-function normalizeUploadName(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ");
-}
-
-const CURRENT_STATE_FILENAME_ALIASES: Record<string, readonly string[]> = {
-  member_service_process_map: [
-    "workflow walkthrough",
-    "member service process",
-    "process and escalation map",
-    "agent journey",
-  ],
-  member_service_metrics_baseline: [
-    "monthly kpi baseline",
-    "metric dictionary",
-    "contact center performance baseline",
-    "contact center kpi",
-    "conflict register",
-  ],
-  member_service_systems_data_landscape: [
-    "system inventory",
-    "systems data landscape",
-    "integration inventory",
-    "application inventory",
-    "data source inventory",
-  ],
-  knowledge_policy_content_inventory: [
-    "knowledge inventory",
-    "policy inventory",
-    "script inventory",
-  ],
-  contact_center_transcripts_intents: [
-    "transcript",
-    "intent taxonomy",
-    "speech analytics",
-  ],
-  phi_controls_and_human_approval: [
-    "security control matrix",
-    "phi controls",
-    "privacy control inventory",
-    "human approval control matrix",
-    "human approval boundaries",
-  ],
-  member_service_org_change_readiness: [
-    "org change readiness",
-    "stakeholder map",
-    "training adoption",
-    "change readiness",
-  ],
-  solution_delivery_estimation_context: [
-    "delivery estimation context",
-    "implementation capacity",
-    "delivery cadence",
-  ],
-};
-
-function inferCurrentStateFamilies(
-  fileName: string,
-  instruments: CurrentStateInstrument[],
-): CurrentStateInstrument[] {
-  const normalized = normalizeUploadName(fileName);
-  const explicitMatches = instruments.filter((instrument) =>
-    (CURRENT_STATE_FILENAME_ALIASES[instrument.key] ?? []).some((alias) =>
-      normalized.includes(normalizeUploadName(alias)),
-    ),
-  );
-  if (explicitMatches.length > 0) return explicitMatches;
-
-  const semanticMatches = instruments.filter((instrument) => {
-    const family = normalizeUploadName(
-      `${instrument.key} ${instrument.label} ${instrument.documentFamily ?? ""}`,
-    );
-    if (
-      /\bsla\b|\bservice level\b/.test(family) &&
-      /\bsla\b|\bservice level\b|\bbaseline\b|\btarget\b|\bvendor handler\b/.test(
-        normalized,
-      )
-    ) {
-      return true;
-    }
-    if (
-      /\bvendor\b.*\bspend\b|\bspend\b.*\bvendor\b|\bcost\b/.test(family) &&
-      /\bvendor\b|\bspend\b|\bcost\b|\bexpense\b|\bcompensation\b|\bexpedite\b/.test(
-        normalized,
-      )
-    ) {
-      return true;
-    }
-    if (
-      /\bincumbent\b|\bperformance\b/.test(family) &&
-      /\bincumbent\b|\bperformance\b|\bcase\b|\bscan\b|\bevent\b|\bcontact\b|\bqueue\b|\bmetric\b/.test(
-        normalized,
-      )
-    ) {
-      return true;
-    }
-    const familyTokens = family
-      .split(/\s+/)
-      .filter(
-        (token) =>
-          token.length >= 4 &&
-          !/^(current|state|evidence|family|baseline)$/.test(token),
-      );
-    return familyTokens.some((token) => normalized.includes(token));
-  });
-  if (semanticMatches.length > 0) return semanticMatches;
-
-  const candidateKeys = new Set<string>();
-
-  if (
-    /\b(workshop|process|handoff|workflow|current state|sop|walkthrough)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("commercial_lending_process_map");
-  }
-  if (
-    /\b(metric|metrics|baseline|kpi|cycle|volume|queue|aging|onboarding)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("commercial_lending_metrics_baseline");
-  }
-  if (/\b(kyc|defect|exception|audit|document)\b/.test(normalized)) {
-    candidateKeys.add("kyc_document_defect_log");
-  }
-  if (
-    /\b(system|systems|application|apps|data|inventory|integration|architecture|core|crm|los)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("lending_systems_data_landscape");
-  }
-  if (
-    /\b(policy|knowledge|checklist|covenant|content|procedure|guidance)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("credit_policy_knowledge_inventory");
-  }
-  if (
-    /\b(control|controls|approval|authority|risk|compliance|guardrail|privacy)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("banking_controls_human_approval");
-  }
-  if (
-    /\b(org|organization|stakeholder|change|training|adoption|readiness|role|owner)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("lending_org_change_readiness");
-  }
-  if (
-    /\b(delivery|estimate|estimation|implementation|capacity|release|sdlc|itsm|roadmap)\b/.test(
-      normalized,
-    )
-  ) {
-    candidateKeys.add("solution_delivery_estimation_context");
-  }
-
-  const directMatches = instruments.filter((instrument) =>
-    candidateKeys.has(instrument.key),
-  );
-  return directMatches;
-}
-
 function CurrentStateFamilyUploadPanel({
   moveId,
   onOpenFiles,
@@ -7432,12 +7521,20 @@ function CurrentStateFamilyUploadPanel({
   >("readiness_evidence");
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<FamilyUploadResult[]>([]);
+  // What this batch of files is declared to cover. Empty means "decide from
+  // the file name", which is what this surface used to do for every file with
+  // no way to say otherwise.
+  const [declaredFamilyKey, setDeclaredFamilyKey] = useState("");
   const documentFamilies = readiness.instruments.filter(
     (instrument) => instrument.documentFamily,
   );
   const openFamilies = readiness.instruments.filter(
     (instrument) => instrument.status !== "committed",
   );
+  // Every open family on the readiness map is offered, so the table below and
+  // the control above it ask for the same set: no family is named as needed
+  // while being impossible to declare.
+  const declarableFamilies = declarableCurrentStateFamilies(openFamilies);
   const reviewRequiredCount = documentFamilies.filter(
     (instrument) => instrument.status === "review_required",
   ).length;
@@ -7636,17 +7733,24 @@ function CurrentStateFamilyUploadPanel({
           nextResults.push(await uploadSessionArtifact(file));
           continue;
         }
-        const mappedFamilies = inferCurrentStateFamilies(
-          file.name,
+        // A declared family wins; the file name is the fallback for an
+        // undeclared file only. Before the picker existed, a name the
+        // heuristic could not place was refused here with no way through.
+        const routing = resolveCurrentStateUploadFamilies({
+          declaredFamilyKey,
+          fileName: file.name,
           openFamilies,
-        );
-        if (mappedFamilies.length === 0) {
+        });
+        const mappedFamilies = routing.families;
+        if (routing.basis === null) {
           nextResults.push({
             familyKey: "unmapped",
             familyLabel: "No open current-state family",
             fileName: file.name,
             status: "error",
-            detail: "No open current-state family matched this file.",
+            detail:
+              routing.refusal ??
+              "No open current-state family matched this file.",
           });
           continue;
         }
@@ -7660,11 +7764,20 @@ function CurrentStateFamilyUploadPanel({
           // families go through parse → review → commit. Dispatching on
           // `documentFamily` is what makes the gap card's own instruction
           // ("Upload CMDB export as CSV") true on this step.
-          nextResults.push(
-            family.documentFamily
-              ? await uploadFileForFamily(file, family)
-              : await ingestStructuredForFamily(file, family),
-          );
+          const result = family.documentFamily
+            ? await uploadFileForFamily(file, family)
+            : await ingestStructuredForFamily(file, family);
+          // Say which way the family was decided. A guessed family can place
+          // one file under several families at once, and until this line said
+          // so the only difference an uploader could see between a declared
+          // placement and a guessed one was the number of rows that appeared.
+          nextResults.push({
+            ...result,
+            detail:
+              routing.basis === "declared"
+                ? `Declared as this family. ${result.detail}`
+                : `Family guessed from the file name (${mappedFamilies.length} matched). ${result.detail}`,
+          });
         }
       }
       setResults(nextResults);
@@ -7719,6 +7832,23 @@ function CurrentStateFamilyUploadPanel({
             <option value="session_notes">Workshop / session notes</option>
           </select>
         </label>
+        {uploadMode === "readiness_evidence" ? (
+          <label className="mxw-family-upload-mode">
+            <span>These files cover</span>
+            <select
+              aria-label="Evidence family these files cover"
+              onChange={(event) => setDeclaredFamilyKey(event.target.value)}
+              value={declaredFamilyKey}
+            >
+              <option value="">Decide from the file name</option>
+              {declarableFamilies.map((family) => (
+                <option key={family.key} value={family.key}>
+                  {family.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <input
           aria-label="Upload P2 current-state evidence files"
           className="mxw-hidden-file"
@@ -7949,8 +8079,12 @@ function EvidenceUploadControl({
             </select>
           </label>
         ) : null}
+        {/* Offered on every phase that has families to declare, not only P1.
+            The upload route already accepts any of this Move's discovery
+            families at any phase; while this picker was P1-only, a discovery
+            upload could not state what it covered and fell to keyword
+            inference, which decides most families on an exact phrase match. */}
         {!fixedEvidenceFamily &&
-        phase === 1 &&
         uploadFamily === "uploaded_evidence" &&
         evidenceFamilies.length > 0 ? (
           <label className="mxw-upload-family">
@@ -8046,20 +8180,7 @@ function StageReadinessWorkbookPreviewControl({
   const [preview, setPreview] =
     useState<StageReadinessWorkbookParsePreview | null>(initialPreview);
   const [selectedProposalIds, setSelectedProposalIds] = useState<Set<string>>(
-    () =>
-      new Set(
-        initialPreview?.proposalSet?.proposals
-          ?.filter(
-            (proposal) =>
-              proposal.answerState !== "blank" &&
-              Boolean(proposal.response?.trim()) &&
-              (proposal.disposition === "pending" ||
-                proposal.disposition === "needs_validation"),
-          )
-          .map((proposal) => proposal.proposalId)
-          .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
-          [],
-      ),
+    () => selectableWorkbookProposalIds(initialPreview?.proposalSet?.proposals),
   );
   const [reviewStatus, setReviewStatus] = useState<
     "idle" | "saving" | "saved" | "error"
@@ -8093,12 +8214,9 @@ function StageReadinessWorkbookPreviewControl({
         );
       }
       setPreview(payload);
-      const proposalIds =
-        payload.proposalSet?.proposals
-          ?.map((proposal) => proposal.proposalId)
-          .filter((proposalId): proposalId is string => Boolean(proposalId)) ??
-        [];
-      setSelectedProposalIds(new Set(proposalIds));
+      setSelectedProposalIds(
+        selectableWorkbookProposalIds(payload.proposalSet?.proposals),
+      );
       const summary = payload.summary ?? {};
       const issueCount =
         (summary.errorCount ?? 0) + (summary.warningCount ?? 0);
@@ -8126,18 +8244,47 @@ function StageReadinessWorkbookPreviewControl({
   async function reviewSelectedProposals(
     disposition: "accepted" | "rejected" | "needs_validation",
   ) {
-    const proposalSet = preview?.proposalSet;
-    const artifactId = proposalSet?.artifactId;
-    const selectedIds = Array.from(selectedProposalIds);
-    if (!artifactId || selectedIds.length === 0) return;
-    setReviewStatus("saving");
-    setReviewMessage(
+    await submitReviewDecisions(
+      Array.from(selectedProposalIds).map((proposalId) => ({
+        proposalId,
+        disposition,
+      })),
       disposition === "accepted"
         ? "Accepting selected responses..."
         : disposition === "needs_validation"
           ? "Marking selected responses for validation..."
           : "Rejecting selected responses...",
     );
+  }
+
+  /**
+   * Put the decisions a re-upload kept on record, each as the disposition
+   * already recorded for it.
+   *
+   * A re-upload that changed nothing leaves no response pending, so the
+   * ordinary review controls have nothing to act on while the phase is still
+   * held: the restored decisions are shown but belong to the previous upload,
+   * and no gate may read them until a human submits them. This is that
+   * submission. It re-decides nothing — a kept rejection is sent as a
+   * rejection — and the server's own carry-forward covers any row this batch
+   * does not name.
+   */
+  async function recordKeptDecisions() {
+    await submitReviewDecisions(
+      keptDecisionsToRecord(preview?.proposalSet?.proposals),
+      "Recording the decisions kept from your previous upload...",
+    );
+  }
+
+  async function submitReviewDecisions(
+    decisions: readonly { proposalId: string; disposition: string }[],
+    savingMessage: string,
+  ) {
+    const proposalSet = preview?.proposalSet;
+    const artifactId = proposalSet?.artifactId;
+    if (!artifactId || decisions.length === 0) return;
+    setReviewStatus("saving");
+    setReviewMessage(savingMessage);
     try {
       const res = await fetch(apiPath, {
         method: "PATCH",
@@ -8146,10 +8293,7 @@ function StageReadinessWorkbookPreviewControl({
         body: JSON.stringify({
           proposalSetArtifactId: artifactId,
           proposalSetArtifactVersion: proposalSet.artifactVersion,
-          decisions: selectedIds.map((proposalId) => ({
-            proposalId,
-            disposition,
-          })),
+          decisions,
         }),
       });
       const payload = (await res.json().catch(() => ({}))) as
@@ -8175,11 +8319,24 @@ function StageReadinessWorkbookPreviewControl({
         pendingCount: review.pendingCount ?? 0,
         readiness: review.readiness,
       };
-      const selectedIdsSet = new Set(selectedIds);
-      const reviewedProposals = (proposalSet.proposals ?? []).map((proposal) =>
-        proposal.proposalId && selectedIdsSet.has(proposal.proposalId)
-          ? { ...proposal, disposition }
-          : proposal,
+      // Every restored disposition is now on record, not only the ones this
+      // batch named: the route carries the rest forward onto the same review.
+      // Leaving the marks up would keep telling the reviewer that work is
+      // still unrecorded, and would keep the gate projection discarding it.
+      const submitted = new Map(
+        decisions.map((decision) => [decision.proposalId, decision.disposition]),
+      );
+      const reviewedProposals = (proposalSet.proposals ?? []).map(
+        (proposal) => {
+          const recorded = { ...proposal };
+          delete recorded.dispositionRestoredFromPriorUpload;
+          const submittedDisposition = proposal.proposalId
+            ? submitted.get(proposal.proposalId)
+            : undefined;
+          return submittedDisposition
+            ? { ...recorded, disposition: submittedDisposition }
+            : recorded;
+        },
       );
       setPreview((current) =>
         current?.proposalSet
@@ -8195,18 +8352,7 @@ function StageReadinessWorkbookPreviewControl({
             }
           : current,
       );
-      setSelectedProposalIds(
-        new Set(
-          reviewedProposals
-            .filter(
-              (proposal) =>
-                proposal.disposition === "pending" ||
-                proposal.disposition === "needs_validation",
-            )
-            .map((proposal) => proposal.proposalId)
-            .filter((proposalId): proposalId is string => Boolean(proposalId)),
-        ),
-      );
+      setSelectedProposalIds(selectableWorkbookProposalIds(reviewedProposals));
       setReviewStatus("saved");
       setReviewMessage(
         `Review saved · ${review.acceptedCount ?? 0} accepted · ${review.needsValidationCount ?? 0} needs validation · ${review.rejectedCount ?? 0} rejected`,
@@ -8233,22 +8379,79 @@ function StageReadinessWorkbookPreviewControl({
   const pendingProposalCount = preview?.proposalSet?.pendingCount ?? 0;
   const blankProposalCount =
     preview?.proposalSet?.proposals?.filter(
-      (proposal) =>
-        proposal.answerState === "blank" || !proposal.response?.trim(),
+      (proposal) => !isWorkbookProposalAcceptable(proposal),
     ).length ?? 0;
   const proposalReview = preview?.proposalSet?.review;
   const reviewActionCount =
+    preview?.proposalSet?.proposals?.filter(isWorkbookProposalOpenForReview)
+      .length ?? 0;
+  // Required responses that are not accepted. Every one of these holds both
+  // forward controls, whether it is still pending or was rejected: the P1
+  // branch of `applyStageReadinessToEvidencePackets` requires every required
+  // proposal accepted, and `assessStageReadinessGate` raises a
+  // `review_required` blocker for any required proposal that is not. So the
+  // phase gate keeps returning 409 and so does `generate-phase`.
+  const requiredNotAcceptedCount =
     preview?.proposalSet?.proposals?.filter(
       (proposal) =>
-        proposal.answerState !== "blank" &&
-        Boolean(proposal.response?.trim()) &&
-        (proposal.disposition === "pending" ||
-          proposal.disposition === "needs_validation"),
+        (proposal.requirement ?? "required") === "required" &&
+        proposal.disposition !== "accepted",
     ).length ?? 0;
+  // Whether any decision on this set still needs to be changeable.
+  //
+  // Open work is not the only reason. A review can leave NO open work and
+  // still hold the phase, because rejecting a required response is not a
+  // resting state for it. That combination used to close the review surface
+  // completely: the action row rendered only while open work remained, and a
+  // rejected row's checkbox was disabled, so not one control on the page could
+  // revise the single decision that was holding the phase — while the gate's
+  // blocker text went on saying to accept each required response. The server
+  // never locked this; `mergeStageReadinessReviewDecisions` states that
+  // incoming decisions always win.
+  //
+  // A review that holds nothing stays closed, which is what it means for a
+  // review to be finished.
+  // `isWorkbookProposalReviewable` is the per-row half: a blank response can
+  // never be accepted, so a workbook of nothing but blanks must not be offered
+  // an action row whose buttons could never enable. Completing the cells and
+  // uploading again is that workbook's only path, which the blank tally says.
+  const anyProposalReviewable =
+    preview?.proposalSet?.proposals?.some(isWorkbookProposalReviewable) ??
+    false;
+  // Decisions shown on screen that no review of THIS set has recorded. They
+  // are the reason the review surface must stay open on a re-upload that
+  // changed nothing: every row reads decided, so neither count above is
+  // positive, while the gate still holds the phase because nothing is on
+  // record. Without this term the fix that stops the gate reading a preview
+  // would leave the reviewer a blocker and no control.
+  const keptDecisions = keptDecisionsToRecord(
+    preview?.proposalSet?.proposals,
+  );
+  const reviewRevisable =
+    anyProposalReviewable &&
+    (reviewActionCount > 0 ||
+      requiredNotAcceptedCount > 0 ||
+      keptDecisions.length > 0);
+  // A restored decision is reported as restored. The reviewer is looking at a
+  // workbook they uploaded again, and the difference between "you already
+  // judged these" and "the product decided for you" is the whole reason the
+  // count is carried this far.
+  const carriedForwardCount =
+    proposalReview?.carriedForwardFromPriorUpload ?? 0;
   const proposalReviewMessage = proposalReview
     ? `Workbook review recorded · ${proposalReview.acceptedCount ?? 0} accepted · ${proposalReview.needsValidationCount ?? 0} needs validation · ${proposalReview.rejectedCount ?? 0} rejected · ${proposalReview.pendingCount ?? 0} pending` +
       (proposalReview.readiness
         ? ` · readiness ${proposalReview.readiness.ready ?? 0} ready / ${proposalReview.readiness.insufficientEvidence ?? 0} insufficient / ${proposalReview.readiness.unknown ?? 0} unknown`
+        : "") +
+      (carriedForwardCount > 0
+        ? ` · ${carriedForwardCount} decision${carriedForwardCount === 1 ? "" : "s"} kept from your previous upload of this workbook — ` +
+          // Whether those decisions are on record yet is the difference
+          // between "nothing left to do here" and "the phase is still held".
+          // `keptDecisions` is empty once they are recorded, which is why the
+          // same sentence can answer both.
+          (keptDecisions.length > 0
+            ? "review what changed, then record the kept decisions"
+            : "review only what changed")
         : "")
     : "";
   const storedProposalMessage =
@@ -8312,26 +8515,50 @@ function StageReadinessWorkbookPreviewControl({
                 ? `${preview.proposalSet.proposals.length} responses reviewed · ${reviewActionCount} still open`
                 : `${selectedProposalIds.size}/${preview.proposalSet.proposals.length} selected · upload is not acceptance`}
             </span>
+            {requiredNotAcceptedCount > 0 && reviewRevisable ? (
+              <small>
+                {`${requiredNotAcceptedCount} required response${requiredNotAcceptedCount === 1 ? "" : "s"} not accepted. This phase stays held until each one is accepted; select the response below to change its decision.`}
+              </small>
+            ) : null}
           </div>
-          <div className="mxw-workbook-review-list">
-            {preview.proposalSet.proposals.slice(0, 6).map((proposal) => {
+          {/*
+            Every stored response is listed. Rendering only the first few
+            capped what a reviewer could judge while the selection was still
+            seeded from the whole set, so a 41-proposal workbook offered
+            "41/41 selected" above six rows, and no row past the sixth could
+            be rejected or flagged at all. The list scrolls instead.
+          */}
+          <div
+            aria-label="Stored workbook responses"
+            className="mxw-workbook-review-list"
+            role="group"
+          >
+            {preview.proposalSet.proposals.map((proposal) => {
               const proposalId = proposal.proposalId ?? "";
+              const restored = isRestoredDisposition(proposal);
               return (
-                <label key={proposalId || proposal.questionId}>
+                <label
+                  data-restored-disposition={restored ? "true" : undefined}
+                  key={proposalId || proposal.questionId}
+                >
                   <input
                     checked={selectedProposalIds.has(proposalId)}
                     disabled={
                       !proposalId ||
-                      proposal.answerState === "blank" ||
-                      !proposal.response?.trim() ||
-                      reviewStatus === "saving" ||
-                      (proposal.disposition !== "pending" &&
-                        proposal.disposition !== "needs_validation")
+                      !isWorkbookProposalReviewable(proposal) ||
+                      !reviewRevisable ||
+                      reviewStatus === "saving"
                     }
                     onChange={(event) => {
+                      // Read the event BEFORE the updater: React can replay a
+                      // state updater on a later render, and by then the
+                      // event's currentTarget is null. Reading it inside threw
+                      // a TypeError out of the whole phase workspace on a
+                      // second tick in the same render pass.
+                      const checked = event.currentTarget.checked;
                       setSelectedProposalIds((current) => {
                         const next = new Set(current);
-                        if (event.currentTarget.checked) {
+                        if (checked) {
                           next.add(proposalId);
                         } else {
                           next.delete(proposalId);
@@ -8345,18 +8572,37 @@ function StageReadinessWorkbookPreviewControl({
                     <b>{proposal.question ?? proposal.questionId}</b>
                     <em>
                       {proposal.requirement ?? "required"} ·{" "}
-                      {proposal.answerState === "blank" ||
-                      !proposal.response?.trim()
-                        ? "response required in workbook"
-                        : `${proposal.answerState ?? "answered"} · ${proposal.disposition ?? "pending"}`}
+                      {isWorkbookProposalAcceptable(proposal)
+                        ? `${proposal.answerState ?? "answered"} · ${proposal.disposition ?? "pending"}`
+                        : "response required in workbook"}
+                      {/*
+                        Which rows the count in the status line refers to.
+                        Reporting only the total left a reviewer unable to tell
+                        a decision they had just made from one restored off an
+                        earlier upload, which is the difference between a row
+                        they can leave alone and one still to be put on record.
+                      */}
+                      {restored
+                        ? " · kept from your previous upload, not yet recorded"
+                        : ""}
                     </em>
                   </span>
                 </label>
               );
             })}
           </div>
-          {reviewActionCount > 0 ? (
+          {reviewRevisable ? (
             <div className="mxw-workbook-review-actions">
+              {keptDecisions.length > 0 ? (
+                <button
+                  className="mxw-workbook-review-keep"
+                  disabled={reviewStatus === "saving"}
+                  onClick={() => void recordKeptDecisions()}
+                  type="button"
+                >
+                  {`Record ${keptDecisions.length} kept decision${keptDecisions.length === 1 ? "" : "s"}`}
+                </button>
+              ) : null}
               <button
                 disabled={
                   selectedProposalIds.size === 0 || reviewStatus === "saving"
@@ -8383,6 +8629,40 @@ function StageReadinessWorkbookPreviewControl({
                 type="button"
               >
                 Reject selected
+              </button>
+              {/*
+                Accept-all is one click because every open response starts
+                ticked. Without these two, singling out one response in a
+                forty-row workbook meant unticking the other thirty-nine, so
+                a reviewer holding one bad answer had no practical move but
+                to accept it.
+              */}
+              <button
+                className="mxw-workbook-review-select"
+                disabled={
+                  selectedProposalIds.size === reviewActionCount ||
+                  reviewStatus === "saving"
+                }
+                onClick={() =>
+                  setSelectedProposalIds(
+                    selectableWorkbookProposalIds(
+                      preview.proposalSet?.proposals,
+                    ),
+                  )
+                }
+                type="button"
+              >
+                Select all open responses
+              </button>
+              <button
+                className="mxw-workbook-review-select"
+                disabled={
+                  selectedProposalIds.size === 0 || reviewStatus === "saving"
+                }
+                onClick={() => setSelectedProposalIds(new Set())}
+                type="button"
+              >
+                Clear selection
               </button>
             </div>
           ) : null}
@@ -8602,6 +8882,8 @@ function SolutionRouteValidationForm({
         })
       : "unresolved";
   const decision = record.decision;
+  const confirmUnavailableReason =
+    solutionRouteConfirmUnavailableReason(recommendation);
 
   const update = (key: string, next: unknown) => {
     const routeImpactChanged = [
@@ -8738,10 +9020,18 @@ function SolutionRouteValidationForm({
           value={typeof decision === "string" ? decision : ""}
         >
           <option value="">Review before confirming</option>
-          <option value="confirm">Confirm recommendation</option>
-          <option value="correct">Correct recommendation</option>
+          {solutionRouteDecisionChoices(recommendation).map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
         </select>
       </label>
+      {confirmUnavailableReason ? (
+        <p className="mxw-structured-note" role="status">
+          {confirmUnavailableReason}
+        </p>
+      ) : null}
       {decision === "correct" ? (
         <>
           <label>
@@ -8837,9 +9127,8 @@ function PhaseCaptureEditor({
             {phase.phase === 1 ? "Charter inputs" : `${phase.title} inputs`}
           </h2>
           <p>
-            Saved inputs are not phase completion. Required evidence must be
-            approved or formally waived before these inputs can show complete or
-            the phase can advance.
+            Saved inputs are not phase completion.{" "}
+            {requiredEvidenceCompletionNotice()}
           </p>
         </div>
         <strong>
@@ -9185,7 +9474,7 @@ function MovesStandaloneStyles() {
 .mxw-workbook-review-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .mxw-workbook-review-summary strong{font-size:12.5px;color:var(--ink)}
 .mxw-workbook-review-summary span{font-size:11.5px;color:var(--muted);font-weight:700}
-.mxw-workbook-review-list{display:grid;gap:6px}
+.mxw-workbook-review-list{display:grid;gap:6px;max-height:280px;overflow-y:auto}
 .mxw-workbook-review-list label{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-2)}
 .mxw-workbook-review-list input{margin-top:3px}
 .mxw-workbook-review-list b{display:block;font-size:12px;color:var(--ink);font-weight:750}
@@ -9193,6 +9482,7 @@ function MovesStandaloneStyles() {
 .mxw-workbook-review-actions{display:flex;gap:7px;flex-wrap:wrap}
 .mxw-workbook-review-actions button{border:1px solid rgba(0,87,184,.2);background:#fff;color:var(--blue);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer}
 .mxw-workbook-review-actions button:first-child{background:var(--blue);color:#fff;border-color:var(--blue)}
+.mxw-workbook-review-actions button.mxw-workbook-review-select{border-color:var(--line-2);color:var(--muted);font-weight:750}
 .mxw-workbook-review-actions button:disabled{opacity:.5;cursor:not-allowed}
 .mxw-workbook-review-status{font-size:11.5px;font-weight:800;color:var(--muted)}
 .mxw-workbook-review-status.saved{color:#147c5b}
@@ -9222,6 +9512,10 @@ function MovesStandaloneStyles() {
 .mxw-surface-tabs button:hover{color:var(--ink);background:rgba(255,255,255,.62)}
 .mxw-surface-tabs button.active{color:var(--ink);background:#fff;box-shadow:0 1px 2px rgba(12,26,58,.08)}
 .mxw-surface-tabs button.active::before{content:none}
+.mxw-surface-tabs--secondary{background:transparent;padding:0;gap:4px;margin:0 0 14px;opacity:.9}
+.mxw-surface-tabs--secondary button{font-size:12px;font-weight:500;color:var(--muted);padding:5px 10px;border-radius:7px}
+.mxw-surface-tabs--secondary button.active{background:rgba(12,26,58,.06);color:var(--ink);box-shadow:none}
+.mxw-finder-on .mxw-surface-tabs--secondary button.active::before{content:none}
 .mxw-progress{display:flex;align-items:center;gap:14px;flex:1}
 .mxw-track{flex:1;height:6px;border-radius:3px;background:rgba(20,20,19,.07);overflow:hidden;max-width:260px}
 .mxw-track span{display:block;height:100%;background:var(--green);border-radius:3px;transition:width .35s ease}

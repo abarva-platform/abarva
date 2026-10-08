@@ -104,19 +104,44 @@ describe("the governed-data-foundation artifact pack", () => {
     ).toBeUndefined();
   });
 
-  it("lands the archetype's evidence in all but the two deliverables that withhold it", () => {
+  it("lands the archetype's evidence in all but the charter, which withholds it", () => {
     // The measured before/after. Every number here was 21 before the pack
-    // existed. A charter must not pre-empt P2's evidence and a design workshop
-    // guide is a facilitation template, so those two ground nothing on
-    // purpose; `composeBrief` withholds archetype assets from both by name.
+    // existed. The charter grounds nothing on purpose: its own sections
+    // instruct the model not to assert P2 findings, so the archetype's
+    // families would only widen its retrieval.
+    //
+    // The design workshop guide was on this list too, on the reasoning that it
+    // is "a facilitation template". That conflated two separate questions and
+    // the guide is the opposite case from the charter: its purpose line is
+    // "using accepted discovery evidence", and two of its sections exist to
+    // enumerate that evidence. It now declares those two as landing sites, so
+    // it grounds — while `composeBrief` still withholds the pack's EXHIBITS
+    // and TABLES from it by name, which is the second list below and is the
+    // part of "facilitation template" that was right.
+    // 26 rows: one per structure in the catalog. The last five are the P5
+    // value measurement contract, the bounded-route process change estimate
+    // brief, and the P3, P4 and P5 working-session guides. The first two ground
+    // and take the pack's assets, so neither joins either list below. The three
+    // guides ground — each declares its carry-forward and evidence sections as
+    // landing sites, exactly as the P2 design guide does — but their assets are
+    // withheld, so they join the second list and not the first.
     const rows = report();
-    expect(rows).toHaveLength(21);
+    expect(rows).toHaveLength(26);
     expect(
       rows.filter((r) => r.landsNowhere).map((r) => r.deliverableType),
-    ).toEqual(["charter", "design_workshop_guide"]);
+    ).toEqual(["charter"]);
     expect(
-      rows.filter((r) => r.archetypeAssetsWithheld).map((r) => r.deliverableType),
-    ).toEqual(["charter", "discovery_plan", "design_workshop_guide"]);
+      rows.filter((r) => r.archetypeAssetsWithheld).map((r) => r.deliverableType).sort(),
+    ).toEqual(
+      [
+        "charter",
+        "design_workshop_guide",
+        "discovery_plan",
+        "execution_kickoff_guide",
+        "mobilization_workshop_guide",
+        "planning_workshop_guide",
+      ].sort(),
+    );
   });
 
   it("grounds every fact-asserting section it covers in the whole family set", () => {

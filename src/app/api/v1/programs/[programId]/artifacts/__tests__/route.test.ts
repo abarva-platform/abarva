@@ -43,18 +43,21 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: jest.fn(() => ({
     from: (table: string) => {
-      const query = {
+      const data =
+        table === "program_evidence_reviews"
+          ? mockPendingEvidenceReviewRows
+          : mockPendingEvidenceRows;
+      // Thenable builder: every method chains, and awaiting the chain resolves
+      // to the table's rows regardless of which method terminates it — so this
+      // tolerates the tenant-key filter being `.in(...)` mid-chain.
+      const query: Record<string, unknown> = {
         select: () => query,
         eq: () => query,
+        in: () => query,
         order: () => query,
-        limit: async () => ({
-          data:
-            table === "program_evidence_reviews"
-              ? mockPendingEvidenceReviewRows
-              : mockPendingEvidenceRows,
-          error: null,
-        }),
-        in: async () => ({ data: mockPendingEvidenceRows, error: null }),
+        limit: () => query,
+        then: (resolve: (v: { data: unknown; error: null }) => unknown) =>
+          resolve({ data, error: null }),
       };
       return query;
     },
@@ -62,6 +65,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 }));
 
 import { GET } from "../route";
+import { normalizeReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 
 function req(search = "") {
   return { nextUrl: { searchParams: new URLSearchParams(search) } } as never;
@@ -995,6 +999,114 @@ describe("GET /api/v1/programs/[programId]/artifacts — Cabinet merge", () => {
             freshnessStatus: "stale",
             currentApprovedEvidenceCount: 2,
           }),
+        }),
+      }),
+    );
+  });
+});
+
+// A governed operator data-build job writes canonical evidence + a pending
+// review row directly, with no uploaded attachment and no move_artifacts row.
+// That shape differs from the upload door in every field the cabinet reads, and
+// an empty vault must not hide it: if this queue comes back empty, a reviewer
+// sees "no artifacts yet" and the loaded inputs can never be approved, so the
+// discovery phase can never close.
+describe("GET /api/v1/programs/[programId]/artifacts — operator-job evidence", () => {
+  const jobReviewRow = {
+    id: "review-job-1",
+    evidence_id: "evidence-job-1",
+    family_key: "identity_resolution",
+    phase: 2,
+    // No move_artifact_id: the job wrote no attachment and no vault row.
+    source_ref: {
+      governance_dataset_id: "dataset-under-test",
+      source_file: "02_p2_discover/identity_resolution.md",
+      filename: "identity_resolution.md",
+      title: "Identity resolution current state",
+      parse_method: "exact_utf8_fixture",
+      confidence: 1,
+      synthetic: true,
+      client_attested: false,
+    },
+  };
+  const jobEvidenceRow = {
+    id: "evidence-job-1",
+    title: "Identity resolution current state",
+    summary: "SYNTHETIC - NOT CLIENT-ATTESTED. Pending review.",
+    extracted_text: "# Identity resolution\n\nOne record per person is not yet established.",
+    // The job nests its citation under `flexible` and sets none of the
+    // top-level structured lists the upload parser produces.
+    extracted_structured: {
+      synthetic: true,
+      client_attested: false,
+      agent_readiness_status: "not_reviewed",
+      flexible: {
+        citations: [
+          {
+            quote: "SYNTHETIC - NOT CLIENT-ATTESTED",
+            locator: "02_p2_discover/identity_resolution.md",
+          },
+        ],
+      },
+    },
+  };
+
+  it("queues job-written evidence for review even when the move vault is empty", async () => {
+    mockPendingEvidenceReviewRows = [jobReviewRow];
+    mockPendingEvidenceRows = [jobEvidenceRow];
+    moveRows = [];
+    generatedRecs = [];
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      artifacts: unknown[];
+      pendingEvidenceReviews: Array<Record<string, unknown>>;
+      evidenceReviewStatus: string;
+    };
+
+    // An empty vault is the real post-load state, and must not empty the queue.
+    expect(json.artifacts).toEqual([]);
+    expect(json.evidenceReviewStatus).toBe("available");
+    expect(json.pendingEvidenceReviews).toHaveLength(1);
+    expect(json.pendingEvidenceReviews[0]).toEqual(
+      expect.objectContaining({
+        evidenceId: "evidence-job-1",
+        reviewId: "review-job-1",
+        familyKey: "identity_resolution",
+        phase: 2,
+        sourceArtifactId: null,
+        title: "identity_resolution.md",
+        parseMethod: "exact_utf8_fixture",
+        confidence: 1,
+      }),
+    );
+  });
+
+  it("offers an approvable extraction, so Approve is not a dead end", async () => {
+    mockPendingEvidenceReviewRows = [jobReviewRow];
+    mockPendingEvidenceRows = [jobEvidenceRow];
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      pendingEvidenceReviews: Array<{ extraction: unknown }>;
+    };
+
+    // The approve route rejects a body whose extraction does not normalize
+    // (400 reviewed_extraction_required), so the extraction the cabinet hands
+    // the reviewer has to survive that same contract.
+    const offered = json.pendingEvidenceReviews[0]?.extraction;
+    expect(normalizeReviewedEvidenceExtraction(offered)).not.toBeNull();
+    expect(normalizeReviewedEvidenceExtraction(offered)).toEqual(
+      expect.objectContaining({
+        version: 1,
+        summary: "SYNTHETIC - NOT CLIENT-ATTESTED. Pending review.",
+        structured: expect.objectContaining({
+          citations: [
+            {
+              quote: "SYNTHETIC - NOT CLIENT-ATTESTED",
+              locator: "02_p2_discover/identity_resolution.md",
+            },
+          ],
         }),
       }),
     );

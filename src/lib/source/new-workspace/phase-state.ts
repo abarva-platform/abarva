@@ -5,6 +5,12 @@ import {
   isSourceStageKey,
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
+import {
+  getSourceJourneyForEvent,
+  type SourceJourneyDefinition,
+  type SourceSourcingMotion,
+} from "@/lib/source/sourcing-motion-journeys";
+import type { SourceStageKey } from "@/lib/source/types";
 import { getSourceCategory } from "@/lib/source/taxonomy/category-taxonomy";
 
 /**
@@ -55,7 +61,14 @@ export type SourceNewPhaseState =
   | "recorded"
   | "historical_gap"
   | "no_record"
-  | "not_open";
+  | "not_open"
+  /**
+   * A phase this event's journey never visits. Distinct from `not_open`, which
+   * means "ahead of the event, and coming". Reporting an off-path phase as
+   * `not_open` tells an operator to expect work that will never arrive — a
+   * renegotiation does not go to market, and the rail said it would.
+   */
+  | "off_path";
 
 export const SOURCE_NEW_PHASE_STATE_LABELS: Record<SourceNewPhaseState, string> = {
   current: "Current",
@@ -64,11 +77,113 @@ export const SOURCE_NEW_PHASE_STATE_LABELS: Record<SourceNewPhaseState, string> 
   historical_gap: "Historical gap",
   no_record: "No record",
   not_open: "Later",
+  off_path: "Not on this path",
 };
 
 export type SourceNewPhaseEvidence = Record<SourceNewPhaseKey, boolean>;
 
-export interface SourceNewPhasePositionInput {
+/**
+ * The canonical stages each product phase stands for.
+ *
+ * `request` and `suppliers` map to nothing: intake happens before the governed
+ * stage order begins, and Phase 1 has no supplier stage of its own. A phase
+ * with no canonical stage can therefore never be reported as skipped, which is
+ * the honest answer - a journey's skipped set says nothing about a phase the
+ * stage order does not represent.
+ */
+export const SOURCE_NEW_PHASE_STAGE_KEYS: Record<
+  SourceNewPhaseKey,
+  readonly SourceStageKey[]
+> = {
+  request: [],
+  define: ["strategy", "scope"],
+  suppliers: [],
+  rfi: ["rfp"],
+};
+
+/**
+ * What the workspace needs in order to resolve which journey an event is on.
+ * These are the same fields the Source New page already feeds
+ * `buildSourceEventStagePlanSnapshot`, so the rail and the stage plan resolve
+ * the same journey rather than two journeys that happen to agree.
+ */
+export interface SourceNewJourneyInput {
+  sourcingMotion?: SourceSourcingMotion | string | null;
+  eventType?: string | null;
+  category?: string | null;
+  name?: string | null;
+  code?: string | null;
+  trigger?: string | null;
+}
+
+/**
+ * The governed journey this event is on.
+ *
+ * A read-through of `getSourceJourneyForEvent`, which is already
+ * journey-complete; nothing is inferred here that the resolver does not
+ * already decide.
+ */
+export function sourceNewJourneyForEvent(
+  event: SourceNewJourneyInput,
+): SourceJourneyDefinition {
+  return getSourceJourneyForEvent({
+    sourcingMotion: event.sourcingMotion ?? null,
+    eventType: event.eventType ?? null,
+    classifiedCategory: event.category ?? null,
+    eventName: event.name ?? null,
+    eventCode: event.code ?? null,
+    triggerDescription: event.trigger ?? null,
+  });
+}
+
+/**
+ * Whether a journey that skips `skippedStageKeys` skips this phase outright.
+ *
+ * A phase counts as skipped only when *every* canonical stage it stands for is
+ * skipped. `define` covers two stages, and one of them surviving means the
+ * phase is still on the event's path - a partly-skipped phase is still work.
+ * No journey defined today skips a proper subset of a phase's stages, so this
+ * is stated here, where it can be exercised, rather than left implicit in a
+ * filter that no present-day input distinguishes.
+ */
+export function sourceNewPhaseIsSkipped(
+  phase: SourceNewPhaseKey,
+  skippedStageKeys: readonly SourceStageKey[],
+): boolean {
+  const stages = SOURCE_NEW_PHASE_STAGE_KEYS[phase];
+  if (stages.length === 0) return false;
+  const skipped = new Set<SourceStageKey>(skippedStageKeys);
+  return stages.every((stage) => skipped.has(stage));
+}
+
+/**
+ * The phases this event's journey declares it will never visit.
+ *
+ * Read from the journey's declared `skippedStageKeys` only. Absence from the
+ * journey's `stages` is deliberately not treated as skipped: the contract
+ * optimization journey lists no intake stage and still has a request, so
+ * reading absence as a skip would report the `request` phase as off-path for
+ * every renegotiation.
+ */
+/**
+ * Whether this event records a governed sourcing motion, as opposed to one the
+ * resolver inferred from free text. Only a declared motion is allowed to put a
+ * phase off the path; see `sourceNewPhaseState`.
+ */
+function declaredMotion(event: SourceNewJourneyInput): boolean {
+  return typeof event.sourcingMotion === "string" && event.sourcingMotion.trim().length > 0;
+}
+
+export function sourceNewSkippedPhases(
+  event: SourceNewJourneyInput,
+): SourceNewPhaseKey[] {
+  const { skippedStageKeys } = sourceNewJourneyForEvent(event);
+  return SOURCE_NEW_PHASE_ORDER.filter((phase) =>
+    sourceNewPhaseIsSkipped(phase, skippedStageKeys),
+  );
+}
+
+export interface SourceNewPhasePositionInput extends SourceNewJourneyInput {
   currentStage: string;
   lifecycle: string;
 }
@@ -224,6 +339,27 @@ export function sourceNewPhaseState(
   const current = sourceNewCurrentPhase(event);
   if (current !== null && phase === current) {
     return awaitsIntakeReview(event.lifecycle) ? "review_needed" : "current";
+  }
+  // Only a DECLARED motion may put a phase off the path, never an inferred one.
+  //
+  // `getSourceJourneyForEvent` infers a motion from free text when none is
+  // recorded, and that inference is not strong enough to tell an operator a
+  // phase will never happen. The workspace fixture's trigger reads "A contract
+  // is nearing renewal.", which the resolver reads as a renegotiation — yet an
+  // approaching renewal is the classic trigger for a competitive re-bid, which
+  // very much does go to market. Acting on that inference would report "Not on
+  // this path" for the market package on any event whose trigger mentions a
+  // renewal, which is worse than the journey-blind "Later" it replaces.
+  //
+  // Checked AFTER the current-phase branch, deliberately. Where the event
+  // actually is beats what its journey declared: if a stage resolves to a phase
+  // the journey says is skipped, that contradiction surfaces as `current`
+  // rather than hiding behind `off_path`.
+  if (
+    declaredMotion(event) &&
+    sourceNewPhaseIsSkipped(phase, sourceNewJourneyForEvent(event).skippedStageKeys)
+  ) {
+    return "off_path";
   }
   const behind = (): SourceNewPhaseState => {
     if (evidence[phase]) return "recorded";

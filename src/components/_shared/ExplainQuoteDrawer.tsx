@@ -20,6 +20,9 @@ import { startTransition, useEffect, useState } from 'react';
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { buildGateSummaryLine } from '@/lib/reasoning/gate-summary-line';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import {
+  explanationGateRowsLabel,
+} from '@/lib/reasoning/explanation-gate-figures';
 import type {
   ExplanationCascadeRow,
   ExplanationContradictionRow,
@@ -316,7 +319,16 @@ function SummaryBar({ payload }: { payload: ExplanationPayload }) {
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
-function SectionHeader({ title, count }: { title: string; count?: number }) {
+function SectionHeader({
+  title,
+  count,
+  countLabel,
+}: {
+  title: string;
+  count?: number;
+  countLabel?: string;
+}) {
+  const label = countLabel ?? (typeof count === 'number' ? String(count) : null);
   return (
     <div
       style={{
@@ -337,9 +349,9 @@ function SectionHeader({ title, count }: { title: string; count?: number }) {
       >
         {title}
       </span>
-      {typeof count === 'number' && (
+      {label !== null && (
         <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED }}>
-          {count}
+          {label}
         </span>
       )}
     </div>
@@ -415,7 +427,7 @@ function GatesSection({ gates }: { gates: ExplanationGateStageGroup[] }) {
   const totalRows = gates.reduce((acc, g) => acc + g.rows.length, 0);
   return (
     <section data-testid="explain-gates">
-      <SectionHeader title="Gates" count={totalRows} />
+      <SectionHeader title="Gates" countLabel={explanationGateRowsLabel(gates)} />
       {totalRows === 0 ? (
         <EmptyHint text="No gate criteria evaluated." />
       ) : (

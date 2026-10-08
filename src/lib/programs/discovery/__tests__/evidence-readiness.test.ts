@@ -1,5 +1,6 @@
 import {
   buildDiscoveryBlueprintInputFromProgram,
+  discoveryInferenceReach,
   declaredDiscoveryFamilies,
   evaluateDiscoveryEvidenceReadiness,
   mapEvidenceToDiscoveryFamily,
@@ -494,5 +495,176 @@ describe("resolveDeclaredProgramArchetypeId prefers a known catalog archetype", 
     ).toBe("some_function_pack");
     expect(resolveDeclaredProgramArchetypeId({})).toBeNull();
     expect(resolveDeclaredProgramArchetypeId(null)).toBeNull();
+  });
+});
+
+describe("anchoring keyword inference", () => {
+  const gdf = getDiscoveryBlueprint(
+    "governed_data_foundation",
+    "governed_data_foundation",
+  );
+
+  function doc(title: string, summary: string, evidenceType = "document") {
+    return item("e1", title, summary, evidenceType);
+  }
+
+  it("reports how little of a governed-data-foundation blueprint inference can reach", () => {
+    const reach = discoveryInferenceReach(gdf);
+    expect(reach.phraseOnlyRequiredFamilyIds).toEqual([
+      "data_governance_ownership",
+      "semantic_layer_certification",
+      "data_lineage_audit_trail",
+      "data_quality_rules",
+      "source_system_data_access",
+      "platform_architecture_readiness",
+      "master_identity_resolution",
+      "privacy_security_controls",
+    ]);
+    expect(reach.keywordedRequiredFamilyIds).toEqual([
+      "model_risk_responsible_ai_controls",
+      "measurement_owner_cadence",
+      "finance_baseline_value_plan",
+    ]);
+    expect(reach.mixed).toBe(true);
+  });
+
+  it("refuses to file a semantic-layer document under measurement owners on the word 'owner'", () => {
+    // The word that did it: `measurement_owner_cadence` lists `owner`, and the
+    // family this document is about has no authored list, so it could not
+    // compete. Placing nothing is remediable by declaring the family; placing
+    // it here read as covered and could never be corrected.
+    expect(
+      mapEvidenceToDiscoveryFamily(
+        doc(
+          "Certified metric definitions",
+          "Certified metrics, entity definitions, and the steward who is the owner of each.",
+        ),
+        gdf,
+      ),
+    ).toBeNull();
+  });
+
+  it("still places a document that names its own family", () => {
+    expect(
+      mapEvidenceToDiscoveryFamily(
+        doc(
+          "Data governance ownership and decision rights",
+          "Council, policies, decision rights, stewardship.",
+        ),
+        gdf,
+      ),
+    ).toBe("data_governance_ownership");
+  });
+
+  it("places a document named after the family LABEL the upload surface shows", () => {
+    // The id-as-words phrase (`semantic layer certification`) does not appear
+    // here; the label does. A file named after the label the picker displays is
+    // the likeliest shape of all, so the label must anchor on its own.
+    const family = gdf.evidenceFamilies.find(
+      (candidate) => candidate.id === "semantic_layer_certification",
+    );
+    expect(family).toBeDefined();
+    expect(family?.label).not.toContain("semantic layer certification");
+    expect(
+      mapEvidenceToDiscoveryFamily(doc(family?.label ?? "", "Workbook."), gdf),
+    ).toBe("semantic_layer_certification");
+  });
+
+  it("still places a document on a multi-word keyword of its family", () => {
+    expect(
+      mapEvidenceToDiscoveryFamily(
+        doc(
+          "Boundary note",
+          "Covers model risk for the downstream automation.",
+        ),
+        gdf,
+      ),
+    ).toBe("model_risk_responsible_ai_controls");
+  });
+
+  it("still places a document corroborated by two keywords of its family", () => {
+    expect(
+      mapEvidenceToDiscoveryFamily(
+        doc("Value note", "The finance baseline for this work."),
+        gdf,
+      ),
+    ).toBe("finance_baseline_value_plan");
+  });
+
+  it("does not let an unanchored higher scorer shut out an anchored family behind it", () => {
+    // `cost_pools` matches the single generic word `cost` and takes a +2
+    // evidence-type bonus on baseline evidence, scoring 4 on no specific
+    // signal. `model_risk_responsible_ai_controls` matches the multi-word
+    // `model risk` and scores only 2. The anchored family must win: an
+    // unanchored match is not a candidate, rather than a winner that is
+    // discarded afterwards and takes the placement down with it.
+    const blueprint = {
+      ...gdf,
+      evidenceFamilies: [
+        {
+          id: "cost_pools",
+          label: "Cost pools",
+          grounds: "value case",
+          required: true,
+          likelySource: "finance",
+          format: "CSV",
+        },
+        {
+          id: "model_risk_responsible_ai_controls",
+          label: "Responsible-AI / model-risk controls",
+          grounds: "controls",
+          required: true,
+          likelySource: "risk",
+          format: "doc",
+        },
+      ],
+    };
+    expect(
+      mapEvidenceToDiscoveryFamily(
+        doc("Note", "Model risk and the cost of it.", "baseline_evidence"),
+        blueprint,
+      ),
+    ).toBe("model_risk_responsible_ai_controls");
+  });
+
+  it("leaves every family it does place correct for the real discovery pack", () => {
+    // The eleven titles the committed governed-data-foundation discovery pack
+    // actually carries, one per required family. Before anchoring, three of
+    // these were filed under `measurement_owner_cadence` on the word `owner`
+    // and a fourth under it on `measurement`; the family then listed four
+    // files, three of them about something else, and read as covered. Now
+    // every placement that is made is the right one, and the rest are MISSING
+    // — which is what an undeclared upload honestly is for a blueprint whose
+    // families inference cannot reach.
+    const titles: Array<[string, string | null]> = [
+      [
+        "Data governance ownership and decision rights",
+        "data_governance_ownership",
+      ],
+      ["Semantic layer and certified measure definitions", null],
+      ["Source-to-measure lineage and AI/model audit trail", null],
+      ["04_data_quality_rules.csv", null],
+      ["05_source_system_data_access.csv", null],
+      ["Platform and architecture readiness", null],
+      ["Patient, member, and provider identity resolution", null],
+      ["Privacy and security control questions (PHI)", null],
+      [
+        "Responsible AI and model-risk boundary",
+        "model_risk_responsible_ai_controls",
+      ],
+      [
+        "Measurement owners and operating cadence",
+        "measurement_owner_cadence",
+      ],
+      [
+        "Finance baseline and value-measurement plan",
+        "finance_baseline_value_plan",
+      ],
+    ];
+    for (const [title, expected] of titles) {
+      expect(mapEvidenceToDiscoveryFamily(doc(title, title), gdf)).toBe(
+        expected,
+      );
+    }
   });
 });

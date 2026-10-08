@@ -41,6 +41,12 @@ import {
 import { getProgramById } from "@/lib/programs/queries";
 import { getGeneratedArtifactById } from "@/lib/artifacts/repository";
 import { phaseForOrchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
+import {
+  approvedEvidenceBasisRefusalCode,
+  classifyApprovedEvidenceBasisRefusal,
+  describeApprovedEvidenceBasisRefusal,
+  unevaluableApprovedEvidenceBasisRefusal,
+} from "@/lib/programs/approved-evidence-basis-refusal";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { countSolutionContextEvidenceSignals } from "@/lib/programs/solution-context";
 import type {
@@ -116,21 +122,31 @@ async function runMovesPremiumArtifact(
       tenantKey: run.tenantKey,
       moveId: payload.sourceArtifactRef,
     });
+    const recordedEvidenceRevision =
+      payload.phaseEvidenceSnapshotHash ?? payload.evidenceSnapshotHash ?? null;
     const evidenceBasisIsCurrent = isApprovedMoveEvidenceBasisCurrent({
       snapshot: evidenceSnapshot,
       phase: payload.phase,
-      recordedRevision:
-        payload.phaseEvidenceSnapshotHash ?? payload.evidenceSnapshotHash ?? null,
+      recordedRevision: recordedEvidenceRevision,
       scope: payload.phaseEvidenceSnapshotHash ? "phase" : null,
       generatedAt: run.createdAt,
     });
-    if (!evidenceBasisIsCurrent || !evidenceSnapshot) {
+    const evidenceBasisRefusal = classifyApprovedEvidenceBasisRefusal({
+      basisEvaluable: Boolean(evidenceSnapshot),
+      cause: "snapshot_unreadable",
+      recordedRevision: recordedEvidenceRevision,
+      basisIsCurrent: evidenceBasisIsCurrent,
+    });
+    // The `!evidenceSnapshot` disjunct narrows the snapshot for lines below; a
+    // null snapshot is already classified as `basis_unevaluable` above, so the
+    // fallback resolves to that same refusal.
+    if (evidenceBasisRefusal || !evidenceSnapshot) {
+      const refusal =
+        evidenceBasisRefusal ?? unevaluableApprovedEvidenceBasisRefusal();
       await completeDeliverableRun(run.id, {
         status: "blocked",
-        error: "stale_approved_evidence_snapshot",
-        blockers: [
-          "Approved Move evidence changed after this build was queued. Re-run the build from the current evidence set.",
-        ],
+        error: approvedEvidenceBasisRefusalCode(refusal),
+        blockers: [describeApprovedEvidenceBasisRefusal(refusal, "build")],
       }).catch(() => {});
       return;
     }
@@ -326,18 +342,21 @@ async function runClaimed(
         moveId: orchestratorPayload.sourceArtifactRef,
         phase: 3,
       });
-      if (
-        !freshness ||
-        freshness.freshnessStatus !== "fresh" ||
-        freshness.evidenceFingerprint !==
-          orchestratorPayload.decisionLineage.contextSnapshotHash
-      ) {
+      // One `if` over four independent operands answered all of them with
+      // "evidence changed, rebuild" — including the case where the approved-
+      // evidence basis could not be READ, whose rebuild re-reads the same basis.
+      const { classifyMoveContextFreshnessRefusal } =
+        await import("@/lib/programs/move-context-freshness-refusal");
+      const freshnessRefusal = classifyMoveContextFreshnessRefusal({
+        freshness,
+        expectedFingerprint:
+          orchestratorPayload.decisionLineage.contextSnapshotHash,
+      });
+      if (freshnessRefusal) {
         await completeDeliverableRun(run.id, {
           status: "blocked",
-          error: "stale_context_snapshot",
-          blockers: [
-            "Move evidence changed after this architecture batch was queued. Refresh the Context Extract and rebuild from the approved evidence snapshot.",
-          ],
+          error: freshnessRefusal.error,
+          blockers: [freshnessRefusal.blocker],
         }).catch(() => {});
         return;
       }
@@ -363,22 +382,29 @@ async function runClaimed(
         tenantKey: run.tenantKey,
         moveId: orchestratorPayload.sourceArtifactRef,
       });
+      const recordedEvidenceRevision =
+        orchestratorPayload.phaseEvidenceSnapshotHash ??
+        orchestratorPayload.evidenceSnapshotHash ??
+        null;
       const evidenceBasisIsCurrent = isApprovedMoveEvidenceBasisCurrent({
         snapshot,
         phase,
-        recordedRevision:
-          orchestratorPayload.phaseEvidenceSnapshotHash ??
-          orchestratorPayload.evidenceSnapshotHash ??
-          null,
+        recordedRevision: recordedEvidenceRevision,
         scope: orchestratorPayload.phaseEvidenceSnapshotHash ? "phase" : null,
         generatedAt: run.createdAt,
       });
-      if (!evidenceBasisIsCurrent) {
+      const evidenceBasisRefusal = classifyApprovedEvidenceBasisRefusal({
+        basisEvaluable: Boolean(snapshot),
+        cause: "snapshot_unreadable",
+        recordedRevision: recordedEvidenceRevision,
+        basisIsCurrent: evidenceBasisIsCurrent,
+      });
+      if (evidenceBasisRefusal) {
         await completeDeliverableRun(run.id, {
           status: "blocked",
-          error: "stale_approved_evidence_snapshot",
+          error: approvedEvidenceBasisRefusalCode(evidenceBasisRefusal),
           blockers: [
-            "Approved Move evidence changed after this build was queued. Re-run Approve & Build from the current evidence set.",
+            describeApprovedEvidenceBasisRefusal(evidenceBasisRefusal, "build"),
           ],
         }).catch(() => {});
         return;

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   resolveDeclaredDiscoveryBlueprint,
   resolveDiscoveryBlueprintWithBasis,
@@ -9,8 +10,16 @@ import {
   type EvidenceFamily,
 } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import type { FamilyAwaitingReview } from "@/lib/programs/evidence-readiness/pending-review-next-action";
 import { getProgramById } from "@/lib/programs/queries";
 import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
+import { gapRemediationSentence } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
+import {
+  inferenceReachReport,
+  isAnchoredFamilyMatch,
+  type FamilyMatchSignal,
+  type InferenceReachReport,
+} from "@/lib/programs/discovery/family-inference-anchor";
 
 export interface DiscoveryEvidenceReadinessItem {
   id: string;
@@ -71,6 +80,18 @@ export interface DiscoveryEvidenceReadiness {
   readyForP3: boolean;
   families: DiscoveryFamilyCoverage[];
   gapRegister: DiscoveryGapRegisterItem[];
+  /**
+   * Families that have evidence loaded and awaiting a human review decision
+   * (`program_evidence_reviews.decision = 'pending'`).
+   *
+   * Coverage above is graded on APPROVED rows only, so without this an
+   * uncovered family cannot be told apart from one whose evidence is already
+   * sitting in the reviewer's queue, and every consumer asks for an upload that
+   * has already happened. Nothing gate-bearing may read this field: pending is
+   * not approved. Optional so a readiness object built before it existed, or
+   * one that crossed an API boundary without it, reads as "nothing pending".
+   */
+  familiesAwaitingReview?: FamilyAwaitingReview[];
 }
 
 const FAMILY_KEYWORDS: Record<string, string[]> = {
@@ -366,21 +387,42 @@ export function buildDiscoveryBlueprintInputFromProgram(
     .join(" ");
 }
 
-function familyScore(
+/**
+ * Score one (item, family) pair, and report WHAT matched alongside the number.
+ *
+ * The score alone cannot say whether a win is specific to the family or was
+ * taken by default off one generic word; `signal` carries that, and
+ * `familyMatchAnchor` decides.
+ *
+ * Only AUTHORED keyword hits are reported as keywords. Today the derived
+ * fallback list is exactly the two strings `phraseMatched` already tests, so
+ * reporting it as well would change nothing — a mutation that drops this guard
+ * is inert, not untested. It is here so the two signals stay separate channels
+ * if either side is edited, and the derived fallback can never read as keyword
+ * corroboration of itself.
+ */
+function familyMatch(
   item: DiscoveryEvidenceReadinessItem,
   family: EvidenceFamily,
-): number {
+): { score: number; signal: FamilyMatchSignal } {
   const text = evidenceText(item);
-  const keywords = FAMILY_KEYWORDS[family.id] ?? [
+  const authored = FAMILY_KEYWORDS[family.id];
+  const keywords = authored ?? [
     family.id.replace(/_/g, " "),
     family.label.toLowerCase(),
   ];
   let score = 0;
+  const matchedAuthoredKeywords: string[] = [];
   for (const keyword of keywords) {
-    if (text.includes(keyword.toLowerCase())) score += 2;
+    if (text.includes(keyword.toLowerCase())) {
+      score += 2;
+      if (authored) matchedAuthoredKeywords.push(keyword);
+    }
   }
-  if (text.includes(family.id.replace(/_/g, " "))) score += 3;
-  if (text.includes(family.label.toLowerCase())) score += 3;
+  const idPhraseMatched = text.includes(family.id.replace(/_/g, " "));
+  const labelPhraseMatched = text.includes(family.label.toLowerCase());
+  if (idPhraseMatched) score += 3;
+  if (labelPhraseMatched) score += 3;
 
   if (item.evidenceType === "architecture_inventory") {
     if (
@@ -419,7 +461,13 @@ function familyScore(
       score += 1;
     }
   }
-  return score;
+  return {
+    score,
+    signal: {
+      matchedAuthoredKeywords,
+      phraseMatched: idPhraseMatched || labelPhraseMatched,
+    },
+  };
 }
 
 /**
@@ -499,14 +547,37 @@ export function resolveDeclaredEvidenceFamily(
       };
 }
 
+/**
+ * Which of a blueprint's required families keyword inference can actually
+ * reach, for the one keyword table this product has.
+ *
+ * Exposed so a surface or report can say that a blueprint's families are mostly
+ * unreachable by inference, instead of presenting an inferred coverage map as
+ * if every family had an equal chance of being matched. See
+ * `inferenceReachReport` for why a MIXED blueprint is the biased case.
+ */
+export function discoveryInferenceReach(
+  blueprint: DiscoveryBlueprint,
+): InferenceReachReport {
+  return inferenceReachReport(
+    blueprint.evidenceFamilies,
+    new Set(Object.keys(FAMILY_KEYWORDS)),
+  );
+}
+
 export function mapEvidenceToDiscoveryFamily(
   item: DiscoveryEvidenceReadinessItem,
   blueprint: DiscoveryBlueprint,
 ): string | null {
-  let best: { id: string; score: number } | null = null;
+  let best: { id: string; score: number; signal: FamilyMatchSignal } | null =
+    null;
   for (const family of blueprint.evidenceFamilies) {
-    const score = familyScore(item, family);
-    if (!best || score > best.score) best = { id: family.id, score };
+    const { score, signal } = familyMatch(item, family);
+    // A family whose match is not anchored cannot be the winner at all, rather
+    // than winning and then being discarded: a weak generic hit must not shut
+    // out a weaker-scoring but anchored family behind it.
+    if (!isAnchoredFamilyMatch(signal)) continue;
+    if (!best || score > best.score) best = { id: family.id, score, signal };
   }
   return best && best.score >= 2 ? best.id : null;
 }
@@ -567,7 +638,7 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
       likelySource: family.likelySource,
       format: family.format,
       grounds: family.grounds,
-      remediation: `Upload ${family.format} from ${family.likelySource} or record a human waiver before P3.`,
+      remediation: gapRemediationSentence(family.format, family.likelySource),
     }));
 
   return {
@@ -604,7 +675,10 @@ export async function loadDiscoveryEvidenceReadiness(
     resolveDeclaredProgramArchetypeId(program),
   );
   const blueprint = resolution.blueprint;
-  const tenantKey = ctx.clientKey ?? "";
+  // Match any representation of the tenant (app client key + its canonical
+  // substrate alias), so approved evidence loaded under either is counted. The
+  // alias set is per-tenant, so this cannot widen to another tenant.
+  const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
   const rows = await azureRead
     .query<{
       id: string;
@@ -630,30 +704,72 @@ export async function loadDiscoveryEvidenceReadiness(
         INNER JOIN program_evidence_items pei
           ON pei.id = per.evidence_id
         WHERE per.program_id = $1
-          AND per.tenant_key = $2
+          AND per.tenant_key = ANY($2)
           AND per.decision = 'approved'
           AND pei.program_id = per.program_id
           AND pei.tenant_key = per.tenant_key
         ORDER BY COALESCE(per.reviewed_at, per.updated_at, per.created_at) DESC
         LIMIT 200
       `,
-      [programId, tenantKey],
+      [programId, tenantKeys],
       { missingTable: "empty" },
     )
     .catch(() => []);
-  return evaluateDiscoveryEvidenceReadiness({
-    blueprint,
-    blueprintBasis: resolution.basis,
-    unknownDeclaredArchetype: resolution.unknownDeclaration,
-    evidenceItems: rows.map((row) => ({
-      id: row.id,
-      title: row.title ?? "Untitled evidence",
-      summary: row.summary ?? "",
-      evidenceType: row.evidence_type ?? "uploaded_artifact",
-      phase: row.phase,
-      confidence: row.confidence,
-      createdAt: row.created_at,
-      declaredFamilyKey: row.family_key,
-    })),
+  // Pending reviews are read SEPARATELY, deliberately. Folding them into the
+  // query above would let pending rows crowd out approved ones inside its
+  // LIMIT and change what counts as covered; coverage must keep grading on
+  // approved rows alone. This read only ever adds wording, so a failure
+  // degrades to "nothing pending" rather than failing the readiness load.
+  const pendingRows = await azureRead
+    .query<{
+      family_key: string | null;
+      pending_count: number | string | null;
+    }>(
+      `
+        SELECT
+          per.family_key,
+          COUNT(*) AS pending_count
+        FROM program_evidence_reviews per
+        WHERE per.program_id = $1
+          AND per.tenant_key = ANY($2)
+          AND per.decision = 'pending'
+          AND per.family_key IS NOT NULL
+        GROUP BY per.family_key
+      `,
+      [programId, tenantKeys],
+      { missingTable: "empty" },
+    )
+    .catch(() => []);
+  const familiesAwaitingReview = pendingRows.flatMap((row) => {
+    const familyId =
+      typeof row.family_key === "string" ? row.family_key.trim() : "";
+    if (!familyId) return [];
+    const parsed = Number(row.pending_count);
+    return [
+      {
+        familyId,
+        pendingCount:
+          Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1,
+      },
+    ];
   });
+
+  return {
+    ...evaluateDiscoveryEvidenceReadiness({
+      blueprint,
+      blueprintBasis: resolution.basis,
+      unknownDeclaredArchetype: resolution.unknownDeclaration,
+      evidenceItems: rows.map((row) => ({
+        id: row.id,
+        title: row.title ?? "Untitled evidence",
+        summary: row.summary ?? "",
+        evidenceType: row.evidence_type ?? "uploaded_artifact",
+        phase: row.phase,
+        confidence: row.confidence,
+        createdAt: row.created_at,
+        declaredFamilyKey: row.family_key,
+      })),
+    }),
+    familiesAwaitingReview,
+  };
 }

@@ -17,6 +17,7 @@ jest.mock("../audit-log", () => ({
 }));
 
 import { signOffDeliverable } from "../mutations";
+import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approved-evidence-lineage";
 
 function selectDeliverable(result: unknown) {
   return {
@@ -112,7 +113,13 @@ describe("signOffDeliverable", () => {
         approvalLineage: {
           source: "generated_artifact_acceptance",
           generatedArtifactId: "artifact-current",
-          evidenceSnapshotHash: "revision-current",
+          // The lineage production records: both revisions, the phase scope, and
+          // the moment they were read. See `approved-evidence-lineage.ts`.
+          ...stampApprovedEvidenceLineage({
+            evidenceSnapshotHash: "revision-current",
+            phaseEvidenceSnapshotHash: "revision-current-phase-1",
+            at: "2026-10-01T11:00:00.000Z",
+          }),
           approvalMode: "client_approved_replacement",
         },
         approvalRationale: "Synthetic review accepted the current evidence-bound version.",
@@ -144,10 +151,16 @@ describe("signOffDeliverable", () => {
         authoritative_lifecycle_state: "human_approved",
         authoritative_flag_source: "normal_flow",
         requires_revalidation: false,
+        // Strict on purpose: the merge must keep `retained`, overwrite the old
+        // lineage, and carry the whole stamp — the moment included, since the
+        // currency check cannot run without it.
         structured_data: {
           source: "generated_artifact_acceptance",
           generatedArtifactId: "artifact-current",
           evidenceSnapshotHash: "revision-current",
+          phaseEvidenceSnapshotHash: "revision-current-phase-1",
+          evidenceSnapshotScope: "phase",
+          generatedAt: "2026-10-01T11:00:00.000Z",
           approvalMode: "client_approved_replacement",
           retained: "existing governed metadata",
         },

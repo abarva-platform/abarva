@@ -2,6 +2,7 @@ import "server-only";
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 
 export interface ApprovedPhaseEvidenceReference {
   evidenceId: string;
@@ -27,13 +28,17 @@ export async function listApprovedPhaseEvidence(
 ): Promise<ApprovedPhaseEvidenceReference[]> {
   const tenantKey = ctx.clientKey;
   if (!tenantKey || !moveId || !Number.isInteger(phase)) return [];
+  // Match any representation of the tenant (app client key + canonical
+  // substrate alias) so approved evidence loaded under either is seen by the
+  // gate. The alias set is per-tenant, so this cannot widen to another tenant.
+  const tenantKeys = tenantAliasesFor(tenantKey);
 
   try {
     const db = getAzureWriteFluentClient();
     const { data: reviews, error: reviewError } = await db
       .from("program_evidence_reviews")
       .select("evidence_id, family_key, source_ref, reviewed_at")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", moveId)
       .eq("phase", phase)
       .eq("decision", "approved")
@@ -51,7 +56,7 @@ export async function listApprovedPhaseEvidence(
     const { data: evidence, error: evidenceError } = await db
       .from("program_evidence_items")
       .select("id, title")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", moveId)
       .in("id", evidenceIds);
     if (evidenceError || !Array.isArray(evidence)) return [];

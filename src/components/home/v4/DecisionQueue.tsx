@@ -141,6 +141,15 @@ export function buildDecisionQueue(input: {
       "no contract sits inside its notice window as at the record's date",
     );
   }
+  // Contracts are served but the record carries no as-of date, so the notice-window test cannot run.
+  // Name that instead of dropping the whole lens: on the attention chapter the queue is the point,
+  // and a section that silently vanishes reads as a load failure, not as an honest "could not
+  // compute, and here is why" -- the same stated-absence discipline the rest of the surface keeps.
+  if ((input.contracts?.length ?? 0) > 0 && !asOf) {
+    checkedAndEmpty.push(
+      "contract notice windows need the record's as-of date, which is not established here, so no contract could be placed inside or outside its window",
+    );
+  }
 
   // Rated first, then the order the record declared them in. Nothing is scored.
   items.sort((a, b) => (a.rated ? 0 : 1) - (b.rated ? 0 : 1));

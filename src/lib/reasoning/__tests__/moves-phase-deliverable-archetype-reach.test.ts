@@ -44,6 +44,7 @@ import { GOVERNED_DATA_FOUNDATION_PACK } from "@/lib/deliverables/orchestrator/b
 import { getDeliverableStructure } from "@/lib/deliverables/orchestrator/briefs/deliverable-structures";
 import type { DeliverableIntelligenceRequest } from "@/lib/deliverables/orchestrator/types";
 import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
+import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 
 /**
  * The archetype under test is the one a Move declares to collect a governed
@@ -84,9 +85,14 @@ const PHASE_DELIVERABLES: Record<number, string[]> = {
  * exhibits or tables. Each is excluded for a stated reason, so that losing the
  * exclusion reads as a change rather than as noise:
  *
- *  - `charter` and `design_workshop_guide` are excluded inside `composeBrief`
- *    itself (`allowArchetypeAssets`) — a P1 approval instrument and a workshop
- *    agenda are not places to assert client facts.
+ *  - `charter`, `design_workshop_guide`, `planning_workshop_guide`,
+ *    `mobilization_workshop_guide` and `execution_kickoff_guide` are withheld
+ *    the pack's exhibits and tables by `withholdsArchetypeAssets`
+ *    (archetype-asset-withholding.ts, read by `composeBrief`) — a P1 approval
+ *    instrument and the four phase facilitation guides are not places to carry
+ *    a use case's exhibits. The withholding does not touch evidence families,
+ *    which is why the four guides still have to ground the archetype's
+ *    evidence below.
  *  - `discovery_plan` never reaches `composeBrief`: it has a dedicated builder
  *    that grounds its evidence section from the discovery BLUEPRINT instead,
  *    which is the catalog that decides what Discover collects.
@@ -95,6 +101,9 @@ const ASSET_FREE_BY_DESIGN = [
   "charter",
   "design_workshop_guide",
   "discovery_plan",
+  "planning_workshop_guide",
+  "mobilization_workshop_guide",
+  "execution_kickoff_guide",
 ] as const;
 
 /**
@@ -141,26 +150,54 @@ const PACK_EVIDENCE_FAMILIES = [
 ] as const;
 
 /**
- * Phase deliverables with NO declared structure, so `composeBrief` returns
- * null and the generic brief is used. Measured, not aspirational — this is the
- * present cost, and every entry is a deliverable that cannot cite the
- * archetype's evidence. All three of Mobilize's deliverables are here, which
- * is why a Move's hand-off to Tower is the weakest-grounded thing it produces.
+ * Phase deliverables with NO declared structure AT THEIR REGISTRY KEY, so
+ * `composeBrief` returns null and the generic brief is used. Measured, not
+ * aspirational — every entry is a deliverable that cannot cite the archetype's
+ * evidence when asked for by this key.
+ *
+ * Read this list together with `PRODUCTION_STRUCTURELESS` below. This one is
+ * measured at the registry key; five registry keys are NOT what production
+ * asks for, because `orchestratorDeliverableType` maps them onto a structure
+ * authored under a different spelling. So this list overstates the live cost
+ * and the two are kept side by side rather than one standing in for the other.
  *
  * This list may only shrink. Authoring a structure for one of these makes the
  * "genuinely has no structure" assertion below fail until the key is removed.
  */
 const STRUCTURELESS = [
   "operating_model_design",
-  "planning_workshop_guide",
   "execution_roadmap",
   "financial_model",
   "tower_metrics_plan",
-  "mobilization_workshop_guide",
   "handoff_package",
-  "value_measurement_contract",
-  "execution_kickoff_guide",
 ] as const;
+
+/**
+ * The same question asked of the key PRODUCTION sends.
+ *
+ * `/api/v1/deliverables/generate-phase` and `PhaseDocumentsPanel` both resolve
+ * a registry key through `orchestratorDeliverableType` before requesting a
+ * brief, and five registry keys resolve to a structure authored under a
+ * different spelling (`operating_model_design` -> `operating_model`,
+ * `execution_roadmap` -> `roadmap`, `financial_model` -> `estimate_model`,
+ * `tower_metrics_plan` -> `value_model`, `handoff_package` -> `handoff_pack`).
+ * Measuring only the registry key therefore reports five deliverables as
+ * ungrounded that are in fact grounded, and a fix to one of the genuinely
+ * ungrounded ones looks five times smaller than it is.
+ *
+ * What is left here after the mapping is applied is the real present cost, and
+ * it is now EMPTY. It was all three working-session guides; the P4 mobilization
+ * guide and the P5 execution kickoff guide were authored first, and the P3
+ * planning guide has since joined them (all three in
+ * `structure-phase-session-guides.ts`). Every key production sends for a phase
+ * deliverable now resolves a declared structure.
+ *
+ * Kept as an empty literal rather than deleted, because the value of this list
+ * is the assertion it anchors in BOTH directions: a new phase deliverable that
+ * arrives without a structure, or an existing structure that is unregistered,
+ * fails the case below instead of silently falling back to the generic brief.
+ */
+const PRODUCTION_STRUCTURELESS: readonly string[] = [];
 
 const ALL_PHASE_DELIVERABLES = Object.values(PHASE_DELIVERABLES).flat();
 
@@ -257,6 +294,47 @@ describe("a Move's phase deliverables and the archetype that should reach them",
         (key) => getDeliverableStructure("moves", key) === undefined,
       );
       expect(missing.sort()).toEqual([...STRUCTURELESS].sort());
+    });
+  });
+
+  describe("the key production actually sends", () => {
+    it("leaves no phase deliverable without a structure", () => {
+      const missing = ALL_PHASE_DELIVERABLES.filter(
+        (key) =>
+          getDeliverableStructure("moves", orchestratorDeliverableType(key)) ===
+          undefined,
+      );
+      expect(missing.sort()).toEqual([...PRODUCTION_STRUCTURELESS].sort());
+    });
+
+    it("grounds the archetype's evidence in every other phase deliverable", () => {
+      const families = new Set<string>(PACK_EVIDENCE_FAMILIES);
+      const ungrounded = ALL_PHASE_DELIVERABLES.filter((key) => {
+        if ((PRODUCTION_STRUCTURELESS as readonly string[]).includes(key)) {
+          return false;
+        }
+        // `ASSET_FREE_BY_DESIGN` members stay in the subject set on purpose:
+        // `allowArchetypeAssets` withholds exhibits and tables from them, not
+        // evidence families, so they are expected to ground evidence like any
+        // other deliverable.
+        const req: DeliverableIntelligenceRequest = {
+          ...amsRfpRequest(),
+          module: "moves",
+          deliverableType: orchestratorDeliverableType(key),
+          useCaseArchetype: ARCHETYPE,
+        };
+        return !getArtifactBrief(req).recommendedStructure.some((section) =>
+          section.expectedEvidenceFamilies.some((family) =>
+            families.has(family),
+          ),
+        );
+      });
+      // `charter` is withheld the archetype's assets by `composeBrief`'s
+      // `allowArchetypeAssets`, but that gate does not touch the evidence
+      // families, and the charter's own sections declare none that overlap the
+      // pack — so it is the one expected member here. Named as a literal
+      // rather than filtered out, so it reads as a known exclusion.
+      expect(ungrounded).toEqual(["charter"]);
     });
   });
 

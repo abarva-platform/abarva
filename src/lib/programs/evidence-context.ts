@@ -7,6 +7,7 @@ import {
   reviewedExtractionFromStoredSourceRef,
   toStoredReviewedStructured,
 } from "./evidence-review-contract";
+import { moveEvidenceReadTenantKeys } from "./evidence-readiness/tenant-read-scope";
 
 export interface ProgramEvidenceCitation {
   quote: string;
@@ -131,12 +132,18 @@ export async function listProgramEvidenceForPrompt(
   // an unfiltered "most recent" query. A file that is uploaded but still
   // pending human review (or rejected) must never appear in generation
   // context, no matter how recent it is.
-  const tenantKey = ctx.clientKey ?? "";
+  // One tenant's evidence rows can carry either of that tenant's own keys (the
+  // product writes the app client key, a data-plane load job writes the
+  // canonical substrate key), so a prompt scoped to a single key is built from
+  // only one producer's rows and the rest read as absent. Per-tenant by
+  // construction; see `moveEvidenceReadTenantKeys`.
+  const tenantKeys = moveEvidenceReadTenantKeys(ctx.clientKey);
+  if (tenantKeys.length === 0) return [];
   const reviewRows = await azureRead.select<Record<string, unknown>>({
     table: "program_evidence_reviews",
     columns: ["evidence_id", "reviewed_at", "updated_at", "source_ref"],
     where: {
-      tenant_key: tenantKey,
+      tenant_key: { op: "in", value: tenantKeys },
       program_id: programId,
       decision: "approved",
     },
@@ -171,7 +178,7 @@ export async function listProgramEvidenceForPrompt(
       "created_at",
     ],
     where: {
-      tenant_key: tenantKey,
+      tenant_key: { op: "in", value: tenantKeys },
       program_id: programId,
       id: { op: "in", value: approvedEvidenceIds },
       ...(phase !== undefined ? { phase } : {}),

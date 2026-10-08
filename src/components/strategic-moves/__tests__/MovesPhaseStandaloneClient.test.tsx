@@ -38,6 +38,7 @@ import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import { buildPhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import { P1_CHARTER_EVIDENCE_FAMILIES } from "@/lib/programs/p1-charter-evidence";
+import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
@@ -1207,6 +1208,56 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    it("drops the legacy gate stepper on the Steps view when the capture composition is active, and restores it on another tab", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureCompositionEnabled
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // On the Steps view the capture flow renders its OWN phase bar, so the
+      // legacy gate stepper must not be a second phase navigator stacked above.
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("navigation", { name: "Phase steps" }),
+      ).not.toBeInTheDocument();
+      // On a tab without the capture bar (Approvals) the stepper is the only
+      // phase navigator and must still render.
+      fireEvent.click(workspaceTab(/Approvals/));
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the gate stepper on the Steps view when the composition flag is OFF (capture flow still mounts)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // capture_v2 on, composition off: the flow mounts, but the legacy chrome
+      // (including this stepper) is intentionally kept, as before this change.
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+    });
+
     // ─── the structured `facts` question on the redesigned flow ───
     // P2's "Baseline metrics" is a required capture section whose input is
     // structured (`structured: "facts"`). Every other structured section —
@@ -1236,6 +1287,132 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(metric).toBeEnabled();
       fireEvent.change(metric, { target: { value: "Intake cycle time" } });
       expect(metric.value).toBe("Intake cycle time");
+    });
+
+    // ─── P2's route decision: never offer a decision that cannot validate ───
+    // `solution_route_validated` is HARD in two consecutive gates (P2 -> P3 and
+    // P3 -> P4) and needs `resolveConfirmedSolutionRoute` to return a route.
+    // That resolver rejects `decision: "confirm"` whenever `selectedRoute !==
+    // recommendation`, and `selectedRoute` cannot hold `"unresolved"` — so when
+    // the recommendation is unresolved, confirming is incapable of validating
+    // anything. The form offered "Confirm recommendation" anyway, next to a
+    // recommendation displayed as "Not yet determined", and storing that answer
+    // wrote `selectedRoute: ""`, which the parser rejects outright. Every
+    // select was filled, nothing objected, and the gate then reported the route
+    // unvalidated while naming neither the cause nor the way out.
+    //
+    // `src/lib/programs/__tests__/solution-route-decision.test.ts` pins the
+    // rule against the resolver and enumerates the 4 of 45 form answers that
+    // reach it. These cases pin what the reviewer sees.
+    function renderP2RouteDecision(route: Record<string, unknown>) {
+      return render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+          initialSubstepKey="findings"
+          initialPhaseCaptureValues={{
+            current_state_findings: "Observed intake backlog.",
+            baseline_metrics: JSON.stringify([
+              {
+                metric: "Intake cycle time",
+                value: "9 days median",
+                source: "Intake work queue",
+              },
+            ]),
+            gaps_root_causes: "No single owner for intake triage.",
+            process_handoffs: "Three handoffs between intake and ops.",
+            data_quality_governance: "Ownership unclear on the master record.",
+            evidence_confidence: "Medium-high operationally.",
+            recommendation: "Proceed to design the governed intake path.",
+            solution_route_validation: JSON.stringify(route),
+          }}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+    }
+
+    /** Reaches `recommendSolutionRoute` -> "unresolved". */
+    const UNRESOLVED_ANSWER = {
+      solutionOutput: "mixed",
+      workflowChange: "limited",
+      roleAccountabilityChange: "limited",
+    } as const;
+
+    /** Reaches `recommendSolutionRoute` -> "technical_product". */
+    const RESOLVED_ANSWER = {
+      solutionOutput: "reports_dashboards",
+      workflowChange: "limited",
+      roleAccountabilityChange: "none",
+    } as const;
+
+    it("P2 withholds the confirm decision when no route follows from the answers", () => {
+      renderP2RouteDecision(UNRESOLVED_ANSWER);
+
+      // The state that makes confirming incapable, as the form displays it.
+      expect(screen.getByText("Not yet determined")).toBeInTheDocument();
+
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      const offered = Array.from(decision.options).map(
+        (option) => option.value,
+      );
+      expect(offered).not.toContain("confirm");
+      expect(offered).toContain("correct");
+    });
+
+    it("P2 says why confirming is unavailable and names the decision that is", () => {
+      renderP2RouteDecision(UNRESOLVED_ANSWER);
+
+      const reason = screen.getByText(/no recommendation to confirm/i);
+      expect(reason).toBeInTheDocument();
+      expect(reason).toHaveTextContent(/correct recommendation/i);
+    });
+
+    it("P2 keeps the confirm decision, and shows no objection, once a route follows", () => {
+      renderP2RouteDecision(RESOLVED_ANSWER);
+
+      expect(
+        screen.getByText("Technical product / data solution"),
+      ).toBeInTheDocument();
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      const offered = Array.from(decision.options).map(
+        (option) => option.value,
+      );
+      expect(offered).toContain("confirm");
+      expect(offered).toContain("correct");
+      expect(
+        screen.queryByText(/no recommendation to confirm/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("P2 does not show a stored confirm as the selected decision once it cannot validate", () => {
+      // A record written before this guard, or by an agent: the decision says
+      // confirm while the answers resolve to no route. Withholding the option
+      // is what makes the control stop presenting that dead answer as the
+      // reviewer's standing decision — a stored value matching no option
+      // cannot be the selected one. Asserted separately from the option set
+      // because this is the consequence a reviewer actually meets on reload.
+      renderP2RouteDecision({ ...UNRESOLVED_ANSWER, decision: "confirm" });
+
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      // `selectedIndex`, not `value`: a controlled select whose value matches
+      // no option reports `value` as "" either way, so only the index shows
+      // whether the placeholder is actually the selected option (0) or the
+      // control renders with nothing selected at all (-1).
+      expect(decision.selectedIndex).toBe(0);
+      expect(decision.options[0]?.textContent).toBe("Review before confirming");
+      expect(
+        screen.getByText(/no recommendation to confirm/i),
+      ).toBeInTheDocument();
     });
 
     it("P2 on the redesigned flow does not render the baseline question read-only", () => {
@@ -1733,6 +1910,102 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("tablist", { name: "Move workspace views" }),
       ).toBeInTheDocument();
+    });
+
+    // ─── moves_workspace_v2 (Increment 1 of the phase-workspace shell) ───────
+    it("moves_workspace_v2 ON: the capture flow renders the single slim phase rail and the four-stage spine", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      const flow = within(dock).getByTestId("moves-capture-flow");
+      // the slim rail and the four-stage spine, not the legacy bars
+      expect(flow.querySelector(".mcf-v2-rail")).not.toBeNull();
+      expect(flow.querySelector(".mcf-v2-flow")).not.toBeNull();
+      expect(flow.querySelector(".mcf-phasebar")).toBeNull();
+      expect(flow.querySelector(".mcf-stepbar")).toBeNull();
+      expect(within(flow).getByText("→ Tower")).toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON: drops the stacked legacy gate stepper on the phase view (subsumes the composition polish)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // composition is implied — the duplicate phase navigator and the repeated
+      // stage head come off the phase view without the composition flag set.
+      expect(
+        screen.queryByRole("navigation", { name: "Phase steps" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { level: 1, name: "Charter" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON: the workspace-view row becomes a secondary control, still reachable", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const tablist = screen.getByRole("tablist", {
+        name: "Move workspace views",
+      });
+      expect(tablist).toHaveClass("mxw-surface-tabs--secondary");
+      // the views are still reachable from it
+      expect(
+        within(tablist).getByRole("tab", { name: /Files/ }),
+      ).toBeInTheDocument();
+      expect(
+        within(tablist).getByRole("tab", { name: /Approvals/ }),
+      ).toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON without moves_capture_v2: changes nothing (no flow to reshape)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // the legacy canvas, head, stepper and standard tab row are all untouched
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+      const tablist = screen.getByRole("tablist", {
+        name: "Move workspace views",
+      });
+      expect(tablist).not.toHaveClass("mxw-surface-tabs--secondary");
     });
 
     // ─── moves_charter_basis_v1: the HOST call site ─────────────────────────
@@ -2850,7 +3123,9 @@ describe("MovesPhaseStandaloneClient", () => {
       // state a P3 render holds, so a dropped or re-derived prop fails here.
       expect(screen.getByText("Priya Raman")).toBeInTheDocument();
       expect(
-        screen.getByText("Discover found billing already inside the same queue."),
+        screen.getByText(
+          "Discover found billing already inside the same queue.",
+        ),
       ).toBeInTheDocument();
       expect(band).toHaveAttribute("data-count", "2");
       expect(band).toHaveAttribute("data-known-wrong", "1");
@@ -3114,6 +3389,305 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    it("a partly filled uploaded workbook offers only its answered responses for acceptance", async () => {
+      // The review API refuses the whole batch if any accepted response is
+      // blank, and a blank row's checkbox is disabled, so a seed that
+      // pre-selected the blanks left the reviewer with a 422 and no way back.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const baseFetch = global.fetch as jest.Mock;
+      global.fetch = jest.fn(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = typeof input === "string" ? input : String(input);
+          if (
+            url.includes("/stage-readiness-workbook") &&
+            init?.method === "POST"
+          ) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => ({
+                ok: true,
+                summary: {
+                  totalQuestions: 2,
+                  answeredQuestions: 1,
+                  requiredAnswered: 1,
+                  requiredTotal: 2,
+                },
+                proposalSet: {
+                  artifactId: "proposal-artifact-1",
+                  artifactVersion: 2,
+                  status: "review_required",
+                  proposalCount: 2,
+                  pendingCount: 2,
+                  proposals: [
+                    {
+                      proposalId: "answered-1",
+                      questionId: "q-1",
+                      dimensionId: "baseline_metrics",
+                      requirement: "required",
+                      question: "Provide baseline metrics.",
+                      response: "41 days, measured.",
+                      answerState: "answered",
+                      disposition: "pending",
+                    },
+                    {
+                      proposalId: "blank-1",
+                      questionId: "q-2",
+                      dimensionId: "change_adoption_owner",
+                      requirement: "required",
+                      question: "Name the adoption owner.",
+                      response: "",
+                      answerState: "blank",
+                      disposition: "pending",
+                    },
+                  ],
+                },
+              }),
+            } as Response;
+          }
+          return baseFetch(input, init);
+        },
+      ) as unknown as typeof global.fetch;
+
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.change(
+        screen.getByLabelText("Upload completed readiness workbook"),
+        {
+          target: {
+            files: [
+              new File([Buffer.from("xlsx")], "partly-filled.xlsx", {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              }),
+            ],
+          },
+        },
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/1\/2 selected/)).toBeInTheDocument();
+      });
+      expect(screen.getByText(/1 blank response\./)).toBeInTheDocument();
+      expect(
+        screen.getByRole("checkbox", { name: /Provide baseline metrics/ }),
+      ).toBeChecked();
+      const blankRow = screen.getByRole("checkbox", {
+        name: /Name the adoption owner/,
+      });
+      expect(blankRow).not.toBeChecked();
+      expect(blankRow).toBeDisabled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Accept selected" }));
+      await waitFor(() => {
+        expect(
+          (global.fetch as jest.Mock).mock.calls.some(
+            ([, init]) => init?.method === "PATCH",
+          ),
+        ).toBe(true);
+      });
+      const patchCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(patchCall?.[1]?.body)).decisions).toEqual([
+        { proposalId: "answered-1", disposition: "accepted" },
+      ]);
+    });
+
+    it("lists every stored workbook response, not just the first few, so a long workbook can be judged row by row", () => {
+      // The selection is seeded from EVERY open proposal, but the list used to
+      // render only the first six. A reviewer was told "41/41 selected", shown
+      // six rows, and could accept all forty-one — and could never reject or
+      // flag any row past the sixth, because its checkbox did not exist. A
+      // real workbook carries roughly 33-55 proposals.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const proposals = Array.from({ length: 41 }, (_, index) => ({
+        proposalId: `proposal-${index + 1}`,
+        questionId: `q-${index + 1}`,
+        dimensionId: "baseline_metrics",
+        requirement: "required" as const,
+        question: `Workbook question ${index + 1}.`,
+        response: `Response ${index + 1}.`,
+        answerState: "answered",
+        disposition: "pending",
+      }));
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount: proposals.length,
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const list = screen.getByRole("group", {
+        name: "Stored workbook responses",
+      });
+      expect(within(list).getAllByRole("checkbox")).toHaveLength(41);
+      expect(
+        within(list).getByRole("checkbox", {
+          name: /Workbook question 41\./,
+        }),
+      ).toBeEnabled();
+      expect(screen.getByText(/41\/41 selected/)).toBeInTheDocument();
+    });
+
+    it("clears the seeded selection so one response out of many can be rejected on its own", async () => {
+      // Accept-all is one click because every open response starts ticked.
+      // Rejecting a single response out of forty-one used to mean unticking
+      // forty rows, which is why a reviewer with one bad answer had no
+      // practical move other than accepting it.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const proposals = Array.from({ length: 41 }, (_, index) => ({
+        proposalId: `proposal-${index + 1}`,
+        questionId: `q-${index + 1}`,
+        dimensionId: "baseline_metrics",
+        requirement: "required" as const,
+        question: `Workbook question ${index + 1}.`,
+        response: `Response ${index + 1}.`,
+        answerState: "answered",
+        disposition: "pending",
+      }));
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount: proposals.length,
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+      expect(screen.getByText(/0\/41 selected/)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Reject selected" }),
+      ).toBeDisabled();
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Select all open responses" }),
+      );
+      expect(screen.getByText(/41\/41 selected/)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+      fireEvent.click(
+        screen.getByRole("checkbox", { name: /Workbook question 30\./ }),
+      );
+      expect(screen.getByText(/1\/41 selected/)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Reject selected" }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const patchCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(patchCall?.[1]?.body)).decisions).toEqual([
+        { proposalId: "proposal-30", disposition: "rejected" },
+      ]);
+    });
+    it("survives unticking and re-ticking a response row", () => {
+      // The row handler used to read event.currentTarget INSIDE the state
+      // updater. React can replay an updater on a later render, and the event
+      // is detached by then, so the second tick in one render pass threw a
+      // TypeError out of the whole phase workspace.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 2,
+              pendingCount: 2,
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  questionId: "q-1",
+                  dimensionId: "baseline_metrics",
+                  requirement: "required",
+                  question: "Provide baseline metrics.",
+                  response: "Confirmed in the Q3 close.",
+                  answerState: "answered",
+                  disposition: "pending",
+                },
+                {
+                  proposalId: "proposal-2",
+                  questionId: "q-2",
+                  dimensionId: "delay_volume",
+                  requirement: "required",
+                  question: "Provide addressable delay volume.",
+                  response: "Measured at 1,200 cases.",
+                  answerState: "answered",
+                  disposition: "pending",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const row = screen.getByRole("checkbox", {
+        name: /Provide baseline metrics\./,
+      });
+      expect(row).toBeChecked();
+      fireEvent.click(row);
+      expect(screen.getByText(/1\/2 selected/)).toBeInTheDocument();
+      fireEvent.click(row);
+      expect(screen.getByText(/2\/2 selected/)).toBeInTheDocument();
+    });
+
     it("restores a completed workbook review without reopening pending actions", () => {
       const move = makeMove({
         currentPhase: 1,
@@ -3181,6 +3755,322 @@ describe("MovesPhaseStandaloneClient", () => {
           name: /Provide baseline metrics.*accepted/,
         }),
       ).toBeDisabled();
+    });
+
+    it.each([
+      [
+        "says how many decisions a re-upload kept",
+        3,
+        /3 decisions kept from your previous upload of this workbook/,
+      ],
+      [
+        "counts one kept decision in the singular",
+        1,
+        /1 decision kept from your previous upload of this workbook/,
+      ],
+    ])("%s", (_label, carriedForward, expected) => {
+      // A reviewer who corrected one cell is looking at a workbook they
+      // uploaded again. Without this line the restored decisions read as
+      // decisions the product made for them.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 3,
+              proposalSetId: "proposal-set-2",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 4,
+              pendingCount: 1,
+              review: {
+                status: "review_required",
+                acceptedCount: 3,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount: 1,
+                carriedForwardFromPriorUpload: carriedForward,
+              },
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  question: "Provide baseline metrics.",
+                  response: "Measured at 30 tickets per week.",
+                  answerState: "answered",
+                  disposition: "accepted",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByText(expected)).toBeInTheDocument();
+    });
+
+    it("says nothing about a previous upload when no decision was kept", () => {
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 1,
+              pendingCount: 0,
+              review: {
+                status: "review_required",
+                acceptedCount: 1,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount: 0,
+                carriedForwardFromPriorUpload: 0,
+              },
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  question: "Provide baseline metrics.",
+                  response: "Measured at 30 tickets per week.",
+                  answerState: "answered",
+                  disposition: "accepted",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.queryByText(/kept from your previous upload/),
+      ).not.toBeInTheDocument();
+    });
+
+    /**
+     * A restored decision is shown and is not yet on record. Both halves are
+     * the reviewer's business: the first tells them not to re-judge the row,
+     * the second is why the phase is still held.
+     */
+    function renderRestoredReview(
+      proposals: Array<Record<string, unknown>>,
+      pendingCount = 0,
+    ) {
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 3,
+              proposalSetId: "proposal-set-2",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount,
+              review: {
+                status: "review_required",
+                acceptedCount: proposals.length - pendingCount,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount,
+                carriedForwardFromPriorUpload: proposals.filter(
+                  (proposal) =>
+                    proposal.dispositionRestoredFromPriorUpload === true,
+                ).length,
+              },
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      return move;
+    }
+
+    it("marks the rows whose decision came from the previous upload, and only those", () => {
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "accepted",
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.getByText(
+          /kept from your previous upload, not yet recorded/,
+        ),
+      ).toBeInTheDocument();
+      // One marker, not one per row: the recorded decision is not restored.
+      expect(
+        screen.getAllByText(/kept from your previous upload, not yet recorded/)
+          .length,
+      ).toBe(1);
+    });
+
+    it("offers a control to record the kept decisions when the re-upload left nothing pending", async () => {
+      // The case the gate fix would otherwise strand. Every row reads decided,
+      // so no response is open and no required response is unaccepted, while
+      // the phase stays held because no review of THIS set exists. Before this
+      // control the whole action row was hidden in exactly that state.
+      const move = renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "rejected",
+            dispositionRestoredFromPriorUpload: true,
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.getByText(
+          /review what changed, then record the kept decisions/,
+        ),
+      ).toBeInTheDocument();
+      const record = screen.getByRole("button", {
+        name: "Record 2 kept decisions",
+      });
+      fireEvent.click(record);
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      // Each row is recorded as the disposition that was already made for it.
+      // Sending them all as "accepted" would overturn a human's rejection.
+      expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 3,
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          { proposalId: "proposal-2", disposition: "rejected" },
+        ],
+      });
+      expect(String(move.id).length).toBeGreaterThan(0);
+      // Once recorded, neither the marks nor the control remain.
+      expect(
+        screen.queryByRole("button", { name: /kept decision/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/kept from your previous upload, not yet recorded/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("keeps the review surface open when every restored decision is an acceptance", async () => {
+      // The actual dead end, and the only state in which the kept-decision
+      // term is load-bearing. A restored REJECTION already leaves a required
+      // response unaccepted, which holds the surface open on its own; when
+      // every restored decision is an acceptance, no response is open and none
+      // is unaccepted, so without that term the action row disappears while
+      // the phase is still held for want of a recorded review.
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+        ],
+        0,
+      );
+      const record = screen.getByRole("button", {
+        name: "Record 2 kept decisions",
+      });
+      expect(record).toBeEnabled();
+      fireEvent.click(record);
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          { proposalId: "proposal-2", disposition: "accepted" },
+        ],
+      });
+    });
+
+    it("offers no kept-decision control when every decision is already on record", () => {
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.queryByRole("button", { name: /kept decision/ }),
+      ).not.toBeInTheDocument();
     });
 
     it("keeps a blocked P2 request on P1 with the server-derived why, remains, and next action above the fold", () => {
@@ -3335,6 +4225,204 @@ describe("MovesPhaseStandaloneClient", () => {
         ],
       });
       expect(mockRouterRefresh).toHaveBeenCalled();
+    });
+
+    // ─── a rejected required response must stay revisable ────────────────
+    //
+    // Rejecting a required response is not a resting state for it. Every
+    // forward control reads `disposition === "accepted"`: the P1 branch of
+    // `applyStageReadinessToEvidencePackets` requires every required proposal
+    // accepted, and `assessStageReadinessGate` raises a `review_required`
+    // blocker for any required proposal that is not. So the phase gate
+    // returns 409 and so does `generate-phase` — the transition AND the phase
+    // build both stay shut.
+    //
+    // The surface used to close completely in exactly that state. The action
+    // row rendered only while OPEN work remained, and once every response
+    // carried a disposition there was none; the rejected row's own checkbox
+    // was disabled because `rejected` was treated as closed. Not one control
+    // on the page could revise the single decision that was holding the
+    // phase, while the gate's blocker text went on saying to accept each
+    // required response. The server never locked it:
+    // `mergeStageReadinessReviewDecisions` states incoming decisions win.
+    describe("a review that holds the phase with no open work", () => {
+      const renderRejectedRequiredReview = () =>
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            initialStageReadinessPreview={{
+              ok: true,
+              proposalSet: {
+                artifactId: "proposal-artifact-1",
+                artifactVersion: 2,
+                proposalSetId: "proposal-set-1",
+                transition: { fromPhase: 1, toPhase: 2 },
+                status: "review_required",
+                proposalCount: 2,
+                pendingCount: 0,
+                review: {
+                  status: "review_required",
+                  acceptedCount: 1,
+                  rejectedCount: 1,
+                  needsValidationCount: 0,
+                  pendingCount: 0,
+                  readiness: {
+                    ready: 1,
+                    insufficientEvidence: 0,
+                    unknown: 0,
+                  },
+                },
+                proposals: [
+                  {
+                    proposalId: "proposal-1",
+                    questionId: "q-1",
+                    dimensionId: "it_systems_landscape",
+                    requirement: "required",
+                    question: "Which systems hold the record?",
+                    response: "The CMDB extract dated 2026-09-30.",
+                    answerState: "answered",
+                    disposition: "accepted",
+                  },
+                  {
+                    proposalId: "proposal-2",
+                    questionId: "q-2",
+                    dimensionId: "data_analytics_estate",
+                    requirement: "required",
+                    question: "Where does the governed number land?",
+                    response: "The warehouse, per the 2026-09 extract.",
+                    answerState: "answered",
+                    disposition: "rejected",
+                  },
+                ],
+              },
+            }}
+            move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+            phaseNum={1}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+      it("keeps the rejected required response changeable, and names it as holding the phase", () => {
+        renderRejectedRequiredReview();
+
+        expect(
+          screen.getByText("1 required response not accepted. This phase stays held until each one is accepted; select the response below to change its decision."),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        ).toBeEnabled();
+        expect(
+          screen.getByRole("button", { name: "Accept selected" }),
+        ).toBeInTheDocument();
+      });
+
+      it("does not pre-select the rejected response, so one bulk accept cannot silently reverse a deliberate rejection", () => {
+        renderRejectedRequiredReview();
+
+        expect(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        ).not.toBeChecked();
+        expect(
+          screen.getByRole("button", { name: "Accept selected" }),
+        ).toBeDisabled();
+      });
+
+      it("sends only the response the reviewer ticked when the rejection is taken back", async () => {
+        renderRejectedRequiredReview();
+
+        fireEvent.click(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        );
+        fireEvent.click(
+          screen.getByRole("button", { name: "Accept selected" }),
+        );
+
+        await waitFor(() => {
+          expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+        });
+        const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+          ([url, init]) =>
+            String(url).includes("/stage-readiness-workbook") &&
+            init?.method === "PATCH",
+        );
+        expect(reviewCall).toBeTruthy();
+        expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+          proposalSetArtifactId: "proposal-artifact-1",
+          proposalSetArtifactVersion: 2,
+          decisions: [{ proposalId: "proposal-2", disposition: "accepted" }],
+        });
+
+        // The re-seed after a save must stay on the open-work predicate too.
+        // Widening it here would leave every row the reviewer just decided
+        // ticked, so the NEXT click of any action button would re-dispose
+        // decisions nobody reopened.
+        for (const checkbox of screen.getAllByRole("checkbox", {
+          name: /Which systems hold the record|Where does the governed number land/,
+        })) {
+          expect(checkbox).not.toBeChecked();
+        }
+      });
+
+      // A blank response can never be accepted, so reopening the action row
+      // for a workbook of nothing but blanks would offer buttons that could
+      // never enable. Completing the cells and uploading again is that
+      // workbook's only path, which is what the blank tally already says.
+      it("offers no action row for a workbook whose every response is blank", () => {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            initialStageReadinessPreview={{
+              ok: true,
+              proposalSet: {
+                artifactId: "proposal-artifact-1",
+                artifactVersion: 2,
+                proposalSetId: "proposal-set-1",
+                transition: { fromPhase: 1, toPhase: 2 },
+                status: "review_required",
+                proposalCount: 1,
+                pendingCount: 1,
+                proposals: [
+                  {
+                    proposalId: "proposal-1",
+                    questionId: "q-1",
+                    dimensionId: "it_systems_landscape",
+                    requirement: "required",
+                    question: "Which systems hold the record?",
+                    response: "",
+                    answerState: "blank",
+                    disposition: "pending",
+                  },
+                ],
+              },
+            }}
+            move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+            phaseNum={1}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+        expect(
+          screen.getByText(
+            /1 blank response\. Complete the Response cells and upload the workbook again before review\./,
+          ),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Accept selected" }),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Reject selected" }),
+        ).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -4814,6 +5902,62 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
   });
 
+  it("lets a discovery-phase upload declare the evidence family it covers", async () => {
+    // The checklist beside this uploader names the families P2 needs. While
+    // the picker was gated on P1 this surface offered none of them, so each
+    // file reached coverage with no declared identity and was placed by
+    // keyword inference instead -- which, for an archetype whose families
+    // carry no keyword list, turns on an exact phrase match.
+    const discoveryPackets = coveredEvidencePacketsForPhase(2).map(
+      (packet) => ({
+        ...packet,
+        evidenceSlot: "Data lineage and AI audit trail",
+        familyId: "data_lineage_audit_trail",
+        status: "missing" as const,
+      }),
+    );
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={discoveryPackets}
+        initialSubstepKey="current"
+        move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const picker = screen.getByLabelText("Required evidence family (optional)");
+    expect(picker).toBeEnabled();
+    expect(
+      screen.getByRole("option", { name: "Data lineage and AI audit trail" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(picker, {
+      target: { value: "data_lineage_audit_trail" },
+    });
+    fireEvent.change(screen.getByLabelText("Upload P2 files"), {
+      target: {
+        files: [
+          new File(["lineage"], "lineage-register.md", {
+            type: "text/markdown",
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(uploadedEvidenceRoutes).toEqual([
+        {
+          fileName: "lineage-register.md",
+          phase: 2,
+          evidenceFamily: "data_lineage_audit_trail",
+        },
+      ]);
+    });
+  });
+
   it("does not report an upload as usable evidence when parsing did not create a review record", async () => {
     render(
       <MovesPhaseStandaloneClient
@@ -4944,6 +6088,213 @@ describe("MovesPhaseStandaloneClient", () => {
       ]);
     });
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
+  });
+
+  // The P2 readiness panel is where the demo Move's discovery evidence is
+  // actually uploaded. It named the families the gate wants in its table while
+  // offering no way to say which family a file covered, so the file NAME
+  // decided — and a name the heuristic could not place was refused outright.
+  describe("the P2 readiness panel's evidence-family declaration", () => {
+    function renderLendingReadinessPanel() {
+      return render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          currentStateReadiness={{
+            ...makeCurrentStateReadiness(),
+            archetypeId: "COMMERCIAL_LENDING_AGENT_ASSIST",
+            archetypeName: "Commercial Lending Agent Assist",
+            hardGaps: [
+              "commercial_lending_metrics_baseline",
+              "lending_systems_data_landscape",
+            ],
+            instruments: [
+              {
+                key: "commercial_lending_metrics_baseline",
+                label: "Commercial lending metrics baseline",
+                kind: "metric_baseline",
+                whyNeeded: "Cycle time, rework, and service-level baseline.",
+                sourceDocHint: "Metrics export",
+                severity: "hard",
+                status: "missing",
+                backingTable: "program_evidence_items",
+                committedRows: 0,
+                rationale: "Baseline metrics are required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+              {
+                key: "lending_systems_data_landscape",
+                label: "Lending systems and data landscape",
+                kind: "document",
+                whyNeeded: "Applications, data stores, and integrations.",
+                sourceDocHint: "Systems inventory",
+                severity: "hard",
+                status: "missing",
+                backingTable: "program_evidence_items",
+                committedRows: 0,
+                rationale: "Systems context is required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+              // Already satisfied, so it is not open. The picker must not
+              // offer it: a declaration naming it would be refused by the
+              // router, which would make the option a dead end of its own.
+              {
+                key: "credit_policy_knowledge_inventory",
+                label: "Credit policy and knowledge inventory",
+                kind: "document",
+                whyNeeded: "Policies, checklists, and covenant guidance.",
+                sourceDocHint: "Policy inventory",
+                severity: "hard",
+                status: "committed",
+                backingTable: "program_evidence_items",
+                committedRows: 4,
+                rationale: "Policy context is required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+            ],
+          }}
+          evidenceNeedPackets={[]}
+          initialSubstepKey="current"
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+    }
+
+    function uploadUnplaceableFile() {
+      fireEvent.change(
+        screen.getByLabelText(
+          "Upload P2 current-state evidence files",
+        ) as HTMLInputElement,
+        {
+          target: {
+            files: [
+              new File(["rows"], "Q3 export.xlsx", {
+                type: "application/vnd.ms-excel",
+              }),
+            ],
+          },
+        },
+      );
+    }
+
+    it("offers a declaration for every open family the readiness table names", () => {
+      renderLendingReadinessPanel();
+
+      const picker = screen.getByLabelText(
+        "Evidence family these files cover",
+      ) as HTMLSelectElement;
+      // Exactly the two open families, in the readiness map's order. The
+      // committed third family is deliberately absent.
+      expect(Array.from(picker.options).map((option) => option.value)).toEqual([
+        "",
+        "commercial_lending_metrics_baseline",
+        "lending_systems_data_landscape",
+      ]);
+      // The default keeps the previous behaviour available rather than forcing
+      // a declaration on a file whose name already places it correctly.
+      expect(picker.value).toBe("");
+      expect(
+        screen.getByRole("option", { name: "Decide from the file name" }),
+      ).toBeInTheDocument();
+    });
+
+    it("files a name the heuristic places nowhere under the declared family", async () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(
+        screen.getByLabelText("Evidence family these files cover"),
+        { target: { value: "lending_systems_data_landscape" } },
+      );
+      uploadUnplaceableFile();
+
+      await waitFor(() => {
+        expect(currentStateFamilyIngests).toEqual([
+          {
+            family: "lending_systems_data_landscape",
+            fileName: "Q3 export.xlsx",
+            phase: 2,
+          },
+        ]);
+      });
+      // Declaring routes review and nothing else: the row still says the
+      // upload is awaiting a human.
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Declared as this family\./),
+        ).toBeInTheDocument();
+      });
+      expect(screen.getByText(/awaiting human review/)).toBeInTheDocument();
+    });
+
+    it("refuses the same file when nothing is declared, and names the picker as the way through", async () => {
+      renderLendingReadinessPanel();
+
+      uploadUnplaceableFile();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Declare the family this file covers/),
+        ).toBeInTheDocument();
+      });
+      expect(currentStateFamilyIngests).toEqual([]);
+    });
+
+    it("says so when the family was guessed from the file name", async () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(
+        screen.getByLabelText(
+          "Upload P2 current-state evidence files",
+        ) as HTMLInputElement,
+        {
+          target: {
+            files: [
+              new File(["rows"], "systems-data-inventory.csv", {
+                type: "text/csv",
+              }),
+            ],
+          },
+        },
+      );
+
+      await waitFor(() => {
+        expect(currentStateFamilyIngests).toEqual([
+          {
+            family: "lending_systems_data_landscape",
+            fileName: "systems-data-inventory.csv",
+            phase: 2,
+          },
+        ]);
+      });
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Family guessed from the file name \(1 matched\)\./),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("hides the family declaration when the upload is session notes, which cover no family", () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(screen.getByLabelText("P2 upload mode"), {
+        target: { value: "session_notes" },
+      });
+
+      expect(
+        screen.queryByLabelText("Evidence family these files cover"),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("routes contact-center evidence by its declared family and leaves unknown files unmapped", async () => {
@@ -6724,7 +8075,9 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByText("Upload the architecture constraints memo."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Likely source owner: Client owner \/ evidence steward/i),
+      screen.getByText(
+        /Likely source owner: Client owner \/ evidence steward/i,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("Accepted formats: DOCX")).toBeInTheDocument();
     expect(
@@ -6969,6 +8322,132 @@ describe("MovesPhaseStandaloneClient", () => {
     );
   });
 
+  // A phase gate whose HARD check reads a sign-off recorded AFTER the build can
+  // only be closed by a submission that does not rebuild: regeneration writes a
+  // new unapproved draft and clears that sign-off. The documents are already on
+  // the record here, so the host must submit the gate without touching the
+  // generator.
+  it("submits the gate from documents already on the record without starting a build", async () => {
+    const requested: string[] = [];
+    let releaseApproval: (() => void) | null = null;
+    const approvalHeld = new Promise<void>((resolve) => {
+      releaseApproval = resolve;
+    });
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        requested.push(url);
+        if (url.includes("/phase-gate-approval")) {
+          await approvalHeld;
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              error: "gate_blocked",
+              gate: {
+                failedChecks: [
+                  {
+                    severity: "hard",
+                    check: "handoff_package_signed_off",
+                    reason: "Execution handoff package signed off",
+                  },
+                ],
+              },
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(5)}
+        initialPhaseCaptureValues={completeP5CaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 5,
+          phaseLabel: "P5 Mobilize & Handoff",
+        })}
+        phaseBuildArtifacts={[
+          {
+            artifactId: "artifact-1",
+            deliverableTypeKey: "handoff_package",
+            documentTitle: "Execution Handoff Package",
+            phase: 5,
+            status: "board_ready",
+            version: 1,
+            downloadUrl: "/api/v1/programs/move/artifacts/artifact-1/download",
+          },
+          {
+            artifactId: "artifact-2",
+            deliverableTypeKey: "value_measurement_contract",
+            documentTitle: "Value Measurement Contract",
+            phase: 5,
+            status: "board_ready",
+            version: 1,
+            downloadUrl: "/api/v1/programs/move/artifacts/artifact-2/download",
+          },
+        ]}
+        phaseNum={5}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const submit = await screen.findByRole("button", {
+      name: /Submit P5 Mobilize & Handoff gate approval/i,
+    });
+    await act(async () => {
+      fireEvent.click(submit);
+    });
+    const confirmDialog = await screen.findByRole("dialog");
+    await act(async () => {
+      fireEvent.click(
+        within(confirmDialog).getByRole("button", {
+          name: /^Submit gate approval$/i,
+        }),
+      );
+    });
+
+    // While the approval is in flight: the host must not claim it just built
+    // documents it only read off the record.
+    await waitFor(() => {
+      expect(
+        screen.getByText(/already on the record/i),
+      ).toBeInTheDocument();
+    });
+    expect(requested.some((url) => url.includes("/phase-gate-approval"))).toBe(
+      true,
+    );
+    expect(requested.some((url) => url.includes("/generate-phase"))).toBe(
+      false,
+    );
+
+    await act(async () => {
+      releaseApproval?.();
+      await approvalHeld;
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Submitted, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(
+        /use "Submit P5 Mobilize & Handoff gate approval"/i,
+      ),
+    ).toBeInTheDocument();
+    // Still no build: the refusal must not have triggered a regeneration.
+    expect(requested.some((url) => url.includes("/generate-phase"))).toBe(
+      false,
+    );
+  });
+
   it("surfaces the hard gate blocker after generation succeeds but approval returns 409", async () => {
     const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
     (global.fetch as jest.Mock).mockImplementation(
@@ -7035,6 +8514,107 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/approve the draft or upload an edited version/i),
     ).toBeInTheDocument();
+    // The instruction must not be "re-run Approve & Build": regeneration writes
+    // a new unapproved draft and clears the sign-off the hard check is waiting
+    // for, so following it could never close the gate. The blocked message
+    // names the submission that does not rebuild, and says why.
+    expect(
+      screen.queryByText(/then re-run Approve & Build/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /use "Submit P3 Design Future State gate approval"/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /re-running Approve & Build would replace the document you just approved with a new unapproved draft/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  // `transition_evidence_incomplete` carries no `gate` and no `missing`, so the
+  // ladder used to land on `detail` — which states the CATEGORY of what is
+  // open and never which slot. The payload names them. For a
+  // governed-data-foundation Move a transition can be held by exactly one
+  // thing, and naming it is the difference between a next step and a dead end.
+  it("names the open evidence slot when approval returns 409 on transition evidence", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              error: "transition_evidence_incomplete",
+              phase: 3,
+              detail:
+                "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+              requiredEvidenceGaps: [
+                {
+                  evidenceSlot: "P3 to P4 readiness workbook",
+                  status: "open",
+                  nextAction:
+                    "Complete the P3 to P4 readiness review and accept each answer.",
+                },
+              ],
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    // The route's own category sentence is kept, and the slot is named after
+    // it. The blocked message renders at more than one site, so assert that
+    // each part is present somewhere rather than that it is unique.
+    expect(
+      screen.getAllByText(
+        /Required evidence must be approved, linked to a sourced/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Open: P3 to P4 readiness workbook/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        /Complete the P3 to P4 readiness review and accept each answer/,
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("gates Approve & Build behind a confirmation dialog and does not enqueue a build until confirmed", async () => {
@@ -8196,6 +9776,49 @@ describe("MovesPhaseStandaloneClient", () => {
       },
     );
 
+    // The legacy rule above reads the contract-steps substep, which is the
+    // right reading only while that canvas is what renders. Under
+    // `moves_capture_v2` the 3-step flow keeps its own step state and nothing
+    // moves `substepIndex`, so the same rule hid the workbook for the WHOLE of
+    // P3 and P4 — and the accepted workbook review is a hard precondition for
+    // closing either phase (`transition_evidence_incomplete` /
+    // `required_evidence_open`), with this control its only producer.
+    it.each([
+      { phase: 3, workbook: "Download P4 readiness workbook" },
+      { phase: 4, workbook: "Download P5 readiness workbook" },
+    ])(
+      "P$phase offers the readiness workbook on the FIRST step when the redesigned capture flow is mounted",
+      ({ phase, workbook }) => {
+        const move = makeMove({ currentPhase: phase });
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            captureV2Enabled
+            carriesForwardContent={[]}
+            evidenceNeedPackets={coveredEvidencePacketsForPhase(phase)}
+            move={move}
+            phaseNum={phase}
+            phaseTallies={[...phaseTallies]}
+            syntheticEvidencePackHref={`/api/v1/programs/${move.id}/stage-readiness-evidence-pack?phase=${phase}`}
+          />,
+        );
+
+        // The redesigned flow is what renders, and no substep control exists.
+        expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+        expect(
+          screen.queryByTestId("mxw-contract-card"),
+        ).not.toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: workbook })).toBeInTheDocument();
+        expect(
+          screen.getByLabelText("Upload completed readiness workbook"),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("link", { name: "Download sample upload files" }),
+        ).toBeInTheDocument();
+      },
+    );
+
     it.each([
       {
         phase: 3,
@@ -8820,9 +10443,7 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       // Continue is held even though every question is answered and saved, so
       // the band is the only thing that can explain the step.
-      expect(
-        screen.getByRole("button", { name: "Continue" }),
-      ).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
       const hold = screen.getByTestId("capture-evidence-hold");
       expect(hold).toHaveTextContent("Phase inputs are captured.");
       expect(hold).toHaveTextContent("1 required evidence item");
@@ -8909,9 +10530,134 @@ describe("MovesPhaseStandaloneClient", () => {
           phaseTallies={[...phaseTallies]}
         />,
       );
-      expect(
-        screen.getByTestId("capture-evidence-hold"),
-      ).toHaveTextContent("Phase inputs are captured.");
+      expect(screen.getByTestId("capture-evidence-hold")).toHaveTextContent(
+        "Phase inputs are captured.",
+      );
     });
+  });
+});
+
+describe("P0 blocked framing excludes the criteria the approval itself completes", () => {
+  // `program_seed_recorded` and `value_hypothesis_seed` are both evaluated from
+  // the signed origination brief, and the P0 gate approval is what signs it.
+  // They are open in every pre-approval P0 state and no control can clear
+  // them, so they must not drive the blocked framing.
+  const approvalGeneratedOpen = [
+    {
+      id: "program_seed_recorded",
+      label: "Origination brief signed off with archetype classification",
+      completed: false,
+      severity: "hard" as const,
+      verified: true,
+    },
+    {
+      id: "value_hypothesis_seed",
+      label: "Value hypothesis seed names problem trigger and target outcome",
+      completed: false,
+      severity: "hard" as const,
+      verified: true,
+    },
+  ];
+
+  function renderP0(args: {
+    sourceCovered: boolean;
+    extraCriteria?: typeof approvalGeneratedOpen;
+  }) {
+    return render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[
+          p0SourceEvidenceNeedPacket({
+            moveId: makeMove().id,
+            evidenceTitles: args.sourceCovered
+              ? ["approved-origination-source.pdf"]
+              : [],
+          }),
+        ]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          gateCriteria: [
+            ...approvalGeneratedOpen,
+            ...(args.extraCriteria ?? []),
+          ],
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  it("a P0 whose only open hard criteria complete on approval reads as ready", () => {
+    renderP0({ sourceCovered: true });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).not.toHaveTextContent("P0 cannot advance yet");
+    expect(surface).toHaveTextContent("P0 is ready for Approve & Build");
+  });
+
+  it("does not tell a reader to upload a source file they already had reviewed", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.queryByText(/Why some checks are still open/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/P0 cannot advance on intake answers alone/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not name an approval-generated criterion as the blocker", () => {
+    renderP0({ sourceCovered: true });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).not.toHaveTextContent(
+      "Blocked by: Origination brief signed off with archetype classification.",
+    );
+    expect(surface).not.toHaveTextContent("Clear hard blockers");
+  });
+
+  it("still offers the approval control in that ready state", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.getByRole("button", { name: /Approve gate/i }),
+    ).toBeInTheDocument();
+  });
+
+  // The complement: the fix must not blanket-suppress the blocked state.
+  it("an uncovered P0 source file still blocks, and still explains why", () => {
+    renderP0({ sourceCovered: false });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).toHaveTextContent("P0 cannot advance yet");
+    expect(
+      screen.getByText(/P0 cannot advance on intake answers alone/i),
+    ).toBeInTheDocument();
+  });
+
+  it("a genuine non-approval-generated hard criterion still blocks", () => {
+    renderP0({
+      sourceCovered: true,
+      extraCriteria: [
+        {
+          id: "sponsor_assigned",
+          label: "Sponsor progress contact listed",
+          completed: false,
+          severity: "hard" as const,
+          verified: true,
+        },
+      ],
+    });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).toHaveTextContent("P0 cannot advance yet");
+    expect(surface).toHaveTextContent(
+      "Blocked by: Sponsor progress contact listed.",
+    );
+  });
+
+  it("still annotates the approval-generated criteria in the gate list", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.getAllByText(/Completed by approving this gate/i).length,
+    ).toBeGreaterThanOrEqual(2);
   });
 });

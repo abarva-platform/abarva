@@ -18,6 +18,23 @@ export function formatMovesAvaChatPacketForPrompt(
     `Answer mode: ${mode}`,
   ];
 
+  // The Move's DECLARED archetype, when it has one. Placed immediately after
+  // the Move identity so the subject domain is established before any gate,
+  // evidence or drafting instruction below. Absent for an undeclared Move —
+  // no default framing is substituted (see ./archetype-framing.ts).
+  if (packet.archetypeFraming) {
+    const framing = packet.archetypeFraming;
+    lines.push(
+      `Declared archetype: ${framing.archetypeName} (${framing.archetypeId}). This identity is declared on the Move, not inferred from its wording — reason within the subject domain it names and do not ask for evidence the framing rules out.`,
+      `Archetype framing: ${framing.systemFraming}`,
+    );
+    if (framing.keyQuestions.length > 0) {
+      lines.push(
+        `Archetype key questions: ${framing.keyQuestions.join(" ")}`,
+      );
+    }
+  }
+
   const hardGateCriteria = packet.gateCriteria.filter(
     (criterion) => criterion.severity === "hard",
   );

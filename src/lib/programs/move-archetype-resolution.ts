@@ -2,6 +2,10 @@ import "server-only";
 
 import type { TenancyCtx, ProgramCore } from "@/lib/programs/types.db";
 import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
+import {
+  charterDeclaredArchetypeId,
+  resolveDeclaredArchetypeId,
+} from "@/lib/programs/archetypes/declared-archetype-precedence";
 import type { StrategicMoveArchetype } from "@/lib/programs/archetypes/types";
 import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import {
@@ -52,26 +56,26 @@ function charterText(
  * legacy value (`platform_modernization`, …) which names no registry archetype
  * and is not a declaration of one.
  *
- * Mirrors the precedence of `resolveDeclaredProgramArchetypeId`
- * (`src/lib/programs/discovery/evidence-readiness.ts`) for the fields that can
- * carry a discovery-blueprint id. Kept local so this server-only resolver does
- * not pull in the discovery-blueprint module graph.
+ * The choice BETWEEN the two fields is `resolveDeclaredArchetypeId`
+ * (`archetypes/declared-archetype-precedence.ts`), which prefers whichever one
+ * names a known archetype rather than trusting field order. The two fields hold
+ * different id spaces, so a function-pack key that names no archetype would
+ * otherwise shadow a blueprint id that names one. That module carries the
+ * reasoning and the cases.
+ *
+ * This is the precedence `resolveDeclaredProgramArchetypeId`
+ * (`src/lib/programs/discovery/evidence-readiness.ts`) applies — mirrored in
+ * substance, not merely in field order. Kept out of this file so the rule is
+ * assertable without mocking the data layer this server-only resolver needs.
  */
 function declaredArchetypeId(
   charter: Record<string, unknown> | null,
   functionPackKey: string | null | undefined,
 ): string | null {
-  const packKey =
-    typeof functionPackKey === "string" && functionPackKey.trim()
-      ? functionPackKey.trim()
-      : null;
-  if (packKey) return packKey;
-  const classification = charter?.classification;
-  if (!classification || typeof classification !== "object") return null;
-  const declared = (classification as Record<string, unknown>).archetype;
-  return typeof declared === "string" && declared.trim()
-    ? declared.trim()
-    : null;
+  return resolveDeclaredArchetypeId({
+    functionPackKey,
+    charterClassificationArchetype: charterDeclaredArchetypeId(charter),
+  });
 }
 
 function moduleText(value: unknown): string | null {

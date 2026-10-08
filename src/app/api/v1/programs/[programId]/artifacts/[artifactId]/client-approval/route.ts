@@ -41,6 +41,13 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  approvedEvidenceBasisRefusalCode,
+  classifyApprovedEvidenceBasisRefusal,
+  describeApprovedEvidenceBasisRefusal,
+  unevaluableApprovedEvidenceBasisRefusal,
+} from "@/lib/programs/approved-evidence-basis-refusal";
+import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approved-evidence-lineage";
 import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
 import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
@@ -332,11 +339,15 @@ export async function POST(
 
     let verifiedGenerationLineage: Record<string, unknown> | null = null;
     if (!ctx.clientKey) {
+      // No tenant key means the approved-evidence read was never issued, so
+      // nothing was established about this document's currency.
+      const refusal = unevaluableApprovedEvidenceBasisRefusal(
+        "tenant_scope_unresolved",
+      );
       return Response.json(
         {
-          error: "evidence_snapshot_not_current",
-          detail:
-            "The active tenant key is unavailable; the evidence snapshot cannot be verified.",
+          error: approvedEvidenceBasisRefusalCode(refusal),
+          detail: describeApprovedEvidenceBasisRefusal(refusal, "approval"),
         },
         { status: 409 },
       );
@@ -351,25 +362,33 @@ export async function POST(
         : typeof artifact.metadata.evidenceSnapshotHash === "string"
           ? artifact.metadata.evidenceSnapshotHash
           : null;
-    if (
-      !currentEvidenceSnapshot ||
-      !artifactSnapshotHash ||
-      !isApprovedMoveEvidenceBasisCurrent({
-        snapshot: currentEvidenceSnapshot,
-        phase,
-        recordedRevision: artifactSnapshotHash,
-        scope:
-          typeof artifact.metadata.evidenceSnapshotScope === "string"
-            ? artifact.metadata.evidenceSnapshotScope
-            : null,
-        generatedAt: artifact.renderedAt,
-      })
-    ) {
+    const evidenceBasisRefusal = classifyApprovedEvidenceBasisRefusal({
+      basisEvaluable: Boolean(currentEvidenceSnapshot),
+      cause: "snapshot_unreadable",
+      recordedRevision: artifactSnapshotHash,
+      basisIsCurrent:
+        Boolean(currentEvidenceSnapshot) &&
+        isApprovedMoveEvidenceBasisCurrent({
+          snapshot: currentEvidenceSnapshot,
+          phase,
+          recordedRevision: artifactSnapshotHash,
+          scope:
+            typeof artifact.metadata.evidenceSnapshotScope === "string"
+              ? artifact.metadata.evidenceSnapshotScope
+              : null,
+          generatedAt: artifact.renderedAt,
+        }),
+    });
+    // The `!currentEvidenceSnapshot` disjunct narrows the snapshot for the
+    // lineage written below; a null snapshot already classifies as
+    // `basis_unevaluable`, so the fallback resolves to that same refusal.
+    if (evidenceBasisRefusal || !currentEvidenceSnapshot) {
+      const refusal =
+        evidenceBasisRefusal ?? unevaluableApprovedEvidenceBasisRefusal();
       return Response.json(
         {
-          error: "stale_evidence_snapshot",
-          detail:
-            "Approved evidence changed after this document was generated, or its evidence revision cannot be verified. Rebuild the phase outputs before approval.",
+          error: approvedEvidenceBasisRefusalCode(refusal),
+          detail: describeApprovedEvidenceBasisRefusal(refusal, "approval"),
         },
         { status: 409 },
       );
@@ -725,12 +744,13 @@ export async function POST(
         generatedArtifactId: artifact.id,
         generatedArtifactType: artifact.artifactType,
         sourceArtifactRef: artifact.sourceArtifactRef,
-        evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-        phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-          currentEvidenceSnapshot,
-          phase,
-        ),
-        evidenceSnapshotScope: "phase",
+        ...stampApprovedEvidenceLineage({
+          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
+        }),
         approvalReason: reason,
         mode: isFileUploadApproval
           ? "client_approved_replacement"
@@ -758,12 +778,13 @@ export async function POST(
         approvalLineage: {
           source: "generated_artifact_acceptance",
           generatedArtifactId: artifact.id,
-          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-            currentEvidenceSnapshot,
-            phase,
-          ),
-          evidenceSnapshotScope: "phase",
+          ...stampApprovedEvidenceLineage({
+            evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+            phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+              currentEvidenceSnapshot,
+              phase,
+            ),
+          }),
           approvalMode: isFileUploadApproval
             ? "client_approved_replacement"
             : "accept_ai_draft_as_authoritative",

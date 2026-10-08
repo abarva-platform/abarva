@@ -22,7 +22,8 @@ import type {
 import { getArtifactBrief } from "./artifact-brief-registry";
 import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
 import { buildGenerationProgress, type GenerationProgress } from "./progress";
-import { buildPassPrompt } from "./prompt-builder";
+import { buildPassPrompt, sectionWordBudgetPlanFor } from "./prompt-builder";
+import { sectionRepairTargetWithin } from "./section-word-budget-plan";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
 import {
   countBodyWords,
@@ -226,6 +227,12 @@ export async function runDeliverableOrchestration(
   const outlineSummary = plan.sectionPlan
     .map((s, i) => `${i + 1}. ${s.title} — ${s.rationale || ""}`)
     .join("\n");
+  // The sections the document will ACTUALLY contain. The per-section caps and
+  // repair targets are reconciled with the word floor over THIS set, not over
+  // the brief's declared structure: a declared section the architect omitted
+  // carries a share of the floor and writes no words, and a section it keyed
+  // off-brief carries none of it. See realized-section-word-budget.ts.
+  const plannedSectionKeys = plan.sectionPlan.map((s) => s.key);
   // Reserve bounded repair calls per planned section so progress reflects retries.
   const isMovesCharter =
     req.module === "moves" && req.deliverableType === "charter";
@@ -253,6 +260,7 @@ export async function runDeliverableOrchestration(
           evidence: assignedEvidence,
           section: s,
           outlineSummary,
+          plannedSectionKeys,
         }),
         req,
         trace,
@@ -307,6 +315,22 @@ export async function runDeliverableOrchestration(
   const excludeNonProse = isMovesCharter
     ? true
     : req.qualityBar.excludeNonProseFromBody === true;
+  // Built once: the plan is a function of the request, the brief and the
+  // architect's section set — not of the repair round or the drafted section —
+  // and the draft prompt states its caps from the same reading, over the same
+  // realized keys.
+  const sectionWordBudgets = sectionWordBudgetPlanFor(
+    req,
+    brief,
+    plannedSectionKeys,
+  );
+  const sectionRepairTargetFor = (
+    key: string,
+    evenShare: number,
+  ): number | null =>
+    sectionWordBudgets
+      ? sectionRepairTargetWithin(sectionWordBudgets, key, evenShare)
+      : null;
   for (let repairRound = 0; repairRound < maxRepairRounds; repairRound++) {
     if (
       countBodyWords(sections, { excludeNonProse }) >=
@@ -315,16 +339,28 @@ export async function runDeliverableOrchestration(
       break;
     }
 
+    const evenShare = sectionShareOfFloor(
+      req.qualityBar.minBodyWords,
+      sections.length,
+    );
     const targetByKey = isMovesCharter
       ? new Map(
           CHARTER_CONTRACT.sections
             .filter((section) => (section.targetProseWords ?? 0) > 0)
             .map((section) => [section.key, section.targetProseWords!]),
         )
-      : new Map(
+      : // Not an even share: the repair target is the section's share of the
+        // floor in proportion to its OWN cap, read from the same plan that
+        // states that cap to the model. An even share asked four of
+        // solution_design's six sections for more words than the hard cap one
+        // line above it allowed — see section-word-budget-plan.ts. A generated
+        // section the brief does not declare takes the even share clamped to
+        // the plan's fallback cap, which is the cap it will be told to stay
+        // under — so "write at least X, stay under Y" holds for it too.
+        new Map(
           sections.map((section) => [
             section.key,
-            sectionShareOfFloor(req.qualityBar.minBodyWords, sections.length),
+            sectionRepairTargetFor(section.key, evenShare) ?? evenShare,
           ]),
         );
     const repairs = sections.flatMap((section) => {
@@ -364,6 +400,7 @@ export async function runDeliverableOrchestration(
             evidence: assignedEvidence,
             section: plannedSection,
             outlineSummary,
+            plannedSectionKeys,
             sectionRepair: {
               currentBodyMarkdown: section.bodyMarkdown,
               currentWordCount,

@@ -43,7 +43,14 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
-import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import {
+  reportUnevaluableApprovalCurrencyOnce,
+  resolveDeliverableApprovalCurrencyScope,
+} from "@/lib/programs/deliverable-approval-currency";
+import {
+  reportUnevaluableApprovedEvidenceBasisOnce,
+  resolveApprovedEvidenceCurrencyBasis,
+} from "@/lib/programs/approved-evidence-currency-basis";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -587,11 +594,16 @@ export async function evaluateGate(
     deliverableRows.find((d) => keys.includes(d.deliverable_type_key));
   const findDeliverables = (...keys: string[]) =>
     deliverableRows.filter((d) => keys.includes(d.deliverable_type_key));
-  const currentEvidenceSnapshot = ctx.clientKey
-    ? await loadApprovedMoveEvidenceSnapshot({
-        tenantKey: ctx.clientKey,
-        moveId: programId,
-      }).catch(() => null)
+  // Not `snapshot | null`: a null conflates "nothing approved" with "I could not
+  // read the basis", and only the first of those may veto a recorded human
+  // approval. See `approved-evidence-currency-basis.ts`.
+  const evidenceBasis = await resolveApprovedEvidenceCurrencyBasis({
+    tenantKey: ctx.clientKey,
+    moveId: programId,
+    load: loadApprovedMoveEvidenceSnapshot,
+  });
+  const currentEvidenceSnapshot = evidenceBasis.evaluable
+    ? evidenceBasis.snapshot
     : null;
   const linkedArtifactIds = deliverableRows
     .map((row) => row.approved_artifact_id)
@@ -643,9 +655,26 @@ export async function evaluateGate(
       typeof structured.evidenceSnapshotHash === "string"
         ? structured.evidenceSnapshotHash
         : null;
-    const deliverablePhase = DELIVERABLE_REGISTRY.find(
-      (spec) => spec.deliverableTypeKey === row.deliverable_type_key,
-    )?.phase;
+    // A phase this check cannot run at is NOT a stale approval — see
+    // `deliverable-approval-currency.ts`. Return BEFORE the lineage comparisons
+    // rather than computing them and ignoring the result: with the scope resolved
+    // first, `deliverablePhase` below is always the phase the comparison actually
+    // runs at, so there is no branch where a currency verdict is derived from a
+    // phase that does not exist.
+    const currencyScope = resolveDeliverableApprovalCurrencyScope(
+      row.deliverable_type_key,
+    );
+    if (!currencyScope.evaluable) {
+      // Say so rather than silently allowing it: the only way this row's approval
+      // currency becomes checkable again is a registry change, and that is worth
+      // seeing in the logs instead of inferring from a gate that stopped failing.
+      reportUnevaluableApprovalCurrencyOnce(
+        row.deliverable_type_key,
+        currencyScope.reason,
+      );
+      return true;
+    }
+    const deliverablePhase = currencyScope.phase;
     const structuredLineageCurrent = Boolean(
       currentEvidenceSnapshot &&
       deliverablePhase &&
@@ -678,32 +707,66 @@ export async function evaluateGate(
           linkedMetadata.generatedArtifactId ===
             structured.generatedArtifactId)),
     );
-    const linkedArtifactCurrent = Boolean(
-      currentEvidenceSnapshot &&
+    // Split on purpose. The ownership/lifecycle half is snapshot-INDEPENDENT, so
+    // it keeps its veto even when the evidence basis cannot be read; the evidence
+    // comparison below is the only half an unevaluable basis may skip.
+    const linkedArtifactIntegrityOk = Boolean(
       linkedArtifact &&
       linkedArtifact.tenant_key === ctx.clientKey &&
       linkedArtifact.move_id === programId &&
       linkedArtifact.artifact_family === "generated_deliverable" &&
       linkedArtifact.lifecycle_state === "current" &&
-      linkedArtifactMatchesDeliverable &&
-      Boolean(
-        deliverablePhase &&
-        isApprovedMoveEvidenceBasisCurrent({
-          snapshot: currentEvidenceSnapshot,
-          phase: deliverablePhase,
-          recordedRevision:
-            typeof linkedMetadata.phaseEvidenceSnapshotHash === "string"
-              ? linkedMetadata.phaseEvidenceSnapshotHash
-              : typeof linkedMetadata.evidenceSnapshotHash === "string"
-                ? linkedMetadata.evidenceSnapshotHash
-                : null,
-          scope:
-            typeof linkedMetadata.evidenceSnapshotScope === "string"
-              ? linkedMetadata.evidenceSnapshotScope
+      linkedArtifactMatchesDeliverable,
+    );
+    if (!evidenceBasis.tenantScopeResolved) {
+      // With no tenant key the `move_artifacts` lookup above was never issued,
+      // so `linkedArtifactIntegrityOk` is false for want of a read rather than
+      // for want of a valid artifact. Nothing about this approval is evaluable;
+      // report it and leave the recorded human sign-off standing.
+      reportUnevaluableApprovedEvidenceBasisOnce(
+        programId,
+        evidenceBasis.reason,
+      );
+      return true;
+    }
+    if (linkedArtifactId && !linkedArtifactIntegrityOk) return false;
+    if (!evidenceBasis.evaluable) {
+      // The reads ran, so integrity was just checked for real. Only the evidence
+      // comparison is unevaluable — and an unevaluable check is not a stale
+      // approval, the same rule `resolveDeliverableApprovalCurrencyScope` applies
+      // above. Without this the whole gate ladder held with no reason rendered.
+      reportUnevaluableApprovedEvidenceBasisOnce(
+        programId,
+        evidenceBasis.reason,
+      );
+      return true;
+    }
+    // `linkedArtifactIntegrityOk` here is redundant and a mutation that removes
+    // it SURVIVES: reaching this line with a truthy `linkedArtifact` implies a
+    // truthy `linkedArtifactId`, which implies the veto above already passed. It
+    // is kept so this Boolean states the whole condition it depends on rather
+    // than inheriting half of it from a control-flow accident one line up — if
+    // that veto is ever changed to collect a reason instead of returning, this
+    // comparison stays correct. Not a coverage gap.
+    const linkedArtifactCurrent = Boolean(
+      linkedArtifactIntegrityOk &&
+      linkedArtifact &&
+      deliverablePhase &&
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot: evidenceBasis.snapshot,
+        phase: deliverablePhase,
+        recordedRevision:
+          typeof linkedMetadata.phaseEvidenceSnapshotHash === "string"
+            ? linkedMetadata.phaseEvidenceSnapshotHash
+            : typeof linkedMetadata.evidenceSnapshotHash === "string"
+              ? linkedMetadata.evidenceSnapshotHash
               : null,
-          generatedAt: linkedArtifact.created_at ?? null,
-        }),
-      ),
+        scope:
+          typeof linkedMetadata.evidenceSnapshotScope === "string"
+            ? linkedMetadata.evidenceSnapshotScope
+            : null,
+        generatedAt: linkedArtifact.created_at ?? null,
+      }),
     );
 
     if (linkedArtifactId && !linkedArtifactCurrent) return false;
@@ -1289,7 +1352,24 @@ export async function evaluateGate(
       case "delivery_raci_named":
         pass =
           isPresent(
-            findDeliverable("delivery_raci", "raci", "operating_model"),
+            findDeliverable(
+              "delivery_raci",
+              "raci",
+              // `operating_model_design` is the registry key for the Operating
+              // Model Design — the P3 document that names the work split and
+              // accountability this criterion is about. It is built by the P3
+              // generation set and stored under the REGISTRY spelling, because
+              // the acceptance path maps the orchestrator type back through
+              // `deliverableKeyForOrchestratorType` before writing the row.
+              // Only `operating_model`, the orchestrator alias, was listed, and
+              // nothing ever writes that: the other two spellings are neither
+              // registry keys nor allowed authorship keys either, so a
+              // generated and signed-off Operating Model Design left this
+              // criterion unmet and it passed only on the prose fallbacks
+              // below.
+              "operating_model_design",
+              "operating_model",
+            ),
           ) ||
           briefString.includes("raci") ||
           (fromPhase === 4 &&
@@ -1334,7 +1414,18 @@ export async function evaluateGate(
         );
         break;
       case "sponsor_alignment_confirmed":
-        pass = isSignedOff(findDeliverable("stakeholder_alignment"));
+        // `sponsor_alignment` is accepted alongside `stakeholder_alignment`
+        // because this criterion has no capture-text fallback and no phase
+        // generation set produces either key, so deliberate authorship
+        // (`complete_deliverable`) is its ONLY producer — and that tool both
+        // allows and advertises the two spellings as interchangeable for this
+        // artifact. Reading only one of them meant an accepted, signed-off
+        // alignment record could satisfy the criterion named after it or be
+        // invisible to it, decided by which spelling the agent happened to
+        // pick. Same class as `tower_metric_plan_drafted` below.
+        pass = isSignedOff(
+          findDeliverable("stakeholder_alignment", "sponsor_alignment"),
+        );
         break;
       case "readiness_and_change_plan_signed_off":
         pass = isSignedOff(changePlanRow);

@@ -64,35 +64,32 @@ const importedRequest: SourceIntakeRequestSummary = {
   eventLink: null,
 };
 
+const acceptedMappingDecision: NonNullable<SourceIntakeRequestSummary["mappingDecision"]> = {
+  decisionId: "mapping-version-3",
+  state: "accepted",
+  categoryId: "cloud_finops",
+  archetypeId: "CLOUD_FINOPS",
+  decidedByUserId: "person-1",
+  decidedByName: "Procurement Lead",
+  decidedAt: "2026-09-22T13:00:00.000Z",
+  rationale: "The cloud category matches the recorded scope and baseline owner.",
+  sourceVersion: "version-3",
+};
+
 describe("ServiceNow request review handoff", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
   });
 
-  it("blocks event creation until a person persists the proposed route with rationale", async () => {
+  it("keeps event creation blocked after mapping review until request acceptance", async () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          mappingDecision: {
-            decisionId: "mapping-version-3",
-            state: "accepted",
-            categoryId: "cloud_finops",
-            archetypeId: "CLOUD_FINOPS",
-            decidedByUserId: "person-1",
-            decidedByName: "Procurement Lead",
-            decidedAt: "2026-09-22T13:00:00.000Z",
-            rationale:
-              "The cloud category matches the recorded scope and baseline owner.",
-            sourceVersion: "version-3",
-          },
+          mappingDecision: acceptedMappingDecision,
         }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ event: { id: "event-from-request" } }),
       });
     global.fetch = fetchMock;
 
@@ -156,13 +153,36 @@ describe("ServiceNow request review handoff", () => {
         "The cloud category matches the recorded scope and baseline owner.",
     });
 
-    await waitFor(() =>
-      expect(createButton.hasAttribute("disabled")).toBe(false),
-    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Review recorded" })).toBeTruthy());
+    expect(createButton.hasAttribute("disabled")).toBe(true);
     fireEvent.click(createButton);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const request = fetchMock.mock.calls[1]?.[1] as { body?: string };
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(screen.getByText("Accept the current request version in the request queue before creating an event.")).toBeTruthy();
+  });
+
+  it("creates an event only after the imported request is accepted", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ event: { id: "event-from-request" } }),
+    });
+    global.fetch = fetchMock;
+
+    render(createElement(SourceOriginatePage, {
+      clientName: "Example Organization",
+      clientShortName: "Example",
+      clientKey: "example",
+      sourceRequest: { ...importedRequest, mappingDecision: acceptedMappingDecision },
+      sourceRequestDisposition: "accepted",
+    }));
+
+    const createButton = screen.getByTestId("source-intake-open-event");
+    await waitFor(() => expect(createButton.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(createButton);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const request = fetchMock.mock.calls[0]?.[1] as { body?: string };
     const payload = JSON.parse(request.body ?? "{}") as Record<string, unknown>;
 
     expect(payload).toEqual({

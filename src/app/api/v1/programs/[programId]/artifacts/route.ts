@@ -10,7 +10,11 @@ import {
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
-import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  getAzureReadFluentClient,
+  getAzureWriteFluentClient,
+} from "@/lib/data-plane/postgresCompat";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   initialReviewedEvidenceExtraction,
   reviewedExtractionFromStoredSourceRef,
@@ -58,6 +62,14 @@ interface CabinetArtifact {
   visualCompanionArtifactType?: string | null;
   contextExtract?: CabinetContextExtract | null;
   evidenceSnapshotStatus?: "current" | "stale" | "unverified";
+  // Sign-off state for generated_deliverable rows, read from the SAME
+  // deliverables_v2 projection PhaseDocumentsPanel uses. Carried so the gate
+  // step's in-workspace attestation ledger can show sign-off state inline
+  // instead of only on the /evidence page. Absent for non-deliverable rows or
+  // when no deliverables_v2 row matches the artifact's deliverable_type_key.
+  deliverableId?: string | null;
+  signedOffVersion?: number | null;
+  currentVersion?: number | null;
   downloadUrl: string;
 }
 
@@ -94,11 +106,17 @@ async function loadPendingEvidenceReviews(
 }> {
   try {
     const db = getAzureWriteFluentClient();
-    const tenantKey = ctx.clientKey ?? "";
+    // Program-evidence rows may be stored under any of the tenant's
+    // representations (the app client key, e.g. "meridian", or its canonical
+    // substrate alias, e.g. "meridian-health") depending on which writer
+    // created them. Match all of them so a load under either representation is
+    // visible; the alias set is per-tenant, so this cannot widen to another
+    // tenant.
+    const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
     const { data: reviews, error: reviewError } = await db
       .from("program_evidence_reviews")
       .select("id, evidence_id, family_key, phase, source_ref")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", programId)
       .eq("decision", "pending")
       .order("created_at", { ascending: false })
@@ -115,7 +133,7 @@ async function loadPendingEvidenceReviews(
     const { data: evidenceRows, error: evidenceError } = await db
       .from("program_evidence_items")
       .select("id, title, summary, extracted_text, extracted_structured")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", programId)
       .in("id", evidenceIds);
     if (evidenceError || !Array.isArray(evidenceRows)) {
@@ -176,6 +194,167 @@ async function loadPendingEvidenceReviews(
   } catch {
     return { items: [], available: false };
   }
+}
+
+interface CabinetReviewedEvidence {
+  evidenceId: string;
+  reviewId: string;
+  title: string;
+  familyKey: string;
+  phase: number | null;
+  reviewedAt: string | null;
+}
+
+/**
+ * Human-approved program evidence for this Move, as a light read-only list for
+ * the Files & Evidence cabinet. Unlike the pending queue it carries no
+ * extraction/source-text payload — it is an audit trail of what a reviewer
+ * accepted, not an editing surface. Tenant match uses the per-tenant alias set
+ * so rows written under either representation surface (see the pending loader).
+ */
+async function loadReviewedEvidence(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+): Promise<{ items: CabinetReviewedEvidence[]; available: boolean }> {
+  try {
+    const db = getAzureWriteFluentClient();
+    const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
+    const { data: reviews, error: reviewError } = await db
+      .from("program_evidence_reviews")
+      .select("id, evidence_id, family_key, phase, source_ref, reviewed_at")
+      .in("tenant_key", tenantKeys)
+      .eq("program_id", programId)
+      .eq("decision", "approved")
+      .order("reviewed_at", { ascending: false })
+      .limit(200);
+    if (reviewError || !Array.isArray(reviews)) {
+      return { items: [], available: false };
+    }
+    const reviewRows = reviews as Array<Record<string, unknown>>;
+    const evidenceIds = reviewRows
+      .map((row) => row.evidence_id)
+      .filter((id): id is string => typeof id === "string" && Boolean(id));
+    if (!evidenceIds.length) return { items: [], available: true };
+
+    const { data: evidenceRows, error: evidenceError } = await db
+      .from("program_evidence_items")
+      .select("id, title")
+      .in("tenant_key", tenantKeys)
+      .eq("program_id", programId)
+      .in("id", evidenceIds);
+    if (evidenceError || !Array.isArray(evidenceRows)) {
+      return { items: [], available: false };
+    }
+    const titleById = new Map(
+      (evidenceRows as Array<Record<string, unknown>>).map((row) => [
+        row.id,
+        typeof row.title === "string" ? row.title : "",
+      ]),
+    );
+    return {
+      available: true,
+      items: reviewRows.flatMap((review) => {
+        const evidenceId =
+          typeof review.evidence_id === "string" ? review.evidence_id : "";
+        if (!titleById.has(evidenceId)) return [];
+        const sourceRef = objectValue(review.source_ref);
+        return [
+          {
+            evidenceId,
+            reviewId: String(review.id ?? ""),
+            title: String(
+              sourceRef.filename ??
+                sourceRef.title ??
+                titleById.get(evidenceId) ??
+                "Approved evidence",
+            ),
+            familyKey: String(review.family_key ?? "uploaded_move_evidence"),
+            phase: typeof review.phase === "number" ? review.phase : null,
+            reviewedAt:
+              typeof review.reviewed_at === "string"
+                ? review.reviewed_at
+                : null,
+          },
+        ];
+      }),
+    };
+  } catch {
+    return { items: [], available: false };
+  }
+}
+
+interface DeliverableSignOffState {
+  deliverableId: string;
+  signedOffVersion: number | null;
+  currentVersion: number | null;
+}
+
+/**
+ * Per-deliverable sign-off state from deliverables_v2, keyed by
+ * deliverable_type_key. This reuses the SAME projection (columns + engagement
+ * filter) that PhaseDocumentsPanel reads to render its "Signed off" badge and
+ * mount DeliverableApprovalAction. The gate step's attestation ledger consumes
+ * it through this route so it can show sign-off state inline rather than only
+ * on /evidence. Newest row per key wins (ordered by updated_at), matching the
+ * panel's dedupe intent. Non-fatal: a read failure yields an empty map and the
+ * ledger falls back to build-status-only.
+ */
+async function loadDeliverableSignOffByKey(
+  programId: string,
+): Promise<Map<string, DeliverableSignOffState>> {
+  const byKey = new Map<string, DeliverableSignOffState>();
+  try {
+    const sb = getAzureReadFluentClient();
+    const { data } = await sb
+      .from("deliverables_v2")
+      .select(
+        "id, deliverable_type_key, current_version, signed_off_version, updated_at",
+      )
+      .eq("engagement_id", programId)
+      .order("updated_at", { ascending: false });
+    if (!Array.isArray(data)) return byKey;
+    for (const row of data as Array<Record<string, unknown>>) {
+      const key =
+        typeof row.deliverable_type_key === "string"
+          ? row.deliverable_type_key
+          : "";
+      // Newest-first ordering means the first row seen per key is the current
+      // one; later (older) rows for the same key are ignored.
+      if (!key || byKey.has(key)) continue;
+      byKey.set(key, {
+        deliverableId: String(row.id ?? ""),
+        signedOffVersion:
+          typeof row.signed_off_version === "number"
+            ? row.signed_off_version
+            : null,
+        currentVersion:
+          typeof row.current_version === "number" ? row.current_version : null,
+      });
+    }
+    return byKey;
+  } catch {
+    return byKey;
+  }
+}
+
+/** Sign-off fields for one artifact row, or {} when no deliverables_v2 row
+ * matches its deliverable_type_key. */
+function deliverableSignOffFields(
+  key: string | null,
+  byKey: Map<string, DeliverableSignOffState>,
+): Partial<
+  Pick<
+    CabinetArtifact,
+    "deliverableId" | "signedOffVersion" | "currentVersion"
+  >
+> {
+  const signOff = key ? byKey.get(key) : undefined;
+  if (!signOff) return {};
+  return {
+    deliverableId: signOff.deliverableId,
+    signedOffVersion: signOff.signedOffVersion,
+    currentVersion: signOff.currentVersion,
+  };
 }
 
 interface CabinetContextExtractItem {
@@ -507,6 +686,9 @@ export async function GET(
       ctx,
       programId,
     );
+    const reviewedEvidenceList = await loadReviewedEvidence(ctx, programId);
+    const deliverableSignOffByKey =
+      await loadDeliverableSignOffByKey(programId);
     const approvedSnapshot = ctx.clientKey
       ? await loadApprovedMoveEvidenceSnapshot({
           tenantKey: ctx.clientKey,
@@ -628,6 +810,12 @@ export async function GET(
         visualCompanionArtifactType: meta?.visualCompanionArtifactType ?? null,
         contextExtract,
         ...(evidenceSnapshotStatus ? { evidenceSnapshotStatus } : {}),
+        ...(r.artifact_family === "generated_deliverable"
+          ? deliverableSignOffFields(
+              deliverableKeyFromMoveArtifactMetadata(meta),
+              deliverableSignOffByKey,
+            )
+          : {}),
         downloadUrl: `/api/v1/programs/${programId}/artifacts/${r.artifact_id}/download`,
       };
     });
@@ -719,6 +907,10 @@ export async function GET(
                   : generatedEvidenceBasisCurrent
                     ? "current"
                     : "stale",
+              ...deliverableSignOffFields(
+                deliverableKeyFromGeneratedArtifactMetadata(meta),
+                deliverableSignOffByKey,
+              ),
               generatedBy: rec.renderedBy,
               createdAt: rec.renderedAt,
               downloadUrl: `/api/v1/artifacts/${rec.id}`,
@@ -746,6 +938,7 @@ export async function GET(
       count: artifacts.length,
       artifacts,
       pendingEvidenceReviews: evidenceReviewQueue.items,
+      reviewedEvidence: reviewedEvidenceList.items,
       evidenceReviewStatus: evidenceReviewQueue.available
         ? "available"
         : "unavailable",

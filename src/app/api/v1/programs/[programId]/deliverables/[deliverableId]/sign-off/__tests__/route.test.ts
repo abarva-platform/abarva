@@ -324,7 +324,74 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
 
     expect(res.status).toBe(409);
     await expect(res.json()).resolves.toMatchObject({
-      error: "generated_artifact_evidence_not_current",
+      error: "stale_approved_evidence_snapshot",
+    });
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  // Until this case the route answered an UNREADABLE basis with the same code
+  // and the same text as the superseded case above: "not bound to the current
+  // approved evidence. Rebuild it from the current evidence set before
+  // approval." A null snapshot does not establish that the evidence moved — and
+  // the rebuild it prescribed re-reads the same unreadable basis, so there was
+  // no action that could satisfy the refusal. Both halves are asserted: the
+  // honest code, and the absence of the rebuild prescription.
+  it("refuses generated sign-off without calling it stale when the evidence basis cannot be read", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue(null);
+
+    const { POST } = await import("../route");
+    const res = await POST(req(), { params });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe("approved_evidence_basis_unevaluable");
+    expect(body.detail).toContain("was not verified as changed");
+    expect(body.detail).toContain("Regenerating this document will not change");
+    expect(body.detail).not.toMatch(/\bRebuild\b/);
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  // The third unevaluable cause, and the one that is NOT a fault: a signable
+  // deliverable whose type key the orchestrator registry does not carry
+  // resolves `deliverablePhase` to 0, so there is no phase evidence basis to
+  // compare against at all. `RECOGNIZED_DELIVERABLE_TYPE_KEYS` is the registry
+  // keys UNION `ALLOWED_PROGRAM_DELIVERABLE_TYPES`, and 35 of the 41 allowed
+  // keys are not registry keys — including this P3 hard-gate artifact — so the
+  // condition is reachable for a generated version, not theoretical. It was
+  // answered with the stale code and a rebuild prescription that could never
+  // resolve a phase, which is the same closed loop in a different input.
+  it("names an unresolvable deliverable phase as its own cause, not a stale document", async () => {
+    deliverableRow = {
+      deliverable_type_key: "requirements_design_outcome_trace",
+      title: "Requirements to Design Outcome Trace",
+      current_version: 1,
+    };
+
+    const { POST } = await import("../route");
+    const res = await POST(req(), { params });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe("approved_evidence_basis_unevaluable");
+    expect(body.detail).toContain("canonical Move phase did not resolve");
+    expect(body.detail).not.toMatch(/\bRebuild\b/);
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  // A loader that throws is the same fact to this route as one that returns
+  // null — the route already `.catch(() => null)`s it — so it must reach the
+  // same honest refusal rather than the stale one.
+  it("treats a thrown snapshot load as an unevaluable basis, not a stale one", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockRejectedValue(
+      new Error("read replica unavailable"),
+    );
+
+    const { POST } = await import("../route");
+    const res = await POST(req(), { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "approved_evidence_basis_unevaluable",
     });
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });

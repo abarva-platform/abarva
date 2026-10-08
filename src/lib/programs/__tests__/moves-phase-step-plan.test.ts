@@ -1,7 +1,9 @@
 import {
+  MOVES_CAPTURE_STEP_BAR_STEPS,
   phaseStepPlan,
   resolvePhaseStepGroups,
 } from "../moves-phase-step-plan";
+import { getPhaseStepGroups } from "../moves-phase-step-groups";
 import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
@@ -189,5 +191,130 @@ describe("the repair path — a declared key no grouping anticipated", () => {
     expect([...keysOf(plan.groups)].sort()).toEqual(
       ["brand_new_one", "brand_new_two", "recommendation", "solution_approach"],
     );
+  });
+});
+
+describe("a phase the contract answers for but no grouping anticipated at all", () => {
+  // The repair's guarantee — every declared question is reachable in some step
+  // — used to hold only while there was a step to append to. With no grouping
+  // at all the appended keys went nowhere: `groups` came back EMPTY while
+  // `appendedKeys` still listed every one of them, so the plan reported a
+  // placement it had not made. The flow then rendered a blank three-step shell
+  // whose Continue could never enable, while `evaluatePhaseCapture` read the
+  // same contract and went on requiring all of those answers.
+  //
+  // The phase is DERIVED from the grouping declaration, not typed: the first
+  // phase for which `getPhaseStepGroups` has no copy. Writing copy for it moves
+  // this case to the next such phase instead of making it vacuous.
+  const phaseWithoutStepCopy = (() => {
+    for (let candidate = 0; candidate <= 24; candidate += 1) {
+      if (getPhaseStepGroups(candidate).length === 0) return candidate;
+    }
+    throw new Error("every probed phase declares step copy");
+  })();
+
+  const section = (key: string): PhaseCaptureSection => ({
+    key,
+    label: key,
+    description: key,
+    required: true,
+  });
+
+  it("declares questions the flow would have to ask", () => {
+    // Guards the case above it from passing vacuously: if the contract ever
+    // answers such a phase with NO questions there is nothing to lose, and
+    // asserting the coverage property would prove nothing.
+    expect(
+      getPhaseCaptureSections(phaseWithoutStepCopy).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("places every declared question in a step rather than dropping it", () => {
+    const sections = getPhaseCaptureSections(phaseWithoutStepCopy);
+    const plan = phaseStepPlan(phaseWithoutStepCopy, sections);
+
+    expect(plan.basis).toBe("repaired");
+    expect([...keysOf(plan.groups)].sort()).toEqual(
+      sections.map((s) => s.key).sort(),
+    );
+    expect(plan.droppedKeys).toEqual([]);
+  });
+
+  it("keeps the step-bar shape, so the phase can still reach Submit", () => {
+    const plan = phaseStepPlan(
+      phaseWithoutStepCopy,
+      getPhaseCaptureSections(phaseWithoutStepCopy),
+    );
+
+    expect(plan.groups).toHaveLength(MOVES_CAPTURE_STEP_BAR_STEPS);
+    for (const group of plan.groups) {
+      expect(group.title.trim().length).toBeGreaterThan(0);
+      expect(group.intro.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it("spreads the questions across the steps in contract order", () => {
+    const sections = [
+      section("one"),
+      section("two"),
+      section("three"),
+      section("four"),
+    ];
+    const plan = phaseStepPlan(phaseWithoutStepCopy, sections);
+
+    // Four questions over three steps: 2/1/1, never all on one step.
+    expect(plan.groups.map((g) => [...g.sectionKeys])).toEqual([
+      ["one", "two"],
+      ["three"],
+      ["four"],
+    ]);
+  });
+
+  it("stays step-bar shaped with fewer questions than steps", () => {
+    const sections = [section("only_one")];
+    const plan = phaseStepPlan(phaseWithoutStepCopy, sections);
+
+    // A trailing step holding nothing is vacuously complete, so Submit is
+    // still reachable; a SHORT grouping could never reach it.
+    expect(plan.groups).toHaveLength(MOVES_CAPTURE_STEP_BAR_STEPS);
+    expect(keysOf(plan.groups)).toEqual(["only_one"]);
+  });
+});
+
+describe("`appendedKeys` reports only placements the repair actually made", () => {
+  // The report is the only way the condition is observable, so it must not
+  // name a key the groups do not carry — in EITHER repair direction.
+  const cases: readonly [string, number, readonly string[]][] = [
+    [
+      "a grouping existed to append to",
+      3,
+      [...getPhaseCaptureSections(3).map((s) => s.key), "unanticipated"],
+    ],
+    [
+      "no grouping existed at all",
+      (() => {
+        for (let candidate = 0; candidate <= 24; candidate += 1) {
+          if (getPhaseStepGroups(candidate).length === 0) return candidate;
+        }
+        throw new Error("every probed phase declares step copy");
+      })(),
+      ["alpha", "beta", "gamma", "delta"],
+    ],
+  ];
+
+  it.each(cases)("%s", (_name, phase, keys) => {
+    const plan = phaseStepPlan(
+      phase,
+      keys.map((key) => ({
+        key,
+        label: key,
+        description: key,
+        required: true,
+      })),
+    );
+    const placed = new Set(keysOf(plan.groups));
+
+    expect(plan.appendedKeys.length).toBeGreaterThan(0);
+    for (const key of plan.appendedKeys) expect(placed.has(key)).toBe(true);
   });
 });

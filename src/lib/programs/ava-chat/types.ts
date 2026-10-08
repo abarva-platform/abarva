@@ -51,6 +51,17 @@ export interface MovesAvaApprovedEvidenceItem {
   citations: Array<{ quote: string; locator: string }>;
 }
 
+/** The DECLARED archetype's agent framing, resolved for this Move. `null`
+ *  whenever the Move declares no archetype the registry knows — there is no
+ *  default framing, because the default archetype's subject domain is a wrong
+ *  answer rather than a neutral one. */
+export interface MovesAvaArchetypeFraming {
+  archetypeId: string;
+  archetypeName: string;
+  systemFraming: string;
+  keyQuestions: string[];
+}
+
 export interface MovesAvaFeedForwardSummary {
   headline: string;
   carriesForward: string[];
@@ -69,6 +80,8 @@ export interface MovesAvaChatPacket extends AvaModulePacketBase<"moves"> {
   tenant: string;
   moveId: string;
   moveTitle: string;
+  /** The DECLARED archetype's framing, or null when the Move declares none. */
+  archetypeFraming: MovesAvaArchetypeFraming | null;
   currentPhase: number;
   currentPhaseClientLabel: string;
   currentPhaseQuestion: string | null;

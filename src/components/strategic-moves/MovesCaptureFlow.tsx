@@ -2,12 +2,17 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { type PhaseStepGroup } from "@/lib/programs/moves-phase-step-groups";
+import { captureStepResumeIndex } from "@/lib/programs/capture-step-resume";
 import { resolvePhaseStepGroups } from "@/lib/programs/moves-phase-step-plan";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
 import {
   captureHandoffAccess,
   captureHandoffHeading,
 } from "@/lib/programs/capture-handoff-reachability";
+import {
+  movesWorkspaceV2Spine,
+  type MovesV2SpineStage,
+} from "@/lib/programs/moves-workspace-v2-spine";
 
 /**
  * The redesigned Moves phase capture: one repeatable 3-step flow for every
@@ -126,6 +131,37 @@ export interface MovesCaptureFlowProps {
    * with an `approveSlot` present the recap is then unreachable (U-564).
    */
   allowReviewBeforeSubmit?: boolean;
+  /**
+   * `moves_workspace_v2` (Increment 1 of the phase-workspace redesign). When
+   * true the two navigators are re-presented in the v2 shell: the phase journey
+   * becomes a single slim rail (P0-P5 + a non-interactive hand-off marker) and
+   * the step bar becomes the four-stage sub-step SPINE (CAPTURE steps · GENERATE
+   * · OUTCOME · GATE) in the v3 locked-light palette. Presentation only — the
+   * view-state machine, Continue-gating, resume, recap reachability, the
+   * approveSlot and every handler are byte-for-byte unchanged, so with this
+   * false (the default) the flow renders exactly as it does today.
+   */
+  workspaceV2?: boolean;
+  /**
+   * `moves_workspace_v2` only: host-supplied controls rendered on the GATE
+   * step, beside the governed approve control — today the readiness-workbook
+   * download / upload / preview actions, which the host used to render on the
+   * stage head above every capture step ("across all steps"). Null (the
+   * default) leaves the flow unchanged. Ignored unless `workspaceV2` is true.
+   */
+  gateExtras?: ReactNode;
+  /**
+   * `moves_workspace_v2`, Increment 2: the OUTCOME findings surface for an
+   * intelligence phase (P2 Discover, P4 Business case). When provided AND
+   * `workspaceV2` is true, the OUTCOME step (view 3) renders this surface in
+   * place of the hand-off recap, and the OUTCOME stage becomes navigable (the
+   * surface is a no-submit review, so it opens no second submit path). The
+   * governed approve control still travels onto this screen exactly as it does
+   * onto the recap, so the gate decision runs through the existing pipeline.
+   * Null (the default, and for every capture-heavy phase) leaves the OUTCOME
+   * step as the hand-off recap — byte-for-byte Increment 1.
+   */
+  outcomeFindings?: ReactNode;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -151,6 +187,9 @@ export function MovesCaptureFlow({
   initialStep,
   approveSlot,
   allowReviewBeforeSubmit = false,
+  workspaceV2 = false,
+  gateExtras = null,
+  outcomeFindings = null,
 }: MovesCaptureFlowProps) {
   // Resolved from the sections this phase DECLARES, not from the phase number:
   // P3 Design re-shapes its question set once P2 confirms a solution route, and
@@ -171,21 +210,25 @@ export function MovesCaptureFlow({
       .map((key) => sectionByKey.get(key))
       .filter((s): s is PhaseCaptureSection => Boolean(s));
 
-  const firstIncompleteStep = groups.findIndex((group) => {
-    const resolvedSections = groupSections(group);
-    return (
-      resolvedSections.length !== group.sectionKeys.length ||
-      resolvedSections.length === 0 ||
-      resolvedSections.some((section) => !isSectionComplete(section.key))
-    );
-  });
   // view: 0..2 = steps, 3 = hand-off. A reload resumes at the first step whose
   // server-backed answers are not complete. When all capture steps are done,
   // stop at the final step so its governed approval action remains explicit.
-  const resumeStep =
-    firstIncompleteStep >= 0
-      ? firstIncompleteStep
-      : Math.max(groups.length - 1, 0);
+  //
+  // A step a `repaired` grouping left with no questions is vacuously done, not
+  // forever undone — see `capture-step-resume.ts` for why this rule lives
+  // outside the component and what it used to get wrong.
+  const resumeStep = captureStepResumeIndex(
+    groups.map((group) => {
+      const resolvedSections = groupSections(group);
+      return {
+        mounted: resolvedSections.length,
+        unmounted: group.sectionKeys.length - resolvedSections.length,
+        allComplete: resolvedSections.every((section) =>
+          isSectionComplete(section.key),
+        ),
+      };
+    }),
+  );
   const [view, setView] = useState<number>(initialStep ?? resumeStep);
   // Whether this phase was submitted FROM this flow. The recap may be opened as
   // a review before that happens, and must not claim a submission that has not.
@@ -215,11 +258,83 @@ export function MovesCaptureFlow({
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
 
+  // v2 shell: the four-stage sub-step spine, derived from the real step groups
+  // and the current view. Presentation only — see `moves-workspace-v2-spine`.
+  // Increment 2: an intelligence phase's OUTCOME is the findings surface, which
+  // is a no-submit review and so opens the OUTCOME path on its own.
+  const hasOutcomeFindings = workspaceV2 && outcomeFindings !== null;
+  const v2Spine: MovesV2SpineStage[] = workspaceV2
+    ? movesWorkspaceV2Spine({
+        captureTitles: groups.map((group) => group.title),
+        view,
+        handoffReachable: handoffAccess.reachable,
+        outcomeFindingsPresent: hasOutcomeFindings,
+      })
+    : [];
+
   return (
-    <div className="mcf" data-testid="moves-capture-flow">
+    <div
+      className={workspaceV2 ? "mcf mcf-v2" : "mcf"}
+      data-testid="moves-capture-flow"
+    >
       <style>{MCF_CSS}</style>
 
-      {/* LEVEL 1 — journey: the six phases */}
+      {/* LEVEL 1 — journey: the six phases. v2 renders ONE slim rail (pips +
+          a non-interactive hand-off marker); the legacy build renders the
+          journey tab strip. Same navigation, reachability and completion
+          rules either way. */}
+      {workspaceV2 ? (
+        <nav className="mcf-v2-rail" aria-label="Phases">
+          {phases.map((p, idx) => {
+            const measured = p.answered !== null;
+            const complete =
+              measured && p.total > 0 && p.answered === p.total;
+            const saved =
+              !measured && typeof p.savedAnswers === "number"
+                ? p.savedAnswers
+                : null;
+            const current = p.phase === phase;
+            const count = measured
+              ? `${p.answered} of ${p.total} answered`
+              : saved !== null
+                ? `${saved} of ${p.total} saved`
+                : `${p.total} question${p.total === 1 ? "" : "s"}`;
+            return (
+              <span className="mcf-v2-rail-item" key={p.code}>
+                {idx > 0 ? (
+                  <span className="mcf-v2-rail-sep" aria-hidden />
+                ) : null}
+                <button
+                  type="button"
+                  className={`mcf-v2-rail-btn${complete ? " is-done" : ""}${
+                    current ? " is-current" : ""
+                  }`}
+                  aria-current={current ? "page" : undefined}
+                  disabled={!p.reachable}
+                  title={`${p.name} · ${count}`}
+                  onClick={() => p.reachable && onSelectPhase(p.phase)}
+                >
+                  <span className="mcf-v2-pip">
+                    {complete ? (
+                      <span aria-label="complete">✓</span>
+                    ) : (
+                      p.code
+                    )}
+                  </span>
+                  <span className="mcf-v2-rail-copy">
+                    <span className="mcf-v2-rail-name">{p.name}</span>
+                    <span className="mcf-v2-rail-count">{count}</span>
+                  </span>
+                </button>
+              </span>
+            );
+          })}
+          <span className="mcf-v2-rail-sep" aria-hidden />
+          <span className="mcf-v2-rail-tower" aria-hidden>
+            → Tower
+          </span>
+        </nav>
+      ) : (
       <nav className="mcf-phasebar" aria-label="Phases">
         <ol>
           {phases.map((p) => {
@@ -279,9 +394,51 @@ export function MovesCaptureFlow({
           })}
         </ol>
       </nav>
+      )}
 
-      {/* LEVEL 2 — the three steps of this phase */}
-      {view < 3 ? (
+      {/* LEVEL 2 — this phase's workflow. v2 renders the four-stage sub-step
+          spine (CAPTURE → GENERATE → OUTCOME → GATE) at every view, including
+          the recap, so the spine stays on screen as a map of the phase. The
+          legacy build renders the three-step bar and only below the recap. */}
+      {workspaceV2 ? (
+        <nav className="mcf-v2-flow" aria-label="Steps">
+          <div className="mcf-v2-stages">
+            {v2Spine.map((stage, i) => {
+              const interactive = stage.targetView !== null;
+              return (
+                <span className="mcf-v2-stage" key={`${stage.kind}-${i}`}>
+                  {i > 0 ? (
+                    <span className="mcf-v2-stage-sep" aria-hidden />
+                  ) : null}
+                  <button
+                    type="button"
+                    className={`mcf-v2-sstep is-${stage.state} kind-${stage.kind}`}
+                    disabled={!interactive}
+                    // `state` is the emphasis channel and a co-located marker
+                    // shares it (GENERATE beside the last capture step, GATE
+                    // beside OUTCOME). `aria-current` names ONE item in a set,
+                    // so it reads the spine's single navigational stage.
+                    aria-current={stage.isCurrentView ? "step" : undefined}
+                    onClick={() => {
+                      if (stage.targetView !== null) go(stage.targetView);
+                    }}
+                  >
+                    <span className="mcf-v2-kind">{stage.kind}</span>
+                    <span className="mcf-v2-lab">
+                      <span className="mcf-v2-dot">
+                        {stage.state === "done"
+                          ? "✓"
+                          : pad(stage.position)}
+                      </span>
+                      {stage.label}
+                    </span>
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        </nav>
+      ) : view < 3 ? (
         <nav className="mcf-stepbar" aria-label="Steps">
           <ol>
             {groups.map((group, i) => {
@@ -362,6 +519,9 @@ export function MovesCaptureFlow({
                   ) : null}
                   {view === 2 && approveSlot ? (
                     <>
+                      {workspaceV2 && gateExtras ? (
+                        <div className="mcf-v2-gate-extras">{gateExtras}</div>
+                      ) : null}
                       {handoffAccess.offerReviewBeforeSubmit ? (
                         <button
                           type="button"
@@ -396,47 +556,64 @@ export function MovesCaptureFlow({
             </>
           ) : (
             <section className="mcf-handoff" data-testid="mcf-handoff">
-              <div className="mcf-panel-head">
-                <span
-                  className={
-                    handoffHeading.showTick
-                      ? "mcf-eyebrow mcf-done-eyebrow"
-                      : "mcf-eyebrow"
-                  }
+              {/* Increment 2: an intelligence phase's OUTCOME is the findings
+                  surface, not the hand-off recap. It carries its own heading,
+                  so the recap head + "what you captured" list give way to it;
+                  the "what's next"/gate block below is unchanged, so the
+                  governed approve control still travels here. Every other phase
+                  keeps the recap exactly as Increment 1. */}
+              {hasOutcomeFindings ? (
+                <div
+                  className="mcf-v2-outcome"
+                  data-testid="mcf-v2-outcome-findings"
                 >
-                  {handoffHeading.showTick ? (
-                    <span className="mcf-tick">✓</span>
-                  ) : null}{" "}
-                  {handoffHeading.eyebrow}
-                </span>
-                <h1 className="mcf-panel-title">{handoffHeading.title}</h1>
-              </div>
-              {handoffSummary}
-              <div className="mcf-recap" aria-label="What you captured">
-                {groups.map((group, gi) => (
-                  <div key={group.title}>
-                    <h3 className="mcf-eyebrow">
-                      {pad(gi + 1)} · {group.title}
-                    </h3>
-                    <dl>
-                      {groupSections(group).map((section) => {
-                        const recap = sectionRecap(section).trim();
-                        return (
-                          <div key={section.key}>
-                            <dt>
-                              {section.label}
-                              {renderSectionRecapMark?.(section) ?? null}
-                            </dt>
-                            <dd className={recap ? "" : "mcf-empty"}>
-                              {recap || "Not answered"}
-                            </dd>
-                          </div>
-                        );
-                      })}
-                    </dl>
+                  {outcomeFindings}
+                </div>
+              ) : (
+                <>
+                  <div className="mcf-panel-head">
+                    <span
+                      className={
+                        handoffHeading.showTick
+                          ? "mcf-eyebrow mcf-done-eyebrow"
+                          : "mcf-eyebrow"
+                      }
+                    >
+                      {handoffHeading.showTick ? (
+                        <span className="mcf-tick">✓</span>
+                      ) : null}{" "}
+                      {handoffHeading.eyebrow}
+                    </span>
+                    <h1 className="mcf-panel-title">{handoffHeading.title}</h1>
                   </div>
-                ))}
-              </div>
+                  {handoffSummary}
+                  <div className="mcf-recap" aria-label="What you captured">
+                    {groups.map((group, gi) => (
+                      <div key={group.title}>
+                        <h3 className="mcf-eyebrow">
+                          {pad(gi + 1)} · {group.title}
+                        </h3>
+                        <dl>
+                          {groupSections(group).map((section) => {
+                            const recap = sectionRecap(section).trim();
+                            return (
+                              <div key={section.key}>
+                                <dt>
+                                  {section.label}
+                                  {renderSectionRecapMark?.(section) ?? null}
+                                </dt>
+                                <dd className={recap ? "" : "mcf-empty"}>
+                                  {recap || "Not answered"}
+                                </dd>
+                              </div>
+                            );
+                          })}
+                        </dl>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
               <div className="mcf-next">
                 <div>
                   <span className="mcf-eyebrow">
@@ -470,7 +647,12 @@ export function MovesCaptureFlow({
                        approve control travels onto the recap instead, so the
                        person decides with the basis rollup in front of them and
                        the decision still runs through the gate pipeline. */
-                    <div className="mcf-approve-slot">{approveSlot}</div>
+                    <div className="mcf-approve-slot">
+                      {workspaceV2 && gateExtras ? (
+                        <div className="mcf-v2-gate-extras">{gateExtras}</div>
+                      ) : null}
+                      {approveSlot}
+                    </div>
                   )}
                 </div>
               </div>
@@ -553,4 +735,41 @@ const MCF_CSS = `
 .mcf-ava-insert:hover{background:var(--mcf-accent-hover)}
 .mcf-ava-dismiss{border:0;background:none;color:var(--mcf-muted);font-size:12.5px;font-weight:500;padding:7px 8px;cursor:pointer}
 @media (max-width:640px){.mcf-panel-intro{font-size:16px}}
+
+/* ─── moves_workspace_v2: v3 locked-light palette + the single slim phase
+   rail and the four-stage sub-step spine. Scoped to .mcf-v2, so the legacy
+   build is untouched. ─── */
+.mcf-v2{--mcf-bg:#FFFFFF;--mcf-surface:#FBFAF7;--mcf-ink:#1A1A18;--mcf-muted:#525866;--mcf-faint:#9AA3B2;--mcf-line:#E7E3DB;--mcf-line-strong:#D8D3C8;--mcf-accent:#1B2B5C;--mcf-accent-hover:#162449;--mcf-accent-ink:#fff;--mcf-current-bg:#1B2B5C;--mcf-current-ink:#fff;--mcf-serif:'Fraunces',Georgia,serif;--mcf-teal:#1d9e75}
+.mcf-v2 .mcf-tick,.mcf-v2 .mcf-done-eyebrow{color:var(--mcf-teal)}
+/* slim phase rail */
+.mcf-v2-rail{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin:0}
+.mcf-v2-rail-item{display:inline-flex;align-items:center;gap:3px}
+.mcf-v2-rail-sep{width:18px;height:1.5px;background:var(--mcf-line-strong);flex:0 0 auto}
+.mcf-v2-rail-btn{display:inline-flex;align-items:center;gap:8px;background:none;border:0;cursor:pointer;font-family:var(--mcf-mono);font-size:11px;letter-spacing:.03em;color:var(--mcf-faint);padding:5px 4px}
+.mcf-v2-rail-btn:disabled{cursor:not-allowed;opacity:.65}
+.mcf-v2-pip{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mcf-line-strong);display:grid;place-items:center;font-size:10px;color:var(--mcf-faint);flex:0 0 auto}
+.mcf-v2-rail-btn.is-done .mcf-v2-pip{background:var(--mcf-teal);border-color:var(--mcf-teal);color:#fff}
+.mcf-v2-rail-btn.is-current{color:var(--mcf-ink)}
+.mcf-v2-rail-btn.is-current .mcf-v2-pip{background:var(--mcf-accent);border-color:var(--mcf-accent);color:#fff}
+.mcf-v2-rail-copy{display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;text-align:left}
+.mcf-v2-rail-name{font-family:var(--mcf-sans);font-size:13px;font-weight:600;color:inherit}
+.mcf-v2-rail-count{font-size:10.5px;color:var(--mcf-faint);letter-spacing:0}
+.mcf-v2-rail-tower{font-family:var(--mcf-mono);font-size:10px;letter-spacing:.06em;color:var(--mcf-faint)}
+/* four-stage sub-step spine */
+.mcf-v2-flow{border-top:1px solid var(--mcf-line);border-bottom:1px solid var(--mcf-line);padding:14px 0}
+.mcf-v2-stages{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.mcf-v2-stage{display:inline-flex;align-items:center;gap:6px}
+.mcf-v2-stage-sep{width:22px;height:1.5px;background:var(--mcf-line-strong);flex:0 0 auto}
+.mcf-v2-sstep{display:inline-flex;flex-direction:column;gap:5px;background:none;border:0;padding:3px 4px;text-align:left;cursor:pointer}
+.mcf-v2-sstep:disabled{cursor:default}
+.mcf-v2-kind{font-family:var(--mcf-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--mcf-faint)}
+.mcf-v2-lab{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--mcf-muted);white-space:nowrap}
+.mcf-v2-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mcf-line-strong);display:grid;place-items:center;font-family:var(--mcf-mono);font-size:10px;color:var(--mcf-faint);flex:0 0 auto}
+.mcf-v2-sstep.is-done .mcf-v2-dot{background:var(--mcf-teal);border-color:var(--mcf-teal);color:#fff}
+.mcf-v2-sstep.is-done .mcf-v2-lab{color:var(--mcf-muted)}
+.mcf-v2-sstep.is-current .mcf-v2-lab{color:var(--mcf-ink);font-weight:600}
+.mcf-v2-sstep.is-current .mcf-v2-dot{background:var(--mcf-accent);border-color:var(--mcf-accent);color:#fff}
+.mcf-v2-sstep.is-current .mcf-v2-kind{color:var(--mcf-accent)}
+.mcf-v2-gate-extras{display:flex;flex-direction:column;gap:10px;flex-basis:100%;margin-bottom:4px}
+.mcf-v2-outcome{margin:0 0 8px}
 `;

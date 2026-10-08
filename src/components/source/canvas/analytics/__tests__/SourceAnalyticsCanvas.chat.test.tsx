@@ -18,7 +18,7 @@
 // matching the pattern already used by StrategyStage.test.tsx.
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 const mockRouterRefresh = jest.fn();
 
@@ -125,7 +125,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.queryByTestId("stub-ask-anything-bar"),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /ask ava/i }));
+    fireEvent.click(screen.getByTestId("source-ask-ava-launcher"));
 
     const bar = screen.getByTestId("stub-ask-anything-bar");
     expect(bar).toHaveAttribute("data-surface", "source-detail");
@@ -135,7 +135,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(bar).toHaveAttribute("data-agent", "sentinel");
   });
 
-  it("renders the contract aVa launcher and does not reintroduce the old dock controls or duplicate launcher", () => {
+  it("renders the responsive aVa launchers without the retired dock controls", () => {
     render(
       <SourceAnalyticsCanvas
         event={makeEvent()}
@@ -150,6 +150,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.queryByTestId("ava-dock-bottom")).not.toBeInTheDocument();
     expect(screen.queryByTestId("ava-dock-hidden")).not.toBeInTheDocument();
     expect(screen.getByTestId("source-ask-ava-launcher")).toBeInTheDocument();
+    expect(screen.getByTestId("source-mobile-ask-ava-launcher")).toBeInTheDocument();
     expect(
       screen.queryByTestId("stub-ask-anything-bar"),
     ).not.toBeInTheDocument();
@@ -190,9 +191,10 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     const continueGuidance = screen.getByTestId(
       "source-shell-continue-guidance",
     );
-    expect(continueGuidance).toHaveTextContent(
-      "Locked: Download the template, fill one row per tower, tier, month, and time window, then upload.",
-    );
+    expect(continueGuidance).toHaveTextContent("L2/L3 ticket history and service volumetrics");
+    expect(continueGuidance).toHaveTextContent("Now: Not loaded");
+    expect(within(continueGuidance).getByRole("button", { name: "Open evidence workspace" }))
+      .toBeInTheDocument();
   });
 
   it("keeps gate approval handoff inside the event shell workspace", () => {

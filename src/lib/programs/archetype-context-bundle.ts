@@ -34,6 +34,8 @@ import {
   resolveProgramArchetype,
 } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
+import { phaseKeyForNumber } from "@/lib/programs/archetypes/phase-key";
 import { resolveArchetypeRequirements } from "@/lib/programs/archetypes/resolver";
 import type { GroundedAnswerEnvelope } from "@/lib/programs/archetypes/types";
 import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
@@ -55,21 +57,50 @@ export async function buildArchetypeContextBundle(
   moveId: string,
   phase: number,
 ): Promise<ArchetypeContextBundle> {
-  // Archetype resolved from the Move's own row (best-effort) — never a
+  // Archetype resolved through the canonical per-Move resolver — never a
   // hardcoded default for a Move we can read.
+  //
+  // This used to resolve inline from `move.archetype` + `move.charter
+  // .classification` + `move.name`, which could not see a DECLARATION:
+  //
+  // - `move.archetype` is `engagements.program_archetype`, a column whose DB
+  //   CHECK limits it to five coarse values (`strategic_transformation`,
+  //   `workflow_automation`, `platform_modernization`, `ai_product_enablement`,
+  //   `operational_optimization`). None of them names a registry archetype, so
+  //   the exact-id arm never fired from a stored Move.
+  // - `charter.classification` is the OBJECT that carries the declared id at
+  //   `.archetype` (what `scripts/moves/declare-discovery-archetype-job.ts`
+  //   writes). It was read as if it were a string, and `resolveProgramArchetype`
+  //   keeps only string parts of its haystack, so the object was dropped whole —
+  //   the declaration contributed nothing, not even as inference text.
+  // - `declaredArchetypeId`, the parameter a declaration wins through, was never
+  //   passed at all.
+  //
+  // So a Move DECLARING an archetype resolved here by keyword-guessing its name,
+  // and fell through to the back-compat default. That archetype is what
+  // `resolveCurrentStateReadiness` below is asked for, so the bundle's
+  // instruments, hard gaps, `missingEvidence`, risk dimensions and the
+  // "P2 Diagnose … requires" answer all described the WRONG kind of work.
+  //
+  // `resolveMoveArchetypeForProgram` is the resolver every other
+  // `resolveCurrentStateReadiness` call site already pairs with: it reads the
+  // declaration (`functionPackKey`, `charter.classification.archetype`) and
+  // passes it as `declaredArchetypeId`, and its inference haystack is strictly
+  // wider than the one above. This bundle was the only call site resolving its
+  // own.
+  //
+  // The two reads are caught separately on purpose: a failed name read must not
+  // also cost the archetype (before, one `catch` lost both).
   let moveName = moveId;
   let archetype = resolveProgramArchetype({});
   try {
     const move = await getStrategicMoveById(ctx, moveId);
     if (move?.name) moveName = move.name;
-    if (move) {
-      archetype = resolveProgramArchetype({
-        archetype: move.archetype,
-        classification: (move.charter as { classification?: string } | null)
-          ?.classification,
-        name: move.name,
-      });
-    }
+  } catch {
+    /* best-effort */
+  }
+  try {
+    archetype = await resolveMoveArchetypeForProgram(ctx, moveId);
   } catch {
     /* best-effort */
   }
@@ -253,14 +284,35 @@ export function answerGrounded(
 
   // 5) What should be diagnosed in P2?
   if (/diagnose|p2|discover/.test(q)) {
-    const reqs = resolveArchetypeRequirements(
+    // `resolveArchetypeRequirements` returns a severity per family and a
+    // rationale that says, for a soft one, that it "is not a hard blocker".
+    // Flattening both into one list labelled "requires" asserted the opposite
+    // of what the resolver resolved: the governed-data-foundation archetype
+    // declares eleven hard families and an optional twelfth, and the approved
+    // evidence pack supplies the eleven on purpose. Stating twelve as required
+    // sends a reader after evidence no gate asks for, and gives them no way to
+    // tell which of the twelve actually blocks. Say each in its own terms.
+    const resolved = resolveArchetypeRequirements(
       getArchetype(b.archetype.id)!,
       "diagnose",
       b.profile,
-    ).map((r) => r.family.key);
+    );
+    const label = (k: string) => familyLabel(b, k);
+    const hardKeys = resolved
+      .filter((r) => r.severity === "hard")
+      .map((r) => r.family.key);
+    const softKeys = resolved
+      .filter((r) => r.severity !== "hard")
+      .map((r) => r.family.key);
+    const requiredSentence = hardKeys.length
+      ? `P2 Diagnose (archetype-driven) requires: ${hardKeys.map(label).join(", ")}.`
+      : "P2 Diagnose (archetype-driven) requires no evidence family as a hard blocker.";
+    const optionalSentence = softKeys.length
+      ? ` Optional context, not a blocker: ${softKeys.map(label).join(", ")}.`
+      : "";
     return {
       question,
-      answer: `P2 Diagnose (archetype-driven) requires: ${reqs.map((k) => familyLabel(b, k)).join(", ")}. These are computed from the ${b.archetype.name} archetype × this estate — not a fixed list.`,
+      answer: `${requiredSentence}${optionalSentence} These are computed from the ${b.archetype.name} archetype × this estate — not a fixed list.`,
       envelope: envelope(b, {
         citations: ["archetype:" + b.archetype.id],
         missing: [],
@@ -272,11 +324,17 @@ export function answerGrounded(
   // 6) What deliverables should be generated next?
   if (/deliverable|next|generate|artifact/.test(q)) {
     const arch = getArchetype(b.archetype.id)!;
-    const phaseKey =
-      b.phase === 1 ? "charter" : b.phase === 2 ? "diagnose" : "charter";
-    const d = arch.deliverablePack
-      .filter((x) => x.phase === phaseKey)
-      .map((x) => x.label);
+    // Resolve the phase the caller is actually on. This read used to map 1 to
+    // charter, 2 to diagnose and EVERY other phase to charter, so P0, P3, P4
+    // and P5 were answered with the charter entries under the words "at this
+    // phase". Every archetype but one declares design, roadmap/business-case
+    // and mobilize entries, which that fallback could never reach.
+    const phaseKey = phaseKeyForNumber(b.phase);
+    const d = phaseKey
+      ? arch.deliverablePack
+          .filter((x) => x.phase === phaseKey)
+          .map((x) => x.label)
+      : [];
     return {
       question,
       answer: `Next deliverables for the ${arch.name} archetype at this phase: ${d.join(", ") || "none defined"}. Each is generated grounded — claims cited or flagged [MISSING EVIDENCE].`,

@@ -97,6 +97,41 @@ function renderStage(stageKey: SourceStageKey, stageView?: StageAnalyticsView) {
 describe("SourceAnalyticsCanvas New Event journey smoke", () => {
   afterEach(() => cleanup());
 
+  it("keeps the journey and workspaces reachable from the compact rail", () => {
+    renderStage("rfp");
+
+    const toggle = screen.getByRole("button", {
+      name: /journey and workspaces/i,
+    });
+    const mobileAva = screen.getByTestId("source-mobile-ask-ava-launcher");
+    expect(mobileAva).toHaveAttribute("aria-label", "Ask aVa");
+    fireEvent.click(mobileAva);
+    expect(mobileAva).toHaveAttribute("aria-label", "Close aVa");
+    expect(mobileAva).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(mobileAva);
+    expect(mobileAva).toHaveAttribute("aria-expanded", "false");
+    const railContent = document.getElementById("source-shell-mobile-rail-content");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(railContent).toHaveAttribute("data-open", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(railContent).toHaveAttribute("data-open", "true");
+    expect(
+      screen.getByRole("button", { name: /files & deliverables/i }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /files & deliverables/i }),
+    );
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(railContent).toHaveAttribute("data-open", "false");
+    expect(screen.getByTestId("source-shell-v2-files")).toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole("button", { name: /current stage/i }));
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
+  });
+
   it.each(SOURCE_STAGE_ORDER)(
     "renders the active workflow contract for %s",
     (stageKey) => {
@@ -157,6 +192,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       expect(
         screen.getByTestId("source-stage-header-readiness"),
       ).toBeInTheDocument();
+      expect(screen.getByTestId("source-stage-header-layout")).toHaveClass(
+        "stageHeaderLayout",
+      );
       expect(
         screen.getByTestId("source-journey-current-stage-status"),
       ).toBeInTheDocument();
@@ -164,8 +202,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       const activeNeed = screen.getByTestId("source-shell-active-step-needs");
       expect(activeNeed).toHaveTextContent(/what continue needs/i);
       expect(activeNeed).toHaveTextContent(/required/i);
-      expect(screen.queryByTestId("source-shell-evidence-ask-table"))
-        .toBeNull();
+      expect(
+        screen.queryByTestId("source-shell-evidence-ask-table"),
+      ).toBeNull();
       expect(
         screen.getByTestId("source-shell-active-step-guide"),
       ).toHaveTextContent(/guidebook/i);
@@ -222,8 +261,38 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     );
 
     expect(supplierCheckpoint).toBeDefined();
-    expect(within(supplierCheckpoint as HTMLElement).getByText("Historical gap"))
-      .toBeInTheDocument();
+    expect(
+      within(supplierCheckpoint as HTMLElement).getByText("Historical gap"),
+    ).toBeInTheDocument();
+    expect(supplierCheckpoint).not.toHaveTextContent("✓");
+  });
+
+  it("does not equate a recorded NDA file with completed supplier coverage", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent("rfp")}
+        viewStage="rfp"
+        tenantName="AbarVa QA"
+        artifacts={[
+          {
+            id: "nda-file",
+            artifactCode: "NDA-EXECUTED",
+            sourcingStage: "scope",
+            title: "NDA record",
+          },
+        ]}
+      />,
+    );
+
+    const supplierCheckpoint = within(
+      screen.getByTestId("source-shell-v2-rail"),
+    )
+      .getAllByTestId("source-reader-journey-checkpoint")
+      .find((checkpoint) =>
+        checkpoint.textContent?.includes("Suppliers & NDA"),
+      );
+    expect(supplierCheckpoint).toBeDefined();
+    expect(supplierCheckpoint).toHaveTextContent("Recorded");
     expect(supplierCheckpoint).not.toHaveTextContent("✓");
   });
 
@@ -307,8 +376,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     renderStage("rfp", completedRfpView);
 
     expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
-    expect(screen.getByTestId("source-shell-active-step-needs"))
-      .toHaveTextContent("Requirements and service levels");
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Requirements and service levels");
     const readiness = screen.getByTestId("source-stage-operating-status");
     expect(readiness).toHaveTextContent("RFP gate readiness");
     expect(readiness).toHaveTextContent("RFP Package unlocks");
