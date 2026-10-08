@@ -1451,4 +1451,76 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     const json = (await res.json()) as Record<string, unknown>;
     expect(json.error).toBe("tenant_mismatch");
   });
+  /**
+   * The slot list this refusal names comes from a discovery blueprint, and the
+   * readiness pack records what chose that blueprint. The build refusal called
+   * those slots required in the same words whether a human declared the
+   * framework or keyword inference picked it. Nothing here queues a build.
+   */
+  it("does not call an inferred framework's evidence a declared requirement", async () => {
+    loadDiscoveryEvidenceReadiness.mockResolvedValueOnce({
+      blueprintBasis: "inferred",
+      archetypeLabel: "Contact Center Agent Assist",
+      unknownDeclaredArchetype: null,
+    });
+    evidencePacketsForTest = [
+      {
+        phase: 1,
+        priority: "required",
+        status: "missing",
+        evidenceSlot: "Sponsor-backed charter evidence",
+        nextAction: "Upload and approve the source evidence.",
+      } as MoveEvidenceNeedPacket,
+    ];
+
+    const res = await POST(
+      req({ moveId: "m-p1", phase: 1, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(409);
+    const json = (await res.json()) as {
+      detail: string;
+      evidenceFramework: { declared: boolean; origin: string } | null;
+      requiredEvidenceGaps: unknown[];
+    };
+    expect(json.evidenceFramework).toMatchObject({
+      declared: false,
+      origin: "inferred",
+    });
+    expect(json.detail).toMatch(/not a declared requirement/);
+    expect(json.detail).toContain("Contact Center Agent Assist");
+    // The slot list and the count the route already produced are unchanged.
+    expect(json.requiredEvidenceGaps).toHaveLength(1);
+    expect(createCalls).toHaveLength(0);
+  });
+
+  it("leaves a declared framework's build refusal wording unchanged", async () => {
+    loadDiscoveryEvidenceReadiness.mockResolvedValueOnce({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    evidencePacketsForTest = [
+      {
+        phase: 1,
+        priority: "required",
+        status: "missing",
+        evidenceSlot: "Sponsor-backed charter evidence",
+        nextAction: "Upload and approve the source evidence.",
+      } as MoveEvidenceNeedPacket,
+    ];
+
+    const res = await POST(
+      req({ moveId: "m-p1", phase: 1, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(409);
+    const json = (await res.json()) as {
+      detail: string;
+      evidenceFramework: { declared: boolean } | null;
+    };
+    expect(json.evidenceFramework).toMatchObject({ declared: true });
+    expect(json.detail).not.toMatch(/not a declared requirement/);
+    expect(createCalls).toHaveLength(0);
+  });
 });
