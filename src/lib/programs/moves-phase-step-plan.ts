@@ -35,6 +35,20 @@ import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract"
  * references a question the contract no longer declares.
  */
 
+/**
+ * How many steps the capture flow's step bar is shaped for.
+ *
+ * `MovesCaptureFlow` hardcodes this shape: it renders `Step {view + 1} of 3`,
+ * treats `view === 2` as the step that offers Submit, and advances only while
+ * `view < 2`. So a grouping with fewer steps than this does not merely look
+ * wrong — it never reaches the step that submits the phase.
+ *
+ * Declared here, in the module that has to PRODUCE a plan of this shape, and
+ * re-exported by `capture-step-plan-integrity.ts` (which audits the shape) so
+ * the producer and the audit cannot drift apart.
+ */
+export const MOVES_CAPTURE_STEP_BAR_STEPS = 3;
+
 /** How `resolvePhaseStepGroups` arrived at the grouping it returned. */
 export type PhaseStepPlanBasis =
   /** The phase's default grouping already covers exactly the declared keys. */
@@ -49,7 +63,11 @@ export interface PhaseStepPlan {
   basis: PhaseStepPlanBasis;
   /** Keys a candidate grouping referenced that the contract does not declare. */
   droppedKeys: readonly string[];
-  /** Declared keys no candidate grouping referenced, appended to the last step. */
+  /**
+   * Declared keys no candidate grouping referenced. Appended to the last step,
+   * or — when there was no grouping to repair at all — carried by the steps
+   * `synthesizeSteps` produced for them.
+   */
   appendedKeys: readonly string[];
 }
 
@@ -139,6 +157,40 @@ function coversExactly(
  * and its `initialStep` are three-step shaped — and a step emptied by the drop
  * keeps its place rather than silently renumbering the others.
  */
+/**
+ * A grouping for a phase that declares questions but has no step copy at all.
+ *
+ * Exactly `MOVES_CAPTURE_STEP_BAR_STEPS` steps, because the flow cannot submit
+ * a phase with fewer, carrying the declared keys in contract order and spread
+ * as evenly as the count allows. The copy is deliberately plain rather than
+ * invented editorial: `basis` is `repaired` and `appendedKeys` lists every key,
+ * so the condition stays observable and reads as what it is — a phase whose
+ * step copy was never written.
+ *
+ * Where the two invariants cannot both hold (fewer declared keys than steps)
+ * the step COUNT wins: a trailing step holding nothing is vacuously complete
+ * (see `capture-step-resume.ts`) and the phase can still be submitted, whereas
+ * a short grouping can never reach Submit.
+ */
+function synthesizeSteps(keys: readonly string[]): PhaseStepGroup[] {
+  const steps = MOVES_CAPTURE_STEP_BAR_STEPS;
+  const base = Math.floor(keys.length / steps);
+  const remainder = keys.length % steps;
+  const groups: PhaseStepGroup[] = [];
+  let at = 0;
+  for (let index = 0; index < steps; index += 1) {
+    const size = base + (index < remainder ? 1 : 0);
+    groups.push({
+      title: `Capture (step ${index + 1} of ${steps})`,
+      intro:
+        "This phase has no written step copy yet, so its questions are grouped in the order the capture contract declares them.",
+      sectionKeys: keys.slice(at, at + size),
+    });
+    at += size;
+  }
+  return groups;
+}
+
 function repair(
   groups: readonly PhaseStepGroup[],
   declared: readonly string[],
@@ -146,7 +198,7 @@ function repair(
   const declaredSet = new Set(declared);
   const seen = new Set<string>();
   const dropped: string[] = [];
-  const kept = groups.map((group) => {
+  const kept: PhaseStepGroup[] = groups.map((group) => {
     const sectionKeys = group.sectionKeys.filter((key) => {
       if (!declaredSet.has(key) || seen.has(key)) {
         dropped.push(key);
@@ -158,12 +210,25 @@ function repair(
     return { ...group, sectionKeys };
   });
   const appended = declared.filter((key) => !seen.has(key));
-  if (appended.length > 0 && kept.length > 0) {
-    const last = kept[kept.length - 1];
-    kept[kept.length - 1] = {
-      ...last,
-      sectionKeys: [...last.sectionKeys, ...appended],
-    };
+  if (appended.length > 0) {
+    if (kept.length > 0) {
+      const last = kept[kept.length - 1];
+      kept[kept.length - 1] = {
+        ...last,
+        sectionKeys: [...last.sectionKeys, ...appended],
+      };
+    } else {
+      // There was no grouping to repair, so there is no last step to append
+      // to. Appending to nothing used to leave `groups` EMPTY while still
+      // REPORTING every declared key in `appendedKeys` — the repair claimed a
+      // placement it had not made, and the flow rendered a blank three-step
+      // shell: no question mounted, `groups[view]` undefined, so `stepComplete`
+      // false and Continue disabled for ever, while `evaluatePhaseCapture`
+      // read the same contract and went on requiring all of those answers.
+      // That is precisely the lost-question failure this module exists to
+      // prevent, so synthesize the steps instead of dropping the keys.
+      kept.push(...synthesizeSteps(appended));
+    }
   }
   return { groups: kept, dropped, appended };
 }
