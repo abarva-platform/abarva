@@ -349,8 +349,28 @@ function ignoreMatches(pattern, testPath) {
   }
 }
 
+/**
+ * `\\` to `/` so a Windows-style path in a command matches a repo-relative one.
+ *
+ * A jest positional argument is a REGEX, though, so a directory under a
+ * Next.js dynamic route has to escape its brackets — `\\[programId\\]` — or jest
+ * reads the segment as a character class and the pattern selects nothing. The
+ * separator rewrite turned that escape into `/[programId/]`, a spelling no
+ * path has, so the literal reading below credited the command with nothing and
+ * a directory a REQUIRED job really does sweep read as reached by no workflow.
+ *
+ * A backslash before a regex metacharacter is therefore resolved to the
+ * character it escapes, which is the on-disk spelling the literal reading
+ * compares against, and only the remaining backslashes are read as separators.
+ * A Windows separator is never followed by a metacharacter, so no path reading
+ * changes.
+ */
 function normalize(value) {
-  return value.replaceAll("\\", "/").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/\\([.*+?^${}()|[\]])/g, "$1")
+    .replaceAll("\\", "/")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function resolveSourceModule(root, importer, specifier) {

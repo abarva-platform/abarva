@@ -247,6 +247,42 @@ describe("the mirror of the ruleset cannot go quietly stale", () => {
     expect(result.output).toContain("names no job");
   });
 
+  it("reads a dynamic-route sweep through the regex escapes jest requires", () => {
+    // Jest reads a bare positional argument as a REGEX, so a directory under a
+    // Next.js dynamic route has to escape its brackets or `[programId]` is a
+    // character class and the pattern matches nothing. The escaped token is not
+    // a path, so the control used to answer "not a directory" and record no
+    // sweep — leaving the name in the non-required job legal for exactly the
+    // directories a required job had just taken ownership of.
+    const dynamicDirectory = "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__";
+    const root = buildTree({
+      workflows: {
+        "coverage-threshold.yml": workflow("Behavior coverage floor", [
+          "npm run coverage:behavior-gate",
+        ]),
+        "ai-surface-control-catalog.yml": workflow("AI surface control catalog", [
+          "npx jest 'src/app/api/v1/programs/\\[programId\\]/phase-gate-approval/__tests__' --runInBand",
+        ]),
+        "unit-suites.yml": workflow("Unit suites that pass on main", [
+          `npx jest --runTestsByPath "${dynamicDirectory}/route.test.ts" --ci`,
+        ]),
+      },
+      scripts: { "coverage:behavior-gate": "node scripts/ci/check-behavior-coverage.mjs" },
+      mirror: {
+        note: "fixture",
+        requiredContexts: ["Behavior coverage floor", "AI surface control catalog"],
+        indirectSweeps: [],
+      },
+      directories: ["src/__tests__/behaviors", dynamicDirectory],
+    });
+
+    const result = runControl(root);
+
+    expect(result.status).toBe(1);
+    expect(result.output).toContain(`${dynamicDirectory}/route.test.ts`);
+    expect(result.output).toContain("AI surface control catalog");
+  });
+
   it("refuses a declared sweep the script performing it no longer performs", () => {
     const root = buildTree({
       workflows: {
