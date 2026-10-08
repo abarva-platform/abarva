@@ -25,7 +25,7 @@ const RENDERER_SUITE_DIR = "src/lib/deliverables/orchestrator/__tests__";
  * orchestration control was deliberately retired, so it belongs in a change
  * that says which one and why.
  */
-const MIN_SUITE_FILES = 59;
+const MIN_SUITE_FILES = 60;
 
 /**
  * Suites named individually because a floor cannot say WHICH files are there.

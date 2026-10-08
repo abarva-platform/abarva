@@ -1018,9 +1018,12 @@ jobs:
 
       # C-415 slice 16: the deliverable RENDERER and orchestration suites.
       #
-      # Measured BEFORE it was wired, on this base, three consecutive runs with
-      # identical results: 59 suites, 857 tests, GREEN in 6.3-6.7s under
-      # --runInBand. Largest suites: brief-library 63, renderers 48,
+      # Measured BEFORE it was wired, three consecutive runs with identical
+      # results: 59 suites, 857 tests, GREEN in 6.3-6.7s under --runInBand. A
+      # sixtieth suite arrived on main while this change was open and the
+      # directory re-measured 60 suites / 860 tests green in 6.9s, which is the
+      # count the guard's floor is held at. Largest suites: brief-library 63,
+      # renderers 48,
       # orchestrator 46, slide-text 46, archetype-evidence-landing 41,
       # archetype-config-source 36, surface 34, archetype-pack-config 33,
       # discovery-evidence-library 31, discovery-blueprint-config 30,

@@ -93,7 +93,20 @@ rendering and orchestration logic itself is unchanged.
 - **PASS** — `npx jest src/lib/deliverables/orchestrator/__tests__ --runInBand`
   → 59 suites, 857 tests, all pass. Measured **before** wiring and repeated
   three times with identical results (6.656s, 6.317s, 6.333s), so a known-green
-  directory is being added to a required gate rather than a flaky one. Largest
+  directory is being added to a required gate rather than a flaky one.
+- **PASS** — re-measured after a forward merge of `main`, which landed a
+  sixtieth suite into this very directory while this change was open: **60
+  suites, 860 tests**, green in 6.935s. The guard's floor is raised from 59 to
+  60 to match, and the workflow comment states both measurements rather than
+  only the first. That a suite arrived here mid-change is itself the argument
+  for sweeping the directory instead of naming files: the new suite is owned by
+  a required check with no workflow edit.
+- **PASS** — `npx jest` on the new guard plus `named-suite-requiredness` → 12 of
+  12. The second is the repository's own rule that a suite named individually in
+  a non-required job, while a required sweep already runs it, is a defect.
+  Wiring a directory can create that condition, so it is checked here
+  deliberately: no suite inside this directory is individually named in a
+  non-required job, so this change creates no such violation. Largest
   suites: brief-library 63, renderers 48, orchestrator 46, slide-text 46,
   archetype-evidence-landing 41, archetype-config-source 36, surface 34,
   archetype-pack-config 33, discovery-evidence-library 31,
@@ -128,13 +141,20 @@ rendering and orchestration logic itself is unchanged.
   6. Adding a sibling directory whose name starts with the swept path's last
      segment fails **exactly one** case — the widening assertion.
 - **PASS** — `npm run audit:test-ci-coverage` →
-  `census drift: committed census matches this run`. The base was measured first
-  and agreed with the committed census exactly, so the delta is clean:
-  `testFiles` +1, `coveredTestFiles` +1, `pullRequestCoveredTestFiles` +1,
-  `uncoveredTestFiles` **unchanged** at 164. Covered up and uncovered flat is
-  the proof that the new suite is registered rather than orphaned. Absolute
-  values are base-relative (2854 → 2855 at this base); the **delta** is the
-  durable claim.
+  `census drift: committed census matches this run`. This change registers
+  **one** test file: `coveredTestFiles` and `pullRequestCoveredTestFiles` each
+  rise by one with `uncoveredTestFiles` **unchanged** at 164. Covered up and
+  uncovered flat is the proof that the new suite is registered rather than
+  orphaned.
+  Absolutes are base-relative and the base currently carries drift, so they are
+  stated rather than claimed as the delta. This branch regenerates to
+  `2857 / 2693 / 2692`; `main`'s **committed** census reads `2855 / 2691 / 2690`,
+  so the apparent delta is +2 and only +1 of it belongs here. The other +1 was
+  **measured, not inferred**: removing this change's one new test file and
+  regenerating gives `2856 / 2692 / 2691`, so `main`'s true count is 2856
+  against a committed 2855 — two pull requests each added a file and each
+  computed +1 from the same 2854 base, so both wrote 2855. Regenerating honestly
+  is what closes it; whichever pull request merges next writes the true count.
 - **PASS** — `npm run audit:tenancy-fence-coverage` — no change; the new file is
   not a fence-scoped suite.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit`,
