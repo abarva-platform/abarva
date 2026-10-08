@@ -348,6 +348,7 @@ jest.mock(
 
 import { POST } from "../route";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { unexpectedWalkStepDetail } from "@/lib/programs/walk-step-unexpected-failure";
 
 function req(body: unknown, headers: Record<string, string> = {}) {
   return {
@@ -667,6 +668,35 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     });
     expect(createMoveContextExtract).not.toHaveBeenCalled();
     expect(createCalls).toHaveLength(0);
+  });
+
+  /**
+   * The catch-all arm, driven through the route.
+   *
+   * This route already answers two of its own failures with a `detail` — an
+   * unresolvable build set and a failed P3 enqueue — and `PhaseApproveAndBuild`
+   * reads `detail` above `error`. The catch-all was the one arm that carried a
+   * raw `message` instead, in a field the client's response type does not even
+   * declare, so the reader who pressed Approve & Build was shown the literal
+   * `internal_error` in place of the build result.
+   */
+  it("answers an unanticipated failure with a sentence, not with its error code", async () => {
+    validateDeliverableTenantInvariant.mockRejectedValue(
+      new Error('relation "deliverable_tenancy" does not exist'),
+    );
+
+    const res = await POST(
+      req({ moveId: "m-p1", phase: 1, useCaseArchetype: "ai_member_service" }),
+    );
+
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toStrictEqual({
+      error: "internal_error",
+      detail: unexpectedWalkStepDetail("phase_deliverable_build"),
+    });
+    expect(body).not.toHaveProperty("message");
+    expect(JSON.stringify(body)).not.toContain("deliverable_tenancy");
   });
 
   it("queues P1 Charter and Discovery Workshop Guide with authoritative phase capture", async () => {

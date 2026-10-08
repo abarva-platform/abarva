@@ -4424,7 +4424,8 @@
           "src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts"
         ],
         "byteScanner": [
-          "src/lib/programs/__tests__/stage-readiness-prompt-window.test.ts"
+          "src/lib/programs/__tests__/stage-readiness-prompt-window.test.ts",
+          "src/lib/programs/__tests__/walk-step-unexpected-failure.test.ts"
         ]
       }
     },

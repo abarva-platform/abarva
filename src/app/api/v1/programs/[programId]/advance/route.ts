@@ -30,6 +30,7 @@ import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-overr
 import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 import { resolvePhaseAdvanceAllowlistRefusal } from "@/lib/programs/phase-advance-authorization-outcome";
 import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
+import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -294,9 +295,8 @@ export async function POST(
       return tenancyErrorResponse(err);
     } catch {}
     console.error("[POST /programs/:id/advance]", err);
-    return Response.json(
-      { error: "internal_error", message: (err as Error).message },
-      { status: 500 },
-    );
+    return Response.json(unexpectedWalkStepFailureBody("phase_advance"), {
+      status: 500,
+    });
   }
 }
