@@ -130,6 +130,7 @@ import { capturePhaseSectionTotal } from "@/lib/programs/capture-phase-section-t
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
 import { declarableEvidenceUploadFamilies } from "@/lib/programs/evidence-readiness/upload-family-declaration";
+import { gateRefusalAllowsResubmission } from "@/lib/programs/gate-refusal-resubmission";
 import {
   declarableCurrentStateFamilies,
   resolveCurrentStateUploadFamilies,
@@ -2581,6 +2582,10 @@ export function MovesPhaseStandaloneClient({
       detail?: string;
       error?: string;
       requiredEvidenceGaps?: unknown;
+      // The route classifies three transition-evidence refusals and says per
+      // cause whether submitting again can answer them. `false` means it
+      // cannot, so the standing remedy below must not be offered.
+      resubmitCanSatisfy?: boolean;
     };
     if (!approvalRes.ok || !approval.ok) {
       const hard = approval.gate?.failedChecks
@@ -2606,8 +2611,15 @@ export function MovesPhaseStandaloneClient({
       // build regenerates the document as a fresh unapproved draft — which
       // clears the very sign-off the gate is waiting for. The no-rebuild
       // submission is the control that can actually close this.
+      // Offered only where a re-submission can actually answer the refusal.
+      // The route rules one out for `gap_assessment_failed` (422) and says so
+      // in its own `detail`; appending this there contradicted the sentence
+      // directly above it and sent the reader round a loop that cannot close.
+      const resubmissionRemedy = gateRefusalAllowsResubmission(approval)
+        ? ` Review the open gate item, then approve the draft or upload an edited version in the gate step's sign-off ledger above and use "Submit ${phase.code} ${phase.title} gate approval" — re-running Approve & Build would replace the document you just approved with a new unapproved draft.`
+        : "";
       setGateApprovalMessage(
-        `${result.source === "existing_documents" ? "Submitted" : "Build completed"}, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, then approve the draft or upload an edited version in the gate step's sign-off ledger above and use "Submit ${phase.code} ${phase.title} gate approval" — re-running Approve & Build would replace the document you just approved with a new unapproved draft.`,
+        `${result.source === "existing_documents" ? "Submitted" : "Build completed"}, but the phase gate is blocked: ${blockedMessage}.${resubmissionRemedy}`,
       );
       throw new Error(blockedMessage);
     }
