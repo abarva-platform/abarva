@@ -1,5 +1,7 @@
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
+import { deriveEngagementPhaseRail } from '@/lib/programs/engagement-phase-rail';
+import { getPhaseLabel } from '@/lib/programs/phase-labels';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
@@ -12,8 +14,10 @@ const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const MONO = 'JetBrains Mono, monospace';
 const SERIF = 'Fraunces, Georgia, serif';
 
-const PHASE_LABELS = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
-const PHASE_COLORS = [TEAL, TEAL, AMBER, '#FB923C', GREEN];
+// One colour per canonical phase (P0-P5). The labels are NOT stated here:
+// `phase-labels` is the declared source of truth for every user-visible phase
+// label, and the rail model supplies them.
+const PHASE_COLORS = [TEAL, TEAL, AMBER, '#FB923C', GREEN, GREEN];
 
 function dollarsM(n: number | null | undefined): string {
   if (n == null || n <= 0) return '—';
@@ -90,7 +94,6 @@ export function EngagementMetaStrip({
   contradictionsCount,
   contradictionsScope = 'client',
 }: Props) {
-  const gates = (engagement.gates_passed as Array<{ phase?: number; signed_at?: string; status?: string }> | null) ?? [];
   const baseline = engagement.baseline_metrics as {
     items?: Array<{ metric: string; baseline_value?: string | number; actual_value?: string | number; savings_usd?: string | number }>;
     savings_usd?: number;
@@ -108,20 +111,19 @@ export function EngagementMetaStrip({
           }
           return null;
         })();
-  const phase2Gate = gates.find((g) => g.phase === 2 && g.status === 'approved');
-  const baselineLockedAt =
-    baseline?.captured_at
-      ?? (Array.isArray(baseline?.items) && baseline.items.length > 0 ? phase2Gate?.signed_at ?? null : phase2Gate?.signed_at ?? null);
-  const latestGate = gates
-    .filter((g) => g.status === 'approved' && g.signed_at)
-    .sort((a, b) => (b.signed_at ?? '').localeCompare(a.signed_at ?? ''))[0];
-  const nextGateAt = latestGate?.signed_at
-    ? new Date(new Date(latestGate.signed_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    : null;
+  // Every gate signal comes from one place, so the strip cannot recognise a
+  // narrower set of recorded shapes than the rest of the product does. The two
+  // former `baselineLockedAt` fallback arms were identical expressions, so
+  // collapsing them to the phase-2 gate date changes no outcome.
+  const phaseRail = deriveEngagementPhaseRail({
+    gatesPassed: engagement.gates_passed as readonly unknown[] | null,
+    baselineCapturedAt: baseline?.captured_at ?? null,
+  });
+  const { baselineLockedAt, nextGateAt, markers } = phaseRail;
 
   const phase = engagement.current_phase;
   const phaseColor = PHASE_COLORS[phase] ?? MUTE;
-  const phaseLabel = PHASE_LABELS[phase] ?? `Phase ${phase}`;
+  const phaseLabel = getPhaseLabel(phase);
 
   return (
     <div
@@ -193,7 +195,7 @@ export function EngagementMetaStrip({
         />
         <MetaCell
           eyebrow="PHASE"
-          value={`${phase} · ${phaseLabel}`}
+          value={phaseLabel}
           sub={nextGateAt ? `next gate ~${formatShortDate(nextGateAt)}` : 'no gate history yet'}
           accent={phaseColor}
         />
@@ -226,13 +228,12 @@ export function EngagementMetaStrip({
       {/* Row 3: phase progress bar */}
       <div style={{ marginTop: 16, padding: '10px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {PHASE_LABELS.map((label, i) => {
+          {markers.map(({ phase: i, label, approved, signedAt }) => {
             const isPast = i < phase;
             const isCurrent = i === phase;
-            const gate = gates.find((g) => g.phase === i && g.status === 'approved');
             const dotColor = isPast || isCurrent ? PHASE_COLORS[i] : 'rgba(255,255,255,0.18)';
             return (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: i === PHASE_LABELS.length - 1 ? 0 : 1 }}>
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: i === markers.length - 1 ? 0 : 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 80 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div
@@ -258,8 +259,9 @@ export function EngagementMetaStrip({
                       P{i} · {label}
                     </div>
                   </div>
-                  {gate?.signed_at && (
+                  {approved && (
                     <div
+                      data-testid={`engagement-meta-strip-gate-${i}`}
                       style={{
                         fontFamily: MONO,
                         fontSize: 9,
@@ -269,11 +271,11 @@ export function EngagementMetaStrip({
                         marginTop: 2,
                       }}
                     >
-                      gate {formatShortDate(gate.signed_at)}
+                      {signedAt ? `gate ${formatShortDate(signedAt)}` : 'gate approved'}
                     </div>
                   )}
                 </div>
-                {i < PHASE_LABELS.length - 1 && (
+                {i < markers.length - 1 && (
                   <div
                     style={{
                       flex: 1,

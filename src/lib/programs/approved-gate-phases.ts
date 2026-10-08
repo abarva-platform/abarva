@@ -90,17 +90,58 @@ export function gatesPassedContainsPhase(
   gatesPassed: readonly unknown[] | null | undefined,
   phase: number,
 ): boolean {
-  if (!Array.isArray(gatesPassed)) return false;
-  return gatesPassed.some((entry) => {
-    if (namesPhase(entry, phase)) return true;
+  return findGatesPassedEntryForPhase(gatesPassed, phase) !== null;
+}
+
+/**
+ * What a matched `gates_passed` entry carries beyond the fact of approval.
+ *
+ * A date is optional, because the only reachable writer on the Moves path
+ * appends the bare phase number — an approval record with no date at all. A
+ * reader that wants to say "this gate was approved" must therefore be able to
+ * do so without one, and a reader that wants to print a date must treat its
+ * absence as unknown rather than as "not approved".
+ */
+export type GatesPassedEntryMatch = {
+  signedAt: string | null;
+  summary: string | null;
+};
+
+function asOptionalText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== "" ? value : null;
+}
+
+/**
+ * The matched `engagements.gates_passed` entry for a phase, or null when the
+ * array names no approval for it.
+ *
+ * Same rule as `gatesPassedContainsPhase` — that function is this one asked for
+ * a yes or no — so the vocabulary of phase spellings and approving statuses is
+ * stated once. Callers that need the recorded date (a gate marker, a timeline
+ * entry) use this; callers that only need the fact use the predicate.
+ */
+export function findGatesPassedEntryForPhase(
+  gatesPassed: readonly unknown[] | null | undefined,
+  phase: number,
+): GatesPassedEntryMatch | null {
+  if (!Array.isArray(gatesPassed)) return null;
+  for (const entry of gatesPassed) {
+    if (namesPhase(entry, phase)) {
+      return { signedAt: null, summary: null };
+    }
     const gate = asRecord(entry);
-    if (!gate) return false;
+    if (!gate) continue;
     const status = String(
       gate.status ?? gate.approval_status ?? "approved",
     ).toLowerCase();
-    if (!GATES_PASSED_APPROVED_STATUSES.includes(status)) return false;
-    return PHASE_KEYS.some((key) => namesPhase(gate[key], phase));
-  });
+    if (!GATES_PASSED_APPROVED_STATUSES.includes(status)) continue;
+    if (!PHASE_KEYS.some((key) => namesPhase(gate[key], phase))) continue;
+    return {
+      signedAt: asOptionalText(gate.signed_at ?? gate.signedAt),
+      summary: asOptionalText(gate.summary),
+    };
+  }
+  return null;
 }
 
 /** The `phase_snapshots` rule on its own: an `approved` row for the phase. */
