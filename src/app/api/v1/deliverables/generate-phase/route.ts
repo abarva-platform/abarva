@@ -68,6 +68,11 @@ import {
 } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import {
+  appendEvidenceFrameworkProvenance,
+  resolveEvidenceFrameworkProvenance,
+  type EvidenceFrameworkProvenance,
+} from "@/lib/programs/evidence-framework-provenance";
 import { buildHeldByEvidenceDetail } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
 import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
@@ -311,9 +316,14 @@ export async function POST(req: NextRequest) {
     let requiredEvidenceGaps: ReturnType<
       typeof currentPhaseRequiredEvidenceGaps
     >;
+    // What chose the framework the gaps below were measured against. Stays
+    // `null` if readiness never loaded, so the refusal cannot claim a
+    // declaration it did not read.
+    let evidenceFramework: EvidenceFrameworkProvenance | null = null;
     let acceptedStageReadinessPrompt = "";
     try {
       const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
+      evidenceFramework = resolveEvidenceFrameworkProvenance(readiness);
       let packets = buildMoveEvidenceNeedPackets({
         moveId,
         moveName,
@@ -367,12 +377,18 @@ export async function POST(req: NextRequest) {
       return Response.json(
         {
           error: "required_evidence_open",
-          detail: buildHeldByEvidenceDetail(requiredEvidenceGaps.length),
+          // The count and the slot names are correct; what needs saying is
+          // whether a declaration chose the framework they came from.
+          detail: appendEvidenceFrameworkProvenance(
+            buildHeldByEvidenceDetail(requiredEvidenceGaps.length),
+            evidenceFramework,
+          ),
           requiredEvidenceGaps: requiredEvidenceGaps.map((gap) => ({
             evidenceSlot: gap.evidenceSlot,
             status: gap.status,
             nextAction: gap.nextAction,
           })),
+          evidenceFramework,
           nextAction:
             "Upload the minimum required source evidence, review the extracted facts, and approve or formally waive each required item before building.",
         },
