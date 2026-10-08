@@ -2,6 +2,7 @@ import {
   gatesPassedContainsPhase,
   snapshotsApprovePhase,
   isGateApprovedForPhase,
+  findGatesPassedEntryForPhase,
 } from "@/lib/programs/approved-gate-phases";
 
 // The shape the demo tenant's engagement is seeded with: full gate records for
@@ -130,5 +131,55 @@ describe("isGateApprovedForPhase — the union both readers must ask", () => {
       ),
     ).toBe(true);
     expect(isGateApprovedForPhase({}, 1)).toBe(false);
+  });
+});
+
+describe("findGatesPassedEntryForPhase", () => {
+  it("is the predicate's own rule, so the two cannot disagree", () => {
+    const arrays: Array<readonly unknown[] | null> = [
+      null,
+      [],
+      [2],
+      ["2"],
+      ["P2"],
+      [{ phase: 2, status: "approved" }],
+      [{ phase_number: 2, status: "passed" }],
+      [{ phase: 2, status: "rejected" }],
+      [{}],
+      ["nonsense"],
+    ];
+    for (const gatesPassed of arrays) {
+      for (const phase of [0, 1, 2, 3, 4, 5]) {
+        expect(findGatesPassedEntryForPhase(gatesPassed, phase) !== null).toBe(
+          gatesPassedContainsPhase(gatesPassed, phase),
+        );
+      }
+    }
+  });
+
+  it("returns a dateless match for the bare phase number", () => {
+    expect(findGatesPassedEntryForPhase([5], 5)).toEqual({
+      signedAt: null,
+      summary: null,
+    });
+  });
+
+  it("carries the recorded date and summary when the record has them", () => {
+    expect(
+      findGatesPassedEntryForPhase(
+        [{ phase: 3, status: "approved", signed_at: "2026-05-06T00:00:00.000Z", summary: "Design agreed" }],
+        3,
+      ),
+    ).toEqual({ signedAt: "2026-05-06T00:00:00.000Z", summary: "Design agreed" });
+  });
+
+  it("reports a blank date as absent rather than as an empty string", () => {
+    expect(
+      findGatesPassedEntryForPhase([{ phase: 1, status: "approved", signed_at: "  " }], 1),
+    ).toEqual({ signedAt: null, summary: null });
+  });
+
+  it("returns null for a phase the array does not name", () => {
+    expect(findGatesPassedEntryForPhase([{ phase: 1, status: "approved" }], 2)).toBeNull();
   });
 });
