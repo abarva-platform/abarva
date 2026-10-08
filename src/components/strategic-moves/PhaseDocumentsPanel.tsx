@@ -36,6 +36,7 @@ import {
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
 import { DeliverableApprovalAction } from "./DeliverableApprovalAction";
+import { describeDeliverableStatus } from "@/lib/programs/deliverable-status-presentation";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 
 interface Props {
@@ -163,10 +164,12 @@ function mimeIcon(mimeType: string): string {
   return "📎";
 }
 
+// The dot's name and colour come from the status-presentation module, which
+// also answers whether approving this state can succeed. Keeping both answers
+// in one place is what stopped `superseded` rendering as `Draft`.
 function statusDot(status: string): { color: string; label: string } {
-  if (status === "signed_off") return { color: "#16A34A", label: "Signed off" };
-  if (status === "in_review") return { color: "#D97706", label: "In review" };
-  return { color: "#9AA3B2", label: "Draft" };
+  const described = describeDeliverableStatus(status);
+  return { color: described.dotColor, label: described.label };
 }
 
 function FormatPills({ format }: { format: DeliverableFormat }) {
@@ -362,6 +365,12 @@ function DocumentRow({
       ? "#1D4ED8"
       : "#B4513C";
   const dot = dbRow ? statusDot(dbRow.status) : null;
+  // Non-null only for a state approving cannot leave. Rendered in place of the
+  // approve control, so the list stops offering the action the sign-off route
+  // refuses from here and names the one that works.
+  const blockedNextAction = dbRow
+    ? describeDeliverableStatus(dbRow.status).blockedNextAction
+    : null;
   const isExcel = spec.formatRecommendation === "excel";
   const base = `/api/programs/${moveId}/deliverables/${dbRow?.id}/content-export`;
   const artBase = runArtifact
@@ -552,15 +561,21 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(dbRow.updated_at)}
             </span>
-            {!calmBrowse && canApproveGates && (
-              <DeliverableApprovalAction
-                moveId={moveId}
-                deliverableId={dbRow.id}
-                alreadyApproved={
-                  dbRow.signed_off_version === dbRow.current_version
-                }
-              />
-            )}
+            {!calmBrowse &&
+              canApproveGates &&
+              (blockedNextAction ? (
+                <span style={{ fontSize: 10, color: "#B4513C", maxWidth: 260 }}>
+                  {blockedNextAction}
+                </span>
+              ) : (
+                <DeliverableApprovalAction
+                  moveId={moveId}
+                  deliverableId={dbRow.id}
+                  alreadyApproved={
+                    dbRow.signed_off_version === dbRow.current_version
+                  }
+                />
+              ))}
           </>
         ) : builtViaRun && runArtifact ? (
           // The run artifact is only the preview/download source. If its
@@ -576,15 +591,22 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(runArtifact.updatedAt)}
             </span>
-            {dbRow && !calmBrowse && canApproveGates && (
-              <DeliverableApprovalAction
-                moveId={moveId}
-                deliverableId={dbRow.id}
-                alreadyApproved={
-                  dbRow.signed_off_version === dbRow.current_version
-                }
-              />
-            )}
+            {dbRow &&
+              !calmBrowse &&
+              canApproveGates &&
+              (blockedNextAction ? (
+                <span style={{ fontSize: 10, color: "#B4513C", maxWidth: 260 }}>
+                  {blockedNextAction}
+                </span>
+              ) : (
+                <DeliverableApprovalAction
+                  moveId={moveId}
+                  deliverableId={dbRow.id}
+                  alreadyApproved={
+                    dbRow.signed_off_version === dbRow.current_version
+                  }
+                />
+              ))}
           </>
         ) : runNeedsAttention ? (
           <div

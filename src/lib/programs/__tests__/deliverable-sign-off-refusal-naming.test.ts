@@ -34,6 +34,13 @@ import {
   refuseMoveNotReadable,
   refuseSignOffNotApplied,
 } from "@/lib/programs/deliverable-sign-off-outcome";
+import type { DeliverableSignOffStatus } from "@/lib/programs/deliverable-sign-off-outcome";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import {
+  DELIVERABLE_SIGNABLE_STATUSES,
+  describeDeliverableStatus,
+} from "@/lib/programs/deliverable-status-presentation";
 import { P3_ARCHITECTURE_DELIVERABLE_KEYS } from "@/lib/programs/approved-solution-approach";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 
@@ -491,5 +498,97 @@ describe("deliverable sign-off refusal naming", () => {
       expect(body.status).toBe("signed_off");
       expect(mockSignOffDeliverable).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+// ── What the LIST says before the click ───────────────────────────────────────
+//
+// The refusals above are what the route answers AFTER a submission. The Files &
+// Evidence Documents list had to answer two questions before it:
+// what the state is called, and whether approving it can succeed. It answered
+// both from a two-arm ladder naming `signed_off` and `in_review`, so
+// `superseded` — the one other value the CHECK constraint admits — fell through
+// to `Draft` and the approve control rendered beside that label. Every
+// submission from there is the `deliverable_superseded` 409 above.
+//
+// `deliverable-status-presentation.ts` holds both answers, and these cases pin
+// them to the same domain and the same remedy the refusal names.
+describe("the document list's reading of deliverables_v2.status", () => {
+  const DOMAIN: DeliverableSignOffStatus[] = [
+    "draft",
+    "in_review",
+    "signed_off",
+    "superseded",
+  ];
+
+  it("names the superseded state instead of calling it a draft", () => {
+    const described = describeDeliverableStatus("superseded");
+    expect(described.label).toBe("Superseded");
+    expect(described.label).not.toBe(describeDeliverableStatus("draft").label);
+  });
+
+  it("refuses to call a superseded row signable and names regeneration", () => {
+    const described = describeDeliverableStatus("superseded");
+    expect(described.signable).toBe(false);
+    expect(described.blockedNextAction).toMatch(/generate it again/i);
+    // The remedy has to be the SAME one the route's refusal prescribes, or the
+    // list sends the reader somewhere the route will not agree with.
+    const refusal = refuseSignOffNotApplied({ statusAtRead: "superseded" });
+    expect(refusal.code).toBe("deliverable_superseded");
+    expect(refusal.detail).toMatch(/generate the document again/i);
+  });
+
+  it("leaves the two signable states offering approval", () => {
+    for (const status of ["draft", "in_review"] as const) {
+      const described = describeDeliverableStatus(status);
+      expect(described.signable).toBe(true);
+      // Non-null here would replace the approve control on a row that can be
+      // approved — the mirror of the defect.
+      expect(described.blockedNextAction).toBeNull();
+    }
+  });
+
+  it("blocks nothing for an already-signed row", () => {
+    // The reader's intent is recorded; the control suppresses itself on
+    // `alreadyApproved`, and a next action here would talk over that.
+    const described = describeDeliverableStatus("signed_off");
+    expect(described.signable).toBe(false);
+    expect(described.blockedNextAction).toBeNull();
+  });
+
+  it("keeps the signable set to exactly the states it calls signable", () => {
+    const derived = DOMAIN.filter(
+      (status) => describeDeliverableStatus(status).signable,
+    );
+    expect([...DELIVERABLE_SIGNABLE_STATUSES].sort()).toEqual(derived.sort());
+    // Non-vacuous: the domain is wider than the signable set, so the filter is
+    // doing work. A fifth status added to the column reaches the default arm,
+    // is called signable there, and fails this case until it is declared.
+    expect(DOMAIN.length).toBeGreaterThan(DELIVERABLE_SIGNABLE_STATUSES.length);
+  });
+
+  it("falls an unrecognised status to Draft and keeps its control", () => {
+    // Deliberately fail-OPEN. The route is the authority on eligibility and now
+    // names its own refusals, so hiding the control for a state this module has
+    // not been taught about would withhold a legitimate approval.
+    const described = describeDeliverableStatus("some_status_added_later");
+    expect(described.label).toBe("Draft");
+    expect(described.signable).toBe(true);
+    expect(described.blockedNextAction).toBeNull();
+  });
+
+  it("has the write layer consume the signable set rather than relist it", () => {
+    // The constant is inert unless the guarded write reads it: the eligible set
+    // was an inline literal at the `.in("status", ...)` filter, a third
+    // declaration of a domain two other modules already owned.
+    const source = readFileSync(
+      join(process.cwd(), "src/lib/programs/mutations.ts"),
+      "utf8",
+    );
+    expect(source).toContain("DELIVERABLE_SIGNABLE_STATUSES");
+    expect(source).toContain(
+      '.in("status", [...DELIVERABLE_SIGNABLE_STATUSES])',
+    );
+    expect(source).not.toContain('.in("status", ["draft", "in_review"])');
   });
 });

@@ -23,6 +23,7 @@ import type {
 import type { ApprovedEvidenceLineageStamp } from "./deliverables/approved-evidence-lineage";
 import type { ArchetypeKey } from "./types.ui";
 import { getProgramById } from "./queries";
+import { DELIVERABLE_SIGNABLE_STATUSES } from "./deliverable-status-presentation";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 import {
   createSupabaseProgramsWriteAdapter,
@@ -782,7 +783,7 @@ export async function signOffDeliverable(
     // signs it off in the same action, so sign-off must act on a fresh draft
     // without a separate publish hop. Widening only ADDS draft acceptance; the
     // existing in_review → signed_off path is unchanged.
-    .in("status", ["draft", "in_review"])
+    .in("status", [...DELIVERABLE_SIGNABLE_STATUSES])
     .select("id")
     .maybeSingle();
   if (error) throw error;
