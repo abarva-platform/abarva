@@ -174,14 +174,18 @@ jobs:
       # generate-phase/__tests__/route.test.ts has been removed from this list
       # and from "Run the deliverables route suites" below, where it was named
       # a second time, for the same reason: the catalog sweeps that directory
-      # as of slice 18. The remaining paths here are in directories that no
-      # required sweep reaches.
+      # as of slice 18.
+      #
+      # artifacts/__tests__/route.test.ts has left this list for the same
+      # reason, as of slice 20: the catalog sweeps that directory, so a name
+      # here would be the quotable line in a job that blocks nothing — exactly
+      # what `named-suite-requiredness` refuses. The remaining paths here are
+      # in directories that no required sweep reaches.
       - name: Run the Moves evidence revision suites
         run: >-
           npx jest --runTestsByPath
           src/scripts/__tests__/process-deliverable-queue.test.ts
           src/app/api/v1/programs/[programId]/generate/__tests__/route.test.ts
-          src/app/api/v1/programs/[programId]/artifacts/__tests__/route.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.scroll-into-view.test.tsx
