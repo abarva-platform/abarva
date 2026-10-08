@@ -1211,6 +1211,24 @@ jobs:
       - name: Exercise the current-state evidence approval route suites
         run: npx jest 'src/app/api/v1/programs/\[programId\]/current-state/evidence/\[evidenceId\]/approve/__tests__' --runInBand
 
+      # The capture autosave route, wired for the same reason and the same way
+      # as the sweeps above — with one difference worth naming: this directory
+      # was not merge-dark, it did not EXIST. Slices 17-19 wired directories the
+      # census already counted covered; `phase-capture/__tests__` had no suite
+      # at all, so the single most-used control on the phase walk — every field
+      # of every phase is persisted through this POST, on a debounce, while the
+      # reader types — had no route-level coverage of any kind.
+      #
+      # Measured at wiring: 1 suite, 12 tests, GREEN in 0.06-0.11s under
+      # --runInBand.
+      #
+      # Wired as a DIRECTORY so a suite added here is owned without a workflow
+      # edit, with the dynamic segment's brackets escaped for the reason slice
+      # 17 states: jest reads a bare positional argument as a REGEX, and an
+      # unescaped `[programId]` is a character class that matches nothing.
+      - name: Exercise the phase capture route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/phase-capture/__tests__' --runInBand
+
       # C-415 slice 19: the three interactive approval writes on the Moves
       # phase surface that no required job reached.
       #
