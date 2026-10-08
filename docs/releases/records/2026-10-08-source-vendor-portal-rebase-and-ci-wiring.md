@@ -88,7 +88,7 @@ The census moves because of the step, not alongside it.
 
 These are measurements, not changes. Nothing below is fixed here.
 
-### F1 — The migration enables no row-level security at all
+### F1 — The migration enabled no row-level security at all — **now fixed**
 
 `20260925090000_source_vendor_rfp_portal.sql` creates four tables and adds a column. It contains
 **zero** `ENABLE ROW LEVEL SECURITY` statements and **zero** policies.
@@ -101,12 +101,25 @@ The brief's E3 slice describes the blocker as "the portal DAO runs on an elevate
 policies alone would not bind". That is true and it is the smaller half. The larger half is that
 there are no policies to bind. E3 is bigger than its one-hour sizing.
 
-### F2 — Every portal statement runs on the write client
+### F2 — Corrected: the DAO's fence is `vendor_id`, and it holds
 
-`src/lib/source/vendor-portal/dao.ts` resolves `getAzureWriteFluentClient()` in every function.
-Queries carry a `source_event_id` predicate; several do not carry a `tenant_key` predicate — the
-credential lookup is `WHERE source_event_id = $1 AND username = $2`. With no RLS and an elevated
-connection, the event-id predicate is the entire fence.
+An earlier reading of this said several statements "do not carry a `tenant_key` predicate", implying
+a hole. That overstated it. Every statement in `dao.ts` is bounded, by design and in fact:
+
+| Function | Bound |
+|---|---|
+| `findVendorForSignIn` | `source_event_id` **and** `username`, then a password check — the one path where no vendor is yet known |
+| `resolveVendorBySession` | `session_token_hash` joined to a vendor on the **same** `source_event_id` |
+| `listVendorEvents`, `countSubmissions` | `vendor_id` |
+| `recordAcknowledgement` | the vendor's own `id`, and `invitation_state = 'invited'` |
+| `revokeSession` | `session_token_hash`, the bearer secret itself |
+
+`vendor_id` is **narrower** than `tenant_key`, and it is taken only from a verified session. A
+tenant predicate would have been a weaker fence, not a stronger one. What was missing was not a
+predicate but anything that would stop a *future* statement omitting one — now `dao-fence.test.ts`.
+
+Every statement does run on the write client, which remains true and is why RLS cannot be the
+vendor-to-vendor fence.
 
 ### F3 — The migration's timestamp sorts before ~30 already-applied migrations
 
