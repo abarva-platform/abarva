@@ -272,6 +272,15 @@ jobs:
       # job hosting this step is a required status check, so the name is one a
       # closure note may honestly quote (T-595). New strategic-moves suites
       # that live beside these controls must be named here deliberately.
+      #
+      # The forty-fourth path below is the phase approve-and-build gate sign-off
+      # suite, named here under that rule. It sat in this directory enumerated
+      # but collected by nothing: the census recorded it `run: false`,
+      # `covered: false`, `untriaged: true` while the directory itself ranks at
+      # the critical governed-risk band on the declared-AI-surface-control and
+      # approval-or-lifecycle-write signals. A dark suite over gate sign-off on
+      # the approve path is precisely the gap this step exists to close. Five of
+      # five pass on this commit.
       - name: Exercise Moves visible AI liability controls
         run: >-
           npx jest --runTestsByPath
@@ -318,6 +327,7 @@ jobs:
           src/components/strategic-moves/__tests__/CaptureGateMetNotice.test.tsx
           src/components/strategic-moves/__tests__/MovesPhaseFindings.test.tsx
           src/components/strategic-moves/__tests__/MovesPhaseCharts.test.tsx
+          src/components/strategic-moves/__tests__/phase-approve-and-build-gate-signoff.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
