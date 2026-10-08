@@ -764,6 +764,41 @@ jobs:
       - name: Exercise the Programs stage-readiness transition workbook suite
         run: npx jest src/lib/programs/stage-readiness-workbooks/__tests__ --runInBand
 
+      # C-415 slice 15: the deliverable-generation precondition suites.
+      #
+      # Measured BEFORE it was wired, the directory executed on its own: 36
+      # suites, 303 tests, GREEN in 3.0s — golden-bar 32, visual-and-prompt 24,
+      # roadmap-governed-output 18, roadmap-structured-pass 17,
+      # adaptive-depth-inbound-merges 16, roadmap-contract-extractor 14,
+      # exhibit-content-extractor 13, adaptive-depth 12,
+      # client-facing-artifact-sanitize 11, governance-contradiction-validator
+      # 11, roadmap-artifact-persistence 11, generate-artifact 11,
+      # slide-contract 10, and 23 more of 8 or fewer.
+      #
+      # Wired for the same reason as slice 14 above: the census already counted
+      # this directory as COVERED and it was merge-dark anyway. The only
+      # workflow that named it was unit-suites.yml, whose job is in none of the
+      # required contexts, so a regression in the generation preconditions could
+      # not fail a merge. The census asks whether SOME workflow reaches a
+      # directory, never whether a REQUIRED one does.
+      #
+      # Not coverage of nothing, checked before wiring: moves-generate-deps.ts
+      # is imported at runtime by the Moves generate route, the deliverable
+      # queue worker, the deliverable sign-off route and the agent's
+      # draftArtifact tool. It resolves gateApproved, captureComplete,
+      # loadDecisions and loadPhaseCapture — the preconditions that decide
+      # whether a phase deliverable generates at all — so this directory sits on
+      # the last mile of the phase-to-document path. generate-artifact.ts has
+      # six production importers behind the same routes.
+      #
+      # Wired as a DIRECTORY with no trailing slash, so a suite added here is
+      # owned without a workflow edit. Sibling directories under
+      # src/lib/deliverables stay out: each needs its own green measurement
+      # first, and wiring a red directory by naming it in a green command is
+      # the thing this step exists to avoid.
+      - name: Exercise the deliverable-generation precondition suites
+        run: npx jest src/lib/deliverables/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
