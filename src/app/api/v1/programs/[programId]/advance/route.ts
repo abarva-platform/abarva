@@ -28,6 +28,7 @@ import {
 import { resolvePhaseGateActorPersonId } from "@/lib/programs/phase-gate-actor";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
 import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
+import { resolvePhaseAdvanceAllowlistRefusal } from "@/lib/programs/phase-advance-authorization-outcome";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,11 +42,12 @@ export async function POST(
     const ctx = await requireTenancy();
     const { supabase } = await getProgramsRouteSupabase("mutation");
     const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
-    if (
-      accessPolicy.programIdsAllowed !== null &&
-      !accessPolicy.programIdsAllowed.includes(programId)
-    ) {
-      return Response.json({ error: "forbidden" }, { status: 403 });
+    const allowlistRefusal = resolvePhaseAdvanceAllowlistRefusal({
+      programId,
+      programIdsAllowed: accessPolicy.programIdsAllowed,
+    });
+    if (allowlistRefusal) {
+      return Response.json(allowlistRefusal, { status: 403 });
     }
     const body = (await req.json()) as {
       toPhase?: number;
