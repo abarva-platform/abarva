@@ -833,13 +833,14 @@ jobs:
       # time is zero either way, this job has 66% headroom, and a dedicated
       # workflow pays its own setup — so pick on failure attribution, and do
       # not convert an existing one for consistency alone.
-      - name: Exercise unwired component suites (programs, agent, shell, atlas)
+      - name: Exercise unwired component suites (programs, agent, shell, atlas, sponsor)
         run: >-
           npx jest
           src/components/programs/__tests__
           src/components/agent/__tests__
           src/components/shell/__tests__
           src/components/atlas/__tests__
+          src/components/sponsor/__tests__
           --runInBand
 
       # Shared AI-disclosure primitives and the phase-workspace controls were

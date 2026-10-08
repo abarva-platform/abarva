@@ -5,6 +5,7 @@ import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { TurnRow } from '@/lib/db/turn';
 import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
+import { PHASE_CODES, getPhaseLabelShort } from '@/lib/programs/phase-labels';
 
 type LocalTurn = TurnRow & { streaming?: boolean; errored?: boolean };
 
@@ -33,7 +34,17 @@ const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 const FONT_MONO = 'JetBrains Mono, monospace';
 const FONT_SERIF = 'Fraunces, Georgia, serif';
 
-const PHASE_LABELS = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
+// The sponsor stepper names the phases from the canonical phase model.
+// It used to carry a local five-entry Start/Diagnose/Design/Execute/Verify
+// array: P0..P4 were each named as the wrong phase, Execute/Verify are the
+// downstream Tower vocabulary `phase-labels.ts` retired, and because the
+// array had five entries for six phases a sponsor whose engagement sits at
+// P5 saw no cell marked current at all.
+const PHASE_STEPPER = PHASE_CODES.map((code, phase) => ({
+  code,
+  phase,
+  label: getPhaseLabelShort(phase),
+}));
 
 export function SponsorConsole({ engagement, viewer, maestro, turns, deliverables }: Props) {
   const [messages, setMessages] = useState<LocalTurn[]>(turns);
@@ -145,8 +156,8 @@ export function SponsorConsole({ engagement, viewer, maestro, turns, deliverable
 
       {/* Phase stepper */}
       <div style={{ padding: '16px 24px', maxWidth: 1080, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
-          {PHASE_LABELS.map((label, i) => (
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${PHASE_STEPPER.length}, 1fr)`, gap: 6 }}>
+          {PHASE_STEPPER.map(({ code, label }, i) => (
             <div
               key={i}
               style={{
@@ -157,7 +168,7 @@ export function SponsorConsole({ engagement, viewer, maestro, turns, deliverable
               }}
             >
               <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: i === engagement.current_phase ? TEAL : MUTE, letterSpacing: '0.14em', marginBottom: 4 }}>
-                PHASE {i}
+                {code}
               </div>
               <div style={{ fontSize: 13, color: i === engagement.current_phase ? INK : MUTE }}>{label}</div>
             </div>
