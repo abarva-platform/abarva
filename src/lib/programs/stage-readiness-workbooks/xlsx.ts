@@ -87,6 +87,13 @@ export async function renderStageReadinessWorkbookXlsx(
   });
   start.addRow({ item: "Move", value: spec.moveName });
   start.addRow({ item: "Workbook", value: spec.artifactName });
+  // The question set IS the resolved archetype's evidence families, so the
+  // operator answering it is told which archetype shaped it and who chose it.
+  // Previously the archetype appeared only in the veryHidden `_metadata` sheet.
+  start.addRow({
+    item: "Question set",
+    value: spec.archetypeBasis.statement,
+  });
   start.addRow({
     item: "Evidence references included",
     value: String(spec.startHere.evidenceReferencesIncluded),
@@ -146,6 +153,10 @@ export async function renderStageReadinessWorkbookXlsx(
     phase: String(spec.phase),
     nextPhase: String(spec.nextPhase),
     archetype: spec.archetype,
+    archetypeBasis: spec.archetypeBasis.basis,
+    archetypeDeclared: String(spec.archetypeBasis.declared),
+    archetypeDiscardedDeclaration:
+      spec.archetypeBasis.discardedDeclaration ?? "",
     generatedAt: spec.generatedAt,
     workbookContentHash: spec.metadata.workbookContentHash,
     dimensionPlanVersion: spec.metadata.dimensionPlanVersion,
