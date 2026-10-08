@@ -9,6 +9,13 @@ import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract"
 // The Claude-Design verdicts, re-stated here as the contract (so a drift in the
 // map is a failing test, not a silent layout change).
 const EXPECTED_WIDE: Record<number, string[]> = {
+  1: ["success_criteria", "evidence_plan", "business_change_assessment"],
+  2: [
+    "current_state_findings",
+    "baseline_metrics",
+    "data_quality_governance",
+    "solution_route_validation",
+  ],
   3: [
     "solution_approach",
     "recommendation",
@@ -60,12 +67,12 @@ describe("captureSectionSpan", () => {
   }
 
   it("keeps a structured editor wide even when its phase lists nothing", () => {
-    // P2 is not in the map; a structured section there must still be wide.
+    // phase 6 (Tower) is not in the map; a structured section there must still be wide.
     expect(
-      captureSectionSpan(2, { key: "diagnosis_facts", structured: "facts" }),
+      captureSectionSpan(6, { key: "diagnosis_facts", structured: "facts" }),
     ).toBe("wide");
     // and a plain section in an unlisted phase is single-column
-    expect(captureSectionSpan(2, plain("some_plain"))).toBe("default");
+    expect(captureSectionSpan(6, plain("some_plain"))).toBe("default");
   });
 
   it("never narrows a structured section, even if the map wrongly listed it as default", () => {
@@ -95,8 +102,8 @@ describe("captureSectionSpan", () => {
   // ("default") sections has EVEN length (each D pairs; a wide section forces
   // its own full row). This catches a wrong verdict OR a future question
   // reorder that would strand a half-cell.
-  describe("every P3-P5 step resolves to a clean rectangle", () => {
-    for (const phase of [3, 4, 5]) {
+  describe("every P1-P5 step resolves to a clean rectangle", () => {
+    for (const phase of [1, 2, 3, 4, 5]) {
       const groups = getPhaseStepGroups(phase);
       const byKey = new Map(
         getPhaseCaptureSections(phase).map((s) => [s.key, s]),
