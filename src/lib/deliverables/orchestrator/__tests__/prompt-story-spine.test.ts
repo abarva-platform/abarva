@@ -210,6 +210,21 @@ describe("required exhibit keys reach the pass that authors exhibits", () => {
     expect(instruction).toContain("a RACI");
   });
 
+  it("asks solution design to author the exhibit keys checked before optional rendering", () => {
+    const req = movesRequest("solution_design");
+    const instruction = requiredExhibitsInstruction(req);
+    expect(instruction).toContain(
+      "experience_flow, agent_workflow, exception_handling, control_points, data_flow",
+    );
+    const synthesis = buildPassPrompt("synthesis", {
+      req,
+      brief: getArtifactBrief(req),
+      evidence: req.governedEvidenceBundle,
+      sectionDrafts: [],
+    } as never).user;
+    expect(synthesis).toContain(instruction);
+  });
+
   it("leaves out exhibits another step produces", () => {
     // The open-inputs exhibit is the open-inputs table and checklist.
     const businessCase = requiredExhibitsInstruction(

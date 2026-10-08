@@ -721,7 +721,7 @@ const MOVES_ROOT_CAUSE_WORKSHEET: DeliverableStructure = {
     {
       key: "root_cause_tree",
       title: "Root-Cause Tree",
-      kind: "diagram",
+      kind: "flow",
       purpose:
         "Shows the issue-tree logic from symptoms to root-cause branches and supporting evidence.",
       preferredFormat: "docx",

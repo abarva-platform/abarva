@@ -1134,12 +1134,34 @@ jobs:
       - name: Exercise the phase-gate-approval route suites
         run: npx jest 'src/app/api/v1/programs/\[programId\]/phase-gate-approval/__tests__' --runInBand
 
+      # The advance route's sibling directory, wired for the same reason and the
+      # same way as the phase-gate-approval sweep above.
+      #
+      # `approval-gate.test.ts` in this directory is named by exact path near
+      # the top of this job, and that step stays. Its NEIGHBOUR,
+      # `route.test.ts`, ran in no required job at all: only unit-suites.yml
+      # reached it, and that workflow is required by nothing. So the suite that
+      # covers the live phase-advance mutation end to end — the refusals, the
+      # self-approval path, the capture-incomplete block — could have gone red
+      # on any of its cases without a single merge-blocking check failing, while
+      # the census counted the directory covered because SOME workflow named it.
+      #
+      # Measured before wiring: 2 suites, 16 tests, GREEN under --runInBand.
+      #
+      # Wired as a DIRECTORY so a suite added here is owned without a workflow
+      # edit, and with the brackets of the dynamic segment escaped — jest reads
+      # a bare positional argument as a regex, and unescaped `[programId]` is a
+      # character class that matches nothing.
+      - name: Exercise the phase-advance route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/advance/__tests__' --runInBand
+
       # C-415 slice 18: the two remaining live Moves write routes on the
       # end-to-end path that no required job reached.
       #
-      # Slice 17 wired the gate-approval route. These are the other two writes
-      # a Move cannot complete a phase without, and both were in exactly the
-      # state slice 17 describes: the census counted the directory COVERED
+      # Slice 17 wired the gate-approval route and the step above wired the
+      # phase-advance route. These are the other two writes a Move cannot
+      # complete a phase without, and both were in exactly the state those two
+      # describe: the census counted the directory COVERED
       # because `unit-suites.yml` named it, and `unit-suites.yml` is in none of
       # the required contexts, so every case guarding either route could be
       # deleted without a merge-blocking check going red.
