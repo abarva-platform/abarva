@@ -342,18 +342,21 @@ async function runClaimed(
         moveId: orchestratorPayload.sourceArtifactRef,
         phase: 3,
       });
-      if (
-        !freshness ||
-        freshness.freshnessStatus !== "fresh" ||
-        freshness.evidenceFingerprint !==
-          orchestratorPayload.decisionLineage.contextSnapshotHash
-      ) {
+      // One `if` over four independent operands answered all of them with
+      // "evidence changed, rebuild" — including the case where the approved-
+      // evidence basis could not be READ, whose rebuild re-reads the same basis.
+      const { classifyMoveContextFreshnessRefusal } =
+        await import("@/lib/programs/move-context-freshness-refusal");
+      const freshnessRefusal = classifyMoveContextFreshnessRefusal({
+        freshness,
+        expectedFingerprint:
+          orchestratorPayload.decisionLineage.contextSnapshotHash,
+      });
+      if (freshnessRefusal) {
         await completeDeliverableRun(run.id, {
           status: "blocked",
-          error: "stale_context_snapshot",
-          blockers: [
-            "Move evidence changed after this architecture batch was queued. Refresh the Context Extract and rebuild from the approved evidence snapshot.",
-          ],
+          error: freshnessRefusal.error,
+          blockers: [freshnessRefusal.blocker],
         }).catch(() => {});
         return;
       }
