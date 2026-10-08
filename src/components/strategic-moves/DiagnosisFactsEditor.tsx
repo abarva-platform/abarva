@@ -94,40 +94,40 @@ export function DiagnosisFactsEditor({
         <tbody>
           {rows.map((row, index) => (
             <tr key={index}>
-              <td>
-                <input
+              <td data-label="Metric">
+                <textarea
                   aria-label={`${label} — metric, row ${index + 1}`}
                   onChange={(event) =>
                     setField(index, "metric", event.target.value)
                   }
                   placeholder="Contract intake cycle time"
-                  type="text"
+                  rows={1}
                   value={row.metric}
                 />
               </td>
-              <td>
-                <input
+              <td data-label="Value">
+                <textarea
                   aria-label={`${label} — value, row ${index + 1}`}
                   onChange={(event) =>
                     setField(index, "value", event.target.value)
                   }
                   placeholder="18.4 days median"
-                  type="text"
+                  rows={1}
                   value={row.value}
                 />
               </td>
-              <td>
-                <input
+              <td data-label="Source">
+                <textarea
                   aria-label={`${label} — source, row ${index + 1}`}
                   onChange={(event) =>
                     setField(index, "source", event.target.value)
                   }
                   placeholder="Where this number came from"
-                  type="text"
+                  rows={1}
                   value={row.source}
                 />
               </td>
-              <td>
+              <td data-label="Remove">
                 <button
                   aria-label={`Remove ${label} row ${index + 1}`}
                   className="mxw-facts-editor-remove"

@@ -3653,6 +3653,35 @@ export function MovesPhaseStandaloneClient({
                         phase: phase.phase,
                         sections: phaseCaptureSections,
                         isSectionComplete: isCaptureSectionComplete,
+                        sectionSaveLabel: (section) =>
+                          phaseCaptureStatusForSection(
+                            section,
+                            displayPhaseCaptureValues,
+                            persistedPhaseCaptureValues,
+                            phaseCaptureSaveStatus,
+                            businessChangeAssessment,
+                            initialApprovedEvidenceReferences.map(
+                              (item) => item.evidenceId,
+                            ),
+                            phaseEvidencePassed,
+                            phaseEvidenceCheckAvailable,
+                            initialApprovedP1CaptureEvidenceReferences,
+                            captureBasisForSection(section.key),
+                          ).label,
+                        sectionBasisLabel: (section) => {
+                          if (
+                            !charterBasisActive ||
+                            !charterBasisSectionKeys.has(section.key)
+                          )
+                            return null;
+                          const basis = charterBasisBySection[section.key];
+                          if (!basis) return null;
+                          return basis.kind === "approved_evidence"
+                            ? "Approved evidence"
+                            : basis.kind === "assumption"
+                              ? "Assumption to validate in Discover"
+                              : "Workspace assertion";
+                        },
                         requireAnswers: true,
                         renderSectionInput: captureSectionInput,
                         renderSectionBasis: captureSectionBasis,
@@ -10115,8 +10144,9 @@ function MovesStandaloneStyles() {
 .mxw-facts-editor-table th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5b6c8a;padding:4px 6px 6px;border-bottom:1px solid rgba(12,26,58,.14);font-weight:800}
 .mxw-facts-editor-table th:last-child{width:34px}
 .mxw-facts-editor-table td{padding:5px 6px;vertical-align:top}
-.mxw-facts-editor-table input{width:100%;min-width:0;box-sizing:border-box;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;line-height:1.35;padding:8px 9px}
-.mxw-facts-editor-table input:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
+.mxw-facts-editor-table textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#0c1a3a;font:inherit;font-size:13px;line-height:1.35;padding:8px 9px;field-sizing:content;min-height:36px;max-height:calc(6 * 1.35em + 16px);resize:vertical;overflow-y:auto;overflow-x:hidden}
+.mxw-facts-editor-table textarea:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
+@container (max-width:559px){.mcf-v2 .mxw-facts-editor-table,.mcf-v2 .mxw-facts-editor-table tbody,.mcf-v2 .mxw-facts-editor-table tr,.mcf-v2 .mxw-facts-editor-table td{display:block;width:100%;box-sizing:border-box}.mcf-v2 .mxw-facts-editor-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.mcf-v2 .mxw-facts-editor-table tr{padding:10px 0;border-bottom:1px solid rgba(12,26,58,.14)}.mcf-v2 .mxw-facts-editor-table td{padding:4px 0}.mcf-v2 .mxw-facts-editor-table td::before{content:attr(data-label);display:block;font-size:11px;font-weight:800;color:#5b6c8a;margin:0 0 4px}.mcf-v2 .mxw-facts-editor-table textarea{width:100%}}
 .mxw-facts-editor-remove{width:28px;height:32px;border:1px solid rgba(12,26,58,.16);border-radius:6px;background:#fff;color:#5b6c8a;font-size:15px;line-height:1;cursor:pointer}
 .mxw-facts-editor-remove:hover:not(:disabled){background:#f1f3f8;color:#0c1a3a}
 .mxw-facts-editor-remove:disabled{opacity:.4;cursor:default}
