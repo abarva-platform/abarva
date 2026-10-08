@@ -1,4 +1,4 @@
-# U-584 — The declared phase decides where a generated companion is filed
+# U-585 — The declared phase decides where a generated companion is filed
 
 ## Release ID
 
