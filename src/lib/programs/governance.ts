@@ -40,6 +40,10 @@ import { resolveMoveTier } from "./p0-extended-intake-fields";
 import { listApprovedPhaseEvidence } from "./approved-phase-evidence";
 import { resolveConfirmedSolutionRoute } from "./solution-route-assessment";
 import {
+  discoveryReportTextFromLatestVersion,
+  p2ReadinessBlockedReason,
+} from "./discovery-report-readiness";
+import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
@@ -51,6 +55,10 @@ import {
   reportUnevaluableApprovedEvidenceBasisOnce,
   resolveApprovedEvidenceCurrencyBasis,
 } from "@/lib/programs/approved-evidence-currency-basis";
+import {
+  describeDeliverableSignOffFailure,
+  type DeliverableSignOffVerdict,
+} from "@/lib/programs/deliverable-signoff-diagnosis";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -632,7 +640,12 @@ export async function evaluateGate(
       }> | null) ?? []
     ).map((artifact) => [artifact.artifact_id, artifact]),
   );
-  const isSignedOff = (
+  // The verdict, not just the boolean. `isSignedOff` below keeps the boolean
+  // shape every other caller already uses; the five HARD criteria that ARE a
+  // single sign-off call read the cause so the blocked reader is told which of
+  // the four states they are in and which single action answers it. See
+  // `deliverable-signoff-diagnosis.ts`.
+  const signOffVerdict = (
     row:
       | {
           id: string;
@@ -642,8 +655,15 @@ export async function evaluateGate(
           structured_data?: Record<string, unknown> | null;
         }
       | undefined,
-  ) => {
-    if (row?.status !== "signed_off") return false;
+  ): DeliverableSignOffVerdict => {
+    const pass: DeliverableSignOffVerdict = {
+      ok: true,
+      cause: "signed_off",
+      status: row?.status ?? null,
+    };
+    if (!row) return { ok: false, cause: "absent", status: null };
+    if (row.status !== "signed_off")
+      return { ok: false, cause: "not_signed_off", status: row.status };
     const structured = row.structured_data ?? {};
     const structuredGenerated =
       structured.source === "generated_by_orchestrator" ||
@@ -672,7 +692,7 @@ export async function evaluateGate(
         row.deliverable_type_key,
         currencyScope.reason,
       );
-      return true;
+      return pass;
     }
     const deliverablePhase = currencyScope.phase;
     const structuredLineageCurrent = Boolean(
@@ -727,9 +747,14 @@ export async function evaluateGate(
         programId,
         evidenceBasis.reason,
       );
-      return true;
+      return pass;
     }
-    if (linkedArtifactId && !linkedArtifactIntegrityOk) return false;
+    if (linkedArtifactId && !linkedArtifactIntegrityOk)
+      return {
+        ok: false,
+        cause: "linked_artifact_integrity",
+        status: row.status,
+      };
     if (!evidenceBasis.evaluable) {
       // The reads ran, so integrity was just checked for real. Only the evidence
       // comparison is unevaluable — and an unevaluable check is not a stale
@@ -739,7 +764,7 @@ export async function evaluateGate(
         programId,
         evidenceBasis.reason,
       );
-      return true;
+      return pass;
     }
     // `linkedArtifactIntegrityOk` here is redundant and a mutation that removes
     // it SURVIVES: reaching this line with a truthy `linkedArtifact` implies a
@@ -769,16 +794,19 @@ export async function evaluateGate(
       }),
     );
 
-    if (linkedArtifactId && !linkedArtifactCurrent) return false;
+    if (linkedArtifactId && !linkedArtifactCurrent)
+      return { ok: false, cause: "evidence_basis_stale", status: row.status };
     if (
       structuredGenerated &&
       !structuredLineageCurrent &&
       !linkedArtifactCurrent
     ) {
-      return false;
+      return { ok: false, cause: "evidence_basis_stale", status: row.status };
     }
-    return true;
+    return pass;
   };
+  const isSignedOff = (row: Parameters<typeof signOffVerdict>[0]): boolean =>
+    signOffVerdict(row).ok;
   // One authenticated, authorized workspace user records the approval. Role
   // labels describe stakeholders and reviewers; they are not separate gate
   // actors or extra approval requirements.
@@ -1046,14 +1074,9 @@ export async function evaluateGate(
       content: string | null;
       structured_data: Record<string, unknown> | null;
     }> | null) ?? [])[0];
-    latestDiscoveryReportText = [
-      latestDiscoveryVersion?.content ?? "",
-      latestDiscoveryVersion?.structured_data
-        ? JSON.stringify(latestDiscoveryVersion.structured_data)
-        : "",
-    ]
-      .join("\n")
-      .toLowerCase();
+    latestDiscoveryReportText = discoveryReportTextFromLatestVersion(
+      latestDiscoveryVersion,
+    );
   }
 
   // The 6-phase doctrine moved Discovery to P2 (Discover & Diagnose),
@@ -1149,9 +1172,18 @@ export async function evaluateGate(
       case "charter_drafted":
         pass = Boolean(charterRow && charterRow.status !== null);
         break;
-      case "charter_signed_off":
-        pass = isSignedOff(charterRow);
+      case "charter_signed_off": {
+        const verdict = signOffVerdict(charterRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "charter",
+          });
+        }
         break;
+      }
       case "sponsor_assigned":
         pass =
           hasSponsor ||
@@ -1161,9 +1193,18 @@ export async function evaluateGate(
               briefString.includes("sponsor") ||
               p0SeedEvidenceText.includes("sponsor")));
         break;
-      case "discovery_report_signed_off":
-        pass = isSignedOff(discoveryReportRow);
+      case "discovery_report_signed_off": {
+        const verdict = signOffVerdict(discoveryReportRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "discovery_report",
+          });
+        }
         break;
+      }
       case "baseline_captured": {
         pass =
           moduleCompleted("baseline_capture", "baseline") ||
@@ -1209,18 +1250,12 @@ export async function evaluateGate(
               phaseCaptureText,
             ) &&
             phaseModulesCompleted(fromPhase));
-        if (!pass && discoveryReportRow && discoveryReportHasHardGap) {
-          failureReason =
-            "The signed Discovery Report still contains unresolved hard-gap, hold, unverified, or not-yet-attested language. Upload a client-approved replacement or regenerate/edit the Discovery Report so it explicitly clears P2 or carries only non-blocking P3 design caveats.";
-        } else if (
-          !pass &&
-          /\bconditional proceed\b/.test(latestDiscoveryReportText)
-        ) {
-          failureReason =
-            "The signed Discovery Report says conditional proceed. Replace it with a client-approved decision that either clears P2 or records a hold/discontinue decision.";
-        } else if (!pass && !discoveryReportRow) {
-          failureReason =
-            "No signed Discovery Report is available for P2 readiness. Approve or upload the client-approved Discovery Report in Files & Evidence, then rerun Approve & Build.";
+        if (!pass) {
+          failureReason = p2ReadinessBlockedReason({
+            hasReportRow: Boolean(discoveryReportRow),
+            reportText: latestDiscoveryReportText,
+            hasHardGap: discoveryReportHasHardGap,
+          });
         }
         break;
       case "solution_route_validated":
@@ -1401,9 +1436,27 @@ export async function evaluateGate(
               phaseCaptureText,
             ));
         break;
-      case "business_case_approved":
-        pass = await meetsApprovalBar(businessCaseRow);
+      case "business_case_approved": {
+        // The sixth HARD criterion that is a single sign-off call, and the only
+        // one whose body reads `meetsApprovalBar` rather than `isSignedOff` —
+        // that async wrapper delegates straight to `isSignedOff`, so the verdict
+        // here is the same predicate and `pass` is unchanged. It was missed when
+        // the other five were given causes because a grep for `isSignedOff`
+        // structurally cannot see it. Of the four single-row sign-off criteria
+        // that still restate themselves, this is the only one whose deliverable
+        // is in `PHASE_CANONICAL_KEYS` (P4), which is what makes the `absent`
+        // arm's "run Approve & Build" a remedy that can actually work here.
+        const verdict = signOffVerdict(businessCaseRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "business_case",
+          });
+        }
         break;
+      }
       case "funding_approval_recorded":
         pass = isSignedOff(
           findDeliverable(
@@ -1427,18 +1480,45 @@ export async function evaluateGate(
           findDeliverable("stakeholder_alignment", "sponsor_alignment"),
         );
         break;
-      case "readiness_and_change_plan_signed_off":
-        pass = isSignedOff(changePlanRow);
+      case "readiness_and_change_plan_signed_off": {
+        const verdict = signOffVerdict(changePlanRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "readiness_and_change_plan",
+          });
+        }
         break;
+      }
       case "tower_handoff_plan_accepted":
         pass = isSignedOff(towerHandoffRow);
         break;
-      case "handoff_package_signed_off":
-        pass = isSignedOff(handoffPackageRow);
+      case "handoff_package_signed_off": {
+        const verdict = signOffVerdict(handoffPackageRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "handoff_package",
+          });
+        }
         break;
-      case "value_measurement_contract_signed_off":
-        pass = isSignedOff(valueMeasurementContractRow);
+      }
+      case "value_measurement_contract_signed_off": {
+        const verdict = signOffVerdict(valueMeasurementContractRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "value_measurement_contract",
+          });
+        }
         break;
+      }
       case "launch_readiness_attested":
         pass =
           isSignedOff(handoffPackageRow) ||

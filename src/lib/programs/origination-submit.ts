@@ -1,3 +1,7 @@
+import {
+  originationSubmitAccessSentence,
+  originationSubmitFailureSentence,
+} from "./origination-submit-failure-text";
 import "server-only";
 
 import { requireTenancy, TenancyError } from "@/app/api/v1/programs/_auth";
@@ -358,9 +362,14 @@ async function resolvePersonByLabel(input: {
 
   const { data, error } = await query;
   if (error) {
+    // The raw driver text is what an operator needs and what a product user
+    // must not be handed; log it, answer with the sentence.
+    console.error("[origination-submit] sponsor lookup failed", {
+      message: error.message,
+    });
     throw new OriginationSubmitError(
       "person_lookup_failed",
-      error.message,
+      originationSubmitFailureSentence("person_lookup_failed"),
       500,
     );
   }
@@ -403,10 +412,12 @@ async function resolvePersonByLabel(input: {
       .select("id, name, role")
       .single();
     if (placeholderError || !placeholderRow) {
+      console.error("[origination-submit] sponsor placeholder insert failed", {
+        message: placeholderError?.message ?? null,
+      });
       throw new OriginationSubmitError(
         "person_placeholder_failed",
-        placeholderError?.message ??
-          `Could not register "${placeholderSpec.name}" as a pending sponsor in ${input.clientName}'s people records`,
+        originationSubmitFailureSentence("person_placeholder_failed"),
         500,
       );
     }
@@ -727,9 +738,12 @@ export async function submitOriginationBrief(
     tenancy = await requireTenancy();
   } catch (err) {
     if (err instanceof TenancyError) {
+      // The code stays the code; the MESSAGE has to be a sentence, because the
+      // product clients render `message` ahead of `error` and `TenancyError` is
+      // `super(code)` -- so without this the user read the bare token.
       throw new OriginationSubmitError(
         err.code,
-        err.code,
+        originationSubmitAccessSentence(err.code),
         err.code === "unauthenticated" ? 401 : 403,
       );
     }
@@ -1008,9 +1022,12 @@ export async function submitOriginationBrief(
   }
 
   if (insertError || !inserted) {
+    console.error("[origination-submit] engagement insert failed", {
+      message: insertError?.message ?? null,
+    });
     throw new OriginationSubmitError(
       "engagement_insert_failed",
-      insertError?.message ?? "Unknown engagement insert failure",
+      originationSubmitFailureSentence("engagement_insert_failed"),
       500,
     );
   }

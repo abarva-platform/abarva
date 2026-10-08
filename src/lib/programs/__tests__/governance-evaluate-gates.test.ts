@@ -635,9 +635,9 @@ describe("evaluateGate", () => {
       5,
     );
 
-    expect(
-      result.failedChecks.map((check) => check.check),
-    ).not.toContain("tower_metric_plan_drafted");
+    expect(result.failedChecks.map((check) => check.check)).not.toContain(
+      "tower_metric_plan_drafted",
+    );
   });
 
   it("reports the P4 Tower metric-plan criterion as unmet when neither the plan nor any Tower wording exists", async () => {
@@ -869,6 +869,413 @@ describe("evaluateGate", () => {
     );
   });
 
+  describe("a failed sign-off criterion states WHICH of its four states it is in", () => {
+    // `isSignedOff` is one boolean over four structurally different states, and
+    // the reason it produces is what the live surface renders: the standalone
+    // client joins `failedChecks[].reason` into the blocked message and the
+    // advance route puts it in `detail`. An `objectContaining` match on
+    // `{check, severity}` is satisfied by a superset, so it cannot see whether
+    // a reason was set at all — these cases read `reason` directly.
+    const ctx = {
+      clientId: "client-1",
+      clientKey: "tenant-1",
+      userId: "person-1",
+    };
+
+    function reasonFor(
+      result: Awaited<ReturnType<typeof evaluateGate>>,
+      check: string,
+    ): string {
+      const failed = result.failedChecks.find((f) => f.check === check);
+      expect(failed).toBeDefined();
+      return failed!.reason;
+    }
+
+    beforeEach(() => {
+      getProgramByIdMock.mockResolvedValue({
+        id: "program-1",
+        currentPhase: 1,
+        archetype: "agent_assist",
+      });
+      participantsFixture = [{ approval_authority: "sponsor" }];
+    });
+
+    it("absent: no charter row at all sends the reader to Approve & Build", async () => {
+      deliverablesFixture = [];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+      expect(reason).toContain("No Program Charter exists on this Move yet");
+      expect(reason).toContain("Approve & Build");
+      // The criterion's own describe is a restatement, not a cause.
+      expect(reason).not.toBe("Charter approved by an authorized Move user");
+    });
+
+    it("not_signed_off: a draft charter names its status and forbids the rebuild", async () => {
+      deliverablesFixture = [
+        { id: "charter", deliverable_type_key: "charter", status: "draft" },
+      ];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+      expect(reason).toContain('"draft"');
+      expect(reason).toContain("Record the sign-off on the existing document");
+      // Rebuilding replaces the document with a fresh unapproved draft, so
+      // prescribing it here would prescribe the one action that cannot work.
+      expect(reason).toContain("Do not re-run Approve & Build");
+    });
+
+    it("not_signed_off: an in-review charter reads differently from an absent one", async () => {
+      deliverablesFixture = [
+        { id: "charter", deliverable_type_key: "charter", status: "in_review" },
+      ];
+      const inReview = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+
+      deliverablesFixture = [];
+      const absent = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+
+      expect(inReview).toContain('"in_review"');
+      expect(inReview).not.toBe(absent);
+    });
+
+    it("linked_artifact_integrity: an artifact owned by another tenant names ownership, not currency", async () => {
+      deliverablesFixture = [
+        {
+          id: "charter",
+          deliverable_type_key: "charter",
+          status: "signed_off",
+          approved_artifact_id: "artifact-foreign",
+        },
+      ];
+      moveArtifactsFixture = [
+        {
+          artifact_id: "artifact-foreign",
+          tenant_key: "tenant-1",
+          move_id: "some-other-move",
+          artifact_family: "generated_deliverable",
+          lifecycle_state: "current",
+          created_at: "2026-09-29T15:00:00.000Z",
+          metadata: {
+            deliverableId: "charter",
+            evidenceSnapshotHash: "revision-current",
+          },
+        },
+      ];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+      expect(reason).toContain("recorded as signed off");
+      expect(reason).toContain("does not belong to this Move");
+      expect(reason).not.toContain("older evidence basis");
+    });
+
+    it("evidence_basis_stale: the signature stands and the sentence says so", async () => {
+      deliverablesFixture = [
+        {
+          id: "charter",
+          deliverable_type_key: "charter",
+          status: "signed_off",
+          structured_data: {
+            source: "generated_artifact_acceptance",
+            evidenceSnapshotHash: "revision-before-new-evidence",
+            generatedAt: "2026-09-29T15:00:00.000Z",
+          },
+        },
+      ];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+      expect(reason).toContain("recorded as signed off");
+      expect(reason).toContain("older evidence basis");
+      expect(reason).toContain("Regenerate");
+      // Not the draft sentence: the reader must not be told to sign something
+      // that is already signed.
+      expect(reason).not.toContain("Record the sign-off on the existing");
+    });
+
+    it("the P2 gate's discovery report carries its own name, not the charter's", async () => {
+      // P2 Discover is the blocking phase of the walk, and this is the
+      // criterion a reader hits first there.
+      getProgramByIdMock.mockResolvedValue({
+        id: "program-1",
+        currentPhase: 2,
+        archetype: "agent_assist",
+      });
+      deliverablesFixture = [
+        {
+          id: "discovery-report",
+          deliverable_type_key: "discovery_report",
+          status: "approved",
+        },
+      ];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 2, 3),
+        "discovery_report_signed_off",
+      );
+      expect(reason).toContain("Discovery & Diagnosis Report");
+      expect(reason).toContain('"approved"');
+      expect(reason).not.toContain("Program Charter");
+    });
+
+    it("each of the six sign-off criteria names its own document", async () => {
+      // One shared predicate, six criteria. A label resolved from the wrong
+      // key would send the reader to the wrong document. `business_case_approved`
+      // is the sixth: it reaches the same predicate through `meetsApprovalBar`,
+      // so a list built by grepping `isSignedOff` would leave it out.
+      deliverablesFixture = [];
+      const expectations: Array<[number, number, string, string]> = [
+        [1, 2, "charter_signed_off", "Program Charter"],
+        [2, 3, "discovery_report_signed_off", "Discovery & Diagnosis Report"],
+        [4, 5, "business_case_approved", "Business Case"],
+        [
+          4,
+          5,
+          "readiness_and_change_plan_signed_off",
+          "Readiness & Change Plan",
+        ],
+        [
+          5,
+          6,
+          "handoff_package_signed_off",
+          "Mobilization & Tower Handoff Package",
+        ],
+        [
+          5,
+          6,
+          "value_measurement_contract_signed_off",
+          "Value Measurement Contract",
+        ],
+      ];
+      for (const [from, to, check, label] of expectations) {
+        getProgramByIdMock.mockResolvedValue({
+          id: "program-1",
+          currentPhase: from,
+          archetype: "agent_assist",
+        });
+        const reason = reasonFor(
+          await evaluateGate(ctx, "program-1", from, to),
+          check,
+        );
+        expect(reason).toContain(label);
+      }
+    });
+
+    describe("business_case_approved, the sixth criterion and the only one reached through meetsApprovalBar", () => {
+      // The P4->P5 business case is HARD, and both readers that render a
+      // blocked message filter to `severity === "hard"` — so this criterion's
+      // reason is one a signed-in user at P4 actually reads. It was the last of
+      // the six to get a cause because its body calls `meetsApprovalBar`, an
+      // async wrapper that delegates to the same `isSignedOff`; a grep for the
+      // predicate name cannot see it.
+      const P4_DESCRIBE = "Business case and value plan approved";
+
+      beforeEach(() => {
+        getProgramByIdMock.mockResolvedValue({
+          id: "program-1",
+          currentPhase: 4,
+          archetype: "analytics_modernization",
+        });
+      });
+
+      it("absent: no business case row sends the reader to Approve & Build", async () => {
+        deliverablesFixture = [];
+
+        const reason = reasonFor(
+          await evaluateGate(ctx, "program-1", 4, 5),
+          "business_case_approved",
+        );
+        expect(reason).toContain("No Business Case exists on this Move yet");
+        // `business_case` IS in PHASE_CANONICAL_KEYS[4], so a P4 build really
+        // does produce it — this is the one of the four single-row sign-off
+        // criteria for which this remedy is not ruled out.
+        expect(reason).toContain("Approve & Build");
+        expect(reason).not.toBe(P4_DESCRIBE);
+      });
+
+      it("not_signed_off: a draft business case names its status and forbids the rebuild", async () => {
+        deliverablesFixture = [
+          {
+            id: "business-case",
+            deliverable_type_key: "business_case",
+            status: "draft",
+          },
+        ];
+
+        const reason = reasonFor(
+          await evaluateGate(ctx, "program-1", 4, 5),
+          "business_case_approved",
+        );
+        expect(reason).toContain("Business Case");
+        expect(reason).toContain('"draft"');
+        expect(reason).toContain(
+          "Record the sign-off on the existing document",
+        );
+        // The rebuild is in the P4 build set, so prescribing it here would
+        // actively clear the sign-off the gate is waiting for.
+        expect(reason).toContain("Do not re-run Approve & Build");
+      });
+
+      it("not_signed_off: reports the status of the ALIAS row that was found, not a canonical miss", async () => {
+        // `businessCaseRow` resolves three keys. When an alias row is the one
+        // present, the status in the sentence has to be that row's status —
+        // otherwise the reader is told about a document that is not there while
+        // the one that is there goes unnamed.
+        deliverablesFixture = [
+          {
+            id: "funding-case",
+            deliverable_type_key: "funding_business_case",
+            status: "in_review",
+          },
+        ];
+
+        const reason = reasonFor(
+          await evaluateGate(ctx, "program-1", 4, 5),
+          "business_case_approved",
+        );
+        expect(reason).toContain('"in_review"');
+        // The canonical document name, deliberately: the gate call site passes
+        // `business_case` so the reader is pointed at the registered document
+        // rather than at a bare alias identifier.
+        expect(reason).toContain("Business Case");
+        expect(reason).not.toContain("No Business Case exists");
+      });
+
+      it("linked_artifact_integrity: an artifact belonging to another Move names ownership, not currency", async () => {
+        deliverablesFixture = [
+          {
+            id: "business-case",
+            deliverable_type_key: "business_case",
+            status: "signed_off",
+            approved_artifact_id: "artifact-foreign",
+          },
+        ];
+        moveArtifactsFixture = [
+          {
+            artifact_id: "artifact-foreign",
+            tenant_key: "tenant-1",
+            move_id: "some-other-move",
+            artifact_family: "generated_deliverable",
+            lifecycle_state: "current",
+            created_at: "2026-09-29T15:00:00.000Z",
+            metadata: {
+              deliverableId: "business-case",
+              evidenceSnapshotHash: "revision-current",
+            },
+          },
+        ];
+
+        const reason = reasonFor(
+          await evaluateGate(ctx, "program-1", 4, 5),
+          "business_case_approved",
+        );
+        expect(reason).toContain("recorded as signed off");
+        expect(reason).toContain("does not belong to this Move");
+        expect(reason).not.toContain("older evidence basis");
+      });
+
+      it("evidence_basis_stale: the signature stands and the sentence says so", async () => {
+        deliverablesFixture = [
+          {
+            id: "business-case",
+            deliverable_type_key: "business_case",
+            status: "signed_off",
+            structured_data: {
+              source: "generated_artifact_acceptance",
+              evidenceSnapshotHash: "revision-before-new-evidence",
+              generatedAt: "2026-09-29T15:00:00.000Z",
+            },
+          },
+        ];
+
+        const reason = reasonFor(
+          await evaluateGate(ctx, "program-1", 4, 5),
+          "business_case_approved",
+        );
+        expect(reason).toContain("older evidence basis");
+        expect(reason).toContain("Regenerate");
+        // Already signed: do not tell the reader to sign it.
+        expect(reason).not.toContain("Record the sign-off on the existing");
+      });
+
+      it("no failing cause leaves the criterion restating itself", async () => {
+        // The defect: every cause arrived as `c.describe`. Four of the five
+        // causes are reachable from this gate; none of them may come back as
+        // the restatement, and each must differ from the others.
+        const fixtures: Array<[string, typeof deliverablesFixture]> = [
+          ["absent", []],
+          [
+            "not_signed_off",
+            [
+              {
+                id: "business-case",
+                deliverable_type_key: "business_case",
+                status: "draft",
+              },
+            ],
+          ],
+          [
+            "evidence_basis_stale",
+            [
+              {
+                id: "business-case",
+                deliverable_type_key: "business_case",
+                status: "signed_off",
+                structured_data: {
+                  source: "generated_artifact_acceptance",
+                  evidenceSnapshotHash: "older-revision",
+                },
+              },
+            ],
+          ],
+        ];
+        const seen = new Set<string>();
+        for (const [name, fixture] of fixtures) {
+          deliverablesFixture = fixture;
+          const failed = (
+            await evaluateGate(ctx, "program-1", 4, 5)
+          ).failedChecks.find((f) => f.check === "business_case_approved");
+          expect(failed).toBeDefined();
+          // Still HARD: a soft reason is filtered out of the blocked message by
+          // both readers, so the severity is what makes this sentence reachable.
+          expect(failed!.severity).toBe("hard");
+          expect(failed!.reason).not.toBe(P4_DESCRIBE);
+          expect(failed!.reason.trim().length).toBeGreaterThan(0);
+          expect(seen.has(failed!.reason)).toBe(false);
+          seen.add(failed!.reason);
+          expect(name.length).toBeGreaterThan(0);
+        }
+        expect(seen.size).toBe(fixtures.length);
+      });
+
+      it("a signed-off, current business case still passes", async () => {
+        // The verdict replaced an `await meetsApprovalBar(...)` call. That
+        // wrapper delegates straight to `isSignedOff`, so `pass` must be
+        // unchanged — this is the case that would catch a regression there.
+        const result = await evaluateGate(ctx, "program-1", 4, 5);
+        expect(result.failedChecks).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ check: "business_case_approved" }),
+          ]),
+        );
+      });
+    });
+  });
+
   it("does not resolve an artifact link from another tenant", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
@@ -970,7 +1377,9 @@ describe("evaluateGate", () => {
       participantsFixture = [{ approval_authority: "sponsor" }];
     }
 
-    const charterFailed = (result: { failedChecks: Array<{ check: string }> }) =>
+    const charterFailed = (result: {
+      failedChecks: Array<{ check: string }>;
+    }) =>
       result.failedChecks.some((check) => check.check === "charter_signed_off");
 
     it("leaves the recorded sign-off standing when the snapshot is unavailable", async () => {
@@ -1609,6 +2018,44 @@ describe("evaluateGate", () => {
       ]),
     );
     expect(result.requiresApproval).toBe(false);
+  });
+
+  it("blocks P2 to P3 when the Discovery Report row carries no readable content", async () => {
+    // A `discovery_report` row whose latest version has nothing readable used
+    // to CLEAR `p2_readiness_cleared`: the criterion passes on the absence of
+    // blocking language, and the report text was assembled with a join that
+    // returned "\n" — never empty — so "a report exists and says something"
+    // could not fail. A HARD criterion on the P2 gate was satisfied by silence.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 2,
+      archetype: "ams_consolidation",
+    });
+    deliverablesFixture = [
+      {
+        id: "discovery-report",
+        deliverable_type_key: "discovery_report",
+        status: "signed_off",
+      },
+    ];
+    evidenceFixture = [{ id: "p2-workshop-notes" }];
+    deliverableVersionsFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      2,
+      3,
+    );
+
+    expect(result.pass).toBe(false);
+    const readiness = result.failedChecks.find(
+      (c) => c.check === "p2_readiness_cleared",
+    );
+    expect(readiness).toBeDefined();
+    expect(readiness?.severity).toBe("hard");
+    // And it must SAY why — this state had no sentence before.
+    expect(readiness?.reason).toContain("no readable content");
   });
 
   it("accepts signed P2 Discovery Report content as ingested workshop evidence", async () => {
