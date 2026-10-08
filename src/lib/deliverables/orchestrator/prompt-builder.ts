@@ -500,7 +500,10 @@ export function sectionWordBudgetPlanFor(
       declaredCap: extractSectionWordBudget(s.expertLatitude),
     })),
     realizedKeys: plannedSectionKeys ?? [],
-    fallbackCap: Math.max(120, Math.floor(qb.targetBodyWordsMax / sectionCount)),
+    fallbackCap: Math.max(
+      120,
+      Math.floor(qb.targetBodyWordsMax / sectionCount),
+    ),
     minBodyWords: qb.minBodyWords,
     // The number the quality gate BLOCKS on. Between `targetBodyWordsMax` and
     // `advisoryBandMax` the validator warns and lets the document through, so
@@ -704,7 +707,12 @@ export function requiredExhibitsInstruction(
   const key = deliverableKeyForOrchestratorType(req.deliverableType);
   if (!key) return "";
   const required = DELIVERABLE_PROFILES[key].requiredExhibits.filter(
-    (id) => !EXHIBITS_PRODUCED_ELSEWHERE.has(id),
+    (id) =>
+      !EXHIBITS_PRODUCED_ELSEWHERE.has(id) ||
+      // The optional structured renderer runs after synthesis quality checks.
+      // Solution design must author these exact keys for that earlier gate.
+      (key === "solution_design" &&
+        (id === "control_points" || id === "data_flow")),
   );
   if (required.length === 0) return "";
   return `REQUIRED EXHIBITS: "exhibits" must contain one entry for each of these keys, spelled exactly as written: ${required.join(", ")}. The quality gate identifies an exhibit by its key and blocks the artifact when one is missing. Give each a title, a supported payload kind, and "data" populated from the drafted sections and the cited evidence. Never invent a value to fill an exhibit: where the content is not established, the exhibit shows what is open and who owns closing it. An exhibit is kept only if it meets both of these, and is discarded otherwise: (1) "data" uses one of the supported payload kinds below with real content — a flow with at least two nodes and one edge; a matrix, heatmap or comparison with at least two cells; a timeline or roadmap with at least one lane that has items; a value_tree with a root and at least one branch. A table-like exhibit (a RACI, a measurement table, a decision box, risks and mitigations, an operating cadence) is a matrix; lanes or dates over time are a timeline; dependencies are a flow. (2) "description" makes at least three distinct statements, separated by full stops or semicolons: what the exhibit shows, what it means for the decision, and what remains open.`;
@@ -920,7 +928,12 @@ export function buildPassPrompt(
           ? `REPAIR ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`
           : `WRITE ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`,
         `Intent: ${s?.rationale || s?.title || ""}`,
-        conciseSectionDraftInstruction(req, brief, s, inputs.plannedSectionKeys),
+        conciseSectionDraftInstruction(
+          req,
+          brief,
+          s,
+          inputs.plannedSectionKeys,
+        ),
         ...(repair
           ? [
               `SECTION QUALITY REPAIR: the existing draft has ${repair.currentWordCount} prose words; the section completeness target is ${repair.targetProseWords} prose words. Return a complete revised section with at least ${repair.targetProseWords} prose words, while staying under the hard cap above.`,

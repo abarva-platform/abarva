@@ -1,3 +1,8 @@
+import {
+  MOVE_UNREADABLE_REFUSAL_DETAIL,
+  moveUnreadableRefusalBody,
+} from "@/lib/programs/move-unreadable-refusal";
+
 // INCIDENT 2026-07-20 regression coverage. This route previously called
 // preparePhaseGateApprovalRecords, which fabricated-and-signed-off a
 // placeholder deliverables_v2 row for stale hardcoded type keys BEFORE
@@ -2036,5 +2041,54 @@ describe("a transition-evidence refusal names the step that failed", () => {
     };
     expect(body.transitionReadiness.available).toBe(true);
     expect(body.transitionReadiness.basisUnevaluable).toBeNull();
+  });
+});
+
+// The 404 leg had NO case in this 1800-line suite before these: all 39
+// pre-existing cases resolved `getProgramById` to a program. Unlike the advance
+// route, this one loads the Move BEFORE it fences on the grant list, so this
+// 404 is also the answer for a Move the caller's grants exclude — the 403 below
+// it re-tests that identical predicate and can only be reached by a caller who
+// may read the Move but may not approve gates.
+describe("POST /api/v1/programs/[programId]/phase-gate-approval · unreadable Move", () => {
+  beforeEach(() => {
+    mockGetProgramById.mockResolvedValue(null);
+  });
+
+  it("refuses with the sentence the workspace ladder shows instead of the code", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as { error?: string; detail?: string };
+    expect(body.error).toBe("not_found");
+    expect(body.detail).toBe(MOVE_UNREADABLE_REFUSAL_DETAIL);
+  });
+
+  it("rules the re-submission out, because no re-submission clears any cause", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    const body = (await res.json()) as { resubmitCanSatisfy?: unknown };
+    expect(body.resubmitCanSatisfy).toBe(false);
+  });
+
+  it("sends the shared body and nothing cause-specific", async () => {
+    // Three causes reach this one `null`: grants exclude the Move, no row for
+    // the id, or the id belongs to another tenant. One body for all three is
+    // what keeps the refusal from answering "does this Move exist?".
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(await res.json()).toEqual(
+      moveUnreadableRefusalBody({ withResubmitSignal: true }),
+    );
+  });
+
+  it("refuses before it reads evidence or evaluates the gate", async () => {
+    const { POST } = await import("../route");
+    await POST(req({ phase: 3 }) as never, { params });
+
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
   });
 });

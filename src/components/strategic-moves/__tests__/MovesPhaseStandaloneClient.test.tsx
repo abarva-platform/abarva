@@ -40,6 +40,7 @@ import { buildPhaseNavigationStatus } from "@/lib/programs/phase-navigation-stat
 import { P1_CHARTER_EVIDENCE_FAMILIES } from "@/lib/programs/p1-charter-evidence";
 import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import { MOVE_UNREADABLE_REFUSAL_DETAIL } from "@/lib/programs/move-unreadable-refusal";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -8611,6 +8612,88 @@ describe("MovesPhaseStandaloneClient", () => {
         /re-running Approve & Build would replace the document you just approved with a new unapproved draft/i,
       ),
     ).toBeInTheDocument();
+  });
+
+  // The refusal ladder reads `detail` above `error`, so a refusal with no
+  // sentence falls through to the raw code. Both live Moves mutations answered
+  // an unreadable Move with a bare `not_found`, and this is the surface that
+  // printed it: a product reader was shown the literal refusal code, and then
+  // told to approve a draft and submit the gate again — which cannot clear a
+  // Move the loader will not return, for any of the three causes that reach it.
+  it("states why an unreadable Move refused the gate, and withholds the remedy none of its causes can clear", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 404,
+            json: async () => ({
+              error: "not_found",
+              detail: MOVE_UNREADABLE_REFUSAL_DETAIL,
+              resubmitCanSatisfy: false,
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    // The sentence reaches more than one region of the screen (the gate message
+    // and the error banner beside it), so count rather than expect one.
+    expect(
+      screen.getAllByText(/This Move could not be opened for your account/i)
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        /Reopen the Moves list to see the Moves you can work on/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    // The raw refusal code is what the reader saw before the route carried a
+    // sentence. It must not reach the screen.
+    expect(screen.queryByText(/\bnot_found\b/)).not.toBeInTheDocument();
+    // And the standing remedy must not follow it: no sign-off, upload, or
+    // re-submission clears a Move the loader will not return.
+    expect(
+      screen.queryByText(/approve the draft or upload an edited version/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Submit P3 Design Future State gate approval/i),
+    ).not.toBeInTheDocument();
   });
 
   // `transition_evidence_incomplete` carries no `gate` and no `missing`, so the

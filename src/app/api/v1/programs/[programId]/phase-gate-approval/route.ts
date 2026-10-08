@@ -63,6 +63,8 @@ import {
 } from "@/lib/programs/phase-gate-evidence-binding";
 import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
 
+import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -461,7 +463,12 @@ export async function GET(
       );
     }
     const program = await getProgramById(ctx, programId);
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!program) {
+      // This GET has no product fetcher today, so the sentence reaches no
+      // screen from here. It is shared with the POST so the file does not keep
+      // one bare refusal beside a worded one.
+      return Response.json(moveUnreadableRefusalBody(), { status: 404 });
+    }
     const evidence = await loadEvidenceState(ctx, programId);
     const p0Evidence =
       phase === 0
@@ -572,7 +579,17 @@ export async function POST(
     const ctx = await requireTenancy();
     const { programId } = await params;
     const program = await getProgramById(ctx, programId);
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!program) {
+      // Code and status stay byte-identical across all three causes the loader
+      // folds into `null`. Without `detail` the workspace ladder fell through
+      // to `error` and printed the literal `not_found` to a product user, then
+      // prescribed a sign-off remedy that cannot clear any of them — so this
+      // refusal also carries `resubmitCanSatisfy: false`.
+      return Response.json(
+        moveUnreadableRefusalBody({ withResubmitSignal: true }),
+        { status: 404 },
+      );
+    }
 
     const body = (await req.json().catch(() => ({}))) as {
       phase?: number;
