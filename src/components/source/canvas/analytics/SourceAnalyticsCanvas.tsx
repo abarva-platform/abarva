@@ -27,6 +27,7 @@ import { EvaluationBafoReadinessPanel } from "@/components/source/canvas/respons
 import { VendorEvaluationScorecardPanel } from "@/components/source/canvas/responses/VendorEvaluationScorecardPanel";
 import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
+import styles from "./SourceAnalyticsCanvas.module.css";
 import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceAwardSowHandoffReadinessPanel";
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
@@ -956,7 +957,7 @@ export function SourceAnalyticsCanvas({
         context: `${event.code} · ${event.name}`,
       }}
     >
-      <main data-testid="source-analytics-canvas" style={MAIN_STYLE}>
+      <main data-testid="source-analytics-canvas" className={styles.canvas} style={MAIN_STYLE}>
         <div style={WORK_PANE_STYLE}>
           <SourceWorkflowFrame
             testId="source-workflow-frame"
@@ -968,6 +969,7 @@ export function SourceAnalyticsCanvas({
                 onWorkspaceChange={setWorkspace}
               />
             }
+            paneTestId="source-workflow-pane"
             minHeight="100%"
             alignItems="stretch"
             paneStyle={{ padding: "28px 28px 150px" }}
@@ -1014,6 +1016,7 @@ export function SourceAnalyticsCanvas({
       </main>
       <AskAvaLauncher
         open={avaOpen}
+        withProgressDock={workspace === "steps"}
         onClick={() => setAvaOpen((value) => !value)}
       />
       {avaOpen ? (
@@ -1061,6 +1064,11 @@ function SourceShellRail({
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const readerJourney = sourceReaderJourneyCheckpoints(view, journey);
+  const [mobileRailOpen, setMobileRailOpen] = useState(false);
+  const selectWorkspace = (nextWorkspace: SourceShellWorkspace) => {
+    onWorkspaceChange(nextWorkspace);
+    setMobileRailOpen(false);
+  };
 
   return (
     <aside
@@ -1072,6 +1080,21 @@ function SourceShellRail({
         background: ANALYTICS.PAGE_BG,
       }}
     >
+      <button
+        type="button"
+        className={styles.mobileRailToggle}
+        aria-controls="source-shell-mobile-rail-content"
+        aria-expanded={mobileRailOpen}
+        onClick={() => setMobileRailOpen((open) => !open)}
+      >
+        <span>Journey and workspaces</span>
+        <span aria-hidden="true">{mobileRailOpen ? "−" : "+"}</span>
+      </button>
+      <div
+        id="source-shell-mobile-rail-content"
+        className={styles.railContents}
+        data-open={mobileRailOpen}
+      >
       <Link
         href="/source/new"
         style={{
@@ -1301,30 +1324,36 @@ function SourceShellRail({
       >
         <RailLabel>Workspace</RailLabel>
         <WorkspaceButton
+          workspaceKey="steps"
+          label="Current stage"
+          active={workspace === "steps"}
+          onClick={() => selectWorkspace("steps")}
+        />
+        <WorkspaceButton
           workspaceKey="files"
           label="Files & deliverables"
           active={workspace === "files"}
-          onClick={() => onWorkspaceChange("files")}
+          onClick={() => selectWorkspace("files")}
         />
         <WorkspaceButton
           workspaceKey="intelligence"
           label="Intelligence Explorer"
           badge={workspace === "intelligence" ? "open" : undefined}
           active={workspace === "intelligence"}
-          onClick={() => onWorkspaceChange("intelligence")}
+          onClick={() => selectWorkspace("intelligence")}
         />
         <WorkspaceButton
           workspaceKey="approvals"
           label="Approvals"
           active={workspace === "approvals"}
-          onClick={() => onWorkspaceChange("approvals")}
+          onClick={() => selectWorkspace("approvals")}
         />
         <WorkspaceButton
           workspaceKey="guidebook"
           label="Guidebook"
           badge={view.guidebook.available ? undefined : "default"}
           active={workspace === "guidebook"}
-          onClick={() => onWorkspaceChange("guidebook")}
+          onClick={() => selectWorkspace("guidebook")}
         />
       </div>
       <div
@@ -1346,6 +1375,7 @@ function SourceShellRail({
         <div style={{ marginTop: 14 }}>
           <SourceRailAdvisorNote view={view} />
         </div>
+      </div>
       </div>
     </aside>
   );
@@ -9071,15 +9101,19 @@ function IntelligenceExplorerCard({ view }: { view: SourceEventShellView }) {
 
 function AskAvaLauncher({
   open,
+  withProgressDock,
   onClick,
 }: {
   open: boolean;
+  withProgressDock: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       data-testid="source-ask-ava-launcher"
+      className={withProgressDock ? styles.askAvaWithDock : styles.askAvaLauncher}
+      aria-label={open ? "Close aVa" : "Ask aVa"}
       aria-expanded={open}
       onClick={onClick}
       style={{
