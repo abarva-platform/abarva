@@ -312,8 +312,12 @@ function svgTimeline(
           ? `<path d="M${x + 48} ${y} L${x + step - 48} ${y}" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
           : "";
       return `${line}<g>
-        <circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>
-        ${ordered ? `<text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="700">${i + 1}</text>` : ""}
+        <circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>${
+          ordered
+            ? `
+        <text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="700">${i + 1}</text>`
+            : ""
+        }
         ${svgTextBlock(item.label, x, y + 48, {
           maxChars: ordered ? 24 : 30,
           maxLines: ordered ? 2 : 3,
