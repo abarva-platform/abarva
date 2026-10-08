@@ -10,6 +10,8 @@ const mockExtractProgramEvidenceFromUploadBuffer = jest.fn();
 const mockWriteAuditLog = jest.fn();
 const mockExtractOfficeText = jest.fn();
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
+const mockLoadApprovedSolutionApproach = jest.fn();
+const mockLoadCurrentMoveContextExtractFreshness = jest.fn();
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -54,6 +56,17 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
   ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
     mockLoadApprovedMoveEvidenceSnapshot(...args),
+}));
+
+jest.mock("@/lib/programs/approved-solution-approach", () => ({
+  ...jest.requireActual("@/lib/programs/approved-solution-approach"),
+  loadApprovedSolutionApproach: (...args: unknown[]) =>
+    mockLoadApprovedSolutionApproach(...args),
+}));
+
+jest.mock("@/lib/programs/move-context-extract", () => ({
+  loadCurrentMoveContextExtractFreshness: (...args: unknown[]) =>
+    mockLoadCurrentMoveContextExtractFreshness(...args),
 }));
 
 let deliverableRow: {
@@ -223,6 +236,99 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       format: "docx",
       text: "clean generated office companion",
       partCount: 1,
+    });
+    mockLoadApprovedSolutionApproach.mockResolvedValue({
+      decisionHash: "decision-hash",
+      selectedOptionId: "option-2",
+      selectedOptionVersion: "1",
+    });
+    mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue({
+      evidenceFingerprint: "context-hash",
+      approvedEvidenceRevision: "revision-current",
+      freshnessStatus: "fresh",
+    });
+  });
+
+  describe("a P3 architecture document whose lineage basis is not readable", () => {
+    beforeEach(() => {
+      deliverableRow = {
+        deliverable_type_key: "target_state_architecture",
+        title: "Target State Architecture",
+        current_version: 1,
+      };
+      versionRow = {
+        id: "version-1",
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+          generationLineage: {
+            decisionHash: "decision-hash",
+            decisionVersion: "v1",
+            approvedOptionId: "option-2",
+            approvedOptionVersion: "1",
+            contextSnapshotHash: "context-hash",
+            architectureModelVersion: "moves-architecture-model-v2",
+          },
+        },
+        content: "<p>The target architecture follows the approved option.</p>",
+      };
+    });
+
+    it("names the missing approved option, and the control that supplies it", async () => {
+      mockLoadApprovedSolutionApproach.mockResolvedValue(null);
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+      const json = (await res.json()) as Record<string, unknown>;
+
+      expect(res.status).toBe(409);
+      expect(json.detail).toMatch(/no approved P3 solution option/i);
+      expect(json.detail).toMatch(/approve a P3 solution option/i);
+      // The sentence this replaces named neither the fact nor an action.
+      expect(json.detail).not.toMatch(
+        /approved option or P3 context snapshot is unavailable/i,
+      );
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("names an absent Context Extract without reporting changed evidence", async () => {
+      mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue(null);
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+      const json = (await res.json()) as Record<string, unknown>;
+
+      expect(res.status).toBe(409);
+      expect(json.detail).toMatch(/No current P3 Context Extract/);
+      expect(json.detail).not.toMatch(/Move evidence changed/);
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("does not refuse on a non-fresh extract alone", async () => {
+      // This path's own condition required only that an extract exist; the
+      // comparison that follows settles its currency. Refusing here would add a
+      // refusal the route never had.
+      mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: "context-hash",
+        approvedEvidenceRevision: "revision-old",
+        freshnessStatus: "stale",
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+
+      expect(res.status).toBe(200);
+      expect(mockSignOffDeliverable).toHaveBeenCalled();
+    });
+
+    it("still signs off when both reads land", async () => {
+      // Non-vacuity: the two refusals above are produced by the input, not by
+      // the deliverable type key alone.
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+
+      expect(res.status).toBe(200);
+      expect(mockSignOffDeliverable).toHaveBeenCalled();
     });
   });
 

@@ -852,6 +852,81 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
   });
 
+  it("names the missing approved option rather than an unavailable snapshot", async () => {
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 3 });
+    mockLoadApprovedSolutionApproach.mockResolvedValue(null);
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      sourceArtifactRef: "move:prog-1:phase:3",
+      artifactType: "target_state_architecture",
+      metadata: {
+        evidenceSnapshotHash: "revision-current",
+        deliverableTypeKey: "target_state_architecture",
+        renderableDoc: {
+          title: "Target Architecture",
+          deliverableTypeKey: "target_state_architecture",
+          generatedSections: [
+            { title: "Architecture", bodyMarkdown: "Approved option." },
+          ],
+        },
+      },
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      request({ reason: "Approve the architecture." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(409);
+    expect(json.detail).toMatch(/no approved P3 solution option/i);
+    expect(json.detail).toMatch(/approve a P3 solution option/i);
+    // The sentence this replaces prescribed a rebuild, which cannot approve an
+    // option, and named neither of the two facts it collapsed.
+    expect(json.detail).not.toMatch(/Rebuild the architecture chain/);
+    expect(json.detail).not.toMatch(
+      /approved option or P3 context snapshot is unavailable/i,
+    );
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("names a stale Context Extract as changed evidence, not as unavailable", async () => {
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 3 });
+    mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue({
+      evidenceFingerprint: "context-hash",
+      approvedEvidenceRevision: "revision-old",
+      freshnessStatus: "stale",
+    });
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      sourceArtifactRef: "move:prog-1:phase:3",
+      artifactType: "target_state_architecture",
+      metadata: {
+        evidenceSnapshotHash: "revision-current",
+        deliverableTypeKey: "target_state_architecture",
+        renderableDoc: {
+          title: "Target Architecture",
+          deliverableTypeKey: "target_state_architecture",
+          generatedSections: [
+            { title: "Architecture", bodyMarkdown: "Approved option." },
+          ],
+        },
+      },
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      request({ reason: "Approve the architecture." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(409);
+    expect(json.detail).toMatch(/Move evidence changed after this document/);
+    expect(json.detail).not.toMatch(
+      /approved option or P3 context snapshot is unavailable/i,
+    );
+  });
+
   it("preserves verified P3 architecture lineage in the authoritative deliverable", async () => {
     const lineage = {
       decisionHash: "decision-hash",

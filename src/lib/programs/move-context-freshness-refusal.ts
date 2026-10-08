@@ -103,6 +103,19 @@ const UNEVALUABLE_BECAUSE: Readonly<
 };
 
 /**
+ * The clause naming which approved-evidence read could not be made. Exported so
+ * the interactive P3 approval paths state the same cause in their own register
+ * rather than declaring a second copy of these three sentences.
+ */
+export function describeUnevaluableApprovedEvidenceBasis(
+  reason: ApprovedEvidenceCurrencyBasisReason | null,
+): string {
+  return reason
+    ? UNEVALUABLE_BECAUSE[reason]
+    : "the approved-evidence snapshot was not read";
+}
+
+/**
  * Classify the P3 architecture batch's context-freshness refusal, or return
  * `null` when the extract is current AND matches the queued batch.
  *
