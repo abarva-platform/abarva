@@ -47,6 +47,10 @@ import {
   reportUnevaluableApprovalCurrencyOnce,
   resolveDeliverableApprovalCurrencyScope,
 } from "@/lib/programs/deliverable-approval-currency";
+import {
+  reportUnevaluableApprovedEvidenceBasisOnce,
+  resolveApprovedEvidenceCurrencyBasis,
+} from "@/lib/programs/approved-evidence-currency-basis";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -590,11 +594,16 @@ export async function evaluateGate(
     deliverableRows.find((d) => keys.includes(d.deliverable_type_key));
   const findDeliverables = (...keys: string[]) =>
     deliverableRows.filter((d) => keys.includes(d.deliverable_type_key));
-  const currentEvidenceSnapshot = ctx.clientKey
-    ? await loadApprovedMoveEvidenceSnapshot({
-        tenantKey: ctx.clientKey,
-        moveId: programId,
-      }).catch(() => null)
+  // Not `snapshot | null`: a null conflates "nothing approved" with "I could not
+  // read the basis", and only the first of those may veto a recorded human
+  // approval. See `approved-evidence-currency-basis.ts`.
+  const evidenceBasis = await resolveApprovedEvidenceCurrencyBasis({
+    tenantKey: ctx.clientKey,
+    moveId: programId,
+    load: loadApprovedMoveEvidenceSnapshot,
+  });
+  const currentEvidenceSnapshot = evidenceBasis.evaluable
+    ? evidenceBasis.snapshot
     : null;
   const linkedArtifactIds = deliverableRows
     .map((row) => row.approved_artifact_id)
@@ -698,32 +707,66 @@ export async function evaluateGate(
           linkedMetadata.generatedArtifactId ===
             structured.generatedArtifactId)),
     );
-    const linkedArtifactCurrent = Boolean(
-      currentEvidenceSnapshot &&
+    // Split on purpose. The ownership/lifecycle half is snapshot-INDEPENDENT, so
+    // it keeps its veto even when the evidence basis cannot be read; the evidence
+    // comparison below is the only half an unevaluable basis may skip.
+    const linkedArtifactIntegrityOk = Boolean(
       linkedArtifact &&
       linkedArtifact.tenant_key === ctx.clientKey &&
       linkedArtifact.move_id === programId &&
       linkedArtifact.artifact_family === "generated_deliverable" &&
       linkedArtifact.lifecycle_state === "current" &&
-      linkedArtifactMatchesDeliverable &&
-      Boolean(
-        deliverablePhase &&
-        isApprovedMoveEvidenceBasisCurrent({
-          snapshot: currentEvidenceSnapshot,
-          phase: deliverablePhase,
-          recordedRevision:
-            typeof linkedMetadata.phaseEvidenceSnapshotHash === "string"
-              ? linkedMetadata.phaseEvidenceSnapshotHash
-              : typeof linkedMetadata.evidenceSnapshotHash === "string"
-                ? linkedMetadata.evidenceSnapshotHash
-                : null,
-          scope:
-            typeof linkedMetadata.evidenceSnapshotScope === "string"
-              ? linkedMetadata.evidenceSnapshotScope
+      linkedArtifactMatchesDeliverable,
+    );
+    if (!evidenceBasis.tenantScopeResolved) {
+      // With no tenant key the `move_artifacts` lookup above was never issued,
+      // so `linkedArtifactIntegrityOk` is false for want of a read rather than
+      // for want of a valid artifact. Nothing about this approval is evaluable;
+      // report it and leave the recorded human sign-off standing.
+      reportUnevaluableApprovedEvidenceBasisOnce(
+        programId,
+        evidenceBasis.reason,
+      );
+      return true;
+    }
+    if (linkedArtifactId && !linkedArtifactIntegrityOk) return false;
+    if (!evidenceBasis.evaluable) {
+      // The reads ran, so integrity was just checked for real. Only the evidence
+      // comparison is unevaluable — and an unevaluable check is not a stale
+      // approval, the same rule `resolveDeliverableApprovalCurrencyScope` applies
+      // above. Without this the whole gate ladder held with no reason rendered.
+      reportUnevaluableApprovedEvidenceBasisOnce(
+        programId,
+        evidenceBasis.reason,
+      );
+      return true;
+    }
+    // `linkedArtifactIntegrityOk` here is redundant and a mutation that removes
+    // it SURVIVES: reaching this line with a truthy `linkedArtifact` implies a
+    // truthy `linkedArtifactId`, which implies the veto above already passed. It
+    // is kept so this Boolean states the whole condition it depends on rather
+    // than inheriting half of it from a control-flow accident one line up — if
+    // that veto is ever changed to collect a reason instead of returning, this
+    // comparison stays correct. Not a coverage gap.
+    const linkedArtifactCurrent = Boolean(
+      linkedArtifactIntegrityOk &&
+      linkedArtifact &&
+      deliverablePhase &&
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot: evidenceBasis.snapshot,
+        phase: deliverablePhase,
+        recordedRevision:
+          typeof linkedMetadata.phaseEvidenceSnapshotHash === "string"
+            ? linkedMetadata.phaseEvidenceSnapshotHash
+            : typeof linkedMetadata.evidenceSnapshotHash === "string"
+              ? linkedMetadata.evidenceSnapshotHash
               : null,
-          generatedAt: linkedArtifact.created_at ?? null,
-        }),
-      ),
+        scope:
+          typeof linkedMetadata.evidenceSnapshotScope === "string"
+            ? linkedMetadata.evidenceSnapshotScope
+            : null,
+        generatedAt: linkedArtifact.created_at ?? null,
+      }),
     );
 
     if (linkedArtifactId && !linkedArtifactCurrent) return false;
