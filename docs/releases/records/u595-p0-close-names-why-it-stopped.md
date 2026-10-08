@@ -157,10 +157,12 @@ written by this change.
 - **PASS** — `npx eslint` on all five changed and added source files — exit 0,
   no findings.
 - **PASS** — census regenerated with `npm run audit:test-ci-coverage:write`.
-  `coveredTestFiles` 2679 → 2680, `uncoveredTestFiles` 165 unchanged,
-  `testFiles` 2844 → 2845. The covered count rising by exactly the one added
+  Measured against the merge base after `origin/main` moved mid-change:
+  `coveredTestFiles` 2682 → 2683, `uncoveredTestFiles` 165 unchanged,
+  `testFiles` 2847 → 2848. The covered count rising by exactly the one added
   file with the uncovered count unchanged is the proof the new suite is wired,
-  not dark.
+  not dark. The census was resolved by taking `origin/main`'s version and
+  regenerating over it, never by hand-merging the generated file.
 - **NOT RUN** — live signed-in walk of the P0 close against a deployed revision.
   This task holds no authority to declare or advance a live Move, so nothing
   here is `live-proven`. See Known Gaps.
