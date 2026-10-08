@@ -10,7 +10,12 @@ import {
   type EvidenceFamily,
 } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import type { TenancyCtx } from "@/lib/programs/types.db";
-import type { FamilyAwaitingReview } from "@/lib/programs/evidence-readiness/pending-review-next-action";
+import {
+  familyReviewBacklogFromDecisionRows,
+  type FamilyAwaitingReview,
+  type FamilyReviewDecisionRow,
+  type FamilyWithRejectedEvidence,
+} from "@/lib/programs/evidence-readiness/pending-review-next-action";
 import { getProgramById } from "@/lib/programs/queries";
 import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 import { gapRemediationSentence } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
@@ -92,6 +97,19 @@ export interface DiscoveryEvidenceReadiness {
    * one that crossed an API boundary without it, reads as "nothing pending".
    */
   familiesAwaitingReview?: FamilyAwaitingReview[];
+  /**
+   * Families whose provided evidence was rejected in review
+   * (`program_evidence_reviews.decision = 'rejected'`).
+   *
+   * The third value of that column was read by nothing. A rejection takes the
+   * row out of the pending queue without ever making it approved, and the
+   * review update is itself filtered `decision = 'pending'`, so no control can
+   * re-decide it — which silently restored the bare "upload" instruction for a
+   * family whose file is already in the cabinet. Like the pending list this is
+   * wording only: nothing gate-bearing may read it, and a rejected family
+   * stays uncovered. Optional for the same reason as the field above.
+   */
+  familiesWithRejectedEvidence?: FamilyWithRejectedEvidence[];
 }
 
 const FAMILY_KEYWORDS: Record<string, string[]> = {
@@ -715,44 +733,37 @@ export async function loadDiscoveryEvidenceReadiness(
       { missingTable: "empty" },
     )
     .catch(() => []);
-  // Pending reviews are read SEPARATELY, deliberately. Folding them into the
-  // query above would let pending rows crowd out approved ones inside its
-  // LIMIT and change what counts as covered; coverage must keep grading on
-  // approved rows alone. This read only ever adds wording, so a failure
-  // degrades to "nothing pending" rather than failing the readiness load.
-  const pendingRows = await azureRead
-    .query<{
-      family_key: string | null;
-      pending_count: number | string | null;
-    }>(
+  // The undecided/refused backlog is read SEPARATELY from the approved rows,
+  // deliberately. Folding it into the query above would let these rows crowd
+  // out approved ones inside its LIMIT and change what counts as covered;
+  // coverage must keep grading on approved rows alone. This read only ever
+  // adds wording, so a failure degrades to "no backlog" rather than failing
+  // the readiness load.
+  //
+  // Both non-approved decisions come back in ONE grouped read. `rejected` is
+  // the third and last value of the column's CHECK constraint and was read by
+  // nothing, which left a rejected family presenting the bare "upload"
+  // instruction for a file already in the cabinet.
+  const backlogRows = await azureRead
+    .query<FamilyReviewDecisionRow>(
       `
         SELECT
           per.family_key,
-          COUNT(*) AS pending_count
+          per.decision,
+          COUNT(*) AS decision_count
         FROM program_evidence_reviews per
         WHERE per.program_id = $1
           AND per.tenant_key = ANY($2)
-          AND per.decision = 'pending'
+          AND per.decision IN ('pending', 'rejected')
           AND per.family_key IS NOT NULL
-        GROUP BY per.family_key
+        GROUP BY per.family_key, per.decision
       `,
       [programId, tenantKeys],
       { missingTable: "empty" },
     )
     .catch(() => []);
-  const familiesAwaitingReview = pendingRows.flatMap((row) => {
-    const familyId =
-      typeof row.family_key === "string" ? row.family_key.trim() : "";
-    if (!familyId) return [];
-    const parsed = Number(row.pending_count);
-    return [
-      {
-        familyId,
-        pendingCount:
-          Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1,
-      },
-    ];
-  });
+  const { familiesAwaitingReview, familiesWithRejectedEvidence } =
+    familyReviewBacklogFromDecisionRows(backlogRows);
 
   return {
     ...evaluateDiscoveryEvidenceReadiness({
@@ -771,5 +782,6 @@ export async function loadDiscoveryEvidenceReadiness(
       })),
     }),
     familiesAwaitingReview,
+    familiesWithRejectedEvidence,
   };
 }
