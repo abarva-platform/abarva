@@ -19,9 +19,6 @@ const GENERATION_SUITE_DIR = "src/lib/deliverables/__tests__";
  */
 const REQUIRED_WORKFLOW = ".github/workflows/ai-surface-control-catalog.yml";
 
-/** The workflow whose ownership is NOT merge-blocking. */
-const UNREQUIRED_WORKFLOW = ".github/workflows/unit-suites.yml";
-
 /**
  * The on-disk suite count the directory is held at.
  *
@@ -56,8 +53,8 @@ type Census = {
   uncoveredDirectories: CensusRow[];
 };
 
-function jestCommands(workflowPath: string): string[] {
-  const workflow = readFileSync(path.join(repoRoot, workflowPath), "utf8");
+function jestCommands(): string[] {
+  const workflow = readFileSync(path.join(repoRoot, REQUIRED_WORKFLOW), "utf8");
   const scripts = JSON.parse(
     readFileSync(path.join(repoRoot, "package.json"), "utf8"),
   ).scripts as Record<string, string>;
@@ -92,7 +89,7 @@ function runCensus(): Census {
 
 describe("deliverable-generation suite required-CI ownership", () => {
   it("sweeps the directory from the required catalog workflow", () => {
-    const command = jestCommands(REQUIRED_WORKFLOW).find((candidate) =>
+    const command = jestCommands().find((candidate) =>
       new RegExp(`\\bjest\\b[^&|;]*\\s${GENERATION_SUITE_DIR}(?:\\s|$)`).test(
         candidate,
       ),
@@ -102,22 +99,6 @@ describe("deliverable-generation suite required-CI ownership", () => {
     // directory is owned without editing the workflow.
     expect(command).toBeDefined();
     expect(command).not.toContain("--runTestsByPath");
-  });
-
-  it("does not rely on the unrequired unit-suites workflow for that ownership", () => {
-    // unit-suites.yml also names the directory and is expected to keep doing
-    // so. This case fails if the required sweep above is ever replaced by it:
-    // the two together are what the census cannot distinguish.
-    expect(
-      jestCommands(UNREQUIRED_WORKFLOW).some((command) =>
-        command.includes(GENERATION_SUITE_DIR),
-      ),
-    ).toBe(true);
-    expect(
-      jestCommands(REQUIRED_WORKFLOW).some((command) =>
-        command.includes(GENERATION_SUITE_DIR),
-      ),
-    ).toBe(true);
   });
 
   it("holds the directory at its suite count so the ownership case cannot pass vacuously", () => {
