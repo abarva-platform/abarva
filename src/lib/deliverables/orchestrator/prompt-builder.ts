@@ -710,7 +710,7 @@ export function requiredExhibitsInstruction(
   return `REQUIRED EXHIBITS: "exhibits" must contain one entry for each of these keys, spelled exactly as written: ${required.join(", ")}. The quality gate identifies an exhibit by its key and blocks the artifact when one is missing. Give each a title, a supported payload kind, and "data" populated from the drafted sections and the cited evidence. Never invent a value to fill an exhibit: where the content is not established, the exhibit shows what is open and who owns closing it. An exhibit is kept only if it meets both of these, and is discarded otherwise: (1) "data" uses one of the supported payload kinds below with real content — a flow with at least two nodes and one edge; a matrix, heatmap or comparison with at least two cells; a timeline or roadmap with at least one lane that has items; a value_tree with a root and at least one branch. A table-like exhibit (a RACI, a measurement table, a decision box, risks and mitigations, an operating cadence) is a matrix; lanes or dates over time are a timeline; dependencies are a flow. (2) "description" makes at least three distinct statements, separated by full stops or semicolons: what the exhibit shows, what it means for the decision, and what remains open.`;
 }
 
-const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
+export const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
 { "title","subtitle","recommendation","nextActions":[],
   "deckSlides":[{"key","title","governingMessage","points":[],"exhibitKey","speakerNotes","citationsUsed":[n]}],
   "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat":"docx","statusColumn":n}],
@@ -723,7 +723,7 @@ For exhibits, do not merely repeat the exhibit name or purpose. Populate data wi
 - matrix/heatmap/comparison: {"kind":"matrix","axes":{"x","y"},"cells":[{"x","y","label","value","weight"}]}
 - timeline/roadmap: {"kind":"roadmap","lanes":[{"label","items":[{"label","start","end"}]}]}
 - value_tree: {"kind":"value_tree","root":{"label","value"},"branches":[{"label","value","children":[{"label","value"}]}]}
-- conceptual_architecture/logical_architecture/physical_architecture/agent_orchestration: {"kind":"logical_architecture","lanes":[{"label","items":[]}]}
+- conceptual_architecture/logical_architecture/physical_architecture/agent_orchestration: {"kind":"logical_architecture","lanes":[{"label","items":["label"]}]}
 Every node, cell, lane item, metric, date, and label must be grounded in cited evidence or explicitly be a labeled assumption/open input in the source prose. If evidence is insufficient to populate real exhibit data, omit that exhibit so the quality gate can surface the missing visual; do not create a placeholder exhibit.
 Reason is an internal enum for workflow routing; do not copy snake_case reason codes into narrative prose, tables, or placeholder text.`;
 
