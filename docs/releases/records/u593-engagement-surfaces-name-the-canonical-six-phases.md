@@ -84,6 +84,10 @@ every client and not feature-gated.
 - `src/lib/programs/__tests__/phase-roster.test.ts` — new, 14 cases.
 - `src/lib/agent/__tests__/engagement-prompt-phase-name.test.ts` — new, 5
   cases, asserting the assembled prompt's own `- Current phase:` line.
+- `src/components/engagement/__tests__/EngagementConsole.phase-indicator.test.tsx`
+  — new, 6 cases. Renders the console and asserts six phase cells, their
+  canonical names, the absence of the retired names, and the grid's six
+  tracks.
 - `src/components/engagement/EngagementConsole.tsx` — the phase-indicator grid
   takes its columns and its labels from the roster, and the phase-transition
   ceremony names the phase the user just entered from it.
@@ -113,21 +117,38 @@ No new runtime dependency, no change to any write path, no new flag.
   src/__tests__/behaviors/engagement-create-active-client-scoping.test.ts` —
   2 suites / 7 tests. These are the other consumers of the changed prompt
   module.
-- **PASS** — mutation sweep, 7 mutations, **7 killed**. Covers the roster
-  length taken from a literal instead of the declared total; the chip falling
-  back to an empty string; the chip skipping its upper-casing; the prose helper
-  falling through to `undefined`; the roster taking the full label where the
-  short one is meant; the absent-phase chip returning blank; and the prompt
-  reverting to the retired five-entry literal. Baseline restored and re-run
-  green afterwards, 19/19.
+- **PASS** — `npx jest src/components/engagement` (the whole directory, as CI
+  runs it) — 2 suites / 12 tests.
+- **PASS** — mutation sweep, **12 mutations, 11 killed, 1 diagnosed as
+  behaviour-neutral**. On the derivation: the roster length taken from a
+  literal instead of the declared total; the chip falling back to an empty
+  string; the chip skipping its upper-casing; the prose helper falling through
+  to `undefined`; the roster taking the full label where the short one is
+  meant; the absent-phase chip returning blank; and the prompt reverting to the
+  retired five-entry literal. On the rendered indicator: reverting it to the
+  retired local array; slicing the roster to five at the call site; dropping
+  the name from a cell; and pinning the grid back to five columns.
+  - That last one **survived the first sweep and was a real gap, not a false
+    survivor**: six cells inside a five-column grid still render all six
+    names — the sixth wraps onto a second row — so text assertions could not
+    see it. A case asserting the grid's track count now kills it.
+  - The one survivor left standing is hardcoding the grid to a literal `6`
+    instead of deriving it. That renders identically today and changes no
+    behaviour, so it is a false survivor by construction; what it would cost is
+    future drift, and the roster's own suite already pins the length to the
+    declared total.
+  - Baseline restored and re-run green after every mutation.
 - **PASS** — `npx tsc -p tsconfig.json --noEmit`, exit 0.
 - **PASS** — `npx eslint` on all eight changed files, exit 0, no warnings.
-- **PASS** — census regenerated honestly. Base regenerated on a clean checkout
-  of the same commit reads `2843 / 2678 / 2677`; the committed file on main
-  reads `2842 / 2677 / 2676`, so main carries one file of inherited drift this
-  branch does not cause. This branch reads `2845 / 2680 / 2679` with
-  `uncoveredTestFiles` unchanged at `165` — base + 2 on each counter, which is
-  what proves both new suites are merge-blocking rather than merely present.
+- **PASS** — census regenerated honestly. Regenerated in a clean detached
+  worktree of the base commit, the census reads `2844 / 2679 / 2678` — byte
+  for byte what the committed file on main reads, so main carries no inherited
+  drift at this base. This branch reads `2847 / 2682 / 2681` with
+  `uncoveredTestFiles` unchanged at `165` — base + 3 on each counter, one per
+  new suite, which is what proves all three are merge-blocking rather than
+  merely present. Measuring base regen inside the branch's own worktree instead
+  gives a misleading `2845`, because stashing leaves the branch's committed
+  test files in place; the clean worktree is the reading to trust.
 - **NOT RUN** — live signed-in walk. This record does not claim `live-proven`.
 
 ## Rollout Plan
@@ -148,7 +169,9 @@ no traffic shift.
 - Live signed-in proof required: **yes**, before this is called `live-proven`.
   The phase indicator and the chips are observable on the engagement console
   and its deliverables, turns and topics pages at any phase; the prompt line is
-  observable in a trace of a conversation turn at P5.
+  observable in a trace of a conversation turn at P5. The indicator is also
+  render-pinned in CI, so the live walk confirms that half rather than being
+  the only proof of it.
 
 ## Rollback Plan
 
@@ -169,14 +192,11 @@ array. No migration to unwind, no written data to reconcile, no flag to flip.
 
 ## Known Gaps
 
-- **The console's phase indicator has no render test.** The roster derivation
-  is fully tested and mutation-proven, and the component's reference to it is
-  pinned by typecheck — the local array is gone, so a wrong reference does not
-  compile — but no suite renders the indicator and asserts six cells with the
-  right one marked. `src/components/engagement/__tests__` does not yet exist on
-  main and is being created with its CI wiring by a separate in-flight change;
-  adding it here would collide with that. Owed as follow-on work once that
-  directory lands.
+- **Closed during this change, recorded because it shaped the work.** The
+  console's phase indicator started with no render test, because
+  `src/components/engagement/__tests__` did not exist on main. That directory
+  landed with its CI wiring mid-change, so the render test is included here
+  and the gap is closed rather than carried.
 - **The three server-component pages are pinned only by typecheck.** They are
   async server components with no test host, the same gap already recorded for
   the adjacent queries in that route group.
