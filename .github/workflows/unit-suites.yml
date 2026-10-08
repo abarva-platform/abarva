@@ -422,8 +422,16 @@ jobs:
       # applied one level too high.
       #
       # Still red and still unwired, deliberately:
-      #   src/lib/deliverables/__tests__/golden-regression.test.ts
       #   src/lib/deliverables/orchestrator/__tests__
+      #
+      # Corrected 8 Oct: golden-regression.test.ts was listed here as red while
+      # the "Run the repaired deliverables suites" step above already named the
+      # directory that holds it. Re-measured on the whole directory, it passes
+      # 3 of 3 and the directory is 36 suites / 303 tests green, so the
+      # quarantine line was describing a state that had already been repaired.
+      # Ownership of that directory has since moved to the required
+      # ai-surface-control-catalog workflow, which is where a merge can fail on
+      # it; naming it here as well is deliberate and harmless.
       #   src/components/admin/__tests__ and components/admin/context-layer/__tests__
       #   src/lib/admin/__tests__ (5 failed of 62 suites)
       #
