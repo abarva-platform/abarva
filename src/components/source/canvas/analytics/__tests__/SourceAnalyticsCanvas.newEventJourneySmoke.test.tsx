@@ -227,6 +227,29 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     expect(supplierCheckpoint).not.toHaveTextContent("✓");
   });
 
+  it("does not equate a recorded NDA file with completed supplier coverage", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent("rfp")}
+        viewStage="rfp"
+        tenantName="AbarVa QA"
+        artifacts={[{
+          id: "nda-file",
+          artifactCode: "NDA-EXECUTED",
+          sourcingStage: "scope",
+          title: "NDA record",
+        }]}
+      />,
+    );
+
+    const supplierCheckpoint = within(screen.getByTestId("source-shell-v2-rail"))
+      .getAllByTestId("source-reader-journey-checkpoint")
+      .find((checkpoint) => checkpoint.textContent?.includes("Suppliers & NDA"));
+    expect(supplierCheckpoint).toBeDefined();
+    expect(supplierCheckpoint).toHaveTextContent("Recorded");
+    expect(supplierCheckpoint).not.toHaveTextContent("✓");
+  });
+
   it("keeps supporting workspaces reachable without competing with the active step canvas", () => {
     renderStage("scope");
 

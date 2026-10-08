@@ -18,7 +18,7 @@
 // matching the pattern already used by StrategyStage.test.tsx.
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 const mockRouterRefresh = jest.fn();
 
@@ -190,9 +190,10 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     const continueGuidance = screen.getByTestId(
       "source-shell-continue-guidance",
     );
-    expect(continueGuidance).toHaveTextContent(
-      "Locked: Download the template, fill one row per tower, tier, month, and time window, then upload.",
-    );
+    expect(continueGuidance).toHaveTextContent("L2/L3 ticket history and service volumetrics");
+    expect(continueGuidance).toHaveTextContent("Now: Not loaded");
+    expect(within(continueGuidance).getByRole("button", { name: "Open evidence workspace" }))
+      .toBeInTheDocument();
   });
 
   it("keeps gate approval handoff inside the event shell workspace", () => {
