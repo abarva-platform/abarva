@@ -207,6 +207,30 @@ required sweep must be checked for suites inside it that a non-required job stil
 names individually.** The wiring does not merely add a gate; it changes the
 classification of lines that were previously correct.
 
+## Census Absolutes — the base carries one of inherited drift
+
+After the forward merge, this branch's regenerated census reads
+`testFiles 2857 / coveredTestFiles 2693 / pullRequestCoveredTestFiles 2692`,
+while `main`'s **committed** census reads `2855 / 2691 / 2690`. The apparent
+delta is therefore **+2**, and only **+1** of it belongs to this change.
+
+The other +1 is drift already on the base, and it was measured rather than
+inferred: removing this change's one new test file and regenerating gives
+`2856 / 2692 / 2691`, so `main`'s true count is 2856 against a committed 2855.
+Two pull requests each added one test file and each computed `+1` from the same
+2854 base, so both wrote 2855 and the second landing left the file behind
+uncounted.
+
+`uncoveredTestFiles` is **164** on the base, in the measured base-equivalent
+tree, and on this branch — flat throughout, which is the part of the claim that
+does not move with the base.
+
+This is not something to correct here. Regenerating honestly is what fixes it:
+whichever pull request merges next writes the true count, and the drift closes
+itself. Recorded so the +2 is not read as this change registering two files.
+`census drift: committed census matches this run` passes on this branch, which
+is the check that actually constrains it.
+
 ## Known Gaps
 
 - **Sibling directories under the same parent are still merge-dark**, and one of
