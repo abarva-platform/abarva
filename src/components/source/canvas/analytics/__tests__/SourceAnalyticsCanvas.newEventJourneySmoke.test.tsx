@@ -97,6 +97,29 @@ function renderStage(stageKey: SourceStageKey, stageView?: StageAnalyticsView) {
 describe("SourceAnalyticsCanvas New Event journey smoke", () => {
   afterEach(() => cleanup());
 
+  it("keeps the journey and workspaces reachable from the compact rail", () => {
+    renderStage("rfp");
+
+    const toggle = screen.getByRole("button", {
+      name: /journey and workspaces/i,
+    });
+    const railContent = document.getElementById("source-shell-mobile-rail-content");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(railContent).toHaveAttribute("data-open", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(railContent).toHaveAttribute("data-open", "true");
+    expect(
+      screen.getByRole("button", { name: /files & deliverables/i }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /files & deliverables/i }),
+    );
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(railContent).toHaveAttribute("data-open", "false");
+    expect(screen.getByTestId("source-shell-v2-files")).toBeInTheDocument();
+  });
+
   it.each(SOURCE_STAGE_ORDER)(
     "renders the active workflow contract for %s",
     (stageKey) => {
@@ -164,8 +187,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       const activeNeed = screen.getByTestId("source-shell-active-step-needs");
       expect(activeNeed).toHaveTextContent(/what continue needs/i);
       expect(activeNeed).toHaveTextContent(/required/i);
-      expect(screen.queryByTestId("source-shell-evidence-ask-table"))
-        .toBeNull();
+      expect(
+        screen.queryByTestId("source-shell-evidence-ask-table"),
+      ).toBeNull();
       expect(
         screen.getByTestId("source-shell-active-step-guide"),
       ).toHaveTextContent(/guidebook/i);
@@ -222,8 +246,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     );
 
     expect(supplierCheckpoint).toBeDefined();
-    expect(within(supplierCheckpoint as HTMLElement).getByText("Historical gap"))
-      .toBeInTheDocument();
+    expect(
+      within(supplierCheckpoint as HTMLElement).getByText("Historical gap"),
+    ).toBeInTheDocument();
     expect(supplierCheckpoint).not.toHaveTextContent("✓");
   });
 
@@ -233,18 +258,24 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
         event={makeEvent("rfp")}
         viewStage="rfp"
         tenantName="AbarVa QA"
-        artifacts={[{
-          id: "nda-file",
-          artifactCode: "NDA-EXECUTED",
-          sourcingStage: "scope",
-          title: "NDA record",
-        }]}
+        artifacts={[
+          {
+            id: "nda-file",
+            artifactCode: "NDA-EXECUTED",
+            sourcingStage: "scope",
+            title: "NDA record",
+          },
+        ]}
       />,
     );
 
-    const supplierCheckpoint = within(screen.getByTestId("source-shell-v2-rail"))
+    const supplierCheckpoint = within(
+      screen.getByTestId("source-shell-v2-rail"),
+    )
       .getAllByTestId("source-reader-journey-checkpoint")
-      .find((checkpoint) => checkpoint.textContent?.includes("Suppliers & NDA"));
+      .find((checkpoint) =>
+        checkpoint.textContent?.includes("Suppliers & NDA"),
+      );
     expect(supplierCheckpoint).toBeDefined();
     expect(supplierCheckpoint).toHaveTextContent("Recorded");
     expect(supplierCheckpoint).not.toHaveTextContent("✓");
@@ -330,8 +361,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     renderStage("rfp", completedRfpView);
 
     expect(screen.queryByTestId("source-shell-stage-ready-panel")).toBeNull();
-    expect(screen.getByTestId("source-shell-active-step-needs"))
-      .toHaveTextContent("Requirements and service levels");
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Requirements and service levels");
     const readiness = screen.getByTestId("source-stage-operating-status");
     expect(readiness).toHaveTextContent("RFP gate readiness");
     expect(readiness).toHaveTextContent("RFP Package unlocks");
