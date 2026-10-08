@@ -228,6 +228,49 @@ function isRecoverableCreditCandidate(
   );
 }
 
+/**
+ * The contracts whose loaded actions include a credit claim.
+ *
+ * Both the fallback portfolio figure and the no-action report use this
+ * classification. An active load run can cause the figure to include rows
+ * without actions, so the two amounts are not always disjoint.
+ */
+function creditActionContractIdSet(
+  portfolio: RecoverableCreditInput,
+): ReadonlySet<string> {
+  return new Set(
+    portfolio.impact.actionCandidates
+      .filter(isRecoverableCreditCandidate)
+      .map((row) => row.contract_id),
+  );
+}
+
+/**
+ * Contracts holding unclaimed SLA credit that no loaded action would claim.
+ *
+ * A credit row without a matching action needs review regardless of whether
+ * the portfolio figure includes it. The figure may include all rows for a
+ * selected load run, or narrow to actionable rows in its fallback path.
+ *
+ * Nothing here estimates anything. The amount is the unclaimed credit already
+ * summed on the loaded coverage row, which is the same arithmetic the two
+ * authored credit actions carry.
+ */
+export function unexploitedRecoverableCreditRows(
+  portfolio: RecoverableCreditInput,
+): readonly SourceContractEvidenceCoverageRow[] {
+  const creditActionContractIds = creditActionContractIdSet(portfolio);
+  return portfolio.impact.evidenceCoverage
+    .filter((row) => (numberFromDb(row.unclaimed_credit_usd) ?? 0) > 0)
+    .filter((row) => !creditActionContractIds.has(row.contract_id))
+    .sort(
+      (left, right) =>
+        (numberFromDb(right.unclaimed_credit_usd) ?? 0) -
+          (numberFromDb(left.unclaimed_credit_usd) ?? 0) ||
+        left.contract_id.localeCompare(right.contract_id),
+    );
+}
+
 export function source360RecoverableCreditCoverageRows(
   portfolio: RecoverableCreditInput,
 ): readonly SourceContractEvidenceCoverageRow[] {
@@ -256,23 +299,7 @@ export function source360RecoverableCreditCoverageRows(
     }
   }
 
-  const creditActionContractIds = new Set(
-    portfolio.impact.actionCandidates
-      .filter((row) =>
-        /credit|recover/i.test(
-          [
-            row.action_type,
-            row.opportunity_type,
-            row.title,
-            row.finding_summary,
-            row.deterministic_basis,
-          ]
-            .filter(Boolean)
-            .join(" "),
-        ),
-      )
-      .map((row) => row.contract_id),
-  );
+  const creditActionContractIds = creditActionContractIdSet(portfolio);
   const actionableCreditRows = rowsWithCredits.filter((row) =>
     creditActionContractIds.has(row.contract_id),
   );
@@ -1787,6 +1814,7 @@ export function CoveragePage({
       : 0;
   const { shown: archetypes, notShown: archetypesNotShown } =
     archetypeRowsForDisplay(vendorArchetypeRows(portfolio));
+  const unexploitedCredit = unexploitedRecoverableCreditRows(portfolio);
   const archetypeCoverageTitle =
     populations.declaredOutsideRegisterCount > 0
       ? `${populations.declaredInRegisterCount} of ${populations.registerCount} register contracts are classified`
@@ -1939,6 +1967,32 @@ export function CoveragePage({
           ) : null}
         </div>
       </section>
+      {unexploitedCredit.length > 0 ? (
+        <section className="sw-v2-panel sw-v2-coverage-unexploited">
+          <PanelHead
+            eyebrow="Loaded, unclaimed"
+            title="Credit in the rows that no action would claim"
+          />
+          <div className="sw-v2-archetype-list">
+            {unexploitedCredit.map((row) => (
+              <div key={row.contract_id}>
+                <span>
+                  {safeVendorDisplayName(row.vendor_name, row.contract_id)}
+                </span>
+                <b>{money(numberFromDb(row.unclaimed_credit_usd) ?? 0)}</b>
+                <small>
+                  {numberFromDb(row.performance_rows) ?? 0} performance rows ·
+                  no credit action loaded
+                </small>
+              </div>
+            ))}
+          </div>
+          <p className="sw-v2-muted">
+            Amounts come from loaded performance coverage. Review the governing
+            SLA and claim window before opening a credit action.
+          </p>
+        </section>
+      ) : null}
     </div>
   );
 }
