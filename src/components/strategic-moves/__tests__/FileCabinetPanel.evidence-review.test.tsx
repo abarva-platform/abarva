@@ -535,3 +535,116 @@ describe("Moves File Cabinet evidence review", () => {
     });
   });
 });
+
+// ── The rejected decision ─────────────────────────────────────────────────────
+//
+// `program_evidence_reviews.decision` admits `pending | approved | rejected`.
+// The cabinet's queue reads the first and its reviewed list reads the second,
+// so a REJECTED review was on no surface: the card left the queue on the
+// decision and arrived nowhere, taking the rationale the reviewer had just
+// recorded with it, while the queue's own explainer sentence told them that
+// "pending and rejected evidence is excluded from phase generation" — naming a
+// state the panel then refused to show.
+//
+// These cases render the real panel, so they pin the WIRING: that the panel
+// asks the route for the rejected list and renders what the presentation module
+// answers. Asserting the pure split and the sentence is that module's own
+// suite; neither case here passes if the panel stops asking.
+describe("Moves File Cabinet rejected evidence", () => {
+  const REJECTED = {
+    evidenceId: "evidence-9",
+    reviewId: "review-9",
+    title: "finance-baseline.xlsx",
+    familyKey: "kpi_baseline",
+    phase: 2,
+    reviewedAt: "2026-10-07T00:00:00.000Z",
+    rationale: "The parser merged two baselines into one row.",
+  };
+
+  const mockCabinet = (payload: Record<string, unknown>) => {
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        artifacts: [],
+        pendingEvidenceReviews: [],
+        reviewedEvidence: [],
+        rejectedEvidence: [],
+        evidenceReviewStatus: "available",
+        ...payload,
+      }),
+    })) as unknown as typeof fetch;
+  };
+
+  it("gives a rejected review a place, with the reason that was recorded", async () => {
+    mockCabinet({ rejectedEvidence: [REJECTED] });
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    const section = await screen.findByRole("region", {
+      name: "Rejected evidence",
+    });
+    // Before this, none of these reached any surface: not the file, not the
+    // state, not the reason.
+    expect(section).toHaveTextContent("finance-baseline.xlsx");
+    expect(section).toHaveTextContent("Rejected");
+    expect(section).toHaveTextContent(
+      "The parser merged two baselines into one row.",
+    );
+  });
+
+  it("states the action that can succeed and not the two that cannot", async () => {
+    mockCabinet({ rejectedEvidence: [REJECTED] });
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    const section = await screen.findByRole("region", {
+      name: "Rejected evidence",
+    });
+    // The stored decision is never re-decided (the guarded update filters on
+    // `pending`) and the same file parses to the extraction that was rejected,
+    // so the only instruction that works is a corrected or different source.
+    expect(section).toHaveTextContent(/cannot be re-decided/i);
+    expect(section).toHaveTextContent(/corrected file or a different source/i);
+    // And no approve control: there is nothing here approving can act on.
+    expect(section.querySelectorAll("button").length).toBe(0);
+  });
+
+  it("renders the rejected section only for a rejected review", async () => {
+    // The control for the fix. An approved review is the neighbouring state and
+    // has its own list; if the section rendered for it too, the first two cases
+    // would pass without the decision having been read at all.
+    mockCabinet({
+      reviewedEvidence: [
+        {
+          evidenceId: REJECTED.evidenceId,
+          reviewId: REJECTED.reviewId,
+          title: REJECTED.title,
+          familyKey: REJECTED.familyKey,
+          phase: REJECTED.phase,
+          reviewedAt: REJECTED.reviewedAt,
+        },
+      ],
+    });
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    expect(
+      await screen.findByRole("region", { name: "Reviewed evidence" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Rejected evidence" }),
+    ).toBeNull();
+  });
+
+  it("shows a rejected review to a reader who cannot approve", async () => {
+    // Exclusion from generation is a fact about the Move, not a reviewer
+    // privilege, so the reader without approval rights must see it too.
+    mockCabinet({ rejectedEvidence: [REJECTED] });
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} />);
+
+    expect(
+      await screen.findByRole("region", { name: "Rejected evidence" }),
+    ).toHaveTextContent("finance-baseline.xlsx");
+  });
+});
