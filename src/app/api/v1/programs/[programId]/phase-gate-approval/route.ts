@@ -64,6 +64,7 @@ import {
 import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
 
 import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
+import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -984,7 +985,7 @@ export async function POST(
       err,
     );
     return Response.json(
-      { error: "internal_error", message: (err as Error).message },
+      unexpectedWalkStepFailureBody("phase_gate_submission"),
       { status: 500 },
     );
   }

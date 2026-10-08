@@ -132,6 +132,7 @@ import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/m
 import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
 import { declarableEvidenceUploadFamilies } from "@/lib/programs/evidence-readiness/upload-family-declaration";
 import { gateRefusalAllowsResubmission } from "@/lib/programs/gate-refusal-resubmission";
+import { readUnexpectedWalkStepFailure } from "@/lib/programs/walk-step-unexpected-failure";
 import {
   declarableCurrentStateFamilies,
   resolveCurrentStateUploadFamilies,
@@ -2589,6 +2590,19 @@ export function MovesPhaseStandaloneClient({
       resubmitCanSatisfy?: boolean;
     };
     if (!approvalRes.ok || !approval.ok) {
+      // An unanticipated failure in the route is not a gate refusal, and the
+      // framing below would report it as one. Answer it on its own terms: no
+      // "the phase gate is blocked" wrapper, and none of the document remedy,
+      // which cannot clear a failure that never reached the gate.
+      const unexpected = readUnexpectedWalkStepFailure(
+        approvalRes.status,
+        approval,
+      );
+      if (unexpected) {
+        setGateApprovalStatus("blocked");
+        setGateApprovalMessage(unexpected);
+        throw new Error(unexpected);
+      }
       const hard = approval.gate?.failedChecks
         ?.filter((check) => check.severity === "hard")
         .map((check) => check.reason || check.check)

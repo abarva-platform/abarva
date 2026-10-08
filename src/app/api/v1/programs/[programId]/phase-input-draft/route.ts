@@ -24,6 +24,7 @@ import {
   resolveMoveConfirmedSolutionRoute,
 } from "@/lib/programs/phase-capture-values-for-move";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
+import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -140,9 +141,8 @@ export async function POST(
       /* not a tenancy error */
     }
     console.error("[POST /api/v1/programs/:programId/phase-input-draft]", err);
-    return Response.json(
-      { error: "internal_error", message: (err as Error).message },
-      { status: 500 },
-    );
+    return Response.json(unexpectedWalkStepFailureBody("phase_input_draft"), {
+      status: 500,
+    });
   }
 }
