@@ -20,6 +20,7 @@ import type {
   WorkItemStatus,
   WorkItemType,
 } from "./types.db";
+import type { ApprovedEvidenceLineageStamp } from "./deliverables/approved-evidence-lineage";
 import type { ArchetypeKey } from "./types.ui";
 import { getProgramById } from "./queries";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
@@ -658,18 +659,22 @@ export async function signOffDeliverable(
   deliverableId: string,
   opts: {
     supabase?: SupabaseClient;
-    /** Validated lineage for a generated artifact accepted as this deliverable. */
+    /**
+     * Validated lineage for a generated artifact accepted as this deliverable.
+     *
+     * The evidence revisions are intersected in as `ApprovedEvidenceLineageStamp`
+     * rather than listed here, so the moment they were read travels with them. A
+     * lineage recorded without that moment cannot be checked for currency, and the
+     * deliverable reads as NOT signed off wherever no artifact row is linked.
+     */
     approvalLineage?: {
       source: "generated_artifact_acceptance" | "moves_program_generate";
       generatedArtifactId?: string;
-      evidenceSnapshotHash: string;
-      phaseEvidenceSnapshotHash?: string;
-      evidenceSnapshotScope?: "phase";
       approvalMode:
         | "client_approved_replacement"
         | "accept_ai_draft_as_authoritative"
         | "approve_generated_deliverable_as_is";
-    };
+    } & ApprovedEvidenceLineageStamp;
     /**
      * Set when the client approved by uploading an edited replacement
      * (move_artifacts row, artifact_family=generated_deliverable) rather

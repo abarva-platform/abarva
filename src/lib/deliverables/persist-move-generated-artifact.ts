@@ -13,6 +13,7 @@ import {
 } from "@/lib/deliverables/phase-word-equivalent";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
 import { getPhaseDeliverablePackageContract } from "@/lib/programs/phase-deliverable-package-contract";
+import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approved-evidence-lineage";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
 import type { ProgramCore, TenancyCtx } from "@/lib/programs/types.db";
 
@@ -134,9 +135,12 @@ export async function persistMoveGeneratedArtifact({
     structuredData: {
       source: "moves_program_generate",
       phase,
-      evidenceSnapshotHash,
-      phaseEvidenceSnapshotHash,
-      evidenceSnapshotScope: "phase",
+      // The two revisions plus the moment they were read. Recorded together so
+      // the deliverable's own currency check can run without a linked artifact.
+      ...stampApprovedEvidenceLineage({
+        evidenceSnapshotHash,
+        phaseEvidenceSnapshotHash,
+      }),
       artifact,
       output_format: "html",
       output_role: "html_visual_review_companion",

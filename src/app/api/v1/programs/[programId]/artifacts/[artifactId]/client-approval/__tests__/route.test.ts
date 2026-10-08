@@ -247,6 +247,8 @@ function uploadedReviewRequest(): Request {
   );
 }
 
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+
 const params = Promise.resolve({
   programId: "prog-1",
   artifactId: "artifact-1",
@@ -404,6 +406,9 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
           evidenceSnapshotHash: "revision-current",
           phaseEvidenceSnapshotHash: "revision-current",
           evidenceSnapshotScope: "phase",
+          // The moment the two revisions above were read. Without it the gate's
+          // currency check cannot run and this approval reads as stale.
+          generatedAt: expect.stringMatching(ISO_TIMESTAMP),
           approvalMode: "accept_ai_draft_as_authoritative",
         },
       }),
@@ -447,6 +452,9 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
           evidenceSnapshotHash: "revision-current",
           phaseEvidenceSnapshotHash: "revision-current",
           evidenceSnapshotScope: "phase",
+          // The moment the two revisions above were read. Without it the gate's
+          // currency check cannot run and this approval reads as stale.
+          generatedAt: expect.stringMatching(ISO_TIMESTAMP),
           approvalMode: "client_approved_replacement",
         },
       }),
