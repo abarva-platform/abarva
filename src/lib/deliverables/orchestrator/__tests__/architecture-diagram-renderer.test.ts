@@ -1,8 +1,7 @@
 // Dedicated layered/swimlane renderers for the four architecture-view exhibit
 // kinds, replacing the generic flow-diagram fallback those kinds previously
 // rendered through. Each kind gets its own layout matching its required
-// elements; physical_architecture carries a legend (illustrative/selected/
-// client-confirmed).
+// elements; a legend appears only when the structured exhibit supplies one.
 
 import { renderDeliverableHtml } from "../renderers";
 import { goodDocument } from "../__fixtures__/ams-rfp";
@@ -15,7 +14,7 @@ function architectureData(
     | "physical_architecture"
     | "agent_orchestration",
   lanes: Array<{ label: string; items: string[] }>,
-): RenderableExhibit["data"] {
+): Extract<NonNullable<RenderableExhibit["data"]>, { legend?: string[] }> {
   return { kind, lanes };
 }
 
@@ -96,24 +95,27 @@ describe("architecture-view exhibit rendering", () => {
       description:
         "A dedicated Azure subscription with private networking. Container Apps runtime hosts the agent; Azure AI Foundry serves model endpoints. Azure AI Search and Postgres hold context and data. Key Vault, Application Insights, and CI/CD complete the picture with resilience across regions.",
       targetFormat: "docx",
-      data: architectureData("physical_architecture", [
-        {
-          label: "Cloud boundaries and network",
-          items: ["Dedicated subscription", "Private networking"],
-        },
-        {
-          label: "Runtime and model endpoints",
-          items: ["Container Apps runtime", "Model endpoints"],
-        },
-        {
-          label: "Data, search and events",
-          items: ["Azure AI Search", "Postgres", "Event queue"],
-        },
-        {
-          label: "Secrets, monitoring, CI/CD and resilience",
-          items: ["Key Vault", "Application Insights", "CI/CD"],
-        },
-      ]),
+      data: {
+        ...architectureData("physical_architecture", [
+          {
+            label: "Cloud boundaries and network",
+            items: ["Dedicated subscription", "Private networking"],
+          },
+          {
+            label: "Runtime and model endpoints",
+            items: ["Container Apps runtime", "Model endpoints"],
+          },
+          {
+            label: "Data, search and events",
+            items: ["Azure AI Search", "Postgres", "Event queue"],
+          },
+          {
+            label: "Secrets, monitoring, CI/CD and resilience",
+            items: ["Key Vault", "Application Insights", "CI/CD"],
+          },
+        ]),
+        legend: ["illustrative", "selected", "client-confirmed"],
+      },
     });
     expect(html).toMatch(/Cloud Boundaries &amp; Network/);
     expect(html).toMatch(/Runtime &amp; Model Endpoints/);
@@ -125,12 +127,29 @@ describe("architecture-view exhibit rendering", () => {
     expect(html).toMatch(/client-confirmed/);
   });
 
+  it("does not imply a confirmation status or a link when neither is declared", () => {
+    const html = withExhibit({
+      key: "physical_architecture",
+      title: "Physical Architecture",
+      kind: "physical_architecture",
+      description: "Declared lanes only.",
+      targetFormat: "docx",
+      data: architectureData("physical_architecture", [
+        { label: "Network", items: ["Private endpoint"] },
+        { label: "Runtime", items: ["Container runtime"] },
+      ]),
+    });
+    expect(html).not.toMatch(/data-legend="true"/);
+    expect(html).not.toMatch(/data-declared-edges="true"/);
+  });
+
   it("does NOT render a legend for conceptual/logical architecture (only physical/agent-orchestration need one)", () => {
     const html = withExhibit({
       key: "logical_architecture",
       title: "Logical Architecture",
       kind: "logical_architecture",
-      description: "Plain description with no special lane keywords at all here.",
+      description:
+        "Plain description with no special lane keywords at all here.",
       targetFormat: "docx",
       data: architectureData("logical_architecture", [
         { label: "Experience", items: ["Intake"] },
@@ -168,15 +187,14 @@ describe("architecture-view exhibit rendering", () => {
     expect(html).toMatch(/Intent Router/);
     expect(html).toMatch(/Planner/);
     expect(html).toMatch(/Context Assembler/);
-    expect(html).toMatch(/Tool\/Retrieval Selection/);
+    expect(html).toMatch(/Tool Selection/);
     expect(html).toMatch(/Model Execution/);
     expect(html).toMatch(/Evidence Challenge/);
-    expect(html).toMatch(/Policy\/Control Gate/);
+    expect(html).toMatch(/Policy Gate/);
     expect(html).toMatch(/Human Approval/);
     expect(html).toMatch(/Action Execution/);
-    expect(html).toMatch(/Trace\/Monitoring/);
-    // gate nodes get a visibly distinct legend/fill, not just plain text
-    expect(html).toMatch(/policy\/control or human-approval gate/);
+    expect(html).toMatch(/Trace Monitoring/);
+    expect(html).not.toMatch(/data-declared-edges="true"/);
   });
 
   it("still renders matrix/timeline/flow kinds exactly as before (no regression to existing exhibit kinds)", () => {

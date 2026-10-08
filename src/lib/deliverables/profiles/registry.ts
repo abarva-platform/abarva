@@ -13,6 +13,8 @@ import type {
   MovesDeliverableKey,
 } from "./types";
 import { SOURCE_PROFILES } from "./registry-source";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import type { AllowedDepth } from "./types";
 
 const CURRENT_STATE_VISUAL_STANDARD = {
   requiredVisuals: [
@@ -877,10 +879,33 @@ export const MOVES_DELIVERABLE_KEYS = [
   "solution_approach_options",
 ] as const satisfies ReadonlyArray<MovesDeliverableKey>;
 
-/** The canonical profile registry, keyed by deliverable. */
-export const DELIVERABLE_PROFILES: Readonly<
-  Record<DeliverableKey, DeliverableProfile>
-> = {
+/** Presentation altitude is a type decision, never a renderer branch. */
+const MOVES_ALTITUDE: Readonly<Record<MovesDeliverableKey, AllowedDepth>> = {
+  charter: "concise",
+  discovery_plan: "standard",
+  discovery_report: "deep",
+  root_cause_worksheet: "standard",
+  design_workshop_guide: "standard",
+  target_state_architecture: "deep",
+  solution_design: "deep",
+  process_change_estimate_brief: "standard",
+  requirements_traceability: "deep",
+  operating_model_design: "deep",
+  sourcing_strategy: "standard",
+  planning_workshop_guide: "standard",
+  execution_roadmap: "deep",
+  business_case: "deep",
+  financial_model: "deep",
+  tower_metrics_plan: "standard",
+  readiness_and_change_plan: "standard",
+  mobilization_workshop_guide: "standard",
+  handoff_package: "concise",
+  value_measurement_contract: "standard",
+  execution_kickoff_guide: "concise",
+  solution_approach_options: "standard",
+};
+
+const RAW_PROFILES: Readonly<Record<DeliverableKey, DeliverableProfile>> = {
   charter,
   discovery_plan: discoveryPlan,
   discovery_report: discoveryReport,
@@ -905,6 +930,26 @@ export const DELIVERABLE_PROFILES: Readonly<
   solution_approach_options: solutionApproachOptions,
   ...SOURCE_PROFILES,
 };
+
+/** The canonical profile registry, keyed by deliverable. */
+export const DELIVERABLE_PROFILES: Readonly<
+  Record<DeliverableKey, DeliverableProfile>
+> = Object.fromEntries(
+  Object.entries(RAW_PROFILES).map(([key, profile]) => {
+    if (!(key in MOVES_ALTITUDE)) return [key, profile];
+    const outline = DELIVERABLE_REGISTRY.find(
+      (spec) => spec.deliverableTypeKey === key,
+    )?.sections;
+    return [
+      key,
+      {
+        ...profile,
+        allowedDepth: MOVES_ALTITUDE[key as MovesDeliverableKey],
+        sectionOutline: outline?.length ? outline : (profile.storyArc ?? []),
+      },
+    ];
+  }),
+) as Record<DeliverableKey, DeliverableProfile>;
 
 export function getDeliverableProfile(key: DeliverableKey): DeliverableProfile {
   return DELIVERABLE_PROFILES[key];

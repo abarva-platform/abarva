@@ -4,6 +4,8 @@
 // a board-grade PDF via @react-pdf/renderer.
 import { Packer } from "docx";
 import JSZip from "jszip";
+import { judgeRenderedDocx } from "../doc-quality";
+import { judgeSheetQuality } from "../sheet-quality";
 import { renderToBuffer } from "@react-pdf/renderer";
 import {
   renderDeliverableDocx,
@@ -254,14 +256,14 @@ describe("DOCX/HTML/PDF renderers — duplicate section-heading suppression", ()
     expect(explicitPageBreaks).toHaveLength(0);
   });
 
-  it("preserves section page breaks for non-charter deliverables", async () => {
+  it("avoids forced page breaks that leave mostly empty pages", async () => {
     const buf = await Packer.toBuffer(renderDeliverableDocx(goodDocument()));
     const zip = await JSZip.loadAsync(buf);
     const documentXml = await zip.file("word/document.xml")!.async("string");
     const explicitPageBreaks =
       documentXml.match(/<w:pageBreakBefore\s*\/>/g) ?? [];
 
-    expect(explicitPageBreaks).toHaveLength(4);
+    expect(explicitPageBreaks).toHaveLength(0);
   });
 });
 
@@ -335,14 +337,32 @@ describe("renderers — malformed section-object body recovery", () => {
 });
 
 describe("Excel companion", () => {
-  it("builds a workbook with one sheet per xlsx-flagged table", async () => {
+  it("builds a cover, styled table, and visual exhibit sheet", async () => {
     const wb = renderDeliverableExcelCompanion(goodDocument());
     expect(wb).not.toBeNull();
     // goodDocument has one xlsx table (Application Inventory) and one docx table (risk register)
-    expect(wb!.worksheets).toHaveLength(1);
-    expect(wb!.worksheets[0].name).toMatch(/Application Inventory/);
+    expect(wb!.worksheets).toHaveLength(3);
+    expect(wb!.worksheets[0].name).toBe("Cover");
+    expect(wb!.worksheets[1].name).toMatch(/Application Inventory/);
+    expect(wb!.worksheets[1].getCell("A1").fill).toMatchObject({
+      type: "pattern",
+      pattern: "solid",
+    });
+    expect(wb!.worksheets[2].getImages()).toHaveLength(1);
+    expect(judgeSheetQuality(wb!, 1).findings).toEqual([]);
+    expect(judgeSheetQuality(wb!, 2).findings).toContain(
+      "empty_figure:expected_2:actual_1",
+    );
     const buf = await wb!.xlsx.writeBuffer();
     expect(buf.byteLength).toBeGreaterThan(1000);
+  });
+
+  it("rejects a workbook whose data sheet has become empty", () => {
+    const wb = renderDeliverableExcelCompanion(goodDocument())!;
+    wb.worksheets[1].spliceRows(2, wb.worksheets[1].rowCount - 1);
+    expect(judgeSheetQuality(wb).findings).toContain(
+      "empty_sheet:Application Inventory",
+    );
   });
 
   it("returns null when there are no xlsx tables", () => {
@@ -363,7 +383,7 @@ describe("HTML preview", () => {
     expect(html).toMatch(/Airline Demo/);
     expect(html).toMatch(/Recommendation/);
     expect(html).toMatch(/Source Register/);
-    expect(html).toMatch(/F8F7F4/); // AbarVa cream background
+    expect(html).toMatch(/FBFAF7/); // AbarVa cream background token
   });
 
   it("leaks no internal ids/tags into the rendered HTML body", () => {
@@ -500,13 +520,13 @@ describe("HTML preview", () => {
       expect(out).toContain(word);
     }
     expect(out).not.toMatch(/decisio</);
-    expect(out).toMatch(/<path d="M\d+ 72 L\d+ 72"[^>]*marker-end/);
+    expect(out).toMatch(/data-declared-edge="[^\"]+"[^>]*marker-end/);
     expect(out).not.toContain("Start");
     expect(out).not.toContain("Step 2");
     // There must be exactly one box per NODE. Three nodes and two edges means
     // three boxes — if edges are being flattened into the node list again this
     // becomes five, and an arrow assertion alone would not notice.
-    const nodeBoxes = [...out.matchAll(/<rect x="\d+" y="38" width="118"/g)];
+    const nodeBoxes = [...out.matchAll(/<rect x="\d+" y="28" width="152"/g)];
     expect(nodeBoxes).toHaveLength(3);
 
     // The matrix labels both axes and places a cell by its own x/y, not by its
@@ -634,17 +654,97 @@ describe("HTML renderer — roadmap exhibit (REF_EXECUTIVE_ROADMAP)", () => {
     expect(html).toMatch(/Governance &amp; Controls/);
   });
 
-  it("renders decision-gate diamonds and a dependency/gate legend", () => {
+  it("does not invent decision gates or dependencies absent from structured data", () => {
     const html = renderDeliverableHtml(docWithRoadmapExhibit());
-    expect(html).toMatch(/data-legend="true"/);
-    expect(html).toMatch(/decision gate/);
-    expect(html).toMatch(/dependency/);
-    // gate diamond path + fill color, same palette as the agent-orchestration gates
-    expect(html).toMatch(/fill="#FDF6E3" stroke="#E8CF8A"/);
+    expect(html).not.toMatch(/data-legend="true"/);
+    expect(html).not.toMatch(/decision gate/);
+    expect(html).not.toMatch(/dependency/);
+    expect(html).toMatch(/Governance cadence set/);
+  });
+
+  it("keeps declared lanes, horizons, and every item beyond the default grid", () => {
+    const doc = docWithRoadmapExhibit();
+    const roadmap = doc.exhibits[0]!;
+    if (!roadmap.data || roadmap.data.kind !== "roadmap")
+      throw new Error("fixture");
+    roadmap.data.lanes.push({
+      label: "Finance",
+      items: [
+        { label: "Budget model", start: "Q1" },
+        { label: "Funding review", start: "Q1" },
+        { label: "Spend baseline", start: "Q1" },
+      ],
+    });
+    const html = renderDeliverableHtml(doc);
+    for (const label of [
+      "Finance",
+      "Q1",
+      "Budget model",
+      "Funding review",
+      "Spend baseline",
+    ])
+      expect(html).toContain(label);
+  });
+});
+
+describe("HTML renderer — complete structured exhibit data", () => {
+  it("keeps matrix cells and value-tree branches beyond old display caps", () => {
+    const doc = goodDocument();
+    doc.exhibits = [
+      {
+        key: "matrix_all",
+        title: "Full matrix",
+        kind: "matrix",
+        description: "Declared cells",
+        targetFormat: "pptx",
+        data: {
+          kind: "matrix",
+          cells: Array.from({ length: 9 }, (_, index) => ({
+            x: "One",
+            y: "One",
+            label: `Cell ${index + 1}`,
+          })),
+        },
+      },
+      {
+        key: "tree_all",
+        title: "Full tree",
+        kind: "chart",
+        description: "Declared drivers",
+        targetFormat: "pptx",
+        data: {
+          kind: "value_tree",
+          root: { label: "Outcome" },
+          branches: Array.from({ length: 7 }, (_, index) => ({
+            label: `Branch ${index + 1}`,
+            children: Array.from({ length: 5 }, (_, childIndex) => ({
+              label: `Driver ${index + 1}-${childIndex + 1}`,
+            })),
+          })),
+        },
+      },
+    ];
+    const html = renderDeliverableHtml(doc);
+    expect(html).toContain("Cell 9");
+    expect(html).toContain("Branch 7");
+    expect(html).toContain("Driver 7-5");
   });
 });
 
 describe("DOCX renderer — visual exhibits", () => {
+  it("rejects a declared figure missing from the packaged document", async () => {
+    const doc = goodDocument();
+    const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
+    expect((await judgeRenderedDocx(buf, doc)).findings).toEqual([]);
+    const missingFigure = {
+      ...doc,
+      exhibits: [...doc.exhibits, doc.exhibits[0]!],
+    };
+    expect((await judgeRenderedDocx(buf, missingFigure)).findings).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^empty_figure:/)]),
+    );
+  });
+
   it("embeds a rasterised image for each declared exhibit, with its title and description as text", async () => {
     const buf = await Packer.toBuffer(renderDeliverableDocx(goodDocument()));
     const zip = await JSZip.loadAsync(buf);
@@ -671,7 +771,7 @@ describe("DOCX renderer — visual exhibits", () => {
     );
   });
 
-  it("omits the exhibit instead of shipping a fallback notice when rasterisation fails", async () => {
+  it("fails closed when a declared exhibit cannot rasterise", async () => {
     jest.resetModules();
     jest.doMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -686,19 +786,9 @@ describe("DOCX renderer — visual exhibits", () => {
     const { goodDocument: freshGoodDocument } =
       await import("../__fixtures__/ams-rfp");
 
-    const buf = await Packer.toBuffer(
-      renderWithBrokenRasteriser(freshGoodDocument()),
+    expect(() => renderWithBrokenRasteriser(freshGoodDocument())).toThrow(
+      /docx_exhibit_rasterisation_failed:tower_scope_map/,
     );
-    const zip = await JSZip.loadAsync(buf);
-    const documentXml = await zip.file("word/document.xml")!.async("string");
-    expect(documentXml).not.toMatch(
-      /exhibit could not be rendered as an image/,
-    );
-    expect(documentXml).not.toMatch(/Service Tower Scope Map/);
-    const mediaFiles = Object.keys(zip.files).filter((f) =>
-      /^word\/media\//.test(f),
-    );
-    expect(mediaFiles).toHaveLength(0);
 
     jest.dontMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -748,7 +838,7 @@ describe("PDF renderer (MOVES-QUALITY-001)", () => {
     expect(text).toContain("Towers × services.");
   });
 
-  it("omits the exhibit instead of shipping a fallback notice when rasterisation fails", async () => {
+  it("fails closed when a declared PDF exhibit cannot rasterise", async () => {
     jest.resetModules();
     jest.doMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -762,16 +852,9 @@ describe("PDF renderer (MOVES-QUALITY-001)", () => {
       await import("../renderers");
     const { goodDocument: freshGoodDocument } =
       await import("../__fixtures__/ams-rfp");
-    const { renderToBuffer: freshRenderToBuffer } =
-      await import("@react-pdf/renderer");
-
-    const buf = await freshRenderToBuffer(
-      renderWithBrokenRasteriser(freshGoodDocument()),
+    expect(() => renderWithBrokenRasteriser(freshGoodDocument())).toThrow(
+      /pdf_exhibit_rasterisation_failed:tower_scope_map/,
     );
-    const text = buf.toString("latin1");
-    expect(text.startsWith("%PDF-")).toBe(true);
-    expect(text).not.toContain("exhibit could not be rendered as an image");
-    expect(text).not.toContain("Service Tower Scope Map");
 
     jest.dontMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -1112,7 +1195,7 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     ).toHaveLength(1);
   });
 
-  it("omits the exhibit slide instead of shipping a fallback notice when rasterisation fails", async () => {
+  it("fails the deck when a declared exhibit cannot be rasterised", async () => {
     jest.resetModules();
     jest.doMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",
@@ -1127,18 +1210,9 @@ describe("PPTX renderer (MOVES-QUALITY-003 / Track D)", () => {
     const { goodDocument: freshGoodDocument } =
       await import("../__fixtures__/ams-rfp");
 
-    const buf = await renderWithBrokenRasteriser(freshGoodDocument());
-    expect(buf.subarray(0, 2).toString("latin1")).toBe("PK");
-    const zip = await JSZip.loadAsync(buf);
-    const slides = await slideXmlFiles(buf);
-    const exhibitSlide = slides.find((s) =>
-      s.includes("Service Tower Scope Map"),
-    );
-    expect(exhibitSlide).toBeUndefined();
-    const mediaFiles = Object.keys(zip.files).filter((f) =>
-      /^ppt\/media\/.+\.(png|jpe?g)$/i.test(f),
-    );
-    expect(mediaFiles).toHaveLength(0);
+    await expect(
+      renderWithBrokenRasteriser(freshGoodDocument()),
+    ).rejects.toThrow("simulated rasteriser failure");
 
     jest.dontMock(
       "@/lib/programs/expert-kernel/exports/board-grade/svg-raster",

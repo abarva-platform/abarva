@@ -80,7 +80,12 @@ export async function renderValidatedDeck(
   const { buffer, inspection, verdict } = rendered;
 
   const integrityFailures = verdict.findings
-    .filter((f) => f.kind === "off_canvas" || f.kind === "canvas")
+    .filter(
+      (f) =>
+        f.kind === "off_canvas" ||
+        f.kind === "canvas" ||
+        f.kind === "empty_canvas",
+    )
     .map((f) => f.message);
 
   if (integrityFailures.length > 0) {

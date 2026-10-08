@@ -323,6 +323,8 @@ export interface DeliverableProfile {
   readonly sourceTracePolicy?: SourceTracePolicy;
   /** Depth the purpose permits — reader-energy control, never a word cap. */
   readonly allowedDepth?: AllowedDepth;
+  /** Ordered section outline from the deliverable's authored specification. */
+  readonly sectionOutline?: ReadonlyArray<string>;
   /** Golden-sample references for this profile. */
   readonly examples?: ReadonlyArray<string>;
   /** Known failure modes the gate watches for. */

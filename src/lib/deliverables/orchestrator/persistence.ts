@@ -8,7 +8,6 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { Packer } from "docx";
 import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
 import type {
   BoardPackRenderInput,
@@ -21,7 +20,8 @@ import {
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
 import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import { renderDeliverableDocx, renderDeliverableHtml } from "./renderers";
+import { renderDeliverableHtml } from "./renderers";
+import { renderValidatedDocx } from "./render-validated-doc";
 import { renderValidatedDeck } from "./render-validated-deck";
 import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
@@ -397,7 +397,7 @@ async function renderOfficeCompanion(
 
   if (outputFormat === "docx") {
     return {
-      body: await Packer.toBuffer(renderDeliverableDocx(doc)),
+      body: await renderValidatedDocx(doc),
       fileFormat: "docx",
       fileName: `${safeFileStem(doc.title)}.docx`,
     };
