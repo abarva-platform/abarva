@@ -164,10 +164,16 @@ jobs:
       - name: Run the deliverables worker boundary suite
         run: npx jest --runTestsByPath src/scripts/__tests__/process-deliverable-queue-worker-boundary.test.ts --no-coverage --ci
 
+      # persist-move-generated-artifact.test.ts was named here and has been
+      # removed: the required ai-surface-control-catalog workflow now sweeps
+      # the directory that holds it, so naming it here put the quotable line
+      # in a job that blocks nothing while the blocking line stayed anonymous
+      # — the defect `named-suite-requiredness` exists to refuse. Read
+      # `PASS <path>` out of the required job's own log instead. The remaining
+      # paths are in directories that no required sweep reaches.
       - name: Run the Moves evidence revision suites
         run: >-
           npx jest --runTestsByPath
-          src/lib/deliverables/__tests__/persist-move-generated-artifact.test.ts
           src/scripts/__tests__/process-deliverable-queue.test.ts
           src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/generate/__tests__/route.test.ts
