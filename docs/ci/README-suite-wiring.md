@@ -115,3 +115,40 @@ narrows the staleness that invites from both sides: a mirrored context that name
 `scripts/ci/check-behavior-coverage.mjs`, not in YAML a reader can see — fails unless that
 script still passes the directory to jest. Neither can see a context **added** to the ruleset
 and never written down. Update the mirror in the same pull request that changes the ruleset.
+
+## Naming a directory under a dynamic route
+
+A Jest positional argument is a **regular expression**, not a directory prefix. So a
+`__tests__` directory under a Next.js dynamic route cannot be swept the way every other
+directory in the catalog is: unescaped, `[programId]` is a character class, the pattern
+matches nothing, and Jest exits 1 with "No tests found" — a step that reads as owning a
+directory while owning none of it.
+
+Two spellings work, and the choice is about whether a **directory** is being owned:
+
+| spelling | owns | use when |
+|---|---|---|
+| `npx jest --runTestsByPath "src/.../[programId]/.../x.test.ts"` | the files listed | a few named suites, no directory claim |
+| `npx jest 'src/.../\[programId\]/.../__tests__'` | the directory | a suite added later should be owned with no workflow edit |
+
+The escaped form is what the catalog's phase-gate-approval step uses. Quote it in the YAML
+so the shell hands Jest the backslashes intact.
+
+Two controls had to learn to read it, and both read the escape-resolved spelling now:
+
+- `scripts/quality/check-named-suite-requiredness.mjs` resolves the escapes before asking
+  the filesystem whether the argument is a directory. Without that it recorded no sweep, so
+  a required job could sweep a dynamic-route directory, a non-required job could keep
+  naming a suite inside it, and the run reported OK.
+- `scripts/quality/test-ci-coverage-census.mjs` normalises `\` to `/` so a Windows-style
+  path matches a repo-relative one, which turned the escape into `/[programId/]` — a
+  spelling no path has — and credited the sweep with nothing.
+
+**Residual, open:** a plain workflow command is read as a literal token list, so the
+*unescaped* spelling is still over-credited by the census — it looks covered and Jest runs
+none of it. Closing that means routing every plain workflow command through Jest's own
+matcher, as a ratchet baseline path already is, which can move counts across the corpus.
+The reading is pinned in `src/__tests__/behaviors/test-ci-coverage-census.test.ts`; that
+case fails the day it is fixed, which is when to delete it. Nothing relies on the gap
+today — every bracketed path in `.github/workflows` is either passed with
+`--runTestsByPath` or escaped.

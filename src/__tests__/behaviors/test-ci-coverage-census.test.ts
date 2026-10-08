@@ -2545,6 +2545,69 @@ describe("test CI coverage census — a ratchet baseline path is a Jest regex", 
   }, 120_000);
 });
 
+describe("test CI coverage census — a workflow command's path argument is a Jest regex too", () => {
+  // The ratchet-baseline cases above establish the reading for a path spread
+  // into Jest's argv by a script. A path written straight into a workflow
+  // `run:` line is the same kind of argument, and the census reached it by a
+  // different route: the command string is normalised first, and that step
+  // rewrote `\\` to `/` so a Windows-style path would match a repo-relative one.
+  //
+  // A directory under a Next.js dynamic route has to escape its brackets or
+  // Jest reads `[programId]` as a character class and selects nothing. The
+  // separator rewrite turned the escape into `/[programId/]`, a spelling no
+  // path has, so a directory a workflow really does sweep was credited with
+  // nothing — and a required job's sweep of it read as reached by no workflow
+  // at all.
+  const DYNAMIC_SUITE =
+    "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__/route.test.ts";
+  const commandFixture = (pattern: string) => ({
+    [DYNAMIC_SUITE]: TEST_FILE,
+    ".github/workflows/gate.yml": PR_WORKFLOW(`npx jest '${pattern}' --runInBand`),
+  });
+
+  it("credits the suites under the escaped form of a bracketed directory", () => {
+    const pattern = "src/app/api/v1/programs/\\[programId\\]/phase-gate-approval/__tests__";
+    const dir = fixture(commandFixture(pattern));
+
+    // Ground truth first, and independently of anything the census says.
+    expect(jestSelects(dir, [pattern])).toEqual([DYNAMIC_SUITE]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.testFiles).toBe(1);
+    expect(census.counts.coveredTestFiles).toBe(1);
+    expect(census.counts.pullRequestCoveredTestFiles).toBe(1);
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+  });
+
+  it("still over-credits the unescaped form, which is the residual this change does not close", () => {
+    // The other direction, measured and recorded rather than asserted the way
+    // one would like it. Written unescaped, the step looks like it owns the
+    // directory and runs none of it — Jest exits 1 with "No tests found" — yet
+    // the census credits the suite, because a plain workflow command is read
+    // as a LITERAL token list and that token really is in the line.
+    //
+    // Closing it means routing every plain workflow command through Jest's own
+    // matcher the way a ratchet baseline path already is, which re-reads all of
+    // them under new semantics and can move counts across the corpus. That is
+    // not a change to make beside a one-directory wiring fix, so the reading is
+    // pinned here instead: this case fails the day the over-crediting is fixed,
+    // which is the right moment to delete it.
+    //
+    // Nothing in the repository relies on the gap today. Every bracketed path
+    // in .github/workflows is passed with --runTestsByPath, and the one bare
+    // bracketed positional is escaped.
+    const pattern = "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__";
+    const dir = fixture(commandFixture(pattern));
+
+    // Jest's own answer, taken first: the pattern selects nothing at all.
+    expect(jestSelects(dir, [pattern])).toEqual([]);
+
+    const { census } = runCensus(dir);
+    expect(census.counts.coveredTestFiles).toBe(1);
+    expect(census.counts.uncoveredTestFiles).toBe(0);
+  });
+});
+
 describe("test CI coverage census --explain", () => {
   it("names the unrun file and not the covered one beside it", () => {
     // Ground truth is the ignore pattern, not anything the census reports:
