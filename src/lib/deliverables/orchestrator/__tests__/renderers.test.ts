@@ -355,6 +355,12 @@ describe("Excel companion", () => {
     );
     const buf = await wb!.xlsx.writeBuffer();
     expect(buf.byteLength).toBeGreaterThan(1000);
+    const packaged = await JSZip.loadAsync(buf);
+    expect(
+      Object.keys(packaged.files).filter((name) =>
+        /^xl\/media\/.*\.png$/i.test(name),
+      ),
+    ).toHaveLength(1);
   });
 
   it("rejects a workbook whose data sheet has become empty", () => {
@@ -365,12 +371,19 @@ describe("Excel companion", () => {
     );
   });
 
-  it("returns null when there are no xlsx tables", () => {
+  it("keeps figure sheets when there are no xlsx tables", () => {
     const doc = goodDocument();
     doc.tables = doc.tables.map((t) => ({
       ...t,
       targetFormat: "docx" as const,
     }));
+    const wb = renderDeliverableExcelCompanion(doc);
+    expect(wb?.worksheets.map((sheet) => sheet.name)).toEqual([
+      "Cover",
+      expect.stringMatching(/^Exhibit/),
+    ]);
+    expect(wb?.worksheets[1]?.getImages()).toHaveLength(1);
+    doc.exhibits = [];
     expect(renderDeliverableExcelCompanion(doc)).toBeNull();
   });
 });

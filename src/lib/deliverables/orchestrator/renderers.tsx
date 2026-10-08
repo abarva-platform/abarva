@@ -642,7 +642,11 @@ export function renderDeliverableExcelCompanion(
   if (xlsxTables.length === 0 && options.includeAllTablesWhenNoXlsxTables) {
     xlsxTables = doc.tables;
   }
-  if (xlsxTables.length === 0 && !options.includeDocumentSheetsWhenNoTables) {
+  if (
+    xlsxTables.length === 0 &&
+    !options.includeDocumentSheetsWhenNoTables &&
+    !doc.exhibits.some((exhibit) => exhibit.data)
+  ) {
     return null;
   }
   const wb = new ExcelJS.Workbook();
