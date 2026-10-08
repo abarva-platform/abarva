@@ -4423,7 +4423,9 @@
         "behavioral": [
           "src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts"
         ],
-        "byteScanner": []
+        "byteScanner": [
+          "src/lib/programs/__tests__/stage-readiness-prompt-window.test.ts"
+        ]
       }
     },
     {

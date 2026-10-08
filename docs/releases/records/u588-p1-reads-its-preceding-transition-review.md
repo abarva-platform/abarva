@@ -99,12 +99,14 @@ No migration, no route contract change, no workflow change, no worker change.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit` — **PASS**
   (exit 0).
 - `npx eslint` over the four changed/added files — **PASS** (exit 0).
-- `npm run audit:test-ci-coverage:write` — regenerated. Counts moved
-  `2669/2668/165` → `2671/2670/165`, `uncoveredTestFiles` unchanged at `165`. **Of that
-  `+2`, only `+1` is this change**: regenerating on the unmodified base tree yields
-  `2670/2669/165`, so main's committed census was already one file behind its own tree
-  when this branch was cut. The new suite lands in `coveredTestFiles` and not in
-  `uncoveredTestFiles`, which is the proof that it is CI-wired rather than dark.
+- `npm run audit:test-ci-coverage:write` — regenerated after merging `origin/main`.
+  Counts moved `2669/2668/165` → `2672/2671/165`, `uncoveredTestFiles` unchanged at `165`.
+  **Of that `+3`, only `+1` is this change**: regenerating on the merged base tree with
+  this branch's suite removed yields `2671/2670/165`, so main's committed census was two
+  files behind its own tree. The new suite lands in `coveredTestFiles` and not in
+  `uncoveredTestFiles`, which is the proof that it is CI-wired rather than dark. (Grepping
+  the census for the suite's filename returns nothing and proves nothing — the census
+  records counts and directories, not file names.)
 - `npm run audit:tenancy-fence-coverage:write` — run; no drift attributable to this change.
 - Mutation testing — **5 of 5 mutations killed**, each applied with an asserted
   single-occurrence anchor and reverted to a re-verified green baseline (45/45):
