@@ -264,8 +264,8 @@ function buildContextBlock(
         ? brief.expectedExhibits
             .map((e) =>
               e.requiredElements && e.requiredElements.length > 0
-                ? `  - ${e.title} [${e.kind}]: MUST show ${e.requiredElements.join(", ")}.${e.legendRequired ? " Include a legend marking each element illustrative, selected, or client-confirmed." : ""}`
-                : `  - ${e.title} [${e.kind}]: ${e.purpose}`,
+                ? `  - ${e.title} [key: ${e.key}; kind: ${e.kind}]: MUST show ${e.requiredElements.join(", ")}.${e.legendRequired ? " Include a legend marking each element illustrative, selected, or client-confirmed." : ""}`
+                : `  - ${e.title} [key: ${e.key}; kind: ${e.kind}]: ${e.purpose}`,
             )
             .join("\n")
         : "  (use judgment)",

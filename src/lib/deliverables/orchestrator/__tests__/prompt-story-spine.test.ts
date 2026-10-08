@@ -64,6 +64,19 @@ describe("executive story spine reaches the prompt", () => {
     expect(prompt).toContain("Runtime and activation flow");
   });
 
+  it("names every solution-design exhibit by its exact authored key", () => {
+    const prompt = promptFor("solution_design");
+    for (const key of [
+      "experience_flow",
+      "agent_workflow",
+      "exception_handling",
+      "control_points",
+      "data_flow",
+    ]) {
+      expect(prompt).toContain(`[key: ${key}; kind:`);
+    }
+  });
+
   it("forbids reordering the spine", () => {
     expect(promptFor("business_case")).toMatch(/NOT reorder/);
   });

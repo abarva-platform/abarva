@@ -114,18 +114,24 @@ button, the request and the result are identical.
   de-duplication, not as a behaviour fix, and not papered over with a test that
   would pin an identity.
 - **PASS** — `npx jest src/components/strategic-moves/__tests__
-src/components/agent/__tests__ --runInBand`: 57 suites, 837 of 837.
+src/components/agent/__tests__ --runInBand`: 57 suites, 839 of 839 after the
+  merge-forward (837 before it).
+- **PASS** — `npm run test:behaviors`: 208 suites, 2163 of 2163.
+- **PASS** — re-proved after the merge-forward, which brought in a change to the
+  same client file: the two decisive mutations (the literal action list
+  restored; the handler's silent return restored) still fail 2 and 1 cases
+  respectively, and the clean tree is 22 of 22.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json
 --noEmit`, exit 0.
 - **PASS** — `npx eslint` on the four changed source files: 0 errors. Two
   pre-existing unused-import warnings in the host, on lines this change does not
   touch, left alone.
-- **PASS** — census regenerated: covered test files +1 with **uncovered
-  unchanged**, which is what proves the new suite is registered rather than
-  dark. The counts read +2 against the committed file because that file carried
-  one test file of inherited drift at this base (a base regen with this change
-  removed reads +1 against it, and the census `--check` reports counts as a
-  report, not a gate; the coverage shape matched at base and matches now).
+- **PASS** — census regenerated: test files +1, covered +1, **uncovered
+  unchanged at 164**, directories unchanged. The uncovered figure holding still
+  is what proves the new suite is registered rather than dark. (At the original
+  base this read +2, because that base carried one test file of inherited census
+  drift; the merge-forward picked up the change that corrected it, so the delta
+  is now cleanly this change's own one file.)
 - **PASS** — `node scripts/quality/check-named-suite-requiredness.mjs`.
 - **PASS** — the workflow parses and the step lists 47 paths including the new
   one.

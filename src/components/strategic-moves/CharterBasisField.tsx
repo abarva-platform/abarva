@@ -202,9 +202,9 @@ export function CharterBasisField({
         <div className="cbf-assumption">
           <div className="cbf-field">
             <label htmlFor={`${groupId}-owner`}>Owner</label>
-            <input
+            <textarea
               id={`${groupId}-owner`}
-              type="text"
+              rows={1}
               value={assumption.owner}
               disabled={disabled}
               placeholder="Who owns validating this?"
@@ -217,9 +217,9 @@ export function CharterBasisField({
             <label htmlFor={`${groupId}-plan`}>
               How Discover validates it
             </label>
-            <input
+            <textarea
               id={`${groupId}-plan`}
-              type="text"
+              rows={1}
               value={assumption.p2ValidationPlan}
               disabled={disabled}
               placeholder="What Discover will do to confirm or correct it"
@@ -273,7 +273,7 @@ export function CharterBasisField({
 }
 
 const CBF_CSS = `
-.cbf{--cbf-bg:#f5f1eb;--cbf-surface:#fff;--cbf-ink:#2c2c2a;--cbf-muted:#5f5e5a;--cbf-faint:#6f6e68;--cbf-line:rgba(10,10,11,.12);--cbf-amber:#ba7517;--cbf-amber-line:rgba(186,117,23,.3);--cbf-amber-bg:#fdf7ee;--cbf-mono:'JetBrains Mono',ui-monospace,monospace;--cbf-sans:Inter,system-ui,sans-serif;margin-top:12px;border:1px solid var(--cbf-line);border-radius:10px;background:var(--cbf-surface);padding:12px 14px;font-family:var(--cbf-sans);color:var(--cbf-ink)}
+.cbf{--cbf-bg:#f5f1eb;--cbf-surface:#fff;--cbf-ink:#2c2c2a;--cbf-muted:#5f5e5a;--cbf-faint:#6f6e68;--cbf-line:rgba(10,10,11,.12);--cbf-amber:#ba7517;--cbf-amber-line:rgba(186,117,23,.3);--cbf-amber-bg:#fdf7ee;--cbf-mono:'JetBrains Mono',ui-monospace,monospace;--cbf-sans:Inter,system-ui,sans-serif;margin-top:12px;border:1px solid var(--cbf-line);border-radius:10px;background:var(--cbf-surface);padding:12px 14px;font-family:var(--cbf-sans);color:var(--cbf-ink);container-type:inline-size}
 .cbf-is-assumption{border-color:var(--cbf-amber-line);background:var(--cbf-amber-bg)}
 .cbf-eyebrow{font-family:var(--cbf-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cbf-faint);margin-bottom:8px}
 .cbf-options{display:flex;gap:6px;flex-wrap:wrap}
@@ -283,12 +283,13 @@ const CBF_CSS = `
 .cbf-option:disabled{cursor:not-allowed;opacity:.55}
 .cbf-option[data-selected=on]{border-color:var(--cbf-ink);background:var(--cbf-ink);color:#fff;font-weight:600}
 .cbf-is-assumption .cbf-option[data-selected=on]{border-color:var(--cbf-amber);background:var(--cbf-amber)}
-.cbf-assumption{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:12px}
-@media (max-width:640px){.cbf-assumption{grid-template-columns:1fr}}
+.cbf-assumption{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+@container (max-width:559px){.cbf-assumption{grid-template-columns:1fr}.cbf-options{flex-direction:column}.cbf-option{width:100%;text-align:left}}
 .cbf-field{margin-top:12px}
 .cbf-assumption .cbf-field{margin-top:0}
 .cbf-field label{display:block;font-size:12px;color:var(--cbf-muted);margin-bottom:4px}
-.cbf-field input,.cbf-field select{width:100%;box-sizing:border-box;font-family:inherit;font-size:13.5px;color:var(--cbf-ink);background:var(--cbf-surface);border:1px solid var(--cbf-line);border-radius:8px;padding:9px 11px}
+.cbf-field input,.cbf-field select,.cbf-field textarea{width:100%;box-sizing:border-box;font-family:inherit;font-size:13.5px;color:var(--cbf-ink);background:var(--cbf-surface);border:1px solid var(--cbf-line);border-radius:8px;padding:9px 11px}
+.cbf-field textarea{field-sizing:content;min-height:38px;max-height:calc(6 * 1.5em + 18px);line-height:1.5;resize:vertical;overflow-y:auto;overflow-x:hidden}
 .cbf-note{font-size:12px;color:var(--cbf-faint);margin:9px 0 0}
 .cbf-note-amber{color:var(--cbf-amber)}
 .cbf-error{font-size:12px;color:#8c2f22;margin:9px 0 0}

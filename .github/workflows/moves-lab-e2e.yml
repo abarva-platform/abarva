@@ -1,0 +1,112 @@
+name: Moves lab P0 to Tower E2E
+
+# Runs only after a governed fixture build has prepared three distinct,
+# disposable Moves with reviewed evidence and signed outputs. A run mutates
+# those fixtures by submitting their phase gates; recreate them before reruns.
+on:
+  pull_request:
+    paths:
+      - .github/workflows/moves-lab-e2e.yml
+      - tests/e2e/_helpers/moves-gate-walk.ts
+      - tests/e2e/programs-phase-4-to-5.spec.ts
+      - tests/e2e/programs-phase-5-to-tower.spec.ts
+      - tests/e2e/programs-p0-to-tower.spec.ts
+  workflow_dispatch:
+    inputs:
+      p0_move_id:
+        description: "Disposable gate-ready Move at P0"
+        required: true
+        type: string
+      p4_move_id:
+        description: "Disposable gate-ready Move at P4"
+        required: true
+        type: string
+      p5_move_id:
+        description: "Disposable gate-ready Move at P5"
+        required: true
+        type: string
+      fixture_proof_ref:
+        description: "Governed fixture build proof reference"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  moves-e2e-discovery:
+    name: Moves E2E suite discovery
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Compile and discover the three Moves suites
+        run: >-
+          npx playwright test
+          tests/e2e/programs-phase-4-to-5.spec.ts
+          tests/e2e/programs-phase-5-to-tower.spec.ts
+          tests/e2e/programs-p0-to-tower.spec.ts
+          --list
+
+  moves-lab-e2e:
+    name: Signed-in Moves gate walk
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_URL: https://app.abarva.ai
+      E2E_MOVES_LAB_RUN: "1"
+      E2E_MOVES_P0_ID: ${{ inputs.p0_move_id }}
+      E2E_MOVES_P4_ID: ${{ inputs.p4_move_id }}
+      E2E_MOVES_P5_ID: ${{ inputs.p5_move_id }}
+      E2E_MOVES_CLIENT_KEY: ${{ vars.MOVES_E2E_CLIENT_KEY }}
+      E2E_MOVES_OPERATOR_EMAIL: ${{ vars.MOVES_E2E_OPERATOR_EMAIL }}
+      E2E_MOVES_FIXTURE_PROOF_REF: ${{ inputs.fixture_proof_ref }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      PLAYWRIGHT_JUNIT_OUTPUT_FILE: test-results/moves-lab-e2e.xml
+
+    steps:
+      - name: Check fixture scope and operator configuration
+        shell: bash
+        run: |
+          for key in E2E_MOVES_P0_ID E2E_MOVES_P4_ID E2E_MOVES_P5_ID E2E_MOVES_CLIENT_KEY E2E_MOVES_OPERATOR_EMAIL CLERK_SECRET_KEY; do
+            if [[ -z "${!key}" ]]; then
+              echo "Missing required lab input: $key" >&2
+              exit 2
+            fi
+          done
+          if [[ "$E2E_MOVES_P0_ID" == "$E2E_MOVES_P4_ID" || "$E2E_MOVES_P0_ID" == "$E2E_MOVES_P5_ID" || "$E2E_MOVES_P4_ID" == "$E2E_MOVES_P5_ID" ]]; then
+            echo "Three distinct disposable Move IDs are required." >&2
+            exit 2
+          fi
+          test -n "$E2E_MOVES_FIXTURE_PROOF_REF"
+
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+      - name: Run real signed-in Moves transition suites
+        run: >-
+          npx playwright test
+          tests/e2e/programs-phase-4-to-5.spec.ts
+          tests/e2e/programs-phase-5-to-tower.spec.ts
+          tests/e2e/programs-p0-to-tower.spec.ts
+          --project=chromium --workers=1 --reporter=list,junit
+      - name: Upload E2E result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: moves-lab-e2e-result
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore

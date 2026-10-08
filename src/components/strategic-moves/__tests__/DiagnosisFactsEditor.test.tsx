@@ -49,7 +49,8 @@ describe("DiagnosisFactsEditor", () => {
         `Baseline metrics — ${field}, row 1`,
       );
       expect(input).toBeEnabled();
-      expect(input).toHaveAttribute("type", "text");
+      expect(input.tagName).toBe("TEXTAREA");
+      expect(input).toHaveAttribute("rows", "1");
       expect(input).not.toHaveAttribute("readonly");
       expect(input).not.toHaveAttribute("disabled");
     }
