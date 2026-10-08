@@ -4020,9 +4020,7 @@ describe("MovesPhaseStandaloneClient", () => {
         0,
       );
       expect(
-        screen.getByText(
-          /kept from your previous upload, not yet recorded/,
-        ),
+        screen.getByText(/kept from your previous upload, not yet recorded/),
       ).toBeInTheDocument();
       // One marker, not one per row: the recorded decision is not restored.
       expect(
@@ -4058,9 +4056,7 @@ describe("MovesPhaseStandaloneClient", () => {
         0,
       );
       expect(
-        screen.getByText(
-          /review what changed, then record the kept decisions/,
-        ),
+        screen.getByText(/review what changed, then record the kept decisions/),
       ).toBeInTheDocument();
       const record = screen.getByRole("button", {
         name: "Record 2 kept decisions",
@@ -4396,7 +4392,9 @@ describe("MovesPhaseStandaloneClient", () => {
         renderRejectedRequiredReview();
 
         expect(
-          screen.getByText("1 required response not accepted. This phase stays held until each one is accepted; select the response below to change its decision."),
+          screen.getByText(
+            "1 required response not accepted. This phase stays held until each one is accepted; select the response below to change its decision.",
+          ),
         ).toBeInTheDocument();
         expect(
           screen.getByRole("checkbox", {
@@ -8504,9 +8502,7 @@ describe("MovesPhaseStandaloneClient", () => {
     // While the approval is in flight: the host must not claim it just built
     // documents it only read off the record.
     await waitFor(() => {
-      expect(
-        screen.getByText(/already on the record/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/already on the record/i)).toBeInTheDocument();
     });
     expect(requested.some((url) => url.includes("/phase-gate-approval"))).toBe(
       true,
@@ -8526,9 +8522,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
     expect(
-      screen.getByText(
-        /use "Submit P5 Mobilize & Handoff gate approval"/i,
-      ),
+      screen.getByText(/use "Submit P5 Mobilize & Handoff gate approval"/i),
     ).toBeInTheDocument();
     // Still no build: the refusal must not have triggered a regeneration.
     expect(requested.some((url) => url.includes("/generate-phase"))).toBe(
@@ -8610,9 +8604,7 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.queryByText(/then re-run Approve & Build/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText(
-        /use "Submit P3 Design Future State gate approval"/i,
-      ),
+      screen.getByText(/use "Submit P3 Design Future State gate approval"/i),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -8702,6 +8694,159 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getAllByText(
         /Complete the P3 to P4 readiness review and accept each answer/,
       ).length,
+    ).toBeGreaterThan(0);
+  });
+
+  // The route classifies the transition-evidence basis failure per cause and
+  // says whether submitting again can answer it. These two cases differ in
+  // exactly that field and in nothing else, so neither can pass by the remedy
+  // simply never rendering.
+  it("withholds the submit-again remedy when the route says a re-submission cannot answer the refusal", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 422,
+            json: async () => ({
+              error: "transition_evidence_assessment_failed",
+              precondition: "transition_evidence_readiness_unavailable",
+              phase: 3,
+              basisUnevaluableCause: "gap_assessment_failed",
+              resubmitCanSatisfy: false,
+              detail:
+                "This Move's discovery evidence readiness and the next phase's workbook review were both read, but they could not be reduced to this phase's required evidence slots. Submitting the gate again will not change the answer — the same records are reduced the same way. The phase gate was not submitted and no evidence requirement was waived; this is an operational fault in the evidence assessment to resolve, not an open evidence item.",
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    // The route's own sentence is shown in full — nothing is relaxed or
+    // softened, and the reader still learns the gate did not pass.
+    expect(
+      screen.getAllByText(
+        /Submitting the gate again will not change the answer/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    // ...and the standing remedy, which prescribes the submission that
+    // sentence has just ruled out, is not appended to it.
+    expect(
+      screen.queryByText(/approve the draft or upload an edited version/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/use "Submit P3 Design Future State gate approval"/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        /re-running Approve & Build would replace the document you just approved/i,
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the submit-again remedy when the route says a re-submission can answer the refusal", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 503,
+            json: async () => ({
+              error: "transition_discovery_readiness_unreadable",
+              precondition: "transition_evidence_readiness_unavailable",
+              phase: 3,
+              basisUnevaluableCause: "discovery_readiness_unreadable",
+              resubmitCanSatisfy: true,
+              detail:
+                "This Move's discovery evidence readiness could not be read, so none of its transition evidence was measured and the next phase's readiness workbook was not reached. The phase gate was not submitted and no evidence requirement was waived. Submit the gate again; if the read keeps failing it is an operational fault, not an open evidence item.",
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getAllByText(
+        /Submit the gate again; if the read keeps failing it is an operational fault/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/approve the draft or upload an edited version/i)
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/use "Submit P3 Design Future State gate approval"/i)
+        .length,
     ).toBeGreaterThan(0);
   });
 
@@ -9897,7 +10042,9 @@ describe("MovesPhaseStandaloneClient", () => {
           screen.queryByTestId("mxw-contract-card"),
         ).not.toBeInTheDocument();
 
-        expect(screen.getByRole("link", { name: workbook })).toBeInTheDocument();
+        expect(
+          screen.getByRole("link", { name: workbook }),
+        ).toBeInTheDocument();
         expect(
           screen.getByLabelText("Upload completed readiness workbook"),
         ).toBeInTheDocument();
