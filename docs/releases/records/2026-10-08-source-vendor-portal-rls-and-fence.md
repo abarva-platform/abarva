@@ -149,6 +149,45 @@ exist.
 - 11 mutations, each killed, including two on the `SECURITY DEFINER` helper's own hardening.
 - The comment-stripper that closed the one survivor is itself covered by five cases.
 
+## Two gates caught what this slice missed
+
+Both were red on the PR before this commit, and both were right.
+
+### The tenancy fence census had no row for the new routes
+
+`Fence coverage matches the committed census` failed with the three `/rfp` API routes
+"not in the committed census (fence none, coverage n/a)". Regenerated with
+`node scripts/quality/tenancy-fence-coverage.mjs --write`.
+
+`fence: none` is the honest classification and not a defect: it records that a route does not call
+`src/lib/auth/tenancy.ts`, which 176 of 405 routes also do not. These three genuinely cannot — a
+vendor has no tenant session to require. Their control is `public-surface.test.ts` in a required
+job, not the tenancy fence.
+
+Worth recording for the next reader: the artifact shows `suites: []` and `coverage: null` for these
+routes, and that is **by construction, not a detection miss**. Suite attribution runs only for
+fenced routes (`if (fence !== "none") fencedRoutes.push(row)`), so an unfenced route is out of
+scope — which is why it gets `null` rather than `"none"`. I nearly changed a shared quality script
+to "fix" this before reading that line.
+
+### One module was reached by nothing but its own test
+
+`Agent context broker boundary` runs `audit:lib-orphans`, which reported
+`src/lib/source/vendor-portal/invitation-email.ts` as **NEW and testOnly**.
+
+It is correct. Nothing issues an invitation yet, because deriving the recipient list from a
+persisted RFx package version is slice **E4**. The module was written ahead of its caller on a
+branch that then sat for 773 commits.
+
+The gate offers two remedies — reach it from product code, or remove it. Mounting a caller to clear
+a gate makes the audit lie, so the module and its three cases are **deferred to E4**, which owns
+the caller. They are not lost: they remain on `feat/source-vendor-rfp-portal` and in this branch's
+history, and the test file carries a pointer saying so, naming the escaping case specifically so it
+is reinstated rather than rewritten.
+
+Counts confirm exactly one module left: `src/lib` modules 3183 → 3182, test-only 429 → 428, and the
+audit then reports "No change against the baseline".
+
 ## Known Gaps
 
 - **E2 and E4 remain.** The event-vendor row still carries a free-text supplier name rather than a
