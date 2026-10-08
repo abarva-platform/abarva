@@ -1548,3 +1548,117 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
 });
 
 export {};
+
+/**
+ * The slot list this route refuses with comes from a discovery blueprint, and
+ * the readiness pack records what chose that blueprint. Both facts stopped at
+ * the packet builder, so a refusal measured against an INFERRED framework
+ * called its slots "Required evidence" in the same words it uses for a declared
+ * one. Nothing here relaxes the gate: the 409 still refuses and no phase
+ * advances. Only the claim about where the list came from changes.
+ */
+describe("the transition refusal states what chose the framework it measured", () => {
+  it("does not call an inferred framework's slots a declared requirement", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "inferred",
+      archetypeLabel: "Contact Center Agent Assist",
+      unknownDeclaredArchetype: null,
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as {
+      error: string;
+      detail: string;
+      evidenceFramework: { declared: boolean; origin: string } | null;
+      requiredEvidenceGaps: unknown[];
+    };
+    expect(body.error).toBe("transition_evidence_incomplete");
+    expect(body.evidenceFramework).toMatchObject({
+      declared: false,
+      origin: "inferred",
+    });
+    expect(body.detail).toMatch(/not a declared requirement/);
+    expect(body.detail).toContain("Contact Center Agent Assist");
+    // The route's own wording still leads, and the named slots are untouched.
+    expect(body.detail.startsWith("Required evidence must be approved")).toBe(
+      true,
+    );
+    expect(body.requiredEvidenceGaps.length).toBeGreaterThan(0);
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("names a discarded declaration in the refusal rather than the framework that replaced it", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "inferred",
+      archetypeLabel: "Contact Center Agent Assist",
+      unknownDeclaredArchetype: "governed_data_foundaton",
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      evidenceFramework: {
+        declared: false,
+        origin: "declaration_discarded",
+        discardedDeclaration: "governed_data_foundaton",
+      },
+    });
+  });
+
+  it("leaves a declared framework's refusal wording exactly as it was", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as {
+      detail: string;
+      evidenceFramework: { declared: boolean } | null;
+    };
+    expect(body.evidenceFramework).toMatchObject({ declared: true });
+    expect(body.detail).toBe(
+      "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+    );
+  });
+
+  it("reports the framework on the readiness read, not only on the refusal", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "default",
+      archetypeLabel: "General Case",
+      unknownDeclaredArchetype: null,
+    });
+    const { GET } = await import("../route");
+    const res = await GET(getReq(3) as never, { params });
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      transitionReadiness: {
+        evidenceFramework: { declared: false, origin: "default" },
+      },
+    });
+  });
+
+  it("reports no framework at all when readiness could not be read", async () => {
+    // `available: false` already says the readiness read failed. The framework
+    // must then be absent rather than defaulted, so a reader cannot mistake
+    // "not asked" for "declared".
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("readiness_unavailable"),
+    );
+    const { GET } = await import("../route");
+    const res = await GET(getReq(3) as never, { params });
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      transitionReadiness: { available: false, evidenceFramework: null },
+    });
+  });
+});

@@ -40,6 +40,11 @@ import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import {
+  appendEvidenceFrameworkProvenance,
+  resolveEvidenceFrameworkProvenance,
+  type EvidenceFrameworkProvenance,
+} from "@/lib/programs/evidence-framework-provenance";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
 import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
 import {
@@ -110,8 +115,16 @@ async function transitionEvidenceReadiness(
   programId: string,
   moveName: string,
   phase: number,
-): Promise<{ available: boolean; gaps: ReturnType<typeof currentPhaseRequiredEvidenceGaps> }> {
-  if (phase < 1 || phase > 4) return { available: true, gaps: [] };
+): Promise<{
+  available: boolean;
+  gaps: ReturnType<typeof currentPhaseRequiredEvidenceGaps>;
+  // What chose the framework those gaps were measured against. `null` when no
+  // readiness pack was read, so a caller cannot mistake "not asked" for
+  // "declared".
+  evidenceFramework: EvidenceFrameworkProvenance | null;
+}> {
+  if (phase < 1 || phase > 4)
+    return { available: true, gaps: [], evidenceFramework: null };
   try {
     const readiness = await loadDiscoveryEvidenceReadiness(ctx, programId);
     const packets = buildMoveEvidenceNeedPackets({
@@ -138,9 +151,10 @@ async function transitionEvidenceReadiness(
     return {
       available: true,
       gaps: currentPhaseRequiredEvidenceGaps(assessedPackets, phase),
+      evidenceFramework: resolveEvidenceFrameworkProvenance(readiness),
     };
   } catch {
-    return { available: false, gaps: [] };
+    return { available: false, gaps: [], evidenceFramework: null };
   }
 }
 
@@ -432,6 +446,7 @@ export async function GET(
           status: gap.status,
           nextAction: gap.nextAction,
         })),
+        evidenceFramework: transitionReadiness.evidenceFramework,
       },
       evidenceSnapshotAvailable: Boolean(evidence),
       p0Evidence,
@@ -628,8 +643,13 @@ export async function POST(
             status: gap.status,
             nextAction: gap.nextAction,
           })),
-          detail:
+          evidenceFramework: transitionReadiness.evidenceFramework,
+          // The slot list is correct; the sentence that calls it "required" is
+          // only true when a declaration chose the framework it came from.
+          detail: appendEvidenceFrameworkProvenance(
             "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+            transitionReadiness.evidenceFramework,
+          ),
         },
         { status: 409 },
       );
