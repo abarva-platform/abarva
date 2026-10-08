@@ -14,10 +14,7 @@
 //   - Internal binders (value_target_brief, pricing_workbook) use evidenceMode
 //     'working_binder', appendixMode 'evidence_binder', and are clientFacing:false.
 
-import type {
-  DeliverableProfile,
-  SourceDeliverableKey,
-} from "./types";
+import type { DeliverableProfile, SourceDeliverableKey } from "./types";
 import { DEFAULT_QUALITY_RUBRIC } from "./types";
 
 const SOURCING_STRATEGY_VISUAL_STANDARD = {
@@ -71,7 +68,10 @@ const SOURCING_COMMERCIAL_VISUAL_STANDARD = {
     "Negotiation leverage map",
   ],
   requiredCharts: ["Bar chart", "Waterfall chart", "Scenario comparison"],
-  requiredTables: ["Normalised pricing comparison", "Pricing traps and mitigations"],
+  requiredTables: [
+    "Normalised pricing comparison",
+    "Pricing traps and mitigations",
+  ],
   clientToCompleteChecklistRequired: true,
   readinessLabelRequired: true,
 } as const;
@@ -85,7 +85,10 @@ const SOURCING_DECISION_VISUAL_STANDARD = {
     "Risk/value tradeoff matrix",
     "Approval flow",
   ],
-  requiredTables: ["Decision options and recommendation", "Why-not for rejected options"],
+  requiredTables: [
+    "Decision options and recommendation",
+    "Why-not for rejected options",
+  ],
   clientToCompleteChecklistRequired: true,
   readinessLabelRequired: true,
 } as const;
@@ -98,7 +101,10 @@ const SOURCING_RISK_VISUAL_STANDARD = {
     "Remediation roadmap",
     "Escalation path",
   ],
-  requiredTables: ["Risk register with controls and owners", "Open Inputs Required"],
+  requiredTables: [
+    "Risk register with controls and owners",
+    "Open Inputs Required",
+  ],
   clientToCompleteChecklistRequired: true,
   readinessLabelRequired: true,
 } as const;
@@ -135,7 +141,8 @@ const sourceStrategyMemo: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["options_matrix", "decision_box", "value_tree"],
-  lengthGuidance: "Senior-partner thesis — as long as the argument needs, not a binder.",
+  lengthGuidance:
+    "Senior-partner thesis — as long as the argument needs, not a binder.",
   acceptanceChecks: [
     "first page states the sourcing thesis and the decision it supports",
     "no phase labels in the client narrative",
@@ -172,7 +179,8 @@ const sourceValueTargetBrief: DeliverableProfile = {
   sourceRegisterPolicy: "download",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["value_tree", "measurement_table"],
-  lengthGuidance: "Internal working brief — value hypothesis with traceable assumptions.",
+  lengthGuidance:
+    "Internal working brief — value hypothesis with traceable assumptions.",
   acceptanceChecks: [
     "value targets are explicit and tied to baseline assumptions",
     "internal-only: never structured as a vendor-facing document",
@@ -181,7 +189,11 @@ const sourceValueTargetBrief: DeliverableProfile = {
   ],
   intent: "value_target_brief",
   appendixMode: "evidence_binder",
-  requiredTables: ["Value hypothesis by lever", "Baseline assumptions", "Open Inputs Required"],
+  requiredTables: [
+    "Value hypothesis by lever",
+    "Baseline assumptions",
+    "Open Inputs Required",
+  ],
   renderer: "docx_narrative",
   qualityRubric: DEFAULT_QUALITY_RUBRIC,
   sourceTracePolicy: "inline_binder",
@@ -260,8 +272,13 @@ const sourceRfpPackage: DeliverableProfile = {
   evidenceMode: "appendix_only",
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
-  requiredExhibits: ["options_matrix", "measurement_table", "open_inputs_required"],
-  lengthGuidance: "Detailed vendor-facing procurement document — allowed to be long.",
+  requiredExhibits: [
+    "options_matrix",
+    "measurement_table",
+    "open_inputs_required",
+  ],
+  lengthGuidance:
+    "Detailed vendor-facing procurement document — allowed to be long.",
   acceptanceChecks: [
     "requirements are numbered, testable, and comparable across vendors",
     "evaluation criteria and weighting are stated for vendors",
@@ -302,7 +319,8 @@ const sourceResponseChecklist: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["measurement_table", "open_inputs_required"],
-  lengthGuidance: "Operational control — concise checklist, one row per requirement.",
+  lengthGuidance:
+    "Operational control — concise checklist, one row per requirement.",
   acceptanceChecks: [
     "every RFP requirement maps to a completeness check",
     "complete / incomplete status is unambiguous per item",
@@ -339,7 +357,8 @@ const sourceEvaluationScorecard: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["heatmap", "measurement_table", "decision_box"],
-  lengthGuidance: "Evidence-cited scoring artifact — every score traces to a response.",
+  lengthGuidance:
+    "Evidence-cited scoring artifact — every score traces to a response.",
   acceptanceChecks: [
     "every score cites the specific response evidence behind it",
     "criteria weighting is applied consistently across vendors",
@@ -348,7 +367,11 @@ const sourceEvaluationScorecard: DeliverableProfile = {
   ],
   intent: "evaluation_scorecard",
   appendixMode: "source_register_appendix",
-  requiredTables: ["Weighted scoring matrix", "Evidence citations by score", "Open Inputs Required"],
+  requiredTables: [
+    "Weighted scoring matrix",
+    "Evidence citations by score",
+    "Open Inputs Required",
+  ],
   renderer: "xlsx_workbook",
   qualityRubric: DEFAULT_QUALITY_RUBRIC,
   sourceTracePolicy: "appendix",
@@ -376,7 +399,8 @@ const sourcePricingWorkbook: DeliverableProfile = {
   sourceRegisterPolicy: "download",
   missingInputPolicy: "working_binder_detail",
   requiredExhibits: ["measurement_table", "value_tree"],
-  lengthGuidance: "Internal commercial workbook — finance-grade, cells trace to inputs.",
+  lengthGuidance:
+    "Internal commercial workbook — finance-grade, cells trace to inputs.",
   acceptanceChecks: [
     "vendor pricing normalised to comparable total-cost terms",
     "no invented prices; every cell traces to a sourced input",
@@ -385,7 +409,11 @@ const sourcePricingWorkbook: DeliverableProfile = {
   ],
   intent: "pricing_workbook",
   appendixMode: "evidence_binder",
-  requiredTables: ["Normalised pricing comparison", "Total cost of ownership", "Pricing assumptions"],
+  requiredTables: [
+    "Normalised pricing comparison",
+    "Total cost of ownership",
+    "Pricing assumptions",
+  ],
   renderer: "xlsx_workbook",
   qualityRubric: DEFAULT_QUALITY_RUBRIC,
   sourceTracePolicy: "inline_binder",
@@ -414,7 +442,8 @@ const sourcePricingTrapLog: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["risks_and_mitigations", "measurement_table"],
-  lengthGuidance: "Commercial risk log — one row per trap with exposure and mitigation.",
+  lengthGuidance:
+    "Commercial risk log — one row per trap with exposure and mitigation.",
   acceptanceChecks: [
     "each trap names the clause/term and the cost exposure it creates",
     "each trap carries a concrete mitigation or negotiation ask",
@@ -452,7 +481,8 @@ const sourceBafoQuestionPack: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["measurement_table", "decision_box"],
-  lengthGuidance: "Negotiation pack — targeted questions tied to specific leverage.",
+  lengthGuidance:
+    "Negotiation pack — targeted questions tied to specific leverage.",
   acceptanceChecks: [
     "each question ties to a specific gap, trap, or leverage point",
     "questions are precise and answerable, not open-ended fishing",
@@ -489,8 +519,13 @@ const sourceAtlasDecisionBrief: DeliverableProfile = {
   evidenceMode: "speaker_notes",
   sourceRegisterPolicy: "speaker_notes",
   missingInputPolicy: "single_open_inputs_table",
-  requiredExhibits: ["decision_headline", "risks_and_mitigations", "value_story"],
-  lengthGuidance: "Executive brief — one governing message per slide; decision up front.",
+  requiredExhibits: [
+    "decision_headline",
+    "risks_and_mitigations",
+    "value_story",
+  ],
+  lengthGuidance:
+    "Executive brief — one governing message per slide; decision up front.",
   acceptanceChecks: [
     "the recommendation and decision requested are visible by slide 2",
     "each slide carries one governing message; no text-wall slides",
@@ -527,8 +562,13 @@ const sourceSentinelRiskAttestation: DeliverableProfile = {
   evidenceMode: "appendix_only",
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
-  requiredExhibits: ["risks_and_mitigations", "control_points", "measurement_table"],
-  lengthGuidance: "Governance attestation — each risk carries a control and an owner.",
+  requiredExhibits: [
+    "risks_and_mitigations",
+    "control_points",
+    "measurement_table",
+  ],
+  lengthGuidance:
+    "Governance attestation — each risk carries a control and an owner.",
   acceptanceChecks: [
     "each risk names a control, an owner, and a residual-risk position",
     "compliance/regulatory obligations are explicitly addressed",
@@ -537,7 +577,10 @@ const sourceSentinelRiskAttestation: DeliverableProfile = {
   ],
   intent: "risk_attestation",
   appendixMode: "source_register_appendix",
-  requiredTables: ["Risk register with controls and owners", "Open Inputs Required"],
+  requiredTables: [
+    "Risk register with controls and owners",
+    "Open Inputs Required",
+  ],
   renderer: "docx_narrative",
   qualityRubric: DEFAULT_QUALITY_RUBRIC,
   sourceTracePolicy: "appendix",
@@ -566,7 +609,8 @@ const sourceSelectionMemo: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["decision_box", "options_matrix", "measurement_table"],
-  lengthGuidance: "Award decision record — defensible rationale, not a sales pitch.",
+  lengthGuidance:
+    "Award decision record — defensible rationale, not a sales pitch.",
   acceptanceChecks: [
     "the selected vendor and the basis for award are stated up front",
     "rejected options carry an explicit reason for non-selection",
@@ -575,7 +619,10 @@ const sourceSelectionMemo: DeliverableProfile = {
   ],
   intent: "selection_memo",
   appendixMode: "source_register_appendix",
-  requiredTables: ["Award decision and rationale", "Why-not for rejected options"],
+  requiredTables: [
+    "Award decision and rationale",
+    "Why-not for rejected options",
+  ],
   renderer: "docx_narrative",
   qualityRubric: DEFAULT_QUALITY_RUBRIC,
   sourceTracePolicy: "appendix",
@@ -604,7 +651,8 @@ const sourceTransitionPlan: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["roadmap_lanes", "dependency_map", "decision_calendar"],
-  lengthGuidance: "Delivery mobilisation — sequenced transition with owners and gates.",
+  lengthGuidance:
+    "Delivery mobilisation — sequenced transition with owners and gates.",
   acceptanceChecks: [
     "transition is sequenced with owners, gates, and cutover criteria",
     "dependencies and critical path are rendered, not described in prose",
@@ -613,7 +661,11 @@ const sourceTransitionPlan: DeliverableProfile = {
   ],
   intent: "transition_plan",
   appendixMode: "source_register_appendix",
-  requiredTables: ["Transition workstreams and owners", "Cutover gates", "Open Inputs Required"],
+  requiredTables: [
+    "Transition workstreams and owners",
+    "Cutover gates",
+    "Open Inputs Required",
+  ],
   renderer: "docx_narrative",
   qualityRubric: DEFAULT_QUALITY_RUBRIC,
   sourceTracePolicy: "appendix",
@@ -642,7 +694,8 @@ const sourceValueLedger: DeliverableProfile = {
   sourceRegisterPolicy: "appendix_only",
   missingInputPolicy: "single_open_inputs_table",
   requiredExhibits: ["measurement_table", "value_tree"],
-  lengthGuidance: "Benefits tracking ledger — each line traces target to realised value.",
+  lengthGuidance:
+    "Benefits tracking ledger — each line traces target to realised value.",
   acceptanceChecks: [
     "every benefit line has owner, baseline, target, method, and cadence",
     "realised value is separated from forecast value",
@@ -651,7 +704,11 @@ const sourceValueLedger: DeliverableProfile = {
   ],
   intent: "value_ledger",
   appendixMode: "source_register_appendix",
-  requiredTables: ["Benefit lines: target vs realised", "Measurement method by benefit", "Open Inputs Required"],
+  requiredTables: [
+    "Benefit lines: target vs realised",
+    "Measurement method by benefit",
+    "Open Inputs Required",
+  ],
   renderer: "xlsx_workbook",
   qualityRubric: DEFAULT_QUALITY_RUBRIC,
   sourceTracePolicy: "appendix",
@@ -662,8 +719,98 @@ const sourceValueLedger: DeliverableProfile = {
   ],
 };
 
-/** The canonical Source profile registry, keyed by SourceDeliverableKey. */
-export const SOURCE_PROFILES: Readonly<
+/** Ordered section purposes stay in profiles; shared renderers own layout. */
+const SOURCE_SECTION_OUTLINES = {
+  source_strategy_memo: [
+    "Decision context",
+    "Options and tradeoffs",
+    "Recommendation",
+    "Open inputs",
+  ],
+  source_value_target_brief: [
+    "Value hypothesis",
+    "Baseline and assumptions",
+    "Measurement owners",
+    "Open inputs",
+  ],
+  source_scope_memo: [
+    "Scope boundary",
+    "Dependencies",
+    "Exclusions",
+    "Decision",
+  ],
+  source_rfp_package: [
+    "Scope and requirements",
+    "Response instructions",
+    "Evaluation method",
+    "Contract positions",
+    "Open inputs",
+  ],
+  source_response_checklist: [
+    "Requirements",
+    "Evidence status",
+    "Exceptions",
+    "Next actions",
+  ],
+  source_evaluation_scorecard: [
+    "Criteria and weights",
+    "Evidence by score",
+    "Comparison",
+    "Decision",
+  ],
+  source_pricing_workbook: [
+    "Pricing inputs",
+    "Normalization",
+    "Scenario comparison",
+    "Open assumptions",
+  ],
+  source_pricing_trap_log: [
+    "Commercial risks",
+    "Evidence and exposure",
+    "Clarification questions",
+    "Mitigations",
+  ],
+  source_bafo_question_pack: [
+    "Open commercial questions",
+    "Requested response",
+    "Evidence gaps",
+    "Decision path",
+  ],
+  source_atlas_decision_brief: [
+    "Decision headline",
+    "Options and evidence",
+    "Tradeoffs",
+    "Recommendation",
+  ],
+  source_sentinel_risk_attestation: [
+    "Risk position",
+    "Control evidence",
+    "Owner review",
+    "Open remediation",
+  ],
+  source_selection_memo: [
+    "Evaluation summary",
+    "Options and tradeoffs",
+    "Recommendation",
+    "Approval path",
+  ],
+  source_transition_plan: [
+    "Workstreams",
+    "Milestones and dependencies",
+    "Cutover gates",
+    "Owners and risks",
+  ],
+  source_value_ledger: [
+    "Baselines",
+    "Value formulas",
+    "Owners and evidence",
+    "Validation status",
+  ],
+} as const satisfies Readonly<
+  Record<SourceDeliverableKey, ReadonlyArray<string>>
+>;
+
+const RAW_SOURCE_PROFILES: Readonly<
   Record<SourceDeliverableKey, DeliverableProfile>
 > = {
   source_strategy_memo: sourceStrategyMemo,
@@ -681,3 +828,16 @@ export const SOURCE_PROFILES: Readonly<
   source_transition_plan: sourceTransitionPlan,
   source_value_ledger: sourceValueLedger,
 };
+
+/** The canonical Source profile registry, keyed by SourceDeliverableKey. */
+export const SOURCE_PROFILES: Readonly<
+  Record<SourceDeliverableKey, DeliverableProfile>
+> = Object.fromEntries(
+  Object.entries(RAW_SOURCE_PROFILES).map(([key, profile]) => [
+    key,
+    {
+      ...profile,
+      sectionOutline: SOURCE_SECTION_OUTLINES[key as SourceDeliverableKey],
+    },
+  ]),
+) as unknown as Record<SourceDeliverableKey, DeliverableProfile>;

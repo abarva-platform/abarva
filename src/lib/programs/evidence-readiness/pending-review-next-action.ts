@@ -28,6 +28,28 @@
  * A family that is already `covered` keeps its authored wording: approved
  * evidence exists, so nothing is blocked on the reviewer, and extra pending
  * rows are not the next action.
+ *
+ * The third decision value, and why it needs its own sentence
+ * -----------------------------------------------------------
+ * `program_evidence_reviews.decision` admits exactly three values
+ * (`pending | approved | rejected`, the table's CHECK constraint). Coverage
+ * grades on `approved`; the wording above reacts to `pending`. `rejected` was
+ * read by NOTHING: it leaves the pending queue, never enters the approved
+ * list, and the `decideEvidenceReview` update is itself filtered
+ * `decision = 'pending'`, so a rejected review can never be re-decided by any
+ * control in the product.
+ *
+ * The consequence is that rejecting an extraction silently restores the
+ * authored *"Upload a … from …"* sentence — the exact instruction this module
+ * exists to remove — for a family whose source file is already uploaded and
+ * sitting in the cabinet. Re-uploading the same file produces a second pending
+ * row carrying the same extraction the reviewer just rejected. So a rejected
+ * family gets its own sentence, naming the state and asking for a CORRECTED or
+ * DIFFERENT source, which is an action the surface actually offers.
+ *
+ * Pending outranks rejected: while anything is still in the queue there is a
+ * decision to record, and that is the nearer action. And as with pending,
+ * nothing gate-bearing reads any of this — a rejected family stays `missing`.
  */
 
 /** A family with evidence loaded and awaiting a human review decision. */
@@ -35,6 +57,26 @@ export interface FamilyAwaitingReview {
   familyId: string;
   /** How many `decision = 'pending'` review rows name this family. */
   pendingCount: number;
+}
+
+/** A family whose provided evidence was rejected in review. */
+export interface FamilyWithRejectedEvidence {
+  familyId: string;
+  /** How many `decision = 'rejected'` review rows name this family. */
+  rejectedCount: number;
+}
+
+/** One `GROUP BY family_key, decision` row from the review backlog read. */
+export interface FamilyReviewDecisionRow {
+  family_key?: string | null;
+  decision?: string | null;
+  decision_count?: number | string | null;
+}
+
+/** Both backlog lists a readiness object carries, derived from one read. */
+export interface FamilyReviewBacklog {
+  familiesAwaitingReview: FamilyAwaitingReview[];
+  familiesWithRejectedEvidence: FamilyWithRejectedEvidence[];
 }
 
 /**
@@ -80,11 +122,57 @@ export function awaitingReviewNextActionSentence(pendingCount: number): string {
 }
 
 /**
+ * How many rejected review rows name `familyId`, or 0 when none do.
+ *
+ * Same tolerance as the pending count: a row with an unusable count still
+ * proves the family has something rejected, and a missing list reads as none.
+ */
+export function rejectedReviewCountForFamily(
+  familyId: string,
+  familiesWithRejectedEvidence:
+    | readonly FamilyWithRejectedEvidence[]
+    | null
+    | undefined,
+): number {
+  if (!Array.isArray(familiesWithRejectedEvidence)) return 0;
+  let total = 0;
+  for (const entry of familiesWithRejectedEvidence) {
+    if (!entry || entry.familyId !== familyId) continue;
+    const count = Number(entry.rejectedCount);
+    total += Number.isFinite(count) && count > 0 ? Math.floor(count) : 1;
+  }
+  return total;
+}
+
+/**
+ * The sentence presented when every source provided for a family was rejected.
+ *
+ * It must NOT prescribe re-reviewing the rejected row: the only write path
+ * (`decideEvidenceReview`) is filtered `decision = 'pending'`, so no control
+ * can re-decide it. The action it asks for — upload a corrected or different
+ * source — is one the Files & Evidence tab offers.
+ */
+export function rejectedEvidenceNextActionSentence(
+  rejectedCount: number,
+): string {
+  const items = rejectedCount === 1 ? "1 item" : `${rejectedCount} items`;
+  const verb = rejectedCount === 1 ? "was" : "were";
+  return (
+    `${items} provided for this evidence slot ${verb} rejected in review, so ` +
+    `nothing from ${rejectedCount === 1 ? "it" : "them"} counts as evidence. A ` +
+    `recorded rejection cannot be re-decided, and re-uploading the same file ` +
+    `would carry the same rejected content — upload a CORRECTED or DIFFERENT ` +
+    `source on ${REVIEW_SURFACE}.`
+  );
+}
+
+/**
  * The next action to present for one evidence family.
  *
  * Returns the authored sentence unchanged unless the family is uncovered AND
- * has at least one pending review row — the only state in which "upload" is
- * the wrong instruction.
+ * has at least one pending or rejected review row — the only states in which a
+ * bare "upload" is the wrong instruction. Pending outranks rejected, because a
+ * decision still waiting in the queue is the nearer action.
  */
 export function resolvePendingAwareNextAction(args: {
   familyId: string;
@@ -93,12 +181,55 @@ export function resolvePendingAwareNextAction(args: {
   /** The authored `nextAction` this family would otherwise present. */
   authoredNextAction: string;
   familiesAwaitingReview?: readonly FamilyAwaitingReview[] | null;
+  familiesWithRejectedEvidence?: readonly FamilyWithRejectedEvidence[] | null;
 }): string {
   if (args.familyStatus === "covered") return args.authoredNextAction;
   const pending = pendingReviewCountForFamily(
     args.familyId,
     args.familiesAwaitingReview,
   );
-  if (pending < 1) return args.authoredNextAction;
-  return awaitingReviewNextActionSentence(pending);
+  if (pending > 0) return awaitingReviewNextActionSentence(pending);
+  const rejected = rejectedReviewCountForFamily(
+    args.familyId,
+    args.familiesWithRejectedEvidence,
+  );
+  if (rejected > 0) return rejectedEvidenceNextActionSentence(rejected);
+  return args.authoredNextAction;
+}
+
+/**
+ * Split one `GROUP BY family_key, decision` read into the two backlog lists.
+ *
+ * The producer reads pending and rejected in a single query, so the shape of
+ * that read is declared here with the consumers of its output rather than
+ * being re-derived inline at the call site. Any decision value other than
+ * `pending`/`rejected` is ignored: `approved` is what coverage already grades
+ * on, and a value outside the CHECK constraint belongs to neither list.
+ */
+export function familyReviewBacklogFromDecisionRows(
+  rows: readonly FamilyReviewDecisionRow[] | null | undefined,
+): FamilyReviewBacklog {
+  const backlog: FamilyReviewBacklog = {
+    familiesAwaitingReview: [],
+    familiesWithRejectedEvidence: [],
+  };
+  if (!Array.isArray(rows)) return backlog;
+  for (const row of rows) {
+    if (!row) continue;
+    const familyId =
+      typeof row.family_key === "string" ? row.family_key.trim() : "";
+    if (!familyId) continue;
+    const parsed = Number(row.decision_count);
+    const count =
+      Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+    if (row.decision === "pending") {
+      backlog.familiesAwaitingReview.push({ familyId, pendingCount: count });
+    } else if (row.decision === "rejected") {
+      backlog.familiesWithRejectedEvidence.push({
+        familyId,
+        rejectedCount: count,
+      });
+    }
+  }
+  return backlog;
 }

@@ -1,4 +1,3 @@
-import { Packer } from "docx";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { getActiveClientRow } from "@/lib/active-client";
 import {
@@ -8,12 +7,11 @@ import {
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
 import {
-  renderDeliverableDocx,
   renderDeliverableExcelCompanion,
   renderDeliverablePdf,
 } from "@/lib/deliverables/orchestrator/renderers";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
-import {} from "@/lib/deliverables/orchestrator/renderers";
+import { renderValidatedDocx } from "@/lib/deliverables/orchestrator/render-validated-doc";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
@@ -256,7 +254,7 @@ export async function GET(
         });
       }
 
-      const buf = await Packer.toBuffer(renderDeliverableDocx(structuredDoc));
+      const buf = await renderValidatedDocx(structuredDoc);
       return new Response(new Uint8Array(buf), {
         status: 200,
         headers: attachmentHeaders(
@@ -267,11 +265,11 @@ export async function GET(
         ),
       });
     } catch (err) {
-      console.error(
-        "[GET /api/v1/artifacts/[artifactId]] render failed; falling back",
-        err,
+      console.error("[GET /api/v1/artifacts/[artifactId]] render failed", err);
+      return Response.json(
+        { error: "artifact_render_failed", format: requested },
+        { status: 422, headers: { "cache-control": "no-store" } },
       );
-      // fall through to HTML / JSON fallback below
     }
   }
 

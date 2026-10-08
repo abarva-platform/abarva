@@ -629,6 +629,8 @@ export type ExhibitData =
         | "physical_architecture"
         | "agent_orchestration";
       lanes: ExhibitArchitectureLane[];
+      /** Declared topology only. Absent edges never imply a connection. */
+      edges?: ExhibitFlowEdge[];
       legend?: string[];
     };
 

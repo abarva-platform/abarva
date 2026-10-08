@@ -15,6 +15,7 @@ const mockPackerToBuffer = jest.fn();
 const mockRenderDeliverableDocx = jest.fn();
 const mockRenderDeliverablePptx = jest.fn();
 const mockRenderValidatedDeck = jest.fn();
+const mockRenderValidatedDocx = jest.fn();
 let sponsorParticipantExists = true;
 let routeSupabase: ReturnType<typeof makeSupabase>;
 
@@ -140,6 +141,10 @@ jest.mock("@/lib/deliverables/orchestrator/renderers", () => ({
 
 jest.mock("@/lib/deliverables/orchestrator/render-validated-deck", () => ({
   renderValidatedDeck: (doc: unknown) => mockRenderValidatedDeck(doc),
+}));
+
+jest.mock("@/lib/deliverables/orchestrator/render-validated-doc", () => ({
+  renderValidatedDocx: (doc: unknown) => mockRenderValidatedDocx(doc),
 }));
 
 jest.mock("@/lib/deliverables/quality/deliverable-key-map", () => ({
@@ -307,6 +312,7 @@ beforeEach(() => {
     verdict: { ok: true, findings: [], renderedPptxSlides: 3 },
   });
   mockPackerToBuffer.mockResolvedValue(Buffer.from("docx"));
+  mockRenderValidatedDocx.mockResolvedValue(Buffer.from("docx"));
   mockLoadApprovedSolutionApproach.mockResolvedValue({
     decisionHash: "decision-hash",
     selectedOptionId: "option-2",
@@ -635,6 +641,28 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(json.detail).toContain("generated_artifact_pptx_quality_failed");
     expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("does not approve a DOCX whose declared figure failed packaged quality", async () => {
+    mockRenderValidatedDocx.mockRejectedValue(
+      new Error("generated_docx_failed_quality:empty_figure"),
+    );
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({
+        reason: "Synthetic reviewer attempted a test approval.",
+      }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(422);
+    expect(json).toMatchObject({
+      error: "generated_artifact_final_render_failed",
+    });
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
 

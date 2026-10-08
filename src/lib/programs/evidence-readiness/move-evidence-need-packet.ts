@@ -935,13 +935,16 @@ export function buildMoveEvidenceNeedPackets(
           ? null
           : mustWaitSentence(family.label.toLowerCase()),
       waiverOption: waiverOptionSentence(required),
-      // Pending evidence must not read as covered, so this rewrites the
-      // sentence ALONE — everything the gate layer reads above is untouched.
+      // Pending and rejected evidence must not read as covered, so this
+      // rewrites the sentence ALONE — everything the gate layer reads above is
+      // untouched.
       nextAction: resolvePendingAwareNextAction({
         familyId: family.familyId,
         familyStatus: family.status,
         authoredNextAction: guidance.nextAction,
         familiesAwaitingReview: input.readiness.familiesAwaitingReview,
+        familiesWithRejectedEvidence:
+          input.readiness.familiesWithRejectedEvidence,
       }),
       status,
       evidenceIds: family.evidenceIds,

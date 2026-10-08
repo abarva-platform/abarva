@@ -7,7 +7,6 @@
 
 import "server-only";
 
-import { Packer } from "docx";
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
@@ -50,7 +49,7 @@ import {
 } from "@/lib/programs/approved-evidence-basis-refusal";
 import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approved-evidence-lineage";
 import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
-import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
+import { renderValidatedDocx } from "@/lib/deliverables/orchestrator/render-validated-doc";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 
@@ -268,7 +267,7 @@ async function renderAcceptedGeneratedDraft(args: {
       parseMethod: "generated_renderable_deliverable_pptx",
     };
   }
-  const docx = await Packer.toBuffer(renderDeliverableDocx(structuredDoc));
+  const docx = await renderValidatedDocx(structuredDoc);
   return {
     body: Buffer.from(docx),
     fileName: safeArtifactFileName(args.title, "docx"),

@@ -15,6 +15,7 @@ import {
   BorderStyle,
   Document,
   Footer,
+  HeadingLevel,
   ImageRun,
   Paragraph,
   Table,
@@ -34,6 +35,11 @@ import {
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { rasteriseSvg } from "@/lib/programs/expert-kernel/exports/board-grade/svg-raster";
+import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
+import {
+  renderArchitectureVisualExhibits,
+  type ArchitectureVisualExhibit,
+} from "@/lib/visual-system/architecture-html-renderer";
 
 import {
   ORDERED_NUMBERING_CONFIG,
@@ -42,11 +48,7 @@ import {
   bodyRun,
   boldRun,
   coverSubtitleParagraph,
-  coverTitleParagraph,
   eyebrowParagraph,
-  heading1,
-  heading2,
-  pageBreak,
 } from "@/lib/exports-shared/docx-base";
 import { markdownToDocxBlocks } from "@/lib/exports-shared/markdown-to-docx";
 import { markdownToPdfNodes } from "@/lib/exports-shared/markdown-to-pdf";
@@ -66,9 +68,18 @@ import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { humanizeSourceFamily } from "./source-register";
 import { cellTone, CELL_TONE_HEX } from "@/lib/deliverables/shared/cell-tone";
 import {
+  COLORS,
+  EXHIBIT_DESIGN,
+  PAGE_DESIGN,
+  SHEET_DESIGN,
+  SLIDE_DESIGN,
+  TYPOGRAPHY,
+} from "@/lib/design/design-tokens";
+import { inspectDeck } from "./deck-inspection";
+import { judgeRenderedDeck } from "./deck-quality";
+import { judgeSheetQuality } from "./sheet-quality";
+import {
   MAX_SLIDE_BULLETS,
-  bulletFontSize,
-  governingFontSize,
   normaliseSlideText,
   sectionSlideText,
   stripStructuralScaffolding,
@@ -118,11 +129,52 @@ const DOC_STATUS_FOOTER =
 // rendered DOCX uses muted uppercase headers + hairline row dividers + NO navy
 // fill — without mutating the shared Source house-style helpers.
 const TOKENS = {
-  MUTED: "6F6A61", // --muted
-  INK: "1B1A17", // --ink
-  LINE: "E6E2DA", // --line  (header bottom border)
-  LINE2: "EFECE5", // --line2 (row divider)
+  MUTED: COLORS.deckMuted.slice(1),
+  INK: COLORS.ink.slice(1),
+  LINE: COLORS.deckRule.slice(1),
+  LINE2: COLORS.deckRule.slice(1),
 } as const;
+
+function designedHeading(
+  text: string,
+  level: 1 | 2,
+  pageBreakBefore = false,
+): Paragraph {
+  const first = level === 1;
+  return new Paragraph({
+    heading: first ? HeadingLevel.HEADING_1 : HeadingLevel.HEADING_2,
+    keepNext: true,
+    pageBreakBefore,
+    spacing: {
+      before:
+        (first
+          ? PAGE_DESIGN.space.sectionBeforePt
+          : PAGE_DESIGN.space.sectionAfterPt) * 20,
+      after: PAGE_DESIGN.space.sectionAfterPt * 20,
+    },
+    border: first
+      ? {
+          bottom: {
+            style: BorderStyle.SINGLE,
+            size: 4,
+            color: TOKENS.LINE,
+            space: 6,
+          },
+        }
+      : undefined,
+    children: [
+      new TextRun({
+        text,
+        font: first ? SOURCE_DOCX.DISPLAY_FONT : SOURCE_DOCX.BODY_FONT,
+        size:
+          (first ? PAGE_DESIGN.type.heading1Pt : PAGE_DESIGN.type.heading2Pt) *
+          2,
+        bold: !first,
+        color: TOKENS.INK,
+      }),
+    ],
+  });
+}
 
 const SOURCE_REGISTER_APPENDIX_THRESHOLD = 10;
 
@@ -402,11 +454,22 @@ function normalizeSectionMarkdown(markdown: string, title: string): string {
 
 export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   const children: (Paragraph | Table)[] = [];
-  const compactMovesCharter = doc.deliverableType === "charter";
 
   // Cover
   children.push(eyebrowParagraph(DOC_COVER_EYEBROW));
-  children.push(coverTitleParagraph(doc.title));
+  children.push(
+    new Paragraph({
+      spacing: { before: 180, after: 180 },
+      children: [
+        new TextRun({
+          text: doc.title,
+          font: SOURCE_DOCX.DISPLAY_FONT,
+          size: PAGE_DESIGN.type.titlePt * 2,
+          color: TOKENS.INK,
+        }),
+      ],
+    }),
+  );
   if (doc.subtitle) children.push(coverSubtitleParagraph(doc.subtitle));
   children.push(
     coverSubtitleParagraph(
@@ -419,13 +482,12 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
     bodyParagraph([boldRun("Document status: "), bodyRun(DOC_STATUS_LABEL)]),
   );
   children.push(bodyParagraph([bodyRun(DOC_STATUS_BODY)]));
-  if (!compactMovesCharter) children.push(pageBreak());
 
   // Sections — render the authored markdown body PROPERLY (headings, bold,
   // ordered/unordered + nested lists, inline GFM tables) via the shared
   // mdast walker, instead of flattening every line to a paragraph.
   for (const section of doc.generatedSections) {
-    children.push(heading1(section.title));
+    children.push(designedHeading(section.title, 1));
     children.push(
       ...markdownToDocxBlocks(
         normalizeSectionMarkdown(section.bodyMarkdown, section.title),
@@ -436,10 +498,9 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   // In-document tables (those NOT routed to the Excel companion)
   const inDocTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
   if (inDocTables.length) {
-    if (!compactMovesCharter) children.push(pageBreak());
-    children.push(heading1("Tables & Exhibits"));
+    children.push(designedHeading("Tables & Exhibits", 1));
     for (const t of inDocTables) {
-      children.push(heading2(t.title, { keepNext: true }));
+      children.push(designedHeading(t.title, 2));
       children.push(tableToDocx(t));
     }
   }
@@ -451,24 +512,22 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
     exhibitToDocxBlocks(exhibit, index),
   );
   if (exhibitBlocks.length) {
-    if (!compactMovesCharter) children.push(pageBreak());
-    children.push(heading1("Visual Exhibits"));
+    children.push(designedHeading("Visual Exhibits", 1));
     children.push(...exhibitBlocks);
   }
 
   // Recommendation + next actions
-  if (!compactMovesCharter) children.push(pageBreak());
-  children.push(heading1("Recommendation"));
+  children.push(designedHeading("Recommendation", 1));
   children.push(bodyParagraph([bodyRun(doc.recommendation)]));
   if (doc.nextActions.length) {
-    children.push(heading2("Next Actions"));
+    children.push(designedHeading("Next Actions", 2));
     for (const a of doc.nextActions)
       children.push(bodyParagraph([bodyRun(`• ${a}`)]));
   }
 
   // Client-to-complete checklist
   if (doc.clientCompleteChecklist.length) {
-    children.push(heading1("Client-to-Complete Checklist"));
+    children.push(designedHeading("Client-to-Complete Checklist", 1));
     for (const c of doc.clientCompleteChecklist) {
       children.push(
         bodyParagraph([
@@ -483,7 +542,7 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
 
   // Assumptions
   if (doc.assumptions.length) {
-    children.push(heading1("Assumptions"));
+    children.push(designedHeading("Assumptions", 1));
     for (const a of doc.assumptions) {
       children.push(
         bodyParagraph([
@@ -498,11 +557,11 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   // Source register
   if (doc.sourceRegister.length) {
     children.push(
-      heading1("Source Register", {
-        keepNext: true,
-        pageBreakBefore:
-          doc.sourceRegister.length >= SOURCE_REGISTER_APPENDIX_THRESHOLD,
-      }),
+      designedHeading(
+        "Source Register",
+        1,
+        doc.sourceRegister.length >= SOURCE_REGISTER_APPENDIX_THRESHOLD,
+      ),
     );
     children.push(
       lightTable(
@@ -527,7 +586,12 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
       {
         properties: {
           page: {
-            margin: { top: 1080, right: 1080, bottom: 1080, left: 1080 },
+            margin: {
+              top: PAGE_DESIGN.marginIn * 1440,
+              right: PAGE_DESIGN.marginIn * 1440,
+              bottom: PAGE_DESIGN.marginIn * 1440,
+              left: PAGE_DESIGN.marginIn * 1440,
+            },
           },
         },
         footers: {
@@ -578,38 +642,183 @@ export function renderDeliverableExcelCompanion(
   if (xlsxTables.length === 0 && options.includeAllTablesWhenNoXlsxTables) {
     xlsxTables = doc.tables;
   }
-  if (xlsxTables.length === 0 && !options.includeDocumentSheetsWhenNoTables) {
+  if (
+    xlsxTables.length === 0 &&
+    !options.includeDocumentSheetsWhenNoTables &&
+    !doc.exhibits.some((exhibit) => exhibit.data)
+  ) {
     return null;
   }
   const wb = new ExcelJS.Workbook();
   wb.creator = "AbarVa";
   wb.created = new Date(0); // deterministic
+  addExcelCover(wb, doc);
   for (const t of xlsxTables) {
-    const sheet = wb.addWorksheet(
-      t.title.slice(0, 31).replace(/[\\/?*[\]:]/g, " "),
-    );
+    const sheet = wb.addWorksheet(uniqueSheetName(wb, t.title));
     const header = sheet.addRow(t.columns.map((c) => c.toUpperCase()));
-    // Canonical light header: muted uppercase text on a hairline bottom rule —
-    // no navy fill (DATA_DISPLAY_TOKENS.md table recipe).
-    header.font = { color: { argb: `FF${TOKENS.MUTED}` } };
-    header.eachCell((cell) => {
-      cell.border = {
-        bottom: { style: "thin", color: { argb: `FF${TOKENS.LINE}` } },
-      };
-    });
     for (const row of t.rows) sheet.addRow(row);
-    sheet.columns.forEach((col) => {
-      let max = 10;
-      col.eachCell?.({ includeEmpty: true }, (cell) => {
-        max = Math.max(max, String(cell.value ?? "").length + 2);
-      });
-      col.width = Math.min(60, max);
-    });
+    styleExcelDataSheet(sheet, header);
   }
   if (xlsxTables.length === 0 && options.includeDocumentSheetsWhenNoTables) {
     addDocumentSummarySheets(wb, doc);
   }
+  const expectedFigures = addExcelExhibits(wb, doc);
+  const sheetVerdict = judgeSheetQuality(wb, expectedFigures);
+  if (!sheetVerdict.ok) {
+    throw new Error(
+      `generated_xlsx_failed_quality:${sheetVerdict.findings.join(";")}`,
+    );
+  }
   return wb;
+}
+
+function addExcelExhibits(
+  wb: ExcelJS.Workbook,
+  doc: RenderableDeliverable,
+): number {
+  let rendered = 0;
+  doc.exhibits.forEach((exhibit, index) => {
+    if (!exhibit.data) return;
+    const rawSvg = exhibitSvg(exhibit, index);
+    if (!rawSvg) throw new Error(`xlsx_exhibit_not_renderable:${exhibit.key}`);
+    const { png, aspect } = rasteriseSvg(
+      withXmlns(resolveSvgTokens(rawSvg)),
+      2,
+    );
+    const sheet = wb.addWorksheet(
+      uniqueSheetName(wb, `Exhibit ${index + 1} ${exhibit.title}`),
+    );
+    sheet.columns = [{ width: 30 }, { width: 70 }];
+    const title = sheet.addRow([`FIGURE ${index + 1}`, exhibit.title]);
+    sheet.addRow(["Description", exhibit.description]);
+    styleExcelDataSheet(sheet, title);
+    const width = Math.min(960, 640 * aspect);
+    const height = width / aspect;
+    const imageId = wb.addImage({
+      buffer: png as unknown as Parameters<
+        ExcelJS.Workbook["addImage"]
+      >[0]["buffer"],
+      extension: "png",
+    });
+    sheet.addImage(imageId, { tl: { col: 0, row: 4 }, ext: { width, height } });
+    rendered += 1;
+  });
+  return rendered;
+}
+
+function uniqueSheetName(wb: ExcelJS.Workbook, title: string): string {
+  const stem =
+    title
+      .replace(/[\\/?*[\]:]/g, " ")
+      .trim()
+      .slice(0, 27) || "Data";
+  let name = stem;
+  let suffix = 2;
+  while (wb.getWorksheet(name)) name = `${stem.slice(0, 27)} ${suffix++}`;
+  return name.slice(0, 31);
+}
+
+function addExcelCover(wb: ExcelJS.Workbook, doc: RenderableDeliverable): void {
+  const sheet = wb.addWorksheet("Cover");
+  sheet.columns = [{ width: 23 }, { width: 66 }];
+  sheet.mergeCells("A2:B3");
+  const title = sheet.getCell("A2");
+  title.value = doc.title;
+  title.font = {
+    name: SOURCE_DOCX.DISPLAY_FONT,
+    size: SHEET_DESIGN.type.coverPt,
+    color: { argb: `FF${TOKENS.INK}` },
+  };
+  title.alignment = { vertical: "middle", wrapText: true };
+  sheet.getRow(2).height = 31;
+  sheet.getRow(3).height = 24;
+  const metadata: Array<[string, string]> = [
+    ["Client", doc.clientDisplayName],
+    ["Initiative", doc.initiativeDisplayName],
+    ["Status", DOC_STATUS_LABEL],
+    ["Recommendation", doc.recommendation],
+    ["Source", "Structured generated deliverable; review evidence before use"],
+  ];
+  metadata.forEach(([label, value], index) => {
+    const row = sheet.getRow(index + 5);
+    row.values = [label.toUpperCase(), value];
+    row.height = index === 3 ? 56 : 28;
+    row.getCell(1).font = {
+      name: SOURCE_DOCX.BODY_FONT,
+      bold: true,
+      size: 9,
+      color: { argb: `FF${TOKENS.MUTED}` },
+    };
+    row.getCell(2).font = {
+      name: SOURCE_DOCX.BODY_FONT,
+      size: 11,
+      color: { argb: `FF${TOKENS.INK}` },
+    };
+    row.getCell(2).alignment = { vertical: "middle", wrapText: true };
+    row.getCell(1).border = row.getCell(2).border = {
+      bottom: { style: "hair", color: { argb: `FF${TOKENS.LINE}` } },
+    };
+  });
+  sheet.views = [{ showGridLines: false }];
+}
+
+function styleExcelDataSheet(
+  sheet: ExcelJS.Worksheet,
+  header: ExcelJS.Row,
+): void {
+  sheet.views = [{ state: "frozen", ySplit: 1, showGridLines: false }];
+  sheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: {
+      row: Math.max(1, sheet.rowCount),
+      column: Math.max(1, sheet.columnCount),
+    },
+  };
+  header.height = SHEET_DESIGN.rows.headerHeightPt;
+  header.eachCell((cell) => {
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: `FF${COLORS.navy.slice(1)}` },
+    };
+    cell.font = {
+      name: SOURCE_DOCX.BODY_FONT,
+      size: SHEET_DESIGN.type.headerPt,
+      bold: true,
+      color: { argb: `FF${COLORS.white.slice(1)}` },
+    };
+    cell.alignment = { vertical: "middle", wrapText: true };
+  });
+  sheet.eachRow((row, number) => {
+    if (number === 1) return;
+    row.height = SHEET_DESIGN.rows.bodyHeightPt;
+    row.eachCell((cell) => {
+      cell.font = {
+        name: SOURCE_DOCX.BODY_FONT,
+        size: SHEET_DESIGN.type.bodyPt,
+        color: { argb: `FF${TOKENS.INK}` },
+      };
+      cell.alignment = { vertical: "middle", wrapText: true };
+      cell.border = {
+        bottom: { style: "hair", color: { argb: `FF${TOKENS.LINE2}` } },
+      };
+      if (typeof cell.value === "number") {
+        cell.numFmt = Number.isInteger(cell.value)
+          ? SHEET_DESIGN.formats.integer
+          : SHEET_DESIGN.formats.decimal;
+      }
+    });
+  });
+  sheet.columns.forEach((column) => {
+    let max: number = SHEET_DESIGN.columns.minChars;
+    column.eachCell?.({ includeEmpty: true }, (cell) => {
+      max = Math.max(
+        max,
+        String(cell.value ?? "").length + SHEET_DESIGN.columns.paddingChars,
+      );
+    });
+    column.width = Math.min(SHEET_DESIGN.columns.maxChars, max);
+  });
 }
 
 function addDocumentSummarySheets(
@@ -626,48 +835,41 @@ function addDocumentSummarySheets(
     ["Next actions", doc.nextActions.join("\n")],
   ]);
 
-  const sections = wb.addWorksheet("Sections");
-  sections.addRow(["Section", "Content"]);
-  for (const section of doc.generatedSections) {
-    sections.addRow([section.title, section.bodyMarkdown]);
+  if (doc.generatedSections.length) {
+    const sections = wb.addWorksheet("Sections");
+    sections.addRow(["Section", "Content"]);
+    for (const section of doc.generatedSections) {
+      sections.addRow([section.title, section.bodyMarkdown]);
+    }
   }
 
-  const sources = wb.addWorksheet("Source Register");
-  sources.addRow(["Citation", "Source", "Family", "Confidence"]);
-  for (const source of doc.sourceRegister) {
-    sources.addRow([
-      source.citationNumber,
-      source.label,
-      humanizeSourceFamily(source.evidenceFamily),
-      `${source.confidence}${source.asOf ? ` · ${source.asOf}` : ""}`,
-    ]);
+  if (doc.sourceRegister.length) {
+    const sources = wb.addWorksheet("Source Register");
+    sources.addRow(["Citation", "Source", "Family", "Confidence"]);
+    for (const source of doc.sourceRegister) {
+      sources.addRow([
+        source.citationNumber,
+        source.label,
+        humanizeSourceFamily(source.evidenceFamily),
+        `${source.confidence}${source.asOf ? ` · ${source.asOf}` : ""}`,
+      ]);
+    }
   }
 
-  const assumptions = wb.addWorksheet("Assumptions");
-  assumptions.addRow(["Assumption", "Basis", "Must validate"]);
-  for (const assumption of doc.assumptions) {
-    assumptions.addRow([
-      assumption.statement,
-      assumption.basis,
-      assumption.mustValidate ? "yes" : "no",
-    ]);
+  if (doc.assumptions.length) {
+    const assumptions = wb.addWorksheet("Assumptions");
+    assumptions.addRow(["Assumption", "Basis", "Must validate"]);
+    for (const assumption of doc.assumptions) {
+      assumptions.addRow([
+        assumption.statement,
+        assumption.basis,
+        assumption.mustValidate ? "yes" : "no",
+      ]);
+    }
   }
 
-  for (const sheet of wb.worksheets) {
-    const header = sheet.getRow(1);
-    header.font = { color: { argb: `FF${TOKENS.MUTED}` } };
-    header.eachCell((cell) => {
-      cell.border = {
-        bottom: { style: "thin", color: { argb: `FF${TOKENS.LINE}` } },
-      };
-    });
-    sheet.columns.forEach((col) => {
-      let max = 10;
-      col.eachCell?.({ includeEmpty: true }, (cell) => {
-        max = Math.max(max, String(cell.value ?? "").length + 2);
-      });
-      col.width = Math.min(80, max);
-    });
+  for (const sheet of wb.worksheets.filter((entry) => entry.name !== "Cover")) {
+    styleExcelDataSheet(sheet, sheet.getRow(1));
   }
 }
 
@@ -722,21 +924,6 @@ function tableHtml(t: RenderableTable): string {
     )
     .join("");
   return `<h3>${esc(t.title)}</h3><table class="md"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
-}
-
-function exhibitClauses(exhibit: RenderableExhibit): string[] {
-  const raw = exhibit.description || exhibit.title;
-  const parts = raw
-    .split(/\s*(?:→|->|;|\n|\.\s+)\s*/g)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .slice(0, 5);
-  if (parts.length >= 3) return parts;
-  return [
-    exhibit.kind.replace(/_/g, " "),
-    exhibit.title,
-    exhibit.description || "Decision implication to confirm",
-  ].slice(0, 5);
 }
 
 function exhibitDataClauses(
@@ -835,60 +1022,88 @@ function fitLabelLines(text: string, perLine: number, maxLines = 2): string[] {
 }
 
 function svgFlowExhibit(exhibit: RenderableExhibit, domId: string): string {
-  // Read the STRUCTURE, not a flattened sentence.
-  //
-  // This previously took `exhibitClauses`, which concatenates a flow's nodes
-  // AND its edges into one list of strings — so a four-node, four-edge flow
-  // rendered as eight boxes in a row, four of them labelled with an edge and
-  // numbered "Step 5" through "Step 8". The arrows a flow exists to show were
-  // drawn as more boxes. Edges are edges here.
   const data = exhibit.data;
   if (!data || data.kind !== "flow" || data.nodes.length === 0) return "";
-
-  const nodes = data.nodes.slice(0, 6);
-  const width = Math.max(720, nodes.length * 180);
-  const xFor = (i: number) => 56 + i * 170;
-  const indexById = new Map(nodes.map((n, i) => [n.id ?? n.label, i]));
+  const nodes = data.nodes;
+  const columns = Math.min(4, nodes.length);
+  const rows = Math.ceil(nodes.length / columns);
+  const cardW = 152;
+  const cardH = 80;
+  const gapX = 24;
+  const gapY = 100;
+  const width = 2 * 28 + columns * cardW + (columns - 1) * gapX;
+  const canvasHeight = 2 * 28 + rows * cardH + (rows - 1) * gapY;
+  const position = (index: number) => ({
+    x: 28 + (index % columns) * (cardW + gapX),
+    y: 28 + Math.floor(index / columns) * (cardH + gapY),
+  });
+  const indexById = new Map(nodes.map((node, index) => [node.id, index]));
 
   const boxes = nodes
     .map((node, i) => {
-      const x = xFor(i);
+      const { x, y } = position(i);
       const role = node.role ? esc(String(node.role).slice(0, 26)) : "";
-      const lines = fitLabelLines(String(node.label), 18, role ? 2 : 3);
-      const first = role ? 62 : 66;
+      const lines = fitLabelLines(String(node.label), 22, role ? 2 : 3);
+      const first = y + (role ? 28 : 32);
       const labelSvg = lines
         .map(
           (ln, n) =>
-            `<text x="${x + 59}" y="${first + n * 13}" text-anchor="middle" font-size="10.5" font-weight="700">${esc(ln)}</text>`,
+            `<text x="${x + cardW / 2}" y="${first + n * 15}" text-anchor="middle" font-size="${EXHIBIT_DESIGN.type.labelPx}" font-weight="700">${esc(ln)}</text>`,
         )
         .join("");
       return `<g>
-        <rect x="${x}" y="38" width="118" height="68" rx="8" fill="#fff" stroke="var(--line)"/>
+        <rect x="${x}" y="${y}" width="${cardW}" height="${cardH}" rx="${EXHIBIT_DESIGN.space.cardRadiusPx}" fill="var(--panel)" stroke="var(--line)"/>
         ${labelSvg}
-        ${role ? `<text x="${x + 59}" y="98" text-anchor="middle" font-size="9" fill="var(--muted)">${role}</text>` : ""}
+        ${role ? `<text x="${x + cardW / 2}" y="${y + 69}" text-anchor="middle" font-size="10" fill="var(--muted)">${role}</text>` : ""}
       </g>`;
     })
     .join("");
-
-  // Only draw an edge whose endpoints both exist. An edge into a node that was
-  // never declared is a data defect; drawing it anyway would hide that.
   const arrows = data.edges
     .map((edge) => {
       const a = indexById.get(edge.from);
       const b = indexById.get(edge.to);
-      if (a === undefined || b === undefined || a === b) return "";
-      const from = xFor(Math.min(a, b)) + 118;
-      const to = xFor(Math.max(a, b));
-      const label = edge.label
-        ? `<text x="${(from + to) / 2}" y="64" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(String(edge.label).slice(0, 22))}</text>`
-        : "";
-      return `<path d="M${from} 72 L${to - 4} 72" stroke="var(--fresh)" stroke-width="2" marker-end="url(#arrow-${domId})"/>${label}`;
+      if (a === undefined || b === undefined || a === b) {
+        throw new Error(
+          `flow_edge_invalid:${exhibit.key}:${edge.from}:${edge.to}`,
+        );
+      }
+      const from = position(a);
+      const to = position(b);
+      const sameRow = Math.floor(a / columns) === Math.floor(b / columns);
+      const forward = to.x > from.x;
+      const x1 = sameRow ? from.x + (forward ? cardW : 0) : from.x + cardW / 2;
+      const y1 = sameRow ? from.y + cardH / 2 : from.y + cardH;
+      const x2 = sameRow ? to.x + (forward ? 0 : cardW) : to.x + cardW / 2;
+      const y2 = sameRow ? to.y + cardH / 2 : to.y;
+      const path = sameRow
+        ? `M${x1} ${y1} H${x2}`
+        : `M${x1} ${y1} V${(y1 + y2) / 2} H${x2} V${y2}`;
+      return `<path data-declared-edge="${esc(edge.from)}:${esc(edge.to)}" d="${path}" fill="none" stroke="var(--fresh)" stroke-width="2" marker-end="url(#arrow-${domId})"/>`;
     })
     .join("");
 
-  return `<svg class="exhibit-svg" viewBox="0 0 ${width} 140" role="img" aria-label="${esc(exhibit.title)}">
+  const labeledEdges = data.edges.filter((edge) => edge.label);
+  const legendRows = Math.ceil(labeledEdges.length / 2);
+  const edgeLegend = labeledEdges
+    .map((edge, index) => {
+      const x = 28 + (index % 2) * (width / 2);
+      const y = canvasHeight + 8 + Math.floor(index / 2) * 32;
+      const fromLabel = nodes[indexById.get(edge.from)!]!.label;
+      const toLabel = nodes[indexById.get(edge.to)!]!.label;
+      const lines = fitLabelLines(
+        `${fromLabel} → ${toLabel}: ${edge.label}`,
+        46,
+        2,
+      );
+      return `<g><circle cx="${x + 5}" cy="${y + 6}" r="4" fill="var(--fresh)"/>
+        ${lines.map((line, lineIndex) => `<text x="${x + 16}" y="${y + 10 + lineIndex * 12}" font-size="${EXHIBIT_DESIGN.type.captionPx}" fill="var(--muted)">${esc(line)}</text>`).join("")}</g>`;
+    })
+    .join("");
+  const height = canvasHeight + (legendRows ? legendRows * 32 + 20 : 0);
+
+  return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(exhibit.title)}">
     <defs><marker id="arrow-${domId}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--fresh)"/></marker></defs>
-    ${arrows}${boxes}
+    ${arrows}${boxes}${edgeLegend}
   </svg>`;
 }
 
@@ -899,14 +1114,13 @@ function svgValueTree(exhibit: RenderableExhibit): string {
   // declared exhibit kind the dispatch never drew; this is its renderer.
   const data = exhibit.data;
   if (!data || data.kind !== "value_tree" || !data.root) return "";
-  const branches = data.branches.slice(0, 6);
+  const branches = data.branches;
   if (branches.length === 0) return "";
 
   const rowH = 50;
   const pad = 18;
   const nodeH = 40;
-  const childCap = (b: (typeof branches)[number]) =>
-    Math.min(b.children?.length ?? 0, 4);
+  const childCap = (b: (typeof branches)[number]) => b.children?.length ?? 0;
   const slots = branches.map((b) => Math.max(1, childCap(b)));
   const totalSlots = slots.reduce((a, b) => a + b, 0);
   const height = pad * 2 + totalSlots * rowH;
@@ -939,7 +1153,7 @@ function svgValueTree(exhibit: RenderableExhibit): string {
       ? `<text x="${x + w - 12}" y="${y + nodeH - 11}" text-anchor="end" font-size="10" font-weight="700" fill="var(--fresh)">${esc(String(value).slice(0, 20))}</text>`
       : "";
     return `<g>
-      <rect x="${x}" y="${y}" width="${w}" height="${nodeH}" rx="8" fill="${emphasis ? "#fff" : "#fff"}" stroke="var(--line)" stroke-width="${emphasis ? 1.5 : 1}"/>
+      <rect x="${x}" y="${y}" width="${w}" height="${nodeH}" rx="${EXHIBIT_DESIGN.space.cardRadiusPx}" fill="var(--panel)" stroke="var(--line)" stroke-width="${emphasis ? 1.5 : 1}"/>
       ${labelSvg}${valueSvg}
     </g>`;
   };
@@ -950,7 +1164,7 @@ function svgValueTree(exhibit: RenderableExhibit): string {
   const rootCY = height / 2;
 
   branches.forEach((branch, i) => {
-    const kids = (branch.children ?? []).slice(0, 4);
+    const kids = branch.children ?? [];
     const start = slotCursor;
     const span = slots[i]!;
     const branchCY = slotCenterY(start) + ((span - 1) * rowH) / 2;
@@ -958,13 +1172,17 @@ function svgValueTree(exhibit: RenderableExhibit): string {
     connectors.push(
       `<path d="M${rootX + rootW} ${rootCY} C ${(rootX + rootW + brX) / 2} ${rootCY}, ${(rootX + rootW + brX) / 2} ${branchCY}, ${brX} ${branchCY}" fill="none" stroke="var(--line)" stroke-width="1.5"/>`,
     );
-    branchParts.push(node(brX, brW, branchCY, branch.label, branch.value, true));
+    branchParts.push(
+      node(brX, brW, branchCY, branch.label, branch.value, true),
+    );
     kids.forEach((child, k) => {
       const childCY = slotCenterY(start + k);
       connectors.push(
         `<path d="M${brX + brW} ${branchCY} C ${(brX + brW + chX) / 2} ${branchCY}, ${(brX + brW + chX) / 2} ${childCY}, ${chX} ${childCY}" fill="none" stroke="var(--line)" stroke-width="1"/>`,
       );
-      branchParts.push(node(chX, chW, childCY, child.label, child.value, false));
+      branchParts.push(
+        node(chX, chW, childCY, child.label, child.value, false),
+      );
     });
     slotCursor += span;
   });
@@ -1008,7 +1226,7 @@ function svgMatrixExhibit(exhibit: RenderableExhibit): string {
     Boolean,
   );
 
-  const placed = data.cells.slice(0, 8).map((cell) => {
+  const placed = data.cells.map((cell) => {
     const xi = xs.indexOf(String(cell.x ?? ""));
     const yi = ys.indexOf(String(cell.y ?? ""));
     const right = xi >= 0 ? xi >= Math.ceil(xs.length / 2) : false;
@@ -1021,30 +1239,43 @@ function svgMatrixExhibit(exhibit: RenderableExhibit): string {
     const q = `${p.right ? "r" : "l"}${p.lower ? "b" : "t"}`;
     byQuadrant.set(q, [...(byQuadrant.get(q) ?? []), p]);
   }
+  const topRows = Math.max(
+    1,
+    byQuadrant.get("lt")?.length ?? 0,
+    byQuadrant.get("rt")?.length ?? 0,
+  );
+  const bottomRows = Math.max(
+    1,
+    byQuadrant.get("lb")?.length ?? 0,
+    byQuadrant.get("rb")?.length ?? 0,
+  );
+  const middleY = 64 + topRows * 70;
+  const height = middleY + 20 + bottomRows * 70 + 46;
 
   const cells = [...byQuadrant.entries()]
     .flatMap(([q, items]) =>
-      items.slice(0, 2).map((p, n) => {
+      items.map((p, n) => {
         const x = q.startsWith("r") ? 378 : 36;
-        const y = (q.endsWith("b") ? 132 : 44) + n * 34;
+        const y = (q.endsWith("b") ? middleY + 20 : 50) + n * 70;
         const value = p.cell.value
           ? ` · ${esc(String(p.cell.value).slice(0, 14))}`
           : "";
+        const label = fitLabelLines(String(p.cell.label ?? ""), 34, 2);
         return `<g>
-        <rect x="${x}" y="${y}" width="300" height="30" rx="6" fill="#fff" stroke="var(--line)"/>
-        <text x="${x + 14}" y="${y + 19}" font-size="11" font-weight="700">${esc(fitLabelLines(String(p.cell.label ?? ""), 34, 1)[0] ?? "")}${value}</text>
+        <rect x="${x}" y="${y}" width="300" height="62" rx="${EXHIBIT_DESIGN.space.cardRadiusPx}" fill="var(--panel)" stroke="var(--line)"/>
+        ${label.map((line, i) => `<text x="${x + EXHIBIT_DESIGN.space.cardPaddingPx}" y="${y + 25 + i * 18}" font-size="${EXHIBIT_DESIGN.type.headingPx}" font-weight="700">${esc(line)}${i === label.length - 1 ? value : ""}</text>`).join("")}
       </g>`;
       }),
     )
     .join("");
 
   const axisLabels = axes
-    ? `<text x="360" y="224" text-anchor="middle" font-size="10" fill="var(--muted)">${esc(String(axes.x).slice(0, 40))}</text>
-       <text x="14" y="120" font-size="10" fill="var(--muted)" transform="rotate(-90 14 120)" text-anchor="middle">${esc(String(axes.y).slice(0, 40))}</text>`
+    ? `<text x="360" y="${height - 15}" text-anchor="middle" font-size="${EXHIBIT_DESIGN.type.labelPx}" fill="var(--muted)">${esc(String(axes.x).slice(0, 40))}</text>
+       <text x="14" y="${middleY + 6}" font-size="${EXHIBIT_DESIGN.type.labelPx}" fill="var(--muted)" transform="rotate(-90 14 ${middleY + 6})" text-anchor="middle">${esc(String(axes.y).slice(0, 40))}</text>`
     : "";
 
-  return `<svg class="exhibit-svg" viewBox="0 0 720 240" role="img" aria-label="${esc(exhibit.title)}">
-    <path d="M360 28 L360 210 M24 120 L696 120" stroke="var(--line)" stroke-width="1"/>
+  return `<svg class="exhibit-svg" viewBox="0 0 720 ${height}" role="img" aria-label="${esc(exhibit.title)}">
+    <path d="M360 34 L360 ${height - 36} M24 ${middleY} L696 ${middleY}" stroke="var(--line)" stroke-width="${EXHIBIT_DESIGN.line.rulePx}"/>
     ${axisLabels}${cells}
   </svg>`;
 }
@@ -1059,11 +1290,8 @@ function svgMatrixExhibit(exhibit: RenderableExhibit): string {
 // imported, since these are static reference labels, the same pattern
 // `golden-bar.ts` already uses for its own keyword lists — importing across
 // that module boundary would be a real dependency, not just shared data).
-// The model's free-text exhibit description is split into clauses (the same
-// `exhibitClauses` extraction used elsewhere) and each clause is assigned to
-// the lane whose keywords it best matches, so the rendered diagram always
-// shows the FULL required lane structure even when the model's own wording
-// only touches some of it.
+// Declared lane labels and items supply content. Static headings are a visual
+// frame; they do not assert an undeclared component or connection.
 
 interface ArchitectureLane {
   label: string;
@@ -1117,45 +1345,61 @@ const PHYSICAL_LANES: ArchitectureLane[] = [
   },
 ];
 
-const AGENT_ORCHESTRATION_STEPS: string[] = [
-  "Trigger",
-  "Intent Router",
-  "Planner",
-  "Context Assembler",
-  "Tool/Retrieval Selection",
-  "Model Execution",
-  "Evidence Challenge",
-  "Policy/Control Gate",
-  "Human Approval",
-  "Action Execution",
-  "Trace/Monitoring",
-];
-
-function assignToLanes(
-  clauses: string[],
-  lanes: ArchitectureLane[],
-): string[][] {
-  const buckets: string[][] = lanes.map(() => []);
-  clauses.forEach((clause, i) => {
-    const matchIdx = lanes.findIndex((l) => l.keywords.test(clause));
-    buckets[matchIdx >= 0 ? matchIdx : i % lanes.length].push(clause);
-  });
-  return buckets;
-}
-
-function svgLegendRow(y: number, width: number): string {
-  const items: [string, string][] = [
-    ["illustrative", "var(--muted)"],
-    ["selected", "var(--fresh)"],
-    ["client-confirmed", "#B5852A"],
-  ];
+function svgLegendRow(y: number, width: number, labels: string[]): string {
+  const items = labels.slice(0, 4);
   const chips = items
-    .map(([label, color], i) => {
-      const x = width / 2 - 260 + i * 180;
-      return `<circle cx="${x}" cy="${y}" r="5" fill="${color}"/><text x="${x + 12}" y="${y + 4}" font-size="10" fill="var(--muted)">${esc(label)}</text>`;
+    .map((label, i) => {
+      const x = width / 2 - ((items.length - 1) * 180) / 2 + i * 180;
+      return `<circle cx="${x}" cy="${y}" r="5" fill="var(--fresh)"/><text x="${x + 12}" y="${y + 4}" font-size="10" fill="var(--muted)">${esc(label)}</text>`;
     })
     .join("");
   return `<g data-legend="true">${chips}</g>`;
+}
+
+function declaredArchitectureEdges(
+  exhibit: RenderableExhibit,
+  displayedSourceIndexes: number[],
+  rowHeight: number,
+  top: number,
+): string {
+  const data = exhibit.data;
+  if (
+    !data ||
+    (data.kind !== "conceptual_architecture" &&
+      data.kind !== "logical_architecture" &&
+      data.kind !== "physical_architecture" &&
+      data.kind !== "agent_orchestration")
+  )
+    return "";
+  const laneFor = (endpoint: string): number => {
+    const source = data.lanes.findIndex(
+      (lane) => lane.label === endpoint || lane.items.includes(endpoint),
+    );
+    if (source < 0) return -1;
+    return displayedSourceIndexes.indexOf(source);
+  };
+  const edges = (data.edges ?? []).map((edge) => {
+    const from = laneFor(edge.from);
+    const to = laneFor(edge.to);
+    if (from < 0 || to < 0) {
+      throw new Error(
+        `architecture_edge_invalid:${exhibit.key}:${edge.from}:${edge.to}`,
+      );
+    }
+    const y1 = top + from * rowHeight + 31;
+    const y2 = top + to * rowHeight + 31;
+    const label = edge.label
+      ? `<text x="730" y="${(y1 + y2) / 2 - 6}" text-anchor="end" font-size="9" fill="var(--muted)">${esc(edge.label)}</text>`
+      : "";
+    const path =
+      from === to
+        ? `M708 ${y1 - 10} H736 V${y1 + 10} H708`
+        : `M708 ${y1} H734 V${y2} H708`;
+    return `<path data-declared-edge="${esc(edge.from)}:${esc(edge.to)}" d="${path}" fill="none" stroke="var(--fresh)" stroke-width="2" marker-end="url(#architecture-arrow)"/>${label}`;
+  });
+  return edges.length
+    ? `<defs><marker id="architecture-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--fresh)"/></marker></defs><g data-declared-edges="true">${edges.join("")}</g>`
+    : "";
 }
 
 function svgLayeredArchitectureExhibit(
@@ -1163,97 +1407,108 @@ function svgLayeredArchitectureExhibit(
   lanes: ArchitectureLane[],
   opts: { legend?: boolean } = {},
 ): string {
-  const clauses = exhibitClauses(exhibit);
-  const buckets = assignToLanes(clauses, lanes);
+  const data = exhibit.data;
+  if (
+    !data ||
+    (data.kind !== "conceptual_architecture" &&
+      data.kind !== "logical_architecture" &&
+      data.kind !== "physical_architecture" &&
+      data.kind !== "agent_orchestration")
+  )
+    return "";
+  const matchedIndexes = lanes.map((lane) =>
+    data.lanes.findIndex((entry) => lane.keywords.test(entry.label)),
+  );
+  const extras = data.lanes
+    .map((_, index) => index)
+    .filter((index) => !matchedIndexes.includes(index));
+  const displayRows = [
+    ...lanes.map((lane, index) => ({
+      label: lane.label,
+      sourceIndex: matchedIndexes[index]!,
+    })),
+    ...extras.map((sourceIndex) => ({
+      label: data.lanes[sourceIndex]!.label,
+      sourceIndex,
+    })),
+  ];
   const laneHeight = 62;
   const width = 760;
   const top = 24;
-  const rows = lanes
+  const rows = displayRows
     .map((lane, i) => {
       const y = top + i * (laneHeight + 10);
-      const content = buckets[i].length
-        ? buckets[i].map((c) => c.slice(0, 60)).join(" · ")
-        : "(use judgment — no clause matched this layer)";
+      const content =
+        lane.sourceIndex >= 0
+          ? data.lanes[lane.sourceIndex]!.items.join(" · ")
+          : "";
       return `<g>
-        <rect x="24" y="${y}" width="${width - 48}" height="${laneHeight}" rx="8" fill="#fff" stroke="var(--line)"/>
+        <rect x="24" y="${y}" width="${width - 48}" height="${laneHeight}" rx="${EXHIBIT_DESIGN.space.cardRadiusPx}" fill="var(--panel)" stroke="var(--line)"/>
         <rect x="24" y="${y}" width="6" height="${laneHeight}" rx="3" fill="var(--fresh)"/>
         <text x="42" y="${y + 22}" font-size="11" font-weight="700">${esc(lane.label)}</text>
-        <text x="42" y="${y + 42}" font-size="10" fill="var(--muted)">${esc(content)}</text>
+        <text x="42" y="${y + 42}" font-size="${EXHIBIT_DESIGN.type.detailPx}" fill="var(--muted)">${esc(fitLabelLines(content, 96, 1)[0] ?? "")}</text>
       </g>`;
     })
     .join("");
-  const legendY = top + lanes.length * (laneHeight + 10) + 16;
-  const totalHeight = legendY + (opts.legend ? 20 : 4);
+  const legendY = top + displayRows.length * (laneHeight + 10) + 16;
+  const legend = opts.legend ? (data.legend ?? []).filter(Boolean) : [];
+  const totalHeight = legendY + (legend.length ? 20 : 4);
   return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${totalHeight}" role="img" aria-label="${esc(exhibit.title)}">
     ${rows}
-    ${opts.legend ? svgLegendRow(legendY, width) : ""}
+    ${declaredArchitectureEdges(
+      exhibit,
+      displayRows.map((row) => row.sourceIndex),
+      laneHeight + 10,
+      top,
+    )}
+    ${legend.length ? svgLegendRow(legendY, width, legend) : ""}
   </svg>`;
 }
 
 function svgAgentOrchestrationExhibit(exhibit: RenderableExhibit): string {
-  const clauses = exhibitClauses(exhibit);
-  const steps = AGENT_ORCHESTRATION_STEPS;
-  const nodeWidth = 108;
-  const gap = 14;
-  const width = steps.length * (nodeWidth + gap) + gap;
-  const y = 34;
-  const nodes = steps
-    .map((step, i) => {
-      const x = gap + i * (nodeWidth + gap);
-      const isGate =
-        step === "Policy/Control Gate" || step === "Human Approval";
-      const arrow =
-        i < steps.length - 1
-          ? `<path d="M${x + nodeWidth} ${y + 30} L${x + nodeWidth + gap} ${y + 30}" stroke="var(--fresh)" stroke-width="2" marker-end="url(#arrow-ao-${esc(exhibit.key)})"/>`
-          : "";
-      const annotation = clauses[i] ? clauses[i].slice(0, 30) : "";
-      return `${arrow}<g>
-        <rect x="${x}" y="${y}" width="${nodeWidth}" height="60" rx="8" fill="${isGate ? "#FDF6E3" : "#fff"}" stroke="${isGate ? "#E8CF8A" : "var(--line)"}"/>
-        <text x="${x + nodeWidth / 2}" y="${y + 24}" text-anchor="middle" font-size="10" font-weight="700">${esc(step)}</text>
-        ${annotation ? `<text x="${x + nodeWidth / 2}" y="${y + 42}" text-anchor="middle" font-size="8" fill="var(--muted)">${esc(annotation)}</text>` : ""}
-      </g>`;
-    })
-    .join("");
-  const legendY = y + 90;
-  return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${legendY + 20}" role="img" aria-label="${esc(exhibit.title)}">
-    <defs><marker id="arrow-ao-${esc(exhibit.key)}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--fresh)"/></marker></defs>
-    ${nodes}
-    <circle cx="${width / 2 - 90}" cy="${legendY}" r="5" fill="#FDF6E3" stroke="#E8CF8A"/><text x="${width / 2 - 78}" y="${legendY + 4}" font-size="10" fill="var(--muted)">policy/control or human-approval gate</text>
-  </svg>`;
+  const data = exhibit.data;
+  if (!data || data.kind !== "agent_orchestration") return "";
+  // Lane order is presentation order, not proof of a causal connection.
+  return svgLayeredArchitectureExhibit(
+    exhibit,
+    data.lanes.map((lane) => ({
+      label: lane.label,
+      keywords: new RegExp(
+        lane.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i",
+      ),
+    })),
+  );
 }
 
 function svgTimelineExhibit(exhibit: RenderableExhibit): string {
-  const clauses = exhibitClauses(exhibit);
-  const width = Math.max(720, clauses.length * 170);
-  const nodes = clauses
-    .map((clause, i) => {
-      const x = 70 + i * 160;
-      const line =
-        i < clauses.length - 1
-          ? `<path d="M${x + 28} 84 L${x + 132} 84" stroke="var(--fresh)" stroke-width="2"/>`
-          : "";
-      return `${line}<g>
-        <circle cx="${x}" cy="84" r="24" fill="#fff" stroke="var(--fresh)" stroke-width="2"/>
-        <text x="${x}" y="89" text-anchor="middle" font-size="12" font-weight="700">${i + 1}</text>
-        <text x="${x}" y="130" text-anchor="middle" font-size="11" font-weight="700">${esc(clause.slice(0, 28))}</text>
-      </g>`;
+  const data = exhibit.data;
+  if (!data || data.kind !== "timeline") return "";
+  const items = data.lanes.flatMap((lane) =>
+    lane.items.map((item) => ({ ...item, lane: lane.label })),
+  );
+  if (!items.length) return "";
+  const width = 760;
+  const rowHeight = 66;
+  const rows = items
+    .map((item, i) => {
+      const y = 20 + i * rowHeight;
+      const when = [item.start, item.end].filter(Boolean).join(" – ");
+      return `<g><rect x="20" y="${y}" width="720" height="56" rx="${EXHIBIT_DESIGN.space.cardRadiusPx}" fill="var(--panel)" stroke="var(--line)"/>
+        <rect x="20" y="${y}" width="5" height="56" rx="2" fill="var(--fresh)"/>
+        <text x="36" y="${y + 22}" font-size="${EXHIBIT_DESIGN.type.labelPx}" font-weight="700">${esc(item.label)}</text>
+        <text x="36" y="${y + 42}" font-size="10" fill="var(--muted)">${esc(item.lane)} · ${esc(when)}</text></g>`;
     })
     .join("");
-  return `<svg class="exhibit-svg" viewBox="0 0 ${width} 165" role="img" aria-label="${esc(exhibit.title)}">${nodes}</svg>`;
+  return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${items.length * rowHeight + 30}" role="img" aria-label="${esc(exhibit.title)}">${rows}</svg>`;
 }
 
 // ── Executive roadmap renderer (REF_EXECUTIVE_ROADMAP, 2026-07-25) ──
 //
-// A horizons(columns) × workstreams(rows) grid with decision gates and
-// dependency connectors — not a Gantt chart. Mirrors the same clause-
-// extraction + keyword-bucketing pattern already used for the architecture
-// lanes above (`assignToLanes`): the model's free-text exhibit description is
-// split into clauses, each assigned to the workstream row whose keywords it
-// best matches, so the rendered diagram always shows the full required
-// horizon/workstream structure even when the model's own wording only
-// touches part of it. See shared/reference-library/executive-roadmap-
-// reference.ts for the single source of the horizon/workstream labels this
-// mirrors.
+// A horizons(columns) × workstreams(rows) grid, not a Gantt chart. Items are
+// positioned only by their declared lane and start horizon; empty cells remain
+// empty. See shared/reference-library/executive-roadmap-reference.ts for the
+// horizon/workstream labels mirrored here.
 
 const ROADMAP_HORIZONS = [
   "Mobilize",
@@ -1275,12 +1530,46 @@ const ROADMAP_WORKSTREAM_LANES: ArchitectureLane[] = [
 ];
 
 function svgRoadmapExhibit(exhibit: RenderableExhibit): string {
-  const clauses = exhibitClauses(exhibit);
-  const lanes = ROADMAP_WORKSTREAM_LANES;
-  const buckets = assignToLanes(clauses, lanes);
-  const horizons = ROADMAP_HORIZONS;
+  const data = exhibit.data;
+  if (!data || data.kind !== "roadmap") return "";
+  const laneEntries = ROADMAP_WORKSTREAM_LANES.map((lane) => ({
+    label: lane.label,
+    entries: data.lanes.filter(
+      (entry) =>
+        ROADMAP_WORKSTREAM_LANES.findIndex((candidate) =>
+          candidate.keywords.test(entry.label),
+        ) === ROADMAP_WORKSTREAM_LANES.indexOf(lane),
+    ),
+  }));
+  const unmatchedLanes = data.lanes.filter(
+    (entry) =>
+      !ROADMAP_WORKSTREAM_LANES.some((lane) => lane.keywords.test(entry.label)),
+  );
+  const lanes = [
+    ...laneEntries,
+    ...unmatchedLanes.map((entry) => ({
+      label: entry.label,
+      entries: [entry],
+    })),
+  ];
+  const normalizeHorizon = (start: string) =>
+    start.toLowerCase() === "scale" ? "Scale and Optimize" : start;
+  const horizons = [
+    ...ROADMAP_HORIZONS,
+    ...[
+      ...new Set(
+        data.lanes.flatMap((lane) =>
+          lane.items.map((item) => normalizeHorizon(item.start)),
+        ),
+      ),
+    ].filter(
+      (start) =>
+        !ROADMAP_HORIZONS.some(
+          (known) => known.toLowerCase() === start.toLowerCase(),
+        ),
+    ),
+  ];
 
-  const laneHeight = 56;
   const laneGap = 8;
   const headerHeight = 40;
   const labelWidth = 190;
@@ -1288,61 +1577,53 @@ function svgRoadmapExhibit(exhibit: RenderableExhibit): string {
   const top = 16;
   const width = labelWidth + colWidth * horizons.length + 24;
   const gridTop = top + headerHeight;
+  let rowTop = gridTop;
 
   const headerCells = horizons
     .map((h, i) => {
       const x = labelWidth + i * colWidth;
       return `<rect x="${x}" y="${top}" width="${colWidth - 6}" height="${headerHeight - 8}" rx="6" fill="var(--chip)"/>
-        <text x="${x + (colWidth - 6) / 2}" y="${top + 22}" text-anchor="middle" font-size="11" font-weight="700">${esc(h)}</text>`;
-    })
-    .join("");
-
-  const gateMarkers = horizons
-    .slice(0, -1)
-    .map((_, i) => {
-      const x = labelWidth + (i + 1) * colWidth - 3;
-      const y = top + headerHeight / 2;
-      return `<path d="M${x} ${y - 8} L${x + 8} ${y} L${x} ${y + 8} L${x - 8} ${y} Z" fill="#FDF6E3" stroke="#E8CF8A" stroke-width="1.5"/>`;
+        <text x="${x + (colWidth - 6) / 2}" y="${top + 22}" text-anchor="middle" font-size="${EXHIBIT_DESIGN.type.labelPx}" font-weight="700">${esc(h)}</text>`;
     })
     .join("");
 
   const rows = lanes
-    .map((lane, rowIdx) => {
-      const y = gridTop + rowIdx * (laneHeight + laneGap);
-      const laneLabel = `<text x="12" y="${y + laneHeight / 2 + 4}" font-size="11" font-weight="700">${esc(lane.label)}</text>`;
-      const laneClauses = buckets[rowIdx];
+    .map((lane) => {
+      const grouped = horizons.map((horizon) =>
+        lane.entries
+          .flatMap((entry) => entry.items)
+          .filter(
+            (item) =>
+              normalizeHorizon(item.start).toLowerCase() ===
+              horizon.toLowerCase(),
+          ),
+      );
+      const laneHeight = Math.max(
+        56,
+        Math.max(...grouped.map((items) => items.length)) * 22 + 16,
+      );
+      const y = rowTop;
+      rowTop += laneHeight + laneGap;
+      const laneLabel = `<text x="12" y="${y + laneHeight / 2 + 4}" font-size="${EXHIBIT_DESIGN.type.labelPx}" font-weight="700">${esc(lane.label)}</text>`;
       const cells = horizons
-        .map((_, colIdx) => {
+        .map((_horizon, colIdx) => {
           const x = labelWidth + colIdx * colWidth;
-          const cellClauses = laneClauses
-            .filter((_, i) => i % horizons.length === colIdx)
-            .slice(0, 3);
-          const content = cellClauses.length
-            ? cellClauses.map((c) => c.slice(0, 44)).join(" · ")
-            : "(use judgment — no clause matched)";
-          return `<rect x="${x}" y="${y}" width="${colWidth - 6}" height="${laneHeight}" rx="6" fill="#fff" stroke="var(--line)"/>
-            <text x="${x + 10}" y="${y + laneHeight / 2 + 4}" font-size="9.5" fill="var(--muted)">${esc(content)}</text>`;
+          const content = grouped[colIdx]!.map(
+            (item, index) =>
+              `<text x="${x + 10}" y="${y + 20 + index * 22}" font-size="${EXHIBIT_DESIGN.type.detailPx}" fill="var(--ink)">${esc(fitLabelLines(item.label, 48, 1)[0] ?? "")}</text>`,
+          ).join("");
+          return `<rect x="${x}" y="${y}" width="${colWidth - 6}" height="${laneHeight}" rx="${EXHIBIT_DESIGN.space.cardRadiusPx}" fill="var(--panel)" stroke="var(--line)"/>
+            ${content}`;
         })
         .join("");
       return `${laneLabel}${cells}`;
     })
     .join("");
 
-  const gridBottom = gridTop + lanes.length * (laneHeight + laneGap);
-  const legendY = gridBottom + 20;
-  const legend = `<g data-legend="true">
-    <path d="M40 ${legendY - 6} L48 ${legendY} L40 ${legendY + 6} L32 ${legendY} Z" fill="#FDF6E3" stroke="#E8CF8A" stroke-width="1.5"/>
-    <text x="58" y="${legendY + 4}" font-size="10" fill="var(--muted)">decision gate</text>
-    <path d="M180 ${legendY} L220 ${legendY}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <text x="228" y="${legendY + 4}" font-size="10" fill="var(--muted)">dependency</text>
-  </g>`;
-
-  const totalHeight = legendY + 20;
+  const totalHeight = rowTop + 12;
   return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${totalHeight}" role="img" aria-label="${esc(exhibit.title)}">
     ${headerCells}
-    ${gateMarkers}
     ${rows}
-    ${legend}
   </svg>`;
 }
 
@@ -1354,6 +1635,7 @@ function exhibitSvg(exhibit: RenderableExhibit, index: number): string | null {
   const domId = `exhibit-${index + 1}`;
   const dataExhibit = exhibitWithDataDescription(exhibit);
   if (!dataExhibit) return null;
+  let visual: string | null = null;
   if (
     dataExhibit.kind === "matrix" ||
     dataExhibit.kind === "heatmap" ||
@@ -1361,26 +1643,37 @@ function exhibitSvg(exhibit: RenderableExhibit, index: number): string | null {
     dataExhibit.data?.kind === "heatmap" ||
     dataExhibit.data?.kind === "comparison"
   )
-    return svgMatrixExhibit(dataExhibit);
-  if (dataExhibit.kind === "timeline" || dataExhibit.data?.kind === "timeline")
-    return svgTimelineExhibit(dataExhibit);
-  if (dataExhibit.kind === "conceptual_architecture")
-    return svgLayeredArchitectureExhibit(dataExhibit, CONCEPTUAL_LANES);
-  if (dataExhibit.kind === "logical_architecture")
-    return svgLayeredArchitectureExhibit(dataExhibit, LOGICAL_LANES);
-  if (dataExhibit.kind === "physical_architecture")
-    return svgLayeredArchitectureExhibit(dataExhibit, PHYSICAL_LANES, {
+    visual = svgMatrixExhibit(dataExhibit);
+  else if (
+    dataExhibit.kind === "timeline" ||
+    dataExhibit.data?.kind === "timeline"
+  )
+    visual = svgTimelineExhibit(dataExhibit);
+  else if (dataExhibit.kind === "conceptual_architecture")
+    visual = svgLayeredArchitectureExhibit(dataExhibit, CONCEPTUAL_LANES);
+  else if (dataExhibit.kind === "logical_architecture")
+    visual = svgLayeredArchitectureExhibit(dataExhibit, LOGICAL_LANES);
+  else if (dataExhibit.kind === "physical_architecture")
+    visual = svgLayeredArchitectureExhibit(dataExhibit, PHYSICAL_LANES, {
       legend: true,
     });
-  if (dataExhibit.kind === "agent_orchestration")
-    return svgAgentOrchestrationExhibit(dataExhibit);
-  if (dataExhibit.kind === "roadmap" || dataExhibit.data?.kind === "roadmap")
-    return svgRoadmapExhibit(dataExhibit);
-  if (dataExhibit.kind === "flow" || dataExhibit.data?.kind === "flow")
-    return svgFlowExhibit(dataExhibit, domId);
-  if (dataExhibit.data?.kind === "value_tree")
-    return svgValueTree(dataExhibit);
-  return null;
+  else if (dataExhibit.kind === "agent_orchestration")
+    visual = svgAgentOrchestrationExhibit(dataExhibit);
+  else if (
+    dataExhibit.kind === "roadmap" ||
+    dataExhibit.data?.kind === "roadmap"
+  )
+    visual = svgRoadmapExhibit(dataExhibit);
+  else if (dataExhibit.kind === "flow" || dataExhibit.data?.kind === "flow")
+    visual = svgFlowExhibit(dataExhibit, domId);
+  else if (dataExhibit.data?.kind === "value_tree")
+    visual = svgValueTree(dataExhibit);
+  return visual
+    ? visual.replace(
+        '<svg class="exhibit-svg"',
+        `<svg class="exhibit-svg" font-family="${PPTX_FONT.body}" font-size="${EXHIBIT_DESIGN.type.detailPx}"`,
+      )
+    : null;
 }
 
 function exhibitHtml(exhibit: RenderableExhibit, index: number): string {
@@ -1403,14 +1696,19 @@ function exhibitHtml(exhibit: RenderableExhibit, index: number): string {
 // cannot resolve those variables, so they must be substituted with the same
 // concrete hex values before handing the SVG to `@resvg/resvg-js`.
 const SVG_TOKEN_HEX: Record<string, string> = {
-  "--bg": "#F8F7F4",
-  "--panel": "#FFFFFF",
-  "--ink": "#1B1A17",
-  "--muted": "#6F6A61",
-  "--line": "#E6E2DA",
-  "--line2": "#EFECE5",
-  "--chip": "#F1EEE7",
-  "--fresh": "#3F7A5B",
+  "--bg": COLORS.cream,
+  "--panel": COLORS.white,
+  "--ink": COLORS.ink,
+  "--muted": COLORS.deckMuted,
+  "--line": COLORS.deckRule,
+  "--line2": COLORS.deckRule,
+  "--chip": COLORS.skyPale,
+  "--fresh": COLORS.navy,
+  "--data": COLORS.mintInk,
+  "--control": COLORS.amberInk,
+  "--new": COLORS.mintInk,
+  "--changed": COLORS.amberInk,
+  "--accent": COLORS.ink,
 };
 
 function resolveSvgTokens(svg: string): string {
@@ -1440,35 +1738,49 @@ function exhibitToDocxBlocks(
   let imageParagraph: Paragraph;
   try {
     const { png, aspect } = rasteriseSvg(svg, 3);
-    const width = 6.5 * 96; // 6.5in at 96dpi, in pixels (docx ImageRun expects px)
+    const maxWidth = (PAGE_DESIGN.widthIn - 2 * PAGE_DESIGN.marginIn) * 96;
+    const maxHeight = 5.6 * 96;
+    const width = Math.round(Math.min(maxWidth, maxHeight * aspect));
     const height = Math.round(width / aspect);
     imageParagraph = new Paragraph({
-      spacing: { before: 120, after: 60 },
+      spacing: {
+        before: PAGE_DESIGN.space.figureBeforePt * 20,
+        after: PAGE_DESIGN.space.figureAfterPt * 20,
+      },
+      keepNext: true,
       children: [
         new ImageRun({
           type: "png",
           data: png,
           transformation: { width, height },
+          altText: {
+            title: exhibit.title,
+            description: exhibit.description,
+            name: exhibit.key,
+          },
         }),
       ],
     });
   } catch (err) {
-    console.error(
-      "[renderDeliverableDocx] exhibit rasterisation failed",
-      exhibit.key,
-      err,
-    );
-    return [];
+    throw new Error(`docx_exhibit_rasterisation_failed:${exhibit.key}`, {
+      cause: err,
+    });
   }
   return [
-    heading2(exhibit.title),
+    designedHeading(exhibit.title, 2),
     imageParagraph,
-    bodyParagraph([
-      bodyRun(exhibit.description, {
-        italics: true,
-        color: SOURCE_DOCX.MUTED_COLOR,
-      }),
-    ]),
+    new Paragraph({
+      spacing: { after: PAGE_DESIGN.space.figureAfterPt * 20 },
+      children: [
+        new TextRun({
+          text: `Figure ${index + 1}. ${exhibit.description}`,
+          font: SOURCE_DOCX.BODY_FONT,
+          size: PAGE_DESIGN.type.captionPt * 2,
+          italics: true,
+          color: TOKENS.MUTED,
+        }),
+      ],
+    }),
   ];
 }
 
@@ -1502,7 +1814,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   const nextActions = doc.nextActions.map((a) => `<li>${esc(a)}</li>`).join("");
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(doc.title)}</title><style>
-  :root{--bg:#F8F7F4;--panel:#FFFFFF;--ink:#1B1A17;--muted:#6F6A61;--line:#E6E2DA;--line2:#EFECE5;--chip:#F1EEE7;--fresh:#3F7A5B}
+  :root{--bg:${SVG_TOKEN_HEX["--bg"]};--panel:${SVG_TOKEN_HEX["--panel"]};--ink:${SVG_TOKEN_HEX["--ink"]};--muted:${SVG_TOKEN_HEX["--muted"]};--line:${SVG_TOKEN_HEX["--line"]};--line2:${SVG_TOKEN_HEX["--line2"]};--chip:${SVG_TOKEN_HEX["--chip"]};--fresh:${SVG_TOKEN_HEX["--fresh"]}}
   *{box-sizing:border-box}
   body{background:var(--bg);color:var(--ink);font-family:'DM Sans',-apple-system,Segoe UI,sans-serif;font-size:13.5px;line-height:1.45;margin:0}
   .wrap{max-width:860px;margin:0 auto;padding:40px 28px 80px}
@@ -1683,9 +1995,7 @@ function tableToPdf(table: RenderableTable): ReactElement {
   return pdfLightTable(table.columns, table.rows, table.statusColumn);
 }
 
-/** Rasterise one exhibit to a PNG and embed it as a PDF `<Image>`, with the
- *  same best-effort fallback the DOCX renderer uses — a malformed exhibit
- *  must never fail the whole document. */
+/** Rasterise one declared exhibit into the PDF; missing visuals fail closed. */
 function exhibitToPdfBlock(
   exhibit: RenderableExhibit,
   index: number,
@@ -1705,12 +2015,9 @@ function exhibitToPdfBlock(
       />
     );
   } catch (err) {
-    console.error(
-      "[renderDeliverablePdf] exhibit rasterisation failed",
-      exhibit.key,
-      err,
-    );
-    return null;
+    throw new Error(`pdf_exhibit_rasterisation_failed:${exhibit.key}`, {
+      cause: err,
+    });
   }
   return (
     <PdfView key={exhibit.key} wrap={false} style={{ marginBottom: 10 }}>
@@ -1737,6 +2044,11 @@ export function renderDeliverablePdf(
   const exhibitBlocks = doc.exhibits
     .map((exhibit, index) => exhibitToPdfBlock(exhibit, index))
     .filter((block): block is ReactElement => block !== null);
+  if (
+    exhibitBlocks.length < doc.exhibits.filter((exhibit) => exhibit.data).length
+  ) {
+    throw new Error("pdf_declared_exhibit_not_renderable");
+  }
 
   return (
     <PdfDocument
@@ -1874,14 +2186,21 @@ export function renderDeliverablePdf(
 // export format.
 
 const PPTX_COLOR = {
-  ink: "1B1A17",
-  muted: "6F6A61",
-  line: "E6E2DA",
-  cream: "F8F7F4",
-  paper: "FFFFFF",
-  accent: "3F7A5B",
-  white: "FFFFFF",
+  ink: COLORS.deckInk.slice(1),
+  muted: COLORS.deckMuted.slice(1),
+  line: COLORS.deckRule.slice(1),
+  cream: COLORS.cream.slice(1),
+  paper: COLORS.white.slice(1),
+  accent: COLORS.navy.slice(1),
+  white: COLORS.white.slice(1),
+  coverMuted: COLORS.deckCoverMuted.slice(1),
 } as const;
+
+const PPTX_FONT = {
+  body: TYPOGRAPHY.sans.split(",")[0]!.replaceAll('"', ""),
+  display: TYPOGRAPHY.serif.split(",")[0]!.replaceAll('"', ""),
+} as const;
+const PPTX_GRID = SLIDE_DESIGN.grid;
 
 const MAX_BULLETS_PER_SLIDE = MAX_SLIDE_BULLETS;
 
@@ -1914,11 +2233,11 @@ function addPptxChrome(
   slide.addText(
     `${doc.clientDisplayName.toUpperCase()} · ${doc.title.toUpperCase()}`,
     {
-      x: 0.55,
+      x: PPTX_GRID.x(0),
       y: 0.28,
       w: 9.8,
       h: 0.24,
-      fontFace: "Arial",
+      fontFace: PPTX_FONT.body,
       fontSize: 8,
       bold: true,
       color: PPTX_COLOR.muted,
@@ -1926,19 +2245,19 @@ function addPptxChrome(
     },
   );
   slide.addText(`${slideNumber}/${totalSlides}`, {
-    x: 11.7,
+    x: PPTX_GRID.x(11),
     y: 0.28,
-    w: 1,
+    w: PPTX_GRID.w(1),
     h: 0.24,
-    fontFace: "Arial",
+    fontFace: PPTX_FONT.body,
     fontSize: 8,
     color: PPTX_COLOR.muted,
     align: "right",
   });
   slide.addShape("line", {
-    x: 0.55,
+    x: PPTX_GRID.x(0),
     y: 0.62,
-    w: 12.2,
+    w: PPTX_GRID.w(12),
     h: 0,
     line: { color: PPTX_COLOR.line, width: 0.75 },
   });
@@ -1946,11 +2265,11 @@ function addPptxChrome(
     slide.addText(
       `${doc.clientDisplayName} · Confidential · AI-generated working draft`,
       {
-        x: 0.55,
+        x: PPTX_GRID.x(0),
         y: 7.17,
-        w: 12.2,
+        w: PPTX_GRID.w(12),
         h: 0.22,
-        fontFace: "Arial",
+        fontFace: PPTX_FONT.body,
         fontSize: 7,
         color: PPTX_COLOR.muted,
         charSpacing: 0.5,
@@ -1959,47 +2278,34 @@ function addPptxChrome(
   }
 }
 
-function addPptxExhibitSlide(
+function addPptxFullBleedExhibitLayout(
   pptx: PptxGenJSInstance,
   exhibit: RenderableExhibit,
   index: number,
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
-): boolean {
+): void {
   const rawSvg = exhibitSvg(exhibit, index);
-  if (!rawSvg) return false;
+  if (!rawSvg) throw new Error(`pptx_exhibit_not_renderable:${exhibit.key}`);
   const svg = withXmlns(resolveSvgTokens(rawSvg));
-  let png: Buffer;
-  let aspect: number;
-  try {
-    const rasterised = rasteriseSvg(svg, 3);
-    png = rasterised.png;
-    aspect = rasterised.aspect;
-  } catch (err) {
-    console.error(
-      "[renderDeliverablePptx] exhibit rasterisation failed",
-      exhibit.key,
-      err,
-    );
-    return false;
-  }
+  const { png, aspect } = rasteriseSvg(svg, 3);
 
   const slide = pptx.addSlide();
   slide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(slide, doc, slideNumber, totalSlides);
   slide.addText(safePptxText(exhibit.title), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 0.85,
-    w: 11.8,
+    w: PPTX_GRID.w(12),
     h: 0.6,
-    fontFace: "Georgia",
-    fontSize: 20,
+    fontFace: PPTX_FONT.display,
+    fontSize: 25,
     color: PPTX_COLOR.ink,
     fit: "shrink",
   });
-  const maxW = 11.8;
-  const maxH = 4.6;
+  const maxW = PPTX_GRID.w(12);
+  const maxH = SLIDE_DESIGN.masters.fullBleedExhibit.exhibitMaxHeightIn;
   let w = maxW;
   let h = w / aspect;
   if (h > maxH) {
@@ -2008,45 +2314,91 @@ function addPptxExhibitSlide(
   }
   slide.addImage({
     data: `data:image/png;base64,${png.toString("base64")}`,
-    x: 0.72 + (maxW - w) / 2,
-    y: 1.55,
+    x: PPTX_GRID.x(0) + (maxW - w) / 2,
+    y: SLIDE_DESIGN.masters.fullBleedExhibit.exhibitTopIn,
     w,
     h,
   });
   slide.addText(safePptxText(exhibit.description), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 6.35,
-    w: 11.8,
+    w: PPTX_GRID.w(12),
     h: 0.6,
-    fontFace: "Arial",
+    fontFace: PPTX_FONT.body,
     fontSize: 10,
     italic: true,
     color: PPTX_COLOR.muted,
   });
-  return true;
 }
 
-function addPptxAuthoredSlide(
+function addPptxArchitectureVisualSlide(
   pptx: PptxGenJSInstance,
-  authoredSlide: RenderableDeckSlide,
+  exhibit: ArchitectureVisualExhibit,
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
-  exhibitByKey: ReadonlyMap<
-    string,
-    { exhibit: RenderableExhibit; index: number }
-  >,
+): void {
+  const { png, aspect } = rasteriseSvg(
+    withXmlns(resolveSvgTokens(exhibit.svg)),
+    3,
+  );
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  slide.addText(safePptxText(exhibit.title), {
+    x: PPTX_GRID.x(0),
+    y: 0.85,
+    w: PPTX_GRID.w(12),
+    h: 0.55,
+    fontFace: PPTX_FONT.display,
+    fontSize: 19,
+    color: PPTX_COLOR.ink,
+    fit: "shrink",
+  });
+  const maxW = PPTX_GRID.w(12);
+  const maxH = SLIDE_DESIGN.masters.fullBleedExhibit.exhibitMaxHeightIn;
+  const w = Math.min(maxW, maxH * aspect);
+  const h = w / aspect;
+  slide.addImage({
+    data: `data:image/png;base64,${png.toString("base64")}`,
+    x: PPTX_GRID.x(0) + (maxW - w) / 2,
+    y: SLIDE_DESIGN.masters.fullBleedExhibit.exhibitTopIn + (maxH - h) / 2,
+    w,
+    h,
+  });
+  slide.addText(safePptxText(exhibit.soWhat), {
+    x: PPTX_GRID.x(0),
+    y: 6.25,
+    w: PPTX_GRID.w(12),
+    h: 0.58,
+    fontFace: PPTX_FONT.body,
+    fontSize: 10,
+    color: PPTX_COLOR.ink,
+    fit: "shrink",
+  });
+  slide.addNotes(
+    `Exhibit: ${exhibit.id}\nDecision implication: ${exhibit.decisionImplication}`,
+  );
+}
+
+function addPptxTwoUpExhibitNarrativeLayout(
+  pptx: PptxGenJSInstance,
+  authoredSlide: RenderableDeckSlide,
+  exhibit: { exhibit: RenderableExhibit; index: number },
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
 ): void {
   const slide = pptx.addSlide();
   slide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(slide, doc, slideNumber, totalSlides);
   if (authoredSlide.title) {
     slide.addText(safePptxText(authoredSlide.title), {
-      x: 0.72,
+      x: PPTX_GRID.x(0),
       y: 0.85,
-      w: 11.8,
+      w: PPTX_GRID.w(4),
       h: 0.4,
-      fontFace: "Arial",
+      fontFace: PPTX_FONT.body,
       fontSize: 11,
       bold: true,
       color: PPTX_COLOR.accent,
@@ -2054,18 +2406,16 @@ function addPptxAuthoredSlide(
     });
   }
   slide.addText(safePptxText(authoredSlide.governingMessage), {
-    x: 0.72,
-    y: authoredSlide.title ? 1.3 : 1.05,
-    w: authoredSlide.exhibitKey ? 6.2 : 11.8,
-    h: 1.25,
-    fontFace: "Georgia",
-    fontSize: 22,
+    x: PPTX_GRID.x(0),
+    y: authoredSlide.title ? 1.42 : 1.08,
+    w: PPTX_GRID.w(4),
+    h: 1.9,
+    fontFace: PPTX_FONT.display,
+    fontSize: 24,
     color: PPTX_COLOR.ink,
     fit: "shrink",
   });
-  const points = (authoredSlide.points ?? [])
-    .slice(0, MAX_BULLETS_PER_SLIDE)
-    .map(safePptxText);
+  const points = (authoredSlide.points ?? []).slice(0, 3).map(safePptxText);
   if (points.length > 0) {
     slide.addText(
       points.map(
@@ -2076,12 +2426,12 @@ function addPptxAuthoredSlide(
           }) as const,
       ),
       {
-        x: 0.95,
-        y: 2.75,
-        w: authoredSlide.exhibitKey ? 5.7 : 11.1,
-        h: 3.8,
-        fontFace: "Arial",
-        fontSize: 13.5,
+        x: PPTX_GRID.x(0) + 0.15,
+        y: 3.56,
+        w: PPTX_GRID.w(4) - 0.15,
+        h: 2.8,
+        fontFace: PPTX_FONT.body,
+        fontSize: 16,
         color: PPTX_COLOR.ink,
         fit: "shrink",
         breakLine: false,
@@ -2089,52 +2439,32 @@ function addPptxAuthoredSlide(
     );
   }
 
-  const exhibit = authoredSlide.exhibitKey
-    ? exhibitByKey.get(authoredSlide.exhibitKey)
-    : undefined;
-  if (exhibit) {
-    const rawSvg = exhibitSvg(exhibit.exhibit, exhibit.index);
-    if (rawSvg) {
-      try {
-        const { png, aspect } = rasteriseSvg(
-          withXmlns(resolveSvgTokens(rawSvg)),
-          3,
-        );
-        const maxW = 5.25;
-        const maxH = 4.35;
-        let w = maxW;
-        let h = w / aspect;
-        if (h > maxH) {
-          h = maxH;
-          w = h * aspect;
-        }
-        slide.addText(safePptxText(exhibit.exhibit.title), {
-          x: 7.05,
-          y: 1.12,
-          w: 5.2,
-          h: 0.35,
-          fontFace: "Arial",
-          fontSize: 10,
-          bold: true,
-          color: PPTX_COLOR.accent,
-          fit: "shrink",
-        });
-        slide.addImage({
-          data: `data:image/png;base64,${png.toString("base64")}`,
-          x: 7.05 + (maxW - w) / 2,
-          y: 1.55,
-          w,
-          h,
-        });
-      } catch (err) {
-        console.error(
-          "[renderDeliverablePptx] authored slide exhibit rasterisation failed",
-          exhibit.exhibit.key,
-          err,
-        );
-      }
-    }
-  }
+  const rawSvg = exhibitSvg(exhibit.exhibit, exhibit.index);
+  if (!rawSvg)
+    throw new Error(`pptx_exhibit_not_renderable:${exhibit.exhibit.key}`);
+  const { png, aspect } = rasteriseSvg(withXmlns(resolveSvgTokens(rawSvg)), 3);
+  const imageX = PPTX_GRID.x(4);
+  const maxW = PPTX_GRID.w(8);
+  const maxH = SLIDE_DESIGN.masters.twoUp.exhibitMaxHeightIn;
+  const w = Math.min(maxW, maxH * aspect);
+  const h = w / aspect;
+  slide.addText(safePptxText(exhibit.exhibit.title), {
+    x: imageX,
+    y: 0.94,
+    w: maxW,
+    h: 0.38,
+    fontFace: PPTX_FONT.body,
+    fontSize: 12,
+    bold: true,
+    color: PPTX_COLOR.accent,
+  });
+  slide.addImage({
+    data: `data:image/png;base64,${png.toString("base64")}`,
+    x: imageX + (maxW - w) / 2,
+    y: SLIDE_DESIGN.masters.twoUp.exhibitTopIn + (maxH - h) / 2,
+    w,
+    h,
+  });
 
   const notes = [
     authoredSlide.speakerNotes,
@@ -2148,7 +2478,161 @@ function addPptxAuthoredSlide(
   if (notes.length > 0) slide.addNotes(notes.join("\n"));
 }
 
-function addPptxTableSlide(
+function addPptxSectionDividerLayout(
+  pptx: PptxGenJSInstance,
+  content: RenderableDeckSlide,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  slide.addText(safePptxText(content.title ?? doc.title), {
+    x: PPTX_GRID.x(0),
+    y: 0.93,
+    w: PPTX_GRID.w(12),
+    h: 0.35,
+    fontFace: PPTX_FONT.body,
+    fontSize: 11,
+    bold: true,
+    color: PPTX_COLOR.accent,
+    charSpacing: 0.6,
+  });
+  slide.addText(safePptxText(content.governingMessage), {
+    x: PPTX_GRID.x(0),
+    y: SLIDE_DESIGN.masters.sectionDivider.governingTopIn,
+    w: PPTX_GRID.w(11),
+    h: 1.8,
+    fontFace: PPTX_FONT.display,
+    fontSize: 31,
+    color: PPTX_COLOR.ink,
+    fit: "shrink",
+  });
+  const points = (content.points ?? []).slice(0, 3).map(safePptxText);
+  if (points.length)
+    slide.addText(
+      points.map((point) => ({
+        text: point,
+        options: PPTX_BULLET,
+      })),
+      {
+        x: PPTX_GRID.x(0) + 0.16,
+        y: SLIDE_DESIGN.masters.sectionDivider.pointsTopIn,
+        w: PPTX_GRID.w(10),
+        h: 2.65,
+        fontFace: PPTX_FONT.body,
+        fontSize: 20,
+        color: PPTX_COLOR.ink,
+        fit: "shrink",
+      },
+    );
+  const notes = [
+    content.speakerNotes,
+    content.citationsUsed?.length
+      ? `Citations: [${content.citationsUsed.join(", ")}]`
+      : undefined,
+  ].filter(Boolean);
+  if (notes.length) slide.addNotes(notes.join("\n"));
+}
+
+function addPptxComparisonLayout(
+  pptx: PptxGenJSInstance,
+  content: RenderableDeckSlide,
+  exhibit: { exhibit: RenderableExhibit; index: number },
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
+  addPptxTwoUpExhibitNarrativeLayout(
+    pptx,
+    content,
+    exhibit,
+    doc,
+    slideNumber,
+    totalSlides,
+  );
+}
+
+type PptxExhibitRef = { exhibit: RenderableExhibit; index: number };
+type PptxStoryPage =
+  | { kind: "narrative"; slide: RenderableDeckSlide; exhibit?: PptxExhibitRef }
+  | { kind: "exhibit"; exhibit: PptxExhibitRef };
+
+function composePptxStory(
+  doc: RenderableDeliverable,
+  renderableExhibits: PptxExhibitRef[],
+): PptxStoryPage[] {
+  const pages: PptxStoryPage[] = [];
+  const exhibitByKey = new Map(
+    renderableExhibits.map((entry) => [entry.exhibit.key, entry]),
+  );
+  const pairedKeys = new Set<string>();
+  const authored = (doc.deckSlides ?? []).filter(
+    (slide) => slide.governingMessage.trim().length > 0,
+  );
+  const story: RenderableDeckSlide[] = authored.length
+    ? authored
+    : doc.generatedSections.map((section) => {
+        const source = sectionSlideText(
+          normalizeSectionMarkdown(section.bodyMarkdown, section.title),
+          section.title,
+          Number.MAX_SAFE_INTEGER,
+        );
+        return {
+          title: source.governingIsTitle ? undefined : section.title,
+          governingMessage: source.governing,
+          points: source.bullets,
+          speakerNotes: [
+            section.citationsUsed.length
+              ? `Grounding: ${section.groundingMode}; citations [${section.citationsUsed.join(", ")}]`
+              : undefined,
+            source.heldOffFace.length
+              ? `In full (too long for the slide face):\n${source.heldOffFace.join("\n")}`
+              : undefined,
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        } satisfies RenderableDeckSlide;
+      });
+
+  for (const slide of story) {
+    const points = slide.points ?? [];
+    const chunks: string[][] = [];
+    for (let i = 0; i < points.length; i += 3) {
+      chunks.push(points.slice(i, i + 3));
+    }
+    if (chunks.length === 0) chunks.push([]);
+    chunks.forEach((chunk, index) => {
+      const linked =
+        index === 0 && slide.exhibitKey
+          ? exhibitByKey.get(slide.exhibitKey)
+          : undefined;
+      if (linked) pairedKeys.add(linked.exhibit.key);
+      pages.push({
+        kind: "narrative",
+        slide: {
+          ...slide,
+          title:
+            index > 0 && slide.title
+              ? `${slide.title} — continued`
+              : slide.title,
+          points: chunk,
+          exhibitKey: linked?.exhibit.key,
+        },
+        ...(linked ? { exhibit: linked } : {}),
+      });
+    });
+  }
+  for (const exhibit of renderableExhibits) {
+    if (!pairedKeys.has(exhibit.exhibit.key)) {
+      pages.push({ kind: "exhibit", exhibit });
+    }
+  }
+  return pages;
+}
+
+function addPptxTableLayout(
   pptx: PptxGenJSInstance,
   table: RenderableTable,
   doc: RenderableDeliverable,
@@ -2159,22 +2643,22 @@ function addPptxTableSlide(
   slide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(slide, doc, slideNumber, totalSlides);
   slide.addText(safePptxText(table.title), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 0.85,
-    w: 11.8,
+    w: PPTX_GRID.w(12),
     h: 0.6,
-    fontFace: "Georgia",
+    fontFace: PPTX_FONT.display,
     fontSize: 20,
     color: PPTX_COLOR.ink,
     fit: "shrink",
   });
   if (table.rows.length === 0) {
     slide.addText(`(${table.title}: see Excel companion exhibit)`, {
-      x: 0.72,
+      x: PPTX_GRID.x(0),
       y: 2,
-      w: 11.8,
+      w: PPTX_GRID.w(12),
       h: 0.5,
-      fontFace: "Arial",
+      fontFace: PPTX_FONT.body,
       fontSize: 12,
       italic: true,
       color: PPTX_COLOR.muted,
@@ -2189,7 +2673,7 @@ function addPptxTableSlide(
     options: {
       bold: true,
       color: PPTX_COLOR.white,
-      fontFace: "Arial",
+      fontFace: PPTX_FONT.body,
       fontSize: 9,
       fill: { color: PPTX_COLOR.ink },
     },
@@ -2211,7 +2695,7 @@ function addPptxTableSlide(
           options: {
             color: tone.text,
             bold: tone.fill !== null,
-            fontFace: "Arial",
+            fontFace: PPTX_FONT.body,
             fontSize: 10,
             ...(tone.fill ? { fill: { color: tone.fill } } : {}),
           },
@@ -2219,14 +2703,18 @@ function addPptxTableSlide(
       }
       return {
         text: cell,
-        options: { color: PPTX_COLOR.ink, fontFace: "Arial", fontSize: 10 },
+        options: {
+          color: PPTX_COLOR.ink,
+          fontFace: PPTX_FONT.body,
+          fontSize: 10,
+        },
       };
     }),
   );
   slide.addTable([header, ...bodyRows], {
-    x: 0.72,
-    y: 1.6,
-    w: 11.8,
+    x: PPTX_GRID.x(0),
+    y: SLIDE_DESIGN.masters.table.tableTopIn,
+    w: PPTX_GRID.w(12),
     border: { type: "solid", color: PPTX_COLOR.line, pt: 0.5 },
     autoPage: false,
   });
@@ -2234,11 +2722,11 @@ function addPptxTableSlide(
     slide.addText(
       `+ ${table.rows.length - 14} more rows — see Excel companion exhibit`,
       {
-        x: 0.72,
+        x: PPTX_GRID.x(0),
         y: 6.9,
-        w: 11.8,
+        w: PPTX_GRID.w(12),
         h: 0.3,
-        fontFace: "Arial",
+        fontFace: PPTX_FONT.body,
         fontSize: 9,
         italic: true,
         color: PPTX_COLOR.muted,
@@ -2247,263 +2735,112 @@ function addPptxTableSlide(
   }
 }
 
-/** Render a RenderableDeliverable as a native, editable PPTX deck: a title
- *  slide (with the mandatory AI-draft disclosure), one condensed slide per
- *  generated section, one rasterised-image slide per exhibit, one table
- *  slide per in-deck table, and a closing slide for next actions / the
- *  client-to-complete checklist. Mirrors the DOCX/PDF renderers' content
- *  model; a malformed exhibit is best-effort (falls back to a text notice)
- *  and never fails the whole deck. */
-export async function renderDeliverablePptx(
+function addPptxTitleLayout(
+  pptx: PptxGenJSInstance,
   doc: RenderableDeliverable,
-): Promise<Buffer> {
-  const { default: PptxGenJS } = await import("pptxgenjs");
-  const pptx = new PptxGenJS();
-  // LAYOUT_WIDE is 13.333in x 7.5in. LAYOUT_16x9 is 10.0in x 5.625in — the same
-  // aspect ratio, a third narrower.
-  //
-  // This said LAYOUT_16x9 while every content shape in this renderer is
-  // positioned for the wide canvas (x: 0.72, w: 11.8 needs 12.52in). So every
-  // shape on every slide overflowed the right edge by about 2.5 inches: body
-  // text, tables and exhibits all ran off the page. A 12-slide charter carried
-  // 64 off-canvas shapes.
-  //
-  // Same aspect ratio is why it was invisible — thumbnails and slide-count
-  // checks look correct, and only opening the file shows it.
-  pptx.layout = "LAYOUT_WIDE";
-  pptx.author = "AbarVa";
-  pptx.company = "AbarVa";
-  pptx.subject = doc.title;
-  pptx.title = `${doc.clientDisplayName} — ${doc.title}`;
-
-  const inDeckTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
-  const renderableExhibits = doc.exhibits
-    .map((exhibit, index) => ({ exhibit, index }))
-    .filter(({ exhibit, index }) => exhibitSvg(exhibit, index) !== null);
-  const authoredSlides = (doc.deckSlides ?? []).filter(
-    (slide) => slide.governingMessage.trim().length > 0,
-  );
-  const totalSlides =
-    1 +
-    (authoredSlides.length > 0
-      ? authoredSlides.length
-      : doc.generatedSections.length + renderableExhibits.length) +
-    inDeckTables.length +
-    1;
-  let slideNumber = 1;
-
-  // Title slide.
+): void {
   const titleSlide = pptx.addSlide();
   titleSlide.background = { color: PPTX_COLOR.ink };
   titleSlide.addText(DOC_COVER_EYEBROW.toUpperCase(), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 0.7,
     w: 10,
     h: 0.3,
-    fontFace: "Arial",
+    fontFace: PPTX_FONT.body,
     fontSize: 9,
     bold: true,
     color: PPTX_COLOR.accent,
     charSpacing: 1.5,
   });
   titleSlide.addText(safePptxText(doc.title), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 1.6,
-    w: 11.3,
+    w: PPTX_GRID.w(11),
     h: 1.6,
-    fontFace: "Georgia",
+    fontFace: PPTX_FONT.display,
     fontSize: 34,
     color: PPTX_COLOR.white,
     fit: "shrink",
   });
   if (doc.subtitle) {
     titleSlide.addText(safePptxText(doc.subtitle), {
-      x: 0.72,
+      x: PPTX_GRID.x(0),
       y: 3.15,
-      w: 11.3,
+      w: PPTX_GRID.w(11),
       h: 0.6,
-      fontFace: "Arial",
+      fontFace: PPTX_FONT.body,
       fontSize: 14,
-      color: "BEB9AE",
+      color: PPTX_COLOR.coverMuted,
     });
   }
   titleSlide.addText(
     `${doc.clientDisplayName} — ${doc.initiativeDisplayName}`,
     {
-      x: 0.72,
+      x: PPTX_GRID.x(0),
       y: 3.85,
-      w: 11.3,
+      w: PPTX_GRID.w(11),
       h: 0.4,
-      fontFace: "Arial",
+      fontFace: PPTX_FONT.body,
       fontSize: 12,
-      color: "BEB9AE",
+      color: PPTX_COLOR.coverMuted,
     },
   );
   titleSlide.addShape("line", {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 4.5,
     w: 4,
     h: 0,
     line: { color: PPTX_COLOR.accent, width: 2 },
   });
   titleSlide.addText(safePptxText(DOC_STATUS_LABEL), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 4.75,
-    w: 11.3,
+    w: PPTX_GRID.w(11),
     h: 0.35,
-    fontFace: "Arial",
+    fontFace: PPTX_FONT.body,
     fontSize: 12,
     bold: true,
     color: PPTX_COLOR.white,
   });
   titleSlide.addText(safePptxText(DOC_STATUS_CAVEAT), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 5.15,
-    w: 11.3,
+    w: PPTX_GRID.w(11),
     h: 1,
-    fontFace: "Arial",
+    fontFace: PPTX_FONT.body,
     fontSize: 10,
-    color: "BEB9AE",
+    color: PPTX_COLOR.coverMuted,
     fit: "shrink",
   });
   titleSlide.addNotes(`Recommendation: ${doc.recommendation}`);
-  slideNumber += 1;
+}
 
-  const exhibitByKey = new Map(
-    renderableExhibits.map(({ exhibit, index }) => [
-      exhibit.key,
-      { exhibit, index },
-    ]),
-  );
-
-  if (authoredSlides.length > 0) {
-    authoredSlides.forEach((authoredSlide) => {
-      addPptxAuthoredSlide(
-        pptx,
-        authoredSlide,
-        doc,
-        slideNumber,
-        totalSlides,
-        exhibitByKey,
-      );
-      slideNumber += 1;
-    });
-  } else {
-    // One condensed slide per generated section.
-    for (const section of doc.generatedSections) {
-      const slide = pptx.addSlide();
-      slide.background = { color: PPTX_COLOR.cream };
-      addPptxChrome(slide, doc, slideNumber, totalSlides);
-      const sectionMarkdown = normalizeSectionMarkdown(
-        section.bodyMarkdown,
-        section.title,
-      );
-      // A slide is scanned, not read — but what is on it is a whole claim.
-      // Anything too long to print whole is held off the face and carried in
-      // the notes; nothing is cut at a word count. See ./slide-text.
-      const slideText = sectionSlideText(
-        sectionMarkdown,
-        section.title,
-        MAX_BULLETS_PER_SLIDE,
-      );
-      if (!slideText.governingIsTitle) {
-        slide.addText(safePptxText(section.title), {
-          x: 0.72,
-          y: 0.85,
-          w: 11.8,
-          h: 0.5,
-          fontFace: "Arial",
-          fontSize: 11,
-          bold: true,
-          color: PPTX_COLOR.accent,
-          charSpacing: 0.5,
-        });
-      }
-      slide.addText(slideText.governing, {
-        x: 0.72,
-        y: 1.35,
-        w: 11.8,
-        h: 1.1,
-        fontFace: "Georgia",
-        fontSize: governingFontSize(slideText.governing),
-        color: PPTX_COLOR.ink,
-        fit: "shrink",
-      });
-      const bullets = slideText.bullets;
-      if (bullets.length > 0) {
-        slide.addText(
-          bullets.map(
-            (b) =>
-              ({
-                text: b,
-                options: PPTX_BULLET,
-              }) as const,
-          ),
-          {
-            x: 0.95,
-            y: 2.6,
-            w: 11.1,
-            h: 4,
-            fontFace: "Arial",
-            fontSize: bulletFontSize(bullets),
-            color: PPTX_COLOR.ink,
-            fit: "shrink",
-            breakLine: false,
-          },
-        );
-      }
-      const noteLines: string[] = [];
-      if (section.citationsUsed.length > 0) {
-        noteLines.push(
-          `Grounding: ${section.groundingMode}; citations [${section.citationsUsed.join(", ")}]`,
-        );
-      }
-      if (slideText.heldOffFace.length > 0) {
-        noteLines.push(
-          "In full (too long for the slide face):",
-          ...slideText.heldOffFace.map((claim) => `• ${claim}`),
-        );
-      }
-      if (noteLines.length > 0) slide.addNotes(noteLines.join("\n"));
-      slideNumber += 1;
-    }
-
-    // One rasterised-image slide per exhibit.
-    renderableExhibits.forEach(({ exhibit, index }) => {
-      if (
-        addPptxExhibitSlide(pptx, exhibit, index, doc, slideNumber, totalSlides)
-      )
-        slideNumber += 1;
-    });
-  }
-
-  // One native table slide per in-deck table (xlsx-targeted tables live only in the Excel companion).
-  inDeckTables.forEach((table) => {
-    addPptxTableSlide(pptx, table, doc, slideNumber, totalSlides);
-    slideNumber += 1;
-  });
-
-  // Closing slide: recommendation, next actions, client-to-complete checklist.
+function addPptxClosingLayout(
+  pptx: PptxGenJSInstance,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
   const closingSlide = pptx.addSlide();
   closingSlide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(closingSlide, doc, slideNumber, totalSlides, false);
   closingSlide.addText("RECOMMENDATION & NEXT ACTIONS", {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 0.85,
-    w: 11.8,
+    w: PPTX_GRID.w(12),
     h: 0.4,
-    fontFace: "Arial",
+    fontFace: PPTX_FONT.body,
     fontSize: 11,
     bold: true,
     color: PPTX_COLOR.accent,
     charSpacing: 0.5,
   });
   closingSlide.addText(safePptxText(doc.recommendation), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 1.3,
-    w: 11.8,
+    w: PPTX_GRID.w(12),
     h: 1.2,
-    fontFace: "Georgia",
+    fontFace: PPTX_FONT.display,
     fontSize: 18,
     color: PPTX_COLOR.ink,
     fit: "shrink",
@@ -2524,11 +2861,11 @@ export async function renderDeliverablePptx(
         ),
       ],
       {
-        x: 0.95,
+        x: PPTX_GRID.x(0) + 0.16,
         y: 2.7,
-        w: 5.6,
+        w: PPTX_GRID.w(6),
         h: 3.6,
-        fontFace: "Arial",
+        fontFace: PPTX_FONT.body,
         fontSize: 13,
         color: PPTX_COLOR.ink,
         fit: "shrink",
@@ -2555,11 +2892,11 @@ export async function renderDeliverablePptx(
         ),
       ],
       {
-        x: 6.85,
+        x: PPTX_GRID.x(6),
         y: 2.7,
-        w: 5.6,
+        w: PPTX_GRID.w(6),
         h: 3.6,
-        fontFace: "Arial",
+        fontFace: PPTX_FONT.body,
         fontSize: 13,
         color: PPTX_COLOR.ink,
         fit: "shrink",
@@ -2568,15 +2905,141 @@ export async function renderDeliverablePptx(
     );
   }
   closingSlide.addText(safePptxText(DOC_STATUS_FOOTER), {
-    x: 0.72,
+    x: PPTX_GRID.x(0),
     y: 6.6,
-    w: 11.8,
+    w: PPTX_GRID.w(12),
     h: 0.5,
-    fontFace: "Arial",
+    fontFace: PPTX_FONT.body,
     fontSize: 9,
     italic: true,
     color: PPTX_COLOR.muted,
   });
+}
 
-  return (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
+/** Compose the governed document into narrative/exhibit pairs, unpaired
+ *  exhibits, tables and a closing decision slide. All declared visual payloads
+ *  must rasterise; physical canvas defects fail before a file is returned. */
+export async function renderDeliverablePptx(
+  doc: RenderableDeliverable,
+  architectureModel?: ArchitectureModel,
+): Promise<Buffer> {
+  const { default: PptxGenJS } = await import("pptxgenjs");
+  const pptx = new PptxGenJS();
+  // LAYOUT_WIDE is 13.333in x 7.5in. LAYOUT_16x9 is 10.0in x 5.625in — the same
+  // aspect ratio, a third narrower.
+  //
+  // This said LAYOUT_16x9 while every content shape in this renderer is
+  // positioned for the wide canvas (x: 0.72, w: 11.8 needs 12.52in). So every
+  // shape on every slide overflowed the right edge by about 2.5 inches: body
+  // text, tables and exhibits all ran off the page. A 12-slide charter carried
+  // 64 off-canvas shapes.
+  //
+  // Same aspect ratio is why it was invisible — thumbnails and slide-count
+  // checks look correct, and only opening the file shows it.
+  pptx.layout = "LAYOUT_WIDE";
+  pptx.author = "AbarVa";
+  pptx.company = "AbarVa";
+  pptx.subject = doc.title;
+  pptx.title = `${doc.clientDisplayName} — ${doc.title}`;
+
+  const inDeckTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
+  const renderableExhibits = doc.exhibits
+    .map((exhibit, index) => ({ exhibit, index }))
+    .filter(({ exhibit, index }) => exhibitSvg(exhibit, index) !== null);
+  if (
+    renderableExhibits.length <
+    doc.exhibits.filter((exhibit) => exhibit.data).length
+  ) {
+    throw new Error("pptx_declared_exhibit_not_renderable");
+  }
+  const architectureVisuals = architectureModel
+    ? renderArchitectureVisualExhibits(architectureModel)
+    : [];
+  const storyPages = composePptxStory(doc, renderableExhibits);
+  const totalSlides =
+    1 +
+    storyPages.length +
+    inDeckTables.length +
+    architectureVisuals.length +
+    1;
+  let slideNumber = 1;
+
+  addPptxTitleLayout(pptx, doc);
+  slideNumber += 1;
+
+  for (const page of storyPages) {
+    if (page.kind === "exhibit") {
+      addPptxFullBleedExhibitLayout(
+        pptx,
+        page.exhibit.exhibit,
+        page.exhibit.index,
+        doc,
+        slideNumber,
+        totalSlides,
+      );
+    } else if (page.exhibit?.exhibit.data?.kind === "comparison") {
+      addPptxComparisonLayout(
+        pptx,
+        page.slide,
+        page.exhibit,
+        doc,
+        slideNumber,
+        totalSlides,
+      );
+    } else if (page.exhibit) {
+      addPptxTwoUpExhibitNarrativeLayout(
+        pptx,
+        page.slide,
+        page.exhibit,
+        doc,
+        slideNumber,
+        totalSlides,
+      );
+    } else {
+      addPptxSectionDividerLayout(
+        pptx,
+        page.slide,
+        doc,
+        slideNumber,
+        totalSlides,
+      );
+    }
+    slideNumber += 1;
+  }
+
+  for (const exhibit of architectureVisuals) {
+    addPptxArchitectureVisualSlide(
+      pptx,
+      exhibit,
+      doc,
+      slideNumber,
+      totalSlides,
+    );
+    slideNumber += 1;
+  }
+
+  // One native table slide per in-deck table (xlsx-targeted tables live only in the Excel companion).
+  inDeckTables.forEach((table) => {
+    addPptxTableLayout(pptx, table, doc, slideNumber, totalSlides);
+    slideNumber += 1;
+  });
+
+  addPptxClosingLayout(pptx, doc, slideNumber, totalSlides);
+
+  const buffer = (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
+  const verdict = judgeRenderedDeck(await inspectDeck(buffer));
+  const physicalFailures = verdict.findings.filter(
+    (finding) =>
+      finding.kind === "off_canvas" ||
+      finding.kind === "canvas" ||
+      finding.kind === "empty_canvas",
+  );
+  if (physicalFailures.length > 0) {
+    throw new Error(
+      `generated_pptx_failed_canvas: ${physicalFailures
+        .map((finding) => finding.message)
+        .join("; ")}`,
+    );
+  }
+  return buffer;
 }

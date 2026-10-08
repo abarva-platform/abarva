@@ -311,7 +311,7 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="current_state_operating_flow" data-exhibit="current_state_operating_flow">
     <div class="sec-h"><span class="num">3</span><h2>Current-state operating flow</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Ordered architecture flow">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--control)"/></marker></defs>
     <path d="M180 92 L304 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
         <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
@@ -335,33 +335,28 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="current_state_system_data_flow" data-exhibit="current_state_system_data_flow">
     <div class="sec-h"><span class="num">4</span><h2>Current-state system/data flow</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 1144 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Email / courier intake →</tspan><tspan x="132" dy="14">Manual...</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">documents</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Manual document review →</tspan><tspan x="352" dy="14">Trade...</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">keyed data</tspan></text>
-      </g><path d="M620 92 L744 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Manual document review →</tspan><tspan x="572" dy="14">Manual...</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">exceptions</tspan></text>
-      </g><path d="M840 92 L964 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="792" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="792" y="97" text-anchor="middle" font-size="13" font-weight="700">4</text>
-        <text x="792" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="792" dy="0">Trade Finance system →</tspan><tspan x="792" dy="14">FIS...</tspan></text>
-        <text x="792" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="792" dy="0">postings</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Email / courier intake →</tspan><tspan x="115" dy="14">Manual document review</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">documents</tspan></text>
       </g><g>
-        <circle cx="1012" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1012" y="97" text-anchor="middle" font-size="13" font-weight="700">5</text>
-        <text x="1012" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1012" dy="0">Trade Finance system →</tspan><tspan x="1012" dy="14">NICE...</tspan></text>
-        <text x="1012" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1012" dy="0">screening</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Manual document review → Trade</tspan><tspan x="360" dy="14">Finance system</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">keyed data</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Manual document review →</tspan><tspan x="605" dy="14">Manual exception tracking</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">exceptions</tspan></text>
+      </g><g>
+        <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Trade Finance system → FIS</tspan><tspan x="850" dy="14">IST/Profile core</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">postings</tspan></text>
+      </g><g>
+        <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Trade Finance system → NICE</tspan><tspan x="115" dy="14">Actimize</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">screening</tspan></text>
       </g>
   </svg><div class="statemap"><div class="band">
     <div class="band-label">Experience &amp; Channels</div>
@@ -420,23 +415,20 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="current_state_gaps_map" data-exhibit="current_state_gaps_map">
     <div class="sec-h"><span class="num">5</span><h2>Current-state gaps map</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 200" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--changed)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--changed)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Event-driven document</tspan><tspan x="132" dy="14">intake...</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">The process lacks a governed</tspan><tspan x="132" dy="12">intake...</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--changed)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Grounded AI-assisted</tspan><tspan x="352" dy="14">clause...</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">There is no governed retrieval</tspan><tspan x="352" dy="12">layer...</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Event-driven document intake</tspan><tspan x="115" dy="14">and extraction</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">The process lacks a governed</tspan><tspan x="115" dy="12">intake...</tspan></text>
       </g><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Controlled exception</tspan><tspan x="572" dy="14">decision...</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">Human approval exists, but the</tspan><tspan x="572" dy="12">approval...</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Grounded AI-assisted clause</tspan><tspan x="360" dy="14">comparison</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">There is no governed retrieval</tspan><tspan x="360" dy="12">layer...</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Controlled exception decision</tspan><tspan x="605" dy="14">workflow</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Human approval exists, but the</tspan><tspan x="605" dy="12">approval...</tspan></text>
       </g>
   </svg><div class="grid2"><div class="card"><div class="card-h">The process lacks a governed intake layer and reliable queue telemetry.</div><div class="note">Documents arrive through email/courier and are triaged manually.</div><div class="outcome">Introduce structured intake, extraction, and event telemetry before any AI recommendation is trusted.</div></div><div class="card"><div class="card-h">There is no governed retrieval layer for L/C terms, UCP rules, and decision evidence.</div><div class="note">Clause comparison depends on officer memory and fragmented references.</div><div class="outcome">Ground clause comparison in a governed corpus with traceable retrieval and citations.</div></div><div class="card"><div class="card-h">Human approval exists, but the approval trail is not captured as a controlled decision system.</div><div class="note">Exceptions are assembled in spreadsheets and email threads.</div><div class="outcome">Put officer approval, model-risk validation, AML screening, and audit telemetry into the target flow.</div></div></div></div>
     <p class="so-what"><strong>So what:</strong> Each observed gap translates into a specific target capability.</p>
@@ -444,38 +436,32 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="target_conceptual_architecture" data-exhibit="target_conceptual_architecture">
     <div class="sec-h"><span class="num">6</span><h2>Target conceptual architecture</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 1364 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Sense: document intake</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">Experience &amp; Channels</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Context: terms + UCP</tspan><tspan x="352" dy="14">rules</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">Data &amp; ML Platform</tspan></text>
-      </g><path d="M620 92 L744 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Recommend: AI</tspan><tspan x="572" dy="14">discrepancy...</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">Agentic Orchestration</tspan></text>
-      </g><path d="M840 92 L964 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="792" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="792" y="97" text-anchor="middle" font-size="13" font-weight="700">4</text>
-        <text x="792" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="792" dy="0">Approve: officer</tspan><tspan x="792" dy="14">judgment</tspan></text>
-        <text x="792" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="792" dy="0">Core Systems of Record</tspan></text>
-      </g><path d="M1060 92 L1184 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1012" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1012" y="97" text-anchor="middle" font-size="13" font-weight="700">5</text>
-        <text x="1012" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1012" dy="0">Act: core posting</tspan></text>
-        <text x="1012" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1012" dy="0">Core Systems of Record</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Sense: document intake</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Experience &amp; Channels</tspan></text>
       </g><g>
-        <circle cx="1232" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1232" y="97" text-anchor="middle" font-size="13" font-weight="700">6</text>
-        <text x="1232" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1232" dy="0">Measure: lineage + value</tspan></text>
-        <text x="1232" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1232" dy="0">Cloud &amp; Platform</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Context: terms + UCP rules</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Data &amp; ML Platform</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Recommend: AI discrepancy</tspan><tspan x="605" dy="14">finding</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Agentic Orchestration</tspan></text>
+      </g><g>
+        <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Approve: officer judgment</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">Core Systems of Record</tspan></text>
+      </g><g>
+        <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Act: core posting</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Core Systems of Record</tspan></text>
+      </g><g>
+        <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Measure: lineage + value</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Cloud &amp; Platform</tspan></text>
       </g>
   </svg><p class="caption">The business design is a governed decision system: intake, context enrichment, AI recommendation, officer approval, system action, and value telemetry.</p><div class="statemap"><div class="band">
     <div class="band-label">Experience &amp; Channels</div>
@@ -531,43 +517,36 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="target_logical_architecture" data-exhibit="target_logical_architecture">
     <div class="sec-h"><span class="num">7</span><h2>Target logical architecture</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 1584 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Officer workbench</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">Experience &amp; Channels</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">API facade</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">Integration &amp; Rails</tspan></text>
-      </g><path d="M620 92 L744 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Agent orchestrator</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">Agentic Orchestration</tspan></text>
-      </g><path d="M840 92 L964 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="792" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="792" y="97" text-anchor="middle" font-size="13" font-weight="700">4</text>
-        <text x="792" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="792" dy="0">Extraction service</tspan></text>
-        <text x="792" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="792" dy="0">Applications &amp; Services</tspan></text>
-      </g><path d="M1060 92 L1184 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1012" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1012" y="97" text-anchor="middle" font-size="13" font-weight="700">5</text>
-        <text x="1012" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1012" dy="0">Retrieval service</tspan></text>
-        <text x="1012" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1012" dy="0">Data &amp; ML Platform</tspan></text>
-      </g><path d="M1280 92 L1404 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1232" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1232" y="97" text-anchor="middle" font-size="13" font-weight="700">6</text>
-        <text x="1232" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1232" dy="0">Model serving</tspan></text>
-        <text x="1232" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1232" dy="0">Applications &amp; Services</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Officer workbench</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Experience &amp; Channels</tspan></text>
       </g><g>
-        <circle cx="1452" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1452" y="97" text-anchor="middle" font-size="13" font-weight="700">7</text>
-        <text x="1452" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1452" dy="0">Risk / AML controls</tspan></text>
-        <text x="1452" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1452" dy="0">Core Systems of Record</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">API facade</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Integration &amp; Rails</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Agent orchestrator</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Agentic Orchestration</tspan></text>
+      </g><g>
+        <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Extraction service</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">Applications &amp; Services</tspan></text>
+      </g><g>
+        <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Retrieval service</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Data &amp; ML Platform</tspan></text>
+      </g><g>
+        <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Model serving</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Applications &amp; Services</tspan></text>
+      </g><g>
+        <circle cx="605" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Risk / AML controls</tspan></text>
+        <text x="605" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Core Systems of Record</tspan></text>
       </g>
   </svg><p class="caption">Logical components separate intake, orchestration, retrieval, model serving, exception assembly, approval, and system integration.</p><div class="statemap"><div class="band">
     <div class="band-label">Experience &amp; Channels</div>
@@ -638,43 +617,36 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="target_physical_deployment" data-exhibit="target_physical_deployment">
     <div class="sec-h"><span class="num">8</span><h2>Target physical / deployment architecture</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 1584 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">AWS landing zone</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">VPC, IAM, KMS, CloudTrail</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Amazon API Gateway</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">API Gateway</tspan></text>
-      </g><path d="M620 92 L744 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Amazon EventBridge</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">EventBridge</tspan></text>
-      </g><path d="M840 92 L964 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="792" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="792" y="97" text-anchor="middle" font-size="13" font-weight="700">4</text>
-        <text x="792" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="792" dy="0">Textract + Bedrock</tspan></text>
-        <text x="792" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="792" dy="0">Amazon Textract + Bedrock</tspan></text>
-      </g><path d="M1060 92 L1184 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1012" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1012" y="97" text-anchor="middle" font-size="13" font-weight="700">5</text>
-        <text x="1012" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1012" dy="0">Databricks on AWS</tspan></text>
-        <text x="1012" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1012" dy="0">Databricks + Vector Search</tspan></text>
-      </g><path d="M1280 92 L1404 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1232" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1232" y="97" text-anchor="middle" font-size="13" font-weight="700">6</text>
-        <text x="1232" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1232" dy="0">Snowflake finance mart</tspan></text>
-        <text x="1232" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1232" dy="0">Snowflake</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">AWS landing zone</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">VPC, IAM, KMS, CloudTrail</tspan></text>
       </g><g>
-        <circle cx="1452" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1452" y="97" text-anchor="middle" font-size="13" font-weight="700">7</text>
-        <text x="1452" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1452" dy="0">FIS IST/Profile</tspan></text>
-        <text x="1452" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1452" dy="0">Mainframe core</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Amazon API Gateway</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">API Gateway</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Amazon EventBridge</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">EventBridge</tspan></text>
+      </g><g>
+        <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Textract + Bedrock</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">Amazon Textract + Bedrock</tspan></text>
+      </g><g>
+        <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Databricks on AWS</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Databricks + Vector Search</tspan></text>
+      </g><g>
+        <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Snowflake finance mart</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Snowflake</tspan></text>
+      </g><g>
+        <circle cx="605" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">FIS IST/Profile</tspan></text>
+        <text x="605" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Mainframe core</tspan></text>
       </g>
   </svg><p class="caption">The physical design uses the bank's AWS/Databricks target estate with tenant boundary, identity, encryption, audit logging, and mainframe integration explicitly shown.</p><div class="statemap"><div class="band">
     <div class="band-label">Applications &amp; Services</div>
@@ -742,43 +714,36 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="end_to_end_data_flow" data-exhibit="end_to_end_data_flow">
     <div class="sec-h"><span class="num">9</span><h2>End-to-end data flow</h2></div>
-    <div class="visual-body"><div class="legend"><span class="l-data">Data flow</span></div><svg class="diagram timeline" viewBox="0 0 1584 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><div class="legend"><span class="l-data">Data flow</span></div><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Trade Finance workbench</tspan><tspan x="132" dy="14">→...</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">document upload</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Event bus → L/C</tspan><tspan x="352" dy="14">orchestrator...</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">document arrived</tspan></text>
-      </g><path d="M620 92 L744 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Clause-comparison agent</tspan><tspan x="572" dy="14">→...</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">retrieve terms + UCP rules</tspan></text>
-      </g><path d="M840 92 L964 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="792" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="792" y="97" text-anchor="middle" font-size="13" font-weight="700">4</text>
-        <text x="792" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="792" dy="0">Trade Finance workbench</tspan><tspan x="792" dy="14">→...</tspan></text>
-        <text x="792" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="792" dy="0">approved posting</tspan></text>
-      </g><path d="M1060 92 L1184 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1012" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1012" y="97" text-anchor="middle" font-size="13" font-weight="700">5</text>
-        <text x="1012" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1012" dy="0">Trade Finance system →</tspan><tspan x="1012" dy="14">FIS...</tspan></text>
-        <text x="1012" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1012" dy="0">core update</tspan></text>
-      </g><path d="M1280 92 L1404 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1232" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1232" y="97" text-anchor="middle" font-size="13" font-weight="700">6</text>
-        <text x="1232" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1232" dy="0">Discrepancy / exception</tspan><tspan x="1232" dy="14">agent...</tspan></text>
-        <text x="1232" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1232" dy="0">AML screening</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Trade Finance workbench → API</tspan><tspan x="115" dy="14">gateway</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">document upload</tspan></text>
       </g><g>
-        <circle cx="1452" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1452" y="97" text-anchor="middle" font-size="13" font-weight="700">7</text>
-        <text x="1452" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1452" dy="0">Lakehouse → Retrieval /</tspan><tspan x="1452" dy="14">vector...</tspan></text>
-        <text x="1452" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1452" dy="0">governed corpus</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Event bus → L/C orchestrator</tspan><tspan x="360" dy="14">agent</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">document arrived</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Clause-comparison agent →</tspan><tspan x="605" dy="14">Retrieval / vector index</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">retrieve terms + UCP rules</tspan></text>
+      </g><g>
+        <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Trade Finance workbench →</tspan><tspan x="850" dy="14">Trade Finance system</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">approved posting</tspan></text>
+      </g><g>
+        <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Trade Finance system → FIS</tspan><tspan x="115" dy="14">IST/Profile core</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">core update</tspan></text>
+      </g><g>
+        <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Discrepancy / exception agent</tspan><tspan x="360" dy="14">→ AML / fraud control</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">AML screening</tspan></text>
+      </g><g>
+        <circle cx="605" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Lakehouse → Retrieval / vector</tspan><tspan x="605" dy="14">index</tspan></text>
+        <text x="605" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">governed corpus</tspan></text>
       </g>
   </svg><div class="flow k-data">
         <div class="flow-line"><span class="tile">Trade Finance workbench</span><span class="arrow" data-k="data">→</span><span class="tile">API gateway</span><span class="flbl">document upload</span><span class="badge fk fk-data">Data</span></div>
@@ -807,38 +772,32 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="ai_recommendation_control_flow" data-exhibit="ai_recommendation_control_flow">
     <div class="sec-h"><span class="num">10</span><h2>AI recommendation &amp; decision-control flow</h2></div>
-    <div class="visual-body"><div class="legend"><span class="l-control">AI control / decision flow</span></div><h3 style="font-size:15px;margin:0 0 10px">AI decision &amp; control flow</h3><svg class="diagram timeline" viewBox="0 0 1364 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><div class="legend"><span class="l-control">AI control / decision flow</span></div><h3 style="font-size:15px;margin:0 0 10px">AI decision &amp; control flow</h3><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--control)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">L/C orchestrator agent →</tspan><tspan x="132" dy="14">Intake...</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">extract</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Intake &amp; extraction</tspan><tspan x="352" dy="14">agent...</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">OCR + parse</tspan></text>
-      </g><path d="M620 92 L744 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">L/C orchestrator agent →</tspan><tspan x="572" dy="14">Clause-comparison...</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">compare clauses</tspan></text>
-      </g><path d="M840 92 L964 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="792" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="792" y="97" text-anchor="middle" font-size="13" font-weight="700">4</text>
-        <text x="792" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="792" dy="0">L/C orchestrator agent →</tspan><tspan x="792" dy="14">Discrepancy...</tspan></text>
-        <text x="792" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="792" dy="0">flag discrepancies</tspan></text>
-      </g><path d="M1060 92 L1184 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1012" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="1012" y="97" text-anchor="middle" font-size="13" font-weight="700">5</text>
-        <text x="1012" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1012" dy="0">Discrepancy / exception</tspan><tspan x="1012" dy="14">agent...</tspan></text>
-        <text x="1012" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1012" dy="0">officer reviews exception</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">L/C orchestrator agent →</tspan><tspan x="115" dy="14">Intake &amp; extraction agent</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">extract</tspan></text>
       </g><g>
-        <circle cx="1232" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="1232" y="97" text-anchor="middle" font-size="13" font-weight="700">6</text>
-        <text x="1232" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1232" dy="0">Clause-comparison agent</tspan><tspan x="1232" dy="14">→...</tspan></text>
-        <text x="1232" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1232" dy="0">model-risk check</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Intake &amp; extraction agent →</tspan><tspan x="360" dy="14">Document AI service</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">OCR + parse</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">L/C orchestrator agent →</tspan><tspan x="605" dy="14">Clause-comparison agent</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">compare clauses</tspan></text>
+      </g><g>
+        <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">L/C orchestrator agent →</tspan><tspan x="850" dy="14">Discrepancy / exception agent</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">flag discrepancies</tspan></text>
+      </g><g>
+        <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Discrepancy / exception agent</tspan><tspan x="115" dy="14">→ Trade Finance workbench</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">officer reviews exception</tspan></text>
+      </g><g>
+        <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Clause-comparison agent →</tspan><tspan x="360" dy="14">Model-risk control</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">model-risk check</tspan></text>
       </g>
   </svg><div class="flow k-control">
         <div class="flow-line"><span class="tile">L/C orchestrator agent</span><span class="arrow" data-k="control">→</span><span class="tile">Intake &amp; extraction agent</span><span class="flbl">extract</span><span class="badge fk fk-control">AI control</span></div>
@@ -882,18 +841,16 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="human_approval_override_model" data-exhibit="human_approval_override_model">
     <div class="sec-h"><span class="num">11</span><h2>Human approval / override model</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 200" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--control)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Clause-comparison agent</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">Officer confirms any</tspan><tspan x="132" dy="12">low-confidence...</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Clause-comparison agent</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Officer confirms any</tspan><tspan x="115" dy="12">low-confidence...</tspan></text>
       </g><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Discrepancy / exception</tspan><tspan x="352" dy="14">agent</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">Trade-finance officer approves,</tspan><tspan x="352" dy="12">overrides,...</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Discrepancy / exception agent</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Trade-finance officer approves,</tspan><tspan x="360" dy="12">overrides,...</tspan></text>
       </g>
   </svg><div class="agents"><div class="agent">
         <div class="agent-h"><span class="dot"></span><strong>Intake &amp; extraction agent</strong><span class="role">Extracts structured fields from unstructured L/C documents</span></div>
@@ -919,38 +876,32 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="integration_map" data-exhibit="integration_map">
     <div class="sec-h"><span class="num">12</span><h2>Integration map</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 1364 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Event bus</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">Amazon EventBridge</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">API gateway</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">Amazon API Gateway</tspan></text>
-      </g><path d="M620 92 L744 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Trade Finance system</tspan></text>
-        
-      </g><path d="M840 92 L964 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="792" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="792" y="97" text-anchor="middle" font-size="13" font-weight="700">4</text>
-        <text x="792" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="792" dy="0">FIS IST/Profile core</tspan></text>
-        <text x="792" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="792" dy="0">FIS IST/Profile (mainframe)</tspan></text>
-      </g><path d="M1060 92 L1184 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="1012" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1012" y="97" text-anchor="middle" font-size="13" font-weight="700">5</text>
-        <text x="1012" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1012" dy="0">Model-risk control</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Event bus</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Amazon EventBridge</tspan></text>
+      </g><g>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">API gateway</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Amazon API Gateway</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Trade Finance system</tspan></text>
         
       </g><g>
-        <circle cx="1232" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="1232" y="97" text-anchor="middle" font-size="13" font-weight="700">6</text>
-        <text x="1232" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="1232" dy="0">AML / fraud control</tspan></text>
-        <text x="1232" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="1232" dy="0">Actimize + Feedzai</tspan></text>
+        <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">FIS IST/Profile core</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">FIS IST/Profile (mainframe)</tspan></text>
+      </g><g>
+        <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Model-risk control</tspan></text>
+        
+      </g><g>
+        <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
+        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">AML / fraud control</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Actimize + Feedzai</tspan></text>
       </g>
   </svg><div class="statemap"><div class="band">
     <div class="band-label">Integration &amp; Rails</div>
@@ -982,28 +933,24 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="governance_audit_telemetry_flow" data-exhibit="governance_audit_telemetry_flow">
     <div class="sec-h"><span class="num">13</span><h2>Governance, audit, and telemetry flow</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 924 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 200" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--control)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">SR 11-7 model risk</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">Model Risk Management</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">BSA/AML screening</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">Financial Crime</tspan></text>
-      </g><path d="M620 92 L744 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Officer approval gate</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">Trade Finance Ops</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">SR 11-7 model risk</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Model Risk Management</tspan></text>
       </g><g>
-        <circle cx="792" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="792" y="97" text-anchor="middle" font-size="13" font-weight="700">4</text>
-        <text x="792" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="792" dy="0">Lineage &amp; audit</tspan></text>
-        <text x="792" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="792" dy="0">Architecture / Risk</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">BSA/AML screening</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Financial Crime</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Officer approval gate</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Trade Finance Ops</tspan></text>
+      </g><g>
+        <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
+        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Lineage &amp; audit</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">Architecture / Risk</tspan></text>
       </g>
   </svg><div class="grid2"><div class="card"><div class="card-h">SR 11-7 model risk</div><div class="note">Every model decision is validated, versioned, and monitored.</div><div class="owner">Model Risk Management</div></div><div class="card"><div class="card-h">BSA/AML screening</div><div class="note">Discrepancies route through Actimize/Feedzai before posting.</div><div class="owner">Financial Crime</div></div><div class="card"><div class="card-h">Officer approval gate</div><div class="note">Exceptions require human approval; AI never auto-clears a discrepancy.</div><div class="owner">Trade Finance Ops</div></div><div class="card"><div class="card-h">Lineage &amp; audit</div><div class="note">Every extraction, comparison, and decision is logged with its evidence.</div><div class="owner">Architecture / Risk</div></div></div></div>
     <p class="so-what"><strong>So what:</strong> Risk, AML, lineage, and value telemetry are part of the workflow.</p>
@@ -1011,7 +958,7 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="implementation_waves" data-exhibit="implementation_waves">
     <div class="sec-h"><span class="num">14</span><h2>Implementation waves</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Ordered architecture flow">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
     <path d="M180 92 L304 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g>
         <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
@@ -1035,23 +982,20 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   </section>
     <section class="exhibit" id="architecture_decision_log" data-exhibit="architecture_decision_log">
     <div class="sec-h"><span class="num">15</span><h2>Architecture decision log</h2></div>
-    <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Architecture flow diagram">
+    <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 200" role="img" aria-label="Architecture components">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">recommended</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">No — AI may recommend and</tspan><tspan x="132" dy="12">assemble...</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrow)"/><g>
-        <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">recommended</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">No — integrate via governed APIs</tspan><tspan x="352" dy="12">and...</tspan></text>
+    <g>
+        <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">recommended</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">No — AI may recommend and</tspan><tspan x="115" dy="12">assemble...</tspan></text>
       </g><g>
-        <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">open</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">Capture intake timestamps,</tspan><tspan x="572" dy="12">retrieval...</tspan></text>
+        <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">recommended</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">No — integrate via governed APIs</tspan><tspan x="360" dy="12">and...</tspan></text>
+      </g><g>
+        <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">open</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Capture intake timestamps,</tspan><tspan x="605" dy="12">retrieval...</tspan></text>
       </g>
   </svg><div class="grid2"><div class="card"><div class="card-h">Should AI be allowed to auto-clear L/C exceptions in the pilot?</div><div class="outcome">No — AI may recommend and assemble evidence, but officers approve every exception.</div><div class="note">The bank needs SR 11-7 evidence, AML alignment, and operational confidence before widening automation.</div><span class="badge">recommended</span></div><div class="card"><div class="card-h">Should the target replace the FIS core?</div><div class="outcome">No — integrate via governed APIs and postings.</div><div class="note">The value case is trapped in review and exception handling, not core replacement.</div><span class="badge">recommended</span></div><div class="card"><div class="card-h">Which telemetry is mandatory for build approval?</div><div class="outcome">Capture intake timestamps, retrieval evidence, model version, officer action, override reason, AML screening, and posting outcome.</div><div class="note">Without telemetry, the pilot cannot prove cycle-time, risk, or control value.</div><span class="badge">open</span></div></div></div>
     <p class="so-what"><strong>So what:</strong> The key decisions are explicit enough for an architecture review board.</p>
