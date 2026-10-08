@@ -40,6 +40,7 @@ import {
   renderArchitectureVisualExhibits,
   type ArchitectureVisualExhibit,
 } from "@/lib/visual-system/architecture-html-renderer";
+import { composeArchitectureDeckPages } from "@/lib/deliverables/orchestrator/architecture-deck-composition";
 
 import {
   ORDERED_NUMBERING_CONFIG,
@@ -2331,6 +2332,71 @@ function addPptxFullBleedExhibitLayout(
   });
 }
 
+function addPptxArchitectureHeadlineSlide(
+  pptx: PptxGenJSInstance,
+  visual: ArchitectureVisualExhibit,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
+  // A board-storyline beat: the governed argument (soWhat) and its decision
+  // implication on the left, the governed diagram on the right. The claim is
+  // the model's own field, never an LLM-authored assertion about the diagram.
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  slide.addText(safePptxText(visual.title), {
+    x: PPTX_GRID.x(0),
+    y: 0.85,
+    w: PPTX_GRID.w(4),
+    h: 0.4,
+    fontFace: PPTX_FONT.body,
+    fontSize: 11,
+    bold: true,
+    color: PPTX_COLOR.accent,
+    charSpacing: 0.5,
+  });
+  slide.addText(safePptxText(visual.soWhat), {
+    x: PPTX_GRID.x(0),
+    y: 1.42,
+    w: PPTX_GRID.w(4),
+    h: 2.6,
+    fontFace: PPTX_FONT.display,
+    fontSize: 22,
+    color: PPTX_COLOR.ink,
+    fit: "shrink",
+  });
+  slide.addText(safePptxText(visual.decisionImplication), {
+    x: PPTX_GRID.x(0),
+    y: 4.3,
+    w: PPTX_GRID.w(4),
+    h: 2.2,
+    fontFace: PPTX_FONT.body,
+    fontSize: 14,
+    color: PPTX_COLOR.muted,
+    fit: "shrink",
+  });
+  const { png, aspect } = rasteriseSvg(
+    withXmlns(resolveSvgTokens(visual.svg)),
+    3,
+  );
+  const imageX = PPTX_GRID.x(4);
+  const maxW = PPTX_GRID.w(8);
+  const maxH = SLIDE_DESIGN.masters.twoUp.exhibitMaxHeightIn;
+  const w = Math.min(maxW, maxH * aspect);
+  const h = w / aspect;
+  slide.addImage({
+    data: `data:image/png;base64,${png.toString("base64")}`,
+    x: imageX + (maxW - w) / 2,
+    y: SLIDE_DESIGN.masters.twoUp.exhibitTopIn + (maxH - h) / 2,
+    w,
+    h,
+  });
+  slide.addNotes(
+    `Architecture exhibit: ${visual.id}\nDecision implication: ${visual.decisionImplication}`,
+  );
+}
+
 function addPptxArchitectureVisualSlide(
   pptx: PptxGenJSInstance,
   exhibit: ArchitectureVisualExhibit,
@@ -2368,12 +2434,23 @@ function addPptxArchitectureVisualSlide(
   });
   slide.addText(safePptxText(exhibit.soWhat), {
     x: PPTX_GRID.x(0),
-    y: 6.25,
+    y: 6.18,
     w: PPTX_GRID.w(12),
-    h: 0.58,
+    h: 0.4,
     fontFace: PPTX_FONT.body,
-    fontSize: 10,
+    fontSize: 11,
+    bold: true,
     color: PPTX_COLOR.ink,
+    fit: "shrink",
+  });
+  slide.addText(safePptxText(exhibit.decisionImplication), {
+    x: PPTX_GRID.x(0),
+    y: 6.6,
+    w: PPTX_GRID.w(12),
+    h: 0.38,
+    fontFace: PPTX_FONT.body,
+    fontSize: 9,
+    color: PPTX_COLOR.muted,
     fit: "shrink",
   });
   slide.addNotes(
@@ -2955,13 +3032,10 @@ export async function renderDeliverablePptx(
   const architectureVisuals = architectureModel
     ? renderArchitectureVisualExhibits(architectureModel)
     : [];
+  const architecturePages = composeArchitectureDeckPages(architectureVisuals);
   const storyPages = composePptxStory(doc, renderableExhibits);
   const totalSlides =
-    1 +
-    storyPages.length +
-    inDeckTables.length +
-    architectureVisuals.length +
-    1;
+    1 + storyPages.length + inDeckTables.length + architecturePages.length + 1;
   let slideNumber = 1;
 
   addPptxTitleLayout(pptx, doc);
@@ -3007,14 +3081,32 @@ export async function renderDeliverablePptx(
     slideNumber += 1;
   }
 
-  for (const exhibit of architectureVisuals) {
-    addPptxArchitectureVisualSlide(
-      pptx,
-      exhibit,
-      doc,
-      slideNumber,
-      totalSlides,
-    );
+  for (const page of architecturePages) {
+    if (page.kind === "divider") {
+      addPptxSectionDividerLayout(
+        pptx,
+        { title: page.eyebrow, governingMessage: page.title },
+        doc,
+        slideNumber,
+        totalSlides,
+      );
+    } else if (page.kind === "headline") {
+      addPptxArchitectureHeadlineSlide(
+        pptx,
+        page.visual,
+        doc,
+        slideNumber,
+        totalSlides,
+      );
+    } else {
+      addPptxArchitectureVisualSlide(
+        pptx,
+        page.visual,
+        doc,
+        slideNumber,
+        totalSlides,
+      );
+    }
     slideNumber += 1;
   }
 
