@@ -66,6 +66,21 @@ import { missingP1CaptureSections } from "@/lib/programs/p1-charter-evidence";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/**
+ * The phase a Move sits at once its P5 gate is approved and the terminal Tower
+ * handoff is recorded.
+ *
+ * It is a constant rather than a literal at each site because the two used to
+ * disagree: the handoff wrote `lifecycle_state` and `gates_passed` and left
+ * `current_phase` at 5, while the response told the client `newPhase: 6`. Three
+ * readers key on the phase and not on the lifecycle — the advance control
+ * (`isFinal = currentPhase >= 6`), the CXO preview mode, and the phase-6
+ * deliverable set — so the walk's last step claimed a phase no reader could
+ * see. `completeTerminalTowerHandoff` now returns the phase it recorded and the
+ * response reports that, so a change to one is a change to both.
+ */
+const TERMINAL_TOWER_HANDOFF_PHASE = 6;
+
 function gateIdFor(programId: string, phase: number): string {
   return `moves-phase-gate:${programId}:P${phase}->P${phase + 1}`;
 }
@@ -343,7 +358,7 @@ async function completeTerminalTowerHandoff(
   gatesPassed: unknown,
   evidenceRevision: string,
   phaseEvidenceRevision: string,
-): Promise<{ snapshotId: string }> {
+): Promise<{ snapshotId: string; newPhase: number }> {
   const nowIso = new Date().toISOString();
   const snapshot = {
     humanRationale: rationale,
@@ -375,6 +390,10 @@ async function completeTerminalTowerHandoff(
     .from("engagements")
     .update({
       lifecycle_state: "completed",
+      // Recorded here and not only reported: every surface that asks how far a
+      // Move has gone reads `current_phase`, so a handoff that moved only the
+      // lifecycle left the Move reading as still sitting at P5.
+      current_phase: TERMINAL_TOWER_HANDOFF_PHASE,
       gates_passed: toJsonbParam(appendGatePassed(gatesPassed, 5)),
       phase_locked_at: nowIso,
       phase_locked_by_user_id: ctx.userId,
@@ -399,7 +418,7 @@ async function completeTerminalTowerHandoff(
   });
   if (logError) throw logError;
 
-  return { snapshotId };
+  return { snapshotId, newPhase: TERMINAL_TOWER_HANDOFF_PHASE };
 }
 
 async function recordReapprovalSnapshot(
@@ -855,7 +874,8 @@ export async function POST(
       : phase === 5
         ? {
             programId,
-            newPhase: 6,
+            // `newPhase` comes from the handoff itself, so the number reported
+            // is the number written.
             ...(await completeTerminalTowerHandoff(
               sb,
               ctx,

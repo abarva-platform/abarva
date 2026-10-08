@@ -992,6 +992,114 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     );
   });
 
+  it("records the terminal phase it reports, not only the lifecycle", async () => {
+    // The sibling case above asserts the engagements write with
+    // `objectContaining`, which cannot notice a field that is absent. The
+    // handoff wrote `lifecycle_state` and `gates_passed` and left
+    // `current_phase` at 5 while the response said `newPhase: 6`, so the
+    // readers that ask the phase rather than the lifecycle — the advance
+    // control's `isFinal = currentPhase >= 6`, the CXO preview mode, and the
+    // phase-6 deliverable set — all read a completed Move as still at P5.
+    const writes: Array<{ table: string; payload: Record<string, unknown> }> =
+      [];
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      name: "MEMBER AI ASSIST",
+      currentPhase: 5,
+      gatesPassed: [],
+    });
+    mockGetPhaseSnapshots.mockImplementation(
+      async (_ctx: unknown, _programId: string, phase: number) =>
+        phase === 4
+          ? [
+              {
+                id: "phase-4-approved",
+                phaseNumber: 4,
+                approvalStatus: "approved",
+                lockedAt: "2026-09-29T17:00:00.000Z",
+                createdAt: "2026-09-29T17:00:00.000Z",
+                snapshot: { evidenceSnapshotHash: "evidence-revision-1" },
+              },
+            ]
+          : [],
+    );
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "launch_readiness", label: "Launch readiness" },
+    ]);
+    mockGetModuleState.mockResolvedValue([]);
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: true,
+    });
+    mockSbFrom.mockImplementation((table: string) => {
+      if (table === "phase_snapshots") {
+        return {
+          insert: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              select: jest.fn(() => ({
+                single: async () => ({
+                  data: { id: "p5-snap-1" },
+                  error: null,
+                }),
+              })),
+            };
+          }),
+        };
+      }
+      if (table === "engagements") {
+        return {
+          update: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              eq: jest.fn(() => ({
+                eq: async () => ({ error: null }),
+              })),
+            };
+          }),
+        };
+      }
+      if (table === "module_state_log") {
+        return {
+          insert: jest.fn(async (payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return { error: null };
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ limit: async () => ({ data: [], error: null }) }),
+          }),
+        }),
+      };
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ phase: 5, rationale: "Terminal handoff approved." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      newPhase: number;
+      transition: { toPhase: number };
+    };
+    const engagementWrite = writes.find(
+      (write) => write.table === "engagements",
+    );
+    expect(engagementWrite).toBeDefined();
+    // The phase is recorded, not merely reported.
+    expect(engagementWrite?.payload.current_phase).toBe(6);
+    // And the two agree, so one cannot drift from the other again.
+    expect(body.newPhase).toBe(engagementWrite?.payload.current_phase);
+    expect(body.transition.toPhase).toBe(
+      engagementWrite?.payload.current_phase,
+    );
+  });
+
   it("repairs a partial P5 approval snapshot instead of short-circuiting terminal handoff completion", async () => {
     const writes: Array<{ table: string; payload: Record<string, unknown> }> =
       [];
