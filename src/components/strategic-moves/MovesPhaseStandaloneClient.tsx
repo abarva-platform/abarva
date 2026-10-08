@@ -1540,8 +1540,16 @@ export function MovesPhaseStandaloneClient({
         : null;
   const phaseEvidenceGapCount =
     requiredEvidenceGaps.length + (currentStateEvidenceGapCount ?? 0);
+  // The transition workbook is reviewed at the Gate step. It must hold the
+  // phase gate, but cannot hold Capture's Continue: the workbook control is
+  // only reachable after Capture and its answers depend on the design written
+  // there. Other required evidence still holds the capture inputs.
+  const captureEvidenceGapCount =
+    requiredEvidenceGaps.filter(
+      (gap) => !gap.familyId.startsWith("stage_readiness_"),
+    ).length + (currentStateEvidenceGapCount ?? 0);
   const phaseEvidencePassed =
-    phaseEvidenceCheckAvailable && phaseEvidenceGapCount === 0;
+    phaseEvidenceCheckAvailable && captureEvidenceGapCount === 0;
   const phaseCaptureCompleteCount = useMemo(
     () =>
       phaseCaptureSections.filter(

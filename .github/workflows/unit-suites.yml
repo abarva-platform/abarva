@@ -351,10 +351,21 @@ jobs:
           src/lib/source/__tests__/queries-tenant-scope.test.ts
           --no-coverage --ci
 
-      # Nineteen approval and approval-adjacent route suites across thirteen
+      # Eighteen approval and approval-adjacent route suites across twelve
       # directories were not reached by a pull-request workflow. The narrow
       # list is deliberate: their common parents also contain unrelated route
       # trees, so naming a broad parent would hide which governed gate failed.
+      #
+      # The nineteenth entry was the phase-gate-approval route suite. Its
+      # directory is now swept by the required AI surface control catalog
+      # (slice 17), and a suite a required job runs must be NAMED inside a
+      # required job, so the quotable line and the merge-blocking line are the
+      # same one (scripts/quality/check-named-suite-requiredness.mjs, T-595).
+      # Read its result out of the catalog's own log.
+      #
+      # This job still RUNS that suite — the broad `src/app/api/v1/programs`
+      # argument below selects it — so nothing stopped running here and the
+      # coverage census reads the same before and after. Only the name moved.
       - name: Run governed approval route suites
         run: >-
           npx jest --runTestsByPath
@@ -371,7 +382,6 @@ jobs:
           "src/app/api/admin/programs/approvals/export/__tests__/route.test.ts"
           "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts"
           "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/__tests__/route.test.ts"
-          "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__/route.test.ts"
           "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__/route.test.ts"
           "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
           "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__/route.test.ts"
@@ -655,9 +665,16 @@ jobs:
       # full of `[eventId]`, `[programId]` and the like, which is fine -- those
       # are matched as descendants of a literal prefix. Naming one of them
       # directly would not be: a jest path argument is a regex, so `[id]` is a
-      # character class. That is why the governed approval routes are run by
-      # exact path with --runTestsByPath, and any future addition naming a
-      # bracketed segment must do the same.
+      # character class and the pattern selects nothing at all.
+      #
+      # There are two ways to name one, and which to pick depends on whether a
+      # DIRECTORY is being taken ownership of:
+      #   - --runTestsByPath with the exact file, as the governed approval
+      #     routes above do. Exact, and it owns only the files listed.
+      #   - the escaped regex, `src/.../\[programId\]/.../__tests__`, as the
+      #     required catalog's phase-gate-approval step does. This owns the
+      #     DIRECTORY, so a suite added to it needs no workflow edit.
+      # See docs/ci/README-suite-wiring.md.
       - name: Run the v1 API route suites
         run: >-
           npx jest

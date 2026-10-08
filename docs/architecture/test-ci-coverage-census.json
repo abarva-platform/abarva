@@ -18,9 +18,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2860,
-    "coveredTestFiles": 2696,
-    "pullRequestCoveredTestFiles": 2696,
+    "testFiles": 2861,
+    "coveredTestFiles": 2697,
+    "pullRequestCoveredTestFiles": 2697,
     "uncoveredTestFiles": 164,
     "directoriesWithTests": 511,
     "directoriesFullyCovered": 441,
@@ -145,6 +145,10 @@
     {
       "source": "scripts/quality/check-integration-root-quarantine.mjs",
       "mention": "/** * Keep the integration ROOT carve-out honest. * * Every sibling list in this directory guards a directory a workflow NAMES, so * the default there is INCLUDED and a new suite runs the day it lands. The * root of `src/__tests__/integration` is different, for a reason recorded in * `integration-suites.yml`: naming that path as a directory would also run * every red subdirectory under it, so its root-level files are enumerated one * by one, by exact path. * * That inverts the default to EXCLUDED, and an inverted default needs a * control the sibling lists never needed. Until this file existed, the only * record of the carve-out was a workflow comment reading \"10 are still red and * stay out of the green job\" — a count, with no per-file reason, no owner, and * nothing that could fail. Five root files were still unrun and untriaged when * this landed, and one of them was red because a governed Source answer had * started dropping two of three recommended vendors. Nobody saw it, because * nothing ran it, because nothing checked that everything ran. * * Four ways the carve-out rots, and the first is the one the enumeration * cannot notice by itself: * * 1. A root file is unrun and UNDECLARED. With the default inverted, that is * what silence looks like: no failure, no mention, no coverage. * 2. A declared file is RUN again. The exclusion no longer excludes anything * but still reads as live to the next person who counts the list. * 3. A declared file no longer exists, is named twice, or carries no reason, * owner or triage verdict. * 4. THE REASON EXPIRED — `--rerun` runs every quarantined suite and fails if * one PASSES. That is the direction that matters: repair the suite and * this exits 1 until the entry is deleted and the file is wired back into * the workflow. * * \"Is this test file run by any workflow\" is NOT re-implemented here. It is * asked of `test-ci-coverage-census.mjs`, which already resolves package * scripts, jest invocations, ignore arguments and directory-regex collisions — * and gets the collisions right, which a naive read of the workflow would not: * `npx jest src/__tests__/integration/programs` is a regex that also selects * root files beginning `programs-`. Two audits asking the same question must * not be able to disagree about the answer. */"
+    },
+    {
+      "source": "scripts/quality/check-named-suite-requiredness.mjs",
+      "mention": "/** * A jest positional argument is a REGEX, not a path. A directory under a * Next.js dynamic route therefore has to escape its brackets — pass * `src/app/api/v1/programs/[programId]/.../__tests__` — or jest reads * `[programId]` as a character class and the pattern matches nothing. * * That escaped token is not a path any filesystem holds, so the sweep test * below (`existsSync` + `isDirectory`) answered false for every dynamic-route * directory and the control recorded no sweep. The consequence was precisely * the failure mode this control exists to catch, inverted: a required job could * sweep a dynamic-route directory, a non-required job could keep naming a suite * inside it, and the run would report OK because the sweep was invisible. * * Resolving the escapes also normalises the recorded directory to its real * on-disk spelling, which is what `isInside` compares a named file against. */"
     },
     {
       "source": "scripts/quality/intelligence-integration-ignore-args.mjs",

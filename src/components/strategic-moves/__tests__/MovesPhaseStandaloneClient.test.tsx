@@ -1474,6 +1474,94 @@ describe("MovesPhaseStandaloneClient", () => {
       );
     }
 
+    it("lets P3 capture reach its workbook review while the transition workbook still holds the gate", () => {
+      const openWorkbook = {
+        ...coveredEvidencePacketsForPhase(3)[0],
+        artifactType: null,
+        evidenceSlot: "P3 to P4 readiness workbook",
+        familyId: "stage_readiness_p3_p4",
+        status: "missing" as const,
+        evidenceTitles: [],
+      };
+      const packets = [...coveredEvidencePacketsForPhase(3), openWorkbook];
+      const move = makeMove({ currentPhase: 3 });
+      const { unmount } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={packets}
+          initialPhaseCaptureValues={{
+            solution_approach: completeP3CaptureValues.solution_approach,
+            recommendation: completeP3CaptureValues.recommendation,
+          }}
+          initialSubstepKey="prepare"
+          move={move}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(
+        screen.getByRole("heading", { name: "How it works" }),
+      ).toBeInTheDocument();
+      unmount();
+
+      const { unmount: unmountGate } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={packets}
+          initialPhaseCaptureValues={{
+            ...completeP3CaptureValues,
+            recommendation:
+              "Choose Option B: proceed to conditional design planning.",
+          }}
+          move={move}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByRole("link", { name: "Download P4 readiness workbook" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByLabelText("Upload completed readiness workbook"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: /Final build blocked by required evidence/i,
+        }),
+      ).toBeDisabled();
+      unmountGate();
+
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[
+            { ...coveredEvidencePacketsForPhase(3)[0], status: "missing" },
+            openWorkbook,
+          ]}
+          initialPhaseCaptureValues={{
+            solution_approach: completeP3CaptureValues.solution_approach,
+            recommendation: completeP3CaptureValues.recommendation,
+          }}
+          initialSubstepKey="prepare"
+          move={move}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
+
     it("P3 on the redesigned flow offers the solution-option choice beside the build control", () => {
       renderP3Capture();
       expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();

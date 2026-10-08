@@ -1092,3 +1092,44 @@ jobs:
       # never by adding it to a green command.
       - name: Exercise the deliverable renderer and orchestration suites
         run: npx jest src/lib/deliverables/orchestrator/__tests__ --runInBand
+
+      # C-415 slice 17: the live phase-gate-approval route.
+      #
+      # Measured BEFORE it was wired, three consecutive runs with identical
+      # results: 1 suite, 43 tests, GREEN in 0.11-0.12s under --runInBand.
+      #
+      # Wired for the same reason as slices 14, 15 and 16: the census already
+      # counted this directory COVERED and a merge could not fail on any of it.
+      # Only unit-suites.yml reached it, and twice — by exact name inside the
+      # "governed approval route suites" list, and already by the broad
+      # `src/app/api/v1/programs` argument of "Run the v1 API route suites" —
+      # but that job is in none of the required contexts. The census asks
+      # whether SOME workflow reaches a directory, never whether a REQUIRED one
+      # does, which is why it read covered while a regression here could not
+      # fail a merge.
+      #
+      # The exact-name entry is dropped from that list, because a suite a
+      # required job runs must be NAMED inside a required job
+      # (scripts/quality/check-named-suite-requiredness.mjs, T-595). Dropping it
+      # loses no run and no census coverage: the same job's broad v1 argument
+      # still selects the directory, so the removal only moves the quotable
+      # line to the job that can actually block a merge.
+      #
+      # Not coverage of nothing, checked before wiring. This route is the single
+      # path every phase gate crosses: POST is fetched from exactly one product
+      # surface (MovesPhaseStandaloneClient.tsx:2545) and it is what advances a
+      # Move from one phase to the next, evaluates the gate rule, records the
+      # phase snapshot and runs the terminal handoff. 974 lines, and until this
+      # step every one of the 43 cases guarding it could be deleted without a
+      # single merge-blocking check going red.
+      #
+      # Wired as a DIRECTORY so a suite added here is owned without a workflow
+      # edit. Jest reads a bare positional argument as a REGEX, so the dynamic
+      # route segment must escape its brackets — unescaped, `[programId]` is a
+      # character class and the pattern matches nothing at all (jest exits 1
+      # with "No tests found"), which is why this is the first dynamic-route
+      # directory sweep in the catalog rather than one more --runTestsByPath
+      # line. The requiredness control resolves those escapes before asking the
+      # filesystem, so this sweep is visible to it.
+      - name: Exercise the phase-gate-approval route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/phase-gate-approval/__tests__' --runInBand
