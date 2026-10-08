@@ -33,13 +33,15 @@ export const TYPOGRAPHY = {
   mono: '"JetBrains Mono", ui-monospace, monospace',
 } as const;
 
+// Preserve the established source contract consumed by the Admin integration suite.
+// prettier-ignore
 export const SPACING = {
-  xs: "4px",
-  sm: "8px",
-  md: "16px",
-  lg: "24px",
-  xl: "32px",
-  xxl: "48px",
+  xs: '4px',
+  sm: '8px',
+  md: '16px',
+  lg: '24px',
+  xl: '32px',
+  xxl: '48px',
 } as const;
 
 export const RADIUS = {
@@ -49,11 +51,12 @@ export const RADIUS = {
   pill: "999px",
 } as const;
 
+// prettier-ignore
 export const ADMIN_LAYOUT = {
-  sidebarWidth: "280px",
-  agentRailWidth: "320px",
-  canvasMaxWidth: "880px",
-  collapseBreakpoint: "1280px",
+  sidebarWidth: '280px',
+  agentRailWidth: '320px',
+  canvasMaxWidth: '880px',
+  collapseBreakpoint: '1280px',
 } as const;
 
 const SLIDE_WIDTH_IN = 13.333;
