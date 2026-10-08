@@ -152,9 +152,10 @@ signable, what supersedes a document, and what signing does are all unchanged.
   client-approval route suite, the sign-off write-layer suite and the two
   programs integration guard suites → **110 of 110** across two invocations
   (63 + 47).
-- **PASS** — `npx jest src/lib/programs/__tests__` → **178 suites, 2,316
+- **PASS** — `npx jest src/lib/programs/__tests__` → **179 suites, 2,326
   tests**, the required catalog sweep that makes these cases merge-blocking with
-  no workflow edit.
+  no workflow edit. Re-run after merging `main` forward, which added a suite to
+  this directory and did not touch either changed file.
 - **PASS** — **all test trees searched for assertions pinning the old state
   before writing.** Every reader of the module, the refusal codes and the status
   type is listed: the route, the module, this suite, and u607's record. Exactly
@@ -170,8 +171,11 @@ signable, what supersedes a document, and what signing does are all unchanged.
   reports the committed census one behind its own tree, `+1/+1`. This change
   adds **no test file**, so it cannot move those counts, and that was proven
   rather than argued: the base content of both changed files was restored in
-  place and the audit re-run, giving a **byte-identical** reading
-  (`2863 -> 2864`, `2699 -> 2700`). The drift is the base's. See Known Gaps.
+  place and the audit re-run, giving a **byte-identical** reading. The `+1/+1`
+  delta is the durable claim; the absolutes are base-relative and moved with the
+  base during this change (`2863 -> 2864` at the first base, `2865 -> 2866`
+  after merging `main` forward), with the drift unchanged at `+1/+1` both times.
+  The drift is the base's. See Known Gaps.
 - **NOT RUN** — no signed-in walk. This changes what a refusal says on a live
   product surface, so a walk is the only way to observe it. See Known Gaps.
 - **NOT RUN** — the superseded path was not exercised against a live database.
