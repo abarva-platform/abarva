@@ -1611,6 +1611,44 @@ describe("evaluateGate", () => {
     expect(result.requiresApproval).toBe(false);
   });
 
+  it("blocks P2 to P3 when the Discovery Report row carries no readable content", async () => {
+    // A `discovery_report` row whose latest version has nothing readable used
+    // to CLEAR `p2_readiness_cleared`: the criterion passes on the absence of
+    // blocking language, and the report text was assembled with a join that
+    // returned "\n" — never empty — so "a report exists and says something"
+    // could not fail. A HARD criterion on the P2 gate was satisfied by silence.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 2,
+      archetype: "ams_consolidation",
+    });
+    deliverablesFixture = [
+      {
+        id: "discovery-report",
+        deliverable_type_key: "discovery_report",
+        status: "signed_off",
+      },
+    ];
+    evidenceFixture = [{ id: "p2-workshop-notes" }];
+    deliverableVersionsFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      2,
+      3,
+    );
+
+    expect(result.pass).toBe(false);
+    const readiness = result.failedChecks.find(
+      (c) => c.check === "p2_readiness_cleared",
+    );
+    expect(readiness).toBeDefined();
+    expect(readiness?.severity).toBe("hard");
+    // And it must SAY why — this state had no sentence before.
+    expect(readiness?.reason).toContain("no readable content");
+  });
+
   it("accepts signed P2 Discovery Report content as ingested workshop evidence", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
