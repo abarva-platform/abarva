@@ -90,7 +90,9 @@ slot that is already covered keeps its authored wording.
   sets.
 - Test suite: 15 cases appended to the module's existing suite.
 
-No workflow, generated artifact, or census file is touched by this change.
+No workflow file is touched by this change. One generated file — the test CI
+coverage census — carries a three-number regeneration of drift inherited from
+the base; see QA / Validation.
 
 ## QA / Validation
 
@@ -108,7 +110,11 @@ No workflow, generated artifact, or census file is touched by this change.
 - `npx eslint` over all four changed files — **PASS**, exit 0.
 - `npm run audit:test-ci-coverage` — **PASS**,
   `census drift: committed census matches this run`. This change adds no test
-  file, so no count moves.
+  file, so no count of its own moves. After merging main forward mid-release the
+  audit reported the base one behind its own tree (`+1/+1`); that drift is
+  inherited, not this change's, and it is regenerated here in a separate commit
+  because no open pull request touches the census, so nothing contends for it.
+  The regen is three numbers in one file.
 - `npm run audit:tenancy-fence-coverage` — **PASS**, no new gap, no generated
   file changed.
 - `npm run release:check -- --base origin/main --head HEAD` — **PASS**.
