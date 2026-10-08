@@ -41,6 +41,7 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approved-evidence-lineage";
 import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
 import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
@@ -725,12 +726,13 @@ export async function POST(
         generatedArtifactId: artifact.id,
         generatedArtifactType: artifact.artifactType,
         sourceArtifactRef: artifact.sourceArtifactRef,
-        evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-        phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-          currentEvidenceSnapshot,
-          phase,
-        ),
-        evidenceSnapshotScope: "phase",
+        ...stampApprovedEvidenceLineage({
+          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
+        }),
         approvalReason: reason,
         mode: isFileUploadApproval
           ? "client_approved_replacement"
@@ -758,12 +760,13 @@ export async function POST(
         approvalLineage: {
           source: "generated_artifact_acceptance",
           generatedArtifactId: artifact.id,
-          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-            currentEvidenceSnapshot,
-            phase,
-          ),
-          evidenceSnapshotScope: "phase",
+          ...stampApprovedEvidenceLineage({
+            evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+            phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+              currentEvidenceSnapshot,
+              phase,
+            ),
+          }),
           approvalMode: isFileUploadApproval
             ? "client_approved_replacement"
             : "accept_ai_draft_as_authoritative",

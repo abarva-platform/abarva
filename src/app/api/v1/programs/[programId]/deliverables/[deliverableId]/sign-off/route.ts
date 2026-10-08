@@ -65,6 +65,10 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  stampApprovedEvidenceLineage,
+  type ApprovedEvidenceLineageStamp,
+} from "@/lib/programs/deliverables/approved-evidence-lineage";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 // Union of every deliberately registered/agent-authorable deliverable type
@@ -353,14 +357,11 @@ export async function POST(
     > | null = null;
     let readinessScannedArtifacts: GeneratedOfficeScanArtifact[] = [];
     let generatedApprovalLineage:
-      | {
+      | ({
           source: "moves_program_generate";
           generatedArtifactId?: string;
-          evidenceSnapshotHash: string;
-          phaseEvidenceSnapshotHash: string;
-          evidenceSnapshotScope: "phase";
           approvalMode: "approve_generated_deliverable_as_is";
-        }
+        } & ApprovedEvidenceLineageStamp)
       | undefined;
     let generatedApprovalArtifactId: string | undefined;
 
@@ -482,12 +483,16 @@ export async function POST(
                     versionStructuredData.generated_artifact_id,
                 }
               : {}),
-          evidenceSnapshotHash: evidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-            evidenceSnapshot,
-            deliverablePhase,
-          ),
-          evidenceSnapshotScope: "phase",
+          // Re-read at approval time, so the moment is stamped with them. Without
+          // it the deliverable's own currency check cannot run and this approval
+          // reads as stale wherever no artifact row is linked.
+          ...stampApprovedEvidenceLineage({
+            evidenceSnapshotHash: evidenceSnapshot.revision,
+            phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+              evidenceSnapshot,
+              deliverablePhase,
+            ),
+          }),
           approvalMode: "approve_generated_deliverable_as_is",
         };
       }
