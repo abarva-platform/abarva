@@ -46,9 +46,10 @@ describe("architecture Office export", () => {
       /^ppt\/media\/.*\.png$/i.test(name),
     );
 
-    // title + story (one page per section here) + architecture storyline + closing.
+    // This sparse, eight-section story is paired into four legible two-column
+    // slides; no section is dropped and all architecture pages remain.
     expect(slides).toHaveLength(
-      doc.generatedSections.length + archPages.length + 2,
+      doc.generatedSections.length / 2 + archPages.length + 2,
     );
     // Every governed visual is rendered exactly once — none dropped, none doubled.
     expect(images).toHaveLength(ARCHITECTURE_V2_EXHIBITS.length);
@@ -74,13 +75,28 @@ describe("architecture Office export", () => {
       `architecture_exhibit_missing_interpretation:${ARCHITECTURE_V2_EXHIBITS[0]}`,
     );
 
+    const orderedSlides = slides.sort(
+      (a, b) => Number(a.match(/slide(\d+)/)?.[1]) - Number(b.match(/slide(\d+)/)?.[1]),
+    );
     const slideXml = await Promise.all(
-      slides.map((name) => zip.file(name)!.async("string")),
+      orderedSlides.map((name) => zip.file(name)!.async("string")),
     );
     const allXml = slideXml.join("\n");
+    for (const section of doc.generatedSections) {
+      expect(allXml).toContain(section.title.replace(/&/g, "&amp;"));
+    }
     // The new section structure is present.
     expect(allXml).toContain("ARCHITECTURE");
-    expect(allXml).toContain("ARCHITECTURE — REFERENCE");
+    expect(allXml).toContain("APPENDIX A");
+    const closingIndex = slideXml.findIndex((xml) =>
+      xml.includes("RECOMMENDATION &amp; NEXT ACTIONS"),
+    );
+    const appendixIndex = slideXml.findIndex((xml) => xml.includes("APPENDIX A"));
+    expect(closingIndex).toBeGreaterThan(0);
+    expect(appendixIndex).toBeGreaterThan(closingIndex);
+    expect(slideXml.length).toBeLessThanOrEqual(22);
+    expect(slideXml[appendixIndex]).toContain("A1");
+    expect(slideXml[appendixIndex]).toContain("a:hlinkClick");
     // The governed diagrams still carry their titles.
     expect(
       slideXml.some((xml) => xml.includes("conceptual architecture")),
@@ -128,6 +144,36 @@ describe("architecture Office export", () => {
     expect(verdict.findings).toEqual(
       expect.arrayContaining([
         expect.stringMatching(/^architecture_exhibit_export_count:/),
+      ]),
+    );
+  });
+
+  it("rejects a visual whose exported source digest no longer matches the governed model", async () => {
+    const model = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText: "A governed serving layer is proposed.",
+    });
+    const doc = { ...goodDocument(), exhibits: [], tables: [], deckSlides: [] };
+    const rendered = await renderValidatedDeck(doc, {}, model);
+    const zip = await JSZip.loadAsync(rendered.buffer);
+    const architectureSlide = (
+      await Promise.all(
+        Object.keys(zip.files)
+          .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+          .map(async (name) => [name, await zip.file(name)!.async("string")] as const),
+      )
+    ).find(([, xml]) => xml.includes("architecture-exhibit:"));
+    expect(architectureSlide).toBeDefined();
+    const [name, xml] = architectureSlide!;
+    zip.file(name, xml.replace(/(architecture-exhibit:[a-z0-9_]+:)[a-f0-9]{16}/, "$1deadbeefdeadbeef"));
+    const verdict = await judgeArchitectureDeck(
+      await zip.generateAsync({ type: "nodebuffer" }),
+      model,
+    );
+    expect(verdict.findings).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^architecture_exhibit_source_mismatch:/),
       ]),
     );
   });
