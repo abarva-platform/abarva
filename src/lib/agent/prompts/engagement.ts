@@ -8,6 +8,7 @@ import type {
 import { CONVERSATION_PRINCIPLES } from "./_shared/conversation-principles";
 import { CITATION_INSTRUCTION } from "../retrieval-format";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
+import { getPhaseRosterName } from "@/lib/programs/phase-roster";
 
 interface AssembleArgs {
   engagement: EngagementRow;
@@ -104,8 +105,7 @@ function assemblePhase0Prompt(ctx: AssembleArgs): string {
     chainedPatterns,
     maestro,
   } = ctx;
-  const phaseNames = ["Start", "Diagnose", "Design", "Execute", "Verify"];
-  const phase = phaseNames[engagement.current_phase];
+  const phase = getPhaseRosterName(engagement.current_phase);
 
   return `You are Ava — AbarVa's senior strategic partner, embedded in this engagement.
 
