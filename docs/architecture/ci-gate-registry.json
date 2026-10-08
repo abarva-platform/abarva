@@ -110,6 +110,9 @@
     "audit:canonical-tenant-inputs": {
       "kind": "unclassified"
     },
+    "audit:capture-step-plan": {
+      "kind": "pr-gate"
+    },
     "audit:categories": {
       "kind": "unclassified"
     },
