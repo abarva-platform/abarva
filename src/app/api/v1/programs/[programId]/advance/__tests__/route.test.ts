@@ -1,3 +1,8 @@
+import {
+  MOVE_UNREADABLE_REFUSAL_DETAIL,
+  moveUnreadableRefusalBody,
+} from "@/lib/programs/move-unreadable-refusal";
+
 const mockRequireTenancy = jest.fn();
 const mockLoadUserProgramAccessPolicy = jest.fn();
 const mockGetProgramById = jest.fn();
@@ -595,6 +600,75 @@ describe("POST /api/v1/programs/[programId]/advance · program allowlist fence",
 
     expect(res.status).toBe(200);
     expect(mockAdvancePhase).toHaveBeenCalled();
+  });
+});
+
+// The 404 leg had NO case in this suite before these: every case above resolves
+// `getProgramById` to a program, so the refusal a reader meets when the Move
+// stops being readable mid-session was untested, and it carried a bare code the
+// button turned into "Failed to advance phase".
+//
+// What can reach it is narrower than it looks, and the allowlist fence above is
+// why: that fence answers a Move outside the caller's grants with a 403 before
+// this route loads anything, which is the INVERSE of the phase-gate-approval
+// route, where the loader answers first and folds the grant case into its 404.
+// So this 404 means "no row for this id in the active client" — an absent Move,
+// or one belonging to another tenant. The fence's own ordering is pinned by
+// "answers the fence without reading the Move" above; these cases pin what the
+// refusal says once the fence has passed.
+describe("POST /api/v1/programs/[programId]/advance · unreadable Move", () => {
+  const rationale = "P0 was reviewed before advancing.";
+
+  beforeEach(() => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    mockGetProgramById.mockResolvedValue(null);
+  });
+
+  it("refuses with a sentence the advance button can show", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ toPhase: 1, humanRationale: rationale }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as { error?: string; detail?: string };
+    expect(body.error).toBe("not_found");
+    // `PhaseAdvanceButton` reads `body.detail ?? "Failed to advance phase"`.
+    expect(typeof body.detail).toBe("string");
+    expect(body.detail).toBe(MOVE_UNREADABLE_REFUSAL_DETAIL);
+  });
+
+  it("answers the no-row cause with the shared body and nothing cause-specific", async () => {
+    // One code path, one body: the route hands the builder no cause, so a
+    // caller cannot read the refusal to learn whether the Move exists, and it
+    // emits no resubmission signal here because nothing on this surface reads
+    // one.
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ toPhase: 1, humanRationale: rationale }) as never,
+      { params },
+    );
+
+    expect(await res.json()).toEqual(moveUnreadableRefusalBody());
+  });
+
+  it("refuses before it advances the phase", async () => {
+    const { POST } = await import("../route");
+    await POST(
+      req({
+        toPhase: 1,
+        selfApproveIfAuthorized: true,
+        humanRationale: rationale,
+      }) as never,
+      { params },
+    );
+
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
   });
 });
 

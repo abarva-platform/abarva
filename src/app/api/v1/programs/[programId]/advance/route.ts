@@ -29,6 +29,7 @@ import { resolvePhaseGateActorPersonId } from "@/lib/programs/phase-gate-actor";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
 import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 import { resolvePhaseAdvanceAllowlistRefusal } from "@/lib/programs/phase-advance-authorization-outcome";
+import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -69,7 +70,16 @@ export async function POST(
     }
 
     const program = await getProgramById(ctx, programId, { supabase });
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!program) {
+      // Code and status are unchanged; only the sentence is new.
+      // `PhaseAdvanceButton` reads `detail` and otherwise shows "Failed to
+      // advance phase", which named nothing the reader could act on. The
+      // allowlist refusal above answers a Move outside the caller's grants, so
+      // what reaches here is "no row for this id in the active client" — an
+      // absent Move, or one belonging to another tenant, told apart by nothing
+      // in this body.
+      return Response.json(moveUnreadableRefusalBody(), { status: 404 });
+    }
     if (!accessPolicy.canApproveGates) {
       return Response.json(
         {
