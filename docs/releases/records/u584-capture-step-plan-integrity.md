@@ -82,9 +82,12 @@ variables changed.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit`, exit 0 (not
   134, so not an out-of-memory exit read as success).
 - **PASS** — `npx eslint` over both new files, exit 0.
-- **PASS** — registered-suite proof via census delta: `testFiles` 2828 → 2829, `coveredTestFiles`
-  2664 → 2665, and `uncoveredTestFiles` unchanged at 164. The suite sits in a directory a required
-  check sweeps, so it is not dark.
+- **PASS** — registered-suite proof via census delta, measured after merging `main`: `testFiles`
+  2829 → 2830, `coveredTestFiles` 2664 → 2665, and `uncoveredTestFiles` unchanged at 165. Flat
+  uncovered is the proof the suite sits in a directory a required check sweeps, so it is not dark.
+  The base figures rose from the first measurement (2828/2664/164) because two sibling changes merged
+  while this one was open; the census was regenerated over `main`'s version rather than
+  conflict-resolved, so it asserts the true total rather than re-asserting a stale one.
 - **PASS** — mutation testing: 9 mutations, 9 killed. Killed: loosening the step-count comparison so
   a short grouping passes; inverting the unheld-question predicate; raising the held-twice threshold;
   inverting the undeclared-key predicate; making the empty-step comparison unreachable; keying the

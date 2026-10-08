@@ -212,6 +212,20 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         createdAt: "2026-09-30T00:00:00Z",
         updatedAt: "2026-09-30T00:00:00Z",
       }));
+    evidenceStates.push({
+      id: "rfp-legal-available",
+      sourceEventId: event.id,
+      tenantKey: "demo-client",
+      requirementId: "EVID-SRC-RFP-LEGAL-TEMPLATE",
+      stage: "rfp",
+      currentState: "Available",
+      sourceArtifactId: null,
+      sourceEventFactIds: ["legal-template-fact"],
+      notes: null,
+      lastSyncedAt: null,
+      createdAt: "2026-09-30T00:00:00Z",
+      updatedAt: "2026-09-30T00:00:00Z",
+    });
 
     render(
       <SourceAnalyticsCanvas
@@ -233,6 +247,13 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("task-dropzone")).toBeInTheDocument();
     expect(screen.getByTestId("source-shell-progress-status"))
       .toHaveTextContent("Approval locked");
+    expect(screen.getByTestId("source-shell-progress-dock"))
+      .toHaveTextContent("Approved legal and commercial template");
+    expect(screen.getByTestId("source-shell-progress-dock"))
+      .toHaveTextContent("Available");
+    fireEvent.click(within(screen.getByTestId("source-shell-progress-dock"))
+      .getByRole("button", { name: "Review evidence in Files" }));
+    expect(screen.getByTestId("source-shell-v2-files")).toBeInTheDocument();
     expect(screen.queryByTestId("source-shell-progress-action")).toBeNull();
   });
 
@@ -293,7 +314,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("source-shell-progress-status"))
       .toHaveTextContent("Approval locked");
     expect(screen.getByTestId("source-shell-progress-status"))
-      .toHaveTextContent("Review remaining required evidence in Files.");
+      .toHaveTextContent("Approved legal and commercial template");
     expect(screen.queryByTestId("source-shell-progress-action")).toBeNull();
   });
 
