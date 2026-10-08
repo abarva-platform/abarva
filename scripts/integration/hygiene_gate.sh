@@ -195,11 +195,20 @@ section "4. TypeScript"
 # out-of-memory trace and emits no diagnostic at all, so the grep found nothing
 # and the gate called it clean. The heap option is what stops the crash; the
 # exit-code check is what stops a crash from reading as success if it returns.
+#
+# The heap matches the build step below (8192) rather than sitting under it.
+# It was 6144, and the project's type graph outgrew that: the step began failing
+# `exit 134` with "Ineffective mark-compacts near heap limit" at ~6.12 GB against
+# the 6144 ceiling — close enough to the limit that it depended on GC timing, so
+# it failed intermittently and then failed on a re-run too. Both numbers run in
+# the same job on the same runner, so the lower one was an asymmetry rather than
+# a budget. `hygiene-gate-exit-codes.test.ts` holds this at or above the build
+# step's heap so the asymmetry cannot come back silently.
 TSC_LOG="$(mktemp)"
 TSC_NODE_OPTIONS="${NODE_OPTIONS:-}"
 case " $TSC_NODE_OPTIONS " in
   *" --max-old-space-size="* | *" --max_old_space_size="*) ;;
-  *) TSC_NODE_OPTIONS="${TSC_NODE_OPTIONS:+$TSC_NODE_OPTIONS }--max-old-space-size=6144" ;;
+  *) TSC_NODE_OPTIONS="${TSC_NODE_OPTIONS:+$TSC_NODE_OPTIONS }--max-old-space-size=8192" ;;
 esac
 if NODE_OPTIONS="$TSC_NODE_OPTIONS" npx tsc --noEmit --pretty false >"$TSC_LOG" 2>&1; then
   pass "TypeScript clean"
