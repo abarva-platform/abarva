@@ -1050,3 +1050,45 @@ jobs:
       # one appears.
       - name: Exercise the agent-runtime unit suites
         run: npx jest src/lib/agent/__tests__ --runInBand
+
+      # C-415 slice 16: the deliverable RENDERER and orchestration suites.
+      #
+      # Measured BEFORE it was wired, three consecutive runs with identical
+      # results: 59 suites, 857 tests, GREEN in 6.3-6.7s under --runInBand. A
+      # sixtieth suite arrived on main while this change was open and the
+      # directory re-measured 60 suites / 860 tests green in 6.9s, which is the
+      # count the guard's floor is held at. Largest suites: brief-library 63,
+      # renderers 48,
+      # orchestrator 46, slide-text 46, archetype-evidence-landing 41,
+      # archetype-config-source 36, surface 34, archetype-pack-config 33,
+      # discovery-evidence-library 31, discovery-blueprint-config 30,
+      # archetype-identity 28, archetype-config-preflight 27,
+      # quality-bar-registry 26, section-generation 23,
+      # quality-validator-size-range 19, and 30 more of 8 or fewer.
+      #
+      # Wired for the same reason as slices 14 and 15: the census already
+      # counted this directory COVERED, and a merge could not fail on any of
+      # it. The only workflow naming it was unit-suites.yml, whose job is in
+      # none of the required contexts. The census asks whether SOME workflow
+      # reaches a directory, never whether a REQUIRED one does.
+      #
+      # Not coverage of nothing, checked before wiring. renderers.tsx is the
+      # module that produces the file a reader actually opens — DOCX, PPTX,
+      # XLSX, HTML and PDF — and three product routes import it: the artifact
+      # download route, the client-approval route, and the Source file-cabinet
+      # deliverable bridge. orchestrator.ts is imported by both orchestrated
+      # Move runners. section-generation.ts and prompt-builder.ts are reached
+      # through those same modules inside this directory. So these suites sit
+      # on the last mile of the phase-to-document path, one step beyond the
+      # generation preconditions owned by slice 15.
+      #
+      # Wired as a DIRECTORY with no trailing slash, so a suite added here is
+      # owned without a workflow edit. Jest reads a bare path argument as a
+      # regex, so this also selects any sibling whose name STARTS with
+      # `__tests__`; there is none, and the guard suite fails if one appears.
+      #
+      # Sibling directories under src/lib/deliverables stay out: each needs its
+      # own green measurement first, and a red directory is wired by fixing it,
+      # never by adding it to a green command.
+      - name: Exercise the deliverable renderer and orchestration suites
+        run: npx jest src/lib/deliverables/orchestrator/__tests__ --runInBand
