@@ -85,6 +85,41 @@ jobs:
       # The counts are the half `--check` does not enforce. Reporting them
       # here is what makes the lag visible at the moment it is created rather
       # than when somebody next regenerates the file.
+      # The other half of the census nothing read. (item T-792)
+      #
+      # `--check` above gates the coverage SHAPE and deliberately not the
+      # counts, for a reason recorded at the top of this file: a gate on the
+      # counts fires on nearly every pull request that adds a test, and the way
+      # to green is to regenerate a two-thousand-line artifact. That decision
+      # stands and this step does not touch it.
+      #
+      # This is a different predicate, and it is invariant to adding tests. It
+      # fails only when a test file is reached by some workflow and by NO
+      # `pull_request` or `merge_group` workflow — a suite that runs green AFTER
+      # the deploy it might have stopped, and can fail no merge. Adding a test
+      # file moves no row into that state, so this does not reintroduce the
+      # fires-on-every-PR problem the counts gate had.
+      #
+      # It encodes a policy already settled rather than a new one: T-478 and
+      # T-764 both treated `covered: true, pullRequestCovered: false` as a
+      # defect and fixed it by ADDING a pull-request invocation while keeping
+      # the pre-deploy one. What was missing was any way to notice the next
+      # instance. Both known instances were found by drawing a governed-risk
+      # directory, so a file in a fully covered directory was undetectable —
+      # which is exactly how the one this item wired survived eleven triage
+      # rounds.
+      #
+      # Green on arrival, on purpose: the last instance is wired in this same
+      # change. It is a tripwire for the next one.
+      - name: No suite is reachable only outside a pull request
+        run: node scripts/quality/check-pull-request-coverage-gap.mjs
+
+      # The gate's own predicate, driven by fixtures rather than by a census
+      # run: nine cases, and all five mutations of the predicate and its
+      # verdict are killed (3, 1, 1, 1 and 2 of 9).
+      - name: The coverage-gap gate can fail
+        run: node --test scripts/quality/check-pull-request-coverage-gap.test.mjs
+
       - name: Report count drift
         if: always()
         run: |
