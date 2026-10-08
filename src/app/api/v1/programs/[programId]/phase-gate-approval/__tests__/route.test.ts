@@ -1662,3 +1662,179 @@ describe("the transition refusal states what chose the framework it measured", (
     });
   });
 });
+
+/**
+ * The gate's transition-evidence read is five steps behind one flag.
+ *
+ * It ran under a single bare `try` whose `catch` answered every cause with one
+ * HTTP 503 — a retry instruction — and logged nothing. Two of the five steps are
+ * reads a re-submission can plausibly answer; three are pure reductions over
+ * records already on the Move, where a re-submission recomputes the same inputs
+ * and fails the same way. These cases drive the three causes apart through the
+ * route and pin which refusal each one sends.
+ *
+ * None of them relaxes the gate: `advancePhase` must stay uncalled throughout.
+ */
+describe("a transition-evidence refusal names the step that failed", () => {
+  let errorSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  it("sends an unreadable discovery readiness as a retryable 503", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("pg: connection terminated"),
+    );
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as {
+      error: string;
+      precondition: string;
+      basisUnevaluableCause: string;
+      resubmitCanSatisfy: boolean;
+      detail: string;
+    };
+    expect(body.error).toBe("transition_discovery_readiness_unreadable");
+    // The code a reader of the old refusal matched on is kept.
+    expect(body.precondition).toBe(
+      "transition_evidence_readiness_unavailable",
+    );
+    expect(body.basisUnevaluableCause).toBe("discovery_readiness_unreadable");
+    expect(body.resubmitCanSatisfy).toBe(true);
+    expect(body.detail).toContain("was not reached");
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("distinguishes an unreadable workbook review from an unreadable readiness", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    mockLoadStageReadinessGateProposals.mockRejectedValueOnce(
+      new Error("workbook read failed"),
+    );
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as {
+      error: string;
+      basisUnevaluableCause: string;
+      resubmitCanSatisfy: boolean;
+      detail: string;
+    };
+    expect(body.error).toBe("transition_workbook_review_unreadable");
+    expect(body.basisUnevaluableCause).toBe("workbook_review_unreadable");
+    expect(body.resubmitCanSatisfy).toBe(true);
+    // Readiness DID answer here, so the refusal must say so.
+    expect(body.detail).toContain("discovery evidence readiness was read, but");
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("does not prescribe a re-submission for a failed gap assessment", async () => {
+    // Both reads answered; the reduction threw. This is the case the single 503
+    // got wrong: re-submitting reduces the same records the same way.
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    mockLoadAcceptedStageReadinessContext.mockResolvedValueOnce(null);
+    mockBuildMoveEvidenceNeedPackets.mockImplementationOnce(() => {
+      throw new Error("packet expansion failed");
+    });
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 3 }) as never, { params });
+
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as {
+      error: string;
+      basisUnevaluableCause: string;
+      resubmitCanSatisfy: boolean;
+      detail: string;
+    };
+    expect(body.error).toBe("transition_evidence_assessment_failed");
+    expect(body.basisUnevaluableCause).toBe("gap_assessment_failed");
+    expect(body.resubmitCanSatisfy).toBe(false);
+    expect(body.detail).toContain(
+      "Submitting the gate again will not change the answer",
+    );
+    expect(body.detail).not.toMatch(/submit the gate again;/i);
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("logs the failing step and its error so a stuck Move leaves a trace", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("pg: connection terminated"),
+    );
+    const { POST } = await import("../route");
+    await POST(req({ phase: 3 }) as never, { params });
+
+    const logged = errorSpy.mock.calls.map((call) => String(call[0])).join("\n");
+    expect(logged).toContain("cause=discovery_readiness_unreadable");
+    expect(logged).toContain("phase=3");
+    expect(logged).toContain("pg: connection terminated");
+  });
+
+  it("reports the failing step on the readiness read too", async () => {
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("pg: connection terminated"),
+    );
+    const { GET } = await import("../route");
+    const res = await GET(getReq(3) as never, { params });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      transitionReadiness: {
+        available: false,
+        basisUnevaluable: {
+          cause: "discovery_readiness_unreadable",
+          resubmitCanSatisfy: true,
+        },
+      },
+    });
+  });
+
+  it("reports no unevaluable cause when the read succeeded", async () => {
+    // The mirror of the case above: a measured gate must not carry a fault.
+    mockLoadDiscoveryEvidenceReadiness.mockResolvedValue({
+      blueprintBasis: "declared",
+      archetypeLabel: "Governed Data Foundation",
+      unknownDeclaredArchetype: null,
+    });
+    const { GET } = await import("../route");
+    const res = await GET(getReq(3) as never, { params });
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      transitionReadiness: { available: boolean; basisUnevaluable: unknown };
+    };
+    expect(body.transitionReadiness.available).toBe(true);
+    expect(body.transitionReadiness.basisUnevaluable).toBeNull();
+  });
+
+  it("asks nothing of the transition-evidence read outside P1-P4", async () => {
+    // The early return is the declared not-applicable bound. A phase outside it
+    // must not produce a fault, and must not issue the reads at all.
+    mockLoadDiscoveryEvidenceReadiness.mockRejectedValue(
+      new Error("must not be called"),
+    );
+    const { GET } = await import("../route");
+    const res = await GET(getReq(5) as never, { params });
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      transitionReadiness: { available: boolean; basisUnevaluable: unknown };
+    };
+    expect(body.transitionReadiness.available).toBe(true);
+    expect(body.transitionReadiness.basisUnevaluable).toBeNull();
+  });
+});
