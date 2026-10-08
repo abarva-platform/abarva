@@ -988,6 +988,8 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/governedDirectives.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/moneyPrecision.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/portfolioTruth.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/unexploitedCreditPanel.test.tsx"
+          "src/app/(maestro)/source/preview/workspace/__tests__/unexploitedRecoverableCredit.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/viewModel.explore.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/workspaceNavigation.test.ts"
           "src/app/(maestro)/source/preview/workspace/__tests__/workspaceUrlState.test.ts"

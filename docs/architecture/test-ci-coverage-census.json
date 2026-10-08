@@ -18,9 +18,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2853,
-    "coveredTestFiles": 2689,
-    "pullRequestCoveredTestFiles": 2688,
+    "testFiles": 2855,
+    "coveredTestFiles": 2691,
+    "pullRequestCoveredTestFiles": 2690,
     "uncoveredTestFiles": 164,
     "directoriesWithTests": 511,
     "directoriesFullyCovered": 441,
@@ -202,8 +202,8 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 38,
-      "coveredTestFiles": 35,
+      "testFiles": 40,
+      "coveredTestFiles": 37,
       "declaredQuarantineTestFiles": 3,
       "untriagedUnrunTestFiles": 0,
       "via": [

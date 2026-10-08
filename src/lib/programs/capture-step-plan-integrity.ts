@@ -60,6 +60,7 @@ import {
   type PhaseCaptureSection,
 } from "@/lib/programs/phase-capture-contract";
 import {
+  MOVES_CAPTURE_STEP_BAR_STEPS,
   phaseStepPlan,
   type PhaseStepPlan,
 } from "@/lib/programs/moves-phase-step-plan";
@@ -79,8 +80,12 @@ import {
  * its `initialStep` is typed `0 | 1 | 2`. The submit action is keyed on
  * `view === 2` being the LAST capture step, so a grouping of a different
  * length would put Submit on the wrong screen — or on no screen.
+ *
+ * Declared by `moves-phase-step-plan.ts`, which has to PRODUCE a plan of this
+ * shape, and re-exported here so this audit and the producer cannot read two
+ * different numbers. Importers of this module keep their path.
  */
-export const MOVES_CAPTURE_STEP_BAR_STEPS = 3;
+export { MOVES_CAPTURE_STEP_BAR_STEPS };
 
 export type CaptureStepPlanDefectKind =
   /** INV1 — the grouping is not the length the step bar is shaped for. */
