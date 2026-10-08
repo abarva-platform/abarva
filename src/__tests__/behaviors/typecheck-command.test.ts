@@ -305,11 +305,15 @@ describe("the typecheck command cannot read or leave a build-info", () => {
 
 describe("the typecheck command raises the heap above where this project dies", () => {
   /**
-   * 6144 is not decoration. The measured crash on `main` is an allocation
-   * failure just past 4 GB, which is where Node's default lands on this
-   * machine, and both workflows already set 6144 and complete.
+   * The floor is not decoration. The first measured crash on `main` was an
+   * allocation failure just past 4 GB, where Node's default lands on this
+   * machine. The floor then had to be raised again: at 6144 the compiler died
+   * `SIGABRT` at a ~6.13 GB peak on two independent branches within seven
+   * minutes. A re-run of one of them passed — which is what a peak within 1% of
+   * its ceiling does, and why a literal alone is the weaker of the two cases
+   * here.
    */
-  it("hands the compiler a heap floor of 6144 MB", () => {
+  it("hands the compiler a heap floor of 8192 MB", () => {
     const tree = makeTree({
       sources: { "ok.ts": "export const value: number = 1;\n" },
       compiler: {
@@ -319,7 +323,36 @@ describe("the typecheck command raises the heap above where this project dies", 
 
     const run = runScript(tree);
 
-    expect(run.output).toContain("--max-old-space-size=6144");
+    expect(run.output).toContain("--max-old-space-size=8192");
+  });
+
+  it("floors the heap at or above the hygiene gate's own typecheck step", () => {
+    // The case above asserts a literal, so lowering the floor and the literal
+    // together would keep it green. This one asserts the RELATIONSHIP that made
+    // 6144 wrong: the same compiler over the same type graph runs at 8192 in
+    // the hygiene gate on the same runner, so a lower floor here is an
+    // asymmetry and not a budget. Both numbers are read from their own
+    // declarations and each is asserted found before being compared, so a
+    // renamed section can never make this pass by matching nothing.
+    const script = readFileSync(
+      path.join(repoRoot, "scripts/quality/typecheck.mjs"),
+      "utf8",
+    );
+    const floors = [...script.matchAll(/HEAP_FLOOR_MB = (\d+)/g)].map((match) =>
+      Number(match[1]),
+    );
+    expect(floors).toHaveLength(1);
+
+    const gate = readFileSync(
+      path.join(repoRoot, "scripts/integration/hygiene_gate.sh"),
+      "utf8",
+    );
+    const gateTypecheckHeaps = [
+      ...gate.matchAll(/TSC_NODE_OPTIONS[^\n]*--max-old-space-size=(\d+)/g),
+    ].map((match) => Number(match[1]));
+    expect(gateTypecheckHeaps.length).toBeGreaterThan(0);
+
+    expect(floors[0]).toBeGreaterThanOrEqual(Math.max(...gateTypecheckHeaps));
   });
 
   it("does not lower a caller who asked for more, and keeps their other flags", () => {

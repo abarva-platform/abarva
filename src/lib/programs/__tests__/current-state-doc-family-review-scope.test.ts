@@ -48,6 +48,12 @@ import {
   canonicalTenantKey,
 } from "@/lib/tenant/aliases";
 import { resolveDocFamilyReviews } from "../current-state-doc-ingest";
+import {
+  DECIDED_EVIDENCE_REVIEW_DECISIONS,
+  describeRejectedEvidenceReview,
+  isDecidedEvidenceReviewDecision,
+  splitDecidedEvidenceReviews,
+} from "../evidence-review-dispositions";
 import type { TenancyCtx } from "../types.db";
 
 // Tenant keys come from code, never hand-typed. These cases turn on ONE tenant
@@ -197,5 +203,101 @@ describe("resolveDocFamilyReviews — tenant read scope", () => {
         (filter) => filter.column === "program_id" && filter.value === "move-a",
       ),
     ).toHaveLength(2);
+  });
+});
+
+// ── The decided decisions ─────────────────────────────────────────────────────
+//
+// Hosted here because these cases are about the same column as the suite above
+// — `program_evidence_reviews.decision` — and its domain is declared by the
+// module this suite already imports.
+//
+// The cabinet asked for TWO of the column's three values by name: the queue for
+// `pending`, the reviewed list for `approved`. `rejected` was therefore in
+// neither read and appeared on no surface, while the queue's own explainer
+// sentence named it as a state. These cases pin the decided SET and the split,
+// which is what keeps a third value from going unread again.
+describe("decided program-evidence review decisions", () => {
+  it("covers exactly the non-pending half of the decision domain", () => {
+    expect([...DECIDED_EVIDENCE_REVIEW_DECISIONS].sort()).toEqual([
+      "approved",
+      "rejected",
+    ]);
+    // The defect in one assertion: `rejected` is a decided decision, so a read
+    // that asks only for `approved` is asking for half of them.
+    expect(isDecidedEvidenceReviewDecision("rejected")).toBe(true);
+    expect(isDecidedEvidenceReviewDecision("approved")).toBe(true);
+    // `pending` is the queue's own read and must not be in this set: a pending
+    // row in the reviewed list would report evidence as committed before a
+    // human accepted it.
+    expect(isDecidedEvidenceReviewDecision("pending")).toBe(false);
+  });
+
+  it("splits one read into the approved and the rejected list", () => {
+    const rows = [
+      { id: "a", decision: "approved" },
+      { id: "r", decision: "rejected" },
+      { id: "a2", decision: "approved" },
+    ];
+
+    const { approved, rejected } = splitDecidedEvidenceReviews(rows);
+
+    expect(approved.map((row) => row.id)).toEqual(["a", "a2"]);
+    expect(rejected.map((row) => row.id)).toEqual(["r"]);
+  });
+
+  it("puts a pending row in neither list", () => {
+    const { approved, rejected } = splitDecidedEvidenceReviews([
+      { id: "p", decision: "pending" },
+    ]);
+
+    expect(approved).toEqual([]);
+    expect(rejected).toEqual([]);
+  });
+
+  it("puts a decision it does not recognise in neither list", () => {
+    // A value added to the column later must not be rendered as accepted
+    // evidence by a list that has not been taught what it means.
+    const { approved, rejected } = splitDecidedEvidenceReviews([
+      { id: "x", decision: "withdrawn" },
+      { id: "y" },
+    ]);
+
+    expect(approved).toEqual([]);
+    expect(rejected).toEqual([]);
+  });
+
+  it("names the rejected state and the action that can still succeed", () => {
+    const rejection = describeRejectedEvidenceReview({
+      rationale: "The parser merged two baselines.",
+    });
+
+    expect(rejection.label).toBe("Rejected");
+    expect(rejection.rationale).toBe("The parser merged two baselines.");
+    // The two actions that CANNOT work must not be prescribed: the stored
+    // decision is never re-decided (the guarded update filters on `pending`),
+    // and the same file parses to the extraction that was rejected.
+    expect(rejection.nextAction).toMatch(/cannot be re-decided/i);
+    expect(rejection.nextAction).toMatch(/same file produces the same/i);
+    // The one that does.
+    expect(rejection.nextAction).toMatch(
+      /corrected file or a different source/i,
+    );
+  });
+
+  it("reports no reason rather than an empty one", () => {
+    // `rationale` is nullable on the column, and a blank string would render as
+    // if the reviewer had left a reason.
+    expect(describeRejectedEvidenceReview({ rationale: "   " }).rationale).toBe(
+      null,
+    );
+    expect(describeRejectedEvidenceReview({ rationale: null }).rationale).toBe(
+      null,
+    );
+    expect(describeRejectedEvidenceReview({}).rationale).toBe(null);
+    // The action does not depend on a reason being recorded.
+    expect(describeRejectedEvidenceReview({}).nextAction).toBe(
+      describeRejectedEvidenceReview({ rationale: "any" }).nextAction,
+    );
   });
 });

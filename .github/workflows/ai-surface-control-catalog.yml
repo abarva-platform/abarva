@@ -289,6 +289,7 @@ jobs:
           src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx
           src/components/strategic-moves/__tests__/BoardArtifactsPanel.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
+          src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
           src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx
           src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.ts
           src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx
@@ -1250,3 +1251,20 @@ jobs:
 
       - name: Exercise the Moves artifact review-decision route suites
         run: npx jest 'src/app/api/v1/programs/\[programId\]/artifacts/\[artifactId\]/review-decision/__tests__' --runInBand
+
+      # C-415 slice 20: the cabinet's own read route, the same class as
+      # slice 19's three writes and for the same surface.
+      # `GET .../artifacts` is the ONLY read behind FileCabinetPanel.tsx — the
+      # panel's single fetch — so it decides what a reviewer can see about the
+      # evidence they have decided on. It was named only by `unit-suites.yml`,
+      # which is required by nothing, so cases over it could not block a merge.
+      # Wired as a DIRECTORY with the brackets escaped for the reason the block
+      # above states; the ONE dynamic segment is still a character class
+      # unescaped, and the unescaped spelling selects no test (measured:
+      # `--listTests` returns nothing). The child route directories are wired
+      # separately and do not match this argument, which stops at
+      # `artifacts/__tests__`. The census reads the same before and after,
+      # because `unit-suites.yml` already selected this path — only the
+      # quotable line moves into a job that can block a merge.
+      - name: Exercise the Moves cabinet artifacts read route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/artifacts/__tests__' --runInBand
