@@ -45,8 +45,9 @@ guard.
 
 ## Layer Impact
 
-- `global-control-lane`. Layer 4 (products) only, and within it only a new leaf module plus its test
-  suite. No existing module's behaviour changes. No change to layers 1–3 — no intake, adapter, or
+- `global-control-lane`. Layer 4 (products) plus repository control: a new leaf module, an operator
+  entry point over it, and the CI wiring that makes it a gate. No existing source module's behaviour
+  changes — nothing new is called at request time. No change to layers 1–3 — no intake, adapter, or
   canonical model change — and nothing is written, migrated, or re-derived.
 
 ## Client Applicability
@@ -56,7 +57,8 @@ guard.
 - Specific clients: none.
 - Internal only: no.
 - Public/demo only: no.
-- Feature flag: none. Nothing is gated, because nothing executes in the product.
+- Feature flag: none. Nothing is gated at request time, because nothing new executes in the
+  product; the audit runs in CI and from the operator script.
 
 ## Changes Included
 
@@ -65,48 +67,75 @@ guard.
   both derived, never listed here: the phases come from the route parser that decides which phase
   pages the product serves, and the route configurations from the exported route and change-impact
   constants, so a new phase or a new route value is audited without editing this file.
+- New `src/scripts/audit/audit-capture-step-plan.ts` — the operator entry point and the gate over it.
+  It prints what it swept before what it found, and exits non-zero both on a defect and on an empty
+  sweep, so "nothing to audit" cannot read as "nothing wrong".
+- `package.json` — new `audit:capture-step-plan` script.
+- `docs/architecture/ci-gate-registry.json` — the new script classified `pr-gate`, in sorted
+  position. The registry refuses any newly added `audit:`/`validate:`/`check:` script that is not
+  classified, and a separate check keeps the file sorted.
+- `.github/workflows/architecture-boundary.yml` — one step in the existing boundary job runs the
+  gate. `pr-gate` requires a workflow to invoke it; without this step the classification would be a
+  claim rather than a fact.
 - New `src/lib/programs/__tests__/capture-step-plan-integrity.test.ts` — asserts the shipped
   declarations are clean, asserts what the sweep actually visited so a clean result cannot be a
   vacuous one, and proves each invariant is checked against a constructed violation.
+- New `src/scripts/__tests__/audit-capture-step-plan.test.ts` — runs the real entry point and pins
+  that it sweeps something, says so, and refuses on an empty sweep.
 - A regenerated test-CI coverage census.
 
-No existing source file is modified. No migrations, workflows, images, flags, or environment
+No existing source module's behaviour changes. No migrations, images, flags, or environment
 variables changed.
 
 ## QA / Validation
 
-- **PASS** — `npx jest src/lib/programs/__tests__`: 160 suites, 2057 tests.
-- **PASS** — `npx jest --runTestsByPath` on the new suite: 16 tests. Invoked by path rather than by
+- **PASS** — `npx jest src/lib/programs/__tests__ src/scripts/__tests__`: 167 suites, 2151 tests.
+- **PASS** — each new suite via `--runTestsByPath`: 16 and 3 tests. Invoked by path rather than by
   pattern, because a path containing a bracketed segment is read as a regular-expression character
   class and can report a confident green while running a different set.
+- **PASS** — `npm run test:behaviors`: 202 suites, 2102 tests.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit`, exit 0 (not
   134, so not an out-of-memory exit read as success).
-- **PASS** — `npx eslint` over both new files, exit 0.
+- **PASS** — `npx eslint` over all four new files, exit 0.
+- **PASS** — the gate's own FAIL path, proven on a real drift rather than only on injected input:
+  removing one declared key from a step group made the audit exit 1 and name the phase, the route
+  configuration, the invariant and the key (`P0 [no confirmed route]
+  grouping_did_not_anticipate_contract (basis repaired): appended business_trigger`). The file was
+  restored and the restoration diffed.
+- **PASS** — `npm run audit:ci-gate-registry` and `audit:ci-gate-registry-order`, both exit 0 with
+  the new entry classified and in sorted position (239 entries).
+- **PASS** — `npm run audit:lib-orphans`, exit 0. The orphan report's own counts are the proof the
+  module is reached: modules reached by operator tooling only moved 258 → 259 and modules reached by
+  a test only moved 429 → 428. The first attempt at this change put the module in `src/lib` with no
+  caller at all, and this gate correctly failed it as `testOnly` — a green suite over a module
+  nothing reaches is not evidence the code is reached.
 - **PASS** — registered-suite proof via census delta, measured after merging `main`: `testFiles`
-  2829 → 2830, `coveredTestFiles` 2664 → 2665, and `uncoveredTestFiles` unchanged at 165. Flat
-  uncovered is the proof the suite sits in a directory a required check sweeps, so it is not dark.
-  The base figures rose from the first measurement (2828/2664/164) because two sibling changes merged
-  while this one was open; the census was regenerated over `main`'s version rather than
-  conflict-resolved, so it asserts the true total rather than re-asserting a stale one.
-- **PASS** — mutation testing: 9 mutations, 9 killed. Killed: loosening the step-count comparison so
-  a short grouping passes; inverting the unheld-question predicate; raising the held-twice threshold;
-  inverting the undeclared-key predicate; making the empty-step comparison unreachable; keying the
-  repaired-basis check on the wrong basis; making the sweep's dedupe skip every configuration so it
-  audits nothing; collapsing the phase probe to a single phase; and truncating one axis of the route
-  cross-product. The harness asserts each anchor matches exactly once before applying, prints the
-  baseline test count for every run (16 in all nine, so no run silently executed zero tests), and the
-  module was diffed byte-for-byte against its backup after the run.
+  2829 → 2831, `coveredTestFiles` 2664 → 2666, `pullRequestCoveredTestFiles` 2663 → 2665, and
+  `uncoveredTestFiles` unchanged at 165. Flat uncovered is the proof both suites sit in directories a
+  required check sweeps, so neither is dark. The base figures rose from the first measurement
+  (2828/2664/164) because two sibling changes merged while this one was open; the census was
+  regenerated over `main`'s version rather than conflict-resolved, so it asserts the true total
+  rather than re-asserting a stale one.
+- **PASS** — mutation testing: 11 mutations, 11 killed. On the audit module (9): loosening the
+  step-count comparison so a short grouping passes; inverting the unheld-question predicate; raising
+  the held-twice threshold; inverting the undeclared-key predicate; making the empty-step comparison
+  unreachable; keying the repaired-basis check on the wrong basis; making the sweep's dedupe skip
+  every configuration so it audits nothing; collapsing the phase probe to a single phase; truncating
+  one axis of the route cross-product. On the entry point (2): dropping the empty-sweep refusal;
+  suppressing the headline that states what was swept. The harness asserts each anchor matches
+  exactly once before applying, prints the baseline test count for every run (16 and 3 respectively,
+  so no run silently executed zero tests), and both files were diffed byte-for-byte against backups
+  after the runs.
 - **NOT RUN** — live signed-in walk. Nothing in this change executes in the product at request time;
   there is no runtime behaviour for a walk to observe.
-- **NOT RUN** — a negative run against a deliberately drifted contract committed to the repository.
-  The drift cases are covered by injected inputs at the audit boundary instead, which is why the
-  suite proves each invariant is checked rather than only that today's declarations pass.
+- **NOT RUN** — a drifted contract committed to the repository as a negative fixture. The drift path
+  is proven by the restored-after live drift above and by injected cases at the audit boundary.
 
 ## Rollout Plan
 
-Merge to `main`. No rollout of its own: the module has no product caller and the suite runs in CI on
-the next run after merge. No migration to apply, no flag to set, no environment variable to change,
-and no image to rebuild for the behaviour to take effect.
+Merge to `main`. No rollout of its own: nothing new is called at request time, and the gate runs on
+the next CI run after merge. No migration to apply, no flag to set, no environment variable to
+change, and no image to rebuild for the behaviour to take effect.
 
 ## Deployment Authority
 
@@ -122,10 +151,12 @@ and no image to rebuild for the behaviour to take effect.
 
 ## Rollback Plan
 
-Revert the squash commit. The change is confined to two new files and a regenerated census; it adds
-no product caller, writes nothing, migrates nothing, and reads no new table, so a revert needs no
-data repair and changes no runtime behaviour. Reverting removes the guard and restores the prior
-state, in which the two declarations could drift unobserved.
+Revert the squash commit. The change is confined to four new files, three single-entry additions
+(an npm script, a gate-registry entry, a workflow step) and a regenerated census; it adds no
+request-time caller, writes nothing, migrates nothing, and reads no new table, so a revert needs no
+data repair and changes no runtime behaviour. Reverting removes the gate and its workflow step and
+restores the prior state, in which the two declarations could drift unobserved. Reverting the
+workflow step alone is enough to stop the gate blocking a PR, without removing the audit.
 
 ## Audit Evidence
 
@@ -141,15 +172,24 @@ state, in which the two declarations could drift unobserved.
 
 - This is a guard, not a repair. It finds no current defect, and it is honest about that: the value
   is that a future edit to either declaration now fails a check instead of silently changing which
-  questions a route's user is asked.
+  questions a route's user is asked. Do not later cite this change as having fixed a live break.
+- Of the four invariants, INV4 (`grouping_did_not_anticipate_contract`) is the one a realistic file
+  drift actually trips, because the repair pass places an unanticipated key on the last step rather
+  than losing it — so the question is still asked, under the wrong editorial copy. INV2's
+  `question_in_no_step` is reachable only when the grouping is empty. Both are checked; their
+  likelihoods are very different and the record says so rather than presenting four equal risks.
 - One latent loss in the reconciler is pinned as a detected case but deliberately not changed. With
   no grouping to repair there is no last step to append to, so every declared question is reported as
   appended and held by nothing — a zero-step flow asking none of the phase's questions. This is
   unreachable through the product today, because the route parser rejects a phase outside the served
   range before a page renders, so changing the reconciler would be a behaviour change to an
   unreachable branch. The audit detects it; nothing relies on it.
-- The audit is not read by any product surface. It joins the other diagnostic signals that flow and
-  render nowhere; a CI check is the right consumer for this one, but the broader pattern remains.
+- The reconciler's three signals (`basis`, `droppedKeys`, `appendedKeys`) still have no reader in the
+  product. A CI gate is the right consumer for this particular condition, so that is not owed here —
+  but the broader pattern of diagnostic signals that flow and render nowhere is unchanged.
 - The audit covers which step holds a question. It does not check that the step's editorial copy
   (title and intro) still describes the questions grouped under it, which can drift without any key
   changing.
+- The gate is wired into an existing boundary job rather than a job of its own, so its red is
+  reported under that job's name. That job already runs ten audits, and a check's name does not
+  describe everything it runs.

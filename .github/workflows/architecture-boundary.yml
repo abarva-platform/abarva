@@ -43,6 +43,12 @@ jobs:
       - name: Check no src/lib module is reached only by its own test
         run: npm run audit:lib-orphans
 
+      # Which capture questions a phase asks and which step renders each are two
+      # hand-maintained declarations. A drift between them means a question
+      # nobody is asked while the capture evaluator still requires its answer.
+      - name: Check every declared capture question reaches a step
+        run: npm run audit:capture-step-plan
+
       # Every audit:/validate:/check: script must say whether it gates a PR.
       - name: Check the CI gate registry
         run: npm run audit:ci-gate-registry
