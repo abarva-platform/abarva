@@ -552,6 +552,9 @@ export async function runDeliverableForTenant(
     ...(input.deliverableTypeKey
       ? { deliverableTypeKey: input.deliverableTypeKey }
       : {}),
+    // The phase this run was scoped to is declared by the caller; persistence files
+    // the editable companion under it instead of re-deriving it from the key.
+    ...(input.phase !== undefined ? { phase: input.phase } : {}),
     tenantPolicy: policy,
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
