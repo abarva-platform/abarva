@@ -18,6 +18,7 @@ import {
   type StageReadinessWorkbookSpec,
   type StageReadinessWorkbookTab,
 } from "./types";
+import { buildStageReadinessArchetypeBasis } from "./archetype-basis";
 
 export const STAGE_READINESS_WORKBOOK_CONTRACT_VERSION =
   "stage-readiness-workbook-v1";
@@ -404,6 +405,13 @@ export function buildStageReadinessWorkbookSpec(
     nextPhase: input.nextPhase,
     artifactName: `${workbookName(input.phase, input.nextPhase)} — ${input.moveName}`,
     archetype: input.archetype,
+    // Both provenance facts are already on the readiness object this builder
+    // receives; nothing new has to be loaded to answer who chose the archetype.
+    archetypeBasis: buildStageReadinessArchetypeBasis({
+      archetype: input.archetype,
+      blueprintBasis: input.readiness.blueprintBasis,
+      unknownDeclaredArchetype: input.readiness.unknownDeclaredArchetype,
+    }),
     generatedAt: input.generatedAt ?? new Date().toISOString(),
     dimensionPlan,
     startHere: {
