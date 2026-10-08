@@ -1,5 +1,9 @@
 import JSZip from "jszip";
 import type { RenderableDeliverable } from "./types";
+import {
+  ARCHITECTURE_V2_EXHIBITS,
+  type ArchitectureModel,
+} from "@/lib/visual-system/architecture-model";
 
 export interface DocQualityVerdict {
   ok: boolean;
@@ -11,13 +15,16 @@ export interface DocQualityVerdict {
 export async function judgeRenderedDocx(
   buffer: Buffer,
   doc: RenderableDeliverable,
+  architectureModel?: ArchitectureModel,
 ): Promise<DocQualityVerdict> {
   const findings: string[] = [];
   const zip = await JSZip.loadAsync(buffer);
   const xml = await zip.file("word/document.xml")?.async("string");
   if (!xml)
     return { ok: false, figures: 0, findings: ["missing_document_xml"] };
-  const expected = doc.exhibits.filter((exhibit) => exhibit.data).length;
+  const expected =
+    doc.exhibits.filter((exhibit) => exhibit.data).length +
+    (architectureModel ? ARCHITECTURE_V2_EXHIBITS.length : 0);
   const figures = (xml.match(/<w:drawing\b/g) ?? []).length;
   const embeddedPngs = Object.keys(zip.files).filter((name) =>
     /^word\/media\/.*\.png$/i.test(name),
@@ -35,6 +42,17 @@ export async function judgeRenderedDocx(
   }
   if (expected && extents.length < expected)
     findings.push("missing_figure_extent");
+  if (architectureModel) {
+    const imageNames = new Set(
+      [...xml.matchAll(/<wp:docPr\b[^>]*\bname="([^"]+)"/g)].map(
+        (match) => match[1],
+      ),
+    );
+    for (const key of ARCHITECTURE_V2_EXHIBITS) {
+      if (!imageNames.has(key))
+        findings.push(`missing_architecture_figure:${key}`);
+    }
+  }
   const escapedTitle = doc.title
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")

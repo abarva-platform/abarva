@@ -18,6 +18,8 @@ import { scanForInternalLeaks } from "../source-register";
 import { goodDocument } from "../__fixtures__/ams-rfp";
 import { extractOfficeText } from "../../shared/office-text-extract";
 import { scanClientReadiness } from "../../shared/client-readiness-scan";
+import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
+import { ARCHITECTURE_V2_EXHIBITS } from "@/lib/visual-system/architecture-model";
 
 describe("DOCX renderer", () => {
   it("produces a valid .docx buffer with the title in metadata", async () => {
@@ -745,6 +747,31 @@ describe("HTML renderer — complete structured exhibit data", () => {
 });
 
 describe("DOCX renderer — visual exhibits", () => {
+  it("renders and judges every governed architecture figure by key", async () => {
+    const model = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
+    const doc = { ...goodDocument(), exhibits: [] };
+    const withoutFigures = await Packer.toBuffer(renderDeliverableDocx(doc));
+    expect(
+      (await judgeRenderedDocx(withoutFigures, doc, model)).findings,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("missing_architecture_figure:"),
+      ]),
+    );
+
+    const withFigures = await Packer.toBuffer(
+      renderDeliverableDocx(doc, model),
+    );
+    const verdict = await judgeRenderedDocx(withFigures, doc, model);
+    expect(verdict.findings).toEqual([]);
+    expect(verdict.figures).toBe(ARCHITECTURE_V2_EXHIBITS.length);
+  }, 120_000);
+
   it("rejects a declared figure missing from the packaged document", async () => {
     const doc = goodDocument();
     const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
