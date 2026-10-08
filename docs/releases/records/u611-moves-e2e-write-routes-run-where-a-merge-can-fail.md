@@ -131,6 +131,16 @@ State exactly who receives the change.
   itself rather than on a copy, so the config resolves from the files' own
   directory.
 - **PASS** — `npm run audit:tenancy-fence-coverage:check`, exit 0, shape matches.
+- **PASS, re-validated after merging main forward.** Main advanced three commits
+  mid-run and one of them appended its own sweep to the end of the same catalog
+  file, so the two appends conflicted. Resolved by keeping BOTH, the earlier
+  sweep first, and by correcting slice 18's own prose, which named only slice 17
+  as its precedent when a second sweep had landed between them. Re-measured on
+  the merged tree: catalog YAML parses (83 steps); requiredness **45**
+  directories, `OK`; the five wiring suites 31 tests green; all four swept route
+  directories 5 suites / 109 tests green; `tsc` exit 0; `prettier --check`
+  clean; fence census shape matches; `release:check` 11 of 11 against the new
+  base.
 - **NOT RUN** — no live signed-in walk. This change alters no product surface,
   so there is nothing on screen for a walk to read.
 
@@ -170,6 +180,13 @@ runtime state is involved, so the revert is complete on merge.
 
 ## Known Gaps
 
+- **After the forward merge the committed census reads 2867 / 2703, which is
+  `+2` over BOTH parents' committed 2865.** Attributed exactly: main's three new
+  commits add two test files
+  (`deliverable-structure-exhibit-kinds.test.ts`, `move-unreadable-refusal.test.ts`)
+  and main's own committed census had not been updated for them. The two
+  parents' identical 2865 is a coincidence of the collision described below, not
+  agreement.
 - **One of the census's two added files is inherited from the base, not produced
   here.** Measured directly: with only the two edited workflow files reverted and
   the new behaviour suite still absent, the census already read `+1` against its
