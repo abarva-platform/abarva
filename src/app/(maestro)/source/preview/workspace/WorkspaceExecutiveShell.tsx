@@ -1764,7 +1764,7 @@ function PortfolioPage({
   );
 }
 
-function CoveragePage({
+export function CoveragePage({
   portfolio,
   onOpenVendor,
 }: {
@@ -1785,7 +1785,8 @@ function CoveragePage({
             100,
         )
       : 0;
-  const archetypes = vendorArchetypeRows(portfolio).slice(0, 6);
+  const { shown: archetypes, notShown: archetypesNotShown } =
+    archetypeRowsForDisplay(vendorArchetypeRows(portfolio));
   const archetypeCoverageTitle =
     populations.declaredOutsideRegisterCount > 0
       ? `${populations.declaredInRegisterCount} of ${populations.registerCount} register contracts are classified`
@@ -1891,10 +1892,10 @@ function CoveragePage({
         ) : null}
         {populations.declaredOutsideRegisterCount > 0 ? (
           <p className="sw-v2-muted">
-            {populations.declaredOutsideRegisterCount} loaded evidence
-            contracts already carry a declared archetype, but their identifiers
-            are not linked to a register header yet. They are shown in the
-            declared plays below and excluded from the register percentage.
+            {populations.declaredOutsideRegisterCount} loaded evidence contracts
+            already carry a declared archetype, but their identifiers are not
+            linked to a register header yet. They are shown in the declared
+            archetypes below and excluded from the register percentage.
           </p>
         ) : null}
         {populations.undeclaredInRegisterCount > 0 ? (
@@ -1908,8 +1909,8 @@ function CoveragePage({
 
       <section className="sw-v2-panel sw-v2-coverage-archetypes">
         <PanelHead
-          eyebrow="Declared plays"
-          title="Archetype determines which levers are allowed"
+          eyebrow="Declared archetypes"
+          title="Recorded value by declared archetype"
         />
         <div className="sw-v2-archetype-list">
           {archetypes.map((row) => (
@@ -1924,6 +1925,16 @@ function CoveragePage({
           {archetypes.length === 0 ? (
             <p className="sw-v2-muted">
               No declared archetype rows are loaded yet.
+            </p>
+          ) : null}
+          {archetypesNotShown > 0 ? (
+            <p className="sw-v2-muted">
+              {archetypesNotShown} further declared{" "}
+              {archetypesNotShown === 1
+                ? "archetype carries"
+                : "archetypes carry"}{" "}
+              recorded value and {archetypesNotShown === 1 ? "is" : "are"} not
+              listed here.
             </p>
           ) : null}
         </div>
@@ -7067,6 +7078,21 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
       vendorName: row.vendorName,
     }))
     .sort((a, b) => b.annualValue - a.annualValue);
+}
+
+/**
+ * How many declared-archetype rows the coverage panel lists.
+ *
+ * The list is capped for layout. A cap that drops a row silently makes a
+ * coverage panel understate the very taxonomy it exists to report, so the
+ * count of omitted rows is returned alongside the ones shown and the panel
+ * states it.
+ */
+const ARCHETYPE_ROWS_SHOWN = 6;
+
+export function archetypeRowsForDisplay<Row>(rows: readonly Row[]) {
+  const shown = rows.slice(0, ARCHETYPE_ROWS_SHOWN);
+  return { shown, notShown: rows.length - shown.length };
 }
 
 export function vendorArchetypeCoverage(

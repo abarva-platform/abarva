@@ -662,7 +662,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
     expect(
-      screen.getByText("Archetype determines which levers are allowed"),
+      screen.getByText("Recorded value by declared archetype"),
     ).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: /Epic Systems Cor.*ready.*\$12\.0M/ }),
@@ -740,7 +740,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
     expect(
-      screen.getByText("Archetype determines which levers are allowed"),
+      screen.getByText("Recorded value by declared archetype"),
     ).toBeTruthy();
   });
 
@@ -1217,7 +1217,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("Readiness by value")).toBeTruthy();
     expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
-    expect(screen.getByText("Declared plays")).toBeTruthy();
+    expect(screen.getByText("Declared archetypes")).toBeTruthy();
     expect(
       screen.queryByText(/No declared archetype rows are loaded/i),
     ).toBeNull();
