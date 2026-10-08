@@ -2387,6 +2387,8 @@ function addPptxArchitectureHeadlineSlide(
   const h = w / aspect;
   slide.addImage({
     data: `data:image/png;base64,${png.toString("base64")}`,
+    objectName: `architecture-exhibit:${visual.id}`,
+    altText: `${visual.title}. ${visual.soWhat} ${visual.decisionImplication}`,
     x: imageX + (maxW - w) / 2,
     y: SLIDE_DESIGN.masters.twoUp.exhibitTopIn + (maxH - h) / 2,
     w,
@@ -2427,6 +2429,8 @@ function addPptxArchitectureVisualSlide(
   const h = w / aspect;
   slide.addImage({
     data: `data:image/png;base64,${png.toString("base64")}`,
+    objectName: `architecture-exhibit:${exhibit.id}`,
+    altText: `${exhibit.title}. ${exhibit.soWhat} ${exhibit.decisionImplication}`,
     x: PPTX_GRID.x(0) + (maxW - w) / 2,
     y: SLIDE_DESIGN.masters.fullBleedExhibit.exhibitTopIn + (maxH - h) / 2,
     w,

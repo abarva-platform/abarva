@@ -311,7 +311,7 @@ function svgTimeline(
         ordered && i < items.length - 1
           ? `<path d="M${x + 48} ${y} L${x + step - 48} ${y}" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
           : "";
-      return `${line}<g>
+      return `${line}<g data-arch-item-id="${esc(item.id)}">
         <circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>${
           ordered
             ? `
@@ -347,7 +347,14 @@ function svgFlowDiagram(
   kinds: ArchFlowKind[],
   title: string,
 ): string {
-  const filtered = flows.filter((f) => kinds.includes(f.kind)).slice(0, 8);
+  const filtered = flows.filter((f) => kinds.includes(f.kind));
+  // This visual fits eight flow cards. A ninth must be composed explicitly;
+  // silently dropping it would make the exported architecture incomplete.
+  if (filtered.length > 8) {
+    throw new Error(
+      `architecture_flow_visual_capacity_exceeded:${title}:${filtered.length}`,
+    );
+  }
   const items = filtered.length
     ? filtered.map((f) => ({
         id: f.id,
