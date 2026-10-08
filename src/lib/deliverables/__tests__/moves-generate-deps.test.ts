@@ -45,12 +45,17 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/prompt-context", () => ({
 }));
 
 import { azureRead } from "@/lib/data-plane/azureRead";
-import { getModuleState, getProgramById } from "@/lib/programs/queries";
+import {
+  getModuleState,
+  getPhaseSnapshots,
+  getProgramById,
+} from "@/lib/programs/queries";
 import { createMovesGenerateArtifactDeps } from "../moves-generate-deps";
 
 const mockAzureQuery = azureRead.query as jest.Mock;
 const mockGetModuleState = getModuleState as jest.Mock;
 const mockGetProgramById = getProgramById as jest.Mock;
+const mockGetPhaseSnapshots = getPhaseSnapshots as jest.Mock;
 
 describe("createMovesGenerateArtifactDeps", () => {
   beforeEach(() => {
@@ -85,6 +90,10 @@ describe("createMovesGenerateArtifactDeps", () => {
     mockGetModuleState.mockResolvedValue([]);
     mockGetProgramById.mockReset();
     mockGetProgramById.mockResolvedValue({ gatesPassed: [] });
+    // The gate readers consult the authoritative approval record as well as
+    // the denormalized `gates_passed` array, so this double must resolve.
+    mockGetPhaseSnapshots.mockReset();
+    mockGetPhaseSnapshots.mockResolvedValue([]);
   });
 
   it("binds uploaded program evidence alongside broker context for artifact generation", async () => {
