@@ -109,29 +109,31 @@ const buildMoveEvidenceNeedPackets = jest.fn(
   },
 );
 const loadDiscoveryEvidenceReadiness = jest.fn(async () => ({}));
-const loadAcceptedStageReadinessContext: jest.Mock = jest.fn(async (...args: unknown[]) => {
-  void args;
-  return {
-    moveId: "move-1",
-    sourcePhase: 1,
-    targetPhase: 2,
-    reviewArtifactId: "review-1",
-    reviewArtifactVersion: 1,
-    proposals: [
-      {
-        proposalId: "proposal-kpi",
-        questionId: "q_kpi_baseline",
-        dimensionId: "contact_center_kpis",
-        requirement: "required" as const,
-        answerState: "answered" as const,
-        disposition: "accepted" as const,
-        evidenceOrSource: "Existing evidence: ev-kpi",
-      },
-    ],
-    acceptedResponses: [],
-    readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
-  };
-});
+const loadAcceptedStageReadinessContext: jest.Mock = jest.fn(
+  async (...args: unknown[]) => {
+    void args;
+    return {
+      moveId: "move-1",
+      sourcePhase: 1,
+      targetPhase: 2,
+      reviewArtifactId: "review-1",
+      reviewArtifactVersion: 1,
+      proposals: [
+        {
+          proposalId: "proposal-kpi",
+          questionId: "q_kpi_baseline",
+          dimensionId: "contact_center_kpis",
+          requirement: "required" as const,
+          answerState: "answered" as const,
+          disposition: "accepted" as const,
+          evidenceOrSource: "Existing evidence: ev-kpi",
+        },
+      ],
+      acceptedResponses: [],
+      readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+    };
+  },
+);
 const formatAcceptedStageReadinessContextForPrompt = jest.fn(
   (...args: unknown[]) => {
     void args;
@@ -141,10 +143,12 @@ const formatAcceptedStageReadinessContextForPrompt = jest.fn(
 // The PROMPT reading is a different policy from the gate reading above: it
 // accepts a review that is still open. Separate mocks so a case can drive the
 // two apart, which is the only thing that pins the route to the right one.
-const loadStageReadinessPromptContext: jest.Mock = jest.fn(async (...args: unknown[]) => {
-  void args;
-  return null;
-});
+const loadStageReadinessPromptContext: jest.Mock = jest.fn(
+  async (...args: unknown[]) => {
+    void args;
+    return null;
+  },
+);
 const formatStageReadinessPromptContext = jest.fn((...args: unknown[]) => {
   void args;
   return "ACCEPTED STAGE READINESS RESPONSE: contact_center_kpis is supported by ev-kpi.";
@@ -308,7 +312,9 @@ jest.mock(
   "@/lib/programs/evidence-readiness/move-evidence-need-packet",
   () => ({
     buildMoveEvidenceNeedPackets: (input: unknown) =>
-      buildMoveEvidenceNeedPackets(input as { moveId?: string; currentPhase?: number }),
+      buildMoveEvidenceNeedPackets(
+        input as { moveId?: string; currentPhase?: number },
+      ),
   }),
 );
 jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
@@ -504,7 +510,9 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
   it("500 naming the keys when a declared phase document has no registry entry", async () => {
     await jest.isolateModulesAsync(async () => {
       jest.doMock("@/lib/programs/deliverable-registry", () => {
-        const actual = jest.requireActual("@/lib/programs/deliverable-registry");
+        const actual = jest.requireActual(
+          "@/lib/programs/deliverable-registry",
+        );
         return {
           ...actual,
           phaseCanonicalKeysForRoute: () => [
@@ -699,7 +707,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         useCaseArchetype: "ai_member_service",
         moveName: "Member Service Agent Assist",
         clientDisplayName: "Client",
-  }),
+      }),
     );
 
     expect(res.status).toBe(202);
@@ -979,8 +987,59 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     const decisionContext = (
       createCalls[0]?.jobPayload as { decisionContext: string }
     ).decisionContext;
+    expect(decisionContext).toContain("one response is still open for review");
+  });
+
+  // P1 Charter is the FIRST deliverable-generating phase, and its preceding
+  // transition is the P0 to P1 workbook the P0 screen offers, serves and
+  // reviews. The prompt window used to start at P2, so every accepted answer on
+  // that workbook was dropped from the charter build with nothing reporting it.
+  it("reads the P0 to P1 review when building P1, the first generating phase", async () => {
+    loadStageReadinessPromptContext.mockResolvedValue({
+      context: {
+        moveId: "m-1",
+        sourcePhase: 0,
+        targetPhase: 1,
+        reviewArtifactId: "a-p0-p1",
+        reviewArtifactVersion: 2,
+        proposals: [],
+        acceptedResponses: [
+          { questionId: "q1", answer: "Named sponsor", source: "charter.pdf" },
+        ],
+        readiness: {
+          ready: 1,
+          partial: 0,
+          insufficientEvidence: 0,
+          unknown: 0,
+        },
+      },
+      openResponseCount: 0,
+      reviewOpen: false,
+    });
+    formatStageReadinessPromptContext.mockReturnValue(
+      "ACCEPTED STAGE READINESS RESPONSE: Named sponsor.",
+    );
+
+    const res = await POST(
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    // Keyed by the phase being generated, which is the review's targetPhase.
+    expect(loadStageReadinessPromptContext).toHaveBeenCalledWith(
+      expect.anything(),
+      "m-1",
+      1,
+    );
+    const decisionContext = (
+      createCalls[0]?.jobPayload as { decisionContext: string }
+    ).decisionContext;
     expect(decisionContext).toContain(
-      "one response is still open for review",
+      "ACCEPTED STAGE READINESS RESPONSE: Named sponsor.",
     );
   });
 
@@ -1320,7 +1379,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       charter: { classification: { archetype: "governed_data_foundation" } },
     });
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createMoveContextExtract).toHaveBeenCalledWith(
@@ -1330,10 +1393,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         declaredArchetypeId: "governed_data_foundation",
       }),
     );
-    expect(getProgramById).toHaveBeenCalledWith(
-      expect.anything(),
-      "m-1",
-    );
+    expect(getProgramById).toHaveBeenCalledWith(expect.anything(), "m-1");
   });
 
   it("hands over the coarse archetype as the inference seed when the Move declares nothing", async () => {
@@ -1343,7 +1403,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       charter: null,
     });
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createMoveContextExtract).toHaveBeenCalledWith(
@@ -1366,7 +1430,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       charter: { classification: { archetype: "governed_data_foundation" } },
     });
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createCalls.length).toBeGreaterThan(0);
@@ -1386,7 +1454,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       charter: null,
     });
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createCalls.length).toBeGreaterThan(0);
@@ -1422,7 +1494,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
   it("still enqueues when the program read fails — a lost declaration must not fail the build", async () => {
     getProgramById.mockRejectedValue(new Error("program store unavailable"));
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createMoveContextExtract).toHaveBeenCalledWith(
