@@ -292,32 +292,36 @@ function svgTextBlock(
 function svgTimeline(
   items: ReadonlyArray<{ id: string; label: string; detail?: string }>,
   accent = "var(--data)",
+  ordered = true,
 ): string {
-  const leftGutter = 132;
-  const step = 220;
-  const width = Math.max(
-    760,
-    leftGutter * 2 + Math.max(0, items.length - 1) * step,
-  );
-  const height = 214;
+  const columns = 4;
+  const leftGutter = ordered ? 132 : 115;
+  const step = ordered ? 220 : 245;
+  const width = ordered
+    ? Math.max(760, leftGutter * 2 + Math.max(0, items.length - 1) * step)
+    : 980;
+  const height = ordered
+    ? 214
+    : 35 + Math.max(1, Math.ceil(items.length / columns)) * 165;
   const nodes = items
     .map((item, i) => {
-      const x = leftGutter + i * step;
+      const x = leftGutter + (ordered ? i : i % columns) * step;
+      const y = ordered ? 92 : 65 + Math.floor(i / columns) * 165;
       const line =
-        i < items.length - 1
-          ? `<path d="M${x + 48} 92 L${x + step - 48} 92" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
+        ordered && i < items.length - 1
+          ? `<path d="M${x + 48} ${y} L${x + step - 48} ${y}" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
           : "";
       return `${line}<g>
-        <circle cx="${x}" cy="92" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>
-        <text x="${x}" y="97" text-anchor="middle" font-size="13" font-weight="700">${i + 1}</text>
-        ${svgTextBlock(item.label, x, 140, {
-          maxChars: 24,
-          maxLines: 2,
+        <circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>
+        ${ordered ? `<text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="700">${i + 1}</text>` : ""}
+        ${svgTextBlock(item.label, x, y + 48, {
+          maxChars: ordered ? 24 : 30,
+          maxLines: ordered ? 2 : 3,
           lineHeight: 14,
           fontSize: 12,
           weight: 700,
         })}
-        ${svgTextBlock(item.detail, x, 174, {
+        ${svgTextBlock(item.detail, x, y + (ordered ? 82 : 100), {
           maxChars: 32,
           maxLines: 2,
           lineHeight: 12,
@@ -327,7 +331,7 @@ function svgTimeline(
       </g>`;
     })
     .join("");
-  return `<svg class="diagram timeline" viewBox="0 0 ${width} ${height}" role="img" aria-label="Architecture flow diagram">
+  return `<svg class="diagram ${ordered ? "timeline" : "collection"}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${ordered ? "Ordered architecture flow" : "Architecture components"}">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${accent}"/></marker></defs>
     ${nodes}
   </svg>`;
@@ -351,7 +355,7 @@ function svgFlowDiagram(
     kinds.includes("control") || kinds.includes("human_approval")
       ? "var(--control)"
       : "var(--data)";
-  return svgTimeline(items, accent);
+  return svgTimeline(items, accent, false);
 }
 
 function svgGapBridge(model: ArchitectureModel): string {
@@ -360,7 +364,7 @@ function svgGapBridge(model: ArchitectureModel): string {
     label: b.targetCapability,
     detail: b.gap,
   }));
-  return svgTimeline(items, "var(--changed)");
+  return svgTimeline(items, "var(--changed)", false);
 }
 
 function svgLevel(
@@ -371,6 +375,7 @@ function svgLevel(
     return svgTimeline(
       [{ id: "missing", label: title, detail: "Missing level" }],
       "var(--muted)",
+      false,
     );
   }
   return svgTimeline(
@@ -380,6 +385,7 @@ function svgLevel(
       detail: n.service ?? ARCH_LAYER_LABELS[n.layer],
     })),
     "var(--data)",
+    false,
   );
 }
 
@@ -431,7 +437,7 @@ function humanApproval(
       label: labels[a.agentId] ?? a.agentId,
       detail: a.humanInLoop,
     }));
-  return `${svgTimeline(approvals, "var(--control)")}${agenticOverlay(model, labels)}`;
+  return `${svgTimeline(approvals, "var(--control)", false)}${agenticOverlay(model, labels)}`;
 }
 
 function integrationMap(
@@ -451,6 +457,7 @@ function integrationMap(
       detail: n.service,
     })),
     "var(--data)",
+    false,
   );
   return `${svg}${stateMap({
     title: "Integration map",
@@ -466,7 +473,7 @@ function governanceTelemetry(model: ArchitectureModel): string {
     label: c.label,
     detail: c.owner ?? c.what,
   }));
-  return `${svgTimeline(items, "var(--control)")}<div class="grid2">${model.controlPoints
+  return `${svgTimeline(items, "var(--control)", false)}<div class="grid2">${model.controlPoints
     .map(
       (c) =>
         `<div class="card"><div class="card-h">${esc(c.label)}</div><div class="note">${esc(c.what)}</div>${c.owner ? `<div class="owner">${esc(c.owner)}</div>` : ""}</div>`,
@@ -486,6 +493,7 @@ function decisionLog(model: ArchitectureModel): string {
       detail: d.recommendation,
     })),
     "var(--accent)",
+    false,
   )}<div class="grid2">${rows.join("")}</div>`;
 }
 
@@ -690,6 +698,34 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
     ${section("decisions", 17, "Open inputs required", "What the architecture leadership still needs to confirm.", decisionsBody || `<p class="empty">No open decisions outstanding.</p>`)}
   </div>
 </body></html>`;
+}
+
+export interface ArchitectureVisualExhibit {
+  id: ArchitectureExhibitKey;
+  title: string;
+  soWhat: string;
+  decisionImplication: string;
+  svg: string;
+}
+
+/** Use the exact governed diagrams shown in the HTML preview for Office exports. */
+export function renderArchitectureVisualExhibits(
+  model: ArchitectureModel,
+): ArchitectureVisualExhibit[] {
+  const html = renderArchitectureHtml(model);
+  return ARCHITECTURE_V2_EXHIBITS.map((id) => {
+    const section = html.match(
+      new RegExp(
+        `<section\\b[^>]*\\bdata-exhibit="${id}"[\\s\\S]*?<\\/section>`,
+        "i",
+      ),
+    )?.[0];
+    const svg = section?.match(/<svg\b[\s\S]*?<\/svg>/i)?.[0];
+    if (!svg) {
+      throw new Error(`architecture_visual_missing: ${id}`);
+    }
+    return { id, ...exhibitMeta(model, id), svg };
+  });
 }
 
 function blockHasSvg(html: string, id: ArchitectureExhibitKey): boolean {

@@ -3,11 +3,31 @@ import type { ArchitectureModel } from "../architecture-model";
 import {
   deriveArchitectureContractSignals,
   renderArchitectureHtml,
+  renderArchitectureVisualExhibits,
 } from "../architecture-html-renderer";
 import { ARCHITECTURE_V2_EXHIBITS } from "../architecture-model";
 import { FIRST_CAPITAL_ARCHITECTURE } from "../__fixtures__/first-capital-architecture";
 
 describe("architecture model + HTML renderer (W2)", () => {
+  it("does not imply a sequence between unordered architecture components or recorded edges", () => {
+    const visuals = renderArchitectureVisualExhibits(
+      FIRST_CAPITAL_ARCHITECTURE,
+    );
+    const conceptual = visuals.find(
+      (visual) => visual.id === "target_conceptual_architecture",
+    );
+    const dataFlow = visuals.find(
+      (visual) => visual.id === "end_to_end_data_flow",
+    );
+    const operatingFlow = visuals.find(
+      (visual) => visual.id === "current_state_operating_flow",
+    );
+    expect(conceptual?.svg).toContain('class="diagram collection"');
+    expect(conceptual?.svg).not.toContain('marker-end="url(#arrow)"');
+    expect(dataFlow?.svg).toContain('class="diagram collection"');
+    expect(dataFlow?.svg).not.toContain('marker-end="url(#arrow)"');
+    expect(operatingFlow?.svg).toContain('marker-end="url(#arrow)"');
+  });
   it("the First Capital sample model is referentially valid (no errors)", () => {
     const issues = validateArchitectureModel(FIRST_CAPITAL_ARCHITECTURE);
     expect(issues.filter((i) => i.level === "error")).toHaveLength(0);

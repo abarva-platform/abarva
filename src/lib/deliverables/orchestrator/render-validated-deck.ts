@@ -15,6 +15,7 @@ import {
   type DeckVerdict,
 } from "./deck-quality";
 import type { RenderableDeliverable } from "./types";
+import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
 
 export interface ValidatedDeck {
   buffer: Buffer;
@@ -37,9 +38,10 @@ export interface ValidatedDeck {
 export async function renderValidatedDeck(
   doc: RenderableDeliverable,
   policy: DeckPolicy = {},
+  architectureModel?: ArchitectureModel,
 ): Promise<ValidatedDeck> {
   const renderAndJudge = async (candidate: RenderableDeliverable) => {
-    const buffer = await renderDeliverablePptx(candidate);
+    const buffer = await renderDeliverablePptx(candidate, architectureModel);
     const inspection = await inspectDeck(buffer);
     return {
       buffer,

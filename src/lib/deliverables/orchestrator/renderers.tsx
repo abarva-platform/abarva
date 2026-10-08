@@ -34,6 +34,11 @@ import {
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { rasteriseSvg } from "@/lib/programs/expert-kernel/exports/board-grade/svg-raster";
+import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
+import {
+  renderArchitectureVisualExhibits,
+  type ArchitectureVisualExhibit,
+} from "@/lib/visual-system/architecture-html-renderer";
 
 import {
   ORDERED_NUMBERING_CONFIG,
@@ -958,13 +963,17 @@ function svgValueTree(exhibit: RenderableExhibit): string {
     connectors.push(
       `<path d="M${rootX + rootW} ${rootCY} C ${(rootX + rootW + brX) / 2} ${rootCY}, ${(rootX + rootW + brX) / 2} ${branchCY}, ${brX} ${branchCY}" fill="none" stroke="var(--line)" stroke-width="1.5"/>`,
     );
-    branchParts.push(node(brX, brW, branchCY, branch.label, branch.value, true));
+    branchParts.push(
+      node(brX, brW, branchCY, branch.label, branch.value, true),
+    );
     kids.forEach((child, k) => {
       const childCY = slotCenterY(start + k);
       connectors.push(
         `<path d="M${brX + brW} ${branchCY} C ${(brX + brW + chX) / 2} ${branchCY}, ${(brX + brW + chX) / 2} ${childCY}, ${chX} ${childCY}" fill="none" stroke="var(--line)" stroke-width="1"/>`,
       );
-      branchParts.push(node(chX, chW, childCY, child.label, child.value, false));
+      branchParts.push(
+        node(chX, chW, childCY, child.label, child.value, false),
+      );
     });
     slotCursor += span;
   });
@@ -1378,8 +1387,7 @@ function exhibitSvg(exhibit: RenderableExhibit, index: number): string | null {
     return svgRoadmapExhibit(dataExhibit);
   if (dataExhibit.kind === "flow" || dataExhibit.data?.kind === "flow")
     return svgFlowExhibit(dataExhibit, domId);
-  if (dataExhibit.data?.kind === "value_tree")
-    return svgValueTree(dataExhibit);
+  if (dataExhibit.data?.kind === "value_tree") return svgValueTree(dataExhibit);
   return null;
 }
 
@@ -1411,6 +1419,11 @@ const SVG_TOKEN_HEX: Record<string, string> = {
   "--line2": "#EFECE5",
   "--chip": "#F1EEE7",
   "--fresh": "#3F7A5B",
+  "--data": "#2F6F6A",
+  "--control": "#9A5B2F",
+  "--new": "#2F6F6A",
+  "--changed": "#9A5B2F",
+  "--accent": "#1A1A1A",
 };
 
 function resolveSvgTokens(svg: string): string {
@@ -2026,6 +2039,56 @@ function addPptxExhibitSlide(
   return true;
 }
 
+function addPptxArchitectureVisualSlide(
+  pptx: PptxGenJSInstance,
+  exhibit: ArchitectureVisualExhibit,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
+  const { png, aspect } = rasteriseSvg(
+    withXmlns(resolveSvgTokens(exhibit.svg)),
+    3,
+  );
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  slide.addText(safePptxText(exhibit.title), {
+    x: 0.72,
+    y: 0.85,
+    w: 11.8,
+    h: 0.55,
+    fontFace: "Georgia",
+    fontSize: 19,
+    color: PPTX_COLOR.ink,
+    fit: "shrink",
+  });
+  const maxW = 11.8;
+  const maxH = 4.65;
+  const w = Math.min(maxW, maxH * aspect);
+  const h = w / aspect;
+  slide.addImage({
+    data: `data:image/png;base64,${png.toString("base64")}`,
+    x: 0.72 + (maxW - w) / 2,
+    y: 1.48 + (maxH - h) / 2,
+    w,
+    h,
+  });
+  slide.addText(safePptxText(exhibit.soWhat), {
+    x: 0.72,
+    y: 6.25,
+    w: 11.8,
+    h: 0.58,
+    fontFace: "Arial",
+    fontSize: 10,
+    color: PPTX_COLOR.ink,
+    fit: "shrink",
+  });
+  slide.addNotes(
+    `Exhibit: ${exhibit.id}\nDecision implication: ${exhibit.decisionImplication}`,
+  );
+}
+
 function addPptxAuthoredSlide(
   pptx: PptxGenJSInstance,
   authoredSlide: RenderableDeckSlide,
@@ -2256,6 +2319,7 @@ function addPptxTableSlide(
  *  and never fails the whole deck. */
 export async function renderDeliverablePptx(
   doc: RenderableDeliverable,
+  architectureModel?: ArchitectureModel,
 ): Promise<Buffer> {
   const { default: PptxGenJS } = await import("pptxgenjs");
   const pptx = new PptxGenJS();
@@ -2280,6 +2344,9 @@ export async function renderDeliverablePptx(
   const renderableExhibits = doc.exhibits
     .map((exhibit, index) => ({ exhibit, index }))
     .filter(({ exhibit, index }) => exhibitSvg(exhibit, index) !== null);
+  const architectureVisuals = architectureModel
+    ? renderArchitectureVisualExhibits(architectureModel)
+    : [];
   const authoredSlides = (doc.deckSlides ?? []).filter(
     (slide) => slide.governingMessage.trim().length > 0,
   );
@@ -2289,6 +2356,7 @@ export async function renderDeliverablePptx(
       ? authoredSlides.length
       : doc.generatedSections.length + renderableExhibits.length) +
     inDeckTables.length +
+    architectureVisuals.length +
     1;
   let slideNumber = 1;
 
@@ -2475,6 +2543,17 @@ export async function renderDeliverablePptx(
       )
         slideNumber += 1;
     });
+  }
+
+  for (const exhibit of architectureVisuals) {
+    addPptxArchitectureVisualSlide(
+      pptx,
+      exhibit,
+      doc,
+      slideNumber,
+      totalSlides,
+    );
+    slideNumber += 1;
   }
 
   // One native table slide per in-deck table (xlsx-targeted tables live only in the Excel companion).

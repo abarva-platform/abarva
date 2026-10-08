@@ -365,9 +365,10 @@ function safeFileStem(value: string): string {
 async function renderOfficeCompanion(
   doc: RenderableDeliverable,
   outputFormat: GeneratedArtifactFormat,
+  architectureModel?: ArchitectureModel,
 ): Promise<GeneratedOfficeCompanion | null> {
   if (outputFormat === "pptx") {
-    const rendered = await renderValidatedDeck(doc);
+    const rendered = await renderValidatedDeck(doc, {}, architectureModel);
     if (!rendered.physicallyIntact) {
       throw new Error(
         `generated_pptx_failed_physical_integrity: ${rendered.integrityFailures
@@ -718,6 +719,9 @@ export async function persistDeliverable(
     const officeCompanion = await renderCompanion(
       renderableDocWithType,
       outputFormat,
+      usesStructuredArchitecturePreview(contractDeliverableKey)
+        ? opts.structuredModels?.architectureModel
+        : undefined,
     );
     const materialize = deps.materializeDeliverableDraft ?? completeDeliverable;
     const materialized = await materialize(
@@ -798,8 +802,7 @@ export async function persistDeliverable(
               : {}),
             ...(opts.phaseEvidenceSnapshotHash
               ? {
-                  phaseEvidenceSnapshotHash:
-                    opts.phaseEvidenceSnapshotHash,
+                  phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
                   evidenceSnapshotScope: "phase",
                 }
               : {}),
