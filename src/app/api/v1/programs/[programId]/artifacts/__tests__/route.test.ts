@@ -10,6 +10,14 @@ const tenancy = {
 let moveRows: Array<Record<string, unknown>> = [];
 let generatedRecs: Array<Record<string, unknown>> = [];
 let mockPendingEvidenceReviewRows: Array<Record<string, unknown>> = [];
+/**
+ * The column filters the route puts on `program_evidence_reviews`, captured
+ * only — the builder below still resolves every row for the table, so adding
+ * this changes no existing case. It is how a case can ask WHICH decisions a
+ * read asked for, which is the question behind a decision value that no list
+ * carried.
+ */
+let mockEvidenceReviewFilters: Array<{ column: string; value: unknown }> = [];
 let mockPendingEvidenceRows: Array<Record<string, unknown>> = [];
 const moveCalls: Array<Record<string, unknown>> = [];
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
@@ -50,10 +58,21 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
       // Thenable builder: every method chains, and awaiting the chain resolves
       // to the table's rows regardless of which method terminates it — so this
       // tolerates the tenant-key filter being `.in(...)` mid-chain.
+      const record = (column: string, value: unknown) => {
+        if (table === "program_evidence_reviews") {
+          mockEvidenceReviewFilters.push({ column, value });
+        }
+      };
       const query: Record<string, unknown> = {
         select: () => query,
-        eq: () => query,
-        in: () => query,
+        eq: (column: string, value: unknown) => {
+          record(column, value);
+          return query;
+        },
+        in: (column: string, value: unknown) => {
+          record(column, value);
+          return query;
+        },
         order: () => query,
         limit: () => query,
         then: (resolve: (v: { data: unknown; error: null }) => unknown) =>
@@ -79,6 +98,7 @@ beforeEach(() => {
   generatedRecs = [];
   mockPendingEvidenceReviewRows = [];
   mockPendingEvidenceRows = [];
+  mockEvidenceReviewFilters = [];
   moveCalls.length = 0;
   genCalled = 0;
   mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue({
@@ -1110,5 +1130,95 @@ describe("GET /api/v1/programs/[programId]/artifacts — operator-job evidence",
         }),
       }),
     );
+  });
+});
+
+// ── The rejected decision reaches the cabinet payload ─────────────────────────
+//
+// `program_evidence_reviews.decision` admits `pending | approved | rejected`.
+// This route read two of the three by name — one query for the pending queue
+// and one for the reviewed list, filtered `decision = 'approved'` — so a
+// REJECTED review was returned by neither and the cabinet had no list to put it
+// in. These cases pin the producer: that the decided read asks for the decided
+// SET, and that a rejected row leaves the route in its own field with the
+// reviewer's reason attached.
+describe("GET artifacts carries the rejected evidence reviews", () => {
+  const reviewRow = (decision: string) => ({
+    id: `review-${decision}`,
+    evidence_id: "evidence-9",
+    family_key: "kpi_baseline",
+    phase: 2,
+    decision,
+    rationale: "The parser merged two baselines into one row.",
+    reviewed_at: "2026-10-07T00:00:00.000Z",
+    source_ref: { filename: "finance-baseline.xlsx" },
+  });
+
+  it("asks for both decided decisions, not approved alone", async () => {
+    mockPendingEvidenceReviewRows = [reviewRow("rejected")];
+    mockPendingEvidenceRows = [{ id: "evidence-9", title: "Finance baseline" }];
+
+    await GET(req(), params("11111111-1111-1111-1111-111111111111"));
+
+    const decisionFilters = mockEvidenceReviewFilters.filter(
+      (filter) => filter.column === "decision",
+    );
+    // The pending queue's own `decision = 'pending'` is one of these; the
+    // decided read is the one that asks for a set, and it has to name both.
+    const decidedFilter = decisionFilters.find((filter) =>
+      Array.isArray(filter.value),
+    );
+    expect(decidedFilter).toBeDefined();
+    expect(decidedFilter!.value).toEqual(
+      expect.arrayContaining(["approved", "rejected"]),
+    );
+    expect(decidedFilter!.value).not.toEqual(
+      expect.arrayContaining(["pending"]),
+    );
+  });
+
+  it("returns a rejected review with the reason the reviewer recorded", async () => {
+    mockPendingEvidenceReviewRows = [reviewRow("rejected")];
+    mockPendingEvidenceRows = [{ id: "evidence-9", title: "Finance baseline" }];
+
+    const res = await GET(
+      req(),
+      params("11111111-1111-1111-1111-111111111111"),
+    );
+    const json = await res.json();
+
+    expect(json.rejectedEvidence).toEqual([
+      {
+        evidenceId: "evidence-9",
+        reviewId: "review-rejected",
+        title: "finance-baseline.xlsx",
+        familyKey: "kpi_baseline",
+        phase: 2,
+        reviewedAt: "2026-10-07T00:00:00.000Z",
+        rationale: "The parser merged two baselines into one row.",
+      },
+    ]);
+    // It is not ALSO reported as accepted evidence: the approved list is what
+    // phase generation treats as committed.
+    expect(json.reviewedEvidence).toEqual([]);
+  });
+
+  it("keeps an approved review in the reviewed list and out of the rejected one", async () => {
+    // The control. Both lists come from one read, so a split that ignored the
+    // decision would put every decided row in both.
+    mockPendingEvidenceReviewRows = [reviewRow("approved")];
+    mockPendingEvidenceRows = [{ id: "evidence-9", title: "Finance baseline" }];
+
+    const res = await GET(
+      req(),
+      params("11111111-1111-1111-1111-111111111111"),
+    );
+    const json = await res.json();
+
+    expect(json.rejectedEvidence).toEqual([]);
+    expect(json.reviewedEvidence).toHaveLength(1);
+    expect(json.reviewedEvidence[0].reviewId).toBe("review-approved");
+    // The approved list has never carried a rationale and does not start now.
+    expect(json.reviewedEvidence[0]).not.toHaveProperty("rationale");
   });
 });

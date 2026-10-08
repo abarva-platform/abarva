@@ -14,6 +14,7 @@ import {
 } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 import { getPhaseLabel, TOTAL_PHASES } from "@/lib/programs/phase-labels";
+import { describeRejectedEvidenceReview } from "@/lib/programs/evidence-review-dispositions";
 
 interface Artifact {
   artifactId: string;
@@ -1916,6 +1917,20 @@ export function FileCabinetPanel({
       reviewedAt: string | null;
     }>
   >([]);
+  // Rejected reviews are a THIRD list. They are in neither the queue (pending)
+  // nor the reviewed list (approved), so before this they were on no surface at
+  // all — including the rationale the reviewer had just recorded.
+  const [rejectedEvidence, setRejectedEvidence] = useState<
+    Array<{
+      evidenceId: string;
+      reviewId: string;
+      title: string;
+      familyKey: string;
+      phase: number | null;
+      reviewedAt: string | null;
+      rationale: string | null;
+    }>
+  >([]);
   const [reviewingEvidenceId, setReviewingEvidenceId] = useState<string | null>(
     null,
   );
@@ -1957,6 +1972,9 @@ export function FileCabinetPanel({
       setEvidenceReviewAvailable(j.evidenceReviewStatus !== "unavailable");
       setReviewedEvidence(
         Array.isArray(j.reviewedEvidence) ? j.reviewedEvidence : [],
+      );
+      setRejectedEvidence(
+        Array.isArray(j.rejectedEvidence) ? j.rejectedEvidence : [],
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "load failed");
@@ -2451,6 +2469,88 @@ export function FileCabinetPanel({
                 </div>
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {rejectedEvidence.length > 0 && (
+        <section
+          aria-label="Rejected evidence"
+          style={{
+            margin: "10px 0 14px",
+            padding: 12,
+            border: "1px solid #e6cfcf",
+            borderRadius: 6,
+            background: "#fdf8f8",
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 14, color: "#7a2f2f" }}>
+            {rejectedEvidence.length} rejected evidence item
+            {rejectedEvidence.length === 1 ? "" : "s"}
+          </h3>
+          <p style={{ margin: "4px 0 8px", fontSize: 12, color: "#6b4f4f" }}>
+            Rejected evidence is excluded from phase generation.{" "}
+            {describeRejectedEvidenceReview({}).nextAction}
+          </p>
+          <ul
+            style={{
+              margin: 0,
+              padding: 0,
+              listStyle: "none",
+              display: "grid",
+              gap: 6,
+            }}
+          >
+            {rejectedEvidence.map((item) => {
+              const rejection = describeRejectedEvidenceReview(item);
+              return (
+                <li
+                  key={item.reviewId || item.evidenceId}
+                  style={{
+                    border: "1px solid #e6cfcf",
+                    borderRadius: 6,
+                    padding: 10,
+                    background: "#fff",
+                  }}
+                >
+                  <strong style={{ fontSize: 12 }}>{item.title}</strong>
+                  <div
+                    style={{
+                      margin: "4px 0 0",
+                      fontSize: 11.5,
+                      color: "#6b4f4f",
+                      display: "flex",
+                      gap: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span>{rejection.label}</span>
+                    <span>{item.familyKey.replace(/_/g, " ")}</span>
+                    {item.phase != null && <span>Phase {item.phase}</span>}
+                    {item.reviewedAt && (
+                      <span>
+                        Rejected{" "}
+                        {new Date(item.reviewedAt).toLocaleDateString(
+                          undefined,
+                          { year: "numeric", month: "short", day: "numeric" },
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  {rejection.rationale && (
+                    <p
+                      style={{
+                        margin: "6px 0 0",
+                        fontSize: 11.5,
+                        color: "#4a3f3f",
+                      }}
+                    >
+                      Reviewer&rsquo;s reason: {rejection.rationale}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

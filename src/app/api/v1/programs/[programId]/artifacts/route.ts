@@ -23,6 +23,10 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  DECIDED_EVIDENCE_REVIEW_DECISIONS,
+  splitDecidedEvidenceReviews,
+} from "@/lib/programs/evidence-review-dispositions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -205,36 +209,57 @@ interface CabinetReviewedEvidence {
   reviewedAt: string | null;
 }
 
+/** A rejected review, which no cabinet list used to carry. */
+interface CabinetRejectedEvidence extends CabinetReviewedEvidence {
+  /** The reviewer's recorded reason, null when none was stored. */
+  rationale: string | null;
+}
+
 /**
- * Human-approved program evidence for this Move, as a light read-only list for
- * the Files & Evidence cabinet. Unlike the pending queue it carries no
- * extraction/source-text payload — it is an audit trail of what a reviewer
- * accepted, not an editing surface. Tenant match uses the per-tenant alias set
+ * The DECIDED program-evidence reviews for this Move, as light read-only lists
+ * for the Files & Evidence cabinet. Unlike the pending queue they carry no
+ * extraction/source-text payload — they are an audit trail of what a reviewer
+ * decided, not an editing surface. Tenant match uses the per-tenant alias set
  * so rows written under either representation surface (see the pending loader).
+ *
+ * Both decisions come from ONE read over
+ * `DECIDED_EVIDENCE_REVIEW_DECISIONS`. This read asked for `approved` alone,
+ * and the pending queue asks for `pending`, so a `rejected` row — the third
+ * value the column's CHECK constraint admits — was returned by neither and
+ * appeared in no list on the panel. Asking for the decided SET and splitting it
+ * is what stops a decision value going unread.
  */
-async function loadReviewedEvidence(
+async function loadDecidedEvidenceReviews(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
-): Promise<{ items: CabinetReviewedEvidence[]; available: boolean }> {
+): Promise<{
+  approved: CabinetReviewedEvidence[];
+  rejected: CabinetRejectedEvidence[];
+  available: boolean;
+}> {
+  const unavailable = { approved: [], rejected: [], available: false };
   try {
     const db = getAzureWriteFluentClient();
     const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
     const { data: reviews, error: reviewError } = await db
       .from("program_evidence_reviews")
-      .select("id, evidence_id, family_key, phase, source_ref, reviewed_at")
+      .select(
+        "id, evidence_id, family_key, phase, source_ref, reviewed_at, decision, rationale",
+      )
       .in("tenant_key", tenantKeys)
       .eq("program_id", programId)
-      .eq("decision", "approved")
+      .in("decision", [...DECIDED_EVIDENCE_REVIEW_DECISIONS])
       .order("reviewed_at", { ascending: false })
       .limit(200);
     if (reviewError || !Array.isArray(reviews)) {
-      return { items: [], available: false };
+      return unavailable;
     }
     const reviewRows = reviews as Array<Record<string, unknown>>;
     const evidenceIds = reviewRows
       .map((row) => row.evidence_id)
       .filter((id): id is string => typeof id === "string" && Boolean(id));
-    if (!evidenceIds.length) return { items: [], available: true };
+    if (!evidenceIds.length)
+      return { approved: [], rejected: [], available: true };
 
     const { data: evidenceRows, error: evidenceError } = await db
       .from("program_evidence_items")
@@ -243,7 +268,7 @@ async function loadReviewedEvidence(
       .eq("program_id", programId)
       .in("id", evidenceIds);
     if (evidenceError || !Array.isArray(evidenceRows)) {
-      return { items: [], available: false };
+      return unavailable;
     }
     const titleById = new Map(
       (evidenceRows as Array<Record<string, unknown>>).map((row) => [
@@ -251,35 +276,52 @@ async function loadReviewedEvidence(
         typeof row.title === "string" ? row.title : "",
       ]),
     );
+    const describe = (
+      review: Record<string, unknown>,
+      fallbackTitle: string,
+    ): CabinetReviewedEvidence | null => {
+      const evidenceId =
+        typeof review.evidence_id === "string" ? review.evidence_id : "";
+      if (!titleById.has(evidenceId)) return null;
+      const sourceRef = objectValue(review.source_ref);
+      return {
+        evidenceId,
+        reviewId: String(review.id ?? ""),
+        title: String(
+          sourceRef.filename ??
+            sourceRef.title ??
+            titleById.get(evidenceId) ??
+            fallbackTitle,
+        ),
+        familyKey: String(review.family_key ?? "uploaded_move_evidence"),
+        phase: typeof review.phase === "number" ? review.phase : null,
+        reviewedAt:
+          typeof review.reviewed_at === "string" ? review.reviewed_at : null,
+      };
+    };
+    const split = splitDecidedEvidenceReviews(reviewRows);
     return {
       available: true,
-      items: reviewRows.flatMap((review) => {
-        const evidenceId =
-          typeof review.evidence_id === "string" ? review.evidence_id : "";
-        if (!titleById.has(evidenceId)) return [];
-        const sourceRef = objectValue(review.source_ref);
+      // The approved list is an audit trail of acceptance; a rationale is not
+      // part of what it has ever shown, and widening it is not this change.
+      approved: split.approved.flatMap((review) => {
+        const item = describe(review, "Approved evidence");
+        return item ? [item] : [];
+      }),
+      rejected: split.rejected.flatMap((review) => {
+        const item = describe(review, "Rejected evidence");
+        if (!item) return [];
         return [
           {
-            evidenceId,
-            reviewId: String(review.id ?? ""),
-            title: String(
-              sourceRef.filename ??
-                sourceRef.title ??
-                titleById.get(evidenceId) ??
-                "Approved evidence",
-            ),
-            familyKey: String(review.family_key ?? "uploaded_move_evidence"),
-            phase: typeof review.phase === "number" ? review.phase : null,
-            reviewedAt:
-              typeof review.reviewed_at === "string"
-                ? review.reviewed_at
-                : null,
+            ...item,
+            rationale:
+              typeof review.rationale === "string" ? review.rationale : null,
           },
         ];
       }),
     };
   } catch {
-    return { items: [], available: false };
+    return unavailable;
   }
 }
 
@@ -686,7 +728,7 @@ export async function GET(
       ctx,
       programId,
     );
-    const reviewedEvidenceList = await loadReviewedEvidence(ctx, programId);
+    const decidedEvidence = await loadDecidedEvidenceReviews(ctx, programId);
     const deliverableSignOffByKey =
       await loadDeliverableSignOffByKey(programId);
     const approvedSnapshot = ctx.clientKey
@@ -938,7 +980,9 @@ export async function GET(
       count: artifacts.length,
       artifacts,
       pendingEvidenceReviews: evidenceReviewQueue.items,
-      reviewedEvidence: reviewedEvidenceList.items,
+      reviewedEvidence: decidedEvidence.approved,
+      // The third decision value, which no cabinet list carried before.
+      rejectedEvidence: decidedEvidence.rejected,
       evidenceReviewStatus: evidenceReviewQueue.available
         ? "available"
         : "unavailable",
