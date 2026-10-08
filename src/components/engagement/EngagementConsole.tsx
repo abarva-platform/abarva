@@ -13,6 +13,7 @@ import { CitationPill } from './CitationPill';
 import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
+import { PHASE_ROSTER, getPhaseRosterName } from '@/lib/programs/phase-roster';
 
 // Extract unique citations from agent turn text so we can render a source
 // pills row below the response — visible provenance by default, Target
@@ -95,7 +96,6 @@ export function EngagementConsole({
   engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics, topContradictions, contradictionsScope = 'client', activityEvents,
 }: Props) {
   const router = useRouter();
-  const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
   const deliverablesList = deliverables ?? [];
 
   const [messages, setMessages] = useState<LocalTurn[]>(turns);
@@ -265,7 +265,7 @@ export function EngagementConsole({
             const raw = evt as unknown as { phase?: number; new_phase?: number };
             const phase = typeof raw.phase === 'number' ? raw.phase : engagement.current_phase;
             const newPhase = typeof raw.new_phase === 'number' ? raw.new_phase : phase + 1;
-            const phaseName = phaseLabels[newPhase] ?? `Phase ${newPhase}`;
+            const phaseName = getPhaseRosterName(newPhase);
             setGateToast({ phase, newPhase });
             setPhaseTransition({ fromPhase: phase, toPhase: newPhase, phaseName, stage: 0 });
             // Safety net · if the server never emits phase_opener for any
@@ -509,8 +509,8 @@ export function EngagementConsole({
 
       {/* Phase indicator */}
       <div style={{ padding: '18px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, maxWidth: 1480, margin: '0 auto', width: '100%' }}>
-          {phaseLabels.map((label, i) => (
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${PHASE_ROSTER.length}, 1fr)`, gap: 8, maxWidth: 1480, margin: '0 auto', width: '100%' }}>
+          {PHASE_ROSTER.map(({ phase: i, shortLabel: label }) => (
             <div key={i} style={{
               padding: '10px 12px',
               borderRadius: 8,

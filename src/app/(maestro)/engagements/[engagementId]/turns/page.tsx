@@ -2,6 +2,7 @@ import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { PHASE_ROSTER, getPhaseChipLabel } from '@/lib/programs/phase-roster';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,6 @@ const PURPLE = '#9B6DFF';
 const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const PANEL_BG = 'rgba(255,255,255,0.02)';
 const MONO = 'JetBrains Mono, monospace';
-const PHASE_LABELS = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
 
 interface TurnRow {
   id: string;
@@ -141,8 +141,8 @@ export default async function TurnsPage({
           style={{ background: '#0A0A0A', color: INK, border: BORDER, borderRadius: 6, padding: '4px 10px', fontSize: 12, fontFamily: MONO }}
         >
           <option value="">All phases</option>
-          {PHASE_LABELS.map((label, i) => (
-            <option key={i} value={i}>Phase {i} · {label}</option>
+          {PHASE_ROSTER.map(({ phase, shortLabel }) => (
+            <option key={phase} value={phase}>Phase {phase} · {shortLabel}</option>
           ))}
         </select>
         <select
@@ -202,7 +202,7 @@ export default async function TurnsPage({
                 {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}` : 'SPONSOR'}
               </span>
               <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.1em' }}>
-                PHASE {t.phase} {PHASE_LABELS[t.phase]?.toUpperCase()}
+                PHASE {t.phase} {getPhaseChipLabel(t.phase)}
               </span>
               <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, marginLeft: 'auto' }}>
                 {new Date(t.created_at).toLocaleString()}
