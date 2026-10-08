@@ -1154,3 +1154,48 @@ jobs:
       # character class that matches nothing.
       - name: Exercise the phase-advance route suites
         run: npx jest 'src/app/api/v1/programs/\[programId\]/advance/__tests__' --runInBand
+
+      # C-415 slice 18: the two remaining live Moves write routes on the
+      # end-to-end path that no required job reached.
+      #
+      # Slice 17 wired the gate-approval route and the step above wired the
+      # phase-advance route. These are the other two writes a Move cannot
+      # complete a phase without, and both were in exactly the state those two
+      # describe: the census counted the directory COVERED
+      # because `unit-suites.yml` named it, and `unit-suites.yml` is in none of
+      # the required contexts, so every case guarding either route could be
+      # deleted without a merge-blocking check going red.
+      #
+      # Measured BEFORE wiring, three consecutive runs each with identical
+      # results under --runInBand:
+      #   deliverables/generate-phase        1 suite, 35 tests, GREEN 0.13-0.18s
+      #   current-state/evidence/.../approve 1 suite,  4 tests, GREEN 0.053s
+      #
+      # Not coverage of nothing, checked before wiring:
+      #   - generate-phase is the phase build. POST is fetched from
+      #     PhaseApproveAndBuild.tsx:562, the control that turns an approved
+      #     phase into its deliverables; the route validates the phase, resolves
+      #     the build specs and enqueues the durable worker. Without it a phase
+      #     produces no document at all.
+      #   - the evidence approve route is the human-in-the-loop step. POST is
+      #     fetched from FileCabinetPanel.tsx:1979 and
+      #     CurrentStateReadinessPanel.tsx:823 — the two surfaces where a
+      #     reviewer turns a pending evidence review into an approved one, which
+      #     is a precondition of the discovery gate.
+      #
+      # Both wired as DIRECTORIES so a suite added to either is owned without a
+      # workflow edit. generate-phase has no dynamic segment, so its argument is
+      # a plain path the coverage census can also read. The evidence route does,
+      # so its brackets are escaped for the same reason slice 17's are: jest
+      # reads a bare positional argument as a REGEX and `[evidenceId]`
+      # unescaped is a character class that matches nothing. The requiredness
+      # control resolves those escapes; the coverage census does not, which is
+      # why the unit-suites entry removed for that one is the exact-path name
+      # and not its directory — the same job's broad `src/app/api/v1/programs`
+      # argument still selects it, so the census reads the same before and
+      # after and only the quotable line moves into a job that can block.
+      - name: Exercise the phase deliverable build route suites
+        run: npx jest src/app/api/v1/deliverables/generate-phase/__tests__ --runInBand
+
+      - name: Exercise the current-state evidence approval route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/current-state/evidence/\[evidenceId\]/approve/__tests__' --runInBand

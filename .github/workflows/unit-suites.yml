@@ -169,13 +169,17 @@ jobs:
       # the directory that holds it, so naming it here put the quotable line
       # in a job that blocks nothing while the blocking line stayed anonymous
       # — the defect `named-suite-requiredness` exists to refuse. Read
-      # `PASS <path>` out of the required job's own log instead. The remaining
-      # paths are in directories that no required sweep reaches.
+      # `PASS <path>` out of the required job's own log instead.
+      #
+      # generate-phase/__tests__/route.test.ts has been removed from this list
+      # and from "Run the deliverables route suites" below, where it was named
+      # a second time, for the same reason: the catalog sweeps that directory
+      # as of slice 18. The remaining paths here are in directories that no
+      # required sweep reaches.
       - name: Run the Moves evidence revision suites
         run: >-
           npx jest --runTestsByPath
           src/scripts/__tests__/process-deliverable-queue.test.ts
-          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/generate/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/artifacts/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts
@@ -192,7 +196,6 @@ jobs:
           npx jest --runTestsByPath
           src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/__tests__/route.test.ts
           src/app/api/programs/[id]/deliverables/[deliverableId]/export/__tests__/route.test.ts
-          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
           src/app/api/v1/deliverables/generate/__tests__/route.test.ts
           src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/__tests__/route.test.ts
@@ -356,16 +359,18 @@ jobs:
       # list is deliberate: their common parents also contain unrelated route
       # trees, so naming a broad parent would hide which governed gate failed.
       #
-      # The nineteenth entry was the phase-gate-approval route suite. Its
-      # directory is now swept by the required AI surface control catalog
-      # (slice 17), and a suite a required job runs must be NAMED inside a
-      # required job, so the quotable line and the merge-blocking line are the
-      # same one (scripts/quality/check-named-suite-requiredness.mjs, T-595).
-      # Read its result out of the catalog's own log.
+      # Two entries have since left the list. The phase-gate-approval route
+      # suite went when the required AI surface control catalog began sweeping
+      # its directory (slice 17); the current-state evidence approval route
+      # suite went for the same reason at slice 18. A suite a required job runs
+      # must be NAMED inside a required job, so that the quotable line and the
+      # merge-blocking line are the same one
+      # (scripts/quality/check-named-suite-requiredness.mjs, T-595). Read both
+      # results out of the catalog's own log.
       #
-      # This job still RUNS that suite — the broad `src/app/api/v1/programs`
-      # argument below selects it — so nothing stopped running here and the
-      # coverage census reads the same before and after. Only the name moved.
+      # This job still RUNS both suites — the broad `src/app/api/v1/programs`
+      # argument below selects them — so nothing stopped running here and the
+      # coverage census reads the same before and after. Only the names moved.
       - name: Run governed approval route suites
         run: >-
           npx jest --runTestsByPath
@@ -381,7 +386,6 @@ jobs:
           "src/app/api/admin/pricing/rate-cards/[id]/approve/__tests__/route.test.ts"
           "src/app/api/admin/programs/approvals/export/__tests__/route.test.ts"
           "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts"
-          "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/__tests__/route.test.ts"
           "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__/route.test.ts"
           "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
           "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__/route.test.ts"
