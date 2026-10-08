@@ -237,6 +237,22 @@ jobs:
       - name: Exercise Source canvas analytics component suites
         run: npx jest src/components/source/canvas/analytics --runInBand
 
+      # Not a catalog control. `src/components/engagement` held NO suites at
+      # all and no workflow named it, while the engagement meta strip it holds
+      # is the Moves nav tab's own progress surface: it states the phase, the
+      # baseline lock, the next gate, and a marker per phase gate. Two
+      # successive defects landed in that strip's gate rail — a hardcoded phase
+      # model, then a blindness to the record that holds a mid-phase approval —
+      # and neither could have been caught here, because the `data-testid` the
+      # first of them added had no assertion behind it anywhere in the tree.
+      #
+      # Wired as a DIRECTORY, like the `src/lib/programs/__tests__` step below:
+      # the directory is the half that covers suites nobody has written yet,
+      # and this one is being created with its first suite, so file-by-file
+      # wiring would guarantee the next suite starts dark.
+      - name: Exercise the engagement console component suites
+        run: npx jest src/components/engagement --runInBand
+
       # Not a catalog control. `src/components/strategic-moves/__tests__` is the
       # second-ranked governed-risk directory in
       # `docs/architecture/test-ci-coverage-census.json` — declared AI surface

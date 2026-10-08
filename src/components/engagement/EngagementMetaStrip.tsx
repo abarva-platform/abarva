@@ -1,6 +1,7 @@
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import { deriveEngagementPhaseRail } from '@/lib/programs/engagement-phase-rail';
+import type { DatedGateSnapshot } from '@/lib/programs/gate-approval-events';
 import { getPhaseLabel } from '@/lib/programs/phase-labels';
 
 const INK = '#F5F5F0';
@@ -54,6 +55,13 @@ function initials(name: string): string {
 
 interface Props {
   engagement: EngagementRow;
+  /**
+   * The Move's `phase_snapshots` rows. Required, not optional: `gates_passed`
+   * carries no P1-P4 approval on the walked path, so a strip rendered without
+   * these reports an advancing Move as having cleared no gate. Pass `[]` only
+   * when the host truly loaded none.
+   */
+  phaseSnapshots: readonly DatedGateSnapshot[];
   sponsor: PersonRow | null;
   turnCount: number;
   lastTurnAt: string | null;
@@ -86,6 +94,7 @@ function parseCurrencyToUsd(value: unknown): number | null {
 // sponsor badge. Below: phase progress bar with gate markers.
 export function EngagementMetaStrip({
   engagement,
+  phaseSnapshots,
   sponsor,
   turnCount,
   lastTurnAt,
@@ -112,11 +121,12 @@ export function EngagementMetaStrip({
           return null;
         })();
   // Every gate signal comes from one place, so the strip cannot recognise a
-  // narrower set of recorded shapes than the rest of the product does. The two
-  // former `baselineLockedAt` fallback arms were identical expressions, so
-  // collapsing them to the phase-2 gate date changes no outcome.
+  // narrower set of recorded shapes — or a narrower set of RECORDS — than the
+  // rest of the product does. The snapshots are what carry a P1-P4 approval;
+  // without them the rail marks only whatever the Move was seeded with.
   const phaseRail = deriveEngagementPhaseRail({
     gatesPassed: engagement.gates_passed as readonly unknown[] | null,
+    snapshots: phaseSnapshots,
     baselineCapturedAt: baseline?.captured_at ?? null,
   });
   const { baselineLockedAt, nextGateAt, markers } = phaseRail;

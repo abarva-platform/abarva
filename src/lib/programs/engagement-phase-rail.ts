@@ -2,7 +2,7 @@
 // canonical Strategic Move phase, each carrying the canonical label and
 // whichever gate approval the Move's records name for it.
 //
-// Two separate defects put this in a module instead of at the render site.
+// Three separate defects put this in a module instead of at the render site.
 //
 // 1. The strip stated its own phase model. It hardcoded five labels —
 //    'Start', 'Diagnose', 'Design', 'Execute', 'Verify' — on a surface the
@@ -23,25 +23,43 @@
 //    BARE PHASE NUMBER. A number has no `.phase`, so the approval the product
 //    itself records matched nothing. A sibling reader of the same array,
 //    `hasTerminalTowerHandoffPassed`, does accept the bare number, so two
-//    readers disagreed about the same record. Asking through
-//    `findGatesPassedEntryForPhase` means the phase spellings and approving
-//    statuses are stated once, in `approved-gate-phases`, for every reader.
+//    readers disagreed about the same record. Asking a shared reader means the
+//    phase spellings and approving statuses are stated once, in
+//    `approved-gate-phases`, for every reader rather than per surface.
+//
+// 3. The rail asked one of the two records that can say a gate was approved.
+//    `gates_passed` is not appended to for phases 1-4 by any reachable
+//    control — the advance SQL omits the column and the only product writer is
+//    the terminal P5 handoff — so a user who approved the P1, P2, P3 or P4
+//    gate in the product saw that phase render unmarked, on the surface whose
+//    whole job is to show how far the Move has come. The authoritative record
+//    for those phases is `phase_snapshots`: both `runAdvancePhase`
+//    implementations insert a row for the phase being left, stamped `approved`
+//    with a `locked_at`. Taking both records closes that, and because the
+//    snapshot row is dated it also gives the two date readings below something
+//    to read on a walked Move, where before they could only ever be null.
+//
+// Approval and its date are both asked of `buildGateApprovalEvents`, which
+// already states that union once for the activity timeline, so the rail gains
+// a reader of the existing rule rather than restating it. Phases it reports as
+// approved-but-undatable come back separately and are marked without a date.
 //
 // What is deliberately NOT claimed. A bare phase number carries no date, so
 // such an entry reports `approved: true` with `signedAt: null`: the rail can
 // say the gate was approved without inventing when. Date-derived text
 // (baseline lock, next gate) stays absent in that case rather than guessing.
-// And `gates_passed` is not written at all for phases 1-4 by any reachable
-// control, so recovering those approvals needs `phase_snapshots` — which this
-// host does not load, and which is why the rail can still show an approved
-// phase as unmarked. That is a narrower claim than the array being right.
+// And a host that loads no snapshots is told nothing new — the rail reads what
+// it is handed, so wiring the host is part of the fix, not an optional half.
 
 import {
   PHASE_LABELS_SHORT,
   TOTAL_PHASES,
   getPhaseLabelShort,
 } from "@/lib/programs/phase-labels";
-import { findGatesPassedEntryForPhase } from "@/lib/programs/approved-gate-phases";
+import {
+  buildGateApprovalEvents,
+  type DatedGateSnapshot,
+} from "@/lib/programs/gate-approval-events";
 
 /** Days from the most recent signed gate to the nominal next one. */
 export const NEXT_GATE_INTERVAL_DAYS = 30;
@@ -50,7 +68,7 @@ export type EngagementPhaseMarker = {
   phase: number;
   /** The canonical short rail label, e.g. `Originate` for phase 0. */
   label: string;
-  /** Does `gates_passed` name this phase's gate as approved? */
+  /** Does either gate record name this phase's gate as approved? */
   approved: boolean;
   /** The recorded sign-off date, or null when the record carried none. */
   signedAt: string | null;
@@ -68,6 +86,12 @@ export type EngagementPhaseRail = {
 export type EngagementPhaseRailInput = {
   /** `engagements.gates_passed`, in any shape it has been written in. */
   gatesPassed: readonly unknown[] | null | undefined;
+  /**
+   * `phase_snapshots` rows for the Move — the record that carries the P1-P4
+   * approvals the array never receives. Omit only when the host genuinely
+   * loaded none; omitting it reinstates the blind spot this input exists for.
+   */
+  snapshots?: readonly DatedGateSnapshot[] | null;
   /** `baseline_metrics.captured_at`, which outranks a gate date when present. */
   baselineCapturedAt?: string | null;
 };
@@ -78,18 +102,30 @@ function nonEmpty(value: unknown): string | null {
 
 export function deriveEngagementPhaseRail({
   gatesPassed,
+  snapshots = null,
   baselineCapturedAt = null,
 }: EngagementPhaseRailInput): EngagementPhaseRail {
+  // Both records, asked once. `events` carries the approvals some record can
+  // date; `undatedPhases` carries the approvals no record can — a bare phase
+  // number is an approval with no time attached, and dropping it would report
+  // an approved gate as unapproved purely for want of a timestamp.
+  const { events, undatedPhases } = buildGateApprovalEvents({
+    gatesPassed,
+    snapshots,
+  });
+  const signedAtByPhase = new Map(events.map((event) => [event.phase, event.at]));
+  const undated = new Set(undatedPhases);
+
   // The rail is as long as the canonical phase model, so a Move at the last
   // phase has a column to sit in and no index runs off the end.
   const markers: EngagementPhaseMarker[] = [];
   for (let phase = 0; phase < TOTAL_PHASES; phase += 1) {
-    const match = findGatesPassedEntryForPhase(gatesPassed, phase);
+    const signedAt = signedAtByPhase.get(phase) ?? null;
     markers.push({
       phase,
       label: getPhaseLabelShort(phase),
-      approved: match !== null,
-      signedAt: match?.signedAt ?? null,
+      approved: signedAt !== null || undated.has(phase),
+      signedAt,
     });
   }
 
