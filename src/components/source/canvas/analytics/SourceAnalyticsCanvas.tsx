@@ -1324,6 +1324,12 @@ function SourceShellRail({
       >
         <RailLabel>Workspace</RailLabel>
         <WorkspaceButton
+          workspaceKey="steps"
+          label="Current stage"
+          active={workspace === "steps"}
+          onClick={() => selectWorkspace("steps")}
+        />
+        <WorkspaceButton
           workspaceKey="files"
           label="Files & deliverables"
           active={workspace === "files"}

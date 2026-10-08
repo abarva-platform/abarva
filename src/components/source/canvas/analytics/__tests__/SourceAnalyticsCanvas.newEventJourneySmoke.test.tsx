@@ -118,6 +118,11 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(railContent).toHaveAttribute("data-open", "false");
     expect(screen.getByTestId("source-shell-v2-files")).toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole("button", { name: /current stage/i }));
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
   });
 
   it.each(SOURCE_STAGE_ORDER)(

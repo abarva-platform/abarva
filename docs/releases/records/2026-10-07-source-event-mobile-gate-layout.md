@@ -29,14 +29,14 @@ Release lane: `global-control-lane`.
 
 ## Changes Included
 
-- Collapse the event journey and workspace rail behind an accessible control on narrow screens, preserving navigation.
+- Collapse the event journey and workspace rail behind an accessible control on narrow screens, preserving navigation in both directions.
 - Stack the focused step list above the active step and keep it scrollable.
 - Give the fixed progress area usable mobile width and separate Ask aVa from it.
-- Add a focused interaction test for compact rail navigation.
+- Add a focused interaction test for the compact rail's Files-to-stage round trip.
 
 ## QA / Validation
 
-- The compact rail test failed before implementation and passed after it.
+- The compact rail test failed before implementation, then the Files-to-stage round-trip test exposed a missing return action. Both passed after the change.
 - Mutation check: forcing the rail content closed while leaving `aria-expanded` functional failed the focused test; the mutation was reverted.
 - Canvas analytics suite: 40 suites, 293 tests passed.
 - TypeScript check with Node 24 and an 8 GB heap: passed.
