@@ -81,14 +81,41 @@ for them today.
 - `src/lib/programs/__tests__/engagement-console-tenant-fence-wiring.test.tsx`
   — new, 7 cases, hosting the page itself.
 - `docs/architecture/test-ci-coverage-census.json` — regenerated.
+- `src/__tests__/integration/programs/phase-capture-gate-routes.test.ts` — a
+  stale assertion inverted. Carried here because `main` was red on it, see
+  below.
+
+### Also in this release: a stale assertion that left `main` red
+
+u604 made the P5 terminal Tower handoff record the `current_phase: 6` it had
+always reported. This integration suite, in a different tree, asserted the
+OPPOSITE — `expect(updateCalls).not.toEqual(... current_phase: 6)` — so it
+pinned the very defect u604 removed. u604's own unit suite passed and this one
+was not run against the change, so `main` went red on the required-adjacent
+`Programs governance integration` check the moment u604 merged, and every PR
+opened after it inherited that red.
+
+The assertion is now the positive: the handoff MUST record the phase it
+reports. Proof it is load-bearing rather than merely inverted — dropping
+`current_phase` from the route again (the original defect) fails exactly 1 of
+the suite's 7 cases, and restoring it returns 7 of 7.
+
+This is the same shape as a required sweep reclassifying a previously-correct
+named line: a behaviour fix can turn a passing assertion into a defect, and the
+assertion that encoded the old behaviour has to move with it.
 
 ## QA / Validation
 
 - **PASS** `npx jest src/lib/programs/__tests__/engagement-tenant-fence.test.ts
   src/lib/programs/__tests__/engagement-console-tenant-fence-wiring.test.tsx` —
   23 of 23.
-- **PASS** `npx jest src/lib/programs/__tests__` — 175 suites, 2269 tests, the
-  whole swept directory, no sibling regressed.
+- **PASS** `npx jest src/lib/programs/__tests__
+  src/__tests__/integration/programs/phase-capture-gate-routes.test.ts` — 176
+  suites, 2276 tests, the whole swept directory plus the carried integration
+  suite, no sibling regressed.
+- **PASS** Mutation proof for the carried assertion: dropping `current_phase`
+  from the terminal handoff route — the original u604 defect — fails exactly 1
+  of 7 cases; restored, 7 of 7.
 - **PASS** Mutation proof, 6 designed mutations, **6 of 6 killed**:
   removing the page's fence call (2 cases — this is the proof the host asks the
   decider rather than the decider merely being correct in isolation); inverting
