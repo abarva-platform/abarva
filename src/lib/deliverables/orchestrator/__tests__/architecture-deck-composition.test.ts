@@ -20,7 +20,7 @@ const all = ARCHITECTURE_V2_EXHIBITS.map(visual);
 const ids = (pages: ReturnType<typeof composeArchitectureDeckPages>) =>
   pages
     .filter((p) => p.kind !== "divider")
-    .map((p) => (p.kind === "divider" ? null : p.visual.id));
+    .map((p) => p.visual.id);
 
 describe("composeArchitectureDeckPages", () => {
   it("returns nothing when there are no visuals", () => {
@@ -41,7 +41,7 @@ describe("composeArchitectureDeckPages", () => {
     });
     const headlineIds = pages
       .filter((p) => p.kind === "headline")
-      .map((p) => (p.kind === "headline" ? p.visual.id : null));
+      .map((p) => p.visual.id);
     expect(headlineIds).toEqual([...ARCHITECTURE_HEADLINE_ORDER]);
   });
 
@@ -117,7 +117,7 @@ describe("composeArchitectureDeckPages", () => {
     const pages = composeArchitectureDeckPages(subset);
     const headlineIds = pages
       .filter((p) => p.kind === "headline")
-      .map((p) => (p.kind === "headline" ? p.visual.id : null));
+      .map((p) => p.visual.id);
     expect(headlineIds).toEqual([
       "current_state_gaps_map",
       "ai_recommendation_control_flow",
