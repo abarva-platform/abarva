@@ -175,6 +175,38 @@ non-required workflow exactly as they did before.
 - The repository ruleset's required status checks, in which
   `AI surface control catalog` appears and `unit-suites.yml`'s job does not.
 
+## Follow-up Applied — a required sweep makes a named line in a non-required job a defect
+
+Wiring the directory into the required catalog workflow turned an existing line
+in the non-required workflow into a violation of the repository's own
+suite-wiring rule (`docs/ci/README-suite-wiring.md`, enforced by
+`src/__tests__/behaviors/named-suite-requiredness.test.ts`): one suite inside the
+newly swept directory was also named individually, by path, in a job that blocks
+nothing. The named line is the quotable one and the blocking line is anonymous,
+which is exactly the confusion that rule refuses.
+
+The rule offers two remedies — move the named step into the required job, or drop
+it and read `PASS <path>` out of the required job's own log. The second applies
+here, because the required sweep already runs that file. The path is removed from
+the non-required list with a comment saying why; the other paths in that step are
+in directories no required sweep reaches and are untouched.
+
+- **PASS** — `npx jest src/__tests__/behaviors/named-suite-requiredness.test.ts`
+  → 7 of 7, having failed 1 of 7 before the drop. The failure was a true
+  consequence of this change, not a flake, and the remedy is the one the rule
+  prescribes.
+- **PASS** — the census delta is **unchanged** by the drop: still `+1/+1/+1` with
+  `uncoveredTestFiles` flat. `pullRequestCoveredTestFiles` in particular does not
+  fall, which is the proof that the dropped path is still reached on a pull
+  request — by the required sweep rather than by its own line.
+- **PASS** — `npx jest src/lib/deliverables/__tests__` plus both guards → 38
+  suites, 314 tests, all pass after the forward merge of `main`.
+
+This is worth recording as a general consequence: **every directory wired into a
+required sweep must be checked for suites inside it that a non-required job still
+names individually.** The wiring does not merely add a gate; it changes the
+classification of lines that were previously correct.
+
 ## Known Gaps
 
 - **Sibling directories under the same parent are still merge-dark**, and one of
