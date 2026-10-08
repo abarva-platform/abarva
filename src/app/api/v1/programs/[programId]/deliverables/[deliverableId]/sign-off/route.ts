@@ -75,6 +75,7 @@ import {
   stampApprovedEvidenceLineage,
   type ApprovedEvidenceLineageStamp,
 } from "@/lib/programs/deliverables/approved-evidence-lineage";
+import { resolveApprovedEvidenceBasisPhaseScope } from "@/lib/programs/approved-evidence-basis-phase-scope";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 // Union of every deliberately registered/agent-authorable deliverable type
@@ -277,6 +278,14 @@ export async function POST(
       DELIVERABLE_REGISTRY.find(
         (spec) => spec.deliverableTypeKey === deliverableTypeKey,
       )?.phase ?? 0;
+    // A separate question from the phase this artifact is STAMPED with: whether
+    // an approved-evidence currency comparison can run for this key at all.
+    // `isApprovedMoveEvidenceBasisCurrent` refuses to compare outside P1-P5 and
+    // answers `false` there for every input, so that `false` may not be read as
+    // "superseded". Owned by the component that owns the bounds; this route
+    // used to confine only the lower one.
+    const evidenceBasisPhaseScope =
+      resolveApprovedEvidenceBasisPhaseScope(deliverableTypeKey);
 
     if (!RECOGNIZED_DELIVERABLE_TYPE_KEYS.has(deliverableTypeKey)) {
       return Response.json(
@@ -423,11 +432,12 @@ export async function POST(
               ? versionStructuredData.evidenceSnapshotHash
               : null;
         const evidenceBasisRefusal = classifyApprovedEvidenceBasisRefusal({
-          basisEvaluable: Boolean(evidenceSnapshot) && deliverablePhase >= 1,
+          basisEvaluable:
+            Boolean(evidenceSnapshot) && evidenceBasisPhaseScope.evaluable,
           cause: !ctx.clientKey
             ? "tenant_scope_unresolved"
-            : deliverablePhase < 1
-              ? "deliverable_phase_unresolved"
+            : !evidenceBasisPhaseScope.evaluable
+              ? evidenceBasisPhaseScope.cause
               : "snapshot_unreadable",
           recordedRevision,
           basisIsCurrent:

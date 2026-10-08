@@ -52,7 +52,15 @@ export type UnevaluableApprovedEvidenceBasisCause =
   /** The snapshot loader answered `null` or threw: one of its unevaluable paths. */
   | "snapshot_unreadable"
   /** The deliverable's canonical phase did not resolve, so no phase basis exists. */
-  | "deliverable_phase_unresolved";
+  | "deliverable_phase_unresolved"
+  /**
+   * The phase resolved, but sits outside the range the approved-evidence
+   * snapshot models, where `isApprovedMoveEvidenceBasisCurrent` answers `false`
+   * for every input. Kept distinct from `deliverable_phase_unresolved` so a
+   * registration at such a phase does not read as a registry gap — and, more
+   * importantly, so it cannot read as a stale document.
+   */
+  | "deliverable_phase_outside_evidence_basis_range";
 
 export type ApprovedEvidenceBasisCondition =
   /** No comparison ran. Rebuilding cannot change the answer. */
@@ -130,6 +138,12 @@ function describeCause(cause: UnevaluableApprovedEvidenceBasisCause): string {
   }
   if (cause === "deliverable_phase_unresolved") {
     return "this deliverable's canonical Move phase did not resolve, so it has no phase evidence basis";
+  }
+  if (cause === "deliverable_phase_outside_evidence_basis_range") {
+    return (
+      "this deliverable's phase is outside the range the approved-evidence snapshot models, so the " +
+      "snapshot holds no revision to compare it against"
+    );
   }
   return (
     "the Move's approved-evidence snapshot could not be built — a query error, a row cap " +
