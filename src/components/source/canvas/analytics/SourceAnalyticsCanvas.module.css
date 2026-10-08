@@ -3,6 +3,12 @@
 }
 
 @media (max-width: 900px) {
+  .stageHeaderLayout {
+    align-items: stretch !important;
+    flex-direction: column;
+    gap: 14px !important;
+  }
+
   .canvas [data-testid="source-workflow-frame"] {
     grid-template-columns: minmax(0, 1fr) !important;
   }

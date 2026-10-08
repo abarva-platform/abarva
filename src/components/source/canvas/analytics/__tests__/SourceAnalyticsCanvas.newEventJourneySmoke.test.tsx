@@ -185,6 +185,9 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
       expect(
         screen.getByTestId("source-stage-header-readiness"),
       ).toBeInTheDocument();
+      expect(screen.getByTestId("source-stage-header-layout")).toHaveClass(
+        "stageHeaderLayout",
+      );
       expect(
         screen.getByTestId("source-journey-current-stage-status"),
       ).toBeInTheDocument();
