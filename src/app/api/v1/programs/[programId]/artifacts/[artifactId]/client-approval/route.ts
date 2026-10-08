@@ -36,6 +36,7 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import { classifyP3ArchitectureLineagePrecondition } from "@/lib/programs/p3-architecture-lineage-precondition";
 import {
   approvedMoveEvidenceRevisionForPhase,
   isApprovedMoveEvidenceBasisCurrent,
@@ -411,34 +412,45 @@ export async function POST(
       phase === 3 &&
       P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)
     ) {
-      if (!ctx.clientKey) {
+      const approved = ctx.clientKey
+        ? await loadApprovedSolutionApproach({
+            moveId: programId,
+            clientId: ctx.clientId,
+          })
+        : null;
+      const freshness = ctx.clientKey
+        ? await loadCurrentMoveContextExtractFreshness({
+            tenantKey: ctx.clientKey,
+            moveId: programId,
+            phase: 3,
+          })
+        : null;
+      // This path also refuses a non-`fresh` extract, which the sign-off path
+      // leaves to the lineage comparison. `staleRefuses: true` keeps that.
+      const precondition = classifyP3ArchitectureLineagePrecondition({
+        clientKey: ctx.clientKey,
+        approvedOptionPresent: Boolean(approved),
+        freshness,
+        staleRefuses: true,
+      });
+      if (precondition) {
         return Response.json(
           {
             error: "architecture_lineage_not_current",
-            detail: "The active tenant key is unavailable.",
+            detail: precondition.detail,
           },
           { status: 409 },
         );
       }
-      const approved = await loadApprovedSolutionApproach({
-        moveId: programId,
-        clientId: ctx.clientId,
-      });
-      const freshness = await loadCurrentMoveContextExtractFreshness({
-        tenantKey: ctx.clientKey,
-        moveId: programId,
-        phase: 3,
-      });
-      if (
-        !approved ||
-        !freshness?.evidenceFingerprint ||
-        freshness.freshnessStatus !== "fresh"
-      ) {
+      if (!approved || !freshness) {
+        // Unreachable: the classifier refuses on every input that leaves either
+        // read unusable. Kept so the comparison below narrows without a
+        // non-null assertion.
         return Response.json(
           {
             error: "architecture_lineage_not_current",
             detail:
-              "The current approved option or P3 context snapshot is unavailable. Rebuild the architecture chain before approval.",
+              "The current approved option or P3 context snapshot is unavailable.",
           },
           { status: 409 },
         );

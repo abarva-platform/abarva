@@ -65,6 +65,7 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import { classifyP3ArchitectureLineagePrecondition } from "@/lib/programs/p3-architecture-lineage-precondition";
 import {
   approvedMoveEvidenceRevisionForPhase,
   isApprovedMoveEvidenceBasisCurrent,
@@ -634,30 +635,45 @@ export async function POST(
       readinessScannedArtifacts = scanContent.scannedArtifacts;
 
       if (P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)) {
-        if (!ctx.clientKey) {
-          return Response.json(
-            {
-              error: "architecture_lineage_not_current",
-              detail: "The active tenant key is unavailable.",
-            },
-            { status: 409 },
-          );
-        }
         const structuredData = (
           versionRow as {
             structured_data?: Record<string, unknown> | null;
           } | null
         )?.structured_data;
-        const approved = await loadApprovedSolutionApproach({
-          moveId: programId,
-          clientId: ctx.clientId,
+        const approved = ctx.clientKey
+          ? await loadApprovedSolutionApproach({
+              moveId: programId,
+              clientId: ctx.clientId,
+            })
+          : null;
+        const freshness = ctx.clientKey
+          ? await loadCurrentMoveContextExtractFreshness({
+              tenantKey: ctx.clientKey,
+              moveId: programId,
+              phase: 3,
+            })
+          : null;
+        // This path requires only that an extract exist; its currency is settled
+        // by the lineage comparison below. `staleRefuses: false` keeps that.
+        const precondition = classifyP3ArchitectureLineagePrecondition({
+          clientKey: ctx.clientKey,
+          approvedOptionPresent: Boolean(approved),
+          freshness,
+          staleRefuses: false,
         });
-        const freshness = await loadCurrentMoveContextExtractFreshness({
-          tenantKey: ctx.clientKey,
-          moveId: programId,
-          phase: 3,
-        });
-        if (!approved || !freshness?.evidenceFingerprint) {
+        if (precondition) {
+          return Response.json(
+            {
+              error: "architecture_lineage_not_current",
+              detail: precondition.detail,
+            },
+            { status: 409 },
+          );
+        }
+        if (!approved || !freshness) {
+          // Unreachable: the classifier refuses on every input that leaves
+          // either read unusable. Kept so the comparison below narrows without
+          // a non-null assertion.
           return Response.json(
             {
               error: "architecture_lineage_not_current",

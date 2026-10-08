@@ -1,7 +1,9 @@
 import {
   classifyMoveContextFreshnessRefusal,
+  describeUnevaluableApprovedEvidenceBasis,
   type MoveContextFreshnessForRefusal,
 } from "@/lib/programs/move-context-freshness-refusal";
+import { classifyP3ArchitectureLineagePrecondition } from "@/lib/programs/p3-architecture-lineage-precondition";
 
 const fresh: MoveContextFreshnessForRefusal = {
   freshnessStatus: "fresh",
@@ -239,5 +241,279 @@ describe("classifyMoveContextFreshnessRefusal", () => {
       expectedFingerprint: "fp-1",
     });
     expect(refusal?.condition).toBe("context_superseded");
+  });
+});
+
+// The interactive P3 approval paths make the same comparison about the same
+// extract, plus one more fact the queue never reads (the approved solution
+// option). Its classifier delegates here, so both live in one suite rather than
+// drifting apart.
+describe("classifyP3ArchitectureLineagePrecondition", () => {
+  const ready = {
+    clientKey: "tenant-1",
+    approvedOptionPresent: true,
+    freshness: fresh,
+    staleRefuses: true as boolean,
+  };
+
+  it("does not refuse when the option and a fresh extract are both present", () => {
+    expect(classifyP3ArchitectureLineagePrecondition(ready)).toBeNull();
+    expect(
+      classifyP3ArchitectureLineagePrecondition({
+        ...ready,
+        staleRefuses: false,
+      }),
+    ).toBeNull();
+  });
+
+  describe("an absent approved solution option", () => {
+    const refusal = classifyP3ArchitectureLineagePrecondition({
+      ...ready,
+      approvedOptionPresent: false,
+    });
+
+    it("is named as the missing option, not as an unavailable snapshot", () => {
+      expect(refusal?.condition).toBe("approved_option_absent");
+      expect(refusal?.detail).toMatch(/no approved P3 solution option/i);
+      expect(refusal?.detail).not.toMatch(
+        /approved option or P3 context snapshot is unavailable/i,
+      );
+    });
+
+    it("prescribes approving an option and rules out a rebuild", () => {
+      expect(refusal?.detail).toMatch(/approve a P3 solution option/i);
+      expect(refusal?.rebuildCanSatisfy).toBe(false);
+      expect(refusal?.detail).toMatch(/[Rr]ebuilding .*cannot create one/);
+    });
+
+    it("refuses on both callers' conditions", () => {
+      expect(
+        classifyP3ArchitectureLineagePrecondition({
+          ...ready,
+          approvedOptionPresent: false,
+          staleRefuses: false,
+        })?.condition,
+      ).toBe("approved_option_absent");
+    });
+
+    it("is reported even when the extract is also unusable", () => {
+      // The option is read first because its remedy is the one a product user
+      // holds; an extract refresh cannot substitute for it.
+      expect(
+        classifyP3ArchitectureLineagePrecondition({
+          ...ready,
+          approvedOptionPresent: false,
+          freshness: null,
+        })?.condition,
+      ).toBe("approved_option_absent");
+    });
+  });
+
+  it("an unresolved tenant scope reports that nothing was compared", () => {
+    const refusal = classifyP3ArchitectureLineagePrecondition({
+      ...ready,
+      clientKey: null,
+    });
+    expect(refusal?.condition).toBe("tenant_scope_unresolved");
+    expect(refusal?.rebuildCanSatisfy).toBe(false);
+    expect(refusal?.detail).toMatch(/[Nn]othing was compared/);
+    expect(refusal?.detail).not.toMatch(
+      /The active tenant key is unavailable\./,
+    );
+  });
+
+  it("an absent extract is not reported as changed evidence", () => {
+    const refusal = classifyP3ArchitectureLineagePrecondition({
+      ...ready,
+      freshness: null,
+    });
+    expect(refusal?.condition).toBe("context_extract_absent");
+    expect(refusal?.rebuildCanSatisfy).toBe(true);
+    expect(refusal?.detail).toMatch(/No current P3 Context Extract/);
+    expect(refusal?.detail).not.toMatch(/Move evidence changed/);
+  });
+
+  it("an empty fingerprint refuses as an absent extract on both callers", () => {
+    for (const staleRefuses of [true, false]) {
+      expect(
+        classifyP3ArchitectureLineagePrecondition({
+          ...ready,
+          staleRefuses,
+          freshness: { ...fresh, evidenceFingerprint: "" },
+        })?.condition,
+      ).toBe("context_extract_absent");
+    }
+  });
+
+  describe("an unreadable approved-evidence basis", () => {
+    const reasons = [
+      "tenant_scope_unresolved",
+      "snapshot_load_failed",
+      "snapshot_unavailable",
+    ] as const;
+
+    it.each(reasons)("%s does not prescribe a rebuild", (reason) => {
+      const refusal = classifyP3ArchitectureLineagePrecondition({
+        ...ready,
+        freshness: {
+          ...fresh,
+          freshnessStatus: "rebuild_required",
+          basisUnevaluableReason: reason,
+        },
+      });
+      expect(refusal?.condition).toBe("context_basis_unevaluable");
+      expect(refusal?.reason).toBe(reason);
+      expect(refusal?.rebuildCanSatisfy).toBe(false);
+      expect(refusal?.detail).toMatch(/cannot clear this/);
+      // The sentence must DISCLAIM a change, not assert one.
+      expect(refusal?.detail).toMatch(/not a report that the evidence changed/);
+      expect(refusal?.detail).not.toMatch(/Move evidence changed after/);
+    });
+
+    it("states a different cause for each reason", () => {
+      // A clause helper collapsed to one constant would satisfy the
+      // same-helper comparison below while telling every reader the same thing.
+      const details = reasons.map(
+        (reason) =>
+          classifyP3ArchitectureLineagePrecondition({
+            ...ready,
+            freshness: {
+              ...fresh,
+              freshnessStatus: "rebuild_required",
+              basisUnevaluableReason: reason,
+            },
+          })?.detail,
+      );
+      expect(new Set(details).size).toBe(reasons.length);
+    });
+
+    it.each(reasons)("%s names which read could not be made", (reason) => {
+      const refusal = classifyP3ArchitectureLineagePrecondition({
+        ...ready,
+        freshness: {
+          ...fresh,
+          freshnessStatus: "rebuild_required",
+          basisUnevaluableReason: reason,
+        },
+      });
+      expect(refusal?.detail).toContain(
+        describeUnevaluableApprovedEvidenceBasis(reason),
+      );
+    });
+  });
+
+  it("an extract with no recorded revision is rebuild-shaped", () => {
+    const refusal = classifyP3ArchitectureLineagePrecondition({
+      ...ready,
+      freshness: {
+        ...fresh,
+        freshnessStatus: "rebuild_required",
+        approvedEvidenceRevision: null,
+      },
+    });
+    expect(refusal?.condition).toBe("context_recorded_basis_absent");
+    expect(refusal?.rebuildCanSatisfy).toBe(true);
+  });
+
+  it("an extract marked for rebuild with a readable basis keeps that reading", () => {
+    const refusal = classifyP3ArchitectureLineagePrecondition({
+      ...ready,
+      freshness: { ...fresh, freshnessStatus: "rebuild_required" },
+    });
+    expect(refusal?.condition).toBe("context_extract_rebuild_required");
+    expect(refusal?.rebuildCanSatisfy).toBe(true);
+  });
+
+  it("a superseded extract is the only reading that reports changed evidence", () => {
+    const refusal = classifyP3ArchitectureLineagePrecondition({
+      ...ready,
+      freshness: { ...fresh, freshnessStatus: "stale" },
+    });
+    expect(refusal?.condition).toBe("context_superseded");
+    expect(refusal?.detail).toMatch(/Move evidence changed/);
+  });
+
+  it("an unrecognised status still refuses", () => {
+    // Narrowing the last arm to `=== "stale"` would let an unrecognised status
+    // fall through and PASS, so a document could be approved against an extract
+    // nothing had certified.
+    const refusal = classifyP3ArchitectureLineagePrecondition({
+      ...ready,
+      freshness: {
+        ...fresh,
+        freshnessStatus: "FRESH" as unknown as "fresh",
+      },
+    });
+    expect(refusal).not.toBeNull();
+    expect(refusal?.condition).toBe("context_superseded");
+  });
+
+  it("the sign-off caller's condition ignores a non-fresh extract", () => {
+    // `staleRefuses: false` is the sign-off path, whose original condition
+    // required only that an extract exist. Widening it here would add a refusal.
+    for (const freshnessStatus of ["stale", "rebuild_required"] as const) {
+      expect(
+        classifyP3ArchitectureLineagePrecondition({
+          ...ready,
+          staleRefuses: false,
+          freshness: { ...fresh, freshnessStatus },
+        }),
+      ).toBeNull();
+    }
+  });
+
+  it("exactly three readings rule out a rebuild", () => {
+    const inputs = [
+      { ...ready, clientKey: null },
+      { ...ready, approvedOptionPresent: false },
+      { ...ready, freshness: null },
+      {
+        ...ready,
+        freshness: {
+          ...fresh,
+          freshnessStatus: "rebuild_required" as const,
+          basisUnevaluableReason: "snapshot_unavailable" as const,
+        },
+      },
+      {
+        ...ready,
+        freshness: {
+          ...fresh,
+          freshnessStatus: "rebuild_required" as const,
+          approvedEvidenceRevision: null,
+        },
+      },
+      { ...ready, freshness: { ...fresh, freshnessStatus: "stale" as const } },
+    ];
+    const unsatisfiable = inputs
+      .map((input) => classifyP3ArchitectureLineagePrecondition(input))
+      .filter((refusal) => refusal && !refusal.rebuildCanSatisfy)
+      .map((refusal) => refusal?.condition);
+    expect(unsatisfiable.sort()).toEqual([
+      "approved_option_absent",
+      "context_basis_unevaluable",
+      "tenant_scope_unresolved",
+    ]);
+  });
+
+  it("no refusal prescribes the rebuild it has ruled out", () => {
+    const ruledOut = [
+      { ...ready, approvedOptionPresent: false },
+      {
+        ...ready,
+        freshness: {
+          ...fresh,
+          freshnessStatus: "rebuild_required" as const,
+          basisUnevaluableReason: "snapshot_load_failed" as const,
+        },
+      },
+    ];
+    for (const input of ruledOut) {
+      const detail = classifyP3ArchitectureLineagePrecondition(input)?.detail;
+      expect(detail).toBeTruthy();
+      expect(detail).not.toMatch(
+        /(Refresh the Context Extract|Rebuild the architecture chain)/,
+      );
+    }
   });
 });
