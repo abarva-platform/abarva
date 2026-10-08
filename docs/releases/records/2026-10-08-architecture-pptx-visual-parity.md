@@ -39,7 +39,7 @@ Generated PowerPoint, Word, and Excel files use one token-based visual language.
 
 ## QA / Validation
 
-- The full deliverable orchestration suite passed (63 suites, 873 tests), as did the Admin integration suite (51 suites, 1,611 tests). TypeScript, ESLint, and release checks are recorded in the pull request.
+- The full deliverable orchestration suite passed (63 suites, 873 tests), as did the Admin integration suite (51 suites, 1,611 tests) and v1 API route suite (78 suites, 651 tests). TypeScript, ESLint, and release checks are recorded in the pull request.
 - Two persisted synthetic P3 payloads were rendered locally with the candidate code: 32 and 21 slides, with no empty-canvas or off-canvas findings. The architecture payload embedded all 13 structured model visuals; the other deck embedded each renderable exhibit.
 - A persisted synthetic P3 report was rendered to Word and a seven-sheet workbook. The Word file passed its packaged-figure check. Selected slide and report pages were converted to PDF and visually inspected, including a seven-node declared flow.
 - These are local render proofs. Deployment, digest readback, and signed-in product download remain separate release checks.
