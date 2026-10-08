@@ -15,10 +15,21 @@ import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract"
  * Sections not listed render single-column. A structured editor (the facts /
  * estimate-model / business-change / solution-route editors) is ALWAYS wide,
  * handled in `captureSectionSpan` so a plain "default" here can never narrow
- * one. P1/P2 are intentionally absent: they keep the component's own default
- * (structured wide, plain single-column), unchanged from the grid's first ship.
+ * one. All of P1-P5 are covered by a Claude Design width review; a phase not
+ * listed here (e.g. P0/Tower) simply keeps the component default.
  */
 export const PHASE_WIDE_CAPTURE_SECTIONS: Record<number, ReadonlySet<string>> = {
+  1: new Set([
+    "success_criteria",
+    "evidence_plan",
+    "business_change_assessment",
+  ]),
+  2: new Set([
+    "current_state_findings",
+    "baseline_metrics",
+    "data_quality_governance",
+    "solution_route_validation",
+  ]),
   3: new Set([
     "solution_approach",
     "recommendation",
