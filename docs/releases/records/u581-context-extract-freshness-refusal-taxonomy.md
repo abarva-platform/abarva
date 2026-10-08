@@ -76,9 +76,13 @@ No migrations, workflows, images, flags, or environment variables changed.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit`, exit 0 (not
   134, so not an out-of-memory exit read as success).
 - **PASS** — `npx eslint` over all six changed files, exit 0.
-- **PASS** — registered-suite proof via census delta: `testFiles` 2824 → 2826 for the two added
-  files, `coveredTestFiles` 2660 → 2662, and `uncoveredTestFiles` unchanged at 164. Both new suites
-  sit in directories a required check sweeps, so neither is dark.
+- **PASS** — registered-suite proof via census delta, measured after merging `main`: `testFiles`
+  2825 → 2828, `coveredTestFiles` 2661 → 2664, and `uncoveredTestFiles` unchanged at 164. Both new
+  suites sit in directories a required check sweeps, so neither is dark. The delta is +3 rather than
+  the +2 these two files add because `main`'s committed census was itself short by one: two
+  concurrent changes each asserted their own total from the same base, and the later merge erased one
+  hunk with no conflict. The regenerated file therefore also repairs that drift rather than
+  re-asserting it.
 - **PASS** — mutation testing: 10 mutations, 10 killed. Killed: dropping the loader's reason
   pass-through; collapsing the loader's three causes into one; falling the unevaluable branch through
   to the status ladder; claiming a rebuild can satisfy an unevaluable basis; narrowing the final
@@ -144,7 +148,8 @@ conflated refusal and its unsatisfiable prescription.
   close them together.
 - This change names the structural unreadable causes honestly; it does not remove them. Raising or
   paginating the loader's row caps so the basis stays readable at scale remains open.
-- The census count asserted here is taken against the base at the time of writing. Concurrent
-  changes that also add suites will each assert their own total from the same base, so whichever
-  merges later leaves `main` short by the others' deltas with no conflict; one regeneration after
-  they land reconciles it.
+- The two concurrent changes this one was written alongside have since merged, and resolving the
+  resulting census conflict confirmed the predicted drift: `main` was short by exactly one. The
+  regenerated census here corrects it, so no separate reconciliation PR is owed for that drift. The
+  mechanism itself is unchanged and will recur for any future set of concurrent suite-adding
+  changes.
