@@ -1930,6 +1930,8 @@ function StageHeader({
         Source › {view.event.code} › {view.stage.label}
       </div>
       <div
+        data-testid="source-stage-header-layout"
+        className={styles.stageHeaderLayout}
         style={{
           display: "flex",
           alignItems: "flex-end",
