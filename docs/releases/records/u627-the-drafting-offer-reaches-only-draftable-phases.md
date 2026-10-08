@@ -1,4 +1,4 @@
-# u626 — aVa's input-drafting offer reaches only the phases it can draft
+# u627 — aVa's input-drafting offer reaches only the phases it can draft
 
 ## Release ID
 
