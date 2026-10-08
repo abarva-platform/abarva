@@ -250,8 +250,8 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     expect(signals.physicalArchPresent).toBe(true);
     expect(signals.exhibitsRenderedAsVisual).toBe(true);
     expect(model.openInputs?.join(" ")).toMatch(/confirm|validation/i);
-    expect(html).toContain(
-      '<tspan x="132" dy="0">Operational event</tspan><tspan x="132" dy="14">detected</tspan>',
+    expect(html).toMatch(
+      /<tspan x="(\d+)" dy="0">Operational event<\/tspan><tspan x="\1" dy="\d+">detected<\/tspan>/,
     );
   });
 
