@@ -38,6 +38,7 @@ import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import { buildPhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import { P1_CHARTER_EVIDENCE_FAMILIES } from "@/lib/programs/p1-charter-evidence";
+import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
@@ -10533,5 +10534,130 @@ describe("MovesPhaseStandaloneClient", () => {
         "Phase inputs are captured.",
       );
     });
+  });
+});
+
+describe("P0 blocked framing excludes the criteria the approval itself completes", () => {
+  // `program_seed_recorded` and `value_hypothesis_seed` are both evaluated from
+  // the signed origination brief, and the P0 gate approval is what signs it.
+  // They are open in every pre-approval P0 state and no control can clear
+  // them, so they must not drive the blocked framing.
+  const approvalGeneratedOpen = [
+    {
+      id: "program_seed_recorded",
+      label: "Origination brief signed off with archetype classification",
+      completed: false,
+      severity: "hard" as const,
+      verified: true,
+    },
+    {
+      id: "value_hypothesis_seed",
+      label: "Value hypothesis seed names problem trigger and target outcome",
+      completed: false,
+      severity: "hard" as const,
+      verified: true,
+    },
+  ];
+
+  function renderP0(args: {
+    sourceCovered: boolean;
+    extraCriteria?: typeof approvalGeneratedOpen;
+  }) {
+    return render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[
+          p0SourceEvidenceNeedPacket({
+            moveId: makeMove().id,
+            evidenceTitles: args.sourceCovered
+              ? ["approved-origination-source.pdf"]
+              : [],
+          }),
+        ]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          gateCriteria: [
+            ...approvalGeneratedOpen,
+            ...(args.extraCriteria ?? []),
+          ],
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  it("a P0 whose only open hard criteria complete on approval reads as ready", () => {
+    renderP0({ sourceCovered: true });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).not.toHaveTextContent("P0 cannot advance yet");
+    expect(surface).toHaveTextContent("P0 is ready for Approve & Build");
+  });
+
+  it("does not tell a reader to upload a source file they already had reviewed", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.queryByText(/Why some checks are still open/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/P0 cannot advance on intake answers alone/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not name an approval-generated criterion as the blocker", () => {
+    renderP0({ sourceCovered: true });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).not.toHaveTextContent(
+      "Blocked by: Origination brief signed off with archetype classification.",
+    );
+    expect(surface).not.toHaveTextContent("Clear hard blockers");
+  });
+
+  it("still offers the approval control in that ready state", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.getByRole("button", { name: /Approve gate/i }),
+    ).toBeInTheDocument();
+  });
+
+  // The complement: the fix must not blanket-suppress the blocked state.
+  it("an uncovered P0 source file still blocks, and still explains why", () => {
+    renderP0({ sourceCovered: false });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).toHaveTextContent("P0 cannot advance yet");
+    expect(
+      screen.getByText(/P0 cannot advance on intake answers alone/i),
+    ).toBeInTheDocument();
+  });
+
+  it("a genuine non-approval-generated hard criterion still blocks", () => {
+    renderP0({
+      sourceCovered: true,
+      extraCriteria: [
+        {
+          id: "sponsor_assigned",
+          label: "Sponsor progress contact listed",
+          completed: false,
+          severity: "hard" as const,
+          verified: true,
+        },
+      ],
+    });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).toHaveTextContent("P0 cannot advance yet");
+    expect(surface).toHaveTextContent(
+      "Blocked by: Sponsor progress contact listed.",
+    );
+  });
+
+  it("still annotates the approval-generated criteria in the gate list", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.getAllByText(/Completed by approving this gate/i).length,
+    ).toBeGreaterThanOrEqual(2);
   });
 });

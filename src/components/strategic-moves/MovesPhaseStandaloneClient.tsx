@@ -138,6 +138,10 @@ import {
   currentPhaseRequiredEvidenceGaps,
   phaseProgressReadiness,
 } from "@/lib/programs/phase-progress-readiness";
+import {
+  isP0ApprovalGeneratedCriterion,
+  partitionOpenHardGateCriteria,
+} from "@/lib/programs/p0-approval-generated-gate-criteria";
 import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import type { ApprovedPhaseEvidenceReference } from "@/lib/programs/approved-phase-evidence";
 import {
@@ -6280,6 +6284,15 @@ function PhaseBody({
   const openHardCriteria = hardGateCriteria.filter(
     (criterion) => !criterion.completed,
   );
+  // Two of P0's three hard checks read the signed origination brief, and the
+  // P0 gate approval is what signs it — so no control can clear them first.
+  // Blocked-state reckoning below uses only the criteria a reader can act on;
+  // `partitionOpenHardGateCriteria` is a no-op at P1+.
+  const { actionable: actionableOpenHardCriteria } =
+    partitionOpenHardGateCriteria({
+      phase: phase.phase,
+      openHardCriteria,
+    });
   const hardMetCount = hardGateCriteria.filter(
     (criterion) => criterion.completed,
   ).length;
@@ -6290,7 +6303,7 @@ function PhaseBody({
   const isGateBlocked =
     !isHistoricalPhase &&
     !gateApproved &&
-    (openHardCriteria.length > 0 ||
+    (actionableOpenHardCriteria.length > 0 ||
       openRequiredEvidence.length > 0 ||
       !evidenceReadinessAvailable ||
       Boolean(phaseCaptureBlocker));
@@ -6310,7 +6323,7 @@ function PhaseBody({
         : openRequiredEvidence.length > 0
           ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
           : (phaseCaptureBlocker ??
-            `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
+            `Resolve ${actionableOpenHardCriteria.length} hard gate blocker${actionableOpenHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
       : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.");
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
@@ -6331,10 +6344,6 @@ function PhaseBody({
             ? "Refresh evidence status"
             : "Clear hard blockers"
         : "Run Approve & Build";
-  const p0ApprovalGeneratedCriteria = new Set([
-    "program_seed_recorded",
-    "value_hypothesis_seed",
-  ]);
   const readinessPack = buildNextPhaseReadinessPack({
     nextPhaseLabel: nextPhaseContract
       ? `${nextPhaseContract.code} ${nextPhaseContract.title}`
@@ -6404,7 +6413,7 @@ function PhaseBody({
     phase.phase >= 5
       ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
       : gateOnlyConfirmSummaryFor(phase, nextOpenPhaseContract);
-  const primaryHardBlocker = openHardCriteria[0]?.label ?? null;
+  const primaryHardBlocker = actionableOpenHardCriteria[0]?.label ?? null;
   const primarySoftCaveat = openSoftCriteria[0]?.label ?? null;
   const gateSummaryLine = isGateBlocked
     ? primaryHardBlocker
@@ -6574,7 +6583,7 @@ function PhaseBody({
         ) : null}
         {phase.phase === 0 &&
         !isHistoricalPhase &&
-        openHardCriteria.length > 0 ? (
+        actionableOpenHardCriteria.length > 0 ? (
           <div className="mxw-gate-note">
             <strong>Why some checks are still open</strong>
             <span>
@@ -6761,7 +6770,7 @@ function PhaseBody({
                   <span
                     className={`${criterion.completed ? "met" : ""} ${
                       phase.phase === 0 &&
-                      p0ApprovalGeneratedCriteria.has(criterion.id)
+                      isP0ApprovalGeneratedCriterion(criterion.id)
                         ? "approval-generated"
                         : ""
                     }`}
@@ -6770,7 +6779,7 @@ function PhaseBody({
                     {criterion.completed ? "✓" : "○"} {criterion.label}
                     {phase.phase === 0 &&
                     !criterion.completed &&
-                    p0ApprovalGeneratedCriteria.has(criterion.id) ? (
+                    isP0ApprovalGeneratedCriterion(criterion.id) ? (
                       <em>Completed by approving this gate</em>
                     ) : null}
                   </span>

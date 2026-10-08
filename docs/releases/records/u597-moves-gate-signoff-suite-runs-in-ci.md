@@ -90,19 +90,23 @@ behaviour guard, and the regenerated coverage census.
     confirming the floor assertion is load-bearing and not vacuous.
 - **PASS** — census reconciliation performed by diffing the gap lists rather
   than by comparing totals: exactly one directory leaves
-  `partiallyCoveredDirectories` (28 → 27) and none enter;
-  `uncoveredDirectories` is unchanged at 43 with none entering or leaving; and
-  `governedRiskRanking` goes 1 → 0 for that same directory. The fully-dark
+  `partiallyCoveredDirectories` and none enter; `uncoveredDirectories` is
+  unchanged with none entering or leaving; and `governedRiskRanking` goes
+  1 → 0 for that same directory. This reconciliation was re-run after merging
+  the base forward and came back identical in shape. The fully-dark
   baseline `src/__tests__/behaviors/product-directory-ci-coverage.baseline.json`
   is deliberately untouched — this directory was never in it, and a partially
   covered directory must never be added to it.
 - **PASS** — census counts move exactly as predicted: `coveredTestFiles`
-  2684 → 2686 (the wired suite plus this record's new guard),
-  `pullRequestCoveredTestFiles` 2683 → 2685, `uncoveredTestFiles` 165 → 164,
-  `untriagedUnrunTestFiles` 113 → 112, `rankedUntriagedUnrunTestFiles` 1 → 0,
-  `directoriesWithUnrunTestFiles` 71 → 70. Both censuses were regenerated with
+  2685 → 2687 (the wired suite plus this record's new guard),
+  `pullRequestCoveredTestFiles` 2684 → 2686, `uncoveredTestFiles` 165 → 164,
+  `rankedUntriagedUnrunTestFiles` 1 → 0. Both censuses were regenerated with
   `audit:test-ci-coverage:write` and `audit:tenancy-fence-coverage:write`;
   the generator reports `census drift: committed census matches this run`.
+  These figures are stated against the base this branch was last reconciled
+  onto. That base moves whenever another change adds a test file, so the
+  absolute counts shift with it while the deltas do not: this change
+  contributes +2 covered and −1 uncovered wherever it lands.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit`.
 - **PASS** — `npx eslint` on the new suite.
 - **PASS** — `npm run release:check -- --base origin/main --head HEAD`.
