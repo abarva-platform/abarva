@@ -39,6 +39,14 @@ const kinds = (v: ReturnType<typeof judgeRenderedDeck>) =>
   v.findings.map((f) => f.kind);
 
 describe("planted defects must fail", () => {
+  it("empty cover", () => {
+    const v = judgeRenderedDeck(
+      deckOf([slide({ index: 1, textRuns: [], visibleChars: 0 })]),
+    );
+    expect(v.ok).toBe(false);
+    expect(kinds(v)).toContain("empty_canvas");
+  });
+
   it("title-only slide", () => {
     const v = judgeRenderedDeck(
       deckOf([
@@ -51,7 +59,7 @@ describe("planted defects must fail", () => {
       ]),
     );
     expect(v.ok).toBe(false);
-    expect(kinds(v)).toContain("thin_slide");
+    expect(kinds(v)).toContain("empty_canvas");
   });
 
   it("title plus one fragment", () => {

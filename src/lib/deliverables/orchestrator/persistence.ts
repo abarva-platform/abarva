@@ -8,7 +8,6 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { Packer } from "docx";
 import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
 import type {
   BoardPackRenderInput,
@@ -21,7 +20,8 @@ import {
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
 import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import { renderDeliverableDocx, renderDeliverableHtml } from "./renderers";
+import { renderDeliverableHtml } from "./renderers";
+import { renderValidatedDocx } from "./render-validated-doc";
 import { renderValidatedDeck } from "./render-validated-deck";
 import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
@@ -365,9 +365,10 @@ function safeFileStem(value: string): string {
 async function renderOfficeCompanion(
   doc: RenderableDeliverable,
   outputFormat: GeneratedArtifactFormat,
+  architectureModel?: ArchitectureModel,
 ): Promise<GeneratedOfficeCompanion | null> {
   if (outputFormat === "pptx") {
-    const rendered = await renderValidatedDeck(doc);
+    const rendered = await renderValidatedDeck(doc, {}, architectureModel);
     if (!rendered.physicallyIntact) {
       throw new Error(
         `generated_pptx_failed_physical_integrity: ${rendered.integrityFailures
@@ -396,7 +397,7 @@ async function renderOfficeCompanion(
 
   if (outputFormat === "docx") {
     return {
-      body: await Packer.toBuffer(renderDeliverableDocx(doc)),
+      body: await renderValidatedDocx(doc),
       fileFormat: "docx",
       fileName: `${safeFileStem(doc.title)}.docx`,
     };
@@ -718,6 +719,9 @@ export async function persistDeliverable(
     const officeCompanion = await renderCompanion(
       renderableDocWithType,
       outputFormat,
+      usesStructuredArchitecturePreview(contractDeliverableKey)
+        ? opts.structuredModels?.architectureModel
+        : undefined,
     );
     const materialize = deps.materializeDeliverableDraft ?? completeDeliverable;
     const materialized = await materialize(
@@ -798,8 +802,7 @@ export async function persistDeliverable(
               : {}),
             ...(opts.phaseEvidenceSnapshotHash
               ? {
-                  phaseEvidenceSnapshotHash:
-                    opts.phaseEvidenceSnapshotHash,
+                  phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
                   evidenceSnapshotScope: "phase",
                 }
               : {}),
