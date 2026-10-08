@@ -177,16 +177,46 @@ describe('access gates', () => {
   );
 });
 
-// The invitation email renderer is deferred with its caller.
-//
-// `invitation-email.ts` had no product entry point: nothing issues an
-// invitation yet, because deriving the recipient list from a persisted RFx
-// package version is slice E4. The required lib-orphan audit reported it as
-// NEW and testOnly, and a green suite over an unreached module is not
-// evidence the code runs. Rather than mount a caller to clear the gate, the
-// module and these cases return with E4. They are not lost: they remain on
-// `feat/source-vendor-rfp-portal` and in this branch's history, including the
-// case asserting a vendor-supplied name is escaped rather than interpolated.
+import {
+  renderVendorInvitationHtml,
+  renderVendorInvitationText,
+} from '../invitation-email';
+
+describe('invitation email', () => {
+  const input = {
+    vendorDisplayName: 'Northwind Systems',
+    contactName: 'A. Contact',
+    contactEmail: 'contact@example.invalid',
+    eventName: 'Data Platform Build and Rollout',
+    buyerDisplayName: 'Example Health',
+    portalUrl: 'https://app.example.invalid/rfp/evt-1',
+    username: 'abc23xyz',
+    password: 'PASSWORD23456789',
+    acceptBy: new Date('2026-10-01T01:00:00Z'),
+    respondBy: new Date('2026-10-07T01:00:00Z'),
+    procurementContactName: 'P. Lead',
+    procurementContactEmail: 'lead@example.invalid',
+  };
+
+  it('carries both deadlines and states the download precondition', () => {
+    const text = renderVendorInvitationText(input);
+    expect(text).toContain('Confirm intent to respond by');
+    expect(text).toContain('Submit your response by');
+    expect(text).toContain('available to download once your confirmation is recorded');
+  });
+
+  it('tells the vendor the credential is shareable and unrecoverable', () => {
+    const text = renderVendorInvitationText(input);
+    expect(text).toMatch(/may be shared with colleagues/i);
+    expect(text).toMatch(/cannot be retrieved later/i);
+  });
+
+  it('escapes vendor-supplied names rather than interpolating markup', () => {
+    const html = renderVendorInvitationHtml({ ...input, vendorDisplayName: '<script>x</script>' });
+    expect(html).not.toContain('<script>x</script>');
+    expect(html).toContain('&lt;script&gt;');
+  });
+});
 
 import { buildPortalView, type RfpSection, type VendorActivityEvent } from '../portal-view';
 
