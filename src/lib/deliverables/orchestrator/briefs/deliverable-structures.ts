@@ -948,9 +948,9 @@ const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
       legendRequired: true,
     },
     {
-      key: "component_interaction",
-      title: "Component Interaction View",
-      kind: "logical_architecture",
+      key: "agent_workflow",
+      title: "Agent and System Workflow",
+      kind: "flow",
       purpose:
         "Shows how the accepted architecture components collaborate for the priority journey.",
       preferredFormat: "docx",
@@ -965,9 +965,9 @@ const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
       legendRequired: true,
     },
     {
-      key: "exception_control_flow",
-      title: "Exception and Control Flow",
-      kind: "agent_orchestration",
+      key: "exception_handling",
+      title: "Exception and Escalation Flow",
+      kind: "flow",
       purpose: "Shows normal, exception, override, and escalation paths.",
       preferredFormat: "docx",
       requiredElements: [
@@ -977,6 +977,37 @@ const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
         "override",
         "escalation",
         "audit",
+      ],
+      legendRequired: true,
+    },
+    {
+      key: "control_points",
+      title: "Human and Policy Control Points",
+      kind: "matrix",
+      purpose:
+        "Identifies each control, its owner, decision, evidence, and escalation path.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "control point",
+        "decision owner",
+        "approval or exception",
+        "audit evidence",
+      ],
+      legendRequired: true,
+    },
+    {
+      key: "data_flow",
+      title: "Source-to-Use Data Flow",
+      kind: "flow",
+      purpose:
+        "Shows evidence-backed source, processing, access, and use boundaries.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "source",
+        "transformation",
+        "access boundary",
+        "consumer",
+        "lineage or audit trace",
       ],
       legendRequired: true,
     },
