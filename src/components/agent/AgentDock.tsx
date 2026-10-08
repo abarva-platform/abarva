@@ -1163,7 +1163,11 @@ export function AgentDock(props: AgentDockProps) {
               if (action.onClick) action.onClick();
               else void submitSuggestedAction(action.body);
             }}
-            disabled={submitting}
+            // `submitSuggestedAction` already returns early while the composer
+            // is paused, so without this the chip stays clickable and does
+            // nothing. No surface passed `composerDisabledReason` before the
+            // Moves capture dock, so this is inert for every other host.
+            disabled={submitting || composerDisabled}
             data-testid={`agent-dock-suggestion-${action.id}`}
             style={
               expanded

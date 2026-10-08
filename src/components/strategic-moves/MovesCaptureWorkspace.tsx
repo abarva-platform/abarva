@@ -11,6 +11,7 @@ import {
   avaSuggestedActions,
   type AvaThreadTurn,
 } from "@/components/strategic-moves/ava-dock-adapter";
+import { avaComposerAvailability } from "@/components/strategic-moves/ava-composer-availability";
 
 /**
  * The composed phase workspace for `moves_capture_v2`: the Source New
@@ -33,6 +34,13 @@ export interface MovesCaptureWorkspaceProps {
   avaQuestions: readonly string[];
   /** Leading dock actions (e.g. "Draft proposed inputs", "Check blockers"). */
   avaLeadingActions?: readonly SuggestedAction[];
+  /**
+   * True while the host's aVa turn is still streaming. The host's send
+   * handler refuses in exactly this state, so the dock withholds the composer
+   * and shows its throbber rather than offering a send that does nothing.
+   * Absent is treated as not streaming, which is the dock's behaviour today.
+   */
+  avaStreaming?: boolean;
   onAvaMessage: (text: string) => void;
   /** Workspace tab row rendered above the capture content. */
   tabs?: ReactNode;
@@ -55,6 +63,7 @@ export function MovesCaptureWorkspace({
   avaThread,
   avaQuestions,
   avaLeadingActions = [],
+  avaStreaming = false,
   onAvaMessage,
   tabs,
   notesFill,
@@ -69,6 +78,8 @@ export function MovesCaptureWorkspace({
     [avaQuestions, avaLeadingActions],
   );
 
+  const composer = avaComposerAvailability(avaStreaming);
+
   return (
     <AgentDock
       agent={{ initials: "aVa", mark: "ava", name: "aVa", role: avaRole }}
@@ -80,6 +91,8 @@ export function MovesCaptureWorkspace({
       initialQuote={`Ask about the current charter step for ${moveName}.`}
       thread={thread}
       suggestedActions={suggestedActions}
+      composerDisabledReason={composer.disabledReason}
+      isAgentBusy={composer.agentBusy}
       onMessage={(text) => onAvaMessage(text)}
       workspace={
         <>
