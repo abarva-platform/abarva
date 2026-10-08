@@ -10,6 +10,7 @@ import {
   type EvidenceFamily,
 } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import type { FamilyAwaitingReview } from "@/lib/programs/evidence-readiness/pending-review-next-action";
 import { getProgramById } from "@/lib/programs/queries";
 import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 import { gapRemediationSentence } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
@@ -79,6 +80,18 @@ export interface DiscoveryEvidenceReadiness {
   readyForP3: boolean;
   families: DiscoveryFamilyCoverage[];
   gapRegister: DiscoveryGapRegisterItem[];
+  /**
+   * Families that have evidence loaded and awaiting a human review decision
+   * (`program_evidence_reviews.decision = 'pending'`).
+   *
+   * Coverage above is graded on APPROVED rows only, so without this an
+   * uncovered family cannot be told apart from one whose evidence is already
+   * sitting in the reviewer's queue, and every consumer asks for an upload that
+   * has already happened. Nothing gate-bearing may read this field: pending is
+   * not approved. Optional so a readiness object built before it existed, or
+   * one that crossed an API boundary without it, reads as "nothing pending".
+   */
+  familiesAwaitingReview?: FamilyAwaitingReview[];
 }
 
 const FAMILY_KEYWORDS: Record<string, string[]> = {
@@ -326,7 +339,9 @@ export function resolveDeclaredProgramArchetypeId(
   const charterClassification = charter.classification;
   const charterArchetype =
     typeof charterClassification === "object" && charterClassification !== null
-      ? nonEmptyString((charterClassification as Record<string, unknown>).archetype)
+      ? nonEmptyString(
+          (charterClassification as Record<string, unknown>).archetype,
+        )
       : null;
   const charterClassificationText =
     typeof charterClassification === "string" ? charterClassification : null;
@@ -588,11 +603,11 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
     // overrides, and never adds to, a declaration.
     const declared = declaredDiscoveryFamilies(item, args.blueprint);
     const inferred =
-      declared.length > 0 ||
-      isP1CharterEvidenceFamily(item.declaredFamilyKey)
+      declared.length > 0 || isP1CharterEvidenceFamily(item.declaredFamilyKey)
         ? null
         : mapEvidenceToDiscoveryFamily(item, args.blueprint);
-    const familyIds = declared.length > 0 ? declared : inferred ? [inferred] : [];
+    const familyIds =
+      declared.length > 0 ? declared : inferred ? [inferred] : [];
     for (const familyId of familyIds) {
       const items = coverage.get(familyId) ?? [];
       items.push(item);
@@ -702,19 +717,61 @@ export async function loadDiscoveryEvidenceReadiness(
       { missingTable: "empty" },
     )
     .catch(() => []);
-  return evaluateDiscoveryEvidenceReadiness({
-    blueprint,
-    blueprintBasis: resolution.basis,
-    unknownDeclaredArchetype: resolution.unknownDeclaration,
-    evidenceItems: rows.map((row) => ({
-      id: row.id,
-      title: row.title ?? "Untitled evidence",
-      summary: row.summary ?? "",
-      evidenceType: row.evidence_type ?? "uploaded_artifact",
-      phase: row.phase,
-      confidence: row.confidence,
-      createdAt: row.created_at,
-      declaredFamilyKey: row.family_key,
-    })),
+  // Pending reviews are read SEPARATELY, deliberately. Folding them into the
+  // query above would let pending rows crowd out approved ones inside its
+  // LIMIT and change what counts as covered; coverage must keep grading on
+  // approved rows alone. This read only ever adds wording, so a failure
+  // degrades to "nothing pending" rather than failing the readiness load.
+  const pendingRows = await azureRead
+    .query<{
+      family_key: string | null;
+      pending_count: number | string | null;
+    }>(
+      `
+        SELECT
+          per.family_key,
+          COUNT(*) AS pending_count
+        FROM program_evidence_reviews per
+        WHERE per.program_id = $1
+          AND per.tenant_key = ANY($2)
+          AND per.decision = 'pending'
+          AND per.family_key IS NOT NULL
+        GROUP BY per.family_key
+      `,
+      [programId, tenantKeys],
+      { missingTable: "empty" },
+    )
+    .catch(() => []);
+  const familiesAwaitingReview = pendingRows.flatMap((row) => {
+    const familyId =
+      typeof row.family_key === "string" ? row.family_key.trim() : "";
+    if (!familyId) return [];
+    const parsed = Number(row.pending_count);
+    return [
+      {
+        familyId,
+        pendingCount:
+          Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1,
+      },
+    ];
   });
+
+  return {
+    ...evaluateDiscoveryEvidenceReadiness({
+      blueprint,
+      blueprintBasis: resolution.basis,
+      unknownDeclaredArchetype: resolution.unknownDeclaration,
+      evidenceItems: rows.map((row) => ({
+        id: row.id,
+        title: row.title ?? "Untitled evidence",
+        summary: row.summary ?? "",
+        evidenceType: row.evidence_type ?? "uploaded_artifact",
+        phase: row.phase,
+        confidence: row.confidence,
+        createdAt: row.created_at,
+        declaredFamilyKey: row.family_key,
+      })),
+    }),
+    familiesAwaitingReview,
+  };
 }
