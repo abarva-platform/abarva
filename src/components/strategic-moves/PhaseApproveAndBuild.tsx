@@ -749,28 +749,29 @@ export function PhaseApproveAndBuild({
           : built
             ? "unverified"
             : "blocked";
-      // A known-unsigned built gate document is the only thing that must hold
-      // the submission; an unverified or not-yet-built document falls back to
-      // the prior (no-sign-off) behaviour and does not block it.
-      const countsAsSigned = state !== "draft";
       return {
         deliverableTypeKey: row.deliverableTypeKey,
         documentTitle: row.documentTitle,
         state,
         deliverableId,
         signedVersion: currentVersion,
-        countsAsSigned,
         row,
       };
     });
   const ledgerGateCount = gateLedgerEntries.length;
   const signedCount = gateLedgerEntries.filter(
-    (entry) => entry.countsAsSigned,
+    (entry) => entry.state === "signed",
+  ).length;
+  // Only a known-unsigned built document holds the submit control here.
+  // Unverified and not-yet-built rows still fall through to the existing
+  // server gate/build-set checks, but neither is a recorded sign-off.
+  const knownUnsignedCount = gateLedgerEntries.filter(
+    (entry) => entry.state === "draft",
   ).length;
   // The submission must not read as actionable while a built gate document is
   // sitting unsigned. This narrows the existing submit control's feedback only
   // — it never widens WHEN the gate POST fires beyond refusing an unsigned set.
-  const needsGateSignOff = ledgerGateCount > 0 && signedCount < ledgerGateCount;
+  const needsGateSignOff = knownUnsignedCount > 0;
 
   const requiredGaps = currentPhaseRequiredEvidenceGaps(
     evidenceNeedPackets,
@@ -830,7 +831,7 @@ export function PhaseApproveAndBuild({
     }
   };
 
-  const submitUnsignedCount = ledgerGateCount - signedCount;
+  const submitUnsignedCount = knownUnsignedCount;
   const gateSubmitDisabled =
     submittingGate || hasParentBlocker || needsGateSignOff;
   const gateSubmitActionButton = gateSubmitPlan.submittable ? (
