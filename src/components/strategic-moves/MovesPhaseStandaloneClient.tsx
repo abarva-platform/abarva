@@ -172,6 +172,10 @@ import {
   solutionRouteDecisionChoices,
 } from "@/lib/programs/solution-route-decision";
 import type { AvaPhaseInputProposal } from "@/lib/programs/phase-input-draft-proposals";
+import {
+  avaPhaseInputDraftAvailability,
+  avaPhaseInputDraftLeadingActions,
+} from "./ava-dock-adapter";
 import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -1860,7 +1864,18 @@ export function MovesPhaseStandaloneClient({
     [avaDraftValues, setPhaseCaptureValue],
   );
   const requestAvaPhaseInputDrafts = useCallback(async () => {
-    if (phase.phase < 1 || avaDraftStatus === "loading") return;
+    if (avaDraftStatus === "loading") return;
+    // A phase outside aVa's drafting window used to return here silently, which
+    // on P0 — where the dock offered the control anyway — made an enabled
+    // button do nothing at all. The control is no longer offered there; a click
+    // that still reaches this handler is answered with the reason.
+    const draftAvailability = avaPhaseInputDraftAvailability(phase.phase);
+    if (!draftAvailability.available) {
+      setAvaOpen(true);
+      setAvaDraftStatus("error");
+      setAvaDraftError(draftAvailability.unavailableReason);
+      return;
+    }
     setAvaOpen(true);
     setAvaDraftStatus("loading");
     setAvaDraftError(null);
@@ -1906,6 +1921,20 @@ export function MovesPhaseStandaloneClient({
       );
     }
   }, [avaDraftStatus, move.id, phase.phase]);
+  // The dock's leading actions. aVa's drafting offer is phase-conditional, so
+  // the list is DERIVED rather than literal: the capture-flow dock renders every
+  // leading action it is handed as an enabled button, and P0 Originate cannot be
+  // drafted at all. An empty list is the correct answer there, not an action.
+  const avaDraftLeadingActions = useMemo(
+    () =>
+      avaPhaseInputDraftLeadingActions(phase.phase, () => {
+        void requestAvaPhaseInputDrafts();
+      }),
+    [phase.phase, requestAvaPhaseInputDrafts],
+  );
+  const avaDraftAvailable = avaPhaseInputDraftAvailability(
+    phase.phase,
+  ).available;
   const applyAvaDraftProposal = useCallback(
     (proposal: AvaPhaseInputProposal) => {
       if (
@@ -3649,16 +3678,7 @@ export function MovesPhaseStandaloneClient({
                           />
                         ) : null
                       }
-                      avaLeadingActions={[
-                        {
-                          id: "draft-inputs",
-                          label: "Draft proposed inputs",
-                          body: "",
-                          onClick: () => {
-                            void requestAvaPhaseInputDrafts();
-                          },
-                        },
-                      ]}
+                      avaLeadingActions={avaDraftLeadingActions}
                       onAvaMessage={(text) => {
                         void sendAvaMessage(text);
                       }}
@@ -4014,7 +4034,7 @@ export function MovesPhaseStandaloneClient({
                   ? "Ask about this workspace"
                   : "Ask about this phase"}
               </div>
-              {phase.phase >= 1 ? (
+              {avaDraftAvailable ? (
                 <div className="mxw-ava-assist">
                   {phaseCaptureMissingCount > 0 ? (
                     <>
