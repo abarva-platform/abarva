@@ -38,6 +38,7 @@ Release lane: `global-control-lane`.
 
 - The compact rail test failed before implementation, then the Files-to-stage round-trip test exposed a missing return action. Both passed after the change.
 - Mutation check: forcing the rail content closed while leaving `aria-expanded` functional failed the focused test; the mutation was reverted.
+- The Source builder-vocabulary closure artifact was regenerated after the CSS module entered the import graph; only that root's closure count changed (439 to 440), with covered paths and remainder unchanged.
 - Canvas analytics suite: 40 suites, 293 tests passed.
 - TypeScript check with Node 24 and an 8 GB heap: passed.
 - ESLint on changed TypeScript files: passed.
