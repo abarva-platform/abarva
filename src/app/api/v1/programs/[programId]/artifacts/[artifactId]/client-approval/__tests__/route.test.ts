@@ -932,10 +932,55 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
 
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({
-      error: "stale_evidence_snapshot",
+      error: "stale_approved_evidence_snapshot",
     });
     expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  // The route's own text already hedged — "or its evidence revision cannot be
+  // verified" — while the code stayed `stale_` and the prescription stayed
+  // "Rebuild the phase outputs before approval." For an unreadable basis the
+  // rebuild re-reads the same basis, and the rebuild path refuses it the same
+  // way, so the two controls pointed at each other. The refusal stands (this
+  // route stamps a lineage it cannot read); only the claim changes.
+  // `TenancyCtx` declares `clientKey?: string` and `assertTenancy` requires only
+  // clientId + userId, so this route can run with no tenant key — and then the
+  // approved-evidence read was never issued at all. Its own cause, distinct from
+  // a read that ran and could not answer, so an operator is not sent to look at
+  // the data when the request never reached it.
+  it("names a missing tenant key as its own unevaluable cause", async () => {
+    mockRequireTenancy.mockResolvedValue({ ...ctx, clientKey: undefined });
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Review the current generated document." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe("approved_evidence_basis_unevaluable");
+    expect(body.detail).toContain("no active tenant key was resolved");
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("refuses approval without calling the document stale when the evidence basis cannot be read", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue(null);
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Review the current generated document." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe("approved_evidence_basis_unevaluable");
+    expect(body.detail).toContain("was not verified as changed");
+    expect(body.detail).not.toMatch(/\bRebuild\b/);
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
 });

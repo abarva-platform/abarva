@@ -66,6 +66,12 @@ import {
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
 import {
+  approvedEvidenceBasisRefusalCode,
+  classifyApprovedEvidenceBasisRefusal,
+  describeApprovedEvidenceBasisRefusal,
+  unevaluableApprovedEvidenceBasisRefusal,
+} from "@/lib/programs/approved-evidence-basis-refusal";
+import {
   stampApprovedEvidenceLineage,
   type ApprovedEvidenceLineageStamp,
 } from "@/lib/programs/deliverables/approved-evidence-lineage";
@@ -416,29 +422,44 @@ export async function POST(
             : typeof versionStructuredData.evidenceSnapshotHash === "string"
               ? versionStructuredData.evidenceSnapshotHash
               : null;
-        if (
-          deliverablePhase < 1 ||
-          !evidenceSnapshot ||
-          !isApprovedMoveEvidenceBasisCurrent({
-            snapshot: evidenceSnapshot,
-            phase: deliverablePhase,
-            recordedRevision,
-            scope:
-              typeof versionStructuredData.evidenceSnapshotScope === "string"
-                ? versionStructuredData.evidenceSnapshotScope
-                : null,
-            generatedAt:
-              typeof (versionRow as { created_at?: string | null } | null)
-                ?.created_at === "string"
-                ? (versionRow as { created_at: string }).created_at
-                : null,
-          })
-        ) {
+        const evidenceBasisRefusal = classifyApprovedEvidenceBasisRefusal({
+          basisEvaluable: Boolean(evidenceSnapshot) && deliverablePhase >= 1,
+          cause: !ctx.clientKey
+            ? "tenant_scope_unresolved"
+            : deliverablePhase < 1
+              ? "deliverable_phase_unresolved"
+              : "snapshot_unreadable",
+          recordedRevision,
+          basisIsCurrent:
+            Boolean(evidenceSnapshot) &&
+            isApprovedMoveEvidenceBasisCurrent({
+              snapshot: evidenceSnapshot,
+              phase: deliverablePhase,
+              recordedRevision,
+              scope:
+                typeof versionStructuredData.evidenceSnapshotScope === "string"
+                  ? versionStructuredData.evidenceSnapshotScope
+                  : null,
+              generatedAt:
+                typeof (versionRow as { created_at?: string | null } | null)
+                  ?.created_at === "string"
+                  ? (versionRow as { created_at: string }).created_at
+                  : null,
+            }),
+        });
+        // The `!evidenceSnapshot` disjunct narrows the snapshot for the lineage
+        // stamp below; a null snapshot already classifies as `basis_unevaluable`,
+        // so the fallback resolves to that same refusal.
+        if (evidenceBasisRefusal || !evidenceSnapshot) {
+          const refusal =
+            evidenceBasisRefusal ?? unevaluableApprovedEvidenceBasisRefusal();
           return Response.json(
             {
-              error: "generated_artifact_evidence_not_current",
-              detail:
-                "This generated version is not bound to the current approved evidence. Rebuild it from the current evidence set before approval.",
+              error: approvedEvidenceBasisRefusalCode(refusal),
+              detail: describeApprovedEvidenceBasisRefusal(
+                refusal,
+                "approval",
+              ),
             },
             { status: 409 },
           );
