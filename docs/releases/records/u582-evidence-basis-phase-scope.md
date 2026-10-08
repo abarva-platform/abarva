@@ -104,10 +104,11 @@ reaching all clients and not feature-gated.
 - **PASS** — `npm run test:behaviors`: 202 suites, 2102 tests.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit`, exit 0.
 - **PASS** — `npx eslint` over all four changed/added source files, exit 0.
-- **PASS** — census regenerated: covered test files 2661 → 2663, PR-covered 2660 → 2662, uncovered
-  flat at 164. The +2 is this change's one new suite plus the repair of one census hunk that was
-  dropped from the base without a conflict; the flat uncovered count is the evidence that the new
-  suite is CI-wired rather than dark.
+- **PASS** — census regenerated against the current base after merging it: test files 2828 → 2829,
+  covered 2664 → 2665, PR-covered 2663 → 2664, uncovered flat at 164. The +1 is this change's one
+  new suite; the flat uncovered count is the evidence that the suite is CI-wired rather than dark.
+  (The earlier figures on this record, 2661 → 2663, were measured against a base that has since
+  moved and that has repaired a one-file census drift of its own.)
 - **NOT RUN** — live signed-in walk. No runtime rollout is required and the changed branch is
   unreachable through any shipped deliverable type, so there is no live behaviour to observe.
 
