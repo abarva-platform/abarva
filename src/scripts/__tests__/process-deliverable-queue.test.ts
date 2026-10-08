@@ -474,6 +474,147 @@ describe('processDeliverableQueue', () => {
     );
   });
 
+  // The P3 architecture batch's freshness guard was one `if` over four operands,
+  // all answered with `stale_context_snapshot` / "Move evidence changed". These
+  // pin each operand to the fact it actually establishes, at the host, so the
+  // classifier's verdict is proven to reach the recorded run rather than only to
+  // be computed.
+  describe('the P3 architecture batch states which freshness fact it established', () => {
+    function p3Run(id: string) {
+      return {
+        ...claimedRow(id),
+        module: 'moves',
+        jobPayload: {
+          ...jobPayload,
+          module: 'moves',
+          sourceArtifactRef: 'move-1',
+          evidenceSnapshotHash: 'revision-current',
+          decisionLineage: {
+            decisionHash: 'decision-hash-1',
+            decisionVersion: '1',
+            approvedOptionId: 'option-b',
+            approvedOptionVersion: '1',
+            contextSnapshotHash: 'context-hash-1',
+            architectureModelVersion: 'moves-architecture-model-v2',
+          },
+        },
+      };
+    }
+
+    it('does not report that evidence changed when the basis could not be read', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: 'context-hash-1',
+        approvedEvidenceRevision: 'revision-current',
+        freshnessStatus: 'rebuild_required',
+        basisUnevaluableReason: 'snapshot_unavailable',
+      });
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-unevaluable'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-unevaluable', batchSize: 2 });
+
+      expect(runDeliverableForTenant).not.toHaveBeenCalled();
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-unevaluable',
+      );
+      expect(call?.[1]).toMatchObject({
+        status: 'blocked',
+        error: 'context_extract_basis_unevaluable',
+      });
+      const blockers = (call?.[1] as { blockers: string[] }).blockers;
+      expect(blockers[0]).not.toMatch(
+        /Move evidence changed after this architecture batch/,
+      );
+      expect(blockers[0]).toMatch(/cannot clear this block/i);
+    });
+
+    it('still reports a genuinely superseded extract as changed evidence', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: 'context-hash-1',
+        approvedEvidenceRevision: 'revision-old',
+        freshnessStatus: 'stale',
+      });
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-stale'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-stale-ctx', batchSize: 2 });
+
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-stale',
+      );
+      expect(call?.[1]).toMatchObject({
+        status: 'blocked',
+        error: 'stale_context_snapshot',
+      });
+      expect((call?.[1] as { blockers: string[] }).blockers[0]).toMatch(
+        /Move evidence changed after this architecture batch/,
+      );
+    });
+
+    it('names an absent extract rather than calling it changed evidence', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue(null);
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-absent'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-absent-ctx', batchSize: 2 });
+
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-absent',
+      );
+      expect(call?.[1]).toMatchObject({
+        status: 'blocked',
+        error: 'context_extract_absent',
+      });
+    });
+
+    it('names an extract that recorded no revision as the rebuild-shaped case', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: 'context-hash-1',
+        approvedEvidenceRevision: null,
+        freshnessStatus: 'rebuild_required',
+      });
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-no-revision'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-no-rev', batchSize: 2 });
+
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-no-revision',
+      );
+      expect(call?.[1]).toMatchObject({
+        status: 'blocked',
+        error: 'context_extract_basis_absent',
+      });
+    });
+
+    it('lets a fresh, matching extract through to generation', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: 'context-hash-1',
+        approvedEvidenceRevision: 'revision-current',
+        freshnessStatus: 'fresh',
+      });
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-ok'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-fresh-ctx', batchSize: 2 });
+
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-ok',
+      );
+      expect((call?.[1] as { error?: string } | undefined)?.error).not.toBe(
+        'stale_context_snapshot',
+      );
+      expect(
+        (call?.[1] as { error?: string } | undefined)?.error,
+      ).not.toBe('context_extract_basis_unevaluable');
+    });
+  });
+
   it('maps a blocked result to status blocked', async () => {
     claimNextDeliverableRun.mockResolvedValueOnce(claimedRow('run-2')).mockResolvedValueOnce(null);
     runDeliverableForTenant.mockResolvedValue({
