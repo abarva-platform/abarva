@@ -18,6 +18,10 @@ import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { listAllTopics, listEngagementTopics } from '@/lib/topics/db';
 import { getActiveClientKey } from '@/lib/active-client';
 import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
+import {
+  buildGateApprovalEvents,
+  type DatedGateSnapshot,
+} from '@/lib/programs/gate-approval-events';
 
 type NormalizedDeliverable = {
   type: string;
@@ -271,16 +275,33 @@ export default async function EngagePage({
       at: t.created_at,
     });
   }
-  const gates = (engagement.gates_passed as Array<{ phase?: number; signed_at?: string; status?: string; summary?: string }> | null) ?? [];
-  for (const g of gates) {
-    if (g.status === 'approved' && g.signed_at) {
-      events.push({
-        kind: 'gate',
-        label: `Phase ${g.phase} gate approved`,
-        detail: g.summary ?? 'Phase advanced',
-        at: g.signed_at,
-      });
-    }
+  // Gate approvals · `engagements.gates_passed` cannot date a gate crossing on
+  // the walked path: the advance SQL omits the column for phases 1-4 and the P5
+  // handoff appends a bare number, so asking it for a status plus a signed_at
+  // found nothing at any phase. The timestamped `phase_snapshots` rows both
+  // advance implementations write are what place a crossing in time.
+  let gateSnapshots: DatedGateSnapshot[] = [];
+  try {
+    const { data: snapshotRows } = await sb
+      .from('phase_snapshots')
+      .select('phase_number, approval_status, locked_at, created_at, snapshot_jsonb')
+      .eq('engagement_id', engagement.id)
+      .order('created_at', { ascending: false });
+    gateSnapshots = (snapshotRows as DatedGateSnapshot[] | null) ?? [];
+  } catch (err) {
+    console.warn('[engagement-page] phase_snapshots failed:', err);
+  }
+  const { events: gateEvents } = buildGateApprovalEvents({
+    gatesPassed: Array.isArray(engagement.gates_passed) ? engagement.gates_passed : null,
+    snapshots: gateSnapshots,
+  });
+  for (const gate of gateEvents) {
+    events.push({
+      kind: 'gate',
+      label: gate.label,
+      detail: gate.detail ?? 'Phase advanced',
+      at: gate.at,
+    });
   }
   for (const d of deliverables.slice(0, 3)) {
     const deliverableLabel = d.label ?? d.type.replace(/_/g, ' ');
