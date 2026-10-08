@@ -339,9 +339,7 @@ export function resolveDeclaredProgramArchetypeId(
   const charterClassification = charter.classification;
   const charterArchetype =
     typeof charterClassification === "object" && charterClassification !== null
-      ? nonEmptyString(
-          (charterClassification as Record<string, unknown>).archetype,
-        )
+      ? nonEmptyString((charterClassification as Record<string, unknown>).archetype)
       : null;
   const charterClassificationText =
     typeof charterClassification === "string" ? charterClassification : null;
@@ -603,11 +601,11 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
     // overrides, and never adds to, a declaration.
     const declared = declaredDiscoveryFamilies(item, args.blueprint);
     const inferred =
-      declared.length > 0 || isP1CharterEvidenceFamily(item.declaredFamilyKey)
+      declared.length > 0 ||
+      isP1CharterEvidenceFamily(item.declaredFamilyKey)
         ? null
         : mapEvidenceToDiscoveryFamily(item, args.blueprint);
-    const familyIds =
-      declared.length > 0 ? declared : inferred ? [inferred] : [];
+    const familyIds = declared.length > 0 ? declared : inferred ? [inferred] : [];
     for (const familyId of familyIds) {
       const items = coverage.get(familyId) ?? [];
       items.push(item);
