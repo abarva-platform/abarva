@@ -41,6 +41,7 @@ import { P1_CHARTER_EVIDENCE_FAMILIES } from "@/lib/programs/p1-charter-evidence
 import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import { MOVE_UNREADABLE_REFUSAL_DETAIL } from "@/lib/programs/move-unreadable-refusal";
+import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -8693,6 +8694,83 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Submit P3 Design Future State gate approval/i),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * An unanticipated failure in the route is not a gate refusal, and this
+   * surface's own framing reported it as one.
+   *
+   * The ladder landed on `error` — the literal `internal_error` — and wrapped
+   * it in "Build completed, but the phase gate is blocked: ...", a sentence
+   * about a verdict the gate never produced. It then appended the standing
+   * document remedy, because that is offered whenever the body does not rule a
+   * re-submission out, and an unexpected failure says nothing either way. So
+   * the reader was told the gate had judged them, and prescribed an
+   * approve-or-upload action that cannot touch a failure in the route.
+   */
+  it("reports a failed gate submission as a failure, not as a gate verdict", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 500,
+            json: async () =>
+              unexpectedWalkStepFailureBody("phase_gate_submission"),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/Submitting the gate did not finish/i).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(
+      screen.getAllByText(/The gate was not evaluated/i).length,
+    ).toBeGreaterThan(0);
+    // The framing this case exists to remove. Every other refusal on this
+    // surface keeps it; this one must not have it.
+    expect(
+      screen.queryByText(/the phase gate is blocked/i),
+    ).not.toBeInTheDocument();
+    // The code the reader used to be shown in its place.
+    expect(screen.queryByText(/\binternal_error\b/)).not.toBeInTheDocument();
+    // And the remedy that cannot clear a failure the gate never saw.
+    expect(
+      screen.queryByText(/approve the draft or upload an edited version/i),
     ).not.toBeInTheDocument();
   });
 

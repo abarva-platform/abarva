@@ -2,6 +2,7 @@ import {
   MOVE_UNREADABLE_REFUSAL_DETAIL,
   moveUnreadableRefusalBody,
 } from "@/lib/programs/move-unreadable-refusal";
+import { unexpectedWalkStepDetail } from "@/lib/programs/walk-step-unexpected-failure";
 
 const mockRequireTenancy = jest.fn();
 const mockLoadUserProgramAccessPolicy = jest.fn();
@@ -12,6 +13,7 @@ const mockListApprovedPhaseEvidence = jest.fn();
 const mockDecideApproval = jest.fn();
 const mockAdvancePhase = jest.fn();
 const mockResolvePhaseGateActorPersonId = jest.fn();
+const mockSendMoveProgressUpdate = jest.fn();
 
 jest.mock("../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -59,7 +61,7 @@ jest.mock("@/lib/programs/phase-gate-actor", () => ({
 }));
 
 jest.mock("@/lib/programs/move-progress-notifications", () => ({
-  sendMoveProgressUpdate: jest.fn().mockResolvedValue(undefined),
+  sendMoveProgressUpdate: (input: unknown) => mockSendMoveProgressUpdate(input),
 }));
 
 jest.mock("@/lib/programs/programs-auth-mode-server", () => ({
@@ -129,6 +131,7 @@ beforeEach(() => {
     ok: true,
     personId: "person-1",
   });
+  mockSendMoveProgressUpdate.mockResolvedValue(undefined);
 });
 
 describe("POST /api/v1/programs/[programId]/advance", () => {
@@ -172,6 +175,54 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     });
     expect(mockEvaluateGate).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The catch-all arm, driven through the route rather than asserted on the
+   * module.
+   *
+   * `advancePhase` commits, and then two awaited calls run inside the same
+   * `try` with no local catch of their own: the gate decision record and the
+   * progress notification. The notification is the easier of the two to drive
+   * and the comment above the record calls both "best-effort", which the code
+   * does not implement — a throw in either answers 500 with the phase already
+   * moved. `PhaseAdvanceButton` reads `body.detail`, so before this the reader
+   * was told "Failed to advance phase" about a Move that had advanced.
+   */
+  it("answers a post-advance failure with a sentence that does not deny the phase moved", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    mockSendMoveProgressUpdate.mockRejectedValue(
+      new Error('relation "move_progress_outbox" does not exist'),
+    );
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        toPhase: 1,
+        selfApproveIfAuthorized: true,
+        humanRationale:
+          "I reviewed the phase gate evidence and approve advancing this Move.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(500);
+    // The advance itself did happen. That is what makes the old wording wrong,
+    // so assert it rather than assume it.
+    expect(mockAdvancePhase).toHaveBeenCalled();
+
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toStrictEqual({
+      error: "internal_error",
+      detail: unexpectedWalkStepDetail("phase_advance"),
+    });
+    // The raw error text was the whole of the old body and no client declared a
+    // field for it. It must not come back.
+    expect(body).not.toHaveProperty("message");
+    expect(JSON.stringify(body)).not.toContain("move_progress_outbox");
   });
 
   it("self-approves phase advancement for callers with gate approval rights", async () => {

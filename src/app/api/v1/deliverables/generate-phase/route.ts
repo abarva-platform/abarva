@@ -81,6 +81,7 @@ import {
   formatStageReadinessPromptContext,
   loadStageReadinessPromptContext,
 } from "@/lib/programs/stage-readiness-workbooks/prompt-context";
+import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -826,8 +827,14 @@ export async function POST(req: NextRequest) {
     } catch {
       /* not a tenancy error */
     }
-    const message = errorMessage(err);
-    console.error("[POST /api/v1/deliverables/generate-phase]", err);
-    return Response.json({ error: "internal_error", message }, { status: 500 });
+    console.error(
+      "[POST /api/v1/deliverables/generate-phase]",
+      errorMessage(err),
+      err,
+    );
+    return Response.json(
+      unexpectedWalkStepFailureBody("phase_deliverable_build"),
+      { status: 500 },
+    );
   }
 }

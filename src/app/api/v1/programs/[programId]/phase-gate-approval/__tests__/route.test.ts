@@ -2,6 +2,7 @@ import {
   MOVE_UNREADABLE_REFUSAL_DETAIL,
   moveUnreadableRefusalBody,
 } from "@/lib/programs/move-unreadable-refusal";
+import { unexpectedWalkStepDetail } from "@/lib/programs/walk-step-unexpected-failure";
 
 // INCIDENT 2026-07-20 regression coverage. This route previously called
 // preparePhaseGateApprovalRecords, which fabricated-and-signed-off a
@@ -474,6 +475,41 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
         carriedGaps: [],
       }),
     );
+  });
+
+  /**
+   * The catch-all arm, driven through the route.
+   *
+   * This surface's reader wraps whatever the body offers in "the phase gate is
+   * blocked" and appends its standing document remedy. With `detail` absent the
+   * ladder landed on `error`, so a crash was reported to a product user as a
+   * verdict — `internal_error` — with an approve-or-upload instruction that
+   * cannot address a failure the gate never reached.
+   */
+  it("answers an unanticipated failure with a sentence, not with its error code", async () => {
+    mockEvaluateGate.mockRejectedValue(
+      new Error('relation "gate_rules" does not exist'),
+    );
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        phase: 3,
+        rationale: "Architecture reviewed and approved.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(500);
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toStrictEqual({
+      error: "internal_error",
+      detail: unexpectedWalkStepDetail("phase_gate_submission"),
+    });
+    expect(body).not.toHaveProperty("message");
+    expect(JSON.stringify(body)).not.toContain("gate_rules");
   });
 
   it("lets the authorized user approve P1 without becoming the sponsor", async () => {
