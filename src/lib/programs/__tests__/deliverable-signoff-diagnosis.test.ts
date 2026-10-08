@@ -7,13 +7,17 @@ import {
 import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
 
 /**
- * The five HARD criteria this module serves, with the canonical registry key
+ * The six HARD criteria this module serves, with the canonical registry key
  * each gate call site passes. Kept here so a renamed key fails a test rather
  * than silently degrading a sentence to a humanized identifier.
+ *
+ * `business_case` is the one reached through `meetsApprovalBar` rather than a
+ * direct `isSignedOff` call, which is why it was not in the original five.
  */
 const GATE_SIGN_OFF_KEYS = [
   "charter",
   "discovery_report",
+  "business_case",
   "readiness_and_change_plan",
   "handoff_package",
   "value_measurement_contract",

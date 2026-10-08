@@ -1,13 +1,17 @@
 /**
  * Why a deliverable sign-off criterion failed — and the one action that answers it.
  *
- * Five HARD gate criteria are a single `isSignedOff(row)` call:
+ * Six HARD gate criteria resolve to a single sign-off call:
  * `charter_signed_off` (P1->P2), `discovery_report_signed_off` (P2->P3),
- * `readiness_and_change_plan_signed_off` (P4->P5), and both
- * `handoff_package_signed_off` / `value_measurement_contract_signed_off`
- * (P5->P6). That predicate returns a bare boolean, so four structurally
- * different states arrived at the reader as one sentence — the criterion's
- * own `describe`, which restates the criterion rather than the cause:
+ * `business_case_approved` and `readiness_and_change_plan_signed_off`
+ * (P4->P5), and both `handoff_package_signed_off` /
+ * `value_measurement_contract_signed_off` (P5->P6). Five of them call
+ * `isSignedOff` directly; `business_case_approved` calls `meetsApprovalBar`,
+ * an async wrapper that delegates to the same predicate, which is why a grep
+ * for `isSignedOff` does not find it and why it was the last to get a cause.
+ * The predicate returns a bare boolean, so four structurally different states
+ * arrived at the reader as one sentence — the criterion's own `describe`,
+ * which restates the criterion rather than the cause:
  *
  *   1. no such deliverable row exists at all,
  *   2. the row exists but is not recorded as signed off,
@@ -26,6 +30,20 @@
  *
  * Labels are read from `DELIVERABLE_REGISTRY` rather than typed here, so a
  * renamed document renames itself in these sentences.
+ *
+ * NOT wired to these sentences, deliberately: the three SOFT single-row
+ * sign-off criteria `funding_approval_recorded`, `sponsor_alignment_confirmed`
+ * and `tower_handoff_plan_accepted`. The `absent` arm below prescribes Approve
+ * & Build, and none of the keys those three resolve (`funding_approval`,
+ * `capacity_approval`, `approval_memo`, `stakeholder_alignment`,
+ * `sponsor_alignment`, `tower_handoff_plan`, `execution_monitoring_plan`,
+ * `control_tower_handoff`) appears in any `PHASE_CANONICAL_KEYS` set, so no
+ * phase build produces them — `complete_deliverable` is their only producer.
+ * Giving them this sentence would prescribe an action their own generation set
+ * rules out. Their reasons are not inert either: both blocked-message readers
+ * filter to `severity === "hard"`, but the advance route copies soft failures
+ * into the gate decision artifact's `carriedGaps`, so these three need a
+ * producer-aware `absent` arm rather than no change at all.
  */
 
 import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
