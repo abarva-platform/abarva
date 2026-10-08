@@ -28,6 +28,54 @@ describe("architecture model + HTML renderer (W2)", () => {
     expect(dataFlow?.svg).not.toContain('marker-end="url(#arrow)"');
     expect(operatingFlow?.svg).toContain('marker-end="url(#arrow)"');
   });
+  it("represents exactly the recorded flow ids in each data and control visual", () => {
+    const visuals = renderArchitectureVisualExhibits(
+      FIRST_CAPITAL_ARCHITECTURE,
+    );
+    const renderedIds = (id: string) => {
+      const svg = visuals.find((visual) => visual.id === id)?.svg ?? "";
+      return [...svg.matchAll(/data-arch-item-id="([^"]+)"/g)]
+        .map((match) => match[1])
+        .sort();
+    };
+    const expectedIds = (
+      flows: typeof FIRST_CAPITAL_ARCHITECTURE.target.flows,
+      kinds: string[],
+    ) =>
+      flows
+        .filter((flow) => kinds.includes(flow.kind))
+        .map((flow) => flow.id)
+        .sort();
+    expect(renderedIds("current_state_system_data_flow")).toEqual(
+      expectedIds(FIRST_CAPITAL_ARCHITECTURE.current.flows, ["data", "event"]),
+    );
+    expect(renderedIds("end_to_end_data_flow")).toEqual(
+      expectedIds(FIRST_CAPITAL_ARCHITECTURE.target.flows, ["data", "event"]),
+    );
+    expect(renderedIds("ai_recommendation_control_flow")).toEqual(
+      expectedIds(FIRST_CAPITAL_ARCHITECTURE.target.flows, [
+        "control",
+        "human_approval",
+      ]),
+    );
+  });
+  it("refuses a flow visual that would silently omit recorded flows", () => {
+    const flow = FIRST_CAPITAL_ARCHITECTURE.target.flows[0];
+    const model: ArchitectureModel = {
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      target: {
+        ...FIRST_CAPITAL_ARCHITECTURE.target,
+        flows: Array.from({ length: 9 }, (_, index) => ({
+          ...flow,
+          id: `flow-${index}`,
+          kind: "data" as const,
+        })),
+      },
+    };
+    expect(() => renderArchitectureVisualExhibits(model)).toThrow(
+      /architecture_flow_visual_capacity_exceeded/,
+    );
+  });
   it("the First Capital sample model is referentially valid (no errors)", () => {
     const issues = validateArchitectureModel(FIRST_CAPITAL_ARCHITECTURE);
     expect(issues.filter((i) => i.level === "error")).toHaveLength(0);

@@ -16,6 +16,7 @@ import {
 } from "./deck-quality";
 import type { RenderableDeliverable } from "./types";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
+import { judgeArchitectureDeck } from "./architecture-deck-quality";
 
 export interface ValidatedDeck {
   buffer: Buffer;
@@ -78,6 +79,18 @@ export async function renderValidatedDeck(
   }
 
   const { buffer, inspection, verdict } = rendered;
+
+  if (architectureModel) {
+    const architectureVerdict = await judgeArchitectureDeck(
+      buffer,
+      architectureModel,
+    );
+    if (!architectureVerdict.ok) {
+      throw new Error(
+        `generated_pptx_failed_architecture_semantics: ${architectureVerdict.findings.join("; ")}`,
+      );
+    }
+  }
 
   const integrityFailures = verdict.findings
     .filter(
