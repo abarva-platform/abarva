@@ -200,11 +200,10 @@ describe("inboundArtifactMerges", () => {
 
   it("ignores applicabilities that are not a merge", () => {
     const decision = decisionForPhase(3, STRAIGHTFORWARD);
-    // sourcing_strategy is not_applicable at every tier for this archetype —
-    // omitted, but with no content to carry anywhere.
+    // A lightweight sourcing brief is a standalone gate artifact, not a merge.
     expect(
       decision.artifactApplicability.sourcing_strategy?.applicability,
-    ).toBe("not_applicable");
+    ).toBe("lightweight");
     expect(
       inboundArtifactMerges(decision, "solution_design").map(
         (merge) => merge.artifactKey,
