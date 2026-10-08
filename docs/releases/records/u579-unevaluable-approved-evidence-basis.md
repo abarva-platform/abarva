@@ -132,10 +132,11 @@ migration rollback. Reverting restores the prior behavior exactly, including its
 - PR URL and its CI run on this branch, including the required `AI surface control catalog`,
   `Behavior coverage floor`, `Typecheck + reasoning-layer tests`, `ESLint`, and
   `Release record and impact note` checks.
-- Census delta in `docs/architecture/test-ci-coverage-census.json`: `testFiles` 2820 → 2822,
-  `coveredTestFiles` 2656 → 2658, uncovered unchanged — the registered-suite proof. Two of those
-  four counts move by more than the one added file because the committed census on `main` is one
-  file stale; regenerating with the added suite removed reproduces that offset.
+- Census delta in `docs/architecture/test-ci-coverage-census.json`: `testFiles` 2823 → 2824,
+  `coveredTestFiles` 2659 → 2660, uncovered unchanged — the registered-suite proof for the one
+  added suite. Measured after merging `origin/main`: against the earlier base these counts read
+  +2, because that base's committed census was one file stale and the sibling merge absorbed the
+  offset. The committed numbers here are the post-merge ones.
 - The new log line, `[moves] approved-evidence currency basis not evaluable`, carries the Move id,
   the reason, and the operator-readable detail. Its absence from a gate decision is now itself
   evidence that the basis WAS readable.
