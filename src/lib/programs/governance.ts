@@ -40,6 +40,10 @@ import { resolveMoveTier } from "./p0-extended-intake-fields";
 import { listApprovedPhaseEvidence } from "./approved-phase-evidence";
 import { resolveConfirmedSolutionRoute } from "./solution-route-assessment";
 import {
+  discoveryReportTextFromLatestVersion,
+  p2ReadinessBlockedReason,
+} from "./discovery-report-readiness";
+import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
@@ -1046,14 +1050,9 @@ export async function evaluateGate(
       content: string | null;
       structured_data: Record<string, unknown> | null;
     }> | null) ?? [])[0];
-    latestDiscoveryReportText = [
-      latestDiscoveryVersion?.content ?? "",
-      latestDiscoveryVersion?.structured_data
-        ? JSON.stringify(latestDiscoveryVersion.structured_data)
-        : "",
-    ]
-      .join("\n")
-      .toLowerCase();
+    latestDiscoveryReportText = discoveryReportTextFromLatestVersion(
+      latestDiscoveryVersion,
+    );
   }
 
   // The 6-phase doctrine moved Discovery to P2 (Discover & Diagnose),
@@ -1209,18 +1208,12 @@ export async function evaluateGate(
               phaseCaptureText,
             ) &&
             phaseModulesCompleted(fromPhase));
-        if (!pass && discoveryReportRow && discoveryReportHasHardGap) {
-          failureReason =
-            "The signed Discovery Report still contains unresolved hard-gap, hold, unverified, or not-yet-attested language. Upload a client-approved replacement or regenerate/edit the Discovery Report so it explicitly clears P2 or carries only non-blocking P3 design caveats.";
-        } else if (
-          !pass &&
-          /\bconditional proceed\b/.test(latestDiscoveryReportText)
-        ) {
-          failureReason =
-            "The signed Discovery Report says conditional proceed. Replace it with a client-approved decision that either clears P2 or records a hold/discontinue decision.";
-        } else if (!pass && !discoveryReportRow) {
-          failureReason =
-            "No signed Discovery Report is available for P2 readiness. Approve or upload the client-approved Discovery Report in Files & Evidence, then rerun Approve & Build.";
+        if (!pass) {
+          failureReason = p2ReadinessBlockedReason({
+            hasReportRow: Boolean(discoveryReportRow),
+            reportText: latestDiscoveryReportText,
+            hasHardGap: discoveryReportHasHardGap,
+          });
         }
         break;
       case "solution_route_validated":
