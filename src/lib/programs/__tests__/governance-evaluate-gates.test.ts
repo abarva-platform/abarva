@@ -635,9 +635,9 @@ describe("evaluateGate", () => {
       5,
     );
 
-    expect(
-      result.failedChecks.map((check) => check.check),
-    ).not.toContain("tower_metric_plan_drafted");
+    expect(result.failedChecks.map((check) => check.check)).not.toContain(
+      "tower_metric_plan_drafted",
+    );
   });
 
   it("reports the P4 Tower metric-plan criterion as unmet when neither the plan nor any Tower wording exists", async () => {
@@ -869,6 +869,210 @@ describe("evaluateGate", () => {
     );
   });
 
+  describe("a failed sign-off criterion states WHICH of its four states it is in", () => {
+    // `isSignedOff` is one boolean over four structurally different states, and
+    // the reason it produces is what the live surface renders: the standalone
+    // client joins `failedChecks[].reason` into the blocked message and the
+    // advance route puts it in `detail`. An `objectContaining` match on
+    // `{check, severity}` is satisfied by a superset, so it cannot see whether
+    // a reason was set at all — these cases read `reason` directly.
+    const ctx = {
+      clientId: "client-1",
+      clientKey: "tenant-1",
+      userId: "person-1",
+    };
+
+    function reasonFor(
+      result: Awaited<ReturnType<typeof evaluateGate>>,
+      check: string,
+    ): string {
+      const failed = result.failedChecks.find((f) => f.check === check);
+      expect(failed).toBeDefined();
+      return failed!.reason;
+    }
+
+    beforeEach(() => {
+      getProgramByIdMock.mockResolvedValue({
+        id: "program-1",
+        currentPhase: 1,
+        archetype: "agent_assist",
+      });
+      participantsFixture = [{ approval_authority: "sponsor" }];
+    });
+
+    it("absent: no charter row at all sends the reader to Approve & Build", async () => {
+      deliverablesFixture = [];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+      expect(reason).toContain("No Program Charter exists on this Move yet");
+      expect(reason).toContain("Approve & Build");
+      // The criterion's own describe is a restatement, not a cause.
+      expect(reason).not.toBe("Charter approved by an authorized Move user");
+    });
+
+    it("not_signed_off: a draft charter names its status and forbids the rebuild", async () => {
+      deliverablesFixture = [
+        { id: "charter", deliverable_type_key: "charter", status: "draft" },
+      ];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+      expect(reason).toContain('"draft"');
+      expect(reason).toContain("Record the sign-off on the existing document");
+      // Rebuilding replaces the document with a fresh unapproved draft, so
+      // prescribing it here would prescribe the one action that cannot work.
+      expect(reason).toContain("Do not re-run Approve & Build");
+    });
+
+    it("not_signed_off: an in-review charter reads differently from an absent one", async () => {
+      deliverablesFixture = [
+        { id: "charter", deliverable_type_key: "charter", status: "in_review" },
+      ];
+      const inReview = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+
+      deliverablesFixture = [];
+      const absent = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+
+      expect(inReview).toContain('"in_review"');
+      expect(inReview).not.toBe(absent);
+    });
+
+    it("linked_artifact_integrity: an artifact owned by another tenant names ownership, not currency", async () => {
+      deliverablesFixture = [
+        {
+          id: "charter",
+          deliverable_type_key: "charter",
+          status: "signed_off",
+          approved_artifact_id: "artifact-foreign",
+        },
+      ];
+      moveArtifactsFixture = [
+        {
+          artifact_id: "artifact-foreign",
+          tenant_key: "tenant-1",
+          move_id: "some-other-move",
+          artifact_family: "generated_deliverable",
+          lifecycle_state: "current",
+          created_at: "2026-09-29T15:00:00.000Z",
+          metadata: {
+            deliverableId: "charter",
+            evidenceSnapshotHash: "revision-current",
+          },
+        },
+      ];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+      expect(reason).toContain("recorded as signed off");
+      expect(reason).toContain("does not belong to this Move");
+      expect(reason).not.toContain("older evidence basis");
+    });
+
+    it("evidence_basis_stale: the signature stands and the sentence says so", async () => {
+      deliverablesFixture = [
+        {
+          id: "charter",
+          deliverable_type_key: "charter",
+          status: "signed_off",
+          structured_data: {
+            source: "generated_artifact_acceptance",
+            evidenceSnapshotHash: "revision-before-new-evidence",
+            generatedAt: "2026-09-29T15:00:00.000Z",
+          },
+        },
+      ];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 1, 2),
+        "charter_signed_off",
+      );
+      expect(reason).toContain("recorded as signed off");
+      expect(reason).toContain("older evidence basis");
+      expect(reason).toContain("Regenerate");
+      // Not the draft sentence: the reader must not be told to sign something
+      // that is already signed.
+      expect(reason).not.toContain("Record the sign-off on the existing");
+    });
+
+    it("the P2 gate's discovery report carries its own name, not the charter's", async () => {
+      // P2 Discover is the blocking phase of the walk, and this is the
+      // criterion a reader hits first there.
+      getProgramByIdMock.mockResolvedValue({
+        id: "program-1",
+        currentPhase: 2,
+        archetype: "agent_assist",
+      });
+      deliverablesFixture = [
+        {
+          id: "discovery-report",
+          deliverable_type_key: "discovery_report",
+          status: "approved",
+        },
+      ];
+
+      const reason = reasonFor(
+        await evaluateGate(ctx, "program-1", 2, 3),
+        "discovery_report_signed_off",
+      );
+      expect(reason).toContain("Discovery & Diagnosis Report");
+      expect(reason).toContain('"approved"');
+      expect(reason).not.toContain("Program Charter");
+    });
+
+    it("each of the five sign-off criteria names its own document", async () => {
+      // One shared predicate, five criteria. A label resolved from the wrong
+      // key would send the reader to the wrong document.
+      deliverablesFixture = [];
+      const expectations: Array<[number, number, string, string]> = [
+        [1, 2, "charter_signed_off", "Program Charter"],
+        [2, 3, "discovery_report_signed_off", "Discovery & Diagnosis Report"],
+        [
+          4,
+          5,
+          "readiness_and_change_plan_signed_off",
+          "Readiness & Change Plan",
+        ],
+        [
+          5,
+          6,
+          "handoff_package_signed_off",
+          "Mobilization & Tower Handoff Package",
+        ],
+        [
+          5,
+          6,
+          "value_measurement_contract_signed_off",
+          "Value Measurement Contract",
+        ],
+      ];
+      for (const [from, to, check, label] of expectations) {
+        getProgramByIdMock.mockResolvedValue({
+          id: "program-1",
+          currentPhase: from,
+          archetype: "agent_assist",
+        });
+        const reason = reasonFor(
+          await evaluateGate(ctx, "program-1", from, to),
+          check,
+        );
+        expect(reason).toContain(label);
+      }
+    });
+  });
+
   it("does not resolve an artifact link from another tenant", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
@@ -970,7 +1174,9 @@ describe("evaluateGate", () => {
       participantsFixture = [{ approval_authority: "sponsor" }];
     }
 
-    const charterFailed = (result: { failedChecks: Array<{ check: string }> }) =>
+    const charterFailed = (result: {
+      failedChecks: Array<{ check: string }>;
+    }) =>
       result.failedChecks.some((check) => check.check === "charter_signed_off");
 
     it("leaves the recorded sign-off standing when the snapshot is unavailable", async () => {
