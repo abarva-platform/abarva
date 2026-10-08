@@ -319,6 +319,7 @@ export default async function EngagePage({
     <div style={{ padding: '24px 24px 40px', maxWidth: 1400, margin: '0 auto' }}>
       <EngagementMetaStrip
         engagement={engagement}
+        phaseSnapshots={gateSnapshots}
         sponsor={sponsor}
         turnCount={turns.length}
         lastTurnAt={lastTurn?.created_at ?? null}
