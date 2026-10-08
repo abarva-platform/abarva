@@ -4,6 +4,8 @@ import { notFound, redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import { getEngagementByAnyId } from '@/lib/db/engagement';
+import { engagementReadIsCrossTenant } from '@/lib/programs/engagement-tenant-fence';
+import { requireTenancy } from '@/app/api/v1/programs/_auth';
 import { getPersonById } from '@/lib/db/person';
 import { getRecentTurns } from '@/lib/db/turn';
 import {
@@ -120,6 +122,29 @@ export default async function EngagePage({
 
   const engagement = await getEngagementByAnyId(engagementId);
   if (!engagement) notFound();
+
+  // Tenancy fence. `getEngagementByAnyId` filters on the id alone, through the
+  // data-plane compat client, under a layout that guards only the
+  // responsible-AI gates -- so nothing above this line keeps one tenant's
+  // session out of another tenant's Move. The decision lives in
+  // `engagement-tenant-fence`, which refuses ONLY when both sides record a
+  // client and they differ; an unrecorded client and an unresolved context
+  // both fail open, so no surface that renders today stops rendering. It sits
+  // before the canonical-path redirect deliberately: redirecting on a Move the
+  // caller may not read would confirm that the Move exists.
+  const tenancyClientId = await requireTenancy()
+    .then((ctx) => ctx.clientId)
+    .catch(() => null);
+  if (
+    engagementReadIsCrossTenant({
+      engagementClientId: engagement.client_id,
+      contextClientId: tenancyClientId,
+    })
+  ) {
+    // Same answer as an id that resolves to no Move, so a cross-tenant id is
+    // indistinguishable from an absent one.
+    notFound();
+  }
 
   // C2-03 · if the engagement resolves to a seeded canonical program path,
   // redirect there instead of rendering the legacy console. Covers Tower

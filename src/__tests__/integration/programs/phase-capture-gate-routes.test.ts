@@ -475,7 +475,15 @@ describe("Moves signed-in phase capture/gate routes", () => {
         ],
       ]),
     );
-    expect(updateCalls).not.toEqual(
+    // Reclassified by u604: this assertion used to FORBID `current_phase`,
+    // which pinned the defect that release fixed. The handoff returns
+    // `newPhase: 6` and three readers key on the phase rather than the
+    // lifecycle -- the advance control (`isFinal = currentPhase >= 6`, so it
+    // stayed live on a finished Move), the CXO preview mode, and the phase-6
+    // deliverable set -- so a handoff that reports 6 and records only
+    // `lifecycle_state` leaves all three reading a Move still at phase 5.
+    // The terminal handoff must record the phase it reports.
+    expect(updateCalls).toEqual(
       expect.arrayContaining([
         [expect.objectContaining({ current_phase: 6 })],
       ]),

@@ -3,6 +3,14 @@ import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 export interface EngagementRow {
   id: string;
   graph_node_id: string;
+  /**
+   * Owning tenant. The loaders below `select('*')`, so the column is present
+   * on every row they return; it is optional here because narrower selects
+   * elsewhere cast into this shape. Declared because a caller that must fence
+   * a read needs the column to be readable without a second query --
+   * `engagement-tenant-fence` is the one that does.
+   */
+  client_id?: string | null;
   name: string;
   industry_code: string;
   function_code: string;
