@@ -45,6 +45,12 @@ import {
   resolveEvidenceFrameworkProvenance,
   type EvidenceFrameworkProvenance,
 } from "@/lib/programs/evidence-framework-provenance";
+import {
+  classifyTransitionEvidenceBasisRefusal,
+  describeTransitionEvidenceBasisFault,
+  type TransitionEvidenceBasisCause,
+  type TransitionEvidenceBasisRefusal,
+} from "@/lib/programs/transition-evidence-basis";
 import { applyStageReadinessToEvidencePackets } from "@/lib/programs/stage-readiness-workbooks/gate-readiness";
 import { loadStageReadinessGateProposals } from "@/lib/programs/stage-readiness-workbooks/gate-proposal-context";
 import {
@@ -122,26 +128,72 @@ async function transitionEvidenceReadiness(
   // readiness pack was read, so a caller cannot mistake "not asked" for
   // "declared".
   evidenceFramework: EvidenceFrameworkProvenance | null;
+  // Which step did not complete, when `available` is false. The five steps fail
+  // for different reasons and only some of them can be answered by submitting
+  // again, so they are caught separately rather than collapsed into one flag.
+  basisRefusal: TransitionEvidenceBasisRefusal | null;
 }> {
   if (phase < 1 || phase > 4)
-    return { available: true, gaps: [], evidenceFramework: null };
+    return {
+      available: true,
+      gaps: [],
+      evidenceFramework: null,
+      basisRefusal: null,
+    };
+
+  const unevaluable = (
+    cause: TransitionEvidenceBasisCause,
+    error: unknown,
+  ) => {
+    // The cause reached neither the operator nor the log before, so a Move stuck
+    // here left no trace of which step to look at.
+    console.error(
+      describeTransitionEvidenceBasisFault({
+        cause,
+        programId,
+        phase,
+        error,
+      }),
+    );
+    return {
+      available: false,
+      gaps: [],
+      evidenceFramework: null,
+      basisRefusal: classifyTransitionEvidenceBasisRefusal(cause),
+    };
+  };
+
+  let readiness: Awaited<ReturnType<typeof loadDiscoveryEvidenceReadiness>>;
   try {
-    const readiness = await loadDiscoveryEvidenceReadiness(ctx, programId);
+    readiness = await loadDiscoveryEvidenceReadiness(ctx, programId);
+  } catch (error) {
+    return unevaluable("discovery_readiness_unreadable", error);
+  }
+
+  let workbookProposals: Awaited<
+    ReturnType<typeof loadStageReadinessGateProposals>
+  >;
+  try {
+    // The review AS IT STANDS, not only a finished one. A finished-only
+    // reading reported a workbook held by one response as a workbook nobody
+    // had reviewed, and left an undecidable blank on an OPTIONAL question
+    // holding the phase shut with no control able to clear it.
+    workbookProposals = await loadStageReadinessGateProposals(
+      ctx,
+      programId,
+      phase + 1,
+    );
+  } catch (error) {
+    return unevaluable("workbook_review_unreadable", error);
+  }
+
+  try {
     const packets = buildMoveEvidenceNeedPackets({
       moveId: programId,
       moveName,
       currentPhase: phase,
       readiness,
     });
-    // The review AS IT STANDS, not only a finished one. A finished-only
-    // reading reported a workbook held by one response as a workbook nobody
-    // had reviewed, and left an undecidable blank on an OPTIONAL question
-    // holding the phase shut with no control able to clear it.
-    const workbookProposals = await loadStageReadinessGateProposals(
-      ctx,
-      programId,
-      phase + 1,
-    );
     const assessedPackets = applyStageReadinessToEvidencePackets(
       packets,
       phase,
@@ -152,9 +204,12 @@ async function transitionEvidenceReadiness(
       available: true,
       gaps: currentPhaseRequiredEvidenceGaps(assessedPackets, phase),
       evidenceFramework: resolveEvidenceFrameworkProvenance(readiness),
+      basisRefusal: null,
     };
-  } catch {
-    return { available: false, gaps: [], evidenceFramework: null };
+  } catch (error) {
+    // Pure reduction over records both reads already returned. Submitting the
+    // gate again recomputes it identically, so this must not be sent as a retry.
+    return unevaluable("gap_assessment_failed", error);
   }
 }
 
@@ -447,6 +502,17 @@ export async function GET(
           nextAction: gap.nextAction,
         })),
         evidenceFramework: transitionReadiness.evidenceFramework,
+        // Which step did not complete when `available` is false, so a reader
+        // can tell an unmeasured gate from a measured-and-clear one.
+        basisUnevaluable: transitionReadiness.basisRefusal
+          ? {
+              cause: transitionReadiness.basisRefusal.cause,
+              code: transitionReadiness.basisRefusal.code,
+              resubmitCanSatisfy:
+                transitionReadiness.basisRefusal.resubmitCanSatisfy,
+              detail: transitionReadiness.basisRefusal.detail,
+            }
+          : null,
       },
       evidenceSnapshotAvailable: Boolean(evidence),
       p0Evidence,
@@ -623,14 +689,26 @@ export async function POST(
       phase,
     );
     if (!transitionReadiness.available) {
+      // One flag, three causes, two of which a re-submission cannot answer.
+      // The refusal names the step that failed and says whether submitting
+      // again can help; it relaxes nothing.
+      const basisRefusal =
+        transitionReadiness.basisRefusal ??
+        classifyTransitionEvidenceBasisRefusal(
+          "discovery_readiness_unreadable",
+        );
       return Response.json(
         {
-          error: "transition_evidence_readiness_unavailable",
+          error: basisRefusal.code,
+          // The code every client ladder already keys on, kept so a reader that
+          // matched the old refusal still recognises this one.
+          precondition: "transition_evidence_readiness_unavailable",
           phase,
-          detail:
-            "The current transition evidence and workbook review could not be verified. The phase gate was not submitted.",
+          basisUnevaluableCause: basisRefusal.cause,
+          resubmitCanSatisfy: basisRefusal.resubmitCanSatisfy,
+          detail: basisRefusal.detail,
         },
-        { status: 503 },
+        { status: basisRefusal.status },
       );
     }
     if (transitionReadiness.gaps.length > 0) {
