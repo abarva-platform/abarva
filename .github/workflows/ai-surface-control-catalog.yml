@@ -736,6 +736,34 @@ jobs:
       - name: Exercise the Programs vendor-platform intelligence registry suite
         run: npx jest src/lib/programs/vendor-platform-intelligence/__tests__ --runInBand
 
+      # C-415 slice 14: the Programs stage-readiness transition workbook.
+      #
+      # Measured BEFORE it was wired, the directory executed on its own: 10
+      # suites, 101 tests, GREEN — accepted-context 9, gate-readiness 21,
+      # parser 3, proposals 9, resolver 2, review-accumulation 19,
+      # review-family-coverage 9, review-selection 26,
+      # synthetic-evidence-pack 2, xlsx 1.
+      #
+      # Wired because the census already counted this directory as COVERED and
+      # it was merge-dark anyway: the only workflow that named it was
+      # unit-suites.yml, whose job is in none of the 19 required contexts. The
+      # census asks whether a suite is run by ANY workflow, not by a REQUIRED
+      # one, so a transition-gate regression here could not fail a merge.
+      #
+      # Not coverage of nothing, checked before wiring:
+      # applyStageReadinessToEvidencePackets is imported at runtime by the
+      # strategic-move phase page, the phase-gate-approval route and the phase
+      # deliverable generator. Its gaps decide `canApprove` and are returned as
+      # a 409 `transition_evidence_incomplete`, so this directory guards a hard
+      # precondition on both the Charter and Discover gates.
+      #
+      # The suites read no file's bytes, so `T-770` has nothing to refuse and
+      # `textIsTheSubject` is negative.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs stage-readiness transition workbook suite
+        run: npx jest src/lib/programs/stage-readiness-workbooks/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
