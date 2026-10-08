@@ -2186,7 +2186,7 @@ export function renderDeliverablePdf(
 // export format.
 
 const PPTX_COLOR = {
-  ink: COLORS.ink.slice(1),
+  ink: COLORS.deckInk.slice(1),
   muted: COLORS.deckMuted.slice(1),
   line: COLORS.deckRule.slice(1),
   cream: COLORS.cream.slice(1),

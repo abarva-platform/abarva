@@ -11,6 +11,7 @@ export const COLORS = {
   navy: "#0b4a91", // Va wordmark, primary actions, active fills
   cream: "#FBFAF7", // background, soft surfaces
   white: "#FFFFFF",
+  deckInk: "#1B1A17", // Existing v3 presentation ink and dark table band
   deckMuted: "#5E6874",
   deckRule: "#D9DFE6",
   deckCoverMuted: "#CAD3E1",
