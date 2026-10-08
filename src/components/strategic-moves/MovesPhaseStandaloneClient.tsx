@@ -357,6 +357,9 @@ interface MoveArtifactApiRow {
   lifecycleState: string;
   version: number;
   downloadUrl: string;
+  deliverableId?: string | null;
+  signedOffVersion?: number | null;
+  currentVersion?: number | null;
 }
 
 type WorkspaceView =
@@ -902,6 +905,9 @@ function mapArtifactApiRowToBuildArtifact(
     status: artifact.status,
     version: artifact.version,
     downloadUrl: artifact.downloadUrl,
+    deliverableId: artifact.deliverableId ?? null,
+    signedOffVersion: artifact.signedOffVersion ?? null,
+    currentVersion: artifact.currentVersion ?? null,
   };
 }
 
@@ -2589,7 +2595,7 @@ export function MovesPhaseStandaloneClient({
       // clears the very sign-off the gate is waiting for. The no-rebuild
       // submission is the control that can actually close this.
       setGateApprovalMessage(
-        `${result.source === "existing_documents" ? "Submitted" : "Build completed"}, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, then approve the draft or upload an edited version in Files & Evidence and use "Submit ${phase.code} ${phase.title} gate approval" — re-running Approve & Build would replace the document you just approved with a new unapproved draft.`,
+        `${result.source === "existing_documents" ? "Submitted" : "Build completed"}, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, then approve the draft or upload an edited version in the gate step's sign-off ledger above and use "Submit ${phase.code} ${phase.title} gate approval" — re-running Approve & Build would replace the document you just approved with a new unapproved draft.`,
       );
       throw new Error(blockedMessage);
     }
@@ -3204,6 +3210,7 @@ export function MovesPhaseStandaloneClient({
         <PhaseApproveAndBuild
           archetype={move.archetype}
           approverLabel={approverLabel}
+          canApproveGates={canApproveGates}
           clientDisplayName={move.tenant.name}
           disabledReason={phaseCaptureBlocker}
           deliverableKeys={phaseCanonicalKeysForRoute(
@@ -6642,6 +6649,7 @@ function PhaseBody({
             <PhaseApproveAndBuild
               archetype={move.archetype}
               approverLabel={approverLabel}
+              canApproveGates={canApproveGates}
               clientDisplayName={move.tenant.name}
               disabledReason={phaseCaptureBlocker}
               deliverableKeys={phaseCanonicalKeysForRoute(

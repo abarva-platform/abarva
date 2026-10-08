@@ -10,7 +10,10 @@ import {
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
-import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  getAzureReadFluentClient,
+  getAzureWriteFluentClient,
+} from "@/lib/data-plane/postgresCompat";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   initialReviewedEvidenceExtraction,
@@ -59,6 +62,14 @@ interface CabinetArtifact {
   visualCompanionArtifactType?: string | null;
   contextExtract?: CabinetContextExtract | null;
   evidenceSnapshotStatus?: "current" | "stale" | "unverified";
+  // Sign-off state for generated_deliverable rows, read from the SAME
+  // deliverables_v2 projection PhaseDocumentsPanel uses. Carried so the gate
+  // step's in-workspace attestation ledger can show sign-off state inline
+  // instead of only on the /evidence page. Absent for non-deliverable rows or
+  // when no deliverables_v2 row matches the artifact's deliverable_type_key.
+  deliverableId?: string | null;
+  signedOffVersion?: number | null;
+  currentVersion?: number | null;
   downloadUrl: string;
 }
 
@@ -270,6 +281,80 @@ async function loadReviewedEvidence(
   } catch {
     return { items: [], available: false };
   }
+}
+
+interface DeliverableSignOffState {
+  deliverableId: string;
+  signedOffVersion: number | null;
+  currentVersion: number | null;
+}
+
+/**
+ * Per-deliverable sign-off state from deliverables_v2, keyed by
+ * deliverable_type_key. This reuses the SAME projection (columns + engagement
+ * filter) that PhaseDocumentsPanel reads to render its "Signed off" badge and
+ * mount DeliverableApprovalAction. The gate step's attestation ledger consumes
+ * it through this route so it can show sign-off state inline rather than only
+ * on /evidence. Newest row per key wins (ordered by updated_at), matching the
+ * panel's dedupe intent. Non-fatal: a read failure yields an empty map and the
+ * ledger falls back to build-status-only.
+ */
+async function loadDeliverableSignOffByKey(
+  programId: string,
+): Promise<Map<string, DeliverableSignOffState>> {
+  const byKey = new Map<string, DeliverableSignOffState>();
+  try {
+    const sb = getAzureReadFluentClient();
+    const { data } = await sb
+      .from("deliverables_v2")
+      .select(
+        "id, deliverable_type_key, current_version, signed_off_version, updated_at",
+      )
+      .eq("engagement_id", programId)
+      .order("updated_at", { ascending: false });
+    if (!Array.isArray(data)) return byKey;
+    for (const row of data as Array<Record<string, unknown>>) {
+      const key =
+        typeof row.deliverable_type_key === "string"
+          ? row.deliverable_type_key
+          : "";
+      // Newest-first ordering means the first row seen per key is the current
+      // one; later (older) rows for the same key are ignored.
+      if (!key || byKey.has(key)) continue;
+      byKey.set(key, {
+        deliverableId: String(row.id ?? ""),
+        signedOffVersion:
+          typeof row.signed_off_version === "number"
+            ? row.signed_off_version
+            : null,
+        currentVersion:
+          typeof row.current_version === "number" ? row.current_version : null,
+      });
+    }
+    return byKey;
+  } catch {
+    return byKey;
+  }
+}
+
+/** Sign-off fields for one artifact row, or {} when no deliverables_v2 row
+ * matches its deliverable_type_key. */
+function deliverableSignOffFields(
+  key: string | null,
+  byKey: Map<string, DeliverableSignOffState>,
+): Partial<
+  Pick<
+    CabinetArtifact,
+    "deliverableId" | "signedOffVersion" | "currentVersion"
+  >
+> {
+  const signOff = key ? byKey.get(key) : undefined;
+  if (!signOff) return {};
+  return {
+    deliverableId: signOff.deliverableId,
+    signedOffVersion: signOff.signedOffVersion,
+    currentVersion: signOff.currentVersion,
+  };
 }
 
 interface CabinetContextExtractItem {
@@ -602,6 +687,8 @@ export async function GET(
       programId,
     );
     const reviewedEvidenceList = await loadReviewedEvidence(ctx, programId);
+    const deliverableSignOffByKey =
+      await loadDeliverableSignOffByKey(programId);
     const approvedSnapshot = ctx.clientKey
       ? await loadApprovedMoveEvidenceSnapshot({
           tenantKey: ctx.clientKey,
@@ -723,6 +810,12 @@ export async function GET(
         visualCompanionArtifactType: meta?.visualCompanionArtifactType ?? null,
         contextExtract,
         ...(evidenceSnapshotStatus ? { evidenceSnapshotStatus } : {}),
+        ...(r.artifact_family === "generated_deliverable"
+          ? deliverableSignOffFields(
+              deliverableKeyFromMoveArtifactMetadata(meta),
+              deliverableSignOffByKey,
+            )
+          : {}),
         downloadUrl: `/api/v1/programs/${programId}/artifacts/${r.artifact_id}/download`,
       };
     });
@@ -814,6 +907,10 @@ export async function GET(
                   : generatedEvidenceBasisCurrent
                     ? "current"
                     : "stale",
+              ...deliverableSignOffFields(
+                deliverableKeyFromGeneratedArtifactMetadata(meta),
+                deliverableSignOffByKey,
+              ),
               generatedBy: rec.renderedBy,
               createdAt: rec.renderedAt,
               downloadUrl: `/api/v1/artifacts/${rec.id}`,
