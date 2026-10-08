@@ -28,9 +28,9 @@ import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
 import type { OrchestrationResult } from "./orchestrator";
 import { completeDeliverable } from "@/lib/programs/mutations";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
-import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
+import { resolveGeneratedCompanionPhase } from "./generated-companion-phase";
 import {
   buildContractInput,
   deliverableKeyForOrchestratorType,
@@ -90,6 +90,12 @@ export interface PersistDeliverableOptions {
   phaseEvidenceSnapshotHash?: string;
   /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
   deliverableTypeKey?: string;
+  /**
+   * Moves phase DECLARED by the generation request. It is the phase the enqueuing
+   * route scoped this run's approved evidence to, so it — not a re-derivation from
+   * the deliverable key — decides which phase the editable companion is filed under.
+   */
+  phase?: number;
   userId?: string;
   /**
    * When true (the `moves_decision_storytelling` flag), render the artifact as the exhibit-led
@@ -399,14 +405,6 @@ async function renderOfficeCompanion(
   return null;
 }
 
-function phaseForDeliverableType(deliverableTypeKey: string): number {
-  return (
-    DELIVERABLE_REGISTRY.find(
-      (spec) => spec.deliverableTypeKey === deliverableTypeKey,
-    )?.phase ?? 0
-  );
-}
-
 export async function persistDeliverable(
   result: OrchestrationResult,
   opts: PersistDeliverableOptions,
@@ -438,6 +436,12 @@ export async function persistDeliverable(
   });
   const resolvedDeliverableTypeKey =
     opts.deliverableTypeKey ?? deliverableKey ?? result.brief.deliverableType;
+  // Declared phase wins; the key derivation is the fallback. `basis` is persisted
+  // so an unresolved phase is not read back as Originate.
+  const companionPhase = resolveGeneratedCompanionPhase({
+    declaredPhase: opts.phase,
+    deliverableTypeKey: resolvedDeliverableTypeKey,
+  });
   let profileRenderedHtml = false;
   // True whenever a profile/deck renderer creates an HTML preview of the SAME
   // governed document. The persisted outputFormat remains the prescribed final
@@ -767,7 +771,7 @@ export async function persistDeliverable(
         } satisfies TenancyCtx,
         {
           moveId: opts.sourceArtifactRef,
-          phase: phaseForDeliverableType(resolvedDeliverableTypeKey),
+          phase: companionPhase.phase,
           artifactType: `${resolvedDeliverableTypeKey}_editable_${officeCompanion.fileFormat}`,
           artifactFamily: "generated_deliverable",
           title: doc.title,
@@ -788,6 +792,7 @@ export async function persistDeliverable(
             versionId: materialized.versionId,
             generatedArtifactId: record.id,
             outputFormat,
+            companionPhaseBasis: companionPhase.basis,
             ...(opts.evidenceSnapshotHash
               ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
               : {}),
