@@ -518,4 +518,84 @@ describe("POST /api/v1/programs/[programId]/approvals", () => {
   });
 });
 
+// The program allowlist fence. Every case above sets `programIdsAllowed: null`,
+// so until these the route's first guard — and the only refusal a workspace
+// user cannot clear by retrying — had no coverage at all.
+describe("POST /api/v1/programs/[programId]/advance · program allowlist fence", () => {
+  const rationale =
+    "I reviewed the phase gate evidence and request approval for this Move.";
+
+  it("refuses a restricted caller whose grants omit the Move, in a sentence", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: ["prog-7", "prog-8"],
+      canApproveGates: true,
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ toPhase: 1, selfApproveIfAuthorized: true, humanRationale: rationale }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { error?: string; detail?: string };
+    expect(body.error).toBe("forbidden");
+    expect(body.detail).toContain("authorized to work in 2 Moves");
+    expect(body.detail).toContain("administrator");
+    expect(mockEvaluateGate).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("refuses a caller with no grants at all, in a sentence", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: [],
+      canApproveGates: true,
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ toPhase: 1, selfApproveIfAuthorized: true, humanRationale: rationale }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { error?: string; detail?: string };
+    expect(body.error).toBe("forbidden");
+    expect(body.detail).toContain("not authorized to work in any Move");
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("answers the fence without reading the Move, so the refusal cannot imply the id exists", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: ["prog-7"],
+      canApproveGates: true,
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ toPhase: 1, selfApproveIfAuthorized: true, humanRationale: rationale }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockGetProgramById).not.toHaveBeenCalled();
+  });
+
+  it("still lets a restricted caller advance a Move the account is granted", async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: ["prog-7", "prog-1"],
+      canApproveGates: true,
+    });
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: false,
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ toPhase: 1, selfApproveIfAuthorized: true, humanRationale: rationale }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockAdvancePhase).toHaveBeenCalled();
+  });
+});
+
 export {};
