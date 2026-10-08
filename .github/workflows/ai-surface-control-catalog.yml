@@ -1199,3 +1199,53 @@ jobs:
 
       - name: Exercise the current-state evidence approval route suites
         run: npx jest 'src/app/api/v1/programs/\[programId\]/current-state/evidence/\[evidenceId\]/approve/__tests__' --runInBand
+
+      # C-415 slice 19: the three interactive approval writes on the Moves
+      # phase surface that no required job reached.
+      #
+      # Slices 17 and 18 wired the gate-approval, phase-advance, phase-build and
+      # evidence-approval routes. These are the writes that turn a GENERATED
+      # document into an APPROVED one, and several phase gate criteria read the
+      # signed-off state they produce, so a phase cannot be crossed without
+      # them. All three were in the state those slices were built to end: the
+      # coverage census counted each directory COVERED, two of them because
+      # `unit-suites.yml` named a suite inside it and all three because that
+      # job's broad `src/app/api/v1/programs` argument selects them. That job is
+      # in none of the required contexts, so every case guarding any of the three
+      # routes could have been deleted with no merge-blocking check going red.
+      # A release landed cases in two of them with exactly that gap in place.
+      #
+      # Measured BEFORE wiring, three consecutive runs each with identical
+      # results under --runInBand:
+      #   deliverables/[deliverableId]/sign-off     1 suite, 25 tests, GREEN
+      #   artifacts/[artifactId]/client-approval    1 suite, 18 tests, GREEN
+      #   artifacts/[artifactId]/review-decision    1 suite,  4 tests, GREEN
+      #
+      # Not coverage of nothing, checked before wiring — each route has a live
+      # product fetcher on the mounted phase surface:
+      #   - sign-off is POSTed from DeliverableApprovalAction.tsx, which
+      #     PhaseApproveAndBuild.tsx and PhaseDocumentsPanel.tsx both mount. It
+      #     is the control that records a deliverable as signed off.
+      #   - client-approval and review-decision are both POSTed from
+      #     FileCabinetPanel.tsx, which MovesPhaseStandaloneClient.tsx mounts —
+      #     the surface where a reviewer dispositions a generated artifact.
+      #
+      # All three wired as DIRECTORIES so a suite added to any of them is owned
+      # without a workflow edit. Every one carries two dynamic segments, so the
+      # brackets are escaped for the same reason slices 17 and 18 escape theirs:
+      # jest reads a bare positional argument as a REGEX, and the unescaped
+      # spelling is a character class. Measured directly — the unescaped
+      # sign-off path reports `0 matches` and selects no test at all. The
+      # requiredness control resolves those escapes; the coverage census does
+      # not, which is why what leaves `unit-suites.yml` is the exact-path names
+      # and not its broad argument — that argument still selects all three, so
+      # the census reads the same before and after and only the quotable line
+      # moves into a job that can block a merge.
+      - name: Exercise the Moves deliverable sign-off route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/deliverables/\[deliverableId\]/sign-off/__tests__' --runInBand
+
+      - name: Exercise the Moves artifact client-approval route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/artifacts/\[artifactId\]/client-approval/__tests__' --runInBand
+
+      - name: Exercise the Moves artifact review-decision route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/artifacts/\[artifactId\]/review-decision/__tests__' --runInBand

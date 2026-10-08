@@ -182,7 +182,6 @@ jobs:
           src/scripts/__tests__/process-deliverable-queue.test.ts
           src/app/api/v1/programs/[programId]/generate/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/artifacts/__tests__/route.test.ts
-          src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.scroll-into-view.test.tsx
@@ -198,7 +197,6 @@ jobs:
           src/app/api/programs/[id]/deliverables/[deliverableId]/export/__tests__/route.test.ts
           src/app/api/v1/deliverables/generate/__tests__/route.test.ts
           src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts
-          src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/role-approvals/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/deliverables/complete/__tests__/route.test.ts
           --no-coverage --ci
@@ -385,7 +383,6 @@ jobs:
           "src/app/api/admin/programs/approvals/__tests__/route.test.ts"
           "src/app/api/admin/pricing/rate-cards/[id]/approve/__tests__/route.test.ts"
           "src/app/api/admin/programs/approvals/export/__tests__/route.test.ts"
-          "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts"
           "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__/route.test.ts"
           "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
           "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__/route.test.ts"
