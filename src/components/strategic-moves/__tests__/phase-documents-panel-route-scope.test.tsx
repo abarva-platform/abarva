@@ -262,3 +262,116 @@ describe("Files & Evidence documents list is scoped to the Move's route", () => 
     expect(phaseTally("P3 Design Future State")).toBe("0/3");
   });
 });
+
+// ── The superseded state ──────────────────────────────────────────────────────
+//
+// `POST .../solution-options/approve` sets every P3 architecture deliverable in
+// the Move to `superseded` when the chosen option is approved. The list named
+// that state `Draft` and offered the approve control beside it, and the sign-off
+// route refuses every submission from there with the `deliverable_superseded`
+// 409. These cases pin the list's two answers — what the state is called, and
+// that approving is not offered from it — against the real render.
+describe("Files & Evidence names a superseded document and does not offer its approval", () => {
+  const SUPERSEDED_ROW = {
+    id: "d-superseded",
+    deliverable_type_key: "solution_design",
+    title: "Solution Design Specification",
+    status: "superseded",
+    current_version: 2,
+    updated_at: "2026-10-07T00:00:00.000Z",
+    signed_off_version: null,
+    approved_artifact_id: null,
+    deliverable_versions: [
+      { content: "Built on the prior solution basis.", version: 2 },
+    ],
+  };
+
+  beforeEach(() => {
+    mockConfirmedRoute = null;
+    mockRouteLoaderCalls = [];
+    mockDeliverablesData = [];
+    mockActiveClient = null;
+    mockRunHistory = [];
+  });
+
+  it("calls the state Superseded rather than Draft", async () => {
+    mockDeliverablesData = [SUPERSEDED_ROW];
+    render(
+      await PhaseDocumentsPanel({
+        moveId: MOVE_ID,
+        currentPhase: 3,
+        compact: false,
+      }),
+    );
+    expect(screen.getByText("Superseded")).toBeInTheDocument();
+    // The defect: the two-arm ladder let this row fall through to the most
+    // actionable label in the domain. No row in this render is a draft, so a
+    // surviving "Draft" here is this row wearing the wrong name.
+    expect(screen.queryByText("Draft")).not.toBeInTheDocument();
+  });
+
+  it("replaces the approve control with the action that can succeed", async () => {
+    mockDeliverablesData = [SUPERSEDED_ROW];
+    render(
+      await PhaseDocumentsPanel({
+        moveId: MOVE_ID,
+        currentPhase: 3,
+        compact: false,
+      }),
+    );
+    // `signed_off_version` is null, so `alreadyApproved` is false and the full
+    // approve/upload control rendered here before the fix — against a row whose
+    // every submission the route answers with the superseded 409.
+    expect(screen.queryAllByRole("button", { name: /approve/i })).toHaveLength(
+      0,
+    );
+    // Regeneration is the one action that clears the state, and the list has to
+    // say so: the refusal naming it only arrives after a click that fails.
+    expect(
+      screen.getByText(/generate it again to return it to draft/i),
+    ).toBeInTheDocument();
+  });
+
+  it("still offers approval for a draft document in the same render", async () => {
+    // The control for the fix: the suppression is the superseded status's doing
+    // and not a render that lost its approve control altogether.
+    mockDeliverablesData = [
+      { ...SUPERSEDED_ROW, status: "draft", id: "d-draft" },
+    ];
+    render(
+      await PhaseDocumentsPanel({
+        moveId: MOVE_ID,
+        currentPhase: 3,
+        compact: false,
+      }),
+    );
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+    // The control renders more than one approve affordance (as-is and
+    // upload-a-replacement), so the assertion is on the count being non-zero.
+    expect(
+      screen.queryAllByRole("button", { name: /approve/i }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByText(/generate it again to return it to draft/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps a superseded document visible and in the tally's denominator", async () => {
+    mockConfirmedRoute = TECHNICAL_PRODUCT_ROUTE;
+    mockDeliverablesData = [SUPERSEDED_ROW];
+    render(
+      await PhaseDocumentsPanel({
+        moveId: MOVE_ID,
+        currentPhase: 3,
+        compact: false,
+      }),
+    );
+    // Naming the state must not hide the row: `solution_design` is off this
+    // Move's route, and retention is what keeps the reader able to see that a
+    // document exists and needs rebuilding.
+    expect(
+      screen.getByText("Solution Design Specification"),
+    ).toBeInTheDocument();
+    expect(phaseTally("P3 Design Future State")).toBe("1/3");
+  });
+});

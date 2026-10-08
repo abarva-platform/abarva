@@ -76,6 +76,15 @@ export interface MovesCaptureFlowProps {
    * visibly classified at the question and never reads as evidence.
    */
   renderSectionBadge?: (section: PhaseCaptureSection) => ReactNode;
+  /**
+   * Optional per-section width hint for the v2 two-column capture grid.
+   * "wide" makes the section span both columns; "default" (or omitting the
+   * prop) keeps it in one column. Structured editors (facts/estimate tables,
+   * route-card choosers) span wide automatically — this prop only lets a host
+   * widen a PLAIN-text section that still needs the room (e.g. a P3
+   * route-card question). Ignored outside `moves_workspace_v2`.
+   */
+  sectionSpan?: (section: PhaseCaptureSection) => "wide" | "default";
   /** Short recap value shown on the hand-off screen for a section. */
   sectionRecap: (section: PhaseCaptureSection) => string;
   /**
@@ -166,6 +175,19 @@ export interface MovesCaptureFlowProps {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/**
+ * Structured editors that need the full content width in the v2 capture grid:
+ * facts/estimate tables and route-card choosers read as cramped in a single
+ * column. Plain-text sections default to one column; a host can widen a
+ * specific plain section with the `sectionSpan` prop.
+ */
+const WIDE_STRUCTURED = new Set<string>([
+  "facts",
+  "business-change",
+  "solution-route",
+  "estimate-model",
+]);
+
 export function MovesCaptureFlow({
   phases,
   phase,
@@ -174,6 +196,7 @@ export function MovesCaptureFlow({
   renderSectionInput,
   renderSectionBasis,
   renderSectionBadge,
+  sectionSpan,
   sectionRecap,
   renderSectionRecapMark,
   handoffSummary = null,
@@ -199,6 +222,17 @@ export function MovesCaptureFlow({
     () => resolvePhaseStepGroups(phase, sections),
     [phase, sections],
   );
+  // v2 two-column capture grid: a section spans both columns when the host
+  // hints `wide`, or (absent a hint) when it is a structured editor. Plain
+  // sections sit in a single column so the grid reads as paired questions.
+  const sectionIsWide = (section: PhaseCaptureSection): boolean => {
+    const hint = sectionSpan?.(section);
+    if (hint === "wide") return true;
+    if (hint === "default") return false;
+    return section.structured
+      ? WIDE_STRUCTURED.has(section.structured)
+      : false;
+  };
   const sectionByKey = useMemo(() => {
     const map = new Map<string, PhaseCaptureSection>();
     for (const section of sections) map.set(section.key, section);
@@ -480,6 +514,13 @@ export function MovesCaptureFlow({
               {openingBand}
               <section className="mcf-panel" aria-labelledby="mcf-panel-title">
                 <div className="mcf-panel-head">
+                  {workspaceV2 && groups.length > 0 ? (
+                    <span className="mcf-eyebrow mcf-panel-eyebrow">
+                      {phases.find((p) => p.phase === phase)?.code ??
+                        `P${phase}`}
+                      {" · "}STEP {view + 1} OF {groups.length}
+                    </span>
+                  ) : null}
                   <h1 id="mcf-panel-title" className="mcf-panel-title">
                     {groups[view]?.title}
                   </h1>
@@ -488,7 +529,12 @@ export function MovesCaptureFlow({
                 <div className="mcf-questions">
                   {groups[view]
                     ? groupSections(groups[view]).map((section) => (
-                        <div className="mcf-question" key={section.key}>
+                        <div
+                          className={`mcf-question${
+                            sectionIsWide(section) ? " is-wide" : ""
+                          }`}
+                          key={section.key}
+                        >
                           <div className="mcf-q-labelrow">
                             <label className="mcf-q-label">
                               {section.label}
@@ -498,8 +544,14 @@ export function MovesCaptureFlow({
                           {section.description ? (
                             <p className="mcf-q-help">{section.description}</p>
                           ) : null}
-                          {renderSectionInput(section)}
-                          {renderSectionBasis?.(section) ?? null}
+                          <div className="mcf-q-field">
+                            {renderSectionInput(section)}
+                          </div>
+                          {renderSectionBasis?.(section) ? (
+                            <div className="mcf-q-basis">
+                              {renderSectionBasis(section)}
+                            </div>
+                          ) : null}
                         </div>
                       ))
                     : null}
@@ -740,6 +792,19 @@ const MCF_CSS = `
    rail and the four-stage sub-step spine. Scoped to .mcf-v2, so the legacy
    build is untouched. ─── */
 .mcf-v2{--mcf-bg:#FFFFFF;--mcf-surface:#FBFAF7;--mcf-ink:#1A1A18;--mcf-muted:#525866;--mcf-faint:#9AA3B2;--mcf-line:#E7E3DB;--mcf-line-strong:#D8D3C8;--mcf-accent:#1B2B5C;--mcf-accent-hover:#162449;--mcf-accent-ink:#fff;--mcf-current-bg:#1B2B5C;--mcf-current-ink:#fff;--mcf-serif:'Fraunces',Georgia,serif;--mcf-teal:#1d9e75}
+.mcf-v2{--mcf-space-1:8px;--mcf-space-2:12px;--mcf-space-3:16px;--mcf-space-4:24px;--mcf-space-5:32px;--mcf-space-6:40px}
+.mcf-v2 .mcf-panel-eyebrow{display:block;margin:0 0 var(--mcf-space-2)}
+.mcf-v2 .mcf-panel-intro{margin:0 0 var(--mcf-space-6)}
+.mcf-v2 .mcf-questions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--mcf-space-5);row-gap:var(--mcf-space-5);align-items:start}
+.mcf-v2 .mcf-question{min-width:0}
+.mcf-v2 .mcf-question.is-wide{grid-column:1 / -1}
+.mcf-v2 .mcf-q-labelrow{margin-bottom:var(--mcf-space-1)}
+.mcf-v2 .mcf-q-help{font-size:13.5px;margin:0 0 var(--mcf-space-2)}
+.mcf-v2 .mcf-q-field{min-width:0}
+.mcf-v2 .mcf-q-field>*{max-width:100%}
+.mcf-v2 .mcf-q-basis{margin-top:var(--mcf-space-3);padding-top:var(--mcf-space-3);border-top:1px solid var(--mcf-line)}
+.mcf-v2 .mcf-footer-actions{flex-wrap:wrap;gap:var(--mcf-space-2)}
+@media (max-width:640px){.mcf-v2 .mcf-questions{grid-template-columns:1fr;row-gap:var(--mcf-space-4)}.mcf-v2 .mcf-panel-intro{margin-bottom:var(--mcf-space-5)}}
 .mcf-v2 .mcf-tick,.mcf-v2 .mcf-done-eyebrow{color:var(--mcf-teal)}
 /* slim phase rail */
 .mcf-v2-rail{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin:0}

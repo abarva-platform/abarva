@@ -301,6 +301,7 @@ jobs:
           src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts
           src/components/strategic-moves/__tests__/CharterBasisField.test.tsx
           src/components/strategic-moves/__tests__/MovesCaptureFlow.test.tsx
+          src/components/strategic-moves/__tests__/MovesCaptureFlowGrid.test.tsx
           src/components/strategic-moves/__tests__/MovesCaptureWorkspace.test.tsx
           src/components/strategic-moves/__tests__/ava-dock-adapter.test.ts
           src/components/strategic-moves/__tests__/MovesHome.test.tsx
