@@ -1436,9 +1436,27 @@ export async function evaluateGate(
               phaseCaptureText,
             ));
         break;
-      case "business_case_approved":
-        pass = await meetsApprovalBar(businessCaseRow);
+      case "business_case_approved": {
+        // The sixth HARD criterion that is a single sign-off call, and the only
+        // one whose body reads `meetsApprovalBar` rather than `isSignedOff` —
+        // that async wrapper delegates straight to `isSignedOff`, so the verdict
+        // here is the same predicate and `pass` is unchanged. It was missed when
+        // the other five were given causes because a grep for `isSignedOff`
+        // structurally cannot see it. Of the four single-row sign-off criteria
+        // that still restate themselves, this is the only one whose deliverable
+        // is in `PHASE_CANONICAL_KEYS` (P4), which is what makes the `absent`
+        // arm's "run Approve & Build" a remedy that can actually work here.
+        const verdict = signOffVerdict(businessCaseRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "business_case",
+          });
+        }
         break;
+      }
       case "funding_approval_recorded":
         pass = isSignedOff(
           findDeliverable(
