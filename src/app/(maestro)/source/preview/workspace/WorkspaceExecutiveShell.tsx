@@ -231,29 +231,16 @@ function isRecoverableCreditCandidate(
 /**
  * The contracts whose loaded actions include a credit claim.
  *
- * One definition, two readers. The portfolio credit finding narrows TO this
- * set; `unexploitedRecoverableCreditRows` reports its complement. If the two
- * computed membership separately they would drift, and the gap report would
- * stop being the exact complement of the figure it qualifies.
+ * Both the fallback portfolio figure and the no-action report use this
+ * classification. An active load run can cause the figure to include rows
+ * without actions, so the two amounts are not always disjoint.
  */
 function creditActionContractIdSet(
   portfolio: RecoverableCreditInput,
 ): ReadonlySet<string> {
   return new Set(
     portfolio.impact.actionCandidates
-      .filter((row) =>
-        /credit|recover/i.test(
-          [
-            row.action_type,
-            row.opportunity_type,
-            row.title,
-            row.finding_summary,
-            row.deterministic_basis,
-          ]
-            .filter(Boolean)
-            .join(" "),
-        ),
-      )
+      .filter(isRecoverableCreditCandidate)
       .map((row) => row.contract_id),
   );
 }
@@ -261,11 +248,9 @@ function creditActionContractIdSet(
 /**
  * Contracts holding unclaimed SLA credit that no loaded action would claim.
  *
- * `source360RecoverableCreditCoverageRows` narrows to the contracts that DO
- * have a credit action whenever any of them does, so a contract carrying
- * unclaimed credit with no action is dropped from the portfolio figure - and
- * dropped precisely BECAUSE a different contract has one. The set is computed
- * there and discarded. This returns it.
+ * A credit row without a matching action needs review regardless of whether
+ * the portfolio figure includes it. The figure may include all rows for a
+ * selected load run, or narrow to actionable rows in its fallback path.
  *
  * Nothing here estimates anything. The amount is the unclaimed credit already
  * summed on the loaded coverage row, which is the same arithmetic the two
@@ -284,15 +269,6 @@ export function unexploitedRecoverableCreditRows(
           (numberFromDb(left.unclaimed_credit_usd) ?? 0) ||
         left.contract_id.localeCompare(right.contract_id),
     );
-}
-
-export function unexploitedRecoverableCreditTotal(
-  portfolio: RecoverableCreditInput,
-): number {
-  return unexploitedRecoverableCreditRows(portfolio).reduce(
-    (sum, row) => sum + (numberFromDb(row.unclaimed_credit_usd) ?? 0),
-    0,
-  );
 }
 
 export function source360RecoverableCreditCoverageRows(
@@ -2012,10 +1988,8 @@ export function CoveragePage({
             ))}
           </div>
           <p className="sw-v2-muted">
-            Summed from the unclaimed credit on each contract&apos;s loaded
-            performance rows, which is the same arithmetic a loaded credit
-            action carries. The portfolio credit figure narrows to the contracts
-            that already have one, so these are excluded from it.
+            Amounts come from loaded performance coverage. Review the governing
+            SLA and claim window before opening a credit action.
           </p>
         </section>
       ) : null}
