@@ -250,6 +250,39 @@ describe('hygiene gate · the typecheck judges the exit code, not the word "erro
     const untilNextSection = typescriptSection.slice(0, typescriptSection.indexOf('section "5'));
     expect(untilNextSection).toMatch(/--max-old-space-size=\d+/);
   });
+
+  it('gives the typecheck at least the heap the build step in the same job gets', () => {
+    // The typecheck sat at 6144 while the build below it sat at 8192, in the
+    // same job on the same runner. The type graph outgrew the lower number and
+    // the step started dying `exit 134` at ~6.12 GB against that ceiling —
+    // near enough the limit to depend on GC timing, so it failed intermittently
+    // and then failed on a re-run too. The case above only asserts an option is
+    // present, so a silent return to the lower number would keep it green.
+    //
+    // Both assignments are read so a comparison can never run against a missed
+    // one: the `case` guards above each assignment mention the flag WITHOUT a
+    // value, so the value pattern must be the assignment shape, and both sides
+    // are asserted found before being compared.
+    const source = readFileSync(GATE_SOURCE, 'utf8');
+
+    const heapFor = (sectionHeading: string, endHeading: string): number => {
+      const start = source.indexOf(sectionHeading);
+      expect(start).toBeGreaterThan(-1);
+      const section = source.slice(start);
+      const end = section.indexOf(endHeading);
+      const body = end === -1 ? section : section.slice(0, end);
+      const sizes = [...body.matchAll(/--max-old-space-size=(\d+)/g)].map((m) =>
+        Number(m[1]),
+      );
+      expect(sizes.length).toBeGreaterThan(0);
+      return Math.max(...sizes);
+    };
+
+    const typecheckHeap = heapFor('4. TypeScript', 'section "5');
+    const buildHeap = heapFor('5. Build', 'section "6');
+
+    expect(typecheckHeap).toBeGreaterThanOrEqual(buildHeap);
+  });
 });
 
 describe('hygiene gate · the secret-hygiene check judges the run, not its summary text', () => {
