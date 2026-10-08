@@ -164,6 +164,7 @@ import {
   source360RecoverableCreditCoverageRows,
   source360RecoverableCreditFinding,
   topVendors,
+  archetypeRowsForDisplay,
   vendorArchetypeCoverage,
   vendorArchetypeRows,
   vendorCoverageRows,
@@ -2700,5 +2701,79 @@ describe("the source-hygiene scanner is comment-proof", () => {
     ]) {
       expect(stripped).toContain(anchor);
     }
+  });
+});
+
+/*
+ * The coverage panel used to be titled "Archetype determines which levers are
+ * allowed" under the eyebrow "Declared plays". It renders an archetype's name,
+ * recorded annual value, contract count and vendor count - and no lever at
+ * all. Nothing on this surface resolves a contract's declared archetype to a
+ * lever set either: the archetype playbook is resolved for a sourcing EVENT
+ * from its classified category and feeds deliverable prompts, and the contract
+ * register's archetype vocabulary does not overlap that registry's
+ * identifiers. So the title asserted a rule the product does not apply, on a
+ * panel that could not have shown it.
+ *
+ * The guard reads the comment-stripped module source, so this very paragraph
+ * cannot satisfy it and a future comment cannot trip it.
+ */
+describe("the archetype coverage panel claims only what it shows", () => {
+  it("no longer asserts that archetype selects the allowed levers", () => {
+    const stripped = sourceCode();
+
+    expect(stripped).not.toContain("determines which levers");
+    expect(stripped).not.toContain("Declared plays");
+    expect(stripped).toContain("Recorded value by declared archetype");
+  });
+});
+
+/*
+ * The panel caps its list for layout. A cap that drops a row silently makes a
+ * coverage panel understate the taxonomy it exists to report - the register
+ * carries seven declared archetypes against a cap of six, so exactly one was
+ * disappearing with nothing on screen to say so.
+ */
+describe("archetypeRowsForDisplay", () => {
+  const rows = (n: number) => Array.from({ length: n }, (_, i) => ({ i }));
+
+  it("reports the row it does not show", () => {
+    const { shown, notShown } = archetypeRowsForDisplay(rows(7));
+
+    expect(shown).toHaveLength(6);
+    expect(notShown).toBe(1);
+  });
+
+  it("reports every omitted row, not just that some were omitted", () => {
+    expect(archetypeRowsForDisplay(rows(11)).notShown).toBe(5);
+  });
+
+  it("claims nothing is omitted when the list exactly fills the cap", () => {
+    const { shown, notShown } = archetypeRowsForDisplay(rows(6));
+
+    expect(shown).toHaveLength(6);
+    expect(notShown).toBe(0);
+  });
+
+  it("omits nothing when the list is shorter than the cap", () => {
+    expect(archetypeRowsForDisplay(rows(2))).toEqual({
+      shown: [{ i: 0 }, { i: 1 }],
+      notShown: 0,
+    });
+  });
+
+  it("omits nothing when no archetype is declared", () => {
+    expect(archetypeRowsForDisplay([])).toEqual({ shown: [], notShown: 0 });
+  });
+
+  it("keeps the first rows, which the builder has already sorted by value", () => {
+    expect(archetypeRowsForDisplay(rows(7)).shown).toEqual([
+      { i: 0 },
+      { i: 1 },
+      { i: 2 },
+      { i: 3 },
+      { i: 4 },
+      { i: 5 },
+    ]);
   });
 });
