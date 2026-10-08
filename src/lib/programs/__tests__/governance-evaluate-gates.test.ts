@@ -72,7 +72,7 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
     loadApprovedMoveEvidenceSnapshotMock(...args),
 }));
 
-import { evaluateGate } from "@/lib/programs/governance";
+import { evaluateGate, findGateRule } from "@/lib/programs/governance";
 import { __resetUnevaluableApprovalCurrencyReports } from "@/lib/programs/deliverable-approval-currency";
 
 function tableResult(table: string) {
@@ -1120,6 +1120,148 @@ describe("evaluateGate", () => {
           severity: "hard",
         }),
       ]),
+    );
+  });
+
+  // ── The three SOFT sign-off criteria whose document no build produces.
+  //
+  // `funding_approval_recorded`, `sponsor_alignment_confirmed` and
+  // `tower_handoff_plan_accepted` are each one row and one sign-off call, like
+  // the HARD criteria above, but they left `failureReason` at its default —
+  // the criterion's own `describe`. Both blocked-message readers drop soft
+  // failures, so that default never reached a screen; the advance route copies
+  // every soft failure into the gate decision artifact's `carriedGaps` WITH its
+  // reason, so it reached the auditable record of what was outstanding when the
+  // Move advanced anyway, as the criterion's title rather than its cause.
+  //
+  // Host-level on purpose. The sentences themselves are pinned over the pure
+  // module in `deliverable-signoff-diagnosis.test.ts`; these cases exist because
+  // that suite would stay green with the three evaluator arms reverted.
+  describe("a carried SOFT sign-off gap states its cause, not the criterion's name", () => {
+    const SOFT_SIGN_OFF_CRITERIA = [
+      { check: "funding_approval_recorded", label: "Funding Approval" },
+      { check: "sponsor_alignment_confirmed", label: "Stakeholder Alignment" },
+      { check: "tower_handoff_plan_accepted", label: "Tower Handoff Plan" },
+    ] as const;
+
+    async function p4Gate() {
+      return evaluateGate(
+        { clientId: "client-1", userId: "person-1" },
+        "program-1",
+        4,
+        5,
+      );
+    }
+
+    it.each(SOFT_SIGN_OFF_CRITERIA)(
+      "$check names the missing document and asks for authorship, not a build",
+      async ({ check, label }) => {
+        const result = await p4Gate();
+        const failure = result.failedChecks.find((c) => c.check === check);
+
+        expect(failure).toBeDefined();
+        expect(failure!.severity).toBe("soft");
+        expect(failure!.reason).toContain(label);
+        expect(failure!.reason).toContain(
+          "Approve & Build does not produce one",
+        );
+        expect(failure!.reason).toContain("Ask aVa to save");
+      },
+    );
+
+    it.each(SOFT_SIGN_OFF_CRITERIA)(
+      "$check no longer reports the criterion's own describe as the reason",
+      async ({ check }) => {
+        // The defect itself. Without this the arms could be reverted and the
+        // cases above would have to carry the whole proof.
+        const result = await p4Gate();
+        const failure = result.failedChecks.find((c) => c.check === check);
+        // Read from the rule catalog rather than copied here, so a reworded
+        // criterion cannot quietly make this assertion vacuous.
+        const declared = findGateRule(4, 5)!.checks.find(
+          (criterion) => criterion.key === check,
+        )!.describe;
+
+        expect(declared.length).toBeGreaterThan(0);
+        expect(failure!.reason).not.toBe(declared);
+      },
+    );
+
+    it.each(SOFT_SIGN_OFF_CRITERIA)(
+      "$check distinguishes an unsigned document from an absent one",
+      async ({ check, label }) => {
+        const primaryKey = {
+          funding_approval_recorded: "funding_approval",
+          sponsor_alignment_confirmed: "stakeholder_alignment",
+          tower_handoff_plan_accepted: "tower_handoff_plan",
+        }[check];
+        deliverablesFixture = [
+          ...deliverablesFixture,
+          {
+            id: `${primaryKey}-row`,
+            deliverable_type_key: primaryKey,
+            status: "draft",
+          },
+        ];
+
+        const result = await p4Gate();
+        const failure = result.failedChecks.find((c) => c.check === check);
+
+        expect(failure).toBeDefined();
+        expect(failure!.reason).toContain(label);
+        expect(failure!.reason).toContain(
+          'its status is "draft", not signed off',
+        );
+        // The row exists, so nothing should tell this reader to create one.
+        expect(failure!.reason).not.toContain("Ask aVa to save");
+        // And no build can replace it, so the rebuild warning must not appear.
+        expect(failure!.reason).not.toContain("Do not re-run Approve & Build");
+      },
+    );
+
+    it("names the document by the spelling the row actually carries", async () => {
+      // `sponsor_alignment_confirmed` accepts two interchangeable spellings. A
+      // sentence built from the first alias of the group would name a document
+      // the Move does not have.
+      deliverablesFixture = [
+        ...deliverablesFixture,
+        {
+          id: "sponsor-alignment-row",
+          deliverable_type_key: "sponsor_alignment",
+          status: "draft",
+        },
+      ];
+
+      const result = await p4Gate();
+      const failure = result.failedChecks.find(
+        (c) => c.check === "sponsor_alignment_confirmed",
+      );
+
+      expect(failure!.reason).toContain("Sponsor Alignment");
+      expect(failure!.reason).not.toContain("Stakeholder Alignment");
+    });
+
+    it.each(SOFT_SIGN_OFF_CRITERIA)(
+      "$check still PASSES on a signed-off document, unchanged",
+      async ({ check }) => {
+        const primaryKey = {
+          funding_approval_recorded: "funding_approval",
+          sponsor_alignment_confirmed: "stakeholder_alignment",
+          tower_handoff_plan_accepted: "tower_handoff_plan",
+        }[check];
+        deliverablesFixture = [
+          ...deliverablesFixture,
+          {
+            id: `${primaryKey}-row`,
+            deliverable_type_key: primaryKey,
+            status: "signed_off",
+          },
+        ];
+
+        const result = await p4Gate();
+
+        expect(result.failedChecks.map((c) => c.check)).not.toContain(check);
+      },
     );
   });
 

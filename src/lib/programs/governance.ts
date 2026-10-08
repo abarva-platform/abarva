@@ -1439,16 +1439,35 @@ export async function evaluateGate(
       case "business_case_approved":
         pass = await meetsApprovalBar(businessCaseRow);
         break;
-      case "funding_approval_recorded":
-        pass = isSignedOff(
-          findDeliverable(
-            "funding_approval",
-            "capacity_approval",
-            "approval_memo",
-          ),
+      case "funding_approval_recorded": {
+        // SOFT, so neither blocked-message reader renders this sentence — both
+        // filter to `severity === "hard"` first. It is not inert: the advance
+        // route copies every soft failure into the gate decision artifact's
+        // `carriedGaps` WITH its reason, and that record is the auditable
+        // account of what was outstanding when the Move advanced anyway. With
+        // the default reason it stored the criterion's own `describe` —
+        // "Funding or capacity approval recorded" — which reads as the thing
+        // having happened and names neither the cause nor the next action.
+        const row = findDeliverable(
+          "funding_approval",
+          "capacity_approval",
+          "approval_memo",
         );
+        const verdict = signOffVerdict(row);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            // The row's own spelling when one exists, so the sentence names the
+            // document that is actually there rather than the first alias of
+            // the group; the primary spelling when none does.
+            deliverableTypeKey: row?.deliverable_type_key ?? "funding_approval",
+          });
+        }
         break;
-      case "sponsor_alignment_confirmed":
+      }
+      case "sponsor_alignment_confirmed": {
         // `sponsor_alignment` is accepted alongside `stakeholder_alignment`
         // because this criterion has no capture-text fallback and no phase
         // generation set produces either key, so deliberate authorship
@@ -1458,10 +1477,22 @@ export async function evaluateGate(
         // alignment record could satisfy the criterion named after it or be
         // invisible to it, decided by which spelling the agent happened to
         // pick. Same class as `tower_metric_plan_drafted` below.
-        pass = isSignedOff(
-          findDeliverable("stakeholder_alignment", "sponsor_alignment"),
+        const row = findDeliverable(
+          "stakeholder_alignment",
+          "sponsor_alignment",
         );
+        const verdict = signOffVerdict(row);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey:
+              row?.deliverable_type_key ?? "stakeholder_alignment",
+          });
+        }
         break;
+      }
       case "readiness_and_change_plan_signed_off": {
         const verdict = signOffVerdict(changePlanRow);
         pass = verdict.ok;
@@ -1474,9 +1505,19 @@ export async function evaluateGate(
         }
         break;
       }
-      case "tower_handoff_plan_accepted":
-        pass = isSignedOff(towerHandoffRow);
+      case "tower_handoff_plan_accepted": {
+        const verdict = signOffVerdict(towerHandoffRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey:
+              towerHandoffRow?.deliverable_type_key ?? "tower_handoff_plan",
+          });
+        }
         break;
+      }
       case "handoff_package_signed_off": {
         const verdict = signOffVerdict(handoffPackageRow);
         pass = verdict.ok;

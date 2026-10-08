@@ -26,9 +26,41 @@
  *
  * Labels are read from `DELIVERABLE_REGISTRY` rather than typed here, so a
  * renamed document renames itself in these sentences.
+ *
+ * WHO CAN PRODUCE THE DOCUMENT changes what those arms may prescribe. Every
+ * sentence above names a build — "Run Approve & Build", "Regenerate" — or warns
+ * that a rebuild would clear the sign-off. That is only true of a document some
+ * phase's Approve & Build set actually produces. Three SOFT sign-off criteria
+ * wait on documents that NO build set contains: `funding_approval_recorded`
+ * (`funding_approval` / `capacity_approval` / `approval_memo`),
+ * `sponsor_alignment_confirmed` (`stakeholder_alignment` / `sponsor_alignment`)
+ * and `tower_handoff_plan_accepted` (`tower_handoff_plan` /
+ * `execution_monitoring_plan` / `control_tower_handoff`). All eight of those
+ * keys are absent from `DELIVERABLE_REGISTRY` entirely; they are saved by the
+ * workspace assistant's `complete_deliverable(s)`, which the agent's own
+ * instructions name as the producer for exactly these documents. Prescribing
+ * Approve & Build to a reader whose gate waits on one of them names an action
+ * that cannot succeed — the same defect class as
+ * `a-refusals-prescribed-remedy-can-be-refused-by-the-same-cause`.
+ *
+ * So the producer is DERIVED, not passed: `resolveDeliverableProducer` asks
+ * whether the key appears in any phase build set, and the two arms that can
+ * reach an authorship-only document take a second form. The derivation lives
+ * here rather than at the call sites so a document later added to a build set
+ * gets the build sentence with no edit, and so no caller can forget to supply
+ * it.
+ *
+ * Only `absent` and `not_signed_off` need that second form. The other two
+ * causes are UNREACHABLE for an authorship-only document: `signOffVerdict`
+ * consults `resolveDeliverableApprovalCurrencyScope` before either of them, and
+ * an unregistered key resolves to no phase, so the verdict returns `pass`
+ * first. Their sentences therefore keep their single build-shaped form.
  */
 
-import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
+import {
+  PHASE_CANONICAL_KEYS,
+  getDeliverableSpec,
+} from "@/lib/programs/deliverable-registry";
 
 /**
  * Why `signOffVerdict` reached its answer. `signed_off` is the pass; every
@@ -58,6 +90,47 @@ export const DELIVERABLE_SIGN_OFF_CAUSES: readonly DeliverableSignOffCause[] = [
 ];
 
 /**
+ * Who can create the document a sign-off criterion waits on.
+ *
+ * `phase_build` — some phase's Approve & Build set produces it, so the build
+ * sentences apply and a rebuild really would replace a signed document.
+ * `authorship_only` — no build set produces it; it exists only because someone
+ * (today, the workspace assistant on a user's instruction) saved it.
+ */
+export type DeliverableProducer = "phase_build" | "authorship_only";
+
+/** Both producers, so a test can assert the branch below is exhaustive. */
+export const DELIVERABLE_PRODUCERS: readonly DeliverableProducer[] = [
+  "phase_build",
+  "authorship_only",
+];
+
+/**
+ * Whether Approve & Build can produce this document, derived from the phase
+ * build sets rather than declared.
+ *
+ * Membership is exact, matching `deliverableLabel`/`getDeliverableSpec` above:
+ * an alias spelling that no build set carries answers `authorship_only`, which
+ * is the honest answer for the action being prescribed — Approve & Build builds
+ * the keys in the set, not their aliases.
+ *
+ * `phaseBuildSets` is injectable so the branch can be exercised against a
+ * constructed set, including the case the shipped registry does not contain
+ * (a document that moves INTO a build set and must stop being told to go
+ * through authorship).
+ */
+export function resolveDeliverableProducer(args: {
+  deliverableTypeKey: string;
+  phaseBuildSets?: Readonly<Record<number, readonly string[]>>;
+}): DeliverableProducer {
+  const sets = args.phaseBuildSets ?? PHASE_CANONICAL_KEYS;
+  for (const keys of Object.values(sets)) {
+    if (keys.includes(args.deliverableTypeKey)) return "phase_build";
+  }
+  return "authorship_only";
+}
+
+/**
  * The document's name as the product shows it. Falls back to a humanized key
  * so an unregistered alias still reads as a document name and never as a bare
  * identifier in a sentence aimed at a product user.
@@ -81,17 +154,37 @@ export function describeDeliverableSignOffFailure(input: {
   cause: DeliverableSignOffCause;
   deliverableTypeKey: string;
   status?: string | null;
+  /**
+   * Overrides the build sets the producer is derived from. Tests only — callers
+   * pass nothing and get the shipped registry, so no call site can disagree
+   * with the registry about who produces a document.
+   */
+  phaseBuildSets?: Readonly<Record<number, readonly string[]>>;
 }): string {
   const label = deliverableLabel(input.deliverableTypeKey);
+  const producer = resolveDeliverableProducer({
+    deliverableTypeKey: input.deliverableTypeKey,
+    phaseBuildSets: input.phaseBuildSets,
+  });
   switch (input.cause) {
     case "absent":
-      return `No ${label} exists on this Move yet. Run Approve & Build for this phase to generate it, then record the sign-off on the generated document.`;
+      return producer === "authorship_only"
+        ? `No ${label} exists on this Move yet, and Approve & Build does not produce one — no phase build set includes it. Ask aVa to save the ${label} for this Move, then record the sign-off on it.`
+        : `No ${label} exists on this Move yet. Run Approve & Build for this phase to generate it, then record the sign-off on the generated document.`;
     case "not_signed_off": {
       const recorded =
         typeof input.status === "string" && input.status.trim().length > 0
           ? input.status.trim()
           : "not recorded";
-      return `${label} exists but its status is "${recorded}", not signed off. Record the sign-off on the existing document. Do not re-run Approve & Build for this: it replaces the document with a fresh unapproved draft and clears the sign-off this gate is waiting for.`;
+      const opening = `${label} exists but its status is "${recorded}", not signed off. Record the sign-off on the existing document.`;
+      // The rebuild warning is a claim about a mechanism, so it is only said
+      // where the mechanism exists. Approve & Build does not build an
+      // authorship-only document, so it would neither replace this one nor
+      // clear its sign-off, and saying otherwise would warn a reader off an
+      // action that was never a risk here.
+      return producer === "authorship_only"
+        ? opening
+        : `${opening} Do not re-run Approve & Build for this: it replaces the document with a fresh unapproved draft and clears the sign-off this gate is waiting for.`;
     }
     case "linked_artifact_integrity":
       return `${label} is recorded as signed off, but the approved artifact it points at does not belong to this Move — wrong workspace, wrong Move, not a generated deliverable, or superseded. Regenerate the ${label} and sign off the current artifact.`;
