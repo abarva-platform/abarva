@@ -38,6 +38,11 @@ import {
 } from "@/lib/deliverables/shared/office-text-extract";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
+import {
+  refuseDeliverableNotInMove,
+  refuseMoveNotReadable,
+  refuseSignOffNotApplied,
+} from "@/lib/programs/deliverable-sign-off-outcome";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import {
@@ -239,7 +244,13 @@ export async function POST(
     const ctx = await requireTenancy();
     const { supabase } = await getProgramsRouteSupabase("mutation");
     const program = await getProgramById(ctx, programId, { supabase });
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!program) {
+      const refusal = refuseMoveNotReadable();
+      return Response.json(
+        { error: refusal.code, detail: refusal.detail },
+        { status: refusal.httpStatus },
+      );
+    }
 
     const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
     if (
@@ -258,21 +269,35 @@ export async function POST(
 
     const { data: deliverableRow, error: deliverableError } = await supabase
       .from("deliverables_v2")
-      .select("deliverable_type_key, title, current_version")
+      // `status` and `signed_off_version` are read for the refusal naming at the
+      // end of this route: the sign-off write is guarded on status, so without
+      // them a write that matches nothing cannot be told from a missing row.
+      .select(
+        "deliverable_type_key, title, current_version, status, signed_off_version",
+      )
       .eq("id", deliverableId)
       .eq("engagement_id", programId)
       .maybeSingle();
     if (deliverableError) throw deliverableError;
-    if (!deliverableRow)
-      return Response.json({ error: "not_found" }, { status: 404 });
+    if (!deliverableRow) {
+      const refusal = refuseDeliverableNotInMove();
+      return Response.json(
+        { error: refusal.code, detail: refusal.detail },
+        { status: refusal.httpStatus },
+      );
+    }
     const {
       deliverable_type_key: deliverableTypeKey,
       title: deliverableTitle,
       current_version: currentVersion,
+      status: deliverableStatusAtRead,
+      signed_off_version: deliverableSignedOffVersionAtRead,
     } = deliverableRow as {
       deliverable_type_key: string;
       title: string;
       current_version: number | null;
+      status: string | null;
+      signed_off_version: number | null;
     };
     const deliverablePhase =
       DELIVERABLE_REGISTRY.find(
@@ -811,8 +836,16 @@ export async function POST(
       approvalLineage: generatedApprovalLineage,
       approvalRationale,
     });
-    if (!signedOff)
-      return Response.json({ error: "not_found" }, { status: 404 });
+    if (!signedOff) {
+      const refusal = refuseSignOffNotApplied({
+        statusAtRead: deliverableStatusAtRead,
+        signedOffVersionAtRead: deliverableSignedOffVersionAtRead,
+      });
+      return Response.json(
+        { error: refusal.code, detail: refusal.detail },
+        { status: refusal.httpStatus },
+      );
+    }
 
     // Record an override, not the absence of one. A deliverable signed off
     // over known client-visible findings is a materially different fact from
