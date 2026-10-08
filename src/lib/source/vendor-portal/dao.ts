@@ -141,6 +141,75 @@ export async function resolveVendorBySession(
   }
 }
 
+/**
+ * Record a competing supplier against one solicitation.
+ *
+ * `vendorId` is REQUIRED and is the canonical `source.vendor(tenant_key,
+ * vendor_id)` identity, resolved from the event's accepted candidate panel by
+ * `resolveCanonicalVendorIdentity`. The type makes it impossible to create a
+ * portal vendor from a name alone, which is the defect this closes: the same
+ * supplier in two solicitations used to be two unconnected rows with two
+ * spellings and no join back to the governed record.
+ *
+ * The name columns are written as a display cache - what the supplier was
+ * invited under - and are never read back as identity.
+ *
+ * Refuses rather than overwrites. The database carries a partial unique index
+ * on `(source_event_id, vendor_id)`, so a second invitation for the same
+ * governed supplier on the same event fails here, whatever name it carries.
+ */
+export async function createEventVendor(input: {
+  sourceEventId: string;
+  tenantKey: string;
+  vendorId: string;
+  vendorLegalName: string;
+  vendorDisplayName: string;
+  primaryContactName: string;
+  primaryContactEmail: string;
+  username: string;
+  passwordHash: string;
+  passwordSalt: string;
+  acceptBy: Date;
+  respondBy: Date;
+  createdByUserId: string;
+}): Promise<{ ok: true; vendorRowId: string } | { ok: false; reason: string }> {
+  if (!input.vendorId.trim()) {
+    return { ok: false, reason: 'canonical_vendor_id_required' };
+  }
+  try {
+    const db = getAzureWriteFluentClient();
+    const { data, error } = await db
+      .from('source_event_vendors')
+      .insert({
+        source_event_id: input.sourceEventId,
+        tenant_key: input.tenantKey,
+        vendor_id: input.vendorId,
+        vendor_legal_name: input.vendorLegalName,
+        vendor_display_name: input.vendorDisplayName,
+        primary_contact_name: input.primaryContactName,
+        primary_contact_email: input.primaryContactEmail,
+        username: input.username,
+        password_hash: input.passwordHash,
+        password_salt: input.passwordSalt,
+        accept_by: input.acceptBy.toISOString(),
+        respond_by: input.respondBy.toISOString(),
+        created_by_user_id: input.createdByUserId,
+      })
+      .select('id')
+      .single();
+    if (error || !data?.id) {
+      return { ok: false, reason: 'write_failed' };
+    }
+    return { ok: true, vendorRowId: String(data.id) };
+  } catch (error) {
+    console.error(
+      '[createEventVendor]',
+      error instanceof Error ? error.message : error,
+    );
+    return { ok: false, reason: 'write_failed' };
+  }
+}
+
 export async function createSession(input: {
   vendorId: string;
   tenantKey: string;

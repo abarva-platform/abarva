@@ -80,6 +80,22 @@ function statementSlices(source: string): { slice: string; at: number }[] {
   return out;
 }
 
+/**
+ * `resolveVendorBySession`'s own body, bounded by the next top-level export.
+ *
+ * Bounded by the NEXT export rather than by a named one: the first version
+ * sliced from this function to `createSession`, and adding a function between
+ * them silently widened the slice to include it - so an assertion about the
+ * resolver's parameters started reading a neighbour's. A boundary that depends
+ * on declaration order is not a boundary.
+ */
+function resolverSource(source: string): string {
+  const start = source.indexOf('export async function resolveVendorBySession');
+  if (start === -1) return '';
+  const next = source.indexOf('\nexport ', start + 1);
+  return source.slice(start, next === -1 ? source.length : next);
+}
+
 function addressesPortalTable(slice: string): boolean {
   return PORTAL_TABLES.some((table) => slice.includes(table));
 }
@@ -88,8 +104,62 @@ function lineOf(source: string, index: number): number {
   return source.slice(0, index).split('\n').length;
 }
 
+/**
+ * Blank TypeScript comments, preserving length.
+ *
+ * This exists because a doc comment broke the slicer. A comment in `dao.ts`
+ * that mentions `source.vendor(...)` in backticks shifts how the template
+ * matcher below pairs backticks across the file, and one real SQL template
+ * stopped being seen as a statement at all - silently, because a slicer that
+ * finds fewer statements still reports every statement it found as bounded.
+ *
+ * A guard over code that does not strip comments is reading prose as code.
+ * Same lesson as the SQL stripper further down, learned twice in one file.
+ */
+function stripTsComments(code: string): string {
+  let out = '';
+  let index = 0;
+  while (index < code.length) {
+    const two = code.slice(index, index + 2);
+    if (two === '//') {
+      const end = code.indexOf('\n', index);
+      const stop = end === -1 ? code.length : end;
+      out += ' '.repeat(stop - index);
+      index = stop;
+      continue;
+    }
+    if (two === '/*') {
+      const end = code.indexOf('*/', index + 2);
+      const stop = end === -1 ? code.length : end + 2;
+      for (let i = index; i < stop; i += 1) out += code[i] === '\n' ? '\n' : ' ';
+      index = stop;
+      continue;
+    }
+    out += code[index];
+    index += 1;
+  }
+  return out;
+}
+
+describe('stripTsComments', () => {
+  it('blanks a backtick inside a doc comment, which is what broke the slicer', () => {
+    const stripped = stripTsComments('/** see `source.vendor` */\nconst q = `SELECT 1`;');
+
+    expect(stripped).not.toContain('source.vendor');
+    expect(stripped).toContain('`SELECT 1`');
+    expect(stripped).toHaveLength('/** see `source.vendor` */\nconst q = `SELECT 1`;'.length);
+  });
+
+  it('blanks a line comment and keeps the statement beside it', () => {
+    const stripped = stripTsComments('// gone\nconst q = `SELECT 2`;');
+
+    expect(stripped).not.toContain('gone');
+    expect(stripped).toContain('`SELECT 2`');
+  });
+});
+
 describe('vendor portal data fence', () => {
-  const source = readFileSync(DAO, 'utf8');
+  const source = stripTsComments(readFileSync(DAO, 'utf8'));
 
   it('finds the statements it claims to check', () => {
     /*
@@ -99,7 +169,7 @@ describe('vendor portal data fence', () => {
      */
     const slices = statementSlices(source).filter((s) => addressesPortalTable(s.slice));
 
-    expect(slices.length).toBeGreaterThanOrEqual(7);
+    expect(slices.length).toBeGreaterThanOrEqual(8);
     for (const table of PORTAL_TABLES) {
       expect(slices.some((s) => s.slice.includes(table))).toBe(true);
     }
@@ -126,10 +196,7 @@ describe('vendor portal data fence', () => {
      * sweep: the session row must be joined to a vendor on the SAME event, or a
      * token minted for one solicitation would resolve on another.
      */
-    const resolver = source.slice(
-      source.indexOf('export async function resolveVendorBySession'),
-      source.indexOf('export async function createSession'),
-    );
+    const resolver = resolverSource(source);
 
     expect(resolver).not.toBe('');
     expect(resolver).toMatch(/\bs\.session_token_hash\s*=\s*\$1/);
@@ -138,10 +205,7 @@ describe('vendor portal data fence', () => {
   });
 
   it('takes the vendor id from the session row, never from the request', () => {
-    const resolver = source.slice(
-      source.indexOf('export async function resolveVendorBySession'),
-      source.indexOf('export async function createSession'),
-    );
+    const resolver = resolverSource(source);
 
     // The function's two parameters are the event id and the raw token. Neither
     // is a vendor id, and no vendor id may be accepted alongside them.

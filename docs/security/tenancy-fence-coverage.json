@@ -10,15 +10,15 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 416,
-    "fenced": 231,
-    "fencedDirect": 107,
+    "routes": 417,
+    "fenced": 232,
+    "fencedDirect": 108,
     "fencedIndirect": 124,
     "unfenced": 185,
     "unfencedButReachesFenceModule": 101,
     "behavioral": 85,
     "byteScannerOnly": 7,
-    "none": 139
+    "none": 140
   },
   "ranking": [
     {
@@ -775,6 +775,12 @@
     },
     {
       "route": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-xlsx/route.ts",
+      "coverage": "none",
+      "fence": "direct",
+      "fenceVia": []
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/vendor-portal/invite/route.ts",
       "coverage": "none",
       "fence": "direct",
       "fenceVia": []
@@ -6801,6 +6807,21 @@
       "fenceVia": [
         "src/lib/source/queries.ts"
       ],
+      "reachesFenceModule": true,
+      "coverage": "none",
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/[eventId]/vendor-portal/invite/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
       "reachesFenceModule": true,
       "coverage": "none",
       "suites": {
