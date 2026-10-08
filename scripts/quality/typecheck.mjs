@@ -47,10 +47,27 @@ const REPO_ROOT = path.resolve(
 
 /**
  * The floor, not the value. 4096 (near the Node default this project crashes
- * at) is what made the bare command unreliable; both CI jobs already set 6144
- * and complete. A caller asking for more keeps their number.
+ * at) is what made the bare command unreliable. A caller asking for more keeps
+ * their number.
+ *
+ * Raised 6144 -> 8192 because the type graph reached that ceiling. The compiler
+ * died `SIGABRT` with `Ineffective mark-compacts near heap limit` at a peak of
+ * ~6.13 GB against 6144 on TWO independent branches within seven minutes, both
+ * on the first base that included a large new module set. A re-run of one of
+ * them then passed, which is the point rather than a reason to wait: a step
+ * whose peak sits within 1% of its ceiling passes or fails on GC timing, and
+ * this gate judges the typecheck by exit status because an out-of-memory abort
+ * emits no diagnostic at all — so there is nothing here to relax.
+ *
+ * 8192 is not a new number. The hygiene gate runs the SAME typecheck over the
+ * same graph at 8192 on the same runner, and the build step beside it too, so
+ * 6144 here was an asymmetry rather than a decision. A case pins this floor at
+ * or above that step's, so the two declarations cannot drift apart again.
+ *
+ * This is a ceiling, not a cure. Reducing the compiler's peak is still owed;
+ * the graph will approach 8192 in time.
  */
-const HEAP_FLOOR_MB = 6144;
+const HEAP_FLOOR_MB = 8192;
 
 const DIAGNOSTIC_RE = /error TS\d+/;
 
