@@ -100,13 +100,13 @@ No migration, no dataset, no seed, no workflow, no image, no flag registry entry
   src/app/api/v1/deliverables` — 430 suites, 6200 tests.
 - PASS `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit` — exit 0.
 - PASS `npx eslint` over all six changed/added files — 0 errors, 0 warnings.
-- PASS census regenerated with `audit:test-ci-coverage:write` after merging the current base: 2829
-  test files / 2665 covered, with uncovered flat at 164 — which is the proof the new suite is reached
-  by a CI command rather than added as a dark file. The base's committed census reads 2828/2664 and
-  regenerates to the same figures, so no drift is outstanding and this branch's delta is exactly its
-  own one new file. (Measured against the earlier base, before it moved: the committed census read
-  2825/2661 while a regeneration of that base alone read 2826/2662 — a one-file drift that the base
-  has since repaired on its own.)
+- PASS census regenerated with `audit:test-ci-coverage:write` after merging the current base: 2830
+  test files / 2665 covered, with uncovered flat at 165 — which is the proof the new suite is reached
+  by a CI command rather than added as a dark file. The base's committed census reads 2829/2664, so
+  no drift is outstanding and this branch's delta is exactly its own one new file. (The base has now
+  moved twice while this branch was open; each time the census was regenerated over the new base
+  rather than conflict-resolved, so what is committed is the true total. Earlier figures on this
+  record, against bases since superseded: 2825/2661 → 2826/2662, and 2828/2664 → 2829/2665.)
 - PASS `audit:tenancy-fence-coverage:write` — no change to the fence census.
 - NOT RUN: any signed-in walk. The new sentence is reached only by a refusal on a signed-in Move
   against the private data plane, which this lane cannot and must not drive.

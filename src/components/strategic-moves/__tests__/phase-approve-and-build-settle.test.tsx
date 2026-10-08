@@ -654,7 +654,9 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
       "Requirements Traceability Matrix",
     ];
     for (const title of generatedRows) {
-      expect(screen.getByText(title)).toBeInTheDocument();
+      // A gate deliverable's title now also appears in the in-workspace gate
+      // sign-off ledger, so it can legitimately render in more than one place.
+      expect(screen.getAllByText(title).length).toBeGreaterThan(0);
     }
     expect(
       screen.queryByText("Operating Model Design", { selector: "span" }),

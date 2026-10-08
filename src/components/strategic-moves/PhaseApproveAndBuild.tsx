@@ -34,6 +34,7 @@ import {
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readiness/required-evidence-refusal";
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
+import { DeliverableApprovalAction } from "@/components/strategic-moves/DeliverableApprovalAction";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
 import {
   heldArtifactBlocker,
@@ -55,6 +56,8 @@ const FRESH = "#3F7A5B"; // succeeded
 const ATTENTION = "#B5852A"; // blocked / below gate
 const STALE = "#B4513C"; // error / failed
 const RUNNING = "#1D4ED8"; // queued / running
+const SIGNED_TEAL = "#1d9e75"; // gate deliverable signed off (v3 locked-light teal)
+const AMBER = "#ba7517"; // sign-off still owed (v3 locked-light amber)
 
 function finalDownloadUrl(url: string): string {
   if (!url.startsWith("/api/v1/artifacts/")) return url;
@@ -180,6 +183,10 @@ interface Props {
   initialArtifacts?: PhaseBuildArtifact[];
   /** Server-confirmed route-specific package, when the parent has one. */
   deliverableKeys?: readonly string[];
+  /** Whether the signed-in session may approve gates. Gates the sign-off
+   *  buttons in the in-workspace attestation ledger: a non-approver sees
+   *  sign-off state only, never a disabled approve button. */
+  canApproveGates?: boolean;
 }
 
 export interface BuildSettledResult {
@@ -214,6 +221,12 @@ export interface PhaseBuildArtifact {
   status: string;
   version: number;
   downloadUrl: string;
+  /** deliverables_v2.id — the row DeliverableApprovalAction signs off against. */
+  deliverableId?: string | null;
+  /** deliverables_v2.signed_off_version — equals currentVersion once signed. */
+  signedOffVersion?: number | null;
+  /** deliverables_v2.current_version — the version a sign-off must match. */
+  currentVersion?: number | null;
 }
 
 const STATUS_COLOR: Record<RunStatus | "idle", string> = {
@@ -295,6 +308,7 @@ export function PhaseApproveAndBuild({
   approverLabel = null,
   initialArtifacts = [],
   deliverableKeys,
+  canApproveGates = false,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [gateSubmitConfirmOpen, setGateSubmitConfirmOpen] = useState(false);
@@ -662,6 +676,34 @@ export function PhaseApproveAndBuild({
     [phaseNum, phaseLabel, specs, rows, artifactStatusByKey, building],
   );
 
+  // Per-deliverable sign-off state from the deliverables_v2 projection the
+  // artifacts route now carries through each PhaseBuildArtifact. Keyed like the
+  // other initialArtifacts maps so the gate attestation ledger can show
+  // sign-off state inline. A row the projection does not cover has null
+  // version fields, which the ledger treats as "no sign-off record to target"
+  // (not as unsigned) — so it never blocks a submission the way a known-unsigned
+  // built gate document does.
+  const signOffByKey = useMemo(() => {
+    const byKey = new Map<
+      string,
+      {
+        deliverableId: string | null;
+        signedOffVersion: number | null;
+        currentVersion: number | null;
+      }
+    >();
+    for (const artifact of initialArtifacts) {
+      if (!artifact.deliverableTypeKey) continue;
+      if (byKey.has(artifact.deliverableTypeKey)) continue;
+      byKey.set(artifact.deliverableTypeKey, {
+        deliverableId: artifact.deliverableId ?? null,
+        signedOffVersion: artifact.signedOffVersion ?? null,
+        currentVersion: artifact.currentVersion ?? null,
+      });
+    }
+    return byKey;
+  }, [initialArtifacts]);
+
   if (specs.length === 0) {
     return (
       <div style={{ fontSize: 12, color: MUTED, fontStyle: "italic" }}>
@@ -679,6 +721,57 @@ export function PhaseApproveAndBuild({
       r.status === "blocked" || r.status === "failed" || r.status === "error",
   ).length;
   const gateCount = specs.filter((s) => s.gateArtifact).length;
+
+  // The attestation ledger: ONE entry per gate deliverable actually in the
+  // current build set (so a merged/omitted deliverable is not listed), joining
+  // its build row (status / download) with its deliverables_v2 sign-off state.
+  // This is the in-workspace equivalent of the /evidence page's "Signed off"
+  // badge + DeliverableApprovalAction, so a presenter can sign off without
+  // leaving the gate step. Reading from `rows` rather than `specs` keeps the
+  // ledger in step with what the build produced.
+  const gateLedgerEntries = rows
+    .filter((row) => row.gateArtifact)
+    .map((row) => {
+      const signOff = signOffByKey.get(row.deliverableTypeKey);
+      const currentVersion = signOff?.currentVersion ?? null;
+      const signedOffVersion = signOff?.signedOffVersion ?? null;
+      const deliverableId = signOff?.deliverableId ?? null;
+      const built = row.status === "succeeded";
+      const hasSignOffRecord = currentVersion != null && Boolean(deliverableId);
+      const isSigned = hasSignOffRecord && signedOffVersion === currentVersion;
+      // State the ledger renders. "unverified" = built but the projection
+      // carries no deliverables_v2 row to sign off against (nothing to show
+      // and nothing to block on). "draft" = built, has a record, not signed.
+      const state: "signed" | "draft" | "unverified" | "blocked" = isSigned
+        ? "signed"
+        : built && hasSignOffRecord
+          ? "draft"
+          : built
+            ? "unverified"
+            : "blocked";
+      // A known-unsigned built gate document is the only thing that must hold
+      // the submission; an unverified or not-yet-built document falls back to
+      // the prior (no-sign-off) behaviour and does not block it.
+      const countsAsSigned = state !== "draft";
+      return {
+        deliverableTypeKey: row.deliverableTypeKey,
+        documentTitle: row.documentTitle,
+        state,
+        deliverableId,
+        signedVersion: currentVersion,
+        countsAsSigned,
+        row,
+      };
+    });
+  const ledgerGateCount = gateLedgerEntries.length;
+  const signedCount = gateLedgerEntries.filter(
+    (entry) => entry.countsAsSigned,
+  ).length;
+  // The submission must not read as actionable while a built gate document is
+  // sitting unsigned. This narrows the existing submit control's feedback only
+  // — it never widens WHEN the gate POST fires beyond refusing an unsigned set.
+  const needsGateSignOff = ledgerGateCount > 0 && signedCount < ledgerGateCount;
+
   const requiredGaps = currentPhaseRequiredEvidenceGaps(
     evidenceNeedPackets,
     phaseNum,
@@ -713,6 +806,10 @@ export function PhaseApproveAndBuild({
 
   const submitGateWithoutBuild = async () => {
     if (!gateSubmitPlan.submittable) return;
+    // A built gate document that is not signed off holds the submission. The
+    // sign-off control lives in the ledger below; submitting here would only
+    // bounce off the gate's HARD sign-off check.
+    if (needsGateSignOff) return;
     setError(null);
     setSubmittingGate(true);
     try {
@@ -733,26 +830,56 @@ export function PhaseApproveAndBuild({
     }
   };
 
+  const submitUnsignedCount = ledgerGateCount - signedCount;
+  const gateSubmitDisabled =
+    submittingGate || hasParentBlocker || needsGateSignOff;
   const gateSubmitActionButton = gateSubmitPlan.submittable ? (
     <button
       type="button"
       onClick={() => setGateSubmitConfirmOpen(true)}
-      disabled={submittingGate || hasParentBlocker}
+      disabled={gateSubmitDisabled}
       style={{
         padding: "10px 16px",
-        background: submittingGate || hasParentBlocker ? "#D8DDE5" : "#FFFFFF",
-        color: submittingGate || hasParentBlocker ? "#596579" : NAVY,
-        border: `1px solid ${submittingGate || hasParentBlocker ? "#D8DDE5" : "rgba(27,43,92,0.35)"}`,
+        background: gateSubmitDisabled ? "#D8DDE5" : "#FFFFFF",
+        color: gateSubmitDisabled ? "#596579" : NAVY,
+        border: `1px solid ${gateSubmitDisabled ? "#D8DDE5" : "rgba(27,43,92,0.35)"}`,
         borderRadius: 8,
         fontSize: 13,
         fontWeight: 700,
-        cursor: submittingGate || hasParentBlocker ? "default" : "pointer",
+        cursor: gateSubmitDisabled ? "default" : "pointer",
         whiteSpace: "nowrap",
       }}
     >
-      {submittingGate ? "Submitting gate approval…" : gateSubmitPlan.actionLabel}
+      {submittingGate
+        ? "Submitting gate approval…"
+        : needsGateSignOff
+          ? `Sign off ${submitUnsignedCount} document${submitUnsignedCount === 1 ? "" : "s"} to submit →`
+          : gateSubmitPlan.actionLabel}
     </button>
   ) : null;
+
+  // Amber reason line travelling with the submit button whenever a built gate
+  // document is still unsigned, pointing the user at the ledger that holds the
+  // sign-off control.
+  const gateSubmitBlockedReason =
+    gateSubmitPlan.submittable && needsGateSignOff ? (
+      <div
+        role="note"
+        style={{
+          fontSize: 11.5,
+          lineHeight: 1.45,
+          color: AMBER,
+          fontWeight: 600,
+          maxWidth: 520,
+        }}
+      >
+        {submitUnsignedCount} gate document
+        {submitUnsignedCount === 1 ? "" : "s"} still{" "}
+        {submitUnsignedCount === 1 ? "needs" : "need"} sign-off. Approve{" "}
+        {submitUnsignedCount === 1 ? "it" : "them"} in the sign-off ledger on
+        this step before the gate can be submitted.
+      </div>
+    ) : null;
 
   const buildActionButton = (
     <button
@@ -785,13 +912,174 @@ export function PhaseApproveAndBuild({
   // through the step-header portal) must show the no-rebuild submission beside
   // the build, or the only visible control is the one that clears a sign-off.
   const phaseActionButtons = gateSubmitActionButton ? (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {buildActionButton}
-      {gateSubmitActionButton}
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {buildActionButton}
+        {gateSubmitActionButton}
+      </div>
+      {gateSubmitBlockedReason}
     </div>
   ) : (
     buildActionButton
   );
+
+  // In-workspace attestation ledger: one row per gate deliverable, carrying the
+  // sign-off state and, for a built-but-unsigned document, the SAME
+  // DeliverableApprovalAction the /evidence page mounts. A presenter signs off
+  // here instead of leaving the gate step. Non-approvers see state only.
+  const gateSignOffLedger =
+    ledgerGateCount > 0 ? (
+      <section
+        aria-label="Gate deliverable sign-off"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: "14px 16px",
+          background: "#FFFFFF",
+          border: `1px solid ${LINE}`,
+          borderRadius: 8,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "#61708D",
+              }}
+            >
+              Gate sign-off
+            </div>
+            <div style={{ marginTop: 3, fontSize: 13, color: INK }}>
+              Sign off each gate deliverable here before submitting the phase
+              gate.
+            </div>
+          </div>
+          <StatusPill tone={signedCount >= ledgerGateCount ? "good" : "neutral"}>
+            {signedCount}/{ledgerGateCount} signed off
+          </StatusPill>
+        </div>
+        {gateLedgerEntries.map((entry) => (
+          <div
+            key={entry.deliverableTypeKey}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              padding: "10px 12px",
+              background: "#FFFFFF",
+              border: `1px solid ${LINE}`,
+              borderLeft: `3px solid ${NAVY}`,
+              borderRadius: 8,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>
+                {entry.documentTitle}
+              </span>
+              {entry.state === "signed" ? (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: SIGNED_TEAL,
+                    background: "rgba(29,158,117,0.1)",
+                    border: "1px solid rgba(29,158,117,0.32)",
+                    borderRadius: 999,
+                    padding: "3px 9px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Signed off · v{entry.signedVersion ?? "?"}
+                </span>
+              ) : entry.state === "draft" ? (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: AMBER,
+                    background: "rgba(186,117,23,0.1)",
+                    border: "1px solid rgba(186,117,23,0.32)",
+                    borderRadius: 999,
+                    padding: "3px 9px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Draft · awaiting sign-off
+                </span>
+              ) : (
+                // Ledger-specific wording so these states never collide with
+                // the per-deliverable status list's own "Built"/"Build blocked"
+                // labels (the status list already carries the build state).
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: entry.state === "unverified" ? MUTED : ATTENTION,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {entry.state === "unverified" ? "On record" : "Not on record"}
+                </span>
+              )}
+            </div>
+            {entry.state === "draft" && (
+              <>
+                {entry.row?.blobUrl && (
+                  <Link
+                    href={finalDownloadUrl(entry.row.blobUrl)}
+                    style={{ fontSize: 11, color: NAVY, fontWeight: 600 }}
+                    target="_blank"
+                  >
+                    Download / preview →
+                  </Link>
+                )}
+                {canApproveGates && entry.deliverableId ? (
+                  <DeliverableApprovalAction
+                    moveId={moveId}
+                    deliverableId={entry.deliverableId}
+                    alreadyApproved={false}
+                  />
+                ) : (
+                  <span style={{ fontSize: 11, color: MUTED }}>
+                    Sign-off is available to an authorized workspace user.
+                  </span>
+                )}
+              </>
+            )}
+            {entry.state === "unverified" && (
+              <span style={{ fontSize: 11, color: MUTED }}>
+                On the record. No sign-off version is tracked for this document
+                yet.
+              </span>
+            )}
+            {entry.state === "blocked" && entry.row && (
+              <BlockedOutputDisclosure row={entry.row} />
+            )}
+          </div>
+        ))}
+      </section>
+    ) : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1170,75 +1458,96 @@ export function PhaseApproveAndBuild({
                 Download final →
               </Link>
             )}
-            {r.status === "blocked" &&
-              (r.packageReadiness || r.blockers.length > 0 || r.error) && (
-                <details
-                  style={{
-                    gridColumn: "2 / -1",
-                    marginTop: 2,
-                    color: "#5C4320",
-                    fontSize: 11.5,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <summary style={{ cursor: "pointer", fontWeight: 700 }}>
-                    Why this output is blocked
-                  </summary>
-                  <div
-                    style={{
-                      marginTop: 8,
-                      padding: "10px 12px",
-                      borderRadius: 6,
-                      border: "1px solid rgba(181,133,42,0.24)",
-                      background: "rgba(181,133,42,0.06)",
-                    }}
-                  >
-                    {r.packageReadiness && (
-                      <>
-                        <div style={{ color: ATTENTION, fontWeight: 700 }}>
-                          {r.packageReadiness.headline}
-                        </div>
-                        <div style={{ marginTop: 6 }}>
-                          Evidence retrieved:{" "}
-                          {r.packageReadiness.retrievedEvidence}/
-                          {r.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
-                          {r.packageReadiness.executiveReadinessPct}%
-                        </div>
-                      </>
-                    )}
-                    {(r.blockers.length > 0 || r.error) && (
-                      <div style={{ marginTop: 6 }}>
-                        <span style={{ fontWeight: 700 }}>Build blocker: </span>
-                        {r.blockers.length > 0
-                          ? r.blockers.join("; ")
-                          : r.error}
-                      </div>
-                    )}
-                    {r.packageReadiness?.missing.length ? (
-                      <div style={{ marginTop: 6 }}>
-                        <span style={{ fontWeight: 700 }}>Evidence gaps: </span>
-                        {r.packageReadiness.missing.slice(0, 3).join("; ")}
-                        {r.packageReadiness.missing.length > 3 ? "…" : ""}
-                      </div>
-                    ) : null}
-                    {r.packageReadiness?.recommendedNextStep && (
-                      <div style={{ marginTop: 6 }}>
-                        <span style={{ fontWeight: 700 }}>Next: </span>
-                        {r.packageReadiness.recommendedNextStep}
-                      </div>
-                    )}
-                  </div>
-                </details>
-              )}
+            {/* A gate row's blocked-output detail is shown once, in the gate
+                sign-off ledger below, so it is not duplicated here. */}
+            {!r.gateArtifact && (
+              <BlockedOutputDisclosure row={r} spanGridColumns />
+            )}
           </div>
         ))}
       </div>
+
+      {gateSignOffLedger}
 
       <div style={{ fontSize: 10.5, color: MUTED }}>
         <span>{MOVES_AI_DRAFT_LABEL}</span> — review and edit every document
         before it informs a decision.
       </div>
     </div>
+  );
+}
+
+// The "Why this output is blocked" disclosure, extracted so the per-deliverable
+// status list and the gate attestation ledger show the SAME blocked-output
+// explanation from one definition rather than two copies that can drift.
+function BlockedOutputDisclosure({
+  row,
+  spanGridColumns = false,
+}: {
+  row: DeliverableRow;
+  spanGridColumns?: boolean;
+}) {
+  if (
+    row.status !== "blocked" ||
+    !(row.packageReadiness || row.blockers.length > 0 || row.error)
+  ) {
+    return null;
+  }
+  return (
+    <details
+      style={{
+        ...(spanGridColumns ? { gridColumn: "2 / -1" } : {}),
+        marginTop: 2,
+        color: "#5C4320",
+        fontSize: 11.5,
+        lineHeight: 1.45,
+      }}
+    >
+      <summary style={{ cursor: "pointer", fontWeight: 700 }}>
+        Why this output is blocked
+      </summary>
+      <div
+        style={{
+          marginTop: 8,
+          padding: "10px 12px",
+          borderRadius: 6,
+          border: "1px solid rgba(181,133,42,0.24)",
+          background: "rgba(181,133,42,0.06)",
+        }}
+      >
+        {row.packageReadiness && (
+          <>
+            <div style={{ color: ATTENTION, fontWeight: 700 }}>
+              {row.packageReadiness.headline}
+            </div>
+            <div style={{ marginTop: 6 }}>
+              Evidence retrieved: {row.packageReadiness.retrievedEvidence}/
+              {row.packageReadiness.minimumEvidenceItems} · Readiness:{" "}
+              {row.packageReadiness.executiveReadinessPct}%
+            </div>
+          </>
+        )}
+        {(row.blockers.length > 0 || row.error) && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontWeight: 700 }}>Build blocker: </span>
+            {row.blockers.length > 0 ? row.blockers.join("; ") : row.error}
+          </div>
+        )}
+        {row.packageReadiness?.missing.length ? (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontWeight: 700 }}>Evidence gaps: </span>
+            {row.packageReadiness.missing.slice(0, 3).join("; ")}
+            {row.packageReadiness.missing.length > 3 ? "…" : ""}
+          </div>
+        ) : null}
+        {row.packageReadiness?.recommendedNextStep && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontWeight: 700 }}>Next: </span>
+            {row.packageReadiness.recommendedNextStep}
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
 
