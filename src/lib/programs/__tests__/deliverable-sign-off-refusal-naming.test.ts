@@ -10,9 +10,20 @@
 // three handed a signed-in product user the literal token `not_found`.
 //
 // These cases pin the naming for all three, and pin that the route emits it.
-// The one that matters most is the already-signed-off case: the write is guarded
-// `status IN ('draft','in_review')` and `signed_off` is the only reachable
-// ineligible value, so its common cause is the user's intent ALREADY BEING MET.
+// The write is guarded `status IN ('draft','in_review')`, so TWO values reach
+// the write-matched-nothing cause, and each needs its own sentence:
+//
+//   • `signed_off` — the user's intent is ALREADY MET.
+//   • `superseded` — written by POST .../solution-options/approve for every P3
+//     architecture deliverable in the Move. It is a durable recorded state, not
+//     a lost race, so "reload and approve the version it then shows" names the
+//     same superseded row and refuses identically every time. Only generating
+//     the document again clears it: the orchestrator persists through
+//     `completeDeliverable(..., { signOff: false })`, whose update carries no
+//     status filter and writes `status: 'draft'`.
+//
+// A status this module does not recognise must keep falling to the generic
+// cause-3 sentence rather than borrowing either named state's.
 //
 // The route suite lives here rather than beside the route because
 // `src/lib/programs/__tests__` is swept wholesale by the required AI surface
@@ -23,6 +34,8 @@ import {
   refuseMoveNotReadable,
   refuseSignOffNotApplied,
 } from "@/lib/programs/deliverable-sign-off-outcome";
+import { P3_ARCHITECTURE_DELIVERABLE_KEYS } from "@/lib/programs/approved-solution-approach";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 
 const mockRequireTenancy = jest.fn();
 const mockTenancyErrorResponse = jest.fn();
@@ -152,11 +165,35 @@ function req(): Request {
   );
 }
 
-async function postSignOff() {
+/**
+ * The approve-by-uploading-a-replacement request.
+ *
+ * This is the path the superseded refusal is reached on. The JSON path runs the
+ * P3 architecture lineage checks first, and for a superseded row those are
+ * expected to refuse on their own (the row is superseded BECAUSE the approved
+ * option changed, so the lineage stored on the version is stale by
+ * construction). The upload path skips that whole block, so the guarded write
+ * is what answers.
+ */
+function uploadReq(): Request {
+  const form = new FormData();
+  form.append(
+    "file",
+    new File(["edited replacement body"], "architecture.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }),
+  );
+  return new Request(
+    "http://test/api/v1/programs/prog-1/deliverables/deliverable-1/sign-off",
+    { method: "POST", body: form },
+  );
+}
+
+async function postSignOff(request: Request = req()) {
   const mod = await import(
     "@/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/route"
   );
-  return mod.POST(req(), { params });
+  return mod.POST(request, { params });
 }
 
 describe("deliverable sign-off refusal naming", () => {
@@ -208,7 +245,7 @@ describe("deliverable sign-off refusal naming", () => {
       ).not.toMatch(/version (null|undefined|NaN)/);
     });
 
-    it.each(["draft", "in_review", null, "some_future_status"])(
+    it.each(["draft", "in_review", null, "some_future_status", "SUPERSEDED"])(
       "reports an eligible-at-read status (%s) as not recorded, not as already approved",
       (statusAtRead) => {
         const refusal = refuseSignOffNotApplied({ statusAtRead });
@@ -220,20 +257,66 @@ describe("deliverable sign-off refusal naming", () => {
       },
     );
 
-    it("keeps 404 for every refusal but the already-signed one", () => {
+    it("keeps 404 for every refusal but the two recorded-state ones", () => {
       // A `false` from the write layer is also how a foreign deliverable id is
       // denied, and `programs-mutation-routes-tenant-guards` pins 404 for that.
       // Answering 409 would leak whether such an id exists.
-      for (const statusAtRead of ["draft", "in_review", null]) {
+      for (const statusAtRead of [
+        "draft",
+        "in_review",
+        null,
+        "some_future_status",
+      ]) {
         expect(refuseSignOffNotApplied({ statusAtRead }).httpStatus).toBe(404);
       }
       expect(refuseMoveNotReadable().httpStatus).toBe(404);
       expect(refuseDeliverableNotInMove().httpStatus).toBe(404);
-      // The one departure, and only because reaching it needs a row this Move
-      // actually holds.
-      expect(
-        refuseSignOffNotApplied({ statusAtRead: "signed_off" }).httpStatus,
-      ).toBe(409);
+      // The two departures, and only because reaching either needs a row this
+      // Move actually holds.
+      for (const statusAtRead of ["signed_off", "superseded"]) {
+        expect(refuseSignOffNotApplied({ statusAtRead }).httpStatus).toBe(409);
+      }
+    });
+
+    it("names a superseded deliverable as superseded, not as a lost race", () => {
+      const refusal = refuseSignOffNotApplied({ statusAtRead: "superseded" });
+      expect(refusal.code).toBe("deliverable_superseded");
+      expect(refusal.httpStatus).toBe(409);
+      expect(refusal.detail).toMatch(/superseded/i);
+      // The generic cause-3 sentence is for a row that changed under the write.
+      // A superseded row did not change under anything: it is where the
+      // solution-option approval deliberately left it.
+      expect(refusal.detail).not.toMatch(/was not recorded/i);
+      expect(refusal.detail).not.toMatch(/already signed off/i);
+    });
+
+    it("prescribes regeneration and not the retry that would refuse again", () => {
+      const refusal = refuseSignOffNotApplied({ statusAtRead: "superseded" });
+      // `superseded` clears only through a regenerate, which persists via
+      // `completeDeliverable(..., { signOff: false })` -> `status: 'draft'`.
+      // Reloading re-renders the same superseded row, so a sentence that sends
+      // the reader back to "the version it then shows" sends them into the
+      // identical refusal.
+      expect(refusal.detail).toMatch(/generate the document again/i);
+      expect(refusal.detail).toMatch(/draft/i);
+      expect(refusal.detail).not.toMatch(/reload/i);
+      // And it says the retry is futile rather than leaving the reader to find
+      // that out by repeating it.
+      expect(refusal.detail).toMatch(/refuse the same way|refuse again/i);
+    });
+
+    it("lands on documents that carry a sign-off control", () => {
+      // Reachability, not vocabulary: `superseded` is written only to the P3
+      // architecture deliverables, so the refusal is dead unless those are
+      // registered deliverables a user is asked to approve.
+      const keys = [...P3_ARCHITECTURE_DELIVERABLE_KEYS];
+      expect(keys.length).toBeGreaterThan(0);
+      const registered = new Set(
+        DELIVERABLE_REGISTRY.map((spec) => spec.deliverableTypeKey),
+      );
+      for (const key of keys) {
+        expect(registered.has(key)).toBe(true);
+      }
     });
 
     it("gives every refusal a distinct code and a distinct sentence", () => {
@@ -241,10 +324,11 @@ describe("deliverable sign-off refusal naming", () => {
         refuseMoveNotReadable(),
         refuseDeliverableNotInMove(),
         refuseSignOffNotApplied({ statusAtRead: "signed_off" }),
+        refuseSignOffNotApplied({ statusAtRead: "superseded" }),
         refuseSignOffNotApplied({ statusAtRead: "draft" }),
       ];
-      expect(new Set(refusals.map((r) => r.code)).size).toBe(4);
-      expect(new Set(refusals.map((r) => r.detail)).size).toBe(4);
+      expect(new Set(refusals.map((r) => r.code)).size).toBe(5);
+      expect(new Set(refusals.map((r) => r.detail)).size).toBe(5);
       for (const refusal of refusals) {
         expect(refusal.detail).not.toContain("not_found");
       }
@@ -365,6 +449,38 @@ describe("deliverable sign-off refusal naming", () => {
       expect(res.status).toBe(404);
       expect(body.error).toBe("sign_off_not_applied");
       expect(body.detail).toMatch(/was not recorded/i);
+    });
+
+    it("tells a user whose deliverable was superseded to generate it again", async () => {
+      // The reachable live sequence: approving a solution option at P3 sets
+      // every P3 architecture deliverable in the Move to `superseded`, and the
+      // approval control is still rendered (the phase build step passes
+      // `alreadyApproved={false}`, and the documents panel compares
+      // `signed_off_version` with `current_version`, not the status). Reached
+      // here on the upload path, which skips the lineage block — see
+      // `uploadReq`.
+      deliverableRow = {
+        deliverable_type_key: "target_state_architecture",
+        title: "Target State Architecture",
+        current_version: 1,
+        status: "superseded",
+        signed_off_version: null,
+      };
+      mockExtractProgramEvidenceFromUploadBuffer.mockResolvedValue({
+        extractedText: "An edited target state architecture.",
+        extractedStructured: { parse_method: "docx", warnings: [] },
+      });
+      mockSaveMoveArtifact.mockResolvedValue({ artifactId: "artifact-1" });
+      mockSignOffDeliverable.mockResolvedValue(false);
+      const res = await postSignOff(uploadReq());
+      const body = await res.json();
+      expect(res.status).toBe(409);
+      expect(body.error).toBe("deliverable_superseded");
+      expect(body.detail).toMatch(/superseded/i);
+      expect(body.detail).toMatch(/generate the document again/i);
+      // The two sentences this one replaced, neither of which was true here.
+      expect(body.detail).not.toMatch(/not found/i);
+      expect(body.detail).not.toMatch(/was not recorded/i);
     });
 
     it("still signs off a draft deliverable", async () => {

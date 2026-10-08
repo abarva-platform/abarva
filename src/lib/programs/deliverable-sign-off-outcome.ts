@@ -21,23 +21,58 @@
 //   3. the row was read, but the guarded write matched nothing.
 //
 // Cause 3 matters most, because its common case is NOT a failure. The write is
-// guarded `status IN ('draft','in_review')`, and `status` only ever holds
-// `draft`, `in_review` or `signed_off`, so the one reachable ineligible value is
-// `signed_off` — the state the user was asking for. The agent tool
-// `complete_deliverable` reaches it with no status guard, so a user who accepts
-// a document in chat and then clicks Approve on the panel still showing the
-// pre-sign-off render was told `not_found` about a document already approved.
+// guarded `status IN ('draft','in_review')`, so every other value of `status`
+// reaches cause 3. There are TWO such values, not one:
+//
+//   • `signed_off` — the state the user was asking for. The agent tool
+//     `complete_deliverable` reaches it with no status guard, so a user who
+//     accepts a document in chat and then clicks Approve on the panel still
+//     showing the pre-sign-off render was told `not_found` about a document
+//     already approved.
+//   • `superseded` — written by POST .../solution-options/approve, which sets
+//     every P3 architecture deliverable in the Move to `superseded` when the
+//     chosen solution option is approved, because an output built on the prior
+//     basis may no longer satisfy a gate. It is the ONLY writer of that value,
+//     and the CHECK constraint on `deliverables_v2.status`
+//     (`draft`/`in_review`/`signed_off`/`superseded`) admits it.
+//
+// `superseded` is the one that still refused badly after the first pass here:
+// it is a durable recorded state, not a lost race, and the generic cause-3
+// sentence told the reader to reload and approve the version shown — which is
+// the same superseded row, so it refuses identically every time. The state
+// clears only by generating the document again: the orchestrator persists
+// through `completeDeliverable(..., { signOff: false })`, whose update carries
+// no status filter and writes `status: 'draft'`, which IS signable. So the
+// refusal names regeneration, the one action that can actually succeed.
+//
+// The path that reaches it is approve-by-uploading-a-replacement. The P3
+// architecture lineage checks sit inside the JSON-only branch, and for a
+// superseded row those are expected to refuse on their own — the row is
+// superseded BECAUSE the approved option changed, so the lineage stamped on the
+// version is stale by construction. The upload branch skips that block
+// entirely, so the guarded write is what answers. A row whose `current_version`
+// is unset skips the block too.
 //
 // This module does the naming only: no database access and no `server-only`, so
 // a suite can import it directly. The write layer keeps its boolean.
 
-/** The status values any writer puts in `deliverables_v2.status`. */
-export type DeliverableSignOffStatus = "draft" | "in_review" | "signed_off";
+/**
+ * The status values any writer puts in `deliverables_v2.status`, matching the
+ * CHECK constraint on the column. `superseded` belongs here: the solution-option
+ * approval route writes it, and leaving it out is what let the generic cause-3
+ * sentence answer for a state it does not describe.
+ */
+export type DeliverableSignOffStatus =
+  | "draft"
+  | "in_review"
+  | "signed_off"
+  | "superseded";
 
 export type DeliverableSignOffRefusalCode =
   | "move_not_readable"
   | "deliverable_not_in_move"
   | "deliverable_already_signed_off"
+  | "deliverable_superseded"
   | "sign_off_not_applied";
 
 export interface DeliverableSignOffRefusal {
@@ -71,11 +106,17 @@ export function refuseDeliverableNotInMove(): DeliverableSignOffRefusal {
 /**
  * The row was read but the guarded write matched nothing.
  *
- * `statusAtRead` is the status read BEFORE the write was attempted. When it was
- * already `signed_off` the user's intent is met and the refusal says so. When it
- * was eligible, the row changed between the read and the write, which is a race
- * and not a terminal state — say that instead of naming a cause we cannot
- * observe.
+ * `statusAtRead` is the status read BEFORE the write was attempted.
+ *
+ *   • `signed_off` — the user's intent is met; the refusal says so.
+ *   • `superseded` — a terminal state for this version, cleared only by
+ *     generating the document again; the refusal names that.
+ *   • anything else, including an eligible status and a value this module does
+ *     not recognise — the row changed between the read and the write, which is
+ *     a race and not a terminal state. Say that instead of naming a cause we
+ *     cannot observe. This stays the LAST arm deliberately: a status added to
+ *     the column later must fall here rather than borrow a named state's
+ *     sentence.
  */
 export function refuseSignOffNotApplied(args: {
   statusAtRead: DeliverableSignOffStatus | string | null;
@@ -92,6 +133,19 @@ export function refuseSignOffNotApplied(args: {
         `This document was already signed off${versionPhrase}, so this approval changed nothing — ` +
         "the approval it is asking for is already recorded. Reload the phase workspace to see the " +
         "approved version and its sign-off badge.",
+    };
+  }
+  if (args.statusAtRead === "superseded") {
+    // 409 for the same reason the already-signed branch may depart from 404:
+    // reaching this needs a row this Move actually holds, so it leaks nothing a
+    // foreign id could be probed with.
+    return {
+      code: "deliverable_superseded",
+      httpStatus: 409,
+      detail:
+        "This document was superseded when the solution option for this Move was approved, so this " +
+        "version can no longer be signed off and approving it again will refuse the same way. " +
+        "Generate the document again — a regenerated version returns to draft — then approve that version.",
     };
   }
   // 404, not 409, and deliberately so. A `false` from the write layer is ALSO
