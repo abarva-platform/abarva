@@ -228,6 +228,73 @@ function isRecoverableCreditCandidate(
   );
 }
 
+/**
+ * The contracts whose loaded actions include a credit claim.
+ *
+ * One definition, two readers. The portfolio credit finding narrows TO this
+ * set; `unexploitedRecoverableCreditRows` reports its complement. If the two
+ * computed membership separately they would drift, and the gap report would
+ * stop being the exact complement of the figure it qualifies.
+ */
+function creditActionContractIdSet(
+  portfolio: RecoverableCreditInput,
+): ReadonlySet<string> {
+  return new Set(
+    portfolio.impact.actionCandidates
+      .filter((row) =>
+        /credit|recover/i.test(
+          [
+            row.action_type,
+            row.opportunity_type,
+            row.title,
+            row.finding_summary,
+            row.deterministic_basis,
+          ]
+            .filter(Boolean)
+            .join(" "),
+        ),
+      )
+      .map((row) => row.contract_id),
+  );
+}
+
+/**
+ * Contracts holding unclaimed SLA credit that no loaded action would claim.
+ *
+ * `source360RecoverableCreditCoverageRows` narrows to the contracts that DO
+ * have a credit action whenever any of them does, so a contract carrying
+ * unclaimed credit with no action is dropped from the portfolio figure - and
+ * dropped precisely BECAUSE a different contract has one. The set is computed
+ * there and discarded. This returns it.
+ *
+ * Nothing here estimates anything. The amount is the unclaimed credit already
+ * summed on the loaded coverage row, which is the same arithmetic the two
+ * authored credit actions carry.
+ */
+export function unexploitedRecoverableCreditRows(
+  portfolio: RecoverableCreditInput,
+): readonly SourceContractEvidenceCoverageRow[] {
+  const creditActionContractIds = creditActionContractIdSet(portfolio);
+  return portfolio.impact.evidenceCoverage
+    .filter((row) => (numberFromDb(row.unclaimed_credit_usd) ?? 0) > 0)
+    .filter((row) => !creditActionContractIds.has(row.contract_id))
+    .sort(
+      (left, right) =>
+        (numberFromDb(right.unclaimed_credit_usd) ?? 0) -
+          (numberFromDb(left.unclaimed_credit_usd) ?? 0) ||
+        left.contract_id.localeCompare(right.contract_id),
+    );
+}
+
+export function unexploitedRecoverableCreditTotal(
+  portfolio: RecoverableCreditInput,
+): number {
+  return unexploitedRecoverableCreditRows(portfolio).reduce(
+    (sum, row) => sum + (numberFromDb(row.unclaimed_credit_usd) ?? 0),
+    0,
+  );
+}
+
 export function source360RecoverableCreditCoverageRows(
   portfolio: RecoverableCreditInput,
 ): readonly SourceContractEvidenceCoverageRow[] {
@@ -256,23 +323,7 @@ export function source360RecoverableCreditCoverageRows(
     }
   }
 
-  const creditActionContractIds = new Set(
-    portfolio.impact.actionCandidates
-      .filter((row) =>
-        /credit|recover/i.test(
-          [
-            row.action_type,
-            row.opportunity_type,
-            row.title,
-            row.finding_summary,
-            row.deterministic_basis,
-          ]
-            .filter(Boolean)
-            .join(" "),
-        ),
-      )
-      .map((row) => row.contract_id),
-  );
+  const creditActionContractIds = creditActionContractIdSet(portfolio);
   const actionableCreditRows = rowsWithCredits.filter((row) =>
     creditActionContractIds.has(row.contract_id),
   );
@@ -1787,6 +1838,7 @@ export function CoveragePage({
       : 0;
   const { shown: archetypes, notShown: archetypesNotShown } =
     archetypeRowsForDisplay(vendorArchetypeRows(portfolio));
+  const unexploitedCredit = unexploitedRecoverableCreditRows(portfolio);
   const archetypeCoverageTitle =
     populations.declaredOutsideRegisterCount > 0
       ? `${populations.declaredInRegisterCount} of ${populations.registerCount} register contracts are classified`
@@ -1939,6 +1991,34 @@ export function CoveragePage({
           ) : null}
         </div>
       </section>
+      {unexploitedCredit.length > 0 ? (
+        <section className="sw-v2-panel sw-v2-coverage-unexploited">
+          <PanelHead
+            eyebrow="Loaded, unclaimed"
+            title="Credit in the rows that no action would claim"
+          />
+          <div className="sw-v2-archetype-list">
+            {unexploitedCredit.map((row) => (
+              <div key={row.contract_id}>
+                <span>
+                  {safeVendorDisplayName(row.vendor_name, row.contract_id)}
+                </span>
+                <b>{money(numberFromDb(row.unclaimed_credit_usd) ?? 0)}</b>
+                <small>
+                  {numberFromDb(row.performance_rows) ?? 0} performance rows ·
+                  no credit action loaded
+                </small>
+              </div>
+            ))}
+          </div>
+          <p className="sw-v2-muted">
+            Summed from the unclaimed credit on each contract&apos;s loaded
+            performance rows, which is the same arithmetic a loaded credit
+            action carries. The portfolio credit figure narrows to the contracts
+            that already have one, so these are excluded from it.
+          </p>
+        </section>
+      ) : null}
     </div>
   );
 }

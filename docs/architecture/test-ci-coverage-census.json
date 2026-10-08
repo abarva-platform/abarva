@@ -202,8 +202,8 @@
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
-      "testFiles": 38,
-      "coveredTestFiles": 35,
+      "testFiles": 40,
+      "coveredTestFiles": 37,
       "declaredQuarantineTestFiles": 3,
       "untriagedUnrunTestFiles": 0,
       "via": [
