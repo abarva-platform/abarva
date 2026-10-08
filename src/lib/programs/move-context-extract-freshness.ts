@@ -5,6 +5,10 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  resolveApprovedEvidenceCurrencyBasis,
+  type ApprovedEvidenceCurrencyBasisReason,
+} from "@/lib/programs/approved-evidence-currency-basis";
 
 export type MoveContextExtractFreshnessStatus =
   | "fresh"
@@ -18,6 +22,16 @@ export interface MoveContextExtractFreshness {
   evidenceFingerprint: string;
   approvedEvidenceRevision: string | null;
   approvedEvidenceRevisionScope?: "phase" | null;
+  /**
+   * Set ONLY when the approved-evidence basis could not be read, so no currency
+   * comparison was made. `freshnessStatus` is then `rebuild_required` because the
+   * extract cannot be certified current — but that is "I cannot tell", not "the
+   * evidence changed", and the two have different remedies. A reader that
+   * prescribes a rebuild must check this first: for the structural causes a
+   * rebuild re-reads the same unreadable basis. Absent on a result parsed from
+   * stored metadata, whose status was established when it was written.
+   */
+  basisUnevaluableReason?: ApprovedEvidenceCurrencyBasisReason | null;
   currentApprovedEvidenceCount?: number;
   attachedEvidenceCount: number;
   acceptedEvidenceCount: number;
@@ -125,8 +139,24 @@ export async function loadCurrentMoveContextExtractFreshness(args: {
     metadata: objectValue(row.metadata),
   });
   if (!parsed) return null;
-  const current = await loadApprovedMoveEvidenceSnapshot(args);
-  if (!current || !parsed.approvedEvidenceRevision) {
+  // Two different facts used to share one `rebuild_required`: a basis that could
+  // not be READ, and an extract that recorded no revision to compare. Only the
+  // second is fixed by refreshing the extract, so they are separated here and
+  // named on the result. See `move-context-freshness-refusal.ts`.
+  const basis = await resolveApprovedEvidenceCurrencyBasis({
+    tenantKey: args.tenantKey,
+    moveId: args.moveId,
+    load: loadApprovedMoveEvidenceSnapshot,
+  });
+  if (!basis.evaluable) {
+    return {
+      ...parsed,
+      freshnessStatus: "rebuild_required",
+      basisUnevaluableReason: basis.reason,
+    };
+  }
+  const current = basis.snapshot;
+  if (!parsed.approvedEvidenceRevision) {
     return { ...parsed, freshnessStatus: "rebuild_required" };
   }
   const freshnessStatus = isApprovedMoveEvidenceBasisCurrent({
