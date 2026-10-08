@@ -55,6 +55,7 @@ import {
   MovesCaptureFlow,
   type MovesCaptureFlowPhase,
 } from "@/components/strategic-moves/MovesCaptureFlow";
+import { captureSectionSpan } from "@/lib/programs/moves-capture-section-width";
 import { CharterAssumptionsCarryForward } from "@/components/strategic-moves/CharterAssumptionsCarryForward";
 import { CharterStandingAfterDiscover } from "@/components/strategic-moves/CharterStandingAfterDiscover";
 import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumptions-carry-forward";
@@ -3656,6 +3657,11 @@ export function MovesPhaseStandaloneClient({
                         renderSectionInput: captureSectionInput,
                         renderSectionBasis: captureSectionBasis,
                         renderSectionBadge: captureSectionBadge,
+                        // Width per Claude Design's P3-P5 grid review; a
+                        // structured editor stays wide regardless. See
+                        // moves-capture-section-width.ts.
+                        sectionSpan: (section) =>
+                          captureSectionSpan(phase.phase, section),
                         renderSectionRecapMark: captureSectionRecapMark,
                         handoffSummary: charterBasisRollup,
                         openingBand: (
