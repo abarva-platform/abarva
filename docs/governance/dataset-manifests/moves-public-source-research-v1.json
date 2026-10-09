@@ -1,0 +1,20 @@
+{
+  "dataset_id": "moves_public_source_research_v1",
+  "title": "Moves governed public-source research (outside sources per Move)",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "public_source",
+  "classification": "internal",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Public web pages retrieved by the Anthropic web search/fetch tools; URL and retrieval date per object",
+  "ingestion_method": "api_upload",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": null,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-10-09",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration only for the storage contract (tables move_public_research_runs and move_public_sources). Objects are produced per Move build by the research step behind the moves_public_source_research flag, through the audited Anthropic egress path (workload moves_public_research, offline lane); nothing is loaded by this declaration. Tenant-scoped and Move-scoped, never corpus_global; used only by Nexus for the same tenant and Move. Provenance per object: source_file is the URL, ingestion_run_id is the research run id, parse_method is anthropic_web_citation, committed_at is the retrieval date. Each object stores the API's own cited text as an excerpt of at most 300 characters, https URLs only, at most 12 stored sources per run and at most 9 tool uses per run. Every object is not_reviewed (pending) until a consultant approves it, and is never agent_ready; only approved sources may be cited, numbered after and rendered apart from client-private evidence. Version 1 researches client-neutral subjects only (program rules, payment rules, published studies): research briefs carry no client names, figures or client text. Client-specific research needs an ops-held identity mapping and is a later decision. The object count depends on builds and is not fixed."
+}

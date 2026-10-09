@@ -1,6 +1,6 @@
 {
   "policy_version": "1.0.0",
-  "updated_at": "2026-06-08",
+  "updated_at": "2026-10-09",
   "decisions": {
     "rls_timing": "phase-2",
     "signals_plane": "fast-follow",
