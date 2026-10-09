@@ -29,6 +29,14 @@ import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
 /** The tenant flag that turns the register on (routes, aVa tool, generation). */
 export const ASSUMPTION_REGISTER_FLAG = "moves_assumption_register_v1" as const;
+/**
+ * Generation is governed by its own flag, off for every tenant until the
+ * register migration is applied and a Move's register is populated: under
+ * enforcement an unreadable register stops the build, and an empty one admits
+ * no figure outside evidence.
+ */
+export const ASSUMPTION_REGISTER_GENERATION_FLAG =
+  "moves_assumption_register_generation_v1" as const;
 
 /**
  * The reader's sentence when a generation the register governs could not read

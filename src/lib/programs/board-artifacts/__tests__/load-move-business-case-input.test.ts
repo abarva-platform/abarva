@@ -164,13 +164,29 @@ describe('loadMoveBusinessCaseInput', () => {
       return rows.map((r) => assumptionFromRow(r));
     }
 
+    const GENERATION_FLAG_ENV =
+      'ABARVA_FEATURE_MOVES_ASSUMPTION_REGISTER_GENERATION_V1_TENANTS';
+    // Generation is off for every tenant in the registry; these cases enrol
+    // the demo tenant explicitly, and one proves the default stays off.
+    afterEach(() => {
+      delete process.env[GENERATION_FLAG_ENV];
+    });
+
     beforeEach(() => {
+      process.env[GENERATION_FLAG_ENV] = 'meridian';
       mockRequireTenancy.mockResolvedValue({
         clientId: 'client-1',
         clientKey: 'meridian',
         userId: 'user-1',
       });
       mockAzureMaybeSingle.mockResolvedValue(null);
+    });
+
+    it('leaves the register out while generation is not enrolled, even with the register on', async () => {
+      delete process.env[GENERATION_FLAG_ENV];
+      const input = await loadMoveBusinessCaseInput('move-1');
+      expect(input?.assumptionRegister).toBeUndefined();
+      expect(mockListAssumptions).not.toHaveBeenCalled();
     });
 
     it('carries the citable register rows when the flag is on for the tenant', async () => {

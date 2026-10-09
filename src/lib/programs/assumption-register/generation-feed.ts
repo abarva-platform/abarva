@@ -19,6 +19,7 @@ import type { ApprovedAssumption } from "@/lib/deliverables/orchestrator/types";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import {
   ASSUMPTION_REGISTER_FLAG,
+  ASSUMPTION_REGISTER_GENERATION_FLAG,
   approvedAssumptionsFromRegister,
 } from "./model";
 import { listAssumptions } from "./store";
@@ -27,7 +28,11 @@ import { listAssumptions } from "./store";
 export function assumptionRegisterGovernsGeneration(
   ctx: Pick<TenancyCtx, "clientKey"> | null | undefined,
 ): boolean {
-  return isFeatureEnabled(ctx ?? null, ASSUMPTION_REGISTER_FLAG);
+  // Both: the register exists for the tenant, and generation is enrolled.
+  return (
+    isFeatureEnabled(ctx ?? null, ASSUMPTION_REGISTER_FLAG) &&
+    isFeatureEnabled(ctx ?? null, ASSUMPTION_REGISTER_GENERATION_FLAG)
+  );
 }
 
 /**
