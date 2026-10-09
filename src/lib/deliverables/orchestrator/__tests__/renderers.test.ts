@@ -154,6 +154,44 @@ describe("DOCX renderer", () => {
     expect(sourceHeading).toContain("<w:keepNext/>");
     expect(sourceHeading).toContain("<w:pageBreakBefore/>");
   });
+
+  it("gives a requirements narrative room instead of equal-width label columns", async () => {
+    const doc = goodDocument();
+    doc.generatedSections = [];
+    doc.tables = [
+      {
+        key: "requirements_trace",
+        title: "Requirements Trace",
+        columns: ["#", "Group", "Requirement", "Status"],
+        rows: [
+          [
+            "R1",
+            "Capability",
+            "Record a versioned definition, accountable owner, source lineage, and consumer purpose before certification.",
+            "Conditional design",
+          ],
+        ],
+        targetFormat: "docx",
+      },
+    ];
+
+    const buf = await Packer.toBuffer(renderDeliverableDocx(doc));
+    const zip = await JSZip.loadAsync(buf);
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const table = (xml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/g) ?? []).find((item) =>
+      item.includes("REQUIREMENT"),
+    );
+    expect(table).toBeDefined();
+    const widths = [...(table?.matchAll(/<w:gridCol w:w="(\d+)"\/>/g) ?? [])].map(
+      (match) => Number(match[1]),
+    );
+    expect(widths).toHaveLength(4);
+    expect(widths.reduce((sum, width) => sum + width, 0)).toBe(10000);
+    expect(widths[0]).toBeLessThan(1000);
+    expect(widths[1]).toBeLessThan(1800);
+    expect(widths[2]).toBeGreaterThan(5500);
+    expect(widths[3]).toBeGreaterThan(1500);
+  });
 });
 
 describe("DOCX/HTML/PDF renderers — duplicate section-heading suppression", () => {
