@@ -37,6 +37,10 @@ import {
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
 import { DeliverableApprovalAction } from "./DeliverableApprovalAction";
 import { describeDeliverableStatus } from "@/lib/programs/deliverable-status-presentation";
+import {
+  describeDeliverableProjectionReadback,
+  type DeliverableProjectionReadback,
+} from "@/lib/programs/deliverable-projection-readback";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 
 interface Props {
@@ -69,11 +73,24 @@ interface DbDeliverable {
 
 // ── Data helpers ──────────────────────────────────────────────────────────────
 
+/**
+ * The read, with its failure representable. A discriminated union rather than
+ * `{ byKey, available }`: an empty map on the error path is the shape this
+ * surface could not tell apart from "no document on record", so the error path
+ * carries no map at all and a caller cannot read one by mistake.
+ *
+ * The fluent client resolves a failed query to `{ data: null, error }` rather
+ * than throwing, so `error` is the signal.
+ */
+type DeliverableProjectionRead =
+  | { available: true; byKey: Map<string, DbDeliverable> }
+  | { available: false };
+
 async function fetchDeliverablesByKey(
   programId: string,
-): Promise<Map<string, DbDeliverable>> {
+): Promise<DeliverableProjectionRead> {
   const sb = getServerSupabase();
-  const { data } = await sb
+  const { data, error } = await sb
     .from("deliverables_v2")
     .select(
       `
@@ -85,7 +102,7 @@ async function fetchDeliverablesByKey(
     .eq("engagement_id", programId)
     .order("updated_at", { ascending: false });
 
-  if (!data) return new Map();
+  if (error || !Array.isArray(data)) return { available: false };
 
   const byKey = new Map<string, DbDeliverable>();
   for (const row of data as Array<{
@@ -122,7 +139,7 @@ async function fetchDeliverablesByKey(
       });
     }
   }
-  return byKey;
+  return { available: true, byKey };
 }
 
 function inferPhaseFromKey(typeKey: string): number {
@@ -324,6 +341,7 @@ function DocumentRow({
   previousRunArtifact,
   presentationMode = false,
   canApproveGates = false,
+  signOffReadback,
 }: {
   spec: DeliverableSpec;
   dbRow: DbDeliverable | undefined;
@@ -338,6 +356,8 @@ function DocumentRow({
   previousRunArtifact?: { artifactId: string; updatedAt: string };
   presentationMode?: boolean;
   canApproveGates?: boolean;
+  /** Whether this row's sign-off state is a fact, and what it may say if not. */
+  signOffReadback: DeliverableProjectionReadback;
 }) {
   const calmBrowse = presentationMode;
   const hasContent = Boolean(dbRow?.latest_content?.trim());
@@ -422,10 +442,20 @@ function DocumentRow({
               Gate
             </span>
           )}
+          {/* Needs no readback guard: an unread projection yields no row at
+              all, so `signed_off_version` is undefined and this condition is
+              already false. The badge can only overstate approval from a row
+              that was actually read. */}
           {!calmBrowse && dbRow?.signed_off_version != null && (
             <ClientApprovedBadge version={dbRow.signed_off_version} />
           )}
+          {/* The asymmetric one. Its first term is the DEFAULT for a row that
+              is absent, so an unread projection turns this badge ON for every
+              document at once — asserting "unapproved draft" about documents
+              whose sign-off state nothing on this render established. Held
+              back to what was read. */}
           {!calmBrowse &&
+            signOffReadback.canStateSignOff &&
             (dbRow?.signed_off_version == null ||
               dbRow.signed_off_version !== dbRow.current_version) && (
               <AiDraftBadge />
@@ -591,10 +621,20 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(runArtifact.updatedAt)}
             </span>
-            {dbRow &&
-              !calmBrowse &&
+            {!calmBrowse &&
               canApproveGates &&
-              (blockedNextAction ? (
+              (!dbRow ? (
+                // A built file with no approvable document. Previously this
+                // rendered nothing at all, so the row was a green "Built"
+                // beside a gate that goes on asking for a sign-off the screen
+                // offered no way to give.
+                <span
+                  data-testid="document-no-approvable-record"
+                  style={{ fontSize: 10, color: "#B4513C", maxWidth: 320 }}
+                >
+                  {signOffReadback.noApprovableDocumentNote}
+                </span>
+              ) : blockedNextAction ? (
                 <span style={{ fontSize: 10, color: "#B4513C", maxWidth: 260 }}>
                   {blockedNextAction}
                 </span>
@@ -728,10 +768,20 @@ export async function PhaseDocumentsPanel({
   // The Documents tab is read-only browse/download — generation happens via the
   // phase workspace's Approve & Build, so the archetype/moveName/clientDisplayName
   // props (still accepted for caller compatibility) are no longer used here.
-  const [deliverablesByKey, attachments] = await Promise.all([
+  const [deliverableProjection, attachments] = await Promise.all([
     fetchDeliverablesByKey(moveId),
     listAttachmentsForProgram(moveId).catch(() => [] as AttachmentRecord[]),
   ]);
+  // What the sign-off column on this render is. Derived once, so every row and
+  // the panel warning answer from the same fact rather than re-deciding it.
+  const signOffReadback = describeDeliverableProjectionReadback(
+    deliverableProjection.available ? "available" : "unavailable",
+  );
+  // Downstream reads stay a map. The map being empty is no longer the only
+  // thing on screen that knows a read failed — `signOffReadback` is.
+  const deliverablesByKey = deliverableProjection.available
+    ? deliverableProjection.byKey
+    : new Map<string, DbDeliverable>();
   const evidenceNeedPackets = tenancy
     ? await (async () => {
         try {
@@ -928,6 +978,29 @@ export async function PhaseDocumentsPanel({
         </div>
       )}
 
+      {/* Stated once above the list, because the condition is a property of
+          the whole list rather than of any one row: the read that failed is
+          the only read of sign-off state the panel makes. Omitted in calm
+          browse, which withholds every sign-off badge anyway and so asserts
+          nothing the warning would have to correct. */}
+      {!calmBrowse && signOffReadback.warning && (
+        <div
+          data-testid="document-register-unreadable-warning"
+          style={{
+            marginBottom: 14,
+            padding: "9px 12px",
+            border: "1px solid rgba(180,81,60,0.32)",
+            borderRadius: 6,
+            backgroundColor: "rgba(180,81,60,0.06)",
+            color: "#B4513C",
+            fontSize: 11.5,
+            lineHeight: 1.45,
+          }}
+        >
+          {signOffReadback.warning}
+        </div>
+      )}
+
       {!calmBrowse && <DecisionSupportNotice />}
 
       {/* Legend */}
@@ -1073,6 +1146,7 @@ export async function PhaseDocumentsPanel({
                   )}
                   presentationMode={calmBrowse}
                   canApproveGates={canApproveGates}
+                  signOffReadback={signOffReadback}
                 />
               ))}
 
