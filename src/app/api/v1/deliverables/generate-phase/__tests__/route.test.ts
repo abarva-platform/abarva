@@ -832,6 +832,61 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     }
   });
 
+  it("hands the P3 build its step-page records as text, beside the answers", async () => {
+    getModuleState.mockResolvedValue([
+      ...confirmedRouteModules("process_change"),
+      {
+        moduleKey: "phase_3_design_traceability",
+        moduleName: "Root cause → design traceability",
+        phaseNumber: 3,
+        status: "in_progress",
+        state: {
+          step_record: true,
+          value: JSON.stringify({
+            kind: "design_traceability",
+            version: 1,
+            links: [
+              {
+                causeId: "RC-2",
+                cause: "Definitions conflict",
+                rank: 1,
+                status: "accepted",
+                element: "Certified semantic layer",
+              },
+            ],
+          }),
+        },
+      },
+    ]);
+
+    const res = await POST(
+      req({
+        moveId: "m-p3",
+        phase: 3,
+        useCaseArchetype: "ams",
+        moveName: "Contact Center AI",
+        clientDisplayName: "Client",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const call of createCalls) {
+      const decisionContext = (call.jobPayload as { decisionContext: string })
+        .decisionContext;
+      expect(decisionContext).toContain(
+        "SAVED PHASE CAPTURE (authoritative input for this build)",
+      );
+      expect(decisionContext).toContain(
+        "- Root cause → design traceability: Each P2 root cause, in the consultant's order, and the design element that answers it:",
+      );
+      expect(decisionContext).toContain(
+        "1. RC-2 Definitions conflict → Certified semantic layer",
+      );
+      expect(decisionContext).not.toContain('"kind"');
+    }
+  });
+
   it("enqueues one queued run per phase deliverable, scoped to the tenant", async () => {
     // P3 has several deliverables, so this proves the batch is real (not a single enqueue).
     const res = await POST(
