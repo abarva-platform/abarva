@@ -9298,6 +9298,110 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(chatBody.surfaceContext).not.toHaveProperty("moveEvidenceCount");
   });
 
+  // A Move this account can no longer read refuses both walk steps the reader
+  // can reach from this screen, and both refusal ladders end `detail || error`.
+  // Before the route carried a `detail`, the fallthrough printed the literal
+  // `not_found` — once into the cited-draft panel's alert, and once into the
+  // per-section save slot beside the field just typed into. These two cases
+  // render the real host and assert the sentence, not the token, reaches it.
+  it("names the refusal in the cited-draft panel when the Move cannot be read", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-input-draft")) {
+          return {
+            ok: false,
+            status: 404,
+            json: async () => ({
+              error: "not_found",
+              detail: MOVE_UNREADABLE_REFUSAL_DETAIL,
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Draft proposed inputs" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/could not be opened for your account/i).length,
+      ).toBeGreaterThan(0);
+    });
+    // The whole point: the wire code never reaches the reader.
+    expect(screen.queryByText("not_found")).not.toBeInTheDocument();
+  });
+
+  it("names the refusal in the draft save slot when the Move cannot be read", async () => {
+    // The draft save is one of this route's four reader ladders. The drafting
+    // request itself is left on the default mock and succeeds, so the refusal
+    // under test is unambiguously the SAVE — a case where both failed could
+    // pass on the drafting panel's message alone.
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-capture") && init?.method === "POST") {
+          return {
+            ok: false,
+            status: 404,
+            json: async () => ({
+              error: "not_found",
+              detail: MOVE_UNREADABLE_REFUSAL_DETAIL,
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Draft proposed inputs" }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(/1 cited draft ready/i)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Insert as draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/could not be opened for your account/i).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText("not_found")).not.toBeInTheDocument();
+  });
+
   it("gets cited aVa drafts without writing, then persists only after Save changes", async () => {
     render(
       <MovesPhaseStandaloneClient

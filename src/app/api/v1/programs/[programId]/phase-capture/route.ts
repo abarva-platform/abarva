@@ -75,6 +75,7 @@ import {
   readP1CharterBasisRecord,
   type P1CharterBasisInput,
 } from "@/lib/programs/p1-charter-evidence";
+import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
 import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
 
 export const runtime = "nodejs";
@@ -238,7 +239,14 @@ export async function POST(
     const ctx = await requireTenancy();
     const { programId } = await params;
     const program = await getProgramById(ctx, programId);
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    // Four reader ladders on this route -- the two autosave paths, the aVa
+    // draft save and the gate finalize -- all fall through to `error`, so a
+    // bare code printed the literal `not_found` into a per-section save slot.
+    // The GET arm above keeps its bare body on purpose: no client fetches it,
+    // so a sentence there would change no screen.
+    if (!program) {
+      return Response.json(moveUnreadableRefusalBody(), { status: 404 });
+    }
 
     const body = (await req.json().catch(() => ({}))) as {
       phase?: number;

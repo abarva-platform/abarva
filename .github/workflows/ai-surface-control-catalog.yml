@@ -71,6 +71,27 @@ jobs:
         # nothing. The step passed locally and found no tests in CI.
         run: npx jest --runTestsByPath "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts" --runInBand
 
+      # Not a catalog control. The two walk routes a reviewer drives from the
+      # phase workspace — the capture save and aVa's cited drafting — had no
+      # route suite of their own, and neither directory is swept by any job, so
+      # both are named here by exact path. Quoted for the same reason as the
+      # step above: jest reads a bare pattern as a regex and the literal
+      # brackets in [programId] are a character class that matches nothing.
+      #
+      # What they hold is the Move-unreadable refusal both routes answer with.
+      # Each has reader ladders that end `detail || error`, so a body carrying
+      # only a code printed the literal `not_found` to a signed-in reviewer —
+      # once in the cited-draft panel's alert, once in a per-section save slot.
+      # The GET case is the deliberate other side: that arm keeps its bare body
+      # because no client fetches it, and the test says so, so a later sweep
+      # cannot "finish the job" by adding copy nothing renders.
+      - name: Exercise Moves walk-step Move-unreadable refusals
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/api/v1/programs/[programId]/phase-input-draft/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/phase-capture/__tests__/move-unreadable-refusal.test.ts"
+          --runInBand
+
       - name: Exercise Intelligence promotion approval gate
         run: npx jest --runTestsByPath src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts --runInBand
 
