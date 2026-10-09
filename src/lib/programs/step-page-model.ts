@@ -14,8 +14,20 @@ import type { StepDepth } from "@/lib/programs/phase-workflow-registry";
  * settled only when a person accepted it, and Ava's drafts stay drafts.
  */
 
-/** Where a row sits. Status lives in the group, never on the row. */
-export type StepRowState = "decision" | "draft" | "settled";
+/**
+ * Where a row sits. Status lives in the group, never on the row.
+ * - decision: gaps, conflicts, missing owners, sign-offs, evidence to review
+ * - ranked: an item in a ranking step's list, until the order is confirmed
+ * - draft: an Ava draft or a team statement awaiting acceptance
+ * - set_aside: ruled out of scope (a symptom, not a cause); not open
+ * - settled: accepted by a person
+ */
+export type StepRowState =
+  | "decision"
+  | "ranked"
+  | "draft"
+  | "set_aside"
+  | "settled";
 
 export interface StepRow {
   /** Stable id shown in mono, e.g. "RC-4" or "OPT-B". */
@@ -38,9 +50,12 @@ export interface StepRow {
   draftName?: string;
 }
 
+/** The Work groups, in their fixed order. */
 export interface StepRowGroups<R extends StepRow = StepRow> {
   decision: R[];
+  ranked: R[];
   draft: R[];
+  setAside: R[];
   settled: R[];
 }
 
@@ -51,10 +66,13 @@ export function groupStepRows<R extends StepRow>(
   rows: readonly R[],
 ): StepRowGroups<R> {
   const sorted = [...rows].sort(byRank);
+  const of = (state: StepRowState) => sorted.filter((row) => row.state === state);
   return {
-    decision: sorted.filter((row) => row.state === "decision"),
-    draft: sorted.filter((row) => row.state === "draft"),
-    settled: sorted.filter((row) => row.state === "settled"),
+    decision: of("decision"),
+    ranked: of("ranked"),
+    draft: of("draft"),
+    setAside: of("set_aside"),
+    settled: of("settled"),
   };
 }
 
@@ -84,11 +102,18 @@ function sentence(body: string): string {
  */
 export function buildNextActionSentence(
   rows: readonly StepRow[],
+  options: {
+    /** The ranking's one clause while its order is unconfirmed: "confirm the order". */
+    rankingClause?: string;
+  } = {},
 ): string | null {
-  const { decision, draft } = groupStepRows(rows);
+  const { decision, ranked, draft } = groupStepRows(rows);
   const clauses = decision.map(
     (row) => row.clause?.trim() || `decide ${row.subject.trim()}`,
   );
+  if (ranked.length > 0) {
+    clauses.push(options.rankingClause?.trim() || "confirm the order");
+  }
   if (draft.length === 1 && draft[0].draftName?.trim()) {
     clauses.push(`review ${draft[0].draftName.trim()}`);
   } else if (draft.length > 0) {
@@ -119,6 +144,8 @@ export interface StepPageInput {
   readySentence: string;
   /** What to do when the step has no rows yet, e.g. "Add the design session output." */
   emptySentence: string;
+  /** The ranking's clause while its order is unconfirmed. */
+  rankingClause?: string;
 }
 
 export interface StepNextAction {
@@ -153,8 +180,11 @@ function formatDoneDate(iso: string): string | null {
  * row still settled.
  */
 export function resolveStepNextAction(input: StepPageInput): StepNextAction {
-  const total = input.rows.length;
-  const settled = input.rows.filter((row) => row.state === "settled").length;
+  // A set-aside row is resolved (ruled out), not settled, so it is neither
+  // open nor part of the count.
+  const counted = input.rows.filter((row) => row.state !== "set_aside");
+  const total = counted.length;
+  const settled = counted.filter((row) => row.state === "settled").length;
   const count = { settled, total };
 
   if (input.depth === "skip") {
@@ -178,7 +208,9 @@ export function resolveStepNextAction(input: StepPageInput): StepNextAction {
     };
   }
 
-  const open = buildNextActionSentence(input.rows);
+  const open = buildNextActionSentence(input.rows, {
+    rankingClause: input.rankingClause,
+  });
   if (open) {
     return {
       state: "in_progress",

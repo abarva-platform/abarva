@@ -178,6 +178,9 @@ export async function buildGateCriteria(
 
   // Evaluate the current → next transition against real program state.
   let failedKeys: Set<string> | null = null;
+  // The evaluator's own sentence for each failed criterion, so a surface can
+  // say why a check is open instead of only that it is.
+  const failedReasons = new Map<string, string>();
   try {
     const check = opts.allowHistoricalPhase
       ? await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1, {
@@ -205,6 +208,12 @@ export async function buildGateCriteria(
     );
     if (!structural) {
       failedKeys = new Set(check.failedChecks.map((f) => f.check));
+      for (const failed of check.failedChecks) {
+        const reason = failed.reason?.trim();
+        if (reason && !failedReasons.has(failed.check)) {
+          failedReasons.set(failed.check, reason);
+        }
+      }
     }
   } catch (err) {
     console.warn("[transformers/buildGateCriteria] evaluateGate failed", {
@@ -224,6 +233,9 @@ export async function buildGateCriteria(
     // NOT list it among the failed checks. With no verified evaluation we
     // never claim completion.
     completed: failedKeys !== null && !failedKeys.has(c.key),
+    ...(failedKeys?.has(c.key) && failedReasons.has(c.key)
+      ? { reason: failedReasons.get(c.key) }
+      : {}),
   }));
 }
 

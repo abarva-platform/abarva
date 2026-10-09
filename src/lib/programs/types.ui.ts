@@ -509,6 +509,8 @@ export interface StrategicMove {
     completed: boolean;
     severity: "hard" | "soft";
     verified: boolean;
+    /** The evaluator's reason, present only on an evaluated, unmet criterion. */
+    reason?: string;
   }>;
   recentActivity: Array<{
     at: string;

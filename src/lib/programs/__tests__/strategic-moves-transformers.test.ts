@@ -309,6 +309,43 @@ describe("strategic move transformer helpers", () => {
     expect(criteria[0]).toMatchObject({ verified: true, completed: false });
   });
 
+  it("carries the evaluator's reason on an unmet criterion and none on a met one", async () => {
+    evaluateGateMock.mockResolvedValue({
+      pass: false,
+      failedChecks: [
+        {
+          check: "charter_signed_off",
+          reason: "  The charter is not bound to current approved evidence.  ",
+          severity: "hard",
+        },
+      ],
+      requiresApproval: false,
+      approverRole: null,
+    });
+    const unmet = await buildGateCriteria(
+      { clientId: "client-1", userId: "user-1" },
+      "move-1",
+      1,
+    );
+    expect(unmet[0]).toHaveProperty(
+      "reason",
+      "The charter is not bound to current approved evidence.",
+    );
+
+    evaluateGateMock.mockResolvedValue({
+      pass: true,
+      failedChecks: [],
+      requiresApproval: false,
+      approverRole: null,
+    });
+    const met = await buildGateCriteria(
+      { clientId: "client-1", userId: "user-1" },
+      "move-1",
+      1,
+    );
+    expect(met[0]).not.toHaveProperty("reason");
+  });
+
   // A failed state read is not a per-criterion signal. The evaluator reports it
   // as one hard `gate_state_unreadable` check, and `buildGateCriteria` already
   // held the right treatment for its three siblings (`phase_mismatch`,

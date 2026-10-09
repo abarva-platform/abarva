@@ -147,12 +147,14 @@ export interface StepPageRow extends StepRow {
   basis?: readonly SourceRef[];
   /** For an instrument (table, sequence) that needs the full width. */
   wide?: boolean;
+  /** Mono eyebrow when it is not the id alone: "RANK 02 · RC-3", "GATE DOCUMENTS". */
+  eyebrow?: string;
 }
 
 function RowView({ row }: { row: StepPageRow }) {
   const subject = (
     <div>
-      <span className={cx("rc-id")}>{row.id}</span>
+      <span className={cx("rc-id")}>{(row.eyebrow ?? row.id).toUpperCase()}</span>
       <span className={cx("rc-cause")}>{row.subject}</span>
       {row.facts?.map((fact, index) => <SourceLine key={index} source={fact} />)}
     </div>
@@ -179,7 +181,15 @@ function RowView({ row }: { row: StepPageRow }) {
   );
 }
 
-function Group({ title, rows }: { title: string; rows: readonly StepPageRow[] }) {
+function Group({
+  title,
+  rows,
+  after,
+}: {
+  title: string;
+  rows: readonly StepPageRow[];
+  after?: ReactNode;
+}) {
   if (rows.length === 0) return null;
   return (
     <section className={cx("group")}>
@@ -190,15 +200,18 @@ function Group({ title, rows }: { title: string; rows: readonly StepPageRow[] })
         {rows.map((row) => (
           <RowView key={row.id} row={row} />
         ))}
+        {after ? <div className={cx("list-foot")}>{after}</div> : null}
       </div>
     </section>
   );
 }
 
-function SettledGroup({
+function CollapsedGroup({
+  title,
   rows,
   defaultOpen,
 }: {
+  title: string;
   rows: readonly StepPageRow[];
   defaultOpen: boolean;
 }) {
@@ -206,7 +219,9 @@ function SettledGroup({
   const summary = rows.map((row) => `${row.id} ${row.shortName}`).join(", ");
   return (
     <section className={cx("group")}>
-      <h2 className={cx("eyebrow", "group-title")}>Settled · {rows.length}</h2>
+      <h2 className={cx("eyebrow", "group-title")}>
+        {title} · {rows.length}
+      </h2>
       <Disclosure
         closed="Show"
         opened="Hide"
@@ -280,6 +295,16 @@ export interface MovesStepPageProps {
   blockedWork?: string;
   /** What this step hands forward, closing the Work region: "Carries to P4". */
   carry?: { label: string; text: ReactNode };
+  /** Closes the Work region at a gate step instead of a carry line: the Next card. */
+  workEnd?: ReactNode;
+  /** The workspace tab strip (Steps · Files · Record), under the header. */
+  tabs?: ReactNode;
+  /** The ranked list's foot: "Confirm this order". */
+  rankingFoot?: ReactNode;
+  /** Replaces `N of M settled`, e.g. "5 of 6 required checks met" at a gate. */
+  countLabel?: string;
+  /** Once the last step is submitted: replaces the forward button. */
+  submittedLabel?: string;
   rows: readonly StepPageRow[];
   /** Ava's step content: what it read, drafted, couldn't find, noticed. */
   ava: ReactNode;
@@ -349,6 +374,8 @@ export function MovesStepPage(props: MovesStepPageProps) {
             </button>
           </div>
         </div>
+
+        {props.tabs}
 
         <nav className={cx("phase-bar")} aria-label="Phases">
           <ol>
@@ -536,7 +563,8 @@ export function MovesStepPage(props: MovesStepPageProps) {
               </div>
               {showCount ? (
                 <span className={cx("next-count")}>
-                  {nextAction.settled} of {nextAction.total} settled
+                  {props.countLabel ??
+                    `${nextAction.settled} of ${nextAction.total} settled`}
                 </span>
               ) : null}
             </section>
@@ -632,8 +660,15 @@ export function MovesStepPage(props: MovesStepPageProps) {
               ) : (
                 <>
                   <Group title="Needs your decision" rows={groups.decision} />
+                  <Group title="Your ranking" rows={groups.ranked} after={props.rankingFoot} />
                   <Group title="Drafts to review" rows={groups.draft} />
-                  <SettledGroup rows={groups.settled} defaultOpen={state === "done"} />
+                  <CollapsedGroup title="Set aside" rows={groups.setAside} defaultOpen={false} />
+                  <CollapsedGroup
+                    title="Settled"
+                    rows={groups.settled}
+                    defaultOpen={state === "done"}
+                  />
+                  {props.workEnd}
                   {props.carry ? (
                     <p className={cx("carry")}>
                       <span className={cx("eyebrow")}>{props.carry.label}</span>
@@ -655,19 +690,58 @@ export function MovesStepPage(props: MovesStepPageProps) {
                     Back
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  className={cx("btn-primary")}
-                  disabled={!nextAction.continueEnabled}
-                  onClick={props.onContinue}
-                >
-                  {props.continueLabel ?? "Continue"}
-                </button>
+                {props.submittedLabel ? (
+                  <span className={cx("footer-count")}>{props.submittedLabel}</span>
+                ) : (
+                  <button
+                    type="button"
+                    className={cx("btn-primary")}
+                    disabled={!nextAction.continueEnabled}
+                    onClick={props.onContinue}
+                  >
+                    {props.continueLabel ?? "Continue"}
+                  </button>
+                )}
               </div>
             </footer>
           </main>
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * The workspace tab strip (template v1.2): Steps · Files · Record. Files is
+ * the evidence library and Record the read-only decision record; neither
+ * carries an action that a step owns.
+ */
+export function StepPageTabs({
+  current,
+  hrefs,
+}: {
+  current: "steps" | "files" | "record";
+  hrefs: Record<"steps" | "files" | "record", string>;
+}) {
+  const tabs = [
+    ["steps", "Steps"],
+    ["files", "Files"],
+    ["record", "Record"],
+  ] as const;
+  return (
+    <nav className={cx("tabs")} aria-label="Workspace">
+      <div className={cx("tab-list")}>
+        {tabs.map(([key, label]) => (
+          <a
+            key={key}
+            className={cx("tab")}
+            href={hrefs[key]}
+            aria-current={key === current ? "page" : undefined}
+          >
+            {label}
+          </a>
+        ))}
+      </div>
+    </nav>
   );
 }

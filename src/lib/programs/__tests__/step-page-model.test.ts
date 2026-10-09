@@ -35,6 +35,16 @@ describe("groupStepRows", () => {
     expect(groups.draft.map((r) => r.id)).toEqual(["RC-3", "RC-5"]);
     expect(groups.settled.map((r) => r.id)).toEqual(["RC-1"]);
   });
+
+  it("places ranked and set-aside rows in their own groups", () => {
+    const groups = groupStepRows([
+      row({ id: "S-1", rank: 9, state: "set_aside" }),
+      row({ id: "RC-2", rank: 2, state: "ranked" }),
+      row({ id: "RC-1", rank: 1, state: "ranked" }),
+    ]);
+    expect(groups.ranked.map((r) => r.id)).toEqual(["RC-1", "RC-2"]);
+    expect(groups.setAside.map((r) => r.id)).toEqual(["S-1"]);
+  });
 });
 
 describe("buildNextActionSentence", () => {
@@ -91,6 +101,26 @@ describe("buildNextActionSentence", () => {
         row({ id: "D", rank: 4, state: "draft" }),
       ]),
     ).toBe("Decide a, decide b, and review 1 draft.");
+  });
+
+  it("puts the ranking's one clause between decisions and reviews", () => {
+    expect(
+      buildNextActionSentence(
+        [
+          row({ id: "D", rank: 9, state: "draft" }),
+          row({ id: "RC-1", rank: 1, state: "ranked" }),
+          row({ id: "RC-2", rank: 2, state: "ranked" }),
+          row({ id: "G", rank: 5, state: "decision", clause: "find evidence for identity or name its owner" }),
+        ],
+        { rankingClause: "confirm the order of the root causes" },
+      ),
+    ).toBe(
+      "Find evidence for identity or name its owner, confirm the order of the root causes, and review 1 draft.",
+    );
+  });
+
+  it("does not treat set-aside rows as open", () => {
+    expect(buildNextActionSentence([row({ id: "S", rank: 1, state: "set_aside" })])).toBeNull();
   });
 
   it("names a lone draft when it has a name and counts it when it does not", () => {
@@ -196,6 +226,20 @@ describe("resolveStepNextAction", () => {
   it("a light step runs the same rules as a full one", () => {
     expect(resolveStepNextAction(base(open, { depth: "light" })).state).toBe("in_progress");
     expect(resolveStepNextAction(base(allSettled, { depth: "light" })).state).toBe("ready");
+  });
+
+  it("leaves set-aside rows out of the count and out of readiness", () => {
+    const action = resolveStepNextAction(
+      base([row({ id: "A", rank: 1 }), row({ id: "S", rank: 2, state: "set_aside" })]),
+    );
+    expect(action).toMatchObject({ state: "ready", settled: 1, total: 1 });
+  });
+
+  it("an unconfirmed ranking keeps the step open", () => {
+    const action = resolveStepNextAction(
+      base([row({ id: "A", rank: 1, state: "ranked" })], { rankingClause: "confirm the order" }),
+    );
+    expect(action).toMatchObject({ state: "in_progress", sentence: "Confirm the order.", continueEnabled: false });
   });
 
   it("a blank block reason is not a block", () => {

@@ -10,6 +10,7 @@
 import { cleanup, render, within } from "@testing-library/react";
 import {
   MovesStepPage,
+  StepPageTabs,
   type MovesStepPageProps,
   type StepPageRow,
 } from "../MovesStepPage";
@@ -193,6 +194,57 @@ describe("MovesStepPage", () => {
     );
     const work = container.querySelector(".work") as HTMLElement;
     expect(work.lastElementChild?.textContent).toBe("Carries to P4The chosen option.");
+  });
+
+  it("renders the ranking and set-aside groups in the template's order", () => {
+    const rows = [
+      row({ id: "S-1", rank: 9, state: "set_aside" }),
+      row({ id: "RC-2", rank: 2, state: "ranked", eyebrow: "Rank 02 · RC-2" }),
+      row({ id: "RC-4", rank: 4, state: "decision", clause: "find evidence for identity or name its owner" }),
+      row({ id: "D", rank: 7, state: "draft" }),
+      row({ id: "RC-1", rank: 1, state: "settled" }),
+    ];
+    const { container } = render(
+      <MovesStepPage
+        {...props(rows, { rankingClause: "confirm the order" }, { rankingFoot: <button type="button">Confirm this order</button> })}
+      />,
+    );
+    expect(groupTitles(container)).toEqual([
+      "Needs your decision · 1",
+      "Your ranking · 1",
+      "Drafts to review · 1",
+      "Set aside · 1",
+      "Settled · 1",
+    ]);
+    expect((container.querySelectorAll("details.settled")[0] as HTMLDetailsElement).open).toBe(false);
+    expect(container.querySelector("#row-RC-2")?.textContent).toContain("RANK 02 · RC-2");
+    expect(container.textContent).toContain("Confirm this order");
+    expect(status(container).textContent).toContain(
+      "Find evidence for identity or name its owner, confirm the order, and review 1 draft.",
+    );
+  });
+
+  it("uses the gate's count label and, once submitted, replaces the forward button", () => {
+    const settled = ROWS.map((r) => ({ ...r, state: "settled" as const }));
+    const { container } = render(
+      <MovesStepPage
+        {...props(settled, {}, { countLabel: "6 of 6 required checks met", submittedLabel: "Submitted Oct 20" })}
+      />,
+    );
+    expect(status(container).textContent).toContain("6 of 6 required checks met");
+    expect(status(container).textContent).not.toContain("of 3 settled");
+    const footer = container.querySelector("footer") as HTMLElement;
+    expect(footer.textContent).toContain("Submitted Oct 20");
+    expect(within(footer).queryByRole("button", { name: "Continue" })).toBeNull();
+  });
+
+  it("marks the current workspace tab", () => {
+    const { container } = render(
+      <StepPageTabs current="steps" hrefs={{ steps: "/s", files: "/f", record: "/r" }} />,
+    );
+    const current = container.querySelector('[aria-current="page"]');
+    expect(current?.textContent).toBe("Steps");
+    expect(container.querySelectorAll("a")).toHaveLength(3);
   });
 
   it("shows the current phase's step position in the phase bar", () => {
