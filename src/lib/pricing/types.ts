@@ -241,6 +241,68 @@ export interface PricingDeliveryLocationRow {
 }
 
 // ---------------------------------------------------------------------------
+// ROM pod library (reference pack only — no Postgres table yet). These mirror
+// `pricing_pod_templates.csv`, `pricing_pod_template_roles.csv` and
+// `pricing_agent_profiles.csv` as parsed by `reference-pack-loader.ts`
+// (`readPodLibraryDir`); the CSVs are emitted by
+// `scripts/pricing/convert-pod-library.ts`.
+// ---------------------------------------------------------------------------
+
+/** How a pod's free-text role label was mapped to a role code. `unmatched` = no mapping (or an ambiguous one); never guessed. */
+export type PodRoleMatchMethod = "exact" | "alias" | "unmatched";
+
+export interface PricingPodTemplateRow {
+  pod_code: string;
+  name: string;
+  tower_code: string;
+  headcount: number;
+  blended_level_code: string;
+  /** Agent profile codes named in the pod's agent mix, in source order. Informational: never applied by default. */
+  agent_mix_codes: string[];
+  source_artifact: string;
+  source_row: number;
+  status: string;
+  version: number;
+}
+
+export interface PricingPodTemplateRoleRow {
+  pod_code: string;
+  /** Null exactly when `match_method === 'unmatched'`. */
+  role_code: string | null;
+  /** The pod's blended level — the source carries no per-role level. */
+  level_code: string;
+  fte: number;
+  raw_role_text: string;
+  match_method: PodRoleMatchMethod;
+  source_row: number;
+}
+
+/**
+ * One AI agent type's planning economics. Product-owner planning
+ * assumptions with no external source — `confidence` is always `low` and
+ * `approval_status` is `global_starter_unapproved`.
+ */
+export interface PricingAgentProfileRow {
+  agent_code: string;
+  name: string;
+  agent_type: string;
+  monthly_cost_usd: number;
+  equiv_eng_fte: number;
+  /** Fraction, 0 < utilization <= 1. */
+  utilization: number;
+  /** Capacity-gain multipliers vs a human-only baseline (1.00 = no gain). Carried, never applied by default. */
+  productivity: number;
+  documentation: number;
+  testing: number;
+  architecture: number;
+  assumption_basis: string;
+  source_artifact: string;
+  source_row: number;
+  confidence: string;
+  approval_status: string;
+}
+
+// ---------------------------------------------------------------------------
 // Rate cards / client profiles (brief §8.2)
 // ---------------------------------------------------------------------------
 

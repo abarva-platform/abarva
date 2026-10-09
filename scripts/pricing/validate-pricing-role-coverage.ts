@@ -238,6 +238,191 @@ export function validateCoverage(input: CoverageInput): CoverageResult {
 }
 
 // ---------------------------------------------------------------------------
+// ROM pod library (pricing_pod_templates / pricing_pod_template_roles /
+// pricing_agent_profiles) — emitted by convert-pod-library.ts. Pure, like
+// validateCoverage. An UNMATCHED role row is a warning (it is honest data:
+// the label has no role code yet); a dangling or inconsistent reference is
+// an error.
+// ---------------------------------------------------------------------------
+
+/** Separator inside `pricing_pod_templates.csv#agent_mix_codes`. */
+export const AGENT_MIX_SEPARATOR = "|";
+export const POD_ROLE_MATCH_METHODS = ["exact", "alias", "unmatched"] as const;
+/** The only labels an agent profile may carry in this increment: planning assumptions, never researched. */
+export const AGENT_ASSUMPTION_BASIS = "product_owner_planning_assumption_no_external_source";
+export const AGENT_CONFIDENCE = "low";
+export const AGENT_APPROVAL_STATUS = "global_starter_unapproved";
+
+export interface PodTemplateCsvRow {
+  pod_code: string;
+  name: string;
+  tower_code: string;
+  headcount: string;
+  blended_level_code: string;
+  agent_mix_codes: string;
+  source_row: string;
+  status: string;
+}
+export interface PodTemplateRoleCsvRow {
+  pod_code: string;
+  role_code: string;
+  level_code: string;
+  fte: string;
+  raw_role_text: string;
+  match_method: string;
+  source_row: string;
+}
+export interface AgentProfileCsvRow {
+  agent_code: string;
+  monthly_cost_usd: string;
+  equiv_eng_fte: string;
+  utilization: string;
+  productivity: string;
+  documentation: string;
+  testing: string;
+  architecture: string;
+  assumption_basis: string;
+  confidence: string;
+  approval_status: string;
+}
+
+export interface PodLibraryValidationInput {
+  podTemplates: PodTemplateCsvRow[];
+  podTemplateRoles: PodTemplateRoleCsvRow[];
+  agentProfiles: AgentProfileCsvRow[];
+  towers: Pick<TowerRow, "tower_code">[];
+  roles: Pick<RoleRow, "role_code">[];
+  levels: Array<{ level_code: string }>;
+}
+
+export interface PodLibraryValidationResult {
+  errors: string[];
+  warnings: string[];
+  summary: {
+    podCount: number;
+    roleRowCount: number;
+    agentProfileCount: number;
+    podsFullyMatched: number;
+    unmatchedRoleRows: number;
+  };
+}
+
+function finiteOrNull(text: string | undefined): number | null {
+  if (text === undefined || text.trim() === "") return null;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function validatePodLibrary(input: PodLibraryValidationInput): PodLibraryValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const towerCodes = new Set(input.towers.map((t) => t.tower_code));
+  const roleCodes = new Set(input.roles.map((r) => r.role_code));
+  const levelCodes = new Set(input.levels.map((l) => l.level_code));
+
+  // --- Agent profiles ---
+  const agentCodes = new Set<string>();
+  for (const a of input.agentProfiles) {
+    const where = `Agent profile "${a.agent_code}"`;
+    if (agentCodes.has(a.agent_code)) errors.push(`Duplicate agent_code "${a.agent_code}" in pricing_agent_profiles.csv`);
+    agentCodes.add(a.agent_code);
+    const monthly = finiteOrNull(a.monthly_cost_usd);
+    if (monthly === null || monthly < 0) errors.push(`${where} monthly_cost_usd must be a finite number >= 0, got "${a.monthly_cost_usd}"`);
+    const equiv = finiteOrNull(a.equiv_eng_fte);
+    if (equiv === null || equiv <= 0) errors.push(`${where} equiv_eng_fte must be a finite number > 0, got "${a.equiv_eng_fte}"`);
+    const util = finiteOrNull(a.utilization);
+    if (util === null || util <= 0 || util > 1) errors.push(`${where} utilization must be a fraction in (0, 1], got "${a.utilization}"`);
+    for (const field of ["productivity", "documentation", "testing", "architecture"] as const) {
+      const v = finiteOrNull(a[field]);
+      if (v === null || v <= 0) errors.push(`${where} ${field} must be a finite multiplier > 0, got "${a[field]}"`);
+    }
+    if (a.assumption_basis !== AGENT_ASSUMPTION_BASIS) errors.push(`${where} assumption_basis must be "${AGENT_ASSUMPTION_BASIS}", got "${a.assumption_basis}"`);
+    if (a.confidence !== AGENT_CONFIDENCE) errors.push(`${where} confidence must be "${AGENT_CONFIDENCE}" (a planning assumption), got "${a.confidence}"`);
+    if (a.approval_status !== AGENT_APPROVAL_STATUS) errors.push(`${where} approval_status must be "${AGENT_APPROVAL_STATUS}", got "${a.approval_status}"`);
+  }
+
+  // --- Pod templates ---
+  const pods = new Map<string, PodTemplateCsvRow>();
+  for (const p of input.podTemplates) {
+    const where = `Pod "${p.pod_code}"`;
+    if (pods.has(p.pod_code)) errors.push(`Duplicate pod_code "${p.pod_code}" in pricing_pod_templates.csv`);
+    pods.set(p.pod_code, p);
+    if (!towerCodes.has(p.tower_code)) errors.push(`${where} references unknown tower_code "${p.tower_code}"`);
+    if (!levelCodes.has(p.blended_level_code)) errors.push(`${where} references unknown blended_level_code "${p.blended_level_code}"`);
+    const headcount = finiteOrNull(p.headcount);
+    if (headcount === null || headcount <= 0) errors.push(`${where} headcount must be a finite number > 0, got "${p.headcount}"`);
+    const mix = p.agent_mix_codes === "" ? [] : p.agent_mix_codes.split(AGENT_MIX_SEPARATOR);
+    for (const code of mix) {
+      if (!agentCodes.has(code)) errors.push(`${where} agent mix references unknown agent_code "${code}"`);
+    }
+  }
+
+  // --- Pod template roles ---
+  const fteByPod = new Map<string, number>();
+  const unmatchedByPod = new Map<string, number>();
+  let unmatchedRoleRows = 0;
+  for (const r of input.podTemplateRoles) {
+    const where = `Pod role row "${r.pod_code}" / "${r.raw_role_text}"`;
+    const pod = pods.get(r.pod_code);
+    if (!pod) {
+      errors.push(`${where} references unknown pod_code "${r.pod_code}"`);
+      continue;
+    }
+    if (!(POD_ROLE_MATCH_METHODS as readonly string[]).includes(r.match_method)) {
+      errors.push(`${where} has match_method "${r.match_method}", expected one of ${POD_ROLE_MATCH_METHODS.join(", ")}`);
+    } else if (r.match_method === "unmatched") {
+      unmatchedRoleRows += 1;
+      unmatchedByPod.set(r.pod_code, (unmatchedByPod.get(r.pod_code) ?? 0) + 1);
+      if (r.role_code !== "") errors.push(`${where} is unmatched but carries role_code "${r.role_code}" — an unmatched row has no role code`);
+    } else if (r.role_code === "") {
+      errors.push(`${where} is "${r.match_method}" but has no role_code`);
+    } else if (!roleCodes.has(r.role_code)) {
+      errors.push(`${where} references unknown role_code "${r.role_code}"`);
+    }
+    if (r.level_code !== pod.blended_level_code) {
+      errors.push(`${where} has level_code "${r.level_code}", but the pod's blended level is "${pod.blended_level_code}"`);
+    }
+    if (r.source_row !== pod.source_row) {
+      errors.push(`${where} has source_row "${r.source_row}", but the pod's source_row is "${pod.source_row}"`);
+    }
+    const fte = finiteOrNull(r.fte);
+    if (fte === null || fte <= 0) {
+      errors.push(`${where} fte must be a finite number > 0, got "${r.fte}"`);
+    } else {
+      fteByPod.set(r.pod_code, (fteByPod.get(r.pod_code) ?? 0) + fte);
+    }
+  }
+  for (const p of pods.values()) {
+    const sum = fteByPod.get(p.pod_code);
+    if (sum === undefined) {
+      errors.push(`Pod "${p.pod_code}" has no role rows in pricing_pod_template_roles.csv`);
+      continue;
+    }
+    const headcount = finiteOrNull(p.headcount);
+    if (headcount !== null && Math.abs(sum - headcount) > 1e-9) {
+      errors.push(`Pod "${p.pod_code}" role rows sum to ${sum} FTE, but its headcount is ${headcount}`);
+    }
+  }
+  if (unmatchedRoleRows > 0) {
+    warnings.push(
+      `${unmatchedRoleRows} pod role row(s) across ${unmatchedByPod.size} pod(s) are unmatched (no role code); those pods cannot be priced until an alias or role is authored`,
+    );
+  }
+
+  return {
+    errors,
+    warnings,
+    summary: {
+      podCount: input.podTemplates.length,
+      roleRowCount: input.podTemplateRoles.length,
+      agentProfileCount: input.agentProfiles.length,
+      podsFullyMatched: input.podTemplates.filter((p) => !unmatchedByPod.has(p.pod_code) && fteByPod.has(p.pod_code)).length,
+      unmatchedRoleRows,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 function defaultDir(): string {
@@ -255,6 +440,17 @@ function loadFromDir(dir: string): CoverageInput {
   };
 }
 
+function loadPodLibraryFromDir(dir: string): PodLibraryValidationInput {
+  return {
+    podTemplates: readCsv(path.join(dir, "pricing_pod_templates.csv")) as unknown as PodTemplateCsvRow[],
+    podTemplateRoles: readCsv(path.join(dir, "pricing_pod_template_roles.csv")) as unknown as PodTemplateRoleCsvRow[],
+    agentProfiles: readCsv(path.join(dir, "pricing_agent_profiles.csv")) as unknown as AgentProfileCsvRow[],
+    towers: readCsv(path.join(dir, "pricing_towers.csv")) as unknown as TowerRow[],
+    roles: readCsv(path.join(dir, "pricing_roles.csv")) as unknown as RoleRow[],
+    levels: readCsv(path.join(dir, "pricing_seniority_levels.csv")) as unknown as Array<{ level_code: string }>,
+  };
+}
+
 function runCli() {
   const argDirIndex = process.argv.indexOf("--dir");
   const dir =
@@ -263,7 +459,13 @@ function runCli() {
     defaultDir();
 
   const input = loadFromDir(dir);
-  const result = validateCoverage(input);
+  const coverage = validateCoverage(input);
+  const pods = validatePodLibrary(loadPodLibraryFromDir(dir));
+  const result = {
+    ...coverage,
+    errors: [...coverage.errors, ...pods.errors],
+    warnings: [...coverage.warnings, ...pods.warnings],
+  };
 
   console.log(`Nexus Pricing Engine — role coverage validation (${dir})`);
   console.log("");
@@ -285,6 +487,8 @@ function runCli() {
   console.log(`  Roles:       ${result.summary.roleCount}`);
   console.log(`  Aliases:     ${result.summary.aliasCount}`);
   console.log(`  Rate bands:  ${result.summary.rateBandCount}`);
+  console.log(`  Pods:        ${pods.summary.podCount} (${pods.summary.podsFullyMatched} fully role-matched, ${pods.summary.unmatchedRoleRows} unmatched role rows)`);
+  console.log(`  Agent profiles: ${pods.summary.agentProfileCount}`);
   console.log("");
   console.log("  Roles by tower:");
   const rows = Object.entries(result.summary.rolesByTower).sort((a, b) => a[0].localeCompare(b[0]));

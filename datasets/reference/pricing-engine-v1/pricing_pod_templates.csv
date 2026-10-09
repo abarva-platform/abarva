@@ -1,0 +1,108 @@
+pod_code,name,tower_code,headcount,blended_level_code,agent_mix_codes,source_artifact,source_row,status,version
+POD-001,Data Product Pod,TWR-04,6,LVL-08,AGENT-B|AGENT-ABARVA,Workforce_Taxonomy_Master.xlsx:Delivery Pods,6,active,1
+POD-002,Snowflake Pod,TWR-04,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,7,active,1
+POD-003,Databricks Pod,TWR-04,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,8,active,1
+POD-004,Data Governance Pod,TWR-04,4,LVL-06,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,9,active,1
+POD-005,MDM Pod,TWR-04,3,LVL-07,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,10,active,1
+POD-006,AI Platform Pod,TWR-05,4,LVL-08,AGENT-D|AGENT-ABARVA,Workforce_Taxonomy_Master.xlsx:Delivery Pods,11,active,1
+POD-007,Agentic AI Pod,TWR-05,4,LVL-08,AGENT-ABARVA|AGENT-D,Workforce_Taxonomy_Master.xlsx:Delivery Pods,12,active,1
+POD-008,GenAI Pod,TWR-05,3,LVL-08,AGENT-D,Workforce_Taxonomy_Master.xlsx:Delivery Pods,13,active,1
+POD-009,Responsible AI Pod,TWR-05,3,LVL-06,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,14,active,1
+POD-010,Adobe Experience Pod,TWR-07,4,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,15,active,1
+POD-011,CDP Pod,TWR-07,3,LVL-07,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,16,active,1
+POD-012,Workday HCM Pod,TWR-11,4,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,17,active,1
+POD-013,Workday Finance Pod,TWR-11,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,18,active,1
+POD-014,SAP S/4 Finance Pod,TWR-11,4,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,19,active,1
+POD-015,SAP Supply Chain Pod,TWR-11,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,20,active,1
+POD-016,Oracle Finance Pod,TWR-11,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,21,active,1
+POD-017,ServiceNow ITSM Pod,TWR-09,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,22,active,1
+POD-018,ServiceNow HRSD Pod,TWR-09,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,23,active,1
+POD-019,Salesforce Pod,TWR-09,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,24,active,1
+POD-020,Cloud Migration Pod,TWR-12,5,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,25,active,1
+POD-021,Platform Engineering Pod,TWR-12,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,26,active,1
+POD-022,DevOps Pod,TWR-12,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,27,active,1
+POD-023,Cyber IAM Pod,TWR-14,3,LVL-07,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,28,active,1
+POD-024,SOC Pod,TWR-14,4,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,29,active,1
+POD-025,AppSec Pod,TWR-14,2,LVL-07,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,30,active,1
+POD-026,Mainframe Modernization Pod,TWR-18,4,LVL-08,AGENT-ABARVA|AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,31,active,1
+POD-027,AMS Pod,TWR-17,10,LVL-09,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,32,active,1
+POD-028,Quality Engineering Pod,TWR-15,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,33,active,1
+POD-029,Integration Pod,TWR-10,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,34,active,1
+POD-030,Product Engineering Pod,TWR-09,5,LVL-08,AGENT-B|AGENT-ABARVA,Workforce_Taxonomy_Master.xlsx:Delivery Pods,35,active,1
+POD-031,Transformation Office Pod,TWR-20,4,LVL-06,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,36,active,1
+POD-032,Change & Adoption Pod,TWR-19,3,LVL-06,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,37,active,1
+POD-033,Enterprise Architecture Pod,TWR-21,3,LVL-04,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,38,active,1
+POD-034,Business Process Pod,TWR-03,3,LVL-06,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,39,active,1
+POD-035,Data Mesh Pod,TWR-04,6,LVL-08,AGENT-B|AGENT-ABARVA,Workforce_Taxonomy_Master.xlsx:Delivery Pods,40,active,1
+POD-036,Real-Time Analytics Pod,TWR-04,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,41,active,1
+POD-037,Lakehouse Pod,TWR-04,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,42,active,1
+POD-038,Data Migration Pod,TWR-04,5,LVL-08,AGENT-ABARVA|AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,43,active,1
+POD-039,Analytics Engineering Pod,TWR-04,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,44,active,1
+POD-040,BI Modernization Pod,TWR-04,4,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,45,active,1
+POD-041,Data Privacy Pod,TWR-04,3,LVL-06,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,46,active,1
+POD-042,RAG Application Pod,TWR-05,4,LVL-08,AGENT-D|AGENT-ABARVA,Workforce_Taxonomy_Master.xlsx:Delivery Pods,47,active,1
+POD-043,ML Platform Pod,TWR-05,3,LVL-08,AGENT-D,Workforce_Taxonomy_Master.xlsx:Delivery Pods,48,active,1
+POD-044,Computer Vision Pod,TWR-05,3,LVL-08,AGENT-D,Workforce_Taxonomy_Master.xlsx:Delivery Pods,49,active,1
+POD-045,NLP Pod,TWR-05,3,LVL-08,AGENT-D,Workforce_Taxonomy_Master.xlsx:Delivery Pods,50,active,1
+POD-046,AI Evaluation Pod,TWR-05,3,LVL-07,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,51,active,1
+POD-047,AI Center of Excellence Pod,TWR-05,4,LVL-04,AGENT-ABARVA,Workforce_Taxonomy_Master.xlsx:Delivery Pods,52,active,1
+POD-048,Forward-Deployed AI Pod,TWR-05,3,LVL-08,AGENT-ABARVA|AGENT-D,Workforce_Taxonomy_Master.xlsx:Delivery Pods,53,active,1
+POD-049,Web Experience Pod,TWR-06,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,54,active,1
+POD-050,Mobile App Pod,TWR-06,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,55,active,1
+POD-051,Design System Pod,TWR-06,3,LVL-07,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,56,active,1
+POD-052,Commerce Build Pod,TWR-06,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,57,active,1
+POD-053,Adobe Analytics Pod,TWR-07,2,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,58,active,1
+POD-054,Personalization Pod,TWR-07,3,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,59,active,1
+POD-055,Product Squad Pod,TWR-08,6,LVL-08,AGENT-B|AGENT-ABARVA,Workforce_Taxonomy_Master.xlsx:Delivery Pods,60,active,1
+POD-056,Microservices Pod,TWR-09,5,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,61,active,1
+POD-057,API Platform Pod,TWR-09,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,62,active,1
+POD-058,App Modernization Pod,TWR-09,5,LVL-08,AGENT-ABARVA|AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,63,active,1
+POD-059,ServiceNow CSM Pod,TWR-09,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,64,active,1
+POD-060,ServiceNow ITOM Pod,TWR-09,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,65,active,1
+POD-061,ServiceNow SecOps Pod,TWR-09,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,66,active,1
+POD-062,Salesforce Sales Cloud Pod,TWR-09,4,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,67,active,1
+POD-063,Salesforce Service Cloud Pod,TWR-09,4,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,68,active,1
+POD-064,Salesforce Platform Pod,TWR-09,4,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,69,active,1
+POD-065,MuleSoft Pod,TWR-10,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,70,active,1
+POD-066,Kafka Streaming Pod,TWR-10,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,71,active,1
+POD-067,API Management Pod,TWR-10,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,72,active,1
+POD-068,SAP S/4 Supply Chain Pod,TWR-11,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,73,active,1
+POD-069,SAP BTP Pod,TWR-11,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,74,active,1
+POD-070,SAP ABAP/Fiori Pod,TWR-11,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,75,active,1
+POD-071,SAP SuccessFactors Pod,TWR-11,2,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,76,active,1
+POD-072,Oracle Fusion HCM Pod,TWR-11,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,77,active,1
+POD-073,OCI Migration Pod,TWR-11,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,78,active,1
+POD-074,Workday Integration Pod,TWR-11,3,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,79,active,1
+POD-075,AWS Migration Pod,TWR-12,5,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,80,active,1
+POD-076,GCP Data Pod,TWR-12,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,81,active,1
+POD-077,Kubernetes Platform Pod,TWR-12,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,82,active,1
+POD-078,FinOps Pod,TWR-12,3,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,83,active,1
+POD-079,IaC Automation Pod,TWR-12,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,84,active,1
+POD-080,Landing Zone Pod,TWR-12,3,LVL-07,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,85,active,1
+POD-081,SRE Pod,TWR-12,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,86,active,1
+POD-082,Network Modernization Pod,TWR-13,4,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,87,active,1
+POD-083,Identity Pod,TWR-13,3,LVL-07,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,88,active,1
+POD-084,DR & Backup Pod,TWR-13,3,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,89,active,1
+POD-085,Zero Trust Pod,TWR-14,3,LVL-07,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,90,active,1
+POD-086,IR & SOC Surge Pod,TWR-14,4,LVL-08,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,91,active,1
+POD-087,GRC Pod,TWR-14,3,LVL-06,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,92,active,1
+POD-088,Pen Test Pod,TWR-14,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,93,active,1
+POD-089,Privacy Pod,TWR-14,3,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,94,active,1
+POD-090,Performance Testing Pod,TWR-15,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,95,active,1
+POD-091,SDET Pod,TWR-15,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,96,active,1
+POD-092,Observability Pod,TWR-16,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,97,active,1
+POD-093,Incident Command Pod,TWR-16,3,LVL-06,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,98,active,1
+POD-094,AMS Data Pod,TWR-17,6,LVL-09,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,99,active,1
+POD-095,AMS Cloud Pod,TWR-17,6,LVL-09,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,100,active,1
+POD-096,AMS ERP Pod,TWR-17,8,LVL-09,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,101,active,1
+POD-097,AMS Salesforce Pod,TWR-17,6,LVL-09,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,102,active,1
+POD-098,AMS ServiceNow Pod,TWR-17,6,LVL-09,AGENT-C,Workforce_Taxonomy_Master.xlsx:Delivery Pods,103,active,1
+POD-099,COBOL-to-Java Pod,TWR-18,5,LVL-08,AGENT-ABARVA|AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,104,active,1
+POD-100,DB2 Modernization Pod,TWR-18,3,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,105,active,1
+POD-101,SAFe Release Train Pod,TWR-20,5,LVL-08,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,106,active,1
+POD-102,Delivery Assurance Pod,TWR-20,3,LVL-04,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,107,active,1
+POD-103,EA Runway Pod,TWR-21,4,LVL-04,AGENT-A,Workforce_Taxonomy_Master.xlsx:Delivery Pods,108,active,1
+POD-104,Banking Data Pod,TWR-02,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,109,active,1
+POD-105,Insurance Claims AI Pod,TWR-02,4,LVL-08,AGENT-D|AGENT-ABARVA,Workforce_Taxonomy_Master.xlsx:Delivery Pods,110,active,1
+POD-106,Healthcare Interop Pod,TWR-02,4,LVL-08,AGENT-B,Workforce_Taxonomy_Master.xlsx:Delivery Pods,111,active,1
+POD-107,Payments Fraud AI Pod,TWR-02,4,LVL-08,AGENT-D,Workforce_Taxonomy_Master.xlsx:Delivery Pods,112,active,1

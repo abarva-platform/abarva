@@ -35,7 +35,22 @@ import { randomUUID } from "node:crypto";
 import Papa from "papaparse";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { createTxSession, type TxSessionRunner } from "@/lib/data-plane/read-adapters/azureSession";
-import { validateCoverage, type CoverageResult } from "../../../scripts/pricing/validate-pricing-role-coverage";
+import {
+  AGENT_MIX_SEPARATOR,
+  validateCoverage,
+  validatePodLibrary,
+  type AgentProfileCsvRow,
+  type CoverageResult,
+  type PodLibraryValidationResult,
+  type PodTemplateCsvRow,
+  type PodTemplateRoleCsvRow,
+} from "../../../scripts/pricing/validate-pricing-role-coverage";
+import type {
+  PodRoleMatchMethod,
+  PricingAgentProfileRow,
+  PricingPodTemplateRoleRow,
+  PricingPodTemplateRow,
+} from "./types";
 import { computeContentHash, decideVersionAction, type VersionDecision } from "./versioning";
 
 // ---------------------------------------------------------------------------
@@ -149,6 +164,137 @@ export function computePackContentHash(data: ReferencePackData): string {
     providerClasses: sortBy(data.providerClasses, "provider_class_code"),
     deliveryLocations: sortBy(data.deliveryLocations, "location_code"),
   });
+}
+
+// ---------------------------------------------------------------------------
+// ROM pod library (pricing_pod_templates / pricing_pod_template_roles /
+// pricing_agent_profiles). Read and validated here, but NOT part of
+// `computePackContentHash`, `rowCountsByTable` or `loadReferencePack`: no
+// Postgres table exists for them yet, and folding them into the taxonomy
+// content hash would mint a new taxonomy version whose rows are never
+// inserted. Their counts and checksums live under
+// `manifest.json#rom_pod_library`.
+// ---------------------------------------------------------------------------
+
+export const POD_LIBRARY_CSV_FILES = {
+  podTemplates: "pricing_pod_templates.csv",
+  podTemplateRoles: "pricing_pod_template_roles.csv",
+  agentProfiles: "pricing_agent_profiles.csv",
+} as const;
+
+export interface PodLibraryRawData {
+  podTemplates: RawRow[];
+  podTemplateRoles: RawRow[];
+  agentProfiles: RawRow[];
+}
+
+export interface PodLibraryData {
+  podTemplates: PricingPodTemplateRow[];
+  podTemplateRoles: PricingPodTemplateRoleRow[];
+  agentProfiles: PricingAgentProfileRow[];
+}
+
+/** Read the three pod-library CSVs as raw string rows. Pure I/O, no validation. */
+export function readPodLibraryDir(dir: string): PodLibraryRawData {
+  return {
+    podTemplates: readCsvFile(path.join(dir, POD_LIBRARY_CSV_FILES.podTemplates)),
+    podTemplateRoles: readCsvFile(path.join(dir, POD_LIBRARY_CSV_FILES.podTemplateRoles)),
+    agentProfiles: readCsvFile(path.join(dir, POD_LIBRARY_CSV_FILES.agentProfiles)),
+  };
+}
+
+/** Row counts keyed exactly like `manifest.json#rom_pod_library.row_counts`. */
+export function podLibraryRowCounts(raw: PodLibraryRawData): Record<string, number> {
+  return {
+    [POD_LIBRARY_CSV_FILES.podTemplates]: raw.podTemplates.length,
+    [POD_LIBRARY_CSV_FILES.podTemplateRoles]: raw.podTemplateRoles.length,
+    [POD_LIBRARY_CSV_FILES.agentProfiles]: raw.agentProfiles.length,
+  };
+}
+
+/** Validate the pod library against the taxonomy it references (towers, roles, levels), via the shared pure validator. */
+export function validatePodLibraryAgainstPack(
+  raw: PodLibraryRawData,
+  pack: Pick<ReferencePackData, "towers" | "roles" | "seniorityLevels">,
+): PodLibraryValidationResult {
+  return validatePodLibrary({
+    podTemplates: raw.podTemplates as unknown as PodTemplateCsvRow[],
+    podTemplateRoles: raw.podTemplateRoles as unknown as PodTemplateRoleCsvRow[],
+    agentProfiles: raw.agentProfiles as unknown as AgentProfileCsvRow[],
+    towers: pack.towers as never,
+    roles: pack.roles as never,
+    levels: pack.seniorityLevels as never,
+  });
+}
+
+function requiredNumber(value: string | undefined, where: string): number {
+  const n = toNumOrNull(value);
+  if (n === null) throw new Error(`${where}: expected a number, got "${value ?? ""}"`);
+  return n;
+}
+
+/** Coerce validated raw rows into typed rows. Throws on a non-numeric numeric field (validate first for a full error list). */
+export function parsePodLibrary(raw: PodLibraryRawData): PodLibraryData {
+  return {
+    podTemplates: raw.podTemplates.map((r) => ({
+      pod_code: r.pod_code,
+      name: r.name,
+      tower_code: r.tower_code,
+      headcount: requiredNumber(r.headcount, `pod ${r.pod_code} headcount`),
+      blended_level_code: r.blended_level_code,
+      agent_mix_codes: r.agent_mix_codes ? r.agent_mix_codes.split(AGENT_MIX_SEPARATOR) : [],
+      source_artifact: r.source_artifact,
+      source_row: requiredNumber(r.source_row, `pod ${r.pod_code} source_row`),
+      status: r.status,
+      version: requiredNumber(r.version, `pod ${r.pod_code} version`),
+    })),
+    podTemplateRoles: raw.podTemplateRoles.map((r) => ({
+      pod_code: r.pod_code,
+      role_code: r.role_code || null,
+      level_code: r.level_code,
+      fte: requiredNumber(r.fte, `pod ${r.pod_code} role "${r.raw_role_text}" fte`),
+      raw_role_text: r.raw_role_text,
+      match_method: r.match_method as PodRoleMatchMethod,
+      source_row: requiredNumber(r.source_row, `pod ${r.pod_code} role source_row`),
+    })),
+    agentProfiles: raw.agentProfiles.map((r) => {
+      const n = (field: string) => requiredNumber(r[field], `agent ${r.agent_code} ${field}`);
+      return {
+        agent_code: r.agent_code,
+        name: r.name,
+        agent_type: r.agent_type,
+        monthly_cost_usd: n("monthly_cost_usd"),
+        equiv_eng_fte: n("equiv_eng_fte"),
+        utilization: n("utilization"),
+        productivity: n("productivity"),
+        documentation: n("documentation"),
+        testing: n("testing"),
+        architecture: n("architecture"),
+        assumption_basis: r.assumption_basis,
+        source_artifact: r.source_artifact,
+        source_row: n("source_row"),
+        confidence: r.confidence,
+        approval_status: r.approval_status,
+      };
+    }),
+  };
+}
+
+/**
+ * Read, validate and parse the pod library at `dir` against the taxonomy in
+ * the same directory. Throws (listing every error) on an invalid library; an
+ * unmatched role row is a warning, returned, not an error.
+ */
+export function loadPodLibrary(dir: string): { data: PodLibraryData; warnings: string[] } {
+  const raw = readPodLibraryDir(dir);
+  const pack = readReferencePackDir(dir);
+  const result = validatePodLibraryAgainstPack(raw, pack);
+  if (result.errors.length > 0) {
+    throw new Error(
+      `Pod library at ${dir} failed validation:\n${result.errors.map((e) => `  - ${e}`).join("\n")}`,
+    );
+  }
+  return { data: parsePodLibrary(raw), warnings: result.warnings };
 }
 
 // ---------------------------------------------------------------------------

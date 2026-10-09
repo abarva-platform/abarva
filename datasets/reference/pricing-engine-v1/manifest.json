@@ -1,7 +1,7 @@
 {
   "dataset_id": "pricing-engine-v1",
-  "version": "1.1.0",
-  "version_bump_reason": "PR4 adds the 8 effort-engine reference objects this manifest's own deferred_pr4_objects section named as explicitly out of PR1 scope (pricing_archetypes, pricing_activity_packs, pricing_effort_drivers, pricing_effort_rules, pricing_activity_role_mix, pricing_archetype_activity_map, pricing_range_policies, pricing_agent_costs). PR1's original 9 taxonomy CSVs (towers/capabilities/role_families/roles/role_aliases/seniority_levels/rate_bands/provider_classes/delivery_locations) are UNCHANGED by this bump — their own `pricing_taxonomy_versions` DB version stays independent (see pr4_effort_engine_pack.versioning_note below). This top-level `version` field is the dataset-PACK's own semantic version, distinct from the DB's `pricing_taxonomy_versions.version` and `pricing_model_versions.version` integers.",
+  "version": "1.2.0",
+  "version_bump_reason": "ROM increment 2a adds 3 files imported from two workbook sheets the PR1 converter never read: pricing_pod_templates.csv and pricing_pod_template_roles.csv (\"Delivery Pods\") and pricing_agent_profiles.csv (\"Agent Economics\"). See `rom_pod_library`. The 17 earlier CSVs are unchanged.",
   "generated_at": "2026-07-24T01:26:35.579Z",
   "generated_from": {
     "source_file_name": "Workforce_Taxonomy_Master.xlsx",
@@ -373,5 +373,56 @@
     "The role-coverage validator's 'active roles have a rate' check only verifies a pricing_rate_bands.csv row exists (or an explicit no_default_rate status) — the full 6-tier fallback resolver (tenant -> provider -> global, etc.) is PR2/PR5 scope and is not implemented here.",
     "Ambiguous-alias validation is global-scope only for PR1 (no tenant/provider-scoped rate cards exist yet to make the ambiguity tenant-relative).",
     "Topics 10, 11, 18 in the tower reconciliation are accepted as 'partial/adequate' coverage without hand-authored additions, per the PR1 execution prompt's explicit fix-list (only topics 15, 16, 20 were called out) — a future PR could add a dedicated Backup & DR capability, a DBA/database-operations capability, and Finance/Commercial/Sourcing/Vendor-Management capabilities under Program Management if the effort model needs that granularity."
-  ]
+  ],
+  "previous_version_bump_reasons": [
+    {
+      "version": "1.1.0",
+      "version_bump_reason": "PR4 adds the 8 effort-engine reference objects this manifest's own deferred_pr4_objects section named as explicitly out of PR1 scope (pricing_archetypes, pricing_activity_packs, pricing_effort_drivers, pricing_effort_rules, pricing_activity_role_mix, pricing_archetype_activity_map, pricing_range_policies, pricing_agent_costs). PR1's original 9 taxonomy CSVs (towers/capabilities/role_families/roles/role_aliases/seniority_levels/rate_bands/provider_classes/delivery_locations) are UNCHANGED by this bump — their own `pricing_taxonomy_versions` DB version stays independent (see pr4_effort_engine_pack.versioning_note below). This top-level `version` field is the dataset-PACK's own semantic version, distinct from the DB's `pricing_taxonomy_versions.version` and `pricing_model_versions.version` integers."
+    }
+  ],
+  "rom_pod_library": {
+    "generation_script": "scripts/pricing/convert-pod-library.ts",
+    "source_sheets": {
+      "Delivery Pods": "header row 'ID | Pod | Tower | Role Mix | Headcount | Blended Level | Agent Mix' (B5), data rows below it",
+      "Agent Economics": "header row 'Platform | Type | Monthly $ | Annual $ | Equiv Eng FTE | Util % | Productivity | Documentation | Testing | Architecture' (B5), data rows below it"
+    },
+    "honesty_disclosure": "pricing_agent_profiles.csv holds product-owner planning assumptions with no external source (the sheet is labelled provider-neutral, '1.00 = no gain'). Every row is confidence=low, approval_status=global_starter_unapproved, assumption_basis=product_owner_planning_assumption_no_external_source. They are not researched benchmarks. The productivity/documentation/testing/architecture multipliers are carried for reference and applied nowhere by default; the capacity scenario (effort-engine/pod-templates.ts#agentCapacityScenario) runs only when explicitly requested and labels its output an unconfirmed planning assumption.",
+    "role_matching_rule": "Each role-mix entry ('3x Role' / 'Role x3' = fte 3, else fte 1) is matched by exact string equality against pricing_roles.csv canonical_name and pricing_role_aliases.csv alias_label. Exactly one distinct role = exact/alias; zero or several = unmatched with an empty role_code. No fuzzy, case-folded, abbreviation or tower-based matching.",
+    "level_rule": "The workbook carries one blended level per pod and no per-role level, so every role row's level_code is the pod's blended level.",
+    "not_imported": [
+      "Delivery Pods 'Use Cases / Est. Monthly $' — a formula (headcount × Internal Cost Model) with no cached value; pod cost comes from the pod pricer.",
+      "Agent Economics 'Annual $' — a formula (Monthly $ × 12) with no cached value."
+    ],
+    "persistence": "Reference pack only. No Postgres table or migration exists for these files yet; reference-pack-loader.ts reads and validates them (readPodLibraryDir / validatePodLibraryAgainstPack) but loadReferencePack does not insert them.",
+    "row_counts": {
+      "pricing_pod_templates.csv": 107,
+      "pricing_pod_template_roles.csv": 258,
+      "pricing_agent_profiles.csv": 5
+    },
+    "file_checksums_sha256": {
+      "pricing_pod_templates.csv": "509b19ae1c1ae69627c2229e2860e01db99a2929985549031b1ddb75b92e1dc3",
+      "pricing_pod_template_roles.csv": "900fcb9105fcc0e7f43c67ca1eeab100c83989a63f979ed365a51567dacbe236",
+      "pricing_agent_profiles.csv": "0c04ba472946e2dce6adcea43dfa712dd82dbeb78b5fc90b0b0343d0005bb87e"
+    },
+    "role_match_coverage": {
+      "pods_total": 107,
+      "pods_fully_matched": 43,
+      "pods_fully_matched_with_rate_bands_at_blended_level": 14,
+      "role_rows_total": 258,
+      "role_rows_exact": 156,
+      "role_rows_alias": 0,
+      "role_rows_unmatched": 102,
+      "matched_role_rows_without_rate_band_at_blended_level": 58,
+      "distinct_unmatched_labels": 58,
+      "ambiguous_labels": [
+        {
+          "label": "Automation Engineer",
+          "candidates": [
+            "ROL-020",
+            "ROL-120"
+          ]
+        }
+      ]
+    }
+  }
 }
