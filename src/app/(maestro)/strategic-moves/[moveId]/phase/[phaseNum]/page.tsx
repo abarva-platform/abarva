@@ -511,6 +511,14 @@ export default async function StrategicMovePhaseWorkspacePage({
       "moves_capture_phase_rollup_v1",
     );
 
+  // The review queue for outside public sources the research step stored for
+  // this Move. Same flag as the research step itself: a tenant that is not
+  // researching has nothing to review.
+  const publicSourceReviewEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_public_source_research",
+  );
+
   // State reconciliation: current_phase is the single source of truth for where
   // the Move actually is. A user must not work a phase ahead of it (e.g. open
   // /phase/1 while P0 is still awaiting the brief approval), or the workspace
@@ -1085,6 +1093,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureHandoffRecapEnabled={captureHandoffRecapEnabled}
         carriedCharterAssumptions={carriedCharterAssumptionRows}
         charterStandingAfterDiscover={charterStandingAfterDiscoverRows}
+        publicSourceReviewEnabled={publicSourceReviewEnabled}
       />
     </AppShell>
   );

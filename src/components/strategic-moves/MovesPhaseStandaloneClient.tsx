@@ -69,6 +69,7 @@ import {
   artifactStatusLabel,
   FileCabinetPanel,
 } from "@/components/strategic-moves/FileCabinetPanel";
+import { PublicSourcesReviewPanel } from "@/components/strategic-moves/PublicSourcesReviewPanel";
 import {
   PhaseApproveAndBuild,
   type BuildSettledResult,
@@ -409,6 +410,13 @@ interface MovesPhaseStandaloneClientProps {
    *  they're approving as before committing. Absent (null) degrades gracefully:
    *  the confirmation still shows, just without the approver-identity line. */
   currentUser?: { email: string | null; role: string | null } | null;
+  /**
+   * `moves_public_source_research`, resolved server-side (tenant-gated,
+   * default OFF). When true the Files & Evidence view lists the outside public
+   * sources awaiting review, apart from the client's own evidence. When false
+   * nothing renders and nothing is fetched.
+   */
+  publicSourceReviewEnabled?: boolean;
 }
 
 interface MoveArtifactApiRow {
@@ -1038,6 +1046,7 @@ export function MovesPhaseStandaloneClient({
   carriedCharterAssumptions: carriedCharterAssumptionRows = null,
   charterStandingAfterDiscover: charterStandingAfterDiscoverRows = null,
   currentUser = null,
+  publicSourceReviewEnabled = false,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
   const approverLabel =
@@ -3986,6 +3995,11 @@ export function MovesPhaseStandaloneClient({
                     canApproveGates={canApproveGates}
                     onEvidenceChanged={refreshPhase}
                     evidenceFamilies={declarableEvidenceFamilies}
+                  />
+                  <PublicSourcesReviewPanel
+                    programId={move.id}
+                    enabled={publicSourceReviewEnabled}
+                    canDecide={canApproveGates}
                   />
                 </>
               ) : workspaceView === "intelligence" ? (
