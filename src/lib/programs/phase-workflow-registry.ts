@@ -62,6 +62,12 @@ export interface PhaseWorkflowStep {
    * contract declares.
    */
   sectionKeys: Readonly<Record<ChangeProfile, readonly string[]>>;
+  /**
+   * Step-page records this step owns: structured answers a step page writes
+   * through the capture route but that are not capture questions, so the
+   * capture flow never asks them (see `PHASE_STEP_RECORD_SECTIONS`).
+   */
+  recordKeys?: Readonly<Record<ChangeProfile, readonly string[]>>;
 }
 
 const same = (
@@ -127,9 +133,10 @@ const P3_STEPS: readonly PhaseWorkflowStep[] = [
     phase: 3,
     title: "Root cause → design",
     depth: { technical: "light", limited: "full", full: "full" },
-    // No capture key yet: traceability exists only as the generated
-    // Requirements Traceability Matrix. Tracked in KNOWN_CAPTURE_GAPS.
+    // Not a capture question: the step page's structured record of each root
+    // cause's design element (`design-traceability.ts`).
     sectionKeys: same([]),
+    recordKeys: same(["design_traceability"]),
   },
   {
     id: "P3.2",
@@ -198,12 +205,6 @@ export const KNOWN_CAPTURE_GAPS: ReadonlyArray<{
       "Evidence planning is served by evidence readiness, not a capture field.",
   },
   {
-    stepId: "P3.1",
-    profiles: ["technical", "limited", "full"],
-    reason:
-      "No root-cause-to-design traceability capture; only the generated matrix.",
-  },
-  {
     stepId: "P3.4",
     profiles: ["technical", "full"],
     reason: "Estimate assumptions are captured on the limited route only.",
@@ -215,6 +216,7 @@ export interface ResolvedWorkflowStep {
   title: string;
   depth: StepDepth;
   sectionKeys: readonly string[];
+  recordKeys: readonly string[];
 }
 
 /**
@@ -231,5 +233,40 @@ export function resolvePhaseWorkflow(
     title: step.title,
     depth: step.depth[profile],
     sectionKeys: step.sectionKeys[profile],
+    recordKeys: step.recordKeys?.[profile] ?? [],
   }));
+}
+
+/** A structured answer a step page writes that is not a capture question. */
+export interface PhaseStepRecordSection {
+  key: string;
+  stepId: string;
+  label: string;
+  description: string;
+}
+
+/**
+ * Step-page records by phase. The capture route stores them beside the
+ * phase's answers (same module table, same revision fence), and every text
+ * reader renders them through `structured-capture-text.ts`; the capture flow
+ * and its question counts never see them.
+ */
+export const PHASE_STEP_RECORD_SECTIONS: Readonly<
+  Record<number, readonly PhaseStepRecordSection[]>
+> = {
+  3: [
+    {
+      key: "design_traceability",
+      stepId: "P3.1",
+      label: "Root cause → design traceability",
+      description:
+        "For each P2 root cause, in the consultant's order, the design element that fixes it, or the program it is handed to with a named owner.",
+    },
+  ],
+};
+
+export function phaseStepRecordSections(
+  phase: number,
+): readonly PhaseStepRecordSection[] {
+  return PHASE_STEP_RECORD_SECTIONS[phase] ?? [];
 }

@@ -26,13 +26,14 @@ export interface RootCauseNotesProposal {
   sourceLine: number;
 }
 
-interface Sentence {
+export interface NoteSentence {
   text: string;
   line: number;
 }
 
-function sentences(notes: string): Sentence[] {
-  const out: Sentence[] = [];
+/** Split pasted notes into sentences, keeping each one's line number. */
+export function noteSentences(notes: string): NoteSentence[] {
+  const out: NoteSentence[] = [];
   notes.split(/\r?\n/).forEach((lineText, index) => {
     const pattern = /[^.!?]+[.!?]?/g;
     for (const match of lineText.matchAll(pattern)) {
@@ -74,13 +75,14 @@ const STOP = new Set([
   "owner",
 ]);
 
-function terms(text: string): Set<string> {
+/** The content words of a text, for overlap. */
+export function noteTerms(text: string): Set<string> {
   return new Set(
     (text.toLowerCase().match(WORD) ?? []).filter((w) => !STOP.has(w)),
   );
 }
 
-function overlap(a: Set<string>, b: Set<string>): number {
+export function termOverlap(a: Set<string>, b: Set<string>): number {
   let shared = 0;
   for (const word of a) if (b.has(word)) shared += 1;
   return shared;
@@ -97,7 +99,8 @@ const OWNER_PATTERNS: RegExp[] = [
   /\bowner(?:\s+is|:)\s*([A-Z][\w'’-]+(?:\s+[A-Z][\w'’-]+)+(?:\s*\([^)]+\))?)/,
 ];
 
-function ownerIn(text: string): string | null {
+/** A named owner a sentence states ("X would own it", "owned by X"). */
+export function ownerInSentence(text: string): string | null {
   for (const pattern of OWNER_PATTERNS) {
     const match = pattern.exec(text);
     if (match?.[1]) return match[1].trim();
@@ -117,25 +120,25 @@ export function proposeRootCausesFromNotes(
   notes: string,
   register: RootCauseRegister,
 ): RootCauseNotesProposal[] {
-  const all = sentences(notes);
+  const all = noteSentences(notes);
   const open = rankedRootCauses(register).filter(
     (c) => c.status === "no_evidence" && !c.owner,
   );
-  const known = register.causes.map((c) => terms(c.cause));
+  const known = register.causes.map((c) => noteTerms(c.cause));
   const proposals: RootCauseNotesProposal[] = [];
   const used = new Set<number>();
 
   // Owners for open causes: the sentence must name the cause, unless only one
   // cause is open, in which case naming an owner is enough.
   all.forEach((sentence, index) => {
-    const owner = ownerIn(sentence.text);
+    const owner = ownerInSentence(sentence.text);
     if (!owner) return;
-    const words = terms(sentence.text);
+    const words = noteTerms(sentence.text);
     const target =
       open.length === 1
         ? open[0]
         : open
-            .map((c) => ({ c, score: overlap(terms(c.cause), words) }))
+            .map((c) => ({ c, score: termOverlap(noteTerms(c.cause), words) }))
             .filter((x) => x.score > 0)
             .sort((a, b) => b.score - a.score)[0]?.c;
     if (!target) return;
@@ -154,12 +157,12 @@ export function proposeRootCausesFromNotes(
   // New candidate causes: cause wording that no existing cause already covers.
   all.forEach((sentence, index) => {
     if (used.has(index) || !CAUSE_MARKER.test(sentence.text)) return;
-    const words = terms(sentence.text);
+    const words = noteTerms(sentence.text);
     // Covered when most of the shorter wording is shared, not when two
     // words happen to be ("EHR" and "claims" appear in different causes).
     const covered = known.some(
       (k) =>
-        overlap(k, words) / Math.max(1, Math.min(k.size, words.size)) >= 0.6,
+        termOverlap(k, words) / Math.max(1, Math.min(k.size, words.size)) >= 0.6,
     );
     if (covered) return;
     proposals.push({

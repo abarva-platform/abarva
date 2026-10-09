@@ -70,6 +70,7 @@ import {
   type ReadinessReport,
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
+import { phaseStepRecordSections } from "@/lib/programs/phase-workflow-registry";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
@@ -936,6 +937,12 @@ export default async function StrategicMovePhaseWorkspacePage({
   const initialP1CharterBasisBySection: Record<string, P1CharterBasisInput> =
     {};
   const initialReferenceDraftValues: Record<string, string> = {};
+  // A saved step-page record (P3's design traceability) joins the values the
+  // client autosaves, exactly as the capture route's snapshot includes it.
+  for (const record of phaseStepRecordSections(parsedPhase)) {
+    const value = captureValue(parsedPhase, record.key);
+    if (value) initialPhaseCaptureValues[record.key] = value;
+  }
   for (const section of getPhaseCaptureSections(
     parsedPhase,
     initialConfirmedSolutionRoute,
@@ -1055,6 +1062,14 @@ export default async function StrategicMovePhaseWorkspacePage({
         solutionPatternGateEnabled={solutionPatternGateEnabled}
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
+        priorPhaseCapture={
+          stepPagesV3Enabled && parsedPhase === 3
+            ? {
+                gapsRootCauses: captureValue(2, "gaps_root_causes"),
+                baselineMetrics: captureValue(2, "baseline_metrics"),
+              }
+            : null
+        }
         initialStepView={
           !stepPagesV3Enabled
             ? null
@@ -1062,7 +1077,9 @@ export default async function StrategicMovePhaseWorkspacePage({
               ? "gate"
               : resolvedSearchParams.step === "root-causes"
                 ? "root-causes"
-                : null
+                : resolvedSearchParams.step === "root-cause-design"
+                  ? "root-cause-design"
+                  : null
         }
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}

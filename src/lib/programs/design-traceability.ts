@@ -194,6 +194,11 @@ export interface TraceCause {
   rank: number;
 }
 
+/** Exactly the cause snapshot a link stores, whatever else the row carries. */
+function causeOf(row: TraceCause): TraceCause {
+  return { causeId: row.causeId, cause: row.cause, rank: row.rank };
+}
+
 /** The consultant's own design element: settled on arrival. */
 export function designHere(
   value: DesignTraceability,
@@ -207,7 +212,7 @@ export function designHere(
   return {
     ok: true,
     value: setLink(value, {
-      ...row,
+      ...causeOf(row),
       status: "accepted",
       element: written,
       source: "team",
@@ -236,7 +241,7 @@ export function draftDesignElement(
   return {
     ok: true,
     value: setLink(value, {
-      ...row,
+      ...causeOf(row),
       status: "draft",
       element: written,
       source,
@@ -284,7 +289,7 @@ export function handOffDesign(
   return {
     ok: true,
     value: setLink(value, {
-      ...row,
+      ...causeOf(row),
       status: "handed_off",
       program: program.trim(),
       owner: owner.trim(),

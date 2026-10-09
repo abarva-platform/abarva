@@ -4792,6 +4792,89 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
+  describe("P3 Step 1 design traceability (moves_step_pages_v3)", () => {
+    const p3Move = () => makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
+
+    it("renders P3 Step 1 inside the aVa dock with the flag on and ?step=root-cause-design", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="root-cause-design"
+          priorPhaseCapture={{
+            gapsRootCauses: JSON.stringify({
+              kind: "root_cause_register",
+              version: 1,
+              orderConfirmedAt: "2026-10-02",
+              causes: [{ id: "RC-1", cause: "No ownership", status: "accepted", evidence: ["Interviews"] }],
+            }),
+            baselineMetrics: "",
+          }}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      expect(
+        within(dock).getByRole("heading", { name: "Map every root cause to a design element" }),
+      ).toBeInTheDocument();
+      expect(within(dock).getByText("No ownership")).toBeInTheDocument();
+    });
+
+    it("ignores ?step=root-cause-design while the flag is off", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          initialStepView="root-cause-design"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Map every root cause to a design element" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("the P3 capture opens Step 1 under the flag, and says nothing of it without", () => {
+      const { unmount } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("open-design-traceability").getAttribute("href")).toMatch(
+        /\/phase\/3\?step=root-cause-design$/,
+      );
+      unmount();
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.queryByTestId("open-design-traceability")).not.toBeInTheDocument();
+    });
+  });
+
   describe("P2 Root causes step page (moves_step_pages_v3)", () => {
     const p2Move = () =>
       makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" });
