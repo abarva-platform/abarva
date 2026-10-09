@@ -221,15 +221,24 @@ export function addRootCause(
   const cause = input.cause.trim();
   if (!cause) return refuse("Write the cause first.");
   const evidence = (input.evidence ?? []).map((e) => e.trim()).filter(Boolean);
+  const drives = input.drives?.trim();
+  // Settled on arrival only when it drives a baseline number AND rests on
+  // approved evidence; with evidence alone it is the consultant's draft to
+  // review; with neither it is open (template v1.5, "Add a cause").
+  const status: RootCauseEntry["status"] = !evidence.length
+    ? "no_evidence"
+    : drives
+      ? "accepted"
+      : "draft";
   const entry: RootCauseEntry = {
     id: nextId(register, "RC"),
     cause,
-    status: evidence.length ? "accepted" : "no_evidence",
+    status,
     source: "team",
-    ...(input.drives?.trim() ? { drives: input.drives.trim() } : {}),
+    ...(drives ? { drives } : {}),
     ...(evidence.length ? { evidence } : {}),
     ...(input.confidence ? { confidence: input.confidence } : {}),
-    ...(evidence.length ? { decidedBy, decidedAt } : {}),
+    ...(status === "accepted" ? { decidedBy, decidedAt } : {}),
   };
   return ok(unconfirmed(register, [...register.causes, entry]));
 }
@@ -319,6 +328,19 @@ export interface RootCauseStepModel {
   nextAction: StepNextAction;
 }
 
+/**
+ * A cause's first few words, lower-cased and without commas, for the
+ * next-action sentence: "identity not resolved across".
+ */
+function shortCause(cause: string): string {
+  const words = cause
+    .replace(/[,;:.]/g, "")
+    .split(/\s+/)
+    .filter(Boolean);
+  const short = words.slice(0, 4).join(" ");
+  return `${short.charAt(0).toLowerCase()}${short.slice(1)}`;
+}
+
 function sentence(clauses: string[]): string {
   const all =
     clauses.length > 3
@@ -341,8 +363,16 @@ function sentence(clauses: string[]): string {
  */
 export function resolveRootCauseStep(
   raw: string,
-  options: { blockedBy?: string | null } = {},
+  options: {
+    blockedBy?: string | null;
+    /**
+     * Clauses for decisions outside the register that lead the sentence and
+     * hold readiness — an uploaded extraction awaiting review.
+     */
+    leadingClauses?: readonly string[];
+  } = {},
 ): RootCauseStepModel {
+  const leading = (options.leadingClauses ?? []).filter((c) => c.trim());
   const { kind, register } = readRootCauseValue(raw);
   const ranked = rankedRootCauses(register);
   const accepted = ranked.filter(isRootCauseSettled).length;
@@ -367,7 +397,7 @@ export function resolveRootCauseStep(
       note: confirmed ? "confirmed" : "not confirmed",
     },
   ];
-  const countLabel = `${accepted} of ${ranked.length} causes accepted`;
+  const countLabel = `${accepted} of ${ranked.length} causes settled`;
   const total = ranked.length + 1;
   const settled = accepted + (confirmed && ranked.length > 0 ? 1 : 0);
   const base = { settled, total, countLabel };
@@ -394,7 +424,10 @@ export function resolveRootCauseStep(
       nextAction: {
         state: "in_progress",
         eyebrow: "Next",
-        sentence: "Turn your earlier answer into ranked causes.",
+        sentence: sentence([
+          ...leading,
+          "turn your earlier answer into ranked causes",
+        ]),
         settled: 0,
         total: 1,
         continueEnabled: false,
@@ -402,7 +435,7 @@ export function resolveRootCauseStep(
     };
   }
 
-  if (isRootCauseRegisterComplete(register)) {
+  if (leading.length === 0 && isRootCauseRegisterComplete(register)) {
     return {
       checks,
       countLabel,
@@ -419,9 +452,13 @@ export function resolveRootCauseStep(
   }
 
   const clauses = [
-    ...unevidenced.map((c) => `find evidence for ${c.id} or name its owner`),
+    ...leading,
+    ...unevidenced.map(
+      (c) =>
+        `find evidence for ${shortCause(c.cause)} (${c.id}) or name its owner`,
+    ),
     drafts.length === 1
-      ? `review the ${drafts[0].id} draft`
+      ? `review the ${shortCause(drafts[0].cause)} (${drafts[0].id}) draft`
       : drafts.length > 1
         ? `review ${drafts.length} drafts`
         : null,

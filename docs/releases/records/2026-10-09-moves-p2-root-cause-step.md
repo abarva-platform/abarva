@@ -33,6 +33,33 @@ through one host helper. The page writes the root-cause register (#9324)
 through the existing capture autosave, so the gate, the build and the next
 phase read it as ranked text.
 
+Also in this change, from the first design review of the real components
+(template v1.5):
+- **Evidence uploaded in the step.** The Context line carries "Upload
+  evidence". An extraction awaiting review becomes a "Needs your decision" row
+  in that step, reviewed with the same governed editor the Files library uses.
+  Until it is approved, nothing from the file counts as evidence, and the step
+  cannot be ready. Upload, read and decide now share one client
+  (`move-evidence-client.ts`) with the Files library.
+- **Gate readiness.**
+  - One row-level "Rebuild the gate documents…" (a build re-runs the whole
+    set) instead of a link on each document.
+  - "Design approved" displays as "Design documents signed off", with the gate
+    rule's own label kept in its note.
+  - A non-approver sees "Waiting on the gate approver" and role wording
+    instead of a name.
+  - The approver writes the rationale with no confirm step, and it stays
+    editable while the gate state cannot be read.
+  - A superseded signature reads "needs signing again".
+- **Step bar.** An unfinished earlier step shows as "open" (reachable and
+  numbered) rather than upcoming.
+- **P2 Step 3.**
+  - Fact lines read "Baseline: …, value".
+  - The next-action sentence names causes with their ids.
+  - The check note and the count both say "settled".
+  - A cause the consultant adds settles only with both a baseline link and
+    approved evidence.
+
 ## Layer Impact
 
 - Release lane: `global-control-lane`, feature-flagged.
@@ -65,7 +92,8 @@ phase read it as ranked text.
 
 ## QA / Validation
 
-- Step model suite: pass, 16 tests. Notes proposer suite: pass, 5 tests. Page
+- Step model suite: pass, 17 tests. Gate readiness model and page: pass, 40 tests. Step page: pass, 14 tests. Files library suites: pass, 11 suites and 454 tests, unchanged after moving to the shared evidence client.
+- Step model suite (original count): 16 tests. Notes proposer suite: pass, 5 tests. Page
   render suite: pass, 9 tests. Host mount suite: pass, 4 tests.
 - Mutation checks: pass. Each of these fails a test: fill overwriting a typed
   owner, resolving without an owner, accepting without evidence, a move
@@ -107,8 +135,6 @@ register written by then stays valid and is read by every reader (#9324).
 
 ## Known Gaps
 
-- Uploading evidence from inside the step, with its extraction-review row, is
-  the next increment. Evidence is uploaded in Files today.
 - aVa drafting causes from approved evidence, rather than from pasted notes,
   is later.
 - Whether the P2 gate should require ranked, evidenced causes is a governance

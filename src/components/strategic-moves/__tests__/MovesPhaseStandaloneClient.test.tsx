@@ -4787,7 +4787,7 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.queryByRole("button", { name: "Sign off" }),
       ).not.toBeInTheDocument();
       expect(
-        screen.getByText("An authorized gate approver approves this gate."),
+        screen.getByText("Only a gate approver can approve this gate."),
       ).toBeInTheDocument();
     });
   });

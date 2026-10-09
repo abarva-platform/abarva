@@ -15,12 +15,13 @@ import {
 import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 import { getPhaseLabel, TOTAL_PHASES } from "@/lib/programs/phase-labels";
 import { describeRejectedEvidenceReview } from "@/lib/programs/evidence-review-dispositions";
-import {
-  describeEvidenceCabinetReadback,
-  describeEvidenceDecisionRefusal,
-} from "@/lib/programs/evidence-cabinet-readback";
+import { describeEvidenceCabinetReadback } from "@/lib/programs/evidence-cabinet-readback";
 import { describeMoveReviewDecisionRefusal } from "@/lib/programs/move-review-decision-refusal";
-import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
+import {
+  decideMoveEvidence,
+  fetchMoveEvidence,
+  uploadMoveEvidence,
+} from "@/lib/programs/move-evidence-client";
 import {
   UPLOAD_ACCEPT_ATTRIBUTE,
   describeUploadBounds,
@@ -2050,11 +2051,8 @@ export function FileCabinetPanel({
     setLoading(true);
     setError(null);
     try {
-      const r = await fetch(`/api/v1/programs/${moveId}/artifacts`, {
-        credentials: "include",
-      });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const j = await r.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const j: any = await fetchMoveEvidence(moveId);
       setArtifacts(Array.isArray(j.artifacts) ? j.artifacts : []);
       setPendingEvidenceReviews(
         Array.isArray(j.pendingEvidenceReviews) ? j.pendingEvidenceReviews : [],
@@ -2094,35 +2092,17 @@ export function FileCabinetPanel({
       setReviewingEvidenceId(review.evidenceId);
       setError(null);
       try {
-        const response = await fetch(
-          `/api/v1/programs/${moveId}/current-state/evidence/${review.evidenceId}/approve`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              decision,
-              reviewedExtraction: extraction,
-              rationale:
-                rationale?.trim() ||
-                (decision === "approved"
-                  ? "Reviewer approved the corrected evidence extraction."
-                  : "Reviewer rejected the parsed evidence."),
-            }),
-          },
-        );
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.ok) {
-          // A bare `no_pending_review` is not a next action a reviewer can
-          // take, and it is the refusal they are most likely to meet: it is
-          // what approving a second time returns after a failed refresh.
-          throw new Error(
-            describeEvidenceDecisionRefusal({
-              code: result.error,
-              detail: result.detail,
-            }),
-          );
-        }
+        // A bare `no_pending_review` is not a next action a reviewer can
+        // take, and it is the refusal they are most likely to meet: it is
+        // what approving a second time returns after a failed refresh. The
+        // shared client words it (see `move-evidence-client`).
+        await decideMoveEvidence({
+          moveId,
+          evidenceId: review.evidenceId,
+          decision,
+          extraction,
+          rationale,
+        });
         await load();
         onEvidenceChanged?.();
       } catch (cause) {
@@ -2141,33 +2121,18 @@ export function FileCabinetPanel({
       setUploadState("uploading");
       setUploadMsg(`Uploading ${file.name}…`);
       try {
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("phase", String(uploadPhase));
-        fd.append("family", uploadFamily);
-        if (uploadFamily === "uploaded_evidence" && declaredFamily) {
-          fd.append("evidenceFamily", declaredFamily);
-        }
-        const r = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
-          method: "POST",
-          credentials: "include",
-          body: fd,
+        // Only the quarantine refusal used to be named here; the other five
+        // the route declares reached the reviewer as their bare code. The
+        // shared client words every refusal (`describeMoveUploadRefusal`),
+        // which also knows `detail` is a raw MIME string or a byte count for
+        // three of the six and must not be rendered.
+        const j = await uploadMoveEvidence({
+          moveId,
+          file,
+          phase: uploadPhase,
+          family: uploadFamily,
+          evidenceFamily: declaredFamily || undefined,
         });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok || !j.ok)
-          // Only the quarantine refusal used to be named here; the other five
-          // the route declares reached the reviewer as their bare code,
-          // because `error` won over `detail`. Both halves move into
-          // `describeMoveUploadRefusal`, which also knows that `detail` is a
-          // raw MIME string or a byte count for three of the six and must not
-          // be rendered.
-          throw new Error(
-            describeMoveUploadRefusal({
-              code: j.error,
-              detail: j.detail,
-              fileName: file.name,
-            }),
-          );
         const evidence = j.evidence as
           | {
               status?: string;

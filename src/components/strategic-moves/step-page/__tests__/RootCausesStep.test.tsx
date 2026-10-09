@@ -27,7 +27,10 @@ import {
 } from "@/lib/programs/root-cause-register";
 import { serializeDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  (global as { fetch?: unknown }).fetch = undefined;
+});
 
 const BY = "consultant@example.test";
 const register = (causes: RootCauseEntry[], confirmed = false) =>
@@ -57,6 +60,8 @@ function Harness({
   const [value, setValue] = useState(initial);
   return (
     <RootCausesStep
+      moveId="move-1"
+      canReviewEvidence
       moveName="Governed data foundation"
       phases={[{ code: "P2", name: "Discover", status: "", current: true }]}
       steps={[
@@ -106,6 +111,51 @@ const row = (c: HTMLElement, id: string) =>
   c.querySelector(`#row-${id}`) as HTMLElement;
 
 describe("RootCausesStep", () => {
+  it("an uploaded extraction awaiting review leads the step and holds it", async () => {
+    const fetchMock = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        evidenceReviewStatus: "available",
+        pendingEvidenceReviews: [
+          {
+            evidenceId: "ev-9",
+            title: "Duplicate-match report",
+            phase: 2,
+            parseMethod: "xlsx",
+            confidence: 0.8,
+            sourceTextPreview: "",
+            extraction: {},
+          },
+          { evidenceId: "ev-other", title: "Other phase", phase: 3 },
+        ],
+        reviewedEvidence: [{ phase: 2 }, { phase: 1 }],
+      }),
+    }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const { container, findByText } = render(
+      <Harness
+        initial={register(
+          [{ id: "RC-1", cause: "A", status: "accepted", evidence: ["P"] }],
+          true,
+        )}
+      />,
+    );
+    await findByText("Extraction needs review.");
+    expect(row(container, "EV-1").textContent).toContain(
+      "Duplicate-match report",
+    );
+    // Another phase's upload is not this step's decision.
+    expect(container.textContent).not.toContain("Other phase");
+    expect(status(container).textContent).toContain(
+      "Review the Duplicate-match report extraction.",
+    );
+    expect(status(container).textContent).not.toContain("Ready");
+    expect(container.textContent).toContain("1 approved file · 1 in review");
+    expect(
+      within(container).getByRole("button", { name: "Upload evidence" }),
+    ).toBeTruthy();
+  });
+
   it("an empty step offers to add the first cause", () => {
     const { container } = render(<Harness initial="" />);
     expect(status(container).textContent).toContain(
@@ -142,7 +192,7 @@ describe("RootCausesStep", () => {
     });
     // The number comes from the approved baseline, labelled as a FACT.
     expect(row(container, "RC-1").textContent).toContain(
-      "FactDrives Priority measures certified: 12 of 40 · Measure register",
+      "FactBaseline: priority measures certified, 12 of 40 · Measure register",
     );
   });
 
@@ -198,7 +248,7 @@ describe("RootCausesStep", () => {
       />,
     );
     expect(status(container).textContent).toContain(
-      "Find evidence for RC-4 or name its owner",
+      "Find evidence for identity unresolved (RC-4) or name its owner",
     );
     fireEvent.click(
       within(row(container, "RC-4")).getByRole("button", {

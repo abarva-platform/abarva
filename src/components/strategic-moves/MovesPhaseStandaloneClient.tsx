@@ -3469,6 +3469,12 @@ export function MovesPhaseStandaloneClient({
     const phaseHref = (n: number) => `/strategic-moves/${move.id}/phase/${n}`;
     return (
       <RootCausesStep
+        moveId={move.id}
+        // The same authority the Files library uses to approve an extraction.
+        canReviewEvidence={canApproveGates}
+        // An approved upload is new approved evidence; re-read the page so the
+        // cause form can cite it.
+        onEvidenceChanged={() => window.location.reload()}
         moveName={displayMoveName}
         tabs={
           <StepPageTabs
@@ -3621,7 +3627,7 @@ export function MovesPhaseStandaloneClient({
           describeGateSignOffReadback(signOffReadback).state === "available"
         }
         canApprove={canApproveGates}
-        approverName="An authorized gate approver"
+        approverName="a gate approver"
         buildHeldReason={buildHold?.statusLine ?? null}
         depthDetail="Full. The gate step is always Full, whatever the change profile."
         onBeforeBuild={finalizePhaseCapture}

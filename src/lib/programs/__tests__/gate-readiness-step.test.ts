@@ -44,7 +44,7 @@ const input = (overrides: Partial<GateStepInput> = {}): GateStepInput => ({
   documents: [doc("a"), doc("b")],
   signOffReadable: true,
   canApprove: true,
-  approverName: "The gate approver",
+  approverName: "the gate approver",
   rationaleWritten: true,
   phaseName: "Design",
   nextPhaseLabel: "P4 Roadmap",
@@ -100,6 +100,20 @@ describe("gateChecks", () => {
     expect(
       checks.every((c) => c.unknown && !c.met && c.note === "not evaluated"),
     ).toBe(true);
+  });
+});
+
+describe("check display labels", () => {
+  it("shows a check by what the page offers and keeps the evaluator's label in the note", () => {
+    const [design] = gateChecks([
+      criterion("design_approved", {
+        completed: false,
+        label: "Design approved",
+        reason: "Not signed.",
+      }),
+    ]);
+    expect(design.text).toBe("Design documents signed off");
+    expect(design.note).toBe("gate rule: Design approved · Not signed.");
   });
 });
 
@@ -205,7 +219,9 @@ describe("resolveGateStep", () => {
     const ready = resolveGateStep(input({ canApprove: false }));
     expect(ready.canSubmit).toBe(false);
     expect(ready.nextAction.continueEnabled).toBe(false);
-    expect(ready.footerNote).toBe("The gate approver approves this gate.");
+    expect(ready.footerNote).toBe(
+      "Only the gate approver can approve this gate.",
+    );
     expect(ready.nextAction.sentence).toBe(
       "Every required check passes. The gate approver can approve and submit Design.",
     );

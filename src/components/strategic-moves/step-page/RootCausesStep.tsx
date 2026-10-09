@@ -25,6 +25,7 @@ import {
   type RootCauseEdit,
 } from "@/lib/programs/root-cause-step";
 import { proposeRootCausesFromNotes } from "@/lib/programs/root-cause-notes";
+import { useStepEvidence } from "./StepEvidence";
 import {
   MovesStepPage,
   SourceLine,
@@ -64,6 +65,11 @@ export interface StepAvaAction {
 }
 
 export interface RootCausesStepProps {
+  moveId: string;
+  /** Whether this viewer may approve or reject an uploaded extraction. */
+  canReviewEvidence: boolean;
+  /** An approved upload changed what counts as evidence; re-read it. */
+  onEvidenceChanged?: () => void;
   moveName: string;
   syntheticNote?: string;
   phases: readonly StepPagePhase[];
@@ -141,8 +147,15 @@ export function RootCausesStep(props: RootCausesStepProps) {
     return true;
   };
 
+  const evidence = useStepEvidence({
+    moveId: props.moveId,
+    phase: 2,
+    canReview: props.canReviewEvidence,
+    onEvidenceChanged: props.onEvidenceChanged,
+  });
   const model = resolveRootCauseStep(props.value, {
     blockedBy: props.blockedBy,
+    leadingClauses: evidence.clauses,
   });
   const ranked = rankedRootCauses(register);
   const setAside = register.causes.filter(
@@ -538,7 +551,7 @@ export function RootCausesStep(props: RootCausesStepProps) {
         ? [
             {
               kind: "fact",
-              text: `Drives ${fact.metric}: ${fact.value}`,
+              text: `Baseline: ${fact.metric.charAt(0).toLowerCase()}${fact.metric.slice(1)}, ${fact.value}`,
               cite: fact.source,
             },
           ]
@@ -548,7 +561,7 @@ export function RootCausesStep(props: RootCausesStepProps) {
     };
   };
 
-  const rows: StepPageRow[] = [];
+  const rows: StepPageRow[] = [...evidence.rows];
   if (refusal) {
     rows.push({
       id: "REFUSED",
@@ -813,7 +826,8 @@ export function RootCausesStep(props: RootCausesStepProps) {
       context={{
         items: [
           <b key="depth">Full depth</b>,
-          `${props.approvedEvidence.length} approved evidence file${props.approvedEvidence.length === 1 ? "" : "s"}`,
+          evidence.summary,
+          evidence.uploadControl,
           `${facts.length} baseline number${facts.length === 1 ? "" : "s"}`,
         ],
         details: [

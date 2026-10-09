@@ -137,21 +137,32 @@ describe("settling a cause", () => {
 });
 
 describe("adding and setting aside", () => {
-  it("a cause the consultant writes is accepted with evidence, open without, and ranked last", () => {
-    const withEvidence = done(
+  it("a cause the consultant writes settles only with a baseline link and evidence, and is ranked last", () => {
+    const settled = done(
       addRootCause(
         reg([c("RC-3")], true),
-        { cause: "New", evidence: ["Notes"] },
+        { cause: "New", drives: "Measures certified", evidence: ["Notes"] },
         BY,
         AT,
       ),
     );
-    expect(withEvidence.causes[1]).toMatchObject({
+    expect(settled.causes[1]).toMatchObject({
       id: "RC-4",
       status: "accepted",
       source: "team",
+      decidedBy: BY,
     });
-    expect(withEvidence.orderConfirmedAt).toBeUndefined();
+    expect(settled.orderConfirmedAt).toBeUndefined();
+    const draft = done(
+      addRootCause(
+        reg([]),
+        { cause: "Evidence only", evidence: ["Notes"] },
+        BY,
+        AT,
+      ),
+    );
+    expect(draft.causes[0]).toMatchObject({ status: "draft", source: "team" });
+    expect(draft.causes[0].decidedBy).toBeUndefined();
     const without = done(addRootCause(reg([]), { cause: "Unproven" }, BY, AT));
     expect(without.causes[0]).toMatchObject({
       id: "RC-1",
@@ -219,9 +230,9 @@ describe("resolveRootCauseStep", () => {
       ),
     );
     expect(model.nextAction.sentence).toBe(
-      "Find evidence for RC-4 or name its owner, review 2 drafts, and confirm the order.",
+      "Find evidence for cause RC-4 (RC-4) or name its owner, review 2 drafts, and confirm the order.",
     );
-    expect(model.countLabel).toBe("1 of 4 causes accepted");
+    expect(model.countLabel).toBe("1 of 4 causes settled");
     expect(model.checks[0]).toMatchObject({ met: false, targetRowId: "RC-4" });
   });
 
@@ -254,6 +265,17 @@ describe("resolveRootCauseStep", () => {
     expect(model.nextAction).toMatchObject({
       state: "in_progress",
       sentence: "Confirm the order.",
+    });
+  });
+
+  it("an extraction awaiting review leads the sentence and holds a complete step", () => {
+    const model = resolveRootCauseStep(value(reg([c("RC-1")], true)), {
+      leadingClauses: ["review the Duplicate-match report extraction"],
+    });
+    expect(model.nextAction).toMatchObject({
+      state: "in_progress",
+      sentence: "Review the Duplicate-match report extraction.",
+      continueEnabled: false,
     });
   });
 
