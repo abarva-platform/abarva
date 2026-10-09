@@ -114,17 +114,47 @@ function reviewWithOneOpenOptionalResponse() {
   };
 }
 
-function artifactRow(metadata: Record<string, number>) {
+/** The upload the review above was recorded against, still under review. */
+function proposalSetRow(overrides: Record<string, unknown> = {}) {
+  return {
+    artifact_id: "proposal-artifact-1",
+    version: 1,
+    phase: 1,
+    artifact_type: "stage_readiness_workbook_proposal_set",
+    status: "review_required",
+    metadata: { proposalSetId: "proposal-set-1" },
+    ...overrides,
+  };
+}
+
+function artifactRow(
+  metadata: Record<string, number>,
+  setRow: Record<string, unknown> | null = proposalSetRow(),
+) {
   return [
     {
       artifact_id: "review-artifact-1",
       version: 4,
       phase: 1,
       artifact_type: "stage_readiness_workbook_proposal_review",
-      metadata,
+      metadata: {
+        ...metadata,
+        proposalSetId: "proposal-set-1",
+        sourceProposalSetArtifact: {
+          artifactId: "proposal-artifact-1",
+          artifactVersion: 1,
+        },
+      },
     },
+    ...(setRow ? [setRow] : []),
   ];
 }
+
+const OPEN_COUNTS = {
+  acceptedCount: 1,
+  pendingCount: 1,
+  needsValidationCount: 0,
+};
 
 function stored(review: unknown) {
   return {
@@ -137,9 +167,7 @@ function stored(review: unknown) {
 describe("stage readiness prompt context", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    listMoveArtifacts.mockResolvedValue(
-      artifactRow({ acceptedCount: 1, pendingCount: 1, needsValidationCount: 0 }),
-    );
+    listMoveArtifacts.mockResolvedValue(artifactRow(OPEN_COUNTS));
     downloadArtifactBytes.mockResolvedValue(
       stored(reviewWithOneOpenOptionalResponse()),
     );
@@ -181,7 +209,11 @@ describe("stage readiness prompt context", () => {
     const review = reviewWithOneOpenOptionalResponse();
     review.summary.pendingCount = 1;
     listMoveArtifacts.mockResolvedValue(
-      artifactRow({ acceptedCount: 1, pendingCount: 0, needsValidationCount: 0 }),
+      artifactRow({
+        acceptedCount: 1,
+        pendingCount: 0,
+        needsValidationCount: 0,
+      }),
     );
     downloadArtifactBytes.mockResolvedValue(stored(review));
 
@@ -198,7 +230,11 @@ describe("stage readiness prompt context", () => {
     review.summary.pendingCount = 0;
     review.summary.needsValidationCount = 1;
     listMoveArtifacts.mockResolvedValue(
-      artifactRow({ acceptedCount: 1, pendingCount: 0, needsValidationCount: 0 }),
+      artifactRow({
+        acceptedCount: 1,
+        pendingCount: 0,
+        needsValidationCount: 0,
+      }),
     );
     downloadArtifactBytes.mockResolvedValue(stored(review));
 
@@ -218,7 +254,11 @@ describe("stage readiness prompt context", () => {
     review.summary.pendingCount = 2;
     review.summary.needsValidationCount = 3;
     listMoveArtifacts.mockResolvedValue(
-      artifactRow({ acceptedCount: 1, pendingCount: 2, needsValidationCount: 3 }),
+      artifactRow({
+        acceptedCount: 1,
+        pendingCount: 2,
+        needsValidationCount: 3,
+      }),
     );
     downloadArtifactBytes.mockResolvedValue(stored(review));
 
@@ -237,7 +277,11 @@ describe("stage readiness prompt context", () => {
     review.summary.proposalCount = 1;
     review.proposals = [review.proposals[0]];
     listMoveArtifacts.mockResolvedValue(
-      artifactRow({ acceptedCount: 1, pendingCount: 0, needsValidationCount: 0 }),
+      artifactRow({
+        acceptedCount: 1,
+        pendingCount: 0,
+        needsValidationCount: 0,
+      }),
     );
     downloadArtifactBytes.mockResolvedValue(stored(review));
 
@@ -271,7 +315,9 @@ describe("stage readiness prompt context", () => {
     expect(block).toContain(
       "The data governance council, chaired by the CDO office.",
     );
-    expect(block).toContain("Evidence/source: Existing evidence: ev-governance");
+    expect(block).toContain(
+      "Evidence/source: Existing evidence: ev-governance",
+    );
     // The governance stance is unchanged and still stated.
     expect(block).toContain(
       "Pending, rejected, and needs-validation workbook proposals are excluded.",
@@ -293,7 +339,11 @@ describe("stage readiness prompt context", () => {
     review.summary.acceptedCount = 0;
     review.summary.pendingCount = 2;
     listMoveArtifacts.mockResolvedValue(
-      artifactRow({ acceptedCount: 0, pendingCount: 2, needsValidationCount: 0 }),
+      artifactRow({
+        acceptedCount: 0,
+        pendingCount: 2,
+        needsValidationCount: 0,
+      }),
     );
     downloadArtifactBytes.mockResolvedValue(stored(review));
 
@@ -334,6 +384,123 @@ describe("stage readiness prompt context", () => {
       fileFormat: "json",
       bytes: Buffer.from("{ not json"),
     });
+
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+  });
+
+  it("gives the prompt nothing from a review of an earlier upload", async () => {
+    // The workbook was re-uploaded after review. The upload writes only a new
+    // set, so the earlier review is still the current review artifact, and its
+    // acceptances are answers to text this upload may have changed. The page
+    // and the gate read every response of the new upload as undecided.
+    listMoveArtifacts.mockResolvedValue(
+      artifactRow(
+        OPEN_COUNTS,
+        proposalSetRow({
+          artifact_id: "proposal-artifact-2",
+          metadata: { proposalSetId: "proposal-set-2" },
+        }),
+      ),
+    );
+
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+    await expect(
+      loadAcceptedStageReadinessContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+    // Refused on the rows: the superseded review is never downloaded.
+    expect(downloadArtifactBytes).not.toHaveBeenCalled();
+  });
+
+  it("refuses a newer version of the same upload, as the gate does", async () => {
+    // Identical workbook content yields the same proposal set id, so the id
+    // alone cannot tell two uploads apart; the artifact version can.
+    listMoveArtifacts.mockResolvedValue(
+      artifactRow(OPEN_COUNTS, proposalSetRow({ version: 2 })),
+    );
+
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+  });
+
+  it("refuses a different upload artifact carrying the same set id", async () => {
+    listMoveArtifacts.mockResolvedValue(
+      artifactRow(
+        OPEN_COUNTS,
+        proposalSetRow({ artifact_id: "proposal-artifact-2" }),
+      ),
+    );
+
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+  });
+
+  it("asserts membership on the review body, not only its row", async () => {
+    const review = reviewWithOneOpenOptionalResponse();
+    review.sourceProposalSetArtifact = {
+      artifactId: "proposal-artifact-0",
+      artifactVersion: 1,
+    };
+    downloadArtifactBytes.mockResolvedValue(stored(review));
+
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+
+    const otherSet = reviewWithOneOpenOptionalResponse();
+    otherSet.proposalSetId = "proposal-set-0";
+    downloadArtifactBytes.mockResolvedValue(stored(otherSet));
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+  });
+
+  it("vouches for nothing when no upload is under review beside the review", async () => {
+    listMoveArtifacts.mockResolvedValue(artifactRow(OPEN_COUNTS, null));
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+
+    listMoveArtifacts.mockResolvedValue(
+      artifactRow(OPEN_COUNTS, proposalSetRow({ status: "superseded" })),
+    );
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+
+    listMoveArtifacts.mockResolvedValue(
+      artifactRow(OPEN_COUNTS, proposalSetRow({ phase: 2 })),
+    );
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+
+    listMoveArtifacts.mockResolvedValue(
+      artifactRow(OPEN_COUNTS, proposalSetRow({ metadata: {} })),
+    );
+    await expect(
+      loadStageReadinessPromptContext(ctx, "move-1", 2),
+    ).resolves.toBeNull();
+    expect(downloadArtifactBytes).not.toHaveBeenCalled();
+  });
+
+  it("does not match an upload with no set id to a review with none either", async () => {
+    // Two missing ids are not one upload. Without its own guard the set id
+    // would compare undefined to undefined and vouch for the review.
+    const rows = artifactRow(OPEN_COUNTS, proposalSetRow({ metadata: {} }));
+    const reviewRow = rows[0] as { metadata: Record<string, unknown> };
+    delete reviewRow.metadata.proposalSetId;
+    listMoveArtifacts.mockResolvedValue(rows);
+    const review: Record<string, unknown> = {
+      ...reviewWithOneOpenOptionalResponse(),
+    };
+    delete review.proposalSetId;
+    downloadArtifactBytes.mockResolvedValue(stored(review));
 
     await expect(
       loadStageReadinessPromptContext(ctx, "move-1", 2),

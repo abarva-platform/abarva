@@ -5,7 +5,9 @@ import {
   listMoveArtifacts,
 } from "@/lib/programs/deliverables/move-artifacts";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import { findCurrentStageReadinessProposalSetArtifact } from "./current-proposal-set";
 import {
+  isReviewForStageReadinessProposalSet,
   STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
   type StageReadinessAcceptedWorkbookResponse,
   type StageReadinessWorkbookProposal,
@@ -38,6 +40,14 @@ export interface AcceptedStageReadinessContext {
  * Keeping one read here, with each policy applied by its own caller, is what
  * stops the strict reading from being borrowed for the question it never
  * answered. See `loadStageReadinessPromptContext` for the prompt policy.
+ *
+ * "As it stands" is still a review OF THE UPLOAD UNDER REVIEW. A workbook
+ * re-uploaded after review leaves the earlier review as the current review
+ * artifact — the upload writes only a new set — and that review's accepted
+ * answers are answers to the previous upload. The page shows every response of
+ * the new upload as undecided, and the gate reads it the same way; neither
+ * reading may hand the old acceptances to a prompt. So both loaders here return
+ * null until a review is recorded against the current upload.
  */
 export interface StoredStageReadinessReview {
   moveId: string;
@@ -56,6 +66,17 @@ interface StageReadinessReviewArtifactRef {
   targetPhase: number;
   artifactId: string;
   version: number;
+  /**
+   * The upload under review, chosen exactly as the gate and the phase page
+   * choose it. A review's accepted answers are answers about ONE upload; a
+   * review recorded against an earlier upload accepted text the current upload
+   * may have changed or emptied, and nobody has looked at the current one yet.
+   */
+  currentProposalSet: {
+    proposalSetId: string;
+    artifactId: string;
+    artifactVersion: number | null;
+  };
   /**
    * The counts as recorded on the artifact row. The row and the body are
    * written from one summary, so they agree by construction; the finished-review
@@ -87,11 +108,40 @@ async function findStageReadinessReviewArtifact(
   );
   if (!reviewArtifact) return null;
   const metadata = reviewArtifact.metadata ?? {};
+
+  // Sets are written before reviews and never rewritten, so a review with no
+  // upload under review beside it has nothing current to vouch for.
+  const proposalSetArtifact = findCurrentStageReadinessProposalSetArtifact(
+    artifacts,
+    sourcePhase,
+  );
+  if (!proposalSetArtifact) return null;
+  const proposalSetId = proposalSetArtifact.metadata?.proposalSetId;
+  if (typeof proposalSetId !== "string" || !proposalSetId) return null;
+  const currentProposalSet = {
+    proposalSetId,
+    artifactId: proposalSetArtifact.artifact_id,
+    artifactVersion: proposalSetArtifact.version,
+  };
+  // The row first, so a superseded review is refused without downloading it;
+  // the body is asserted again after the download.
+  if (
+    !isReviewForStageReadinessProposalSet({
+      proposalSet: currentProposalSet,
+      review: metadata as Parameters<
+        typeof isReviewForStageReadinessProposalSet
+      >[0]["review"],
+    })
+  ) {
+    return null;
+  }
+
   return {
     sourcePhase,
     targetPhase,
     artifactId: reviewArtifact.artifact_id,
     version: reviewArtifact.version,
+    currentProposalSet,
     metadataCounts: {
       pendingCount: numberFrom(metadata.pendingCount),
       needsValidationCount: numberFrom(metadata.needsValidationCount),
@@ -121,6 +171,17 @@ async function readStageReadinessReviewBody(
     review.moveId !== moveId ||
     review.transition?.fromPhase !== ref.sourcePhase ||
     review.transition?.toPhase !== ref.targetPhase
+  ) {
+    return null;
+  }
+  // Membership, asserted on the body as well as the row, the same pair of
+  // checks `loadStageReadinessStoredReview` makes before the page or the gate
+  // honours a stored review.
+  if (
+    !isReviewForStageReadinessProposalSet({
+      proposalSet: ref.currentProposalSet,
+      review,
+    })
   ) {
     return null;
   }
