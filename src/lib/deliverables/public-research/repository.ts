@@ -27,6 +27,7 @@ import {
   PUBLIC_SOURCE_KIND,
   PUBLIC_SOURCES_PER_RUN_MAX,
   RESEARCH_RUN_STATUSES,
+  normalizeReviewNote,
   validatePublicSource,
   validateResearchRun,
   type NewPublicSource,
@@ -49,10 +50,19 @@ export const RUN_COLUMNS =
 export const SOURCE_COLUMNS =
   "id, tenant_key, program_id, run_id, kind, url, title, publisher, published_at, retrieved_at, excerpt, claim, confidence, decision, reviewed_by_user_id, reviewed_at, created_at";
 
+/**
+ * The review surfaces read the reviewer's note as well. It is a separate list
+ * because its column ships in a later migration
+ * (`20261010140000_move_public_source_review_note.sql`): the research step's
+ * writes select SOURCE_COLUMNS only, so they never depend on it.
+ */
+export const REVIEW_SOURCE_COLUMNS = `${SOURCE_COLUMNS}, review_note`;
+
 /** The unique key the database enforces; the writer names it in ON CONFLICT. */
 export const SOURCE_DEDUPE_CONFLICT = "tenant_key,program_id,url,excerpt_md5";
 
 const APPROVED_LIST_LIMIT = 200;
+export const REVIEW_LIST_LIMIT = 200;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -229,6 +239,7 @@ export function rowToPublicSource(row: Row): PublicSource | null {
     decision,
     reviewedByUserId: text(row.reviewed_by_user_id),
     reviewedAt: timestamp(row.reviewed_at),
+    reviewNote: text(row.review_note),
     createdAt,
   };
 }
@@ -607,10 +618,64 @@ export async function listApprovedPublicSources(
   }
 }
 
+export interface ListPublicSourcesOptions {
+  /** Only sources with this decision; every decision when absent. */
+  decision?: PublicSourceDecision;
+}
+
+/**
+ * Every public source stored for one Move, newest first, optionally filtered
+ * by decision — the review queue's read. Pending sources are listed here so a
+ * reviewer can decide them; nothing here makes a source citable.
+ */
+export async function listPublicSources(
+  scope: PublicResearchScope,
+  options: ListPublicSourcesOptions = {},
+): Promise<
+  ListSourcesResult | { ok: false; reason: "invalid_input"; detail: string }
+> {
+  const fence = fenceFor(scope);
+  if (isScopeFailure(fence)) return fence;
+  const decision = options.decision;
+  if (
+    decision !== undefined &&
+    !(PUBLIC_SOURCE_DECISIONS as readonly string[]).includes(decision)
+  ) {
+    return {
+      ok: false,
+      reason: "invalid_input",
+      detail: `decision must be one of ${PUBLIC_SOURCE_DECISIONS.join(", ")}`,
+    };
+  }
+  try {
+    const db = getAzureWriteFluentClient();
+    let query = db
+      .from(SOURCES_TABLE)
+      .select(REVIEW_SOURCE_COLUMNS)
+      .in("tenant_key", fence.tenantKeys)
+      .eq("program_id", fence.programId)
+      .eq("kind", PUBLIC_SOURCE_KIND);
+    if (decision !== undefined) query = query.eq("decision", decision);
+    const { data, error } = await query
+      .order("created_at", { ascending: false })
+      .limit(REVIEW_LIST_LIMIT);
+    if (error)
+      return { ok: false, reason: "read_failed", detail: errorDetail(error) };
+    const sources = (Array.isArray(data) ? (data as Row[]) : [])
+      .map(rowToPublicSource)
+      .filter((source): source is PublicSource => source !== null);
+    return { ok: true, sources };
+  } catch (error) {
+    return { ok: false, reason: "read_failed", detail: errorDetail(error) };
+  }
+}
+
 export interface DecidePublicSourceInput {
   sourceId: string;
   decision: PublicSourceReviewDecision;
   reviewerUserId: string;
+  /** Why; optional, at most PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS characters. */
+  note?: string | null;
   /** Defaults to now. */
   decidedAt?: string;
 }
@@ -667,6 +732,14 @@ export async function decidePublicSource(
       detail: "source id must be a UUID",
     };
   }
+  const note = normalizeReviewNote(input.note);
+  if (!note.ok) {
+    return {
+      ok: false,
+      reason: "invalid_input",
+      detail: note.reasons.join("; "),
+    };
+  }
   const decidedAt = input.decidedAt ?? new Date().toISOString();
   if (Number.isNaN(Date.parse(decidedAt))) {
     return {
@@ -681,7 +754,7 @@ export async function decidePublicSource(
     const db = getAzureWriteFluentClient();
     const { data: current, error: readError } = await db
       .from(SOURCES_TABLE)
-      .select(SOURCE_COLUMNS)
+      .select(REVIEW_SOURCE_COLUMNS)
       .eq("id", input.sourceId)
       .in("tenant_key", fence.tenantKeys)
       .eq("program_id", fence.programId)
@@ -716,12 +789,13 @@ export async function decidePublicSource(
         decision: input.decision,
         reviewed_by_user_id: reviewer,
         reviewed_at: decidedAt,
+        review_note: note.value,
       })
       .eq("id", input.sourceId)
       .in("tenant_key", fence.tenantKeys)
       .eq("program_id", fence.programId)
       .eq("decision", "pending")
-      .select(SOURCE_COLUMNS);
+      .select(REVIEW_SOURCE_COLUMNS);
     if (writeError)
       return {
         ok: false,

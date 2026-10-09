@@ -220,10 +220,15 @@ import {
   insertPublicSources,
   insertResearchRun,
   listApprovedPublicSources,
+  listPublicSources,
+  REVIEW_LIST_LIMIT,
+  REVIEW_SOURCE_COLUMNS,
   SOURCE_COLUMNS,
   SOURCE_DEDUPE_CONFLICT,
 } from "../public-research/repository";
+import { PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS } from "../public-research/review-contract";
 import {
+  normalizeReviewNote,
   PUBLIC_SOURCE_EXCERPT_MAX_CHARS,
   PUBLIC_SOURCES_PER_RUN_MAX,
   type NewPublicSource,
@@ -680,7 +685,10 @@ describe("decidePublicSource", () => {
       decision: "approved",
       reviewed_by_user_id: "reviewer-1",
       reviewed_at: "2026-10-10T05:00:00.000Z",
+      review_note: null,
     });
+    expect(update.columns).toBe(REVIEW_SOURCE_COLUMNS);
+    expect(result.source.reviewNote).toBeNull();
     expect(tenantFilterOf(update).sort()).toEqual(
       tenantAliasesFor(THIS_TENANT).sort(),
     );
@@ -785,6 +793,180 @@ describe("decidePublicSource", () => {
         reviewerUserId: "  ",
       }),
     ).toEqual(expect.objectContaining({ ok: false, reason: "invalid_input" }));
+    expect(mockCalls).toHaveLength(0);
+  });
+});
+
+describe("decidePublicSource · the reviewer's note", () => {
+  it("stores a trimmed note with the decision and reads it back", async () => {
+    const row = seedSource({});
+    const result = await decidePublicSource(scope, {
+      sourceId: String(row.id),
+      decision: "rejected",
+      reviewerUserId: "reviewer-1",
+      note: "  Applies to a different program year.  ",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(row.review_note).toBe("Applies to a different program year.");
+    expect(result.source.reviewNote).toBe(
+      "Applies to a different program year.",
+    );
+    const read = mockCalls.find(
+      (c) => c.table === "move_public_sources" && c.op === "select",
+    )!;
+    expect(read.columns).toBe(REVIEW_SOURCE_COLUMNS);
+  });
+
+  it("stores a blank note as no note", async () => {
+    const row = seedSource({});
+    await decidePublicSource(scope, {
+      sourceId: String(row.id),
+      decision: "approved",
+      reviewerUserId: "reviewer-1",
+      note: "   ",
+    });
+    expect(row.review_note).toBeNull();
+  });
+
+  it(`refuses a note over ${PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS} characters without touching the store`, async () => {
+    const row = seedSource({});
+    const atLimit = "n".repeat(PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS);
+    expect(normalizeReviewNote(atLimit)).toEqual({ ok: true, value: atLimit });
+    const result = await decidePublicSource(scope, {
+      sourceId: String(row.id),
+      decision: "approved",
+      reviewerUserId: "reviewer-1",
+      note: `${atLimit}n`,
+    });
+    expect(result).toEqual(
+      expect.objectContaining({ ok: false, reason: "invalid_input" }),
+    );
+    expect(mockCalls).toHaveLength(0);
+    expect(row.decision).toBe("pending");
+  });
+
+  it("counts a note's length in characters, not UTF-16 units, and refuses a non-text note", () => {
+    const astral = "\u{1F600}".repeat(PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS);
+    expect(normalizeReviewNote(astral).ok).toBe(true);
+    expect(normalizeReviewNote(42)).toEqual(
+      expect.objectContaining({ ok: false }),
+    );
+    expect(normalizeReviewNote(undefined)).toEqual({ ok: true, value: null });
+    expect(normalizeReviewNote(null)).toEqual({ ok: true, value: null });
+  });
+});
+
+describe("listPublicSources", () => {
+  function seedAllDecisions() {
+    const pending = seedSource({
+      excerpt: "pending",
+      created_at: "2026-10-10T03:00:00.000Z",
+    });
+    const pendingCanonical = seedSource({
+      tenant_key: THIS_CANONICAL,
+      excerpt: "pending under the canonical key",
+      created_at: "2026-10-10T01:00:00.000Z",
+    });
+    const approved = seedSource({
+      excerpt: "approved",
+      decision: "approved",
+      reviewed_by_user_id: "user-1",
+      reviewed_at: "2026-10-10T04:00:00.000Z",
+      review_note: "Current rule.",
+      created_at: "2026-10-10T02:00:00.000Z",
+    });
+    const rejected = seedSource({
+      excerpt: "rejected",
+      decision: "rejected",
+      reviewed_by_user_id: "user-1",
+      reviewed_at: "2026-10-10T04:00:00.000Z",
+      created_at: "2026-10-10T00:30:00.000Z",
+    });
+    const theirs = seedSource({
+      tenant_key: OTHER_TENANT,
+      excerpt: "other tenant, same Move id",
+    });
+    const otherMove = seedSource({
+      program_id: OTHER_MOVE,
+      excerpt: "this tenant, other Move",
+    });
+    return { pending, pendingCanonical, approved, rejected, theirs, otherMove };
+  }
+
+  it("lists every decision for this tenant and Move, newest first, and nothing else", async () => {
+    const rows = seedAllDecisions();
+    const result = await listPublicSources(scope);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.sources.map((s) => s.id)).toEqual([
+      rows.pending.id,
+      rows.approved.id,
+      rows.pendingCanonical.id,
+      rows.rejected.id,
+    ]);
+    expect(
+      result.sources.find((s) => s.id === rows.approved.id)!.reviewNote,
+    ).toBe("Current rule.");
+    const read = mockCalls.find((c) => c.table === "move_public_sources")!;
+    expect(read.columns).toBe(REVIEW_SOURCE_COLUMNS);
+    expect(tenantFilterOf(read).sort()).toEqual(
+      tenantAliasesFor(THIS_TENANT).sort(),
+    );
+    expect(read.filters).toEqual(
+      expect.arrayContaining([
+        { op: "eq", column: "program_id", value: MOVE },
+        { op: "eq", column: "kind", value: "public_source" },
+      ]),
+    );
+    expect(read.filters.some((f) => f.column === "decision")).toBe(false);
+    expect(read.order).toEqual({ column: "created_at", ascending: false });
+    expect(read.limit).toBe(REVIEW_LIST_LIMIT);
+  });
+
+  it.each(["pending", "approved", "rejected"] as const)(
+    "filters to %s sources only",
+    async (decision) => {
+      seedAllDecisions();
+      const result = await listPublicSources(scope, { decision });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.sources.length).toBeGreaterThan(0);
+      expect(result.sources.every((s) => s.decision === decision)).toBe(true);
+      const read = mockCalls.find((c) => c.table === "move_public_sources")!;
+      expect(read.filters).toContainEqual({
+        op: "eq",
+        column: "decision",
+        value: decision,
+      });
+    },
+  );
+
+  it("refuses an unknown decision filter without reading", async () => {
+    const result = await listPublicSources(scope, {
+      decision: "maybe" as never,
+    });
+    expect(result).toEqual(
+      expect.objectContaining({ ok: false, reason: "invalid_input" }),
+    );
+    expect(mockCalls).toHaveLength(0);
+  });
+
+  it("reports a failed read as a failure, never as no sources", async () => {
+    seedAllDecisions();
+    mockState.failOn = { table: "move_public_sources", op: "select" };
+    expect(await listPublicSources(scope)).toEqual(
+      expect.objectContaining({ ok: false, reason: "read_failed" }),
+    );
+  });
+
+  it("refuses a bad scope before touching the store", async () => {
+    expect(await listPublicSources({ tenantKey: "", programId: MOVE })).toEqual(
+      expect.objectContaining({ ok: false, reason: "invalid_scope" }),
+    );
+    expect(
+      await listPublicSources({ tenantKey: THIS_TENANT, programId: "move-1" }),
+    ).toEqual(expect.objectContaining({ ok: false, reason: "invalid_scope" }));
     expect(mockCalls).toHaveLength(0);
   });
 });

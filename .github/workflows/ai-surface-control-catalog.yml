@@ -336,6 +336,13 @@ jobs:
       # a sign-off the screen offered no way to give. A declared-AI-surface
       # control that disappears on a read nobody checked belongs in this step.
       # Eight of eight pass on this commit.
+      #
+      # The last path below is the review queue for outside public sources:
+      # the approve and reject controls that decide whether a public web page
+      # found by the audited research step may ever be cited in a Move
+      # deliverable, and the label that keeps such a page from reading as a
+      # fact about the client. An approval control over AI-retrieved content
+      # belongs in this step; the directory is not swept, so it is named.
       - name: Exercise Moves visible AI liability controls
         run: >-
           npx jest --runTestsByPath
@@ -391,6 +398,7 @@ jobs:
           src/components/strategic-moves/__tests__/moves-capture-composer-streaming.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.upload-retention.test.tsx
           src/components/strategic-moves/__tests__/phase-documents-panel-sign-off-readback.test.tsx
+          src/components/strategic-moves/__tests__/PublicSourcesReviewPanel.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
