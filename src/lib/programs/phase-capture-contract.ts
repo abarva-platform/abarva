@@ -5,6 +5,7 @@ import {
 } from "@/lib/programs/solution-route-assessment";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 import { p1CharterEvidenceFamilyForSection } from "@/lib/programs/p1-charter-evidence";
+import { resolveChangeProfile } from "@/lib/programs/phase-workflow-registry";
 
 export interface PhaseCaptureSection {
   key: string;
@@ -496,16 +497,11 @@ export function getPhaseCaptureSections(
   if (phase === 1) return P1_CAPTURE_SECTIONS;
   if (phase === 2) return P2_CAPTURE_SECTIONS;
   if (phase === 3) {
-    if (confirmedSolutionRoute?.route === "technical_product") {
-      return P3_TECHNICAL_PRODUCT_CAPTURE_SECTIONS;
-    }
-    if (
-      confirmedSolutionRoute?.route === "process_change" &&
-      confirmedSolutionRoute.workflowChange !== "material" &&
-      confirmedSolutionRoute.roleAccountabilityChange !== "material"
-    ) {
-      return P3_LIMITED_PROCESS_CAPTURE_SECTIONS;
-    }
+    // The change profile is declared once, in the phase workflow registry, so
+    // capture and the step depths read the same rule.
+    const profile = resolveChangeProfile(confirmedSolutionRoute);
+    if (profile === "technical") return P3_TECHNICAL_PRODUCT_CAPTURE_SECTIONS;
+    if (profile === "limited") return P3_LIMITED_PROCESS_CAPTURE_SECTIONS;
     return P3_CAPTURE_SECTIONS;
   }
   if (phase === 4) return P4_CAPTURE_SECTIONS;
