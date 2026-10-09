@@ -759,6 +759,23 @@ export async function ingestUploadedMoveEvidence(
 }
 
 /**
+ * Why `decideEvidenceReview` refused, for a caller that has to prescribe a
+ * different next action for each.
+ *
+ * - `reviewed_extraction_missing` — approval arrived without the human-reviewed
+ *   extraction. The route guards this before it calls, so it is unreachable
+ *   from the route; it stays named for a non-route caller.
+ * - `already_decided` — a review row for this evidence exists in this Move but
+ *   no PENDING one matched, so it was decided already, here or elsewhere.
+ * - `evidence_not_found` — neither a review row nor an evidence row exists for
+ *   this id in this Move. Nothing was ever recorded to re-read.
+ */
+export type EvidenceReviewRefusalReason =
+  | "reviewed_extraction_missing"
+  | "already_decided"
+  | "evidence_not_found";
+
+/**
  * The governed promotion: flip a pending document review to approved/rejected.
  * This is what turns review_required → committed for the readiness resolver.
  * Service-role scoped + audited; tenant + move are enforced in the predicate.
@@ -777,6 +794,17 @@ export async function decideEvidenceReview(
   evidenceId: string;
   familyKey: string | null;
   decision: ReviewDecision;
+  /**
+   * Which refusal this is, when `ok` is false. Three different situations used
+   * to share one `ok: false` and the route had no way to tell them apart, so it
+   * answered all three with `no_pending_review` — including the one where the
+   * evidence is not in this Move at all, whose reviewer was then told to reload
+   * and read a decision that does not exist. `familyKey` cannot stand in for
+   * this: `family_key` is nullable in the row, so an existing review can report
+   * the same `(decision: "pending", familyKey: null)` shape as a missing one.
+   * Undefined when `ok` is true.
+   */
+  reason?: EvidenceReviewRefusalReason;
 }> {
   const tenantKey = ctx.clientKey ?? "";
   // The rows this promotion may MATCH, which is a read-scope question and not
@@ -801,6 +829,7 @@ export async function decideEvidenceReview(
         evidenceId: args.evidenceId,
         familyKey: null,
         decision: "pending",
+        reason: "reviewed_extraction_missing",
       };
     }
     const { data: pendingReview, error: pendingReviewError } = await sb
@@ -874,6 +903,7 @@ export async function decideEvidenceReview(
         evidenceId: args.evidenceId,
         familyKey: existing.family_key,
         decision: existing.decision,
+        reason: "already_decided",
       };
     }
 
@@ -936,6 +966,7 @@ export async function decideEvidenceReview(
       evidenceId: args.evidenceId,
       familyKey: null,
       decision: "pending",
+      reason: "evidence_not_found",
     };
   }
 

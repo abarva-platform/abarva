@@ -27,7 +27,9 @@ import { FileCabinetPanel } from "../FileCabinetPanel";
 import {
   describeEvidenceCabinetReadback,
   describeEvidenceDecisionRefusal,
+  describeAlreadyDecidedEvidenceReview,
   EVIDENCE_DECISION_REFUSAL_CODES,
+  EVIDENCE_DECISION_REFUSAL_STATE,
   isEvidenceDecisionRefusalCode,
 } from "@/lib/programs/evidence-cabinet-readback";
 
@@ -130,13 +132,15 @@ describe("evidence cabinet readback state", () => {
 
 describe("refused evidence review decisions", () => {
   it("names every refusal code the approve route declares", () => {
-    // The route's four declared codes. A fifth added there and not here would
-    // fall through to the default sentence, so the list is asserted whole.
+    // The route's declared codes. One added there and not here would fall
+    // through to the default sentence, so the list is asserted whole.
     expect([...EVIDENCE_DECISION_REFUSAL_CODES]).toEqual([
       "not_found",
       "forbidden",
       "reviewed_extraction_required",
       "no_pending_review",
+      "evidence_not_in_move",
+      "review_decision_unconfirmed",
     ]);
     for (const code of EVIDENCE_DECISION_REFUSAL_CODES) {
       expect(isEvidenceDecisionRefusalCode(code)).toBe(true);
@@ -163,14 +167,85 @@ describe("refused evidence review decisions", () => {
   it("keeps an unrecognised code out of the reviewer's sentence", () => {
     const sentence = describeEvidenceDecisionRefusal({ code: "wat_is_this" });
     expect(sentence).not.toContain("wat_is_this");
-    expect(sentence).toMatch(/not recorded/);
+    expect(sentence).toMatch(/not confirmed/);
   });
 
-  it("states that nothing was approved when the code is unnamed", () => {
+  it("does not settle whether the decision landed when nothing is readable", () => {
     // The reviewer's real question after a failure is whether the decision
-    // half-landed.
-    expect(describeEvidenceDecisionRefusal({ code: undefined })).toMatch(
-      /nothing was approved/,
+    // half-landed, and this is the one arm reached when the client could read
+    // no answer at all — an unbodied 500 parses to `{}`. It used to assert
+    // "nothing was approved", which is a claim about a write nobody read back:
+    // the promotion's update is what throws, and neither the route nor this
+    // screen re-reads the row to find out whether it applied.
+    const sentence = describeEvidenceDecisionRefusal({ code: undefined });
+    expect(sentence).not.toMatch(/nothing was approved/);
+    expect(sentence).not.toMatch(/unchanged/);
+    expect(sentence).toMatch(/cannot tell whether it was recorded/);
+    expect(sentence).toMatch(/[Rr]eload/);
+  });
+
+  it("tells a reviewer whose evidence is not on the Move that nothing is there to re-read", () => {
+    // Split out of `no_pending_review`, whose sentence promises a recorded
+    // decision to reload and read. There is none: neither a review row nor an
+    // evidence row exists for this id on this Move.
+    const sentence = describeEvidenceDecisionRefusal({
+      code: "evidence_not_in_move",
+    });
+    expect(sentence).toMatch(/not on this Move/);
+    expect(sentence).toMatch(/nothing was recorded/);
+    expect(sentence).not.toMatch(/already decided/);
+  });
+
+  it("claims no direction for an unconfirmed decision", () => {
+    const sentence = describeEvidenceDecisionRefusal({
+      code: "review_decision_unconfirmed",
+    });
+    expect(sentence).toMatch(/may or may not/);
+    expect(sentence).not.toMatch(/nothing was recorded/);
+  });
+
+  it("lets every sentence claim only what its recorded state allows", () => {
+    // The state labels are the contract; the sentences are read against them so
+    // a reworded one cannot quietly start asserting a write it never read.
+    const claimsNothingLanded = /nothing was recorded|nothing was approved/;
+    const claimsSomethingLanded = /already on record|already\s+decided/;
+    for (const code of EVIDENCE_DECISION_REFUSAL_CODES) {
+      const sentence = describeEvidenceDecisionRefusal({ code });
+      const state = EVIDENCE_DECISION_REFUSAL_STATE[code];
+      if (state === "unknown") {
+        expect(sentence).not.toMatch(claimsNothingLanded);
+        expect(sentence).not.toMatch(claimsSomethingLanded);
+      }
+      if (state === "recorded") {
+        expect(sentence).not.toMatch(claimsNothingLanded);
+      }
+    }
+    // Non-vacuous: at least one code sits in each label this asserts over.
+    const labels = EVIDENCE_DECISION_REFUSAL_CODES.map(
+      (code) => EVIDENCE_DECISION_REFUSAL_STATE[code],
+    );
+    expect(labels).toContain("unknown");
+    expect(labels).toContain("recorded");
+    expect(labels).toContain("nothing");
+  });
+
+  it("names the decision on record when the promotion knows it", () => {
+    expect(describeAlreadyDecidedEvidenceReview("rejected")).toMatch(
+      /already on record as rejected/,
+    );
+    expect(describeAlreadyDecidedEvidenceReview("approved")).toMatch(
+      /already on record as approved/,
+    );
+  });
+
+  it("falls back to the unnamed-decision sentence when it does not", () => {
+    // A review row can exist with `decision = 'pending'` and still fail the
+    // promotion's pending-filtered update, so the decision is not always known.
+    expect(describeAlreadyDecidedEvidenceReview("pending")).toBe(
+      describeEvidenceDecisionRefusal({ code: "no_pending_review" }),
+    );
+    expect(describeAlreadyDecidedEvidenceReview(undefined)).toBe(
+      describeEvidenceDecisionRefusal({ code: "no_pending_review" }),
     );
   });
 

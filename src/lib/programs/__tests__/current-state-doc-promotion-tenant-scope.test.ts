@@ -326,3 +326,73 @@ describe("decideEvidenceReview — tenant match scope", () => {
     expect(mockReviewRows[0]?.tenant_key).toBe(CANONICAL_KEY);
   });
 });
+
+describe("the promotion says WHICH refusal this is", () => {
+  /**
+   * Three different situations used to share one bare `ok: false`, and the
+   * route answered all three with `no_pending_review` — whose reviewer sentence
+   * states the decision was already recorded and sends them to reload and read
+   * it. For the one where the evidence is not on the Move at all there is
+   * nothing to read, so the sentence was a fabrication. The route can only tell
+   * them apart if the promotion reports the reason, and `familyKey` cannot
+   * stand in: `family_key` is nullable, so an existing review can report the
+   * same shape as a missing one.
+   */
+  it("reports evidence that is not on this Move as not found", async () => {
+    const result = await approve(APP_KEY);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe("evidence_not_found");
+    expect(mockInserts).toHaveLength(0);
+  });
+
+  it("reports another tenant's rows as not found rather than already decided", async () => {
+    // The widened match is never a way in, and the refusal must not imply a
+    // decision exists for this tenant to read.
+    mockReviewRows.push(review(OTHER_TENANT_KEY, "pending"));
+    mockEvidenceRows.push(evidence(OTHER_TENANT_KEY));
+
+    const result = await approve(APP_KEY);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe("evidence_not_found");
+  });
+
+  it("reports an already-decided review as already decided, with its decision", async () => {
+    mockReviewRows.push(review(CANONICAL_KEY, "rejected"));
+    mockEvidenceRows.push(evidence(CANONICAL_KEY));
+
+    const result = await approve(APP_KEY);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe("already_decided");
+    expect(result.decision).toBe("rejected");
+  });
+
+  it("reports a missing reviewed extraction as its own refusal", async () => {
+    mockReviewRows.push(review(CANONICAL_KEY, "pending"));
+    mockEvidenceRows.push(evidence(CANONICAL_KEY));
+
+    const result = await decideEvidenceReview(ctxFor(APP_KEY), {
+      moveId: MOVE_ID,
+      evidenceId: EVIDENCE_ID,
+      decision: "approved",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe("reviewed_extraction_missing");
+    expect(mockUpdates).toHaveLength(0);
+  });
+
+  it("reports no reason at all when the promotion succeeds", async () => {
+    // Non-vacuous: the reason field is a refusal discriminator, so a success
+    // that carried one would make every case above read as a refusal.
+    mockReviewRows.push(review(CANONICAL_KEY, "pending"));
+    mockEvidenceRows.push(evidence(CANONICAL_KEY));
+
+    const result = await approve(APP_KEY);
+
+    expect(result.ok).toBe(true);
+    expect(result.reason).toBeUndefined();
+  });
+});

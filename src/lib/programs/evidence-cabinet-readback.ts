@@ -132,6 +132,8 @@ export const EVIDENCE_DECISION_REFUSAL_CODES = [
   "forbidden",
   "reviewed_extraction_required",
   "no_pending_review",
+  "evidence_not_in_move",
+  "review_decision_unconfirmed",
 ] as const;
 
 export type EvidenceDecisionRefusalCode =
@@ -151,11 +153,77 @@ const REFUSAL_SENTENCES: Record<EvidenceDecisionRefusalCode, string> = {
     "This evidence has no review awaiting a decision — it was already " +
     "decided, here or in another session. Reload to see its recorded " +
     "decision; deciding it again is refused and will not change it.",
+  evidence_not_in_move:
+    "This evidence is not on this Move, so there is no review to decide and " +
+    "nothing was recorded. It is most likely a file whose evidence was never " +
+    "captured from the upload — reload the cabinet, and upload the source " +
+    "again if the item is still missing.",
+  review_decision_unconfirmed:
+    "The server could not confirm this review decision. It may or may not " +
+    "have been recorded, so do not assume either — reload the cabinet and " +
+    "read the evidence's own state before deciding it again.",
 };
 
+/**
+ * What each refusal lets a reviewer conclude about the recorded state, kept as
+ * DATA so the sentences can be asserted against it rather than read.
+ *
+ * - `nothing` — the refusal happens before any write, so the reviewer may be
+ *   told plainly that nothing was recorded.
+ * - `recorded` — a decision exists already; the refusal is the server declining
+ *   to change it.
+ * - `unknown` — the refusal is reachable on either side of the one write, so no
+ *   sentence may claim a direction. The governed promotion's write is a single
+ *   filtered update whose own error is what throws; the route never re-reads
+ *   the row to settle whether it applied, so neither does its reader.
+ */
+export const EVIDENCE_DECISION_REFUSAL_STATE: Record<
+  EvidenceDecisionRefusalCode,
+  "nothing" | "recorded" | "unknown"
+> = {
+  not_found: "nothing",
+  forbidden: "nothing",
+  reviewed_extraction_required: "nothing",
+  no_pending_review: "recorded",
+  evidence_not_in_move: "nothing",
+  review_decision_unconfirmed: "unknown",
+};
+
+/**
+ * Reached when the response carries no code this module names — and, above
+ * all, when it carries no readable body at all. That is the case in which the
+ * client knows LEAST, so it is the one sentence that must not settle the
+ * reviewer's real question for them. It used to end "the evidence state is
+ * unchanged and nothing was approved", which is a claim about a write whose
+ * outcome nobody read back.
+ */
 const UNNAMED_REFUSAL =
-  "The review decision was not recorded. Reload and try again; if it keeps " +
-  "failing, the evidence state is unchanged and nothing was approved.";
+  "The review decision was not confirmed, and this screen cannot tell " +
+  "whether it was recorded. Reload the cabinet and read the evidence's own " +
+  "state before deciding it again.";
+
+/**
+ * Say that this evidence was already decided, NAMING the decision on record.
+ *
+ * The `no_pending_review` sentence sends the reviewer to reload and read the
+ * recorded decision. The promotion already knows it, so when it is known this
+ * says it outright — a reviewer whose approval was refused because the item is
+ * on record as REJECTED is looking at a different problem from one whose
+ * approval simply landed twice, and "reload to see it" leaves them to guess
+ * which. Falls back to the unnamed-decision sentence when it is not known.
+ */
+export function describeAlreadyDecidedEvidenceReview(
+  recordedDecision: unknown,
+): string {
+  if (recordedDecision === "approved" || recordedDecision === "rejected") {
+    return (
+      `This evidence is already on record as ${recordedDecision}, decided ` +
+      "here or in another session, and nothing was recorded now. Reload the " +
+      "cabinet; deciding it again is refused and will not change it."
+    );
+  }
+  return REFUSAL_SENTENCES.no_pending_review;
+}
 
 /** True for a refusal code this module names. */
 export function isEvidenceDecisionRefusalCode(
