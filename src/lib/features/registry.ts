@@ -113,7 +113,8 @@ export type FeatureFlagKey =
   | "moves_charter_assumption_resolution_v1"
   | "moves_capture_phase_rollup_v1"
   | "moves_charter_standing_after_discover_v1"
-  | "moves_step_pages_v3";
+  | "moves_step_pages_v3"
+  | "moves_public_source_research";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -417,6 +418,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_step_pages_v3",
     summary:
       "2026-10-09: Renders Moves phase steps as the finalized step page template (five regions: step head, one next-action sentence with its count, a collapsed context line, grouped work rows, footer), one page per step declared in the phase workflow registry, with depth from the Move's change profile. First step: P3 Gate readiness, where gate checks, gate-document sign-off and the governed gate submission happen on one page through the existing build, sign-off and phase-gate-approval paths. Same capture keys, saves, documents and gate rules; only where and how the consultant acts changes. Requires moves_capture_v2. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_public_source_research",
+    summary:
+      "2026-10-10: Governed public-source research for Moves deliverable builds. Before a build assembles its evidence, a research step asks the audited Anthropic egress path (workload moves_public_research, offline lane) to search and fetch PUBLIC web pages on client-neutral subjects - program rules, payment rules, published studies - from a brief that carries no client names, figures or client text. Each source is stored for that tenant and Move only, with its https URL, retrieval date and a verbatim excerpt of at most 300 characters, and stays pending until a consultant approves it; nothing unapproved is cited, and an outside source is never presented as a fact about the client. This release adds the storage contract (runs and sources tables, repository, governance manifest) and the research step: a flagged Moves build searches once per brief (reused for 14 days), stores what the API cited as pending sources, and reports 'N outside sources found, awaiting review'; a timeout, denial or unreadable answer is recorded and the build continues with no outside sources. Nothing is cited yet; the review queue and citation rules ship later under this same flag. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
