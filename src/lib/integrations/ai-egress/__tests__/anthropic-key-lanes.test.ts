@@ -47,6 +47,11 @@ describe("anthropic key lanes", () => {
         "offline-generation",
       );
       expect(laneForWorkloadOrDefault("source_rfp")).toBe("offline-generation");
+      // Public-source research runs inside the build worker, before assembly,
+      // so it is billed with the build it serves, not as product traffic.
+      expect(laneForWorkloadOrDefault("moves_public_research")).toBe(
+        "offline-generation",
+      );
     });
 
     it("routes graders and pressure tests to qa-evaluation", () => {

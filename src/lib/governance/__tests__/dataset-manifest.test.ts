@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import {
   namesAPerson,
   resolveLoadApproval,
@@ -704,5 +707,60 @@ describe("resolveLoadApproval — Move-scoped (move_registry) loads", () => {
     expect(
       refusal([moveScopedManifest("move-abc")], binding({ tenant_key: "x" })),
     ).toBe("manifest client_key is not the tenant being loaded");
+  });
+});
+
+describe("public_source manifests", () => {
+  it("refuses a public_source dataset in shared corpus and admits it Move-scoped", () => {
+    const shared = validateManifest(
+      manifest({
+        source_layer: "public_source",
+        client_key: "corpus_global",
+        tenant_scope: "corpus_global",
+      }),
+    );
+    expect(shared.ok).toBe(false);
+    expect(shared.errors).toContain(
+      "source_layer public_source cannot be loaded into corpus_global",
+    );
+    const moveScoped = validateManifest(
+      manifest({
+        source_layer: "public_source",
+        client_key: null,
+        tenant_scope: "move_registry",
+      }),
+    );
+    expect(moveScoped).toEqual({ ok: true, errors: [], warnings: [] });
+  });
+
+  it("the committed Moves public-source research manifest validates as declared", () => {
+    const raw = JSON.parse(
+      readFileSync(
+        join(
+          process.cwd(),
+          "docs/governance/dataset-manifests/moves-public-source-research-v1.json",
+        ),
+        "utf8",
+      ),
+    );
+    expect(validateManifest(raw)).toEqual({
+      ok: true,
+      errors: [],
+      warnings: [],
+    });
+    expect(raw).toEqual(
+      expect.objectContaining({
+        dataset_id: "moves_public_source_research_v1",
+        source_layer: "public_source",
+        tenant_scope: "move_registry",
+        client_key: null,
+        classification: "internal",
+        retrieval_plan: "move_scoped_prompt_context",
+        source_basis:
+          "Public web pages retrieved by the Anthropic web search/fetch tools; URL and retrieval date per object",
+        load_approval: null,
+        serving_approval: null,
+      }),
+    );
   });
 });
