@@ -14,6 +14,7 @@ import {
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { MoveArtifactRow } from "@/lib/programs/deliverables/move-artifacts";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import type { MoveReviewDecisionRefusalCode } from "@/lib/programs/move-review-decision-refusal";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -122,7 +123,11 @@ export async function GET(
     const { programId, artifactId } = await params;
     const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
     const state = await loadReviewState(ctx, programId, artifactId);
-    if (!state) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!state)
+      return Response.json(
+        { error: "not_found" satisfies MoveReviewDecisionRefusalCode },
+        { status: 404 },
+      );
     return Response.json({
       ok: true,
       artifact: {
@@ -160,7 +165,7 @@ export async function POST(
     ) {
       return Response.json(
         {
-          error: "forbidden",
+          error: "forbidden" satisfies MoveReviewDecisionRefusalCode,
           detail:
             "Only an authorized workspace user can record review decisions.",
         },
@@ -168,7 +173,11 @@ export async function POST(
       );
     }
     const state = await loadReviewState(ctx, programId, artifactId);
-    if (!state) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!state)
+      return Response.json(
+        { error: "not_found" satisfies MoveReviewDecisionRefusalCode },
+        { status: 404 },
+      );
 
     const body = (await req.json().catch(() => null)) as Record<
       string,
@@ -178,12 +187,15 @@ export async function POST(
     const rationale =
       typeof body?.rationale === "string" ? body.rationale.trim() : "";
     if (!decision) {
-      return Response.json({ error: "invalid_decision" }, { status: 400 });
+      return Response.json(
+        { error: "invalid_decision" satisfies MoveReviewDecisionRefusalCode },
+        { status: 400 },
+      );
     }
     if (!rationale) {
       return Response.json(
         {
-          error: "rationale_required",
+          error: "rationale_required" satisfies MoveReviewDecisionRefusalCode,
           detail: "Review decisions require a rationale.",
         },
         { status: 400 },

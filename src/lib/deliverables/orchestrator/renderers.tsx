@@ -209,6 +209,12 @@ function lightTable(
     if (label === "type") {
       return 1.1;
     }
+    if (label === "group") {
+      return 0.8;
+    }
+    if (/^requirements?$/.test(label)) {
+      return 3;
+    }
     if (/\b(status|confidence|rating|family|date)\b/.test(label)) {
       return 0.85;
     }

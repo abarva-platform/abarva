@@ -32,6 +32,7 @@ import {
   EVIDENCE_DECISION_REFUSAL_STATE,
   isEvidenceDecisionRefusalCode,
 } from "@/lib/programs/evidence-cabinet-readback";
+import { describeMoveReviewDecisionRefusal } from "@/lib/programs/move-review-decision-refusal";
 
 const PENDING_REVIEW = {
   evidenceId: "evidence-1",
@@ -382,5 +383,205 @@ describe("the cabinet surfaces its own readback state", () => {
     });
     expect(screen.queryByText(/no_pending_review/)).toBeNull();
     expect(screen.queryByText(/HTTP 409/)).toBeNull();
+  });
+});
+
+/**
+ * A phase-2 current artifact whose download URL is under this Move, which is
+ * what `supportsWorkspaceReviewDecisionArtifact` requires before the row
+ * fetches its review packet at all.
+ */
+const REVIEWABLE_ARTIFACT = {
+  artifactId: "artifact-1",
+  artifactType: "discovery_report",
+  family: "generated_deliverable",
+  title: "Service diagnostic",
+  phase: 2,
+  fileFormat: "html",
+  fileName: "diagnostic.html",
+  version: 1,
+  status: "review_required",
+  lifecycleState: "current",
+  qualityScore: null,
+  unsupportedClaims: 0,
+  createdAt: "2026-09-30T00:00:00Z",
+  fileSize: 1000,
+  stored: "azure_blob",
+  openItems: [],
+  downloadUrl: "/api/v1/programs/move-1/artifacts/artifact-1/download",
+};
+
+const REVIEW_PACKET = {
+  ok: true,
+  canRecordDecision: true,
+  reviewPackage: {
+    htmlVisualCompanionArtifactId: null,
+    docxEditableArtifactId: null,
+  },
+  packet: {
+    diagnosticThesis: "Baseline spend is unmanaged.",
+    quantifiedFacts: [],
+    strongestEvidence: [],
+    knownLimitations: [],
+    missingEvidence: [],
+    p3Implication: "Shape the governed-foundation route.",
+  },
+  latestDecision: null,
+  readiness: {
+    readyForP3Draft: false,
+    readyForP3Final: false,
+    p2FinalApproved: false,
+    reason: "No decision recorded.",
+  },
+};
+
+/**
+ * Serve the artifacts list, then answer the review-decision route with
+ * `respond`. The cabinet GETs that route on open and POSTs it on a decision,
+ * so one hook covers both calls.
+ */
+function mockCabinet(
+  respond: (method: string) => {
+    ok: boolean;
+    status: number;
+    body: Record<string, unknown>;
+  },
+) {
+  global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+    const method = init?.method ?? "GET";
+    if (String(url).includes("/review-decision")) {
+      const out = respond(method);
+      return {
+        ok: out.ok,
+        status: out.status,
+        json: async () => out.body,
+      } as Response;
+    }
+    return {
+      ok: true,
+      json: async () => artifactsBody({ artifacts: [REVIEWABLE_ARTIFACT] }),
+    } as Response;
+  }) as unknown as typeof fetch;
+}
+
+describe("the cabinet states why a review decision was refused", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("explains a failed packet read instead of printing its code", async () => {
+    // The GET failure is the worse of the two: clearing `workspaceReview`
+    // hides the packet AND every decision control, so a bare `not_found` left
+    // the reviewer with no account of the missing controls.
+    mockCabinet(() => ({
+      ok: false,
+      status: 404,
+      body: { error: "not_found" },
+    }));
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+    // The packet GET only fires once the row's Review panel is open.
+    fireEvent.click(await screen.findByRole("button", { name: "Review" }));
+
+    const refusal = await screen.findByText(/controls are hidden/);
+    expect(refusal).toBeInTheDocument();
+    expect(refusal.textContent).toBe(
+      describeMoveReviewDecisionRefusal({
+        action: "load",
+        code: "not_found",
+      }),
+    );
+    expect(screen.queryByText(/not_found/)).toBeNull();
+    expect(screen.queryByText(/HTTP 404/)).toBeNull();
+    // And it does not claim a decision was lost, because the GET writes
+    // nothing.
+    expect(screen.queryByText(/NOT recorded/)).toBeNull();
+  });
+
+  it("carries the route's own prose detail through on a failed read", async () => {
+    // The GET reader read `json.error` alone, so a sentence the route DID
+    // send was dropped in favour of the code beside it.
+    mockCabinet(() => ({
+      ok: false,
+      status: 503,
+      body: {
+        error: "tenant_lookup_unavailable",
+        detail: "Tenant lookup is temporarily unavailable. Retry shortly.",
+      },
+    }));
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+    fireEvent.click(await screen.findByRole("button", { name: "Review" }));
+
+    expect(
+      await screen.findByText(
+        "Tenant lookup is temporarily unavailable. Retry shortly.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/tenant_lookup_unavailable/)).toBeNull();
+  });
+
+  it("tells a reviewer whose decision was refused that nothing was recorded", async () => {
+    mockCabinet((method) =>
+      method === "POST"
+        ? { ok: false, status: 404, body: { error: "not_found" } }
+        : { ok: true, status: 200, body: REVIEW_PACKET },
+    );
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Review" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Approve for P3 draft" }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/NOT recorded/)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/not_found/)).toBeNull();
+    expect(screen.queryByText(/HTTP 404/)).toBeNull();
+  });
+
+  it("says a refusal it cannot name may still have been recorded", async () => {
+    // The catch-all also covers a 5xx thrown after the row was written, so
+    // claiming nothing was recorded would be a guess.
+    mockCabinet((method) =>
+      method === "POST"
+        ? { ok: false, status: 500, body: { error: "internal_error" } }
+        : { ok: true, status: 200, body: REVIEW_PACKET },
+    );
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Review" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Approve for P3 draft" }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/whether it was recorded/)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/internal_error/)).toBeNull();
+    expect(screen.queryByText(/HTTP 500/)).toBeNull();
+  });
+
+  it("lays the sentence out so it can wrap", async () => {
+    // The refusal used to render in the control row: an `auto` grid column
+    // beside a `minmax(0, 1fr)` title, at 10.5px, `whiteSpace: "nowrap"`. A
+    // sentence there is one unbreakable line. It now has its own full-width
+    // row, so assert the computed property rather than the text alone.
+    mockCabinet(() => ({
+      ok: false,
+      status: 404,
+      body: { error: "not_found" },
+    }));
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+    // The packet GET only fires once the row's Review panel is open.
+    fireEvent.click(await screen.findByRole("button", { name: "Review" }));
+
+    const refusal = await screen.findByText(/controls are hidden/);
+    expect(window.getComputedStyle(refusal).whiteSpace).not.toBe("nowrap");
+    expect(refusal).toHaveAttribute("role", "status");
   });
 });

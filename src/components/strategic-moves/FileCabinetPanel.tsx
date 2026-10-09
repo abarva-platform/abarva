@@ -19,6 +19,7 @@ import {
   describeEvidenceCabinetReadback,
   describeEvidenceDecisionRefusal,
 } from "@/lib/programs/evidence-cabinet-readback";
+import { describeMoveReviewDecisionRefusal } from "@/lib/programs/move-review-decision-refusal";
 import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import { describeMoveClientApprovalRefusal } from "@/lib/programs/move-client-approval-refusal";
 
@@ -839,9 +840,19 @@ function ArtifactRow({
       const json = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
+        detail?: string;
       } & WorkspaceReviewState;
       if (!res.ok || !json.ok) {
-        throw new Error(json.error || `HTTP ${res.status}`);
+        // A failed load clears `workspaceReview`, which hides the packet and
+        // every decision control — so the sentence has to account for the
+        // missing controls, not just the failed read.
+        throw new Error(
+          describeMoveReviewDecisionRefusal({
+            action: "load",
+            code: json.error,
+            detail: json.detail,
+          }),
+        );
       }
       setWorkspaceReview({
         canRecordDecision: json.canRecordDecision,
@@ -851,7 +862,11 @@ function ArtifactRow({
         readiness: json.readiness,
       });
     } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "review packet failed");
+      setActionErr(
+        e instanceof Error
+          ? e.message
+          : describeMoveReviewDecisionRefusal({ action: "load" }),
+      );
       setWorkspaceReview(null);
     } finally {
       setPacketLoading(false);
@@ -953,7 +968,13 @@ function ArtifactRow({
           .json()
           .catch(() => ({}))) as WorkspaceReviewPostResponse;
         if (!res.ok || !json.ok) {
-          throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+          throw new Error(
+            describeMoveReviewDecisionRefusal({
+              action: "record",
+              code: json.error,
+              detail: json.detail,
+            }),
+          );
         }
         setWorkspaceReview({
           canRecordDecision: json.canRecordDecision ?? true,
@@ -970,7 +991,11 @@ function ArtifactRow({
         });
         await onChanged();
       } catch (e) {
-        setActionErr(e instanceof Error ? e.message : "review decision failed");
+        setActionErr(
+          e instanceof Error
+            ? e.message
+            : describeMoveReviewDecisionRefusal({ action: "record" }),
+        );
       } finally {
         setReviewBusy(false);
       }
@@ -1271,14 +1296,6 @@ function ArtifactRow({
           </div>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          {actionErr && (
-            <span
-              style={{ fontSize: 10.5, color: "#B71C1C", whiteSpace: "nowrap" }}
-              title={actionErr}
-            >
-              {actionErr}
-            </span>
-          )}
           <button
             onClick={() => setReviewOpen((open) => !open)}
             disabled={a.lifecycleState !== "current" || reviewBusy}
@@ -1339,6 +1356,29 @@ function ArtifactRow({
           </a>
         </div>
       </div>
+      {/*
+        A refusal now carries an authored sentence, so it cannot live in the
+        control row: that column is `auto`-sized next to a `minmax(0, 1fr)`
+        title and the span was `whiteSpace: "nowrap"` at 10.5px, which renders
+        a sentence as one unbreakable line and squeezes the title to its floor.
+        Its own full-width row of the surrounding 1fr grid wraps instead.
+      */}
+      {actionErr && (
+        <div
+          role="status"
+          style={{
+            fontSize: 11.5,
+            lineHeight: 1.45,
+            color: "#8A1C1C",
+            background: "#FDF2F2",
+            border: "1px solid #F3CFCF",
+            borderRadius: 6,
+            padding: "7px 10px",
+          }}
+        >
+          {actionErr}
+        </div>
+      )}
       {hasReviewSignals && (
         <details
           style={{

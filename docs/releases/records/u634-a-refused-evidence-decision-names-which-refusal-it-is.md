@@ -124,8 +124,11 @@ nothing here is flag-gated.
 
 ## QA / Validation
 
-- **PASS** `npx jest` on the five directly affected suites — 5 suites, 62 tests,
-  including the 33 new cases.
+- **PASS** `npx jest` on the five directly affected suites — 5 suites, 62 tests
+  including the 33 new cases at the original base, and 5 suites / 67 tests after
+  merging forward (a release that landed mid-flight added five cases to the
+  shared readback suite, which auto-merged; all of this change's additions were
+  re-verified present by grep rather than assumed).
 - **PASS** Wider regression: `src/lib/programs/__tests__` 188 suites / 2631
   tests; `src/components/strategic-moves/__tests__` 52 suites / 818 tests;
   `src/app/api/v1/programs/[programId]/current-state` 2 suites / 19 tests;
@@ -164,13 +167,20 @@ nothing here is flag-gated.
   lines and the file was formatted; the resulting diff is 234 insertions and 0
   deletions, so no pre-existing line was reformatted into this change. Both new
   files are formatted. The other four changed files were already clean.
-- **PASS** Census, with the basis stated. The base commit carries **2** units of
-  inherited drift: it commits 2720 covered test files while a clean detached
-  worktree of that same commit regenerates **2722**. This branch adds two test
-  files and regenerates **2724** — the honest base plus exactly its own two —
-  so the committed number here absorbs the inherited drift rather than adding to
-  it. `uncoveredTestFiles` is 164 before and after, because both new files land
-  in a directory the required catalog already sweeps.
+- **PASS** Census, with the basis stated, and the basis MOVED mid-release. At
+  the original base commit the inherited drift was **2** units: it commits 2720
+  covered test files while a clean detached worktree of that same commit
+  regenerates **2722**. Two releases then merged and the drift grew to **3** —
+  current `main` commits 2721 while a clean detached worktree of `main` itself
+  regenerates **2724** — which is the signature of each of them regenerating
+  honestly against its own base and landing on the same number, leaving git
+  nothing to reconcile. After merging forward this branch regenerates **2726**,
+  the honest base plus exactly its own two test files, so the committed number
+  here absorbs all three inherited units rather than adding to them. That the
+  delta over the honest base is exactly two is itself the check: a branch adding
+  two files to a drifted base reads higher. `uncoveredTestFiles` is unchanged,
+  because both new files land in a directory the required catalog already
+  sweeps.
 - **PASS** `npm run release:check -- --base origin/main --head HEAD`.
 - **NOT RUN** Signed-in walk. No claim in this record is `live-proven`.
 
