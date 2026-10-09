@@ -151,6 +151,7 @@ import {
   digestOpenGateCriteria,
   readyWithCaveatsSentence,
 } from "@/lib/programs/gate-criterion-digest";
+import { resolveGateBlockedCause } from "@/lib/programs/gate-blocked-cause";
 import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import type { ApprovedPhaseEvidenceReference } from "@/lib/programs/approved-phase-evidence";
 import {
@@ -6458,13 +6459,18 @@ function PhaseBody({
     openSoftCriteria,
     "soft",
   );
-  const isGateBlocked =
-    !isHistoricalPhase &&
-    !gateApproved &&
-    (actionableOpenHardCriteria.length > 0 ||
-      openRequiredEvidence.length > 0 ||
-      !evidenceReadinessAvailable ||
-      Boolean(phaseCaptureBlocker));
+  // One resolution of the four causes, for every slot below that reports one.
+  // `isGateBlocked` IS "a cause was found", so the reckoning and the sentences
+  // cannot disagree about whether the gate is blocked or about why.
+  const gateBlockedCause = resolveGateBlockedCause({
+    gateClosed: isHistoricalPhase || gateApproved,
+    evidenceReadinessAvailable,
+    openRequiredEvidenceCount: openRequiredEvidence.length,
+    phaseInputsBlocker: phaseCaptureBlocker,
+    actionableOpenHardCount: actionableOpenHardCriteria.length,
+    firstActionableHardLabel: actionableOpenHardCriteria[0]?.label ?? null,
+  });
+  const isGateBlocked = gateBlockedCause !== null;
   const approvalDecisionTitle =
     phaseApprovalDecisionTitle(approvalStanding, phase.code) ??
     (isGateBlocked
@@ -6475,14 +6481,8 @@ function PhaseBody({
       approvalStanding,
       `${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}`,
     ) ??
-    (isGateBlocked
-      ? !evidenceReadinessAvailable
-        ? "Evidence readiness could not be verified. Refresh this phase before approval."
-        : openRequiredEvidence.length > 0
-          ? `${openRequiredEvidence.length} required evidence item${openRequiredEvidence.length === 1 ? "" : "s"} still need upload and human review before this phase can advance.`
-          : (phaseCaptureBlocker ??
-            `Resolve ${actionableOpenHardCriteria.length} hard gate blocker${actionableOpenHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`)
-      : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.");
+    gateBlockedCause?.decisionText ??
+    "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.";
   const approvalDecisionState =
     isHistoricalPhase || gateApproved
       ? "complete"
@@ -6495,13 +6495,7 @@ function PhaseBody({
       : `Continue to ${nextOpenPhaseContract.code}`
     : gateApproved
       ? "Review generated artifacts"
-      : isGateBlocked
-        ? openRequiredEvidence.length > 0
-          ? "Upload and review evidence"
-          : !evidenceReadinessAvailable
-            ? "Refresh evidence status"
-            : "Clear hard blockers"
-        : "Run Approve & Build";
+      : (gateBlockedCause?.nextActionLabel ?? "Run Approve & Build");
   const readinessPack = buildNextPhaseReadinessPack({
     nextPhaseLabel: nextPhaseContract
       ? `${nextPhaseContract.code} ${nextPhaseContract.title}`
@@ -6571,17 +6565,18 @@ function PhaseBody({
     phase.phase >= 5
       ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
       : gateOnlyConfirmSummaryFor(phase, nextOpenPhaseContract);
-  // Read only on the evaluated arm of `gateSummaryLine` below, which is what
-  // stops a criterion being named as the blocker on the strength of an answer
-  // the evaluator did not compute. A second `evaluated` guard here would be
-  // unkillable: no input reaches this line in the unevaluated case.
-  const primaryHardBlocker = actionableOpenHardCriteria[0]?.label ?? null;
-  const gateSummaryLine = isGateBlocked
+  // The cause's own `summaryLine` is read only on the EVALUATED arm below,
+  // which is what stops a criterion being named as the blocker on the strength
+  // of an answer the evaluator did not compute. A second `evaluated` guard
+  // inside the resolver would be unkillable: no input reaches that line in the
+  // unevaluated case.
+  //
+  // The READY arm is derived too: it used to name the first open caveat in the
+  // singular however many were open. See `gate-criterion-digest`.
+  const gateSummaryLine = gateBlockedCause
     ? !gateCriteriaState.evaluated
       ? gateCriteriaState.summaryLabel
-      : primaryHardBlocker
-        ? `Blocked by: ${primaryHardBlocker}.`
-        : "Blocked by an open hard gate."
+      : gateBlockedCause.summaryLine
     : (readyWithCaveatsSentence(openSoftCriteria) ??
       "No hard blockers are open.");
   // "the approved record" named a decision this screen does not read, on a
