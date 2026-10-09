@@ -2446,6 +2446,126 @@ describe("evaluateGate", () => {
       }),
     );
   });
+  describe("a readable Discovery Report that records a gap outranks P2 answers that mention the topic", () => {
+    // The completed P2 capture used by the capture-path tests above. Its
+    // answers mention baselines and owners, so on their own they clear the
+    // baseline and stakeholder criteria. They are meant to stand in for a
+    // report with no readable text, not to outvote a report that names the
+    // gap.
+    const completedP2Capture = () => [
+      {
+        module_key: "phase_2_current_state_findings",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Current state findings show fragmented claims, CRM, prior authorization, benefits, knowledge, and call-center process evidence.",
+        },
+      },
+      {
+        module_key: "phase_2_baseline_metrics",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Baseline metrics captured: average handle time, first-call resolution, transfer rate, repeat contact, cost, quality, and volume.",
+        },
+      },
+      {
+        module_key: "phase_2_process_handoffs",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Process handoffs name operations, supervisor queues, compliance, security, architecture, and data ownership roles.",
+        },
+      },
+      {
+        module_key: "phase_2_recommendation",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Recommendation: proceed to Design with no unresolved hard gaps, carrying caveats around source readiness.",
+        },
+      },
+    ];
+
+    const evaluateWithReport = async (reportText: string) => {
+      getProgramByIdMock.mockResolvedValue({
+        id: "program-1",
+        currentPhase: 2,
+        archetype: "contact_center_agent_assist",
+      });
+      deliverablesFixture = [
+        {
+          id: "discovery-report",
+          deliverable_type_key: "discovery_report",
+          status: "signed_off",
+        },
+      ];
+      evidenceFixture = [];
+      deliverableVersionsFixture = [
+        {
+          content: reportText,
+          structured_data: null,
+          generated_at: "2026-05-02T00:00:00.000Z",
+        },
+      ];
+      modulesFixture = completedP2Capture();
+      addApprovedTechnicalRouteCapture();
+      return evaluateGate(
+        { clientId: "client-1", userId: "person-1" },
+        "program-1",
+        2,
+        3,
+      );
+    };
+    const failedKeys = (result: { failedChecks: Array<{ check: string }> }) =>
+      result.failedChecks.map((check) => check.check);
+
+    it("lists the baseline and stakeholder criteria as open when the report records them as hard gaps", async () => {
+      const result = await evaluateWithReport(
+        "P2 Discovery Report. Stakeholder map drafted. HARD gaps: technical owner not yet named; baseline not yet attested.",
+      );
+
+      expect(failedKeys(result)).toEqual(
+        expect.arrayContaining([
+          "p2_readiness_cleared",
+          "discovery_baseline_attested",
+          "discovery_stakeholders_named",
+        ]),
+      );
+    });
+
+    it("refuses the gate when the report names missing owners and nothing else blocks", async () => {
+      // No hard-gap wording, so the readiness criterion clears on the report.
+      // The only thing standing between this Move and P3 is the owner gap the
+      // report records, and before the fix the capture's "ownership roles"
+      // cleared it.
+      const result = await evaluateWithReport(
+        "P2 Discovery Report. Stakeholder map drafted. Owner names (technical, security) missing. " +
+          "Baselines captured and owner attestation recorded.",
+      );
+
+      expect(failedKeys(result)).not.toContain("p2_readiness_cleared");
+      expect(failedKeys(result)).not.toContain("discovery_baseline_attested");
+      expect(
+        result.failedChecks.filter((check) => check.severity === "hard"),
+      ).toEqual([
+        expect.objectContaining({
+          check: "discovery_stakeholders_named",
+          severity: "hard",
+        }),
+      ]);
+      expect(result.pass).toBe(false);
+    });
+
+    it("still lets the P2 answers clear both criteria when the report records no gap", async () => {
+      const result = await evaluateWithReport(
+        "P2 Discovery Report. Findings summarised for the sponsor; no unresolved hard gaps.",
+      );
+
+      expect(failedKeys(result)).not.toContain("discovery_baseline_attested");
+      expect(failedKeys(result)).not.toContain("discovery_stakeholders_named");
+    });
+  });
   it("does not block P2 to P3 on future-looking P3 gate risks in the signed Discovery Report", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
