@@ -32,6 +32,8 @@
 // (`downloadArtifactBytes` in `deliverables/move-artifacts.ts`) is, so the
 // naming has to live somewhere a suite can reach without a mocked route.
 
+import { resolveMoveArtifactStorageState } from "@/lib/programs/move-artifact-storage-state";
+
 /** Every way an artifact download can fail to produce bytes. */
 export type MoveArtifactDownloadRefusalReason =
   | "artifact_not_found"
@@ -87,15 +89,26 @@ export function moveArtifactDownloadRefusal(
 /**
  * Whether a `move_artifacts` row DECLARES that its bytes were never written.
  *
- * Only an explicit `storage: "unconfigured"` stamp counts. A row with no
- * `storage` key at all (written before the stamp existed, or by a path that
- * does not set it) is NOT evidence of loss, and must not be reported as
- * unrecoverable — telling a reader their file is gone when we do not know is
- * the one error this classification cannot make.
+ * The marker comparison is delegated to `resolveMoveArtifactStorageState`,
+ * which is the cabinet chip's own authority on the same stamp. That is
+ * deliberate: this refusal and that chip describe one fact to one reader, and
+ * before this release the two contradicted each other. A second literal
+ * `"unconfigured"` here would let them drift apart again the moment the stamp
+ * value changes.
+ *
+ * This reader's own job is only to get `storage` out of the raw `metadata`
+ * column, which arrives as JSONB (an object) but is tolerated as a JSON string.
+ *
+ * Any state other than `not_retained` answers false. A row with no stamp at all
+ * (written before the stamp existed, or by a path that does not set it) is NOT
+ * evidence of loss, and must not be reported as unrecoverable — telling a
+ * reader their file is gone when we do not know is the one error this
+ * classification cannot make.
  */
 export function moveArtifactBytesNeverRetained(metadata: unknown): boolean {
   const record = asRecord(metadata);
-  return record?.storage === "unconfigured";
+  const stored = typeof record?.storage === "string" ? record.storage : null;
+  return resolveMoveArtifactStorageState({ stored }) === "not_retained";
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

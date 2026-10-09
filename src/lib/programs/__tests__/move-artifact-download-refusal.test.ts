@@ -18,6 +18,11 @@ import {
   moveArtifactDownloadRefusal,
   type MoveArtifactDownloadRefusalReason,
 } from "@/lib/programs/move-artifact-download-refusal";
+import {
+  MOVE_ARTIFACT_NOT_STORED_MARKER,
+  MOVE_ARTIFACT_STORED_MARKER,
+  resolveMoveArtifactStorageState,
+} from "@/lib/programs/move-artifact-storage-state";
 
 const ALL_REASONS: MoveArtifactDownloadRefusalReason[] = [
   "artifact_not_found",
@@ -112,6 +117,33 @@ describe("moveArtifactBytesNeverRetained", () => {
     expect(
       moveArtifactBytesNeverRetained(JSON.stringify({ storage: "azure_blob" })),
     ).toBe(false);
+  });
+
+  it("agrees with the cabinet chip's own authority on the same stamp", () => {
+    // The refusal and the chip describe ONE fact to ONE reader, and before
+    // this release they contradicted each other. A second literal marker here
+    // would let them drift apart again, so the comparison is delegated.
+    expect(
+      resolveMoveArtifactStorageState({
+        stored: MOVE_ARTIFACT_NOT_STORED_MARKER,
+      }),
+    ).toBe("not_retained");
+    expect(
+      moveArtifactBytesNeverRetained({
+        storage: MOVE_ARTIFACT_NOT_STORED_MARKER,
+      }),
+    ).toBe(true);
+    expect(
+      moveArtifactBytesNeverRetained({ storage: MOVE_ARTIFACT_STORED_MARKER }),
+    ).toBe(false);
+  });
+
+  it("tolerates a stamp recorded with surrounding whitespace", () => {
+    // Delegation also inherits the shared resolver's trim, so a stamp written
+    // with stray whitespace is still read as the loss it records.
+    expect(moveArtifactBytesNeverRetained({ storage: " unconfigured " })).toBe(
+      true,
+    );
   });
 
   it.each([
