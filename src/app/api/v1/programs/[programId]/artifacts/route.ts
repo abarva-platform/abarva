@@ -338,23 +338,32 @@ interface DeliverableSignOffState {
  * mount DeliverableApprovalAction. The gate step's attestation ledger consumes
  * it through this route so it can show sign-off state inline rather than only
  * on /evidence. Newest row per key wins (ordered by updated_at), matching the
- * panel's dedupe intent. Non-fatal: a read failure yields an empty map and the
- * ledger falls back to build-status-only.
+ * panel's dedupe intent.
+ *
+ * Non-fatal, but NOT silent: a read failure yields an empty map, and an empty
+ * map strips the sign-off columns from every row at once, so the ledger would
+ * report a phase whose documents are signed off as having no sign-off tracked
+ * at all. `available` is therefore returned alongside the map so the response
+ * can say which of the two it is; `gate-sign-off-readback.ts` turns that into
+ * what the ledger may assert. The fluent client resolves a failed query to
+ * `{ data: null, error }` rather than throwing, so `error` is the signal and
+ * the surrounding `catch` covers only client construction.
  */
-async function loadDeliverableSignOffByKey(
-  programId: string,
-): Promise<Map<string, DeliverableSignOffState>> {
+async function loadDeliverableSignOffByKey(programId: string): Promise<{
+  byKey: Map<string, DeliverableSignOffState>;
+  available: boolean;
+}> {
   const byKey = new Map<string, DeliverableSignOffState>();
   try {
     const sb = getAzureReadFluentClient();
-    const { data } = await sb
+    const { data, error } = await sb
       .from("deliverables_v2")
       .select(
         "id, deliverable_type_key, current_version, signed_off_version, updated_at",
       )
       .eq("engagement_id", programId)
       .order("updated_at", { ascending: false });
-    if (!Array.isArray(data)) return byKey;
+    if (error || !Array.isArray(data)) return { byKey, available: false };
     for (const row of data as Array<Record<string, unknown>>) {
       const key =
         typeof row.deliverable_type_key === "string"
@@ -373,9 +382,9 @@ async function loadDeliverableSignOffByKey(
           typeof row.current_version === "number" ? row.current_version : null,
       });
     }
-    return byKey;
+    return { byKey, available: true };
   } catch {
-    return byKey;
+    return { byKey, available: false };
   }
 }
 
@@ -729,8 +738,8 @@ export async function GET(
       programId,
     );
     const decidedEvidence = await loadDecidedEvidenceReviews(ctx, programId);
-    const deliverableSignOffByKey =
-      await loadDeliverableSignOffByKey(programId);
+    const deliverableSignOff = await loadDeliverableSignOffByKey(programId);
+    const deliverableSignOffByKey = deliverableSignOff.byKey;
     const approvedSnapshot = ctx.clientKey
       ? await loadApprovedMoveEvidenceSnapshot({
           tenantKey: ctx.clientKey,
@@ -984,6 +993,13 @@ export async function GET(
       // The third decision value, which no cabinet list carried before.
       rejectedEvidence: decidedEvidence.rejected,
       evidenceReviewStatus: evidenceReviewQueue.available
+        ? "available"
+        : "unavailable",
+      // The deliverables_v2 sign-off projection is a separate read from the
+      // artifact vault, and its failure mode is an empty map — which strips
+      // the sign-off columns from every row. Report its health so the gate
+      // ledger can distinguish "no sign-off record" from "not read".
+      deliverableSignOffStatus: deliverableSignOff.available
         ? "available"
         : "unavailable",
     });

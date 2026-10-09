@@ -19,6 +19,12 @@ let mockPendingEvidenceReviewRows: Array<Record<string, unknown>> = [];
  */
 let mockEvidenceReviewFilters: Array<{ column: string; value: unknown }> = [];
 let mockPendingEvidenceRows: Array<Record<string, unknown>> = [];
+let mockDeliverablesV2Rows: Array<Record<string, unknown>> = [];
+let mockDeliverablesV2Error: { message: string } | null = null;
+// An error returned ALONGSIDE an array, which is the shape that separates
+// "read the error" from "read the rows".
+let mockDeliverablesV2ErrorWithRows: { message: string } | null = null;
+let mockReadClientThrows = false;
 const moveCalls: Array<Record<string, unknown>> = [];
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 let genCalled = 0;
@@ -49,6 +55,40 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
     mockLoadApprovedMoveEvidenceSnapshot(...args),
 }));
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
+  // The deliverables_v2 sign-off projection is read through the READ client and
+  // nothing else in this route uses it. Its failure mode is what the response's
+  // `deliverableSignOffStatus` exists to report, so the mock has to be able to
+  // answer `{ data: null, error }` — which is how the fluent client resolves a
+  // failed query; it does not throw.
+  getAzureReadFluentClient: jest.fn(() => {
+    // Constructing the client is the ONE thing in this loader that can raise —
+    // the fluent query itself resolves its failures. Both paths have to be
+    // reachable from a test or the loader's catch is unexercised.
+    if (mockReadClientThrows) {
+      throw new Error("no read connection string configured");
+    }
+    return {
+      from: () => {
+        const query: Record<string, unknown> = {
+          select: () => query,
+          eq: () => query,
+          in: () => query,
+          order: () => query,
+          limit: () => query,
+          then: (resolve: (v: { data: unknown; error: unknown }) => unknown) =>
+            resolve(
+              mockDeliverablesV2Error
+                ? { data: null, error: mockDeliverablesV2Error }
+                : {
+                    data: mockDeliverablesV2Rows,
+                    error: mockDeliverablesV2ErrorWithRows,
+                  },
+            ),
+        };
+        return query;
+      },
+    };
+  }),
   getAzureWriteFluentClient: jest.fn(() => ({
     from: (table: string) => {
       const data =
@@ -96,6 +136,10 @@ function params(programId: string) {
 beforeEach(() => {
   moveRows = [];
   generatedRecs = [];
+  mockDeliverablesV2Rows = [];
+  mockDeliverablesV2Error = null;
+  mockDeliverablesV2ErrorWithRows = null;
+  mockReadClientThrows = false;
   mockPendingEvidenceReviewRows = [];
   mockPendingEvidenceRows = [];
   mockEvidenceReviewFilters = [];
@@ -1220,5 +1264,140 @@ describe("GET artifacts carries the rejected evidence reviews", () => {
     expect(json.reviewedEvidence[0].reviewId).toBe("review-approved");
     // The approved list has never carried a rationale and does not start now.
     expect(json.reviewedEvidence[0]).not.toHaveProperty("rationale");
+  });
+});
+
+// The deliverables_v2 sign-off projection is a SEPARATE read from the artifact
+// vault, and its failure mode is an empty map — which strips `deliverableId` /
+// `currentVersion` / `signedOffVersion` from every generated row at once. The
+// gate attestation ledger cannot tell that apart from a projection that holds
+// no sign-off records, so it reported a phase whose documents are signed off as
+// having no sign-off tracked and stated a count of zero. The response now says
+// which of the two it is.
+describe("GET artifacts reports the health of its sign-off projection read", () => {
+  const signedVaultRow = {
+    artifact_id: "mv-signed",
+    artifact_type: "move_board_pack",
+    artifact_family: "generated_deliverable",
+    title: "Program Charter",
+    phase: 1,
+    file_format: "docx",
+    file_name: "charter.docx",
+    version: 2,
+    status: "ready",
+    lifecycle_state: "current",
+    quality_score: null,
+    unsupported_claims_count: 0,
+    generated_by: "u",
+    created_at: "2026-06-01T00:00:00Z",
+    file_size: 10,
+    metadata: { deliverableTypeKey: "charter" },
+  };
+
+  it("reports available and carries the sign-off columns when the read lands", async () => {
+    moveRows = [signedVaultRow];
+    mockDeliverablesV2Rows = [
+      {
+        id: "deliv-charter",
+        deliverable_type_key: "charter",
+        current_version: 2,
+        signed_off_version: 2,
+        updated_at: "2026-06-02T00:00:00Z",
+      },
+    ];
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      deliverableSignOffStatus: string;
+      artifacts: Array<Record<string, unknown>>;
+    };
+    expect(json.deliverableSignOffStatus).toBe("available");
+    expect(json.artifacts[0]).toMatchObject({
+      deliverableId: "deliv-charter",
+      currentVersion: 2,
+      signedOffVersion: 2,
+    });
+  });
+
+  it("reports available when the projection simply holds no sign-off record", async () => {
+    // Nothing to sign off against is a FACT, and the ledger is allowed to say
+    // so. It must not be conflated with a read that failed.
+    moveRows = [signedVaultRow];
+    mockDeliverablesV2Rows = [];
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      deliverableSignOffStatus: string;
+      artifacts: Array<Record<string, unknown>>;
+    };
+    expect(json.deliverableSignOffStatus).toBe("available");
+    expect(json.artifacts[0]!.deliverableId).toBeUndefined();
+  });
+
+  it("reports unavailable when the projection query errors", async () => {
+    // The fluent client resolves a failed query to `{ data: null, error }`
+    // rather than throwing, so `error` is the only signal — and before this
+    // change the loader did not even read it.
+    moveRows = [signedVaultRow];
+    mockDeliverablesV2Error = { message: "relation deliverables_v2 is gone" };
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      ok: boolean;
+      deliverableSignOffStatus: string;
+      artifacts: Array<Record<string, unknown>>;
+    };
+    // Still a 200 with the vault intact: the sign-off read is non-fatal.
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.artifacts).toHaveLength(1);
+    // But the columns are gone, and the response says why.
+    expect(json.artifacts[0]!.deliverableId).toBeUndefined();
+    expect(json.deliverableSignOffStatus).toBe("unavailable");
+  });
+
+  it("treats a reported error as authoritative over the rows beside it", async () => {
+    // A query that reported an error has not established that there are zero
+    // sign-off records, whatever array came back with it. Reading the rows and
+    // ignoring the error is how an empty result becomes a false negative.
+    moveRows = [signedVaultRow];
+    mockDeliverablesV2Rows = [];
+    mockDeliverablesV2ErrorWithRows = { message: "statement timeout" };
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as { deliverableSignOffStatus: string };
+    expect(json.deliverableSignOffStatus).toBe("unavailable");
+  });
+
+  it("reports unavailable when the read client cannot be constructed", async () => {
+    // The only raising path in the loader. It must not report healthy either.
+    moveRows = [signedVaultRow];
+    mockReadClientThrows = true;
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      ok: boolean;
+      deliverableSignOffStatus: string;
+      artifacts: Array<Record<string, unknown>>;
+    };
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.artifacts).toHaveLength(1);
+    expect(json.deliverableSignOffStatus).toBe("unavailable");
+  });
+
+  it("keeps the evidence-review status independent of the sign-off status", async () => {
+    // Two sub-reads, two health fields. One failing must not be reported as
+    // the other failing.
+    moveRows = [signedVaultRow];
+    mockDeliverablesV2Error = { message: "down" };
+
+    const res = await GET(req(), params("move-x"));
+    const json = (await res.json()) as {
+      evidenceReviewStatus: string;
+      deliverableSignOffStatus: string;
+    };
+    expect(json.evidenceReviewStatus).toBe("available");
+    expect(json.deliverableSignOffStatus).toBe("unavailable");
   });
 });
