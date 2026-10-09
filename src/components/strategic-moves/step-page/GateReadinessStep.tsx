@@ -118,7 +118,6 @@ function DocumentLine({
   canApprove,
   signOffReadable,
   buildBusy,
-  onRebuild,
   onRecordChanged,
 }: {
   moveId: string;
@@ -128,7 +127,6 @@ function DocumentLine({
   canApprove: boolean;
   signOffReadable: boolean;
   buildBusy: boolean;
-  onRebuild: () => void;
   onRecordChanged: () => void;
 }) {
   const state = gateDocumentSignState(doc, signOffReadable);
@@ -158,25 +156,13 @@ function DocumentLine({
     stateText = doc.build === "queued" ? "Queued" : "Building…";
   else if (state === "failed") {
     stateText = doc.failureReason ?? "The build did not finish.";
-    actions = buildBusy ? null : (
-      <button type="button" className={cx("btn-ink")} onClick={onRebuild}>
-        Build again
-      </button>
-    );
   } else if (state === "signed") {
     stateText = (
       <>
         Signed v{doc.currentVersion} <span className={cx("status-ok")}>✓</span>
       </>
     );
-    actions = buildBusy ? null : (
-      <>
-        {open}
-        <button type="button" className={cx("link-btn")} onClick={onRebuild}>
-          Rebuild…
-        </button>
-      </>
-    );
+    actions = buildBusy ? null : open;
   } else if (state === "unknown") {
     stateText = signOffReadable
       ? "Built · no sign-off record to sign against"
@@ -185,7 +171,7 @@ function DocumentLine({
   } else {
     stateText =
       state === "superseded"
-        ? `Signed v${doc.signedOffVersion} · v${doc.currentVersion} is newer, sign again`
+        ? `Signed v${doc.signedOffVersion} · v${doc.currentVersion} needs signing again`
         : `Built v${doc.currentVersion} · not signed`;
     actions = buildBusy ? null : canApprove ? (
       <>
@@ -354,9 +340,9 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     },
   });
 
+  // The approver's own words, recorded with the approval. No confirm step:
+  // the footer's approve-and-submit enables once there is text (v1.5).
   const [rationale, setRationale] = useState("");
-  const [rationaleDraft, setRationaleDraft] = useState("");
-  const [editingRationale, setEditingRationale] = useState(true);
   const [rebuildAsk, setRebuildAsk] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -419,6 +405,7 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
 
   const noneBuilt =
     documents.length > 0 && documents.every((d) => d.build === "none");
+  const anyFailed = documents.some((d) => d.build === "failed");
   const docsSettled =
     documents.length > 0 &&
     documents.every(
@@ -517,7 +504,6 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
                 canApprove={props.canApprove}
                 signOffReadable={props.signOffReadable}
                 buildBusy={buildBusy}
-                onRebuild={requestBuild}
                 onRecordChanged={onRecordChanged}
               />
             );
@@ -579,20 +565,40 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         ) : null}
       </>
     ),
-    actions:
-      noneBuilt && !buildBusy ? (
-        <button
-          type="button"
-          className={cx("btn-ink")}
-          disabled={Boolean(props.buildHeldReason)}
-          onClick={requestBuild}
-        >
-          Build the{" "}
-          {documents.length === 1
-            ? "gate document"
-            : `${documents.length} gate documents`}
-        </button>
-      ) : null,
+    // One build control for the whole set, at row level: a build always
+    // rebuilds every gate document, so no single document offers one
+    // (template v1.5).
+    actions: buildBusy ? null : noneBuilt ? (
+      <button
+        type="button"
+        className={cx("btn-ink")}
+        disabled={Boolean(props.buildHeldReason)}
+        onClick={requestBuild}
+      >
+        Build the{" "}
+        {documents.length === 1
+          ? "gate document"
+          : `${documents.length} gate documents`}
+      </button>
+    ) : anyFailed ? (
+      <button
+        type="button"
+        className={cx("btn-ink")}
+        disabled={Boolean(props.buildHeldReason)}
+        onClick={requestBuild}
+      >
+        Build again
+      </button>
+    ) : rebuildAsk ? null : (
+      <button
+        type="button"
+        className={cx("link-btn")}
+        disabled={Boolean(props.buildHeldReason)}
+        onClick={requestBuild}
+      >
+        Rebuild the gate documents…
+      </button>
+    ),
     basis: [
       {
         kind: "team",
@@ -602,13 +608,30 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     ],
   };
 
+  const rationaleField = (
+    <div className={cx("field")}>
+      <label className={cx("q-label")} htmlFor="gate-rationale">
+        Why this {props.phaseName.toLowerCase()} should pass the gate
+      </label>
+      <textarea
+        id="gate-rationale"
+        className={cx("q-input")}
+        rows={4}
+        maxLength={2000}
+        value={rationale}
+        placeholder="e.g. The design maps every root cause to a design element and follows the route the approved evidence supports."
+        onChange={(event) => setRationale(event.target.value)}
+      />
+    </div>
+  );
+
   const rationaleRow: StepPageRow = {
     id: GATE_RATIONALE_ROW_ID,
     eyebrow: "Approval",
     rank: 2,
     shortName: "approval rationale",
     subject: "Approval rationale",
-    state: rationale.trim() ? "settled" : "decision",
+    state: "decision",
     clause: "write the approval rationale",
     facts: [
       {
@@ -617,58 +640,11 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
       },
     ],
     middle: !props.canApprove ? (
-      <div>
-        <p className={cx("proposal")}>
-          {props.approverName} writes the rationale when approving.
-        </p>
-      </div>
-    ) : editingRationale ? (
-      <div className={cx("field")}>
-        <label className={cx("q-label")} htmlFor="gate-rationale">
-          Why this {props.phaseName.toLowerCase()} should pass the gate
-        </label>
-        <textarea
-          id="gate-rationale"
-          className={cx("q-input")}
-          rows={4}
-          maxLength={2000}
-          value={rationaleDraft}
-          placeholder="e.g. The design maps every root cause to a design element and follows the route the approved evidence supports."
-          onChange={(event) => setRationaleDraft(event.target.value)}
-        />
-      </div>
+      <p className={cx("proposal")}>
+        The approver writes the rationale when approving.
+      </p>
     ) : (
-      <div>
-        <p className={cx("proposal")}>{rationale}</p>
-        <span className={cx("when-settled")}>
-          Written by you · recorded when you approve and submit
-        </span>
-      </div>
-    ),
-    actions: !props.canApprove ? null : editingRationale ? (
-      <button
-        type="button"
-        className={cx("btn-ink")}
-        disabled={!rationaleDraft.trim()}
-        onClick={() => {
-          setRationale(rationaleDraft.trim());
-          setEditingRationale(false);
-        }}
-      >
-        Use this rationale
-      </button>
-    ) : (
-      <button
-        type="button"
-        className={cx("link-btn")}
-        onClick={() => {
-          setRationaleDraft(rationale);
-          setRationale("");
-          setEditingRationale(true);
-        }}
-      >
-        Edit rationale
-      </button>
+      rationaleField
     ),
   };
 
@@ -734,19 +710,6 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     }
   };
 
-  const docStates = documents.map((d) =>
-    gateDocumentSignState(d, props.signOffReadable),
-  );
-  const builtCount = docStates.filter(
-    (s) => s !== "not_built" && s !== "building" && s !== "failed",
-  ).length;
-  const signedCount = docStates.filter((s) => s === "signed").length;
-  const docsSummary = noneBuilt
-    ? "Gate documents not built"
-    : buildBusy
-      ? "Gate documents building"
-      : `${signedCount} of ${documents.length} gate documents signed`;
-
   // aVa's opening turn in the dock: what it checked, left out and did not
   // draft. Plain sentences, no figures.
   const briefing = (
@@ -799,14 +762,29 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
       checksWhenBlocked
       countLabel={model.countLabel}
       context={{
-        items: [
-          <b key="depth">Full depth</b>,
-          `${builtCount} of ${documents.length} gate documents built`,
-          docsSummary,
-        ],
+        items: [<b key="depth">Full depth</b>],
         details: [{ term: "Depth", detail: <span>{props.depthDetail}</span> }],
       }}
-      blockedWork="Documents, signatures and the rationale are unchanged. They will appear again once the gate state can be read."
+      // Unsaved input survives Blocked (template v1.5): the rationale stays
+      // editable while the gate state cannot be read.
+      blockedWork={
+        <div className={cx("empty-note")}>
+          <p>
+            Documents and signatures are unchanged.{" "}
+            <button
+              type="button"
+              className={cx("link-btn", "inline")}
+              onClick={onRecordChanged}
+            >
+              Try again
+            </button>
+          </p>
+          {props.canApprove ? rationaleField : null}
+        </div>
+      }
+      decisionGroupTitle={
+        props.canApprove ? undefined : "Waiting on the gate approver"
+      }
       rows={[...submitRow, docsRow, rationaleRow]}
       submittedLabel={
         !props.canApprove && model.footerNote ? model.footerNote : undefined

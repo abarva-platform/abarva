@@ -69,6 +69,17 @@ export const DOCUMENT_BACKED_GATE_CRITERIA: ReadonlySet<string> = new Set([
 ]);
 
 export const GATE_DOCUMENTS_ROW_ID = "DOCS";
+
+/**
+ * Display labels for gate checks whose evaluator label reads as something the
+ * page does not offer (template v1.5, the check display-label rule). "Design
+ * approved" is met by signing the design documents, not by approving, so a
+ * consultant reading it beside a held submit button would see a deadlock.
+ * The evaluator's own label stays in the check's note.
+ */
+export const GATE_CHECK_DISPLAY_LABELS: Readonly<Record<string, string>> = {
+  design_approved: "Design documents signed off",
+};
 export const GATE_RATIONALE_ROW_ID = "APPROVE";
 
 export function gateDocumentSignState(
@@ -101,26 +112,42 @@ export function gateChecks(
   criteria: readonly GateCriterionView[],
 ): GateCheckView[] {
   const unreadable = criteria.some((c) => !c.verified);
-  return criteria.map((c) => ({
-    id: c.id,
-    level: c.severity,
-    text: c.label,
-    met: !unreadable && c.completed,
-    unknown: unreadable,
-    note: unreadable ? "not evaluated" : c.completed ? undefined : c.reason,
-    targetRowId:
-      !unreadable && !c.completed && DOCUMENT_BACKED_GATE_CRITERIA.has(c.id)
-        ? GATE_DOCUMENTS_ROW_ID
-        : undefined,
-  }));
+  return criteria.map((c) => {
+    const display = GATE_CHECK_DISPLAY_LABELS[c.id];
+    const reason = unreadable
+      ? "not evaluated"
+      : c.completed
+        ? undefined
+        : c.reason;
+    return {
+      id: c.id,
+      level: c.severity,
+      text: display ?? c.label,
+      met: !unreadable && c.completed,
+      unknown: unreadable,
+      note: display
+        ? [`gate rule: ${c.label}`, reason].filter(Boolean).join(" · ")
+        : reason,
+      targetRowId:
+        !unreadable && !c.completed && DOCUMENT_BACKED_GATE_CRITERIA.has(c.id)
+          ? GATE_DOCUMENTS_ROW_ID
+          : undefined,
+    };
+  });
 }
+
+const capitalize = (text: string) =>
+  `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 
 export interface GateStepInput {
   criteria: readonly GateCriterionView[];
   documents: readonly GateDocumentView[];
   signOffReadable: boolean;
   canApprove: boolean;
-  /** Who approves this gate, for a viewer who cannot: "An authorized approver". */
+  /**
+   * Who approves this gate, written for the middle of a sentence: a person's
+   * name, or the role ("a gate approver") when no name can be resolved.
+   */
   approverName: string;
   rationaleWritten: boolean;
   /** "Design", "Discover": the phase the submit button names. */
@@ -236,7 +263,7 @@ export function resolveGateStep(input: GateStepInput): GateStepModel {
       canSubmit: false,
       footerNote: input.canApprove
         ? null
-        : `${input.approverName} approves this gate.`,
+        : `Only ${input.approverName} can approve this gate.`,
     };
   }
 
@@ -280,12 +307,12 @@ export function resolveGateStep(input: GateStepInput): GateStepModel {
   }
 
   if (!input.canApprove) {
-    const approverLine = `${input.approverName} signs the gate documents and approves this gate.`;
+    const approverLine = `${capitalize(input.approverName)} signs the gate documents and approves this gate.`;
     const sentence =
       clauses.length > 0
         ? `${join(clauses)} ${approverLine}`
         : allHardMet
-          ? `Every required check passes. ${input.approverName} can approve and submit ${input.phaseName}.`
+          ? `Every required check passes. ${capitalize(input.approverName)} can approve and submit ${input.phaseName}.`
           : `Nothing here needs you. ${approverLine}`;
     return {
       checks,
@@ -299,7 +326,7 @@ export function resolveGateStep(input: GateStepInput): GateStepModel {
         continueEnabled: false,
       },
       canSubmit: false,
-      footerNote: `${input.approverName} approves this gate.`,
+      footerNote: `Only ${input.approverName} can approve this gate.`,
     };
   }
 
