@@ -130,6 +130,7 @@ export interface SlideContract {
 export type DeckContractId =
   | "REF_DECK_P2_DISCOVERY_READOUT"
   | "REF_DECK_P3_SOLUTION_DECISION"
+  | "REF_DECK_P3_ARCHITECTURE"
   | "REF_DECK_P4_BUSINESS_CASE"
   | "REF_DECK_P4_ROADMAP";
 
@@ -147,6 +148,8 @@ export interface DeckStoryContract {
   messageLedTitles: boolean;
   onePrimaryMessagePerSlide: boolean;
   onePrimaryVisualPerSlide: boolean;
+  /** Architecture readouts reserve deck pages for governed model exhibits. */
+  narrativeTablePageCeiling?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -563,6 +566,27 @@ const P3_SOLUTION_DECISION: DeckStoryContract = {
   ],
 };
 
+const P3_ARCHITECTURE: DeckStoryContract = {
+  id: "REF_DECK_P3_ARCHITECTURE",
+  spine: "p3_solution_decision",
+  audience: ["CIO", "CDAO", "Architecture review", "Sponsor"],
+  executiveQuestion: "Which governed target design should be conditionally approved?",
+  appendixAllowed: true,
+  appendixContent: ["source statements", "caveats", "provenance", "detailed model views"],
+  messageLedTitles: true,
+  onePrimaryMessagePerSlide: true,
+  onePrimaryVisualPerSlide: true,
+  narrativeTablePageCeiling: 6,
+  slides: [
+    { id: "decision_recommendation", label: "Decision / recommendation", purpose: "State the conditional design thesis.", beatId: "decision_required", primaryVisual: "decision_card", requiredElements: ["choice", "condition"], required: true },
+    { id: "evidence_assumptions", label: "Evidence basis + open assumptions", purpose: "Bound what the evidence establishes and what remains open.", beatId: "what_p2_tells_us", primaryVisual: "table", requiredElements: ["evidence", "open assumptions"], required: true },
+    { id: "certification_options", label: "Certification route / options", purpose: "Compare credible certification routes and name the selected one.", beatId: "approaches_considered", primaryVisual: "matrix", requiredElements: ["options", "selection basis"], required: true },
+    { id: "data_contracts_controls", label: "Data contracts + controls", purpose: "Show the governed contract and its control points.", beatId: "conceptual_architecture", primaryVisual: "architecture", requiredElements: ["data contracts", "controls"], required: true },
+    { id: "ownership_change", label: "Ownership / operating change", purpose: "Name who decides, certifies and handles exceptions.", beatId: "operating_model_controls", primaryVisual: "matrix", requiredElements: ["ownership", "operating change"], required: true },
+    { id: "gated_rollout", label: "Gated rollout / next decision", purpose: "Set the next validation gate without repeating the closing board ask.", beatId: "transition_implications", primaryVisual: "roadmap", requiredElements: ["gate", "next decision"], required: true },
+  ],
+};
+
 // ---------------------------------------------------------------------------
 // P4 — Roadmap commitment deck
 // ---------------------------------------------------------------------------
@@ -738,6 +762,7 @@ export const DECK_STORY_CONTRACTS: Readonly<
 > = {
   REF_DECK_P2_DISCOVERY_READOUT: P2_DISCOVERY_READOUT,
   REF_DECK_P3_SOLUTION_DECISION: P3_SOLUTION_DECISION,
+  REF_DECK_P3_ARCHITECTURE: P3_ARCHITECTURE,
   REF_DECK_P4_BUSINESS_CASE: P4_BUSINESS_CASE,
   REF_DECK_P4_ROADMAP: P4_ROADMAP,
 };
@@ -760,10 +785,11 @@ export function deckContractIdForDeliverable(
     case "root_cause_worksheet":
       return "REF_DECK_P2_DISCOVERY_READOUT";
     case "solution_approach_options":
-    case "target_state_architecture":
     case "solution_design":
     case "operating_model_design":
       return "REF_DECK_P3_SOLUTION_DECISION";
+    case "target_state_architecture":
+      return "REF_DECK_P3_ARCHITECTURE";
     case "business_case":
       return "REF_DECK_P4_BUSINESS_CASE";
     case "roadmap":
@@ -848,7 +874,9 @@ export function renderDeckContractPrompt(id: DeckContractId): string {
     ...slideLines,
     "",
     `DENSITY: ${SLIDE_DENSITY.preferredMin}-${SLIDE_DENSITY.preferredMax} visible words per slide is the target; up to ${SLIDE_DENSITY.advisoryMax} is acceptable; past ${SLIDE_DENSITY.blockingMax} the slide must be split or rewritten. Visible words exclude speaker notes and exhibit data.`,
-    `STRUCTURE: ${CORE_SLIDE_COUNT.min}-${CORE_SLIDE_COUNT.max} core slides. One primary message per slide. One primary visual per slide. At most ${MAX_SUPPORTING_POINTS} supporting points. No paragraph walls. No dense multi-column tables — move those to the appendix.`,
+    c.narrativeTablePageCeiling
+      ? `STRUCTURE: at most ${c.narrativeTablePageCeiling} narrative and in-deck table pages combined. The renderer adds the governed architecture visuals, cover, closing and reference appendix separately. Thin beats merge; never pad to fill six. One primary message and at most 3 supporting points per page. Put source statements, caveats and provenance in speaker notes and the Word companion.`
+      : `STRUCTURE: ${CORE_SLIDE_COUNT.min}-${CORE_SLIDE_COUNT.max} core slides. One primary message per slide. One primary visual per slide. At most ${MAX_SUPPORTING_POINTS} supporting points. No paragraph walls. No dense multi-column tables — move those to the appendix.`,
     'TITLES: every slide title must state the conclusion, not the category. Not "Architecture" but what the architecture means for the decision. A slide should lead naturally into the next.',
     c.appendixAllowed
       ? `APPENDIX: permitted, and the right home for ${c.appendixContent.join(", ")}. Appendix slides are not part of the core count.`

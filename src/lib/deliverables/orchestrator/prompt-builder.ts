@@ -655,6 +655,9 @@ export function deckLengthInstruction(
   if (!req.outputFormats.includes("pptx")) return "";
   const band = SLIDE_BANDS[req.deliverableType as DeliverableKey];
   if (!band) return "";
+  if (req.deliverableType === "target_state_architecture") {
+    return `DECK LENGTH: author at most ${band.max} decision-led narrative slides, covering the six named beats in the architecture deck story contract; thin beats merge. Every in-deck table page counts within the same six-page narrative/table ceiling. The renderer separately adds governed architecture visuals, cover, closing and reference appendix under a 16-page core / 27-page hard physical limit. Do not repeat the opening thesis in the closing board ask. Preserve full source statements, caveats and provenance in speaker notes and the Word companion.`;
+  }
   // Honour a depth-aware slide floor so the generator is told the SAME min the
   // gate will enforce (a bar the writer cannot see is a coin toss). It can only
   // lower the band's min for a smaller-scope Move; the ceiling is unchanged.

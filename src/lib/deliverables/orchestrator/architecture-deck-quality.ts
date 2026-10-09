@@ -5,6 +5,7 @@ import {
   type ArchitectureModel,
 } from "@/lib/visual-system/architecture-model";
 import { renderArchitectureVisualExhibits } from "@/lib/visual-system/architecture-html-renderer";
+import { SLIDE_DESIGN } from "@/lib/design/design-tokens";
 
 export function architectureVisualDigest(svg: string): string {
   return createHash("sha256").update(svg).digest("hex").slice(0, 16);
@@ -49,11 +50,37 @@ export async function judgeArchitectureDeck(
   }
   for (const [key, visual] of visuals) {
     for (const svg of [visual.svg, ...(visual.continuationSvgs ?? [])]) {
+      const viewBox = svg.match(/\bviewBox="0 0 ([\d.]+) ([\d.]+)"/);
       const sizes = [
         ...svg.matchAll(/<text\b[^>]*font-size="(\d+(?:\.\d+)?)"/g),
       ].map((match) => Number(match[1]));
-      if (sizes.length === 0 || sizes.some((size) => size < 12)) {
+      const scale = viewBox
+        ? Math.min(
+            (12 * 72) / Number(viewBox[1]),
+            (SLIDE_DESIGN.masters.architecture.minimumVisualHeightIn * 72) /
+              Number(viewBox[2]),
+          )
+        : 0;
+      if (
+        sizes.length === 0 ||
+        !Number.isFinite(scale) ||
+        scale <= 0 ||
+        sizes.some(
+          (size) =>
+            size * scale + 0.01 <
+            SLIDE_DESIGN.masters.architecture.minimumFullPageLabelPt,
+        )
+      ) {
         findings.push(`architecture_label_scale:${key}`);
+      }
+      const itemCount = [...svg.matchAll(/<g data-arch-item-id="/g)].length;
+      const limit = key === "end_to_end_data_flow" ||
+        key === "current_state_system_data_flow" ||
+        key === "ai_recommendation_control_flow"
+        ? 12
+        : 14;
+      if (itemCount > limit) {
+        findings.push(`architecture_visual_density:${key}:${itemCount}`);
       }
       if (/marker-end="url\(#arrow\)"/.test(svg)) {
         findings.push(`architecture_undeclared_edge:${key}`);

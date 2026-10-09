@@ -30,10 +30,12 @@ describe("deckStoryContractInstruction", () => {
     expect(deckStoryContractInstruction(req("charter", ["pptx"]))).toBe("");
   });
 
-  it("gives the architecture deck the P3 solution-decision contract", () => {
+  it("gives the architecture deck its six-beat page-budget contract", () => {
     const text = deckStoryContractInstruction(
       req("target_state_architecture", ["pptx"]),
     );
-    expect(text).toContain("REF_DECK_P3_SOLUTION_DECISION");
+    expect(text).toContain("REF_DECK_P3_ARCHITECTURE");
+    expect(text).toContain("at most 6 narrative and in-deck table pages combined");
+    expect(text).toContain("at most 3 supporting points per page");
   });
 });

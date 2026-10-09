@@ -27,7 +27,7 @@ describe("architecture model + HTML renderer (W2)", () => {
     expect(dataFlow?.svg).toContain('class="diagram collection"');
     expect(dataFlow?.svg).not.toContain('marker-end="url(#arrow)"');
     expect(operatingFlow?.svg).not.toContain('marker-end="url(#arrow)"');
-    expect(operatingFlow?.svg).toContain('font-size="15"');
+    expect(operatingFlow?.svg).toMatch(/font-size="\d+"/);
   });
   it("represents exactly the recorded flow ids in each data and control visual", () => {
     const visuals = renderArchitectureVisualExhibits(
@@ -60,7 +60,7 @@ describe("architecture model + HTML renderer (W2)", () => {
       ]),
     );
   });
-  it("renders twelve explicit data flows in four legible rows without omitting an id", () => {
+  it("renders twelve explicit data flows in three legible rows without omitting an id", () => {
     const flow = FIRST_CAPITAL_ARCHITECTURE.target.flows[0];
     const model: ArchitectureModel = {
       ...FIRST_CAPITAL_ARCHITECTURE,
@@ -76,14 +76,14 @@ describe("architecture model + HTML renderer (W2)", () => {
     const visual = renderArchitectureVisualExhibits(model).find(
       (exhibit) => exhibit.id === "end_to_end_data_flow",
     );
-    expect(visual?.svg).toContain('viewBox="0 0 980 574"');
+    expect(visual?.svg).toContain('viewBox="0 0 980 436"');
     expect(
       [...(visual?.svg ?? "").matchAll(/data-arch-item-id="([^"]+)"/g)].map(
         (match) => match[1],
       ),
     ).toEqual(Array.from({ length: 12 }, (_, index) => `flow-${index}`));
     expect(visual?.svg).toContain("<title>");
-    expect(visual?.svg).toContain("RECORDED FLOW 12");
+    expect(visual?.svg).toContain('>flow-11</text>');
     expect(visual?.svg).not.toContain('marker-end="url(#arrow)"');
   });
 
@@ -105,10 +105,10 @@ describe("architecture model + HTML renderer (W2)", () => {
     );
     expect(visual?.continuationSvgs).toHaveLength(1);
     const panels = [visual?.svg ?? "", ...(visual?.continuationSvgs ?? [])];
-    expect(panels[0]).toContain('viewBox="0 0 980 574"');
-    expect(panels[1]).toContain('viewBox="0 0 980 436"');
-    expect(panels[0]).toContain("RECORDED FLOW 12");
-    expect(panels[1]).toContain("RECORDED FLOW 19");
+    expect(panels[0]).toContain('viewBox="0 0 980 436"');
+    expect(panels[1]).toContain('viewBox="0 0 980 298"');
+    expect(panels[0]).toContain('>flow-11</text>');
+    expect(panels[1]).toContain('>flow-18</text>');
     expect(
       panels.flatMap((svg) =>
         [...svg.matchAll(/data-arch-item-id="([^"]+)"/g)].map(

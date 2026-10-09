@@ -174,8 +174,8 @@ describe("deck length reaches the pass that authors the deck", () => {
       outputFormats: ["docx", "pptx"],
     } as DeliverableIntelligenceRequest;
     const instruction = deckLengthInstruction(req);
-    expect(instruction).toContain("between 10 and 16 slides");
-    expect(instruction).toContain("the design and its control points");
+    expect(instruction).toContain("at most 6 decision-led narrative slides");
+    expect(instruction).toContain("in-deck table page counts");
     expect(synthesisPrompt(req)).toContain(instruction);
   });
 

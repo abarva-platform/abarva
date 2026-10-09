@@ -27,6 +27,7 @@ import {
   type ArchitectureModel,
   type ArchitectureStateModel,
 } from "./architecture-model";
+import { SLIDE_DESIGN } from "@/lib/design/design-tokens";
 
 /** The exhibits the architecture renderer always produces from a model. */
 export const ARCHITECTURE_RENDERED_EXHIBITS = [
@@ -290,8 +291,18 @@ function svgTextBlock(
 }
 
 const COLLECTION_COLUMNS = 4;
-const FLOW_CARD_COLUMNS = 3;
-const MAX_FLOW_VISUAL_ROWS = 4;
+const FLOW_CARD_COLUMNS = 4;
+const MAX_FLOW_VISUAL_ROWS = 3;
+
+/** SVG pixels required for an 18pt label at the smallest approved physical
+ * architecture image area. Raster resolution does not change projected type. */
+function projectedLabelPixels(width: number, height: number): number {
+  const scale = Math.min(
+    (12 * 72) / width,
+    (SLIDE_DESIGN.masters.architecture.minimumVisualHeightIn * 72) / height,
+  );
+  return Math.ceil(SLIDE_DESIGN.masters.architecture.minimumFullPageLabelPt / scale);
+}
 
 function svgTimeline(
   items: ReadonlyArray<{ id: string; label: string; detail?: string }>,
@@ -307,6 +318,8 @@ function svgTimeline(
   const height = ordered
     ? 214
     : 35 + Math.max(1, Math.ceil(items.length / columns)) * 165;
+  const labelSize = projectedLabelPixels(width, height);
+  const maxChars = Math.max(7, Math.floor(205 / (labelSize * 0.52)));
   const nodes = items
     .map((item, i) => {
       const x = leftGutter + (ordered ? i : i % columns) * step;
@@ -318,22 +331,15 @@ function svgTimeline(
         <circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>${
           ordered
             ? `
-        <text x="${x}" y="${y + 5}" text-anchor="middle" font-size="15" font-weight="700">${i + 1}</text>`
+        <text x="${x}" y="${y + 9}" text-anchor="middle" font-size="${labelSize}" font-weight="700">${i + 1}</text>`
             : ""
         }
         ${svgTextBlock(item.label, x, y + 48, {
-          maxChars: ordered ? 22 : 24,
-          maxLines: ordered ? 2 : 3,
-          lineHeight: 17,
-          fontSize: 15,
-          weight: 700,
-        })}
-        ${svgTextBlock(item.detail, x, y + (ordered ? 82 : 100), {
-          maxChars: 27,
+          maxChars,
           maxLines: 2,
-          lineHeight: 14,
-          fontSize: 12,
-          fill: "#6b6b66",
+          lineHeight: labelSize + 2,
+          fontSize: labelSize,
+          weight: 700,
         })}
       </g>`;
     })
@@ -354,13 +360,24 @@ function svgFlowDiagram(
     kinds.includes("control") || kinds.includes("human_approval")
       ? "var(--control)"
       : "var(--data)";
-  const cardWidth = 300;
+  const cardWidth = 224;
   const cardHeight = 124;
-  const columnGap = 16;
+  const columnGap = 12;
   const rowGap = 14;
   const gutter = 24;
   const pageCapacity = FLOW_CARD_COLUMNS * MAX_FLOW_VISUAL_ROWS;
   const pages: ArchFlow[][] = [];
+  const compactNodeLabel = (label: string, maxChars: number): string => {
+    if (label.length <= maxChars) return label;
+    const words = label.trim().split(/\s+/);
+    for (let count = Math.min(3, words.length); count >= 1; count -= 1) {
+      const suffix = words.slice(-count)
+        .filter((word, index) => index > 0 || !/^(of|the|a|an)$/i.test(word))
+        .join(" ");
+      if (suffix.length <= maxChars) return suffix;
+    }
+    return `${words.at(-1)?.slice(0, Math.max(1, maxChars - 1)) ?? ""}…`;
+  };
   for (let start = 0; start < filtered.length; start += pageCapacity) {
     pages.push(filtered.slice(start, start + pageCapacity));
   }
@@ -372,10 +389,14 @@ function svgFlowDiagram(
             id: f.id,
             label: `${labels[f.from] ?? f.from} → ${labels[f.to] ?? f.to}`,
             detail: f.label ?? FLOW_LABEL[f.kind],
+            fromLabel: labels[f.from] ?? f.from,
+            toLabel: labels[f.to] ?? f.to,
           }))
-        : [{ id: "empty", label: title, detail: "No modelled flow" }];
+        : [{ id: "empty", label: title, detail: "No modelled flow", fromLabel: title, toLabel: "No modelled flow" }];
       const rows = Math.ceil(items.length / FLOW_CARD_COLUMNS);
       const height = 36 + rows * cardHeight + Math.max(0, rows - 1) * rowGap;
+      const labelSize = projectedLabelPixels(980, height);
+      const maxChars = Math.max(7, Math.floor((cardWidth - 22) / (labelSize * 0.62)));
       const cards = items
         .map((item, index) => {
           const x =
@@ -386,21 +407,22 @@ function svgFlowDiagram(
         <title>${esc(item.label)}${item.detail ? ` — ${esc(item.detail)}` : ""}</title>
         <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" rx="9" fill="#fff" stroke="#d8d5cc"/>
         <rect x="${x}" y="${y}" width="4" height="${cardHeight}" rx="2" fill="${accent}"/>
-        <text x="${x + 16}" y="${y + 22}" font-size="12" font-weight="700" fill="${accent}">RECORDED FLOW ${pageIndex * pageCapacity + index + 1}</text>
-        ${svgTextBlock(item.label, x + cardWidth / 2, y + 47, {
-          maxChars: 38,
-          maxLines: 3,
-          lineHeight: 16,
-          fontSize: 14,
+        <text x="${x + 10}" y="${y + 34}" font-size="${labelSize}" font-weight="700" fill="${accent}">${esc(item.id)}</text>
+        ${svgTextBlock(compactNodeLabel(item.fromLabel, maxChars), x + cardWidth / 2, y + 76, {
+          maxChars,
+          maxLines: 1,
+          lineHeight: labelSize,
+          fontSize: labelSize,
           weight: 700,
           fill: "#1f2524",
         })}
-        ${svgTextBlock(item.detail, x + cardWidth / 2, y + 99, {
-          maxChars: 40,
-          maxLines: 2,
-          lineHeight: 14,
-          fontSize: 12,
-          fill: "#59615d",
+        ${svgTextBlock(`→ ${compactNodeLabel(item.toLabel, maxChars - 2)}`, x + cardWidth / 2, y + 111, {
+          maxChars,
+          maxLines: 1,
+          lineHeight: labelSize,
+          fontSize: labelSize,
+          weight: 700,
+          fill: "#1f2524",
         })}
       </g>`;
         })
@@ -435,7 +457,7 @@ function svgLevel(
     );
   }
   return svgTimeline(
-    level.nodes.slice(0, 7).map((n) => ({
+    level.nodes.map((n) => ({
       id: n.id,
       label: n.label,
       detail: n.service ?? ARCH_LAYER_LABELS[n.layer],
