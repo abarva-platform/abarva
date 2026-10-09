@@ -30,7 +30,13 @@ import type { DeliverablePlan } from "@/lib/deliverables/planning/deliverable-pl
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import type { GenerationProgress } from "./progress";
-import type { DeliverableArtifactBrief, OutputFormat } from "./types";
+import type {
+  ApprovedAssumption,
+  DeliverableArtifactBrief,
+  OutputFormat,
+} from "./types";
+import { loadAssumptionRegisterForGeneration } from "@/lib/programs/assumption-register/generation-feed";
+import { REGISTER_UNAVAILABLE_DETAIL } from "@/lib/programs/assumption-register/model";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
 import { getArtifactBrief } from "./artifact-brief-registry";
 import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
@@ -128,6 +134,17 @@ export interface GenerateServiceDeps {
   generatePlan?: (
     req: DeliverablePlanGenRequest,
   ) => Promise<{ plan: DeliverablePlan }>;
+  /**
+   * The Move assumptions register's citable rows for this generation, or null
+   * when the register does not govern it (flag off). Defaults to the server
+   * loader; called only for a Moves deliverable. A throw blocks the run.
+   */
+  loadAssumptionRegister?: (scope: {
+    tenantClientKey: string;
+    clientId: string;
+    userId: string;
+    programId: string;
+  }) => Promise<ApprovedAssumption[] | null>;
   /** Architecture model generation — defaults to the governed adapter. Injectable for tests. */
   generateArchitecture?: (req: {
     engagement: string;
@@ -298,6 +315,22 @@ export function buildSectionDrivenEvidenceQueries(
     : [spellIdentifiersAsWords(normalizeQuery(`${prefix} current state baseline`))];
 }
 
+function defaultLoadAssumptionRegister(scope: {
+  tenantClientKey: string;
+  clientId: string;
+  userId: string;
+  programId: string;
+}): Promise<ApprovedAssumption[] | null> {
+  return loadAssumptionRegisterForGeneration(
+    {
+      clientId: scope.clientId,
+      clientKey: scope.tenantClientKey,
+      userId: scope.userId,
+    },
+    scope.programId,
+  );
+}
+
 export async function runDeliverableForTenant(
   input: GenerateDeliverableServiceInput,
   deps: GenerateServiceDeps = {},
@@ -368,6 +401,35 @@ export async function runDeliverableForTenant(
       : []),
   ];
 
+  // 1b · the Move's assumptions register — only when it governs generation.
+  // Null (flag off, or not a Move) leaves the request exactly as before.
+  let registerAssumptions: ApprovedAssumption[] | null = null;
+  if (input.module === "moves") {
+    const loadRegister =
+      deps.loadAssumptionRegister ?? defaultLoadAssumptionRegister;
+    try {
+      registerAssumptions = await loadRegister({
+        tenantClientKey: input.tenantClientKey,
+        clientId: input.clientId,
+        userId: input.userId,
+        programId: input.sourceArtifactRef,
+      });
+    } catch (err) {
+      console.error(
+        "[generate-service] assumptions register read failed; generation blocked",
+        err,
+      );
+      return {
+        ok: false,
+        qualityPass: false,
+        blockers: [REGISTER_UNAVAILABLE_DETAIL],
+        blockedReason: `assumption_register_unavailable: ${REGISTER_UNAVAILABLE_DETAIL}`,
+        retrievedEvidence: retrievedCount,
+        contextCoverage: coverage,
+      };
+    }
+  }
+
   // 2 · orchestrator request
   const req = buildDeliverableRequest(
     {
@@ -380,6 +442,9 @@ export async function runDeliverableForTenant(
       initiativeDisplayName: input.initiativeDisplayName,
       outputFormats: input.outputFormats,
       adaptiveDepth: input.adaptiveDepth,
+      ...(registerAssumptions
+        ? { approvedAssumptions: registerAssumptions }
+        : {}),
     },
     evidence,
     sourceRegister,
