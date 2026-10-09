@@ -145,15 +145,19 @@ two in-flight changes editing that file.
   file **warns at the base commit**, so it was left unformatted and only the
   appended region was shaped to Prettier's output; the sole remaining
   complaint is the pre-existing one, at lines well above every added hunk.
-- **PASS** Census, basis stated. At this branch's base, `main`'s committed
-  census reads **2881/2717** while a clean regeneration in a detached worktree
-  of that same commit reads **2882/2718** — one pre-existing unit of drift from
-  two earlier changes that each regenerated against the same parent. This
-  branch reads **2883/2719**, which is the true base **+1**: the one new test
-  file. Against the committed file the diff therefore reads **+2**, one unit of
-  which this change does not own. `uncoveredTestFiles` is unchanged at **164**,
-  which is the expected reading — the newly wired directory was already counted
-  covered by the broad sweep, so wiring it moves no coverage count.
+- **PASS** Census, basis stated, and the basis MOVED during the run. At this
+  branch's original base, `main`'s committed census read **2881/2717** while a
+  clean regeneration in a detached worktree of that same commit read
+  **2882/2718** — one pre-existing unit of drift from two earlier changes that
+  each regenerated against the same parent. `main` then advanced by one squash
+  that regenerated honestly from that true base, which absorbed the drift: its
+  committed census now reads **2884/2720**. After merging it forward and
+  regenerating, this branch reads **2885/2721** — committed **+1**, the one new
+  test file, with no drift left to state. That the delta is exactly one is
+  itself the check: a branch adding one test file to a drifted base would read
+  **+2**. `uncoveredTestFiles` is unchanged at **164**, which is the expected
+  reading — the newly wired directory was already counted covered by the broad
+  sweep, so wiring it moves no coverage count.
 - **PASS** `npm run release:check -- --base origin/main --head HEAD`.
 - **NOT RUN** Signed-in walk. No live proof is claimed.
 
@@ -216,5 +220,6 @@ the failures named here would again reject the handler rather than answer.
 - The missing-feedback refusal is unreachable from the one product reader, which
   disables its own control on empty input. Its sentence is corrected for
   consistency and for any future caller, not because a reviewer meets it today.
-- One unit of the census diff is pre-existing drift on `main`, stated above and
-  not corrected here, because this change does not own it.
+- The census basis moved mid-run when `main` advanced; the reading above is
+  the post-merge one, and the pre-existing drift it describes was absorbed by
+  that squash rather than by this change.
