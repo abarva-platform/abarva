@@ -327,6 +327,53 @@ describe("createMovesGenerateArtifactDeps", () => {
     expect(unapprovedCapture?.currentState).toContain("Draft technical approach.");
   });
 
+  it("carries a P2 root-cause register into P3 as ranked text, and free text unchanged", async () => {
+    const register = {
+      kind: "root_cause_register",
+      version: 1,
+      orderConfirmedAt: "2026-10-02",
+      causes: [
+        { id: "RC-2", cause: "Definitions conflict", status: "accepted", evidence: ["Profile"] },
+        { id: "RC-1", cause: "No ownership", status: "draft" },
+        { id: "S-1", cause: "Reports disagree", status: "symptom", symptomOf: "RC-2" },
+      ],
+    };
+    const captureRow = (value: string) => ({
+      phaseNumber: 2,
+      moduleKey: "phase_2_gaps_root_causes",
+      moduleName: "Gaps / root causes",
+      status: "completed",
+      state: {
+        capture_section_key: "gaps_root_causes",
+        label: "Gaps / root causes",
+        value,
+      },
+    });
+    mockGetProgramById.mockResolvedValue({ gatesPassed: [1, 2] });
+    const deps = createMovesGenerateArtifactDeps({
+      clientId: "client-1",
+      clientKey: "lakeshore",
+      userId: "user-1",
+      role: "program_user",
+    });
+
+    mockGetModuleState.mockResolvedValue([captureRow(JSON.stringify(register))]);
+    const structured = await deps.contextSources.loadPhaseCapture!("move-1", 3);
+    expect(structured?.currentState).toContain(
+      "1. RC-2: Definitions conflict (accepted) · evidence: Profile",
+    );
+    expect(structured?.currentState).toContain("2. RC-1: No ownership (draft, not yet accepted)");
+    expect(structured?.currentState).not.toContain('"kind"');
+    // Generation's root causes carry only settled causes, at their rank.
+    expect(structured?.rootCauses).toEqual(["1. Definitions conflict · evidence: Profile"]);
+    expect(structured?.gaps).toEqual(structured?.rootCauses);
+
+    mockGetModuleState.mockResolvedValue([captureRow("Ownership is unclear.")]);
+    const legacy = await deps.contextSources.loadPhaseCapture!("move-1", 3);
+    expect(legacy?.currentState).toContain("Ownership is unclear.");
+    expect(legacy?.rootCauses).toEqual(["Ownership is unclear."]);
+  });
+
   it("keeps the prior approved architecture authoritative when the current version is a draft", async () => {
     mockAzureQuery.mockResolvedValueOnce([
       {

@@ -3,6 +3,10 @@ import {
   isSolutionRouteValidationComplete,
   type ConfirmedSolutionRoute,
 } from "@/lib/programs/solution-route-assessment";
+import {
+  isRootCauseRegisterComplete,
+  parseRootCauseRegister,
+} from "@/lib/programs/root-cause-register";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 import { p1CharterEvidenceFamilyForSection } from "@/lib/programs/p1-charter-evidence";
 import { resolveChangeProfile } from "@/lib/programs/phase-workflow-registry";
@@ -30,6 +34,15 @@ export interface PhaseCaptureSection {
     | "business-change"
     | "solution-route"
     | "estimate-model";
+}
+
+/**
+ * A root-cause register is complete only when every ranked cause is settled
+ * and the order is confirmed; any other value is judged as before.
+ */
+function rootCauseValueComplete(value: string): boolean {
+  const register = parseRootCauseRegister(value);
+  return register ? isRootCauseRegisterComplete(register) : true;
 }
 
 export interface PhaseCaptureSectionStatus extends PhaseCaptureSection {
@@ -539,7 +552,9 @@ export function evaluatePhaseCapture(
             })
           : section.structured === "estimate-model"
             ? evaluateEstimateModel(value).readyForApproval
-            : true;
+            : section.key === "gaps_root_causes"
+              ? rootCauseValueComplete(value)
+              : true;
     return {
       ...section,
       value,
