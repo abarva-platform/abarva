@@ -185,10 +185,25 @@ export function describeApprovedEvidenceBasisRefusal(
         "current evidence set.";
 }
 
+/**
+ * The machine codes `approvedEvidenceBasisRefusalCode` can return — one per
+ * condition. Exported so a reader that has to name them (a product describer
+ * deciding whether a route's `detail` is reviewer prose, for instance) couples
+ * to this list at compile time instead of retyping the strings.
+ */
+export const APPROVED_EVIDENCE_BASIS_REFUSAL_CODES = [
+  "approved_evidence_basis_unevaluable",
+  "approved_evidence_basis_not_recorded",
+  "stale_approved_evidence_snapshot",
+] as const;
+
+export type ApprovedEvidenceBasisRefusalCode =
+  (typeof APPROVED_EVIDENCE_BASIS_REFUSAL_CODES)[number];
+
 /** Stable machine code for the refusal, distinct per condition. */
 export function approvedEvidenceBasisRefusalCode(
   refusal: ApprovedEvidenceBasisRefusal,
-): string {
+): ApprovedEvidenceBasisRefusalCode {
   if (refusal.condition === "basis_unevaluable") {
     return "approved_evidence_basis_unevaluable";
   }
