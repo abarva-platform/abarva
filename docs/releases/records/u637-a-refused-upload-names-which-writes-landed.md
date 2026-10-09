@@ -127,7 +127,8 @@ nothing here is flag-gated.
   list extended from six to nine, and the comment explaining what an unnamed
   code now means corrected.
 - `docs/architecture/test-ci-coverage-census.json` — regenerated; `+2` test
-  files, uncovered unchanged at 164.
+  files on top of the merged base (2894 → 2896, covered 2730 → 2732), uncovered
+  unchanged at 164.
 
 ## QA / Validation
 
@@ -258,14 +259,17 @@ landed: 'bytes_and_registration'`.
   a prior version superseded does not check its own result, so a failure there
   leaves two rows looking current and never reaches this catch. Out of scope
   here and worth its own lane.
-- **A census sequencing hazard, and it is the fifth instance of the same
-  shape.** Two sibling releases are in flight from the identical base and each
-  commits the identical regenerated value, so `git merge-tree` reads clean
-  between all three and whichever lands last leaves the committed census low by
-  the files the others added. This release commits its own honest base `+2`. A
-  regeneration on `main` is owed once the last of the three lands, and the
-  comparison to make is between the committed **values**, never the merge
-  result.
+- **A census sequencing hazard, resolved here by ordering rather than left for
+  `main` to carry.** Two sibling releases were in flight from the identical base
+  and each committed the identical regenerated value, so a merge reads clean
+  between all three and whichever lands last would leave the census low by the
+  files the others added. Both landed first and this branch was merged forward
+  and regenerated against each new base in turn, so the value committed here is
+  base `+2` of the **current** `main` (2896/2732) and `main` carries no drift.
+  The lesson stands for the next lane: compare the committed **values**, never
+  the merge result, and never trust the generator's own `census drift: committed
+census matches this run` line — it printed "matches" on a tree whose committed
+  value was two low, because it prints after writing.
 - **Not `live-proven`.** A signed-in walk is owed. The **regression direction**
   is the success path: an evidence file and a workshop-notes file must each
   still upload, appear in the cabinet, and register a pending review, with the
