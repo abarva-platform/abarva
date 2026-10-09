@@ -35,6 +35,11 @@ import { resolveMoveUploadEvidenceFamily } from "@/lib/programs/p1-charter-evide
 // the product copy module is the only thing that turns these into a next
 // action a reviewer can take.
 import type { MoveUploadRefusalCode } from "@/lib/programs/move-upload-refusal";
+import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
+import {
+  classifyMoveUploadWriteFailure,
+  type MoveUploadWriteStage,
+} from "@/lib/programs/move-upload-write-stage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +58,14 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ programId: string }> },
 ) {
+  // Where this handler is relative to its two writes (blob, then the
+  // `move_artifacts` row). The thrown value cannot say — a rejected insert and
+  // a scanner throw are indistinguishable by the time the catch sees them — so
+  // position is recorded as it is crossed. See
+  // `@/lib/programs/move-upload-write-stage` for why each stage gets a
+  // different sentence, and why the `stored` one tells the reviewer NOT to
+  // upload again.
+  let writeStage: MoveUploadWriteStage = "before_storage";
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
@@ -161,6 +174,7 @@ export async function POST(
       phase,
     });
 
+    writeStage = "storing";
     const saved = await saveMoveArtifact(ctx, {
       moveId: programId,
       phase,
@@ -178,6 +192,10 @@ export async function POST(
       generatedBy: ctx.email ?? "upload",
       metadata: { uploadedBy: ctx.email ?? null, mime: file.type || null },
     });
+    // Both writes have landed. Everything below is either caught locally or is
+    // response construction, so from here a throw means a COMPLETED upload the
+    // reviewer must not repeat.
+    writeStage = "stored";
 
     // Every uploaded_evidence/session_artifact file (evidence files and
     // workshop/session notes alike — same family path, no special-casing)
@@ -249,6 +267,23 @@ export async function POST(
           : undefined,
     });
   } catch (err) {
-    return tenancyErrorResponse(err);
+    // `tenancyErrorResponse` ends in `throw err`, so a bare
+    // `return tenancyErrorResponse(err)` here rejected the handler a second
+    // time and the framework answered with no body — leaving all three readers
+    // of this route with no `error` to name and the unnamed default's "was not
+    // uploaded" to render, whichever writes had actually landed.
+    const failure = classifyMoveUploadWriteFailure(writeStage);
+    // Logged for the tenancy arms too, and correctly so: the stage and the
+    // landed state are true of whatever threw, including a 401.
+    console.error("[artifacts/upload] request_failed", {
+      stage: writeStage,
+      landed: failure.landed,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return tenancyOrNamedErrorResponse(err, tenancyErrorResponse, {
+      code: failure.code,
+      detail: failure.detail,
+      status: failure.status,
+    });
   }
 }

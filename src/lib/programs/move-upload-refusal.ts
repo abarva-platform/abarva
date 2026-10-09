@@ -45,9 +45,16 @@ const SENSITIVE_UPLOAD_QUARANTINE_CODE = "sensitive_data_quarantined";
 
 /**
  * The refusal codes the Moves upload route declares. The route annotates each
- * of its own five with `satisfies MoveUploadRefusalCode`, so a sixth cannot be
- * added there without this list being edited; the quarantine code is the
- * shared guard's, pinned against it in the suite.
+ * of the five it validates with `satisfies MoveUploadRefusalCode`, so a sixth
+ * cannot be added there without this list being edited; the quarantine code is
+ * the shared guard's, pinned against it in the suite.
+ *
+ * The last three are the route's CATCH-ALL arms, named by
+ * `classifyMoveUploadWriteFailure` in `@/lib/programs/move-upload-write-stage`
+ * from where the handler was relative to its two writes. Before they existed
+ * the catch re-threw into an unbodied 500 and every one of them arrived here as
+ * an absent code, so all three were answered by the unnamed default — whose
+ * "was not uploaded" is false for `upload_registered_response_failed`.
  */
 export const MOVE_UPLOAD_REFUSAL_CODES = [
   "file_required",
@@ -56,6 +63,9 @@ export const MOVE_UPLOAD_REFUSAL_CODES = [
   "evidence_family_requires_evidence_upload",
   "unknown_evidence_family",
   SENSITIVE_UPLOAD_QUARANTINE_CODE,
+  "upload_failed_before_storage",
+  "upload_not_registered",
+  "upload_registered_response_failed",
 ] as const;
 
 export type MoveUploadRefusalCode = (typeof MOVE_UPLOAD_REFUSAL_CODES)[number];
@@ -100,10 +110,14 @@ export function isMoveUploadRefusalCode(
 /**
  * Say, in product language, why an evidence upload was refused.
  *
- * Every named code refuses BEFORE the bytes are stored, so each sentence may
- * state that nothing was stored. An unnamed code may have come from the
- * catch-all after a partial write, so the default deliberately does not claim
- * it — it sends the reviewer to the cabinet to look instead.
+ * The six VALIDATION codes refuse before the bytes are stored, so each of
+ * those sentences may state that nothing was stored. The three CATCH-ALL codes
+ * may not: each one states only the writes its stage actually names, and
+ * `upload_registered_response_failed` says the opposite — the file landed, so
+ * do not upload it again.
+ *
+ * An unnamed code is still answered without a claim about the writes, because
+ * it is the shape an unbodied 500 arrives as and nothing has checked them.
  */
 export function describeMoveUploadRefusal(input: {
   code?: unknown;
@@ -151,6 +165,27 @@ export function describeMoveUploadRefusal(input: {
           `${subject} was not uploaded. It appears to contain personal or ` +
           "regulated identifiers, so nothing was stored. Remove the " +
           "identifiers and upload again."
+        );
+      case "upload_failed_before_storage":
+        return (
+          `${subject} was not uploaded: the server failed before storing ` +
+          "anything, so nothing was stored and no record was created. " +
+          "Upload it again."
+        );
+      case "upload_not_registered":
+        return (
+          `${subject} did not finish uploading. Its contents may have ` +
+          "reached storage, but no record of it was created, so it will not " +
+          "be listed in Files & Evidence and cannot ground a build. Upload " +
+          "it again — a second attempt is safe and leaves no duplicate, " +
+          "because nothing was registered the first time."
+        );
+      case "upload_registered_response_failed":
+        return (
+          `${subject} WAS stored and registered — only the server's reply ` +
+          "about it failed. Open Files & Evidence and confirm it is listed. " +
+          "Do not upload it again: a second attempt would file a second " +
+          "copy of a file that is already there."
         );
     }
   }
