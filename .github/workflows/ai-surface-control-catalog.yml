@@ -274,6 +274,15 @@ jobs:
       - name: Exercise the engagement console component suites
         run: npx jest src/components/engagement --runInBand
 
+      # The Moves step page template and its first step, P3 Gate readiness,
+      # where gate-document sign-off and the governed gate submission (approve
+      # and submit, with the approver's own rationale) now happen on one page.
+      # Wired as a DIRECTORY, like the engagement console above: the directory
+      # is created with its first suites, so file-by-file wiring would start
+      # the next step page's suite dark.
+      - name: Exercise the Moves step page suites
+        run: npx jest src/components/strategic-moves/step-page --runInBand
+
       # Not a catalog control. `src/components/strategic-moves/__tests__` is the
       # second-ranked governed-risk directory in
       # `docs/architecture/test-ci-coverage-census.json` — declared AI surface

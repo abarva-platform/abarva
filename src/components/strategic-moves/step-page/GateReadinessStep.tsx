@@ -59,8 +59,7 @@ function buildStateOf(row: DeliverableRow | undefined): {
   if (row.status === "succeeded") return { build: "built" };
   return {
     build: "failed",
-    failureReason:
-      row.blockers[0] ?? row.error ?? "The build did not finish.",
+    failureReason: row.blockers[0] ?? row.error ?? "The build did not finish.",
   };
 }
 
@@ -112,7 +111,6 @@ function DocumentLine({
   title,
   downloadUrl,
   canApprove,
-  approverName,
   signOffReadable,
   buildBusy,
   onRebuild,
@@ -123,7 +121,6 @@ function DocumentLine({
   title: string;
   downloadUrl: string | null;
   canApprove: boolean;
-  approverName: string;
   signOffReadable: boolean;
   buildBusy: boolean;
   onRebuild: () => void;
@@ -138,7 +135,12 @@ function DocumentLine({
   const [signing, setSigning] = useState(false);
   const [note, setNote] = useState("");
   const open = downloadUrl ? (
-    <a className={cx("link-btn")} href={downloadUrl} target="_blank" rel="noreferrer">
+    <a
+      className={cx("link-btn")}
+      href={downloadUrl}
+      target="_blank"
+      rel="noreferrer"
+    >
       Open
     </a>
   ) : null;
@@ -147,7 +149,8 @@ function DocumentLine({
   let stateText: ReactNode;
   let actions: ReactNode = null;
   if (state === "not_built") stateText = "Not built";
-  else if (state === "building") stateText = doc.build === "queued" ? "Queued" : "Building…";
+  else if (state === "building")
+    stateText = doc.build === "queued" ? "Queued" : "Building…";
   else if (state === "failed") {
     stateText = doc.failureReason ?? "The build did not finish.";
     actions = buildBusy ? null : (
@@ -183,7 +186,11 @@ function DocumentLine({
       <>
         {open}
         {signing || refused ? null : (
-          <button type="button" className={cx("btn-ink")} onClick={() => setSigning(true)}>
+          <button
+            type="button"
+            className={cx("btn-ink")}
+            onClick={() => setSigning(true)}
+          >
             Sign off
           </button>
         )}
@@ -191,7 +198,7 @@ function DocumentLine({
     ) : (
       <>
         {open}
-        <span className={cx("item-state")}>Awaiting {approverName}</span>
+        <span className={cx("item-state")}>Awaiting sign-off</span>
       </>
     );
   }
@@ -234,7 +241,11 @@ function DocumentLine({
             >
               {busy ? "Signing…" : `Sign off v${doc.currentVersion}`}
             </button>
-            <button type="button" className={cx("link-btn")} onClick={() => setSigning(false)}>
+            <button
+              type="button"
+              className={cx("link-btn")}
+              onClick={() => setSigning(false)}
+            >
               Cancel
             </button>
           </span>
@@ -244,8 +255,10 @@ function DocumentLine({
         <div className={cx("warn-inline")} role="alert">
           <span>
             <span className={cx("lead")}>
-              Not signed: {refused.blockers?.length ?? 0} client-readiness finding
-              {(refused.blockers?.length ?? 0) === 1 ? "" : "s"} in v{doc.currentVersion}.
+              Not signed: {refused.blockers?.length ?? 0} client-readiness
+              finding
+              {(refused.blockers?.length ?? 0) === 1 ? "" : "s"} in v
+              {doc.currentVersion}.
             </span>{" "}
             Fix the document, or sign it acknowledging them.
           </span>
@@ -253,9 +266,13 @@ function DocumentLine({
             {(refused.blockers ?? []).map((blocker, index) => (
               <li key={`${blocker.kind ?? "finding"}-${index}`}>
                 <span>
-                  <span className={cx("tag", "t-fact")}>{blocker.kind ?? "Finding"}</span>
+                  <span className={cx("tag", "t-fact")}>
+                    {blocker.kind ?? "Finding"}
+                  </span>
                   {blocker.match ? `“${blocker.match}”` : null}
-                  {blocker.why ? <span className={cx("item-note")}>{blocker.why}</span> : null}
+                  {blocker.why ? (
+                    <span className={cx("item-note")}>{blocker.why}</span>
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -273,7 +290,8 @@ function DocumentLine({
                 })
               }
             >
-              Sign off anyway, acknowledging {refused.blockers?.length ?? 0} finding
+              Sign off anyway, acknowledging {refused.blockers?.length ?? 0}{" "}
+              finding
               {(refused.blockers?.length ?? 0) === 1 ? "" : "s"}
             </button>
             <label className={cx("link-btn")}>
@@ -308,7 +326,9 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
   const specs = useMemo(
     () =>
       props.routeDocumentKeys
-        .map((key) => DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key))
+        .map((key) =>
+          DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
+        )
         .filter(Boolean) as DeliverableSpec[],
     [props.routeDocumentKeys],
   );
@@ -339,14 +359,19 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
   const artifactByKey = useMemo(() => {
     const byKey = new Map<string, PhaseBuildArtifact>();
     for (const artifact of props.initialArtifacts) {
-      if (artifact.deliverableTypeKey && !byKey.has(artifact.deliverableTypeKey)) {
+      if (
+        artifact.deliverableTypeKey &&
+        !byKey.has(artifact.deliverableTypeKey)
+      ) {
         byKey.set(artifact.deliverableTypeKey, artifact);
       }
     }
     return byKey;
   }, [props.initialArtifacts]);
 
-  const rowByKey = new Map(build.rows.map((row) => [row.deliverableTypeKey, row]));
+  const rowByKey = new Map(
+    build.rows.map((row) => [row.deliverableTypeKey, row]),
+  );
   const gateSpecs = specs.filter((spec) => spec.gateArtifact);
   const supportSpecs = specs.filter((spec) => !spec.gateArtifact);
   const documents: GateDocumentView[] = gateSpecs.map((spec) => {
@@ -387,10 +412,13 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     void build.approveAndBuild();
   };
 
-  const noneBuilt = documents.length > 0 && documents.every((d) => d.build === "none");
+  const noneBuilt =
+    documents.length > 0 && documents.every((d) => d.build === "none");
   const docsSettled =
     documents.length > 0 &&
-    documents.every((d) => gateDocumentSignState(d, props.signOffReadable) === "signed");
+    documents.every(
+      (d) => gateDocumentSignState(d, props.signOffReadable) === "signed",
+    );
 
   const docsRow: StepPageRow = {
     id: GATE_DOCUMENTS_ROW_ID,
@@ -412,16 +440,16 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         kind: "team",
         text: props.canApprove
           ? `Required by the ${props.phaseName} gate · each signature is bound to one version`
-          : `Required by the ${props.phaseName} gate · ${props.approverName} signs each version`,
+          : `Required by the ${props.phaseName} gate · the approver signs each version`,
       },
     ],
     middle: (
       <>
         {noneBuilt ? (
           <p className={cx("lead-line")}>
-            <span className={cx("lead")}>Not built yet.</span> The gate documents
-            are built from this phase&apos;s steps. Building takes a few minutes; you
-            can leave the page.
+            <span className={cx("lead")}>Not built yet.</span> The gate
+            documents are built from this phase&apos;s steps. Building takes a
+            few minutes; you can leave the page.
           </p>
         ) : buildBusy ? (
           <p className={cx("lead-line")}>
@@ -431,15 +459,19 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         ) : null}
         {props.buildHeldReason && !buildBusy ? (
           <p className={cx("lead-line")}>
-            <span className={cx("lead")}>Build held.</span> {props.buildHeldReason}
+            <span className={cx("lead")}>Build held.</span>{" "}
+            {props.buildHeldReason}
           </p>
         ) : null}
         {build.error ? (
           <p className={cx("lead-line")} role="alert">
-            <span className={cx("lead")}>The build did not start.</span> {build.error}
+            <span className={cx("lead")}>The build did not start.</span>{" "}
+            {build.error}
           </p>
         ) : null}
-        {build.handOffSentence ? <p className={cx("lead-line")}>{build.handOffSentence}</p> : null}
+        {build.handOffSentence ? (
+          <p className={cx("lead-line")}>{build.handOffSentence}</p>
+        ) : null}
         {rebuildAsk ? (
           <div className={cx("warn-inline")}>
             <span>
@@ -450,10 +482,18 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
               The gate&apos;s sign-off checks fail again until they are signed.
             </span>
             <span className={cx("item-actions")}>
-              <button type="button" className={cx("btn-line")} onClick={requestBuild}>
+              <button
+                type="button"
+                className={cx("btn-line")}
+                onClick={requestBuild}
+              >
                 Rebuild anyway
               </button>
-              <button type="button" className={cx("link-btn")} onClick={() => setRebuildAsk(false)}>
+              <button
+                type="button"
+                className={cx("link-btn")}
+                onClick={() => setRebuildAsk(false)}
+              >
                 Cancel
               </button>
             </span>
@@ -470,7 +510,6 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
                 title={doc.title}
                 downloadUrl={artifact?.downloadUrl ?? null}
                 canApprove={props.canApprove}
-                approverName={props.approverName}
                 signOffReadable={props.signOffReadable}
                 buildBusy={buildBusy}
                 onRebuild={requestBuild}
@@ -481,22 +520,33 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         </ul>
         {supportSpecs.length > 0 ? (
           <>
-            <span className={cx("eyebrow", "sub-eyebrow")}>Also built · not signed at the gate</span>
+            <span className={cx("eyebrow", "sub-eyebrow")}>
+              Also built · not signed at the gate
+            </span>
             <ul className={cx("items")}>
               {supportSpecs.map((spec) => {
                 const artifact = artifactByKey.get(spec.deliverableTypeKey);
                 return (
                   <li key={spec.deliverableTypeKey}>
                     <span>
-                      <span className={cx("item-name")}>{spec.documentTitle}</span>
+                      <span className={cx("item-name")}>
+                        {spec.documentTitle}
+                      </span>
                     </span>
                     <span className={cx("item-actions")}>
                       {artifact ? (
-                        <a className={cx("link-btn")} href={artifact.downloadUrl} target="_blank" rel="noreferrer">
+                        <a
+                          className={cx("link-btn")}
+                          href={artifact.downloadUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
                           Open
                         </a>
                       ) : (
-                        <span className={cx("item-state")}>Built with the gate documents</span>
+                        <span className={cx("item-state")}>
+                          Built with the gate documents
+                        </span>
                       )}
                     </span>
                   </li>
@@ -507,7 +557,9 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         ) : null}
         {props.notBuilt.length > 0 ? (
           <>
-            <span className={cx("eyebrow", "sub-eyebrow")}>Not built for this profile</span>
+            <span className={cx("eyebrow", "sub-eyebrow")}>
+              Not built for this profile
+            </span>
             <ul className={cx("items")}>
               {props.notBuilt.map((doc) => (
                 <li key={doc.title}>
@@ -530,7 +582,10 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
           disabled={Boolean(props.buildHeldReason)}
           onClick={requestBuild}
         >
-          Build the {documents.length === 1 ? "gate document" : `${documents.length} gate documents`}
+          Build the{" "}
+          {documents.length === 1
+            ? "gate document"
+            : `${documents.length} gate documents`}
         </button>
       ) : null,
     basis: [
@@ -553,7 +608,7 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     facts: [
       {
         kind: "team",
-        text: `Recorded with ${props.canApprove ? "your" : `${props.approverName}'s`} approval · approving also submits ${props.phaseName}`,
+        text: `Recorded with ${props.canApprove ? "your" : "the approver's"} approval · approving also submits ${props.phaseName}`,
       },
     ],
     middle: !props.canApprove ? (
@@ -580,7 +635,9 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     ) : (
       <div>
         <p className={cx("proposal")}>{rationale}</p>
-        <span className={cx("when-settled")}>Written by you · recorded when you approve and submit</span>
+        <span className={cx("when-settled")}>
+          Written by you · recorded when you approve and submit
+        </span>
       </div>
     ),
     actions: !props.canApprove ? null : editingRationale ? (
@@ -664,14 +721,20 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         humanRationale: rationale.trim(),
       });
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "The gate submission failed.");
+      setSubmitError(
+        err instanceof Error ? err.message : "The gate submission failed.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const docStates = documents.map((d) => gateDocumentSignState(d, props.signOffReadable));
-  const builtCount = docStates.filter((s) => s !== "not_built" && s !== "building" && s !== "failed").length;
+  const docStates = documents.map((d) =>
+    gateDocumentSignState(d, props.signOffReadable),
+  );
+  const builtCount = docStates.filter(
+    (s) => s !== "not_built" && s !== "building" && s !== "failed",
+  ).length;
   const signedCount = docStates.filter((s) => s === "signed").length;
   const docsSummary = noneBuilt
     ? "Gate documents not built"
@@ -719,29 +782,39 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
       rows={[...submitRow, docsRow, rationaleRow]}
       ava={
         <ul className={cx("ava-read")}>
-          <li>I checked every {props.phaseName} gate rule against this Move.</li>
+          <li>
+            I checked every {props.phaseName} gate rule against this Move.
+          </li>
           {noneBuilt ? (
             <li>
               <b>The gate documents aren’t built yet.</b>{" "}
-              <a href={`#row-${GATE_DOCUMENTS_ROW_ID}`}>Build them here</a>; signing comes after.
+              <a href={`#row-${GATE_DOCUMENTS_ROW_ID}`}>Build them here</a>;
+              signing comes after.
             </li>
           ) : null}
           {props.notBuilt.length > 0 ? (
             <li>
-              <b>I left out</b> {props.notBuilt.map((d) => d.title).join(" and ")} for this
-              Move’s change profile. If the profile changes, they come back.
+              <b>I left out</b>{" "}
+              {props.notBuilt.map((d) => d.title).join(" and ")} for this Move’s
+              change profile. If the profile changes, they come back.
             </li>
           ) : null}
           {props.canApprove && !rationale.trim() ? (
             <li>
-              <b>I haven’t drafted</b> the <a href={`#row-${GATE_RATIONALE_ROW_ID}`}>approval rationale</a>.
-              It is yours to write; it is recorded only when you approve and submit.
+              <b>I haven’t drafted</b> the{" "}
+              <a href={`#row-${GATE_RATIONALE_ROW_ID}`}>approval rationale</a>.
+              It is yours to write; it is recorded only when you approve and
+              submit.
             </li>
           ) : null}
         </ul>
       }
-      submittedLabel={!props.canApprove && model.footerNote ? model.footerNote : undefined}
-      continueLabel={submitting ? "Submitting…" : `Approve and submit ${props.phaseName}`}
+      submittedLabel={
+        !props.canApprove && model.footerNote ? model.footerNote : undefined
+      }
+      continueLabel={
+        submitting ? "Submitting…" : `Approve and submit ${props.phaseName}`
+      }
       onContinue={() => void submit()}
       onBack={props.onBack}
     />

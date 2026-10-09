@@ -154,9 +154,13 @@ export interface StepPageRow extends StepRow {
 function RowView({ row }: { row: StepPageRow }) {
   const subject = (
     <div>
-      <span className={cx("rc-id")}>{(row.eyebrow ?? row.id).toUpperCase()}</span>
+      <span className={cx("rc-id")}>
+        {(row.eyebrow ?? row.id).toUpperCase()}
+      </span>
       <span className={cx("rc-cause")}>{row.subject}</span>
-      {row.facts?.map((fact, index) => <SourceLine key={index} source={fact} />)}
+      {row.facts?.map((fact, index) => (
+        <SourceLine key={index} source={fact} />
+      ))}
     </div>
   );
   const actions = <div className={cx("row-actions")}>{row.actions}</div>;
@@ -338,7 +342,8 @@ function useStepPageTheme() {
     const query = window.matchMedia?.("(prefers-color-scheme: dark)");
     if (!query) return;
     setSystemDark(query.matches);
-    const onChange = (event: MediaQueryListEvent) => setSystemDark(event.matches);
+    const onChange = (event: MediaQueryListEvent) =>
+      setSystemDark(event.matches);
     query.addEventListener?.("change", onChange);
     return () => query.removeEventListener?.("change", onChange);
   }, []);
@@ -369,7 +374,8 @@ export function MovesStepPage(props: MovesStepPageProps) {
         : "";
   const showCount =
     (state !== "blocked" && state !== "skipped") ||
-    (state === "blocked" && Boolean(props.checksWhenBlocked && props.countLabel));
+    (state === "blocked" &&
+      Boolean(props.checksWhenBlocked && props.countLabel));
   const doneEyebrow = state === "ready" || state === "done";
 
   return (
@@ -437,7 +443,8 @@ export function MovesStepPage(props: MovesStepPageProps) {
               const done = current
                 ? state === "done"
                 : (step.done ?? index < stepIndex);
-              const depth = current && state === "skipped" ? "skip" : step.depth;
+              const depth =
+                current && state === "skipped" ? "skip" : step.depth;
               const label = DEPTH_LABEL[depth];
               const inner = (
                 <>
@@ -538,11 +545,14 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   {state === "blocked" && props.blockedLink ? (
                     <>
                       {" "}
-                      <a href={props.blockedLink.href}>{props.blockedLink.label}</a>
+                      <a href={props.blockedLink.href}>
+                        {props.blockedLink.label}
+                      </a>
                     </>
                   ) : null}
                 </p>
-                {(showCount || (state === "blocked" && props.checksWhenBlocked)) &&
+                {(showCount ||
+                  (state === "blocked" && props.checksWhenBlocked)) &&
                 props.checks?.length ? (
                   <Disclosure
                     closed={props.checksLabel ?? "Show checks"}
@@ -554,19 +564,29 @@ export function MovesStepPage(props: MovesStepPageProps) {
                         <li key={index}>
                           <span>
                             {check.unknown ? (
-                              <span className={cx("chk-unknown")} aria-label="not evaluated" />
+                              <span
+                                className={cx("chk-unknown")}
+                                aria-label="not evaluated"
+                              />
                             ) : check.met ? (
                               <span className={cx("tick")} aria-label="met">
                                 ✓
                               </span>
                             ) : (
-                              <span className={cx("chk-open")} aria-label="not met" />
+                              <span
+                                className={cx("chk-open")}
+                                aria-label="not met"
+                              />
                             )}
                           </span>
                           <span>
                             <SourceTag kind={check.level} />
-                            {check.targetRowId && !check.met && !check.unknown ? (
-                              <a href={`#row-${check.targetRowId}`}>{check.text}</a>
+                            {check.targetRowId &&
+                            !check.met &&
+                            !check.unknown ? (
+                              <a href={`#row-${check.targetRowId}`}>
+                                {check.text}
+                              </a>
                             ) : (
                               check.text
                             )}
@@ -611,7 +631,8 @@ export function MovesStepPage(props: MovesStepPageProps) {
                       <dt className={cx("eyebrow")}>Depth</dt>
                       <dd>
                         <span>
-                          Skipped. The attestation below is what the gate checks.
+                          Skipped. The attestation below is what the gate
+                          checks.
                         </span>
                       </dd>
                     </div>
@@ -627,7 +648,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   <span className={cx("ctx-items")}>
                     {props.context.items.map((item, index) => (
                       <span key={index} style={{ display: "contents" }}>
-                        {index > 0 ? <span className={cx("sep")}>·</span> : null}
+                        {index > 0 ? (
+                          <span className={cx("sep")}>·</span>
+                        ) : null}
                         <span>{item}</span>
                       </span>
                     ))}
@@ -651,7 +674,8 @@ export function MovesStepPage(props: MovesStepPageProps) {
               {state === "blocked" ? (
                 <div className={cx("list")}>
                   <p className={cx("empty-note")}>
-                    {props.blockedWork ?? "Accepted rows are kept while this step waits."}
+                    {props.blockedWork ??
+                      "Accepted rows are kept while this step waits."}
                   </p>
                 </div>
               ) : state === "skipped" && props.skipped ? (
@@ -669,7 +693,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
                       </div>
                       <div>
                         <dt>Recorded</dt>
-                        <dd>{props.skipped.date}, with the use-case profile in P2</dd>
+                        <dd>
+                          {props.skipped.date}, with the use-case profile in P2
+                        </dd>
                       </div>
                     </dl>
                   </div>
@@ -677,9 +703,17 @@ export function MovesStepPage(props: MovesStepPageProps) {
               ) : (
                 <>
                   <Group title="Needs your decision" rows={groups.decision} />
-                  <Group title="Your ranking" rows={groups.ranked} after={props.rankingFoot} />
+                  <Group
+                    title="Your ranking"
+                    rows={groups.ranked}
+                    after={props.rankingFoot}
+                  />
                   <Group title="Drafts to review" rows={groups.draft} />
-                  <CollapsedGroup title="Set aside" rows={groups.setAside} defaultOpen={false} />
+                  <CollapsedGroup
+                    title="Set aside"
+                    rows={groups.setAside}
+                    defaultOpen={false}
+                  />
                   <CollapsedGroup
                     title="Settled"
                     rows={groups.settled}
@@ -703,12 +737,18 @@ export function MovesStepPage(props: MovesStepPageProps) {
               </span>
               <div className={cx("footer-actions")}>
                 {stepIndex > 0 && props.onBack ? (
-                  <button type="button" className={cx("btn-quiet")} onClick={props.onBack}>
+                  <button
+                    type="button"
+                    className={cx("btn-quiet")}
+                    onClick={props.onBack}
+                  >
                     Back
                   </button>
                 ) : null}
                 {props.submittedLabel ? (
-                  <span className={cx("footer-count")}>{props.submittedLabel}</span>
+                  <span className={cx("footer-count")}>
+                    {props.submittedLabel}
+                  </span>
                 ) : (
                   <button
                     type="button"

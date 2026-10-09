@@ -66,7 +66,8 @@ export function groupStepRows<R extends StepRow>(
   rows: readonly R[],
 ): StepRowGroups<R> {
   const sorted = [...rows].sort(byRank);
-  const of = (state: StepRowState) => sorted.filter((row) => row.state === state);
+  const of = (state: StepRowState) =>
+    sorted.filter((row) => row.state === state);
   return {
     decision: of("decision"),
     ranked: of("ranked"),
@@ -82,7 +83,10 @@ const MAX_CLAUSES = 3;
 function joinClauses(all: readonly string[]): string {
   const clauses =
     all.length > MAX_CLAUSES
-      ? [...all.slice(0, MAX_CLAUSES - 1), `${all.length - (MAX_CLAUSES - 1)} more below`]
+      ? [
+          ...all.slice(0, MAX_CLAUSES - 1),
+          `${all.length - (MAX_CLAUSES - 1)} more below`,
+        ]
       : all;
   if (clauses.length <= 1) return clauses[0] ?? "";
   if (clauses.length === 2) return `${clauses[0]} and ${clauses[1]}`;
@@ -117,7 +121,9 @@ export function buildNextActionSentence(
   if (draft.length === 1 && draft[0].draftName?.trim()) {
     clauses.push(`review ${draft[0].draftName.trim()}`);
   } else if (draft.length > 0) {
-    clauses.push(`review ${draft.length} ${draft.length === 1 ? "draft" : "drafts"}`);
+    clauses.push(
+      `review ${draft.length} ${draft.length === 1 ? "draft" : "drafts"}`,
+    );
   }
   return clauses.length > 0 ? sentence(joinClauses(clauses)) : null;
 }

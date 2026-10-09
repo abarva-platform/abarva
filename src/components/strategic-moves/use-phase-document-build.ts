@@ -148,9 +148,9 @@ export interface PackageReadiness {
 
 export function buildInitialRows(
   specs: DeliverableSpec[],
-  initialArtifacts: readonly PhaseBuildArtifact[],
+  initialArtifacts: readonly PhaseBuildSeedArtifact[],
 ): DeliverableRow[] {
-  const artifactByKey = new Map<string, PhaseBuildArtifact>();
+  const artifactByKey = new Map<string, PhaseBuildSeedArtifact>();
   for (const artifact of initialArtifacts) {
     if (!artifact.deliverableTypeKey) continue;
     if (!artifactByKey.has(artifact.deliverableTypeKey)) {

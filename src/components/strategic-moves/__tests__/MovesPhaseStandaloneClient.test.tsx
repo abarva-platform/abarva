@@ -4659,6 +4659,120 @@ describe("MovesPhaseStandaloneClient", () => {
   // takes it as an OPTIONAL second argument, so omitting it type-checks and
   // quietly reports the default question set's size for a Move whose P3 asks a
   // different one. P3 Design is the only route-dependent phase.
+  describe("P3 Gate readiness step page (moves_step_pages_v3)", () => {
+    const p3Move = () =>
+      makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
+
+    it("renders the gate step page for P3 with the flag on and ?step=gate", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="gate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByRole("heading", { name: "Check the gate and sign off Design" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("moves-phase-standalone")).not.toBeInTheDocument();
+      // Approving and submitting are one governed action, held until the
+      // required checks and the approver's rationale are in place.
+      expect(
+        screen.getByRole("button", { name: "Approve and submit Design" }),
+      ).toBeDisabled();
+      // The step bar comes from the phase workflow registry: five P3 steps.
+      expect(
+        within(screen.getByRole("navigation", { name: "Design steps" })).getAllByRole(
+          "listitem",
+        ),
+      ).toHaveLength(5);
+    });
+
+    it("ignores ?step=gate while the flag is off", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          initialStepView="gate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Check the gate and sign off Design" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+    });
+
+    it("needs the redesigned capture: without moves_capture_v2 the flag does nothing", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          stepPagesV3Enabled
+          initialStepView="gate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Check the gate and sign off Design" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders only for P3 today", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="gate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: /Check the gate and sign off/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("a viewer without gate authority is offered no sign-off and no submission", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates={false}
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="gate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("button", { name: /Approve and submit/ }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Sign off" })).not.toBeInTheDocument();
+      expect(screen.getByText("An authorized gate approver approves this gate.")).toBeInTheDocument();
+    });
+  });
+
   describe("capture phase strip totals (moves_capture_v2)", () => {
     const solutionRoute = (
       overrides: Partial<ConfirmedSolutionRoute> = {},

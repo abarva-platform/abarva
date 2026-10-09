@@ -36,7 +36,10 @@ const input = (overrides: Partial<GateStepInput> = {}): GateStepInput => ({
   criteria: [
     criterion("solution_route_validated"),
     criterion("design_approved"),
-    criterion("phase_3_findings_written", { severity: "soft", completed: false }),
+    criterion("phase_3_findings_written", {
+      severity: "soft",
+      completed: false,
+    }),
   ],
   documents: [doc("a"), doc("b")],
   signOffReadable: true,
@@ -65,24 +68,38 @@ describe("gateDocumentSignState", () => {
 
   it("does not claim signed or unsigned when the sign-off read failed", () => {
     expect(gateDocumentSignState(doc("x"), false)).toBe("unknown");
-    expect(gateDocumentSignState(doc("x", { signedOffVersion: null }), false)).toBe("unknown");
+    expect(
+      gateDocumentSignState(doc("x", { signedOffVersion: null }), false),
+    ).toBe("unknown");
   });
 });
 
 describe("gateChecks", () => {
   it("carries the evaluator's reason on an unmet check and links document-backed ones", () => {
     const [route, design] = gateChecks([
-      criterion("solution_route_validated", { completed: false, reason: "Route not validated." }),
+      criterion("solution_route_validated", {
+        completed: false,
+        reason: "Route not validated.",
+      }),
       criterion("design_approved", { completed: false, reason: "Not signed." }),
     ]);
-    expect(route).toMatchObject({ met: false, unknown: false, note: "Route not validated." });
+    expect(route).toMatchObject({
+      met: false,
+      unknown: false,
+      note: "Route not validated.",
+    });
     expect(route.targetRowId).toBeUndefined();
     expect(design.targetRowId).toBe("DOCS");
   });
 
   it("reads every check as not evaluated when any criterion could not be read", () => {
-    const checks = gateChecks([criterion("a"), criterion("b", { verified: false, completed: false })]);
-    expect(checks.every((c) => c.unknown && !c.met && c.note === "not evaluated")).toBe(true);
+    const checks = gateChecks([
+      criterion("a"),
+      criterion("b", { verified: false, completed: false }),
+    ]);
+    expect(
+      checks.every((c) => c.unknown && !c.met && c.note === "not evaluated"),
+    ).toBe(true);
   });
 });
 
@@ -91,14 +108,19 @@ describe("resolveGateStep", () => {
     const model = resolveGateStep(input());
     expect(model.canSubmit).toBe(true);
     expect(model.countLabel).toBe("2 of 2 required checks met");
-    expect(model.nextAction).toMatchObject({ state: "ready", continueEnabled: true });
+    expect(model.nextAction).toMatchObject({
+      state: "ready",
+      continueEnabled: true,
+    });
     expect(model.nextAction.sentence).toBe(
       "Every required check passes and the rationale is written. Approve and submit Design.",
     );
   });
 
   it("an advisory check never holds submission", () => {
-    expect(resolveGateStep(input()).checks.find((c) => c.level === "soft")?.met).toBe(false);
+    expect(
+      resolveGateStep(input()).checks.find((c) => c.level === "soft")?.met,
+    ).toBe(false);
     expect(resolveGateStep(input()).canSubmit).toBe(true);
   });
 
@@ -122,7 +144,10 @@ describe("resolveGateStep", () => {
     const toSign = resolveGateStep(
       input({
         criteria: [criterion("design_approved", { completed: false })],
-        documents: [doc("a"), doc("b", { currentVersion: 3, signedOffVersion: 2 })],
+        documents: [
+          doc("a"),
+          doc("b", { currentVersion: 3, signedOffVersion: 2 }),
+        ],
       }),
     );
     expect(toSign.nextAction.sentence).toBe("Sign off 1 gate document.");
@@ -132,26 +157,47 @@ describe("resolveGateStep", () => {
     const model = resolveGateStep(
       input({
         criteria: [criterion("design_approved", { completed: false })],
-        documents: [doc("a"), doc("b", { build: "failed", title: "Requirements Traceability Matrix" })],
+        documents: [
+          doc("a"),
+          doc("b", {
+            build: "failed",
+            title: "Requirements Traceability Matrix",
+          }),
+        ],
       }),
     );
-    expect(model.nextAction.sentence).toBe("Build the Requirements Traceability Matrix again.");
+    expect(model.nextAction.sentence).toBe(
+      "Build the Requirements Traceability Matrix again.",
+    );
   });
 
   it("points to the checks list for an unmet required check no row here settles", () => {
     const model = resolveGateStep(
-      input({ criteria: [criterion("solution_route_validated", { completed: false })] }),
+      input({
+        criteria: [criterion("solution_route_validated", { completed: false })],
+      }),
     );
     expect(model.canSubmit).toBe(false);
-    expect(model.nextAction.sentence).toBe("Close the 1 open required check in the checks list.");
+    expect(model.nextAction.sentence).toBe(
+      "Close the 1 open required check in the checks list.",
+    );
   });
 
   it("blocked: an unreadable gate shows no check as met and offers nothing", () => {
     const model = resolveGateStep(
-      input({ criteria: [criterion("design_approved", { verified: false, completed: false })] }),
+      input({
+        criteria: [
+          criterion("design_approved", { verified: false, completed: false }),
+        ],
+      }),
     );
-    expect(model.nextAction).toMatchObject({ state: "blocked", continueEnabled: false });
-    expect(model.countLabel).toBe("Not evaluated · gate state could not be read");
+    expect(model.nextAction).toMatchObject({
+      state: "blocked",
+      continueEnabled: false,
+    });
+    expect(model.countLabel).toBe(
+      "Not evaluated · gate state could not be read",
+    );
     expect(model.canSubmit).toBe(false);
   });
 
@@ -190,7 +236,10 @@ describe("resolveGateStep", () => {
 
   it("submitted: done, no forward action", () => {
     const model = resolveGateStep(input({ submittedOn: "Oct 20" }));
-    expect(model.nextAction).toMatchObject({ state: "done", eyebrow: "✓ Submitted · Oct 20" });
+    expect(model.nextAction).toMatchObject({
+      state: "done",
+      eyebrow: "✓ Submitted · Oct 20",
+    });
     expect(model.footerNote).toBe("Submitted Oct 20");
     expect(model.canSubmit).toBe(false);
   });

@@ -107,11 +107,7 @@ export function gateChecks(
     text: c.label,
     met: !unreadable && c.completed,
     unknown: unreadable,
-    note: unreadable
-      ? "not evaluated"
-      : c.completed
-        ? undefined
-        : c.reason,
+    note: unreadable ? "not evaluated" : c.completed ? undefined : c.reason,
     targetRowId:
       !unreadable && !c.completed && DOCUMENT_BACKED_GATE_CRITERIA.has(c.id)
         ? GATE_DOCUMENTS_ROW_ID
@@ -155,7 +151,9 @@ export function gateDocumentsClause(
   forApprover: boolean,
 ): string | null {
   if (documents.length === 0) return null;
-  const states = documents.map((d) => gateDocumentSignState(d, signOffReadable));
+  const states = documents.map((d) =>
+    gateDocumentSignState(d, signOffReadable),
+  );
   if (states.every((s) => s === "not_built")) {
     return documents.length === 1
       ? "build the gate document"
@@ -171,9 +169,12 @@ export function gateDocumentsClause(
       : `build the ${plural(failed.length, "failed gate document")} again`;
   }
   if (!forApprover) return null;
-  const toSign = states.filter((s) => s === "unsigned" || s === "superseded").length;
+  const toSign = states.filter(
+    (s) => s === "unsigned" || s === "superseded",
+  ).length;
   if (toSign === 0) return null;
-  if (toSign === 1 && documents.length === 1) return "sign off the gate document";
+  if (toSign === 1 && documents.length === 1)
+    return "sign off the gate document";
   return toSign === documents.length
     ? `sign off the ${plural(toSign, "gate document")}`
     : `sign off ${plural(toSign, "gate document")}`;
@@ -233,7 +234,9 @@ export function resolveGateStep(input: GateStepInput): GateStepModel {
         continueEnabled: false,
       },
       canSubmit: false,
-      footerNote: input.canApprove ? null : `${input.approverName} approves this gate.`,
+      footerNote: input.canApprove
+        ? null
+        : `${input.approverName} approves this gate.`,
     };
   }
 
@@ -244,10 +247,16 @@ export function resolveGateStep(input: GateStepInput): GateStepModel {
   // earlier step, so the sentence points to the list rather than guessing one.
   const elsewhere = hard.filter((c) => !c.met && !c.targetRowId).length;
 
-  const docsClause = gateDocumentsClause(docs, input.signOffReadable, input.canApprove);
+  const docsClause = gateDocumentsClause(
+    docs,
+    input.signOffReadable,
+    input.canApprove,
+  );
   const clauses = [
     docsClause,
-    input.canApprove && !input.rationaleWritten ? "write the approval rationale" : null,
+    input.canApprove && !input.rationaleWritten
+      ? "write the approval rationale"
+      : null,
     elsewhere > 0
       ? `close the ${plural(elsewhere, "open required check")} in the checks list`
       : null,
