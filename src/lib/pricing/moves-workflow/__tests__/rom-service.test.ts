@@ -336,6 +336,8 @@ describe("computeRom — golden case (two use cases, a shared foundation, two re
 
   it("totals the releases with the foundation counted ONCE", () => {
     expect(rom.total.hours).toBe(451);
+    // Whole pod-weeks: 2 + 3 for the releases and 1 for the foundation, once.
+    expect(rom.total.weeks).toBe(6);
     expect(rom.total.planCents).toBe(2880000);
     expect(rom.total.lowCents).toBe(2376000);
     expect(rom.total.highCents).toBe(3816000);

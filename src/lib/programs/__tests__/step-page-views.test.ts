@@ -20,6 +20,10 @@ describe("step page views", () => {
       "/strategic-moves/m1/phase/3?step=architecture-options",
     );
     expect(stepPageHref("m1", 3, "P3.3")).toBe("/strategic-moves/m1/phase/3");
+    expect(stepPageHref("m1", 3, "P3.4")).toBe(
+      "/strategic-moves/m1/phase/3?step=rom-estimate",
+    );
+    expect(parseStepPageView("rom-estimate")).toBe("rom-estimate");
   });
 
   it("names only steps the workflow registry declares", () => {

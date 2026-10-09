@@ -5,6 +5,11 @@ import { captureValueText } from "@/lib/programs/structured-capture-text";
 import { RootCausesStep } from "@/components/strategic-moves/step-page/RootCausesStep";
 import { DesignTraceabilityStep } from "@/components/strategic-moves/step-page/DesignTraceabilityStep";
 import { ArchitectureOptionsStep } from "@/components/strategic-moves/step-page/ArchitectureOptionsStep";
+import { RomEstimateStep } from "@/components/strategic-moves/step-page/RomEstimateStep";
+import {
+  isRomEstimateDone,
+  parseRomEstimate,
+} from "@/lib/programs/rom-estimate";
 import {
   stepPageHref,
   type StepPageView,
@@ -353,6 +358,13 @@ interface MovesPhaseStandaloneClientProps {
    * template. Today that is P3 Gate readiness, opened with `?step=gate`.
    */
   stepPagesV3Enabled?: boolean;
+  /**
+   * `moves_rom_engine_v1`, resolved server-side. With `moves_step_pages_v3`
+   * it mounts P3 Step 4, "Estimate the work bottom-up", at
+   * `?step=rom-estimate`; the page prices through the ROM preview route,
+   * which this flag also gates.
+   */
+  romEngineEnabled?: boolean;
   /**
    * The step page the URL asked for, when the flag is on: `gate` (P3 Gate
    * readiness) or `root-causes` (P2 Step 3).
@@ -998,6 +1010,7 @@ function samePhaseBuildArtifactIds(
 
 export function MovesPhaseStandaloneClient({
   stepPagesV3Enabled = false,
+  romEngineEnabled = false,
   initialStepView = null,
   priorPhaseCapture = null,
   canApproveGates = false,
@@ -1093,6 +1106,15 @@ export function MovesPhaseStandaloneClient({
     Boolean(captureV2Enabled) &&
     phaseNum === 3 &&
     initialStepView === "architecture-options";
+  // P3 Step 4, "Estimate the work bottom-up", behind the same flag AND
+  // `moves_rom_engine_v1`. Opened with `?step=rom-estimate`; it writes the
+  // `rom_estimate` step record and prices only through the ROM preview route.
+  const romEstimateStepPageActive =
+    stepPagesV3Enabled &&
+    romEngineEnabled &&
+    Boolean(captureV2Enabled) &&
+    phaseNum === 3 &&
+    initialStepView === "rom-estimate";
   const rootCauseStepPageActive =
     stepPagesV3Enabled &&
     Boolean(captureV2Enabled) &&
@@ -3551,6 +3573,15 @@ export function MovesPhaseStandaloneClient({
       p3Elements,
       displayPhaseCaptureValues.recommendation ?? "",
     ),
+    // Approved, and nothing it was approved on has changed since. Without the
+    // ROM flag the step keeps its capture-answer reading.
+    ...(romEngineEnabled
+      ? {
+          "P3.4": isRomEstimateDone(
+            parseRomEstimate(displayPhaseCaptureValues.rom_estimate),
+          ),
+        }
+      : {}),
   };
   const charterPlatformFit = (() => {
     const fields = readSolutionPatternFromCharter(
@@ -3701,6 +3732,41 @@ export function MovesPhaseStandaloneClient({
           window.location.assign(stepPageHref(move.id, phase.phase, "P3.1"))
         }
         onContinue={() => window.location.assign(chrome.phaseHref(phase.phase))}
+        frame={stepPageDock}
+      />
+    );
+  }
+
+  if (romEstimateStepPageActive) {
+    const chrome = p3StepPageChrome("P3.4");
+    return (
+      <RomEstimateStep
+        moveId={move.id}
+        canReviewEvidence={canApproveGates}
+        onEvidenceChanged={() => window.location.reload()}
+        moveName={displayMoveName}
+        tabs={chrome.tabs}
+        phases={chrome.phases}
+        steps={chrome.steps}
+        stepIndex={chrome.stepIndex}
+        value={displayPhaseCaptureValues.rom_estimate ?? ""}
+        onChange={(value) => setVisiblePhaseCaptureValue("rom_estimate", value)}
+        // Step 3 has no step record yet, so only Step 2 can block Step 4.
+        step2Done={recordStepDone["P3.2"]}
+        step2Href={stepPageHref(move.id, phase.phase, "P3.2")}
+        // The register screen is not built yet: the link lands on the phase,
+        // anchored at the row, until the Record tab's register exists.
+        registerAnswerHref={(registerId) =>
+          `${chrome.phaseHref(phase.phase)}#assumption-${registerId}`
+        }
+        decidedBy={currentUser?.email ?? "signed-in reviewer"}
+        today={new Date().toISOString().slice(0, 10)}
+        onBack={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.3"))
+        }
+        onContinue={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.5"))
+        }
         frame={stepPageDock}
       />
     );
@@ -4323,6 +4389,18 @@ export function MovesPhaseStandaloneClient({
                                 >
                                   Choose a direction →
                                 </a>
+                                {romEngineEnabled ? (
+                                  <>
+                                    {" "}
+                                    Step 4 estimates the work bottom-up.{" "}
+                                    <a
+                                      data-testid="open-rom-estimate"
+                                      href={`/strategic-moves/${move.id}/phase/3?step=rom-estimate`}
+                                    >
+                                      Estimate the work →
+                                    </a>
+                                  </>
+                                ) : null}
                               </p>
                             ) : null}
                             {gateMetWithCaptureUnfinished && viewedGateTally ? (

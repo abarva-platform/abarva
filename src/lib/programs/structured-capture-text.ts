@@ -8,6 +8,11 @@ import {
   parseArchitectureChoice,
 } from "@/lib/programs/architecture-choice";
 import {
+  parseRomEstimate,
+  romEstimateGateText,
+  romEstimateText,
+} from "@/lib/programs/rom-estimate";
+import {
   designTraceabilityGateText,
   designTraceabilityText,
   parseDesignTraceability,
@@ -33,6 +38,10 @@ export function captureValueText(key: string, raw: string): string {
     const value = parseArchitectureChoice(raw);
     return value ? architectureChoiceText(value) : raw;
   }
+  if (key === "rom_estimate") {
+    const value = parseRomEstimate(raw);
+    return value ? romEstimateText(value) : raw;
+  }
   return raw;
 }
 
@@ -46,6 +55,10 @@ export function captureValueGateText(key: string, raw: string): string {
   if (key === "architecture_choice") {
     const value = parseArchitectureChoice(raw);
     return value ? architectureChoiceGateText(value) : raw;
+  }
+  if (key === "rom_estimate") {
+    const value = parseRomEstimate(raw);
+    return value ? romEstimateGateText(value) : raw;
   }
   return raw;
 }

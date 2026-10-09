@@ -427,6 +427,12 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_step_pages_v3",
   );
+  // P3 Step 4's bottom-up estimate prices through the ROM preview route, which
+  // this flag gates; the step page needs it as well as the step-page flag.
+  const romEngineEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_rom_engine_v1",
+  );
   // P0 Originate was left on the legacy canvas when the 3-step capture shipped
   // for phases 1-5. This flag extends the same flow to P0; it is deliberately
   // separate from `moves_capture_v2` so a tenant already on the redesigned
@@ -1062,6 +1068,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         solutionPatternGateEnabled={solutionPatternGateEnabled}
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
+        romEngineEnabled={romEngineEnabled}
         priorPhaseCapture={
           stepPagesV3Enabled && parsedPhase === 3
             ? {
