@@ -51,12 +51,34 @@ const mockStreamAgentTurn = jest.fn(async function* (_input?: unknown) {
   yield "<html><body><svg>Current-State Handoff Map</svg><table>Process vs Data vs Policy vs Ownership vs AI Matrix</table><p>Complete regenerated draft.</p></body></html>";
 });
 
+// Both auth seams are indirected through mutable implementations so a single
+// case can make `requireTenancy` throw, or make `tenancyErrorResponse` RETURN
+// (as it does for a real TenancyError) instead of re-throwing. The defaults
+// are the ones every pre-existing case ran against.
+let requireTenancyImpl: () => Promise<typeof tenancy> = async () => tenancy;
+let tenancyErrorResponseImpl: (err: unknown) => Response = () => {
+  throw new Error("not a tenancy error");
+};
+
 jest.mock("../../../../../_auth", () => ({
-  requireTenancy: jest.fn(async () => tenancy),
-  tenancyErrorResponse: jest.fn(() => {
-    throw new Error("not a tenancy error");
-  }),
+  requireTenancy: () => requireTenancyImpl(),
+  tenancyErrorResponse: (err: unknown) => tenancyErrorResponseImpl(err),
 }));
+
+// The Word-equivalent build is the first thing that runs AFTER the revised
+// artifact is stored, so it is the seam that exercises the post-write arm.
+// Defaults to the real builder, so no pre-existing case changes behaviour.
+let buildDocxFailure: Error | null = null;
+jest.mock("@/lib/deliverables/phase-word-equivalent", () => {
+  const actual = jest.requireActual("@/lib/deliverables/phase-word-equivalent");
+  return {
+    ...actual,
+    buildPhaseWordEquivalentDocx: async (input: unknown) => {
+      if (buildDocxFailure) throw buildDocxFailure;
+      return actual.buildPhaseWordEquivalentDocx(input);
+    },
+  };
+});
 
 jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
   getMoveArtifactForTenant: jest.fn(async () => currentArtifact),
@@ -71,6 +93,11 @@ jest.mock("@/lib/agent/stream", () => ({
 }));
 
 import { POST } from "../route";
+import {
+  NOTHING_RECORDED_CLAUSE,
+  VERSION_RECORDED_CLAUSE,
+  moveReviewRegenerateRefusalDetail,
+} from "@/lib/programs/move-review-regenerate-refusal";
 
 function req(body: Record<string, unknown>) {
   return {
@@ -91,6 +118,18 @@ beforeEach(() => {
   };
   saveMoveArtifact.mockClear();
   mockStreamAgentTurn.mockClear();
+  saveMoveArtifact.mockReset();
+  saveMoveArtifact.mockImplementation(async () => ({
+    artifactId: "artifact-v2",
+    version: 2,
+    blobPath: "blob/path",
+    blobStored: true,
+  }));
+  requireTenancyImpl = async () => tenancy;
+  tenancyErrorResponseImpl = () => {
+    throw new Error("not a tenancy error");
+  };
+  buildDocxFailure = null;
 });
 
 describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regenerate", () => {
@@ -313,6 +352,174 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
     expect(res.status).toBe(422);
     expect(json.error).toBe("source_artifact_not_extractable");
     expect(mockStreamAgentTurn).not.toHaveBeenCalled();
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
+  });
+});
+
+// Every refusal this route can reach, ordered against its TWO stores. The one
+// product reader (`FileCabinetPanel.submitReviewFeedback`) renders
+// `json.detail || json.error || HTTP n`, so a code with no `detail` reaches a
+// signed-in reviewer as the bare token, and an exit with no code at all
+// reaches them as `HTTP 500`.
+describe("what a refused regeneration tells the reviewer", () => {
+  it("names the document, not the code, when it is not on this Move", async () => {
+    currentArtifact = { ...artifact, move_id: "move-2" };
+    const res = await POST(
+      req({ feedbackText: "Tighten the summary." }),
+      params(),
+    );
+    const json = (await res.json()) as { error?: string; detail?: string };
+
+    expect(res.status).toBe(404);
+    expect(json.error).toBe("artifact_not_found");
+    // The defect: this was absent, so the reader printed `artifact_not_found`.
+    expect(json.detail).toBe(
+      moveReviewRegenerateRefusalDetail("artifact_not_found"),
+    );
+    expect(json.detail).toContain(NOTHING_RECORDED_CLAUSE);
+    expect(json.detail).not.toContain("artifact_not_found");
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
+  });
+
+  it("says nothing was created when feedback is missing", async () => {
+    const res = await POST(req({ feedbackText: "   " }), params());
+    const json = (await res.json()) as { detail?: string };
+
+    expect(res.status).toBe(400);
+    expect(json.detail).toContain(NOTHING_RECORDED_CLAUSE);
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
+  });
+
+  it("says nothing was created when the source document cannot be read", async () => {
+    originalDownload = {
+      bytes: Buffer.from("not a zip"),
+      fileName: "broken.docx",
+      fileFormat: "docx",
+    };
+    const res = await POST(
+      req({ feedbackText: "Tighten the summary." }),
+      params(),
+    );
+    const json = (await res.json()) as { error?: string; detail?: string };
+
+    expect(res.status).toBe(422);
+    expect(json.error).toBe("source_artifact_not_extractable");
+    expect(json.detail).toContain(NOTHING_RECORDED_CLAUSE);
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
+  });
+
+  it("reports a named refusal, not an unbodied 500, when the first store throws", async () => {
+    // `saveMoveArtifact` throws the raw Postgres error on an insert failure,
+    // and `artifact_blob_storage_unavailable` on a storage one. Neither is a
+    // TenancyError, so `tenancyErrorResponse` re-threw and the handler
+    // rejected: the reviewer's only report was `HTTP 500`.
+    saveMoveArtifact.mockImplementationOnce(async () => {
+      throw new Error("artifact_blob_storage_unavailable");
+    });
+    const res = await POST(
+      req({ feedbackText: "Tighten the summary." }),
+      params(),
+    );
+    const json = (await res.json()) as {
+      ok?: boolean;
+      error?: string;
+      detail?: string;
+    };
+
+    expect(res.status).toBe(500);
+    expect(json.ok).toBe(false);
+    expect(json.error).toBe("internal_error");
+    expect(json.detail).toBe(
+      moveReviewRegenerateRefusalDetail("internal_error"),
+    );
+  });
+
+  it("claims neither state in the catch-all, because it fires on both sides of the stores", async () => {
+    mockStreamAgentTurn.mockImplementationOnce(async function* () {
+      throw new Error("model stream failed");
+    });
+    const res = await POST(
+      req({ feedbackText: "Tighten the summary." }),
+      params(),
+    );
+    const json = (await res.json()) as { error?: string; detail?: string };
+
+    expect(res.status).toBe(500);
+    expect(json.error).toBe("internal_error");
+    expect(json.detail).not.toContain(NOTHING_RECORDED_CLAUSE);
+    expect(json.detail).not.toContain(VERSION_RECORDED_CLAUSE);
+    // Reached before either store on this path, but the sentence cannot know
+    // that, so it must send the reviewer to look.
+    expect(json.detail).toMatch(/document list/i);
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
+  });
+
+  it("says the revised version WAS recorded when the editable companion fails to build", async () => {
+    buildDocxFailure = new Error("docx build failed");
+    const res = await POST(
+      req({ feedbackText: "Tighten the summary." }),
+      params(),
+    );
+    const json = (await res.json()) as {
+      ok?: boolean;
+      error?: string;
+      detail?: string;
+      recordedArtifactId?: string;
+      recordedVersion?: number;
+    };
+
+    expect(res.status).toBe(500);
+    expect(json.ok).toBe(false);
+    expect(json.error).toBe("editable_companion_failed");
+    // The first store LANDED. Telling the reviewer nothing happened here is
+    // what makes them send the same notes again and record a second version.
+    expect(json.detail).toContain(VERSION_RECORDED_CLAUSE);
+    expect(json.detail).not.toContain(NOTHING_RECORDED_CLAUSE);
+    expect(json.detail).toMatch(/second version/i);
+    expect(json.recordedArtifactId).toBe("artifact-v2");
+    expect(json.recordedVersion).toBe(2);
+    expect(saveMoveArtifact).toHaveBeenCalledTimes(1);
+  });
+
+  it("says the revised version WAS recorded when the second store throws", async () => {
+    saveMoveArtifact
+      .mockImplementationOnce(async () => ({
+        artifactId: "artifact-v2",
+        version: 2,
+        blobPath: "blob/path",
+        blobStored: true,
+      }))
+      .mockImplementationOnce(async () => {
+        throw new Error("insert failed");
+      });
+    const res = await POST(
+      req({ feedbackText: "Tighten the summary." }),
+      params(),
+    );
+    const json = (await res.json()) as { error?: string; detail?: string };
+
+    expect(res.status).toBe(500);
+    expect(json.error).toBe("editable_companion_failed");
+    expect(json.detail).toContain(VERSION_RECORDED_CLAUSE);
+    expect(saveMoveArtifact).toHaveBeenCalledTimes(2);
+  });
+
+  it("still hands a real tenancy failure to the shared tenancy responder", async () => {
+    // The regression direction: the new inner catch must not swallow the
+    // tenancy arms, which carry their own shared copy.
+    requireTenancyImpl = async () => {
+      throw new Error("unauthenticated");
+    };
+    tenancyErrorResponseImpl = () =>
+      Response.json({ error: "unauthenticated" }, { status: 401 });
+    const res = await POST(
+      req({ feedbackText: "Tighten the summary." }),
+      params(),
+    );
+    const json = (await res.json()) as { error?: string };
+
+    expect(res.status).toBe(401);
+    expect(json.error).toBe("unauthenticated");
     expect(saveMoveArtifact).not.toHaveBeenCalled();
   });
 });
