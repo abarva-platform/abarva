@@ -11607,3 +11607,198 @@ describe("gate criteria the evaluator could not check", () => {
     expect(marks[0]?.textContent).not.toBe(tally.textContent);
   });
 });
+
+// The gate panel's blocker list showed the open HARD criteria with a "{N} more"
+// remainder row and the open SOFT ones — its caveats — without one, three lines
+// below. The canonical soft counts are 3 / 1 / 0 / 2 / 6 / 1 for P0->P1 .. P5->P6
+// against a soft limit of 2, so four open caveats left the surface silently at
+// P4->P5 and one at P0->P1. The adjacent decision line understated the same set
+// the other way, reading "Ready with caveat: <first>." in the SINGULAR however
+// many were open. Both slots now read one digest; see `gate-criterion-digest`.
+describe("the gate panel accounts for every open caveat", () => {
+  function softCriteria(count: number) {
+    return Array.from({ length: count }, (_, index) => ({
+      id: `soft_${index + 1}`,
+      label: `Soft criterion ${index + 1}`,
+      completed: false,
+      severity: "soft" as const,
+      verified: true,
+    }));
+  }
+
+  function hardCriteria(count: number, completed: boolean) {
+    return Array.from({ length: count }, (_, index) => ({
+      id: `hard_${index + 1}`,
+      label: `Hard criterion ${index + 1}`,
+      completed,
+      severity: "hard" as const,
+      verified: true,
+    }));
+  }
+
+  // P0 is the phase this surface can render in a genuinely READY state: the
+  // capture-input blocker arms are all `phase.phase >= 1`, and P0's two
+  // brief-derived hard criteria are excluded from the blocked reckoning by
+  // `partitionOpenHardGateCriteria`. That is what makes the caveat SENTENCE
+  // reachable here.
+  function renderReadyP0(soft: StrategicMove["gateCriteria"]) {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[
+          p0SourceEvidenceNeedPacket({
+            moveId: makeMove().id,
+            evidenceTitles: ["approved-origination-source.pdf"],
+          }),
+        ]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          gateCriteria: [
+            {
+              id: "program_seed_recorded",
+              label:
+                "Origination brief signed off with archetype classification",
+              completed: false,
+              severity: "hard" as const,
+              verified: true,
+            },
+            ...soft,
+          ],
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  function renderP4(gateCriteria: StrategicMove["gateCriteria"]) {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(4)}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 4,
+          phaseLabel: "P4 Plan",
+          gateCriteria,
+        })}
+        phaseNum={4}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  const gateWhyLine = () =>
+    screen
+      .getByTestId("mxw-decision-surface")
+      .querySelector(".mxw-gate-why-copy strong")?.textContent ?? "";
+
+  const caveatRows = () =>
+    Array.from(
+      screen
+        .getByTestId("mxw-decision-surface")
+        .querySelectorAll(".mxw-gate-blocker-list li"),
+    )
+      .map((row) => row.textContent ?? "")
+      .filter((text) => text.startsWith("Caveat:"));
+
+  it("counts the four caveats a P4 list leaves out", () => {
+    // The real P4->P5 soft count. Before the digest these four were rendered
+    // nowhere on the surface and nothing said a caveat had been dropped.
+    renderP4([...hardCriteria(1, true), ...softCriteria(6)]);
+    expect(screen.getByTestId("mxw-gate-soft-remainder")).toHaveTextContent(
+      "4 more",
+    );
+    expect(caveatRows()).toEqual([
+      "Caveat: Soft criterion 1",
+      "Caveat: Soft criterion 2",
+      "Caveat: 4 more",
+    ]);
+  });
+
+  it("states the caveat TOTAL on a ready phase, not the singular", () => {
+    // The real P0->P1 soft count.
+    renderReadyP0(softCriteria(3));
+    expect(gateWhyLine()).toBe(
+      "Ready with 3 caveats, including: Soft criterion 1.",
+    );
+    expect(gateWhyLine()).not.toBe("Ready with caveat: Soft criterion 1.");
+  });
+
+  it("the sentence's number equals what the list accounts for", () => {
+    renderReadyP0(softCriteria(3));
+    const rows = caveatRows();
+    const remainder = Number(
+      /(\d+) more/.exec(
+        screen.getByTestId("mxw-gate-soft-remainder").textContent ?? "",
+      )?.[1],
+    );
+    const named = rows.filter((row) => !/\d+ more$/.test(row)).length;
+    expect(named + remainder).toBe(3);
+    expect(gateWhyLine()).toContain(String(named + remainder));
+  });
+
+  it("names a single open caveat and counts it as one", () => {
+    renderReadyP0(softCriteria(1));
+    expect(gateWhyLine()).toBe("Ready with 1 caveat: Soft criterion 1.");
+    expect(
+      screen.queryByTestId("mxw-gate-soft-remainder"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("states no remainder when the caveat list is complete at the limit", () => {
+    renderReadyP0(softCriteria(2));
+    expect(gateWhyLine()).toBe(
+      "Ready with 2 caveats, including: Soft criterion 1.",
+    );
+    expect(
+      screen.queryByTestId("mxw-gate-soft-remainder"),
+    ).not.toBeInTheDocument();
+    expect(caveatRows()).toHaveLength(2);
+  });
+
+  it("a ready phase with no open caveat says so and lists none", () => {
+    renderReadyP0([]);
+    expect(gateWhyLine()).toBe("No hard blockers are open.");
+    expect(caveatRows()).toHaveLength(0);
+    expect(
+      screen.queryByTestId("mxw-gate-soft-remainder"),
+    ).not.toBeInTheDocument();
+  });
+
+  // The regression direction: the hard half already counted what it left out
+  // and must keep doing so, from the same digest.
+  it("the hard half still counts what it leaves out", () => {
+    renderP4(hardCriteria(5, false));
+    expect(screen.getByTestId("mxw-gate-hard-remainder")).toHaveTextContent(
+      "2 more",
+    );
+    expect(
+      screen.queryByTestId("mxw-gate-soft-remainder"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("states no hard remainder when the hard list is complete at the limit", () => {
+    renderP4(hardCriteria(3, false));
+    expect(
+      screen.queryByTestId("mxw-gate-hard-remainder"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("the two remainder rows are distinct elements with distinct prefixes", () => {
+    // Both rows read "{N} more". Without this, a test for either could pass on
+    // the other and a half that lost its row again would stay green.
+    renderP4([...hardCriteria(5, false), ...softCriteria(6)]);
+    const hard = screen.getByTestId("mxw-gate-hard-remainder");
+    const soft = screen.getByTestId("mxw-gate-soft-remainder");
+    expect(hard).not.toBe(soft);
+    expect(hard).toHaveTextContent("Hard: 2 more");
+    expect(soft).toHaveTextContent("Caveat: 4 more");
+    expect(hard.textContent).not.toBe(soft.textContent);
+  });
+});

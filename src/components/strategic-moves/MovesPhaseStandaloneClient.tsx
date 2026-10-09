@@ -147,6 +147,10 @@ import {
   isP0ApprovalGeneratedCriterion,
   partitionOpenHardGateCriteria,
 } from "@/lib/programs/p0-approval-generated-gate-criteria";
+import {
+  digestOpenGateCriteria,
+  readyWithCaveatsSentence,
+} from "@/lib/programs/gate-criterion-digest";
 import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import type { ApprovedPhaseEvidenceReference } from "@/lib/programs/approved-phase-evidence";
 import {
@@ -6441,6 +6445,19 @@ function PhaseBody({
   const openSoftCriteria = softGateCriteria.filter(
     (criterion) => !criterion.completed,
   );
+  // One digest per half of the blocker list below, and the caveat sentence is
+  // derived from the same open set. The hard half already counted what it left
+  // out; the soft half did not, so up to four open caveats disappeared off the
+  // end of a P4 list while the decision line called them a single caveat. See
+  // `gate-criterion-digest`.
+  const openHardCriteriaDigest = digestOpenGateCriteria(
+    openHardCriteria,
+    "hard",
+  );
+  const openSoftCriteriaDigest = digestOpenGateCriteria(
+    openSoftCriteria,
+    "soft",
+  );
   const isGateBlocked =
     !isHistoricalPhase &&
     !gateApproved &&
@@ -6559,18 +6576,14 @@ function PhaseBody({
   // the evaluator did not compute. A second `evaluated` guard here would be
   // unkillable: no input reaches this line in the unevaluated case.
   const primaryHardBlocker = actionableOpenHardCriteria[0]?.label ?? null;
-  const primarySoftCaveat = openSoftCriteria[0]?.label ?? null;
   const gateSummaryLine = isGateBlocked
     ? !gateCriteriaState.evaluated
       ? gateCriteriaState.summaryLabel
       : primaryHardBlocker
         ? `Blocked by: ${primaryHardBlocker}.`
         : "Blocked by an open hard gate."
-    : openSoftCriteria.length > 0
-      ? primarySoftCaveat
-        ? `Ready with caveat: ${primarySoftCaveat}.`
-        : "Ready with caveats."
-      : "No hard blockers are open.";
+    : (readyWithCaveatsSentence(openSoftCriteria) ??
+      "No hard blockers are open.");
   // "the approved record" named a decision this screen does not read, on a
   // line keyed to READINESS — `isFullyReady` is a statement about open prep
   // items, and says nothing about an approval at all. Say what the branch
@@ -6676,21 +6689,28 @@ function PhaseBody({
             </div>
             {isGateBlocked || openSoftCriteria.length > 0 ? (
               <ul className="mxw-gate-blocker-list">
-                {openHardCriteria.slice(0, 3).map((criterion) => (
+                {openHardCriteriaDigest.shown.map((criterion) => (
                   <li key={criterion.id}>
                     <strong>Hard:</strong> {criterion.label}
                   </li>
                 ))}
-                {openHardCriteria.length > 3 ? (
-                  <li>
-                    <strong>Hard:</strong> {openHardCriteria.length - 3} more
+                {openHardCriteriaDigest.remainderLabel ? (
+                  <li data-testid="mxw-gate-hard-remainder">
+                    <strong>Hard:</strong>{" "}
+                    {openHardCriteriaDigest.remainderLabel}
                   </li>
                 ) : null}
-                {openSoftCriteria.slice(0, 2).map((criterion) => (
+                {openSoftCriteriaDigest.shown.map((criterion) => (
                   <li key={criterion.id}>
                     <strong>Caveat:</strong> {criterion.label}
                   </li>
                 ))}
+                {openSoftCriteriaDigest.remainderLabel ? (
+                  <li data-testid="mxw-gate-soft-remainder">
+                    <strong>Caveat:</strong>{" "}
+                    {openSoftCriteriaDigest.remainderLabel}
+                  </li>
+                ) : null}
               </ul>
             ) : null}
           </div>
