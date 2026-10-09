@@ -202,6 +202,7 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
   .legend .l-data::before{background:var(--data)} .legend .l-control::before{background:var(--control)}
   .visual-body{display:flex;flex-direction:column;gap:18px}
   .diagram{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+  .diagram-part{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--data);margin:10px 0 6px}
   .so-what,.decision-implication{background:#fff;border-left:3px solid var(--data);padding:10px 14px;margin:14px 0 0;color:var(--ink)}
   .decision-implication{border-left-color:var(--control);color:var(--muted)}
   .story-spine{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}

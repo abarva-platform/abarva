@@ -350,20 +350,6 @@ function svgFlowDiagram(
   title: string,
 ): string {
   const filtered = flows.filter((f) => kinds.includes(f.kind));
-  // A three-column, four-row page keeps each recorded flow individually
-  // readable. Fail above that page budget rather than omit a recorded flow.
-  if (filtered.length > FLOW_CARD_COLUMNS * MAX_FLOW_VISUAL_ROWS) {
-    throw new Error(
-      `architecture_flow_visual_capacity_exceeded:${title}:${filtered.length}`,
-    );
-  }
-  const items = filtered.length
-    ? filtered.map((f) => ({
-        id: f.id,
-        label: `${labels[f.from] ?? f.from} → ${labels[f.to] ?? f.to}`,
-        detail: f.label ?? FLOW_LABEL[f.kind],
-      }))
-    : [{ id: "empty", label: title, detail: "No modelled flow" }];
   const accent =
     kinds.includes("control") || kinds.includes("human_approval")
       ? "var(--control)"
@@ -373,18 +359,34 @@ function svgFlowDiagram(
   const columnGap = 16;
   const rowGap = 14;
   const gutter = 24;
-  const rows = Math.ceil(items.length / FLOW_CARD_COLUMNS);
-  const height = 36 + rows * cardHeight + Math.max(0, rows - 1) * rowGap;
-  const cards = items
-    .map((item, index) => {
-      const x = gutter + (index % FLOW_CARD_COLUMNS) * (cardWidth + columnGap);
-      const y =
-        18 + Math.floor(index / FLOW_CARD_COLUMNS) * (cardHeight + rowGap);
-      return `<g data-arch-item-id="${esc(item.id)}">
+  const pageCapacity = FLOW_CARD_COLUMNS * MAX_FLOW_VISUAL_ROWS;
+  const pages: ArchFlow[][] = [];
+  for (let start = 0; start < filtered.length; start += pageCapacity) {
+    pages.push(filtered.slice(start, start + pageCapacity));
+  }
+  if (pages.length === 0) pages.push([]);
+  return pages
+    .map((page, pageIndex) => {
+      const items = page.length
+        ? page.map((f) => ({
+            id: f.id,
+            label: `${labels[f.from] ?? f.from} → ${labels[f.to] ?? f.to}`,
+            detail: f.label ?? FLOW_LABEL[f.kind],
+          }))
+        : [{ id: "empty", label: title, detail: "No modelled flow" }];
+      const rows = Math.ceil(items.length / FLOW_CARD_COLUMNS);
+      const height = 36 + rows * cardHeight + Math.max(0, rows - 1) * rowGap;
+      const cards = items
+        .map((item, index) => {
+          const x =
+            gutter + (index % FLOW_CARD_COLUMNS) * (cardWidth + columnGap);
+          const y =
+            18 + Math.floor(index / FLOW_CARD_COLUMNS) * (cardHeight + rowGap);
+          return `<g data-arch-item-id="${esc(item.id)}">
         <title>${esc(item.label)}${item.detail ? ` — ${esc(item.detail)}` : ""}</title>
         <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" rx="9" fill="#fff" stroke="#d8d5cc"/>
         <rect x="${x}" y="${y}" width="4" height="${cardHeight}" rx="2" fill="${accent}"/>
-        <text x="${x + 16}" y="${y + 22}" font-size="12" font-weight="700" fill="${accent}">RECORDED FLOW ${index + 1}</text>
+        <text x="${x + 16}" y="${y + 22}" font-size="12" font-weight="700" fill="${accent}">RECORDED FLOW ${pageIndex * pageCapacity + index + 1}</text>
         ${svgTextBlock(item.label, x + cardWidth / 2, y + 47, {
           maxChars: 38,
           maxLines: 3,
@@ -401,9 +403,15 @@ function svgFlowDiagram(
           fill: "#59615d",
         })}
       </g>`;
+        })
+        .join("");
+      const part =
+        pages.length > 1
+          ? `<div class="diagram-part">Part ${pageIndex + 1} of ${pages.length}</div>`
+          : "";
+      return `${part}<svg class="diagram collection" viewBox="0 0 980 ${height}" role="img" aria-label="${esc(title)}${pages.length > 1 ? ` part ${pageIndex + 1} of ${pages.length}` : ""}"><rect width="980" height="${height}" fill="#fff"/>${cards}</svg>`;
     })
     .join("");
-  return `<svg class="diagram collection" viewBox="0 0 980 ${height}" role="img" aria-label="${esc(title)}"><rect width="980" height="${height}" fill="#fff"/>${cards}</svg>`;
 }
 
 function svgGapBridge(model: ArchitectureModel): string {
@@ -694,6 +702,7 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
   .legend .l-data::before{background:var(--data)} .legend .l-control::before{background:var(--control)}
   .visual-body{display:flex;flex-direction:column;gap:18px}
   .diagram{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+  .diagram-part{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--data);margin:10px 0 6px}
   .so-what,.decision-implication{background:#fff;border-left:3px solid var(--data);padding:10px 14px;margin:14px 0 0;color:var(--ink)}
   .decision-implication{border-left-color:var(--control);color:var(--muted)}
   .story-spine{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
@@ -754,6 +763,37 @@ export interface ArchitectureVisualExhibit {
   soWhat: string;
   decisionImplication: string;
   svg: string;
+  /** Extra full-size panels for a recorded flow set above one page's capacity. */
+  continuationSvgs?: string[];
+}
+
+/** Keep continuation panels at their original size in every Office export. */
+export function architectureVisualPanels(
+  visual: ArchitectureVisualExhibit,
+): ArchitectureVisualExhibit[] {
+  const svgs = [visual.svg, ...(visual.continuationSvgs ?? [])];
+  return svgs.map((svg, index) => ({
+    ...visual,
+    title:
+      svgs.length > 1
+        ? `${visual.title} · Part ${index + 1} of ${svgs.length}`
+        : visual.title,
+    svg,
+    continuationSvgs: undefined,
+  }));
+}
+
+/** Full recorded labels remain available when Office rasterises the SVG cards. */
+export function architecturePanelRecordedFlows(svg: string): string[] {
+  const unescape = (value: string): string =>
+    value
+      .replaceAll("&quot;", '"')
+      .replaceAll("&gt;", ">")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&amp;", "&");
+  return [...svg.matchAll(/<g data-arch-item-id="([^"]+)">\s*<title>([^<]+)<\/title>/g)].map(
+    ([, id, title]) => `${unescape(id)}: ${unescape(title)}`,
+  );
 }
 
 /** Use the exact governed diagrams shown in the HTML preview for Office exports. */
@@ -768,11 +808,17 @@ export function renderArchitectureVisualExhibits(
         "i",
       ),
     )?.[0];
-    const svg = section?.match(/<svg\b[\s\S]*?<\/svg>/i)?.[0];
+    const svgs = section?.match(/<svg\b[\s\S]*?<\/svg>/gi) ?? [];
+    const svg = svgs[0];
     if (!svg) {
       throw new Error(`architecture_visual_missing: ${id}`);
     }
-    return { id, ...exhibitMeta(model, id), svg };
+    return {
+      id,
+      ...exhibitMeta(model, id),
+      svg,
+      ...(svgs.length > 1 ? { continuationSvgs: svgs.slice(1) } : {}),
+    };
   });
 }
 

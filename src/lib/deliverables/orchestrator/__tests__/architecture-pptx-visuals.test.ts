@@ -8,6 +8,63 @@ import { composeArchitectureDeckPages } from "../architecture-deck-composition";
 import { judgeArchitectureDeck } from "../architecture-deck-quality";
 
 describe("architecture Office export", () => {
+  it("embeds all nineteen recorded flow ids across two full-size slides", async () => {
+    const base = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText: "A governed serving layer is proposed.",
+    });
+    const seed = base.target.flows[0];
+    const model = {
+      ...base,
+      target: {
+        ...base.target,
+        flows: [
+          ...Array.from({ length: 19 }, (_, index) => ({
+            ...seed,
+            id: `explicit-flow-${index + 1}`,
+            kind: "data" as const,
+            label: `Recorded transfer ${index + 1} with an accountable owner and governed source-to-use lineage`,
+          })),
+          ...base.target.flows.filter(
+            (flow) => flow.kind === "control" || flow.kind === "human_approval",
+          ),
+        ],
+      },
+    };
+    const doc = { ...goodDocument(), exhibits: [], tables: [], deckSlides: [] };
+    const rendered = await renderValidatedDeck(doc, {}, model);
+    expect(rendered.physicallyIntact).toBe(true);
+    const verdict = await judgeArchitectureDeck(rendered.buffer, model);
+    expect(verdict.findings).toEqual([]);
+    expect(verdict.embeddedKeys.filter((key) => key === "end_to_end_data_flow")).toHaveLength(2);
+    expect(verdict.embeddedKeys).toHaveLength(ARCHITECTURE_V2_EXHIBITS.length + 1);
+
+    const zip = await JSZip.loadAsync(rendered.buffer);
+    const flowSlides = (
+      await Promise.all(
+        Object.keys(zip.files)
+          .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+          .map(async (name) => [name, await zip.file(name)!.async("string")] as const),
+      )
+    ).filter(([, xml]) => xml.includes("architecture-exhibit:end_to_end_data_flow:"));
+    expect(flowSlides).toHaveLength(2);
+    expect(flowSlides[0][1]).toContain("Part 1 of 2");
+    expect(flowSlides[1][1]).toContain("Part 2 of 2");
+    expect(flowSlides[0][1]).toContain("accountable owner and governed source-to-use lineage");
+    expect(flowSlides[1][1]).toContain("accountable owner and governed source-to-use lineage");
+    for (let index = 1; index <= 19; index += 1) {
+      expect(flowSlides.map(([, xml]) => xml).join("\n")).toContain(`explicit-flow-${index}:`);
+    }
+    const [secondName, secondXml] = flowSlides[1];
+    zip.file(secondName, secondXml.replace("architecture-exhibit:end_to_end_data_flow:", "unidentified-exhibit:"));
+    const missingPanel = await judgeArchitectureDeck(
+      await zip.generateAsync({ type: "nodebuffer" }),
+      model,
+    );
+    expect(missingPanel.findings).toContain("architecture_exhibit_export_count:end_to_end_data_flow:1");
+  });
+
   it("carries the governed diagrams into a bounded board storyline, not 13 bare slides", async () => {
     const model = buildGroundedArchitectureFallback({
       engagement: "Synthetic architecture review",

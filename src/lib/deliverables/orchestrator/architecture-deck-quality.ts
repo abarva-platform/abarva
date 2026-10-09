@@ -22,15 +22,22 @@ export async function judgeArchitectureDeck(
   const visuals = new Map(
     renderArchitectureVisualExhibits(model).map((visual) => [visual.id, visual]),
   );
+  const panelsFor = (key: string): string[] => {
+    const visual = visuals.get(key as (typeof ARCHITECTURE_V2_EXHIBITS)[number]);
+    return visual ? [visual.svg, ...(visual.continuationSvgs ?? [])] : [];
+  };
   const flowSources = [
     ["current_state_system_data_flow", model.current.flows, ["data", "event"]],
     ["end_to_end_data_flow", model.target.flows, ["data", "event"]],
     ["ai_recommendation_control_flow", model.target.flows, ["control", "human_approval"]],
   ] as const;
   for (const [key, flows, kinds] of flowSources) {
-    const svg = visuals.get(key)?.svg ?? "";
-    const rendered = [...svg.matchAll(/data-arch-item-id="([^"]+)"/g)]
-      .map((match) => match[1])
+    const rendered = panelsFor(key)
+      .flatMap((svg) =>
+        [...svg.matchAll(/data-arch-item-id="([^"]+)"/g)].map(
+          (match) => match[1],
+        ),
+      )
       .sort();
     const expected = flows
       .filter((flow) => (kinds as readonly string[]).includes(flow.kind))
@@ -41,13 +48,16 @@ export async function judgeArchitectureDeck(
     }
   }
   for (const [key, visual] of visuals) {
-    const sizes = [...visual.svg.matchAll(/<text\b[^>]*font-size="(\d+(?:\.\d+)?)"/g)]
-      .map((match) => Number(match[1]));
-    if (sizes.length === 0 || sizes.some((size) => size < 12)) {
-      findings.push(`architecture_label_scale:${key}`);
-    }
-    if (/marker-end="url\(#arrow\)"/.test(visual.svg)) {
-      findings.push(`architecture_undeclared_edge:${key}`);
+    for (const svg of [visual.svg, ...(visual.continuationSvgs ?? [])]) {
+      const sizes = [
+        ...svg.matchAll(/<text\b[^>]*font-size="(\d+(?:\.\d+)?)"/g),
+      ].map((match) => Number(match[1]));
+      if (sizes.length === 0 || sizes.some((size) => size < 12)) {
+        findings.push(`architecture_label_scale:${key}`);
+      }
+      if (/marker-end="url\(#arrow\)"/.test(svg)) {
+        findings.push(`architecture_undeclared_edge:${key}`);
+      }
     }
   }
   const expected = new Set<string>(ARCHITECTURE_V2_EXHIBITS);
@@ -69,16 +79,16 @@ export async function judgeArchitectureDeck(
     /^ppt\/slides\/slide\d+\.xml$/.test(name),
   );
   const embeddedKeys: string[] = [];
+  const embeddedDigests = new Map<string, string[]>();
   for (const name of slideNames) {
     const xml = await zip.file(name)!.async("string");
     for (const match of xml.matchAll(
       /<p:cNvPr\b[^>]*\bname="architecture-exhibit:([a-z0-9_]+):([a-f0-9]{16})"/g,
     )) {
       embeddedKeys.push(match[1]);
-      const expectedDigest = architectureVisualDigest(visuals.get(match[1] as (typeof ARCHITECTURE_V2_EXHIBITS)[number])?.svg ?? "");
-      if (match[2] !== expectedDigest) {
-        findings.push(`architecture_exhibit_source_mismatch:${match[1]}`);
-      }
+      const digests = embeddedDigests.get(match[1]) ?? [];
+      digests.push(match[2]);
+      embeddedDigests.set(match[1], digests);
     }
   }
 
@@ -86,8 +96,13 @@ export async function judgeArchitectureDeck(
   for (const key of embeddedKeys) counts.set(key, (counts.get(key) ?? 0) + 1);
   for (const key of expected) {
     const count = counts.get(key) ?? 0;
-    if (count !== 1)
+    const expectedDigests = panelsFor(key).map(architectureVisualDigest).sort();
+    if (count !== expectedDigests.length)
       findings.push(`architecture_exhibit_export_count:${key}:${count}`);
+    const actualDigests = [...(embeddedDigests.get(key) ?? [])].sort();
+    if (actualDigests.join("\u0000") !== expectedDigests.join("\u0000")) {
+      findings.push(`architecture_exhibit_source_mismatch:${key}`);
+    }
   }
   for (const key of counts.keys()) {
     if (!expected.has(key))

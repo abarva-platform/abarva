@@ -19,7 +19,11 @@ import type { GeneratedArtifactRecord } from "@/lib/artifacts/repository";
 import JSZip from "jszip";
 import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
 import { ARCHITECTURE_V2_EXHIBITS } from "@/lib/visual-system/architecture-model";
-import { judgeArchitectureDeck } from "@/lib/deliverables/orchestrator/architecture-deck-quality";
+import {
+  architectureVisualDigest,
+  judgeArchitectureDeck,
+} from "@/lib/deliverables/orchestrator/architecture-deck-quality";
+import { renderArchitectureVisualExhibits } from "@/lib/visual-system/architecture-html-renderer";
 
 const mockGetUser = jest.fn();
 const mockGetClientKey = jest.fn();
@@ -264,7 +268,16 @@ describe("GET /api/v1/artifacts/[artifactId]", () => {
     const imageNames = [
       ...xml.matchAll(/<wp:docPr\b[^>]*\bname="([^"]+)"/g),
     ].map((match) => match[1]);
-    expect(imageNames.slice().sort()).toEqual(
+    const expectedNames = renderArchitectureVisualExhibits(architectureModel)
+      .flatMap((visual) =>
+        [visual.svg, ...(visual.continuationSvgs ?? [])].map(
+          (svg) =>
+            `architecture-exhibit:${visual.id}:${architectureVisualDigest(svg)}`,
+        ),
+      )
+      .sort();
+    expect(imageNames.slice().sort()).toEqual(expectedNames);
+    expect(imageNames.map((name) => name.split(":")[1]).sort()).toEqual(
       ARCHITECTURE_V2_EXHIBITS.slice().sort(),
     );
     expect(

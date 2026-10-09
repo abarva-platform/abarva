@@ -87,22 +87,39 @@ describe("architecture model + HTML renderer (W2)", () => {
     expect(visual?.svg).not.toContain('marker-end="url(#arrow)"');
   });
 
-  it("refuses a flow visual above the three-row capacity", () => {
+  it("paginates nineteen explicit flows into two readable panels without losing an id", () => {
     const flow = FIRST_CAPITAL_ARCHITECTURE.target.flows[0];
     const model: ArchitectureModel = {
       ...FIRST_CAPITAL_ARCHITECTURE,
       target: {
         ...FIRST_CAPITAL_ARCHITECTURE.target,
-        flows: Array.from({ length: 13 }, (_, index) => ({
+        flows: Array.from({ length: 19 }, (_, index) => ({
           ...flow,
           id: `flow-${index}`,
           kind: "data" as const,
         })),
       },
     };
-    expect(() => renderArchitectureVisualExhibits(model)).toThrow(
-      /architecture_flow_visual_capacity_exceeded:End-to-end data flow:13/,
+    const visual = renderArchitectureVisualExhibits(model).find(
+      (exhibit) => exhibit.id === "end_to_end_data_flow",
     );
+    expect(visual?.continuationSvgs).toHaveLength(1);
+    const panels = [visual?.svg ?? "", ...(visual?.continuationSvgs ?? [])];
+    expect(panels[0]).toContain('viewBox="0 0 980 574"');
+    expect(panels[1]).toContain('viewBox="0 0 980 436"');
+    expect(panels[0]).toContain("RECORDED FLOW 12");
+    expect(panels[1]).toContain("RECORDED FLOW 19");
+    expect(
+      panels.flatMap((svg) =>
+        [...svg.matchAll(/data-arch-item-id="([^"]+)"/g)].map(
+          (match) => match[1],
+        ),
+      ),
+    ).toEqual(Array.from({ length: 19 }, (_, index) => `flow-${index}`));
+    expect(panels.join("")).not.toContain('marker-end="url(#arrow)"');
+    const html = renderArchitectureHtml(model);
+    expect(html).toContain("Part 1 of 2");
+    expect(html).toContain("Part 2 of 2");
   });
   it("the First Capital sample model is referentially valid (no errors)", () => {
     const issues = validateArchitectureModel(FIRST_CAPITAL_ARCHITECTURE);
