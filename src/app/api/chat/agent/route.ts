@@ -371,6 +371,10 @@ import "@/lib/agent/tools/program/completeProgram";
 // /strategic-moves/:id/phase/:phase surface so Nexus can generate and persist
 // deliverable drafts from the workspace chat.
 import "@/lib/agent/tools/program/draftArtifact";
+// Moves assumptions register · propose_assumption lets aVa put a working
+// figure in front of the team ONLY as a proposed register row (flag
+// `moves_assumption_register_v1`). It can never accept, answer or edit a row.
+import "@/lib/agent/tools/program/proposeAssumption";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
