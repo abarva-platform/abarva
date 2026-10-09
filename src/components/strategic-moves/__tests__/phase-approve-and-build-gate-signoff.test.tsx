@@ -46,12 +46,33 @@ type Artifact = typeof CHARTER & {
   currentVersion?: number | null;
 };
 
+// The sign-off columns on these fixtures stand for a landed read of the
+// deliverables_v2 projection, so every case that asserts a sign-off COUNT or a
+// per-document sign-off state has to declare that read as completed and
+// healthy. Cases that exercise a degraded or un-run read pass their own.
+const READ_LANDED = {
+  completed: true,
+  loadFailed: false,
+  deliverableSignOffStatus: "available",
+} as const;
+
 function renderFlow(
   artifacts: Artifact[],
-  opts: { canApproveGates?: boolean } = {},
+  opts: {
+    canApproveGates?: boolean;
+    signOffReadback?: {
+      completed?: boolean;
+      loadFailed?: boolean;
+      deliverableSignOffStatus?: unknown;
+    } | null;
+  } = {},
 ) {
   // No build is started in these cases, so the component must issue no fetch.
   global.fetch = jest.fn() as unknown as typeof fetch;
+  const readback =
+    opts.signOffReadback === null
+      ? undefined
+      : (opts.signOffReadback ?? READ_LANDED);
   return render(
     <PhaseApproveAndBuild
       moveId="move-1"
@@ -62,6 +83,7 @@ function renderFlow(
       clientDisplayName="Client"
       canApproveGates={opts.canApproveGates ?? true}
       initialArtifacts={artifacts}
+      signOffReadback={readback}
       onBuildSettled={async () => {}}
     />,
   );
@@ -162,5 +184,105 @@ describe("PhaseApproveAndBuild gate sign-off ledger", () => {
     expect(
       within(ledger()).getByText(/No sign-off version is tracked/i),
     ).toBeInTheDocument();
+  });
+
+  // The sign-off columns reach these rows from ONE read. When that read fails
+  // or has not happened, every gate document loses them at once — including
+  // documents that are signed off — so the ledger must stop reporting a tally
+  // and stop annotating each document as having no sign-off tracked.
+  describe("when the sign-off projection was not read", () => {
+    it("states no count when the route reported its sign-off read failed", () => {
+      renderFlow([{ ...CHARTER, currentVersion: 2, signedOffVersion: 2 }], {
+        signOffReadback: {
+          completed: true,
+          loadFailed: false,
+          deliverableSignOffStatus: "unavailable",
+        },
+      });
+      const section = ledger();
+      expect(
+        within(section).queryByText(/signed off$/),
+      ).not.toBeInTheDocument();
+      expect(
+        within(section).getByText("Sign-off state unavailable"),
+      ).toBeInTheDocument();
+      // This fixture keeps a signed row deliberately — the point is that a
+      // visible sign-off does not license a tally while the projection behind
+      // the OTHER rows is unreadable.
+      expect(within(section).getByText(/Signed off · v2/i)).toBeInTheDocument();
+    });
+
+    it("badges a document the unreadable projection cannot describe", () => {
+      // The realistic shape: a failed projection read strips the columns, so
+      // the row arrives with none. Its badge is its own, not the section pill's.
+      renderFlow([CHARTER], {
+        signOffReadback: {
+          completed: true,
+          loadFailed: false,
+          deliverableSignOffStatus: "unavailable",
+        },
+      });
+      const section = ledger();
+      expect(
+        within(section).getByText("Record unreadable"),
+      ).toBeInTheDocument();
+      expect(within(section).queryByText("On record")).not.toBeInTheDocument();
+      expect(
+        within(section).queryByText(/No sign-off version is tracked/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("warns, and denies the negative reading, when the read failed", () => {
+      renderFlow([CHARTER], {
+        signOffReadback: { completed: true, loadFailed: true },
+      });
+      const section = ledger();
+      expect(within(section).getByRole("status")).toHaveTextContent(
+        /Reload before submitting the gate/i,
+      );
+      // The healthy sentence must not be on screen beside that warning.
+      expect(
+        within(section).queryByText(/No sign-off version is tracked/i),
+      ).not.toBeInTheDocument();
+      expect(
+        within(section).getByText(/not a statement that it is unsigned/i),
+      ).toBeInTheDocument();
+      expect(within(section).getByText("Read failed")).toBeInTheDocument();
+      expect(within(section).queryByText("On record")).not.toBeInTheDocument();
+    });
+
+    it("says the state is unread, without warning, before the first read lands", () => {
+      // This is also the permanent state of a host that passes only the
+      // server-rendered artifact list, which carries no sign-off columns.
+      renderFlow([CHARTER], { signOffReadback: null });
+      const section = ledger();
+      expect(
+        within(section).getByText("Sign-off state not read"),
+      ).toBeInTheDocument();
+      expect(within(section).queryByRole("status")).not.toBeInTheDocument();
+      expect(
+        within(section).queryByText(/No sign-off version is tracked/i),
+      ).not.toBeInTheDocument();
+      expect(
+        within(section).queryByText("0/1 signed off"),
+      ).not.toBeInTheDocument();
+      expect(within(section).getByText("Not read")).toBeInTheDocument();
+      expect(within(section).queryByText("On record")).not.toBeInTheDocument();
+    });
+
+    it("still shows a recorded sign-off it can see, and still holds an unsigned one", () => {
+      // A degraded readback changes what the ledger ASSERTS about rows with no
+      // record. It must not suppress a sign-off state the rows do carry, and
+      // must not release the hold on a known-unsigned built document.
+      renderFlow([{ ...CHARTER, currentVersion: 2, signedOffVersion: null }], {
+        signOffReadback: { completed: true, loadFailed: true },
+      });
+      expect(
+        within(ledger()).getByText("Draft · awaiting sign-off"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Sign off 1 document to submit/i }),
+      ).toBeDisabled();
+    });
   });
 });

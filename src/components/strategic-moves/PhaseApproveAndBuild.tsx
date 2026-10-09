@@ -36,6 +36,7 @@ import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readine
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { DeliverableApprovalAction } from "@/components/strategic-moves/DeliverableApprovalAction";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import { describeGateSignOffReadback } from "@/lib/programs/gate-sign-off-readback";
 import {
   heldArtifactBlocker,
   heldArtifactStatus,
@@ -187,6 +188,23 @@ interface Props {
    *  buttons in the in-workspace attestation ledger: a non-approver sees
    *  sign-off state only, never a disabled approve button. */
   canApproveGates?: boolean;
+  /**
+   * Health of the read that supplied the sign-off columns on `initialArtifacts`
+   * (`deliverableId` / `currentVersion` / `signedOffVersion`). Those columns
+   * come only from `GET .../artifacts`, which reads the deliverables_v2
+   * projection separately and reports it as `deliverableSignOffStatus`.
+   *
+   * Absent means no such read has completed for these rows — which is the
+   * truth for a host that passes the server-rendered artifact list, since that
+   * list carries no sign-off columns at all. Treating absence as a successful
+   * read is what let the ledger report every gate document as having no
+   * sign-off tracked. See `gate-sign-off-readback.ts`.
+   */
+  signOffReadback?: {
+    completed?: boolean;
+    loadFailed?: boolean;
+    deliverableSignOffStatus?: unknown;
+  };
 }
 
 export interface BuildSettledResult {
@@ -309,6 +327,7 @@ export function PhaseApproveAndBuild({
   initialArtifacts = [],
   deliverableKeys,
   canApproveGates = false,
+  signOffReadback,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [gateSubmitConfirmOpen, setGateSubmitConfirmOpen] = useState(false);
@@ -683,6 +702,11 @@ export function PhaseApproveAndBuild({
   // version fields, which the ledger treats as "no sign-off record to target"
   // (not as unsigned) — so it never blocks a submission the way a known-unsigned
   // built gate document does.
+  //
+  // That null shape is reached BOTH by a projection that holds no row and by a
+  // projection nothing read, and the two are not the same claim. Which one it
+  // is comes from `signOffReadback`, not from these rows — see
+  // `signOffReadbackState` below.
   const signOffByKey = useMemo(() => {
     const byKey = new Map<
       string,
@@ -712,6 +736,14 @@ export function PhaseApproveAndBuild({
     );
   }
 
+  // What the sign-off column beside each gate document is allowed to assert.
+  // The columns ride on `initialArtifacts` and only one read supplies them, so
+  // their absence is ambiguous: no record, or no read. An absent prop is the
+  // un-read case, never the healthy one.
+  const signOffReadbackState = describeGateSignOffReadback(
+    signOffReadback ?? {},
+  );
+
   const anyRunning = rows.some(
     (r) => r.status === "queued" || r.status === "running",
   );
@@ -739,9 +771,11 @@ export function PhaseApproveAndBuild({
       const built = row.status === "succeeded";
       const hasSignOffRecord = currentVersion != null && Boolean(deliverableId);
       const isSigned = hasSignOffRecord && signedOffVersion === currentVersion;
-      // State the ledger renders. "unverified" = built but the projection
-      // carries no deliverables_v2 row to sign off against (nothing to show
-      // and nothing to block on). "draft" = built, has a record, not signed.
+      // State the ledger renders. "unverified" = built but the row carries no
+      // deliverables_v2 sign-off record (nothing to show and nothing to block
+      // on). Whether that means the projection HOLDS no record or that nothing
+      // read it is `signOffReadbackState`'s job, and it decides what this state
+      // is allowed to say. "draft" = built, has a record, not signed.
       const state: "signed" | "draft" | "unverified" | "blocked" = isSigned
         ? "signed"
         : built && hasSignOffRecord
@@ -968,10 +1002,35 @@ export function PhaseApproveAndBuild({
               gate.
             </div>
           </div>
-          <StatusPill tone={signedCount >= ledgerGateCount ? "good" : "neutral"}>
-            {signedCount}/{ledgerGateCount} signed off
+          <StatusPill
+            tone={
+              signOffReadbackState.canStateSignedCount &&
+              signedCount >= ledgerGateCount
+                ? "good"
+                : "neutral"
+            }
+          >
+            {signOffReadbackState.canStateSignedCount
+              ? `${signedCount}/${ledgerGateCount} signed off`
+              : signOffReadbackState.countLabel}
           </StatusPill>
         </div>
+        {signOffReadbackState.warning ? (
+          <div
+            role="status"
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: ATTENTION,
+              background: "rgba(181,133,42,0.08)",
+              border: "1px solid rgba(181,133,42,0.28)",
+              borderRadius: 6,
+              padding: "8px 10px",
+            }}
+          >
+            {signOffReadbackState.warning}
+          </div>
+        ) : null}
         {gateLedgerEntries.map((entry) => (
           <div
             key={entry.deliverableTypeKey}
@@ -1040,7 +1099,9 @@ export function PhaseApproveAndBuild({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {entry.state === "unverified" ? "On record" : "Not on record"}
+                  {entry.state === "unverified"
+                    ? signOffReadbackState.noRecordLabel
+                    : "Not on record"}
                 </span>
               )}
             </div>
@@ -1070,8 +1131,7 @@ export function PhaseApproveAndBuild({
             )}
             {entry.state === "unverified" && (
               <span style={{ fontSize: 11, color: MUTED }}>
-                On the record. No sign-off version is tracked for this document
-                yet.
+                {signOffReadbackState.noRecordNote}
               </span>
             )}
             {entry.state === "blocked" && entry.row && (

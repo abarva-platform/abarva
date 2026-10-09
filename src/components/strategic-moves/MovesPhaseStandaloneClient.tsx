@@ -1285,6 +1285,15 @@ export function MovesPhaseStandaloneClient({
       ]),
     [clientLoadedPhaseBuildArtifacts, phaseBuildArtifacts],
   );
+  // Health of the one read that carries per-deliverable sign-off state. The
+  // server-rendered `phaseBuildArtifacts` declare no sign-off columns at all,
+  // so until this read lands the gate ledger has nothing to report — and must
+  // say so rather than report zero sign-offs.
+  const [signOffReadback, setSignOffReadback] = useState<{
+    completed: boolean;
+    loadFailed: boolean;
+    deliverableSignOffStatus?: unknown;
+  }>({ completed: false, loadFailed: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -1294,11 +1303,41 @@ export function MovesPhaseStandaloneClient({
           `/api/v1/programs/${encodeURIComponent(move.id)}/artifacts`,
           { credentials: "include" },
         );
-        if (!response.ok) return;
+        if (!response.ok) {
+          // The sign-off columns on these rows come only from this read, so a
+          // refused or failed read leaves the gate ledger with no sign-off
+          // state. Record that it is UNKNOWN rather than leaving the ledger to
+          // report every gate document as having none.
+          if (!cancelled) {
+            setSignOffReadback({ completed: true, loadFailed: true });
+          }
+          return;
+        }
         const payload = (await response.json().catch(() => ({}))) as {
           artifacts?: MoveArtifactApiRow[];
+          deliverableSignOffStatus?: unknown;
         };
-        if (cancelled || !Array.isArray(payload.artifacts)) return;
+        if (cancelled) return;
+        if (!Array.isArray(payload.artifacts)) {
+          setSignOffReadback({ completed: true, loadFailed: true });
+          return;
+        }
+        // Set BEFORE the dedupe short-circuit below: an unchanged artifact set
+        // is still a completed read, and its reported projection health is the
+        // whole point of this state. Bail out when the health has not moved, so
+        // a repeat read of the same state costs no render.
+        const reportedStatus = payload.deliverableSignOffStatus;
+        setSignOffReadback((prev) =>
+          prev.completed &&
+          !prev.loadFailed &&
+          prev.deliverableSignOffStatus === reportedStatus
+            ? prev
+            : {
+                completed: true,
+                loadFailed: false,
+                deliverableSignOffStatus: reportedStatus,
+              },
+        );
         const nextArtifacts = payload.artifacts
           .filter(
             (artifact) =>
@@ -1318,6 +1357,9 @@ export function MovesPhaseStandaloneClient({
         clientLoadedPhaseBuildArtifactsRef.current = nextArtifacts;
         setClientLoadedPhaseBuildArtifacts(nextArtifacts);
       } catch {
+        if (!cancelled) {
+          setSignOffReadback({ completed: true, loadFailed: true });
+        }
         if (
           !cancelled &&
           clientLoadedPhaseBuildArtifactsRef.current.length > 0
@@ -3289,6 +3331,7 @@ export function MovesPhaseStandaloneClient({
           evidenceNeedPackets={evidenceNeedPackets}
           inputCount={phaseCaptureCompleteCount}
           initialArtifacts={visiblePhaseBuildArtifacts}
+          signOffReadback={signOffReadback}
           moveId={move.id}
           moveName={displayMoveName}
           onBeforeBuild={finalizePhaseCapture}
