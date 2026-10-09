@@ -20,6 +20,7 @@ import {
   type BuildMoveDeliverableRequestInput,
 } from "./build-request";
 import { renderDeliverableHtml } from "./render-html";
+import { REGISTER_UNAVAILABLE_DETAIL } from "@/lib/programs/assumption-register/model";
 
 export interface RunOrchestratedMoveDeliverableInput extends BuildMoveDeliverableRequestInput {
   moveInput: MoveBusinessCaseInput;
@@ -50,6 +51,18 @@ export async function runOrchestratedMoveDeliverable(
     input.moveInput,
     input,
   );
+
+  // A register that governs generation but could not be read blocks the run:
+  // generating without it would drop every working figure the document may
+  // cite, and read as "this Move has no assumptions".
+  if (input.moveInput.assumptionRegister?.status === "unavailable") {
+    return {
+      ok: false,
+      evidenceCount,
+      citedInputIds,
+      blockedReason: `assumption_register_unavailable: ${REGISTER_UNAVAILABLE_DETAIL}`,
+    };
+  }
 
   const minEvidence = input.minEvidence ?? 1;
   if (evidenceCount < minEvidence) {

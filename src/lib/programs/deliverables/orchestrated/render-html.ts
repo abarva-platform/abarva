@@ -9,7 +9,11 @@
 // escaped text — never as raw HTML.
 
 import { humanizeSourceFamily } from "@/lib/deliverables/orchestrator/source-register";
-import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
+import { REGISTER_CITATION_RE } from "@/lib/deliverables/orchestrator/numeric-lineage-tokens";
+import type {
+  ApprovedAssumption,
+  RenderableDeliverable,
+} from "@/lib/deliverables/orchestrator/types";
 
 function esc(s: string): string {
   return s
@@ -150,6 +154,43 @@ table.md tbody tr:nth-child(even){background:#f8f8f6}
 .status-footer{font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:#8a6d1a;text-align:center;margin-top:8px;padding:8px 0;border-top:1px dashed #e8cf8a}
 `;
 
+/** The in-page anchor for a register row: `#assumption-V3`. */
+export function registerAnchorId(registerId: string): string {
+  return `assumption-${registerId}`;
+}
+
+const REGISTER_STATUS_LABEL: Readonly<
+  Record<NonNullable<ApprovedAssumption["status"]>, string>
+> = {
+  open: "Open — to validate",
+  confirmed: "Confirmed",
+  corrected: "Corrected",
+};
+
+/**
+ * The Move assumptions register as a table: one row per citable register row,
+ * each anchored so a `[A:V3]` in the body can link to it. Owner ROLE only.
+ */
+function renderRegisterTable(rows: readonly ApprovedAssumption[]): string {
+  return `<table class="md"><thead><tr><th>ID</th><th>Assumption</th><th>Figure</th><th>Owner role</th><th>Confidence</th><th>Status</th></tr></thead><tbody>${rows
+    .map((a) => {
+      const id = a.registerId as string;
+      return `<tr id="${esc(registerAnchorId(id))}"><td>[A:${esc(id)}]</td><td>${esc(a.statement)}</td><td>${esc(a.figure ?? "—")}</td><td>${esc(a.ownerRole ?? "—")}</td><td>${a.confidence !== undefined ? `${a.confidence} of 5` : "—"}</td><td>${esc(a.status ? REGISTER_STATUS_LABEL[a.status] : "—")}</td></tr>`;
+    })
+    .join("")}</tbody></table>`;
+}
+
+/** Link each `[A:ID]` naming a row in this document's register to its anchor. */
+function linkRegisterCitations(html: string, ids: ReadonlySet<string>): string {
+  if (ids.size === 0) return html;
+  return html.replace(REGISTER_CITATION_RE, (token, prefix, seq) => {
+    const id = `${prefix}${seq}`;
+    return ids.has(id)
+      ? `<a href="#${registerAnchorId(id)}">${token}</a>`
+      : token;
+  });
+}
+
 /** Required cover-page status block — every generated artifact carries this until a real approval record exists. */
 function renderDocStatusBlock(): string {
   return `<div class="doc-status">
@@ -180,11 +221,14 @@ export function renderDeliverableHtml(
     .map((s) => `<a href="#${esc(s.key)}">${esc(s.title)}</a>`)
     .join(" · ");
 
+  const registerRows = doc.assumptions.filter((a) => a.registerId);
+  const registerIds = new Set(registerRows.map((a) => a.registerId as string));
+
   const sections = doc.generatedSections
     .map(
       (s) => `<section id="${esc(s.key)}">
 <h2>${esc(s.title)}</h2>
-${markdownToHtml(s.bodyMarkdown)}
+${linkRegisterCitations(markdownToHtml(s.bodyMarkdown), registerIds)}
 </section>`,
     )
     .join("\n");
@@ -215,14 +259,19 @@ ${markdownToHtml(s.bodyMarkdown)}
         .join("")}</ol></section>`
     : "";
 
-  const assumptions = doc.assumptions.length
-    ? `<section id="assumptions"><h2>Assumptions to Validate</h2><ul>${doc.assumptions
-        .map(
-          (a) =>
-            `<li><strong>${esc(a.statement)}</strong> — ${esc(a.basis)}${a.mustValidate ? " <em>[validate]</em>" : ""}</li>`,
-        )
-        .join("")}</ul></section>`
-    : "";
+  // A document built under the Move assumptions register carries register
+  // rows: render them as the register table. Otherwise, exactly as before.
+  const assumptions =
+    registerRows.length > 0
+      ? `<section id="assumptions"><h2>Assumptions Register</h2>${renderRegisterTable(registerRows)}</section>`
+      : doc.assumptions.length
+        ? `<section id="assumptions"><h2>Assumptions to Validate</h2><ul>${doc.assumptions
+            .map(
+              (a) =>
+                `<li><strong>${esc(a.statement)}</strong> — ${esc(a.basis)}${a.mustValidate ? " <em>[validate]</em>" : ""}</li>`,
+            )
+            .join("")}</ul></section>`
+        : "";
 
   const clientComplete = doc.clientCompleteChecklist.length
     ? `<section id="client-complete"><h2>Client-to-Complete</h2><ul class="checklist">${doc.clientCompleteChecklist

@@ -68,6 +68,7 @@ import {
   type EffortEstimate,
   type WorkstreamInput,
 } from "./expert-kernel/effort-estimator";
+import type { ApprovedAssumption } from "@/lib/deliverables/orchestrator/types";
 import type { AiOperatingCostInput } from "./expert-kernel/ai-ops-cost";
 import {
   buildValueForecast,
@@ -188,7 +189,22 @@ export interface MoveBusinessCaseInput {
   ai_operating_cost?: AiOperatingCostInput | null;
   /** Camel-case alias for view-model callers. */
   aiOperatingCost?: AiOperatingCostInput | null;
+  /**
+   * The Move assumptions register, present only when it governs generation
+   * (`moves_assumption_register_v1`). Absent: the orchestrated deliverable is
+   * built exactly as before the register existed. The deterministic kernel
+   * derivation ignores it.
+   */
+  assumptionRegister?: MoveAssumptionRegisterInput;
 }
+
+/**
+ * The register as loaded for a Move: the citable rows, or a read that failed —
+ * kept distinct so a failed read can never read as an empty register.
+ */
+export type MoveAssumptionRegisterInput =
+  | { status: "loaded"; assumptions: readonly ApprovedAssumption[] }
+  | { status: "unavailable" };
 
 export interface MoveGovernedEvidenceItem {
   id: string;
