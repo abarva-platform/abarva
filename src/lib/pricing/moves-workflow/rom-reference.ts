@@ -22,7 +22,7 @@ import path from "node:path";
 import Papa from "papaparse";
 import type { PodRateReference } from "../effort-engine/pod-rate-adapter";
 import type { PodTemplateLibrary } from "../effort-engine/pod-templates";
-import type { PodRoleMatchMethod } from "../types";
+import { loadPodLibrary as loadCanonicalPodLibrary } from "../reference-pack-loader";
 import type { RomReferenceLoaders } from "./rom-service";
 
 export const ROM_REFERENCE_PACK_RELATIVE_DIR = path.join(
@@ -115,42 +115,15 @@ export function createCommittedRomReferenceLoaders(
     }),
   );
 
-  const loadPodLibrary = once(
-    (): PodTemplateLibrary => ({
-      podTemplates: readCsv(dir, "pricing_pod_templates.csv").map((r) => ({
-        pod_code: r.pod_code,
-        name: r.name,
-        tower_code: r.tower_code,
-        headcount: requiredNumber(r.headcount, `pod ${r.pod_code} headcount`),
-        blended_level_code: r.blended_level_code,
-        agent_mix_codes: r.agent_mix_codes ? r.agent_mix_codes.split("|") : [],
-        source_artifact: r.source_artifact,
-        source_row: requiredNumber(
-          r.source_row,
-          `pod ${r.pod_code} source_row`,
-        ),
-        status: r.status,
-        version: requiredNumber(r.version, `pod ${r.pod_code} version`),
-      })),
-      podTemplateRoles: readCsv(dir, "pricing_pod_template_roles.csv").map(
-        (r) => ({
-          pod_code: r.pod_code,
-          role_code: r.role_code || null,
-          level_code: r.level_code,
-          fte: requiredNumber(
-            r.fte,
-            `pod ${r.pod_code} role "${r.raw_role_text}" fte`,
-          ),
-          raw_role_text: r.raw_role_text,
-          match_method: r.match_method as PodRoleMatchMethod,
-          source_row: requiredNumber(
-            r.source_row,
-            `pod ${r.pod_code} role source_row`,
-          ),
-        }),
-      ),
-    }),
-  );
+  // The canonical pod-library parser (validation, mapping status, level
+  // clamps and provenance) — never a second copy that can drift from it.
+  const loadPodLibrary = once((): PodTemplateLibrary => {
+    const { data } = loadCanonicalPodLibrary(dir);
+    return {
+      podTemplates: data.podTemplates,
+      podTemplateRoles: data.podTemplateRoles,
+    };
+  });
 
   const loadRangePolicies = once(() =>
     readCsv(dir, "pricing_range_policies.csv")

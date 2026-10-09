@@ -781,6 +781,21 @@ describe("computeRom — pods from the committed cost foundation", () => {
   });
 
   it("refuses a template with unmatched roles rather than pricing a partial pod", () => {
+    // POD-012 still carries a role no mapping rule resolves.
+    const s = mutate((x) => {
+      x.pod = {
+        templateCode: "POD-012",
+        locationCode: "LOC-CHICAGO",
+        rateBasis: "loaded_cost",
+      };
+    });
+    expect(refused(s, committed)).toMatchObject({
+      code: "pod_template_refused",
+      message: expect.stringContaining("POD-012"),
+    });
+  });
+
+  it("prices a template whose roles are mapped by proposal, and says the mapping is unapproved", () => {
     const s = mutate((x) => {
       x.pod = {
         templateCode: "POD-001",
@@ -788,10 +803,9 @@ describe("computeRom — pods from the committed cost foundation", () => {
         rateBasis: "loaded_cost",
       };
     });
-    expect(refused(s, committed)).toMatchObject({
-      code: "pod_template_refused",
-      message: expect.stringContaining("POD-001"),
-    });
+    const result = computeRom(s, committed);
+    if (!result.ok) throw new Error(`expected a ROM, got ${result.code}`);
+    expect(JSON.stringify(result)).toContain("unapproved");
   });
 });
 
