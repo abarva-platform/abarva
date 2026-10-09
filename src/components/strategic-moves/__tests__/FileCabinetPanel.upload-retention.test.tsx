@@ -23,6 +23,13 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { FileCabinetPanel } from "../FileCabinetPanel";
+import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
+import {
+  ACCEPTED_UPLOAD_FORMATS,
+  UPLOAD_ACCEPT_ATTRIBUTE,
+  describeUploadBounds,
+  describeUploadSizeLimit,
+} from "@/lib/programs/attachments/upload-control-bounds";
 
 function row(overrides: Record<string, unknown> = {}) {
   return {
@@ -248,5 +255,72 @@ describe("what an upload tells the reviewer", () => {
       ).toBeInTheDocument();
     });
     expect(screen.queryByText(/application\/zip/)).toBeNull();
+  });
+});
+
+/**
+ * The refusal above is worded well and arrives too late: it is what a reviewer
+ * reads AFTER the whole file has uploaded. The route refuses on two bounds the
+ * control never declared — a MIME allowlist and a 100 MB cap — so a .zip or a
+ * 300 MB recording was a full upload spent to learn a fact the picker already
+ * had.
+ *
+ * These cases are on the real panel because the finding is about what the
+ * control offers before a file is chosen, and because a bound exported but
+ * never wired into the input is the same defect with extra steps.
+ */
+describe("the upload control states its bounds before a file is chosen", () => {
+  it("states the formats and the cap beside the upload button", async () => {
+    mockCabinet([]);
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    const bounds = await screen.findByTestId("move-upload-bounds");
+    expect(bounds).toHaveTextContent(describeUploadBounds());
+    expect(bounds).toHaveTextContent(describeUploadSizeLimit());
+    expect(bounds).toHaveTextContent(/PDF/);
+  });
+
+  // The wiring. An `accept` derived in the module and never passed to the
+  // input leaves the picker exactly as wide as it was.
+  it("constrains the picker to the types the route accepts", async () => {
+    mockCabinet([]);
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    const input = await screen.findByLabelText("Upload Move file");
+    expect(input).toHaveAttribute("accept", UPLOAD_ACCEPT_ATTRIBUTE);
+    const offered = (input.getAttribute("accept") ?? "").split(",");
+    expect(offered).toContain("application/pdf");
+    expect(offered).toContain(".pdf");
+    // The two formats the allowlist deliberately excludes.
+    expect(offered).not.toContain("application/zip");
+    expect(offered).not.toContain("application/octet-stream");
+  });
+
+  it("keeps the bounds stated while an upload is in flight", async () => {
+    mockCabinetAndUpload({ ok: true, blobStored: true });
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+    await uploadOneFile();
+
+    // The control's own sentence must survive the uploading state, because the
+    // refusal it explains arrives at the end of that state, not before it.
+    expect(await screen.findByTestId("move-upload-bounds")).toHaveTextContent(
+      describeUploadBounds(),
+    );
+  });
+
+  // The pre-upload sentence and the post-refusal sentence must name the same
+  // formats, which is the whole reason the prose has one home.
+  it("names the same formats before the upload as the refusal does after it", async () => {
+    mockCabinet([]);
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    const bounds = await screen.findByTestId("move-upload-bounds");
+    const refusal = describeMoveUploadRefusal({
+      code: "unsupported_type",
+      detail: "application/zip",
+      fileName: "archive.zip",
+    });
+    expect(bounds).toHaveTextContent(ACCEPTED_UPLOAD_FORMATS);
+    expect(refusal).toContain(ACCEPTED_UPLOAD_FORMATS);
   });
 });
