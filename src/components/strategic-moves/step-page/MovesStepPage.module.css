@@ -324,5 +324,17 @@ textarea.q-input { resize: vertical; min-height: 84px; }
 .phase-group .items { padding: 4px 24px 16px; }
 .phase-group .items > li:first-child { padding-top: 12px; }
 
+/* ═════════ v1.3 additions: gate truth ═════════ */
+.chk-unknown { width: 14px; height: 14px; border-radius: 50%; border: 1px dashed var(--mv-line-strong); display: inline-block; margin-top: 4px; }
+.chk-next { display: inline-block; width: 14px; text-align: center; font-size: 13px; line-height: 22px; color: var(--mv-faint); }
+.formgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px 24px; }
+@container main (min-width: 560px) { .formgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.formgrid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--mv-muted); }
+.formgrid .code { font-family: var(--mv-font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--mv-faint); margin-right: 6px; }
+.result-line { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--mv-line); font-size: 15px; }
+.warn-inline { grid-column: 1 / -1; margin: 4px 0 0; padding: 12px 14px; background: var(--mv-bg); border-radius: var(--mv-radius); font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 10px; }
+.review-only .seg + .eyebrow { margin-top: 6px; }
+.warn-inline .btn-line, .warn-inline .btn-ink { white-space: normal; text-align: left; }
+
 /* Product port: phase and step links render as the canonical tabs, not as underlined text. */
 .phase-tab, .step-btn { text-decoration: none; }
