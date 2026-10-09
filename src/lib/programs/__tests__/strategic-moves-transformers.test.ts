@@ -309,6 +309,59 @@ describe("strategic move transformer helpers", () => {
     expect(criteria[0]).toMatchObject({ verified: true, completed: false });
   });
 
+  // A failed state read is not a per-criterion signal. The evaluator reports it
+  // as one hard `gate_state_unreadable` check, and `buildGateCriteria` already
+  // held the right treatment for its three siblings (`phase_mismatch`,
+  // `program_not_found`, `no_rule`): mark the criteria unverified rather than
+  // marking each concrete criterion failed. The compat client never throws, so
+  // this arrives through the NORMAL return and the `catch` below never sees it.
+  it("treats an unreadable gate state as structural, not as a failed criterion", async () => {
+    evaluateGateMock.mockResolvedValue({
+      pass: false,
+      failedChecks: [
+        {
+          check: "gate_state_unreadable",
+          reason: "This gate could not be evaluated: reading ... failed.",
+          severity: "hard",
+        },
+      ],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const criteria = await buildGateCriteria(
+      { clientId: "client-1", userId: "user-1" },
+      "move-1",
+      1,
+    );
+
+    expect(criteria[0]).toMatchObject({ verified: false, completed: false });
+  });
+
+  it("still marks a named criterion failed when the state WAS read", async () => {
+    // The complement: the structural list must not swallow a real failure.
+    evaluateGateMock.mockResolvedValue({
+      pass: false,
+      failedChecks: [
+        {
+          check: "charter_signed_off",
+          reason: "No charter is signed off.",
+          severity: "hard",
+        },
+      ],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const criteria = await buildGateCriteria(
+      { clientId: "client-1", userId: "user-1" },
+      "move-1",
+      1,
+    );
+
+    expect(criteria[0]).toMatchObject({ verified: true, completed: false });
+  });
+
   it("marks the Strategic Move page model terminal-complete from an approved P5 snapshot", async () => {
     selectMock.mockImplementation(async (request) => {
       if (request.table === "phase_snapshots") {
