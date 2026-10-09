@@ -1,8 +1,6 @@
 import "server-only";
-import {
-  rootCauseCaptureText,
-  rootCauseDigestLines,
-} from "@/lib/programs/root-cause-register";
+import { rootCauseDigestLines } from "@/lib/programs/root-cause-register";
+import { captureValueText } from "@/lib/programs/structured-capture-text";
 import { deliverableModel } from "./model-policy";
 
 import { streamAgentTurn } from "@/lib/agent/stream";
@@ -390,9 +388,7 @@ export function createMovesGenerateArtifactDeps(
           let rendered =
             key === "baseline_metrics" && isStructuredFactsValue(value)
               ? factsToPromptText(parseDiagnosisFacts(value))
-              : key === "gaps_root_causes"
-                ? rootCauseCaptureText(value)
-                : value;
+              : captureValueText(key, value);
           if (key === "business_change_assessment") {
             const assessment = parseBusinessChangeAssessment(value);
             if (assessment) {

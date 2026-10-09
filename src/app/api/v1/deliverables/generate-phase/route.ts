@@ -12,7 +12,7 @@
 // deliverable — a single deliverable that fails to enqueue is reported in its row
 // with an error, and does not abort the others.
 
-import { rootCauseCaptureText } from "@/lib/programs/root-cause-register";
+import { captureValueText } from "@/lib/programs/structured-capture-text";
 import { randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
@@ -190,11 +190,7 @@ async function buildPhaseCaptureDecisionContext(args: {
       if (formatted) lines.push(formatted);
       continue;
     }
-    lines.push(
-      `- ${section.label}: ${
-        section.key === "gaps_root_causes" ? rootCauseCaptureText(value) : value
-      }`,
-    );
+    lines.push(`- ${section.label}: ${captureValueText(section.key, value)}`);
   }
   if (lines.length === 0) return null;
 
