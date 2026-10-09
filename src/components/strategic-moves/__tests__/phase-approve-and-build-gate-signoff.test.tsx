@@ -146,4 +146,21 @@ describe("PhaseApproveAndBuild gate sign-off ledger", () => {
       screen.queryByRole("button", { name: /Sign off .* to submit/i }),
     ).not.toBeInTheDocument();
   });
+
+  it("does not count an unbuilt gate artifact as signed off", () => {
+    renderFlow([]);
+    expect(within(ledger()).getByText("0/1 signed off")).toBeInTheDocument();
+    expect(within(ledger()).getByText("Not on record")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Sign off 1 document to submit/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not count a built artifact without a sign-off version as signed off", () => {
+    renderFlow([CHARTER]);
+    expect(within(ledger()).getByText("0/1 signed off")).toBeInTheDocument();
+    expect(
+      within(ledger()).getByText(/No sign-off version is tracked/i),
+    ).toBeInTheDocument();
+  });
 });

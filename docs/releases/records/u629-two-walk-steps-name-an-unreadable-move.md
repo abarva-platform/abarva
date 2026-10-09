@@ -89,7 +89,8 @@ work by changing it.
   evidence read on P1 fails; letting a session-expiry refusal fall into the
   crash arm fails; flipping the read-only claim fails; reading capture state
   before the refusal fails.
-- **PASS** — regression sweep: 264 suites / 3,584 tests across
+- **PASS** — regression sweep after merging the base forward: 266 suites /
+  3,623 tests across
   `src/app/api/v1/programs`, `src/lib/programs/__tests__` and
   `src/components/strategic-moves/__tests__`.
 - **PASS** — `npx tsc -p tsconfig.json --noEmit`, exit 0.
@@ -97,10 +98,17 @@ work by changing it.
   warnings.
 - **PASS** — `node scripts/quality/check-named-suite-requiredness.mjs`, exit 0,
   50 directories swept by a required job.
-- **PASS** — census: base measured in a clean detached worktree of the base
-  commit reads 2878 / 2714 with zero drift; the branch reads 2880 / 2716, so
-  base +2 on both, with `uncoveredTestFiles` unchanged at 164. Both new suites
-  are registered, not dark.
+- **PASS** — census, measured against a clean regeneration of the base rather
+  than against the base's committed file, because the two differ. Base measured
+  in a clean detached worktree of the base commit regenerates to 2880 / 2716,
+  while the committed census at that commit reads 2879 / 2715 — the base
+  carries one unit of inherited drift, from two earlier changes that each
+  regenerated against the same parent and each wrote the same increment. This
+  branch reads 2882 / 2718, which is base-regeneration +2: exactly the two
+  suites added here. Against the base's committed file the diff reads +3, and
+  the extra unit is the base's, not this change's. `uncoveredTestFiles` is
+  unchanged at 164, which is the proof both new suites are registered rather
+  than dark.
 - **PASS** — prettier, checked per file in place against the base. Four of the
   five pre-existing files are clean at base and remain clean. The fifth
   (`phase-capture/route.ts`) warns at base, and all five hunks it proposes fall
@@ -139,7 +147,9 @@ status nor the error code was altered.
 - The PR and its CI run, including the required
   `ai-surface-control-catalog` job, where the new step runs both route suites.
 - The mutation table above, reproducible by reverting each route arm in turn.
-- The census diff, showing +2 covered and `uncoveredTestFiles` unchanged.
+- The census diff. Read it against a clean regeneration of the base, not
+  against the base's committed file: the base is one unit low, so this change's
+  honest +2 appears there as +3.
 
 ## Known Gaps
 
