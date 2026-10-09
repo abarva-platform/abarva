@@ -10,7 +10,9 @@
 // outranks the machine `error` code rather than supplementing it.
 //
 // Four of that path's failures put a driver/database string in `message`, so
-// the user read internals instead of an instruction:
+// the user read internals instead of an instruction (a fifth, added later and
+// listed after them, had no message of its own because it had no refusal at
+// all -- see `duplicate_check_failed` below):
 //
 //   1. `person_lookup_failed`        -- `error.message` from the persons query.
 //   2. `person_placeholder_failed`   -- `placeholderError?.message ?? <a good
@@ -23,7 +25,15 @@
 //   4. `origination_submit_failed`   -- the route's unexpected-failure arm,
 //      `err instanceof Error ? err.message : String(err)`.
 //
-// A fifth did something different and worse: the `requireTenancy` arm threw
+//   5. `duplicate_check_failed`     -- NOT a leak. The 5-minute re-submit
+//      check that keeps a double-submit from creating a second Move dropped
+//      its read `error`, and the compat client reports a failed read as
+//      `{ data: null, error }` rather than throwing. So a failed check read as
+//      "no earlier Move" and the submit created the duplicate the check exists
+//      to prevent -- a write consequence from a state nobody had read. It now
+//      refuses, and this is that refusal's sentence.
+//
+// A sixth did something different and worse: the `requireTenancy` arm threw
 // `new OriginationSubmitError(err.code, err.code, ...)`, passing the machine
 // code as the MESSAGE. `TenancyError` is `super(code)`, so there is no authored
 // sentence anywhere in that chain, and a user whose session lapsed while
@@ -59,6 +69,7 @@ export type OriginationSubmitFailureCode =
   | "person_lookup_failed"
   | "person_placeholder_failed"
   | "engagement_insert_failed"
+  | "duplicate_check_failed"
   | "origination_submit_failed";
 
 /**
@@ -85,6 +96,11 @@ const SENTENCES: Record<OriginationSubmitFailureCode, string> = {
     "This Move could not be created, and nothing was saved -- there is no partial Move to clean " +
     "up. Submit again; if it refuses the same way, the Moves records for this client cannot be " +
     "written right now and an operator has to clear that first.",
+  duplicate_check_failed:
+    "This Move was not created, and nothing was saved for it -- there is no partial Move to clean " +
+    "up. An earlier submit of the same Move could not be ruled out, so this one stopped rather " +
+    "than add a second copy that cannot be removed from here. Open the Moves list first: if this " +
+    "Move is already there, open it instead; if it is not, submit again.",
   origination_submit_failed:
     "This Move could not be created because of an unexpected failure, and nothing was saved. " +
     "Submit again; if it refuses the same way, report it with the time you tried -- the failure " +
