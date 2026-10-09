@@ -281,6 +281,14 @@ jobs:
       # approval-or-lifecycle-write signals. A dark suite over gate sign-off on
       # the approve path is precisely the gap this step exists to close. Five of
       # five pass on this commit.
+      #
+      # The forty-seventh path below pins which phases the capture dock offers
+      # aVa's input-drafting control on. The host handed the dock a literal
+      # one-action list on every mounted phase while the handler returned
+      # silently outside its window, so the first phase carried an enabled
+      # button that made no request and said nothing. A declared-AI-surface
+      # control that does nothing belongs in this step. Nine of nine pass on
+      # this commit.
       - name: Exercise Moves visible AI liability controls
         run: >-
           npx jest --runTestsByPath
@@ -290,6 +298,7 @@ jobs:
           src/components/strategic-moves/__tests__/BoardArtifactsPanel.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
+          src/components/strategic-moves/__tests__/FileCabinetPanel.review-readback.test.tsx
           src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx
           src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.ts
           src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx
@@ -330,6 +339,7 @@ jobs:
           src/components/strategic-moves/__tests__/MovesPhaseFindings.test.tsx
           src/components/strategic-moves/__tests__/MovesPhaseCharts.test.tsx
           src/components/strategic-moves/__tests__/phase-approve-and-build-gate-signoff.test.tsx
+          src/components/strategic-moves/__tests__/ava-draft-action-phase-reach.test.tsx
           src/components/strategic-moves/__tests__/moves-capture-composer-streaming.test.tsx
           --runInBand
 

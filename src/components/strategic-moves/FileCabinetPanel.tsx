@@ -15,6 +15,10 @@ import {
 import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 import { getPhaseLabel, TOTAL_PHASES } from "@/lib/programs/phase-labels";
 import { describeRejectedEvidenceReview } from "@/lib/programs/evidence-review-dispositions";
+import {
+  describeEvidenceCabinetReadback,
+  describeEvidenceDecisionRefusal,
+} from "@/lib/programs/evidence-cabinet-readback";
 
 interface Artifact {
   artifactId: string;
@@ -1906,7 +1910,12 @@ export function FileCabinetPanel({
   const [pendingEvidenceReviews, setPendingEvidenceReviews] = useState<
     PendingEvidenceReview[]
   >([]);
-  const [evidenceReviewAvailable, setEvidenceReviewAvailable] = useState(true);
+  // Three states, not two: a read that did not complete is `unknown`, which
+  // is not the route's narrower "unavailable" and is certainly not healthy.
+  // Initialised from the un-run read so the first paint asserts nothing.
+  const [evidenceReadback, setEvidenceReadback] = useState(() =>
+    describeEvidenceCabinetReadback({ completed: false }),
+  );
   const [reviewedEvidence, setReviewedEvidence] = useState<
     Array<{
       evidenceId: string;
@@ -1969,7 +1978,11 @@ export function FileCabinetPanel({
       setPendingEvidenceReviews(
         Array.isArray(j.pendingEvidenceReviews) ? j.pendingEvidenceReviews : [],
       );
-      setEvidenceReviewAvailable(j.evidenceReviewStatus !== "unavailable");
+      setEvidenceReadback(
+        describeEvidenceCabinetReadback({
+          evidenceReviewStatus: j.evidenceReviewStatus,
+        }),
+      );
       setReviewedEvidence(
         Array.isArray(j.reviewedEvidence) ? j.reviewedEvidence : [],
       );
@@ -1977,6 +1990,13 @@ export function FileCabinetPanel({
         Array.isArray(j.rejectedEvidence) ? j.rejectedEvidence : [],
       );
     } catch (e) {
+      // The read threw before any list setter ran, so every list on screen is
+      // whatever the last successful read left there. Say so: without this the
+      // panel keeps asserting the last known review state, and an item whose
+      // decision WAS recorded stays listed as awaiting review.
+      setEvidenceReadback(
+        describeEvidenceCabinetReadback({ loadFailed: true }),
+      );
       setError(e instanceof Error ? e.message : "load failed");
     } finally {
       setLoading(false);
@@ -2011,8 +2031,14 @@ export function FileCabinetPanel({
         );
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result.ok) {
+          // A bare `no_pending_review` is not a next action a reviewer can
+          // take, and it is the refusal they are most likely to meet: it is
+          // what approving a second time returns after a failed refresh.
           throw new Error(
-            result.detail || result.error || `HTTP ${response.status}`,
+            describeEvidenceDecisionRefusal({
+              code: result.error,
+              detail: result.detail,
+            }),
           );
         }
         await load();
@@ -2334,7 +2360,7 @@ export function FileCabinetPanel({
         </div>
       )}
 
-      {!evidenceReviewAvailable && (
+      {evidenceReadback.warning !== null && (
         <div
           role="alert"
           style={{
@@ -2347,8 +2373,7 @@ export function FileCabinetPanel({
             fontSize: 12,
           }}
         >
-          Evidence review status is unavailable. Do not use newly uploaded files
-          for phase decisions until the review state can be loaded.
+          {evidenceReadback.warning}
         </div>
       )}
 
@@ -2380,7 +2405,15 @@ export function FileCabinetPanel({
                     review={review}
                     programId={moveId}
                     busy={reviewingEvidenceId === review.evidenceId}
-                    disabled={reviewingEvidenceId !== null}
+                    // Withheld while the lists are stale as well as while a
+                    // decision is in flight. After a failed refresh this queue
+                    // can still list an item the server already decided, and
+                    // deciding it again is refused with 409 `no_pending_review`
+                    // — an action that cannot succeed is not offered.
+                    disabled={
+                      reviewingEvidenceId !== null ||
+                      !evidenceReadback.queueIsCurrent
+                    }
                     onDecision={(decision, extraction, rationale) =>
                       void decideEvidenceReview(review, decision, extraction, rationale)
                     }
