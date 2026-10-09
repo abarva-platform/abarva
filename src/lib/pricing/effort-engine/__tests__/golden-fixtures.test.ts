@@ -110,15 +110,21 @@ interface GoldenCase {
 // other exact-value-pinning tests (e.g. workforce-economics.test.ts anchors
 // its worked example against the source workbook). See the PR4 release
 // record for the captured transcript this was generated from.
+//
+// The two HOURS columns were re-pinned on 2026-10-10 (release record
+// 2026-10-10-pricing-shared-rollup-fix): the original capture summed a
+// rule's pack-level hours once per ROLE line, overstating every multi-role
+// rule (e.g. ARCH-01 9,902.04h → 3,630.92h). The cost columns are unchanged —
+// role-line costs were always each line's own allocated share.
 const GOLDEN_CASES: GoldenCase[] = [
-  { archetypeCode: "ARCH-01", expectedTotalRawHours: 9902.04, expectedTotalExpectedHours: 9902.04, expectedTotalLaborCostCents: 103_813_127, expectedTotalManualCostCents: 1_500_000, expectedTotalCostCents: 105_313_127, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
-  { archetypeCode: "ARCH-02", expectedTotalRawHours: 8844.88, expectedTotalExpectedHours: 8844.88, expectedTotalLaborCostCents: 98_302_667, expectedTotalManualCostCents: 0, expectedTotalCostCents: 98_302_667, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
-  { archetypeCode: "ARCH-03", expectedTotalRawHours: 14098.1, expectedTotalExpectedHours: 14098.1, expectedTotalLaborCostCents: 137_706_815, expectedTotalManualCostCents: 0, expectedTotalCostCents: 137_706_815, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
-  { archetypeCode: "ARCH-04", expectedTotalRawHours: 10961.95, expectedTotalExpectedHours: 10961.95, expectedTotalLaborCostCents: 123_825_907, expectedTotalManualCostCents: 0, expectedTotalCostCents: 123_825_907, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
-  { archetypeCode: "ARCH-05", expectedTotalRawHours: 6825.8, expectedTotalExpectedHours: 6825.8, expectedTotalLaborCostCents: 86_607_492, expectedTotalManualCostCents: 0, expectedTotalCostCents: 86_607_492, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
-  { archetypeCode: "ARCH-06", expectedTotalRawHours: 8682.64, expectedTotalExpectedHours: 8682.64, expectedTotalLaborCostCents: 90_559_888, expectedTotalManualCostCents: 0, expectedTotalCostCents: 90_559_888, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
-  { archetypeCode: "ARCH-07", expectedTotalRawHours: 12871.6, expectedTotalExpectedHours: 12871.6, expectedTotalLaborCostCents: 140_994_839, expectedTotalManualCostCents: 0, expectedTotalCostCents: 140_994_839, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
-  { archetypeCode: "ARCH-08", expectedTotalRawHours: 22694.4, expectedTotalExpectedHours: 22694.4, expectedTotalLaborCostCents: 251_365_272, expectedTotalManualCostCents: 0, expectedTotalCostCents: 251_365_272, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
+  { archetypeCode: "ARCH-01", expectedTotalRawHours: 3630.92, expectedTotalExpectedHours: 3630.92, expectedTotalLaborCostCents: 103_813_127, expectedTotalManualCostCents: 1_500_000, expectedTotalCostCents: 105_313_127, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
+  { archetypeCode: "ARCH-02", expectedTotalRawHours: 3332.24, expectedTotalExpectedHours: 3332.24, expectedTotalLaborCostCents: 98_302_667, expectedTotalManualCostCents: 0, expectedTotalCostCents: 98_302_667, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
+  { archetypeCode: "ARCH-03", expectedTotalRawHours: 5200.3, expectedTotalExpectedHours: 5200.3, expectedTotalLaborCostCents: 137_706_815, expectedTotalManualCostCents: 0, expectedTotalCostCents: 137_706_815, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
+  { archetypeCode: "ARCH-04", expectedTotalRawHours: 4158.85, expectedTotalExpectedHours: 4158.85, expectedTotalLaborCostCents: 123_825_907, expectedTotalManualCostCents: 0, expectedTotalCostCents: 123_825_907, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
+  { archetypeCode: "ARCH-05", expectedTotalRawHours: 2717.4, expectedTotalExpectedHours: 2717.4, expectedTotalLaborCostCents: 86_607_492, expectedTotalManualCostCents: 0, expectedTotalCostCents: 86_607_492, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
+  { archetypeCode: "ARCH-06", expectedTotalRawHours: 3180.72, expectedTotalExpectedHours: 3180.72, expectedTotalLaborCostCents: 90_559_888, expectedTotalManualCostCents: 0, expectedTotalCostCents: 90_559_888, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
+  { archetypeCode: "ARCH-07", expectedTotalRawHours: 4610.8, expectedTotalExpectedHours: 4610.8, expectedTotalLaborCostCents: 140_994_839, expectedTotalManualCostCents: 0, expectedTotalCostCents: 140_994_839, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
+  { archetypeCode: "ARCH-08", expectedTotalRawHours: 8855.2, expectedTotalExpectedHours: 8855.2, expectedTotalLaborCostCents: 251_365_272, expectedTotalManualCostCents: 0, expectedTotalCostCents: 251_365_272, expectedGapCount: 0, expectedRangePolicyCode: "RANGE-STANDARD" },
 ];
 
 describe.each(GOLDEN_CASES)("golden fixture — $archetypeCode", (goldenCase: GoldenCase) => {
@@ -147,6 +153,13 @@ describe.each(GOLDEN_CASES)("golden fixture — $archetypeCode", (goldenCase: Go
     expect(output.totals.totalManualCostCents).toBe(goldenCase.expectedTotalManualCostCents);
     expect(output.totals.totalCostCents).toBe(goldenCase.expectedTotalCostCents);
     expect(output.totals.gapCount).toBe(goldenCase.expectedGapCount);
+  });
+
+  it("reports the same hours whether priced by role mix or by pod (a rule's hours are counted once, however many roles share it)", () => {
+    const roleMix = runEffortEngine(pack, buildInput());
+    const pod = runEffortEngine(pack, { ...buildInput(), pricingBasis: "pod" });
+    expect(roleMix.totals.totalRawHours).toBe(pod.totals.totalRawHours);
+    expect(roleMix.totals.totalExpectedHours).toBe(pod.totals.totalExpectedHours);
   });
 
   it("every line carries non-empty formula provenance", () => {

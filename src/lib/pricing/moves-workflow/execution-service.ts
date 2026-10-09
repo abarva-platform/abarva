@@ -50,6 +50,7 @@ import { readEffortEnginePack } from "../effort-engine/model-registry";
 import { resolveActivityPacksForArchetype } from "../effort-engine/activity-packs";
 import { runEffortEngine, type EffortEngineInput } from "../effort-engine/effort-engine";
 import { computeRange } from "../effort-engine/range-policy";
+import { roundHours } from "../effort-engine/money";
 import { assertLowExpectedHighInvariant, assertDeterministicRecomputation } from "../effort-engine/validation";
 import { resolveRoleRatesForTenant } from "../effort-engine/rate-card-resolver";
 import type { EffortLineItem, RangePolicyInputs, ResolvedRate, ScenarioKey } from "../effort-engine/types";
@@ -149,11 +150,26 @@ function lineCostCents(li: EffortLineItem): number {
   return (li.laborCostCents ?? 0) + (li.manualCostCents ?? 0);
 }
 
+/**
+ * How a bucket counts hours. The engine emits one line per (pack, rule,
+ * role), and every role line repeats its rule's pack-level
+ * `moduleHours.expected`; the role's own share is `roleHours`.
+ *
+ *   - `per_rule`: a rule's expected hours count ONCE per bucket, however many
+ *     role lines carry them (by-pack and change/adoption buckets).
+ *   - `per_role_line`: each line contributes its own allocated `roleHours`
+ *     (by-role buckets). A line with no role (an allocation gap) is its
+ *     rule's only line, so it contributes the rule's expected hours.
+ */
+type BucketHoursBasis = "per_rule" | "per_role_line";
+
 function groupBy(
   lineItems: readonly EffortLineItem[],
+  hoursBasis: BucketHoursBasis,
   keyFn: (li: EffortLineItem) => { key: string; label: string } | null,
 ): EstimateRunGroupedBucket[] {
   const buckets = new Map<string, EstimateRunGroupedBucket>();
+  const countedRules = new Set<string>();
   for (const li of lineItems) {
     if (li.classification === "out_of_scope") continue;
     const bucket = keyFn(li);
@@ -169,9 +185,22 @@ function groupBy(
     existing.laborCostCents += li.laborCostCents ?? 0;
     existing.manualCostCents += li.manualCostCents ?? 0;
     existing.totalCostCents += lineCostCents(li);
-    existing.expectedHours += li.moduleHours?.expected ?? 0;
+    if (li.moduleHours) {
+      if (hoursBasis === "per_role_line") {
+        existing.expectedHours += li.roleCode ? (li.roleHours ?? 0) : li.moduleHours.expected;
+      } else {
+        const ruleKey = `${bucket.key}::${li.activityPackCode}::${li.ruleCode}`;
+        if (!countedRules.has(ruleKey)) {
+          countedRules.add(ruleKey);
+          existing.expectedHours += li.moduleHours.expected;
+        }
+      }
+    }
     buckets.set(bucket.key, existing);
   }
+  // Summing 4-decimal hours can leave IEEE-754 noise (20.2 + 10.1); round
+  // each bucket the same way the engine rounds its totals.
+  for (const b of buckets.values()) b.expectedHours = roundHours(b.expectedHours);
   return Array.from(buckets.values()).sort((a, b) => b.totalCostCents - a.totalCostCents);
 }
 
@@ -288,11 +317,11 @@ export async function runEstimate(options: RunEstimateOptions): Promise<Estimate
     unknownCostCents: internalVsExternal.unknownCostCents,
   };
 
-  const costByActivityPack = groupBy(output.lineItems, (li) => ({ key: li.activityPackCode, label: li.activityPackName }));
-  const costByRole = groupBy(output.lineItems, (li) =>
+  const costByActivityPack = groupBy(output.lineItems, "per_rule", (li) => ({ key: li.activityPackCode, label: li.activityPackName }));
+  const costByRole = groupBy(output.lineItems, "per_role_line", (li) =>
     li.roleCode ? { key: li.roleCode, label: li.roleCode } : { key: "__manual__", label: "Manual / non-labor cost" },
   );
-  const changeAdoptionBreakdown = groupBy(output.lineItems, (li) => {
+  const changeAdoptionBreakdown = groupBy(output.lineItems, "per_rule", (li) => {
     const label = CHANGE_ADOPTION_BUCKETS[li.activityPackCode];
     return label ? { key: label, label } : null;
   });
