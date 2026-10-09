@@ -26,6 +26,7 @@ import type { DeliverableStructure } from "../briefs/deliverable-structures";
 import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
 import type { DeliverableIntelligenceRequest } from "../types";
+import { getDeliverableProfile } from "../../profiles/registry";
 
 function req(
   over: Partial<DeliverableIntelligenceRequest>,
@@ -71,6 +72,14 @@ describe("archetype packs", () => {
 });
 
 describe("deliverable structures", () => {
+  it("keeps the solution-design brief aligned with its required exhibit contract", () => {
+    expect(
+      getDeliverableStructure(
+        "moves",
+        "solution_design",
+      )!.expectedExhibits?.map((exhibit) => exhibit.key),
+    ).toEqual(getDeliverableProfile("solution_design").requiredExhibits);
+  });
   it("cover Moves + Source artifact types with required sections", () => {
     expect(getDeliverableStructure("moves", "charter")).toBeTruthy();
     expect(getDeliverableStructure("moves", "business_case")).toBeTruthy();
@@ -184,7 +193,13 @@ describe("deliverable structures", () => {
     [
       "solution_design",
       6,
-      ["experience_flow", "component_interaction", "exception_control_flow"],
+      [
+        "experience_flow",
+        "agent_workflow",
+        "exception_handling",
+        "control_points",
+        "data_flow",
+      ],
     ],
     ["operating_model", 6, ["human_ai_work_split", "decision_rights"]],
     ["requirements_traceability", 5, []],

@@ -10,6 +10,7 @@
 import "@testing-library/jest-dom";
 import { render, fireEvent, cleanup, within } from "@testing-library/react";
 import { MovesCaptureFlow } from "../MovesCaptureFlow";
+import { useState } from "react";
 import type { MovesCaptureFlowPhase } from "../MovesCaptureFlow";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
 
@@ -68,6 +69,72 @@ const stepTo = (container: HTMLElement, key: string): HTMLElement => {
 };
 
 describe("MovesCaptureFlow v2 capture grid", () => {
+  it("summarizes a durable answer without unmounting its editor or saving again", () => {
+    const onSubmitPhase = jest.fn();
+    const c = freshFlow({
+      isSectionComplete: (key) => key === "sponsor_commitment",
+      sectionRecap: () => "A saved sponsor answer with its declared basis",
+      sectionBasisLabel: () => "Approved evidence",
+      sectionSaveLabel: () => "Done",
+      onSubmitPhase,
+    });
+    const question = stepTo(c, "sponsor_commitment");
+    expect(c.querySelector(".mcf-step-summary")).toHaveTextContent("1 of 3 ready");
+    expect(question).toHaveTextContent("Basis: Approved evidence");
+    const field = question.querySelector(".mcf-q-body") as HTMLElement;
+    const input = question.querySelector("textarea") as HTMLTextAreaElement;
+    expect(field).toHaveAttribute("hidden");
+    expect(input).toBeInTheDocument();
+
+    fireEvent.click(within(question).getByRole("button", { name: "Edit" }));
+    expect(field).not.toHaveAttribute("hidden");
+    expect(input).toHaveFocus();
+    expect(onSubmitPhase).not.toHaveBeenCalled();
+  });
+
+  it("reopens an unsaved draft when returning to a step", () => {
+    cleanup();
+    function DraftFlow() {
+      const [draft, setDraft] = useState("Saved answer");
+      return (
+        <MovesCaptureFlow
+          phases={PHASES}
+          phase={1}
+          sections={SECTIONS}
+          isSectionComplete={(key) =>
+            key === "sponsor_commitment" && draft === "Saved answer"
+          }
+          renderSectionInput={(section) => (
+            <textarea
+              aria-label={section.label}
+              data-testid={`input-${section.key}`}
+              value={section.key === "sponsor_commitment" ? draft : ""}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+          )}
+          sectionRecap={() => "Saved answer"}
+          onSelectPhase={jest.fn()}
+          onSubmitPhase={jest.fn()}
+          onAdvanceToNextPhase={jest.fn()}
+          workspaceV2
+        />
+      );
+    }
+    const { container } = render(<DraftFlow />);
+    const question = stepTo(container, "sponsor_commitment");
+    fireEvent.click(within(question).getByRole("button", { name: "Edit" }));
+    fireEvent.change(within(question).getByRole("textbox", { name: SECTIONS[0].label }), {
+      target: { value: "Unsaved revision" },
+    });
+    fireEvent.click(within(container).getByRole("button", { name: "Continue" }));
+    fireEvent.click(within(container).getByRole("button", { name: "Back" }));
+    const returned = stepTo(container, "sponsor_commitment");
+    expect(returned.querySelector(".mcf-q-body")).not.toHaveAttribute("hidden");
+    expect(within(returned).getByRole("textbox", { name: SECTIONS[0].label })).toHaveValue(
+      "Unsaved revision",
+    );
+  });
+
   it("renders a phase · step eyebrow in v2", () => {
     const c = freshFlow();
     const eyebrow = c.querySelector(".mcf-panel-eyebrow");

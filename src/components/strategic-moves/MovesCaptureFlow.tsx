@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { type PhaseStepGroup } from "@/lib/programs/moves-phase-step-groups";
 import { captureStepResumeIndex } from "@/lib/programs/capture-step-resume";
 import { resolvePhaseStepGroups } from "@/lib/programs/moves-phase-step-plan";
@@ -61,6 +61,10 @@ export interface MovesCaptureFlowProps {
   sections: readonly PhaseCaptureSection[];
   /** True when a section's value is captured + saved. */
   isSectionComplete: (sectionKey: string) => boolean;
+  /** Display-only save state from the host's durability state machine. */
+  sectionSaveLabel?: (section: PhaseCaptureSection) => string;
+  /** The human-readable basis of a completed field, when the phase records one. */
+  sectionBasisLabel?: (section: PhaseCaptureSection) => string | null;
   /** The real input for a section (textarea or structured editor). */
   renderSectionInput: (section: PhaseCaptureSection) => ReactNode;
   /**
@@ -193,6 +197,8 @@ export function MovesCaptureFlow({
   phase,
   sections,
   isSectionComplete,
+  sectionSaveLabel,
+  sectionBasisLabel,
   renderSectionInput,
   renderSectionBasis,
   renderSectionBadge,
@@ -264,6 +270,27 @@ export function MovesCaptureFlow({
     }),
   );
   const [view, setView] = useState<number>(initialStep ?? resumeStep);
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
+    () =>
+      new Set(
+        groupSections(groups[initialStep ?? resumeStep] ?? groups[0])
+          .filter((section) => !isSectionComplete(section.key))
+          .map((section) => section.key),
+      ),
+  );
+  const [focusSectionKey, setFocusSectionKey] = useState<string | null>(null);
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  const hasNavigated = useRef(false);
+  useEffect(() => {
+    if (hasNavigated.current && view < 3) stepHeading.current?.focus();
+  }, [view]);
+  useEffect(() => {
+    if (!focusSectionKey) return;
+    document
+      .getElementById(`mcf-question-body-${focusSectionKey}`)
+      ?.querySelector<HTMLElement>("textarea,input,select,button")
+      ?.focus();
+  }, [focusSectionKey]);
   // Whether this phase was submitted FROM this flow. The recap may be opened as
   // a review before that happens, and must not claim a submission that has not.
   const [submitted, setSubmitted] = useState(false);
@@ -288,6 +315,17 @@ export function MovesCaptureFlow({
   });
 
   const go = (next: number) => {
+    hasNavigated.current = true;
+    if (next < 3 && groups[next]) {
+      setExpandedKeys(
+        new Set(
+          groupSections(groups[next])
+            .filter((section) => !isSectionComplete(section.key))
+            .map((section) => section.key),
+        ),
+      );
+    }
+    setFocusSectionKey(null);
     setView(next);
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
@@ -521,39 +559,125 @@ export function MovesCaptureFlow({
                       {" · "}STEP {view + 1} OF {groups.length}
                     </span>
                   ) : null}
-                  <h1 id="mcf-panel-title" className="mcf-panel-title">
+                  <h1
+                    id="mcf-panel-title"
+                    className="mcf-panel-title"
+                    ref={stepHeading}
+                    tabIndex={-1}
+                  >
                     {groups[view]?.title}
                   </h1>
                   <p className="mcf-panel-intro">{groups[view]?.intro}</p>
                 </div>
+                {workspaceV2 && groups[view] ? (
+                  <div className="mcf-step-summary" aria-live="polite">
+                    <span>
+                      {
+                        groupSections(groups[view]).filter((section) =>
+                          isSectionComplete(section.key),
+                        ).length
+                      }
+                      {" of "}
+                      {groupSections(groups[view]).length}
+                      {" ready"}
+                    </span>
+                    <span>
+                      {
+                        groupSections(groups[view]).filter(
+                          (section) => !isSectionComplete(section.key),
+                        ).length
+                      }
+                      {" open"}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="mcf-questions">
                   {groups[view]
-                    ? groupSections(groups[view]).map((section) => (
-                        <div
-                          className={`mcf-question${
-                            sectionIsWide(section) ? " is-wide" : ""
-                          }`}
-                          key={section.key}
-                        >
-                          <div className="mcf-q-labelrow">
-                            <label className="mcf-q-label">
-                              {section.label}
-                            </label>
-                            {renderSectionBadge?.(section) ?? null}
-                          </div>
-                          {section.description ? (
-                            <p className="mcf-q-help">{section.description}</p>
-                          ) : null}
-                          <div className="mcf-q-field">
-                            {renderSectionInput(section)}
-                          </div>
-                          {renderSectionBasis?.(section) ? (
-                            <div className="mcf-q-basis">
-                              {renderSectionBasis(section)}
+                    ? groupSections(groups[view]).map((section) => {
+                        const complete = isSectionComplete(section.key);
+                        const collapsed =
+                          workspaceV2 &&
+                          complete &&
+                          !expandedKeys.has(section.key);
+                        const bodyId = `mcf-question-body-${section.key}`;
+                        return (
+                          <div
+                            className={`mcf-question${
+                              sectionIsWide(section) ? " is-wide" : ""
+                            }`}
+                            key={section.key}
+                          >
+                            {workspaceV2 ? (
+                              <div className="mcf-q-summary">
+                                <span className="mcf-q-state">
+                                  {sectionSaveLabel?.(section) ??
+                                    (complete ? "Saved" : "Needs answer")}
+                                </span>
+                                {complete ? (
+                                  <button
+                                    type="button"
+                                    className="mcf-q-toggle"
+                                    aria-expanded={!collapsed}
+                                    aria-controls={bodyId}
+                                    onClick={() => {
+                                      setFocusSectionKey(
+                                        collapsed ? section.key : null,
+                                      );
+                                      setExpandedKeys((previous) => {
+                                        const next = new Set(previous);
+                                        if (collapsed) next.add(section.key);
+                                        else next.delete(section.key);
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    {collapsed ? "Edit" : "Collapse"}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : null}
+                            <div className="mcf-q-labelrow">
+                              <label className="mcf-q-label">
+                                {section.label}
+                              </label>
+                              {renderSectionBadge?.(section) ?? null}
                             </div>
-                          ) : null}
-                        </div>
-                      ))
+                            {collapsed ? (
+                              <div className="mcf-q-preview">
+                                <p>
+                                  {section.structured
+                                    ? "Structured response saved; open to review its fields."
+                                    : sectionRecap(section).trim()}
+                                </p>
+                                {sectionBasisLabel?.(section) ? (
+                                  <span>
+                                    Basis: {sectionBasisLabel(section)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : null}
+                            <div
+                              id={bodyId}
+                              hidden={collapsed}
+                              className="mcf-q-body"
+                            >
+                              {section.description ? (
+                                <p className="mcf-q-help">
+                                  {section.description}
+                                </p>
+                              ) : null}
+                              <div className="mcf-q-field">
+                                {renderSectionInput(section)}
+                              </div>
+                              {renderSectionBasis?.(section) ? (
+                                <div className="mcf-q-basis">
+                                  {renderSectionBasis(section)}
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })
                     : null}
                 </div>
               </section>
@@ -795,16 +919,25 @@ const MCF_CSS = `
 .mcf-v2{--mcf-space-1:8px;--mcf-space-2:12px;--mcf-space-3:16px;--mcf-space-4:24px;--mcf-space-5:32px;--mcf-space-6:40px}
 .mcf-v2 .mcf-panel-eyebrow{display:block;margin:0 0 var(--mcf-space-2)}
 .mcf-v2 .mcf-panel-intro{margin:0 0 var(--mcf-space-6)}
+.mcf-v2 .mcf-main{container-type:inline-size}
 .mcf-v2 .mcf-questions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--mcf-space-5);row-gap:var(--mcf-space-5);align-items:start}
 .mcf-v2 .mcf-question{min-width:0}
 .mcf-v2 .mcf-question.is-wide{grid-column:1 / -1}
 .mcf-v2 .mcf-q-labelrow{margin-bottom:var(--mcf-space-1)}
+.mcf-v2 .mcf-step-summary{display:flex;gap:var(--mcf-space-2);flex-wrap:wrap;margin:0 0 var(--mcf-space-4);font-size:13px;font-weight:600;color:var(--mcf-muted)}
+.mcf-v2 .mcf-q-summary{display:flex;align-items:center;justify-content:space-between;gap:var(--mcf-space-2);margin:0 0 6px}
+.mcf-v2 .mcf-q-state{font-size:11px;font-weight:700;color:var(--mcf-muted)}
+.mcf-v2 .mcf-q-toggle{border:0;background:none;color:var(--mcf-accent);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:4px}
+.mcf-v2 .mcf-q-preview p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.45;font-size:13px;color:var(--mcf-muted);margin:0}
+.mcf-v2 .mcf-q-preview span{display:block;font-size:11px;color:var(--mcf-muted);margin-top:4px}
+.mcf-v2 .mcf-q-body[hidden]{display:none}
 .mcf-v2 .mcf-q-help{font-size:13.5px;margin:0 0 var(--mcf-space-2)}
 .mcf-v2 .mcf-q-field{min-width:0}
 .mcf-v2 .mcf-q-field>*{max-width:100%}
-.mcf-v2 .mcf-q-basis{margin-top:var(--mcf-space-3);padding-top:var(--mcf-space-3);border-top:1px solid var(--mcf-line)}
-.mcf-v2 .mcf-footer-actions{flex-wrap:wrap;gap:var(--mcf-space-2)}
-@media (max-width:640px){.mcf-v2 .mcf-questions{grid-template-columns:1fr;row-gap:var(--mcf-space-4)}.mcf-v2 .mcf-panel-intro{margin-bottom:var(--mcf-space-5)}}
+.mcf-v2 .mcf-q-basis{margin-top:var(--mcf-space-3);padding-top:var(--mcf-space-3)}
+.mcf-v2 .mcf-footer-actions{flex-wrap:wrap;gap:var(--mcf-space-2);min-width:0}
+@container (max-width:879px){.mcf-v2 .mcf-questions{grid-template-columns:1fr;row-gap:var(--mcf-space-4)}.mcf-v2 .mcf-panel-intro{margin-bottom:var(--mcf-space-5)}}
+@container (max-width:559px){.mcf-v2 .mcf-footer{flex-direction:column;align-items:stretch}.mcf-v2 .mcf-footer-actions{width:100%;align-items:stretch;flex-direction:column}.mcf-v2 .mcf-footer-actions>*{width:100%;min-width:0;box-sizing:border-box}.mcf-v2 .mcf-footer-actions button{max-width:100%;white-space:normal}.mcf-v2 .mcf-v2-gate-extras,.mcf-v2 .mcf-approve-slot{min-width:0;max-width:100%}}
 .mcf-v2 .mcf-tick,.mcf-v2 .mcf-done-eyebrow{color:var(--mcf-teal)}
 /* slim phase rail */
 .mcf-v2-rail{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin:0}
