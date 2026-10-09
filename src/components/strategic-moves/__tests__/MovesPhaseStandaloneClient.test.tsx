@@ -4787,8 +4787,133 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.queryByRole("button", { name: "Sign off" }),
       ).not.toBeInTheDocument();
       expect(
-        screen.getByText("An authorized gate approver approves this gate."),
+        screen.getByText("Only a gate approver can approve this gate."),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("P2 Root causes step page (moves_step_pages_v3)", () => {
+    const p2Move = () =>
+      makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" });
+
+    it("renders P2 Step 3 inside the aVa dock with the flag on and ?step=root-causes", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="root-causes"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p2Move()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      expect(
+        within(dock).getByRole("heading", {
+          name: "Rank what’s causing the gap",
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
+      expect(
+        within(
+          screen.getByRole("navigation", { name: "Discover steps" }),
+        ).getAllByRole("listitem"),
+      ).toHaveLength(5);
+    });
+
+    it("renders only for P2: another phase asked for root causes keeps its own view", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="root-causes"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 3, phaseLabel: "P3 Design" })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Rank what’s causing the gap" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("ignores ?step=root-causes while the flag is off", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          initialStepView="root-causes"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p2Move()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Rank what’s causing the gap" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+    });
+
+    it("the capture's root-causes question opens the step page under the flag, and stays a field without it", () => {
+      const values = {
+        current_state_findings: "Findings captured.",
+        baseline_metrics: JSON.stringify([
+          {
+            metric: "Measures certified",
+            value: "12 of 40",
+            source: "Register",
+          },
+        ]),
+      };
+      const { unmount } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={values}
+          initialSubstepKey="current"
+          move={p2Move()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // Opened on the capture step that holds the root-causes question.
+      expect(
+        screen.getByRole("heading", { name: "Why it happens" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("open-root-causes").getAttribute("href"),
+      ).toMatch(/^\/strategic-moves\/[^/]+\/phase\/2\?step=root-causes$/);
+      unmount();
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={values}
+          initialSubstepKey="current"
+          move={p2Move()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByRole("heading", { name: "Why it happens" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId("open-root-causes")).not.toBeInTheDocument();
     });
   });
 

@@ -325,6 +325,41 @@ describe("MovesStepPage", () => {
     expect(container.querySelectorAll("a")).toHaveLength(3);
   });
 
+  it("shows an unfinished earlier step as open: reachable, numbered, never ticked", () => {
+    const { container } = render(
+      <MovesStepPage
+        {...props(
+          ROWS,
+          {},
+          {
+            stepIndex: 2,
+            steps: [
+              {
+                title: "Root cause → design",
+                depth: "full",
+                done: false,
+                href: "/s1",
+              },
+              {
+                title: "Architecture options",
+                depth: "full",
+                done: true,
+                href: "/s2",
+              },
+              { title: "Operating & adoption", depth: "light" },
+            ],
+          },
+        )}
+      />,
+    );
+    const items = Array.from(
+      container.querySelectorAll("nav[aria-label='Design steps'] li"),
+    );
+    expect(items[0].textContent).toBe("01Root cause → design· open");
+    expect(items[0].querySelector("a")?.getAttribute("href")).toBe("/s1");
+    expect(items[1].textContent).toContain("✓");
+  });
+
   it("shows the current phase's step position in the phase bar", () => {
     const { container } = render(<MovesStepPage {...props(ROWS)} />);
     expect(

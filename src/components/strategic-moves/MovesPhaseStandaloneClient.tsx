@@ -1,6 +1,8 @@
 "use client";
 
 import { GateReadinessStep } from "@/components/strategic-moves/step-page/GateReadinessStep";
+import { rootCauseCaptureText } from "@/lib/programs/root-cause-register";
+import { RootCausesStep } from "@/components/strategic-moves/step-page/RootCausesStep";
 import { StepPageTabs } from "@/components/strategic-moves/step-page/MovesStepPage";
 import { resolvePhaseWorkflow } from "@/lib/programs/phase-workflow-registry";
 import { describeGateSignOffReadback } from "@/lib/programs/gate-sign-off-readback";
@@ -329,8 +331,11 @@ interface MovesPhaseStandaloneClientProps {
    * template. Today that is P3 Gate readiness, opened with `?step=gate`.
    */
   stepPagesV3Enabled?: boolean;
-  /** The step page the URL asked for (`?step=gate`), when the flag is on. */
-  initialStepView?: "gate" | null;
+  /**
+   * The step page the URL asked for, when the flag is on: `gate` (P3 Gate
+   * readiness) or `root-causes` (P2 Step 3).
+   */
+  initialStepView?: "gate" | "root-causes" | null;
   /** `moves_capture_p0_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true AND `captureV2Enabled` is true, P0 Originate also renders the redesigned 3-step capture flow instead of the legacy finder-columns canvas. P0's eleven canonical sections/keys, saves, structured inputs, authorization check and required-evidence gate are unchanged; only which phases render the flow differs. */
   captureP0Enabled?: boolean;
   /** `moves_charter_basis_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, each P1 Charter field carries a "How do you know this?" basis control (approved evidence / an assertion / an owned assumption) and an assumption is badged at the question. When false NOTHING here renders and the legacy approved-evidence lock is unchanged. */
@@ -1041,6 +1046,14 @@ export function MovesPhaseStandaloneClient({
     Boolean(captureV2Enabled) &&
     phaseNum === 3 &&
     initialStepView === "gate";
+  // P2 Step 3, "Rank what's causing the gap", behind the same flag. Opened
+  // with `?step=root-causes`; it edits the `gaps_root_causes` answer through
+  // the capture autosave.
+  const rootCauseStepPageActive =
+    stepPagesV3Enabled &&
+    Boolean(captureV2Enabled) &&
+    phaseNum === 2 &&
+    initialStepView === "root-causes";
   const [substepIndex, setSubstepIndex] = useState(initialSubstepIndex);
   // Which step is showing in the detail pane: a real
   // phase-capture section key, or null for the current workflow step.
@@ -2800,6 +2813,31 @@ export function MovesPhaseStandaloneClient({
   // slot below so they keep working unchanged.
   const captureSectionInput = (section: PhaseCaptureSection): ReactNode => {
     const value = displayPhaseCaptureValues[section.key] ?? "";
+    // Under `moves_step_pages_v3` P2's root causes are ranked on their own
+    // step page; the capture shows what is there and opens it.
+    if (
+      stepPagesV3Enabled &&
+      phase.phase === 2 &&
+      section.key === "gaps_root_causes"
+    ) {
+      return (
+        <div className="mcf-root-causes-entry">
+          {value.trim() ? (
+            <pre style={{ whiteSpace: "pre-wrap", font: "inherit", margin: "0 0 12px" }}>
+              {rootCauseCaptureText(value)}
+            </pre>
+          ) : null}
+          <a
+            className="mcf-btn-primary"
+            style={{ display: "inline-block", textDecoration: "none" }}
+            data-testid="open-root-causes"
+            href={`/strategic-moves/${move.id}/phase/2?step=root-causes`}
+          >
+            Rank the root causes →
+          </a>
+        </div>
+      );
+    }
     // P3's build blocker asks for the solution option architecture should
     // implement. The legacy canvas offers that choice as option cards; the
     // redesigned flow rendered none, so the blocker named a control that was
@@ -3422,6 +3460,87 @@ export function MovesPhaseStandaloneClient({
     />
   );
 
+  if (rootCauseStepPageActive) {
+    const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
+    const stepIndex = Math.max(
+      0,
+      workflow.findIndex((step) => step.id === "P2.3"),
+    );
+    const phaseHref = (n: number) => `/strategic-moves/${move.id}/phase/${n}`;
+    return (
+      <RootCausesStep
+        moveId={move.id}
+        // The same authority the Files library uses to approve an extraction.
+        canReviewEvidence={canApproveGates}
+        // An approved upload is new approved evidence; re-read the page so the
+        // cause form can cite it.
+        onEvidenceChanged={() => window.location.reload()}
+        moveName={displayMoveName}
+        tabs={
+          <StepPageTabs
+            current="steps"
+            hrefs={{
+              steps: `${phaseHref(phase.phase)}?step=root-causes`,
+              files: phaseHref(phase.phase),
+              record: phaseHref(phase.phase),
+            }}
+          />
+        }
+        phases={PHASES.map((p) => {
+          const tally = phaseTallies.find((t) => t.phase === p.phase);
+          return {
+            code: p.code,
+            name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
+            status: tally?.state === "done" ? "Done" : "Not started",
+            current: p.phase === phase.phase,
+            href:
+              tally && tally.state !== "upcoming" ? phaseHref(p.phase) : undefined,
+          };
+        })}
+        steps={workflow.map((step, index) => ({
+          title: step.title,
+          depth: step.depth,
+          href: index === stepIndex ? undefined : phaseHref(phase.phase),
+          // Ticked only when every capture key the step owns is answered.
+          done:
+            index === stepIndex
+              ? undefined
+              : step.sectionKeys.length > 0 &&
+                step.sectionKeys.every(
+                  (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
+                ),
+        }))}
+        stepIndex={stepIndex}
+        value={displayPhaseCaptureValues.gaps_root_causes ?? ""}
+        onChange={(value) =>
+          setVisiblePhaseCaptureValue("gaps_root_causes", value)
+        }
+        baselineValue={displayPhaseCaptureValues.baseline_metrics ?? ""}
+        approvedEvidence={initialApprovedEvidenceReferences.map((item) => ({
+          id: item.evidenceId,
+          title: item.title,
+        }))}
+        decidedBy={currentUser?.email ?? "signed-in reviewer"}
+        today={new Date().toISOString().slice(0, 10)}
+        onBack={() => window.location.assign(phaseHref(phase.phase))}
+        onContinue={() => window.location.assign(phaseHref(phase.phase))}
+        frame={(page, dock) =>
+          renderAvaDock({
+            content: page,
+            openingBriefing: dock.briefing,
+            notesFill: dock.notesPanel,
+            leadingActions: dock.actions.map((action) => ({
+              id: action.id,
+              label: action.label,
+              body: action.label,
+              onClick: action.onClick,
+            })),
+          })
+        }
+      />
+    );
+  }
+
   // `moves_step_pages_v3`: P3 Gate readiness as the finalized step page. The
   // build, sign-off and submission run through the same governed paths as the
   // ledger above; only where and how the consultant acts changes.
@@ -3508,7 +3627,7 @@ export function MovesPhaseStandaloneClient({
           describeGateSignOffReadback(signOffReadback).state === "available"
         }
         canApprove={canApproveGates}
-        approverName="An authorized gate approver"
+        approverName="a gate approver"
         buildHeldReason={buildHold?.statusLine ?? null}
         depthDetail="Full. The gate step is always Full, whatever the change profile."
         onBeforeBuild={finalizePhaseCapture}

@@ -104,7 +104,7 @@ function props(
     initialArtifacts: signedAll(),
     signOffReadable: true,
     canApprove: true,
-    approverName: "The gate approver",
+    approverName: "the gate approver",
     buildHeldReason: null,
     depthDetail: "Full. The gate step is always Full.",
     onSubmit: jest.fn(async () => undefined),
@@ -124,11 +124,6 @@ function writeRationale(
   fireEvent.change(c.querySelector("#gate-rationale") as HTMLTextAreaElement, {
     target: { value: text },
   });
-  fireEvent.click(
-    within(c.querySelector("#row-APPROVE") as HTMLElement).getByRole("button", {
-      name: "Use this rationale",
-    }),
-  );
 }
 
 describe("GateReadinessStep", () => {
@@ -372,7 +367,7 @@ describe("GateReadinessStep", () => {
       />,
     );
     expect(docsRow(container).textContent).toContain(
-      "Signed v2 · v3 is newer, sign again",
+      "Signed v2 · v3 needs signing again",
     );
   });
 
@@ -391,10 +386,16 @@ describe("GateReadinessStep", () => {
 
   it("rebuilding warns that every signed gate document is replaced with an unsigned version", () => {
     const { container } = render(<GateReadinessStep {...props()} />);
+    // One rebuild control, for the whole set: no single document offers one.
+    expect(
+      within(docsRow(container)).queryAllByRole("button", {
+        name: /^Rebuild…$/,
+      }),
+    ).toHaveLength(0);
     fireEvent.click(
-      within(docsRow(container)).getAllByRole("button", {
-        name: "Rebuild…",
-      })[0],
+      within(docsRow(container)).getByRole("button", {
+        name: "Rebuild the gate documents…",
+      }),
     );
     expect(docsRow(container).textContent).toContain(
       "replaces the signed Target State Reference Architecture, Process Change Estimate Brief, and Requirements Traceability Matrix with unsigned new versions",
@@ -425,9 +426,9 @@ describe("GateReadinessStep", () => {
       />,
     );
     fireEvent.click(
-      within(docsRow(container)).getAllByRole("button", {
-        name: "Rebuild…",
-      })[0],
+      within(docsRow(container)).getByRole("button", {
+        name: "Rebuild the gate documents…",
+      }),
     );
     await act(async () => {
       fireEvent.click(
@@ -464,6 +465,52 @@ describe("GateReadinessStep", () => {
     ).toEqual(KEYS);
   });
 
+  it("a failed build offers one whole-set Build again, at row level", () => {
+    const { container } = render(
+      <GateReadinessStep
+        {...props({
+          initialArtifacts: [
+            artifact(KEYS[0], { status: "quarantined" }),
+            ...signedAll().slice(1),
+          ],
+        })}
+      />,
+    );
+    expect(
+      within(docsRow(container)).getAllByRole("button", {
+        name: "Build again",
+      }),
+    ).toHaveLength(1);
+  });
+
+  it("keeps the rationale editable while the gate state cannot be read", () => {
+    const { container } = render(
+      <GateReadinessStep
+        {...props({
+          criteria: [
+            {
+              id: "design_approved",
+              label: "Design approved",
+              severity: "hard",
+              completed: false,
+              verified: false,
+            },
+          ],
+        })}
+      />,
+    );
+    expect(container.textContent).toContain(
+      "Documents and signatures are unchanged.",
+    );
+    expect(
+      within(container).getByRole("button", { name: "Try again" }),
+    ).toBeTruthy();
+    writeRationale(container, "Kept while blocked.");
+    expect(
+      (container.querySelector("#gate-rationale") as HTMLTextAreaElement).value,
+    ).toBe("Kept while blocked.");
+  });
+
   it("a non-approver sees state only: no sign-off, no rationale input, no submit", () => {
     const { container } = render(
       <GateReadinessStep
@@ -486,7 +533,7 @@ describe("GateReadinessStep", () => {
       }),
     ).toBeNull();
     expect(footer(container).textContent).toContain(
-      "The gate approver approves this gate.",
+      "Only the gate approver can approve this gate.",
     );
     expect(docsRow(container).textContent).toContain("Awaiting sign-off");
     expect(container.textContent).not.toMatch(

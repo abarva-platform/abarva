@@ -303,8 +303,17 @@ export interface MovesStepPageProps {
   };
   /** The skip attestation the gate checks. Required when the depth is skip. */
   skipped?: { statement: string; owner: string; date: string };
-  /** The single muted sentence the Work region shows while blocked. */
-  blockedWork?: string;
+  /**
+   * What the Work region shows while blocked: one muted sentence, plus any
+   * unsaved input the step must keep (template v1.5: unsaved input survives
+   * Blocked).
+   */
+  blockedWork?: ReactNode;
+  /**
+   * The decision group's heading. A viewer who cannot act sees "Waiting on
+   * <name>" instead of "Needs your decision" (template v1.5).
+   */
+  decisionGroupTitle?: string;
   /** What this step hands forward, closing the Work region: "Carries to P4". */
   carry?: { label: string; text: ReactNode };
   /** Closes the Work region at a gate step instead of a carry line: the Next card. */
@@ -437,6 +446,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
               const done = current
                 ? state === "done"
                 : (step.done ?? index < stepIndex);
+              // An earlier step that is not finished is "open": reachable,
+              // numbered, never ticked (template v1.5).
+              const open = !current && !done && index < stepIndex;
               const depth =
                 current && state === "skipped" ? "skip" : step.depth;
               const label = DEPTH_LABEL[depth];
@@ -446,7 +458,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
                     {done ? "✓" : String(index + 1).padStart(2, "0")}
                   </span>
                   <span className={cx("step-title")}>{step.title}</span>
-                  {label !== "Full" ? (
+                  {open ? (
+                    <span className={cx("step-depth")}>· open</span>
+                  ) : label !== "Full" ? (
                     <span className={cx("step-depth")}>· {label}</span>
                   ) : null}
                 </>
@@ -455,12 +469,16 @@ export function MovesStepPage(props: MovesStepPageProps) {
                 <li
                   key={step.title}
                   className={cx(
-                    current ? "is-current" : !done && "is-upcoming",
+                    current
+                      ? "is-current"
+                      : open
+                        ? "is-open"
+                        : !done && "is-upcoming",
                     done && "is-done",
                   )}
                 >
                   <span className={cx("step-rule")} />
-                  {done && !current && step.href ? (
+                  {(done || open) && !current && step.href ? (
                     <a className={cx("step-btn")} href={step.href}>
                       {inner}
                     </a>
@@ -469,7 +487,7 @@ export function MovesStepPage(props: MovesStepPageProps) {
                       type="button"
                       className={cx("step-btn")}
                       aria-current={current ? "step" : undefined}
-                      disabled={!current && !done}
+                      disabled={!current && !done && !open}
                     >
                       {inner}
                     </button>
@@ -641,10 +659,15 @@ export function MovesStepPage(props: MovesStepPageProps) {
             <div className={cx("work")}>
               {state === "blocked" ? (
                 <div className={cx("list")}>
-                  <p className={cx("empty-note")}>
-                    {props.blockedWork ??
-                      "Accepted rows are kept while this step waits."}
-                  </p>
+                  {typeof props.blockedWork === "string" ||
+                  props.blockedWork === undefined ? (
+                    <p className={cx("empty-note")}>
+                      {props.blockedWork ??
+                        "Accepted rows are kept while this step waits."}
+                    </p>
+                  ) : (
+                    props.blockedWork
+                  )}
                 </div>
               ) : state === "skipped" && props.skipped ? (
                 <section className={cx("group")}>
@@ -670,7 +693,10 @@ export function MovesStepPage(props: MovesStepPageProps) {
                 </section>
               ) : (
                 <>
-                  <Group title="Needs your decision" rows={groups.decision} />
+                  <Group
+                    title={props.decisionGroupTitle ?? "Needs your decision"}
+                    rows={groups.decision}
+                  />
                   <Group
                     title="Your ranking"
                     rows={groups.ranked}
