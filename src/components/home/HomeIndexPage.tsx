@@ -12,6 +12,7 @@ import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { HOME_VIEW } from '@/lib/home/shell-home-fixture';
 import type { ReasoningDashboardSummary } from '@/lib/reasoning/dashboard-summary';
+import { describeGatePassRateBasis } from '@/lib/reasoning/gate-pass-rate-basis';
 import type { ModuleAccessResult, ProductModule } from '@/lib/auth/module-access';
 
 // ─── Detail color helpers ───────────────────────────────────────────────────
@@ -651,7 +652,7 @@ function ReasoningCard({ label, value, detail, detailColor, href }: ReasoningCar
 }
 
 function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary }) {
-  const { health, gatePassRatePct, criticalAlertCount, coverage } = data;
+  const { health, gatePassRatePct, gatePassRate, criticalAlertCount, coverage } = data;
 
   // Health card — colored dot indicators
   const healthValue = (
@@ -752,7 +753,7 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
         <ReasoningCard
           label="Gate pass rate"
           value={`${gatePassRatePct}%`}
-          detail="avg across all instances"
+          detail={describeGatePassRateBasis(gatePassRate)}
           detailColor={
             gatePassRatePct >= 75 ? SHELL.MINT_TEXT : gatePassRatePct >= 50 ? SHELL.AMBER_DOT : SHELL.RUST_TEXT
           }

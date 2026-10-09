@@ -10,6 +10,7 @@
 
 import { buildPortfolioAlerts } from './portfolio-alerts';
 import { computeInstanceHealth } from './instance-health';
+import type { GatePassRateBasis } from './gate-pass-rate-basis';
 import { buildSourceSynthesisContext } from './synthesis-context-builder';
 import { buildProgramSynthesisContext } from './program-synthesis-context-builder';
 import { auditAll } from './template-coverage-audit';
@@ -27,8 +28,16 @@ export interface ReasoningDashboardSummary {
     degraded: number;
     critical: number;
   };
-  /** Average gate-pass rate (0–100) across all instances, rounded. */
+  /**
+   * Pooled gate-pass rate (0–100), rounded: cleared criteria over evaluated
+   * criteria across all instances. Not an average of per-instance rates.
+   */
   gatePassRatePct: number;
+  /**
+   * The counts behind `gatePassRatePct`, so the surface can state the set the
+   * figure measures. See `gate-pass-rate-basis.ts`.
+   */
+  gatePassRate: GatePassRateBasis;
   /** Number of active (non-dismissed) critical / high-severity alerts. */
   criticalAlertCount: number;
   /** Template coverage totals (always 100% in the demo fixture corpus). */
@@ -76,6 +85,7 @@ export function buildReasoningDashboardSummary(): ReasoningDashboardSummary {
 
   let totalMet = 0;
   let totalGates = 0;
+  let contributingInstances = 0;
 
   for (const inst of SOURCE_EVENT_INSTANCES) {
     const pattern = SOURCE_LIFECYCLE_PATTERNS.find((p) => p.patternId === inst.patternId);
@@ -83,6 +93,7 @@ export function buildReasoningDashboardSummary(): ReasoningDashboardSummary {
     const ctx = buildSourceSynthesisContext(inst, pattern);
     totalMet += ctx.gatesSummary.met;
     totalGates += ctx.gatesSummary.total;
+    if (ctx.gatesSummary.total > 0) contributingInstances += 1;
   }
 
   for (const inst of APEX_RETAIL_PROGRAM_INSTANCES) {
@@ -90,6 +101,7 @@ export function buildReasoningDashboardSummary(): ReasoningDashboardSummary {
     const ctx = buildProgramSynthesisContext(inst, pattern);
     totalMet += ctx.gatesSummary.met;
     totalGates += ctx.gatesSummary.total;
+    if (ctx.gatesSummary.total > 0) contributingInstances += 1;
   }
 
   const gatePassRatePct =
@@ -109,6 +121,11 @@ export function buildReasoningDashboardSummary(): ReasoningDashboardSummary {
   return {
     health: { healthy, degraded, critical },
     gatePassRatePct,
+    gatePassRate: {
+      cleared: totalMet,
+      evaluated: totalGates,
+      instances: contributingInstances,
+    },
     criticalAlertCount,
     coverage: { covered, total },
   };
