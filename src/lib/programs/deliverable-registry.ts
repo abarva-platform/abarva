@@ -15,6 +15,7 @@
 //     and displayed in the Evidence Hub; new keys are the canonical path forward
 
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
+import { resolveChangeProfile } from "@/lib/programs/phase-workflow-registry";
 
 export type DeliverableFormat =
   | "html-word"
@@ -738,15 +739,13 @@ export function phaseCanonicalKeysForRoute(
   phase: number,
   route?: ConfirmedSolutionRoute | null,
 ): string[] {
-  if (phase === 3 && route?.route === "technical_product") {
+  // The change profile is declared once, in the phase workflow registry, so
+  // the documents, the capture and the step depths read the same rule.
+  const profile = phase === 3 ? resolveChangeProfile(route) : null;
+  if (profile === "technical") {
     return ["target_state_architecture", "requirements_traceability"];
   }
-  if (
-    phase === 3 &&
-    route?.route === "process_change" &&
-    route.workflowChange !== "material" &&
-    route.roleAccountabilityChange !== "material"
-  ) {
+  if (profile === "limited") {
     return [
       "target_state_architecture",
       "process_change_estimate_brief",

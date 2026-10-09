@@ -5,6 +5,7 @@ import {
   type ChangeProfile,
 } from "@/lib/programs/phase-workflow-registry";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import { phaseCanonicalKeysForRoute } from "@/lib/programs/deliverable-registry";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 
 function route(
@@ -131,6 +132,36 @@ describe("phase workflow registry reproduces today's capture contract", () => {
       expect(step?.depth).toBe(expected);
     },
   );
+});
+
+describe("the P3 document set reads the same change profile", () => {
+  const DOCUMENTS: Record<ChangeProfile, string[]> = {
+    technical: ["target_state_architecture", "requirements_traceability"],
+    limited: [
+      "target_state_architecture",
+      "process_change_estimate_brief",
+      "requirements_traceability",
+    ],
+    full: [
+      "target_state_architecture",
+      "solution_design",
+      "operating_model_design",
+      "requirements_traceability",
+      "sourcing_strategy",
+      "planning_workshop_guide",
+    ],
+  };
+
+  it.each(CASES)("$name builds the $profile document set", ({ route: r, profile }) => {
+    expect(phaseCanonicalKeysForRoute(3, r)).toEqual(DOCUMENTS[profile]);
+  });
+
+  it("leaves other phases on their canonical set whatever the route", () => {
+    const technical = route({ route: "technical_product" });
+    expect(phaseCanonicalKeysForRoute(2, technical)).toEqual(
+      phaseCanonicalKeysForRoute(2, null),
+    );
+  });
 });
 
 describe("known capture gaps", () => {
