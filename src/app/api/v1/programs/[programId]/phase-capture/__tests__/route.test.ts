@@ -23,6 +23,7 @@ import {
   PHASE_CAPTURE_SNAPSHOT_UNREADABLE_ERROR,
   PHASE_CAPTURE_SNAPSHOT_UNREADABLE_STATUS,
 } from "@/lib/programs/phase-capture-snapshot-refusal";
+import { NextRequest } from "next/server";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import {
   getPhaseCaptureSections,
@@ -70,7 +71,7 @@ jest.mock("@/lib/features/is-feature-enabled", () => ({
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { POST } = require("../route") as typeof import("../route");
+const { GET, POST } = require("../route") as typeof import("../route");
 
 const params = Promise.resolve({ programId: "prog-1" });
 
@@ -628,5 +629,145 @@ describe("POST .../phase-capture · step-page records", () => {
       { params },
     );
     expect(res.status).toBe(409);
+  });
+});
+
+describe("POST .../phase-capture · P4 value plan behind moves_value_engine_v1", () => {
+  // A synthetic structured value model whose attribution is an assumption
+  // register row; nothing in this increment resolves register rows, so the
+  // engine cannot evaluate it.
+  const UNRESOLVED_MODEL = JSON.stringify({
+    kind: "value_model",
+    version: 1,
+    case: {
+      horizonYears: 2,
+      discountRate: { kind: "literal", value: 0.08, source: "synthetic" },
+      cost: { kind: "estimate", baseCents: 10_000_000 },
+      levers: [
+        {
+          id: "L1",
+          name: "Premium labour",
+          conversion: "cost_reduction",
+          driver: {
+            name: "premium labour spend reduced",
+            unit: "share of spend",
+            direction: "increase",
+            baseline: { kind: "literal", value: 0, source: "synthetic" },
+            target: { kind: "literal", value: 0.1, source: "synthetic" },
+          },
+          terms: [
+            {
+              role: "base",
+              label: "annual premium labour spend ($)",
+              ref: { kind: "literal", value: 1_000_000, source: "synthetic" },
+            },
+            { role: "driver_delta" },
+          ],
+          attribution: { kind: "register", registerId: "V3" },
+          probability: { kind: "literal", value: 1, source: "synthetic" },
+          timing: { startMonth: 1, rampMonths: 0, paymentLagMonths: 0 },
+        },
+      ],
+    },
+  });
+  const p4Revision = () =>
+    computeCaptureRevision(
+      Object.fromEntries(
+        getPhaseCaptureSections(4).map((section) => [section.key, ""]),
+      ),
+    );
+
+  beforeEach(() => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 4,
+      charter: {},
+      problemStatement: "",
+      targetOutcome: "",
+    });
+    mockGetModuleState.mockResolvedValue([]);
+  });
+
+  async function valuePlanComplete(): Promise<boolean | undefined> {
+    const res = await POST(
+      req({
+        phase: 4,
+        sections: { value_plan: UNRESOLVED_MODEL },
+        expectedRevision: p4Revision(),
+      }) as never,
+      { params },
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      capture: { sections: Array<{ key: string; complete: boolean }> };
+    };
+    return body.capture.sections.find((s) => s.key === "value_plan")?.complete;
+  }
+
+  it("leaves the value plan free text when the flag is off", async () => {
+    expect(await valuePlanComplete()).toBe(true);
+  });
+
+  it("holds a value model the engine cannot evaluate when the flag is on for the tenant", async () => {
+    mockIsFeatureEnabled.mockImplementation(
+      (_ctx: unknown, key: string) => key === "moves_value_engine_v1",
+    );
+    expect(await valuePlanComplete()).toBe(false);
+    expect(mockIsFeatureEnabled).toHaveBeenCalledWith(
+      { clientKey: "demo", clientId: "client-1" },
+      "moves_value_engine_v1",
+    );
+  });
+
+  function savedValuePlan() {
+    mockGetModuleState.mockResolvedValue([
+      {
+        moduleKey: phaseCaptureModuleKey(4, "value_plan"),
+        status: "in_progress",
+        state: { value: UNRESOLVED_MODEL },
+      },
+    ]);
+    mockIsFeatureEnabled.mockImplementation(
+      (_ctx: unknown, key: string) => key === "moves_value_engine_v1",
+    );
+  }
+  const valuePlanOf = (body: unknown) =>
+    (
+      body as {
+        capture: { sections: Array<{ key: string; complete: boolean }> };
+      }
+    ).capture.sections.find((s) => s.key === "value_plan")?.complete;
+
+  it("applies the same check when the capture is read", async () => {
+    savedValuePlan();
+    const res = await GET(
+      new NextRequest(
+        "http://test/api/v1/programs/prog-1/phase-capture?phase=4",
+      ),
+      { params },
+    );
+    expect(res.status).toBe(200);
+    expect(valuePlanOf(await res.json())).toBe(false);
+  });
+
+  it("applies the same check on a stale-revision refusal", async () => {
+    savedValuePlan();
+    const res = await POST(
+      req({
+        phase: 4,
+        sections: { roadmap_sequencing: "30/60/90." },
+        expectedRevision: "stale",
+      }) as never,
+      { params },
+    );
+    expect(res.status).toBe(409);
+    expect(valuePlanOf(await res.json())).toBe(false);
+  });
+
+  it("never reads a truthy non-boolean flag answer as on", async () => {
+    mockIsFeatureEnabled.mockImplementation((_ctx: unknown, key: string) =>
+      key === "moves_value_engine_v1" ? Promise.resolve(false) : false,
+    );
+    expect(await valuePlanComplete()).toBe(true);
   });
 });
