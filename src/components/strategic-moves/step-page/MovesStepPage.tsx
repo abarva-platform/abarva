@@ -83,11 +83,6 @@ export function SourceLine({ source }: { source: SourceRef }) {
   );
 }
 
-/** The canonical bordered badge: "Ava draft · review", "Session notes · review". */
-export function ReviewBadge({ children }: { children: ReactNode }) {
-  return <span className={cx("ava-badge")}>{children}</span>;
-}
-
 function Disclosure({
   closed,
   opened,
