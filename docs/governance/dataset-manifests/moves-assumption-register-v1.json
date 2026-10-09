@@ -1,0 +1,20 @@
+{
+  "dataset_id": "moves_assumption_register_v1",
+  "title": "Move-level assumptions register (working figures with owner, source, confidence and status)",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "move",
+  "classification": "confidential",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Rows are entered in the product by the Move team, or proposed by aVa and accepted by a person. Every row names its own source, an owner role and a confidence of 1, 3 or 5; a working figure is a labelled assumption, never a fact.",
+  "ingestion_method": "api_upload",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": null,
+  "approved_by": "AbarVa product owner authorization",
+  "approved_at": "2026-10-09",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration only. Storage is the move_assumptions table and its append-only move_assumption_events history (migration 20261010120000_move_assumption_register.sql), written only through the server store and gated by the moves_assumption_register_v1 flag. Tenancy comes from the authenticated Move registry: every row carries the Move's app client key and is read with that tenant's own keys and the Move id; no key is inferred from this manifest. Each row is projected as a governed object with source_layer move, classification confidential and agent readiness committed_not_indexed, so the policy evaluates it to warn and it never claims agent_ready. Only open, confirmed and corrected rows may later reach a Move-scoped prompt; proposed, rejected and superseded rows never do. Prompts carry the owner role only, never a personal name. No bulk load, indexing, serving approval or agent_ready claim is implied, and no routes, screen or document generation read the register in this release."
+}

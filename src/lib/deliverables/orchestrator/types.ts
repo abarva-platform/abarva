@@ -96,6 +96,20 @@ export interface ApprovedAssumption {
   statement: string;
   basis: string; // why it's a reasonable expert assumption
   mustValidate: boolean;
+  /**
+   * Present only when the assumption is a Move assumptions-register row
+   * (`src/lib/programs/assumption-register/model.ts`). Documents cite it as
+   * `[A:<registerId>]`. All optional so every existing producer is unchanged.
+   */
+  registerId?: string;
+  /** The figure the row stands on: the answer figure once answered, else the working figure. */
+  figure?: string | null;
+  /** The accountable owner's ROLE. Never a personal name. */
+  ownerRole?: string;
+  /** Register confidence: 1 low, 3 medium, 5 high. */
+  confidence?: 1 | 3 | 5;
+  /** Only the statuses that may reach a document. */
+  status?: "open" | "confirmed" | "corrected";
 }
 
 /** One row of the clean source register exposed in the document. */
