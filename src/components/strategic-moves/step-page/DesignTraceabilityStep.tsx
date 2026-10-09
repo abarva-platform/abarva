@@ -22,12 +22,6 @@ import {
   buildNextActionSentence,
   resolveStepNextAction,
 } from "@/lib/programs/step-page-model";
-
-/** "A", "A and B", "A, B and C" (inside one clause, so no serial comma). */
-function listNames(names: readonly string[]): string {
-  if (names.length <= 1) return names[0] ?? "";
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-}
 import {
   MovesStepPage,
   SourceLine,
@@ -38,6 +32,12 @@ import {
 import type { StepAvaAction } from "./RootCausesStep";
 import { useStepEvidence } from "./StepEvidence";
 import styles from "./MovesStepPage.module.css";
+
+/** "A", "A and B", "A, B and C" (inside one clause, so no serial comma). */
+function listNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
 
 /**
  * P3 Step 1, "Map every root cause to a design element" (template v1.6).

@@ -3,6 +3,11 @@ import {
   rootCauseGateText,
 } from "@/lib/programs/root-cause-register";
 import {
+  architectureChoiceGateText,
+  architectureChoiceText,
+  parseArchitectureChoice,
+} from "@/lib/programs/architecture-choice";
+import {
   designTraceabilityGateText,
   designTraceabilityText,
   parseDesignTraceability,
@@ -10,7 +15,8 @@ import {
 
 /**
  * How a capture answer reads as text, by section key. Step pages store some
- * answers as structured registers (P2 root causes, P3 design traceability);
+ * answers as structured registers (P2 root causes, P3 design traceability,
+ * the P3 architecture choice);
  * every text reader — the build's decision context, the next phase's carried
  * capture, cited evidence — reads them through `captureValueText`, and the
  * gate's phrase checks through `captureValueGateText`. Any other value, and
@@ -23,6 +29,10 @@ export function captureValueText(key: string, raw: string): string {
     const value = parseDesignTraceability(raw);
     return value ? designTraceabilityText(value) : raw;
   }
+  if (key === "architecture_choice") {
+    const value = parseArchitectureChoice(raw);
+    return value ? architectureChoiceText(value) : raw;
+  }
   return raw;
 }
 
@@ -32,6 +42,10 @@ export function captureValueGateText(key: string, raw: string): string {
   if (key === "design_traceability") {
     const value = parseDesignTraceability(raw);
     return value ? designTraceabilityGateText(value) : raw;
+  }
+  if (key === "architecture_choice") {
+    const value = parseArchitectureChoice(raw);
+    return value ? architectureChoiceGateText(value) : raw;
   }
   return raw;
 }

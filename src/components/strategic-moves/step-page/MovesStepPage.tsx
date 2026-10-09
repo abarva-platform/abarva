@@ -218,7 +218,15 @@ function CollapsedGroup({
   defaultOpen: boolean;
 }) {
   if (rows.length === 0) return null;
-  const summary = rows.map((row) => `${row.id} ${row.shortName}`).join(", ");
+  // A row's id reads in the summary only where the row itself shows it: an
+  // eyebrow such as "Direction" replaces an internal id like "DIR".
+  const summary = rows
+    .map((row) =>
+      !row.eyebrow || row.eyebrow.includes(row.id)
+        ? `${row.id} ${row.shortName}`
+        : row.shortName,
+    )
+    .join(", ");
   return (
     <section className={cx("group")}>
       <h2 className={cx("eyebrow", "group-title")}>

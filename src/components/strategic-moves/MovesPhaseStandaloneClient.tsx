@@ -4,6 +4,12 @@ import { GateReadinessStep } from "@/components/strategic-moves/step-page/GateRe
 import { captureValueText } from "@/lib/programs/structured-capture-text";
 import { RootCausesStep } from "@/components/strategic-moves/step-page/RootCausesStep";
 import { DesignTraceabilityStep } from "@/components/strategic-moves/step-page/DesignTraceabilityStep";
+import { ArchitectureOptionsStep } from "@/components/strategic-moves/step-page/ArchitectureOptionsStep";
+import {
+  stepPageHref,
+  type StepPageView,
+} from "@/lib/programs/step-page-views";
+import { parseArchitectureChoice } from "@/lib/programs/architecture-choice";
 import { StepPageTabs } from "@/components/strategic-moves/step-page/MovesStepPage";
 import {
   phaseStepRecordSections,
@@ -340,7 +346,7 @@ interface MovesPhaseStandaloneClientProps {
    * The step page the URL asked for, when the flag is on: `gate` (P3 Gate
    * readiness) or `root-causes` (P2 Step 3).
    */
-  initialStepView?: "gate" | "root-causes" | "root-cause-design" | null;
+  initialStepView?: StepPageView | null;
   /**
    * P2's saved root causes and baseline, for P3 Step 1 (whose rows are P2's
    * settled causes). Read server-side; absent outside P3 or with the flag off.
@@ -1068,6 +1074,14 @@ export function MovesPhaseStandaloneClient({
     Boolean(captureV2Enabled) &&
     phaseNum === 3 &&
     initialStepView === "root-cause-design";
+  // P3 Step 2, "Choose a direction and size it", behind the same flag.
+  // Opened with `?step=architecture-options`; it writes the
+  // `architecture_choice` step record and the `recommendation` answer.
+  const architectureStepPageActive =
+    stepPagesV3Enabled &&
+    Boolean(captureV2Enabled) &&
+    phaseNum === 3 &&
+    initialStepView === "architecture-options";
   const rootCauseStepPageActive =
     stepPagesV3Enabled &&
     Boolean(captureV2Enabled) &&
@@ -1568,8 +1582,27 @@ export function MovesPhaseStandaloneClient({
         : "",
     [approvedSolutionOption, p3OptionSet.options, phase.phase],
   );
+  // The P3 Step 2 page's choice is the team's working decision: it outranks
+  // an earlier approval (the build re-approves the current choice) and is
+  // ignored when its option has left the set.
+  const stepPageChoiceId = useMemo(() => {
+    if (phase.phase !== 3) return "";
+    const id = parseArchitectureChoice(
+      phaseCaptureValues.architecture_choice,
+    )?.optionId;
+    return id && p3OptionSet.options.some((option) => option.id === id)
+      ? id
+      : "";
+  }, [
+    phase.phase,
+    phaseCaptureValues.architecture_choice,
+    p3OptionSet.options,
+  ]);
   const effectiveSelectedOption =
-    selectedOption || approvedOptionId || inferredSelectedOption;
+    selectedOption ||
+    stepPageChoiceId ||
+    approvedOptionId ||
+    inferredSelectedOption;
   const selectedP3Option = useMemo(
     () =>
       p3OptionSet.options.find(
@@ -3487,77 +3520,139 @@ export function MovesPhaseStandaloneClient({
     />
   );
 
-  if (designTraceStepPageActive) {
+  // Shared chrome for the P3 step pages: the phase bar, the step bar (each
+  // step links to its own page when it has one) and the tabs.
+  const p3StepPageChrome = (stepId: string) => {
     const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
     const stepIndex = Math.max(
       0,
-      workflow.findIndex((step) => step.id === "P3.1"),
+      workflow.findIndex((step) => step.id === stepId),
     );
     const phaseHref = (n: number) => `/strategic-moves/${move.id}/phase/${n}`;
+    return {
+      stepIndex,
+      phaseHref,
+      tabs: (
+        <StepPageTabs
+          current="steps"
+          hrefs={{
+            steps: stepPageHref(move.id, phase.phase, stepId),
+            files: phaseHref(phase.phase),
+            record: phaseHref(phase.phase),
+          }}
+        />
+      ),
+      phases: PHASES.map((p) => {
+        const tally = phaseTallies.find((t) => t.phase === p.phase);
+        return {
+          code: p.code,
+          name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
+          status: tally?.state === "done" ? "Done" : "Not started",
+          current: p.phase === phase.phase,
+          href:
+            tally && tally.state !== "upcoming"
+              ? phaseHref(p.phase)
+              : undefined,
+        };
+      }),
+      steps: workflow.map((step, index) => ({
+        title: step.title,
+        depth: step.depth,
+        href:
+          index === stepIndex
+            ? undefined
+            : stepPageHref(move.id, phase.phase, step.id),
+        done:
+          index === stepIndex
+            ? undefined
+            : step.sectionKeys.length > 0 &&
+              step.sectionKeys.every(
+                (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
+              ),
+      })),
+    };
+  };
+  const stepPageDock = (
+    page: ReactNode,
+    dock: {
+      briefing: string;
+      actions: Array<{ id: string; label: string; onClick: () => void }>;
+      notesPanel: ReactNode;
+    },
+  ) =>
+    renderAvaDock({
+      content: page,
+      openingBriefing: dock.briefing,
+      notesFill: dock.notesPanel,
+      leadingActions: dock.actions.map((action) => ({
+        id: action.id,
+        label: action.label,
+        body: action.label,
+        onClick: action.onClick,
+      })),
+    });
+
+  if (designTraceStepPageActive) {
+    const chrome = p3StepPageChrome("P3.1");
     return (
       <DesignTraceabilityStep
         moveId={move.id}
         canReviewEvidence={canApproveGates}
         onEvidenceChanged={() => window.location.reload()}
         moveName={displayMoveName}
-        tabs={
-          <StepPageTabs
-            current="steps"
-            hrefs={{
-              steps: `${phaseHref(phase.phase)}?step=root-cause-design`,
-              files: phaseHref(phase.phase),
-              record: phaseHref(phase.phase),
-            }}
-          />
-        }
-        phases={PHASES.map((p) => {
-          const tally = phaseTallies.find((t) => t.phase === p.phase);
-          return {
-            code: p.code,
-            name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
-            status: tally?.state === "done" ? "Done" : "Not started",
-            current: p.phase === phase.phase,
-            href:
-              tally && tally.state !== "upcoming" ? phaseHref(p.phase) : undefined,
-          };
-        })}
-        steps={workflow.map((step, index) => ({
-          title: step.title,
-          depth: step.depth,
-          href: index === stepIndex ? undefined : phaseHref(phase.phase),
-          done:
-            index === stepIndex
-              ? undefined
-              : step.sectionKeys.length > 0 &&
-                step.sectionKeys.every(
-                  (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
-                ),
-        }))}
-        stepIndex={stepIndex}
+        tabs={chrome.tabs}
+        phases={chrome.phases}
+        steps={chrome.steps}
+        stepIndex={chrome.stepIndex}
         value={displayPhaseCaptureValues.design_traceability ?? ""}
         onChange={(value) =>
           setVisiblePhaseCaptureValue("design_traceability", value)
         }
         p2RootCauses={priorPhaseCapture?.gapsRootCauses ?? ""}
         p2Baseline={priorPhaseCapture?.baselineMetrics ?? ""}
-        p2StepHref={`${phaseHref(2)}?step=root-causes`}
+        p2StepHref={stepPageHref(move.id, 2, "P2.3")}
         decidedBy={currentUser?.email ?? "signed-in reviewer"}
         today={new Date().toISOString().slice(0, 10)}
-        onBack={() => window.location.assign(phaseHref(phase.phase))}
-        onContinue={() => window.location.assign(phaseHref(phase.phase))}
-        frame={(page, dock) =>
-          renderAvaDock({
-            content: page,
-            openingBriefing: dock.briefing,
-            notesFill: dock.notesPanel,
-            leadingActions: dock.actions.map((action) => ({
-              id: action.id,
-              label: action.label,
-              body: action.label,
-              onClick: action.onClick,
-            })),
-          })
+        onBack={() => window.location.assign(chrome.phaseHref(phase.phase))}
+        onContinue={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.2"))
         }
+        frame={stepPageDock}
+      />
+    );
+  }
+
+  if (architectureStepPageActive) {
+    const chrome = p3StepPageChrome("P3.2");
+    return (
+      <ArchitectureOptionsStep
+        moveId={move.id}
+        canReviewEvidence={canApproveGates}
+        onEvidenceChanged={() => window.location.reload()}
+        moveName={displayMoveName}
+        tabs={chrome.tabs}
+        phases={chrome.phases}
+        steps={chrome.steps}
+        stepIndex={chrome.stepIndex}
+        value={displayPhaseCaptureValues.architecture_choice ?? ""}
+        onChange={(value) =>
+          setVisiblePhaseCaptureValue("architecture_choice", value)
+        }
+        recommendation={displayPhaseCaptureValues.recommendation ?? ""}
+        onRecommendationChange={(value) =>
+          setVisiblePhaseCaptureValue("recommendation", value)
+        }
+        optionSet={p3OptionSet}
+        p2RootCauses={priorPhaseCapture?.gapsRootCauses ?? ""}
+        designTraceability={displayPhaseCaptureValues.design_traceability ?? ""}
+        step1Href={stepPageHref(move.id, phase.phase, "P3.1")}
+        decidedBy={currentUser?.email ?? "signed-in reviewer"}
+        today={new Date().toISOString().slice(0, 10)}
+        onBack={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.1"))
+        }
+        onContinue={() => window.location.assign(chrome.phaseHref(phase.phase))}
+        frame={stepPageDock}
       />
     );
   }
@@ -4170,6 +4265,14 @@ export function MovesPhaseStandaloneClient({
                                   href={`/strategic-moves/${move.id}/phase/3?step=root-cause-design`}
                                 >
                                   Map root causes to design →
+                                </a>{" "}
+                                Step 2 chooses a direction from the team’s
+                                options.{" "}
+                                <a
+                                  data-testid="open-architecture-options"
+                                  href={`/strategic-moves/${move.id}/phase/3?step=architecture-options`}
+                                >
+                                  Choose a direction →
                                 </a>
                               </p>
                             ) : null}
