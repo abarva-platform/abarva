@@ -84,7 +84,16 @@ with no feature gate and no client-scoped data path.
 - `src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
   — nine cases on the real host component. This suite is already named by exact
   path in the required catalog, so no workflow edit was needed.
-- `docs/architecture/test-ci-coverage-census.json` — regenerated.
+- `docs/architecture/test-ci-coverage-census.json` — regenerated. See QA below.
+
+A sibling change to the same panel landed first and replaced its hand-written
+blocked-cause ladder with one resolver. The two are complementary — that change
+owns the gate summary line's BLOCKED arm, this one owns its READY arm — and the
+merge was resolved both-sides in three regions: both module imports, both the
+per-severity digests and the cause resolver, and a summary line that takes the
+resolver's blocked arm together with the derived ready arm, dropping the local
+each side no longer reads. The shared test file collided only because both
+changes append a block, so both blocks are kept.
 
 ## QA / Validation
 
@@ -126,12 +135,28 @@ with no feature gate and no client-scoped data path.
   located and sit at lines 8535 and 8635, far from every hunk this change adds
   (147, 6441, 6559, 6676), so no pre-existing reformatting was pulled into this
   diff and none of the added lines is unclean.
-- Census: regenerated and reads **+1** for the one test file this change adds,
-  with the covered count rising by the same one — which is also the proof that
-  the required directory sweep reaches the new suite. The uncovered count is
-  unchanged. Read from the version-control diff, not from the generator's own
-  drift line, which is written after the file it checks. No inherited drift at
-  this base.
+- Census: regenerated and reads **+1** against `main` for the one test file this
+  change adds, with the covered count rising by the same one — which is also the
+  proof that the required directory sweep reaches the new suite. The uncovered
+  count is unchanged. Read from the version-control diff, not from the
+  generator's own drift line, which is written after the file it checks.
+- Census, the part worth recording: a sibling change and this one shared a base
+  and each added exactly **one** test file, so both honestly regenerated to the
+  **same** committed count. Identical values give version control nothing to
+  reconcile, so the file would have merged with **no conflict** and the branch
+  that landed second would have contributed nothing — leaving the count on the
+  shared branch one below the truth. This was caught before either merged, by
+  reading the sibling's committed value directly rather than waiting for a
+  conflict, and auto-merge on this change was disabled until the sibling landed.
+  After merging it forward the census was reset to the value on the shared
+  branch and regenerated, and it now reads one above it. Nothing was hand-edited
+  and neither side of any conflict was kept.
+- Post-merge re-validation, because the merge touched the region this change
+  edits: **317 tests green** across the three affected suites, and both defect
+  directions were re-proven by mutation rather than assumed — dropping the soft
+  remainder row fails 3, and additionally reverting the sentence to its singular
+  form fails 10. `tsc` exit 0 and `eslint` 0 errors were both re-run after the
+  merge.
 - `npm run audit:tenancy-fence-coverage:write`: **PASS** — no change.
 - `npm run release:check -- --base origin/main --head HEAD`: **PASS** — 11/11.
 - Live signed-in walk: **NOT RUN** — see Deployment Authority.
