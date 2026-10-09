@@ -67,7 +67,10 @@ export function proposeDesignFromNotes(
     proposals.push({
       kind: "element",
       causeId: target.causeId,
-      value: sentence.text.replace(/^[A-Za-z ]{2,30}:\s+/, "").replace(/\.$/, "").trim(),
+      value: sentence.text
+        .replace(/^[A-Za-z ]{2,30}:\s+/, "")
+        .replace(/\.$/, "")
+        .trim(),
       excerpt: sentence.text,
       sourceLine: sentence.line,
     });

@@ -2,9 +2,28 @@ import { proposeDesignFromNotes } from "@/lib/programs/design-traceability-notes
 import type { TraceRow } from "@/lib/programs/design-traceability";
 
 const rows: TraceRow[] = [
-  { rank: 1, causeId: "RC-1", cause: "No accountable ownership or decision rights", link: { causeId: "RC-1", cause: "x", rank: 1, status: "accepted", element: "Stewardship council" } },
-  { rank: 3, causeId: "RC-3", cause: "Lineage not captured at load or transform" },
-  { rank: 4, causeId: "RC-4", cause: "Identity not resolved across EHR and claims" },
+  {
+    rank: 1,
+    causeId: "RC-1",
+    cause: "No accountable ownership or decision rights",
+    link: {
+      causeId: "RC-1",
+      cause: "x",
+      rank: 1,
+      status: "accepted",
+      element: "Stewardship council",
+    },
+  },
+  {
+    rank: 3,
+    causeId: "RC-3",
+    cause: "Lineage not captured at load or transform",
+  },
+  {
+    rank: 4,
+    causeId: "RC-4",
+    cause: "Identity not resolved across EHR and claims",
+  },
 ];
 
 const NOTES =
@@ -18,8 +37,10 @@ describe("proposeDesignFromNotes", () => {
       {
         kind: "element",
         causeId: "RC-3",
-        value: "capture lineage at load and at every transform, with run and version IDs",
-        excerpt: "Lineage: capture lineage at load and at every transform, with run and version IDs.",
+        value:
+          "capture lineage at load and at every transform, with run and version IDs",
+        excerpt:
+          "Lineage: capture lineage at load and at every transform, with run and version IDs.",
         sourceLine: 2,
       },
       {
@@ -27,7 +48,8 @@ describe("proposeDesignFromNotes", () => {
         causeId: "RC-4",
         value: "Dana Ruiz",
         program: "master-data program",
-        excerpt: "Identity matching would be owned by Dana Ruiz (master-data program).",
+        excerpt:
+          "Identity matching would be owned by Dana Ruiz (master-data program).",
         sourceLine: 3,
       },
     ]);
