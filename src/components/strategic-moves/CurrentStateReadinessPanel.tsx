@@ -16,6 +16,11 @@ import type { CurrentStateRecommendation } from "@/lib/programs/current-state-ma
 import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
 import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
 import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
+import {
+  evaluateReviewedExtractionForm,
+  REVIEWED_EXTRACTION_LIST_FIELD_ENTRIES,
+  type ReviewedExtractionListField,
+} from "@/lib/programs/reviewed-extraction-form-bounds";
 
 const usd = (n: number) =>
   n >= 1_000_000
@@ -360,14 +365,11 @@ export type PendingEvidenceReview = {
   sourceTextPreview: string;
   extraction: ReviewedEvidenceExtraction;
 };
-type ReviewSignalField =
-  | "decisions"
-  | "risks"
-  | "baselineCandidates"
-  | "actionItems"
-  | "observations"
-  | "assumptions"
-  | "openQuestions";
+/**
+ * Derived from the approval contract rather than re-listed here, so a list
+ * field the contract gains cannot go unrendered and unchecked.
+ */
+type ReviewSignalField = ReviewedExtractionListField;
 
 /** One reviewed list item per non-empty line, trimmed. Applied on save only. */
 export function normalizeReviewSignalLines(text: string): string[] {
@@ -436,15 +438,10 @@ export function EvidenceReviewEditor({
     assumptions: normalizeReviewSignalLines(signalText.assumptions),
     openQuestions: normalizeReviewSignalLines(signalText.openQuestions),
   });
-  const fieldLabels: Array<[ReviewSignalField, string]> = [
-    ["decisions", "Decisions"],
-    ["baselineCandidates", "Baseline candidates"],
-    ["risks", "Risks"],
-    ["actionItems", "Actions"],
-    ["observations", "Observations"],
-    ["assumptions", "Assumptions"],
-    ["openQuestions", "Open questions"],
-  ];
+  // Ordered, and TOTAL over the contract's list fields by construction — the
+  // seven-entry literal this replaces was a roster nothing required to be
+  // complete.
+  const fieldLabels = REVIEWED_EXTRACTION_LIST_FIELD_ENTRIES;
   const parsedCitations = citationText
     .split("\n")
     .map((line) => line.trim())
@@ -459,6 +456,14 @@ export function EvidenceReviewEditor({
           };
     })
     .filter((citation) => citation.quote && citation.locator);
+  // Judged on the values the approval will SEND, not on the raw textareas, so
+  // the counts judged here are the counts the contract counts.
+  const formVerdict = evaluateReviewedExtractionForm({
+    summary: extraction.summary,
+    lists: reviewedSignals(),
+    citations: parsedCitations,
+  });
+  const approveBlocked = disabled || busy || !formVerdict.canApprove;
 
   return (
     <details
@@ -617,6 +622,35 @@ export function EvidenceReviewEditor({
             }}
           />
         </label>
+        {!formVerdict.canApprove && (
+          <ul
+            aria-label={`${review.title} approval blockers`}
+            style={{
+              margin: 0,
+              padding: "8px 10px 8px 26px",
+              border: "1px solid #e5c792",
+              borderRadius: 5,
+              background: "#fffdf8",
+              fontSize: 11,
+              lineHeight: 1.45,
+              color: "#5d431a",
+              display: "grid",
+              gap: 4,
+            }}
+          >
+            {formVerdict.blockers.map((blocker) => (
+              <li
+                key={
+                  blocker.kind === "list_over_limit"
+                    ? `${blocker.kind}:${blocker.field}`
+                    : blocker.kind
+                }
+              >
+                {blocker.sentence}
+              </li>
+            ))}
+          </ul>
+        )}
         <div
           style={{
             display: "flex",
@@ -649,7 +683,7 @@ export function EvidenceReviewEditor({
             </button>
             <button
               type="button"
-              disabled={disabled || busy || !extraction.summary.trim()}
+              disabled={approveBlocked}
               onClick={() =>
                 onDecision(
                   "approved",
@@ -672,8 +706,12 @@ export function EvidenceReviewEditor({
                 border: "none",
                 borderRadius: 5,
                 padding: "4px 10px",
-                cursor: disabled || busy ? "default" : "pointer",
-                opacity: disabled || busy ? 0.5 : 1,
+                // Both read `approveBlocked`, not a shorter condition. The
+                // styling used to omit the form check, so a form the contract
+                // refuses rendered a full-opacity, pointer-cursor button that
+                // did nothing when pressed and said nothing about why.
+                cursor: approveBlocked ? "default" : "pointer",
+                opacity: approveBlocked ? 0.5 : 1,
               }}
             >
               {busy ? "Saving reviewed version…" : "Approve reviewed version"}
