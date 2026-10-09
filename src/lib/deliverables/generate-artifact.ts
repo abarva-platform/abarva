@@ -33,6 +33,7 @@ import {
   type GovernedRoadmapResult,
 } from "./build-governed-roadmap-artifact";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { describeMissingSolutionContext } from "@/lib/programs/solution-context-labels";
 import { buildArtifactPrompt } from "./solution-prompt-factory";
 import { meetsGoldenBar, type GoldenBarResult } from "./golden-bar";
 import {
@@ -418,7 +419,8 @@ export function formatDraftCaveatText(args: {
       : STRATEGIC_MOVES_DRAFT_CAVEAT;
   const gateReasons = args.draftCaveats.map((caveat) => caveat.reason);
   const contextReasons = args.contextCaveats.map(
-    (missing) => `${missing} is not yet captured or approved for final use.`,
+    (missing) =>
+      `${describeMissingSolutionContext(missing)} is not yet captured or approved for final use.`,
   );
   const openItems = [...gateReasons, ...contextReasons];
   if (openItems.length === 0) {
