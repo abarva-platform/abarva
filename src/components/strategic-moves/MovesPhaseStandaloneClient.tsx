@@ -34,6 +34,7 @@ import {
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import {
   artifactStatusLabel,
   FileCabinetPanel,
@@ -7782,16 +7783,26 @@ function CurrentStateFamilyUploadPanel({
       !payload.evidence.reviewId ||
       payload.evidence.status === "not_captured"
     ) {
+      // Two outcomes used to share one sentence ladder, and the refusal half
+      // read `detail` first — which on this route is the raw MIME string for
+      // `unsupported_type` and a byte count for `file_too_large`. A refusal
+      // stored nothing and gets the product sentence for its code; a file
+      // that WAS stored but did not register keeps the ingestion warning,
+      // because "nothing was stored" would be false for it.
+      const refused = !res.ok || !payload.ok;
       return {
         familyKey: "session_artifact",
         familyLabel: "Workshop / session notes",
         fileName: file.name,
         status: "error",
-        detail:
-          payload.evidence?.warning ||
-          payload.detail ||
-          payload.error ||
-          "Parsing and review registration did not complete; this file cannot ground a build.",
+        detail: refused
+          ? describeMoveUploadRefusal({
+              code: payload.error,
+              detail: payload.detail,
+              fileName: file.name,
+            })
+          : payload.evidence?.warning ||
+            "Parsing and review registration did not complete; this file cannot ground a build.",
       };
     }
     return {
@@ -8090,8 +8101,14 @@ function EvidenceUploadControl({
       };
     };
     if (!res.ok || !payload.ok) {
+      // `detail` is not prose on this route for three of its six codes, so
+      // preferring it put a raw MIME string in front of the uploader.
       throw new Error(
-        payload.detail || payload.error || `Upload failed (HTTP ${res.status})`,
+        describeMoveUploadRefusal({
+          code: payload.error,
+          detail: payload.detail,
+          fileName: file.name,
+        }),
       );
     }
     if (

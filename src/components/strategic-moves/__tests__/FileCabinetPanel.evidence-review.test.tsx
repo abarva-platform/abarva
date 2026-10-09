@@ -3,6 +3,10 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { FileCabinetPanel } from "../FileCabinetPanel";
+import {
+  describeMoveUploadRefusal,
+  MOVE_UPLOAD_REFUSAL_CODES,
+} from "@/lib/programs/move-upload-refusal";
 
 describe("Moves File Cabinet evidence review", () => {
   it("does not expose evidence approval controls without workspace approval permission", async () => {
@@ -646,5 +650,96 @@ describe("Moves File Cabinet rejected evidence", () => {
     expect(
       await screen.findByRole("region", { name: "Rejected evidence" }),
     ).toHaveTextContent("finance-baseline.xlsx");
+  });
+
+  // A refused upload is how off-platform evidence FAILS to enter a Move, and
+  // approved evidence is a HARD precondition for crossing the discovery gate.
+  // Every code the route declares used to reach this panel as its bare token,
+  // because the reader preferred `error` over `detail`.
+  describe("a refused upload states what the reviewer can do", () => {
+    function mockRefusal(payload: Record<string, unknown>, status = 400) {
+      global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes("/artifacts/upload") && init?.method === "POST") {
+          return {
+            ok: false,
+            status,
+            json: async () => ({ ok: false, ...payload }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            artifacts: [],
+            pendingEvidenceReviews: [],
+            evidenceReviewStatus: "available",
+          }),
+        } as Response;
+      }) as typeof fetch;
+    }
+
+    async function uploadAndReadMessage(payload: Record<string, unknown>) {
+      mockRefusal(payload);
+      render(<FileCabinetPanel moveId="move-1" phase={2} />);
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: {
+          files: [new File(["a,b"], "controls.csv", { type: "text/csv" })],
+        },
+      });
+      const sentence = describeMoveUploadRefusal({
+        code: payload.error,
+        detail: payload.detail,
+        fileName: "controls.csv",
+      });
+      await waitFor(() =>
+        expect(screen.getByText(sentence)).toBeInTheDocument(),
+      );
+      return sentence;
+    }
+
+    it.each([...MOVE_UPLOAD_REFUSAL_CODES])(
+      "renders the sentence for %s and not the code",
+      async (code) => {
+        const sentence = await uploadAndReadMessage({ error: code });
+        expect(sentence).not.toContain(code);
+        expect(screen.queryByText(code, { exact: false })).toBeNull();
+      },
+    );
+
+    it("does not put the raw MIME type on screen for an unreadable file", async () => {
+      await uploadAndReadMessage({
+        error: "unsupported_type",
+        detail: "application/zip",
+      });
+      expect(screen.queryByText(/application\/zip/)).toBeNull();
+      expect(
+        screen.getByText(/not a file type this workspace can read/),
+      ).toBeInTheDocument();
+    });
+
+    it("names the upload cap rather than a byte count", async () => {
+      await uploadAndReadMessage({
+        error: "file_too_large",
+        detail: "max 104857600 bytes",
+      });
+      expect(screen.queryByText(/104857600/)).toBeNull();
+      expect(screen.getByText(/100 MB upload limit/)).toBeInTheDocument();
+    });
+
+    it("renders the server sentence for a declared family the Move does not require", async () => {
+      await uploadAndReadMessage({
+        error: "unknown_evidence_family",
+        detail: "'ops_runbook' is not an evidence family this Move requires.",
+      });
+      expect(
+        screen.getByText(
+          "'ops_runbook' is not an evidence family this Move requires.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("still answers when the refusal carries no code at all", async () => {
+      await uploadAndReadMessage({});
+      expect(screen.getByText(/did not say why/)).toBeInTheDocument();
+    });
   });
 });
