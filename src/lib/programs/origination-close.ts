@@ -53,18 +53,44 @@ function charterStr(
 }
 
 /**
+ * Whether the Move's signable origination brief could be ensured, and how.
+ *
+ * A discriminated union rather than `string | null`, because the two ways of
+ * having no id are not interchangeable and the caller has to act differently:
+ * `"unreadable"` means the Move's EXISTING documents could not be read, so
+ * nothing may be created on top of them, while `"not_created"` means the read
+ * succeeded, found none, and the create itself failed. Collapsing both to
+ * `null` would put the refusal and the failure on one code again.
+ */
+export type EnsureOriginationBriefOutcome =
+  | { outcome: "existing"; deliverableId: string }
+  | { outcome: "created"; deliverableId: string }
+  | { outcome: "unreadable" }
+  | { outcome: "not_created" };
+
+/**
  * Create (if absent) the signable origination_brief deliverable from the
  * Move's real origination data. Generalized — content comes from the charter
  * fields captured at origination, never from use-case-specific boilerplate.
- * Returns the deliverableId (existing or newly created).
+ *
+ * The first read is a DEDUPE read, and the two writes below it
+ * (`draftModuleDeliverable` + `publishDeliverable`) are reached only when it
+ * finds nothing. The compat client reports a failed read as
+ * `{ data: null, error }` rather than throwing, so dropping that `error` made
+ * a read outage indistinguishable from "this Move has no brief yet" — and the
+ * consequence was not a mis-worded refusal but a WRITE: a second
+ * origination_brief row, which `closeP0OnApproval` then signed, leaving the
+ * Move with two briefs, the signature on the newer one, the older one's own
+ * sign-off still standing, and no control on any surface that removes either.
+ * A read it could not perform is now refused instead of assumed.
  */
 export async function ensureOriginationBrief(
   ctx: TenancyCtx,
   programId: string,
   row: EngagementSeedRow,
-): Promise<string | null> {
+): Promise<EnsureOriginationBriefOutcome> {
   const sb = getAzureWriteFluentClient();
-  const { data: existing } = await sb
+  const { data: existing, error: existingError } = await sb
     .from("deliverables_v2")
     .select("id, status, deliverable_type_key")
     .eq("engagement_id", programId)
@@ -76,7 +102,16 @@ export async function ensureOriginationBrief(
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (existing?.id) return existing.id as string;
+  if (existingError) {
+    console.error("[origination-close] existing origination brief unreadable", {
+      programId,
+      err: existingError.message ?? String(existingError),
+    });
+    return { outcome: "unreadable" };
+  }
+  if (existing?.id) {
+    return { outcome: "existing", deliverableId: existing.id as string };
+  }
 
   const charter = row.charter ?? {};
   const problem =
@@ -126,8 +161,9 @@ export async function ensureOriginationBrief(
     draftContent,
     structuredData: { archetype, sponsor, scope, problem, outcome },
   });
+  if (!deliverableId) return { outcome: "not_created" };
   await publishDeliverable(ctx, programId, deliverableId);
-  return deliverableId;
+  return { outcome: "created", deliverableId };
 }
 
 export interface CloseP0Result {
@@ -172,11 +208,23 @@ export async function closeP0OnApproval(input: {
   };
   try {
     const sb = getAzureWriteFluentClient();
-    const { data } = await sb
+    // Classify this read. A dropped `error` made an outage and a genuinely
+    // absent Move return the same `move_not_readable`, whose sentence
+    // describes only the absent case — so a read outage told the reader the
+    // Move was archived and steered them off the one action that works.
+    const { data, error: moveError } = await sb
       .from("engagements")
       .select("id, client_id, name, current_phase, problem_statement, charter")
       .eq("id", input.programId)
       .maybeSingle();
+    if (moveError) {
+      result.outcome = "move_state_unreadable";
+      console.error("[origination-close] Move state unreadable", {
+        programId: input.programId,
+        err: moveError.message ?? String(moveError),
+      });
+      return result;
+    }
     const row = data as EngagementSeedRow | null;
     if (!row) {
       result.outcome = "move_not_readable";
@@ -202,16 +250,19 @@ export async function closeP0OnApproval(input: {
       clerkUserId: input.actorTenancy?.clerkUserId,
     };
 
-    const deliverableId = await ensureOriginationBrief(
-      ctx,
-      input.programId,
-      row,
-    );
-    result.briefEnsured = !!deliverableId;
-    if (!deliverableId) {
+    const brief = await ensureOriginationBrief(ctx, input.programId, row);
+    if (brief.outcome === "unreadable") {
+      // Refused, not failed: a second brief was not created BECAUSE an
+      // existing one could not be ruled out. Nothing was written.
+      result.outcome = "brief_not_readable";
+      return result;
+    }
+    if (brief.outcome === "not_created") {
       result.outcome = "brief_not_created";
       return result;
     }
+    const deliverableId = brief.deliverableId;
+    result.briefEnsured = true;
 
     // The authorized user's approval is the brief sign-off.
     const signed = await signOffDeliverable(
