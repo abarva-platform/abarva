@@ -6,6 +6,7 @@ import {
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
 import { planPhaseGateSubmitWithoutBuild } from "@/lib/programs/phase-build-settlement";
+import type { ChangeProfile } from "@/lib/programs/phase-workflow-registry";
 import {
   GATE_DOCUMENTS_ROW_ID,
   GATE_RATIONALE_ROW_ID,
@@ -92,7 +93,10 @@ export interface GateReadinessStepProps {
   approverName: string;
   /** Why the build is held (capture incomplete, required evidence open), or null. */
   buildHeldReason: string | null;
-  depthDetail: string;
+  /** True when `approverName` is the role, not a person's name. */
+  approverIsRole?: boolean;
+  /** The Move's change profile, which decides what some checks measure. */
+  changeProfile?: ChangeProfile;
   onBeforeBuild?: () => Promise<void>;
   /** The governed gate submission. Throws with the refusal sentence. */
   onSubmit: (settlement: BuildSettledResult) => Promise<void>;
@@ -114,6 +118,7 @@ function DocumentLine({
   moveId,
   doc,
   title,
+  purpose,
   downloadUrl,
   canApprove,
   signOffReadable,
@@ -123,6 +128,7 @@ function DocumentLine({
   moveId: string;
   doc: GateDocumentView;
   title: string;
+  purpose?: string;
   downloadUrl: string | null;
   canApprove: boolean;
   signOffReadable: boolean;
@@ -199,6 +205,7 @@ function DocumentLine({
     <li>
       <span>
         <span className={cx("item-name")}>{title}</span>
+        {purpose ? <span className={cx("item-note")}>{purpose}</span> : null}
       </span>
       <span className={cx("item-actions")}>
         <span className={cx("item-state")}>{stateText}</span>
@@ -389,6 +396,8 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     signOffReadable: props.signOffReadable,
     canApprove: props.canApprove,
     approverName: props.approverName,
+    approverIsRole: props.approverIsRole,
+    changeProfile: props.changeProfile,
     rationaleWritten: rationale.trim().length > 0,
     phaseName: props.phaseName,
     nextPhaseLabel: props.nextPhaseLabel,
@@ -500,6 +509,10 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
                 moveId={props.moveId}
                 doc={doc}
                 title={doc.title}
+                purpose={
+                  specs.find((spec) => spec.deliverableTypeKey === doc.key)
+                    ?.documentPurpose
+                }
                 downloadUrl={artifact?.downloadUrl ?? null}
                 canApprove={props.canApprove}
                 signOffReadable={props.signOffReadable}
@@ -763,25 +776,23 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
       countLabel={model.countLabel}
       context={{
         items: [<b key="depth">Full depth</b>],
-        details: [{ term: "Depth", detail: <span>{props.depthDetail}</span> }],
+        // No Details: until the readiness workbook is wired here, it would
+        // only repeat the depth (v1.6).
+        details: [],
       }}
       // Unsaved input survives Blocked (template v1.5): the rationale stays
       // editable while the gate state cannot be read.
       blockedWork={
         <div className={cx("empty-note")}>
-          <p>
-            Documents and signatures are unchanged.{" "}
-            <button
-              type="button"
-              className={cx("link-btn", "inline")}
-              onClick={onRecordChanged}
-            >
-              Try again
-            </button>
-          </p>
+          <p>Documents and signatures are unchanged.</p>
           {props.canApprove ? rationaleField : null}
         </div>
       }
+      blockedAction={{ label: "Try again", onClick: onRecordChanged }}
+      carry={{
+        label: "Carries to P4",
+        text: " This phase's approved answers and signed documents.",
+      }}
       decisionGroupTitle={
         props.canApprove ? undefined : "Waiting on the gate approver"
       }

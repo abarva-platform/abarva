@@ -230,10 +230,51 @@ describe("resolveRootCauseStep", () => {
       ),
     );
     expect(model.nextAction.sentence).toBe(
-      "Find evidence for cause RC-4 (RC-4) or name its owner, review 2 drafts, and confirm the order.",
+      "Find evidence for RC-4 or name its owner, review 2 drafts, and confirm the order.",
     );
     expect(model.countLabel).toBe("1 of 4 causes settled");
     expect(model.checks[0]).toMatchObject({ met: false, targetRowId: "RC-4" });
+  });
+
+  it("names causes by their authored short name with the id, never a truncation", () => {
+    const model = resolveRootCauseStep(
+      value(
+        reg([
+          c("RC-4", {
+            status: "no_evidence",
+            evidence: undefined,
+            short: "identity",
+          }),
+          c("RC-3", { status: "draft", short: "lineage" }),
+        ]),
+      ),
+    );
+    expect(model.nextAction.sentence).toBe(
+      "Find evidence for identity (RC-4) or name its owner, review the lineage (RC-3) draft, and confirm the order.",
+    );
+  });
+
+  it("drops a cause's evidence clause while the file uploaded for it is in review", () => {
+    const register = reg([
+      c("RC-4", {
+        status: "no_evidence",
+        evidence: undefined,
+        short: "identity",
+        evidenceInReview: "duplicate-match report",
+      }),
+      c("RC-3", { status: "draft", short: "lineage" }),
+    ]);
+    const model = resolveRootCauseStep(value(register), {
+      leadingClauses: ["review the duplicate-match report extraction"],
+      evidenceInReview: ["duplicate-match report"],
+    });
+    expect(model.nextAction.sentence).toBe(
+      "Review the duplicate-match report extraction, review the lineage (RC-3) draft, and confirm the order.",
+    );
+    // Once the review is no longer pending, the cause asks for evidence again.
+    expect(resolveRootCauseStep(value(register)).nextAction.sentence).toContain(
+      "Find evidence for identity (RC-4)",
+    );
   });
 
   it("ready when every ranked cause is settled and the order confirmed", () => {

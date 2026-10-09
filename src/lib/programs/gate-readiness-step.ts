@@ -1,3 +1,4 @@
+import type { ChangeProfile } from "@/lib/programs/phase-workflow-registry";
 import type { StepNextAction } from "@/lib/programs/step-page-model";
 
 /**
@@ -77,8 +78,18 @@ export const GATE_DOCUMENTS_ROW_ID = "DOCS";
  * consultant reading it beside a held submit button would see a deadlock.
  * The evaluator's own label stays in the check's note.
  */
-export const GATE_CHECK_DISPLAY_LABELS: Readonly<Record<string, string>> = {
-  design_approved: "Design documents signed off",
+export const GATE_CHECK_DISPLAY_LABELS: Readonly<
+  Record<string, Readonly<Record<ChangeProfile, string>>>
+> = {
+  // What signs `design_approved` off differs by change profile (see
+  // governance.ts): the target architecture alone for a technical product,
+  // the architecture and the change estimate brief for a limited process
+  // change, and any signed design document for a full change.
+  design_approved: {
+    technical: "Target architecture signed off",
+    limited: "Architecture and change brief signed off",
+    full: "A design document signed off",
+  },
 };
 export const GATE_RATIONALE_ROW_ID = "APPROVE";
 
@@ -110,10 +121,11 @@ export interface GateCheckView {
 
 export function gateChecks(
   criteria: readonly GateCriterionView[],
+  profile: ChangeProfile = "full",
 ): GateCheckView[] {
   const unreadable = criteria.some((c) => !c.verified);
   return criteria.map((c) => {
-    const display = GATE_CHECK_DISPLAY_LABELS[c.id];
+    const display = GATE_CHECK_DISPLAY_LABELS[c.id]?.[profile];
     const reason = unreadable
       ? "not evaluated"
       : c.completed
@@ -149,6 +161,14 @@ export interface GateStepInput {
    * name, or the role ("a gate approver") when no name can be resolved.
    */
   approverName: string;
+  /**
+   * True when `approverName` is the role ("the gate approver") rather than a
+   * person, so the footer introduces it indefinitely: "Only a gate approver
+   * can approve this gate." (template v1.5 naming rule).
+   */
+  approverIsRole?: boolean;
+  /** The Move's change profile, which decides what some checks measure. */
+  changeProfile?: ChangeProfile;
   rationaleWritten: boolean;
   /** "Design", "Discover": the phase the submit button names. */
   phaseName: string;
@@ -218,7 +238,12 @@ export interface GateStepModel {
 }
 
 export function resolveGateStep(input: GateStepInput): GateStepModel {
-  const checks = gateChecks(input.criteria);
+  const checks = gateChecks(input.criteria, input.changeProfile);
+  const approverFooter = `Only ${
+    input.approverIsRole
+      ? input.approverName.replace(/^the /, "a ")
+      : input.approverName
+  } can approve this gate.`;
   const hard = checks.filter((c) => c.level === "hard");
   const hardMet = hard.filter((c) => c.met).length;
   const unreadable = checks.some((c) => c.unknown);
@@ -261,9 +286,7 @@ export function resolveGateStep(input: GateStepInput): GateStepModel {
         continueEnabled: false,
       },
       canSubmit: false,
-      footerNote: input.canApprove
-        ? null
-        : `Only ${input.approverName} can approve this gate.`,
+      footerNote: input.canApprove ? null : approverFooter,
     };
   }
 
@@ -326,7 +349,7 @@ export function resolveGateStep(input: GateStepInput): GateStepModel {
         continueEnabled: false,
       },
       canSubmit: false,
-      footerNote: `Only ${input.approverName} can approve this gate.`,
+      footerNote: approverFooter,
     };
   }
 

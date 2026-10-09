@@ -106,7 +106,6 @@ function props(
     canApprove: true,
     approverName: "the gate approver",
     buildHeldReason: null,
-    depthDetail: "Full. The gate step is always Full.",
     onSubmit: jest.fn(async () => undefined),
     ...overrides,
   };
@@ -444,8 +443,9 @@ describe("GateReadinessStep", () => {
     expect(container.textContent).toContain(
       "Documents and signatures are unchanged.",
     );
+    // "Try again" closes the Blocked sentence, where the eye goes (v1.6).
     expect(
-      within(container).getByRole("button", { name: "Try again" }),
+      within(status(container)).getByRole("button", { name: "Try again" }),
     ).toBeTruthy();
     writeRationale(container, "Kept while blocked.");
     expect(
@@ -533,6 +533,28 @@ describe("GateReadinessStep", () => {
     );
     expect(briefing).toContain("I left out Sourcing Strategy Brief");
     expect(briefing).not.toMatch(/\d/);
+  });
+
+  it("gives each gate document its purpose, drops a Details that would repeat the depth, and names what carries forward", () => {
+    const { container } = render(<GateReadinessStep {...props()} />);
+    expect(container.querySelector("details.context")).toBeNull();
+    expect(container.textContent).toContain(
+      "Carries to P4 This phase's approved answers and signed documents.",
+    );
+    expect(
+      docsRow(container).querySelectorAll(".item-note").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("introduces a role approver indefinitely in the footer", () => {
+    const { container } = render(
+      <GateReadinessStep
+        {...props({ canApprove: false, approverIsRole: true })}
+      />,
+    );
+    expect(footer(container).textContent).toContain(
+      "Only a gate approver can approve this gate.",
+    );
   });
 
   it("lists the documents this profile does not build, with why", () => {

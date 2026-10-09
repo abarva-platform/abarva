@@ -111,6 +111,53 @@ const row = (c: HTMLElement, id: string) =>
   c.querySelector(`#row-${id}`) as HTMLElement;
 
 describe("RootCausesStep", () => {
+  it("a cause whose file is in review points to that review instead of asking for evidence", async () => {
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        evidenceReviewStatus: "available",
+        pendingEvidenceReviews: [
+          {
+            evidenceId: "ev-9",
+            title: "Duplicate-match report, EHR x claims.xlsx",
+            phase: 2,
+            parseMethod: "xlsx",
+            confidence: 0.8,
+            sourceTextPreview: "",
+            extraction: { summary: "3 statements about member matching." },
+          },
+        ],
+        reviewedEvidence: [],
+      }),
+    })) as unknown as typeof fetch;
+    const { container, findByText } = render(
+      <Harness
+        initial={register([
+          {
+            id: "RC-4",
+            cause: "Identity unresolved",
+            short: "identity",
+            status: "no_evidence",
+            evidenceInReview: "duplicate-match report",
+          },
+        ])}
+      />,
+    );
+    await findByText("3 statements about member matching.");
+    expect(row(container, "RC-4").textContent).toContain(
+      "Evidence in review: duplicate-match report.",
+    );
+    expect(
+      within(row(container, "RC-4"))
+        .getByRole("link", { name: "Review the file" })
+        .getAttribute("href"),
+    ).toBe("#row-EV-1");
+    expect(status(container).textContent).toContain(
+      "Review the duplicate-match report extraction and confirm the order.",
+    );
+    expect(status(container).textContent).not.toContain("Find evidence");
+  });
+
   it("an uploaded extraction awaiting review leads the step and holds it", async () => {
     const fetchMock = jest.fn(async () => ({
       ok: true,
@@ -147,10 +194,15 @@ describe("RootCausesStep", () => {
     // Another phase's upload is not this step's decision.
     expect(container.textContent).not.toContain("Other phase");
     expect(status(container).textContent).toContain(
-      "Review the Duplicate-match report extraction.",
+      "Review the duplicate-match report extraction.",
     );
     expect(status(container).textContent).not.toContain("Ready");
     expect(container.textContent).toContain("1 approved file · 1 in review");
+    // The upload sits at the right end of the Context line, outside the
+    // summary's toggle (v1.6).
+    expect(container.querySelector(".ctx-action button")?.textContent).toBe(
+      "Upload evidence",
+    );
     expect(
       within(container).getByRole("button", { name: "Upload evidence" }),
     ).toBeTruthy();
@@ -248,7 +300,7 @@ describe("RootCausesStep", () => {
       />,
     );
     expect(status(container).textContent).toContain(
-      "Find evidence for identity unresolved (RC-4) or name its owner",
+      "Find evidence for RC-4 or name its owner",
     );
     fireEvent.click(
       within(row(container, "RC-4")).getByRole("button", {

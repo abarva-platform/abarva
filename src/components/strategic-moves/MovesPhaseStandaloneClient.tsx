@@ -4,7 +4,10 @@ import { GateReadinessStep } from "@/components/strategic-moves/step-page/GateRe
 import { rootCauseCaptureText } from "@/lib/programs/root-cause-register";
 import { RootCausesStep } from "@/components/strategic-moves/step-page/RootCausesStep";
 import { StepPageTabs } from "@/components/strategic-moves/step-page/MovesStepPage";
-import { resolvePhaseWorkflow } from "@/lib/programs/phase-workflow-registry";
+import {
+  resolveChangeProfile,
+  resolvePhaseWorkflow,
+} from "@/lib/programs/phase-workflow-registry";
 import { describeGateSignOffReadback } from "@/lib/programs/gate-sign-off-readback";
 import { resolvePhaseBuildBlock } from "@/lib/programs/phase-build-action-state";
 import Link from "next/link";
@@ -3627,9 +3630,10 @@ export function MovesPhaseStandaloneClient({
           describeGateSignOffReadback(signOffReadback).state === "available"
         }
         canApprove={canApproveGates}
-        approverName="a gate approver"
+        approverName="the gate approver"
+        approverIsRole
+        changeProfile={resolveChangeProfile(confirmedSolutionRoute)}
         buildHeldReason={buildHold?.statusLine ?? null}
-        depthDetail="Full. The gate step is always Full, whatever the change profile."
         onBeforeBuild={finalizePhaseCapture}
         onSubmit={approvePhaseGateAfterBuild}
         onBack={() => window.location.assign(phaseHref(phase.phase))}

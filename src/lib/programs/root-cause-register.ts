@@ -33,6 +33,17 @@ export interface RootCauseEntry {
   /** Stable id: "RC-1", or "S-1" for a symptom. */
   id: string;
   cause: string;
+  /**
+   * An authored short name for sentences ("identity", "lineage"). Never a
+   * truncation of the cause; without one, sentences name the id alone.
+   */
+  short?: string;
+  /**
+   * The label of a file uploaded for this cause that is awaiting extraction
+   * review. While a pending review carries this label, the cause is waiting
+   * on that review, not on new evidence.
+   */
+  evidenceInReview?: string;
   status: RootCauseStatus;
   /** The baseline metric this cause drives, by its name in `baseline_metrics`. */
   drives?: string;
@@ -97,6 +108,10 @@ function toEntry(value: unknown): RootCauseEntry | null {
     id,
     cause,
     status: status as RootCauseStatus,
+    ...(text(o.short) ? { short: text(o.short) } : {}),
+    ...(text(o.evidenceInReview)
+      ? { evidenceInReview: text(o.evidenceInReview) }
+      : {}),
     ...(text(o.drives) ? { drives: text(o.drives) } : {}),
     ...(evidence.length ? { evidence } : {}),
     ...(confidence ? { confidence } : {}),
