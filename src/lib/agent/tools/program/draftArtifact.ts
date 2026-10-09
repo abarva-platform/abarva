@@ -27,6 +27,7 @@ import {
 import { getDeliverableProfile } from '@/lib/deliverables/profiles/registry';
 import { draftModuleDeliverable } from '@/lib/programs/nexus';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
+import { describeMissingSolutionContext } from '@/lib/programs/solution-context-labels';
 import type { ProgramPhaseId } from '@/lib/programs/programs-types';
 
 interface DraftArtifactInput {
@@ -236,7 +237,7 @@ export const draftArtifactTool: AgentTool<DraftArtifactInput> = {
           success: false,
           error: `context_blocked: ${result.missing.join(', ')}`,
           recovery:
-            `I need more evidence before I can draft this: ${result.missing.join(', ')}. ` +
+            `I need more evidence before I can draft this: ${result.missing.map(describeMissingSolutionContext).join(', ')}. ` +
             'Upload it or tell me where to find it and I will retry.',
         };
       }
