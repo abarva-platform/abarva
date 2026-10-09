@@ -485,19 +485,110 @@ describe("POST .../phase-capture · step-page records", () => {
     const body = (await res.json()) as Record<string, unknown>;
     expect(res.status).toBe(200);
     expect(body.changedFields).toEqual(["design_traceability"]);
-    expect((body.values as Record<string, string>).design_traceability).toBe(RECORD);
+    expect((body.values as Record<string, string>).design_traceability).toBe(
+      RECORD,
+    );
     const written = inserts.find(
-      (row) => row.module_key === phaseCaptureModuleKey(3, "design_traceability"),
+      (row) =>
+        row.module_key === phaseCaptureModuleKey(3, "design_traceability"),
     );
     expect(written).toMatchObject({
       phase_number: 3,
-      state_jsonb: expect.objectContaining({ value: RECORD, step_record: true }),
+      state_jsonb: expect.objectContaining({
+        value: RECORD,
+        step_record: true,
+      }),
     });
     // Never counted as a capture question.
     const capture = body.capture as { sections: Array<{ key: string }> };
-    expect(capture.sections.map((s) => s.key)).not.toContain("design_traceability");
+    expect(capture.sections.map((s) => s.key)).not.toContain(
+      "design_traceability",
+    );
     // The revision a client echoes back covers the stored record.
     expect(body.revision).toBe(p3Revision({ design_traceability: RECORD }));
+  });
+
+  it("completes a saved record with the phase, so the next phase inherits it", async () => {
+    const inserts = recordingClient();
+    mockGetModuleState.mockResolvedValue([
+      {
+        moduleKey: phaseCaptureModuleKey(3, "design_traceability"),
+        status: "in_progress",
+        state: { value: RECORD },
+      },
+    ]);
+    const answers = Object.fromEntries(
+      getPhaseCaptureSections(3).map((section) => [
+        section.key,
+        `Answer for ${section.key}.`,
+      ]),
+    );
+    const res = await POST(
+      req({
+        phase: 3,
+        complete: true,
+        sections: answers,
+        expectedRevision: p3Revision({ design_traceability: RECORD }),
+      }) as never,
+      { params },
+    );
+    expect(res.status).toBe(200);
+    const written = inserts.find(
+      (row) =>
+        row.module_key === phaseCaptureModuleKey(3, "design_traceability"),
+    );
+    expect(written).toMatchObject({
+      status: "completed",
+      completed_at: expect.any(String),
+      state_jsonb: expect.objectContaining({
+        value: RECORD,
+        step_record: true,
+      }),
+    });
+  });
+
+  it("does not create an empty record row when the phase completes without one", async () => {
+    const inserts = recordingClient();
+    const answers = Object.fromEntries(
+      getPhaseCaptureSections(3).map((section) => [
+        section.key,
+        `Answer for ${section.key}.`,
+      ]),
+    );
+    const res = await POST(
+      req({
+        phase: 3,
+        complete: true,
+        sections: answers,
+        expectedRevision: p3Revision(),
+      }) as never,
+      { params },
+    );
+    expect(res.status).toBe(200);
+    expect(
+      inserts.some(
+        (row) =>
+          row.module_key === phaseCaptureModuleKey(3, "design_traceability"),
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps a record in progress while the phase is not being completed", async () => {
+    const inserts = recordingClient();
+    await POST(
+      req({
+        phase: 3,
+        sections: { design_traceability: RECORD },
+        expectedRevision: p3Revision(),
+      }) as never,
+      { params },
+    );
+    expect(
+      inserts.find(
+        (row) =>
+          row.module_key === phaseCaptureModuleKey(3, "design_traceability"),
+      ),
+    ).toMatchObject({ status: "in_progress", completed_at: null });
   });
 
   it("leaves a Move without a record on the revision it had", async () => {
@@ -512,7 +603,9 @@ describe("POST .../phase-capture · step-page records", () => {
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
-    expect(Object.keys(body.values as object)).not.toContain("design_traceability");
+    expect(Object.keys(body.values as object)).not.toContain(
+      "design_traceability",
+    );
   });
 
   it("fences a stale write against a saved record", async () => {
@@ -527,7 +620,9 @@ describe("POST .../phase-capture · step-page records", () => {
     const res = await POST(
       req({
         phase: 3,
-        sections: { design_traceability: RECORD.replace("Stewardship", "Steward") },
+        sections: {
+          design_traceability: RECORD.replace("Stewardship", "Steward"),
+        },
         expectedRevision: p3Revision(),
       }) as never,
       { params },

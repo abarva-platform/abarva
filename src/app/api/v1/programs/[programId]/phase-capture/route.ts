@@ -702,10 +702,14 @@ export async function POST(
     // rehydration source of last resort. Only mirror when a capture value
     // actually changed — a no-edit save must never touch it.
     for (const [index, record] of phaseStepRecordSections(phase).entries()) {
-      if (!changedKeys.has(record.key)) continue;
       const moduleKey = phaseCaptureModuleKey(phase, record.key);
       const existing = existingByKey.get(moduleKey);
       const value = storedValues[record.key] ?? "";
+      // A saved record completes with the phase, exactly as an answer does:
+      // the next phase inherits only completed modules, so a record left
+      // `in_progress` would never reach P4's carried capture. An unsaved
+      // record is never created just because the phase completed.
+      if (!changedKeys.has(record.key) && !(markComplete && value)) continue;
       const state: Record<string, unknown> = {
         ...(existing?.state_jsonb ?? {}),
         capture_section_key: record.key,
@@ -715,7 +719,11 @@ export async function POST(
         step_record: true,
         updated_at: nowIso,
       };
-      const status = value ? "in_progress" : "not_started";
+      const status = !value
+        ? "not_started"
+        : markComplete
+          ? "completed"
+          : "in_progress";
       if (existing) {
         const { error } = await sb
           .from("program_modules")
@@ -725,6 +733,7 @@ export async function POST(
             module_order: 100 + index,
             status,
             state_jsonb: state,
+            ...(status === "completed" ? { completed_at: nowIso } : {}),
           })
           .eq("id", existing.id)
           .eq("engagement_id", programId);
@@ -739,7 +748,7 @@ export async function POST(
           status,
           state_jsonb: state,
           started_at: nowIso,
-          completed_at: null,
+          completed_at: status === "completed" ? nowIso : null,
         });
         if (error) throw error;
       }
