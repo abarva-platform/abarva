@@ -47,6 +47,11 @@ import {
   describeApprovedEvidenceBasisRefusal,
   unevaluableApprovedEvidenceBasisRefusal,
 } from "@/lib/programs/approved-evidence-basis-refusal";
+// Each `error:` literal below is annotated `satisfies
+// MoveClientApprovalOwnRefusalCode`, so adding a refusal code here without
+// giving it a reviewer sentence in `move-client-approval-refusal.ts` is a
+// compile error rather than a bare token on a reviewer's screen.
+import type { MoveClientApprovalOwnRefusalCode } from "@/lib/programs/move-client-approval-refusal";
 import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approved-evidence-lineage";
 import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
 import { renderValidatedDocx } from "@/lib/deliverables/orchestrator/render-validated-doc";
@@ -292,7 +297,11 @@ export async function POST(
     const ctx = await requireTenancy();
     const { supabase } = await getProgramsRouteSupabase("mutation");
     const program = await getProgramById(ctx, programId, { supabase });
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!program)
+      return Response.json(
+        { error: "not_found" satisfies MoveClientApprovalOwnRefusalCode },
+        { status: 404 },
+      );
 
     const artifact =
       (await getGeneratedArtifactById(artifactId, {
@@ -304,13 +313,16 @@ export async function POST(
           })
         : null);
     if (!artifact)
-      return Response.json({ error: "not_found" }, { status: 404 });
+      return Response.json(
+        { error: "not_found" satisfies MoveClientApprovalOwnRefusalCode },
+        { status: 404 },
+      );
     if (
       !generatedArtifactBelongsToMove(artifact.sourceArtifactRef, programId)
     ) {
       return Response.json(
         {
-          error: "wrong_move",
+          error: "wrong_move" satisfies MoveClientApprovalOwnRefusalCode,
           detail: "Generated artifact is not scoped to this Move.",
         },
         { status: 403 },
@@ -323,7 +335,8 @@ export async function POST(
     if (!deliverableTypeKey) {
       return Response.json(
         {
-          error: "unsupported_artifact_type",
+          error:
+            "unsupported_artifact_type" satisfies MoveClientApprovalOwnRefusalCode,
           detail: `"${artifact.artifactType}" cannot be resolved to a registered Move deliverable.`,
         },
         { status: 422 },
@@ -336,7 +349,7 @@ export async function POST(
     if (phase < 1 || phase > 5) {
       return Response.json(
         {
-          error: "unsupported_phase",
+          error: "unsupported_phase" satisfies MoveClientApprovalOwnRefusalCode,
           detail: "Only P1-P5 artifacts can be approved here.",
         },
         { status: 422 },
@@ -441,7 +454,8 @@ export async function POST(
       if (precondition) {
         return Response.json(
           {
-            error: "architecture_lineage_not_current",
+            error:
+              "architecture_lineage_not_current" satisfies MoveClientApprovalOwnRefusalCode,
             detail: precondition.detail,
           },
           { status: 409 },
@@ -453,7 +467,8 @@ export async function POST(
         // non-null assertion.
         return Response.json(
           {
-            error: "architecture_lineage_not_current",
+            error:
+              "architecture_lineage_not_current" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               "The current approved option or P3 context snapshot is unavailable.",
           },
@@ -468,7 +483,8 @@ export async function POST(
       if (!validation.ok) {
         return Response.json(
           {
-            error: "architecture_lineage_not_current",
+            error:
+              "architecture_lineage_not_current" satisfies MoveClientApprovalOwnRefusalCode,
             detail: validation.detail,
           },
           { status: 409 },
@@ -493,7 +509,7 @@ export async function POST(
     ) {
       return Response.json(
         {
-          error: "forbidden",
+          error: "forbidden" satisfies MoveClientApprovalOwnRefusalCode,
           detail: "Authorized Move approval permission required.",
         },
         { status: 403 },
@@ -504,7 +520,8 @@ export async function POST(
     if (!generatedContent) {
       return Response.json(
         {
-          error: "generated_artifact_not_extractable",
+          error:
+            "generated_artifact_not_extractable" satisfies MoveClientApprovalOwnRefusalCode,
           detail:
             "The generated artifact has no extractable content to approve.",
         },
@@ -538,7 +555,7 @@ export async function POST(
       if (!(file instanceof File) || file.size === 0) {
         return Response.json(
           {
-            error: "file_required",
+            error: "file_required" satisfies MoveClientApprovalOwnRefusalCode,
             detail: "A client-approved file is required.",
           },
           { status: 400 },
@@ -547,7 +564,7 @@ export async function POST(
       if (!isWithinSizeLimit(file.size)) {
         return Response.json(
           {
-            error: "file_too_large",
+            error: "file_too_large" satisfies MoveClientApprovalOwnRefusalCode,
             detail: `max ${MAX_ATTACHMENT_SIZE_BYTES} bytes`,
           },
           { status: 413 },
@@ -555,7 +572,11 @@ export async function POST(
       }
       if (file.type && !isAllowedMimeType(file.type)) {
         return Response.json(
-          { error: "unsupported_type", detail: file.type },
+          {
+            error:
+              "unsupported_type" satisfies MoveClientApprovalOwnRefusalCode,
+            detail: file.type,
+          },
           { status: 415 },
         );
       }
@@ -571,7 +592,8 @@ export async function POST(
       if (!parsedText) {
         return Response.json(
           {
-            error: "approved_upload_not_extractable",
+            error:
+              "approved_upload_not_extractable" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               "Client-approved replacement files must contain extractable text before they can become the downstream source of truth.",
             parseMethod: parsed.extractedStructured.parse_method,
@@ -591,7 +613,8 @@ export async function POST(
       if (unsupportedFinancialClaims.length > 0) {
         return Response.json(
           {
-            error: "unsupported_financial_claim_delta",
+            error:
+              "unsupported_financial_claim_delta" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               "The reviewed file adds or strengthens financial claims that are not established by the generated source. Attach and approve supporting financial evidence, rebuild the deliverable, then review it again.",
             unsupportedClaims: unsupportedFinancialClaims,
@@ -670,7 +693,8 @@ export async function POST(
       } catch (err) {
         return Response.json(
           {
-            error: "generated_artifact_final_render_failed",
+            error:
+              "generated_artifact_final_render_failed" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               err instanceof Error
                 ? err.message
@@ -682,7 +706,8 @@ export async function POST(
       if (!renderedFinal) {
         return Response.json(
           {
-            error: "generated_artifact_final_not_available",
+            error:
+              "generated_artifact_final_not_available" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               "Accepting an AI draft requires a structured generated artifact that can render to a final DOCX or PPTX and be stored in the artifact vault.",
           },
@@ -738,7 +763,8 @@ export async function POST(
         ) {
           return Response.json(
             {
-              error: "artifact_storage_unavailable",
+              error:
+                "artifact_storage_unavailable" satisfies MoveClientApprovalOwnRefusalCode,
               detail:
                 "The final editable artifact could not be stored. Approval was not recorded; retry after artifact storage is available.",
             },
@@ -811,7 +837,7 @@ export async function POST(
     if (!signedOff) {
       return Response.json(
         {
-          error: "sign_off_failed",
+          error: "sign_off_failed" satisfies MoveClientApprovalOwnRefusalCode,
           detail: "Deliverable could not be signed off.",
         },
         { status: 409 },
@@ -840,7 +866,10 @@ export async function POST(
       err,
     );
     return Response.json(
-      { error: "internal_error", detail: (err as Error).message },
+      {
+        error: "internal_error" satisfies MoveClientApprovalOwnRefusalCode,
+        detail: (err as Error).message,
+      },
       { status: 500 },
     );
   }

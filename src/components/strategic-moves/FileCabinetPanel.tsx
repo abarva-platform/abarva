@@ -20,6 +20,7 @@ import {
   describeEvidenceDecisionRefusal,
 } from "@/lib/programs/evidence-cabinet-readback";
 import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
+import { describeMoveClientApprovalRefusal } from "@/lib/programs/move-client-approval-refusal";
 
 interface Artifact {
   artifactId: string;
@@ -1015,12 +1016,19 @@ function ArtifactRow({
         detail?: string;
       };
       if (!res.ok || !json.ok) {
-        throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+        throw new Error(
+          describeMoveClientApprovalRefusal({
+            code: json.error,
+            detail: json.detail,
+          }),
+        );
       }
       setReviewOpen(false);
       await onChanged();
     } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "client approval failed");
+      setActionErr(
+        e instanceof Error ? e.message : describeMoveClientApprovalRefusal({}),
+      );
     } finally {
       setClientApprovalBusy(false);
     }
@@ -1062,12 +1070,21 @@ function ArtifactRow({
           detail?: string;
         };
         if (!res.ok || !json.ok) {
-          throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+          throw new Error(
+            describeMoveClientApprovalRefusal({
+              code: json.error,
+              detail: json.detail,
+            }),
+          );
         }
         setReviewOpen(false);
         await onChanged();
       } catch (e) {
-        setActionErr(e instanceof Error ? e.message : "approved upload failed");
+        setActionErr(
+          e instanceof Error
+            ? e.message
+            : describeMoveClientApprovalRefusal({}),
+        );
       } finally {
         setClientApprovalBusy(false);
         if (approvedFileInputRef.current) {
