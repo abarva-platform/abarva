@@ -2339,6 +2339,113 @@ describe("evaluateGate", () => {
     expect(result.requiresApproval).toBe(true);
   });
 
+  it("does not let a P2 recommendation to proceed override a Discovery Report that records a hard gap", async () => {
+    // Same completed P2 capture as the test above, whose recommendation says
+    // "proceed to Design". The difference: the signed report is READABLE and
+    // records an unresolved hard gap. The capture path exists for a report
+    // with no readable text; it must not outvote a report that has one.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 2,
+      archetype: "contact_center_agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "discovery-report",
+        deliverable_type_key: "discovery_report",
+        status: "signed_off",
+      },
+    ];
+    evidenceFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content:
+          "P2 Discovery Report. HARD gaps: technical owner not yet named; baseline not yet pulled. " +
+          "Do not advance to P3 design until baseline attestation is complete.",
+        structured_data: null,
+        generated_at: "2026-05-02T00:00:00.000Z",
+      },
+    ];
+    modulesFixture = [
+      {
+        module_key: "phase_2_current_state_findings",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Current state findings show fragmented claims, CRM, prior authorization, benefits, knowledge, and call-center process evidence.",
+        },
+      },
+      {
+        module_key: "phase_2_baseline_metrics",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Baseline metrics captured: average handle time, first-call resolution, transfer rate, repeat contact, cost, quality, and volume.",
+        },
+      },
+      {
+        module_key: "phase_2_gaps_root_causes",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Gaps and root causes are evidence-backed and explain data quality, workflow, and governance blockers.",
+        },
+      },
+      {
+        module_key: "phase_2_process_handoffs",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Process handoffs name operations, supervisor queues, compliance, security, architecture, and data ownership roles.",
+        },
+      },
+      {
+        module_key: "phase_2_data_quality_governance",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Data quality and governance findings name source ownership, privacy controls, audit evidence, and steward accountability.",
+        },
+      },
+      {
+        module_key: "phase_2_evidence_confidence",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Evidence confidence marks which findings are strong, partial, stale, synthetic, or require client completion.",
+        },
+      },
+      {
+        module_key: "phase_2_recommendation",
+        status: "completed",
+        state_jsonb: {
+          value:
+            "Recommendation: proceed to Design with no unresolved hard gaps, carrying caveats around source readiness.",
+        },
+      },
+    ];
+    addApprovedTechnicalRouteCapture();
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      2,
+      3,
+    );
+
+    expect(result.pass).toBe(false);
+    const readiness = result.failedChecks.find(
+      (c) => c.check === "p2_readiness_cleared",
+    );
+    expect(readiness).toEqual(
+      expect.objectContaining({
+        severity: "hard",
+        reason: expect.stringContaining(
+          "signed Discovery Report still contains unresolved hard-gap",
+        ),
+      }),
+    );
+  });
   it("does not block P2 to P3 on future-looking P3 gate risks in the signed Discovery Report", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",

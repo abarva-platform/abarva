@@ -1333,7 +1333,12 @@ export async function evaluateGate(
           (latestDiscoveryReportText.length > 0 &&
             !discoveryReportHasHardGap &&
             !/\bconditional proceed\b/.test(latestDiscoveryReportText)) ||
+          // The P2 answers decide only when the report has no readable text.
+          // A readable report that records a hard gap or a conditional proceed
+          // is the diagnosis of record; a "we recommend proceeding" in the
+          // capture must not override it.
           (fromPhase === 2 &&
+            latestDiscoveryReportText.length === 0 &&
             /\b(proceed|recommend|clear|ready|no unresolved hard)\b/.test(
               phaseCaptureText,
             ) &&
