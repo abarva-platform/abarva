@@ -34,6 +34,18 @@
  * total as their own lines. NO productivity credit is applied for AI tools
  * in this increment — a licence never changes hours, weeks or labor cost.
  *
+ * ## Unconfirmed inputs are printed, never hidden
+ *
+ * A member built from a pod template may carry `provenance`: its role came
+ * from a proposed (unapproved) mapping, and/or its level was clamped into the
+ * role's allowed range. The pricer derives the caveat sentences from those
+ * flags itself (`podMemberCaveats`) — "proposed role mapping, unapproved" and
+ * "level clamped from X to Y" — and writes them into the member's FTE term
+ * source, its rate term source, its rate notes, its cost line, the formula
+ * trace and the result's `caveats`, so a workbook or document built from the
+ * result cannot present the member as confirmed. Provenance whose flags
+ * contradict the member's own level is refused.
+ *
  * Pure, deterministic, no I/O. Invalid input returns a typed refusal —
  * never NaN, Infinity or a silent zero.
  */
@@ -58,6 +70,48 @@ export interface PodMember {
   providerClassCode?: string | null;
   /** Full-time equivalents of this member in the pod. Finite, >= 0. */
   fte: number;
+  /** How the member's role and level were derived, when it came from a pod template. Absent = caller-specified, no caveat. */
+  provenance?: PodMemberProvenance;
+}
+
+/** The first words of the caveat on a member whose role mapping is proposed, not confirmed. */
+export const PROPOSED_ROLE_MAPPING_CAVEAT = "proposed role mapping, unapproved";
+
+export interface PodMemberProvenance {
+  /** `confirmed` = an exact/alias reference match; `proposed_unapproved` = proposed by a tower + label rule, not yet approved. */
+  roleMapping: "confirmed" | "proposed_unapproved";
+  /** The rule that proposed the role (`GENERIC_ROLE_RULES` id), or null. */
+  mappingRuleId: string | null;
+  /** The pod template's role label, as written. */
+  rawRoleText: string;
+  /** `none` exactly when `levelCode === originalLevelCode`. */
+  levelAdjustment: "none" | "clamped_up" | "clamped_down";
+  /** The pod's blended level, before any clamp. */
+  originalLevelCode: string;
+}
+
+/**
+ * The caveat sentences a member's provenance requires, in a fixed order:
+ * the proposed mapping first, then the level clamp. Empty for a member with
+ * no provenance, or a confirmed, unclamped one.
+ */
+export function podMemberCaveats(member: PodMember): string[] {
+  const p = member.provenance;
+  if (!p) return [];
+  const caveats: string[] = [];
+  if (p.roleMapping !== "confirmed") {
+    caveats.push(
+      `${PROPOSED_ROLE_MAPPING_CAVEAT} ("${p.rawRoleText}" → ${member.roleCode}${p.mappingRuleId ? ` by rule ${p.mappingRuleId}` : ""})`,
+    );
+  }
+  if (p.levelAdjustment !== "none") {
+    caveats.push(`level clamped from ${p.originalLevelCode} to ${member.levelCode}`);
+  }
+  return caveats;
+}
+
+function withCaveats(text: string, caveats: readonly string[]): string {
+  return caveats.length === 0 ? text : `${text} [${caveats.join("; ")}]`;
 }
 
 export interface PodDefinition {
@@ -136,7 +190,10 @@ export interface PodPricingInput {
 
 export interface PodMemberCostLine {
   member: PodMember;
+  /** The resolved rate; its `notes` end with the member's caveats. */
   rate: ResolvedPodRate;
+  /** `podMemberCaveats(member)` — empty when the member is confirmed and unclamped. */
+  caveats: readonly string[];
   paidHours: number;
   costCents: Cents;
   /** fte × weeks × hours/week = paid hours; × hourly rate = cost (reconciles via `evaluateFormulaTerms`). */
@@ -175,6 +232,8 @@ export interface PodPricingResult {
   toolLicenceCostCents: Cents;
   /** labor + tool licences. */
   totalCostCents: Cents;
+  /** Every member caveat, prefixed with the member (`ROL-x/LVL-y@LOC: proposed role mapping, unapproved (...)`). Empty = every input confirmed. */
+  caveats: readonly string[];
   formulaTrace: string;
 }
 
@@ -184,6 +243,7 @@ export type PodPricingRefusalCode =
   | "invalid_productive_share"
   | "empty_pod"
   | "invalid_member"
+  | "invalid_member_provenance"
   | "invalid_fte"
   | "non_positive_total_fte"
   | "rate_unresolved"
@@ -268,6 +328,20 @@ function validate(input: PodPricingInput): PodPricingRefusal | null {
       return refuse(
         "invalid_member",
         `every pod member needs a roleCode, levelCode and locationCode, got ${JSON.stringify(m)}`,
+      );
+    }
+    const p = m.provenance;
+    if (
+      p &&
+      ((p.roleMapping !== "confirmed" && p.roleMapping !== "proposed_unapproved") ||
+        (p.levelAdjustment !== "none" &&
+          p.levelAdjustment !== "clamped_up" &&
+          p.levelAdjustment !== "clamped_down") ||
+        (p.levelAdjustment === "none") !== (p.originalLevelCode === m.levelCode))
+    ) {
+      return refuse(
+        "invalid_member_provenance",
+        `member ${memberLabel(m)} provenance must be confirmed|proposed_unapproved with a level adjustment of none exactly when its level equals the original level, got ${JSON.stringify(p)}`,
       );
     }
     if (!isFiniteNumber(m.fte) || m.fte < 0) {
@@ -357,7 +431,9 @@ export function pricePod(
   const productiveCapacityHours = roundHours(weeks * productiveHoursPerWeek);
 
   const memberLines: PodMemberCostLine[] = pod.members.map((member, i) => {
-    const rate = rates[i];
+    const caveats = podMemberCaveats(member);
+    const rate =
+      caveats.length === 0 ? rates[i] : { ...rates[i], notes: [...rates[i].notes, ...caveats] };
     const paidHours = roundHours(member.fte * weeks * hoursPerFteWeek);
     const costCents = hoursToCents(paidHours, rate.hourlyRateCents);
     const terms = closeHoursTerms(
@@ -365,7 +441,7 @@ export function pricePod(
         {
           label: `${memberLabel(member)} FTE`,
           value: member.fte,
-          source: "pod",
+          source: withCaveats("pod", caveats),
           cellRole: "count",
         },
         { label: "weeks", value: weeks, source: "engine", cellRole: "count" },
@@ -382,10 +458,10 @@ export function pricePod(
     appendCostTerms(
       terms,
       rate.hourlyRateCents,
-      `resolved:${rate.baseSource}`,
+      withCaveats(`resolved:${rate.baseSource}`, caveats),
       costCents,
     );
-    return { member, rate, paidHours, costCents, formulaTerms: terms };
+    return { member, rate, caveats, paidHours, costCents, formulaTerms: terms };
   });
   const laborCostCents = sumCents(...memberLines.map((l) => l.costCents));
 
@@ -444,7 +520,7 @@ export function pricePod(
     memberLines
       .map(
         (l) =>
-          `${memberLabel(l.member)} ${l.member.fte} FTE × ${weeks} wk × ${hoursPerFteWeek} h × ${dollars(l.rate.hourlyRateCents)}/hr = ${dollars(l.costCents)}`,
+          `${withCaveats(memberLabel(l.member), l.caveats)} ${l.member.fte} FTE × ${weeks} wk × ${hoursPerFteWeek} h × ${dollars(l.rate.hourlyRateCents)}/hr = ${dollars(l.costCents)}`,
       )
       .join(" + ") +
     ` = ${dollars(laborCostCents)} labor; rounding slack ${slackHours} productive h (${dollars(slackCostCents)}, included)` +
@@ -468,6 +544,9 @@ export function pricePod(
     toolLicenceLines,
     toolLicenceCostCents,
     totalCostCents,
+    caveats: memberLines.flatMap((l) =>
+      l.caveats.map((c) => `${memberLabel(l.member)}: ${c}`),
+    ),
     formulaTrace,
   };
 }

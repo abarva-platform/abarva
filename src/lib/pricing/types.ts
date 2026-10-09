@@ -248,8 +248,18 @@ export interface PricingDeliveryLocationRow {
 // `scripts/pricing/convert-pod-library.ts`.
 // ---------------------------------------------------------------------------
 
-/** How a pod's free-text role label was mapped to a role code. `unmatched` = no mapping (or an ambiguous one); never guessed. */
-export type PodRoleMatchMethod = "exact" | "alias" | "unmatched";
+/**
+ * How a pod's free-text role label was mapped to a role code. `exact` /
+ * `alias` = an exact reference match; `proposed_by_tower` = proposed by an
+ * explicit tower + label rule (`scripts/pricing/convert-pod-library.ts#GENERIC_ROLE_RULES`),
+ * unapproved for the row; `unmatched` = no mapping (or an unresolved
+ * ambiguous one). Never fuzzy.
+ */
+export type PodRoleMatchMethod = "exact" | "alias" | "proposed_by_tower" | "unmatched";
+/** `confirmed` exactly for exact/alias, `proposed_unapproved` for proposed_by_tower, `unmatched` for unmatched. */
+export type PodRoleMappingStatus = "confirmed" | "proposed_unapproved" | "unmatched";
+/** Whether a row's level was clamped into its role's allowed range: `clamped_up` = raised to the junior bound, `clamped_down` = lowered to the senior bound. */
+export type PodLevelAdjustment = "none" | "clamped_up" | "clamped_down";
 
 export interface PricingPodTemplateRow {
   pod_code: string;
@@ -269,11 +279,17 @@ export interface PricingPodTemplateRoleRow {
   pod_code: string;
   /** Null exactly when `match_method === 'unmatched'`. */
   role_code: string | null;
-  /** The pod's blended level — the source carries no per-role level. */
+  /** The level this member is priced at: the pod's blended level, clamped into the role's allowed range. */
   level_code: string;
+  /** The pod's blended level before any clamp (the source carries no per-role level). */
+  original_level_code: string;
+  level_adjustment: PodLevelAdjustment;
   fte: number;
   raw_role_text: string;
   match_method: PodRoleMatchMethod;
+  mapping_status: PodRoleMappingStatus;
+  /** The generic-role rule that proposed the role; null unless `match_method === 'proposed_by_tower'`. */
+  mapping_rule_id: string | null;
   source_row: number;
 }
 

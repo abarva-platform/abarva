@@ -19,6 +19,7 @@ import { pricePod, type PodRateResolver, type ResolvedPodRate } from "../pod-pri
 import { createReferencePodRateResolver } from "../pod-rate-adapter";
 import {
   AGENT_SCENARIO_ASSUMPTION_STATUS,
+  DEFAULT_AGENT_LICENCE_BASIS_REASON,
   agentCapacityScenario,
   podMembersFromTemplate,
   type PodTemplateLibrary,
@@ -51,9 +52,13 @@ function role(
     pod_code: podCode,
     role_code: roleCode,
     level_code: "LVL-08",
+    original_level_code: "LVL-08",
+    level_adjustment: "none",
     fte,
     raw_role_text: raw,
     match_method: roleCode === null ? "unmatched" : "exact",
+    mapping_status: roleCode === null ? "unmatched" : "confirmed",
+    mapping_rule_id: null,
     source_row: 6,
   };
 }
@@ -108,29 +113,34 @@ const PROFILES = [
 // ---------------------------------------------------------------------------
 
 describe("podMembersFromTemplate", () => {
-  it("builds one member per role row at the pod's blended level, location and provider class", () => {
+  it("builds one member per role row at its level, location and provider class, each with confirmed provenance", () => {
     const result = podMembersFromTemplate("POD-001", {
       library: LIBRARY,
       locationCode: "LOC-INDIA-TIER-1",
       providerClassCode: "SI-T2",
     });
+    const confirmed = (raw: string) => ({
+      roleMapping: "confirmed",
+      mappingRuleId: null,
+      rawRoleText: raw,
+      levelAdjustment: "none",
+      originalLevelCode: "LVL-08",
+    });
+    const members = [
+      { roleCode: "ROL-023", levelCode: "LVL-08", locationCode: "LOC-INDIA-TIER-1", providerClassCode: "SI-T2", fte: 1, provenance: confirmed("Data Architect") },
+      { roleCode: "ROL-037", levelCode: "LVL-08", locationCode: "LOC-INDIA-TIER-1", providerClassCode: "SI-T2", fte: 3, provenance: confirmed("3x Data Engineer") },
+    ];
     expect(result).toEqual({
       ok: true,
       podCode: "POD-001",
       templateName: "POD-001 pod",
       blendedLevelCode: "LVL-08",
-      members: [
-        { roleCode: "ROL-023", levelCode: "LVL-08", locationCode: "LOC-INDIA-TIER-1", providerClassCode: "SI-T2", fte: 1 },
-        { roleCode: "ROL-037", levelCode: "LVL-08", locationCode: "LOC-INDIA-TIER-1", providerClassCode: "SI-T2", fte: 3 },
-      ],
-      pod: {
-        podCode: "POD-001",
-        members: [
-          { roleCode: "ROL-023", levelCode: "LVL-08", locationCode: "LOC-INDIA-TIER-1", providerClassCode: "SI-T2", fte: 1 },
-          { roleCode: "ROL-037", levelCode: "LVL-08", locationCode: "LOC-INDIA-TIER-1", providerClassCode: "SI-T2", fte: 3 },
-        ],
-      },
+      members,
+      pod: { podCode: "POD-001", members },
       agentMixCodes: ["AGENT-B", "AGENT-ABARVA"],
+      allMappingsConfirmed: true,
+      proposedMappingCount: 0,
+      clampedLevelCount: 0,
       source: "Workforce_Taxonomy_Master.xlsx:Delivery Pods row 6",
     });
   });
@@ -208,6 +218,7 @@ describe("agentCapacityScenario", () => {
     const result = agentCapacityScenario(D35, [{ agentCode: "AGENT-ABARVA", count: D36 }], {
       profiles: PROFILES,
       licenceBasis: "per_platform",
+      licenceBasisReason: "matches the Estimation Engine worked example",
     });
     if (!result.ok) throw new Error(result.message);
     expect(result.effectiveFte).toBe(19.232);
@@ -225,6 +236,7 @@ describe("agentCapacityScenario", () => {
     const perPlatform = agentCapacityScenario(D35, [{ agentCode: "AGENT-ABARVA", count: D36 }], {
       profiles: PROFILES,
       licenceBasis: "per_platform",
+      licenceBasisReason: "matches the Estimation Engine worked example",
     });
     const perAgent = agentCapacityScenario(D35, [{ agentCode: "AGENT-ABARVA", count: D36 }], {
       profiles: PROFILES,
@@ -243,6 +255,7 @@ describe("agentCapacityScenario", () => {
     const result = agentCapacityScenario(2, [{ agentCode: "AGENT-B", count: 0 }], {
       profiles: PROFILES,
       licenceBasis: "per_platform",
+      licenceBasisReason: "matches the Estimation Engine worked example",
     });
     expect(result).toMatchObject({ ok: true, effectiveFte: 2, licenceCostCentsPerMonth: 0 });
   });
@@ -274,7 +287,7 @@ describe("agentCapacityScenario", () => {
     ]);
     expect(result.formulaTrace).toBe(
       "effective FTE = 5 humans + 2 × AGENT-B 1.2 FTE × 0.75 util (1.8) + 3 × AGENT-ABARVA 1.3 FTE × 0.72 util (2.808) = 9.608; " +
-        "licences/month (per_agent) = 2 × $4000.00 + 3 × $3500.00 = $18500.00; unconfirmed planning assumption, no productivity credit applied",
+        `licences/month (per_agent: ${DEFAULT_AGENT_LICENCE_BASIS_REASON}) = 2 × $4000.00 + 3 × $3500.00 = $18500.00; unconfirmed planning assumption, no productivity credit applied`,
     );
   });
 
@@ -315,6 +328,78 @@ describe("agentCapacityScenario", () => {
     expect(changed.effectiveFte).toBe(base.effectiveFte);
     expect(changed.licenceCostCentsPerMonth).toBe(base.licenceCostCentsPerMonth);
     expect(changed.agentLines[0].capacityTerms).toEqual(base.agentLines[0].capacityTerms);
+  });
+
+  describe("licence basis (product-owner decision: default per_agent)", () => {
+    const twelve = [{ agentCode: "AGENT-ABARVA", count: 12 }];
+
+    it("defaults to per_agent when the caller names no basis, and records that it defaulted and why", () => {
+      const result = agentCapacityScenario(8, twelve, { profiles: PROFILES });
+      if (!result.ok) throw new Error(result.message);
+      expect(result.licenceBasis).toBe("per_agent");
+      expect(result.licenceBasisDefaulted).toBe(true);
+      expect(result.licenceBasisReason).toBe(DEFAULT_AGENT_LICENCE_BASIS_REASON);
+      expect(DEFAULT_AGENT_LICENCE_BASIS_REASON).toMatch(/^default per_agent \(product-owner decision 2026-10-10\)/);
+      expect(result.agentLines[0].licenceQuantity).toBe(12);
+      expect(result.licenceCostCentsPerMonth).toBe(12 * 350000);
+      expect(result.agentLines[0].licenceTerms[0]).toMatchObject({ label: "licensed agents", source: "scenario:per_agent" });
+      expect(result.formulaTrace).toContain(`licences/month (per_agent: ${DEFAULT_AGENT_LICENCE_BASIS_REASON}) = 12 × $3500.00 = $42000.00`);
+    });
+
+    it("an explicit per_agent is not 'defaulted'; it records the caller's reason, or the default one", () => {
+      const bare = agentCapacityScenario(8, twelve, { profiles: PROFILES, licenceBasis: "per_agent" });
+      const reasoned = agentCapacityScenario(8, twelve, {
+        profiles: PROFILES,
+        licenceBasis: "per_agent",
+        licenceBasisReason: "  vendor quotes per seat  ",
+      });
+      if (!bare.ok || !reasoned.ok) throw new Error("refused");
+      expect(bare).toMatchObject({ licenceBasisDefaulted: false, licenceBasisReason: DEFAULT_AGENT_LICENCE_BASIS_REASON });
+      expect(reasoned).toMatchObject({ licenceBasisDefaulted: false, licenceBasisReason: "vendor quotes per seat" });
+      expect(reasoned.licenceCostCentsPerMonth).toBe(bare.licenceCostCentsPerMonth);
+    });
+
+    it.each([
+      ["no reason", undefined],
+      ["an empty reason", ""],
+      ["a blank reason", "   "],
+    ])("refuses per_platform with %s", (_label, reason) => {
+      expect(
+        agentCapacityScenario(8, twelve, { profiles: PROFILES, licenceBasis: "per_platform", licenceBasisReason: reason }),
+      ).toEqual({
+        ok: false,
+        code: "licence_basis_reason_required",
+        message:
+          "licenceBasis 'per_platform' charges one subscription however many agents run, so it needs a non-empty licenceBasisReason; the default is 'per_agent'",
+      });
+    });
+
+    it("accepts per_platform with a reason and records both in the output and the trace", () => {
+      const result = agentCapacityScenario(8, twelve, {
+        profiles: PROFILES,
+        licenceBasis: "per_platform",
+        licenceBasisReason: " enterprise platform contract ",
+      });
+      if (!result.ok) throw new Error(result.message);
+      expect(result).toMatchObject({
+        licenceBasis: "per_platform",
+        licenceBasisReason: "enterprise platform contract",
+        licenceBasisDefaulted: false,
+        licenceCostCentsPerMonth: 350000,
+      });
+      expect(result.agentLines[0].licenceTerms[0]).toMatchObject({ label: "platform subscriptions", source: "scenario:per_platform" });
+      expect(result.formulaTrace).toContain("licences/month (per_platform: enterprise platform contract) = 1 × $3500.00 = $3500.00");
+    });
+
+    it("a non-string reason counts as no reason", () => {
+      expect(
+        agentCapacityScenario(8, twelve, {
+          profiles: PROFILES,
+          licenceBasis: "per_platform",
+          licenceBasisReason: 42 as unknown as string,
+        }),
+      ).toMatchObject({ ok: false, code: "licence_basis_reason_required" });
+    });
   });
 
   it.each([
@@ -423,7 +508,8 @@ describe("against the committed pod library", () => {
         if (!result.ok) throw new Error(`${t.pod_code}: ${result.message}`);
         built += 1;
         expect(result.members.reduce((acc, m) => acc + m.fte, 0)).toBe(t.headcount);
-        expect(result.members.every((m) => m.levelCode === t.blended_level_code)).toBe(true);
+        expect(result.members.map((m) => m.levelCode)).toEqual(rows.map((r) => r.level_code));
+        expect(result.members.every((m) => m.provenance?.originalLevelCode === t.blended_level_code)).toBe(true);
       } else {
         expect(result).toMatchObject({ ok: false, code: "unmatched_roles" });
         expect(result.ok ? [] : result.unmatchedRoles?.map((u) => u.rawRoleText)).toEqual(
@@ -467,7 +553,7 @@ describe("against the committed pod library", () => {
     const result = agentCapacityScenario(
       8,
       [{ agentCode: "AGENT-ABARVA", count: 12 }],
-      { profiles: data.agentProfiles, licenceBasis: "per_platform" },
+      { profiles: data.agentProfiles, licenceBasis: "per_platform", licenceBasisReason: "the Estimation Engine worked example" },
     );
     expect(result).toMatchObject({ ok: true, effectiveFte: 19.232, licenceCostCentsPerMonth: 350000 });
   });
