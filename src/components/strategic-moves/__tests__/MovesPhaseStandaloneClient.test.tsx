@@ -11461,3 +11461,149 @@ describe("P0 blocked framing excludes the criteria the approval itself completes
     ).toBeGreaterThanOrEqual(2);
   });
 });
+
+// The gate ledger when the evaluator did not run.
+//
+// `buildGateCriteria` returns `verified: false` on every criterion when
+// `evaluateGate` could not evaluate the Move — which, since the compat client
+// never throws, now includes a failed state read reported as
+// `gate_state_unreadable`. The flag had ZERO readers: this ledger rendered
+// `completed ? "✓" : "○"` and `{met} of {total}`, both of which read an
+// unevaluated criterion exactly like an evaluated-and-unmet one, so the panel
+// stated `0 of N` in the ordinary met/unmet tone.
+describe("gate criteria the evaluator could not check", () => {
+  function unverifiedCriteria() {
+    return [
+      {
+        id: "discovery_report_signed_off",
+        label: "Discovery synthesis report signed off",
+        completed: false,
+        severity: "hard" as const,
+        verified: false,
+      },
+      {
+        id: "p2_readiness_cleared",
+        label: "Diagnosis clears P2 without unresolved hard gaps",
+        completed: false,
+        severity: "hard" as const,
+        verified: false,
+      },
+    ];
+  }
+
+  function renderPhase2(
+    gateCriteria: ReturnType<typeof unverifiedCriteria>,
+  ): void {
+    // Evidence readiness is seeded COVERED so the decision ladder's prior arms
+    // (readiness unverifiable, then open required evidence) do not win — the
+    // criteria arm is deliberately last, because an open evidence item is still
+    // true and still actionable when the criteria were not evaluated.
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+          gateCriteria,
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  it("does not state a met-of-total tally it never measured", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(screen.queryByText("0 of 2 hard met")).not.toBeInTheDocument();
+    expect(screen.getByText("Not evaluated")).toBeInTheDocument();
+  });
+
+  it("marks each row as unread rather than unmet", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(screen.getAllByText("State unread")).toHaveLength(2);
+  });
+
+  it("says an unchecked criterion is not a failed one", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(
+      screen.getByText(/no criterion below has been checked/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /nothing here says a deliverable is missing or unsigned/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("does not tell the reader to regenerate anything", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(screen.queryByText(/regenerate/i)).not.toBeInTheDocument();
+  });
+
+  // The regression direction, and the one the demo walk uses: an EVALUATED
+  // ledger must keep its tally, its glyphs and its silence.
+  it("an evaluated ledger still states its tally and carries no notice", () => {
+    renderPhase2(
+      unverifiedCriteria().map((criterion, index) => ({
+        ...criterion,
+        verified: true,
+        completed: index === 0,
+      })),
+    );
+    expect(screen.getByText("1 of 2 hard met")).toBeInTheDocument();
+    expect(screen.queryByText("Not evaluated")).not.toBeInTheDocument();
+    expect(screen.queryByText("State unread")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no criterion below has been checked/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("one unverified criterion among verified ones still stops the tally", () => {
+    const mixed = unverifiedCriteria();
+    mixed[0] = { ...mixed[0], verified: true, completed: true };
+    renderPhase2(mixed);
+    expect(screen.queryByText("1 of 2 hard met")).not.toBeInTheDocument();
+    expect(screen.getByText("Not evaluated")).toBeInTheDocument();
+  });
+
+  it("does not name a criterion as the blocker", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(
+      screen.queryByText(/Blocked by: Discovery synthesis report signed off/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/gate state could not be read/i),
+    ).toBeInTheDocument();
+  });
+
+  it("an evaluated ledger still names its blocker and counts them", () => {
+    renderPhase2(
+      unverifiedCriteria().map((criterion) => ({
+        ...criterion,
+        verified: true,
+      })),
+    );
+    expect(
+      screen.getByText(/Blocked by: Discovery synthesis report signed off/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/gate state could not be read/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no count of open blockers can be stated/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("the row mark and the tally label are different words", () => {
+    // Same string in both slots would let either assertion above pass on the
+    // other, and a revert to the met/unmet wording would survive.
+    renderPhase2(unverifiedCriteria());
+    const tally = screen.getByText("Not evaluated");
+    const marks = screen.getAllByText("State unread");
+    expect(marks[0]).not.toBe(tally);
+    expect(marks[0]?.textContent).not.toBe(tally.textContent);
+  });
+});

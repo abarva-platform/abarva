@@ -18,6 +18,7 @@ import {
   type PhaseCaptureStatusView,
 } from "@/lib/programs/phase-capture-status";
 import { resolvePhaseCaptureHold } from "@/lib/programs/phase-capture-hold";
+import { gateCriteriaVerification } from "@/lib/programs/gate-criteria-verification";
 import { CaptureEvidenceHoldNotice } from "@/components/strategic-moves/CaptureEvidenceHoldNotice";
 import {
   CaptureGateMetNotice,
@@ -6415,6 +6416,12 @@ function PhaseBody({
   const softGateCriteria = move.gateCriteria.filter(
     (criterion) => criterion.severity === "soft",
   );
+  // Whether the evaluator ran at all. `completed: false` on an UNEVALUATED
+  // criterion is the correct open-gate direction and is left alone; only the
+  // ledger's claims below change, so the tally stops asserting a count nobody
+  // measured. Derived from `move.gateCriteria` alone — the synthesized P0
+  // evidence criterion is this surface's own and is always evaluated.
+  const gateCriteriaState = gateCriteriaVerification(move.gateCriteria);
   const openHardCriteria = hardGateCriteria.filter(
     (criterion) => !criterion.completed,
   );
@@ -6547,12 +6554,18 @@ function PhaseBody({
     phase.phase >= 5
       ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
       : gateOnlyConfirmSummaryFor(phase, nextOpenPhaseContract);
+  // Read only on the evaluated arm of `gateSummaryLine` below, which is what
+  // stops a criterion being named as the blocker on the strength of an answer
+  // the evaluator did not compute. A second `evaluated` guard here would be
+  // unkillable: no input reaches this line in the unevaluated case.
   const primaryHardBlocker = actionableOpenHardCriteria[0]?.label ?? null;
   const primarySoftCaveat = openSoftCriteria[0]?.label ?? null;
   const gateSummaryLine = isGateBlocked
-    ? primaryHardBlocker
-      ? `Blocked by: ${primaryHardBlocker}.`
-      : "Blocked by an open hard gate."
+    ? !gateCriteriaState.evaluated
+      ? gateCriteriaState.summaryLabel
+      : primaryHardBlocker
+        ? `Blocked by: ${primaryHardBlocker}.`
+        : "Blocked by an open hard gate."
     : openSoftCriteria.length > 0
       ? primarySoftCaveat
         ? `Ready with caveat: ${primarySoftCaveat}.`
@@ -6886,13 +6899,22 @@ function PhaseBody({
               </p>
             </div>
             <strong>
-              {
-                hardGateCriteria.filter((criterion) => criterion.completed)
-                  .length
-              }{" "}
-              of {hardGateCriteria.length || move.gateCriteria.length}
+              {gateCriteriaState.evaluated ? (
+                <>
+                  {
+                    hardGateCriteria.filter((criterion) => criterion.completed)
+                      .length
+                  }{" "}
+                  of {hardGateCriteria.length || move.gateCriteria.length}
+                </>
+              ) : (
+                gateCriteriaState.countLabel
+              )}
             </strong>
           </header>
+          {gateCriteriaState.evaluated ? null : (
+            <p className="mxw-gate-unevaluated">{gateCriteriaState.notice}</p>
+          )}
           {move.gateCriteria.length > 0 ? (
             <>
               <div className="mxw-gate-group">
@@ -6911,7 +6933,11 @@ function PhaseBody({
                     key={criterion.id}
                   >
                     {criterion.completed ? "✓" : "○"} {criterion.label}
-                    {phase.phase === 0 &&
+                    {gateCriteriaState.evaluated ? null : (
+                      <em>{gateCriteriaState.markLabel}</em>
+                    )}
+                    {gateCriteriaState.evaluated &&
+                    phase.phase === 0 &&
                     !criterion.completed &&
                     isP0ApprovalGeneratedCriterion(criterion.id) ? (
                       <em>Completed by approving this gate</em>
@@ -6955,14 +6981,26 @@ function PhaseBody({
               <summary>
                 <span>Gate criteria</span>
                 <strong>
-                  {
-                    hardGateCriteria.filter((criterion) => criterion.completed)
-                      .length
-                  }{" "}
-                  of {hardGateCriteria.length || move.gateCriteria.length} hard
-                  met
+                  {gateCriteriaState.evaluated ? (
+                    <>
+                      {
+                        hardGateCriteria.filter(
+                          (criterion) => criterion.completed,
+                        ).length
+                      }{" "}
+                      of {hardGateCriteria.length || move.gateCriteria.length}{" "}
+                      hard met
+                    </>
+                  ) : (
+                    gateCriteriaState.countLabel
+                  )}
                 </strong>
               </summary>
+              {gateCriteriaState.evaluated ? null : (
+                <p className="mxw-gate-unevaluated">
+                  {gateCriteriaState.notice}
+                </p>
+              )}
               {move.gateCriteria.length > 0 ? (
                 <>
                   <div className="mxw-gate-group compact">
@@ -6978,6 +7016,9 @@ function PhaseBody({
                         key={criterion.id}
                       >
                         {criterion.completed ? "✓" : "○"} {criterion.label}
+                        {gateCriteriaState.evaluated ? null : (
+                          <em>{gateCriteriaState.markLabel}</em>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -9895,6 +9936,7 @@ function MovesStandaloneStyles() {
 .mxw-gate header>strong{border:1px solid var(--line-2);border-radius:999px;padding:7px 12px;font-size:13px;white-space:nowrap}
 .mxw-gate div{display:grid;gap:8px;margin-top:12px}
 .mxw-gate-group{display:grid;gap:8px;margin-top:14px}
+.mxw-gate-unevaluated{margin:0 0 8px!important;font-size:12px!important;line-height:1.5;color:var(--muted)!important}
 .mxw-gate-group-label{border:0!important;background:transparent!important;padding:0!important;font-size:10px!important;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)!important;font-weight:800}
 .mxw-gate span{display:block;border:1px solid var(--line);border-radius:10px;background:var(--soft);padding:12px 14px;font-size:13px;color:var(--ink-2)}
 .mxw-gate span.met{background:var(--green-tint);color:var(--green);border-color:rgba(29,143,104,.25)}

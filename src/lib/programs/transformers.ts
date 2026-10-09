@@ -48,6 +48,7 @@ import {
   getWorkItems,
 } from "./queries";
 import { evaluateGate, gateCriteriaForPhase } from "./governance";
+import { GATE_STATE_UNREADABLE_CHECK } from "./gate-state-readback";
 import { PHASE_LABELS } from "./types.db";
 import { getPhaseLabel } from "./phase-labels";
 import { canonicalProgramClientName } from "./client-name";
@@ -183,14 +184,24 @@ export async function buildGateCriteria(
           allowHistoricalPhase: true,
         })
       : await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1);
-    // A `phase_mismatch` / `program_not_found` failure is not a per-criterion
-    // signal — in that case treat the criteria as not yet verified rather
-    // than marking every concrete criterion failed.
+    // A `phase_mismatch` / `program_not_found` / `no_rule` /
+    // `gate_state_unreadable` failure is not a per-criterion signal — in that
+    // case treat the criteria as not yet verified rather than marking every
+    // concrete criterion failed.
+    //
+    // `gate_state_unreadable` is the one of the four the `catch` below does NOT
+    // already cover, and it is why the comment above this function ("if the
+    // evaluator cannot run (e.g. a transient read error) every criterion is
+    // returned completed: false, verified: false") was not true of the code:
+    // the compat client never throws, so a failed state read returned NORMALLY
+    // with every deliverable-backed criterion listed as failed. Derived from
+    // the evaluator's own id so the two cannot drift.
     const structural = check.failedChecks.some(
       (f) =>
         f.check === "phase_mismatch" ||
         f.check === "program_not_found" ||
-        f.check === "no_rule",
+        f.check === "no_rule" ||
+        f.check === GATE_STATE_UNREADABLE_CHECK,
     );
     if (!structural) {
       failedKeys = new Set(check.failedChecks.map((f) => f.check));

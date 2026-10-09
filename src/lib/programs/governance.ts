@@ -44,6 +44,11 @@ import {
   p2ReadinessBlockedReason,
 } from "./discovery-report-readiness";
 import {
+  GATE_STATE_UNREADABLE_CHECK,
+  classifyGateStateReads,
+  describeUnreadableGateState,
+} from "./gate-state-readback";
+import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
@@ -544,12 +549,16 @@ export async function evaluateGate(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
 
   // Collect state signals
+  // `error` is read on every one of these: the compat client never throws, so a
+  // dropped `error` arrives as `data: null` and every collector below coerces
+  // that to `[]` — the same shape as a Move that has genuinely produced
+  // nothing. See `gate-state-readback.ts`.
   const [
-    { data: deliverables },
-    { data: modules },
-    { data: participants },
-    { data: approvalRequests },
-    { data: milestones },
+    { data: deliverables, error: deliverablesError },
+    { data: modules, error: modulesError },
+    { data: participants, error: participantsError },
+    { data: approvalRequests, error: approvalRequestsError },
+    { data: milestones, error: milestonesError },
   ] = await Promise.all([
     sb
       .from("deliverables_v2")
@@ -626,7 +635,7 @@ export async function evaluateGate(
           .eq("tenant_key", ctx.clientKey)
           .eq("move_id", programId)
           .in("artifact_id", linkedArtifactIds)
-      : { data: [] };
+      : { data: [], error: null };
   const linkedArtifactById = new Map(
     (
       (linkedArtifactRows.data as Array<{
@@ -976,13 +985,16 @@ export async function evaluateGate(
       : null;
 
   let latestOriginationBriefText = "";
+  let originationVersionError: { message?: string | null } | null = null;
   if (originationBriefRow) {
-    const { data: originationVersions } = await sb
-      .from("deliverable_versions")
-      .select("content, structured_data, generated_at")
-      .eq("deliverable_id", (originationBriefRow as { id?: string }).id)
-      .order("generated_at", { ascending: false })
-      .limit(1);
+    const { data: originationVersions, error: originationVersionsError } =
+      await sb
+        .from("deliverable_versions")
+        .select("content, structured_data, generated_at")
+        .eq("deliverable_id", (originationBriefRow as { id?: string }).id)
+        .order("generated_at", { ascending: false })
+        .limit(1);
+    originationVersionError = originationVersionsError ?? null;
     const latestOriginationVersion = ((originationVersions as Array<{
       content: string | null;
       structured_data: Record<string, unknown> | null;
@@ -1063,13 +1075,15 @@ export async function evaluateGate(
     );
 
   let latestDiscoveryReportText = "";
+  let discoveryVersionError: { message?: string | null } | null = null;
   if (discoveryReportRow) {
-    const { data: discoveryVersions } = await sb
+    const { data: discoveryVersions, error: discoveryVersionsError } = await sb
       .from("deliverable_versions")
       .select("content, structured_data, generated_at")
       .eq("deliverable_id", (discoveryReportRow as { id?: string }).id)
       .order("generated_at", { ascending: false })
       .limit(1);
+    discoveryVersionError = discoveryVersionsError ?? null;
     const latestDiscoveryVersion = ((discoveryVersions as Array<{
       content: string | null;
       structured_data: Record<string, unknown> | null;
@@ -1145,6 +1159,46 @@ export async function evaluateGate(
       latestDiscoveryReportText,
     ) &&
     !discoveryReportHasHardGap;
+
+  // Every criterion below answers from the seven reads above, and an unreadable
+  // read is indistinguishable from a Move that produced nothing. Refuse by name
+  // rather than let 30 of the 38 branches report an absence nobody observed.
+  // The verdict does not change — an unread state cannot clear a HARD
+  // criterion — only what the refusal says.
+  const stateReadback = classifyGateStateReads({
+    deliverables: deliverablesError ? { error: deliverablesError } : null,
+    program_modules: modulesError ? { error: modulesError } : null,
+    engagement_participants: participantsError
+      ? { error: participantsError }
+      : null,
+    approval_requests: approvalRequestsError
+      ? { error: approvalRequestsError }
+      : null,
+    milestones: milestonesError ? { error: milestonesError } : null,
+    origination_brief_version: originationVersionError
+      ? { error: originationVersionError }
+      : null,
+    discovery_report_version: discoveryVersionError
+      ? { error: discoveryVersionError }
+      : null,
+    linked_artifacts: linkedArtifactRows.error
+      ? { error: linkedArtifactRows.error }
+      : null,
+  });
+  if (!stateReadback.readable) {
+    return {
+      pass: false,
+      failedChecks: [
+        {
+          check: GATE_STATE_UNREADABLE_CHECK,
+          reason: describeUnreadableGateState(stateReadback.unreadable),
+          severity: "hard",
+        },
+      ],
+      requiresApproval: false,
+      approverRole: null,
+    };
+  }
 
   const failedChecks: GateCheck["failedChecks"] = [];
   for (const c of rule.checks) {
