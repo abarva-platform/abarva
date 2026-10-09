@@ -231,6 +231,75 @@ export const DEFAULT_MODULE_MULTIPLIERS: ModuleMultipliers = {
 };
 
 // ---------------------------------------------------------------------------
+// Program-level factors, pricing basis, unit-hours overrides (ROM increment 1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Program-wide multipliers applied AFTER every module factor (complexity ×
+ * novelty × assurance × scenario). Absent = no program factor at all (the
+ * engine's arithmetic and text trace are byte-identical to before).
+ */
+export interface ProgramFactors {
+  /**
+   * Delivery friction across the whole program (e.g. 1.10 = 10% more hours
+   * than the module factors alone imply). Must be finite and > 0. Applied
+   * exactly ONCE per hour: a `percentage_of_selected_labor` rule reads its
+   * selected packs' PRE-friction expected hours, so the friction it then
+   * receives on its own line is not compounded.
+   */
+  frictionFactor: number;
+}
+
+/**
+ * How the engine turns hours into money.
+ * - `role_mix` (default): every hours line is split across the pack's role
+ *   mix and priced at each role's resolved rate — the original behaviour.
+ * - `pod`: the engine emits hours-only lines (no role allocation, no rate,
+ *   no allocation gap); a caller prices the adjusted hours with
+ *   `pod-pricer.ts`.
+ */
+export type PricingBasis = "role_mix" | "pod";
+
+/** A caller-supplied replacement for one effort rule's reference unit hours. */
+export interface UnitHoursOverride {
+  /** Finite, >= 0. Replaces the rule's unit hours (per-unit / per-week / ... hours, or a fixed rule's base hours). */
+  unitHours: number;
+  /** Required, non-blank — why the reference value does not fit this Move. */
+  reason: string;
+}
+
+/** What one formula term contributes, so a workbook builder can place it in the right kind of cell. */
+export type FormulaCellRole =
+  /** A scope-driver quantity (multiplied). */
+  | "count"
+  /** Hours per unit of a driver (multiplied). */
+  | "unit_hours"
+  /** An hours value that is not count × unit (a fixed base, a tiered total, a selected-labor base) (multiplied). */
+  | "base_hours"
+  /** A `percentage_of_selected_labor` share, as a fraction (multiplied). */
+  | "percentage"
+  /** A module, scenario or program factor (multiplied). */
+  | "factor"
+  /** A role's allocation, as a fraction (multiplied). */
+  | "allocation"
+  /** The engine's per-step 4-decimal rounding carried into this line (ADDED, never multiplied). Present only when non-zero. */
+  | "rounding"
+  /** The line's hours: roundHours(product of every multiplied term + every rounding term). */
+  | "result"
+  /** The resolved hourly rate in cents (multiplies the hours result). */
+  | "rate"
+  /** The line's labor cost in cents: hoursToCents(result, rate). */
+  | "cost_result";
+
+export interface FormulaTerm {
+  label: string;
+  value: number;
+  /** Provenance: `driver:<code>`, `rule:<code>`, `override:<rule>`, `module:<pack>`, `scenario:<key>`, `program`, `selection:<scope>`, `role_mix:<role>`, `rate:<scope>`, `engine`. */
+  source: string;
+  cellRole: FormulaCellRole;
+}
+
+// ---------------------------------------------------------------------------
 // Line item — the per-calculated-line provenance record (brief §2.8, §9.4).
 // ---------------------------------------------------------------------------
 
@@ -258,6 +327,8 @@ export interface EffortLineItem {
         noveltyFactor: number;
         assuranceFactor: number;
         scenarioFactor: number;
+        /** Present only when the caller supplied `programFactors`. */
+        frictionFactor?: number;
         expected: number;
       }
     | null;
@@ -270,6 +341,16 @@ export interface EffortLineItem {
   overrideRationale: string | null;
   /** Human-readable "N base + M driver-hours × factors × allocation × rate = $X" trace for the drilldown UI. */
   formulaTrace: string;
+  /**
+   * The same arithmetic as `formulaTrace`, as ordered structured terms that
+   * reconcile exactly to the line's hours (and, when priced, its labor cost)
+   * via `evaluateFormulaTerms`. Always emitted by `runEffortEngine` (empty
+   * for a line that carries no hours, e.g. a manual cost line); optional on
+   * the type only so hand-built line items stay valid.
+   */
+  formulaTerms?: readonly FormulaTerm[];
+  /** Present only when a `unitHoursOverrides` entry replaced this line's rule's reference unit hours. */
+  unitHoursOverride?: { referenceUnitHours: number; unitHours: number; reason: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -291,6 +372,8 @@ export interface EffortEngineOutput {
   modelVersion: number;
   scenarioKey: ScenarioKey;
   tenantKey: string;
+  /** Set by `runEffortEngine`; optional on the type only so hand-built outputs stay valid. Absent means `role_mix`. */
+  pricingBasis?: PricingBasis;
   lineItems: readonly EffortLineItem[];
   totals: EffortEngineTotals;
 }
@@ -312,6 +395,26 @@ export interface RangeResult {
   policyCode: string;
   policyName: string;
   score: number;
+  lowMultiplier: number;
+  highMultiplier: number;
+  expectedCents: Cents;
+  lowCents: Cents;
+  highCents: Cents;
+}
+
+/**
+ * A named low/high band applied without the five-dimension score — e.g. a
+ * band the program uses for every pre-design release. `low` <= 1 <= `high`.
+ */
+export interface NamedRangePolicy {
+  code: string;
+  low: number;
+  high: number;
+}
+
+export interface NamedRangeResult {
+  basis: "named";
+  policyCode: string;
   lowMultiplier: number;
   highMultiplier: number;
   expectedCents: Cents;
