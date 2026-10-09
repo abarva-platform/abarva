@@ -21,5 +21,6 @@ export * from "./effort-engine";
 export * from "./formula-terms";
 export * from "./pod-pricer";
 export * from "./pod-rate-adapter";
+export * from "./pod-templates";
 export * from "./validation";
 export * from "./snapshot-service";
