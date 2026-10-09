@@ -21,7 +21,22 @@ import {
 } from "@/lib/programs/evidence-cabinet-readback";
 import { describeMoveReviewDecisionRefusal } from "@/lib/programs/move-review-decision-refusal";
 import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
+import {
+  describeMoveArtifactStorage,
+  describeMoveUploadOutcome,
+  type MoveArtifactStoragePresentation,
+} from "@/lib/programs/move-artifact-storage-state";
 import { describeMoveClientApprovalRefusal } from "@/lib/programs/move-client-approval-refusal";
+
+/** The meta row's colours for the storage chip's three tones. */
+const ARTIFACT_STORAGE_TONE_COLOR: Record<
+  MoveArtifactStoragePresentation["tone"],
+  string
+> = {
+  ok: "#1E7E34",
+  alert: "#B71C1C",
+  muted: "#9AA3B2",
+};
 
 interface Artifact {
   artifactId: string;
@@ -763,7 +778,6 @@ function ArtifactRow({
   onChanged: () => Promise<void>;
   canApproveGates: boolean;
 }) {
-  const stored = a.stored === "azure_blob";
   const [reviewOpen, setReviewOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [reviewBusy, setReviewBusy] = useState(false);
@@ -793,6 +807,12 @@ function ArtifactRow({
     a.fileFormat === "html" || a.outputRole === "html_visual_review_companion";
   const isGeneratedArtifactRoute =
     a.downloadUrl.startsWith("/api/v1/artifacts/");
+  // What this row records about where its bytes are. Four states, and only
+  // one of them asks the reviewer for anything; they used to share two words.
+  const storage = describeMoveArtifactStorage({
+    stored: a.stored,
+    renderedOnRequest: isGeneratedArtifactRoute,
+  });
   const canRegenerateReview = supportsReviewRegeneration(a);
 
   const submitReviewFeedback = useCallback(async () => {
@@ -1284,14 +1304,13 @@ function ArtifactRow({
             {!roleLabel && <span>{fmtBytes(a.fileSize)}</span>}
             <span>{fmtDate(a.createdAt)}</span>
             <span
-              title={
-                stored
-                  ? "Stored in the secure artifact vault"
-                  : "Storage pending"
-              }
-              style={{ color: stored ? "#1E7E34" : "#B71C1C", fontWeight: 600 }}
+              title={storage.title}
+              style={{
+                color: ARTIFACT_STORAGE_TONE_COLOR[storage.tone],
+                fontWeight: 600,
+              }}
             >
-              {stored ? "Vault" : "Storage pending"}
+              {storage.label}
             </span>
           </div>
         </div>
@@ -2152,16 +2171,20 @@ export function FileCabinetPanel({
               warning?: string;
             }
           | undefined;
-        const notCaptured = evidence?.status === "not_captured";
-        setUploadState(notCaptured ? "error" : "idle");
-        setUploadMsg(
-          notCaptured
-            ? `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)}, but parsing/review registration failed. This file is not available to generation. ${evidence.warning ?? "Retry ingestion or contact support."}`
-            : evidence?.reviewStatus
-              ? `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}${j.blobStored ? " to secure storage" : ""}; parsed via ${evidence.parseMethod ?? "parser"}. Human review is required before it can inform generation.`
-              : `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)}${j.blobStored ? " to secure storage" : ""}.`,
-        );
-        if (!notCaptured) setUploadPhase(phase);
+        // An upload whose bytes were not retained used to differ from a
+        // healthy one by the four words " to secure storage" being absent,
+        // and it reported itself complete. The outcome is classified now so
+        // the one unrecoverable state is said out loud.
+        const outcome = describeMoveUploadOutcome({
+          blobStored: j.blobStored,
+          evidence,
+          fileName: file.name,
+          phaseLabel: getPhaseLabel(uploadPhase),
+          sessionFile: uploadFamily === "session_artifact",
+        });
+        setUploadState(outcome.needsAction ? "error" : "idle");
+        setUploadMsg(outcome.message);
+        if (!outcome.needsAction) setUploadPhase(phase);
         await load();
         onEvidenceChanged?.();
       } catch (e) {
