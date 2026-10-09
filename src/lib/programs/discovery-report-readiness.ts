@@ -54,9 +54,42 @@ export function discoveryReportTextFromLatestVersion(
 ): string {
   const parts = [
     typeof version?.content === "string" ? version.content : "",
-    version?.structured_data ? JSON.stringify(version.structured_data) : "",
+    version?.structured_data &&
+    !isGeneratedReportRecord(version.structured_data)
+      ? JSON.stringify(version.structured_data)
+      : "",
   ].filter((part) => part.trim().length > 0);
   return parts.join("\n").toLowerCase();
+}
+
+/**
+ * The `structured_data.source` the Moves generator stamps on every report it
+ * writes (`persistMoveGeneratedArtifact`).
+ */
+export const GENERATED_REPORT_SOURCE = "moves_program_generate";
+
+/**
+ * Whether a version's structured data is the generator's record ABOUT the
+ * report rather than the report.
+ *
+ * A generated report's words are all in `content` (the rendered HTML, draft
+ * banner included). Its `structured_data` carries what generation READ and how
+ * it was measured: `solution_context` — the Move's whole P2 capture, gaps and
+ * open questions included — and `golden_bar`, whose `missingExactEvidenceTerms`
+ * lists the terms the report LACKS. Reading that JSON as report text judged the
+ * report by its inputs, in both directions: a current-state finding such as
+ * "lineage unverified" in the capture read as the report's own hard gap (and the
+ * refusal's remedy, regenerate, re-embeds the same capture), while "stakeholder"
+ * or "baseline" in the inputs credited a report that never says either.
+ *
+ * Generated approval is "as is" — no new version is written — so this is the
+ * version the gate reads after sign-off. Uploaded or other versions keep their
+ * structured data, whose shape this module does not own.
+ */
+function isGeneratedReportRecord(
+  structuredData: Record<string, unknown>,
+): boolean {
+  return structuredData.source === GENERATED_REPORT_SOURCE;
 }
 
 /** Inputs the P2 readiness sentence is derived from. */

@@ -5,6 +5,7 @@
 // citation numbers are assigned and internal_only evidence is excluded for vendor-facing
 // audiences. The retriever is injectable so the mapping is unit-tested without Azure.
 
+import { rootCauseCaptureText } from "@/lib/programs/root-cause-register";
 import "server-only";
 
 import {
@@ -318,14 +319,19 @@ function phaseCaptureCandidates(
   row: Record<string, unknown>,
 ): GovernedCandidateLike[] {
   const state = sourceRefObject(row.state_jsonb);
-  const value = stringOrNull(state.value);
-  if (!value) return [];
+  const savedValue = stringOrNull(state.value);
+  if (!savedValue) return [];
 
   const moduleKey = stringOrNull(row.module_key);
   const sectionKey =
     stringOrNull(state.capture_section_key) ??
     moduleKey?.replace(/^phase_\d+_/, "") ??
     "phase_capture";
+  // A structured root-cause register is cited as its ranked text.
+  const value =
+    sectionKey === "gaps_root_causes"
+      ? rootCauseCaptureText(savedValue)
+      : savedValue;
   const label =
     stringOrNull(state.label) ?? stringOrNull(row.module_name) ?? sectionKey;
   const phaseNumber = Number.isInteger(row.phase_number)

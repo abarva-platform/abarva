@@ -1,4 +1,8 @@
 import "server-only";
+import {
+  rootCauseCaptureText,
+  rootCauseDigestLines,
+} from "@/lib/programs/root-cause-register";
 import { deliverableModel } from "./model-policy";
 
 import { streamAgentTurn } from "@/lib/agent/stream";
@@ -386,7 +390,9 @@ export function createMovesGenerateArtifactDeps(
           let rendered =
             key === "baseline_metrics" && isStructuredFactsValue(value)
               ? factsToPromptText(parseDiagnosisFacts(value))
-              : value;
+              : key === "gaps_root_causes"
+                ? rootCauseCaptureText(value)
+                : value;
           if (key === "business_change_assessment") {
             const assessment = parseBusinessChangeAssessment(value);
             if (assessment) {
@@ -449,8 +455,11 @@ export function createMovesGenerateArtifactDeps(
           currentByKey.get("gaps_root_causes") ??
           priorByKey.get("gaps_root_causes");
         if (gaps) {
-          digest.gaps = [gaps];
-          digest.rootCauses = [gaps];
+          // A register contributes one line per settled cause, in rank order;
+          // free text stays one entry, exactly as before.
+          const lines = rootCauseDigestLines(gaps);
+          digest.gaps = lines;
+          digest.rootCauses = lines;
         }
         const recommendation = currentByKey.get("recommendation");
         if (recommendation) {

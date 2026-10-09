@@ -237,7 +237,7 @@ describe("buildGateApprovalEvents", () => {
     });
 
     expect(events[0].label).toBe(`P2 ${PHASE_LABELS_SHORT[2]} gate approved`);
-    expect(events[0].label).toContain("Diagnose");
+    expect(events[0].label).toContain("Discover");
   });
 
   it("surfaces the approver's rationale as the event detail", () => {

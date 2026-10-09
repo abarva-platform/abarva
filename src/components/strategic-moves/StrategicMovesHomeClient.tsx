@@ -32,7 +32,7 @@ const SCATTER_VALUE_COVERAGE_THRESHOLD = 0.3;
 const PHASE_AXIS: Array<{ code: string; name: string }> = [
   { code: "P0", name: "Originate" },
   { code: "P1", name: "Charter" },
-  { code: "P2", name: "Diagnose" },
+  { code: "P2", name: "Discover" },
   { code: "P3", name: "Design" },
   { code: "P4", name: "Roadmap" },
   { code: "P5", name: "Mobilize" },

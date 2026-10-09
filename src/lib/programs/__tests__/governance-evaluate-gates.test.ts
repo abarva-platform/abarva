@@ -2245,6 +2245,60 @@ describe("evaluateGate", () => {
     expect(result.requiresApproval).toBe(true);
   });
 
+  it("does not read a generated Discovery Report's stored inputs as its own hard gap", async () => {
+    // A report generated and approved as-is keeps the generator's record in
+    // structured_data: the whole P2 capture (a current-state finding such as
+    // "lineage unverified" is ordinary discovery content) and the quality
+    // measurement. The report itself clears P2.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 2,
+      archetype: "analytics_modernization",
+    });
+    deliverablesFixture = [
+      {
+        id: "discovery-report",
+        deliverable_type_key: "discovery_report",
+        status: "signed_off",
+      },
+    ];
+    evidenceFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content:
+          "P2 Discovery Report. Attendees: sponsor, data owner, clinical informatics lead, and security lead. " +
+          "Workshop notes: lineage discovery session mapped claims and coding feeds. " +
+          "Baselines captured and owner attestation recorded. Source of record: analytics intake log. " +
+          "Stakeholder map names required owners. No open hard gaps. " +
+          "P3 readiness recommendation: proceed to Design.",
+        structured_data: {
+          source: "moves_program_generate",
+          solution_context: {
+            gaps: [
+              "Claims lineage unverified across the warehouse",
+              "Hold on new feeds until the steward is named",
+            ],
+          },
+          golden_bar: { missingExactEvidenceTerms: [] },
+        },
+        generated_at: "2026-05-02T00:00:00.000Z",
+      },
+    ];
+    addApprovedTechnicalRouteCapture();
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      2,
+      3,
+    );
+
+    expect(
+      result.failedChecks.filter((check) => check.severity === "hard"),
+    ).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
   it("accepts completed P2 phase capture as discovery notes and stakeholder evidence", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
@@ -2337,6 +2391,80 @@ describe("evaluateGate", () => {
       result.failedChecks.filter((check) => check.severity === "hard"),
     ).toEqual([]);
     expect(result.requiresApproval).toBe(true);
+  });
+
+  it("reads a root-cause register by the team's words, never by the register's own labels", async () => {
+    // Capture path: a signed report with no readable text, every P2 answer
+    // neutral. The register's labelled text says "drives baseline:", which
+    // would satisfy the baseline phrase check; the team's words
+    // ("Definitions conflict", "Certified measures") do not. Only the team's
+    // words may decide.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 2,
+      archetype: "contact_center_agent_assist",
+    });
+    deliverablesFixture = [
+      {
+        id: "discovery-report",
+        deliverable_type_key: "discovery_report",
+        status: "signed_off",
+      },
+    ];
+    evidenceFixture = [];
+    deliverableVersionsFixture = [];
+    const neutral = (key: string, value = "Captured.") => ({
+      module_key: `phase_2_${key}`,
+      status: "completed",
+      state_jsonb: { value },
+    });
+    const withRootCauses = (value: string) => [
+      neutral("current_state_findings"),
+      neutral("baseline_metrics"),
+      neutral("gaps_root_causes", value),
+      neutral("process_handoffs"),
+      neutral("data_quality_governance"),
+      neutral("evidence_confidence"),
+      neutral("recommendation"),
+    ];
+    const failed = async () => {
+      const result = await evaluateGate(
+        { clientId: "client-1", userId: "person-1" },
+        "program-1",
+        2,
+        3,
+      );
+      return result.failedChecks.map((check) => check.check);
+    };
+
+    modulesFixture = withRootCauses(
+      JSON.stringify({
+        kind: "root_cause_register",
+        version: 1,
+        orderConfirmedAt: "2026-10-02",
+        causes: [
+          {
+            id: "RC-1",
+            cause: "Definitions conflict",
+            status: "known_gap",
+            owner: "Dana Ruiz",
+            drives: "Certified measures",
+          },
+        ],
+      }),
+    );
+    addApprovedTechnicalRouteCapture();
+    const register = await failed();
+    expect(register).toContain("discovery_baseline_attested");
+
+    // Positive control: the same capture with that word written by the team
+    // clears the check, so the fixture is otherwise sufficient.
+    modulesFixture = withRootCauses(
+      "Definitions conflict; drives baseline: certified measures; owner: Dana Ruiz.",
+    );
+    addApprovedTechnicalRouteCapture();
+    const written = await failed();
+    expect(written).not.toContain("discovery_baseline_attested");
   });
 
   it("does not let a P2 recommendation to proceed override a Discovery Report that records a hard gap", async () => {

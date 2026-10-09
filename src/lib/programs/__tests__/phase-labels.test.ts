@@ -29,7 +29,7 @@ describe('phase-labels', () => {
   it('provides short rail labels for P0–P5', () => {
     expect(PHASE_LABELS_SHORT[0]).toBe('Originate');
     expect(PHASE_LABELS_SHORT[1]).toBe('Charter');
-    expect(PHASE_LABELS_SHORT[2]).toBe('Diagnose');
+    expect(PHASE_LABELS_SHORT[2]).toBe('Discover');
     expect(PHASE_LABELS_SHORT[3]).toBe('Design');
     expect(PHASE_LABELS_SHORT[4]).toBe('Roadmap');
     expect(PHASE_LABELS_SHORT[5]).toBe('Mobilize');
