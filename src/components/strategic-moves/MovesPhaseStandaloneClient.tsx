@@ -3666,6 +3666,7 @@ export function MovesPhaseStandaloneClient({
                       avaRole={phase.avaRole}
                       avaThread={avaThread}
                       avaQuestions={visibleAvaQuestions}
+                      avaStreaming={avaStreaming}
                       notesFill={
                         captureNotesEnabled ? (
                           <CaptureNotesFill
