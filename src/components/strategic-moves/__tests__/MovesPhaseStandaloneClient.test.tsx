@@ -11586,9 +11586,16 @@ describe("gate criteria the evaluator could not check", () => {
         verified: true,
       })),
     );
+    // The criterion is named in the ledger, which is what "still names its
+    // blocker" is about. It is deliberately NOT asserted on the "Why blocked"
+    // primary line: this fixture's evidence readiness is unverifiable, and
+    // `resolveGateBlockedCause` reports that cause first — the same cause the
+    // decision sentence and the next-action label on this panel already
+    // reported. Pinning a criterion name here pinned a panel whose three slots
+    // named three different causes at once.
     expect(
-      screen.getByText(/Blocked by: Discovery synthesis report signed off/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/Discovery synthesis report signed off/i).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.queryByText(/gate state could not be read/i),
     ).not.toBeInTheDocument();
@@ -11605,5 +11612,186 @@ describe("gate criteria the evaluator could not check", () => {
     const marks = screen.getAllByText("State unread");
     expect(marks[0]).not.toBe(tally);
     expect(marks[0]?.textContent).not.toBe(tally.textContent);
+  });
+});
+
+// The gate panel's blocked cause, on the surface that renders it three times.
+//
+// The four causes were written out by hand in each slot and the copies did not
+// agree: the decision sentence had all four in the right order, the next-action
+// label had three of them in a different order with NO phase-inputs arm, and
+// the "Why blocked" primary line collapsed all four onto "Blocked by an open
+// hard gate." whenever it had no criterion label to name.
+//
+// At a phase whose only open item was its capture, that rendered — on one
+// screen — "Complete 7 phase inputs before Approve & Build.", "1/1 hard gates
+// met", and then "Blocked by an open hard gate." plus "Clear hard blockers"
+// twice. `resolveGateBlockedCause` is now the only answer, so the slots cannot
+// name different causes.
+describe("the gate panel names one blocked cause", () => {
+  function renderPhase1(args: {
+    gateCriteria: StrategicMove["gateCriteria"];
+    phaseCaptureValues?: Record<string, string>;
+  }) {
+    return render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(1)}
+        initialPhaseCaptureValues={args.phaseCaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+          gateCriteria: args.gateCriteria,
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  const hardGateMet: StrategicMove["gateCriteria"] = [
+    {
+      id: "charter_signed_off",
+      label: "Charter signed off",
+      completed: true,
+      severity: "hard" as const,
+      verified: true,
+    },
+  ];
+
+  function gateWhyText(): string {
+    return document.querySelector(".mxw-gate-why-copy")?.textContent ?? "";
+  }
+
+  // The decision sentence's OWN element. `mxw-decision-surface` encloses the
+  // gate-why block as well, so asserting the sentence on the surface let a
+  // decision text that had lost its cause pass on the why copy's wording.
+  function decisionText(): string {
+    return document.querySelector(".mxw-decision-primary p")?.textContent ?? "";
+  }
+
+  it("does not call an incomplete capture an open hard gate", () => {
+    renderPhase1({ gateCriteria: hardGateMet });
+    const why = gateWhyText();
+    expect(why).toContain("Why blocked");
+    expect(why).not.toContain("Blocked by an open hard gate.");
+    expect(why).not.toContain("Clear hard blockers");
+  });
+
+  it("prescribes the phase inputs, and the decision surface agrees", () => {
+    renderPhase1({ gateCriteria: hardGateMet });
+    const why = gateWhyText();
+    expect(why).toContain("phase input");
+    expect(why).toContain("Complete phase inputs");
+    // The same cause, in the slot that was already right — this is the pair
+    // that used to disagree. Read off the sentence's own element, and pinned
+    // as equality: the why copy is built from the cause's `summaryLine`, which
+    // for this cause IS the capture sentence, so a decision text that drifted
+    // to a hard-gate count would no longer match.
+    expect(decisionText()).toContain("phase input");
+    expect(why).toContain(decisionText());
+  });
+
+  it("never counts hard blockers it did not find", () => {
+    // `Resolve 0 hard gate blockers before advancing.` is what the decision
+    // sentence reads if it loses its capture arm while the capture is the only
+    // open item.
+    renderPhase1({ gateCriteria: hardGateMet });
+    expect(decisionText()).not.toMatch(/Resolve 0 hard gate/);
+    expect(screen.getByTestId("mxw-decision-surface")).not.toHaveTextContent(
+      /Resolve 0 hard gate/,
+    );
+  });
+
+  it("does not prescribe hard blockers beside a met hard-gate tally", () => {
+    renderPhase1({ gateCriteria: hardGateMet });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    // The tally the old copy contradicted.
+    expect(surface).toHaveTextContent("1/1 hard gates met");
+    expect(surface).not.toHaveTextContent("Clear hard blockers");
+    expect(surface).not.toHaveTextContent("Blocked by an open hard gate.");
+  });
+
+  // The regression direction: a genuinely open hard criterion must still be
+  // named, and must still prescribe clearing it. Rendered at P0, where the
+  // capture ladder's arms are all gated on `phase >= 1` — so the hard cause is
+  // the one the resolver can reach, without having to satisfy a structured
+  // capture section to get there.
+  it("still names an open hard criterion as the blocker", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        evidenceNeedPackets={[
+          p0SourceEvidenceNeedPacket({
+            moveId: makeMove().id,
+            evidenceTitles: ["approved-origination-source.pdf"],
+          }),
+        ]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          gateCriteria: [
+            {
+              id: "sponsor_assigned",
+              label: "Sponsor progress contact listed",
+              completed: false,
+              severity: "hard" as const,
+              verified: true,
+            },
+          ],
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    const why = gateWhyText();
+    expect(why).toContain("Blocked by: Sponsor progress contact listed.");
+    expect(why).toContain("Clear hard blockers");
+  });
+
+  // The ordering the three slots disagreed about. With readiness unverifiable
+  // AND two hard criteria evaluated open, the panel used to say "Evidence
+  // readiness could not be verified." in the decision sentence, "Blocked by:
+  // Discovery synthesis report signed off." on the primary line, and "Refresh
+  // evidence status" on the action — three slots, three causes, one state.
+  it("names the same cause in all three slots when several are open", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+          gateCriteria: [
+            {
+              id: "discovery_report_signed_off",
+              label: "Discovery synthesis report signed off",
+              completed: false,
+              severity: "hard" as const,
+              verified: true,
+            },
+          ],
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    const why = gateWhyText();
+    expect(why).toContain(
+      "Evidence readiness could not be verified. Refresh this phase before approval.",
+    );
+    expect(why).toContain("Refresh evidence status");
+    // The slot that used to name a criterion instead.
+    expect(why).not.toContain("Blocked by: Discovery synthesis report");
+    expect(decisionText()).toBe(
+      "Evidence readiness could not be verified. Refresh this phase before approval.",
+    );
   });
 });
