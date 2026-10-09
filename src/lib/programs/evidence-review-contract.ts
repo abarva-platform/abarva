@@ -1,3 +1,20 @@
+/**
+ * The bounds `normalizeReviewedEvidenceExtraction` REFUSES on, exported so the
+ * review form can be held to the same numbers instead of carrying its own copy.
+ *
+ * Only these two are refusals. Every character bound in this module TRUNCATES
+ * (`boundedText` slices), so an over-long summary, list item, quote or locator
+ * is stored short rather than rejected, and a form has nothing to block on.
+ * Keep that distinction: a form that blocked on a truncating bound would refuse
+ * an approval the server would have accepted.
+ */
+export const REVIEWED_EXTRACTION_REFUSAL_LIMITS = {
+  /** Items in ANY ONE of the seven reviewed list fields. */
+  listItems: 50,
+  /** Reviewed evidence references (quote + locator pairs). */
+  citations: 30,
+} as const;
+
 export interface ReviewedEvidenceCitation {
   quote: string;
   locator: string;
@@ -25,7 +42,11 @@ function boundedText(value: unknown, maxLength = 1000): string | null {
 }
 
 function textList(value: unknown): string[] | null {
-  if (!Array.isArray(value) || value.length > 50) return null;
+  if (
+    !Array.isArray(value) ||
+    value.length > REVIEWED_EXTRACTION_REFUSAL_LIMITS.listItems
+  )
+    return null;
   return value
     .map((item) => boundedText(item, 500))
     .filter((item): item is string => item !== null);
@@ -63,7 +84,10 @@ export function normalizeReviewedEvidenceExtraction(
     ].some((list) => list === null)
   )
     return null;
-  if (!Array.isArray(fields.citations) || fields.citations.length > 30)
+  if (
+    !Array.isArray(fields.citations) ||
+    fields.citations.length > REVIEWED_EXTRACTION_REFUSAL_LIMITS.citations
+  )
     return null;
   const citations: ReviewedEvidenceCitation[] = [];
   for (const citation of fields.citations) {
@@ -150,7 +174,10 @@ export function initialReviewedEvidenceExtraction(args: {
       observations: sourceTextList(flexible.observations),
       assumptions: sourceTextList(flexible.assumptions),
       openQuestions: sourceTextList(flexible.openQuestions),
-      citations: citations.slice(0, 30),
+      citations: citations.slice(
+        0,
+        REVIEWED_EXTRACTION_REFUSAL_LIMITS.citations,
+      ),
     },
   };
 }

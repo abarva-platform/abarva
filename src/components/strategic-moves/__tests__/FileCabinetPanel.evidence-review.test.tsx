@@ -7,6 +7,7 @@ import {
   describeMoveUploadRefusal,
   MOVE_UPLOAD_REFUSAL_CODES,
 } from "@/lib/programs/move-upload-refusal";
+import { REVIEWED_EXTRACTION_REFUSAL_LIMITS } from "@/lib/programs/evidence-review-contract";
 
 describe("Moves File Cabinet evidence review", () => {
   it("does not expose evidence approval controls without workspace approval permission", async () => {
@@ -269,7 +270,12 @@ describe("Moves File Cabinet evidence review", () => {
     );
     fireEvent.change(
       screen.getByRole("textbox", { name: "baseline.docx review rationale" }),
-      { target: { value: "Delegated automated smoke review on named operator instruction." } },
+      {
+        target: {
+          value:
+            "Delegated automated smoke review on named operator instruction.",
+        },
+      },
     );
     fireEvent.click(
       screen.getByRole("button", { name: "Approve reviewed version" }),
@@ -279,7 +285,8 @@ describe("Moves File Cabinet evidence review", () => {
     expect(postedBody).toEqual(
       expect.objectContaining({
         decision: "approved",
-        rationale: "Delegated automated smoke review on named operator instruction.",
+        rationale:
+          "Delegated automated smoke review on named operator instruction.",
         reviewedExtraction: expect.objectContaining({
           summary: "Human-confirmed baseline is 18%.",
           structured: expect.objectContaining({
@@ -740,6 +747,164 @@ describe("Moves File Cabinet rejected evidence", () => {
     it("still answers when the refusal carries no code at all", async () => {
       await uploadAndReadMessage({});
       expect(screen.getByText(/did not say why/)).toBeInTheDocument();
+    });
+  });
+  // The approval contract refuses a reviewed extraction whose list fields or
+  // evidence references are over its bounds, and the producer that fills this
+  // form bounds the references and not the lists — so a stored row can open a
+  // form the server already refuses. These cases pin that the form says which
+  // field is over, and that the button is both inert AND styled inert.
+  describe("approval bounds on the reviewed extraction", () => {
+    const listLimit = REVIEWED_EXTRACTION_REFUSAL_LIMITS.listItems;
+
+    function renderPendingReview(decisions: string[]) {
+      const posted: unknown[] = [];
+      global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+        if (String(url).includes("/approve")) {
+          posted.push(JSON.parse(String(init?.body ?? "{}")));
+          return { ok: true, json: async () => ({ ok: true }) } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            artifacts: [],
+            pendingEvidenceReviews: [
+              {
+                evidenceId: "evidence-1",
+                title: "controls.docx",
+                phase: 2,
+                parseMethod: "docx-parser",
+                confidence: 0.9,
+                sourceTextPreview: "Controls inventory",
+                extraction: {
+                  version: 1,
+                  summary: "Controls inventory as parsed.",
+                  structured: {
+                    decisions,
+                    risks: [],
+                    baselineCandidates: [],
+                    actionItems: [],
+                    observations: [],
+                    assumptions: [],
+                    openQuestions: [],
+                    citations: [],
+                  },
+                },
+              },
+            ],
+            evidenceReviewStatus: "available",
+          }),
+        } as Response;
+      }) as unknown as typeof fetch;
+      render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+      return posted;
+    }
+
+    const rows = (count: number) =>
+      Array.from({ length: count }, (_, index) => `control ${index + 1}`);
+
+    it("names the over-limit field and withholds approval when a stored row is over", async () => {
+      const posted = renderPendingReview(rows(listLimit + 4));
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+
+      const blockers = screen.getByRole("list", {
+        name: "controls.docx approval blockers",
+      });
+      expect(blockers).toHaveTextContent("Decisions");
+      expect(blockers).toHaveTextContent(String(listLimit + 4));
+      expect(blockers).toHaveTextContent("Remove 4 items");
+
+      const approve = screen.getByRole("button", {
+        name: "Approve reviewed version",
+      });
+      expect(approve).toBeDisabled();
+      // The styling has to agree with the attribute: a full-opacity,
+      // pointer-cursor button that does nothing is the original defect.
+      expect(approve).toHaveStyle({ opacity: "0.5", cursor: "default" });
+      fireEvent.click(approve);
+      expect(posted).toHaveLength(0);
+    });
+
+    it("clears the block and approves once the reviewer removes the overage", async () => {
+      const posted = renderPendingReview(rows(listLimit + 1));
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+      expect(
+        screen.getByRole("button", { name: "Approve reviewed version" }),
+      ).toBeDisabled();
+
+      fireEvent.change(
+        screen.getByRole("textbox", {
+          name: "controls.docx reviewed decisions",
+        }),
+        { target: { value: rows(listLimit).join("\n") } },
+      );
+      expect(
+        screen.queryByRole("list", {
+          name: "controls.docx approval blockers",
+        }),
+      ).toBeNull();
+      const approve = screen.getByRole("button", {
+        name: "Approve reviewed version",
+      });
+      expect(approve).toBeEnabled();
+      expect(approve).toHaveStyle({ opacity: "1", cursor: "pointer" });
+
+      fireEvent.click(approve);
+      await waitFor(() => expect(posted).toHaveLength(1));
+    });
+
+    it("withholds approval for an emptied summary and says why", async () => {
+      const posted = renderPendingReview([]);
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+      const approve = screen.getByRole("button", {
+        name: "Approve reviewed version",
+      });
+      expect(approve).toBeEnabled();
+
+      fireEvent.change(
+        screen.getByRole("textbox", { name: "controls.docx reviewed summary" }),
+        { target: { value: "   " } },
+      );
+      expect(
+        screen.getByRole("list", { name: "controls.docx approval blockers" }),
+      ).toHaveTextContent("A reviewed summary is required");
+      expect(approve).toBeDisabled();
+      expect(approve).toHaveStyle({ opacity: "0.5", cursor: "default" });
+      fireEvent.click(approve);
+      expect(posted).toHaveLength(0);
+    });
+
+    it("leaves rejection available while approval is blocked", async () => {
+      const posted = renderPendingReview(rows(listLimit + 1));
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+      expect(
+        screen.getByRole("button", { name: "Approve reviewed version" }),
+      ).toBeDisabled();
+      const reject = screen.getByRole("button", { name: "Reject" });
+      expect(reject).toBeEnabled();
+      fireEvent.click(reject);
+      await waitFor(() => expect(posted).toHaveLength(1));
+      expect(posted[0]).toEqual(
+        expect.objectContaining({ decision: "rejected" }),
+      );
+    });
+
+    it("offers approval with no blocker list on a row within the bounds", async () => {
+      renderPendingReview(rows(listLimit));
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+      expect(
+        screen.queryByRole("list", {
+          name: "controls.docx approval blockers",
+        }),
+      ).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Approve reviewed version" }),
+      ).toBeEnabled();
     });
   });
 });
