@@ -545,6 +545,8 @@ export async function decideApprovalRequest(
   if (request.requestStatus === "approved") {
     try {
       const { closeP0OnApproval } = await import("./origination-close");
+      const { isOriginationCloseNoOp } =
+        await import("./origination-close-outcome");
       const closed = await closeP0OnApproval({
         programId: request.programId,
         tenantKey: request.tenantKey,
@@ -552,9 +554,18 @@ export async function decideApprovalRequest(
         rationale: input.rationale ?? null,
         actorTenancy: input.actorTenancy,
       });
-      if (!closed.advanced && closed.blockedBy.length > 0) {
-        console.error("[approval] P0 close blocked after approval", {
+      // Log EVERY stop, not only a gate block. `blockedBy` is populated for
+      // the gate verdict alone, so gating this on its length silenced the
+      // stops that most need a record — including the two unreadable-state
+      // refusals, where the approval stands and the Move did not move. The
+      // comment above ("a failure logs loudly") was false for exactly those.
+      // `already_past_p0` is excluded because it is a correct no-op, not a
+      // failure, and logging it as one is how a real stop gets lost in noise.
+      if (!closed.advanced && !isOriginationCloseNoOp(closed.outcome)) {
+        console.error("[approval] P0 close did not advance the Move", {
           requestId: request.id,
+          programId: request.programId,
+          outcome: closed.outcome,
           blockedBy: closed.blockedBy,
         });
       }
