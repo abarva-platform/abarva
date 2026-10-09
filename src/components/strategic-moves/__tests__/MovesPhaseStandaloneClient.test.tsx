@@ -3276,8 +3276,9 @@ describe("MovesPhaseStandaloneClient", () => {
     // ─── moves_assumption_register_v1: the HOST call site ────────────────
     // The panel has its own suite (AssumptionRegisterPanel.test.tsx). What
     // lives here is the mount: the flag arrives resolved server-side as one
-    // prop, `null` mounts nothing and fetches nothing, and a mount sits in the
-    // capture flow's opening band beside the charter carry-forward.
+    // prop, `null` mounts nothing and fetches nothing, the compact group sits
+    // in the capture flow's opening band beside the charter carry-forward, and
+    // its link opens the full register in the Record entry (Intelligence).
     const registerFetches = () =>
       (global.fetch as jest.Mock).mock.calls.filter(([input]) =>
         String(input).includes("/assumptions"),
@@ -3303,31 +3304,92 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(registerFetches()).toEqual([]);
     });
 
-    it("moves_assumption_register_v1 ON: the panel opens the capture flow and reads THIS Move's register", () => {
+    it("moves_assumption_register_v1 ON: the compact group sits in the capture flow, reads THIS Move's register, and opens the full register in the Record entry", async () => {
       const move = discoverMove();
-      render(
-        <MovesPhaseStandaloneClient
-          canApproveGates
-          captureV2Enabled
-          assumptionRegister={{
-            programId: move.id,
-            staleAssumptionIds: [],
-            charterUnavailable: false,
-            unbridgedCharterCount: 0,
-          }}
-          carriesForwardContent={[]}
-          evidenceNeedPackets={[]}
-          move={move}
-          phaseNum={2}
-          phaseTallies={[...phaseTallies]}
-        />,
-      );
-      expect(screen.getByTestId("moves-capture-flow")).toContainElement(
-        screen.getByTestId("assumption-register-panel"),
-      );
-      expect(registerFetches().map(([input]) => String(input))).toEqual([
-        `/api/v1/programs/${encodeURIComponent(move.id)}/assumptions`,
-      ]);
+      const registerUrl = `/api/v1/programs/${encodeURIComponent(move.id)}/assumptions`;
+      const previousFetch = global.fetch;
+      global.fetch = jest.fn(
+        async (input: RequestInfo | URL, init?: RequestInit) =>
+          String(input) === registerUrl
+            ? ({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                  assumptions: [
+                    {
+                      id: "00000000-0000-4000-8000-000000000001",
+                      area: "value",
+                      seq: 1,
+                      registerId: "V1",
+                      statement: "Each certified measure avoids rework",
+                      whyItMatters: null,
+                      workingFigure: "~4 h a month",
+                      source: "Session 2 notes",
+                      confidence: 3,
+                      ownerRole: "Analytics lead",
+                      status: "open",
+                      origin: "team",
+                      answer: null,
+                      answerFigure: null,
+                      answerSource: null,
+                      supersededBy: null,
+                      revision: 1,
+                      figuresRedacted: false,
+                    },
+                  ],
+                  figuresRedacted: false,
+                  canEdit: true,
+                }),
+              } as Response)
+            : (previousFetch as jest.Mock)(input, init),
+      ) as unknown as typeof fetch;
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            captureV2Enabled
+            assumptionRegister={{
+              programId: move.id,
+              staleAssumptionIds: [],
+              charterUnavailable: false,
+              unbridgedCharterCount: 0,
+            }}
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={move}
+            phaseNum={2}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        const compact = await screen.findByTestId(
+          "assumption-register-compact",
+        );
+        expect(screen.getByTestId("moves-capture-flow")).toContainElement(
+          compact,
+        );
+        // Phase pages never carry the full register.
+        expect(
+          screen.queryByTestId("assumption-register-panel"),
+        ).not.toBeInTheDocument();
+        expect(registerFetches().map(([input]) => String(input))).toEqual([
+          registerUrl,
+        ]);
+
+        fireEvent.click(within(compact).getByTestId("arp-open-full"));
+        expect(workspaceTab("Intelligence")).toHaveAttribute(
+          "aria-selected",
+          "true",
+        );
+        expect(await screen.findByTestId("arp-row-V1")).toBeInTheDocument();
+        expect(
+          screen.getByTestId("assumption-register-panel"),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByTestId("assumption-register-compact"),
+        ).not.toBeInTheDocument();
+      } finally {
+        global.fetch = previousFetch;
+      }
     });
 
     // ─── moves_charter_standing_after_discover_v1: the HOST call site ─────

@@ -15,24 +15,51 @@ same flag.
 
 ## Plain-English Summary
 
-With `moves_assumption_register_v1` on, a Moves phase page now shows the Move's
-**assumptions register**, and the charter's own assumptions join it.
+With `moves_assumption_register_v1` on, a Move now has an **assumptions
+register**, and the charter's own assumptions join it. The screen follows
+Claude Design's final register design (step page template v1.9, review 5) and
+is built from the step pages' own stylesheet and tokens, in light and dark.
 
-The register panel sits in the capture flow's opening band, beside the P2
-charter carry-forward band. It shows:
+**On a phase page: one collapsed group.** The capture flow's opening band,
+beside the P2 charter carry-forward band, carries a single collapsed group,
+`Assumptions register · n in use · k to answer`. Its summary line counts rows
+by status (open, confirmed, corrected, superseded). Opened, it lists only the
+questions still to answer, each with `Answer…` (or `Set role…`) in place, and
+links to the full register. The design's clutter rules hold: no full register
+and no aVa proposals on a phase page.
 
-- a table of the register: ID (for example V3), area, the assumption, the
-  working figure tagged "est", the owner role, confidence as a word (Low,
-  Medium, High for 1, 3, 5), the status, and the answer with its source once
-  answered. A superseded row names the row that replaced it;
-- aVa's proposals in their own group, labelled "aVa proposals — not yet in the
-  register", with Accept and Reject. A rejected proposal is not shown as a
-  register row;
-- for people who can change the register: add a row, answer a row (Confirmed
-  or Corrected, always with the answer's source; a correction must state the
-  corrected answer), and supersede a row with a new one;
-- "withheld" in place of every figure for a read-only viewer without financial
-  visibility.
+**The full register: the Record entry.** The template puts the full view on a
+Record tab, and there is no Record route yet. The phase page's Intelligence
+view is the Record tab's predecessor in the tabs design, so the full register
+renders there, below the phase intelligence panel; the compact group's link
+opens it. No new tab system was built. It shows:
+
+- each row as: `ID · statement`, why it matters, the working figure tagged
+  ESTIMATE with its source (a corrected row shows its answer figure, cited to
+  the answer's source), `owner role · confidence (Low, Medium or High) · where
+  it came from`, and the answer with its source once answered. The status sits
+  on the right; `Answer…`, `Set role…` and `Supersede…` are quiet links;
+- two views: **by area** (Value, Data, Delivery, Adoption, each `n · k open`)
+  and **by owner**, which lists only the rows to answer, grouped by owner role
+  with `Owner not set as a role` last, plus `Copy the open questions for the
+  client`. Copying uses the clipboard; where the clipboard is missing or
+  refused, the text appears selected in a read-only box;
+- aVa's proposals apart, under `aVa proposals · not yet in the register`, badged
+  `Ava draft · review`, with Accept and Reject. A proposal without a figure
+  reads `Working figure to be set: the source states none`;
+- superseded and rejected rows in their own collapsed group; a superseded row
+  names its replacement;
+- a stale charter row reads `Re-check.` with the reason, and its answer control
+  becomes an outlined `Re-answer…`;
+- a charter row whose owner was a named person reads `Owner named in the P1
+  charter, set a role`;
+- for a viewer without financial visibility: `Figure withheld · no financial
+  visibility`, `Answer withheld`, and no actions;
+- inline forms. Answering needs a choice of Confirmed or Corrected (nothing is
+  preselected unless only one is allowed) and a source; Corrected also needs
+  the new figure. Superseding needs what replaces the row: a row already in the
+  register, or a new assumption. Adding needs the area, owner role, assumption,
+  working figure and source; a person's name is refused as an owner role.
 
 Every change goes through the register routes. When a route refuses, the
 panel shows the route's own sentence word for word, because that sentence
@@ -119,13 +146,21 @@ the charter section: a section that already has a row is never written again.
 ## Changes Included
 
 - `src/components/strategic-moves/assumptions/AssumptionRegisterPanel.tsx`
-  (new): the register panel described above. What a row offers (accept,
-  reject, confirm, correct, supersede) is read from the model's transition
-  table, so the controls cannot drift from the rules. A disabled control's
-  look is driven by the `disabled` attribute itself.
+  (new): the register in two variants, `compact` and `full`, described above.
+  It uses the step pages' CSS module and their `SourceLine` / `SourceTag`
+  exports; it has no styles of its own and no hard-coded colours. What a row
+  offers is read from the model's transition table, so the controls cannot
+  drift from the rules.
+- `src/components/strategic-moves/step-page/MovesStepPage.module.css`: the
+  template v1.9 register rules from Claude Design's `core.css` (`reg-meta`,
+  `withheld`, `form-grid`) plus a few product-port rules that replace the
+  mock's inline paddings. All values are existing tokens.
+- `src/components/strategic-moves/step-page/MovesStepPage.tsx`: exports its
+  theme hook, so the register follows the same light/dark toggle.
 - `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`: mounts the
-  panel in the capture flow's opening band, beside the carry-forward band,
-  from one server-resolved prop (`assumptionRegister`); `null` mounts nothing.
+  compact group in the capture flow's opening band, beside the carry-forward
+  band, and the full register in the Intelligence (Record) view, from one
+  server-resolved prop (`assumptionRegister`); `null` mounts nothing.
 - `src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx`:
   resolves the flag, runs the bridge, passes the register's resolution to the
   carry-forward fold, and passes the panel its mount. A failed charter read is
@@ -163,19 +198,28 @@ the charter section: a section that already has a row is never written again.
 
 ## QA / Validation
 
-- Panel suite (new, 33 tests): nothing renders and nothing is fetched with the
-  flag off; each status in its own words, including "Superseded by" the
-  replacement's ID; confidence 1, 3 and 5 as Low, Medium and High; the "est"
-  tag on a working figure; "withheld" when either the register or the row
-  withholds figures, including answer figures; proposals in their own labelled
-  group and never in the table, and rejected proposals not shown; Accept,
-  Reject, Answer (confirmed and corrected), Supersede and Add each call the
-  right route with the row's revision and the exact body; a refusal's `detail`
-  is shown word for word, a refusal without one never claims nothing was saved,
-  a refusal that changed nothing does not re-read the register, and one that
-  stored a replacement does; a change saved without its history entry says so;
-  a read-only viewer gets no controls; a failed read is shown, never an empty
-  register; only the stale charter row is flagged.
+- Panel suite (rewritten for the final design, 72 tests): nothing renders and
+  nothing is fetched with the flag off, in either variant. Compact: counts by
+  status and to answer, never a proposal, never the full register; only the
+  open questions, in register order, with `Answer…` in place and no
+  Supersede; answering in place; the link to the full view, and no link when
+  the host gives none; nothing rendered for a register holding only proposals;
+  a failed read reported; withheld figures with no actions. Full: the row
+  anatomy line by line; confidence words; origin words; a row with no figure;
+  statuses and answers (a corrected row on its answer figure); the superseded
+  and rejected group; by area (order, counts, open by default); by owner (only
+  rows to answer, grouped by role, role-less group last, an answered row that
+  still needs a role included); the copy to the clipboard with the exact text,
+  singular and plural, and the select-text fallback when the clipboard is
+  missing or refused; a withheld figure never written into the copy; withheld
+  figures and answers with no actions (register-wide and per row); a read-only
+  viewer with no controls; proposals (badge, to be set, evidence badge,
+  Accept/Reject bodies, refusals word for word); each form's validation
+  (answer: choice and source, Corrected also the figure, a stale confirmed
+  row only as a correction; supersede: a choice, a row or a new assumption,
+  the role-less owner not carried; add: each required field alone holds it, a
+  name refused); stale rows (`Re-check.` wording for answered and open rows,
+  outlined `Re-answer…`); needs-a-role rows; failures.
 - Bridge suite (new, 46 tests): the row a charter assumption becomes (origin,
   confidence 1, phase 1, owner, revision pin, area per section); only an
   assumption basis against the current wording is bridged; idempotence (a
@@ -211,9 +255,21 @@ the charter section: a section that already has a row is never written again.
   existing row and writes nothing, keeping the original pin; read inside the
   tenant fence under either tenant key; a lost race returns the winner's row;
   non-charter input and a foreign Move refused with nothing written).
-- Host suite: 2 new cases. Flag off mounts no panel and makes no register read;
-  flag on mounts the panel inside the capture flow and reads this Move's
-  register.
+- Host suite: 2 cases. Flag off mounts nothing and makes no register read;
+  flag on mounts the compact group inside the capture flow (and not the full
+  register), reads this Move's register once, and its link opens the
+  Intelligence (Record) view, where the full register renders and the compact
+  group does not.
+- Restyle mutations (final design): 29 mutations over the panel and 4 over the
+  host mount, applied one at a time and each restored from a private copy.
+  All 33 killed. Three survived the first run: two led to stronger cases (an
+  answered row needing a role is still to answer; rows given out of register
+  order), and the third was a guard that could not change behaviour, which was
+  removed.
+- Visual check: the real component rendered by a temporary jest test to HTML
+  with the step-page CSS, compared against the mock at 1440 and 390 in light
+  and dark, with no horizontal overflow in any state. The temporary test was
+  deleted.
 - Mutation checks: 73 mutations over the panel, the host mount, the bridge, the
   carry-forward fold and the store upsert, applied one at a time and each
   restored from an in-memory copy. All 73 were killed. One survived the first
@@ -286,7 +342,20 @@ rows; they are not deleted.
 
 ## Known Gaps
 
-- Claude Design has not yet reviewed the panel.
+- Claude Design has the renders of the restyled screen for review; it has not
+  yet signed them off.
+- Deviations from the mock, on purpose: (1) Supersede asks for what replaces
+  the row (an existing row or a new assumption) rather than a free-text
+  reason, because the register stores a superseded row's replacement and has
+  no reason field; a reason needs a column. (2) The answer form does not say
+  "the value and cost numbers re-run", because nothing in the product re-runs
+  yet. (3) The owner role is typed, with the name check, because the product
+  has no canonical role list. (4) The compact group shows the whole register's
+  open questions, because phase pages do not yet record which rows a step's
+  numbers cite; it sits in the opening band, because the capture flow has no
+  Settled group to follow. (5) Every row's meta line names its origin,
+  including team rows. (6) A viewer who can edit but cannot see figures gets
+  no actions, as the design says, even though the routes would accept them.
 - The owner check is a heuristic: it flags an email address, an honorific,
   or two or three capitalised words with no role word. A single bare first
   name is NOT flagged, on purpose. The cheap rule (one capitalised word that

@@ -1498,3 +1498,19 @@ textarea.q-input {
 .seg-sm button { padding: 5px 10px; font-size: 13px; white-space: nowrap; }
 .cov-how { margin-top: 8px; }
 .field .ava-badge, td .ava-badge, .card dd .ava-badge { margin: 4px 0 0; align-self: flex-start; }
+
+/* ═════════ Template v1.9: the assumptions register (from core.css; existing tokens only) ═════════ */
+.reg-meta { display: block; font-size: 13px; color: var(--mv-muted); }
+.withheld { color: var(--mv-faint); font-style: italic; }
+.form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px 20px; }
+@container main (min-width: 560px) { .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .form-grid .span2 { grid-column: 1 / -1; } }
+.form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--mv-muted); }
+/* Product port: the mock's inline paddings and the register's own container. */
+.reg-root { min-height: 0; container: main / inline-size; }
+.toolbar .seg { flex: 0 1 280px; }
+.reg-list .items, .settled .items { padding: 16px 24px; }
+.settled .items { padding-top: 4px; }
+.reg-foot { padding: 0 24px 16px; margin: 0; font-size: 13px; color: var(--mv-muted); }
+.reg-empty { padding: 16px 24px; margin: 0; font-size: 13px; color: var(--mv-muted); }
+.reg-subform { display: flex; flex-direction: column; gap: 10px; }
+.reg-copy { min-height: 160px; font-family: var(--mv-font-mono); font-size: 12px; }

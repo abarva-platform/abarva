@@ -2577,6 +2577,12 @@ export function MovesPhaseStandaloneClient({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  /** The Record entry (today's Intelligence view) holds the full assumptions register. */
+  function openRecordWorkspace() {
+    setWorkspaceView("intelligence");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function continueToCurrentPhase() {
     if (terminalComplete || (move.currentPhase ?? 0) > 5) {
       window.location.assign("/tower");
@@ -4027,6 +4033,13 @@ export function MovesPhaseStandaloneClient({
                     moveId={move.id}
                     phase={phase.phase}
                   />
+                  {/* The full assumptions register (template v1.9 "Record
+                      tab: Assumptions register"). Intelligence is the Record
+                      tab's predecessor (TABS.md); there is no Record route. */}
+                  <AssumptionRegisterPanel
+                    register={assumptionRegister}
+                    variant="full"
+                  />
                 </>
               ) : workspaceView === "pricing" ? (
                 <>
@@ -4349,8 +4362,14 @@ export function MovesPhaseStandaloneClient({
                             <CharterStandingAfterDiscover
                               rows={charterStandingAfterDiscoverRows}
                             />
+                            {/* Phase pages carry only the collapsed compact
+                                register group (template v1.9, clutter flag
+                                1); the full register is the Record entry
+                                (the Intelligence view, see TABS.md). */}
                             <AssumptionRegisterPanel
                               register={assumptionRegister}
+                              variant="compact"
+                              onOpenFullView={openRecordWorkspace}
                             />
                             {/* A step whose questions are all answered can
                                 still hold Continue, because an open phase
