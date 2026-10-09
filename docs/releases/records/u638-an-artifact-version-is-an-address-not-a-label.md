@@ -123,6 +123,9 @@ tenant, nothing flag-gated.
   callers: `src/lib/programs/deliverables`, `src/lib/deliverables/__tests__` and
   the `programs/[programId]/artifacts` route suites together — 54 suites / 523
   tests, 3 snapshots. All green.
+- **PASS** Re-run after merging the sibling release forward:
+  `src/lib/programs/deliverables/__tests__` and `src/lib/programs/__tests__`
+  together — **203** suites / **2814** tests. All green.
 - **PASS** Mutation testing, 13 mutants designed, **13 killed**. Each run
   compared failing-test names against the baseline, not only the exit code.
   - **The decisive one is the exact pre-fix revert** — the whole read restored to
@@ -149,12 +152,24 @@ tenant, nothing flag-gated.
   `src/lib/programs/deliverables/move-artifacts.ts` — was checked after the edit
   and in place, so the repo config applied, and no pre-existing line was
   reformatted into this change.
-- **PASS** Census, with the basis stated. `main` committed 2730 / 164 at the base
-  commit and a regen of this branch reads **2732** covered with
-  `uncoveredTestFiles` unchanged at **164** — exactly the two new test files, so
-  inherited drift on this base was zero. The generator's own
+- **PASS** Census, with the basis stated, and **the basis moved mid-release in
+  the way that is invisible to git**. At the original base `main` committed
+  2730 / 164 and a regen of this branch read **2732** — exactly the two new test
+  files, so inherited drift on that base was zero. A sibling release in flight
+  had **also** added two test files and **also** regenerated from that same
+  base, so it committed the _identical_ 2732: `git` therefore had nothing to
+  reconcile and read the census CLEAN between the two branches, and `gh` read
+  both MERGEABLE, so whichever landed second would have committed a census two
+  files low with nothing to object to. Auto-merge was deliberately left
+  **disarmed on this PR from the start** for that reason, the sibling was left to
+  land first, the merge was taken forward — **clean, including the census** — and
+  a regen now reads **2734** against `main`'s committed 2732. Again exactly two,
+  which is the check. `uncoveredTestFiles` is unchanged at **164** throughout,
+  because `src/lib/programs/deliverables/__tests__` is a directory the required
+  AI-surface control catalog already sweeps. The generator's own
   `census drift: committed census matches this run` line is circular (it prints
-  after writing); `git status` was read instead.
+  after writing, and printed it on the drifted tree); `git status` was read
+  instead, both times.
 - **PASS** `npm run release:check -- --base origin/main --head HEAD`.
 - **NOT RUN** Signed-in walk. No claim in this record is `live-proven`.
 
@@ -195,8 +210,9 @@ records written before it, because the success path is unchanged.
   repeated version number resolves to the identical object key. The storage
   adapter's upload overwrites unconditionally.
 - Every test that exercises this writer for real was enumerated before the
-  behaviour was changed. Of the 24 suites that reference the module, 22 mock it
-  wholesale and only one — the writer's own suite — calls it; that suite's
+  behaviour was changed. Of the **24** suites that reference the module, **20**
+  mock it wholesale, **3** import it for real but never call this function, and
+  exactly **one** — the writer's own suite — calls it. That suite's
   prior-version mock already returns a null error, which is why the new refusal
   breaks nothing existing. The one integration suite that names the writer mocks
   it too.
