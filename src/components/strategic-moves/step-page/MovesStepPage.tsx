@@ -11,8 +11,11 @@ import styles from "./MovesStepPage.module.css";
 
 /**
  * The Moves step page: the canonical capture shell (Header, PhaseBar,
- * StepBar, Ava left / Main right) around the five fixed Main regions of the
- * step page template — StepHead, NextAction, Context, Work, Footer.
+ * StepBar) around the five fixed Main regions of the step page template —
+ * StepHead, NextAction, Context, Work, Footer. aVa is NOT drawn here: the host
+ * renders this page as the workspace of the product's existing AgentDock
+ * (`MovesCaptureWorkspace`), so aVa keeps its one design — collapse, hide,
+ * expand, full screen and the Ask aVa mark — on every surface.
  *
  * Ported from Claude Design's final template (v1.1). A step supplies rows and
  * copy; the page rules (grouping, the next-action sentence, the five states)
@@ -315,10 +318,6 @@ export interface MovesStepPageProps {
   /** Once the last step is submitted: replaces the forward button. */
   submittedLabel?: string;
   rows: readonly StepPageRow[];
-  /** Ava's step content: what it read, drafted, couldn't find, noticed. */
-  ava: ReactNode;
-  /** Ava's line while the step is blocked. */
-  avaBlocked?: string;
   continueLabel?: string;
   onContinue?: () => void;
   onBack?: () => void;
@@ -482,32 +481,6 @@ export function MovesStepPage(props: MovesStepPageProps) {
         </nav>
 
         <div className={cx("body")}>
-          <div className={cx("ava-col")}>
-            <aside className={cx("ava")} aria-label="Ava">
-              <div className={cx("ava-head")}>
-                <span className={cx("ava-name")}>Ava</span>
-                <span className={cx("eyebrow")}>Read from your evidence</span>
-              </div>
-              {state === "blocked" ? (
-                <p className={cx("ava-intro")}>
-                  {props.avaBlocked ??
-                    "I’ll redraft this step when what it waits on is approved again."}
-                </p>
-              ) : state === "skipped" ? (
-                <p className={cx("ava-intro")}>
-                  This step is skipped by attestation. If an upload contradicts
-                  it, I’ll propose reopening it for you to confirm.
-                </p>
-              ) : (
-                props.ava
-              )}
-              <p className={cx("ava-foot")}>
-                Drafts stay drafts until you accept them. Numbers come only from
-                approved evidence or labelled estimates; Ava never writes them.
-              </p>
-            </aside>
-          </div>
-
           <main className={cx("main-col")} aria-labelledby="step-panel-title">
             <header className={cx("panel-head")}>
               <span className={cx("eyebrow")}>

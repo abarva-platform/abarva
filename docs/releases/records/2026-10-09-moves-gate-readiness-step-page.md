@@ -24,6 +24,11 @@ build automatically submitted the gate with a fixed sentence as the recorded
 rationale, sign-off lived in two places under two labels, and a consultant had
 to leave the phase steps to cross the gate.
 
+aVa is not redrawn: the step page renders as the workspace of the product's
+existing aVa dock (the same collapse, hide, expand and full-screen behaviour,
+the same Ask aVa mark and the same thread as the capture flow), and aVa's
+step briefing is its opening turn.
+
 Nothing about what the gate requires changes. The page uses the same build,
 sign-off and gate-submission paths the existing control uses; it only changes
 where the consultant acts, and records the approver's own rationale.
@@ -76,6 +81,8 @@ where the consultant acts, and records the approver's own rationale.
   shared hooks; behaviour unchanged.
 - `MovesPhaseStandaloneClient.tsx`, the phase page: flagged mount and entry
   link; optional human rationale on gate submission.
+- `MovesCaptureWorkspace.tsx`: optional `content` (a step page in place of the
+  capture flow) and `openingBriefing` (aVa's first turn) on the existing dock.
 - `deliverable-registry.ts`: P3 document set reads `resolveChangeProfile`.
 - `transformers.ts`, `types.ui.ts`: optional `reason` on gate criteria.
 - `src/lib/features/registry.ts`: `moves_step_pages_v3`.
