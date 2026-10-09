@@ -318,6 +318,15 @@ jobs:
       # button that made no request and said nothing. A declared-AI-surface
       # control that does nothing belongs in this step. Nine of nine pass on
       # this commit.
+      # The forty-eighth path below is the Documents tab's sign-off column. The
+      # panel joins two independent reads, and the one that owns sign-off state
+      # destructured `data` alone — so a failed query fail-opened to an empty
+      # map, the same shape as "no document on record". Every row then lost its
+      # approved badge, took the AI-draft badge by default, and had its approve
+      # control withheld without a word, while the exit gate went on asking for
+      # a sign-off the screen offered no way to give. A declared-AI-surface
+      # control that disappears on a read nobody checked belongs in this step.
+      # Eight of eight pass on this commit.
       - name: Exercise Moves visible AI liability controls
         run: >-
           npx jest --runTestsByPath
@@ -372,6 +381,7 @@ jobs:
           src/components/strategic-moves/__tests__/ava-draft-action-phase-reach.test.tsx
           src/components/strategic-moves/__tests__/moves-capture-composer-streaming.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.upload-retention.test.tsx
+          src/components/strategic-moves/__tests__/phase-documents-panel-sign-off-readback.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
