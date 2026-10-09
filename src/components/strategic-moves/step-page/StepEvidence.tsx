@@ -64,8 +64,8 @@ export interface StepEvidence {
   pendingLabels: string[];
   /** The review row id for a pending file's label, for links from other rows. */
   rowIdFor: (label: string) => string | null;
-  /** The Context line's evidence item. */
-  summary: string;
+  /** The Context line's evidence item; a failed read offers a retry. */
+  summary: ReactNode;
   /** Leading clauses for the next-action sentence, one per pending review. */
   clauses: string[];
   /** Decision rows for pending reviews. */
@@ -95,6 +95,9 @@ export function useStepEvidence({
   const [pending, setPending] = useState<PendingEvidenceReview[]>([]);
   const [approvedCount, setApprovedCount] = useState(0);
   const [readable, setReadable] = useState(false);
+  // Until the first read settles, the line says it is reading rather than
+  // claiming the read failed.
+  const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [deciding, setDeciding] = useState<string | null>(null);
@@ -126,6 +129,7 @@ export function useStepEvidence({
     } catch {
       setReadable(false);
     }
+    setLoaded(true);
   }, [moveId, phase]);
 
   useEffect(() => {
@@ -249,11 +253,24 @@ export function useStepEvidence({
     ),
   }));
 
-  const summary = !readable
-    ? "Evidence status could not be read"
-    : pending.length > 0
-      ? `${approvedCount} approved file${approvedCount === 1 ? "" : "s"} · ${pending.length} in review`
-      : `${approvedCount} approved file${approvedCount === 1 ? "" : "s"}`;
+  const summary: ReactNode = !loaded ? (
+    "Reading evidence…"
+  ) : !readable ? (
+    <>
+      Evidence status could not be read ·{" "}
+      <button
+        type="button"
+        className={cx("link-btn", "inline")}
+        onClick={() => void load()}
+      >
+        Try again
+      </button>
+    </>
+  ) : pending.length > 0 ? (
+    `${approvedCount} approved file${approvedCount === 1 ? "" : "s"} · ${pending.length} in review`
+  ) : (
+    `${approvedCount} approved file${approvedCount === 1 ? "" : "s"}`
+  );
 
   const uploadControl = (
     <span>

@@ -14,7 +14,9 @@ import {
   isWhyConfirmed,
   markCoverage,
   optionComparison,
+  optionKey,
   parseArchitectureChoice,
+  rationaleArguesFor,
   reopenCoverage,
   reopenWhy,
   serializeArchitectureChoice,
@@ -92,6 +94,11 @@ export interface ArchitectureOptionsStepProps {
   recommendation: string;
   onRecommendationChange: (value: string) => void;
   optionSet: P3OptionSet;
+  /**
+   * The charter's platform-fit classification, when one is recorded. Shown
+   * read-only: the platform-fit gate owns it, so this page never writes it.
+   */
+  platformFit?: { pattern: string; routing: string } | null;
   /** P2's root causes and Step 1's traceability, for the design elements. */
   p2RootCauses: string;
   designTraceability: string;
@@ -118,11 +125,6 @@ function shortDate(iso: string): string {
       });
 }
 
-/** "OPT-B" reads as "B"; any other id reads as written. */
-function optionKey(id: string): string {
-  return id.replace(/^opt[-_ ]?/i, "");
-}
-
 export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
   const trace =
     parseDesignTraceability(props.designTraceability) ??
@@ -144,6 +146,7 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
   const staleChoice = saved && !option ? saved : null;
   const comparison = useMemo(() => optionComparison(set), [set]);
   const [refusal, setRefusal] = useState<string | null>(null);
+  const [confirmChange, setConfirmChange] = useState(false);
   const [whyEdit, setWhyEdit] = useState<string | null>(null);
   const [whyFromNotes, setWhyFromNotes] = useState<number[] | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
@@ -262,6 +265,10 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
     </div>
   );
 
+  const hasWorkToLose = Boolean(
+    choice &&
+    (choice.coverage.some((c) => c.source === "team") || choice.whyConfirmedAt),
+  );
   const directionRow: StepPageRow = choice
     ? {
         id: "DIR",
@@ -284,6 +291,20 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
                 }}
               />
             ) : null}
+            {props.platformFit ? (
+              <SourceLine
+                source={{
+                  kind: "team",
+                  text: `Platform fit (from the charter): ${props.platformFit.pattern} · ${props.platformFit.routing}`,
+                }}
+              />
+            ) : null}
+            {confirmChange ? (
+              <p className={cx("warn-inline")} role="alert">
+                Changing the option clears its coverage marks and the
+                confirmation of why. The options stay as written.
+              </p>
+            ) : null}
             <span className={cx("when-settled")}>
               Chosen by{" "}
               {choice.chosenBy === props.decidedBy ? "you" : choice.chosenBy},{" "}
@@ -291,11 +312,37 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
             </span>
           </div>
         ),
-        actions: (
+        actions: confirmChange ? (
+          <>
+            <button
+              type="button"
+              className={cx("btn-line")}
+              onClick={() => {
+                setConfirmChange(false);
+                setWhyEdit(null);
+                props.onChange("");
+              }}
+            >
+              Change anyway
+            </button>
+            <button
+              type="button"
+              className={cx("link-btn")}
+              onClick={() => setConfirmChange(false)}
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
           <button
             type="button"
             className={cx("link-btn")}
             onClick={() => {
+              // Marks or a confirmed reason would be lost: say so first.
+              if (hasWorkToLose) {
+                setConfirmChange(true);
+                return;
+              }
               setWhyEdit(null);
               props.onChange("");
             }}
@@ -330,12 +377,6 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
             {cards}
           </>
         ),
-        basis: [
-          {
-            kind: "team",
-            text: "Options as the team wrote them. Step 4 sizes the chosen one; nothing here is bought or built.",
-          },
-        ],
       };
 
   // ── Coverage ──────────────────────────────────────────────────────────────
@@ -387,8 +428,10 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
         <span>
           <span className={cx("item-name")}>{name}</span>
           <span className={cx("item-note")}>{e.element}</span>
-          {entry?.source === "ava" && !covAccepted ? (
-            <span className={cx("ava-badge")}>Ava draft · review</span>
+          {entry?.source === "option_text" && !covAccepted ? (
+            <span className={cx("ava-badge")}>
+              Named in the option · review
+            </span>
           ) : null}
           {how}
         </span>
@@ -484,8 +527,9 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
         ),
         basis: [
           {
-            kind: "ava",
-            text: "I pre-marked only where the option’s own scope or benefit names the element. Everything else is your judgement; I don’t score or rank options.",
+            kind: "team",
+            text: "Covers is pre-marked only where the option’s own scope or benefit names the element. Everything else is your judgement; options are not scored or ranked.",
+            cite: "Coverage rule",
           },
           {
             kind: "team",
@@ -499,6 +543,9 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
   // ── Why ───────────────────────────────────────────────────────────────────
   const why = props.recommendation.trim();
   let whyRow: StepPageRow | null = null;
+  const arguesFor = choice
+    ? rationaleArguesFor(why, set, choice.optionId)
+    : null;
   if (choice) {
     const editing = whyEdit !== null || !why;
     const text = whyEdit ?? props.recommendation;
@@ -562,6 +609,12 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
               }}
             />
           ) : null}
+          {arguesFor ? (
+            <p className={cx("warn-inline")} role="alert">
+              Your capture answer argues for option {optionKey(arguesFor.id)};
+              you chose {key}.
+            </p>
+          ) : null}
         </div>
       ),
       actions: editing ? (
@@ -572,7 +625,7 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
             disabled={!text.trim()}
             onClick={save}
           >
-            Accept
+            Save
           </button>
           {whyEdit !== null ? (
             <button
@@ -591,6 +644,14 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
           onClick={() => commit({ ok: true, value: reopenWhy(choice) })}
         >
           Reopen
+        </button>
+      ) : arguesFor ? (
+        <button
+          type="button"
+          className={cx("btn-ink")}
+          onClick={() => setWhyEdit(props.recommendation)}
+        >
+          Edit
         </button>
       ) : (
         <>
@@ -659,15 +720,16 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
     emptySentence: "Add the options the team brought",
   });
 
-  const premarked = choice?.coverage.filter((c) => c.source === "ava") ?? [];
+  const premarked =
+    choice?.coverage.filter((c) => c.source === "option_text") ?? [];
   const briefing = [
     set.source === "move_uploaded_options"
       ? `I read the options as written in ${set.sourceTitle ?? "the team’s options"}.`
       : "The Move declared no options, so these are the template set.",
     choice
       ? premarked.length
-        ? `I pre-marked only the design elements option ${key}’s own scope or benefit names: ${premarked.map((c) => c.causeId).join(", ")}. The rest are yours to judge; I don’t score options.`
-        : `Option ${key}’s own scope and benefit name none of the design elements, so I marked nothing. Each one is yours to judge.`
+        ? `Option ${key}’s own scope or benefit names ${premarked.map((c) => c.causeId).join(", ")}, so ${premarked.length === 1 ? "that is" : "those are"} pre-marked Covers for you to review. The rest are yours to judge; options are not scored.`
+        : `Option ${key}’s own scope and benefit name none of the design elements, so nothing is pre-marked. Each one is yours to judge.`
       : "They are shown as the team wrote them: not scored, not ranked, none preselected. You choose.",
     "A choice here is the team’s working decision; the gate approver records it before any architecture is built.",
   ].join("\n\n");
@@ -759,8 +821,8 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
       phaseName="Design"
       steps={props.steps}
       stepIndex={props.stepIndex}
-      title="Choose a direction and size it"
-      intro="Pick one of the options the team brought, as written, and say why. The choice carries to P4 as the estimate basis; nothing here is bought or built."
+      title="Choose a direction"
+      intro="Pick one of the options the team brought, as written, and say why. Step 4 and P4 size the choice; nothing here is bought or built."
       nextAction={nextAction}
       // A stable total: the direction, its coverage and its reason, counted
       // before the choice exists too (template v1.7).

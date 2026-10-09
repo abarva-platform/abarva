@@ -8,11 +8,13 @@ import {
   coverageFor,
   coverageOpenCount,
   explainCoverage,
+  isArchitectureChoiceComplete,
   isCoverageAccepted,
   isWhyConfirmed,
   markCoverage,
   optionComparison,
   parseArchitectureChoice,
+  rationaleArguesFor,
   reopenCoverage,
   serializeArchitectureChoice,
   type ArchitectureChoice,
@@ -242,18 +244,18 @@ describe("optionComparison", () => {
 });
 
 describe("chooseOption", () => {
-  it("pre-marks Covers as aVa's draft only where the option's scope or benefit names the element", () => {
+  it("pre-marks Covers as the rule's draft only where the option's scope or benefit names the element", () => {
     const choice = chooseB();
     expect(choice.coverage).toEqual([
       expect.objectContaining({
         causeId: "RC-2",
         mark: "covers",
-        source: "ava",
+        source: "option_text",
       }),
       expect.objectContaining({
         causeId: "RC-3",
         mark: "covers",
-        source: "ava",
+        source: "option_text",
       }),
     ]);
     // A's tradeoff names lineage and quality; a tradeoff is not a claim.
@@ -389,5 +391,46 @@ describe("structured capture text", () => {
     expect(captureValueText("architecture_choice", "Option B")).toBe(
       "Option B",
     );
+  });
+});
+
+describe("isArchitectureChoiceComplete", () => {
+  it("needs a current choice, accepted coverage and a confirmed why", () => {
+    let choice = done(markCoverage(chooseB(), el("RC-6"), "covers"));
+    choice = done(acceptCoverage(choice, ELEMENTS, "me", "d"));
+    expect(isArchitectureChoiceComplete(choice, SET, ELEMENTS, "Why B.")).toBe(
+      false,
+    );
+    choice = done(confirmWhy(choice, "Why B.", "me", "d"));
+    expect(isArchitectureChoiceComplete(choice, SET, ELEMENTS, "Why B.")).toBe(
+      true,
+    );
+    expect(
+      isArchitectureChoiceComplete(
+        choice,
+        { ...SET, options: [SET.options[0]] },
+        ELEMENTS,
+        "Why B.",
+      ),
+    ).toBe(false);
+    expect(isArchitectureChoiceComplete(null, SET, ELEMENTS, "Why B.")).toBe(
+      false,
+    );
+  });
+});
+
+describe("rationaleArguesFor", () => {
+  it("names another option only when the text names it and not the chosen one", () => {
+    expect(rationaleArguesFor("Configure is fastest.", SET, "OPT-B")).toEqual({
+      id: "OPT-A",
+      label: "Configure",
+    });
+    expect(
+      rationaleArguesFor("Option A was weaker than Build.", SET, "OPT-B"),
+    ).toBeNull();
+    expect(
+      rationaleArguesFor("It certifies measures first.", SET, "OPT-B"),
+    ).toBeNull();
+    expect(rationaleArguesFor("", SET, "OPT-B")).toBeNull();
   });
 });

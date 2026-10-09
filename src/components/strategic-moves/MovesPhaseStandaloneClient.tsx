@@ -9,7 +9,18 @@ import {
   stepPageHref,
   type StepPageView,
 } from "@/lib/programs/step-page-views";
-import { parseArchitectureChoice } from "@/lib/programs/architecture-choice";
+import {
+  coverageElements,
+  isArchitectureChoiceComplete,
+  parseArchitectureChoice,
+} from "@/lib/programs/architecture-choice";
+import {
+  emptyDesignTraceability,
+  isDesignTraceabilityComplete,
+  parseDesignTraceability,
+} from "@/lib/programs/design-traceability";
+import { readSolutionPatternFromCharter } from "@/lib/programs/solution-pattern";
+import { solutionPatternOptionsFor } from "@/lib/programs/solution-pattern-catalog";
 import { StepPageTabs } from "@/components/strategic-moves/step-page/MovesStepPage";
 import {
   phaseStepRecordSections,
@@ -3520,6 +3531,41 @@ export function MovesPhaseStandaloneClient({
     />
   );
 
+  // A step that writes a record is done when its record is complete, read
+  // from the same source as that page's own Ready and Blocked states, so the
+  // step bar never contradicts a page.
+  const p3Elements = coverageElements(
+    priorPhaseCapture?.gapsRootCauses ?? "",
+    parseDesignTraceability(displayPhaseCaptureValues.design_traceability) ??
+      emptyDesignTraceability(),
+  );
+  const recordStepDone: Record<string, boolean> = {
+    "P3.1": isDesignTraceabilityComplete(
+      priorPhaseCapture?.gapsRootCauses ?? "",
+      parseDesignTraceability(displayPhaseCaptureValues.design_traceability) ??
+        emptyDesignTraceability(),
+    ),
+    "P3.2": isArchitectureChoiceComplete(
+      parseArchitectureChoice(displayPhaseCaptureValues.architecture_choice),
+      p3OptionSet,
+      p3Elements,
+      displayPhaseCaptureValues.recommendation ?? "",
+    ),
+  };
+  const charterPlatformFit = (() => {
+    const fields = readSolutionPatternFromCharter(
+      (move.charter as Record<string, unknown> | null) ?? null,
+    );
+    if (!fields) return null;
+    const option = solutionPatternOptionsFor(move.archetype).find(
+      (o) => o.value === fields.pattern,
+    );
+    return {
+      pattern: fields.pattern,
+      routing: (option?.routingNote ?? "").replace(/\.$/, ""),
+    };
+  })();
+
   // Shared chrome for the P3 step pages: the phase bar, the step bar (each
   // step links to its own page when it has one) and the tabs.
   const p3StepPageChrome = (stepId: string) => {
@@ -3565,10 +3611,12 @@ export function MovesPhaseStandaloneClient({
         done:
           index === stepIndex
             ? undefined
-            : step.sectionKeys.length > 0 &&
-              step.sectionKeys.every(
-                (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
-              ),
+            : step.id in recordStepDone
+              ? recordStepDone[step.id]
+              : step.sectionKeys.length > 0 &&
+                step.sectionKeys.every(
+                  (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
+                ),
       })),
     };
   };
@@ -3643,6 +3691,7 @@ export function MovesPhaseStandaloneClient({
           setVisiblePhaseCaptureValue("recommendation", value)
         }
         optionSet={p3OptionSet}
+        platformFit={charterPlatformFit}
         p2RootCauses={priorPhaseCapture?.gapsRootCauses ?? ""}
         designTraceability={displayPhaseCaptureValues.design_traceability ?? ""}
         step1Href={stepPageHref(move.id, phase.phase, "P3.1")}

@@ -21,9 +21,9 @@ import {
  * Coverage is an instrument, not a score: per design element the team marks
  * Covers / Partly / Doesn't, and Partly or Doesn't needs one line on how the
  * element still gets answered. Elements handed off in Step 1 are listed but
- * not asked. aVa pre-marks "Covers" only where the option's own scope or
+ * not asked. A rule pre-marks "Covers" only where the option's own scope or
  * benefit names the element; those marks are drafts until the team accepts
- * the coverage. Each entry keeps the element's words, so an element Step 1
+ * the coverage, and they are labelled by the rule, not credited to aVa. Each entry keeps the element's words, so an element Step 1
  * rewrites is asked again rather than carrying a mark made against other
  * words.
  *
@@ -49,8 +49,11 @@ export interface CoverageEntry {
   mark: CoverageMark;
   /** For Partly or Doesn't: how the element still gets answered. */
   how?: string;
-  /** "ava" only for a pre-mark the team has not touched. */
-  source: "team" | "ava";
+  /**
+   * "option_text" for a pre-mark the rule made because the option's own text
+   * names the element, until the team touches or accepts it.
+   */
+  source: "team" | "option_text";
 }
 
 export interface ArchitectureChoice {
@@ -127,7 +130,7 @@ export function parseArchitectureChoice(
       element,
       mark,
       ...(text(c.how) ? { how: text(c.how) } : {}),
-      source: c.source === "ava" ? "ava" : "team",
+      source: c.source === "option_text" ? "option_text" : "team",
     });
   }
   const optional = (key: keyof ArchitectureChoice) =>
@@ -239,6 +242,55 @@ export function isWhyConfirmed(
   return Boolean(why) && choice.why === why && Boolean(choice.whyConfirmedAt);
 }
 
+/** Step 2 is done: a current choice, its coverage accepted, its why confirmed. */
+export function isArchitectureChoiceComplete(
+  choice: ArchitectureChoice | null,
+  set: P3OptionSet,
+  elements: readonly CoverageElement[],
+  recommendation: string,
+): boolean {
+  return (
+    Boolean(choice) &&
+    set.options.some((o) => o.id === choice!.optionId) &&
+    isCoverageAccepted(choice!, elements) &&
+    isWhyConfirmed(choice!, recommendation)
+  );
+}
+
+/** "OPT-B" reads as "B"; any other id reads as written. */
+export function optionKey(id: string): string {
+  return id.replace(/^opt[-_ ]?/i, "");
+}
+
+/** Does the text name this option: its id, its label, or "option B"? */
+export function textNamesOption(
+  text: string,
+  option: { id: string; label: string },
+): boolean {
+  return [option.id, option.label, `option ${optionKey(option.id)}`].some(
+    (name) =>
+      name.trim().length > 1 &&
+      new RegExp(`\\b${escapeRegExp(name.trim())}\\b`, "i").test(text),
+  );
+}
+
+/**
+ * When the rationale argues for a different option than the one chosen: it
+ * names another option of the set and not the chosen one. Null otherwise.
+ */
+export function rationaleArguesFor(
+  text: string,
+  set: P3OptionSet,
+  chosenId: string,
+): { id: string; label: string } | null {
+  const chosen = set.options.find((o) => o.id === chosenId);
+  if (!text.trim() || !chosen || textNamesOption(text, chosen)) return null;
+  const other = set.options.find(
+    (o) => o.id !== chosenId && textNamesOption(text, o),
+  );
+  return other ? { id: other.id, label: other.label } : null;
+}
+
 // ── The options as the team wrote them ──────────────────────────────────────
 
 export interface OptionField {
@@ -324,7 +376,7 @@ function elementHead(element: string): string | undefined {
 }
 
 /**
- * aVa's pre-marks: "Covers", as a draft, only where the option's scope or
+ * The pre-marks: "Covers", as a draft, only where the option's scope or
  * benefit names the element (its short name or the element's own head
  * phrase). Never a Partly or a Doesn't: absence of a word is not evidence.
  */
@@ -341,7 +393,7 @@ export function premarkCoverage(
             causeId: e.causeId,
             element: e.element,
             mark: "covers" as const,
-            source: "ava" as const,
+            source: "option_text" as const,
           },
         ]
       : [],

@@ -10,8 +10,8 @@
 
 ## Plain-English Summary
 
-The fourth step page on the finalized template (v1.7): P3 Design, Step 2,
-"Choose a direction and size it". It sits behind `moves_step_pages_v3` and is
+The fourth step page on the finalized template (v1.8): P3 Design, Step 2,
+"Choose a direction". It sits behind `moves_step_pages_v3` and is
 on only for the synthetic demo tenant.
 
 The page shows the options the team brought exactly as written. For a
@@ -30,14 +30,23 @@ After a choice, a Coverage instrument asks what the chosen option answers of
 each Step 1 design element: Covers, Partly or Doesn't.
 - Partly or Doesn't needs one line on how the element still gets answered.
 - Elements handed off in Step 1 are listed but not asked.
-- aVa pre-marks "Covers" as a draft only where the option's own scope or
-  benefit names the element. It never marks Partly or Doesn't.
+- A rule pre-marks "Covers" as a draft, labelled "Named in the option", only
+  where the option's own scope or benefit names the element. It never marks
+  Partly or Doesn't, and the mark is not credited to aVa.
 - Each mark keeps the element's words, so an element rewritten in Step 1 is
   asked again.
 
 The rationale row confirms why the option was chosen. That text is the
-existing P3 `recommendation` answer, the one the approval route records. An
-edit made elsewhere asks for confirmation again.
+existing P3 `recommendation` answer, the one the approval route records.
+- The consultant's own words are saved ("Save").
+- Words written elsewhere are accepted ("Accept").
+- An edit made elsewhere asks for confirmation again.
+- If the answer argues for a different option than the one chosen, the row
+  says so and offers only Edit.
+
+Changing the option warns first when coverage marks or a confirmed reason
+would be lost. When the charter records a platform-fit classification, it is
+shown read-only under the chosen direction; this page never writes it.
 
 The step is blocked, with a link to Step 1, until every root cause there is
 settled.
@@ -47,6 +56,14 @@ Partly or Doesn't. Proposals are verbatim and cite their line. Notes never
 choose an option or mark coverage.
 
 Also in this change:
+- Claude Design's fourth review of this page:
+  - the step bar and the Blocked sentence read one completion source, so an
+    unsettled Step 1 shows as open;
+  - the Change warning, the Save and Accept verbs and the mismatch rule;
+  - the read-only platform fit;
+  - the evidence line says "Reading evidence…" until the first read settles,
+    instead of claiming the read failed, and offers "Try again" after a
+    failure.
 - Claude Design's third review of P3 Step 1:
   - one clause for every open cause;
   - a cause P2 carried as a known gap names its owner and pre-fills the
@@ -103,13 +120,14 @@ Also in this change:
 ## QA / Validation
 
 - New suites pass:
-  - choice record (16);
+  - choice record (18);
   - notes proposer (3);
   - view map (3);
-  - page render (9);
+  - page render (14);
+  - host mount and step bar (3);
   - template settled summary (1);
   - Step 1 review-3 cases (6).
-- Mutation checks pass: 25 mutations, each failing a test. They cover:
+- Mutation checks pass: 38 mutations, each failing a test. They cover:
   - a tradeoff counted as a claim, a too-short name matched, an empty field
     kept;
   - a Partly accepted without a how, a mark kept after its element was
@@ -119,17 +137,23 @@ Also in this change:
   - Accept coverage enabled while open, a removed option kept as the choice,
     the Step 1 block dropped, why not written to the answer;
   - notes overwriting a why or a how, or explaining a Covers;
-  - the Step 1 review-3 behaviours.
+  - the Step 1 review-3 behaviours;
+  - review 4: no Change warning (for marks, or for a confirmed reason alone),
+    Accept on a mismatched rationale, Accept for typed words, no platform
+    fit, a mismatch counted while the chosen option is named, completion
+    without a why or with a removed option, no reading state, a dead retry,
+    and a step bar ignoring record completion.
 - One term was removed rather than tested. The gate text's team-source filter
   could never change the result, because only the team writes a "how".
 - Combined run: pass, all Moves component, programs library and programs
-  route suites (7,690 tests before the review-4 additions).
+  route suites (7,706 tests).
 - Census regenerated: pass. All four new test files are swept (2,762 → 2,766).
 - Route and export reachability: pass.
 - `npm run typecheck`: pass. ESLint: pass.
 - Visual check: pass. Five states of the real component were rendered with
   the template CSS and checked at 1440 and 375 wide, with no horizontal
-  scroll. Claude Design review 4 was requested on those renders.
+  scroll. Claude Design reviewed those renders (review 4). Its must-fixes and
+  should-fixes are applied, and the changed states were rendered again.
 
 ## Rollout Plan
 
@@ -167,9 +191,10 @@ back to the approval or the recommendation text as before.
 
 ## Known Gaps
 
-- The Platform fit row from the template is not on this page yet. Platform fit
-  is a separately governed, owner-recorded field, and this page does not write
-  it.
+- Platform fit is shown read-only and only when the charter records it. It is
+  set through its own governed gate, not on this page.
+- An option or program name is shown as the team typed it; mid-sentence
+  capitalisation is not normalised.
 - Client-supplied options carry no effort or time-to-value field, so the
   comparison omits them. P3 Step 4 sizes the chosen option.
 - The approver's real name is not yet resolved. Role wording is used.

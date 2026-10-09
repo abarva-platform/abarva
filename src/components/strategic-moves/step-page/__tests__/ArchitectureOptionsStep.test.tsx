@@ -3,7 +3,7 @@
  *
  * P3 Step 2 on the architecture choice record: the team's options as written
  * (no scores, no rank, none preselected); choosing writes the step record
- * with aVa's text-matched pre-marks as drafts; coverage asks every Step 1
+ * with the rule's text-matched pre-marks as drafts; coverage asks every Step 1
  * design element except a hand-off, and a Partly needs a how; the rationale
  * is the `recommendation` answer, confirmed here; notes fill only empty
  * fields; blocked until Step 1 is settled.
@@ -256,7 +256,7 @@ describe("ArchitectureOptionsStep", () => {
     expect(row(container, "COV")).toBeNull();
   });
 
-  it("choosing writes the record with aVa's text-matched pre-marks as drafts", () => {
+  it("choosing writes the record with the rule's text-matched pre-marks as drafts", () => {
     const { container } = render(<Harness />);
     choose(container, "B");
     expect(last()).toMatchObject({
@@ -267,13 +267,17 @@ describe("ArchitectureOptionsStep", () => {
         expect.objectContaining({
           causeId: "RC-2",
           mark: "covers",
-          source: "ava",
+          source: "option_text",
         }),
       ],
     });
     expect(row(container, "DIR").textContent).toContain("Chosen by you, Oct 9");
     expect(status(container).textContent).toContain("1 of 3 settled");
-    expect(row(container, "COV").textContent).toContain("Ava draft · review");
+    // The pre-mark is the rule's, labelled as such, never credited to aVa.
+    expect(row(container, "COV").textContent).toContain(
+      "Named in the option · review",
+    );
+    expect(row(container, "COV").textContent).not.toMatch(/Ava/);
     expect(
       markOf(container, "definitions", "Covers").getAttribute("aria-checked"),
     ).toBe("true");
@@ -281,7 +285,7 @@ describe("ArchitectureOptionsStep", () => {
       "Mark what option B answers and say why option B.",
     );
     expect(dockNow().briefing).toContain(
-      "I pre-marked only the design elements option B’s own scope or benefit names: RC-2.",
+      "Option B’s own scope or benefit names RC-2, so that is pre-marked Covers for you to review.",
     );
   });
 
@@ -331,7 +335,8 @@ describe("ArchitectureOptionsStep", () => {
       },
     );
     fireEvent.click(
-      within(row(container, "WHY")).getByRole("button", { name: "Accept" }),
+      // The consultant's own words are saved, not accepted.
+      within(row(container, "WHY")).getByRole("button", { name: "Save" }),
     );
     expect(reasons).toEqual(["It certifies measures before any AI use."]);
     expect(last().why).toBe("It certifies measures before any AI use.");
@@ -359,6 +364,113 @@ describe("ArchitectureOptionsStep", () => {
     expect(row(container, "WHY").textContent).toContain(
       "Your capture answer · review",
     );
+  });
+
+  it("says when the capture answer argues for another option, and offers only Edit", () => {
+    const { container } = render(
+      <Harness initialWhy="Configure is the fastest route on what is licensed." />,
+    );
+    choose(container, "B");
+    const why = row(container, "WHY");
+    expect(why.textContent).toContain(
+      "Your capture answer argues for option A; you chose B.",
+    );
+    expect(within(why).queryByRole("button", { name: "Accept" })).toBeNull();
+    expect(within(why).getByRole("button", { name: "Edit" })).toBeTruthy();
+  });
+
+  it("warns before Change discards marks or a confirmed reason", () => {
+    const { container } = render(<Harness />);
+    choose(container, "B");
+    // Only the rule's pre-marks so far: nothing of the team's to lose.
+    fireEvent.click(
+      within(row(container, "DIR")).getByRole("button", { name: "Change" }),
+    );
+    expect(last()).toBeNull();
+    choose(container, "B");
+    fireEvent.click(markOf(container, "quality", "Covers"));
+    fireEvent.click(
+      within(row(container, "DIR")).getByRole("button", { name: "Change" }),
+    );
+    expect(row(container, "DIR").textContent).toContain(
+      "Changing the option clears its coverage marks and the confirmation of why.",
+    );
+    expect(last()?.optionId).toBe("OPT-B");
+    fireEvent.click(
+      within(row(container, "DIR")).getByRole("button", { name: "Cancel" }),
+    );
+    expect(last()?.optionId).toBe("OPT-B");
+    fireEvent.click(
+      within(row(container, "DIR")).getByRole("button", { name: "Change" }),
+    );
+    fireEvent.click(
+      within(row(container, "DIR")).getByRole("button", {
+        name: "Change anyway",
+      }),
+    );
+    expect(last()).toBeNull();
+    expect(status(container).textContent).toContain("Choose a direction.");
+  });
+
+  it("warns before Change discards a confirmed reason, with no marks of the team's", () => {
+    const { container } = render(<Harness />);
+    choose(container, "B");
+    fireEvent.change(
+      container.querySelector("#why-text") as HTMLTextAreaElement,
+      {
+        target: { value: "It certifies measures first." },
+      },
+    );
+    fireEvent.click(
+      within(row(container, "WHY")).getByRole("button", { name: "Save" }),
+    );
+    expect(last().coverage.every((c) => c.source === "option_text")).toBe(true);
+    fireEvent.click(
+      within(row(container, "DIR")).getByRole("button", { name: "Change" }),
+    );
+    expect(last()?.optionId).toBe("OPT-B");
+    expect(
+      within(row(container, "DIR")).getByRole("button", {
+        name: "Change anyway",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("shows the charter's platform fit read-only under the chosen direction", () => {
+    const { container } = render(
+      <Harness
+        platformFit={{
+          pattern: "Build on the Platform",
+          routing: "Proceed, standard review",
+        }}
+      />,
+    );
+    expect(container.textContent).not.toContain("Platform fit");
+    choose(container, "B");
+    const dir = row(container, "DIR");
+    expect(dir.textContent).toContain(
+      "Platform fit (from the charter): Build on the Platform · Proceed, standard review",
+    );
+    expect(within(dir).queryByRole("button", { name: /fit/i })).toBeNull();
+  });
+
+  it("says it is reading evidence until the read settles, and offers a retry when it fails", async () => {
+    const fetchMock = jest.fn(async () => {
+      throw new Error("offline");
+    });
+    (global as { fetch?: unknown }).fetch = fetchMock;
+    const { container, findByRole } = render(<Harness />);
+    expect(container.textContent).toContain("Reading evidence…");
+    const retry = await findByRole("button", { name: "Try again" });
+    expect(container.textContent).toContain(
+      "Evidence status could not be read",
+    );
+    expect(container.textContent).not.toContain("Reading evidence…");
+    const calls = fetchMock.mock.calls.length;
+    await act(async () => {
+      fireEvent.click(retry);
+    });
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(calls);
   });
 
   it("is blocked, with a link to Step 1, until every root cause there is settled", () => {

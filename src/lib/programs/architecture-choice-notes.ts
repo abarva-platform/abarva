@@ -1,5 +1,6 @@
 import {
   coverageFor,
+  textNamesOption,
   type ArchitectureChoice,
   type CoverageElement,
 } from "@/lib/programs/architecture-choice";
@@ -17,25 +18,16 @@ import {
  * the chosen option, and the "how" line under a Partly or Doesn't.
  */
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export interface ChoiceNotesProposal {
   kind: "why" | "how";
   /** For "how": the element it explains. */
   causeId?: string;
   value: string;
   sourceLines: number[];
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function namesOption(text: string, id: string, label: string): boolean {
-  const bare = id.replace(/^opt[-_ ]?/i, "");
-  return [id, label, `option ${bare}`].some(
-    (name) =>
-      name.trim().length > 0 &&
-      new RegExp(`\\b${escapeRegExp(name.trim())}\\b`, "i").test(text),
-  );
 }
 
 export function proposeChoiceFromNotes(
@@ -52,7 +44,10 @@ export function proposeChoiceFromNotes(
   if (!args.recommendation.trim()) {
     const why = sentences
       .filter((s) =>
-        namesOption(s.text, args.choice.optionId, args.choice.optionLabel),
+        textNamesOption(s.text, {
+          id: args.choice.optionId,
+          label: args.choice.optionLabel,
+        }),
       )
       .slice(0, 2);
     if (why.length) {
