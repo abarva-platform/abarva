@@ -1310,7 +1310,12 @@ export async function evaluateGate(
           isSignedOff(
             findDeliverable("baseline", "baseline_metrics", "value_baseline"),
           ) ||
+          // The P2 answers stand in for a report that says nothing either
+          // way. A readable report that records a hard gap (e.g. "baseline
+          // not yet attested") is the diagnosis of record, so a capture that
+          // merely mentions baselines must not clear the criterion over it.
           (fromPhase === 2 &&
+            !discoveryReportHasHardGap &&
             /\bbaseline|current state|metric|volume|cost|quality|cycle time|handle time\b/.test(
               phaseCaptureText,
             ) &&
@@ -1322,7 +1327,12 @@ export async function evaluateGate(
             /\bstakeholder/.test(latestDiscoveryReportText) &&
             !discoveryReportHasNamedOwnerGap &&
             !discoveryReportHasHardGap) ||
+          // Same rule as the baseline criterion above: a readable report
+          // that records a missing owner or a hard gap outranks a capture
+          // that merely uses the word "owner".
           (fromPhase === 2 &&
+            !discoveryReportHasNamedOwnerGap &&
+            !discoveryReportHasHardGap &&
             /\b(stakeholder|owner|ownership|sponsor|business|technology|risk|finance|operations|architecture|compliance|privacy|security|supervisor|steward|handoff|queue|role)\b/.test(
               phaseCaptureText,
             ) &&
