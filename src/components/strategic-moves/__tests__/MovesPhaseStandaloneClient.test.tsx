@@ -656,6 +656,11 @@ describe("MovesPhaseStandaloneClient", () => {
             status: 200,
             json: async () => ({
               ok: true,
+              // The route reports the health of its deliverables_v2 sign-off
+              // sub-read separately from the artifact rows. The default here is
+              // the healthy answer the live route gives; cases that need a
+              // degraded read override this branch.
+              deliverableSignOffStatus: "available",
               count:
                 generatedDeliverableArtifacts.length +
                 uploadedEvidenceArtifacts.length,
@@ -11222,6 +11227,111 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       expect(screen.getByTestId("capture-evidence-hold")).toHaveTextContent(
         "Phase inputs are captured.",
+      );
+    });
+  });
+
+  // The gate attestation ledger's sign-off column comes from ONE read — the
+  // artifacts route's separate deliverables_v2 projection — and the host is the
+  // only thing that knows whether that read landed. The ledger's own suite pins
+  // what each readback state is allowed to say; what only the host can answer is
+  // whether it declares the state at all. Before it did, a refused artifacts read
+  // left the ledger reporting every gate document as having no sign-off tracked,
+  // in a neutral tone, with nothing on screen saying the state was unread.
+  describe("the gate sign-off ledger is told whether its own read landed", () => {
+    const renderGateStep = (overrides: Record<string, unknown> = {}) =>
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="approve"
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+          {...overrides}
+        />,
+      );
+
+    const ledger = () =>
+      screen.getByRole("region", { name: /Gate deliverable sign-off/i });
+
+    it("states a sign-off count once the route reports its projection healthy", async () => {
+      renderGateStep();
+      await waitFor(() =>
+        expect(
+          within(ledger()).getByText(/\d+\/\d+ signed off/),
+        ).toBeInTheDocument(),
+      );
+      expect(within(ledger()).queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("says the sign-off state is unknown when the artifacts read is refused", async () => {
+      const baseFetch = (global.fetch as jest.Mock).getMockImplementation();
+      (global.fetch as jest.Mock).mockImplementation(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          if (url.includes("/api/v1/programs/") && url.endsWith("/artifacts")) {
+            return {
+              ok: false,
+              status: 503,
+              json: async () => ({}),
+            } as Response;
+          }
+          return baseFetch?.(input, init);
+        },
+      );
+
+      renderGateStep();
+      await waitFor(() =>
+        expect(
+          within(ledger()).getByText("Sign-off state unknown"),
+        ).toBeInTheDocument(),
+      );
+      // No tally may be stated from rows that carry no sign-off columns...
+      expect(
+        within(ledger()).queryByText(/\d+\/\d+ signed off/),
+      ).not.toBeInTheDocument();
+      // ...and the reader is told the state is unknown rather than negative.
+      expect(within(ledger()).getByRole("status")).toHaveTextContent(
+        /Reload before submitting the gate/i,
+      );
+      expect(
+        within(ledger()).queryByText(/No sign-off version is tracked/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("says the sign-off state is unavailable when the route reports that sub-read failed", async () => {
+      const baseFetch = (global.fetch as jest.Mock).getMockImplementation();
+      (global.fetch as jest.Mock).mockImplementation(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          if (url.includes("/api/v1/programs/") && url.endsWith("/artifacts")) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => ({
+                ok: true,
+                count: 0,
+                artifacts: [],
+                deliverableSignOffStatus: "unavailable",
+              }),
+            } as Response;
+          }
+          return baseFetch?.(input, init);
+        },
+      );
+
+      renderGateStep();
+      await waitFor(() =>
+        expect(
+          within(ledger()).getByText("Sign-off state unavailable"),
+        ).toBeInTheDocument(),
+      );
+      expect(within(ledger()).getByRole("status")).toHaveTextContent(
+        /unknown, not negative/i,
       );
     });
   });
