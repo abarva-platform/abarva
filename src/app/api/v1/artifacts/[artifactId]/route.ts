@@ -260,7 +260,10 @@ export async function GET(
         });
       }
 
-      const buf = await renderValidatedDocx(structuredDoc);
+      const buf = await renderValidatedDocx(
+        structuredDoc,
+        architectureModelForArtifact(record),
+      );
       return new Response(new Uint8Array(buf), {
         status: 200,
         headers: attachmentHeaders(

@@ -273,7 +273,10 @@ async function renderAcceptedGeneratedDraft(args: {
       parseMethod: "generated_renderable_deliverable_pptx",
     };
   }
-  const docx = await renderValidatedDocx(structuredDoc);
+  const docx = await renderValidatedDocx(
+    structuredDoc,
+    architectureModelForArtifact(args.artifact),
+  );
   return {
     body: Buffer.from(docx),
     fileName: safeArtifactFileName(args.title, "docx"),
