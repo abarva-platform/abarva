@@ -18,7 +18,7 @@ import { MAX_ATTACHMENT_SIZE_BYTES } from "@/lib/programs/attachments/mime";
 import { SENSITIVE_UPLOAD_QUARANTINE_CODE } from "@/lib/security/sensitive-upload-guard";
 
 describe("the upload refusal code list", () => {
-  it("names the six codes the route declares", () => {
+  it("names the nine codes the route declares", () => {
     expect([...MOVE_UPLOAD_REFUSAL_CODES]).toEqual([
       "file_required",
       "file_too_large",
@@ -26,6 +26,12 @@ describe("the upload refusal code list", () => {
       "evidence_family_requires_evidence_upload",
       "unknown_evidence_family",
       "sensitive_data_quarantined",
+      // The three catch-all arms, named by write stage. Before they existed
+      // the catch re-threw into an unbodied 500 and all three arrived as an
+      // absent code.
+      "upload_failed_before_storage",
+      "upload_not_registered",
+      "upload_registered_response_failed",
     ]);
   });
 
@@ -166,9 +172,11 @@ describe("the size limit is stated as the limit declares it", () => {
 
 describe("an unnamed refusal", () => {
   it("does not claim nothing was stored, because it cannot know", () => {
-    // Every NAMED code refuses before `saveMoveArtifact`. An unnamed one may
-    // have come from the route's catch-all after a partial write, so this
-    // sentence sends the reviewer to look rather than asserting a state.
+    // The route's own catch-all arms now name their write stage, so an
+    // unnamed code is what an UNBODIED response arrives as — the shape the
+    // readers' `res.json().catch(() => ({}))` produces. Nothing has checked
+    // the writes in that case, so this sentence sends the reviewer to look
+    // rather than asserting a state.
     const sentence = describeMoveUploadRefusal({
       code: "engagement_insert_failed",
       fileName: "notes.pdf",
