@@ -1303,6 +1303,33 @@ jobs:
       - name: Exercise the Moves artifact review-decision route suites
         run: npx jest 'src/app/api/v1/programs/\[programId\]/artifacts/\[artifactId\]/review-decision/__tests__' --runInBand
 
+      # The third write behind the same panel, left behind by slice 19.
+      # `review-regenerate` is how a reviewer turns review notes into the next
+      # durable version of a Move deliverable — `FileCabinetPanel`'s "Create
+      # next version" control — and it is the only one of the panel's three
+      # writes that stores TWICE: the revised artifact, then its editable Word
+      # companion. Its directory was in exactly the state slice 19 describes:
+      # the census counts it COVERED because `unit-suites.yml`'s broad
+      # `src/app/api/v1/programs` argument selects it, and that job is in none
+      # of the required contexts, so every case over it could have been deleted
+      # with no merge-blocking check going red.
+      #
+      # Measured BEFORE wiring, on its own under --runInBand:
+      #   artifacts/[artifactId]/review-regenerate   1 suite, 7 tests, GREEN
+      #
+      # Not coverage of nothing: `FileCabinetPanel.submitReviewFeedback` is the
+      # route's live product fetcher, and `MovesPhaseStandaloneClient.tsx`
+      # mounts that panel.
+      #
+      # Census-free, for the reason slice 19 gives: the broad argument already
+      # made the directory covered, and `unit-suites.yml` never names this
+      # suite by an exact path, so nothing leaves that job and the requiredness
+      # control has nothing to reconcile. Wired as a DIRECTORY with the
+      # brackets escaped — jest reads a positional argument as a regex, so
+      # unescaped `[programId]` is a character class that selects nothing.
+      - name: Exercise the Moves artifact review-regenerate route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/artifacts/\[artifactId\]/review-regenerate/__tests__' --runInBand
+
       # C-415 slice 20: the cabinet's own read route, the same class as
       # slice 19's three writes and for the same surface.
       # `GET .../artifacts` is the ONLY read behind FileCabinetPanel.tsx — the
