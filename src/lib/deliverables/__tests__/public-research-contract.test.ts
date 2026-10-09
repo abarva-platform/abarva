@@ -17,6 +17,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 
 import { CONFIDENCE_LEVELS } from "@/lib/governance/context-corpus-policy";
 import {
+  REVIEW_SOURCE_COLUMNS,
   RUN_COLUMNS,
   SOURCE_COLUMNS,
   SOURCE_DEDUPE_CONFLICT,
@@ -32,6 +33,7 @@ import {
   validateResearchRun,
   type NewPublicSource,
 } from "../public-research/types";
+import { PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS } from "../public-research/review-contract";
 
 const MIGRATION = "20261010130000_move_public_research.sql";
 
@@ -197,6 +199,47 @@ describe("migration constraints", () => {
     }
     const constraints = text.match(/ADD CONSTRAINT/g) ?? [];
     const guarded = text.match(/WHEN duplicate_object THEN NULL;/g) ?? [];
+    expect(guarded.length).toBe(constraints.length);
+  });
+});
+
+describe("review note migration", () => {
+  const NOTE_MIGRATION = "20261010140000_move_public_source_review_note.sql";
+  const noteSql = () =>
+    readFileSync(
+      join(process.cwd(), "supabase/migrations", NOTE_MIGRATION),
+      "utf8",
+    );
+
+  it("adds exactly the one column the review reads beyond SOURCE_COLUMNS", () => {
+    const base = SOURCE_COLUMNS.split(",").map((c) => c.trim());
+    const review = REVIEW_SOURCE_COLUMNS.split(",").map((c) => c.trim());
+    const extra = review.filter((c) => !base.includes(c));
+    expect(extra).toEqual(["review_note"]);
+    expect(review.slice(0, base.length)).toEqual(base);
+    expect(noteSql()).toMatch(
+      /ALTER TABLE move_public_sources\s+ADD COLUMN IF NOT EXISTS review_note TEXT NULL;/i,
+    );
+  });
+
+  it("bounds the note to the same limit the validator uses, and only on a decided source", () => {
+    expect(PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS).toBe(500);
+    expect(noteSql()).toMatch(
+      new RegExp(
+        `CHECK\\s*\\(review_note IS NULL OR char_length\\(review_note\\) BETWEEN 1 AND ${PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS}\\)`,
+        "i",
+      ),
+    );
+    expect(noteSql()).toMatch(
+      /CHECK\s*\(review_note IS NULL OR decision <> 'pending'\)/i,
+    );
+  });
+
+  it("is idempotent: every constraint is guarded", () => {
+    const text = noteSql();
+    const constraints = text.match(/ADD CONSTRAINT/g) ?? [];
+    const guarded = text.match(/WHEN duplicate_object THEN NULL;/g) ?? [];
+    expect(constraints.length).toBe(2);
     expect(guarded.length).toBe(constraints.length);
   });
 });

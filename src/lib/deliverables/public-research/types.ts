@@ -19,6 +19,14 @@ import {
   type ConfidenceLevel,
 } from "@/lib/governance/context-corpus-policy";
 
+import { PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS } from "./review-contract";
+
+/**
+ * The tenant flag every part of public-source research sits behind: the
+ * research step, the review routes and the review panel.
+ */
+export const PUBLIC_RESEARCH_FLAG = "moves_public_source_research" as const;
+
 /** The only `kind` a stored public source may carry (DB CHECK). */
 export const PUBLIC_SOURCE_KIND = "public_source" as const;
 export type PublicSourceKind = typeof PUBLIC_SOURCE_KIND;
@@ -117,6 +125,8 @@ export interface PublicSource {
   decision: PublicSourceDecision;
   reviewedByUserId: string | null;
   reviewedAt: string | null;
+  /** Why the reviewer decided as they did, when they said. Null while pending. */
+  reviewNote: string | null;
   createdAt: string;
 }
 
@@ -273,6 +283,30 @@ export function validatePublicSource(
       confidence,
     },
   };
+}
+
+/**
+ * Normalize a reviewer's optional note: absent or blank is no note; a string
+ * longer than PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS, or anything that is not a
+ * string, is refused rather than cut, so a reviewer never has part of what
+ * they wrote stored as if it were the whole.
+ */
+export function normalizeReviewNote(raw: unknown): Validation<string | null> {
+  if (raw === undefined || raw === null) return { ok: true, value: null };
+  if (typeof raw !== "string") {
+    return { ok: false, reasons: ["note must be text"] };
+  }
+  const note = raw.trim();
+  if (!note) return { ok: true, value: null };
+  if (charLength(note) > PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS) {
+    return {
+      ok: false,
+      reasons: [
+        `note is ${charLength(note)} characters; the limit is ${PUBLIC_SOURCE_REVIEW_NOTE_MAX_CHARS}`,
+      ],
+    };
+  }
+  return { ok: true, value: note };
 }
 
 /** Validate a run before it is written. Mirrors the CHECKs on the runs table. */

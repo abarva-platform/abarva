@@ -42,6 +42,7 @@ import {
 import {
   charLength,
   normalizePublicSourceUrl,
+  PUBLIC_RESEARCH_FLAG,
   PUBLIC_SOURCE_CONFIDENCE_LEVELS,
   PUBLIC_SOURCE_EXCERPT_MAX_CHARS,
   PUBLIC_SOURCES_PER_RUN_MAX,
@@ -50,7 +51,7 @@ import {
   type ResearchRunStatus,
 } from "./types";
 
-export const PUBLIC_RESEARCH_FLAG = "moves_public_source_research" as const;
+export { PUBLIC_RESEARCH_FLAG };
 export const PUBLIC_RESEARCH_WORKLOAD = "moves_public_research" as const;
 
 /** Budgets. Together the two tool caps are the manifest's 9 tool uses. */
