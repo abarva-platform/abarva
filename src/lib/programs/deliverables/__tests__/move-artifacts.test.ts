@@ -3,6 +3,7 @@ import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import {
   downloadArtifactBytes,
+  downloadArtifactOutcome,
   saveMoveArtifact,
   type ArtifactFamily,
 } from "../move-artifacts";
@@ -165,4 +166,166 @@ describe("saveMoveArtifact", () => {
       "moves/tenant-1/move-1/uploads/source/v1/source.txt",
     );
   });
+});
+
+// The three ways a download produces no bytes. `downloadArtifactOutcome` is the
+// only thing that can tell them apart — the route reads one answer and cannot
+// re-derive the cause — so these cases exercise the PRODUCER, not a mock of it.
+describe("downloadArtifactOutcome", () => {
+  function stubRow(
+    row: Record<string, unknown> | null,
+    opts: { readError?: unknown } = {},
+  ): { selected: string[] } {
+    const selected: string[] = [];
+    const query = {
+      eq() {
+        return query;
+      },
+      maybeSingle: async () => ({
+        data: row,
+        error: opts.readError ?? null,
+      }),
+    };
+    (getAzureWriteFluentClient as jest.Mock).mockReturnValue({
+      from: () => ({
+        select: (columns: string) => {
+          selected.push(columns);
+          return query;
+        },
+      }),
+    });
+    return { selected };
+  }
+
+  const storedRow = (metadata: unknown) => ({
+    blob_container: "context-drops",
+    blob_path: "moves/tenant-1/move-1/uploads/source/v1/source.txt",
+    file_name: "source.txt",
+    file_format: "txt",
+    tenant_key: "meridian",
+    metadata,
+  });
+
+  it("asks for the metadata column that carries the storage stamp", async () => {
+    // Without `metadata` the two failure causes below are indistinguishable at
+    // the source, and the route falls back to one sentence for both.
+    const { selected } = stubRow(storedRow({ storage: "azure_blob" }));
+    downloadMock.mockResolvedValue(Buffer.from("source bytes"));
+
+    await downloadArtifactOutcome(ctx, "artifact-1", "move-1");
+
+    expect(selected).toHaveLength(1);
+    expect(selected[0].split(/\s*,\s*/)).toContain("metadata");
+  });
+
+  it("reports an absent row as not found", async () => {
+    stubRow(null);
+
+    await expect(
+      downloadArtifactOutcome(ctx, "artifact-1", "move-1"),
+    ).resolves.toEqual({ ok: false, reason: "artifact_not_found" });
+    expect(downloadMock).not.toHaveBeenCalled();
+  });
+
+  it("reports a read error as not found, identically to an absent row", async () => {
+    stubRow(null, { readError: { message: "connection reset" } });
+
+    await expect(
+      downloadArtifactOutcome(ctx, "artifact-1", "move-1"),
+    ).resolves.toEqual({ ok: false, reason: "artifact_not_found" });
+  });
+
+  it("reports a row of another tenant as not found, leaking nothing", async () => {
+    stubRow(storedRow({ storage: "azure_blob" }));
+    (getAzureWriteFluentClient as jest.Mock).mockReturnValue({
+      from: () => ({
+        select: () => {
+          const q = {
+            eq() {
+              return q;
+            },
+            maybeSingle: async () => ({
+              data: {
+                ...storedRow({ storage: "azure_blob" }),
+                tenant_key: "apex",
+              },
+              error: null,
+            }),
+          };
+          return q;
+        },
+      }),
+    });
+
+    await expect(
+      downloadArtifactOutcome(ctx, "artifact-1", "move-1"),
+    ).resolves.toEqual({ ok: false, reason: "artifact_not_found" });
+    expect(downloadMock).not.toHaveBeenCalled();
+  });
+
+  it("reports an unfetchable row stamped unconfigured as bytes never retained", async () => {
+    // `saveMoveArtifact` writes this stamp when its best-effort Blob upload
+    // fails. The only copy was the request body and nothing re-attempts it, so
+    // this is permanent and the reader must be told to replace the file.
+    stubRow(storedRow({ sha256: "abc", storage: "unconfigured" }));
+    downloadMock.mockRejectedValue(new Error("BlobNotFound"));
+
+    await expect(
+      downloadArtifactOutcome(ctx, "artifact-1", "move-1"),
+    ).resolves.toEqual({ ok: false, reason: "bytes_never_retained" });
+  });
+
+  it("reports an unfetchable row stamped azure_blob as unreachable storage", async () => {
+    stubRow(storedRow({ sha256: "abc", storage: "azure_blob" }));
+    downloadMock.mockRejectedValue(
+      new Error("ENOTFOUND blob.core.windows.net"),
+    );
+
+    await expect(
+      downloadArtifactOutcome(ctx, "artifact-1", "move-1"),
+    ).resolves.toEqual({ ok: false, reason: "storage_unreachable" });
+  });
+
+  it("does not report loss for a row whose metadata records no stamp", async () => {
+    stubRow(storedRow({ sha256: "abc" }));
+    downloadMock.mockRejectedValue(
+      new Error("ENOTFOUND blob.core.windows.net"),
+    );
+
+    await expect(
+      downloadArtifactOutcome(ctx, "artifact-1", "move-1"),
+    ).resolves.toEqual({ ok: false, reason: "storage_unreachable" });
+  });
+
+  it("serves a row stamped unconfigured whose bytes ARE fetchable", async () => {
+    // The stamp records one past write attempt, not the present state, so
+    // fetchable bytes win over it.
+    stubRow(storedRow({ storage: "unconfigured" }));
+    downloadMock.mockResolvedValue(Buffer.from("recovered bytes"));
+
+    const outcome = await downloadArtifactOutcome(ctx, "artifact-1", "move-1");
+
+    expect(outcome.ok).toBe(true);
+    expect(outcome.ok && outcome.file.bytes.toString()).toBe("recovered bytes");
+  });
+
+  it.each([
+    ["an absent row", null, undefined],
+    [
+      "unretained bytes",
+      { storage: "unconfigured" },
+      new Error("BlobNotFound"),
+    ],
+    ["unreachable storage", { storage: "azure_blob" }, new Error("ENOTFOUND")],
+  ])(
+    "keeps downloadArtifactBytes answering null for %s, for its nine other callers",
+    async (_label, metadata, downloadError) => {
+      stubRow(metadata === null ? null : storedRow(metadata));
+      if (downloadError) downloadMock.mockRejectedValue(downloadError);
+
+      await expect(
+        downloadArtifactBytes(ctx, "artifact-1", "move-1"),
+      ).resolves.toBeNull();
+    },
+  );
 });
