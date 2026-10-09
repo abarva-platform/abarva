@@ -122,7 +122,7 @@ describe("context-corpus policy contract", () => {
     expect(evaluateGovernedObject({ id: "" }).decision).toBe("block");
   });
 
-  describe("public_source layer (v1.1.0)", () => {
+  describe("public_source layer (additive, v1.0.0)", () => {
     // A public web page found by Move research, reviewed before use.
     function publicSource(over: Partial<GovernedObject> = {}): GovernedObject {
       return ready({
@@ -145,8 +145,10 @@ describe("context-corpus policy contract", () => {
       });
     }
 
-    it("is a declared layer under policy version 1.1.0", () => {
-      expect(POLICY_VERSION).toBe("1.1.0");
+    it("is a declared layer, added without bumping the policy version", () => {
+      // A bump would invalidate every stored readiness proof (Home narrative
+      // admission requires proof.policy_version === POLICY_VERSION).
+      expect(POLICY_VERSION).toBe("1.0.0");
       expect(SOURCE_LAYERS).toContain("public_source");
     });
 

@@ -38,8 +38,8 @@ page or answer changes.
   each refused source. Failures come back as failures, never as an empty list.
   A decision only moves a pending source to approved or rejected; a decided
   source is never decided again.
-- Governance: the policy gains a `public_source` source layer (policy version
-  1.1.0). Such an object is refused in shared corpus and can never be
+- Governance: the policy gains a `public_source` source layer (additive; the
+  policy version stays 1.0.0). Such an object is refused in shared corpus and can never be
   `agent_ready`. A dataset manifest declares the dataset before anything
   writes it.
 - A tenant feature flag, `moves_public_source_research`, on for the synthetic
@@ -53,8 +53,7 @@ page or answer changes.
   re-runnable migration). No existing table, column or policy changes.
 - Governance contract: new `public_source` source layer and two new block
   rules (no shared corpus, never `agent_ready`); manifest validator refuses a
-  `public_source` manifest scoped to shared corpus. Policy version 1.0.0 to
-  1.1.0.
+  `public_source` manifest scoped to shared corpus. The policy version stays 1.0.0: the layer is additive, and a bump would invalidate every stored readiness proof (Home narrative admission requires a matching version).
 - Products: no product reads or writes the new tables yet.
 - AI egress: a new workload label only; no new model call.
 
@@ -78,7 +77,7 @@ page or answer changes.
   insert a run, insert sources with dedupe, list approved sources for a Move,
   decide a pending source.
 - `src/lib/governance/context-corpus-policy.ts`: `public_source` layer, the two
-  block rules, `POLICY_VERSION` 1.1.0. `dataset-manifest.ts`: the shared-corpus
+  block rules, `POLICY_VERSION` unchanged (1.0.0). `dataset-manifest.ts`: the shared-corpus
   refusal.
 - `docs/governance/CONTEXT_CORPUS_POLICY.md`, `policy-exceptions.json`,
   `context-corpus-enforcement-tracker.json`: version and the public-source
@@ -136,8 +135,7 @@ the tables until the research step ships.
 
 Revert through a pull request. The tables are additive and empty, and no code
 path depends on them. If the migration was applied, the tables can stay
-unused, or be dropped by a later additive migration after review. Policy
-version 1.0.0 objects remain valid under 1.1.0.
+unused, or be dropped by a later additive migration after review. The policy version is unchanged, so existing objects and readiness proofs are unaffected.
 
 ## Audit Evidence
 

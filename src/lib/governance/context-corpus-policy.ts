@@ -22,11 +22,14 @@ import { z } from "zod";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 
 /**
- * Bump when the contract changes; forces re-validation.
- * 1.1.0 — adds the `public_source` source layer (governed public-web research
- * for Moves: tenant- and Move-scoped, reviewed before use, never agent_ready).
+ * Bump when the contract changes; forces re-validation of EVERY stored
+ * readiness proof (Home narrative admission compares a proof's version to
+ * this constant, so a bump empties Home until proofs are re-validated).
+ * Adding the `public_source` source layer (governed public-web research for
+ * Moves) is additive — no existing object's evaluation changes — so it is
+ * not a bump.
  */
-export const POLICY_VERSION = "1.1.0";
+export const POLICY_VERSION = "1.0.0";
 
 /** Scope sentinel for tenant-neutral (shared corpus) objects. */
 export const CORPUS_GLOBAL_SCOPE = "corpus_global";

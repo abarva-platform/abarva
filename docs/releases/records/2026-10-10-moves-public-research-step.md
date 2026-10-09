@@ -27,7 +27,7 @@ Storage contract:
 - A server-only repository reads and writes these tables. Every read, dedupe
   check and decision is fenced to every alias of one tenant and the exact
   Move. Failures come back as failures, never as an empty list.
-- Governance: a `public_source` source layer (policy version 1.1.0), never
+- Governance: a `public_source` source layer (additive; the policy version stays 1.0.0), never
   allowed in shared corpus and never `agent_ready`, and a dataset manifest.
 
 Research step (new in this release):
@@ -61,8 +61,7 @@ Research step (new in this release):
 - Canonical model: two new tenant-scoped, Move-scoped tables (one additive,
   re-runnable migration). No existing table, column or policy changes.
 - Governance contract: `public_source` layer and two block rules; manifest
-  validator refuses a `public_source` manifest scoped to shared corpus. Policy
-  version 1.0.0 to 1.1.0.
+  validator refuses a `public_source` manifest scoped to shared corpus. The policy version stays 1.0.0: the layer is additive, and a bump would invalidate every stored readiness proof (Home narrative admission requires a matching version).
 - Products: Moves deliverable builds for enrolled tenants gain a research step
   before evidence assembly. Its output is stored, not cited. The build result
   gains an optional `publicResearch` outcome and a `public_research:` note in
@@ -165,8 +164,7 @@ worker for enrolled tenants only.
 Remove the tenant from `includeTenants` and deploy through the main workflow,
 or revert through a pull request. With the flag off nothing runs. The tables are
 additive; stored pending sources are never cited by this release and can stay
-or be removed by a later reviewed migration. Policy version 1.0.0 objects
-remain valid under 1.1.0.
+or be removed by a later reviewed migration. The policy version is unchanged, so existing objects and readiness proofs are unaffected.
 
 ## Audit Evidence
 

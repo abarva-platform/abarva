@@ -1,4 +1,4 @@
-# AbarVa Context & Corpus Policy (v1.1.0)
+# AbarVa Context & Corpus Policy (v1.0.0)
 
 Canonical, enforced policy for every context/corpus object used by any agent. Machine contract:
 `src/lib/governance/context-corpus-policy.ts` (`GovernedObject` + Zod + `evaluateGovernedObject`).
@@ -47,7 +47,7 @@ reasoning, not embeddings.
   `CANONICAL_TENANT_KEYS`; exception file with CI-enforced expiry; machine tracker read on every run.
 - **Runtime gate** — `buildValidatedAgentContextBundle` filters `block` objects before the model.
 
-## Public sources (`public_source` layer, since v1.1.0)
+## Public sources (`public_source` layer, additive)
 
 A `public_source` object is a public web page retrieved by the audited Anthropic web search / fetch
 tools during a Moves deliverable build (program rules, payment rules, published studies). It is
@@ -66,6 +66,8 @@ tools during a Moves deliverable build (program rules, payment rules, published 
 
 ## Versioning
 
-`POLICY_VERSION` (currently `1.1.0`) + per-object `policy_version` + `contract_hash`. Contract
-changes bump the version and force re-validation. v1.1.0 added the `public_source` source layer. Schema evolution is expand/contract only,
+`POLICY_VERSION` (currently `1.0.0`) + per-object `policy_version` + `contract_hash`. Contract
+changes bump the version and force re-validation of every stored readiness proof (Home narrative
+admission requires a proof's version to equal `POLICY_VERSION`). The `public_source` source layer
+was added without a bump because it is additive: no existing object's evaluation changes. Schema evolution is expand/contract only,
 additive, with documented reverse SQL.
