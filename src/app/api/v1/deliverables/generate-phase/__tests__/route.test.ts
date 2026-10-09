@@ -781,6 +781,57 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     }
   });
 
+  it("hands the build a root-cause register as ranked text, never as JSON", async () => {
+    getModuleState.mockResolvedValueOnce([
+      {
+        moduleKey: "phase_2_gaps_root_causes",
+        moduleName: "Gaps / root causes",
+        phaseNumber: 2,
+        status: "completed",
+        state: {
+          value: JSON.stringify({
+            kind: "root_cause_register",
+            version: 1,
+            orderConfirmedAt: "2026-10-02",
+            causes: [
+              {
+                id: "RC-2",
+                cause: "Definitions conflict",
+                status: "accepted",
+                evidence: ["Profile"],
+              },
+              { id: "RC-1", cause: "No ownership", status: "draft" },
+            ],
+          }),
+        },
+      },
+    ]);
+
+    const res = await POST(
+      req({
+        moveId: "m-p2",
+        phase: 2,
+        useCaseArchetype: "ai_member_service",
+        moveName: "Member Service Agent Assist",
+        clientDisplayName: "Client",
+      }),
+    );
+
+    expect(res.status).toBe(202);
+    expect(createCalls.length).toBeGreaterThan(0);
+    for (const call of createCalls) {
+      const decisionContext = (call.jobPayload as { decisionContext: string })
+        .decisionContext;
+      expect(decisionContext).toContain(
+        "Gaps / root causes: Root causes, in the consultant's confirmed order:",
+      );
+      expect(decisionContext).toContain(
+        "1. RC-2: Definitions conflict (accepted) · evidence: Profile",
+      );
+      expect(decisionContext).not.toContain('"kind"');
+    }
+  });
+
   it("enqueues one queued run per phase deliverable, scoped to the tenant", async () => {
     // P3 has several deliverables, so this proves the batch is real (not a single enqueue).
     const res = await POST(
