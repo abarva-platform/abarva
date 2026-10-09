@@ -13,6 +13,7 @@
 // with an error, and does not abort the others.
 
 import { captureValueText } from "@/lib/programs/structured-capture-text";
+import { phaseStepRecordSections } from "@/lib/programs/phase-workflow-registry";
 import { randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
@@ -191,6 +192,19 @@ async function buildPhaseCaptureDecisionContext(args: {
       continue;
     }
     lines.push(`- ${section.label}: ${captureValueText(section.key, value)}`);
+  }
+  // The phase's step-page records (P3: root cause → design traceability, the
+  // chosen option and its coverage) are part of the same authoritative input;
+  // they are not capture questions, so the loop above never reaches them.
+  for (const record of phaseStepRecordSections(args.phase)) {
+    const captureModule = modules.find(
+      (entry) =>
+        entry.moduleKey === phaseCaptureModuleKey(args.phase, record.key),
+    );
+    const state = (captureModule?.state ?? {}) as Record<string, unknown>;
+    const value = typeof state.value === "string" ? state.value.trim() : "";
+    if (!value) continue;
+    lines.push(`- ${record.label}: ${captureValueText(record.key, value)}`);
   }
   if (lines.length === 0) return null;
 
