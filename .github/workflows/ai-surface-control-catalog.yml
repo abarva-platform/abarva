@@ -1382,3 +1382,17 @@ jobs:
       # quotable line moves into a job that can block a merge.
       - name: Exercise the Moves cabinet artifacts read route suites
         run: npx jest 'src/app/api/v1/programs/\[programId\]/artifacts/__tests__' --runInBand
+
+      # The Moves assumptions register routes (flag
+      # `moves_assumption_register_v1`): list, add, edit, and the accept /
+      # reject / answer / supersede decision. aVa's only path onto the register
+      # is the `propose_assumption` tool, whose suite sits in
+      # `src/lib/agent/tools/__tests__` and is already swept by directory above;
+      # these routes are where a PERSON accepts, answers or supersedes a row, so
+      # their refusals and their write guards must be able to block a merge.
+      # The broad `src/app/api/v1/programs` argument in `unit-suites.yml` makes
+      # the directory census-covered, but that job is required by nothing.
+      # Wired as a DIRECTORY with the brackets escaped, for the reason slice 17
+      # states: jest reads a positional argument as a regex.
+      - name: Exercise the Moves assumptions register route suites
+        run: npx jest 'src/app/api/v1/programs/\[programId\]/assumptions/__tests__' --runInBand

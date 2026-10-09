@@ -34,6 +34,7 @@ import '../program/completeModule';
 import '../program/assignSponsor';
 import '../program/completeProgram';
 import '../program/draftArtifact';
+import '../program/proposeAssumption';
 import '../source/commitSourceEvent';
 import '../intelligence/searchPatterns';
 import '../intelligence/patternNeighborhood';
