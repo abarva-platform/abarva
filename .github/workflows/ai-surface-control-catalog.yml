@@ -303,6 +303,14 @@ jobs:
       # the approve path is precisely the gap this step exists to close. Five of
       # five pass on this commit.
       #
+      # The ninety-second path below is the document cabinet's storage state.
+      # One boolean decided a red chip, so a generated deliverable — which is
+      # rendered from its recorded content on download and never occupies the
+      # vault — carried the same warning as an uploaded file whose bytes were
+      # not stored, which is unrecoverable. A declared-AI-surface control whose
+      # only alarm fires on every healthy row cannot be read, so it belongs in
+      # this step. Eight of eight pass on this commit.
+      #
       # The forty-seventh path below pins which phases the capture dock offers
       # aVa's input-drafting control on. The host handed the dock a literal
       # one-action list on every mounted phase while the handler returned
@@ -363,6 +371,7 @@ jobs:
           src/components/strategic-moves/__tests__/phase-approve-and-build-gate-signoff.test.tsx
           src/components/strategic-moves/__tests__/ava-draft-action-phase-reach.test.tsx
           src/components/strategic-moves/__tests__/moves-capture-composer-streaming.test.tsx
+          src/components/strategic-moves/__tests__/FileCabinetPanel.upload-retention.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the
