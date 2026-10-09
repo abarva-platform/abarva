@@ -59,6 +59,25 @@ export type ArchitectureDeckPage =
   | { kind: "headline"; visual: ArchitectureVisualExhibit }
   | { kind: "standalone"; visual: ArchitectureVisualExhibit };
 
+/** Keep the executive argument ahead of the reference visuals. */
+export function splitArchitectureDeckPages(
+  pages: readonly ArchitectureDeckPage[],
+): { body: ArchitectureDeckPage[]; appendix: ArchitectureDeckPage[] } {
+  const hasHeadline = pages.some((page) => page.kind === "headline");
+  if (!hasHeadline) return { body: [], appendix: [...pages] };
+  const appendixStart = pages.findIndex(
+    (page) =>
+      page.kind === "divider" &&
+      page.eyebrow === "ARCHITECTURE — REFERENCE",
+  );
+  return appendixStart < 0
+    ? { body: [...pages], appendix: [] }
+    : {
+        body: pages.slice(0, appendixStart),
+        appendix: pages.slice(appendixStart),
+      };
+}
+
 /**
  * Order the present architecture visuals into the bounded board storyline.
  * Every present visual is emitted exactly once; dividers are added only when a
@@ -112,7 +131,7 @@ export function composeArchitectureDeckPages(
           : "ARCHITECTURE",
       title:
         headlinesPresent.length > 0
-          ? "Supporting architecture detail for diligence"
+          ? "Appendix A — Architecture reference"
           : "The governed architecture model",
     });
     for (const id of rest) {

@@ -312,22 +312,21 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="current_state_operating_flow" data-exhibit="current_state_operating_flow">
     <div class="sec-h"><span class="num">3</span><h2>Current-state operating flow</h2></div>
     <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Ordered architecture flow">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--control)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g data-arch-item-id="cs1">
+    <g data-arch-item-id="cs1">
         <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Document arrival</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">Client service team</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--control)" stroke-width="2" marker-end="url(#arrow)"/><g data-arch-item-id="cs2">
+        <text x="132" y="97" text-anchor="middle" font-size="15" font-weight="700">1</text>
+        <text x="132" y="140" text-anchor="middle" font-size="15" font-weight="700"><tspan x="132" dy="0">Document arrival</tspan></text>
+        <text x="132" y="174" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="132" dy="0">Client service team</tspan></text>
+      </g><g data-arch-item-id="cs2">
         <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Manual clause comparison</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">Trade-finance officer</tspan></text>
+        <text x="352" y="97" text-anchor="middle" font-size="15" font-weight="700">2</text>
+        <text x="352" y="140" text-anchor="middle" font-size="15" font-weight="700"><tspan x="352" dy="0">Manual clause</tspan><tspan x="352" dy="17">comparison</tspan></text>
+        <text x="352" y="174" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="352" dy="0">Trade-finance officer</tspan></text>
       </g><g data-arch-item-id="cs3">
         <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Exception tracking and</tspan><tspan x="572" dy="14">posting</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">Officer and financial-crime</tspan><tspan x="572" dy="12">teams</tspan></text>
+        <text x="572" y="97" text-anchor="middle" font-size="15" font-weight="700">3</text>
+        <text x="572" y="140" text-anchor="middle" font-size="15" font-weight="700"><tspan x="572" dy="0">Exception tracking and</tspan><tspan x="572" dy="17">posting</tspan></text>
+        <text x="572" y="174" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="572" dy="0">Officer and financial-crime</tspan><tspan x="572" dy="14">teams</tspan></text>
       </g>
   </svg><div class="grid2"><div class="card"><div class="card-h">Document arrival</div><div class="note">No structured intake queue or telemetry</div></div><div class="card"><div class="card-h">Manual clause comparison</div><div class="note">Officer reads clauses, compares terms, and keys findings</div></div><div class="card"><div class="card-h">Exception tracking and posting</div><div class="note">Exceptions move through email/spreadsheets before AML screening and posting</div></div></div></div>
     <p class="so-what"><strong>So what:</strong> The current bottleneck is not one task; it is the unsupported chain from intake to exception approval.</p>
@@ -336,27 +335,26 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="current_state_system_data_flow" data-exhibit="current_state_system_data_flow">
     <div class="sec-h"><span class="num">4</span><h2>Current-state system/data flow</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
     <g data-arch-item-id="cf1">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Email / courier intake →</tspan><tspan x="115" dy="14">Manual document review</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">documents</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Email / courier intake →</tspan><tspan x="115" dy="17">Manual document review</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">documents</tspan></text>
       </g><g data-arch-item-id="cf2">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Manual document review → Trade</tspan><tspan x="360" dy="14">Finance system</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">keyed data</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Manual document review →</tspan><tspan x="360" dy="17">Trade Finance system</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">keyed data</tspan></text>
       </g><g data-arch-item-id="cf3">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Manual document review →</tspan><tspan x="605" dy="14">Manual exception tracking</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">exceptions</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Manual document review →</tspan><tspan x="605" dy="17">Manual exception</tspan><tspan x="605" dy="17">tracking</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">exceptions</tspan></text>
       </g><g data-arch-item-id="cf4">
         <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Trade Finance system → FIS</tspan><tspan x="850" dy="14">IST/Profile core</tspan></text>
-        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">postings</tspan></text>
+        <text x="850" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="850" dy="0">Trade Finance system →</tspan><tspan x="850" dy="17">FIS IST/Profile core</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="850" dy="0">postings</tspan></text>
       </g><g data-arch-item-id="cf5">
         <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Trade Finance system → NICE</tspan><tspan x="115" dy="14">Actimize</tspan></text>
-        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">screening</tspan></text>
+        <text x="115" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Trade Finance system →</tspan><tspan x="115" dy="17">NICE Actimize</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">screening</tspan></text>
       </g>
   </svg><div class="statemap"><div class="band">
     <div class="band-label">Experience &amp; Channels</div>
@@ -416,19 +414,18 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="current_state_gaps_map" data-exhibit="current_state_gaps_map">
     <div class="sec-h"><span class="num">5</span><h2>Current-state gaps map</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 200" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--changed)"/></marker></defs>
     <g data-arch-item-id="b1">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Event-driven document intake</tspan><tspan x="115" dy="14">and extraction</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">The process lacks a governed</tspan><tspan x="115" dy="12">intake...</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Event-driven document</tspan><tspan x="115" dy="17">intake and extraction</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">The process lacks a</tspan><tspan x="115" dy="14">governed...</tspan></text>
       </g><g data-arch-item-id="b2">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Grounded AI-assisted clause</tspan><tspan x="360" dy="14">comparison</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">There is no governed retrieval</tspan><tspan x="360" dy="12">layer...</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Grounded AI-assisted</tspan><tspan x="360" dy="17">clause comparison</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">There is no governed</tspan><tspan x="360" dy="14">retrieval...</tspan></text>
       </g><g data-arch-item-id="b3">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--changed)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Controlled exception decision</tspan><tspan x="605" dy="14">workflow</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Human approval exists, but the</tspan><tspan x="605" dy="12">approval...</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Controlled exception</tspan><tspan x="605" dy="17">decision workflow</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">Human approval exists, but</tspan><tspan x="605" dy="14">the...</tspan></text>
       </g>
   </svg><div class="grid2"><div class="card"><div class="card-h">The process lacks a governed intake layer and reliable queue telemetry.</div><div class="note">Documents arrive through email/courier and are triaged manually.</div><div class="outcome">Introduce structured intake, extraction, and event telemetry before any AI recommendation is trusted.</div></div><div class="card"><div class="card-h">There is no governed retrieval layer for L/C terms, UCP rules, and decision evidence.</div><div class="note">Clause comparison depends on officer memory and fragmented references.</div><div class="outcome">Ground clause comparison in a governed corpus with traceable retrieval and citations.</div></div><div class="card"><div class="card-h">Human approval exists, but the approval trail is not captured as a controlled decision system.</div><div class="note">Exceptions are assembled in spreadsheets and email threads.</div><div class="outcome">Put officer approval, model-risk validation, AML screening, and audit telemetry into the target flow.</div></div></div></div>
     <p class="so-what"><strong>So what:</strong> Each observed gap translates into a specific target capability.</p>
@@ -437,31 +434,30 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="target_conceptual_architecture" data-exhibit="target_conceptual_architecture">
     <div class="sec-h"><span class="num">6</span><h2>Target conceptual architecture</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
     <g data-arch-item-id="co_intake">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Sense: document intake</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Experience &amp; Channels</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Sense: document intake</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">Experience &amp; Channels</tspan></text>
       </g><g data-arch-item-id="co_context">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Context: terms + UCP rules</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Data &amp; ML Platform</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Context: terms + UCP</tspan><tspan x="360" dy="17">rules</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Data &amp; ML Platform</tspan></text>
       </g><g data-arch-item-id="co_recommend">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Recommend: AI discrepancy</tspan><tspan x="605" dy="14">finding</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Agentic Orchestration</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Recommend: AI</tspan><tspan x="605" dy="17">discrepancy finding</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">Agentic Orchestration</tspan></text>
       </g><g data-arch-item-id="co_approve">
         <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Approve: officer judgment</tspan></text>
-        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">Core Systems of Record</tspan></text>
+        <text x="850" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="850" dy="0">Approve: officer</tspan><tspan x="850" dy="17">judgment</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="850" dy="0">Core Systems of Record</tspan></text>
       </g><g data-arch-item-id="co_act">
         <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Act: core posting</tspan></text>
-        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Core Systems of Record</tspan></text>
+        <text x="115" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Act: core posting</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">Core Systems of Record</tspan></text>
       </g><g data-arch-item-id="co_measure">
         <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Measure: lineage + value</tspan></text>
-        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Cloud &amp; Platform</tspan></text>
+        <text x="360" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Measure: lineage + value</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Cloud &amp; Platform</tspan></text>
       </g>
   </svg><p class="caption">The business design is a governed decision system: intake, context enrichment, AI recommendation, officer approval, system action, and value telemetry.</p><div class="statemap"><div class="band">
     <div class="band-label">Experience &amp; Channels</div>
@@ -518,35 +514,34 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="target_logical_architecture" data-exhibit="target_logical_architecture">
     <div class="sec-h"><span class="num">7</span><h2>Target logical architecture</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
     <g data-arch-item-id="lo_workbench">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Officer workbench</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Experience &amp; Channels</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Officer workbench</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">Experience &amp; Channels</tspan></text>
       </g><g data-arch-item-id="lo_api">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">API facade</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Integration &amp; Rails</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">API facade</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Integration &amp; Rails</tspan></text>
       </g><g data-arch-item-id="lo_orch">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Agent orchestrator</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Agentic Orchestration</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Agent orchestrator</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">Agentic Orchestration</tspan></text>
       </g><g data-arch-item-id="lo_extract">
         <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Extraction service</tspan></text>
-        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">Applications &amp; Services</tspan></text>
+        <text x="850" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="850" dy="0">Extraction service</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="850" dy="0">Applications &amp; Services</tspan></text>
       </g><g data-arch-item-id="lo_retrieve">
         <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Retrieval service</tspan></text>
-        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Data &amp; ML Platform</tspan></text>
+        <text x="115" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Retrieval service</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">Data &amp; ML Platform</tspan></text>
       </g><g data-arch-item-id="lo_model">
         <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Model serving</tspan></text>
-        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Applications &amp; Services</tspan></text>
+        <text x="360" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Model serving</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Applications &amp; Services</tspan></text>
       </g><g data-arch-item-id="lo_controls">
         <circle cx="605" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Risk / AML controls</tspan></text>
-        <text x="605" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Core Systems of Record</tspan></text>
+        <text x="605" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Risk / AML controls</tspan></text>
+        <text x="605" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">Core Systems of Record</tspan></text>
       </g>
   </svg><p class="caption">Logical components separate intake, orchestration, retrieval, model serving, exception assembly, approval, and system integration.</p><div class="statemap"><div class="band">
     <div class="band-label">Experience &amp; Channels</div>
@@ -618,35 +613,34 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="target_physical_deployment" data-exhibit="target_physical_deployment">
     <div class="sec-h"><span class="num">8</span><h2>Target physical / deployment architecture</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
     <g data-arch-item-id="ph_vpc">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">AWS landing zone</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">VPC, IAM, KMS, CloudTrail</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">AWS landing zone</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">VPC, IAM, KMS, CloudTrail</tspan></text>
       </g><g data-arch-item-id="ph_api">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Amazon API Gateway</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">API Gateway</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Amazon API Gateway</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">API Gateway</tspan></text>
       </g><g data-arch-item-id="ph_bus">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Amazon EventBridge</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">EventBridge</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Amazon EventBridge</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">EventBridge</tspan></text>
       </g><g data-arch-item-id="ph_docai">
         <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Textract + Bedrock</tspan></text>
-        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">Amazon Textract + Bedrock</tspan></text>
+        <text x="850" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="850" dy="0">Textract + Bedrock</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="850" dy="0">Amazon Textract + Bedrock</tspan></text>
       </g><g data-arch-item-id="ph_dbx">
         <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Databricks on AWS</tspan></text>
-        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Databricks + Vector Search</tspan></text>
+        <text x="115" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Databricks on AWS</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">Databricks + Vector Search</tspan></text>
       </g><g data-arch-item-id="ph_sf">
         <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Snowflake finance mart</tspan></text>
-        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Snowflake</tspan></text>
+        <text x="360" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Snowflake finance mart</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Snowflake</tspan></text>
       </g><g data-arch-item-id="ph_fis">
         <circle cx="605" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">FIS IST/Profile</tspan></text>
-        <text x="605" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Mainframe core</tspan></text>
+        <text x="605" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">FIS IST/Profile</tspan></text>
+        <text x="605" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">Mainframe core</tspan></text>
       </g>
   </svg><p class="caption">The physical design uses the bank's AWS/Databricks target estate with tenant boundary, identity, encryption, audit logging, and mainframe integration explicitly shown.</p><div class="statemap"><div class="band">
     <div class="band-label">Applications &amp; Services</div>
@@ -715,35 +709,34 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="end_to_end_data_flow" data-exhibit="end_to_end_data_flow">
     <div class="sec-h"><span class="num">9</span><h2>End-to-end data flow</h2></div>
     <div class="visual-body"><div class="legend"><span class="l-data">Data flow</span></div><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
     <g data-arch-item-id="tf1">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Trade Finance workbench → API</tspan><tspan x="115" dy="14">gateway</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">document upload</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Trade Finance workbench</tspan><tspan x="115" dy="17">→ API gateway</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">document upload</tspan></text>
       </g><g data-arch-item-id="tf2">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Event bus → L/C orchestrator</tspan><tspan x="360" dy="14">agent</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">document arrived</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Event bus → L/C</tspan><tspan x="360" dy="17">orchestrator agent</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">document arrived</tspan></text>
       </g><g data-arch-item-id="tf6">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Clause-comparison agent →</tspan><tspan x="605" dy="14">Retrieval / vector index</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">retrieve terms + UCP rules</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Clause-comparison agent</tspan><tspan x="605" dy="17">→ Retrieval / vector</tspan><tspan x="605" dy="17">index</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">retrieve terms + UCP rules</tspan></text>
       </g><g data-arch-item-id="tf9">
         <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Trade Finance workbench →</tspan><tspan x="850" dy="14">Trade Finance system</tspan></text>
-        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">approved posting</tspan></text>
+        <text x="850" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="850" dy="0">Trade Finance workbench</tspan><tspan x="850" dy="17">→ Trade Finance system</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="850" dy="0">approved posting</tspan></text>
       </g><g data-arch-item-id="tf10">
         <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Trade Finance system → FIS</tspan><tspan x="115" dy="14">IST/Profile core</tspan></text>
-        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">core update</tspan></text>
+        <text x="115" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Trade Finance system →</tspan><tspan x="115" dy="17">FIS IST/Profile core</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">core update</tspan></text>
       </g><g data-arch-item-id="tf11">
         <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Discrepancy / exception agent</tspan><tspan x="360" dy="14">→ AML / fraud control</tspan></text>
-        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">AML screening</tspan></text>
+        <text x="360" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Discrepancy / exception</tspan><tspan x="360" dy="17">agent → AML / fraud</tspan><tspan x="360" dy="17">control</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">AML screening</tspan></text>
       </g><g data-arch-item-id="tf13">
         <circle cx="605" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Lakehouse → Retrieval / vector</tspan><tspan x="605" dy="14">index</tspan></text>
-        <text x="605" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">governed corpus</tspan></text>
+        <text x="605" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Lakehouse → Retrieval /</tspan><tspan x="605" dy="17">vector index</tspan></text>
+        <text x="605" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">governed corpus</tspan></text>
       </g>
   </svg><div class="flow k-data">
         <div class="flow-line"><span class="tile">Trade Finance workbench</span><span class="arrow" data-k="data">→</span><span class="tile">API gateway</span><span class="flbl">document upload</span><span class="badge fk fk-data">Data</span></div>
@@ -773,31 +766,30 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="ai_recommendation_control_flow" data-exhibit="ai_recommendation_control_flow">
     <div class="sec-h"><span class="num">10</span><h2>AI recommendation &amp; decision-control flow</h2></div>
     <div class="visual-body"><div class="legend"><span class="l-control">AI control / decision flow</span></div><h3 style="font-size:15px;margin:0 0 10px">AI decision &amp; control flow</h3><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--control)"/></marker></defs>
     <g data-arch-item-id="tf3">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">L/C orchestrator agent →</tspan><tspan x="115" dy="14">Intake &amp; extraction agent</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">extract</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">L/C orchestrator agent →</tspan><tspan x="115" dy="17">Intake &amp; extraction</tspan><tspan x="115" dy="17">agent</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">extract</tspan></text>
       </g><g data-arch-item-id="tf4">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Intake &amp; extraction agent →</tspan><tspan x="360" dy="14">Document AI service</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">OCR + parse</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Intake &amp; extraction</tspan><tspan x="360" dy="17">agent → Document AI</tspan><tspan x="360" dy="17">service</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">OCR + parse</tspan></text>
       </g><g data-arch-item-id="tf5">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">L/C orchestrator agent →</tspan><tspan x="605" dy="14">Clause-comparison agent</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">compare clauses</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">L/C orchestrator agent →</tspan><tspan x="605" dy="17">Clause-comparison agent</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">compare clauses</tspan></text>
       </g><g data-arch-item-id="tf7">
         <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">L/C orchestrator agent →</tspan><tspan x="850" dy="14">Discrepancy / exception agent</tspan></text>
-        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">flag discrepancies</tspan></text>
+        <text x="850" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="850" dy="0">L/C orchestrator agent →</tspan><tspan x="850" dy="17">Discrepancy / exception</tspan><tspan x="850" dy="17">agent</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="850" dy="0">flag discrepancies</tspan></text>
       </g><g data-arch-item-id="tf8">
         <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Discrepancy / exception agent</tspan><tspan x="115" dy="14">→ Trade Finance workbench</tspan></text>
-        <text x="115" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">officer reviews exception</tspan></text>
+        <text x="115" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Discrepancy / exception</tspan><tspan x="115" dy="17">agent → Trade Finance</tspan><tspan x="115" dy="17">workbench</tspan></text>
+        <text x="115" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">officer reviews exception</tspan></text>
       </g><g data-arch-item-id="tf12">
         <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Clause-comparison agent →</tspan><tspan x="360" dy="14">Model-risk control</tspan></text>
-        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">model-risk check</tspan></text>
+        <text x="360" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Clause-comparison agent</tspan><tspan x="360" dy="17">→ Model-risk control</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">model-risk check</tspan></text>
       </g>
   </svg><div class="flow k-control">
         <div class="flow-line"><span class="tile">L/C orchestrator agent</span><span class="arrow" data-k="control">→</span><span class="tile">Intake &amp; extraction agent</span><span class="flbl">extract</span><span class="badge fk fk-control">AI control</span></div>
@@ -842,15 +834,14 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="human_approval_override_model" data-exhibit="human_approval_override_model">
     <div class="sec-h"><span class="num">11</span><h2>Human approval / override model</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 200" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--control)"/></marker></defs>
     <g data-arch-item-id="t_clause">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Clause-comparison agent</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Officer confirms any</tspan><tspan x="115" dy="12">low-confidence...</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Clause-comparison agent</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">Officer confirms any</tspan><tspan x="115" dy="14">low-confidence...</tspan></text>
       </g><g data-arch-item-id="t_disc">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">Discrepancy / exception agent</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Trade-finance officer approves,</tspan><tspan x="360" dy="12">overrides,...</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">Discrepancy / exception</tspan><tspan x="360" dy="17">agent</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Trade-finance officer</tspan><tspan x="360" dy="14">approves,...</tspan></text>
       </g>
   </svg><div class="agents"><div class="agent">
         <div class="agent-h"><span class="dot"></span><strong>Intake &amp; extraction agent</strong><span class="role">Extracts structured fields from unstructured L/C documents</span></div>
@@ -877,31 +868,30 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="integration_map" data-exhibit="integration_map">
     <div class="sec-h"><span class="num">12</span><h2>Integration map</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 365" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
     <g data-arch-item-id="t_bus">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Event bus</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Amazon EventBridge</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Event bus</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">Amazon EventBridge</tspan></text>
       </g><g data-arch-item-id="t_api">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">API gateway</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Amazon API Gateway</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">API gateway</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Amazon API Gateway</tspan></text>
       </g><g data-arch-item-id="t_tf">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Trade Finance system</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Trade Finance system</tspan></text>
         
       </g><g data-arch-item-id="t_fis">
         <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">FIS IST/Profile core</tspan></text>
-        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">FIS IST/Profile (mainframe)</tspan></text>
+        <text x="850" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="850" dy="0">FIS IST/Profile core</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="850" dy="0">FIS IST/Profile (mainframe)</tspan></text>
       </g><g data-arch-item-id="t_mrisk">
         <circle cx="115" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="115" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">Model-risk control</tspan></text>
+        <text x="115" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">Model-risk control</tspan></text>
         
       </g><g data-arch-item-id="t_aml">
         <circle cx="360" cy="230" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="360" y="278" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">AML / fraud control</tspan></text>
-        <text x="360" y="330" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Actimize + Feedzai</tspan></text>
+        <text x="360" y="278" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">AML / fraud control</tspan></text>
+        <text x="360" y="330" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Actimize + Feedzai</tspan></text>
       </g>
   </svg><div class="statemap"><div class="band">
     <div class="band-label">Integration &amp; Rails</div>
@@ -934,23 +924,22 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="governance_audit_telemetry_flow" data-exhibit="governance_audit_telemetry_flow">
     <div class="sec-h"><span class="num">13</span><h2>Governance, audit, and telemetry flow</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 200" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--control)"/></marker></defs>
     <g data-arch-item-id="k1">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">SR 11-7 model risk</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">Model Risk Management</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">SR 11-7 model risk</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">Model Risk Management</tspan></text>
       </g><g data-arch-item-id="k2">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">BSA/AML screening</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">Financial Crime</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">BSA/AML screening</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">Financial Crime</tspan></text>
       </g><g data-arch-item-id="k3">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">Officer approval gate</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Trade Finance Ops</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">Officer approval gate</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">Trade Finance Ops</tspan></text>
       </g><g data-arch-item-id="k4">
         <circle cx="850" cy="65" r="28" fill="#fff" stroke="var(--control)" stroke-width="2"/>
-        <text x="850" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="850" dy="0">Lineage &amp; audit</tspan></text>
-        <text x="850" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="850" dy="0">Architecture / Risk</tspan></text>
+        <text x="850" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="850" dy="0">Lineage &amp; audit</tspan></text>
+        <text x="850" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="850" dy="0">Architecture / Risk</tspan></text>
       </g>
   </svg><div class="grid2"><div class="card"><div class="card-h">SR 11-7 model risk</div><div class="note">Every model decision is validated, versioned, and monitored.</div><div class="owner">Model Risk Management</div></div><div class="card"><div class="card-h">BSA/AML screening</div><div class="note">Discrepancies route through Actimize/Feedzai before posting.</div><div class="owner">Financial Crime</div></div><div class="card"><div class="card-h">Officer approval gate</div><div class="note">Exceptions require human approval; AI never auto-clears a discrepancy.</div><div class="owner">Trade Finance Ops</div></div><div class="card"><div class="card-h">Lineage &amp; audit</div><div class="note">Every extraction, comparison, and decision is logged with its evidence.</div><div class="owner">Architecture / Risk</div></div></div></div>
     <p class="so-what"><strong>So what:</strong> Risk, AML, lineage, and value telemetry are part of the workflow.</p>
@@ -959,22 +948,21 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="implementation_waves" data-exhibit="implementation_waves">
     <div class="sec-h"><span class="num">14</span><h2>Implementation waves</h2></div>
     <div class="visual-body"><svg class="diagram timeline" viewBox="0 0 760 214" role="img" aria-label="Ordered architecture flow">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--data)"/></marker></defs>
-    <path d="M180 92 L304 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g data-arch-item-id="w1">
+    <g data-arch-item-id="w1">
         <circle cx="132" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="132" y="97" text-anchor="middle" font-size="13" font-weight="700">1</text>
-        <text x="132" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="132" dy="0">Wave 1 — Foundation</tspan></text>
-        <text x="132" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="132" dy="0">0–90 days</tspan></text>
-      </g><path d="M400 92 L524 92" stroke="var(--data)" stroke-width="2" marker-end="url(#arrow)"/><g data-arch-item-id="w2">
+        <text x="132" y="97" text-anchor="middle" font-size="15" font-weight="700">1</text>
+        <text x="132" y="140" text-anchor="middle" font-size="15" font-weight="700"><tspan x="132" dy="0">Wave 1 — Foundation</tspan></text>
+        <text x="132" y="174" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="132" dy="0">0–90 days</tspan></text>
+      </g><g data-arch-item-id="w2">
         <circle cx="352" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="352" y="97" text-anchor="middle" font-size="13" font-weight="700">2</text>
-        <text x="352" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="352" dy="0">Wave 2 — Comparison &amp;</tspan><tspan x="352" dy="14">exceptions</tspan></text>
-        <text x="352" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="352" dy="0">3–6 months</tspan></text>
+        <text x="352" y="97" text-anchor="middle" font-size="15" font-weight="700">2</text>
+        <text x="352" y="140" text-anchor="middle" font-size="15" font-weight="700"><tspan x="352" dy="0">Wave 2 — Comparison &amp;</tspan><tspan x="352" dy="17">exceptions</tspan></text>
+        <text x="352" y="174" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="352" dy="0">3–6 months</tspan></text>
       </g><g data-arch-item-id="w3">
         <circle cx="572" cy="92" r="28" fill="#fff" stroke="var(--data)" stroke-width="2"/>
-        <text x="572" y="97" text-anchor="middle" font-size="13" font-weight="700">3</text>
-        <text x="572" y="140" text-anchor="middle" font-size="12" font-weight="700"><tspan x="572" dy="0">Wave 3 — Scale &amp;</tspan><tspan x="572" dy="14">straight-through</tspan></text>
-        <text x="572" y="174" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="572" dy="0">6–12 months</tspan></text>
+        <text x="572" y="97" text-anchor="middle" font-size="15" font-weight="700">3</text>
+        <text x="572" y="140" text-anchor="middle" font-size="15" font-weight="700"><tspan x="572" dy="0">Wave 3 — Scale &amp;</tspan><tspan x="572" dy="17">straight-through</tspan></text>
+        <text x="572" y="174" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="572" dy="0">6–12 months</tspan></text>
       </g>
   </svg><div class="waves"><div class="wave"><div class="wave-h"><strong>Wave 1 — Foundation</strong><span class="win">0–90 days</span></div><ul><li>Lakehouse</li><li>Retrieval / vector index</li><li>Intake &amp; extraction agent</li><li>Trade Finance workbench</li></ul><div class="outcome">Documents ingested and extracted; officer workbench live in shadow mode.</div></div><div class="wave"><div class="wave-h"><strong>Wave 2 — Comparison &amp; exceptions</strong><span class="win">3–6 months</span></div><ul><li>Clause-comparison agent</li><li>Discrepancy / exception agent</li><li>Model-risk control</li></ul><div class="outcome">AI-assisted clause comparison and exception assembly, officer-approved.</div></div><div class="wave"><div class="wave-h"><strong>Wave 3 — Scale &amp; straight-through</strong><span class="win">6–12 months</span></div><ul><li>L/C orchestrator agent</li><li>Event bus</li><li>AML / fraud control</li></ul><div class="outcome">Low-risk cases flow straight through with controls hardened; throughput scales.</div></div></div></div>
     <p class="so-what"><strong>So what:</strong> The waves de-risk by proving intake and evidence first, then comparison, then scale.</p>
@@ -983,19 +971,18 @@ exports[`golden regression — First Capital transformation artifacts (W5) Targe
     <section class="exhibit" id="architecture_decision_log" data-exhibit="architecture_decision_log">
     <div class="sec-h"><span class="num">15</span><h2>Architecture decision log</h2></div>
     <div class="visual-body"><svg class="diagram collection" viewBox="0 0 980 200" role="img" aria-label="Architecture components">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/></marker></defs>
     <g data-arch-item-id="d1">
         <circle cx="115" cy="65" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
-        <text x="115" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="115" dy="0">recommended</tspan></text>
-        <text x="115" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="115" dy="0">No — AI may recommend and</tspan><tspan x="115" dy="12">assemble...</tspan></text>
+        <text x="115" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="115" dy="0">recommended</tspan></text>
+        <text x="115" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="115" dy="0">No — AI may recommend and</tspan><tspan x="115" dy="14">assemble...</tspan></text>
       </g><g data-arch-item-id="d2">
         <circle cx="360" cy="65" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
-        <text x="360" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="360" dy="0">recommended</tspan></text>
-        <text x="360" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="360" dy="0">No — integrate via governed APIs</tspan><tspan x="360" dy="12">and...</tspan></text>
+        <text x="360" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="360" dy="0">recommended</tspan></text>
+        <text x="360" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="360" dy="0">No — integrate via governed</tspan><tspan x="360" dy="14">APIs...</tspan></text>
       </g><g data-arch-item-id="d3">
         <circle cx="605" cy="65" r="28" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
-        <text x="605" y="113" text-anchor="middle" font-size="12" font-weight="700"><tspan x="605" dy="0">open</tspan></text>
-        <text x="605" y="165" text-anchor="middle" font-size="10" fill="#6b6b66"><tspan x="605" dy="0">Capture intake timestamps,</tspan><tspan x="605" dy="12">retrieval...</tspan></text>
+        <text x="605" y="113" text-anchor="middle" font-size="15" font-weight="700"><tspan x="605" dy="0">open</tspan></text>
+        <text x="605" y="165" text-anchor="middle" font-size="12" fill="#6b6b66"><tspan x="605" dy="0">Capture intake timestamps,</tspan><tspan x="605" dy="14">retrieval...</tspan></text>
       </g>
   </svg><div class="grid2"><div class="card"><div class="card-h">Should AI be allowed to auto-clear L/C exceptions in the pilot?</div><div class="outcome">No — AI may recommend and assemble evidence, but officers approve every exception.</div><div class="note">The bank needs SR 11-7 evidence, AML alignment, and operational confidence before widening automation.</div><span class="badge">recommended</span></div><div class="card"><div class="card-h">Should the target replace the FIS core?</div><div class="outcome">No — integrate via governed APIs and postings.</div><div class="note">The value case is trapped in review and exception handling, not core replacement.</div><span class="badge">recommended</span></div><div class="card"><div class="card-h">Which telemetry is mandatory for build approval?</div><div class="outcome">Capture intake timestamps, retrieval evidence, model version, officer action, override reason, AML screening, and posting outcome.</div><div class="note">Without telemetry, the pilot cannot prove cycle-time, risk, or control value.</div><span class="badge">open</span></div></div></div>
     <p class="so-what"><strong>So what:</strong> The key decisions are explicit enough for an architecture review board.</p>
