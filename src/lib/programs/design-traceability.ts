@@ -41,6 +41,8 @@ export interface DesignLink {
   program?: string;
   owner?: string;
   source?: "team" | "ava";
+  /** Where a drafted element came from: "From your notes, line 2". */
+  citation?: string;
   decidedBy?: string;
   decidedAt?: string;
 }
@@ -112,6 +114,7 @@ export function parseDesignTraceability(
       ...(l.source === "team" || l.source === "ava"
         ? { source: l.source }
         : {}),
+      ...(text(l.citation) ? { citation: text(l.citation) } : {}),
       ...(text(l.decidedBy) ? { decidedBy: text(l.decidedBy) } : {}),
       ...(text(l.decidedAt) ? { decidedAt: text(l.decidedAt) } : {}),
     });
@@ -140,6 +143,8 @@ export interface TraceRow {
   causeId: string;
   cause: string;
   drives?: string;
+  /** What P2 decided: a known gap carries its owner into P3. */
+  p2KnownGapOwner?: string;
   link?: DesignLink;
 }
 
@@ -157,6 +162,9 @@ export function traceRows(
       causeId: c.id,
       cause: c.cause,
       ...(c.drives ? { drives: c.drives } : {}),
+      ...(c.status === "known_gap" && c.owner
+        ? { p2KnownGapOwner: c.owner }
+        : {}),
       ...(byCause.get(c.id) ? { link: byCause.get(c.id) } : {}),
     }));
 }
@@ -228,6 +236,7 @@ export function draftDesignElement(
   row: TraceCause,
   element: string,
   source: "team" | "ava",
+  citation?: string,
 ): TraceEdit {
   const written = element.trim();
   if (!written) return { ok: false, reason: "The draft is empty." };
@@ -245,6 +254,7 @@ export function draftDesignElement(
       status: "draft",
       element: written,
       source,
+      ...(citation?.trim() ? { citation: citation.trim() } : {}),
     }),
   };
 }

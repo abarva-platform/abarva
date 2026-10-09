@@ -143,6 +143,10 @@ const P3_STEPS: readonly PhaseWorkflowStep[] = [
     phase: 3,
     title: "Architecture options",
     depth: { technical: "light", limited: "full", full: "full" },
+    // The chosen option and its coverage of Step 1's design elements are a
+    // step record (`architecture-choice.ts`); the rationale stays the
+    // `recommendation` answer the approval route records.
+    recordKeys: same(["architecture_choice"]),
     sectionKeys: same([
       "solution_approach",
       "controls_governance",
@@ -261,6 +265,13 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
       label: "Root cause → design traceability",
       description:
         "For each P2 root cause, in the consultant's order, the design element that fixes it, or the program it is handed to with a named owner.",
+    },
+    {
+      key: "architecture_choice",
+      stepId: "P3.2",
+      label: "Chosen architecture option and coverage",
+      description:
+        "The option the team chose from the options it brought, as written, and what it answers of each Step 1 design element.",
     },
   ],
 };

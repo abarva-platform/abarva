@@ -1488,3 +1488,13 @@ textarea.q-input {
 /* Template v1.6: the in-step upload sits at the right end of the Context line. */
 .ctx-action { margin-left: auto; display: inline-flex; align-items: baseline; gap: 12px; }
 .context-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; font-size: 14px; color: var(--mv-muted); padding: 0 4px; }
+
+/* Template v1.7: the Coverage instrument. The segmented control is product UI
+   here, not review chrome; `.seg-sm` sizes it for a list item. */
+.seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 4px; background: var(--mv-bg); border: 1px solid var(--mv-line); border-radius: var(--mv-radius); padding: 3px; }
+.seg button { border: 0; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-weight: 500; cursor: pointer; background: transparent; color: var(--mv-muted); }
+.seg button[aria-checked="true"] { background: var(--mv-surface); color: var(--mv-ink); }
+.seg-sm { display: inline-grid; grid-template-columns: repeat(3, auto); padding: 2px; }
+.seg-sm button { padding: 5px 10px; font-size: 13px; white-space: nowrap; }
+.cov-how { margin-top: 8px; }
+.field .ava-badge, td .ava-badge, .card dd .ava-badge { margin: 4px 0 0; align-self: flex-start; }

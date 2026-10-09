@@ -71,6 +71,7 @@ import {
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { phaseStepRecordSections } from "@/lib/programs/phase-workflow-registry";
+import { parseStepPageView } from "@/lib/programs/step-page-views";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
@@ -611,8 +612,7 @@ export default async function StrategicMovePhaseWorkspacePage({
               proposalSet: {
                 ...initialStageReadinessPreview.proposalSet,
                 status:
-                  !fromPriorUpload &&
-                  storedReview.artifactStatus === "approved"
+                  !fromPriorUpload && storedReview.artifactStatus === "approved"
                     ? "accepted"
                     : "review_required",
                 pendingCount: seeded.length - decidedCount,
@@ -1071,15 +1071,9 @@ export default async function StrategicMovePhaseWorkspacePage({
             : null
         }
         initialStepView={
-          !stepPagesV3Enabled
-            ? null
-            : resolvedSearchParams.step === "gate"
-              ? "gate"
-              : resolvedSearchParams.step === "root-causes"
-                ? "root-causes"
-                : resolvedSearchParams.step === "root-cause-design"
-                  ? "root-cause-design"
-                  : null
+          stepPagesV3Enabled
+            ? parseStepPageView(resolvedSearchParams.step)
+            : null
         }
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}

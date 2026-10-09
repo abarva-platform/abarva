@@ -134,6 +134,38 @@ describe("MovesStepPage", () => {
     );
   });
 
+  it("names a settled row by its id only where the row itself shows the id", () => {
+    const { container } = render(
+      <MovesStepPage
+        {...props([
+          row({
+            id: "DIR",
+            rank: 1,
+            state: "settled",
+            eyebrow: "Direction",
+            shortName: "option B",
+          }),
+          row({
+            id: "RC-2",
+            rank: 2,
+            state: "settled",
+            eyebrow: "Rank 02 · RC-2",
+            shortName: "definitions",
+          }),
+          row({
+            id: "RC-5",
+            rank: 3,
+            state: "settled",
+            shortName: "PHI access",
+          }),
+        ])}
+      />,
+    );
+    expect(
+      container.querySelector("details.settled summary")?.textContent,
+    ).toContain("option B, RC-2 definitions, RC-5 PHI access");
+  });
+
   it("labels a number as a Fact and keeps the basis collapsed", () => {
     const { container } = render(<MovesStepPage {...props(ROWS)} />);
     const draft = container.querySelector("#row-RC-3") as HTMLElement;

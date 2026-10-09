@@ -4875,6 +4875,95 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
+  describe("P3 Step 2 architecture options (moves_step_pages_v3)", () => {
+    const p3Move = () => makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
+    const p2 = JSON.stringify({
+      kind: "root_cause_register",
+      version: 1,
+      orderConfirmedAt: "2026-10-02",
+      causes: [{ id: "RC-1", cause: "No ownership", status: "accepted", evidence: ["Interviews"] }],
+    });
+    const trace = JSON.stringify({
+      kind: "design_traceability",
+      version: 1,
+      links: [
+        {
+          causeId: "RC-1",
+          cause: "No ownership",
+          rank: 1,
+          status: "accepted",
+          element: "Stewardship council",
+        },
+      ],
+    });
+    const stepOne = (container: HTMLElement) =>
+      container.querySelector('nav[aria-label="Design steps"] li') as HTMLElement;
+
+    it("renders Step 2 in the dock, blocked, with Step 1 open in the step bar, while Step 1 is unsettled", () => {
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="architecture-options"
+          priorPhaseCapture={{ gapsRootCauses: p2, baselineMetrics: "" }}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      expect(within(dock).getByRole("heading", { name: "Choose a direction" })).toBeInTheDocument();
+      expect(within(dock).getByText(/Waiting on Step 1/)).toBeInTheDocument();
+      // The step bar and the Blocked sentence read one source: Step 1 is not done.
+      expect(stepOne(container).className).not.toMatch(/is-done/);
+      expect(stepOne(container).querySelector("a")?.getAttribute("href")).toMatch(
+        /\/phase\/3\?step=root-cause-design$/,
+      );
+    });
+
+    it("marks Step 1 done once its record is complete, and leaves Step 2 unblocked", () => {
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="architecture-options"
+          priorPhaseCapture={{ gapsRootCauses: p2, baselineMetrics: "" }}
+          initialPhaseCaptureValues={{ design_traceability: trace }}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(stepOne(container).className).toMatch(/is-done/);
+      expect(screen.queryByText(/Waiting on Step 1/)).not.toBeInTheDocument();
+      expect(screen.getByText("Choose a direction.")).toBeInTheDocument();
+    });
+
+    it("the P3 capture opens Step 2 under the flag", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("open-architecture-options").getAttribute("href")).toMatch(
+        /\/phase\/3\?step=architecture-options$/,
+      );
+    });
+  });
+
   describe("P2 Root causes step page (moves_step_pages_v3)", () => {
     const p2Move = () =>
       makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" });

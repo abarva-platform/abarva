@@ -1,0 +1,32 @@
+import {
+  parseStepPageView,
+  STEP_PAGE_VIEWS,
+  stepPageHref,
+} from "@/lib/programs/step-page-views";
+import { resolvePhaseWorkflow } from "@/lib/programs/phase-workflow-registry";
+
+describe("step page views", () => {
+  it("parses only a declared view", () => {
+    expect(parseStepPageView("architecture-options")).toBe(
+      "architecture-options",
+    );
+    expect(parseStepPageView("toString")).toBeNull();
+    expect(parseStepPageView(["gate"])).toBeNull();
+    expect(parseStepPageView(undefined)).toBeNull();
+  });
+
+  it("links a step to its page, and a step without one to the phase", () => {
+    expect(stepPageHref("m1", 3, "P3.2")).toBe(
+      "/strategic-moves/m1/phase/3?step=architecture-options",
+    );
+    expect(stepPageHref("m1", 3, "P3.3")).toBe("/strategic-moves/m1/phase/3");
+  });
+
+  it("names only steps the workflow registry declares", () => {
+    for (const { phase, stepId } of Object.values(STEP_PAGE_VIEWS)) {
+      expect(resolvePhaseWorkflow(phase, null).map((s) => s.id)).toContain(
+        stepId,
+      );
+    }
+  });
+});
