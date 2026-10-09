@@ -23,6 +23,8 @@ const TABLES_TO_VERIFY = [
   'tower_workforce',
   'program_evidence_items',
   'program_evidence_reviews',
+  'move_assumptions',
+  'move_assumption_events',
 ];
 
 const REQUIRED_SOURCE_EVIDENCE_TABLES = [
@@ -37,6 +39,8 @@ const REQUIRED_MOVES_CURRENT_STATE_TABLES = [
   'tower_workforce',
   'program_evidence_items',
   'program_evidence_reviews',
+  'move_assumptions',
+  'move_assumption_events',
 ];
 
 async function scalar<T = unknown>(client: Client, sql: string): Promise<T> {

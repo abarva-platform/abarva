@@ -62,6 +62,43 @@ const REQUIRED_TABLES: RequiredTable[] = [
       'source_ref',
     ],
   },
+  {
+    table: 'move_assumptions',
+    columns: [
+      'tenant_key',
+      'program_id',
+      'area',
+      'seq',
+      'register_id',
+      'statement',
+      'working_figure',
+      'source',
+      'confidence',
+      'owner_role',
+      'status',
+      'origin',
+      'answer_source',
+      'superseded_by',
+      'charter_section_key',
+      'revision',
+    ],
+  },
+  {
+    table: 'move_assumption_events',
+    columns: [
+      'tenant_key',
+      'program_id',
+      'assumption_id',
+      'event_type',
+      'from_status',
+      'to_status',
+      'revision',
+      'before',
+      'after',
+      'actor_user_id',
+      'actor_kind',
+    ],
+  },
 ];
 
 async function tableExists(client: Client, table: string): Promise<boolean> {
