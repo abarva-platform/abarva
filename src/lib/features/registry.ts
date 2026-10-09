@@ -114,7 +114,8 @@ export type FeatureFlagKey =
   | "moves_capture_phase_rollup_v1"
   | "moves_charter_standing_after_discover_v1"
   | "moves_step_pages_v3"
-  | "moves_public_source_research";
+  | "moves_public_source_research"
+  | "moves_rom_engine_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -425,6 +426,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_public_source_research",
     summary:
       "2026-10-10: Governed public-source research for Moves deliverable builds. Before a build assembles its evidence, a research step asks the audited Anthropic egress path (workload moves_public_research, offline lane) to search and fetch PUBLIC web pages on client-neutral subjects - program rules, payment rules, published studies - from a brief that carries no client names, figures or client text. Each source is stored for that tenant and Move only, with its https URL, retrieval date and a verbatim excerpt of at most 300 characters, and stays pending until a consultant approves it; nothing unapproved is cited, and an outside source is never presented as a fact about the client. This release adds the storage contract (runs and sources tables, repository, governance manifest) and the research step: a flagged Moves build searches once per brief (reused for 14 days), stores what the API cited as pending sources, and reports 'N outside sources found, awaiting review'; a timeout, denial or unreadable answer is recorded and the build continues with no outside sources. Nothing is cited yet; the review queue and citation rules ship later under this same flag. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_rom_engine_v1",
+    summary:
+      "2026-10-10: Opens the read-only ROM preview route for a Move (POST /api/v1/programs/:programId/rom/preview). The caller posts a ROM structure - use cases with component counts, unit hours per driver with a source and a confidence, releases with a design status, one shared foundation, a pod and the friction and productive share with their sources - and the ROM engine prices it: hours are count x unit hours x friction, each release and the foundation buys whole weeks of the pod at rates from the cost foundation (role x level x location x provider class, with provenance), not-designed releases carry a 0.75 / 1.50 band and designed ones the existing score tiers, and the total counts the shared foundation once. Returns JSON, or a live-formula workbook with ?format=xlsx. Missing unit hours are refused, never defaulted; no AI productivity credit is applied; nothing is written. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
