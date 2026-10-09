@@ -17,14 +17,15 @@ import { join } from "node:path";
  */
 const API_ROOT = join(process.cwd(), "src/app/api");
 
-/** The ceiling after the current-state evidence-approval lane. */
-const CEILING = 83;
+/** The ceiling after the Moves evidence-upload lane. */
+const CEILING = 81;
 
 /**
  * Routes a lane has fixed. Each must hold at zero. Repo-relative, POSIX.
  */
 const FIXED_ROUTES = [
   "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/route.ts",
+  "src/app/api/v1/programs/[programId]/artifacts/upload/route.ts",
 ] as const;
 
 const BARE_CATCH =
