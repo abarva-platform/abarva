@@ -60,13 +60,40 @@ describe("architecture model + HTML renderer (W2)", () => {
       ]),
     );
   });
-  it("refuses a flow visual that would silently omit recorded flows", () => {
+  it("renders twelve explicit data flows in four legible rows without omitting an id", () => {
     const flow = FIRST_CAPITAL_ARCHITECTURE.target.flows[0];
     const model: ArchitectureModel = {
       ...FIRST_CAPITAL_ARCHITECTURE,
       target: {
         ...FIRST_CAPITAL_ARCHITECTURE.target,
-        flows: Array.from({ length: 9 }, (_, index) => ({
+        flows: Array.from({ length: 12 }, (_, index) => ({
+          ...flow,
+          id: `flow-${index}`,
+          kind: "data" as const,
+        })),
+      },
+    };
+    const visual = renderArchitectureVisualExhibits(model).find(
+      (exhibit) => exhibit.id === "end_to_end_data_flow",
+    );
+    expect(visual?.svg).toContain('viewBox="0 0 980 574"');
+    expect(
+      [...(visual?.svg ?? "").matchAll(/data-arch-item-id="([^"]+)"/g)].map(
+        (match) => match[1],
+      ),
+    ).toEqual(Array.from({ length: 12 }, (_, index) => `flow-${index}`));
+    expect(visual?.svg).toContain("<title>");
+    expect(visual?.svg).toContain("RECORDED FLOW 12");
+    expect(visual?.svg).not.toContain('marker-end="url(#arrow)"');
+  });
+
+  it("refuses a flow visual above the three-row capacity", () => {
+    const flow = FIRST_CAPITAL_ARCHITECTURE.target.flows[0];
+    const model: ArchitectureModel = {
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      target: {
+        ...FIRST_CAPITAL_ARCHITECTURE.target,
+        flows: Array.from({ length: 13 }, (_, index) => ({
           ...flow,
           id: `flow-${index}`,
           kind: "data" as const,
@@ -74,7 +101,7 @@ describe("architecture model + HTML renderer (W2)", () => {
       },
     };
     expect(() => renderArchitectureVisualExhibits(model)).toThrow(
-      /architecture_flow_visual_capacity_exceeded/,
+      /architecture_flow_visual_capacity_exceeded:End-to-end data flow:13/,
     );
   });
   it("the First Capital sample model is referentially valid (no errors)", () => {
