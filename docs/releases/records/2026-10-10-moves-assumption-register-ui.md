@@ -52,6 +52,13 @@ phase 1, an owner, and a pin to the exact wording of the charter answer.
   "Owner named in the P1 charter". The panel shows that row with a prompt to
   set a role (and a "Set role" control while the row can still be edited) and
   never shows the name.
+- **The register routes hold the same rule.** Adding a row, editing a row's
+  owner role, and superseding with a new replacement row are refused with
+  `owner_role_is_a_person` (400) when the owner role reads like a person. The
+  sentence says nothing was saved, that the owner field takes a role such as
+  CFO office because documents and aVa read the owner role, and that the
+  person's name can go in the owner name field. The owner name field still
+  accepts a name; no generation view reads it.
 
 - The P1 basis stays the declaration. Nothing edits the charter.
 - The register owns the resolution. Once the register row is answered (or the
@@ -133,6 +140,11 @@ the charter section: a section that already has a row is never written again.
   role and `ownerNeedsRole`.
 - `src/lib/agent/tools/program/proposeAssumption.ts`: imports the heuristic
   from its new home; behaviour unchanged.
+- The register routes (`assumptions/route.ts`, `[assumptionId]/route.ts`,
+  `[assumptionId]/decision/route.ts`), `register-route-access.ts`
+  (`personAsOwnerRoleResponse`) and `assumption-register-refusal.ts` (the new
+  `owner_role_is_a_person` code and its sentence): the owner-role rule on
+  create, edit and supersede-with-a-new-row, checked before the store.
 - `src/lib/programs/assumption-register/store.ts`: `upsertCharterAssumption`.
 - `src/lib/programs/charter-assumptions-carry-forward.ts`: an optional
   `registerResolvedSectionKeys`; absent or `null` reads exactly as before.
@@ -186,6 +198,15 @@ the charter section: a section that already has a row is never written again.
   revision and refuses a name. The aVa tool suite passes unchanged against the
   moved heuristic. 17 further mutations over this handling, applied one at a
   time and restored from an in-memory copy: all 17 killed.
+- Route suite: 16 new cases. A name, an email address and an honorific are
+  refused on create and on edit with the exact sentence and nothing reaches
+  the store; a supersede's replacement row is held to the same rule; four
+  roles (including the one-word Treasury) are accepted on create and edit; a
+  name in the owner name field is accepted on create and edit; an edit that
+  does not touch the owner role is not checked against it, even when other
+  fields read like a name. 10 mutations over this, one at a time: all killed
+  (one survived first, an edit that checked the wrong field; the case above
+  now pins it).
 - Store suite: 6 new upsert cases (created once; second call returns the
   existing row and writes nothing, keeping the original pin; read inside the
   tenant fence under either tenant key; a lost race returns the winner's row;
@@ -266,10 +287,13 @@ rows; they are not deleted.
 ## Known Gaps
 
 - Claude Design has not yet reviewed the panel.
-- The owner check is a heuristic shared with the aVa tool: it flags an email
-  address, an honorific, or two or three capitalised words with no role word.
-  A single bare first name is not flagged. The register's add and edit routes
-  do not run the check yet; the panel's "Set role" form does.
+- The owner check is a heuristic: it flags an email address, an honorific,
+  or two or three capitalised words with no role word. A single bare first
+  name is NOT flagged, on purpose. The cheap rule (one capitalised word that
+  is not on the role-word list) would refuse common one-word functions that
+  are not on that list, such as Treasury, Marketing, Sales, Audit, Payroll or
+  Claims; the aVa tool's suite already accepts Treasury as a role. So a bare
+  first name can still reach the owner role through the routes or the tool.
 - A stale charter row is flagged on screen only. The row keeps its original
   wording and pin; the team answers or supersedes it.
 - The bridge writes on a page load (a GET). It is an idempotent projection of a

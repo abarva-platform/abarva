@@ -42,6 +42,7 @@ import {
   isRegisterRowId,
   landedAssumptionResponse,
   openAssumptionRegister,
+  personAsOwnerRoleResponse,
 } from "@/lib/programs/assumption-register/register-route-access";
 
 export const runtime = "nodejs";
@@ -90,6 +91,11 @@ export async function POST(
         supersededBy: decision.target.supersededBy,
       };
     } else {
+      // A replacement is a new row: the same owner-role rule as a create.
+      const personAsOwner = personAsOwnerRoleResponse(
+        decision.target.replacement.ownerRole,
+      );
+      if (personAsOwner) return personAsOwner;
       try {
         const result = await supersedeAssumption(
           ctx,
