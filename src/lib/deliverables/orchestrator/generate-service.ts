@@ -38,6 +38,14 @@ import { buildPassPrompt } from "./prompt-builder";
 import { resolveContextBudget } from "./context-budget";
 import { withCitedEvidence, type ContextCoverage } from "./context-coverage";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import {
+  PUBLIC_RESEARCH_FLAG,
+  researchCoverageNote,
+  runPublicResearch,
+  type PublicResearchInput,
+  type PublicResearchOutcome,
+} from "@/lib/deliverables/public-research/research-runner";
+import { resolveTenantAlias } from "@/lib/tenant/aliases";
 
 const STRUCTURED_ARCHITECTURE_KEYS = new Set<DeliverableKey>([
   "target_state_architecture",
@@ -81,6 +89,16 @@ export interface GenerateDeliverableServiceInput extends Omit<
   model?: string;
   /** invoked after each orchestrator pass with a {pct,label} for the live progress band. */
   onProgress?: (p: GenerationProgress) => void;
+  /**
+   * Allowlisted Move fields for public-source research, beyond the industry
+   * (from the tenant registry) and the archetype (from `useCaseArchetype`).
+   * Screened by `buildResearchBrief`; nothing else about the Move is sent.
+   */
+  publicResearchBrief?: {
+    useCase?: string | null;
+    valueLevers?: readonly string[] | null;
+    registerQuestions?: readonly string[] | null;
+  };
 }
 
 export interface GenerateDeliverableServiceResult {
@@ -94,6 +112,11 @@ export interface GenerateDeliverableServiceResult {
   retrievedEvidence?: number;
   contextCoverage?: ContextCoverage;
   blockedReason?: string;
+  /**
+   * The public-source research step's outcome, when it ran. Its sources are
+   * stored pending review and are NOT in this build's prompt or citations.
+   */
+  publicResearch?: PublicResearchOutcome;
 }
 
 export interface GenerateServiceDeps {
@@ -112,6 +135,61 @@ export interface GenerateServiceDeps {
     contextText: string;
     model?: string;
   }) => Promise<{ model: ArchitectureModel }>;
+  /** Public-source research step. Injectable for tests. */
+  research?: (input: PublicResearchInput) => Promise<PublicResearchOutcome>;
+}
+
+/**
+ * Public-source research before evidence assembly: Moves builds only, behind
+ * `moves_public_source_research`. When the flag is off nothing runs — no
+ * egress, no write. Its sources are only STORED, pending review; nothing from
+ * them is put in this build's prompt. Never throws into the build.
+ */
+async function runPublicResearchStep(
+  input: GenerateDeliverableServiceInput,
+  deps: GenerateServiceDeps,
+): Promise<PublicResearchOutcome | undefined> {
+  if (input.module !== "moves") return undefined;
+  if (
+    !isFeatureEnabled(
+      { clientKey: input.tenantClientKey },
+      PUBLIC_RESEARCH_FLAG,
+    )
+  ) {
+    return undefined;
+  }
+  const research = deps.research ?? ((req) => runPublicResearch(req));
+  try {
+    return await research({
+      tenantClientKey: input.tenantClientKey,
+      clientId: input.clientId,
+      userId: input.userId,
+      programId: input.sourceArtifactRef,
+      phase: input.phase ?? null,
+      deliverableType: input.deliverableType,
+      brief: {
+        industry:
+          resolveTenantAlias(input.tenantClientKey)?.industryCode ?? null,
+        archetype: input.useCaseArchetype,
+        useCase: input.publicResearchBrief?.useCase ?? null,
+        valueLevers: input.publicResearchBrief?.valueLevers ?? [],
+        registerQuestions: input.publicResearchBrief?.registerQuestions ?? [],
+        deniedNames: [input.clientDisplayName],
+      },
+    });
+  } catch (err) {
+    return {
+      status: "failed",
+      origin: "not_run",
+      runId: null,
+      briefHash: null,
+      pendingSources: 0,
+      recorded: false,
+      auditId: null,
+      note: researchCoverageNote("failed", 0),
+      error: `research_step_failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
 }
 
 function normalizeQuery(value: string): string {
@@ -264,6 +342,10 @@ export async function runDeliverableForTenant(
     preliminaryBrief,
   );
 
+  // 0 · public-source research (flagged). Stored pending review; not cited.
+  const publicResearch = await runPublicResearchStep(input, deps);
+  const research = publicResearch ? { publicResearch } : {};
+
   // 1 · governed evidence (clean, citation-numbered, vendor-facing exclusion applied)
   const { evidence, sourceRegister, retrievedCount, coverage } = await assemble(
     {
@@ -277,11 +359,14 @@ export async function runDeliverableForTenant(
       contextBudget,
     },
   );
-  const coverageWarnings = coverage.requiresAttention
-    ? [
-        `context_coverage_empty: ${coverage.approvedAvailable} approved evidence item(s) existed for this Move, but 0 were packed into the prompt.`,
-      ]
-    : [];
+  const coverageWarnings = [
+    ...(publicResearch ? [`public_research: ${publicResearch.note}`] : []),
+    ...(coverage.requiresAttention
+      ? [
+          `context_coverage_empty: ${coverage.approvedAvailable} approved evidence item(s) existed for this Move, but 0 were packed into the prompt.`,
+        ]
+      : []),
+  ];
 
   // 2 · orchestrator request
   const req = buildDeliverableRequest(
@@ -363,6 +448,7 @@ export async function runDeliverableForTenant(
           blockedReason: `architecture_brief_incomplete: ${err instanceof Error ? err.message : String(err)}`,
           retrievedEvidence: retrievedCount,
           contextCoverage: coverage,
+          ...research,
         };
       }
     }
@@ -428,6 +514,7 @@ export async function runDeliverableForTenant(
           blockedReason: `architecture_generation_refused: ${err.message}`,
           retrievedEvidence: retrievedCount,
           contextCoverage: coverage,
+          ...research,
         };
       }
       return {
@@ -439,6 +526,7 @@ export async function runDeliverableForTenant(
         blockedReason: `architecture_assembly_failed: ${err instanceof Error ? err.message : String(err)}`,
         retrievedEvidence: retrievedCount,
         contextCoverage: coverage,
+        ...research,
       };
     }
   }
@@ -469,6 +557,7 @@ export async function runDeliverableForTenant(
       sectionCount: result.document?.generatedSections.length,
       retrievedEvidence: retrievedCount,
       contextCoverage: finalCoverage,
+      ...research,
       warnings: [...coverageWarnings, ...(result.quality?.warnings ?? [])],
     };
   }
@@ -626,6 +715,7 @@ export async function runDeliverableForTenant(
       sectionCount: result.document.generatedSections.length,
       retrievedEvidence: retrievedCount,
       contextCoverage: finalCoverage,
+      ...research,
     };
   }
 
@@ -638,5 +728,6 @@ export async function runDeliverableForTenant(
     sectionCount: result.document.generatedSections.length,
     retrievedEvidence: retrievedCount,
     contextCoverage: finalCoverage,
+    ...research,
   };
 }

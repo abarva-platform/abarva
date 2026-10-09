@@ -47,8 +47,27 @@ reasoning, not embeddings.
   `CANONICAL_TENANT_KEYS`; exception file with CI-enforced expiry; machine tracker read on every run.
 - **Runtime gate** — `buildValidatedAgentContextBundle` filters `block` objects before the model.
 
+## Public sources (`public_source` layer, additive)
+
+A `public_source` object is a public web page retrieved by the audited Anthropic web search / fetch
+tools during a Moves deliverable build (program rules, payment rules, published studies). It is
+**never a fact about the client** and is held to these rules:
+
+- **Tenant- and Move-scoped, never `corpus_global`.** Stored in `move_public_sources` under the
+  Move's tenant; used only by Nexus for that same tenant and Move.
+- **Provenance per object:** `source_file` = the URL, `ingestion_run_id` = the research run id,
+  `parse_method` = `anthropic_web_citation`, `committed_at` = the retrieval date. The stored excerpt
+  is the API's own cited text, at most 300 characters; URLs are https only.
+- **`not_reviewed` until a consultant approves it**, and never `agent_ready`. Only approved sources
+  may be cited, and they are numbered and rendered apart from client-private evidence.
+- **Client-neutral research only** in v1: research briefs carry no client names, figures or client
+  text. Client-specific research needs an ops-held identity decision first.
+- Dataset manifest: `docs/governance/dataset-manifests/moves-public-source-research-v1.json`.
+
 ## Versioning
 
 `POLICY_VERSION` (currently `1.0.0`) + per-object `policy_version` + `contract_hash`. Contract
-changes bump the version and force re-validation. Schema evolution is expand/contract only,
+changes bump the version and force re-validation of every stored readiness proof (Home narrative
+admission requires a proof's version to equal `POLICY_VERSION`). The `public_source` source layer
+was added without a bump because it is additive: no existing object's evaluation changes. Schema evolution is expand/contract only,
 additive, with documented reverse SQL.

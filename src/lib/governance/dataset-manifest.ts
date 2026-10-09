@@ -178,6 +178,12 @@ export function validateManifest(raw: unknown): ManifestValidation {
     errors.push("canonical_tenant scope requires a canonical tenant client_key");
   }
 
+  // Public-web research is stored per tenant and Move, never as shared corpus.
+  if (m.source_layer === "public_source" && scopeMode === "corpus_global") {
+    errors.push(
+      "source_layer public_source cannot be loaded into corpus_global",
+    );
+  }
   // Sensitive data in shared corpus is never allowed.
   if (scopeMode === "corpus_global" && SENSITIVE.has(m.classification)) {
     errors.push(
