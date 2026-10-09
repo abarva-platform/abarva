@@ -43,15 +43,15 @@ describe('PHASE_ROSTER', () => {
     expect(PHASE_ROSTER.map((entry) => entry.shortLabel)).toEqual([
       'Originate',
       'Charter',
-      'Diagnose',
+      'Discover',
       'Design',
       'Roadmap',
       'Mobilize',
     ]);
   });
 
-  it('puts Diagnose at P2, where the drifted arrays put Design', () => {
-    expect(PHASE_ROSTER[2].shortLabel).toBe('Diagnose');
+  it('puts Discover at P2, where the drifted arrays put Design', () => {
+    expect(PHASE_ROSTER[2].shortLabel).toBe('Discover');
     expect(PHASE_ROSTER[3].shortLabel).toBe('Design');
   });
 });
@@ -60,7 +60,7 @@ describe('getPhaseChipLabel', () => {
   it('upper-cases the space-tight name for a monospace chip', () => {
     expect(getPhaseChipLabel(0)).toBe('ORIGINATE');
     expect(getPhaseChipLabel(1)).toBe('CHARTER');
-    expect(getPhaseChipLabel(2)).toBe('DIAGNOSE');
+    expect(getPhaseChipLabel(2)).toBe('DISCOVER');
     expect(getPhaseChipLabel(3)).toBe('DESIGN');
     expect(getPhaseChipLabel(4)).toBe('ROADMAP');
   });
@@ -84,7 +84,7 @@ describe('getPhaseChipLabel', () => {
 describe('getPhaseRosterName', () => {
   it('names every canonical phase for prose and for model prompts', () => {
     expect(getPhaseRosterName(0)).toBe('Originate');
-    expect(getPhaseRosterName(2)).toBe('Diagnose');
+    expect(getPhaseRosterName(2)).toBe('Discover');
     expect(getPhaseRosterName(4)).toBe('Roadmap');
   });
 

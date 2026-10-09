@@ -78,7 +78,7 @@ describe("the engagement console phase indicator", () => {
     for (const name of [
       "Originate",
       "Charter",
-      "Diagnose",
+      "Discover",
       "Design",
       "Roadmap",
       "Mobilize",
@@ -110,10 +110,10 @@ describe("the engagement console phase indicator", () => {
     expect(grid!.style.gridTemplateColumns).toBe("repeat(6, 1fr)");
   });
 
-  it("names P2 Diagnose, where the retired array named it Design", () => {
+  it("names P2 Discover, where the retired array named it Design", () => {
     renderConsoleAtPhase(2);
     const codes = phaseCellCodes();
     expect(codes.indexOf("PHASE 2")).toBe(2);
-    expect(screen.getAllByText("Diagnose").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Discover").length).toBeGreaterThan(0);
   });
 });
