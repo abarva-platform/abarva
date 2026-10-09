@@ -699,3 +699,78 @@ describe("the charter bridge's standing", () => {
     );
   });
 });
+
+describe("a charter row whose owner needs a role", () => {
+  const charterRow = (overrides: Partial<AssumptionView> = {}) =>
+    view({
+      registerId: "DL1",
+      origin: "charter_carry_forward",
+      ownerRole: "Owner named in the P1 charter",
+      ownerName: "Avery Quill",
+      revision: 3,
+      ...overrides,
+    });
+
+  it("prompts for a role and never shows the person's name", async () => {
+    serve(
+      listOf([
+        charterRow(),
+        view({ registerId: "DL2", origin: "charter_carry_forward" }),
+      ]),
+    );
+    render(<AssumptionRegisterPanel register={mount()} />);
+    const table = await ready();
+    expect(
+      within(within(table).getByTestId("arp-row-DL1")).getByTestId(
+        "arp-needs-role",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(within(table).getByTestId("arp-row-DL2")).queryByTestId(
+        "arp-needs-role",
+      ),
+    ).toBeNull();
+    expect(screen.queryByText(/Avery Quill/)).toBeNull();
+  });
+
+  it("Set role patches the owner role with the row's revision, refusing a name", async () => {
+    const row = charterRow();
+    serve(listOf([row]), [{ body: { ok: true, assumption: row } }]);
+    render(<AssumptionRegisterPanel register={mount()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Set role" }));
+    const form = screen.getByRole("form", {
+      name: "Set the owner role for DL1",
+    });
+    const save = within(form).getByRole("button", { name: "Save role" });
+    const input = within(form).getByRole("textbox");
+    fireEvent.change(input, { target: { value: "Avery Quill" } });
+    expect(save).toBeDisabled();
+    expect(within(form).getByTestId("arp-role-is-name")).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "Claims operations lead" } });
+    expect(save).toBeEnabled();
+    fireEvent.click(save);
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    expect(writes()[0]).toEqual({
+      url: `${BASE}/${row.id}`,
+      method: "PATCH",
+      body: { expectedRevision: 3, ownerRole: "Claims operations lead" },
+    });
+    await waitFor(() => expect(screen.queryByRole("form")).toBeNull());
+  });
+
+  it("an answered row, or a viewer who cannot edit, gets the prompt without the control", async () => {
+    serve(
+      listOf([
+        charterRow({
+          status: "confirmed",
+          answerSource: "x",
+          answeredAt: "2026-10-09T01:00:00.000Z",
+        }),
+      ]),
+    );
+    render(<AssumptionRegisterPanel register={mount()} />);
+    await ready();
+    expect(screen.getByTestId("arp-needs-role")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Set role" })).toBeNull();
+  });
+});

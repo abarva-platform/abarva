@@ -5,12 +5,17 @@ import {
   ASSUMPTION_AREAS,
   ASSUMPTION_TRANSITIONS,
   CONFIDENCE_LEVEL_BY_SCORE,
+  EDITABLE_STATUSES,
   REGISTER_CONFIDENCE_SCORES,
   type AssumptionArea,
   type AssumptionStatus,
   type RegisterConfidence,
 } from "@/lib/programs/assumption-register/model";
 import type { AssumptionView } from "@/lib/programs/assumption-register/register-request";
+import {
+  looksLikePersonalName,
+  ownerNeedsRole,
+} from "@/lib/programs/assumption-register/owner-role";
 
 /**
  * The Move's assumptions register (`moves_assumption_register_v1`).
@@ -55,6 +60,7 @@ type OpenForm =
   | { kind: "add" }
   | { kind: "answer"; row: AssumptionView }
   | { kind: "supersede"; row: AssumptionView }
+  | { kind: "role"; row: AssumptionView }
   | null;
 
 const STATUS_LABEL: Readonly<Record<AssumptionStatus, string>> = {
@@ -251,6 +257,15 @@ function RegisterBody({ register }: { register: AssumptionRegisterMount }) {
             if (await decide(row, { action: "supersede", replacement }))
               setForm(null);
           }}
+          onSetRole={async (row, ownerRole) => {
+            if (
+              await send(`${base(programId)}/${encodeURIComponent(row.id)}`, {
+                method: "PATCH",
+                body: { expectedRevision: row.revision, ownerRole },
+              })
+            )
+              setForm(null);
+          }}
           onAdd={async (body) => {
             if (await send(base(programId), { method: "POST", body }))
               setForm(null);
@@ -315,6 +330,7 @@ interface ContentProps {
   onReject: (row: AssumptionView) => void;
   onAnswer: (row: AssumptionView, body: Record<string, unknown>) => void;
   onSupersede: (row: AssumptionView, body: Record<string, unknown>) => void;
+  onSetRole: (row: AssumptionView, ownerRole: string) => void;
   onAdd: (body: Record<string, unknown>) => void;
 }
 
@@ -435,7 +451,27 @@ function RegisterContent(props: ContentProps) {
                       withheld={withheld(row)}
                     />
                   </td>
-                  <td>{row.ownerRole}</td>
+                  <td>
+                    {row.ownerRole}
+                    {ownerNeedsRole(row) ? (
+                      <div className="arp-stale" data-testid="arp-needs-role">
+                        The charter named a person here. Set the owner role.
+                        {canEdit && EDITABLE_STATUSES.includes(row.status) ? (
+                          <>
+                            {" "}
+                            <button
+                              type="button"
+                              className="arp-quiet"
+                              disabled={busy}
+                              onClick={() => setForm({ kind: "role", row })}
+                            >
+                              Set role
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </td>
                   <td>{confidenceWord(row.confidence)}</td>
                   <td data-testid="arp-status">
                     {row.status === "superseded" && row.supersededBy
@@ -485,6 +521,15 @@ function RegisterContent(props: ContentProps) {
           onSubmit={(body) => props.onAnswer(form.row, body)}
         />
       ) : null}
+      {canEdit && form?.kind === "role" ? (
+        <RoleForm
+          key={form.row.id}
+          row={form.row}
+          busy={busy}
+          onCancel={() => setForm(null)}
+          onSubmit={(ownerRole) => props.onSetRole(form.row, ownerRole)}
+        />
+      ) : null}
       {canEdit && form?.kind === "supersede" ? (
         <RowForm
           key={form.row.id}
@@ -521,6 +566,53 @@ function RegisterContent(props: ContentProps) {
 }
 
 const present = (value: string) => value.trim().length > 0;
+
+function RoleForm({
+  row,
+  busy,
+  onCancel,
+  onSubmit,
+}: {
+  row: AssumptionView;
+  busy: boolean;
+  onCancel: () => void;
+  onSubmit: (ownerRole: string) => void;
+}) {
+  const [role, setRole] = useState("");
+  const readsLikeName = present(role) && looksLikePersonalName(role);
+  const ready = present(role) && !readsLikeName;
+  return (
+    <form
+      className="arp-form"
+      aria-label={`Set the owner role for ${row.registerId}`}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (ready) onSubmit(role);
+      }}
+    >
+      <div className="arp-form-title">
+        Set the owner role for {row.registerId}
+      </div>
+      <label className="arp-field">
+        Owner role, such as Finance Director (a role, not a person&apos;s name)
+        <input value={role} onChange={(e) => setRole(e.target.value)} />
+      </label>
+      {readsLikeName ? (
+        <p className="arp-note" data-testid="arp-role-is-name">
+          That reads like a person&apos;s name. Enter the role they hold.
+        </p>
+      ) : null}
+      <div className="arp-actions">
+        <button type="submit" className="arp-primary" disabled={busy || !ready}>
+          Save role
+        </button>
+        <button type="button" className="arp-quiet" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
 
 function AnswerForm({
   row,

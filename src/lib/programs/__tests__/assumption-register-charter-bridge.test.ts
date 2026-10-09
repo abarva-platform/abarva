@@ -38,11 +38,22 @@ import {
   bridgeCharterAssumptions,
   charterBridgeMayWrite,
   charterBridgeMount,
+  charterOwnerFields,
   charterRegisterInput,
   charterRegisterStanding,
   declaredCharterAssumptions,
 } from "../assumption-register/charter-bridge";
-import type { AssumptionRecord } from "../assumption-register/model";
+import {
+  agentContextAssumptions,
+  toApprovedAssumption,
+  toGovernedObject,
+  type AssumptionRecord,
+  type NewAssumptionInput,
+} from "../assumption-register/model";
+import {
+  CHARTER_OWNER_ROLE_PLACEHOLDER,
+  ownerNeedsRole,
+} from "../assumption-register/owner-role";
 import { RegisterHistoryWriteError } from "../assumption-register/store";
 import { carriedCharterAssumptions } from "../charter-assumptions-carry-forward";
 import {
@@ -178,6 +189,7 @@ describe("the row a charter assumption becomes", () => {
       source: "P1 charter, Scope boundary, declared as an assumption",
       confidence: 1,
       ownerRole: "Claims operations lead",
+      ownerName: null,
       origin: "charter_carry_forward",
       raisedPhase: 1,
       charterSectionKey: SCOPE,
@@ -686,5 +698,134 @@ describe("what the panel is handed", () => {
       charterUnavailable: true,
       unbridgedCharterCount: 0,
     });
+  });
+});
+
+describe("the owner: a role, never a person, in owner_role", () => {
+  // Synthetic names, built so they read as names to the shared heuristic.
+  const PERSON = "Avery Quill";
+  const EMAIL = "avery.quill@example.test";
+
+  const bridged = async (owner: string) => {
+    mockList.mockResolvedValue([]);
+    mockUpsert.mockImplementation(
+      async (_ctx, _program, input: NewAssumptionInput) => ({
+        ok: true,
+        created: true,
+        // The row as the store persists it: every input column carried over.
+        record: record({
+          area: input.area,
+          statement: input.statement,
+          whyItMatters: input.whyItMatters ?? null,
+          source: input.source,
+          confidence: input.confidence,
+          ownerRole: input.ownerRole,
+          ownerName: input.ownerName ?? null,
+          origin: input.origin,
+          raisedPhase: input.raisedPhase ?? null,
+          charterSectionKey: input.charterSectionKey ?? null,
+          charterValueRevision: input.charterValueRevision ?? null,
+        }),
+      }),
+    );
+    await bridgeCharterAssumptions({
+      ctx,
+      programId: MOVE_ID,
+      modules: [
+        charterModule({
+          sectionKey: SCOPE,
+          value: "Claims intake only.",
+          owner,
+        }),
+      ],
+      write: true,
+    });
+    const input = mockUpsert.mock.calls[0][2] as NewAssumptionInput;
+    const stored = (await mockUpsert.mock.results[0].value)
+      .record as AssumptionRecord;
+    return { input, stored };
+  };
+
+  it.each([
+    ["a person's name", PERSON],
+    ["an email address", EMAIL],
+    ["an honorific", "Dr. Quill"],
+  ])(
+    "%s goes to owner_name, and owner_role is the generic role",
+    async (_label, owner) => {
+      const { input, stored } = await bridged(owner);
+      expect(input.ownerRole).toBe(CHARTER_OWNER_ROLE_PLACEHOLDER);
+      expect(input.ownerName).toBe(owner);
+      expect(ownerNeedsRole(stored)).toBe(true);
+      expect(charterOwnerFields(owner)).toEqual({
+        ownerRole: CHARTER_OWNER_ROLE_PLACEHOLDER,
+        ownerName: owner,
+        ownerNeedsRole: true,
+      });
+    },
+  );
+
+  it.each([
+    "Head of Shared Services",
+    "Finance Director",
+    "CFO office",
+    "Procurement",
+  ])("a role (%s) passes through as owner_role", async (owner) => {
+    const { input, stored } = await bridged(owner);
+    expect(input.ownerRole).toBe(owner);
+    expect(input.ownerName).toBeNull();
+    expect(ownerNeedsRole(stored)).toBe(false);
+  });
+
+  it("a blank owner never becomes a blank role", () => {
+    expect(charterOwnerFields("   ")).toEqual({
+      ownerRole: CHARTER_OWNER_ROLE_PLACEHOLDER,
+      ownerName: null,
+      ownerNeedsRole: true,
+    });
+  });
+
+  it.each([PERSON, EMAIL])(
+    "the generation feed and the governed object of a bridged row never carry the name (%s)",
+    async (owner) => {
+      const { stored } = await bridged(owner);
+      // Answered, so the row is in every counted projection.
+      const answered = {
+        ...stored,
+        status: "confirmed" as const,
+        answerSource: "Volume extract",
+        answeredAt: "2026-10-06T00:00:00.000Z",
+      };
+      for (const row of [stored, answered]) {
+        const feed = toApprovedAssumption(row);
+        expect(feed).not.toBeNull();
+        expect(feed!.ownerRole).toBe(CHARTER_OWNER_ROLE_PLACEHOLDER);
+        expect(JSON.stringify(feed)).not.toContain(owner);
+        const governed = toGovernedObject(row, { tenantId: "client-1" });
+        expect(governed.owner).toBe(CHARTER_OWNER_ROLE_PLACEHOLDER);
+        expect(JSON.stringify(governed)).not.toContain(owner);
+      }
+      expect(
+        agentContextAssumptions([answered], { tenantId: "client-1" })
+          .map(toApprovedAssumption)
+          .map((feed) => JSON.stringify(feed))
+          .join(""),
+      ).not.toContain(owner);
+    },
+  );
+
+  it("only a charter row still carrying the placeholder needs a role", () => {
+    expect(
+      ownerNeedsRole({
+        origin: "charter_carry_forward",
+        ownerRole: "Finance Director",
+      }),
+    ).toBe(false);
+    expect(
+      ownerNeedsRole({
+        origin: "team",
+        ownerRole: CHARTER_OWNER_ROLE_PLACEHOLDER,
+      }),
+    ).toBe(false);
   });
 });

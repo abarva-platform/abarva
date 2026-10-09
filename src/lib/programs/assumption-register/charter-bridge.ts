@@ -5,8 +5,9 @@ import "server-only";
 // P1 lets a charter answer stand on an assumption, with an owner and a plan for
 // validating it in Discover (`p1_charter_basis`). With
 // `moves_assumption_register_v1` on, each such answer gets ONE register row
-// (origin `charter_carry_forward`, confidence 1, raised in phase 1, owner role
-// taken from the basis), so it is answered, corrected or superseded where every
+// (origin `charter_carry_forward`, confidence 1, raised in phase 1, owner from
+// the basis — as the owner ROLE when it reads like one, otherwise kept in
+// `owner_name` behind a role-only placeholder; see `charterOwnerFields`), so it is answered, corrected or superseded where every
 // other working figure is.
 //
 // Division of ownership:
@@ -39,6 +40,10 @@ import type {
   AssumptionRecord,
   NewAssumptionInput,
 } from "./model";
+import {
+  CHARTER_OWNER_ROLE_PLACEHOLDER,
+  looksLikePersonalName,
+} from "./owner-role";
 import { canWriteRegister } from "./register-route-access";
 import {
   RegisterHistoryWriteError,
@@ -133,10 +138,34 @@ export function declaredCharterAssumptions(
   return declared;
 }
 
+/**
+ * The owner columns for a charter row. The P1 basis asks for an owner, not a
+ * role, so the value may be a person. `owner_role` reaches generation prompts
+ * and must never carry a person: a value the shared owner-role check
+ * (`looksLikePersonalName`) flags moves to `owner_name`, and the row carries a
+ * role-only placeholder until the team sets a real role (`ownerNeedsRole`).
+ */
+export function charterOwnerFields(owner: string): {
+  ownerRole: string;
+  ownerName: string | null;
+  ownerNeedsRole: boolean;
+} {
+  const trimmed = owner.trim();
+  if (trimmed && !looksLikePersonalName(trimmed)) {
+    return { ownerRole: trimmed, ownerName: null, ownerNeedsRole: false };
+  }
+  return {
+    ownerRole: CHARTER_OWNER_ROLE_PLACEHOLDER,
+    ownerName: trimmed || null,
+    ownerNeedsRole: true,
+  };
+}
+
 /** The register row a declared charter assumption becomes. */
 export function charterRegisterInput(
   declared: DeclaredCharterAssumption,
 ): NewAssumptionInput {
+  const owner = charterOwnerFields(declared.owner);
   return {
     area: CHARTER_SECTION_AREA[declared.sectionKey],
     statement: declared.answer.trim()
@@ -145,7 +174,8 @@ export function charterRegisterInput(
     whyItMatters: `Validation plan from the charter: ${declared.validationPlan}`,
     source: `P1 charter, ${declared.label}, declared as an assumption`,
     confidence: CHARTER_ASSUMPTION_CONFIDENCE,
-    ownerRole: declared.owner,
+    ownerRole: owner.ownerRole,
+    ownerName: owner.ownerName,
     origin: "charter_carry_forward",
     raisedPhase: CHARTER_RAISED_PHASE,
     charterSectionKey: declared.sectionKey,

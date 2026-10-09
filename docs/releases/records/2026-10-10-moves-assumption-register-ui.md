@@ -41,8 +41,17 @@ says whether anything was saved. Everything is plain text.
 **The charter bridge.** P1 lets a charter answer stand on an assumption, with
 an owner and a plan for validating it in Discover. Each such answer now gets
 one register row: origin "charter carry-forward", confidence 1, raised in
-phase 1, the owner from the charter basis as the owner role, and a pin to the
-exact wording of the charter answer.
+phase 1, an owner, and a pin to the exact wording of the charter answer.
+
+- **The owner role is never a person.** The P1 basis asks for an owner, not a
+  role, and the owner role reaches generation prompts. The owner value goes
+  through the same owner-role check the aVa propose tool uses. A role (for
+  example "Finance Director") becomes the owner role. A person's name, an email
+  address or an honorific is kept in the row's owner name, which no generation
+  view or governed context object carries, and the owner role is set to
+  "Owner named in the P1 charter". The panel shows that row with a prompt to
+  set a role (and a "Set role" control while the row can still be edited) and
+  never shows the name.
 
 - The P1 basis stays the declaration. Nothing edits the charter.
 - The register owns the resolution. Once the register row is answered (or the
@@ -118,6 +127,12 @@ the charter section: a section that already has a row is never written again.
   the declared charter assumptions, the row each becomes, the stale and
   resolved readings, the bridge itself, when it may write, and the panel's
   mount.
+- `src/lib/programs/assumption-register/owner-role.ts` (new, pure): the
+  owner-role heuristic, moved here unchanged from the aVa propose tool so the
+  tool, the bridge and the panel share one copy, plus the charter placeholder
+  role and `ownerNeedsRole`.
+- `src/lib/agent/tools/program/proposeAssumption.ts`: imports the heuristic
+  from its new home; behaviour unchanged.
 - `src/lib/programs/assumption-register/store.ts`: `upsertCharterAssumption`.
 - `src/lib/programs/charter-assumptions-carry-forward.ts`: an optional
   `registerResolvedSectionKeys`; absent or `null` reads exactly as before.
@@ -136,7 +151,7 @@ the charter section: a section that already has a row is never written again.
 
 ## QA / Validation
 
-- Panel suite (new, 30 tests): nothing renders and nothing is fetched with the
+- Panel suite (new, 33 tests): nothing renders and nothing is fetched with the
   flag off; each status in its own words, including "Superseded by" the
   replacement's ID; confidence 1, 3 and 5 as Low, Medium and High; the "est"
   tag on a working figure; "withheld" when either the register or the row
@@ -149,7 +164,7 @@ the charter section: a section that already has a row is never written again.
   stored a replacement does; a change saved without its history entry says so;
   a read-only viewer gets no controls; a failed read is shown, never an empty
   register; only the stale charter row is flagged.
-- Bridge suite (new, 35 tests): the row a charter assumption becomes (origin,
+- Bridge suite (new, 46 tests): the row a charter assumption becomes (origin,
   confidence 1, phase 1, owner, revision pin, area per section); only an
   assumption basis against the current wording is bridged; idempotence (a
   second load writes nothing, only the missing section is written, a row
@@ -162,6 +177,15 @@ the charter section: a section that already has a row is never written again.
   resolve, an open row or a row superseded by an open row does not, a looping
   supersede chain resolves nothing, and an answer about the previous wording
   does not resolve the current one.
+- Owner handling: a name, an email address and an honorific go to the owner
+  name with the generic owner role and `ownerNeedsRole`; roles pass through
+  with no owner name; a blank owner never becomes a blank role; on an actual
+  bridged row (open and answered), `toApprovedAssumption`, the governed object
+  and the agent-context feed never contain the name. The panel prompts for a
+  role without showing the name, and "Set role" patches the row with its
+  revision and refuses a name. The aVa tool suite passes unchanged against the
+  moved heuristic. 17 further mutations over this handling, applied one at a
+  time and restored from an in-memory copy: all 17 killed.
 - Store suite: 6 new upsert cases (created once; second call returns the
   existing row and writes nothing, keeping the original pin; read inside the
   tenant fence under either tenant key; a lost race returns the winner's row;
@@ -177,7 +201,10 @@ the charter section: a section that already has a row is never written again.
 - Affected suites: pass. `src/lib/programs/__tests__` (whole directory), the
   register route suite, the aVa propose tool suite and the features suites:
   225 suites, 3,493 tests. The panel, host, carry-forward, standing-after-
-  Discover and capture-flow component suites: 5 suites, 395 tests.
+  Discover and capture-flow component suites: 5 suites, 395 tests. After the
+  owner handling: `src/lib/programs/__tests__`, the register route suite, all
+  of `src/lib/agent/tools/__tests__` and the features suites, 238 suites and
+  3,601 tests; the panel, host and carry-forward suites, 352 tests.
 - `npm run typecheck`: pass. ESLint on the changed files: no errors; the one
   warning (`MovesCaptureFlow` unused in the host) predates this change. New
   files follow Prettier; the two host files were already unformatted at base
@@ -239,10 +266,10 @@ rows; they are not deleted.
 ## Known Gaps
 
 - Claude Design has not yet reviewed the panel.
-- The owner role of a charter row is the owner text typed in the P1 basis. The
-  P1 control asks for an owner, not a role, so it may hold a person's name. The
-  register's own owner-role rules apply only to rows added through the routes
-  and the aVa tool.
+- The owner check is a heuristic shared with the aVa tool: it flags an email
+  address, an honorific, or two or three capitalised words with no role word.
+  A single bare first name is not flagged. The register's add and edit routes
+  do not run the check yet; the panel's "Set role" form does.
 - A stale charter row is flagged on screen only. The row keeps its original
   wording and pin; the team answers or supersedes it.
 - The bridge writes on a page load (a GET). It is an idempotent projection of a
