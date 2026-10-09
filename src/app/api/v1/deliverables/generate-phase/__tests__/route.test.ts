@@ -14,6 +14,18 @@ const sequentialCalls: Array<{
 let createBehavior: (input: Record<string, unknown>) => {
   id: string;
 } = () => ({ id: "run-default" });
+// P3's ordered batch, as a hook so a case can make it report success while
+// returning no run — the representable `(data ?? [])` empty the route's
+// cannot-know refusal exists for.
+const defaultSequentialBehavior = (inputs: Array<Record<string, unknown>>) =>
+  inputs.map((input, index) => ({
+    id: `run-${index}`,
+    sequenceNo: index,
+    jobPayload: input.jobPayload,
+  }));
+let sequentialBehavior: (
+  inputs: Array<Record<string, unknown>>,
+) => Array<Record<string, unknown>> = defaultSequentialBehavior;
 const createMoveContextExtract = jest.fn(
   async (input: Record<string, unknown>): Promise<Record<string, unknown>> => {
     void input;
@@ -109,29 +121,31 @@ const buildMoveEvidenceNeedPackets = jest.fn(
   },
 );
 const loadDiscoveryEvidenceReadiness = jest.fn(async () => ({}));
-const loadAcceptedStageReadinessContext: jest.Mock = jest.fn(async (...args: unknown[]) => {
-  void args;
-  return {
-    moveId: "move-1",
-    sourcePhase: 1,
-    targetPhase: 2,
-    reviewArtifactId: "review-1",
-    reviewArtifactVersion: 1,
-    proposals: [
-      {
-        proposalId: "proposal-kpi",
-        questionId: "q_kpi_baseline",
-        dimensionId: "contact_center_kpis",
-        requirement: "required" as const,
-        answerState: "answered" as const,
-        disposition: "accepted" as const,
-        evidenceOrSource: "Existing evidence: ev-kpi",
-      },
-    ],
-    acceptedResponses: [],
-    readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
-  };
-});
+const loadAcceptedStageReadinessContext: jest.Mock = jest.fn(
+  async (...args: unknown[]) => {
+    void args;
+    return {
+      moveId: "move-1",
+      sourcePhase: 1,
+      targetPhase: 2,
+      reviewArtifactId: "review-1",
+      reviewArtifactVersion: 1,
+      proposals: [
+        {
+          proposalId: "proposal-kpi",
+          questionId: "q_kpi_baseline",
+          dimensionId: "contact_center_kpis",
+          requirement: "required" as const,
+          answerState: "answered" as const,
+          disposition: "accepted" as const,
+          evidenceOrSource: "Existing evidence: ev-kpi",
+        },
+      ],
+      acceptedResponses: [],
+      readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+    };
+  },
+);
 const formatAcceptedStageReadinessContextForPrompt = jest.fn(
   (...args: unknown[]) => {
     void args;
@@ -141,10 +155,12 @@ const formatAcceptedStageReadinessContextForPrompt = jest.fn(
 // The PROMPT reading is a different policy from the gate reading above: it
 // accepts a review that is still open. Separate mocks so a case can drive the
 // two apart, which is the only thing that pins the route to the right one.
-const loadStageReadinessPromptContext: jest.Mock = jest.fn(async (...args: unknown[]) => {
-  void args;
-  return null;
-});
+const loadStageReadinessPromptContext: jest.Mock = jest.fn(
+  async (...args: unknown[]) => {
+    void args;
+    return null;
+  },
+);
 const formatStageReadinessPromptContext = jest.fn((...args: unknown[]) => {
   void args;
   return "ACCEPTED STAGE READINESS RESPONSE: contact_center_kpis is supported by ev-kpi.";
@@ -249,11 +265,7 @@ jest.mock("@/lib/deliverables/orchestrator/runs-repository", () => ({
     ) => {
       createCalls.push(...inputs);
       sequentialCalls.push({ inputs, opts });
-      return inputs.map((input, index) => ({
-        id: `run-${index}`,
-        sequenceNo: index,
-        jobPayload: input.jobPayload,
-      }));
+      return sequentialBehavior(inputs);
     },
   ),
 }));
@@ -308,7 +320,9 @@ jest.mock(
   "@/lib/programs/evidence-readiness/move-evidence-need-packet",
   () => ({
     buildMoveEvidenceNeedPackets: (input: unknown) =>
-      buildMoveEvidenceNeedPackets(input as { moveId?: string; currentPhase?: number }),
+      buildMoveEvidenceNeedPackets(
+        input as { moveId?: string; currentPhase?: number },
+      ),
   }),
 );
 jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
@@ -365,6 +379,7 @@ beforeEach(() => {
   createBehavior = (input) => ({
     id: `run-${(input as { deliverableType: string }).deliverableType}`,
   });
+  sequentialBehavior = defaultSequentialBehavior;
   validateDeliverableTenantInvariant.mockClear();
   validateDeliverableTenantInvariant.mockResolvedValue({
     ok: true,
@@ -505,7 +520,9 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
   it("500 naming the keys when a declared phase document has no registry entry", async () => {
     await jest.isolateModulesAsync(async () => {
       jest.doMock("@/lib/programs/deliverable-registry", () => {
-        const actual = jest.requireActual("@/lib/programs/deliverable-registry");
+        const actual = jest.requireActual(
+          "@/lib/programs/deliverable-registry",
+        );
         return {
           ...actual,
           phaseCanonicalKeysForRoute: () => [
@@ -729,7 +746,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         useCaseArchetype: "ai_member_service",
         moveName: "Member Service Agent Assist",
         clientDisplayName: "Client",
-  }),
+      }),
     );
 
     expect(res.status).toBe(202);
@@ -1009,9 +1026,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     const decisionContext = (
       createCalls[0]?.jobPayload as { decisionContext: string }
     ).decisionContext;
-    expect(decisionContext).toContain(
-      "one response is still open for review",
-    );
+    expect(decisionContext).toContain("one response is still open for review");
   });
 
   // P1 Charter is the FIRST deliverable-generating phase, and its preceding
@@ -1030,7 +1045,12 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         acceptedResponses: [
           { questionId: "q1", answer: "Named sponsor", source: "charter.pdf" },
         ],
-        readiness: { ready: 1, partial: 0, insufficientEvidence: 0, unknown: 0 },
+        readiness: {
+          ready: 1,
+          partial: 0,
+          insufficientEvidence: 0,
+          unknown: 0,
+        },
       },
       openResponseCount: 0,
       reviewOpen: false,
@@ -1384,6 +1404,95 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     expect(res.status).toBe(500);
   });
 
+  // The status above was the ONLY thing this exit asserted, and it is the one
+  // exit of the route that carried no `error` and no `detail`. The single
+  // product fetcher reads `detail ?? error ?? "HTTP " + status`, so the most
+  // complete failure the route can have rendered as `HTTP 500` while the
+  // PARTIAL failure beside it (the 202 above) names the failing document in
+  // its own row. These read what the reader is actually handed.
+  it("tells the reader what happened when nothing reached the queue, not HTTP 500", async () => {
+    createBehavior = () => {
+      throw new Error("db down");
+    };
+    // The reasons were lost to the operator as well as to the reader: each
+    // rejection is caught into a result row, so this exit used to return
+    // without logging anything at all.
+    const logged = jest.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POST(
+      req({ moveId: "m-3b", phase: 1, useCaseArchetype: "ams" }),
+    );
+    expect(res.status).toBe(500);
+    const json = (await res.json()) as {
+      error?: string;
+      detail?: string;
+      queued?: number;
+      total?: number;
+      deliverables?: Array<Record<string, unknown>>;
+    };
+    expect(json.queued).toBe(0);
+    expect(json.error).toBe("phase_build_not_queued");
+    // What the client's ladder resolves to.
+    const seen = json.detail ?? json.error ?? `HTTP ${res.status}`;
+    expect(seen).toBe(json.detail);
+    expect(seen).not.toBe("HTTP 500");
+    expect(seen).not.toContain("phase_build_not_queued");
+    // The per-document loop knows no run row exists, so it says so and lets
+    // the reader retry. It must not send them back into the capture.
+    expect(seen).toContain("Nothing was generated and nothing is running");
+    expect(seen).toContain("nothing in the capture needs changing");
+    // The count in the sentence is the number the route actually tried, not a
+    // constant: it has to track `total` for every phase.
+    expect(json.total).toBeGreaterThan(1);
+    expect(seen).toContain(`${json.total} documents`);
+    expect(seen).toContain("P1 builds");
+    // The per-document reasons are still on the response for an operator.
+    expect(json.deliverables?.every((d) => d.status === "error")).toBe(true);
+    expect(json.deliverables?.every((d) => typeof d.error === "string")).toBe(
+      true,
+    );
+    expect(logged).toHaveBeenCalledWith(
+      "[generate-phase] phase_build_not_queued",
+      expect.objectContaining({
+        enqueueOutcome: "every_attempt_failed",
+        reasons: expect.arrayContaining([
+          expect.objectContaining({
+            error: expect.stringContaining("db down"),
+          }),
+        ]),
+      }),
+    );
+    logged.mockRestore();
+  });
+
+  it("does not claim nothing was queued when the P3 batch reported no runs", async () => {
+    // The batch call returns WITHOUT throwing and yields no run for any index:
+    // rows may exist, so this is the cannot-know path and it must not reuse the
+    // per-document sentence.
+    sequentialBehavior = () => [];
+    const logged = jest.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POST(
+      req({ moveId: "m-3c", phase: 3, useCaseArchetype: "ams" }),
+    );
+    expect(res.status).toBe(500);
+    const json = (await res.json()) as {
+      error?: string;
+      detail?: string;
+      queued?: number;
+    };
+    expect(json.queued ?? 0).toBe(0);
+    expect(json.error).toBe("phase_build_not_queued");
+    const seen = json.detail ?? json.error ?? `HTTP ${res.status}`;
+    expect(seen).toContain("cannot be read from here");
+    expect(seen).toContain("check its document list before running");
+    expect(seen).not.toContain("Nothing was generated");
+    expect(seen).not.toContain("cannot duplicate work");
+    expect(logged).toHaveBeenCalledWith(
+      "[generate-phase] phase_build_not_queued",
+      expect.objectContaining({ enqueueOutcome: "accepted_without_runs" }),
+    );
+    logged.mockRestore();
+  });
+
   // The archetype this route is HANDED is the Move's coarse `program.archetype`,
   // and none of its five possible values names a discovery blueprint. The Move's
   // DECLARATION has to be resolved here, server-side, or the extract grades the
@@ -1398,7 +1507,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       charter: { classification: { archetype: "governed_data_foundation" } },
     });
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createMoveContextExtract).toHaveBeenCalledWith(
@@ -1408,10 +1521,7 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
         declaredArchetypeId: "governed_data_foundation",
       }),
     );
-    expect(getProgramById).toHaveBeenCalledWith(
-      expect.anything(),
-      "m-1",
-    );
+    expect(getProgramById).toHaveBeenCalledWith(expect.anything(), "m-1");
   });
 
   it("hands over the coarse archetype as the inference seed when the Move declares nothing", async () => {
@@ -1421,7 +1531,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       charter: null,
     });
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createMoveContextExtract).toHaveBeenCalledWith(
@@ -1444,7 +1558,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       charter: { classification: { archetype: "governed_data_foundation" } },
     });
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createCalls.length).toBeGreaterThan(0);
@@ -1464,7 +1582,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
       charter: null,
     });
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createCalls.length).toBeGreaterThan(0);
@@ -1500,7 +1622,11 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
   it("still enqueues when the program read fails — a lost declaration must not fail the build", async () => {
     getProgramById.mockRejectedValue(new Error("program store unavailable"));
     const res = await POST(
-      req({ moveId: "m-1", phase: 1, useCaseArchetype: "platform_modernization" }),
+      req({
+        moveId: "m-1",
+        phase: 1,
+        useCaseArchetype: "platform_modernization",
+      }),
     );
     expect(res.status).toBe(202);
     expect(createMoveContextExtract).toHaveBeenCalledWith(
