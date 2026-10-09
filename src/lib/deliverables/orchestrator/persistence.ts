@@ -397,7 +397,7 @@ async function renderOfficeCompanion(
 
   if (outputFormat === "docx") {
     return {
-      body: await renderValidatedDocx(doc),
+      body: await renderValidatedDocx(doc, architectureModel),
       fileFormat: "docx",
       fileName: `${safeFileStem(doc.title)}.docx`,
     };

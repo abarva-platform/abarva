@@ -18,6 +18,7 @@ import { goodDocument } from "@/lib/deliverables/orchestrator/__fixtures__/ams-r
 import type { GeneratedArtifactRecord } from "@/lib/artifacts/repository";
 import JSZip from "jszip";
 import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
+import { ARCHITECTURE_V2_EXHIBITS } from "@/lib/visual-system/architecture-model";
 import { judgeArchitectureDeck } from "@/lib/deliverables/orchestrator/architecture-deck-quality";
 
 const mockGetUser = jest.fn();
@@ -241,6 +242,38 @@ describe("GET /api/v1/artifacts/[artifactId]", () => {
     expect(verdict.findings).toEqual([]);
   }, 120_000);
 
+  it("embeds the saved architecture visuals in the Word export", async () => {
+    const architectureModel = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
+    mockGetArtifact.mockResolvedValue(
+      recordWith("docx", {
+        registryKey: "target_state_architecture",
+        renderableDoc: { ...goodDocument(), exhibits: [] },
+        architectureModel,
+      }),
+    );
+
+    const res = await GET(reqUrl(), { params });
+    expect(res.status).toBe(200);
+    const zip = await JSZip.loadAsync(Buffer.from(await res.arrayBuffer()));
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const imageNames = [
+      ...xml.matchAll(/<wp:docPr\b[^>]*\bname="([^"]+)"/g),
+    ].map((match) => match[1]);
+    expect(imageNames.slice().sort()).toEqual(
+      ARCHITECTURE_V2_EXHIBITS.slice().sort(),
+    );
+    expect(
+      Object.keys(zip.files).filter((name) =>
+        /^word\/media\/.*\.png$/i.test(name),
+      ),
+    ).toHaveLength(ARCHITECTURE_V2_EXHIBITS.length);
+  }, 120_000);
+
   it("refuses an architecture PPTX when its stored model is missing", async () => {
     mockGetArtifact.mockResolvedValue(
       recordWith("docx", {
@@ -254,6 +287,12 @@ describe("GET /api/v1/artifacts/[artifactId]", () => {
     expect(await res.json()).toMatchObject({
       error: "artifact_render_failed",
       format: "pptx",
+    });
+    const word = await GET(reqUrl("?format=docx"), { params });
+    expect(word.status).toBe(422);
+    expect(await word.json()).toMatchObject({
+      error: "artifact_render_failed",
+      format: "docx",
     });
   });
 
