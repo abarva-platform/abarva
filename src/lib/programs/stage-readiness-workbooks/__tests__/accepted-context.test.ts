@@ -109,7 +109,20 @@ describe("accepted stage readiness context", () => {
           acceptedCount: 2,
           pendingCount: 0,
           needsValidationCount: 0,
+          proposalSetId: "proposal-set-1",
+          sourceProposalSetArtifact: {
+            artifactId: "proposal-artifact-1",
+            artifactVersion: 1,
+          },
         },
+      },
+      {
+        artifact_id: "proposal-artifact-1",
+        version: 1,
+        phase: 1,
+        artifact_type: "stage_readiness_workbook_proposal_set",
+        status: "review_required",
+        metadata: { proposalSetId: "proposal-set-1" },
       },
     ]);
     downloadArtifactBytes.mockResolvedValue({
