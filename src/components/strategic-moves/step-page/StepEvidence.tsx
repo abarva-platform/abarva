@@ -79,12 +79,18 @@ export function useStepEvidence({
   phase,
   canReview,
   onEvidenceChanged,
+  uploadLabel = "Upload evidence",
 }: {
   moveId: string;
   phase: number;
   canReview: boolean;
   /** An approval changed what counts as evidence; the host re-reads it. */
   onEvidenceChanged?: () => void;
+  /**
+   * The upload control's words: "Upload evidence" on an evidence step, "Add
+   * session output" on a design step (template v1.7).
+   */
+  uploadLabel?: string;
 }): StepEvidence {
   const [pending, setPending] = useState<PendingEvidenceReview[]>([]);
   const [approvedCount, setApprovedCount] = useState(0);
@@ -260,13 +266,13 @@ export function useStepEvidence({
           fileInput.current?.click();
         }}
       >
-        {uploading ? "Uploading…" : "Upload evidence"}
+        {uploading ? "Uploading…" : uploadLabel}
       </button>
       <input
         ref={fileInput}
         type="file"
         className={cx("sr-only")}
-        aria-label="Upload evidence for this step"
+        aria-label={`${uploadLabel} for this step`}
         onChange={(event) => {
           const file = event.target.files?.[0];
           const onUploaded = pickCallback.current ?? undefined;

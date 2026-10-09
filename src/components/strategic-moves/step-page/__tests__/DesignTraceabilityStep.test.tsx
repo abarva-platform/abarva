@@ -121,13 +121,45 @@ describe("DesignTraceabilityStep", () => {
   it("shows P2's settled causes in rank, each needing a design or a hand-off", () => {
     const { container } = render(<Harness />);
     expect(status(container).textContent).toContain(
-      "Design definitions (RC-2) here or hand it off and design identity (RC-4) here or hand it off.",
+      "Design or hand off definitions (RC-2) and identity (RC-4).",
     );
     expect(row(container, "RC-2").textContent).toContain(
       "FactBaseline: measures certified, 12 of 40 · Measure register",
     );
     expect(row(container, "RC-2").textContent).toContain(
       "No design element yet.",
+    );
+    // P2 carried RC-4 as a known gap with an owner: the row says so, and it
+    // has no baseline number to show.
+    expect(row(container, "RC-4").textContent).toContain(
+      "P2: carried as a known gap · owner MDM lead",
+    );
+    expect(row(container, "RC-4").textContent).toContain(
+      "No baseline number in P2",
+    );
+    expect(row(container, "RC-2").textContent).not.toContain("known gap");
+    // Evidence on this step is the design session's output.
+    expect(
+      within(container).getByLabelText("Add session output for this step"),
+    ).toBeTruthy();
+  });
+
+  it("keeps the per-cause clause when only one cause is open", () => {
+    const { container } = render(<Harness />);
+    fireEvent.click(
+      within(row(container, "RC-2")).getByRole("button", {
+        name: "Design it here",
+      }),
+    );
+    fireEvent.change(
+      container.querySelector("#de-RC-2") as HTMLTextAreaElement,
+      { target: { value: "Certified semantic layer" } },
+    );
+    fireEvent.click(
+      within(row(container, "RC-2")).getByRole("button", { name: "Accept" }),
+    );
+    expect(status(container).textContent).toContain(
+      "Design identity (RC-4) here or hand it off.",
     );
   });
 
@@ -156,6 +188,10 @@ describe("DesignTraceabilityStep", () => {
     fireEvent.click(
       within(row(container, "RC-4")).getByRole("button", { name: "Hand off…" }),
     );
+    // P2's known-gap owner is the starting point, for the consultant to confirm.
+    expect(
+      (container.querySelector("#ho-RC-4") as HTMLInputElement).value,
+    ).toBe("MDM lead");
     const record = within(row(container, "RC-4")).getByRole("button", {
       name: "Record hand-off",
     }) as HTMLButtonElement;
@@ -178,6 +214,8 @@ describe("DesignTraceabilityStep", () => {
   it("is blocked, with a link to P2, until P2 settles a cause", () => {
     const { container } = render(<Harness p2RootCauses="" />);
     expect(status(container).textContent).toContain("Waiting on P2");
+    // Blocked: the context line carries depth only, not an evidence summary.
+    expect(container.textContent).not.toMatch(/evidence|session output/i);
     expect(
       within(status(container))
         .getByRole("link", { name: "Open P2 Discover →" })
@@ -215,6 +253,10 @@ describe("DesignTraceabilityStep", () => {
     ).toBe("master-data program");
     expect(row(container, "RC-2").textContent).toContain(
       "Session notes · review",
+    );
+    expect(last().links[0].citation).toBe("From your notes, line 1");
+    expect(row(container, "RC-2").textContent).toContain(
+      "From your notes, line 1",
     );
     expect(status(container).textContent).not.toContain("Ready");
   });

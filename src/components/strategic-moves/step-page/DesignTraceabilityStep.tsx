@@ -18,9 +18,19 @@ import {
   type TraceRow,
 } from "@/lib/programs/design-traceability";
 import { proposeDesignFromNotes } from "@/lib/programs/design-traceability-notes";
-import { resolveStepNextAction } from "@/lib/programs/step-page-model";
+import {
+  buildNextActionSentence,
+  resolveStepNextAction,
+} from "@/lib/programs/step-page-model";
+
+/** "A", "A and B", "A, B and C" (inside one clause, so no serial comma). */
+function listNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
 import {
   MovesStepPage,
+  SourceLine,
   type StepPagePhase,
   type StepPageRow,
   type StepPageStep,
@@ -117,6 +127,7 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
     [props.p2Baseline],
   );
   const evidence = useStepEvidence({
+    uploadLabel: "Add session output",
     moveId: props.moveId,
     phase: 3,
     canReview: props.canReviewEvidence,
@@ -140,7 +151,15 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
       const r = rows.find((x) => x.causeId === p.causeId);
       if (!r) continue;
       if (p.kind === "element") {
-        const drafted = draftDesignElement(next, r, p.value, "team");
+        // The words are the team's, verbatim from their notes, so the draft
+        // is badged as session notes and cites the line (template v1.7).
+        const drafted = draftDesignElement(
+          next,
+          r,
+          p.value,
+          "team",
+          `From your notes, line ${p.sourceLine}`,
+        );
         if (drafted.ok) {
           next = drafted.value;
           filled.push(`a design element for ${nameOf(r)}`);
@@ -318,11 +337,13 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
             type="button"
             className={cx("link-btn")}
             onClick={() =>
+              // A cause P2 carried as a known gap already has an owner;
+              // the hand-off starts from it for the consultant to confirm.
               setForm({
                 kind: "handoff",
                 causeId: r.causeId,
                 program: "",
-                owner: "",
+                owner: r.p2KnownGapOwner ?? "",
                 fromAva: false,
               })
             }
@@ -341,6 +362,9 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
               : "Session notes · review"}
           </span>
           <p className={cx("proposal")}>{link.element}</p>
+          {link.citation ? (
+            <SourceLine source={{ kind: "team", text: link.citation }} />
+          ) : null}
         </div>
       );
       actions = (
@@ -410,20 +434,30 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
       state,
       clause: `design ${nameOf(r)} here or hand it off`,
       draftName: `the ${nameOf(r)} draft`,
-      facts: fact
-        ? [
-            {
-              kind: "fact",
-              text: `Baseline: ${fact.metric.charAt(0).toLowerCase()}${fact.metric.slice(1)}, ${fact.value}`,
-              cite: fact.source,
-            },
-          ]
-        : [
-            {
-              kind: "team",
-              text: "P2 root cause, not linked to a baseline number",
-            },
-          ],
+      facts: [
+        ...(r.p2KnownGapOwner
+          ? [
+              {
+                kind: "team" as const,
+                text: `P2: carried as a known gap · owner ${r.p2KnownGapOwner}`,
+              },
+            ]
+          : []),
+        ...(fact
+          ? [
+              {
+                kind: "fact" as const,
+                text: `Baseline: ${fact.metric.charAt(0).toLowerCase()}${fact.metric.slice(1)}, ${fact.value}`,
+                cite: fact.source,
+              },
+            ]
+          : [
+              {
+                kind: "team" as const,
+                text: "No baseline number in P2",
+              },
+            ]),
+      ],
       middle,
       actions,
     };
@@ -467,6 +501,31 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
       "Every root cause has a design element or an owned hand-off, and none is orphaned. Continue to Architecture options",
     emptySentence: "Add the design session output",
   });
+
+  // One verb, one clause (template v1.7): every cause still to design reads
+  // "design or hand off identity (RC-4) and PHI access (RC-5)", ahead of the
+  // drafts, rather than repeating the verb per cause.
+  const open = rows.filter(
+    (r) => !r.link && !(form && form.causeId === r.causeId),
+  );
+  const sentence =
+    nextAction.state === "in_progress" && open.length > 1
+      ? buildNextActionSentence([
+          ...pageRows.filter(
+            (row) =>
+              row.state !== "decision" ||
+              !open.some((r) => r.causeId === row.id),
+          ),
+          {
+            id: "OPEN-CAUSES",
+            rank: open[0].rank,
+            subject: "",
+            state: "decision",
+            clause: `design or hand off ${listNames(open.map(nameOf))}`,
+          },
+        ])
+      : null;
+  const shownAction = sentence ? { ...nextAction, sentence } : nextAction;
 
   const briefing = [
     "I read P2's settled root causes, in your order.",
@@ -536,14 +595,17 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
       stepIndex={props.stepIndex}
       title="Map every root cause to a design element"
       intro="Each P2 root cause needs one design element that fixes it, and each design element needs a root cause that justifies it."
-      nextAction={nextAction}
+      nextAction={shownAction}
       blockedLink={{ label: "Open P2 Discover →", href: props.p2StepHref }}
       blockedWork="The root causes from P2 will appear here once Discover settles them. Your design elements are kept."
       context={{
-        items: [<b key="depth">Full depth</b>, evidence.summary],
+        items:
+          rows.length === 0
+            ? [<b key="depth">Full depth</b>]
+            : [<b key="depth">Full depth</b>, evidence.summary],
         details: [],
       }}
-      contextAction={evidence.uploadControl}
+      contextAction={rows.length === 0 ? undefined : evidence.uploadControl}
       rows={pageRows}
       carry={{
         label: "Carries to Step 2",
