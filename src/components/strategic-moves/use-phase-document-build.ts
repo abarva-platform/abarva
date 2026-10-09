@@ -57,6 +57,12 @@ export interface BuildSettledResult {
    * recorded after the build — see `planPhaseGateSubmitWithoutBuild`.
    */
   source?: "build" | "existing_documents";
+  /**
+   * The approver's own rationale, recorded as the gate's human rationale. A
+   * surface that collects one (the gate step page) passes it; without it the
+   * submission records the standing build-and-submit sentence.
+   */
+  humanRationale?: string;
 }
 
 export type RunStatus =

@@ -2639,7 +2639,8 @@ export function MovesPhaseStandaloneClient({
         body: JSON.stringify({
           phase: phase.phase,
           rationale:
-            `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.` +
+            (result.humanRationale?.trim() ||
+              `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.`) +
             (settlement.workingDocumentCaveat
               ? ` ${settlement.workingDocumentCaveat}`
               : ""),

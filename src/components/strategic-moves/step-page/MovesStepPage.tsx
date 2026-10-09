@@ -240,6 +240,8 @@ function CollapsedGroup({
 /** A gate check listed under the next action on steps that feed a gate. */
 export interface StepPageCheck {
   met: boolean;
+  /** The gate state could not be read: neither met nor unmet. */
+  unknown?: boolean;
   level: "hard" | "soft";
   text: string;
   /** The row that settles it, linked while unmet. */
@@ -266,6 +268,12 @@ export interface StepPageStep {
   title: string;
   depth: StepDepth;
   href?: string;
+  /**
+   * Whether this step is complete. Defaults to "before the current step"; a
+   * host that can prove completion per step passes it so an unfinished earlier
+   * step is never ticked.
+   */
+  done?: boolean;
 }
 
 export interface MovesStepPageProps {
@@ -284,6 +292,8 @@ export interface MovesStepPageProps {
   blockedLink?: { label: string; href: string };
   checks?: readonly StepPageCheck[];
   checksLabel?: string;
+  /** A gate step keeps its checks visible while blocked, all "not evaluated". */
+  checksWhenBlocked?: boolean;
   /** Region 3: the one-line summary items and the expanded details. */
   context: {
     items: readonly ReactNode[];
@@ -357,7 +367,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
       : state === "blocked"
         ? " · blocked"
         : "";
-  const showCount = state !== "blocked" && state !== "skipped";
+  const showCount =
+    (state !== "blocked" && state !== "skipped") ||
+    (state === "blocked" && Boolean(props.checksWhenBlocked && props.countLabel));
   const doneEyebrow = state === "ready" || state === "done";
 
   return (
@@ -422,7 +434,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
           <ol style={{ ["--steps" as string]: steps.length }}>
             {steps.map((step, index) => {
               const current = index === stepIndex;
-              const done = index < stepIndex || (current && state === "done");
+              const done = current
+                ? state === "done"
+                : (step.done ?? index < stepIndex);
               const depth = current && state === "skipped" ? "skip" : step.depth;
               const label = DEPTH_LABEL[depth];
               const inner = (
@@ -528,7 +542,8 @@ export function MovesStepPage(props: MovesStepPageProps) {
                     </>
                   ) : null}
                 </p>
-                {showCount && props.checks?.length ? (
+                {(showCount || (state === "blocked" && props.checksWhenBlocked)) &&
+                props.checks?.length ? (
                   <Disclosure
                     closed={props.checksLabel ?? "Show checks"}
                     opened="Hide checks"
@@ -538,7 +553,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
                       {props.checks.map((check, index) => (
                         <li key={index}>
                           <span>
-                            {check.met ? (
+                            {check.unknown ? (
+                              <span className={cx("chk-unknown")} aria-label="not evaluated" />
+                            ) : check.met ? (
                               <span className={cx("tick")} aria-label="met">
                                 ✓
                               </span>
@@ -548,7 +565,7 @@ export function MovesStepPage(props: MovesStepPageProps) {
                           </span>
                           <span>
                             <SourceTag kind={check.level} />
-                            {check.targetRowId && !check.met ? (
+                            {check.targetRowId && !check.met && !check.unknown ? (
                               <a href={`#row-${check.targetRowId}`}>{check.text}</a>
                             ) : (
                               check.text
