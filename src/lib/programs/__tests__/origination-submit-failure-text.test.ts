@@ -31,6 +31,7 @@ const CODES: OriginationSubmitFailureCode[] = [
   "person_lookup_failed",
   "person_placeholder_failed",
   "engagement_insert_failed",
+  "duplicate_check_failed",
   "origination_submit_failed",
 ];
 
@@ -190,7 +191,7 @@ describe("origination submit failure text · the access family", () => {
   });
 });
 
-describe("origination submit failure text · the three typed throw sites", () => {
+describe("origination submit failure text · the four typed throw sites", () => {
   let source: string;
 
   beforeAll(() => {
@@ -204,6 +205,7 @@ describe("origination submit failure text · the three typed throw sites", () =>
     "person_lookup_failed",
     "person_placeholder_failed",
     "engagement_insert_failed",
+    "duplicate_check_failed",
   ])("answers %s with the sentence helper, not a driver message", (code) => {
     // Anchored on the helper NAME, which survives a reformat of the call.
     expect(source).toContain(`originationSubmitFailureSentence("${code}")`);
@@ -241,6 +243,7 @@ describe("origination submit failure text · the three typed throw sites", () =>
       "[origination-submit] sponsor placeholder insert failed",
     );
     expect(source).toContain("[origination-submit] engagement insert failed");
+    expect(source).toContain("[origination-submit] re-submit check failed");
   });
 });
 

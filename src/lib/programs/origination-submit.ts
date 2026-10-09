@@ -813,8 +813,16 @@ export async function submitOriginationBrief(
       })
     : sponsor;
 
+  // Re-submit guard. A product user who double-submits, or a client that
+  // retries the POST, must land back on the Move the first submit created
+  // rather than get a second one. `data: null` is how the compat client
+  // reports BOTH "no such Move" and "the read failed" -- it resolves
+  // `{ data: null, error }` instead of throwing -- so `error` is the only
+  // signal that the absence was never actually established. Dropping it made
+  // a failed read look like a clean first submit and created the duplicate
+  // this query exists to prevent, which no product control can undo.
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
-  const { data: existing } = await sb
+  const { data: existing, error: existingError } = await sb
     .from("engagements")
     .select("id, name, lifecycle_state, created_at")
     .eq("client_id", tenancy.clientId)
@@ -823,6 +831,18 @@ export async function submitOriginationBrief(
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (existingError) {
+    // Fail closed: a second Move is unrecoverable from the product, a refusal
+    // the user can retry is not. The raw driver text is the operator's.
+    console.error("[origination-submit] re-submit check failed", {
+      message: existingError.message,
+    });
+    throw new OriginationSubmitError(
+      "duplicate_check_failed",
+      originationSubmitFailureSentence("duplicate_check_failed"),
+      503,
+    );
+  }
 
   if (existing) {
     const row = existing as {
