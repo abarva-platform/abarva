@@ -2,6 +2,7 @@ import {
   GATE_CRITERIA_UNEVALUATED_COUNT_LABEL,
   GATE_CRITERIA_UNEVALUATED_MARK_LABEL,
   GATE_CRITERIA_UNEVALUATED_NOTICE,
+  GATE_CRITERIA_UNEVALUATED_SUMMARY_LABEL,
   gateCriteriaVerification,
 } from "@/lib/programs/gate-criteria-verification";
 
@@ -24,26 +25,30 @@ describe("gateCriteriaVerification", () => {
     expect(state.evaluated).toBe(false);
   });
 
-  it("an entirely unverified list carries all three labels", () => {
+  it("an entirely unverified list carries every label", () => {
     const state = gateCriteriaVerification([{ verified: false }]);
     expect(state).toEqual({
       evaluated: false,
       countLabel: GATE_CRITERIA_UNEVALUATED_COUNT_LABEL,
       markLabel: GATE_CRITERIA_UNEVALUATED_MARK_LABEL,
       notice: GATE_CRITERIA_UNEVALUATED_NOTICE,
+      summaryLabel: GATE_CRITERIA_UNEVALUATED_SUMMARY_LABEL,
     });
   });
 });
 
 describe("the unevaluated vocabulary", () => {
-  // Three slots render these on one panel. If two of them carried the same
-  // string, a `within(section).getByText(...)` assertion for either would match
-  // the other and a revert to the met/unmet wording would survive.
+  // Four slots render these on one screen (the ledger's tally, each ledger
+  // row's mark, the ledger notice and the one-line gate summary). If two of
+  // them carried the same string, a
+  // `within(section).getByText(...)` assertion for either would match the other
+  // and a revert to the met/unmet wording would survive.
   // [[feedback_a_badge_that_repeats_its_section_pill_lets_either_test_pass_on_the_other]]
   const labels = [
     GATE_CRITERIA_UNEVALUATED_COUNT_LABEL,
     GATE_CRITERIA_UNEVALUATED_MARK_LABEL,
     GATE_CRITERIA_UNEVALUATED_NOTICE,
+    GATE_CRITERIA_UNEVALUATED_SUMMARY_LABEL,
   ];
 
   it("gives each slot its own wording", () => {
@@ -65,6 +70,14 @@ describe("the unevaluated vocabulary", () => {
     );
     expect(GATE_CRITERIA_UNEVALUATED_NOTICE).toMatch(
       /nothing here says a deliverable is missing or unsigned/i,
+    );
+  });
+
+  it("the summary line names no criterion and states no count", () => {
+    expect(GATE_CRITERIA_UNEVALUATED_SUMMARY_LABEL).not.toMatch(/Blocked by:/);
+    expect(GATE_CRITERIA_UNEVALUATED_SUMMARY_LABEL).not.toMatch(/\d/);
+    expect(GATE_CRITERIA_UNEVALUATED_SUMMARY_LABEL).toMatch(
+      /could not be read/i,
     );
   });
 

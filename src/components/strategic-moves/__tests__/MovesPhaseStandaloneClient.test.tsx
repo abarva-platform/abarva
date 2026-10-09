@@ -11494,11 +11494,15 @@ describe("gate criteria the evaluator could not check", () => {
   function renderPhase2(
     gateCriteria: ReturnType<typeof unverifiedCriteria>,
   ): void {
+    // Evidence readiness is seeded COVERED so the decision ladder's prior arms
+    // (readiness unverifiable, then open required evidence) do not win — the
+    // criteria arm is deliberately last, because an open evidence item is still
+    // true and still actionable when the criteria were not evaluated.
     render(
       <MovesPhaseStandaloneClient
         canApproveGates
         carriesForwardContent={[]}
-        evidenceNeedPackets={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
         initialSubstepKey="approve"
         move={makeMove({
           currentPhase: 2,
@@ -11563,6 +11567,34 @@ describe("gate criteria the evaluator could not check", () => {
     renderPhase2(mixed);
     expect(screen.queryByText("1 of 2 hard met")).not.toBeInTheDocument();
     expect(screen.getByText("Not evaluated")).toBeInTheDocument();
+  });
+
+  it("does not name a criterion as the blocker", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(
+      screen.queryByText(/Blocked by: Discovery synthesis report signed off/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/gate state could not be read/i),
+    ).toBeInTheDocument();
+  });
+
+  it("an evaluated ledger still names its blocker and counts them", () => {
+    renderPhase2(
+      unverifiedCriteria().map((criterion) => ({
+        ...criterion,
+        verified: true,
+      })),
+    );
+    expect(
+      screen.getByText(/Blocked by: Discovery synthesis report signed off/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/gate state could not be read/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no count of open blockers can be stated/i),
+    ).not.toBeInTheDocument();
   });
 
   it("the row mark and the tally label are different words", () => {

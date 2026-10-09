@@ -6554,12 +6554,18 @@ function PhaseBody({
     phase.phase >= 5
       ? "This submits the already-satisfied P5 gate, records the terminal Tower handoff, and marks the Move complete. It does not regenerate artifacts."
       : gateOnlyConfirmSummaryFor(phase, nextOpenPhaseContract);
+  // Read only on the evaluated arm of `gateSummaryLine` below, which is what
+  // stops a criterion being named as the blocker on the strength of an answer
+  // the evaluator did not compute. A second `evaluated` guard here would be
+  // unkillable: no input reaches this line in the unevaluated case.
   const primaryHardBlocker = actionableOpenHardCriteria[0]?.label ?? null;
   const primarySoftCaveat = openSoftCriteria[0]?.label ?? null;
   const gateSummaryLine = isGateBlocked
-    ? primaryHardBlocker
-      ? `Blocked by: ${primaryHardBlocker}.`
-      : "Blocked by an open hard gate."
+    ? !gateCriteriaState.evaluated
+      ? gateCriteriaState.summaryLabel
+      : primaryHardBlocker
+        ? `Blocked by: ${primaryHardBlocker}.`
+        : "Blocked by an open hard gate."
     : openSoftCriteria.length > 0
       ? primarySoftCaveat
         ? `Ready with caveat: ${primarySoftCaveat}.`

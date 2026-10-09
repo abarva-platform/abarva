@@ -75,7 +75,11 @@ Three things change:
    row and an "N of M hard met" count, which read an unchecked criterion exactly
    like a checked-and-unmet one. The panel now reads the flag, replaces the
    count with `Not evaluated`, marks each row `State unread`, and carries one
-   sentence saying an unchecked criterion is not a failed one.
+   sentence saying an unchecked criterion is not a failed one. The same screen's
+   one-line gate summary read `Blocked by: <criterion label>` — naming a
+   specific document as the blocker on the strength of an answer nobody
+   computed, three inches above the ledger — and now says the gate state could
+   not be read instead.
 
 3. **A failed read is treated as structural.** The criteria builder already
    classified three evaluator-level failures as "not a per-criterion signal" and
@@ -137,14 +141,18 @@ required job, two of them as whole directories and two by name.
 
 - **PASS** — `npx jest src/lib/programs/__tests__`: 201 suites, 2825 tests.
 - **PASS** — `npx jest src/components/strategic-moves/__tests__ 'src/app/api/v1/programs/[programId]' src/__tests__/integration/programs src/lib/agent/tools`: 167 suites, 2802 passed, 20 skipped, 0 failed. This is every suite that exercises the evaluator, the two routes that call it, the agent tool that calls it, and the workspace that renders its output.
-- **PASS** — mutation testing, **23 of 23 killed**. Includes the exact pre-fix
+- **PASS** — mutation testing, **26 of 26 killed**. Includes the exact pre-fix
   revert (drop the refusal and let the criterion ladder run: 12 cases fail);
   downgrading the refusal from hard to soft (1); unwiring each individual read's
   error (4 separate mutants, 1-5 cases each); making a *skipped* read report a
   failure (2); dropping the new identifier from the structural classification,
-  i.e. the mutation that proves the display half is not inert (1); and reverting
-  each of the panel's three slots to the met/unmet wording (3 mutants, 2-3 cases
-  each).
+  i.e. the mutation that proves the display half is not inert (1); reverting
+  each of the panel's slots to the met/unmet wording (4 mutants, 1-6 cases
+  each); and restoring the summary line's criterion name (1). Two mutants
+  initially SURVIVED because the guards they changed were redundant — a
+  `length === 0` check ahead of a vacuously-true `every`, and a second
+  `evaluated` guard on a value only the evaluated arm reads. Both guards were
+  removed rather than given a test no input could fail.
 - **PASS** — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit`, exit 0.
 - **PASS** — `npx eslint` over all ten changed files: 0 errors. Two
   pre-existing unused-import warnings in the workspace component, present at
@@ -217,6 +225,17 @@ wording rather than in the classification.
   page renders the same criteria list and does not read the verification state.
   It is not the phase workspace the walk uses, so it is left for a follow-up
   rather than widened into this change.
+- **One more sentence on the same screen still states a fabricated count, and
+  was deliberately NOT changed here.** The decision surface's last fallback
+  reads "Resolve N hard gate blockers before advancing", whose N comes from the
+  same unevaluated criteria. A fix was written and then **withdrawn**: that arm
+  sits behind three earlier arms (evidence readiness unverifiable, open required
+  evidence, a capture hold), and in every host fixture available one of those
+  wins — so the change could not be exercised, and shipping a reader that no
+  test proves runs is how an inert fix happens. It needs a fixture with
+  readiness covered AND capture complete, which is a separate piece of work. The
+  sharper half of the same defect — the summary line naming a specific criterion
+  — IS exercised and is included.
 - **The latest-version read's own sentence is now unreachable, not removed.**
   The P2 readiness ladder has an arm for "the record has no readable content",
   which a failed read used to reach. The refusal above now precedes it, so that

@@ -40,6 +40,12 @@ export type GateCriteriaVerification =
       markLabel: string;
       /** One sentence saying what the ledger does and does not know. */
       notice: string;
+      /**
+       * The one-line gate summary. Replaces `Blocked by: <criterion label>`,
+       * which named a specific criterion as the blocker on the strength of an
+       * answer nobody computed.
+       */
+      summaryLabel: string;
     };
 
 /** The tally slot's text when no criterion was evaluated. */
@@ -47,6 +53,10 @@ export const GATE_CRITERIA_UNEVALUATED_COUNT_LABEL = "Not evaluated";
 
 /** The per-row mark when no criterion was evaluated. */
 export const GATE_CRITERIA_UNEVALUATED_MARK_LABEL = "State unread";
+
+/** The one-line gate summary when no criterion was evaluated. */
+export const GATE_CRITERIA_UNEVALUATED_SUMMARY_LABEL =
+  "Blocked: this Move's gate state could not be read.";
 
 /** The sentence shown once, beside the tally. */
 export const GATE_CRITERIA_UNEVALUATED_NOTICE =
@@ -78,5 +88,6 @@ export function gateCriteriaVerification(
     countLabel: GATE_CRITERIA_UNEVALUATED_COUNT_LABEL,
     markLabel: GATE_CRITERIA_UNEVALUATED_MARK_LABEL,
     notice: GATE_CRITERIA_UNEVALUATED_NOTICE,
+    summaryLabel: GATE_CRITERIA_UNEVALUATED_SUMMARY_LABEL,
   };
 }
