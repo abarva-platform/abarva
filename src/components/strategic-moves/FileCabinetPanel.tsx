@@ -22,6 +22,10 @@ import {
 import { describeMoveReviewDecisionRefusal } from "@/lib/programs/move-review-decision-refusal";
 import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import {
+  UPLOAD_ACCEPT_ATTRIBUTE,
+  describeUploadBounds,
+} from "@/lib/programs/attachments/upload-control-bounds";
+import {
   describeMoveArtifactStorage,
   describeMoveUploadOutcome,
   type MoveArtifactStoragePresentation,
@@ -2099,7 +2103,8 @@ export function FileCabinetPanel({
             body: JSON.stringify({
               decision,
               reviewedExtraction: extraction,
-              rationale: rationale?.trim() ||
+              rationale:
+                rationale?.trim() ||
                 (decision === "approved"
                   ? "Reviewer approved the corrected evidence extraction."
                   : "Reviewer rejected the parsed evidence."),
@@ -2393,6 +2398,11 @@ export function FileCabinetPanel({
             aria-label="Upload Move file"
             ref={fileRef}
             type="file"
+            // The two bounds the upload route refuses on, stated by the picker
+            // instead of discovered by waiting out a doomed upload. Derived
+            // from the allowlist the route enforces — and a hint, not a block,
+            // so it cannot hide a file the route would have taken.
+            accept={UPLOAD_ACCEPT_ATTRIBUTE}
             style={{ display: "none" }}
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -2420,6 +2430,17 @@ export function FileCabinetPanel({
                 ? "Upload session file"
                 : "Upload evidence"}
           </button>
+          <span
+            data-testid="move-upload-bounds"
+            style={{
+              fontSize: 10.5,
+              color: "#5A6472",
+              flexBasis: "100%",
+              marginTop: 2,
+            }}
+          >
+            {describeUploadBounds()}
+          </span>
           <button
             onClick={() => void load()}
             style={{
@@ -2504,7 +2525,12 @@ export function FileCabinetPanel({
                       !evidenceReadback.queueIsCurrent
                     }
                     onDecision={(decision, extraction, rationale) =>
-                      void decideEvidenceReview(review, decision, extraction, rationale)
+                      void decideEvidenceReview(
+                        review,
+                        decision,
+                        extraction,
+                        rationale,
+                      )
                     }
                   />
                 ))
@@ -2554,7 +2580,15 @@ export function FileCabinetPanel({
             read-only audit trail of what a reviewer accepted; it is not an
             editing surface.
           </p>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
+          <ul
+            style={{
+              margin: 0,
+              padding: 0,
+              listStyle: "none",
+              display: "grid",
+              gap: 6,
+            }}
+          >
             {reviewedEvidence.map((item) => (
               <li
                 key={item.reviewId || item.evidenceId}

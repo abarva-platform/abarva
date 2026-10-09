@@ -123,6 +123,27 @@ export const ORIGINATION_CLOSE_UNREADABLE_OUTCOMES: readonly OriginationCloseOut
   );
 
 /**
+ * Every stop that is NOT the gate's own verdict.
+ *
+ * These are the outcomes the approval route has to answer WITHOUT borrowing
+ * the word "gate": each one has a distinct error code, a sentence of its own,
+ * and a reader whose next move differs. Derived from the classification above
+ * rather than listed, because the route's sweep over this group is the only
+ * place those four claims are checked, and a hand-typed copy of the group is
+ * satisfied by any subset of it — so an outcome added to the union would reach
+ * the route while the sweep stayed green and stopped covering it. That is
+ * exactly what happened to the two most recent outcomes.
+ */
+export const ORIGINATION_CLOSE_NON_GATE_STOPS: readonly OriginationCloseOutcome[] =
+  Object.freeze(
+    ORIGINATION_CLOSE_OUTCOMES.filter(
+      (outcome) =>
+        OUTCOME_KIND[outcome] !== "success" &&
+        OUTCOME_KIND[outcome] !== "verdict",
+    ),
+  );
+
+/**
  * True when the outcome is a correct no-op rather than a failure: the Move had
  * already left P0, so the close was owed nothing. Callers must not log or
  * count this as a failure.
