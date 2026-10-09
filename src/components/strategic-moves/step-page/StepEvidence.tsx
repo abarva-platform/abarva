@@ -7,10 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  EvidenceReviewEditor,
-  type PendingEvidenceReview,
-} from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import type { PendingEvidenceReview } from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import { StepEvidenceReviewForm } from "./StepEvidenceReviewForm";
 import { describeEvidenceCabinetReadback } from "@/lib/programs/evidence-cabinet-readback";
 import { describeMoveUploadOutcome } from "@/lib/programs/move-artifact-storage-state";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
@@ -37,6 +35,19 @@ const cx = (...names: Array<string | false | null | undefined>) =>
     .map((name) => styles[name] ?? name)
     .join(" ");
 
+/**
+ * A file named for a sentence: no extension, nothing after a comma, lower-case
+ * first letter ("Duplicate-match report, EHR x claims.xlsx" → "duplicate-match
+ * report") (template v1.6).
+ */
+export function fileLabel(title: string): string {
+  const base = title
+    .replace(/\.[A-Za-z0-9]{2,5}$/, "")
+    .split(",")[0]
+    .trim();
+  return `${base.charAt(0).toLowerCase()}${base.slice(1)}`;
+}
+
 export interface StepEvidence {
   /** Extractions for this phase awaiting review, oldest first. */
   pending: PendingEvidenceReview[];
@@ -46,7 +57,13 @@ export interface StepEvidence {
   /** The last upload's or decision's sentence, for the Context line. */
   message: string | null;
   uploading: boolean;
-  upload: (file: File) => Promise<void>;
+  upload: (file: File, onUploaded?: (label: string) => void) => Promise<void>;
+  /** Open the file picker for one row; `onUploaded` gets the file's label. */
+  pickFor: (onUploaded: (label: string) => void) => void;
+  /** Labels of this phase's files awaiting review. */
+  pendingLabels: string[];
+  /** The review row id for a pending file's label, for links from other rows. */
+  rowIdFor: (label: string) => string | null;
   /** The Context line's evidence item. */
   summary: string;
   /** Leading clauses for the next-action sentence, one per pending review. */
@@ -77,6 +94,7 @@ export function useStepEvidence({
   const [deciding, setDeciding] = useState<string | null>(null);
   const [openReview, setOpenReview] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const pickCallback = useRef<((label: string) => void) | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -109,7 +127,7 @@ export function useStepEvidence({
   }, [load]);
 
   const upload = useCallback(
-    async (file: File) => {
+    async (file: File, onUploaded?: (label: string) => void) => {
       setUploading(true);
       setMessage(`Uploading ${file.name}…`);
       try {
@@ -129,6 +147,7 @@ export function useStepEvidence({
           sessionFile: false,
         });
         setMessage(outcome.message);
+        if (!outcome.needsAction) onUploaded?.(fileLabel(file.name));
         await load();
       } catch (error) {
         setMessage(
@@ -185,14 +204,14 @@ export function useStepEvidence({
     eyebrow: "Evidence",
     subject: review.title,
     state: "decision",
-    clause: `review the ${review.title} extraction`,
+    clause: `review the ${fileLabel(review.title)} extraction`,
     wide: openReview === review.evidenceId,
     facts: [
       { kind: "team", text: "Uploaded in this step · extraction needs review" },
     ],
     middle:
       openReview === review.evidenceId && canReview ? (
-        <EvidenceReviewEditor
+        <StepEvidenceReviewForm
           review={review}
           programId={moveId}
           busy={deciding === review.evidenceId}
@@ -200,24 +219,19 @@ export function useStepEvidence({
           onDecision={(decision, extraction, rationale) =>
             void decide(review, decision, extraction, rationale)
           }
+          onCancel={() => setOpenReview(null)}
         />
       ) : (
         <p className={cx("proposal")}>
-          <span className={cx("lead")}>Extraction needs review.</span> Until it
-          is approved, nothing from this file counts as evidence.
+          <span className={cx("lead")}>
+            {review.extraction?.summary?.trim() || "Extraction needs review."}
+          </span>{" "}
+          Until it is approved, nothing from this file counts as evidence.
         </p>
       ),
     actions: !canReview ? (
       <span className={cx("item-state")}>Awaiting review</span>
-    ) : openReview === review.evidenceId ? (
-      <button
-        type="button"
-        className={cx("link-btn")}
-        onClick={() => setOpenReview(null)}
-      >
-        Close review
-      </button>
-    ) : (
+    ) : openReview === review.evidenceId ? null : (
       <button
         type="button"
         className={cx("btn-ink")}
@@ -241,7 +255,10 @@ export function useStepEvidence({
         type="button"
         className={cx("link-btn", "inline")}
         disabled={uploading}
-        onClick={() => fileInput.current?.click()}
+        onClick={() => {
+          pickCallback.current = null;
+          fileInput.current?.click();
+        }}
       >
         {uploading ? "Uploading…" : "Upload evidence"}
       </button>
@@ -252,7 +269,9 @@ export function useStepEvidence({
         aria-label="Upload evidence for this step"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file) void upload(file);
+          const onUploaded = pickCallback.current ?? undefined;
+          pickCallback.current = null;
+          if (file) void upload(file, onUploaded);
           event.currentTarget.value = "";
         }}
       />
@@ -273,7 +292,20 @@ export function useStepEvidence({
     uploading,
     upload,
     summary,
-    clauses: pending.map((review) => `review the ${review.title} extraction`),
+    clauses: pending.map(
+      (review) => `review the ${fileLabel(review.title)} extraction`,
+    ),
+    pendingLabels: pending.map((review) => fileLabel(review.title)),
+    rowIdFor: (label: string) => {
+      const index = pending.findIndex(
+        (review) => fileLabel(review.title) === label,
+      );
+      return index < 0 ? null : `EV-${index + 1}`;
+    },
+    pickFor: (onUploaded: (label: string) => void) => {
+      pickCallback.current = onUploaded;
+      fileInput.current?.click();
+    },
     rows,
     uploadControl,
   };

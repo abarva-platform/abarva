@@ -1,10 +1,15 @@
 "use client";
 
 import { GateReadinessStep } from "@/components/strategic-moves/step-page/GateReadinessStep";
-import { rootCauseCaptureText } from "@/lib/programs/root-cause-register";
+import { captureValueText } from "@/lib/programs/structured-capture-text";
 import { RootCausesStep } from "@/components/strategic-moves/step-page/RootCausesStep";
+import { DesignTraceabilityStep } from "@/components/strategic-moves/step-page/DesignTraceabilityStep";
 import { StepPageTabs } from "@/components/strategic-moves/step-page/MovesStepPage";
-import { resolvePhaseWorkflow } from "@/lib/programs/phase-workflow-registry";
+import {
+  phaseStepRecordSections,
+  resolveChangeProfile,
+  resolvePhaseWorkflow,
+} from "@/lib/programs/phase-workflow-registry";
 import { describeGateSignOffReadback } from "@/lib/programs/gate-sign-off-readback";
 import { resolvePhaseBuildBlock } from "@/lib/programs/phase-build-action-state";
 import Link from "next/link";
@@ -335,7 +340,12 @@ interface MovesPhaseStandaloneClientProps {
    * The step page the URL asked for, when the flag is on: `gate` (P3 Gate
    * readiness) or `root-causes` (P2 Step 3).
    */
-  initialStepView?: "gate" | "root-causes" | null;
+  initialStepView?: "gate" | "root-causes" | "root-cause-design" | null;
+  /**
+   * P2's saved root causes and baseline, for P3 Step 1 (whose rows are P2's
+   * settled causes). Read server-side; absent outside P3 or with the flag off.
+   */
+  priorPhaseCapture?: { gapsRootCauses: string; baselineMetrics: string } | null;
   /** `moves_capture_p0_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true AND `captureV2Enabled` is true, P0 Originate also renders the redesigned 3-step capture flow instead of the legacy finder-columns canvas. P0's eleven canonical sections/keys, saves, structured inputs, authorization check and required-evidence gate are unchanged; only which phases render the flow differs. */
   captureP0Enabled?: boolean;
   /** `moves_charter_basis_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, each P1 Charter field carries a "How do you know this?" basis control (approved evidence / an assertion / an owned assumption) and an assumption is badged at the question. When false NOTHING here renders and the legacy approved-evidence lock is unchanged. */
@@ -972,6 +982,7 @@ function samePhaseBuildArtifactIds(
 export function MovesPhaseStandaloneClient({
   stepPagesV3Enabled = false,
   initialStepView = null,
+  priorPhaseCapture = null,
   canApproveGates = false,
   initialPhaseCaptureValues,
   initialReferenceDraftValues = {},
@@ -1049,6 +1060,14 @@ export function MovesPhaseStandaloneClient({
   // P2 Step 3, "Rank what's causing the gap", behind the same flag. Opened
   // with `?step=root-causes`; it edits the `gaps_root_causes` answer through
   // the capture autosave.
+  // P3 Step 1, "Map every root cause to a design element", behind the same
+  // flag. Opened with `?step=root-cause-design`; it writes the
+  // `design_traceability` step record through the capture autosave.
+  const designTraceStepPageActive =
+    stepPagesV3Enabled &&
+    Boolean(captureV2Enabled) &&
+    phaseNum === 3 &&
+    initialStepView === "root-cause-design";
   const rootCauseStepPageActive =
     stepPagesV3Enabled &&
     Boolean(captureV2Enabled) &&
@@ -1674,14 +1693,22 @@ export function MovesPhaseStandaloneClient({
   );
   const phaseCaptureDirtyKeys = useMemo(
     () =>
-      phaseCaptureSections
-        .filter(
-          (section) =>
-            String(phaseCaptureValues[section.key] ?? "") !==
-            String(persistedPhaseCaptureValues[section.key] ?? ""),
-        )
-        .map((section) => section.key),
-    [phaseCaptureSections, phaseCaptureValues, persistedPhaseCaptureValues],
+      [
+        ...phaseCaptureSections.map((section) => section.key),
+        // Step-page records save through the same autosave and revision fence,
+        // though the capture flow never asks them (P3's design traceability).
+        ...phaseStepRecordSections(phase.phase).map((record) => record.key),
+      ].filter(
+        (key) =>
+          String(phaseCaptureValues[key] ?? "") !==
+          String(persistedPhaseCaptureValues[key] ?? ""),
+      ),
+    [
+      phaseCaptureSections,
+      phaseCaptureValues,
+      persistedPhaseCaptureValues,
+      phase.phase,
+    ],
   );
   const phaseCaptureDirtyCount = phaseCaptureDirtyKeys.length;
   const phaseCaptureSavingCount = phaseCaptureSections.filter(
@@ -2824,7 +2851,7 @@ export function MovesPhaseStandaloneClient({
         <div className="mcf-root-causes-entry">
           {value.trim() ? (
             <pre style={{ whiteSpace: "pre-wrap", font: "inherit", margin: "0 0 12px" }}>
-              {rootCauseCaptureText(value)}
+              {captureValueText(section.key, value)}
             </pre>
           ) : null}
           <a
@@ -3460,6 +3487,81 @@ export function MovesPhaseStandaloneClient({
     />
   );
 
+  if (designTraceStepPageActive) {
+    const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
+    const stepIndex = Math.max(
+      0,
+      workflow.findIndex((step) => step.id === "P3.1"),
+    );
+    const phaseHref = (n: number) => `/strategic-moves/${move.id}/phase/${n}`;
+    return (
+      <DesignTraceabilityStep
+        moveId={move.id}
+        canReviewEvidence={canApproveGates}
+        onEvidenceChanged={() => window.location.reload()}
+        moveName={displayMoveName}
+        tabs={
+          <StepPageTabs
+            current="steps"
+            hrefs={{
+              steps: `${phaseHref(phase.phase)}?step=root-cause-design`,
+              files: phaseHref(phase.phase),
+              record: phaseHref(phase.phase),
+            }}
+          />
+        }
+        phases={PHASES.map((p) => {
+          const tally = phaseTallies.find((t) => t.phase === p.phase);
+          return {
+            code: p.code,
+            name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
+            status: tally?.state === "done" ? "Done" : "Not started",
+            current: p.phase === phase.phase,
+            href:
+              tally && tally.state !== "upcoming" ? phaseHref(p.phase) : undefined,
+          };
+        })}
+        steps={workflow.map((step, index) => ({
+          title: step.title,
+          depth: step.depth,
+          href: index === stepIndex ? undefined : phaseHref(phase.phase),
+          done:
+            index === stepIndex
+              ? undefined
+              : step.sectionKeys.length > 0 &&
+                step.sectionKeys.every(
+                  (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
+                ),
+        }))}
+        stepIndex={stepIndex}
+        value={displayPhaseCaptureValues.design_traceability ?? ""}
+        onChange={(value) =>
+          setVisiblePhaseCaptureValue("design_traceability", value)
+        }
+        p2RootCauses={priorPhaseCapture?.gapsRootCauses ?? ""}
+        p2Baseline={priorPhaseCapture?.baselineMetrics ?? ""}
+        p2StepHref={`${phaseHref(2)}?step=root-causes`}
+        decidedBy={currentUser?.email ?? "signed-in reviewer"}
+        today={new Date().toISOString().slice(0, 10)}
+        onBack={() => window.location.assign(phaseHref(phase.phase))}
+        onContinue={() => window.location.assign(phaseHref(phase.phase))}
+        frame={(page, dock) =>
+          renderAvaDock({
+            content: page,
+            openingBriefing: dock.briefing,
+            notesFill: dock.notesPanel,
+            leadingActions: dock.actions.map((action) => ({
+              id: action.id,
+              label: action.label,
+              body: action.label,
+              onClick: action.onClick,
+            })),
+          })
+        }
+      />
+    );
+  }
+
   if (rootCauseStepPageActive) {
     const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
     const stepIndex = Math.max(
@@ -3627,9 +3729,10 @@ export function MovesPhaseStandaloneClient({
           describeGateSignOffReadback(signOffReadback).state === "available"
         }
         canApprove={canApproveGates}
-        approverName="a gate approver"
+        approverName="the gate approver"
+        approverIsRole
+        changeProfile={resolveChangeProfile(confirmedSolutionRoute)}
         buildHeldReason={buildHold?.statusLine ?? null}
-        depthDetail="Full. The gate step is always Full, whatever the change profile."
         onBeforeBuild={finalizePhaseCapture}
         onSubmit={approvePhaseGateAfterBuild}
         onBack={() => window.location.assign(phaseHref(phase.phase))}
@@ -4055,6 +4158,21 @@ export function MovesPhaseStandaloneClient({
                         handoffSummary: charterBasisRollup,
                         openingBand: (
                           <>
+                            {/* P3 Step 1 is its own step page under
+                                moves_step_pages_v3: its record is not a
+                                capture question, so the capture opens it. */}
+                            {stepPagesV3Enabled && phase.phase === 3 ? (
+                              <p className="mcf-gate-note">
+                                Step 1 of Design maps every P2 root cause to a
+                                design element.{" "}
+                                <a
+                                  data-testid="open-design-traceability"
+                                  href={`/strategic-moves/${move.id}/phase/3?step=root-cause-design`}
+                                >
+                                  Map root causes to design →
+                                </a>
+                              </p>
+                            ) : null}
                             {gateMetWithCaptureUnfinished && viewedGateTally ? (
                               <CaptureGateMetNotice
                                 met={viewedGateTally.met}

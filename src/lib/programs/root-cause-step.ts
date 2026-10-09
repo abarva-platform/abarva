@@ -202,6 +202,7 @@ export function promoteSymptom(
 
 export interface NewRootCause {
   cause: string;
+  short?: string;
   drives?: string;
   evidence?: string[];
   confidence?: "high" | "medium" | "low";
@@ -235,6 +236,7 @@ export function addRootCause(
     cause,
     status,
     source: "team",
+    ...(input.short?.trim() ? { short: input.short.trim() } : {}),
     ...(drives ? { drives } : {}),
     ...(evidence.length ? { evidence } : {}),
     ...(input.confidence ? { confidence: input.confidence } : {}),
@@ -253,17 +255,28 @@ export function editRootCause(
   if (!cause) return refuse("A cause cannot be blank.");
   const evidence = (input.evidence ?? []).map((e) => e.trim()).filter(Boolean);
   const next = update(register, id, (c) => {
-    const rest = without(c, "drives", "evidence", "confidence");
+    const rest = without(c, "drives", "evidence", "confidence", "short");
     const lostEvidence = c.status === "accepted" && evidence.length === 0;
     return {
       ...rest,
       cause,
+      ...(input.short?.trim() ? { short: input.short.trim() } : {}),
       ...(input.drives?.trim() ? { drives: input.drives.trim() } : {}),
       ...(evidence.length ? { evidence } : {}),
       ...(input.confidence ? { confidence: input.confidence } : {}),
       ...(lostEvidence ? { status: "no_evidence" as const } : {}),
     };
   });
+  return next ? ok(next) : refuse("That cause is no longer on the list.");
+}
+
+/** Record that a file uploaded for this cause is awaiting extraction review. */
+export function markEvidenceInReview(
+  register: RootCauseRegister,
+  id: string,
+  label: string,
+): RootCauseEdit {
+  const next = update(register, id, (c) => ({ ...c, evidenceInReview: label }));
   return next ? ok(next) : refuse("That cause is no longer on the list.");
 }
 
@@ -328,17 +341,9 @@ export interface RootCauseStepModel {
   nextAction: StepNextAction;
 }
 
-/**
- * A cause's first few words, lower-cased and without commas, for the
- * next-action sentence: "identity not resolved across".
- */
-function shortCause(cause: string): string {
-  const words = cause
-    .replace(/[,;:.]/g, "")
-    .split(/\s+/)
-    .filter(Boolean);
-  const short = words.slice(0, 4).join(" ");
-  return `${short.charAt(0).toLowerCase()}${short.slice(1)}`;
+/** How a sentence names a cause: its authored short name with its id, or the id alone. */
+function causeName(c: { id: string; short?: string }): string {
+  return c.short ? `${c.short} (${c.id})` : c.id;
 }
 
 function sentence(clauses: string[]): string {
@@ -370,9 +375,12 @@ export function resolveRootCauseStep(
      * hold readiness — an uploaded extraction awaiting review.
      */
     leadingClauses?: readonly string[];
+    /** Labels of files awaiting extraction review in this step. */
+    evidenceInReview?: readonly string[];
   } = {},
 ): RootCauseStepModel {
   const leading = (options.leadingClauses ?? []).filter((c) => c.trim());
+  const inReview = new Set(options.evidenceInReview ?? []);
   const { kind, register } = readRootCauseValue(raw);
   const ranked = rankedRootCauses(register);
   const accepted = ranked.filter(isRootCauseSettled).length;
@@ -453,12 +461,11 @@ export function resolveRootCauseStep(
 
   const clauses = [
     ...leading,
-    ...unevidenced.map(
-      (c) =>
-        `find evidence for ${shortCause(c.cause)} (${c.id}) or name its owner`,
-    ),
+    ...unevidenced
+      .filter((c) => !(c.evidenceInReview && inReview.has(c.evidenceInReview)))
+      .map((c) => `find evidence for ${causeName(c)} or name its owner`),
     drafts.length === 1
-      ? `review the ${shortCause(drafts[0].cause)} (${drafts[0].id}) draft`
+      ? `review the ${causeName(drafts[0])} draft`
       : drafts.length > 1
         ? `review ${drafts.length} drafts`
         : null,

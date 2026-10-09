@@ -24,16 +24,12 @@
 // a workflow integration plan. P5 gate-out (handoff to Tower) requires
 // execution team acceptance, not just Strategic Moves team signoff.
 
-import { rootCauseGateText } from "@/lib/programs/root-cause-register";
+import { captureValueGateText } from "@/lib/programs/structured-capture-text";
 import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
 } from "@/lib/data-plane/postgresCompat";
-import type {
-  ApprovalAuthority,
-  GateCheck,
-  TenancyCtx,
-} from "./types.db";
+import type { ApprovalAuthority, GateCheck, TenancyCtx } from "./types.db";
 import { getProgramById } from "./queries";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
@@ -999,9 +995,10 @@ export async function evaluateGate(
       // A structured root-cause register contributes only the team's own
       // words, so the phrase checks below see neither JSON keys nor the
       // register's labels.
-      return m.module_key === `phase_${fromPhase}_gaps_root_causes`
-        ? rootCauseGateText(value)
-        : value;
+      return captureValueGateText(
+        m.module_key.replace(/^phase_\d+_/, ""),
+        value,
+      );
     })
     .join("\n")
     .toLowerCase();

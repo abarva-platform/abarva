@@ -13,6 +13,7 @@ import {
   addRootCause,
   confirmRootCauseOrder,
   editRootCause,
+  markEvidenceInReview,
   moveRootCause,
   promoteSymptom,
   readRootCauseValue,
@@ -156,6 +157,7 @@ export function RootCausesStep(props: RootCausesStepProps) {
   const model = resolveRootCauseStep(props.value, {
     blockedBy: props.blockedBy,
     leadingClauses: evidence.clauses,
+    evidenceInReview: evidence.pendingLabels,
   });
   const ranked = rankedRootCauses(register);
   const setAside = register.causes.filter(
@@ -243,6 +245,8 @@ export function RootCausesStep(props: RootCausesStepProps) {
     draft: NewRootCause,
     onSave: (d: NewRootCause) => void,
     label: string,
+    /** For an existing cause: offer uploading a new file for it. */
+    causeId?: string,
   ) => (
     <div>
       <div className={cx("field")}>
@@ -259,6 +263,24 @@ export function RootCausesStep(props: RootCausesStepProps) {
             setForm((f) =>
               f && f.kind !== "resolve"
                 ? { ...f, draft: { ...f.draft, cause: e.target.value } }
+                : f,
+            )
+          }
+        />
+      </div>
+      <div className={cx("field")}>
+        <label className={cx("q-label")} htmlFor="rc-short">
+          Short name
+        </label>
+        <input
+          id="rc-short"
+          className={cx("q-input")}
+          value={draft.short ?? ""}
+          placeholder="e.g. identity"
+          onChange={(e) =>
+            setForm((f) =>
+              f && f.kind !== "resolve"
+                ? { ...f, draft: { ...f.draft, short: e.target.value } }
                 : f,
             )
           }
@@ -293,6 +315,20 @@ export function RootCausesStep(props: RootCausesStepProps) {
       </div>
       <fieldset className={cx("field")}>
         <legend className={cx("q-label")}>Approved evidence it rests on</legend>
+        {causeId ? (
+          <button
+            type="button"
+            className={cx("link-btn", "inline")}
+            onClick={() =>
+              evidence.pickFor((label) => {
+                commit(markEvidenceInReview(register, causeId, label));
+                setForm(null);
+              })
+            }
+          >
+            Or upload a new file for this cause…
+          </button>
+        ) : null}
         {props.approvedEvidence.length === 0 ? (
           <span className={cx("item-note")}>
             No approved evidence yet. Without it, the cause is resolved by a
@@ -342,6 +378,10 @@ export function RootCausesStep(props: RootCausesStepProps) {
 
   const rankRow = (c: RootCauseEntry, index: number): StepPageRow => {
     const fact = factFor(c.drives);
+    // A file uploaded for this cause that is still awaiting review.
+    const reviewRowId = c.evidenceInReview
+      ? evidence.rowIdFor(c.evidenceInReview)
+      : null;
     const resolving =
       form?.kind === "resolve" && form.id === c.id ? form : null;
     const editing = form?.kind === "edit" && form.id === c.id ? form : null;
@@ -443,10 +483,18 @@ export function RootCausesStep(props: RootCausesStepProps) {
           if (commit(editRootCause(register, c.id, d))) setForm(null);
         },
         "Save",
+        c.id,
       );
       actions = null;
     } else if (c.status === "no_evidence") {
-      middle = (
+      middle = reviewRowId ? (
+        <p className={cx("proposal")}>
+          <span className={cx("lead")}>
+            Evidence in review: {c.evidenceInReview}.
+          </span>{" "}
+          <a href={`#row-${reviewRowId}`}>Review the file</a>
+        </p>
+      ) : (
         <p className={cx("proposal")}>
           <span className={cx("lead")}>No approved evidence.</span> Add the
           evidence it rests on, or resolve it with a named owner.
@@ -463,6 +511,7 @@ export function RootCausesStep(props: RootCausesStepProps) {
                 id: c.id,
                 draft: {
                   cause: c.cause,
+                  short: c.short,
                   drives: c.drives,
                   evidence: c.evidence,
                   confidence: c.confidence,
@@ -822,14 +871,10 @@ export function RootCausesStep(props: RootCausesStepProps) {
         targetRowId: check.targetRowId,
       }))}
       checksLabel="Show checks"
+      contextAction={evidence.uploadControl}
       countLabel={model.countLabel}
       context={{
-        items: [
-          <b key="depth">Full depth</b>,
-          evidence.summary,
-          evidence.uploadControl,
-          `${facts.length} baseline number${facts.length === 1 ? "" : "s"}`,
-        ],
+        items: [<b key="depth">Full depth</b>, evidence.summary],
         details: [
           {
             term: "Depth",

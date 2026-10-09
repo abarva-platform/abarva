@@ -111,6 +111,132 @@ const row = (c: HTMLElement, id: string) =>
   c.querySelector(`#row-${id}`) as HTMLElement;
 
 describe("RootCausesStep", () => {
+  it("a cause whose file is in review points to that review instead of asking for evidence", async () => {
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        evidenceReviewStatus: "available",
+        pendingEvidenceReviews: [
+          {
+            evidenceId: "ev-9",
+            title: "Duplicate-match report, EHR x claims.xlsx",
+            phase: 2,
+            parseMethod: "xlsx",
+            confidence: 0.8,
+            sourceTextPreview: "",
+            extraction: { summary: "3 statements about member matching." },
+          },
+        ],
+        reviewedEvidence: [],
+      }),
+    })) as unknown as typeof fetch;
+    const { container, findByText } = render(
+      <Harness
+        initial={register([
+          {
+            id: "RC-4",
+            cause: "Identity unresolved",
+            short: "identity",
+            status: "no_evidence",
+            evidenceInReview: "duplicate-match report",
+          },
+        ])}
+      />,
+    );
+    await findByText("3 statements about member matching.");
+    expect(row(container, "RC-4").textContent).toContain(
+      "Evidence in review: duplicate-match report.",
+    );
+    expect(
+      within(row(container, "RC-4"))
+        .getByRole("link", { name: "Review the file" })
+        .getAttribute("href"),
+    ).toBe("#row-EV-1");
+    expect(status(container).textContent).toContain(
+      "Review the duplicate-match report extraction and confirm the order.",
+    );
+    expect(status(container).textContent).not.toContain("Find evidence");
+  });
+
+  it("reviews an extraction inline in the canon form and approves it through the governed route", async () => {
+    const calls: Array<{ url: string; body?: unknown }> = [];
+    global.fetch = jest.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        calls.push({
+          url,
+          body: init?.body ? JSON.parse(String(init.body)) : undefined,
+        });
+        if (url.endsWith("/approve"))
+          return { ok: true, json: async () => ({ ok: true }) };
+        return {
+          ok: true,
+          json: async () => ({
+            evidenceReviewStatus: "available",
+            pendingEvidenceReviews: [
+              {
+                evidenceId: "ev-9",
+                title: "Duplicate-match report.xlsx",
+                phase: 2,
+                parseMethod: "xlsx",
+                confidence: 0.8,
+                sourceTextPreview: "Member ids drift.",
+                extraction: {
+                  version: 1,
+                  summary: "Member ids drift between claims and EHR.",
+                  structured: {
+                    decisions: [],
+                    risks: [],
+                    baselineCandidates: [],
+                    actionItems: [],
+                    observations: ["Ids drift"],
+                    assumptions: [],
+                    openQuestions: [],
+                    citations: [
+                      { quote: "Member ids drift", locator: "Sheet 1" },
+                    ],
+                  },
+                },
+              },
+            ],
+            reviewedEvidence: [],
+          }),
+        };
+      },
+    ) as unknown as typeof fetch;
+    const { container, findByText } = render(
+      <Harness
+        initial={register(
+          [{ id: "RC-1", cause: "A", status: "accepted", evidence: ["P"] }],
+          true,
+        )}
+      />,
+    );
+    await findByText("Member ids drift between claims and EHR.");
+    fireEvent.click(
+      within(row(container, "EV-1")).getByRole("button", {
+        name: "Review extraction",
+      }),
+    );
+    const evRow = row(container, "EV-1");
+    expect(within(evRow).getByLabelText("What the file says")).toBeTruthy();
+    expect(within(evRow).getByRole("button", { name: "Reject" })).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(
+        within(evRow).getByRole("button", { name: "Approve extraction" }),
+      );
+    });
+    const approve = calls.find((c) =>
+      c.url.endsWith("/current-state/evidence/ev-9/approve"),
+    );
+    expect(approve?.body).toMatchObject({
+      decision: "approved",
+      reviewedExtraction: expect.objectContaining({
+        summary: "Member ids drift between claims and EHR.",
+      }),
+    });
+  });
+
   it("an uploaded extraction awaiting review leads the step and holds it", async () => {
     const fetchMock = jest.fn(async () => ({
       ok: true,
@@ -147,10 +273,15 @@ describe("RootCausesStep", () => {
     // Another phase's upload is not this step's decision.
     expect(container.textContent).not.toContain("Other phase");
     expect(status(container).textContent).toContain(
-      "Review the Duplicate-match report extraction.",
+      "Review the duplicate-match report extraction.",
     );
     expect(status(container).textContent).not.toContain("Ready");
     expect(container.textContent).toContain("1 approved file · 1 in review");
+    // The upload sits at the right end of the Context line, outside the
+    // summary's toggle (v1.6).
+    expect(container.querySelector(".ctx-action button")?.textContent).toBe(
+      "Upload evidence",
+    );
     expect(
       within(container).getByRole("button", { name: "Upload evidence" }),
     ).toBeTruthy();
@@ -248,7 +379,7 @@ describe("RootCausesStep", () => {
       />,
     );
     expect(status(container).textContent).toContain(
-      "Find evidence for identity unresolved (RC-4) or name its owner",
+      "Find evidence for RC-4 or name its owner",
     );
     fireEvent.click(
       within(row(container, "RC-4")).getByRole("button", {

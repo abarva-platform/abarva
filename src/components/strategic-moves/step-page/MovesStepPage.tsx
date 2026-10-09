@@ -292,6 +292,13 @@ export interface MovesStepPageProps {
   nextAction: StepNextAction;
   /** Optional link closing a blocked sentence: "Open P2 Discover →". */
   blockedLink?: { label: string; href: string };
+  /** An action closing the blocked sentence, e.g. "Try again" (v1.6). */
+  blockedAction?: { label: string; onClick: () => void };
+  /**
+   * An action at the right end of the Context line, e.g. the step's upload
+   * control (v1.6). Clicking it never toggles the Details disclosure.
+   */
+  contextAction?: ReactNode;
   checks?: readonly StepPageCheck[];
   checksLabel?: string;
   /** A gate step keeps its checks visible while blocked, all "not evaluated". */
@@ -380,6 +387,25 @@ export function MovesStepPage(props: MovesStepPageProps) {
     (state === "blocked" &&
       Boolean(props.checksWhenBlocked && props.countLabel));
   const doneEyebrow = state === "ready" || state === "done";
+  const contextItems = (
+    <span className={cx("ctx-items")}>
+      {props.context.items.map((item, index) => (
+        <span key={index} style={{ display: "contents" }}>
+          {index > 0 ? <span className={cx("sep")}>·</span> : null}
+          <span>{item}</span>
+        </span>
+      ))}
+    </span>
+  );
+  const contextAction = props.contextAction ? (
+    // A click here must not toggle the Details disclosure around it.
+    <span
+      className={cx("ctx-action")}
+      onClick={(event) => event.preventDefault()}
+    >
+      {props.contextAction}
+    </span>
+  ) : null;
 
   return (
     <div className={cx("root")} data-theme={theme ?? undefined}>
@@ -536,6 +562,18 @@ export function MovesStepPage(props: MovesStepPageProps) {
                       </a>
                     </>
                   ) : null}
+                  {state === "blocked" && props.blockedAction ? (
+                    <>
+                      {" "}
+                      <button
+                        type="button"
+                        className={cx("link-btn", "inline")}
+                        onClick={props.blockedAction.onClick}
+                      >
+                        {props.blockedAction.label}
+                      </button>
+                    </>
+                  ) : null}
                 </p>
                 {(showCount ||
                   (state === "blocked" && props.checksWhenBlocked)) &&
@@ -625,22 +663,23 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   </dl>
                 </div>
               </Disclosure>
+            ) : props.context.details.length === 0 ? (
+              // Nothing to expand: the line stands alone, with no Details
+              // toggle that would only repeat it (v1.6).
+              <div className={cx("context-line")}>
+                {contextItems}
+                {contextAction}
+              </div>
             ) : (
               <Disclosure
                 closed="Details"
                 opened="Hide details"
                 className="context"
                 summaryExtra={
-                  <span className={cx("ctx-items")}>
-                    {props.context.items.map((item, index) => (
-                      <span key={index} style={{ display: "contents" }}>
-                        {index > 0 ? (
-                          <span className={cx("sep")}>·</span>
-                        ) : null}
-                        <span>{item}</span>
-                      </span>
-                    ))}
-                  </span>
+                  <>
+                    {contextItems}
+                    {contextAction}
+                  </>
                 }
               >
                 <div className={cx("ctx-body")}>

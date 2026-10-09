@@ -1478,3 +1478,13 @@ textarea.q-input {
 .step-btn {
   text-decoration: none;
 }
+
+/* Template v1.6: an unfinished earlier step is "open" — reachable, numbered, never ticked. */
+.is-open .step-rule { background: var(--mv-line-strong); }
+.is-open .step-dot { border-color: var(--mv-ink); color: var(--mv-ink); }
+.is-open .step-title { color: var(--mv-muted); font-weight: 500; }
+.is-open .step-depth { color: var(--mv-ink); }
+.is-open .step-btn { cursor: pointer; }
+/* Template v1.6: the in-step upload sits at the right end of the Context line. */
+.ctx-action { margin-left: auto; display: inline-flex; align-items: baseline; gap: 12px; }
+.context-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; font-size: 14px; color: var(--mv-muted); padding: 0 4px; }

@@ -1,5 +1,6 @@
 import {
   KNOWN_CAPTURE_GAPS,
+  phaseStepRecordSections,
   resolveChangeProfile,
   resolvePhaseWorkflow,
   type ChangeProfile,
@@ -152,9 +153,12 @@ describe("the P3 document set reads the same change profile", () => {
     ],
   };
 
-  it.each(CASES)("$name builds the $profile document set", ({ route: r, profile }) => {
-    expect(phaseCanonicalKeysForRoute(3, r)).toEqual(DOCUMENTS[profile]);
-  });
+  it.each(CASES)(
+    "$name builds the $profile document set",
+    ({ route: r, profile }) => {
+      expect(phaseCanonicalKeysForRoute(3, r)).toEqual(DOCUMENTS[profile]);
+    },
+  );
 
   it("leaves other phases on their canonical set whatever the route", () => {
     const technical = route({ route: "technical_product" });
@@ -182,7 +186,11 @@ describe("known capture gaps", () => {
           phase,
           PROFILE_ROUTE[profile],
         )) {
-          if (step.depth !== "skip" && step.sectionKeys.length === 0) {
+          if (
+            step.depth !== "skip" &&
+            step.sectionKeys.length === 0 &&
+            step.recordKeys.length === 0
+          ) {
             found.push(`${step.id}:${profile}`);
           }
         }
@@ -201,6 +209,27 @@ describe("known capture gaps", () => {
           expect(step.sectionKeys.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("step-page records", () => {
+  it("are declared by the step that owns them and are never capture questions", () => {
+    for (const phase of [2, 3]) {
+      const questions = new Set(keysOf(phase, null));
+      for (const record of phaseStepRecordSections(phase)) {
+        expect(questions.has(record.key)).toBe(false);
+        const owner = resolvePhaseWorkflow(phase, null).find(
+          (s) => s.id === record.stepId,
+        );
+        expect(owner?.recordKeys).toContain(record.key);
+      }
+    }
+  });
+
+  it("gives P3 Step 1 its traceability record", () => {
+    expect(phaseStepRecordSections(3).map((r) => r.key)).toEqual([
+      "design_traceability",
+    ]);
   });
 });
 

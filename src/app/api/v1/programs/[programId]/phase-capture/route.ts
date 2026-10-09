@@ -61,6 +61,7 @@ import {
   stampSolutionRouteReviewer,
 } from "@/lib/programs/solution-route-assessment";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { phaseStepRecordSections } from "@/lib/programs/phase-workflow-registry";
 import {
   PHASE_CAPTURE_SNAPSHOT_UNREADABLE_STATUS,
   phaseCaptureSnapshotUnreadableBody,
@@ -156,6 +157,13 @@ async function loadCaptureSnapshot(
         );
       if (input && sourceStillApproved) p1BasisBySection[section.key] = input;
     }
+  }
+  // Step-page records (e.g. P3's design traceability) sit beside the answers.
+  // Only a saved record joins the snapshot, so a Move without one keeps the
+  // revision it had.
+  for (const record of phaseStepRecordSections(phase)) {
+    const value = moduleValue(phase, record.key);
+    if (value) values[record.key] = value;
   }
   return {
     modules,
@@ -399,6 +407,12 @@ export async function POST(
     const storedValues: Record<string, string> = Object.fromEntries(
       evaluation.sections.map((section) => [section.key, section.value]),
     );
+    // Step-page records are stored as sent (trimmed), never evaluated as
+    // capture questions; an emptied record leaves the snapshot, as on read.
+    for (const record of phaseStepRecordSections(phase)) {
+      const value = String(mergedValues[record.key] ?? "").trim();
+      if (value) storedValues[record.key] = value;
+    }
     const incomingP1Basis: Record<string, unknown> =
       body.p1BasisBySection ?? {};
     const p1BasisInputs: Record<string, P1CharterBasisInput | null> = {};
@@ -687,6 +701,50 @@ export async function POST(
     // `engagements.charter` is the authoritative origination record and the
     // rehydration source of last resort. Only mirror when a capture value
     // actually changed — a no-edit save must never touch it.
+    for (const [index, record] of phaseStepRecordSections(phase).entries()) {
+      if (!changedKeys.has(record.key)) continue;
+      const moduleKey = phaseCaptureModuleKey(phase, record.key);
+      const existing = existingByKey.get(moduleKey);
+      const value = storedValues[record.key] ?? "";
+      const state: Record<string, unknown> = {
+        ...(existing?.state_jsonb ?? {}),
+        capture_section_key: record.key,
+        label: record.label,
+        description: record.description,
+        value,
+        step_record: true,
+        updated_at: nowIso,
+      };
+      const status = value ? "in_progress" : "not_started";
+      if (existing) {
+        const { error } = await sb
+          .from("program_modules")
+          .update({
+            module_name: record.label,
+            phase_number: phase,
+            module_order: 100 + index,
+            status,
+            state_jsonb: state,
+          })
+          .eq("id", existing.id)
+          .eq("engagement_id", programId);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from("program_modules").insert({
+          engagement_id: programId,
+          module_key: moduleKey,
+          module_name: record.label,
+          phase_number: phase,
+          module_order: 100 + index,
+          status,
+          state_jsonb: state,
+          started_at: nowIso,
+          completed_at: null,
+        });
+        if (error) throw error;
+      }
+    }
+
     if (phase === 0 && hasEdits) {
       const knownEvidence =
         evaluation.sections.find((s) => s.key === "known_evidence")?.value ??

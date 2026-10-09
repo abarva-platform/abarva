@@ -104,16 +104,44 @@ describe("gateChecks", () => {
 });
 
 describe("check display labels", () => {
-  it("shows a check by what the page offers and keeps the evaluator's label in the note", () => {
-    const [design] = gateChecks([
-      criterion("design_approved", {
-        completed: false,
-        label: "Design approved",
-        reason: "Not signed.",
-      }),
-    ]);
-    expect(design.text).toBe("Design documents signed off");
-    expect(design.note).toBe("gate rule: Design approved · Not signed.");
+  const design = (profile?: "technical" | "limited" | "full") =>
+    gateChecks(
+      [
+        criterion("design_approved", {
+          completed: false,
+          label: "Design approved",
+          reason: "Not signed.",
+        }),
+      ],
+      profile,
+    )[0];
+
+  it("names what actually signs the design off, for each change profile", () => {
+    expect(design("technical").text).toBe("Target architecture signed off");
+    expect(design("limited").text).toBe(
+      "Architecture and change brief signed off",
+    );
+    expect(design("full").text).toBe("A design document signed off");
+    expect(design().text).toBe("A design document signed off");
+  });
+
+  it("keeps the evaluator's own label, and its reason, in the note", () => {
+    expect(design("limited").note).toBe(
+      "gate rule: Design approved · Not signed.",
+    );
+  });
+
+  it("leaves every other check on the evaluator's label", () => {
+    const [route] = gateChecks(
+      [
+        criterion("solution_route_validated", {
+          label: "Solution route validated",
+        }),
+      ],
+      "limited",
+    );
+    expect(route.text).toBe("Solution route validated");
+    expect(route.note).toBeUndefined();
   });
 });
 

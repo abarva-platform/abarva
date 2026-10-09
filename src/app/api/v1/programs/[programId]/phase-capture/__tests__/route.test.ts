@@ -24,7 +24,10 @@ import {
   PHASE_CAPTURE_SNAPSHOT_UNREADABLE_STATUS,
 } from "@/lib/programs/phase-capture-snapshot-refusal";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
-import { phaseCaptureModuleKey } from "@/lib/programs/phase-capture-contract";
+import {
+  getPhaseCaptureSections,
+  phaseCaptureModuleKey,
+} from "@/lib/programs/phase-capture-contract";
 
 const mockRequireTenancy = jest.fn();
 const mockGetProgramById = jest.fn();
@@ -408,5 +411,127 @@ describe("POST .../phase-capture · a readable snapshot still behaves", () => {
     expect(res.status).toBe(400);
     expect(body.error).toBe("bad_request");
     expect(mockGetModuleState).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST .../phase-capture · step-page records", () => {
+  const RECORD = JSON.stringify({
+    kind: "design_traceability",
+    version: 1,
+    links: [
+      {
+        causeId: "RC-1",
+        cause: "No ownership",
+        rank: 1,
+        status: "accepted",
+        element: "Stewardship council",
+      },
+    ],
+  });
+  const p3Revision = (extra: Record<string, string> = {}) =>
+    computeCaptureRevision({
+      ...Object.fromEntries(
+        getPhaseCaptureSections(3).map((section) => [section.key, ""]),
+      ),
+      ...extra,
+    });
+
+  function recordingClient() {
+    const inserts: Array<Record<string, unknown>> = [];
+    mockSbFrom.mockImplementation(() => {
+      const selectChain = {
+        select: () => selectChain,
+        eq: () => selectChain,
+        in: () => Promise.resolve({ data: [], error: null }),
+      };
+      const updateChain = {
+        eq: () => updateChain,
+        then: (resolve: (v: unknown) => unknown) =>
+          resolve({ data: null, error: null }),
+      };
+      return {
+        ...selectChain,
+        update: () => updateChain,
+        insert: (row: Record<string, unknown>) => {
+          inserts.push(row);
+          return Promise.resolve({ error: null });
+        },
+      };
+    });
+    return inserts;
+  }
+
+  beforeEach(() => {
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 3,
+      charter: {},
+      problemStatement: "",
+      targetOutcome: "",
+    });
+    mockGetModuleState.mockResolvedValue([]);
+  });
+
+  it("stores P3's traceability record beside the answers, as a record, not a question", async () => {
+    const inserts = recordingClient();
+    const res = await POST(
+      req({
+        phase: 3,
+        sections: { design_traceability: RECORD },
+        expectedRevision: p3Revision(),
+      }) as never,
+      { params },
+    );
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(res.status).toBe(200);
+    expect(body.changedFields).toEqual(["design_traceability"]);
+    expect((body.values as Record<string, string>).design_traceability).toBe(RECORD);
+    const written = inserts.find(
+      (row) => row.module_key === phaseCaptureModuleKey(3, "design_traceability"),
+    );
+    expect(written).toMatchObject({
+      phase_number: 3,
+      state_jsonb: expect.objectContaining({ value: RECORD, step_record: true }),
+    });
+    // Never counted as a capture question.
+    const capture = body.capture as { sections: Array<{ key: string }> };
+    expect(capture.sections.map((s) => s.key)).not.toContain("design_traceability");
+    // The revision a client echoes back covers the stored record.
+    expect(body.revision).toBe(p3Revision({ design_traceability: RECORD }));
+  });
+
+  it("leaves a Move without a record on the revision it had", async () => {
+    recordingClient();
+    const res = await POST(
+      req({
+        phase: 3,
+        sections: { solution_approach: "Governed medallion layers." },
+        expectedRevision: p3Revision(),
+      }) as never,
+      { params },
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(Object.keys(body.values as object)).not.toContain("design_traceability");
+  });
+
+  it("fences a stale write against a saved record", async () => {
+    recordingClient();
+    mockGetModuleState.mockResolvedValue([
+      {
+        moduleKey: phaseCaptureModuleKey(3, "design_traceability"),
+        status: "in_progress",
+        state: { value: RECORD },
+      },
+    ]);
+    const res = await POST(
+      req({
+        phase: 3,
+        sections: { design_traceability: RECORD.replace("Stewardship", "Steward") },
+        expectedRevision: p3Revision(),
+      }) as never,
+      { params },
+    );
+    expect(res.status).toBe(409);
   });
 });
