@@ -299,6 +299,91 @@ export async function insertResearchRun(
   }
 }
 
+export type ReusableRunResult =
+  | {
+      ok: true;
+      /** The newest `ok` run for this brief since the cutoff, or null. */
+      run: ResearchRun | null;
+      /** Sources stored from that run that are still pending review. */
+      pendingSourceCount: number;
+    }
+  | ScopeFailure
+  | { ok: false; reason: "invalid_input"; detail: string }
+  | { ok: false; reason: "read_failed"; detail: string };
+
+/**
+ * The research cache: the newest successful run for this tenant, this Move and
+ * this brief hash created at or after `since`. A run that reported sources but
+ * has none stored (its source write failed) is not reusable, so the caller
+ * searches again rather than reusing an empty result.
+ */
+export async function findReusableResearchRun(
+  scope: PublicResearchScope,
+  briefHash: string,
+  since: string,
+): Promise<ReusableRunResult> {
+  const fence = fenceFor(scope);
+  if (isScopeFailure(fence)) return fence;
+  const hash = typeof briefHash === "string" ? briefHash.trim() : "";
+  if (!hash) {
+    return {
+      ok: false,
+      reason: "invalid_input",
+      detail: "briefHash is required",
+    };
+  }
+  if (typeof since !== "string" || Number.isNaN(Date.parse(since))) {
+    return {
+      ok: false,
+      reason: "invalid_input",
+      detail: "since must be a timestamp",
+    };
+  }
+  try {
+    const db = getAzureWriteFluentClient();
+    const { data, error } = await db
+      .from(RUNS_TABLE)
+      .select(RUN_COLUMNS)
+      .in("tenant_key", fence.tenantKeys)
+      .eq("program_id", fence.programId)
+      .eq("brief_hash", hash)
+      .eq("status", "ok")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) {
+      return { ok: false, reason: "read_failed", detail: errorDetail(error) };
+    }
+    const row = Array.isArray(data) ? (data[0] as Row | undefined) : undefined;
+    const run = row ? rowToResearchRun(row) : null;
+    if (!run) return { ok: true, run: null, pendingSourceCount: 0 };
+
+    const { data: stored, error: storedError } = await db
+      .from(SOURCES_TABLE)
+      .select("id, decision")
+      .eq("run_id", run.id)
+      .in("tenant_key", fence.tenantKeys)
+      .eq("program_id", fence.programId);
+    if (storedError) {
+      return {
+        ok: false,
+        reason: "read_failed",
+        detail: errorDetail(storedError),
+      };
+    }
+    const rows = Array.isArray(stored) ? (stored as Row[]) : [];
+    if (run.sourceCount > 0 && rows.length === 0) {
+      return { ok: true, run: null, pendingSourceCount: 0 };
+    }
+    const pendingSourceCount = rows.filter(
+      (source) => source.decision === "pending",
+    ).length;
+    return { ok: true, run, pendingSourceCount };
+  } catch (error) {
+    return { ok: false, reason: "read_failed", detail: errorDetail(error) };
+  }
+}
+
 // ── Sources ─────────────────────────────────────────────────────────────────
 
 export interface RejectedSource {

@@ -16,7 +16,7 @@
 import { createHash } from "node:crypto";
 
 type Row = Record<string, unknown>;
-type MockFilter = { op: "eq" | "in"; column: string; value: unknown };
+type MockFilter = { op: "eq" | "in" | "gte"; column: string; value: unknown };
 type MockCall = {
   table: string;
   op: "select" | "insert" | "upsert" | "update";
@@ -24,6 +24,8 @@ type MockCall = {
   columns?: string;
   payload?: unknown;
   options?: unknown;
+  order?: { column: string; ascending: boolean };
+  limit?: number;
 };
 
 const mockStore: Record<string, Row[]> = {
@@ -83,7 +85,9 @@ function mockBuilder(table: string) {
     call.filters.every((filter) =>
       filter.op === "in"
         ? (filter.value as unknown[]).includes(row[filter.column])
-        : row[filter.column] === filter.value,
+        : filter.op === "gte"
+          ? String(row[filter.column] ?? "") >= String(filter.value)
+          : row[filter.column] === filter.value,
     );
   const run = () => {
     const failOn = mockState.failOn;
@@ -95,7 +99,18 @@ function mockBuilder(table: string) {
     }
     const rows = mockStore[table]!;
     if (call.op === "select") {
-      const out = rows.filter(matches).map((r) => mockProject(r, call.columns));
+      let hits = rows.filter(matches);
+      const order = call.order;
+      if (order) {
+        hits = [...hits].sort((a, b) => {
+          const cmp = String(a[order.column] ?? "").localeCompare(
+            String(b[order.column] ?? ""),
+          );
+          return order.ascending ? cmp : -cmp;
+        });
+      }
+      if (call.limit !== undefined) hits = hits.slice(0, call.limit);
+      const out = hits.map((r) => mockProject(r, call.columns));
       return single
         ? { data: out[0] ?? null, error: null }
         : { data: out, error: null };
@@ -166,10 +181,16 @@ function mockBuilder(table: string) {
       call.filters.push({ op: "in", column, value });
       return builder;
     },
-    order() {
+    gte(column: string, value: unknown) {
+      call.filters.push({ op: "gte", column, value });
       return builder;
     },
-    limit() {
+    order(column: string, options?: { ascending?: boolean }) {
+      call.order = { column, ascending: options?.ascending !== false };
+      return builder;
+    },
+    limit(count: number) {
+      call.limit = count;
       return builder;
     },
     maybeSingle() {
@@ -195,6 +216,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 
 import {
   decidePublicSource,
+  findReusableResearchRun,
   insertPublicSources,
   insertResearchRun,
   listApprovedPublicSources,
@@ -763,6 +785,157 @@ describe("decidePublicSource", () => {
         reviewerUserId: "  ",
       }),
     ).toEqual(expect.objectContaining({ ok: false, reason: "invalid_input" }));
+    expect(mockCalls).toHaveLength(0);
+  });
+});
+
+describe("findReusableResearchRun", () => {
+  const SINCE = "2026-09-26T00:00:00.000Z";
+
+  function seedRunRow(over: Row): string {
+    const id = mockId();
+    mockStore.move_public_research_runs!.push({
+      id,
+      tenant_key: THIS_TENANT,
+      program_id: MOVE,
+      phase: 2,
+      brief_hash: "brief-1",
+      status: "ok",
+      source_count: 0,
+      audit_id: "audit-1",
+      started_at: "2026-10-01T00:00:00.000Z",
+      created_at: "2026-10-01T00:00:00.000Z",
+      ...over,
+    });
+    return id;
+  }
+
+  it("returns the newest ok run for this brief since the cutoff, for this tenant and Move only", async () => {
+    seedRunRow({
+      tenant_key: OTHER_TENANT,
+      created_at: "2026-10-09T00:00:00.000Z",
+    });
+    seedRunRow({
+      program_id: OTHER_MOVE,
+      created_at: "2026-10-09T00:00:00.000Z",
+    });
+    seedRunRow({ status: "timeout", created_at: "2026-10-09T00:00:00.000Z" });
+    seedRunRow({
+      brief_hash: "brief-2",
+      created_at: "2026-10-09T00:00:00.000Z",
+    });
+    seedRunRow({ created_at: "2026-09-25T23:59:59.000Z" });
+    const older = seedRunRow({ created_at: "2026-10-02T00:00:00.000Z" });
+    const newest = seedRunRow({
+      tenant_key: THIS_CANONICAL,
+      created_at: "2026-10-05T00:00:00.000Z",
+    });
+    const out = await findReusableResearchRun(scope, " brief-1 ", SINCE);
+    expect(out).toMatchObject({ ok: true, run: { id: newest } });
+    expect(older).not.toBe(newest);
+    const read = mockCalls.find(
+      (c) => c.table === "move_public_research_runs",
+    )!;
+    expect(tenantFilterOf(read)).toEqual(tenantAliasesFor(THIS_TENANT));
+    expect(read.filters).toEqual(
+      expect.arrayContaining([
+        { op: "eq", column: "program_id", value: MOVE },
+        { op: "eq", column: "brief_hash", value: "brief-1" },
+        { op: "eq", column: "status", value: "ok" },
+        { op: "gte", column: "created_at", value: SINCE },
+      ]),
+    );
+    expect(read.limit).toBe(1);
+  });
+
+  it("returns no run when nothing matches", async () => {
+    seedRunRow({ status: "failed" });
+    expect(await findReusableResearchRun(scope, "brief-1", SINCE)).toEqual({
+      ok: true,
+      run: null,
+      pendingSourceCount: 0,
+    });
+  });
+
+  it("counts only this run's pending sources for this tenant and Move", async () => {
+    const id = seedRunRow({ source_count: 3 });
+    seedSource({ run_id: id, excerpt: "one" });
+    seedSource({ run_id: id, tenant_key: THIS_CANONICAL, excerpt: "two" });
+    seedSource({
+      run_id: id,
+      excerpt: "approved",
+      decision: "approved",
+      reviewed_by_user_id: "user-1",
+      reviewed_at: "2026-10-10T01:00:00.000Z",
+    });
+    seedSource({
+      run_id: id,
+      tenant_key: OTHER_TENANT,
+      excerpt: "other tenant",
+    });
+    seedSource({ run_id: id, program_id: OTHER_MOVE, excerpt: "other Move" });
+    seedSource({ excerpt: "other run" });
+    const out = await findReusableResearchRun(scope, "brief-1", SINCE);
+    expect(out).toMatchObject({ ok: true, run: { id }, pendingSourceCount: 2 });
+  });
+
+  it("does not reuse a run that reported sources but has none stored", async () => {
+    const id = seedRunRow({ source_count: 2 });
+    seedSource({ run_id: id, tenant_key: OTHER_TENANT, excerpt: "not ours" });
+    expect(await findReusableResearchRun(scope, "brief-1", SINCE)).toEqual({
+      ok: true,
+      run: null,
+      pendingSourceCount: 0,
+    });
+  });
+
+  it("reuses a run that found nothing", async () => {
+    const id = seedRunRow({ source_count: 0 });
+    expect(
+      await findReusableResearchRun(scope, "brief-1", SINCE),
+    ).toMatchObject({
+      ok: true,
+      run: { id },
+      pendingSourceCount: 0,
+    });
+  });
+
+  it("reports a failed read as a failure, never as no run", async () => {
+    seedRunRow({});
+    mockState.failOn = { table: "move_public_research_runs", op: "select" };
+    expect(
+      await findReusableResearchRun(scope, "brief-1", SINCE),
+    ).toMatchObject({
+      ok: false,
+      reason: "read_failed",
+    });
+    mockState.failOn = { table: "move_public_sources", op: "select" };
+    expect(
+      await findReusableResearchRun(scope, "brief-1", SINCE),
+    ).toMatchObject({
+      ok: false,
+      reason: "read_failed",
+    });
+  });
+
+  it("refuses a bad scope, an empty hash and a bad cutoff without reading", async () => {
+    expect(
+      await findReusableResearchRun(
+        { tenantKey: THIS_TENANT, programId: "x" },
+        "brief-1",
+        SINCE,
+      ),
+    ).toMatchObject({ ok: false, reason: "invalid_scope" });
+    expect(await findReusableResearchRun(scope, "  ", SINCE)).toMatchObject({
+      ok: false,
+      reason: "invalid_input",
+    });
+    expect(
+      await findReusableResearchRun(scope, "brief-1", "not a time"),
+    ).toMatchObject({
+      ok: false,
+      reason: "invalid_input",
+    });
     expect(mockCalls).toHaveLength(0);
   });
 });
