@@ -146,14 +146,21 @@ nothing here is flag-gated.
   three pre-existing reformats into the diff; those three were restored to
   their base text, and Prettier's remaining complaints are at exactly those
   three pre-existing locations, none of them inside an added hunk.
-- **PASS** Census, basis stated. This branch's base commits **2885/2721**,
-  while a regeneration of the same tree plus this branch's two new test files
-  reads **2890/2726** — a delta of five for two added files, because the base
-  carries **three** pre-existing units of drift from earlier squashes that each
-  regenerated honestly against the same parent and landed identical. The true
-  base is therefore **2888/2724** and this branch's reading is that **+2**,
-  which is the check. `release:check` exits 0 on inherited drift and this
-  change does not own it. `uncoveredTestFiles` is unchanged at **164**.
+- **PASS** Census, basis stated, and the basis MOVED during the run. At this
+  branch's original base `main` committed **2885/2721**, while a regeneration
+  of that tree plus this branch's two new test files read **2890/2726** — a
+  delta of five for two added files, because the base carried **three**
+  pre-existing units of drift from earlier squashes that each regenerated
+  honestly against the same parent and landed identical. `main` then advanced
+  by one squash that added two test files of its own and regenerated from that
+  same drifted base, so it now commits **2890/2726** — numerically identical to
+  what this branch had written. **That is why the merge was textually clean and
+  why a clean merge is not evidence the number is right**: taking either side
+  unchanged would land a census two files low. After merging `main` forward and
+  regenerating, this branch reads **2892/2728**, which is `main`'s committed
+  value plus exactly this branch's two files. That the delta is exactly two is
+  the check. `release:check` exits 0 on the inherited drift and this change does
+  not own it. `uncoveredTestFiles` is unchanged at **164**.
 - **PASS** `npm run release:check -- --base origin/main --head HEAD`.
 - **NOT RUN** Signed-in walk. No live proof is claimed.
 
