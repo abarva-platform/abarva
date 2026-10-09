@@ -3273,6 +3273,63 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.queryByText(carriedRows[0].owner)).not.toBeInTheDocument();
     });
 
+    // ─── moves_assumption_register_v1: the HOST call site ────────────────
+    // The panel has its own suite (AssumptionRegisterPanel.test.tsx). What
+    // lives here is the mount: the flag arrives resolved server-side as one
+    // prop, `null` mounts nothing and fetches nothing, and a mount sits in the
+    // capture flow's opening band beside the charter carry-forward.
+    const registerFetches = () =>
+      (global.fetch as jest.Mock).mock.calls.filter(([input]) =>
+        String(input).includes("/assumptions"),
+      );
+
+    it("moves_assumption_register_v1 OFF: no register panel and no register read", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          assumptionRegister={null}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("assumption-register-panel"),
+      ).not.toBeInTheDocument();
+      expect(registerFetches()).toEqual([]);
+    });
+
+    it("moves_assumption_register_v1 ON: the panel opens the capture flow and reads THIS Move's register", () => {
+      const move = discoverMove();
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          assumptionRegister={{
+            programId: move.id,
+            staleAssumptionIds: [],
+            charterUnavailable: false,
+            unbridgedCharterCount: 0,
+          }}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toContainElement(
+        screen.getByTestId("assumption-register-panel"),
+      );
+      expect(registerFetches().map(([input]) => String(input))).toEqual([
+        `/api/v1/programs/${encodeURIComponent(move.id)}/assumptions`,
+      ]);
+    });
+
     // ─── moves_charter_standing_after_discover_v1: the HOST call site ─────
     // The fold is pure and pinned (charter-standing-after-discover.test.ts)
     // and the panel has its own suite. What lives only HERE is the same pair

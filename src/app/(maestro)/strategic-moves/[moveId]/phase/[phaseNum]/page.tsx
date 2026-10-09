@@ -15,6 +15,12 @@ import {
   charterStandingAfterDiscoverActive,
 } from "@/lib/programs/charter-standing-after-discover";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
+import {
+  bridgeCharterAssumptions,
+  charterBridgeMayWrite,
+  charterBridgeMount,
+} from "@/lib/programs/assumption-register/charter-bridge";
+import { ASSUMPTION_REGISTER_FLAG } from "@/lib/programs/assumption-register/register-route-access";
 import { resolveConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
@@ -465,6 +471,12 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_charter_standing_after_discover_v1",
   );
+  // The Move's assumptions register. Resolved here, never in the client: off
+  // ⇒ the panel is not mounted and the charter bridge never runs.
+  const assumptionRegisterEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    ASSUMPTION_REGISTER_FLAG,
+  );
   // Composition-only polish for the redesigned capture. It has nothing to show
   // unless the redesigned capture is what renders, so it is resolved as the
   // conjunction rather than left to the client to remember.
@@ -864,7 +876,14 @@ export default async function StrategicMovePhaseWorkspacePage({
   // boilerplate as if it were the client's own answers, and POSTed it back over
   // the real data. Handing it one authoritative snapshot removes both the
   // synthesis and the loading window in which it happened.
-  const captureModules = await getModuleState(ctx, move.id).catch(() => []);
+  // A failed read is remembered: an empty list would otherwise read as "the
+  // charter declares no assumptions" to the register bridge below, which would
+  // then report every charter row as stale.
+  let captureModulesUnavailable = false;
+  const captureModules = await getModuleState(ctx, move.id).catch(() => {
+    captureModulesUnavailable = true;
+    return [];
+  });
   const captureValue = (capturePhase: number, key: string) => {
     const moduleRow = captureModules.find(
       (entry) => entry.moduleKey === phaseCaptureModuleKey(capturePhase, key),
@@ -976,6 +995,32 @@ export default async function StrategicMovePhaseWorkspacePage({
     if (referenceDraft)
       initialReferenceDraftValues[section.key] = referenceDraft;
   }
+  // The charter's assumptions on the register (`moves_assumption_register_v1`).
+  // Runs on page load, server-side, and is idempotent on the charter section:
+  // a section that already has a row is never written again, so a steady-state
+  // load is one register read. It WRITES only once the Move is past the
+  // charter, and only for a viewer who may change the register
+  // (`charterBridgeMayWrite`). The P1 basis stays the declaration; the
+  // register owns resolution.
+  const charterBridgeWrites = charterBridgeMayWrite({
+    currentPhase,
+    policy: approvalPolicy,
+    programId: move.id,
+  });
+  const charterBridge = !assumptionRegisterEnabled
+    ? null
+    : captureModulesUnavailable
+      ? ({ status: "unavailable" } as const)
+      : await bridgeCharterAssumptions({
+          ctx,
+          programId: move.id,
+          modules: captureModules.map((entry) => ({
+            moduleKey: entry.moduleKey,
+            status: entry.status,
+            state: entry.state ?? null,
+          })),
+          write: charterBridgeWrites,
+        });
   // The charter answers P1 left standing on an assumption, read on P2 only.
   // `captureModules` already holds every module row for the Move (it is not
   // phase-scoped), so P1's rows are in hand here without a second load.
@@ -990,6 +1035,8 @@ export default async function StrategicMovePhaseWorkspacePage({
       state: entry.state ?? null,
     })),
     resolutionReadEnabled: charterAssumptionResolutionEnabled,
+    registerResolvedSectionKeys:
+      charterBridge?.status === "ok" ? charterBridge.resolvedSectionKeys : null,
   });
   // The charter answers P3+ should not quote flat. Same Move-wide
   // `captureModules` as the carry-forward above, so P1's rows are in hand
@@ -1085,6 +1132,11 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureHandoffRecapEnabled={captureHandoffRecapEnabled}
         carriedCharterAssumptions={carriedCharterAssumptionRows}
         charterStandingAfterDiscover={charterStandingAfterDiscoverRows}
+        assumptionRegister={
+          charterBridge
+            ? charterBridgeMount(move.id, charterBridge, charterBridgeWrites)
+            : null
+        }
       />
     </AppShell>
   );

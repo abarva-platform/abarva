@@ -89,6 +89,10 @@ import {
 } from "@/components/strategic-moves/MovesCaptureFlow";
 import { captureSectionSpan } from "@/lib/programs/moves-capture-section-width";
 import { CharterAssumptionsCarryForward } from "@/components/strategic-moves/CharterAssumptionsCarryForward";
+import {
+  AssumptionRegisterPanel,
+  type AssumptionRegisterMount,
+} from "@/components/strategic-moves/assumptions/AssumptionRegisterPanel";
 import { CharterStandingAfterDiscover } from "@/components/strategic-moves/CharterStandingAfterDiscover";
 import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumptions-carry-forward";
 import type { PostDiscoverCharterAnswer } from "@/lib/programs/charter-standing-after-discover";
@@ -404,6 +408,13 @@ interface MovesPhaseStandaloneClientProps {
    * phase-exclusive by construction: the carry-forward owns P2, this owns P3+.
    */
   charterStandingAfterDiscover?: readonly PostDiscoverCharterAnswer[] | null;
+  /**
+   * The Move's assumptions register (`moves_assumption_register_v1`),
+   * resolved server-side with the charter bridge's standing. `null` (the
+   * default, and whenever the flag is off) ⇒ the panel is not mounted and
+   * nothing is fetched — the client re-checks no flag of its own.
+   */
+  assumptionRegister?: AssumptionRegisterMount | null;
   /** The signed-in session's identity, resolved server-side (never client-supplied)
    *  — shown in the gate-approval confirmation dialog so an approver sees who
    *  they're approving as before committing. Absent (null) degrades gracefully:
@@ -1037,6 +1048,7 @@ export function MovesPhaseStandaloneClient({
   captureHandoffRecapEnabled = false,
   carriedCharterAssumptions: carriedCharterAssumptionRows = null,
   charterStandingAfterDiscover: charterStandingAfterDiscoverRows = null,
+  assumptionRegister = null,
   currentUser = null,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
@@ -4336,6 +4348,9 @@ export function MovesPhaseStandaloneClient({
                             />
                             <CharterStandingAfterDiscover
                               rows={charterStandingAfterDiscoverRows}
+                            />
+                            <AssumptionRegisterPanel
+                              register={assumptionRegister}
                             />
                             {/* A step whose questions are all answered can
                                 still hold Continue, because an open phase
