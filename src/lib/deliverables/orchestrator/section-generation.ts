@@ -27,6 +27,7 @@ import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { humanizeSourceFamily } from "./source-register";
 import { deckContract } from "@/lib/deliverables/shared/deck-story-contract";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import { compactArchitectureDeckSlides } from "./architecture-deck-story";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import { factTokens } from "./numeric-lineage-tokens";
 import { citationsCarriedBySections } from "./rendered-section-citations";
@@ -347,8 +348,15 @@ function ensureContractedDeckSlides(args: {
   repairedSlides: RenderableDeliverable["deckSlides"] | undefined;
   recommendation: string;
   nextActions: readonly string[];
+  tablePages: number;
 }): RenderableDeliverable["deckSlides"] | undefined {
   if (!args.req.outputFormats.includes("pptx")) return args.repairedSlides;
+  if (args.req.deliverableType === "target_state_architecture") {
+    return compactArchitectureDeckSlides(
+      args.repairedSlides ?? [],
+      6 - args.tablePages,
+    );
+  }
   const contractSlides = contractedP2SlidesFor(args.req.deliverableType);
   if (contractSlides.length === 0) return args.repairedSlides;
 
@@ -962,6 +970,7 @@ export function assembleDeliverable(
     repairedSlides: repairStructuredDeckSlides(synth.deckSlides),
     recommendation,
     nextActions,
+    tablePages: tables.filter((table) => table.targetFormat !== "xlsx").length,
   });
   return {
     title: honestTitle(req, synth),
