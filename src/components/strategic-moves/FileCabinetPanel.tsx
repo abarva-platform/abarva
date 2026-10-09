@@ -19,6 +19,7 @@ import {
   describeEvidenceCabinetReadback,
   describeEvidenceDecisionRefusal,
 } from "@/lib/programs/evidence-cabinet-readback";
+import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 
 interface Artifact {
   artifactId: string;
@@ -2073,10 +2074,18 @@ export function FileCabinetPanel({
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok || !j.ok)
+          // Only the quarantine refusal used to be named here; the other five
+          // the route declares reached the reviewer as their bare code,
+          // because `error` won over `detail`. Both halves move into
+          // `describeMoveUploadRefusal`, which also knows that `detail` is a
+          // raw MIME string or a byte count for three of the six and must not
+          // be rendered.
           throw new Error(
-            j.error === "sensitive_data_quarantined"
-              ? `${file.name} was not uploaded. It appears to contain personal or regulated identifiers, so nothing was stored. Remove the identifiers and upload again.`
-              : j.error || j.detail || `HTTP ${r.status}`,
+            describeMoveUploadRefusal({
+              code: j.error,
+              detail: j.detail,
+              fileName: file.name,
+            }),
           );
         const evidence = j.evidence as
           | {

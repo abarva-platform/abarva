@@ -1,3 +1,5 @@
+import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
+
 const mockRequireTenancy = jest.fn();
 const mockLoadUserProgramAccessPolicy = jest.fn();
 const mockGetProgramById = jest.fn();
@@ -140,11 +142,16 @@ jest.mock("@/lib/deliverables/orchestrator/renderers", () => ({
 }));
 
 jest.mock("@/lib/deliverables/orchestrator/render-validated-deck", () => ({
-  renderValidatedDeck: (doc: unknown) => mockRenderValidatedDeck(doc),
+  renderValidatedDeck: (
+    doc: unknown,
+    policy: unknown,
+    architectureModel: unknown,
+  ) => mockRenderValidatedDeck(doc, policy, architectureModel),
 }));
 
 jest.mock("@/lib/deliverables/orchestrator/render-validated-doc", () => ({
-  renderValidatedDocx: (doc: unknown) => mockRenderValidatedDocx(doc),
+  renderValidatedDocx: (doc: unknown, architectureModel: unknown) =>
+    mockRenderValidatedDocx(doc, architectureModel),
 }));
 
 jest.mock("@/lib/deliverables/quality/deliverable-key-map", () => ({
@@ -609,9 +616,16 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
   });
 
   it("does not approve a PPTX whose rendered slide quality gate remains blocked", async () => {
+    const architectureModel = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
     mockGetGeneratedArtifactById.mockResolvedValue({
       ...generatedArtifact,
       outputFormat: "pptx",
+      metadata: { ...generatedArtifact.metadata, architectureModel },
     });
     mockRenderValidatedDeck.mockResolvedValue({
       buffer: Buffer.from("pptx"),
@@ -639,12 +653,27 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       error: "generated_artifact_final_render_failed",
     });
     expect(json.detail).toContain("generated_artifact_pptx_quality_failed");
+    expect(mockRenderValidatedDeck).toHaveBeenCalledWith(
+      generatedArtifact.metadata.renderableDoc,
+      {},
+      architectureModel,
+    );
     expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
 
   it("does not approve a DOCX whose declared figure failed packaged quality", async () => {
+    const architectureModel = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      metadata: { ...generatedArtifact.metadata, architectureModel },
+    });
     mockRenderValidatedDocx.mockRejectedValue(
       new Error("generated_docx_failed_quality:empty_figure"),
     );
@@ -662,6 +691,10 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(json).toMatchObject({
       error: "generated_artifact_final_render_failed",
     });
+    expect(mockRenderValidatedDocx).toHaveBeenCalledWith(
+      generatedArtifact.metadata.renderableDoc,
+      architectureModel,
+    );
     expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
@@ -956,6 +989,12 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
   });
 
   it("preserves verified P3 architecture lineage in the authoritative deliverable", async () => {
+    const architectureModel = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
     const lineage = {
       decisionHash: "decision-hash",
       decisionVersion: "v1",
@@ -973,6 +1012,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
         evidenceSnapshotHash: "revision-current",
         deliverableTypeKey: "target_state_architecture",
         generationLineage: lineage,
+        architectureModel,
         renderableDoc: {
           title: "Target Architecture",
           deliverableTypeKey: "target_state_architecture",

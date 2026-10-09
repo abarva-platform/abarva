@@ -289,12 +289,16 @@ function svgTextBlock(
   return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${opts.fontSize}"${weight}${fill}>${tspans}</text>`;
 }
 
+const COLLECTION_COLUMNS = 4;
+const FLOW_CARD_COLUMNS = 3;
+const MAX_FLOW_VISUAL_ROWS = 4;
+
 function svgTimeline(
   items: ReadonlyArray<{ id: string; label: string; detail?: string }>,
   accent = "var(--data)",
   ordered = true,
 ): string {
-  const columns = 4;
+  const columns = COLLECTION_COLUMNS;
   const leftGutter = ordered ? 132 : 115;
   const step = ordered ? 220 : 245;
   const width = ordered
@@ -310,6 +314,7 @@ function svgTimeline(
       // Ordering alone is not a governed relationship. Only explicit model
       // flows may be shown as connections; this timeline carries no edge set.
       return `<g data-arch-item-id="${esc(item.id)}">
+        <title>${esc(item.label)}${item.detail ? ` — ${esc(item.detail)}` : ""}</title>
         <circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>${
           ordered
             ? `
@@ -345,9 +350,9 @@ function svgFlowDiagram(
   title: string,
 ): string {
   const filtered = flows.filter((f) => kinds.includes(f.kind));
-  // This visual fits eight flow cards. A ninth must be composed explicitly;
-  // silently dropping it would make the exported architecture incomplete.
-  if (filtered.length > 8) {
+  // A three-column, four-row page keeps each recorded flow individually
+  // readable. Fail above that page budget rather than omit a recorded flow.
+  if (filtered.length > FLOW_CARD_COLUMNS * MAX_FLOW_VISUAL_ROWS) {
     throw new Error(
       `architecture_flow_visual_capacity_exceeded:${title}:${filtered.length}`,
     );
@@ -363,7 +368,42 @@ function svgFlowDiagram(
     kinds.includes("control") || kinds.includes("human_approval")
       ? "var(--control)"
       : "var(--data)";
-  return svgTimeline(items, accent, false);
+  const cardWidth = 300;
+  const cardHeight = 124;
+  const columnGap = 16;
+  const rowGap = 14;
+  const gutter = 24;
+  const rows = Math.ceil(items.length / FLOW_CARD_COLUMNS);
+  const height = 36 + rows * cardHeight + Math.max(0, rows - 1) * rowGap;
+  const cards = items
+    .map((item, index) => {
+      const x = gutter + (index % FLOW_CARD_COLUMNS) * (cardWidth + columnGap);
+      const y =
+        18 + Math.floor(index / FLOW_CARD_COLUMNS) * (cardHeight + rowGap);
+      return `<g data-arch-item-id="${esc(item.id)}">
+        <title>${esc(item.label)}${item.detail ? ` — ${esc(item.detail)}` : ""}</title>
+        <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" rx="9" fill="#fff" stroke="#d8d5cc"/>
+        <rect x="${x}" y="${y}" width="4" height="${cardHeight}" rx="2" fill="${accent}"/>
+        <text x="${x + 16}" y="${y + 22}" font-size="12" font-weight="700" fill="${accent}">RECORDED FLOW ${index + 1}</text>
+        ${svgTextBlock(item.label, x + cardWidth / 2, y + 47, {
+          maxChars: 38,
+          maxLines: 3,
+          lineHeight: 16,
+          fontSize: 14,
+          weight: 700,
+          fill: "#1f2524",
+        })}
+        ${svgTextBlock(item.detail, x + cardWidth / 2, y + 99, {
+          maxChars: 40,
+          maxLines: 2,
+          lineHeight: 14,
+          fontSize: 12,
+          fill: "#59615d",
+        })}
+      </g>`;
+    })
+    .join("");
+  return `<svg class="diagram collection" viewBox="0 0 980 ${height}" role="img" aria-label="${esc(title)}"><rect width="980" height="${height}" fill="#fff"/>${cards}</svg>`;
 }
 
 function svgGapBridge(model: ArchitectureModel): string {

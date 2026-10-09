@@ -361,6 +361,7 @@ jobs:
           src/components/strategic-moves/__tests__/MovesPhaseCharts.test.tsx
           src/components/strategic-moves/__tests__/phase-approve-and-build-gate-signoff.test.tsx
           src/components/strategic-moves/__tests__/ava-draft-action-phase-reach.test.tsx
+          src/components/strategic-moves/__tests__/moves-capture-composer-streaming.test.tsx
           --runInBand
 
       # Not a catalog control. `src/lib/agent/tools/__tests__` is the

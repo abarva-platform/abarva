@@ -458,7 +458,10 @@ function normalizeSectionMarkdown(markdown: string, title: string): string {
 
 // ── DOCX ──
 
-export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
+export function renderDeliverableDocx(
+  doc: RenderableDeliverable,
+  architectureModel?: ArchitectureModel,
+): Document {
   const children: (Paragraph | Table)[] = [];
 
   // Cover
@@ -517,9 +520,24 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   const exhibitBlocks = doc.exhibits.flatMap((exhibit, index) =>
     exhibitToDocxBlocks(exhibit, index),
   );
-  if (exhibitBlocks.length) {
+  const architectureBlocks = architectureModel
+    ? renderArchitectureVisualExhibits(architectureModel).flatMap(
+        (visual, index) =>
+          svgToDocxBlocks(
+            {
+              key: visual.id,
+              title: visual.title,
+              description: `${visual.soWhat} Decision implication: ${visual.decisionImplication}`,
+              svg: visual.svg,
+            },
+            doc.exhibits.length + index,
+          ),
+      )
+    : [];
+  if (exhibitBlocks.length || architectureBlocks.length) {
     children.push(designedHeading("Visual Exhibits", 1));
     children.push(...exhibitBlocks);
+    children.push(...architectureBlocks);
   }
 
   // Recommendation + next actions
@@ -1734,13 +1752,16 @@ function withXmlns(svg: string): string {
 }
 
 /** Rasterise one exhibit to a DOCX image paragraph + its caption/description. */
-function exhibitToDocxBlocks(
-  exhibit: RenderableExhibit,
+function svgToDocxBlocks(
+  exhibit: {
+    key: string;
+    title: string;
+    description: string;
+    svg: string;
+  },
   index: number,
 ): Paragraph[] {
-  const rawSvg = exhibitSvg(exhibit, index);
-  if (!rawSvg) return [];
-  const svg = withXmlns(resolveSvgTokens(rawSvg));
+  const svg = withXmlns(resolveSvgTokens(exhibit.svg));
   let imageParagraph: Paragraph;
   try {
     const { png, aspect } = rasteriseSvg(svg, 3);
@@ -1788,6 +1809,21 @@ function exhibitToDocxBlocks(
       ],
     }),
   ];
+}
+
+function exhibitToDocxBlocks(
+  exhibit: RenderableExhibit,
+  index: number,
+): Paragraph[] {
+  const svg = exhibitSvg(exhibit, index);
+  return svg
+    ? svgToDocxBlocks({
+        key: exhibit.key,
+        title: exhibit.title,
+        description: exhibit.description,
+        svg,
+      }, index)
+    : [];
 }
 
 export function renderDeliverableHtml(doc: RenderableDeliverable): string {
@@ -2629,11 +2665,13 @@ function addPptxSectionDividerLayout(
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
+  architectureDivider = false,
 ): void {
   const slide = pptx.addSlide();
   slide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(slide, doc, slideNumber, totalSlides);
   slide.addText(safePptxText(content.title ?? doc.title), {
+    ...(architectureDivider ? { objectName: "abarva:layout:divider" } : {}),
     x: PPTX_GRID.x(0),
     y: 0.93,
     w: PPTX_GRID.w(12),
@@ -3281,6 +3319,7 @@ export async function renderDeliverablePptx(
         doc,
         slideNumber,
         totalSlides,
+        true,
       );
     } else if (page.kind === "headline") {
       addPptxArchitectureHeadlineSlide(

@@ -11,6 +11,7 @@ import {
   renderDeliverablePdf,
 } from "@/lib/deliverables/orchestrator/renderers";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
+import { architectureModelForArtifact } from "@/lib/deliverables/orchestrator/architecture-artifact-model";
 import { renderValidatedDocx } from "@/lib/deliverables/orchestrator/render-validated-doc";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -174,7 +175,12 @@ export async function GET(
         // Inspect the file we are about to serve. A deck whose content sits
         // outside the canvas is not a deck the client can read, and used to be
         // served anyway because nothing opened it.
-        const validated = await renderValidatedDeck(structuredDoc);
+        const architectureModel = architectureModelForArtifact(record);
+        const validated = await renderValidatedDeck(
+          structuredDoc,
+          {},
+          architectureModel,
+        );
         if (!validated.physicallyIntact) {
           return Response.json(
             {
@@ -254,7 +260,10 @@ export async function GET(
         });
       }
 
-      const buf = await renderValidatedDocx(structuredDoc);
+      const buf = await renderValidatedDocx(
+        structuredDoc,
+        architectureModelForArtifact(record),
+      );
       return new Response(new Uint8Array(buf), {
         status: 200,
         headers: attachmentHeaders(
