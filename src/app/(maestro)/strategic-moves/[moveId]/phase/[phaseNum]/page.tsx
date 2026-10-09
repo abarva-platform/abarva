@@ -94,7 +94,10 @@ interface Props {
     focus?: string | string[];
     blockedPhase?: string | string[];
     phaseLocked?: string | string[];
-    /** `gate` opens the P3 Gate readiness step page (moves_step_pages_v3). */
+    /**
+     * `gate` opens P3 Gate readiness; `root-causes` opens P2 Step 3
+     * (moves_step_pages_v3).
+     */
     step?: string | string[];
   }>;
 }
@@ -1053,9 +1056,13 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
         initialStepView={
-          stepPagesV3Enabled && resolvedSearchParams.step === "gate"
-            ? "gate"
-            : null
+          !stepPagesV3Enabled
+            ? null
+            : resolvedSearchParams.step === "gate"
+              ? "gate"
+              : resolvedSearchParams.step === "root-causes"
+                ? "root-causes"
+                : null
         }
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}
