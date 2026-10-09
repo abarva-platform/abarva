@@ -54,6 +54,26 @@ function normalizeArgument(token) {
 }
 
 /**
+ * A jest positional argument is a REGEX, not a path. A directory under a
+ * Next.js dynamic route therefore has to escape its brackets — pass
+ * `src/app/api/v1/programs/\[programId\]/.../__tests__` — or jest reads
+ * `[programId]` as a character class and the pattern matches nothing.
+ *
+ * That escaped token is not a path any filesystem holds, so the sweep test
+ * below (`existsSync` + `isDirectory`) answered false for every dynamic-route
+ * directory and the control recorded no sweep. The consequence was precisely
+ * the failure mode this control exists to catch, inverted: a required job could
+ * sweep a dynamic-route directory, a non-required job could keep naming a suite
+ * inside it, and the run would report OK because the sweep was invisible.
+ *
+ * Resolving the escapes also normalises the recorded directory to its real
+ * on-disk spelling, which is what `isInside` compares a named file against.
+ */
+function resolveRegexEscapes(token) {
+  return token.replace(/\\(.)/g, "$1");
+}
+
+/**
  * Expand `npm run <script>` to the script body, repeatedly, so a step that runs
  * a wrapper is read for the jest command the wrapper actually issues. Bounded:
  * a script that runs itself terminates instead of recursing.
@@ -77,7 +97,7 @@ function classifyJestArguments(command, repoRoot) {
   const swept = new Set();
   if (!/\bjest\b/.test(command)) return { named, swept };
   for (const raw of command.split(/\s+/)) {
-    const token = normalizeArgument(raw);
+    const token = resolveRegexEscapes(normalizeArgument(raw));
     if (!token || token.startsWith("-")) continue;
     if (!/^(src|tests|scripts)\//.test(token)) continue;
     if (TEST_FILE.test(token)) {

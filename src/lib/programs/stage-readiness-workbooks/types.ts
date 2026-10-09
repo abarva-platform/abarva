@@ -1,3 +1,5 @@
+import type { StageReadinessArchetypeBasis } from "./archetype-basis";
+
 export type AssessmentRequirement =
   | "required"
   | "recommended"
@@ -89,6 +91,12 @@ export interface StageReadinessWorkbookSpec {
   nextPhase: number;
   artifactName: string;
   archetype: string;
+  /**
+   * What decided `archetype`, and whether a human declared it. The question
+   * set is the resolved archetype's evidence families, so a workbook built on
+   * an inferred or general-case archetype has to say so on its visible sheet.
+   */
+  archetypeBasis: StageReadinessArchetypeBasis;
   generatedAt: string;
   dimensionPlan: AssessmentDimensionPlan;
   startHere: {

@@ -262,27 +262,27 @@ describe('processDeliverableQueue', () => {
     );
   });
 
-  // C-576. The premium guard reads `!evidenceBasisIsCurrent || !evidenceSnapshot`,
-  // and until this case every one of the suite's fixtures handed the loader a
-  // truthy snapshot — including the stale case above, which falsifies only the
-  // first operand. So the refusal of a run whose approved evidence is ABSENT
-  // rather than merely stale was reachable and asserted by nothing: the branch
-  // ran in production and no case named it.
+  // C-576, amended. The premium guard used to answer this case with the same
+  // `stale_approved_evidence_snapshot` code as the stale case above, and the
+  // same text — "Approved Move evidence changed after this build was queued.
+  // Re-run the build from the current evidence set." A null snapshot does NOT
+  // mean evidence changed, and it does not mean evidence is absent either: a
+  // Move with nothing approved returns a real snapshot with zero rows. It means
+  // the comparison could not be made, for one of the loader's unevaluable
+  // paths — and three of those are structural, so the re-run the message
+  // prescribed could never change the answer while `blocked` is terminal and
+  // cascades the rest of the batch.
   //
-  // It is NOT the second operand that this pins, and that distinction is the
-  // whole point. `isApprovedMoveEvidenceBasisCurrent` returns false on a null
-  // snapshot (approved-move-evidence-snapshot.ts:256), so a null snapshot always
-  // falsifies the FIRST operand too and `|| !evidenceSnapshot` can never be the
-  // deciding one. Deleting it leaves this case and all 14 others green; what it
-  // actually breaks is the narrowing that lines 223 and 225 of the worker need,
-  // which `tsc` catches as TS18047 + TS2345 and a required check already runs.
-  // A case claiming to pin that operand would be vacuous, so none is written.
+  // So the case now pins the SPLIT: an unreadable basis gets its own code and a
+  // text that says re-running will not help, while the stale case above keeps
+  // `stale_approved_evidence_snapshot`. Both must hold; one assertion alone
+  // would pass with the split reverted.
   //
-  // The mutation that kills THIS case is the null guard in the predicate:
-  // delete `!snapshot ||` from line 256 and the premium path completes `failed`
-  // instead of `blocked`, because the predicate then reads `revisionByPhase`
-  // off null and throws into the worker's catch.
-  it('blocks a queued phase build when the approved evidence snapshot is absent entirely', async () => {
+  // `isApprovedMoveEvidenceBasisCurrent` still returns false on a null snapshot
+  // (approved-move-evidence-snapshot.ts), so the worker's `|| !evidenceSnapshot`
+  // disjunct remains non-deciding and exists only for the narrowing that `tsc`
+  // enforces. A case claiming to pin it would be vacuous, so none is written.
+  it('refuses a queued phase build whose approved-evidence basis cannot be read, without calling it stale', async () => {
     const queuedRun = {
       ...claimedRow('run-absent-phase-evidence'),
       clientId: 'client-lake',
@@ -313,9 +313,107 @@ describe('processDeliverableQueue', () => {
       'run-absent-phase-evidence',
       expect.objectContaining({
         status: 'blocked',
-        error: 'stale_approved_evidence_snapshot',
+        error: 'approved_evidence_basis_unevaluable',
       }),
     );
+    const blockers = completeDeliverableRun.mock.calls.at(-1)?.[1]?.blockers as
+      | string[]
+      | undefined;
+    expect(blockers?.[0]).toContain('was not verified as changed');
+    expect(blockers?.[0]).toContain('will not change the answer');
+    expect(blockers?.[0]).not.toContain('evidence changed after this build');
+  });
+
+  // The orchestrator branch had the identical conflation, with its own copy of
+  // the message, so a fix applied to the premium branch alone would leave it.
+  it('refuses a queued orchestrator build whose approved-evidence basis cannot be read, without calling it stale', async () => {
+    const queuedRun = {
+      ...claimedRow('run-orchestrator-unreadable-basis'),
+      clientId: 'client-lake',
+      tenantKey: 'lakeshore-holdings',
+      module: 'moves',
+      deliverableType: 'discovery_report',
+      jobPayload: {
+        module: 'moves',
+        useCaseArchetype: 'governed_data_foundation',
+        deliverableType: 'discovery_report',
+        decisionContext: 'ctx',
+        clientDisplayName: 'Lakeshore',
+        initiativeDisplayName: 'Move',
+        sourceArtifactRef: 'move-1',
+        phase: 2,
+        evidenceSnapshotHash: 'revision-current',
+        phaseEvidenceSnapshotHash: 'p2-revision-current',
+      },
+    };
+    claimNextDeliverableRun
+      .mockResolvedValueOnce(queuedRun)
+      .mockResolvedValueOnce(null);
+    approvedEvidence.loadApprovedMoveEvidenceSnapshot.mockResolvedValue(null);
+
+    await processDeliverableQueue({
+      workerId: 'worker-orchestrator-unreadable',
+      batchSize: 5,
+    });
+
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-orchestrator-unreadable-basis',
+      expect.objectContaining({
+        status: 'blocked',
+        error: 'approved_evidence_basis_unevaluable',
+      }),
+    );
+  });
+
+  // The third conflated operand. A build that recorded NO evidence revision is
+  // rebuild-shaped — regenerating it stamps one — so it must keep a text that
+  // prescribes the re-run, and must NOT be answered with the unevaluable code.
+  it('tells a queued build that recorded no evidence revision to re-run, apart from both other conditions', async () => {
+    const queuedRun = {
+      ...claimedRow('run-no-recorded-revision'),
+      clientId: 'client-lake',
+      tenantKey: 'lakeshore-holdings',
+      module: 'moves',
+      deliverableType: 'discovery_report',
+      jobPayload: {
+        kind: 'moves_premium_artifact',
+        module: 'moves',
+        deliverableType: 'discovery_report',
+        sourceArtifactRef: 'move-1',
+        phase: 2,
+        artifact: 'discovery_report',
+      },
+    };
+    claimNextDeliverableRun
+      .mockResolvedValueOnce(queuedRun)
+      .mockResolvedValueOnce(null);
+    approvedEvidence.loadApprovedMoveEvidenceSnapshot.mockResolvedValue({
+      revision: 'revision-current',
+      approvedEvidenceCount: 1,
+      rows: [],
+      revisionByPhase: { 2: 'p2-revision-current' },
+      latestEvidenceActivityAt: '2026-09-29T18:00:00.000Z',
+      latestEvidenceActivityAtByPhase: { 2: '2026-09-29T18:00:00.000Z' },
+    });
+
+    await processDeliverableQueue({
+      workerId: 'worker-no-recorded-revision',
+      batchSize: 5,
+    });
+
+    expect(generateArtifact).not.toHaveBeenCalled();
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-no-recorded-revision',
+      expect.objectContaining({
+        status: 'blocked',
+        error: 'approved_evidence_basis_not_recorded',
+      }),
+    );
+    const blockers = completeDeliverableRun.mock.calls.at(-1)?.[1]?.blockers as
+      | string[]
+      | undefined;
+    expect(blockers?.[0]).toContain('Re-run the build');
   });
 
   it('sweeps, claims one run, reconstructs input from job_payload, and completes succeeded', async () => {
@@ -472,6 +570,147 @@ describe('processDeliverableQueue', () => {
         error: 'stale_decision_basis',
       }),
     );
+  });
+
+  // The P3 architecture batch's freshness guard was one `if` over four operands,
+  // all answered with `stale_context_snapshot` / "Move evidence changed". These
+  // pin each operand to the fact it actually establishes, at the host, so the
+  // classifier's verdict is proven to reach the recorded run rather than only to
+  // be computed.
+  describe('the P3 architecture batch states which freshness fact it established', () => {
+    function p3Run(id: string) {
+      return {
+        ...claimedRow(id),
+        module: 'moves',
+        jobPayload: {
+          ...jobPayload,
+          module: 'moves',
+          sourceArtifactRef: 'move-1',
+          evidenceSnapshotHash: 'revision-current',
+          decisionLineage: {
+            decisionHash: 'decision-hash-1',
+            decisionVersion: '1',
+            approvedOptionId: 'option-b',
+            approvedOptionVersion: '1',
+            contextSnapshotHash: 'context-hash-1',
+            architectureModelVersion: 'moves-architecture-model-v2',
+          },
+        },
+      };
+    }
+
+    it('does not report that evidence changed when the basis could not be read', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: 'context-hash-1',
+        approvedEvidenceRevision: 'revision-current',
+        freshnessStatus: 'rebuild_required',
+        basisUnevaluableReason: 'snapshot_unavailable',
+      });
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-unevaluable'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-unevaluable', batchSize: 2 });
+
+      expect(runDeliverableForTenant).not.toHaveBeenCalled();
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-unevaluable',
+      );
+      expect(call?.[1]).toMatchObject({
+        status: 'blocked',
+        error: 'context_extract_basis_unevaluable',
+      });
+      const blockers = (call?.[1] as { blockers: string[] }).blockers;
+      expect(blockers[0]).not.toMatch(
+        /Move evidence changed after this architecture batch/,
+      );
+      expect(blockers[0]).toMatch(/cannot clear this block/i);
+    });
+
+    it('still reports a genuinely superseded extract as changed evidence', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: 'context-hash-1',
+        approvedEvidenceRevision: 'revision-old',
+        freshnessStatus: 'stale',
+      });
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-stale'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-stale-ctx', batchSize: 2 });
+
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-stale',
+      );
+      expect(call?.[1]).toMatchObject({
+        status: 'blocked',
+        error: 'stale_context_snapshot',
+      });
+      expect((call?.[1] as { blockers: string[] }).blockers[0]).toMatch(
+        /Move evidence changed after this architecture batch/,
+      );
+    });
+
+    it('names an absent extract rather than calling it changed evidence', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue(null);
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-absent'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-absent-ctx', batchSize: 2 });
+
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-absent',
+      );
+      expect(call?.[1]).toMatchObject({
+        status: 'blocked',
+        error: 'context_extract_absent',
+      });
+    });
+
+    it('names an extract that recorded no revision as the rebuild-shaped case', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: 'context-hash-1',
+        approvedEvidenceRevision: null,
+        freshnessStatus: 'rebuild_required',
+      });
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-no-revision'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-no-rev', batchSize: 2 });
+
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-no-revision',
+      );
+      expect(call?.[1]).toMatchObject({
+        status: 'blocked',
+        error: 'context_extract_basis_absent',
+      });
+    });
+
+    it('lets a fresh, matching extract through to generation', async () => {
+      contextExtract.loadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: 'context-hash-1',
+        approvedEvidenceRevision: 'revision-current',
+        freshnessStatus: 'fresh',
+      });
+      claimNextDeliverableRun
+        .mockResolvedValueOnce(p3Run('run-p3-ok'))
+        .mockResolvedValueOnce(null);
+
+      await processDeliverableQueue({ workerId: 'w-fresh-ctx', batchSize: 2 });
+
+      const call = completeDeliverableRun.mock.calls.find(
+        (c: unknown[]) => c[0] === 'run-p3-ok',
+      );
+      expect((call?.[1] as { error?: string } | undefined)?.error).not.toBe(
+        'stale_context_snapshot',
+      );
+      expect(
+        (call?.[1] as { error?: string } | undefined)?.error,
+      ).not.toBe('context_extract_basis_unevaluable');
+    });
   });
 
   it('maps a blocked result to status blocked', async () => {

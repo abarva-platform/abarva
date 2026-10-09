@@ -14,6 +14,33 @@ import {
 } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import type { ReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 import { getPhaseLabel, TOTAL_PHASES } from "@/lib/programs/phase-labels";
+import { describeRejectedEvidenceReview } from "@/lib/programs/evidence-review-dispositions";
+import {
+  describeEvidenceCabinetReadback,
+  describeEvidenceDecisionRefusal,
+} from "@/lib/programs/evidence-cabinet-readback";
+import { describeMoveReviewDecisionRefusal } from "@/lib/programs/move-review-decision-refusal";
+import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
+import {
+  UPLOAD_ACCEPT_ATTRIBUTE,
+  describeUploadBounds,
+} from "@/lib/programs/attachments/upload-control-bounds";
+import {
+  describeMoveArtifactStorage,
+  describeMoveUploadOutcome,
+  type MoveArtifactStoragePresentation,
+} from "@/lib/programs/move-artifact-storage-state";
+import { describeMoveClientApprovalRefusal } from "@/lib/programs/move-client-approval-refusal";
+
+/** The meta row's colours for the storage chip's three tones. */
+const ARTIFACT_STORAGE_TONE_COLOR: Record<
+  MoveArtifactStoragePresentation["tone"],
+  string
+> = {
+  ok: "#1E7E34",
+  alert: "#B71C1C",
+  muted: "#9AA3B2",
+};
 
 interface Artifact {
   artifactId: string;
@@ -755,7 +782,6 @@ function ArtifactRow({
   onChanged: () => Promise<void>;
   canApproveGates: boolean;
 }) {
-  const stored = a.stored === "azure_blob";
   const [reviewOpen, setReviewOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [reviewBusy, setReviewBusy] = useState(false);
@@ -785,6 +811,12 @@ function ArtifactRow({
     a.fileFormat === "html" || a.outputRole === "html_visual_review_companion";
   const isGeneratedArtifactRoute =
     a.downloadUrl.startsWith("/api/v1/artifacts/");
+  // What this row records about where its bytes are. Four states, and only
+  // one of them asks the reviewer for anything; they used to share two words.
+  const storage = describeMoveArtifactStorage({
+    stored: a.stored,
+    renderedOnRequest: isGeneratedArtifactRoute,
+  });
   const canRegenerateReview = supportsReviewRegeneration(a);
 
   const submitReviewFeedback = useCallback(async () => {
@@ -832,9 +864,19 @@ function ArtifactRow({
       const json = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
+        detail?: string;
       } & WorkspaceReviewState;
       if (!res.ok || !json.ok) {
-        throw new Error(json.error || `HTTP ${res.status}`);
+        // A failed load clears `workspaceReview`, which hides the packet and
+        // every decision control — so the sentence has to account for the
+        // missing controls, not just the failed read.
+        throw new Error(
+          describeMoveReviewDecisionRefusal({
+            action: "load",
+            code: json.error,
+            detail: json.detail,
+          }),
+        );
       }
       setWorkspaceReview({
         canRecordDecision: json.canRecordDecision,
@@ -844,7 +886,11 @@ function ArtifactRow({
         readiness: json.readiness,
       });
     } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "review packet failed");
+      setActionErr(
+        e instanceof Error
+          ? e.message
+          : describeMoveReviewDecisionRefusal({ action: "load" }),
+      );
       setWorkspaceReview(null);
     } finally {
       setPacketLoading(false);
@@ -946,7 +992,13 @@ function ArtifactRow({
           .json()
           .catch(() => ({}))) as WorkspaceReviewPostResponse;
         if (!res.ok || !json.ok) {
-          throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+          throw new Error(
+            describeMoveReviewDecisionRefusal({
+              action: "record",
+              code: json.error,
+              detail: json.detail,
+            }),
+          );
         }
         setWorkspaceReview({
           canRecordDecision: json.canRecordDecision ?? true,
@@ -963,7 +1015,11 @@ function ArtifactRow({
         });
         await onChanged();
       } catch (e) {
-        setActionErr(e instanceof Error ? e.message : "review decision failed");
+        setActionErr(
+          e instanceof Error
+            ? e.message
+            : describeMoveReviewDecisionRefusal({ action: "record" }),
+        );
       } finally {
         setReviewBusy(false);
       }
@@ -1009,12 +1065,19 @@ function ArtifactRow({
         detail?: string;
       };
       if (!res.ok || !json.ok) {
-        throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+        throw new Error(
+          describeMoveClientApprovalRefusal({
+            code: json.error,
+            detail: json.detail,
+          }),
+        );
       }
       setReviewOpen(false);
       await onChanged();
     } catch (e) {
-      setActionErr(e instanceof Error ? e.message : "client approval failed");
+      setActionErr(
+        e instanceof Error ? e.message : describeMoveClientApprovalRefusal({}),
+      );
     } finally {
       setClientApprovalBusy(false);
     }
@@ -1056,12 +1119,21 @@ function ArtifactRow({
           detail?: string;
         };
         if (!res.ok || !json.ok) {
-          throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+          throw new Error(
+            describeMoveClientApprovalRefusal({
+              code: json.error,
+              detail: json.detail,
+            }),
+          );
         }
         setReviewOpen(false);
         await onChanged();
       } catch (e) {
-        setActionErr(e instanceof Error ? e.message : "approved upload failed");
+        setActionErr(
+          e instanceof Error
+            ? e.message
+            : describeMoveClientApprovalRefusal({}),
+        );
       } finally {
         setClientApprovalBusy(false);
         if (approvedFileInputRef.current) {
@@ -1236,26 +1308,17 @@ function ArtifactRow({
             {!roleLabel && <span>{fmtBytes(a.fileSize)}</span>}
             <span>{fmtDate(a.createdAt)}</span>
             <span
-              title={
-                stored
-                  ? "Stored in the secure artifact vault"
-                  : "Storage pending"
-              }
-              style={{ color: stored ? "#1E7E34" : "#B71C1C", fontWeight: 600 }}
+              title={storage.title}
+              style={{
+                color: ARTIFACT_STORAGE_TONE_COLOR[storage.tone],
+                fontWeight: 600,
+              }}
             >
-              {stored ? "Vault" : "Storage pending"}
+              {storage.label}
             </span>
           </div>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          {actionErr && (
-            <span
-              style={{ fontSize: 10.5, color: "#B71C1C", whiteSpace: "nowrap" }}
-              title={actionErr}
-            >
-              {actionErr}
-            </span>
-          )}
           <button
             onClick={() => setReviewOpen((open) => !open)}
             disabled={a.lifecycleState !== "current" || reviewBusy}
@@ -1316,6 +1379,29 @@ function ArtifactRow({
           </a>
         </div>
       </div>
+      {/*
+        A refusal now carries an authored sentence, so it cannot live in the
+        control row: that column is `auto`-sized next to a `minmax(0, 1fr)`
+        title and the span was `whiteSpace: "nowrap"` at 10.5px, which renders
+        a sentence as one unbreakable line and squeezes the title to its floor.
+        Its own full-width row of the surrounding 1fr grid wraps instead.
+      */}
+      {actionErr && (
+        <div
+          role="status"
+          style={{
+            fontSize: 11.5,
+            lineHeight: 1.45,
+            color: "#8A1C1C",
+            background: "#FDF2F2",
+            border: "1px solid #F3CFCF",
+            borderRadius: 6,
+            padding: "7px 10px",
+          }}
+        >
+          {actionErr}
+        </div>
+      )}
       {hasReviewSignals && (
         <details
           style={{
@@ -1905,7 +1991,12 @@ export function FileCabinetPanel({
   const [pendingEvidenceReviews, setPendingEvidenceReviews] = useState<
     PendingEvidenceReview[]
   >([]);
-  const [evidenceReviewAvailable, setEvidenceReviewAvailable] = useState(true);
+  // Three states, not two: a read that did not complete is `unknown`, which
+  // is not the route's narrower "unavailable" and is certainly not healthy.
+  // Initialised from the un-run read so the first paint asserts nothing.
+  const [evidenceReadback, setEvidenceReadback] = useState(() =>
+    describeEvidenceCabinetReadback({ completed: false }),
+  );
   const [reviewedEvidence, setReviewedEvidence] = useState<
     Array<{
       evidenceId: string;
@@ -1914,6 +2005,20 @@ export function FileCabinetPanel({
       familyKey: string;
       phase: number | null;
       reviewedAt: string | null;
+    }>
+  >([]);
+  // Rejected reviews are a THIRD list. They are in neither the queue (pending)
+  // nor the reviewed list (approved), so before this they were on no surface at
+  // all — including the rationale the reviewer had just recorded.
+  const [rejectedEvidence, setRejectedEvidence] = useState<
+    Array<{
+      evidenceId: string;
+      reviewId: string;
+      title: string;
+      familyKey: string;
+      phase: number | null;
+      reviewedAt: string | null;
+      rationale: string | null;
     }>
   >([]);
   const [reviewingEvidenceId, setReviewingEvidenceId] = useState<string | null>(
@@ -1954,11 +2059,25 @@ export function FileCabinetPanel({
       setPendingEvidenceReviews(
         Array.isArray(j.pendingEvidenceReviews) ? j.pendingEvidenceReviews : [],
       );
-      setEvidenceReviewAvailable(j.evidenceReviewStatus !== "unavailable");
+      setEvidenceReadback(
+        describeEvidenceCabinetReadback({
+          evidenceReviewStatus: j.evidenceReviewStatus,
+        }),
+      );
       setReviewedEvidence(
         Array.isArray(j.reviewedEvidence) ? j.reviewedEvidence : [],
       );
+      setRejectedEvidence(
+        Array.isArray(j.rejectedEvidence) ? j.rejectedEvidence : [],
+      );
     } catch (e) {
+      // The read threw before any list setter ran, so every list on screen is
+      // whatever the last successful read left there. Say so: without this the
+      // panel keeps asserting the last known review state, and an item whose
+      // decision WAS recorded stays listed as awaiting review.
+      setEvidenceReadback(
+        describeEvidenceCabinetReadback({ loadFailed: true }),
+      );
       setError(e instanceof Error ? e.message : "load failed");
     } finally {
       setLoading(false);
@@ -1984,7 +2103,8 @@ export function FileCabinetPanel({
             body: JSON.stringify({
               decision,
               reviewedExtraction: extraction,
-              rationale: rationale?.trim() ||
+              rationale:
+                rationale?.trim() ||
                 (decision === "approved"
                   ? "Reviewer approved the corrected evidence extraction."
                   : "Reviewer rejected the parsed evidence."),
@@ -1993,8 +2113,14 @@ export function FileCabinetPanel({
         );
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result.ok) {
+          // A bare `no_pending_review` is not a next action a reviewer can
+          // take, and it is the refusal they are most likely to meet: it is
+          // what approving a second time returns after a failed refresh.
           throw new Error(
-            result.detail || result.error || `HTTP ${response.status}`,
+            describeEvidenceDecisionRefusal({
+              code: result.error,
+              detail: result.detail,
+            }),
           );
         }
         await load();
@@ -2029,10 +2155,18 @@ export function FileCabinetPanel({
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok || !j.ok)
+          // Only the quarantine refusal used to be named here; the other five
+          // the route declares reached the reviewer as their bare code,
+          // because `error` won over `detail`. Both halves move into
+          // `describeMoveUploadRefusal`, which also knows that `detail` is a
+          // raw MIME string or a byte count for three of the six and must not
+          // be rendered.
           throw new Error(
-            j.error === "sensitive_data_quarantined"
-              ? `${file.name} was not uploaded. It appears to contain personal or regulated identifiers, so nothing was stored. Remove the identifiers and upload again.`
-              : j.error || j.detail || `HTTP ${r.status}`,
+            describeMoveUploadRefusal({
+              code: j.error,
+              detail: j.detail,
+              fileName: file.name,
+            }),
           );
         const evidence = j.evidence as
           | {
@@ -2042,16 +2176,20 @@ export function FileCabinetPanel({
               warning?: string;
             }
           | undefined;
-        const notCaptured = evidence?.status === "not_captured";
-        setUploadState(notCaptured ? "error" : "idle");
-        setUploadMsg(
-          notCaptured
-            ? `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)}, but parsing/review registration failed. This file is not available to generation. ${evidence.warning ?? "Retry ingestion or contact support."}`
-            : evidence?.reviewStatus
-              ? `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)} as ${uploadFamily === "session_artifact" ? "a session file" : "evidence"}${j.blobStored ? " to secure storage" : ""}; parsed via ${evidence.parseMethod ?? "parser"}. Human review is required before it can inform generation.`
-              : `Uploaded ${file.name} for ${getPhaseLabel(uploadPhase)}${j.blobStored ? " to secure storage" : ""}.`,
-        );
-        if (!notCaptured) setUploadPhase(phase);
+        // An upload whose bytes were not retained used to differ from a
+        // healthy one by the four words " to secure storage" being absent,
+        // and it reported itself complete. The outcome is classified now so
+        // the one unrecoverable state is said out loud.
+        const outcome = describeMoveUploadOutcome({
+          blobStored: j.blobStored,
+          evidence,
+          fileName: file.name,
+          phaseLabel: getPhaseLabel(uploadPhase),
+          sessionFile: uploadFamily === "session_artifact",
+        });
+        setUploadState(outcome.needsAction ? "error" : "idle");
+        setUploadMsg(outcome.message);
+        if (!outcome.needsAction) setUploadPhase(phase);
         await load();
         onEvidenceChanged?.();
       } catch (e) {
@@ -2260,6 +2398,11 @@ export function FileCabinetPanel({
             aria-label="Upload Move file"
             ref={fileRef}
             type="file"
+            // The two bounds the upload route refuses on, stated by the picker
+            // instead of discovered by waiting out a doomed upload. Derived
+            // from the allowlist the route enforces — and a hint, not a block,
+            // so it cannot hide a file the route would have taken.
+            accept={UPLOAD_ACCEPT_ATTRIBUTE}
             style={{ display: "none" }}
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -2287,6 +2430,17 @@ export function FileCabinetPanel({
                 ? "Upload session file"
                 : "Upload evidence"}
           </button>
+          <span
+            data-testid="move-upload-bounds"
+            style={{
+              fontSize: 10.5,
+              color: "#5A6472",
+              flexBasis: "100%",
+              marginTop: 2,
+            }}
+          >
+            {describeUploadBounds()}
+          </span>
           <button
             onClick={() => void load()}
             style={{
@@ -2316,7 +2470,7 @@ export function FileCabinetPanel({
         </div>
       )}
 
-      {!evidenceReviewAvailable && (
+      {evidenceReadback.warning !== null && (
         <div
           role="alert"
           style={{
@@ -2329,8 +2483,7 @@ export function FileCabinetPanel({
             fontSize: 12,
           }}
         >
-          Evidence review status is unavailable. Do not use newly uploaded files
-          for phase decisions until the review state can be loaded.
+          {evidenceReadback.warning}
         </div>
       )}
 
@@ -2362,9 +2515,22 @@ export function FileCabinetPanel({
                     review={review}
                     programId={moveId}
                     busy={reviewingEvidenceId === review.evidenceId}
-                    disabled={reviewingEvidenceId !== null}
+                    // Withheld while the lists are stale as well as while a
+                    // decision is in flight. After a failed refresh this queue
+                    // can still list an item the server already decided, and
+                    // deciding it again is refused with 409 `no_pending_review`
+                    // — an action that cannot succeed is not offered.
+                    disabled={
+                      reviewingEvidenceId !== null ||
+                      !evidenceReadback.queueIsCurrent
+                    }
                     onDecision={(decision, extraction, rationale) =>
-                      void decideEvidenceReview(review, decision, extraction, rationale)
+                      void decideEvidenceReview(
+                        review,
+                        decision,
+                        extraction,
+                        rationale,
+                      )
                     }
                   />
                 ))
@@ -2414,7 +2580,15 @@ export function FileCabinetPanel({
             read-only audit trail of what a reviewer accepted; it is not an
             editing surface.
           </p>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
+          <ul
+            style={{
+              margin: 0,
+              padding: 0,
+              listStyle: "none",
+              display: "grid",
+              gap: 6,
+            }}
+          >
             {reviewedEvidence.map((item) => (
               <li
                 key={item.reviewId || item.evidenceId}
@@ -2451,6 +2625,88 @@ export function FileCabinetPanel({
                 </div>
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {rejectedEvidence.length > 0 && (
+        <section
+          aria-label="Rejected evidence"
+          style={{
+            margin: "10px 0 14px",
+            padding: 12,
+            border: "1px solid #e6cfcf",
+            borderRadius: 6,
+            background: "#fdf8f8",
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 14, color: "#7a2f2f" }}>
+            {rejectedEvidence.length} rejected evidence item
+            {rejectedEvidence.length === 1 ? "" : "s"}
+          </h3>
+          <p style={{ margin: "4px 0 8px", fontSize: 12, color: "#6b4f4f" }}>
+            Rejected evidence is excluded from phase generation.{" "}
+            {describeRejectedEvidenceReview({}).nextAction}
+          </p>
+          <ul
+            style={{
+              margin: 0,
+              padding: 0,
+              listStyle: "none",
+              display: "grid",
+              gap: 6,
+            }}
+          >
+            {rejectedEvidence.map((item) => {
+              const rejection = describeRejectedEvidenceReview(item);
+              return (
+                <li
+                  key={item.reviewId || item.evidenceId}
+                  style={{
+                    border: "1px solid #e6cfcf",
+                    borderRadius: 6,
+                    padding: 10,
+                    background: "#fff",
+                  }}
+                >
+                  <strong style={{ fontSize: 12 }}>{item.title}</strong>
+                  <div
+                    style={{
+                      margin: "4px 0 0",
+                      fontSize: 11.5,
+                      color: "#6b4f4f",
+                      display: "flex",
+                      gap: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span>{rejection.label}</span>
+                    <span>{item.familyKey.replace(/_/g, " ")}</span>
+                    {item.phase != null && <span>Phase {item.phase}</span>}
+                    {item.reviewedAt && (
+                      <span>
+                        Rejected{" "}
+                        {new Date(item.reviewedAt).toLocaleDateString(
+                          undefined,
+                          { year: "numeric", month: "short", day: "numeric" },
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  {rejection.rationale && (
+                    <p
+                      style={{
+                        margin: "6px 0 0",
+                        fontSize: 11.5,
+                        color: "#4a3f3f",
+                      }}
+                    >
+                      Reviewer&rsquo;s reason: {rejection.rationale}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

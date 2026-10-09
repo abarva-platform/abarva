@@ -37,6 +37,7 @@ import {
 import { applyUploadedEvidenceToMove } from "@/lib/programs/mutations";
 import type { ExtractionReceipt } from "@/lib/programs/discovery/extraction-planner";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
+import { moveEvidenceReadTenantKeys } from "@/lib/programs/evidence-readiness/tenant-read-scope";
 import {
   evaluateSensitiveUpload,
   type UploadProtectionResult,
@@ -758,6 +759,23 @@ export async function ingestUploadedMoveEvidence(
 }
 
 /**
+ * Why `decideEvidenceReview` refused, for a caller that has to prescribe a
+ * different next action for each.
+ *
+ * - `reviewed_extraction_missing` — approval arrived without the human-reviewed
+ *   extraction. The route guards this before it calls, so it is unreachable
+ *   from the route; it stays named for a non-route caller.
+ * - `already_decided` — a review row for this evidence exists in this Move but
+ *   no PENDING one matched, so it was decided already, here or elsewhere.
+ * - `evidence_not_found` — neither a review row nor an evidence row exists for
+ *   this id in this Move. Nothing was ever recorded to re-read.
+ */
+export type EvidenceReviewRefusalReason =
+  | "reviewed_extraction_missing"
+  | "already_decided"
+  | "evidence_not_found";
+
+/**
  * The governed promotion: flip a pending document review to approved/rejected.
  * This is what turns review_required → committed for the readiness resolver.
  * Service-role scoped + audited; tenant + move are enforced in the predicate.
@@ -776,8 +794,29 @@ export async function decideEvidenceReview(
   evidenceId: string;
   familyKey: string | null;
   decision: ReviewDecision;
+  /**
+   * Which refusal this is, when `ok` is false. Three different situations used
+   * to share one `ok: false` and the route had no way to tell them apart, so it
+   * answered all three with `no_pending_review` — including the one where the
+   * evidence is not in this Move at all, whose reviewer was then told to reload
+   * and read a decision that does not exist. `familyKey` cannot stand in for
+   * this: `family_key` is nullable in the row, so an existing review can report
+   * the same `(decision: "pending", familyKey: null)` shape as a missing one.
+   * Undefined when `ok` is true.
+   */
+  reason?: EvidenceReviewRefusalReason;
 }> {
   const tenantKey = ctx.clientKey ?? "";
+  // The rows this promotion may MATCH, which is a read-scope question and not
+  // a question about which key a new row carries. `resolveDocFamilyReviews`
+  // already matches every key this tenant's own evidence may be stored under,
+  // so the cabinet shows a canonical-substrate-key row AS pending; scoped to
+  // the app client key alone this update matched nothing, every fallback below
+  // missed the same rows, and the route answered 409 `no_pending_review` for
+  // the very item on screen. Read and match scope have to agree or the control
+  // is a dead end. Per-tenant by construction; see
+  // `moveEvidenceReadTenantKeys`. Written VALUES stay keyed to `ctx.clientKey`.
+  const tenantKeys = moveEvidenceReadTenantKeys(ctx.clientKey);
   const sb = getAzureWriteFluentClient();
   let reviewedSourceRef: Record<string, unknown> | null = null;
   if (args.decision === "approved") {
@@ -790,12 +829,13 @@ export async function decideEvidenceReview(
         evidenceId: args.evidenceId,
         familyKey: null,
         decision: "pending",
+        reason: "reviewed_extraction_missing",
       };
     }
     const { data: pendingReview, error: pendingReviewError } = await sb
       .from("program_evidence_reviews")
       .select("source_ref")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .eq("evidence_id", args.evidenceId)
       .eq("decision", "pending")
@@ -828,7 +868,7 @@ export async function decideEvidenceReview(
           ? `Approved extraction version 1 after human review by ${ctx.userId}.`
           : `Reviewed ${args.decision} by ${ctx.userId} on the current-state evidence review.`),
     })
-    .eq("tenant_key", tenantKey)
+    .in("tenant_key", tenantKeys)
     .eq("program_id", args.moveId)
     .eq("evidence_id", args.evidenceId)
     .eq("decision", "pending")
@@ -839,7 +879,7 @@ export async function decideEvidenceReview(
     const { data: existingReview, error: existingReviewError } = await sb
       .from("program_evidence_reviews")
       .select("evidence_id, family_key, decision")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .eq("evidence_id", args.evidenceId)
       .maybeSingle();
@@ -863,6 +903,7 @@ export async function decideEvidenceReview(
         evidenceId: args.evidenceId,
         familyKey: existing.family_key,
         decision: existing.decision,
+        reason: "already_decided",
       };
     }
 
@@ -871,7 +912,7 @@ export async function decideEvidenceReview(
       .select(
         "id, evidence_type, title, confidence, phase, extracted_structured",
       )
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", args.moveId)
       .eq("id", args.evidenceId)
       .maybeSingle();
@@ -925,6 +966,7 @@ export async function decideEvidenceReview(
       evidenceId: args.evidenceId,
       familyKey: null,
       decision: "pending",
+      reason: "evidence_not_found",
     };
   }
 
@@ -962,6 +1004,12 @@ export async function resolveDocFamilyReviews(
   familyKey: string,
 ): Promise<DocFamilyReviewState> {
   const tenantKey = ctx.clientKey ?? "";
+  // Match any key this tenant's own evidence may be stored under, not just the
+  // app client key. A data-plane load writes the canonical substrate key, and
+  // a reader scoped to one key reported those approved rows as missing
+  // evidence — which is what the P2 readiness gate then counted as a hard gap.
+  // Per-tenant by construction; see `moveEvidenceReadTenantKeys`.
+  const tenantKeys = moveEvidenceReadTenantKeys(ctx.clientKey);
   const empty: DocFamilyReviewState = {
     familyKey,
     approved: 0,
@@ -976,7 +1024,7 @@ export async function resolveDocFamilyReviews(
     const { data, error } = await sb
       .from("program_evidence_reviews")
       .select("id, evidence_id, decision, source_ref, created_at")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeys)
       .eq("program_id", moveId)
       .eq("family_key", familyKey);
     if (error || !Array.isArray(data)) return empty;
@@ -1033,7 +1081,7 @@ export async function resolveDocFamilyReviews(
       const { data: evidenceRows } = await sb
         .from("program_evidence_items")
         .select("id, extracted_structured, extracted_text, summary, title")
-        .eq("tenant_key", tenantKey)
+        .in("tenant_key", tenantKeys)
         .eq("program_id", moveId)
         .in("id", allEvidenceIds);
       if (Array.isArray(evidenceRows)) {

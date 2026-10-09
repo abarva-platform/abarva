@@ -86,6 +86,40 @@ const WIRED_DIRECTORIES = [
     directory: `${PROGRAMS_ROOT}/attachments/__tests__`,
     minimumSuites: 4,
   },
+  /**
+   * `stage-readiness-workbooks/__tests__` joined on 8 Oct, and it is the first
+   * entry here that was already counted COVERED before it was added. The row in
+   * the dark-set log below records T-493 wiring it on 27 Sep and the dark count
+   * falling 18 → 17 — both true, and neither meant a merge could fail on it. The
+   * only workflow that named it was `unit-suites.yml`, whose job is in none of
+   * the 19 required contexts, so every suite in it ran where nothing could block
+   * on the answer.
+   *
+   * That is a gap in what the census ASKS, not a drift in what it measured: a
+   * directory is covered when some workflow reaches it, and "reached by a
+   * REQUIRED workflow" is a different question that no gate asks. This entry
+   * closes it for this directory only, by naming the directory in the catalog
+   * workflow the case below pins. Measured literally across
+   * `.github/workflows`, 40 other test directories are still named only by
+   * `unit-suites.yml`; that count is an upper bound on merge-darkness, because
+   * a required workflow can also reach a directory through an npm script, which
+   * a literal read of the YAML does not follow.
+   *
+   * Taken first of the 40 because of what it guards rather than because it
+   * ranked: `applyStageReadinessToEvidencePackets` decides `canApprove` and
+   * returns the 409 `transition_evidence_incomplete` on the phase-gate approval
+   * route, so these suites hold a hard precondition on both the Charter and the
+   * Discover gate.
+   *
+   * GREEN when it was measured, so wiring it buys the future rather than
+   * repairing the past: 10 suites, 101 tests, 0.7s. The log row below says
+   * "all five suites" because five is what the directory held on 27 Sep; the
+   * floor here is the ten it holds now.
+   */
+  {
+    directory: `${PROGRAMS_ROOT}/stage-readiness-workbooks/__tests__`,
+    minimumSuites: 10,
+  },
 ] as const;
 
 /**
@@ -153,6 +187,15 @@ const WIRED_DIRECTORIES = [
  * `src/lib/programs` left the set, that one, and none entered. A FULL wire — all
  * five suites are owned by one step naming the directory and nothing in it is
  * quarantined — so the number and "directories now fully wired" agree here too.
+ *
+ * What that row does NOT say, and what this one is added to say: the step it
+ * went into was in `unit-suites.yml`, whose job is in none of the 19 required
+ * contexts. The directory left the dark set and still could not fail a merge,
+ * because leaving this set means "some workflow reaches it" and nothing here
+ * asks "which one". It is wired into the required catalog workflow as of 8 Oct
+ * — see its entry in `WIRED_DIRECTORIES`, which is where that stronger claim is
+ * actually pinned. Read every row above with the same caution: leaving this set
+ * is not by itself evidence that a merge can fail on the directory.
  *
  * Every one of those diffs had to be taken by hand, because this case held a
  * COUNT while its sibling `product-directory-ci-coverage.test.ts` held a LIST.

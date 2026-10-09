@@ -38,6 +38,11 @@ import {
 } from "@/lib/deliverables/shared/office-text-extract";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
+import {
+  refuseDeliverableNotInMove,
+  refuseMoveNotReadable,
+  refuseSignOffNotApplied,
+} from "@/lib/programs/deliverable-sign-off-outcome";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import {
@@ -60,11 +65,23 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import { classifyP3ArchitectureLineagePrecondition } from "@/lib/programs/p3-architecture-lineage-precondition";
 import {
   approvedMoveEvidenceRevisionForPhase,
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  approvedEvidenceBasisRefusalCode,
+  classifyApprovedEvidenceBasisRefusal,
+  describeApprovedEvidenceBasisRefusal,
+  unevaluableApprovedEvidenceBasisRefusal,
+} from "@/lib/programs/approved-evidence-basis-refusal";
+import {
+  stampApprovedEvidenceLineage,
+  type ApprovedEvidenceLineageStamp,
+} from "@/lib/programs/deliverables/approved-evidence-lineage";
+import { resolveApprovedEvidenceBasisPhaseScope } from "@/lib/programs/approved-evidence-basis-phase-scope";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 // Union of every deliberately registered/agent-authorable deliverable type
@@ -228,7 +245,13 @@ export async function POST(
     const ctx = await requireTenancy();
     const { supabase } = await getProgramsRouteSupabase("mutation");
     const program = await getProgramById(ctx, programId, { supabase });
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!program) {
+      const refusal = refuseMoveNotReadable();
+      return Response.json(
+        { error: refusal.code, detail: refusal.detail },
+        { status: refusal.httpStatus },
+      );
+    }
 
     const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
     if (
@@ -247,26 +270,48 @@ export async function POST(
 
     const { data: deliverableRow, error: deliverableError } = await supabase
       .from("deliverables_v2")
-      .select("deliverable_type_key, title, current_version")
+      // `status` and `signed_off_version` are read for the refusal naming at the
+      // end of this route: the sign-off write is guarded on status, so without
+      // them a write that matches nothing cannot be told from a missing row.
+      .select(
+        "deliverable_type_key, title, current_version, status, signed_off_version",
+      )
       .eq("id", deliverableId)
       .eq("engagement_id", programId)
       .maybeSingle();
     if (deliverableError) throw deliverableError;
-    if (!deliverableRow)
-      return Response.json({ error: "not_found" }, { status: 404 });
+    if (!deliverableRow) {
+      const refusal = refuseDeliverableNotInMove();
+      return Response.json(
+        { error: refusal.code, detail: refusal.detail },
+        { status: refusal.httpStatus },
+      );
+    }
     const {
       deliverable_type_key: deliverableTypeKey,
       title: deliverableTitle,
       current_version: currentVersion,
+      status: deliverableStatusAtRead,
+      signed_off_version: deliverableSignedOffVersionAtRead,
     } = deliverableRow as {
       deliverable_type_key: string;
       title: string;
       current_version: number | null;
+      status: string | null;
+      signed_off_version: number | null;
     };
     const deliverablePhase =
       DELIVERABLE_REGISTRY.find(
         (spec) => spec.deliverableTypeKey === deliverableTypeKey,
       )?.phase ?? 0;
+    // A separate question from the phase this artifact is STAMPED with: whether
+    // an approved-evidence currency comparison can run for this key at all.
+    // `isApprovedMoveEvidenceBasisCurrent` refuses to compare outside P1-P5 and
+    // answers `false` there for every input, so that `false` may not be read as
+    // "superseded". Owned by the component that owns the bounds; this route
+    // used to confine only the lower one.
+    const evidenceBasisPhaseScope =
+      resolveApprovedEvidenceBasisPhaseScope(deliverableTypeKey);
 
     if (!RECOGNIZED_DELIVERABLE_TYPE_KEYS.has(deliverableTypeKey)) {
       return Response.json(
@@ -353,14 +398,11 @@ export async function POST(
     > | null = null;
     let readinessScannedArtifacts: GeneratedOfficeScanArtifact[] = [];
     let generatedApprovalLineage:
-      | {
+      | ({
           source: "moves_program_generate";
           generatedArtifactId?: string;
-          evidenceSnapshotHash: string;
-          phaseEvidenceSnapshotHash: string;
-          evidenceSnapshotScope: "phase";
           approvalMode: "approve_generated_deliverable_as_is";
-        }
+        } & ApprovedEvidenceLineageStamp)
       | undefined;
     let generatedApprovalArtifactId: string | undefined;
 
@@ -415,29 +457,45 @@ export async function POST(
             : typeof versionStructuredData.evidenceSnapshotHash === "string"
               ? versionStructuredData.evidenceSnapshotHash
               : null;
-        if (
-          deliverablePhase < 1 ||
-          !evidenceSnapshot ||
-          !isApprovedMoveEvidenceBasisCurrent({
-            snapshot: evidenceSnapshot,
-            phase: deliverablePhase,
-            recordedRevision,
-            scope:
-              typeof versionStructuredData.evidenceSnapshotScope === "string"
-                ? versionStructuredData.evidenceSnapshotScope
-                : null,
-            generatedAt:
-              typeof (versionRow as { created_at?: string | null } | null)
-                ?.created_at === "string"
-                ? (versionRow as { created_at: string }).created_at
-                : null,
-          })
-        ) {
+        const evidenceBasisRefusal = classifyApprovedEvidenceBasisRefusal({
+          basisEvaluable:
+            Boolean(evidenceSnapshot) && evidenceBasisPhaseScope.evaluable,
+          cause: !ctx.clientKey
+            ? "tenant_scope_unresolved"
+            : !evidenceBasisPhaseScope.evaluable
+              ? evidenceBasisPhaseScope.cause
+              : "snapshot_unreadable",
+          recordedRevision,
+          basisIsCurrent:
+            Boolean(evidenceSnapshot) &&
+            isApprovedMoveEvidenceBasisCurrent({
+              snapshot: evidenceSnapshot,
+              phase: deliverablePhase,
+              recordedRevision,
+              scope:
+                typeof versionStructuredData.evidenceSnapshotScope === "string"
+                  ? versionStructuredData.evidenceSnapshotScope
+                  : null,
+              generatedAt:
+                typeof (versionRow as { created_at?: string | null } | null)
+                  ?.created_at === "string"
+                  ? (versionRow as { created_at: string }).created_at
+                  : null,
+            }),
+        });
+        // The `!evidenceSnapshot` disjunct narrows the snapshot for the lineage
+        // stamp below; a null snapshot already classifies as `basis_unevaluable`,
+        // so the fallback resolves to that same refusal.
+        if (evidenceBasisRefusal || !evidenceSnapshot) {
+          const refusal =
+            evidenceBasisRefusal ?? unevaluableApprovedEvidenceBasisRefusal();
           return Response.json(
             {
-              error: "generated_artifact_evidence_not_current",
-              detail:
-                "This generated version is not bound to the current approved evidence. Rebuild it from the current evidence set before approval.",
+              error: approvedEvidenceBasisRefusalCode(refusal),
+              detail: describeApprovedEvidenceBasisRefusal(
+                refusal,
+                "approval",
+              ),
             },
             { status: 409 },
           );
@@ -482,12 +540,16 @@ export async function POST(
                     versionStructuredData.generated_artifact_id,
                 }
               : {}),
-          evidenceSnapshotHash: evidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-            evidenceSnapshot,
-            deliverablePhase,
-          ),
-          evidenceSnapshotScope: "phase",
+          // Re-read at approval time, so the moment is stamped with them. Without
+          // it the deliverable's own currency check cannot run and this approval
+          // reads as stale wherever no artifact row is linked.
+          ...stampApprovedEvidenceLineage({
+            evidenceSnapshotHash: evidenceSnapshot.revision,
+            phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+              evidenceSnapshot,
+              deliverablePhase,
+            ),
+          }),
           approvalMode: "approve_generated_deliverable_as_is",
         };
       }
@@ -573,30 +635,45 @@ export async function POST(
       readinessScannedArtifacts = scanContent.scannedArtifacts;
 
       if (P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)) {
-        if (!ctx.clientKey) {
-          return Response.json(
-            {
-              error: "architecture_lineage_not_current",
-              detail: "The active tenant key is unavailable.",
-            },
-            { status: 409 },
-          );
-        }
         const structuredData = (
           versionRow as {
             structured_data?: Record<string, unknown> | null;
           } | null
         )?.structured_data;
-        const approved = await loadApprovedSolutionApproach({
-          moveId: programId,
-          clientId: ctx.clientId,
+        const approved = ctx.clientKey
+          ? await loadApprovedSolutionApproach({
+              moveId: programId,
+              clientId: ctx.clientId,
+            })
+          : null;
+        const freshness = ctx.clientKey
+          ? await loadCurrentMoveContextExtractFreshness({
+              tenantKey: ctx.clientKey,
+              moveId: programId,
+              phase: 3,
+            })
+          : null;
+        // This path requires only that an extract exist; its currency is settled
+        // by the lineage comparison below. `staleRefuses: false` keeps that.
+        const precondition = classifyP3ArchitectureLineagePrecondition({
+          clientKey: ctx.clientKey,
+          approvedOptionPresent: Boolean(approved),
+          freshness,
+          staleRefuses: false,
         });
-        const freshness = await loadCurrentMoveContextExtractFreshness({
-          tenantKey: ctx.clientKey,
-          moveId: programId,
-          phase: 3,
-        });
-        if (!approved || !freshness?.evidenceFingerprint) {
+        if (precondition) {
+          return Response.json(
+            {
+              error: "architecture_lineage_not_current",
+              detail: precondition.detail,
+            },
+            { status: 409 },
+          );
+        }
+        if (!approved || !freshness) {
+          // Unreachable: the classifier refuses on every input that leaves
+          // either read unusable. Kept so the comparison below narrows without
+          // a non-null assertion.
           return Response.json(
             {
               error: "architecture_lineage_not_current",
@@ -775,8 +852,16 @@ export async function POST(
       approvalLineage: generatedApprovalLineage,
       approvalRationale,
     });
-    if (!signedOff)
-      return Response.json({ error: "not_found" }, { status: 404 });
+    if (!signedOff) {
+      const refusal = refuseSignOffNotApplied({
+        statusAtRead: deliverableStatusAtRead,
+        signedOffVersionAtRead: deliverableSignedOffVersionAtRead,
+      });
+      return Response.json(
+        { error: refusal.code, detail: refusal.detail },
+        { status: refusal.httpStatus },
+      );
+    }
 
     // Record an override, not the absence of one. A deliverable signed off
     // over known client-visible findings is a materially different fact from

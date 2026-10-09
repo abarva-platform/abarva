@@ -1,6 +1,9 @@
 export {};
 
-import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
+import {
+  DELIVERABLE_PROFILES,
+  MOVES_DELIVERABLE_KEYS,
+} from "@/lib/deliverables/profiles/registry";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import {
   SLIDE_BANDS,
@@ -9,6 +12,18 @@ import {
 } from "../slide-contract";
 
 describe("slide contract", () => {
+  it("client-facing profiles declare output format, altitude, exhibits, and section outline", () => {
+    expect(MOVES_DELIVERABLE_KEYS.length).toBeGreaterThan(15);
+    for (const profile of Object.values(DELIVERABLE_PROFILES).filter(
+      (entry) => entry.clientFacing,
+    )) {
+      expect(profile.defaultFormat).toBeTruthy();
+      expect(profile.allowedDepth).toBeTruthy();
+      expect(profile.requiredExhibits.length).toBeGreaterThan(0);
+      expect(profile.sectionOutline?.length).toBeGreaterThan(0);
+    }
+  });
+
   it("enforces the ceiling, which is the half that matters", () => {
     const v = judgeSlideCount("business_case", 30);
     expect(v.ok).toBe(false);

@@ -20,6 +20,10 @@ import {
 } from "@/lib/deliverables/phase-word-equivalent";
 import { extractOfficeText } from "@/lib/deliverables/shared/office-text-extract";
 import { getPhaseDeliverablePackageContract } from "@/lib/programs/phase-deliverable-package-contract";
+import {
+  moveReviewRegenerateRefusalDetail,
+  type MoveReviewRegenerateRefusalCode,
+} from "@/lib/programs/move-review-regenerate-refusal";
 import { streamAgentTurn } from "@/lib/agent/stream";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 
@@ -252,8 +256,8 @@ export async function POST(
       return Response.json(
         {
           ok: false,
-          error: "feedback_required",
-          detail: "Review feedback is required before regeneration.",
+          error: "feedback_required" satisfies MoveReviewRegenerateRefusalCode,
+          detail: moveReviewRegenerateRefusalDetail("feedback_required"),
         },
         { status: 400 },
       );
@@ -262,7 +266,11 @@ export async function POST(
     const artifact = await getMoveArtifactForTenant(ctx, artifactId);
     if (!artifact || artifact.move_id !== programId) {
       return Response.json(
-        { ok: false, error: "artifact_not_found" },
+        {
+          ok: false,
+          error: "artifact_not_found" satisfies MoveReviewRegenerateRefusalCode,
+          detail: moveReviewRegenerateRefusalDetail("artifact_not_found"),
+        },
         { status: 404 },
       );
     }
@@ -280,9 +288,11 @@ export async function POST(
       return Response.json(
         {
           ok: false,
-          error: "source_artifact_not_extractable",
-          detail:
-            "The source artifact could not be read as a supported text, DOCX, or PPTX document. No revised version was created.",
+          error:
+            "source_artifact_not_extractable" satisfies MoveReviewRegenerateRefusalCode,
+          detail: moveReviewRegenerateRefusalDetail(
+            "source_artifact_not_extractable",
+          ),
         },
         { status: 422 },
       );
@@ -378,70 +388,92 @@ export async function POST(
       },
     });
 
-    const deliverablePackageContract = getPhaseDeliverablePackageContract({
-      artifact: artifactKey,
-      phase: artifact.phase ?? 0,
-    });
-    const editableDocx = await buildPhaseWordEquivalentDocx({
-      artifact: artifactKey,
-      phase: artifact.phase ?? 0,
-      moveName: artifact.title,
-      title: plan.title,
-      html: regeneratedHtml,
-      generationMode: "draft",
-      reviewStatus: "review_required",
-      qualityStatus: plan.qualityStatus,
-      goldenBarStatus: plan.goldenBarStatus,
-      contract: deliverablePackageContract,
-      feedbackSummary: plan.feedbackItems.map((item) => item.requestedChange),
-    });
-    const editableSaved = await saveMoveArtifact(ctx, {
-      moveId: programId,
-      phase: artifact.phase ?? 0,
-      artifactType: `${artifact.artifact_type}_editable_docx`,
-      artifactFamily: artifact.artifact_family as ArtifactFamily,
-      title: `${plan.title} — Editable Deliverable`,
-      description:
-        "Editable Word-equivalent regenerated from client review feedback. Requires review before final use.",
-      fileName: phaseWordEquivalentFileName({
+    // Everything below this point runs AFTER the revised artifact is stored.
+    // A throw here used to reach the handler's catch, which reported it as an
+    // unbodied 500 — telling a reviewer nothing about the version that had
+    // already landed. It gets its own arm so the refusal can say so.
+    let editableSaved: Awaited<ReturnType<typeof saveMoveArtifact>>;
+    try {
+      const deliverablePackageContract = getPhaseDeliverablePackageContract({
+        artifact: artifactKey,
+        phase: artifact.phase ?? 0,
+      });
+      const editableDocx = await buildPhaseWordEquivalentDocx({
+        artifact: artifactKey,
+        phase: artifact.phase ?? 0,
+        moveName: artifact.title,
         title: plan.title,
-        artifact: artifact.artifact_type,
-        version: saved.version,
-      }),
-      fileFormat: "docx",
-      body: editableDocx,
-      status: "review_required",
-      generatedBy: ctx.email ?? ctx.userId ?? "review-regenerate",
-      qualityScore: plan.qualityScore,
-      unsupportedClaimsCount: 0,
-      sourceBasis: "client_review_feedback",
-      confidence: "medium",
-      citationReady: false,
-      metadata: {
-        ...(artifact.metadata ?? {}),
-        ...plan.metadata,
-        outputFormat: "docx",
-        outputRole: "docx_editable_phase_record",
-        provenanceCategory: "abarva_generated_deliverable",
-        pairedVisualCompanionArtifactId: saved.artifactId,
-        visualCompanionArtifactType: artifact.artifact_type,
-        editableWordEquivalentRequired:
-          deliverablePackageContract.formalEditableRecordRequired,
-        primaryEditableRecordLabel:
-          deliverablePackageContract.primaryEditableRecordLabel,
-        requiredCompanionOutputs: deliverablePackageContract.outputs,
-        wordEquivalentSections: deliverablePackageContract.wordDocumentSections,
-        requiredWorkshopEvidence:
-          deliverablePackageContract.requiredWorkshopEvidence,
-        provenanceRules: deliverablePackageContract.provenanceRules,
-        sourceArtifactTitle: artifact.title,
-        regenerationMode,
-        originalArtifactBodyRetrieved: Boolean(original),
-        regeneratedFromArtifactId: artifact.artifact_id,
+        html: regeneratedHtml,
+        generationMode: "draft",
         reviewStatus: "review_required",
-        clientFacingVersionLabel: `Version ${saved.version}`,
-      },
-    });
+        qualityStatus: plan.qualityStatus,
+        goldenBarStatus: plan.goldenBarStatus,
+        contract: deliverablePackageContract,
+        feedbackSummary: plan.feedbackItems.map((item) => item.requestedChange),
+      });
+      editableSaved = await saveMoveArtifact(ctx, {
+        moveId: programId,
+        phase: artifact.phase ?? 0,
+        artifactType: `${artifact.artifact_type}_editable_docx`,
+        artifactFamily: artifact.artifact_family as ArtifactFamily,
+        title: `${plan.title} — Editable Deliverable`,
+        description:
+          "Editable Word-equivalent regenerated from client review feedback. Requires review before final use.",
+        fileName: phaseWordEquivalentFileName({
+          title: plan.title,
+          artifact: artifact.artifact_type,
+          version: saved.version,
+        }),
+        fileFormat: "docx",
+        body: editableDocx,
+        status: "review_required",
+        generatedBy: ctx.email ?? ctx.userId ?? "review-regenerate",
+        qualityScore: plan.qualityScore,
+        unsupportedClaimsCount: 0,
+        sourceBasis: "client_review_feedback",
+        confidence: "medium",
+        citationReady: false,
+        metadata: {
+          ...(artifact.metadata ?? {}),
+          ...plan.metadata,
+          outputFormat: "docx",
+          outputRole: "docx_editable_phase_record",
+          provenanceCategory: "abarva_generated_deliverable",
+          pairedVisualCompanionArtifactId: saved.artifactId,
+          visualCompanionArtifactType: artifact.artifact_type,
+          editableWordEquivalentRequired:
+            deliverablePackageContract.formalEditableRecordRequired,
+          primaryEditableRecordLabel:
+            deliverablePackageContract.primaryEditableRecordLabel,
+          requiredCompanionOutputs: deliverablePackageContract.outputs,
+          wordEquivalentSections:
+            deliverablePackageContract.wordDocumentSections,
+          requiredWorkshopEvidence:
+            deliverablePackageContract.requiredWorkshopEvidence,
+          provenanceRules: deliverablePackageContract.provenanceRules,
+          sourceArtifactTitle: artifact.title,
+          regenerationMode,
+          originalArtifactBodyRetrieved: Boolean(original),
+          regeneratedFromArtifactId: artifact.artifact_id,
+          reviewStatus: "review_required",
+          clientFacingVersionLabel: `Version ${saved.version}`,
+        },
+      });
+    } catch {
+      return Response.json(
+        {
+          ok: false,
+          error:
+            "editable_companion_failed" satisfies MoveReviewRegenerateRefusalCode,
+          detail: moveReviewRegenerateRefusalDetail(
+            "editable_companion_failed",
+          ),
+          recordedArtifactId: saved.artifactId,
+          recordedVersion: saved.version,
+        },
+        { status: 500 },
+      );
+    }
 
     return Response.json({
       ok: true,
@@ -463,6 +495,21 @@ export async function POST(
       },
     });
   } catch (err) {
-    return tenancyErrorResponse(err);
+    try {
+      return tenancyErrorResponse(err);
+    } catch {
+      // `tenancyErrorResponse` re-throws anything that is not a TenancyError.
+      // That second throw rejected this handler, so the only report a reviewer
+      // got was an unbodied `HTTP 500`. This arm is reachable on EITHER side
+      // of the two stores, so its sentence claims neither.
+      return Response.json(
+        {
+          ok: false,
+          error: "internal_error" satisfies MoveReviewRegenerateRefusalCode,
+          detail: moveReviewRegenerateRefusalDetail("internal_error"),
+        },
+        { status: 500 },
+      );
+    }
   }
 }

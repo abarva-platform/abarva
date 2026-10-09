@@ -19,6 +19,11 @@ import {
   type StageReadinessProposalDecision,
   type StageReadinessWorkbookProposalSet,
 } from "@/lib/programs/stage-readiness-workbooks/proposals";
+import {
+  loadStageReadinessStoredReview,
+  mergeStageReadinessReviewDecisions,
+} from "@/lib/programs/stage-readiness-workbooks/review-accumulation";
+import { carryForwardStageReadinessDecisions } from "@/lib/programs/stage-readiness-workbooks/review-carry-forward";
 import { buildStageReadinessWorkbookSpec } from "@/lib/programs/stage-readiness-workbooks/resolver";
 import { renderStageReadinessWorkbookXlsx } from "@/lib/programs/stage-readiness-workbooks/xlsx";
 
@@ -480,13 +485,54 @@ export async function PATCH(
       );
     }
 
+    // The stored proposal set is always all-pending, so a review recorded in
+    // more than one batch has to carry the current review's dispositions
+    // forward or this batch would discard them. And a corrected re-upload is a
+    // NEW set with new ids for every row, so its predecessor's review restores
+    // nothing by id — those decisions are matched on answer text instead. One
+    // stored review, read once; its `kind` decides which reading applies, so
+    // the two can never double-count a decision. See `review-accumulation` and
+    // `review-carry-forward`.
+    //
+    // The `kind` split states that intent; it is not load-bearing for the
+    // double-count, and a mutation that feeds BOTH readings every stored
+    // proposal survives for that reason. The two readings cannot contaminate
+    // each other whichever way they are wired: the merge matches on
+    // `proposalId`, which a superseded set shares none of, and the
+    // carry-forward matches on answer text but skips anything already decided
+    // — and a question id appears at most once per set, so within one set it
+    // can only re-derive what the merge already decided. Keep the split so the
+    // two policies stay separable if their guards ever diverge.
+    const storedReview = await loadStageReadinessStoredReview(
+      ctx,
+      programId,
+      loaded.proposalSet.transition.fromPhase,
+      {
+        proposalSetId: loaded.proposalSet.proposalSetId,
+        artifactId: proposalSetArtifactId,
+        artifactVersion: loaded.artifactVersion,
+      },
+    );
+    const batchDecisions = mergeStageReadinessReviewDecisions({
+      proposals: loaded.proposalSet.proposals,
+      priorReviewProposals:
+        storedReview?.kind === "current_set" ? storedReview.proposals : null,
+      decisions,
+    });
+    const carried = carryForwardStageReadinessDecisions({
+      proposals: loaded.proposalSet.proposals,
+      priorReviewProposals:
+        storedReview?.kind === "superseded_set" ? storedReview.proposals : null,
+      decisions: batchDecisions,
+    });
+
     const persistedReview = await persistStageReadinessProposalReview({
       ctx,
       program,
       proposalSet: loaded.proposalSet,
       sourceProposalSetArtifactId: proposalSetArtifactId,
       sourceProposalSetArtifactVersion: loaded.artifactVersion,
-      decisions,
+      decisions: carried.decisions,
     });
 
     return Response.json({
@@ -512,8 +558,11 @@ export async function PATCH(
         acceptedResponses:
           persistedReview.proposalReview.acceptedResponses.length,
         blobStored: persistedReview.blobStored,
+        carriedForwardFromPriorUpload: carried.carriedForwardCount,
         message:
-          "Human review recorded. Only accepted workbook responses can feed the next phase context.",
+          carried.carriedForwardCount > 0
+            ? `Human review recorded. ${carried.carriedForwardCount} decision(s) from the previous upload were kept for responses whose question, answer, and source are unchanged. Only accepted workbook responses can feed the next phase context.`
+            : "Human review recorded. Only accepted workbook responses can feed the next phase context.",
       },
     });
   } catch (error) {

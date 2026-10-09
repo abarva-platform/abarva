@@ -24,6 +24,8 @@ import {
   resolveMoveConfirmedSolutionRoute,
 } from "@/lib/programs/phase-capture-values-for-move";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
+import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
+import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,7 +78,13 @@ export async function POST(
     const ctx = await requireTenancy();
     const { programId } = await params;
     const program = await getProgramById(ctx, programId);
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    // The drafting panel renders this body through `detail || error`, so a bare
+    // code printed the literal `not_found` into its alert. The sentence is
+    // cause-blind by construction -- see move-unreadable-refusal. No
+    // `resubmitCanSatisfy`: this ladder does not read it.
+    if (!program) {
+      return Response.json(moveUnreadableRefusalBody(), { status: 404 });
+    }
 
     const body = (await req.json().catch(() => ({}))) as { phase?: unknown };
     const phase = parsePhase(body.phase);
@@ -140,9 +148,8 @@ export async function POST(
       /* not a tenancy error */
     }
     console.error("[POST /api/v1/programs/:programId/phase-input-draft]", err);
-    return Response.json(
-      { error: "internal_error", message: (err as Error).message },
-      { status: 500 },
-    );
+    return Response.json(unexpectedWalkStepFailureBody("phase_input_draft"), {
+      status: 500,
+    });
   }
 }

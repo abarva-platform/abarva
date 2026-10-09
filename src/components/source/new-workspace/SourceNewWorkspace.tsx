@@ -7,6 +7,7 @@ import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
 import { SourceNewNdaCapture } from "./SourceNewNdaCapture";
+import { SourceNewProspectiveSupplierForm } from "./SourceNewProspectiveSupplierForm";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AnswerCitation } from "@/lib/ava-answer/contract";
@@ -31,6 +32,7 @@ import {
 } from "@/lib/source/new-workspace/phase-state";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
+import { recordedScopeFacts } from "@/lib/source/new-workspace/recorded-scope-facts";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewResponseIntake } from "@/lib/source/new-workspace/response-intake";
 import {
@@ -625,10 +627,25 @@ export function SourceNewWorkspace({
                         <dt>Need</dt>
                         <dd>{fact(event.trigger)}</dd>
                       </div>
-                      <div>
-                        <dt>Scope</dt>
-                        <dd>{fact(event.scope)}</dd>
-                      </div>
+                      {/*
+                        The scope column holds four labelled facts, not prose.
+                        Rendered whole it read as one paragraph. Split here, from
+                        the same parser the approval surface uses, so the two
+                        cannot disagree about what the column says.
+                      */}
+                      {recordedScopeFacts(event.scope).length > 0 ? (
+                        recordedScopeFacts(event.scope).map((row) => (
+                          <div key={row.key}>
+                            <dt>{row.label}</dt>
+                            <dd>{row.value}</dd>
+                          </div>
+                        ))
+                      ) : (
+                        <div>
+                          <dt>Scope</dt>
+                          <dd>{fact(event.scope)}</dd>
+                        </div>
+                      )}
                       <div>
                         <dt>Decision owner</dt>
                         <dd>{fact(event.decisionOwner)}</dd>
@@ -1344,11 +1361,19 @@ function SourceNewStage04VendorPanelView({
       <p className="snw-eyebrow">Stage 04 · Vendor panel</p>
       <h3>{posture}</h3>
       <p>
-        This read-only panel separates accepted candidates the organization is
+        This panel separates accepted candidates the organization is
         already under contract with from those it is not, and names selected
         respondents only when human selection evidence is recorded. It sends
         nothing, contacts nobody, and selects no respondent.
       </p>
+      <SourceNewProspectiveSupplierForm
+        eventId={event.id}
+        requestVersionId={event.requestAuthorityVersionId ?? null}
+        canOriginate={
+          event.requestVersionApproval === "accepted" &&
+          panel.suggestions.status !== "blocked"
+        }
+      />
       <div className="snw-known">
         <h4>Suggested for review</h4>
         {panel.suggestions.status === "blocked" ? (
@@ -1377,7 +1402,9 @@ function SourceNewStage04VendorPanelView({
                 {`. Contact policy: ${contactPolicyLabel(row.contactPolicy)}`}
                 {`. Contact readiness: ${row.contactReadiness.replaceAll("_", " ")}`}
                 {`. Source: ${row.sourceReference}.`}
-                {event.requestAuthorityVersionId &&
+                {panel.rows.some((accepted) => accepted.legalEntityId === row.supplierId) ? (
+                  <p className="snw-note">Accepted on this event.</p>
+                ) : event.requestAuthorityVersionId &&
                 event.requestVersionApproval === "accepted" ? (
                   <form
                     className="snw-inline-form"

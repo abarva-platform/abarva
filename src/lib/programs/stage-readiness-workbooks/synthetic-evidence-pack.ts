@@ -52,6 +52,9 @@ function syntheticHeader(spec: StageReadinessWorkbookSpec): string {
     `Move: ${spec.moveName}`,
     `Phase: P${spec.phase} to P${spec.nextPhase}`,
     `Workbook: ${spec.workbookId}`,
+    // The sample rows are shaped by the same resolved archetype as the
+    // workbook's questions, so the pack carries the same provenance sentence.
+    `Question set: ${spec.archetypeBasis.statement}`,
     "",
   ].join("\n");
 }

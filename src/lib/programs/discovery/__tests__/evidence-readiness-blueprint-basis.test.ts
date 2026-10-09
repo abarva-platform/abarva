@@ -91,10 +91,12 @@ describe("the loader's own call site passes the resolved basis through", () => {
   });
 
   it("hands the pack builder the basis and the discarded declaration", () => {
-    const call = source.slice(
-      source.indexOf("return evaluateDiscoveryEvidenceReadiness({"),
-    );
-    expect(call).not.toBe("");
+    // Anchor on the CALL, not on `return ...` preceding it: the loader may
+    // wrap the pack to add non-grading fields, and this case is about the
+    // arguments handed to the evaluator, not the statement shape around it.
+    const callAt = source.indexOf("evaluateDiscoveryEvidenceReadiness({");
+    expect(callAt).toBeGreaterThan(-1);
+    const call = source.slice(callAt);
     const args = call.slice(0, call.indexOf("evidenceItems:"));
     expect(args).toContain("blueprintBasis: resolution.basis");
     expect(args).toContain(

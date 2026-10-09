@@ -12,6 +12,15 @@ import { createHash } from "node:crypto";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import {
+  moveArtifactBytesNeverRetained,
+  type MoveArtifactDownloadRefusalReason,
+} from "@/lib/programs/move-artifact-download-refusal";
+import {
+  MOVE_ARTIFACT_SUPERSEDE_FAILED,
+  MOVE_ARTIFACT_VERSION_LINEAGE_UNREADABLE,
+  resolveMoveArtifactVersionLineage,
+} from "./move-artifact-version-lineage";
 
 const BUCKET = process.env.DATA_PLANE_OBJECT_STORE_CONTAINER ?? "context-drops";
 
@@ -135,28 +144,32 @@ export async function saveMoveArtifact(
   const sha = createHash("sha256").update(body).digest("hex");
   const family = input.artifactFamily ?? "generated_deliverable";
 
-  // Next version for this (move, artifactType) among current rows.
-  let version = 1;
-  let priorId: string | null = null;
-  try {
-    const { data } = await sb
+  // Next version for this (move, artifactType) among current rows. The version
+  // is the blob path, so a failed read cannot be answered with v1 — see
+  // `move-artifact-version-lineage`. This refusal precedes both writes.
+  const lineage = resolveMoveArtifactVersionLineage(
+    await sb
       .from("move_artifacts")
       .select("artifact_id, version")
       .eq("move_id", input.moveId)
       .eq("artifact_type", input.artifactType)
       .eq("lifecycle_state", "current")
       .order("version", { ascending: false })
-      .limit(1);
-    const prior = (
-      data as Array<{ artifact_id: string; version: number }>
-    )?.[0];
-    if (prior) {
-      version = prior.version + 1;
-      priorId = prior.artifact_id;
-    }
-  } catch {
-    /* fresh */
+      .limit(1),
+  );
+  if (lineage.kind === "unreadable") {
+    console.warn(
+      `[move-artifacts] ${MOVE_ARTIFACT_VERSION_LINEAGE_UNREADABLE}`,
+      {
+        moveId: input.moveId,
+        artifactType: input.artifactType,
+        reason: lineage.reason,
+      },
+    );
+    throw new Error(MOVE_ARTIFACT_VERSION_LINEAGE_UNREADABLE);
   }
+  const version = lineage.version;
+  const priorId = lineage.priorArtifactId;
 
   const folder =
     family === "uploaded_evidence"
@@ -224,8 +237,14 @@ export async function saveMoveArtifact(
   const artifactId = (data as { artifact_id: string }).artifact_id;
 
   // Supersede the prior current of this type (version history preserved).
+  // Both writes have already committed here, so a failure must NOT throw — the
+  // caller would read a refusal as "nothing landed" and file a second copy.
+  // It leaves two rows at `lifecycle_state: "current"` for one
+  // (move_id, artifact_type); readers order `created_at DESC`, so the new row
+  // still wins, but the duplicate is visible in the cabinet and is an operator
+  // repair, not something the uploader can act on. Hence a log, not a field.
   if (priorId) {
-    await sb
+    const { error: supersedeError } = await sb
       .from("move_artifacts")
       .update({
         lifecycle_state: "superseded",
@@ -234,6 +253,15 @@ export async function saveMoveArtifact(
         updated_at: new Date().toISOString(),
       })
       .eq("artifact_id", priorId);
+    if (supersedeError) {
+      console.warn(`[move-artifacts] ${MOVE_ARTIFACT_SUPERSEDE_FAILED}`, {
+        moveId: input.moveId,
+        artifactType: input.artifactType,
+        priorArtifactId: priorId,
+        supersededByArtifactId: artifactId,
+        detail: supersedeError.message,
+      });
+    }
   }
 
   return { artifactId, version, blobPath, blobStored };
@@ -306,39 +334,101 @@ export async function getMoveArtifactForTenant(
   }
 }
 
+export interface MoveArtifactBytes {
+  bytes: Buffer;
+  fileName: string;
+  fileFormat: string;
+}
+
+/**
+ * The outcome of an artifact download attempt, with the cause NAMED.
+ *
+ * `downloadArtifactBytes` collapses all three failures to `null`, which is all
+ * its nine other callers need (they each have their own fallback). The one
+ * caller that reports the failure to a person — the cabinet's download route —
+ * needs to know WHICH failure it was, because the three have three different
+ * remedies. See `@/lib/programs/move-artifact-download-refusal`.
+ */
+export type MoveArtifactDownloadOutcome =
+  | { ok: true; file: MoveArtifactBytes }
+  | { ok: false; reason: MoveArtifactDownloadRefusalReason };
+
 /** Stream an artifact's bytes from Blob (tenant-scoped). Robust download path
  *  that doesn't depend on SAS generation under managed identity. */
 export async function downloadArtifactBytes(
   ctx: TenancyCtx,
   artifactId: string,
   moveId?: string,
-): Promise<{ bytes: Buffer; fileName: string; fileFormat: string } | null> {
+): Promise<MoveArtifactBytes | null> {
+  const outcome = await downloadArtifactOutcome(ctx, artifactId, moveId);
+  return outcome.ok ? outcome.file : null;
+}
+
+/** As `downloadArtifactBytes`, but says WHY when there are no bytes. */
+export async function downloadArtifactOutcome(
+  ctx: TenancyCtx,
+  artifactId: string,
+  moveId?: string,
+): Promise<MoveArtifactDownloadOutcome> {
   const tenantKey = ctx.clientKey ?? "";
+  let row: {
+    blob_container: string;
+    blob_path: string;
+    file_name: string;
+    file_format: string;
+    tenant_key: string;
+    metadata: unknown;
+  };
   try {
     const sb = getAzureWriteFluentClient();
     let query = sb
       .from("move_artifacts")
-      .select("blob_container, blob_path, file_name, file_format, tenant_key")
+      // `metadata` carries the `storage` stamp `saveMoveArtifact` writes, and
+      // it is the ONLY way to tell a row whose bytes were never retained from
+      // one whose storage is merely unreachable. Dropping it from this list
+      // silently collapses those two causes back into one.
+      .select(
+        "blob_container, blob_path, file_name, file_format, tenant_key, metadata",
+      )
       .eq("artifact_id", artifactId)
       .eq("tenant_key", tenantKey);
     if (moveId) query = query.eq("move_id", moveId);
     const { data, error } = await query.maybeSingle();
-    if (error || !data) return null;
-    const row = data as {
-      blob_container: string;
-      blob_path: string;
-      file_name: string;
-      file_format: string;
-      tenant_key: string;
-    };
-    if (row.tenant_key !== tenantKey) return null; // tenant isolation
+    // A read error and an absent row are the same answer to the reader: no
+    // such file is filed here. Neither says whether the id exists elsewhere.
+    if (error || !data) return { ok: false, reason: "artifact_not_found" };
+    row = data as typeof row;
+    // Belt-and-braces against the `.eq("tenant_key", …)` filter above; a row
+    // that got past it is reported exactly as an absent one.
+    if (row.tenant_key !== tenantKey) {
+      return { ok: false, reason: "artifact_not_found" };
+    }
+  } catch {
+    return { ok: false, reason: "artifact_not_found" };
+  }
+
+  try {
     const bytes = await getObjectStorageAdapter().download(
       row.blob_container,
       row.blob_path,
     );
-    return { bytes, fileName: row.file_name, fileFormat: row.file_format };
+    // Truth over the stamp: a row marked unretained whose bytes ARE fetchable
+    // is served, because the stamp records one past attempt, not the present.
+    return {
+      ok: true,
+      file: {
+        bytes,
+        fileName: row.file_name,
+        fileFormat: row.file_format,
+      },
+    };
   } catch {
-    return null;
+    return {
+      ok: false,
+      reason: moveArtifactBytesNeverRetained(row.metadata)
+        ? "bytes_never_retained"
+        : "storage_unreachable",
+    };
   }
 }
 

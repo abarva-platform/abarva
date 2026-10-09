@@ -85,6 +85,9 @@ jobs:
           node --import tsx --test
           scripts/source/__tests__/market-candidate-research.test.mjs
 
+      - name: Validate Source contract performance unit loading
+        run: npx jest --runInBand --runTestsByPath scripts/source/__tests__/load-contract-depth-package.test.ts --no-coverage --ci
+
       # `src/lib/admin/broker` is 21 suites / 211 tests that no workflow and no
       # npm script reached. Measured through the census resolver on `b061a6819`,
       # not by reading YAML: three directories, 16 + 4 + 1 test files, 0 covered.
@@ -161,15 +164,28 @@ jobs:
       - name: Run the deliverables worker boundary suite
         run: npx jest --runTestsByPath src/scripts/__tests__/process-deliverable-queue-worker-boundary.test.ts --no-coverage --ci
 
+      # persist-move-generated-artifact.test.ts was named here and has been
+      # removed: the required ai-surface-control-catalog workflow now sweeps
+      # the directory that holds it, so naming it here put the quotable line
+      # in a job that blocks nothing while the blocking line stayed anonymous
+      # — the defect `named-suite-requiredness` exists to refuse. Read
+      # `PASS <path>` out of the required job's own log instead.
+      #
+      # generate-phase/__tests__/route.test.ts has been removed from this list
+      # and from "Run the deliverables route suites" below, where it was named
+      # a second time, for the same reason: the catalog sweeps that directory
+      # as of slice 18.
+      #
+      # artifacts/__tests__/route.test.ts has left this list for the same
+      # reason, as of slice 20: the catalog sweeps that directory, so a name
+      # here would be the quotable line in a job that blocks nothing — exactly
+      # what `named-suite-requiredness` refuses. The remaining paths here are
+      # in directories that no required sweep reaches.
       - name: Run the Moves evidence revision suites
         run: >-
           npx jest --runTestsByPath
-          src/lib/deliverables/__tests__/persist-move-generated-artifact.test.ts
           src/scripts/__tests__/process-deliverable-queue.test.ts
-          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/generate/__tests__/route.test.ts
-          src/app/api/v1/programs/[programId]/artifacts/__tests__/route.test.ts
-          src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.scroll-into-view.test.tsx
@@ -183,10 +199,8 @@ jobs:
           npx jest --runTestsByPath
           src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/__tests__/route.test.ts
           src/app/api/programs/[id]/deliverables/[deliverableId]/export/__tests__/route.test.ts
-          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
           src/app/api/v1/deliverables/generate/__tests__/route.test.ts
           src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts
-          src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/role-approvals/__tests__/route.test.ts
           src/app/api/v1/programs/[programId]/deliverables/complete/__tests__/route.test.ts
           --no-coverage --ci
@@ -342,10 +356,23 @@ jobs:
           src/lib/source/__tests__/queries-tenant-scope.test.ts
           --no-coverage --ci
 
-      # Nineteen approval and approval-adjacent route suites across thirteen
+      # Eighteen approval and approval-adjacent route suites across twelve
       # directories were not reached by a pull-request workflow. The narrow
       # list is deliberate: their common parents also contain unrelated route
       # trees, so naming a broad parent would hide which governed gate failed.
+      #
+      # Two entries have since left the list. The phase-gate-approval route
+      # suite went when the required AI surface control catalog began sweeping
+      # its directory (slice 17); the current-state evidence approval route
+      # suite went for the same reason at slice 18. A suite a required job runs
+      # must be NAMED inside a required job, so that the quotable line and the
+      # merge-blocking line are the same one
+      # (scripts/quality/check-named-suite-requiredness.mjs, T-595). Read both
+      # results out of the catalog's own log.
+      #
+      # This job still RUNS both suites — the broad `src/app/api/v1/programs`
+      # argument below selects them — so nothing stopped running here and the
+      # coverage census reads the same before and after. Only the names moved.
       - name: Run governed approval route suites
         run: >-
           npx jest --runTestsByPath
@@ -360,9 +387,6 @@ jobs:
           "src/app/api/admin/programs/approvals/__tests__/route.test.ts"
           "src/app/api/admin/pricing/rate-cards/[id]/approve/__tests__/route.test.ts"
           "src/app/api/admin/programs/approvals/export/__tests__/route.test.ts"
-          "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts"
-          "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/__tests__/route.test.ts"
-          "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__/route.test.ts"
           "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__/route.test.ts"
           "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
           "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__/route.test.ts"
@@ -419,10 +443,26 @@ jobs:
       # applied one level too high.
       #
       # Still red and still unwired, deliberately:
-      #   src/lib/deliverables/__tests__/golden-regression.test.ts
-      #   src/lib/deliverables/orchestrator/__tests__
       #   src/components/admin/__tests__ and components/admin/context-layer/__tests__
       #   src/lib/admin/__tests__ (5 failed of 62 suites)
+      #
+      # Corrected 8 Oct: golden-regression.test.ts was listed here as red while
+      # the "Run the repaired deliverables suites" step above already named the
+      # directory that holds it. Re-measured on the whole directory, it passes
+      # 3 of 3 and the directory is 36 suites / 303 tests green, so the
+      # quarantine line was describing a state that had already been repaired.
+      # Ownership of that directory has since moved to the required
+      # ai-surface-control-catalog workflow, which is where a merge can fail on
+      # it; naming it here as well is deliberate and harmless.
+      #
+      # Corrected 8 Oct: src/lib/deliverables/orchestrator/__tests__ was listed
+      # here as red while the "Run the repaired deliverables suites" step
+      # earlier in this same file already named it. Re-measured on the current
+      # base, three consecutive runs: 59 suites, 857 tests, all pass in
+      # 6.3-6.7s. The line was describing a state that had already been
+      # repaired. Ownership of that directory has since moved to the required
+      # ai-surface-control-catalog workflow, which is where a merge can fail on
+      # it; naming it earlier in this file as well is deliberate and harmless.
       #
       # And src/lib/deliverables/synthesis is excluded for a different reason:
       # nothing outside its own tree imports its one file except the failing
@@ -630,9 +670,16 @@ jobs:
       # full of `[eventId]`, `[programId]` and the like, which is fine -- those
       # are matched as descendants of a literal prefix. Naming one of them
       # directly would not be: a jest path argument is a regex, so `[id]` is a
-      # character class. That is why the governed approval routes are run by
-      # exact path with --runTestsByPath, and any future addition naming a
-      # bracketed segment must do the same.
+      # character class and the pattern selects nothing at all.
+      #
+      # There are two ways to name one, and which to pick depends on whether a
+      # DIRECTORY is being taken ownership of:
+      #   - --runTestsByPath with the exact file, as the governed approval
+      #     routes above do. Exact, and it owns only the files listed.
+      #   - the escaped regex, `src/.../\[programId\]/.../__tests__`, as the
+      #     required catalog's phase-gate-approval step does. This owns the
+      #     DIRECTORY, so a suite added to it needs no workflow edit.
+      # See docs/ci/README-suite-wiring.md.
       - name: Run the v1 API route suites
         run: >-
           npx jest
@@ -1316,6 +1363,51 @@ jobs:
           "src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts"
           --no-coverage --ci --runInBand
 
+      # T-792 — the THIRD file of the same `COMMAND_CHECKS` entry, and the last
+      # file in the tree in this state.
+      #
+      # `source_provider_alias_unit` in `scripts/ecl/run_product_ecl_predeploy_gate.mjs`
+      # names three test files. T-478 wired the first and T-764 the second; this
+      # is the third, and nothing had looked at it, because both of those were
+      # found by DRAWING a governed-risk directory and this one does not live in
+      # a directory a draw reaches. `src/lib/ecl/__tests__` is fully covered, so
+      # it is absent from the census ranking, from `uncoveredTestFiles` and from
+      # the untriaged pool. It was invisible to all eleven triage rounds since.
+      #
+      # Measured on `474d3aab33`: `covered: true, pullRequestCovered: false`,
+      # `via: ["script-file"]` — the same signature the step above records, and
+      # on that commit the ONLY remaining instance of it in 2,707 test files
+      # (`coveredTestFiles` 2543, `pullRequestCoveredTestFiles` 2542).
+      #
+      # It is a behavioural suite, not a scanner: 0 `readFileSync` and 0
+      # `toContain` in 47 lines, 4 cases that call `resolveEclProductProvider`
+      # and assert what it returns. That is why it is wired rather than
+      # rewritten first, which is the test T-764 had to pass before it could be.
+      #
+      # Not vacuous, proved by inverting the fence three ways rather than by its
+      # green run — 4 of 4 passing in each baseline, 1 of 4 failing in each:
+      #   allowLegacyQuery hard-coded true (legacy reachable with no override)
+      #   the explicit-ECL-request branch removed
+      #   the env rollback to legacy disabled
+      # The first is the governed one: it is what keeps `?provider=legacy` from
+      # routing product reads off the ECL serving provider without the named
+      # diagnostic override.
+      #
+      # Its own step rather than appended to the T-478 one above, for two
+      # reasons: that step's name says "Source workspace" and this file is not
+      # one, and a step carrying exactly one file makes the wiring mutation
+      # attributable — replacing this step with `echo skipped` moves
+      # `pullRequestCoveredTestFiles` by exactly one and `coveredTestFiles` by
+      # zero, which is the whole of what was wrong with this file.
+      #
+      # The pre-deploy gate keeps its own invocation; this adds the
+      # merge-blocking one it never had.
+      - name: Run the T-792 pre-deploy-only ECL product provider suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/ecl/__tests__/product-provider.test.ts
+          --no-coverage --ci --runInBand
+
       # An entry in TENANT_DATASET_BY_KEY is a claim that a dataset exists.
       # When it does not, the V6 builders return null and every caller
       # degrades silently — which is how two dataset roots stayed missing
@@ -1434,6 +1526,14 @@ jobs:
           src/lib/source/candidate-suppliers/__tests__/candidate-supplier-registry-repository.test.ts
           src/lib/source/candidate-suppliers/__tests__/event-candidate-acceptance-repository.test.ts
           src/lib/source/candidate-suppliers/__tests__/event-candidate-authority-repository.test.ts
+          --no-coverage --ci
+
+      - name: Run prospective supplier origination suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/candidate-suppliers/__tests__/originate-prospective-supplier.test.ts
+          "src/app/api/v1/source/[eventId]/candidate-suppliers/originate/__tests__/route.test.ts"
+          src/components/source/new-workspace/SourceNewProspectiveSupplierForm.test.tsx
           --no-coverage --ci
 
       # T-480 (2026-09-26) wires the two suites `T-479` judged `wire_into_ci`.

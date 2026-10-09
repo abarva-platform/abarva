@@ -40,10 +40,31 @@ import { resolveMoveTier } from "./p0-extended-intake-fields";
 import { listApprovedPhaseEvidence } from "./approved-phase-evidence";
 import { resolveConfirmedSolutionRoute } from "./solution-route-assessment";
 import {
+  discoveryReportTextFromLatestVersion,
+  p2ReadinessBlockedReason,
+} from "./discovery-report-readiness";
+import {
+  GATE_STATE_UNREADABLE_CHECK,
+  classifyGateStateReads,
+  describeUnreadableGateState,
+  type GateStateRead,
+} from "./gate-state-readback";
+import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
-import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import {
+  reportUnevaluableApprovalCurrencyOnce,
+  resolveDeliverableApprovalCurrencyScope,
+} from "@/lib/programs/deliverable-approval-currency";
+import {
+  reportUnevaluableApprovedEvidenceBasisOnce,
+  resolveApprovedEvidenceCurrencyBasis,
+} from "@/lib/programs/approved-evidence-currency-basis";
+import {
+  describeDeliverableSignOffFailure,
+  type DeliverableSignOffVerdict,
+} from "@/lib/programs/deliverable-signoff-diagnosis";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -425,22 +446,68 @@ export function gateCriteriaForPhase(
   }));
 }
 
-async function hasProgramEvidence(
+/**
+ * Did this Move ingest discovery evidence for any of these phases — and was
+ * the question answerable at all?
+ *
+ * The compat client never throws, so a connection failure, a permission denial
+ * or a bad column arrives as `{ data: null, error }`. Returning a bare boolean
+ * collapsed that into `false`, which is the IDENTICAL answer to a Move that
+ * genuinely ingested nothing. `discovery_notes_ingested` is a HARD criterion
+ * on the P2→P3 gate, so the collapse let a failed read refuse the demo walk's
+ * own blocking transition while reporting "Discovery notes or workshop logs
+ * ingested" as an observed absence — the remedy for which is to upload or
+ * re-ingest notes that are already there.
+ */
+async function readProgramEvidence(
   programId: string,
   phase: number | number[],
   sb: SupabaseClient,
-): Promise<boolean> {
+): Promise<
+  // A discriminated union, not `{ present, error? }`: a presence answer and a
+  // read failure are mutually exclusive, and the flat shape left a `present`
+  // field on the failure arm that no caller may consult. Carrying it anyway
+  // would restore, as a dead value, exactly the `false` this function stopped
+  // returning.
+  { readable: true; present: boolean } | { readable: false }
+> {
   // Discovery / current-state evidence is ingested with an inconsistent phase tag
   // across routes (current-state/ingest → 1, …/orchestrate → 2). Accept any of the
   // supplied phases so a gate check isn't starved by which intake route was used.
   const phases = Array.isArray(phase) ? phase : [phase];
-  const { data } = await sb
+  const { data, error } = await sb
     .from("program_evidence_items")
     .select("id")
     .eq("program_id", programId)
     .in("phase", phases)
     .limit(1);
-  return ((data as Array<{ id: string }> | null) ?? []).length > 0;
+  if (error) return { readable: false };
+  return {
+    readable: true,
+    present: ((data as Array<{ id: string }> | null) ?? []).length > 0,
+  };
+}
+
+/**
+ * The gate's one refusal for a state it could not read.
+ *
+ * Shared by the pre-loop classification of the eight hoisted reads and by the
+ * ninth read inside the loop, so both produce the same single `failedChecks`
+ * entry rather than two shapes a client has to tell apart.
+ */
+function unreadableGateState(unreadable: readonly GateStateRead[]): GateCheck {
+  return {
+    pass: false,
+    failedChecks: [
+      {
+        check: GATE_STATE_UNREADABLE_CHECK,
+        reason: describeUnreadableGateState(unreadable),
+        severity: "hard",
+      },
+    ],
+    requiresApproval: false,
+    approverRole: null,
+  };
 }
 
 /**
@@ -529,12 +596,16 @@ export async function evaluateGate(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
 
   // Collect state signals
+  // `error` is read on every one of these: the compat client never throws, so a
+  // dropped `error` arrives as `data: null` and every collector below coerces
+  // that to `[]` — the same shape as a Move that has genuinely produced
+  // nothing. See `gate-state-readback.ts`.
   const [
-    { data: deliverables },
-    { data: modules },
-    { data: participants },
-    { data: approvalRequests },
-    { data: milestones },
+    { data: deliverables, error: deliverablesError },
+    { data: modules, error: modulesError },
+    { data: participants, error: participantsError },
+    { data: approvalRequests, error: approvalRequestsError },
+    { data: milestones, error: milestonesError },
   ] = await Promise.all([
     sb
       .from("deliverables_v2")
@@ -587,11 +658,16 @@ export async function evaluateGate(
     deliverableRows.find((d) => keys.includes(d.deliverable_type_key));
   const findDeliverables = (...keys: string[]) =>
     deliverableRows.filter((d) => keys.includes(d.deliverable_type_key));
-  const currentEvidenceSnapshot = ctx.clientKey
-    ? await loadApprovedMoveEvidenceSnapshot({
-        tenantKey: ctx.clientKey,
-        moveId: programId,
-      }).catch(() => null)
+  // Not `snapshot | null`: a null conflates "nothing approved" with "I could not
+  // read the basis", and only the first of those may veto a recorded human
+  // approval. See `approved-evidence-currency-basis.ts`.
+  const evidenceBasis = await resolveApprovedEvidenceCurrencyBasis({
+    tenantKey: ctx.clientKey,
+    moveId: programId,
+    load: loadApprovedMoveEvidenceSnapshot,
+  });
+  const currentEvidenceSnapshot = evidenceBasis.evaluable
+    ? evidenceBasis.snapshot
     : null;
   const linkedArtifactIds = deliverableRows
     .map((row) => row.approved_artifact_id)
@@ -606,7 +682,7 @@ export async function evaluateGate(
           .eq("tenant_key", ctx.clientKey)
           .eq("move_id", programId)
           .in("artifact_id", linkedArtifactIds)
-      : { data: [] };
+      : { data: [], error: null };
   const linkedArtifactById = new Map(
     (
       (linkedArtifactRows.data as Array<{
@@ -620,7 +696,12 @@ export async function evaluateGate(
       }> | null) ?? []
     ).map((artifact) => [artifact.artifact_id, artifact]),
   );
-  const isSignedOff = (
+  // The verdict, not just the boolean. `isSignedOff` below keeps the boolean
+  // shape every other caller already uses; the five HARD criteria that ARE a
+  // single sign-off call read the cause so the blocked reader is told which of
+  // the four states they are in and which single action answers it. See
+  // `deliverable-signoff-diagnosis.ts`.
+  const signOffVerdict = (
     row:
       | {
           id: string;
@@ -630,8 +711,15 @@ export async function evaluateGate(
           structured_data?: Record<string, unknown> | null;
         }
       | undefined,
-  ) => {
-    if (row?.status !== "signed_off") return false;
+  ): DeliverableSignOffVerdict => {
+    const pass: DeliverableSignOffVerdict = {
+      ok: true,
+      cause: "signed_off",
+      status: row?.status ?? null,
+    };
+    if (!row) return { ok: false, cause: "absent", status: null };
+    if (row.status !== "signed_off")
+      return { ok: false, cause: "not_signed_off", status: row.status };
     const structured = row.structured_data ?? {};
     const structuredGenerated =
       structured.source === "generated_by_orchestrator" ||
@@ -643,9 +731,26 @@ export async function evaluateGate(
       typeof structured.evidenceSnapshotHash === "string"
         ? structured.evidenceSnapshotHash
         : null;
-    const deliverablePhase = DELIVERABLE_REGISTRY.find(
-      (spec) => spec.deliverableTypeKey === row.deliverable_type_key,
-    )?.phase;
+    // A phase this check cannot run at is NOT a stale approval — see
+    // `deliverable-approval-currency.ts`. Return BEFORE the lineage comparisons
+    // rather than computing them and ignoring the result: with the scope resolved
+    // first, `deliverablePhase` below is always the phase the comparison actually
+    // runs at, so there is no branch where a currency verdict is derived from a
+    // phase that does not exist.
+    const currencyScope = resolveDeliverableApprovalCurrencyScope(
+      row.deliverable_type_key,
+    );
+    if (!currencyScope.evaluable) {
+      // Say so rather than silently allowing it: the only way this row's approval
+      // currency becomes checkable again is a registry change, and that is worth
+      // seeing in the logs instead of inferring from a gate that stopped failing.
+      reportUnevaluableApprovalCurrencyOnce(
+        row.deliverable_type_key,
+        currencyScope.reason,
+      );
+      return pass;
+    }
+    const deliverablePhase = currencyScope.phase;
     const structuredLineageCurrent = Boolean(
       currentEvidenceSnapshot &&
       deliverablePhase &&
@@ -678,44 +783,86 @@ export async function evaluateGate(
           linkedMetadata.generatedArtifactId ===
             structured.generatedArtifactId)),
     );
-    const linkedArtifactCurrent = Boolean(
-      currentEvidenceSnapshot &&
+    // Split on purpose. The ownership/lifecycle half is snapshot-INDEPENDENT, so
+    // it keeps its veto even when the evidence basis cannot be read; the evidence
+    // comparison below is the only half an unevaluable basis may skip.
+    const linkedArtifactIntegrityOk = Boolean(
       linkedArtifact &&
       linkedArtifact.tenant_key === ctx.clientKey &&
       linkedArtifact.move_id === programId &&
       linkedArtifact.artifact_family === "generated_deliverable" &&
       linkedArtifact.lifecycle_state === "current" &&
-      linkedArtifactMatchesDeliverable &&
-      Boolean(
-        deliverablePhase &&
-        isApprovedMoveEvidenceBasisCurrent({
-          snapshot: currentEvidenceSnapshot,
-          phase: deliverablePhase,
-          recordedRevision:
-            typeof linkedMetadata.phaseEvidenceSnapshotHash === "string"
-              ? linkedMetadata.phaseEvidenceSnapshotHash
-              : typeof linkedMetadata.evidenceSnapshotHash === "string"
-                ? linkedMetadata.evidenceSnapshotHash
-                : null,
-          scope:
-            typeof linkedMetadata.evidenceSnapshotScope === "string"
-              ? linkedMetadata.evidenceSnapshotScope
+      linkedArtifactMatchesDeliverable,
+    );
+    if (!evidenceBasis.tenantScopeResolved) {
+      // With no tenant key the `move_artifacts` lookup above was never issued,
+      // so `linkedArtifactIntegrityOk` is false for want of a read rather than
+      // for want of a valid artifact. Nothing about this approval is evaluable;
+      // report it and leave the recorded human sign-off standing.
+      reportUnevaluableApprovedEvidenceBasisOnce(
+        programId,
+        evidenceBasis.reason,
+      );
+      return pass;
+    }
+    if (linkedArtifactId && !linkedArtifactIntegrityOk)
+      return {
+        ok: false,
+        cause: "linked_artifact_integrity",
+        status: row.status,
+      };
+    if (!evidenceBasis.evaluable) {
+      // The reads ran, so integrity was just checked for real. Only the evidence
+      // comparison is unevaluable — and an unevaluable check is not a stale
+      // approval, the same rule `resolveDeliverableApprovalCurrencyScope` applies
+      // above. Without this the whole gate ladder held with no reason rendered.
+      reportUnevaluableApprovedEvidenceBasisOnce(
+        programId,
+        evidenceBasis.reason,
+      );
+      return pass;
+    }
+    // `linkedArtifactIntegrityOk` here is redundant and a mutation that removes
+    // it SURVIVES: reaching this line with a truthy `linkedArtifact` implies a
+    // truthy `linkedArtifactId`, which implies the veto above already passed. It
+    // is kept so this Boolean states the whole condition it depends on rather
+    // than inheriting half of it from a control-flow accident one line up — if
+    // that veto is ever changed to collect a reason instead of returning, this
+    // comparison stays correct. Not a coverage gap.
+    const linkedArtifactCurrent = Boolean(
+      linkedArtifactIntegrityOk &&
+      linkedArtifact &&
+      deliverablePhase &&
+      isApprovedMoveEvidenceBasisCurrent({
+        snapshot: evidenceBasis.snapshot,
+        phase: deliverablePhase,
+        recordedRevision:
+          typeof linkedMetadata.phaseEvidenceSnapshotHash === "string"
+            ? linkedMetadata.phaseEvidenceSnapshotHash
+            : typeof linkedMetadata.evidenceSnapshotHash === "string"
+              ? linkedMetadata.evidenceSnapshotHash
               : null,
-          generatedAt: linkedArtifact.created_at ?? null,
-        }),
-      ),
+        scope:
+          typeof linkedMetadata.evidenceSnapshotScope === "string"
+            ? linkedMetadata.evidenceSnapshotScope
+            : null,
+        generatedAt: linkedArtifact.created_at ?? null,
+      }),
     );
 
-    if (linkedArtifactId && !linkedArtifactCurrent) return false;
+    if (linkedArtifactId && !linkedArtifactCurrent)
+      return { ok: false, cause: "evidence_basis_stale", status: row.status };
     if (
       structuredGenerated &&
       !structuredLineageCurrent &&
       !linkedArtifactCurrent
     ) {
-      return false;
+      return { ok: false, cause: "evidence_basis_stale", status: row.status };
     }
-    return true;
+    return pass;
   };
+  const isSignedOff = (row: Parameters<typeof signOffVerdict>[0]): boolean =>
+    signOffVerdict(row).ok;
   // One authenticated, authorized workspace user records the approval. Role
   // labels describe stakeholders and reviewers; they are not separate gate
   // actors or extra approval requirements.
@@ -885,13 +1032,16 @@ export async function evaluateGate(
       : null;
 
   let latestOriginationBriefText = "";
+  let originationVersionError: { message?: string | null } | null = null;
   if (originationBriefRow) {
-    const { data: originationVersions } = await sb
-      .from("deliverable_versions")
-      .select("content, structured_data, generated_at")
-      .eq("deliverable_id", (originationBriefRow as { id?: string }).id)
-      .order("generated_at", { ascending: false })
-      .limit(1);
+    const { data: originationVersions, error: originationVersionsError } =
+      await sb
+        .from("deliverable_versions")
+        .select("content, structured_data, generated_at")
+        .eq("deliverable_id", (originationBriefRow as { id?: string }).id)
+        .order("generated_at", { ascending: false })
+        .limit(1);
+    originationVersionError = originationVersionsError ?? null;
     const latestOriginationVersion = ((originationVersions as Array<{
       content: string | null;
       structured_data: Record<string, unknown> | null;
@@ -972,25 +1122,22 @@ export async function evaluateGate(
     );
 
   let latestDiscoveryReportText = "";
+  let discoveryVersionError: { message?: string | null } | null = null;
   if (discoveryReportRow) {
-    const { data: discoveryVersions } = await sb
+    const { data: discoveryVersions, error: discoveryVersionsError } = await sb
       .from("deliverable_versions")
       .select("content, structured_data, generated_at")
       .eq("deliverable_id", (discoveryReportRow as { id?: string }).id)
       .order("generated_at", { ascending: false })
       .limit(1);
+    discoveryVersionError = discoveryVersionsError ?? null;
     const latestDiscoveryVersion = ((discoveryVersions as Array<{
       content: string | null;
       structured_data: Record<string, unknown> | null;
     }> | null) ?? [])[0];
-    latestDiscoveryReportText = [
-      latestDiscoveryVersion?.content ?? "",
-      latestDiscoveryVersion?.structured_data
-        ? JSON.stringify(latestDiscoveryVersion.structured_data)
-        : "",
-    ]
-      .join("\n")
-      .toLowerCase();
+    latestDiscoveryReportText = discoveryReportTextFromLatestVersion(
+      latestDiscoveryVersion,
+    );
   }
 
   // The 6-phase doctrine moved Discovery to P2 (Discover & Diagnose),
@@ -1060,6 +1207,36 @@ export async function evaluateGate(
     ) &&
     !discoveryReportHasHardGap;
 
+  // Every criterion below answers from the eight reads above plus the ninth
+  // `program_evidence_items` read issued inside the loop, and an unreadable
+  // read is indistinguishable from a Move that produced nothing. Refuse by name
+  // rather than let 30 of the 38 branches report an absence nobody observed.
+  // The verdict does not change — an unread state cannot clear a HARD
+  // criterion — only what the refusal says.
+  const stateReadback = classifyGateStateReads({
+    deliverables: deliverablesError ? { error: deliverablesError } : null,
+    program_modules: modulesError ? { error: modulesError } : null,
+    engagement_participants: participantsError
+      ? { error: participantsError }
+      : null,
+    approval_requests: approvalRequestsError
+      ? { error: approvalRequestsError }
+      : null,
+    milestones: milestonesError ? { error: milestonesError } : null,
+    origination_brief_version: originationVersionError
+      ? { error: originationVersionError }
+      : null,
+    discovery_report_version: discoveryVersionError
+      ? { error: discoveryVersionError }
+      : null,
+    linked_artifacts: linkedArtifactRows.error
+      ? { error: linkedArtifactRows.error }
+      : null,
+  });
+  if (!stateReadback.readable) {
+    return unreadableGateState(stateReadback.unreadable);
+  }
+
   const failedChecks: GateCheck["failedChecks"] = [];
   for (const c of rule.checks) {
     let pass = false;
@@ -1086,9 +1263,18 @@ export async function evaluateGate(
       case "charter_drafted":
         pass = Boolean(charterRow && charterRow.status !== null);
         break;
-      case "charter_signed_off":
-        pass = isSignedOff(charterRow);
+      case "charter_signed_off": {
+        const verdict = signOffVerdict(charterRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "charter",
+          });
+        }
         break;
+      }
       case "sponsor_assigned":
         pass =
           hasSponsor ||
@@ -1098,9 +1284,18 @@ export async function evaluateGate(
               briefString.includes("sponsor") ||
               p0SeedEvidenceText.includes("sponsor")));
         break;
-      case "discovery_report_signed_off":
-        pass = isSignedOff(discoveryReportRow);
+      case "discovery_report_signed_off": {
+        const verdict = signOffVerdict(discoveryReportRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "discovery_report",
+          });
+        }
         break;
+      }
       case "baseline_captured": {
         pass =
           moduleCompleted("baseline_capture", "baseline") ||
@@ -1146,18 +1341,12 @@ export async function evaluateGate(
               phaseCaptureText,
             ) &&
             phaseModulesCompleted(fromPhase));
-        if (!pass && discoveryReportRow && discoveryReportHasHardGap) {
-          failureReason =
-            "The signed Discovery Report still contains unresolved hard-gap, hold, unverified, or not-yet-attested language. Upload a client-approved replacement or regenerate/edit the Discovery Report so it explicitly clears P2 or carries only non-blocking P3 design caveats.";
-        } else if (
-          !pass &&
-          /\bconditional proceed\b/.test(latestDiscoveryReportText)
-        ) {
-          failureReason =
-            "The signed Discovery Report says conditional proceed. Replace it with a client-approved decision that either clears P2 or records a hold/discontinue decision.";
-        } else if (!pass && !discoveryReportRow) {
-          failureReason =
-            "No signed Discovery Report is available for P2 readiness. Approve or upload the client-approved Discovery Report in Files & Evidence, then rerun Approve & Build.";
+        if (!pass) {
+          failureReason = p2ReadinessBlockedReason({
+            hasReportRow: Boolean(discoveryReportRow),
+            reportText: latestDiscoveryReportText,
+            hasHardGap: discoveryReportHasHardGap,
+          });
         }
         break;
       case "solution_route_validated":
@@ -1166,8 +1355,14 @@ export async function evaluateGate(
           captureCompleted(2, "solution_route_validation") &&
           confirmedSolutionRoute !== null;
         break;
-      case "discovery_notes_ingested":
-        pass =
+      case "discovery_notes_ingested": {
+        // Four of the five arms answer from state already read above, so they
+        // are tested first: the `program_evidence_items` read is then issued
+        // only when it DECIDES the criterion. That matters for the refusal —
+        // an unreadable evidence table must not refuse a gate some other arm
+        // had already cleared, and reordering pure predicates around a read
+        // cannot change the result of an `||` chain.
+        const clearedWithoutEvidenceRead =
           isPresent(
             findDeliverable(
               "discovery_notes",
@@ -1176,14 +1371,29 @@ export async function evaluateGate(
             ),
           ) ||
           moduleCompleted("discovery_notes_ingest", "workshop_notes_ingest") ||
-          (await hasProgramEvidence(programId, [1, 2], sb)) ||
           discoveryReportHasWorkshopEvidence ||
           (fromPhase === 2 &&
             /\b(current state|finding|baseline|metric|gap|root cause|handoff|process|data quality|governance|evidence confidence|recommendation)\b/.test(
               phaseCaptureText,
             ) &&
             phaseModulesCompleted(fromPhase));
+        if (clearedWithoutEvidenceRead) {
+          pass = true;
+          break;
+        }
+        const ingestedEvidence = await readProgramEvidence(
+          programId,
+          [1, 2],
+          sb,
+        );
+        if (!ingestedEvidence.readable) {
+          // Decisive and unread. Same refusal as the other eight reads: this
+          // is NOT a finding that no notes were ingested.
+          return unreadableGateState(["program_evidence"]);
+        }
+        pass = ingestedEvidence.present;
         break;
+      }
       case "current_state_summary_drafted":
         pass = isPresent(
           findDeliverable(
@@ -1289,7 +1499,24 @@ export async function evaluateGate(
       case "delivery_raci_named":
         pass =
           isPresent(
-            findDeliverable("delivery_raci", "raci", "operating_model"),
+            findDeliverable(
+              "delivery_raci",
+              "raci",
+              // `operating_model_design` is the registry key for the Operating
+              // Model Design — the P3 document that names the work split and
+              // accountability this criterion is about. It is built by the P3
+              // generation set and stored under the REGISTRY spelling, because
+              // the acceptance path maps the orchestrator type back through
+              // `deliverableKeyForOrchestratorType` before writing the row.
+              // Only `operating_model`, the orchestrator alias, was listed, and
+              // nothing ever writes that: the other two spellings are neither
+              // registry keys nor allowed authorship keys either, so a
+              // generated and signed-off Operating Model Design left this
+              // criterion unmet and it passed only on the prose fallbacks
+              // below.
+              "operating_model_design",
+              "operating_model",
+            ),
           ) ||
           briefString.includes("raci") ||
           (fromPhase === 4 &&
@@ -1321,19 +1548,56 @@ export async function evaluateGate(
               phaseCaptureText,
             ));
         break;
-      case "business_case_approved":
-        pass = await meetsApprovalBar(businessCaseRow);
+      case "business_case_approved": {
+        // The sixth HARD criterion that is a single sign-off call, and the only
+        // one whose body reads `meetsApprovalBar` rather than `isSignedOff` —
+        // that async wrapper delegates straight to `isSignedOff`, so the verdict
+        // here is the same predicate and `pass` is unchanged. It was missed when
+        // the other five were given causes because a grep for `isSignedOff`
+        // structurally cannot see it. Of the four single-row sign-off criteria
+        // that still restate themselves, this is the only one whose deliverable
+        // is in `PHASE_CANONICAL_KEYS` (P4), which is what makes the `absent`
+        // arm's "run Approve & Build" a remedy that can actually work here.
+        const verdict = signOffVerdict(businessCaseRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "business_case",
+          });
+        }
         break;
-      case "funding_approval_recorded":
-        pass = isSignedOff(
-          findDeliverable(
-            "funding_approval",
-            "capacity_approval",
-            "approval_memo",
-          ),
+      }
+      case "funding_approval_recorded": {
+        // SOFT, so neither blocked-message reader renders this sentence — both
+        // filter to `severity === "hard"` first. It is not inert: the advance
+        // route copies every soft failure into the gate decision artifact's
+        // `carriedGaps` WITH its reason, and that record is the auditable
+        // account of what was outstanding when the Move advanced anyway. With
+        // the default reason it stored the criterion's own `describe` —
+        // "Funding or capacity approval recorded" — which reads as the thing
+        // having happened and names neither the cause nor the next action.
+        const row = findDeliverable(
+          "funding_approval",
+          "capacity_approval",
+          "approval_memo",
         );
+        const verdict = signOffVerdict(row);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            // The row's own spelling when one exists, so the sentence names the
+            // document that is actually there rather than the first alias of
+            // the group; the primary spelling when none does.
+            deliverableTypeKey: row?.deliverable_type_key ?? "funding_approval",
+          });
+        }
         break;
-      case "sponsor_alignment_confirmed":
+      }
+      case "sponsor_alignment_confirmed": {
         // `sponsor_alignment` is accepted alongside `stakeholder_alignment`
         // because this criterion has no capture-text fallback and no phase
         // generation set produces either key, so deliberate authorship
@@ -1343,22 +1607,71 @@ export async function evaluateGate(
         // alignment record could satisfy the criterion named after it or be
         // invisible to it, decided by which spelling the agent happened to
         // pick. Same class as `tower_metric_plan_drafted` below.
-        pass = isSignedOff(
-          findDeliverable("stakeholder_alignment", "sponsor_alignment"),
+        const row = findDeliverable(
+          "stakeholder_alignment",
+          "sponsor_alignment",
         );
+        const verdict = signOffVerdict(row);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey:
+              row?.deliverable_type_key ?? "stakeholder_alignment",
+          });
+        }
         break;
-      case "readiness_and_change_plan_signed_off":
-        pass = isSignedOff(changePlanRow);
+      }
+      case "readiness_and_change_plan_signed_off": {
+        const verdict = signOffVerdict(changePlanRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "readiness_and_change_plan",
+          });
+        }
         break;
-      case "tower_handoff_plan_accepted":
-        pass = isSignedOff(towerHandoffRow);
+      }
+      case "tower_handoff_plan_accepted": {
+        const verdict = signOffVerdict(towerHandoffRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey:
+              towerHandoffRow?.deliverable_type_key ?? "tower_handoff_plan",
+          });
+        }
         break;
-      case "handoff_package_signed_off":
-        pass = isSignedOff(handoffPackageRow);
+      }
+      case "handoff_package_signed_off": {
+        const verdict = signOffVerdict(handoffPackageRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "handoff_package",
+          });
+        }
         break;
-      case "value_measurement_contract_signed_off":
-        pass = isSignedOff(valueMeasurementContractRow);
+      }
+      case "value_measurement_contract_signed_off": {
+        const verdict = signOffVerdict(valueMeasurementContractRow);
+        pass = verdict.ok;
+        if (!pass) {
+          failureReason = describeDeliverableSignOffFailure({
+            cause: verdict.cause,
+            status: verdict.status,
+            deliverableTypeKey: "value_measurement_contract",
+          });
+        }
         break;
+      }
       case "launch_readiness_attested":
         pass =
           isSignedOff(handoffPackageRow) ||

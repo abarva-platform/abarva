@@ -15,6 +15,8 @@ import {
   type DeckVerdict,
 } from "./deck-quality";
 import type { RenderableDeliverable } from "./types";
+import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
+import { judgeArchitectureDeck } from "./architecture-deck-quality";
 
 export interface ValidatedDeck {
   buffer: Buffer;
@@ -37,9 +39,10 @@ export interface ValidatedDeck {
 export async function renderValidatedDeck(
   doc: RenderableDeliverable,
   policy: DeckPolicy = {},
+  architectureModel?: ArchitectureModel,
 ): Promise<ValidatedDeck> {
   const renderAndJudge = async (candidate: RenderableDeliverable) => {
-    const buffer = await renderDeliverablePptx(candidate);
+    const buffer = await renderDeliverablePptx(candidate, architectureModel);
     const inspection = await inspectDeck(buffer);
     return {
       buffer,
@@ -77,8 +80,25 @@ export async function renderValidatedDeck(
 
   const { buffer, inspection, verdict } = rendered;
 
+  if (architectureModel) {
+    const architectureVerdict = await judgeArchitectureDeck(
+      buffer,
+      architectureModel,
+    );
+    if (!architectureVerdict.ok) {
+      throw new Error(
+        `generated_pptx_failed_architecture_semantics: ${architectureVerdict.findings.join("; ")}`,
+      );
+    }
+  }
+
   const integrityFailures = verdict.findings
-    .filter((f) => f.kind === "off_canvas" || f.kind === "canvas")
+    .filter(
+      (f) =>
+        f.kind === "off_canvas" ||
+        f.kind === "canvas" ||
+        f.kind === "empty_canvas",
+    )
     .map((f) => f.message);
 
   if (integrityFailures.length > 0) {

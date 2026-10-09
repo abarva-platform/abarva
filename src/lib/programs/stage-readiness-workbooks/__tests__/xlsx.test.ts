@@ -81,10 +81,18 @@ describe("renderStageReadinessWorkbookXlsx", () => {
       "Approved data estate profile",
     );
     const startHere = workbook.getWorksheet("Start Here");
-    expect(startHere?.getCell("A5").value).toBe("Evidence references included");
-    expect(startHere?.getCell("B5").value).toBe("1");
-    expect(startHere?.getCell("A6").value).toBe("Needs input");
-    expect(Number(startHere?.getCell("B6").value)).toBeGreaterThan(0);
+    // Looked up by item name rather than by cell address: these rows pinned
+    // A5/A6, so adding any row above them failed this case for a position
+    // change rather than a behaviour change.
+    const startHereValues = new Map<string, string>();
+    startHere?.eachRow((row) => {
+      startHereValues.set(
+        String(row.getCell(1).value ?? ""),
+        String(row.getCell(2).value ?? ""),
+      );
+    });
+    expect(startHereValues.get("Evidence references included")).toBe("1");
+    expect(Number(startHereValues.get("Needs input"))).toBeGreaterThan(0);
     const dataSheetContext = dataSheet
       ? [2, 3, 4].map((row) => String(dataSheet.getCell(`C${row}`).value))
       : [];

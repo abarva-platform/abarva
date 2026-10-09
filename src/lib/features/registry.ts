@@ -107,6 +107,7 @@ export type FeatureFlagKey =
   | "moves_charter_assumptions_discover_v1"
   | "moves_capture_p0_v1"
   | "moves_capture_composition_v1"
+  | "moves_workspace_v2"
   | "moves_capture_notes_v1"
   | "moves_capture_handoff_recap_v1"
   | "moves_charter_assumption_resolution_v1"
@@ -443,6 +444,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_capture_composition_v1",
     summary:
       "2026-10-04: Composition-only polish for the redesigned phase capture. The workspace surface tabs move into the agent dock's workspace column so they sit with the content they switch, and the legacy stage head stops repeating the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. The blocked-phase notice and the readiness-workbook actions keep rendering. No capture field, key, save, gate or evidence behaviour changes. Requires moves_capture_v2; enabled for the synthetic demo tenant for signed-in review and off elsewhere.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_workspace_v2",
+    summary:
+      "2026-10-07: Increment 1 of the Moves phase-workspace v2 shell. Consolidates the phase chrome into ONE slim phase rail (P0-P5 plus a non-interactive handoff-to-delivery marker) rendered by the capture flow, drops the stacked legacy gate stepper and the repeated stage head on the phase view, and de-emphasises the workspace-view row (Files / Intelligence / Approvals stay reachable as a secondary control, out of the primary phase-flow chrome). Within a phase the capture step bar becomes the v2 four-stage sub-step SPINE - CAPTURE steps (the phase's real step groups) then a GENERATE bridge, an OUTCOME step (the existing hand-off recap) and a GATE/attest step - in the v3 locked-light palette. The readiness-workbook download/upload/preview actions move off the per-step chrome onto the phase's gate step, in one consistent place for every phase. Presentation and arrangement only: the capture fields, structured inputs, saves/autosave, the gate/approve pipeline, evidence, approvals and the readiness workbook upload/accept are all unchanged, and the capture flow's view-state machine, resume, Continue-gating and recap reachability are untouched. Conjoined server-side with moves_capture_v2 (there is no capture flow to reshape without it) and subsumes the composition polish. Enrolled for the synthetic demo tenant for signed-in review; OFF elsewhere, and with it off the product renders exactly as today. Increments 2-3 (the OUTCOME findings surface and the charts layer) ship under this same flag.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },

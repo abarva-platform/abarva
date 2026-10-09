@@ -289,46 +289,56 @@ function svgTextBlock(
   return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${opts.fontSize}"${weight}${fill}>${tspans}</text>`;
 }
 
+const COLLECTION_COLUMNS = 4;
+const FLOW_CARD_COLUMNS = 3;
+const MAX_FLOW_VISUAL_ROWS = 4;
+
 function svgTimeline(
   items: ReadonlyArray<{ id: string; label: string; detail?: string }>,
   accent = "var(--data)",
+  ordered = true,
 ): string {
-  const leftGutter = 132;
-  const step = 220;
-  const width = Math.max(
-    760,
-    leftGutter * 2 + Math.max(0, items.length - 1) * step,
-  );
-  const height = 214;
+  const columns = COLLECTION_COLUMNS;
+  const leftGutter = ordered ? 132 : 115;
+  const step = ordered ? 220 : 245;
+  const width = ordered
+    ? Math.max(760, leftGutter * 2 + Math.max(0, items.length - 1) * step)
+    : 980;
+  const height = ordered
+    ? 214
+    : 35 + Math.max(1, Math.ceil(items.length / columns)) * 165;
   const nodes = items
     .map((item, i) => {
-      const x = leftGutter + i * step;
-      const line =
-        i < items.length - 1
-          ? `<path d="M${x + 48} 92 L${x + step - 48} 92" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
-          : "";
-      return `${line}<g>
-        <circle cx="${x}" cy="92" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>
-        <text x="${x}" y="97" text-anchor="middle" font-size="13" font-weight="700">${i + 1}</text>
-        ${svgTextBlock(item.label, x, 140, {
-          maxChars: 24,
+      const x = leftGutter + (ordered ? i : i % columns) * step;
+      const y = ordered ? 92 : 65 + Math.floor(i / columns) * 165;
+      // Ordering alone is not a governed relationship. Only explicit model
+      // flows may be shown as connections; this timeline carries no edge set.
+      return `<g data-arch-item-id="${esc(item.id)}">
+        <title>${esc(item.label)}${item.detail ? ` — ${esc(item.detail)}` : ""}</title>
+        <circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>${
+          ordered
+            ? `
+        <text x="${x}" y="${y + 5}" text-anchor="middle" font-size="15" font-weight="700">${i + 1}</text>`
+            : ""
+        }
+        ${svgTextBlock(item.label, x, y + 48, {
+          maxChars: ordered ? 22 : 24,
+          maxLines: ordered ? 2 : 3,
+          lineHeight: 17,
+          fontSize: 15,
+          weight: 700,
+        })}
+        ${svgTextBlock(item.detail, x, y + (ordered ? 82 : 100), {
+          maxChars: 27,
           maxLines: 2,
           lineHeight: 14,
           fontSize: 12,
-          weight: 700,
-        })}
-        ${svgTextBlock(item.detail, x, 174, {
-          maxChars: 32,
-          maxLines: 2,
-          lineHeight: 12,
-          fontSize: 10,
           fill: "#6b6b66",
         })}
       </g>`;
     })
     .join("");
-  return `<svg class="diagram timeline" viewBox="0 0 ${width} ${height}" role="img" aria-label="Architecture flow diagram">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${accent}"/></marker></defs>
+  return `<svg class="diagram ${ordered ? "timeline" : "collection"}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${ordered ? "Ordered architecture flow" : "Architecture components"}">
     ${nodes}
   </svg>`;
 }
@@ -339,19 +349,69 @@ function svgFlowDiagram(
   kinds: ArchFlowKind[],
   title: string,
 ): string {
-  const filtered = flows.filter((f) => kinds.includes(f.kind)).slice(0, 8);
-  const items = filtered.length
-    ? filtered.map((f) => ({
-        id: f.id,
-        label: `${labels[f.from] ?? f.from} → ${labels[f.to] ?? f.to}`,
-        detail: f.label ?? FLOW_LABEL[f.kind],
-      }))
-    : [{ id: "empty", label: title, detail: "No modelled flow" }];
+  const filtered = flows.filter((f) => kinds.includes(f.kind));
   const accent =
     kinds.includes("control") || kinds.includes("human_approval")
       ? "var(--control)"
       : "var(--data)";
-  return svgTimeline(items, accent);
+  const cardWidth = 300;
+  const cardHeight = 124;
+  const columnGap = 16;
+  const rowGap = 14;
+  const gutter = 24;
+  const pageCapacity = FLOW_CARD_COLUMNS * MAX_FLOW_VISUAL_ROWS;
+  const pages: ArchFlow[][] = [];
+  for (let start = 0; start < filtered.length; start += pageCapacity) {
+    pages.push(filtered.slice(start, start + pageCapacity));
+  }
+  if (pages.length === 0) pages.push([]);
+  return pages
+    .map((page, pageIndex) => {
+      const items = page.length
+        ? page.map((f) => ({
+            id: f.id,
+            label: `${labels[f.from] ?? f.from} → ${labels[f.to] ?? f.to}`,
+            detail: f.label ?? FLOW_LABEL[f.kind],
+          }))
+        : [{ id: "empty", label: title, detail: "No modelled flow" }];
+      const rows = Math.ceil(items.length / FLOW_CARD_COLUMNS);
+      const height = 36 + rows * cardHeight + Math.max(0, rows - 1) * rowGap;
+      const cards = items
+        .map((item, index) => {
+          const x =
+            gutter + (index % FLOW_CARD_COLUMNS) * (cardWidth + columnGap);
+          const y =
+            18 + Math.floor(index / FLOW_CARD_COLUMNS) * (cardHeight + rowGap);
+          return `<g data-arch-item-id="${esc(item.id)}">
+        <title>${esc(item.label)}${item.detail ? ` — ${esc(item.detail)}` : ""}</title>
+        <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" rx="9" fill="#fff" stroke="#d8d5cc"/>
+        <rect x="${x}" y="${y}" width="4" height="${cardHeight}" rx="2" fill="${accent}"/>
+        <text x="${x + 16}" y="${y + 22}" font-size="12" font-weight="700" fill="${accent}">RECORDED FLOW ${pageIndex * pageCapacity + index + 1}</text>
+        ${svgTextBlock(item.label, x + cardWidth / 2, y + 47, {
+          maxChars: 38,
+          maxLines: 3,
+          lineHeight: 16,
+          fontSize: 14,
+          weight: 700,
+          fill: "#1f2524",
+        })}
+        ${svgTextBlock(item.detail, x + cardWidth / 2, y + 99, {
+          maxChars: 40,
+          maxLines: 2,
+          lineHeight: 14,
+          fontSize: 12,
+          fill: "#59615d",
+        })}
+      </g>`;
+        })
+        .join("");
+      const part =
+        pages.length > 1
+          ? `<div class="diagram-part">Part ${pageIndex + 1} of ${pages.length}</div>`
+          : "";
+      return `${part}<svg class="diagram collection" viewBox="0 0 980 ${height}" role="img" aria-label="${esc(title)}${pages.length > 1 ? ` part ${pageIndex + 1} of ${pages.length}` : ""}"><rect width="980" height="${height}" fill="#fff"/>${cards}</svg>`;
+    })
+    .join("");
 }
 
 function svgGapBridge(model: ArchitectureModel): string {
@@ -360,7 +420,7 @@ function svgGapBridge(model: ArchitectureModel): string {
     label: b.targetCapability,
     detail: b.gap,
   }));
-  return svgTimeline(items, "var(--changed)");
+  return svgTimeline(items, "var(--changed)", false);
 }
 
 function svgLevel(
@@ -371,6 +431,7 @@ function svgLevel(
     return svgTimeline(
       [{ id: "missing", label: title, detail: "Missing level" }],
       "var(--muted)",
+      false,
     );
   }
   return svgTimeline(
@@ -380,6 +441,7 @@ function svgLevel(
       detail: n.service ?? ARCH_LAYER_LABELS[n.layer],
     })),
     "var(--data)",
+    false,
   );
 }
 
@@ -431,7 +493,7 @@ function humanApproval(
       label: labels[a.agentId] ?? a.agentId,
       detail: a.humanInLoop,
     }));
-  return `${svgTimeline(approvals, "var(--control)")}${agenticOverlay(model, labels)}`;
+  return `${svgTimeline(approvals, "var(--control)", false)}${agenticOverlay(model, labels)}`;
 }
 
 function integrationMap(
@@ -451,6 +513,7 @@ function integrationMap(
       detail: n.service,
     })),
     "var(--data)",
+    false,
   );
   return `${svg}${stateMap({
     title: "Integration map",
@@ -466,7 +529,7 @@ function governanceTelemetry(model: ArchitectureModel): string {
     label: c.label,
     detail: c.owner ?? c.what,
   }));
-  return `${svgTimeline(items, "var(--control)")}<div class="grid2">${model.controlPoints
+  return `${svgTimeline(items, "var(--control)", false)}<div class="grid2">${model.controlPoints
     .map(
       (c) =>
         `<div class="card"><div class="card-h">${esc(c.label)}</div><div class="note">${esc(c.what)}</div>${c.owner ? `<div class="owner">${esc(c.owner)}</div>` : ""}</div>`,
@@ -486,6 +549,7 @@ function decisionLog(model: ArchitectureModel): string {
       detail: d.recommendation,
     })),
     "var(--accent)",
+    false,
   )}<div class="grid2">${rows.join("")}</div>`;
 }
 
@@ -638,6 +702,7 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
   .legend .l-data::before{background:var(--data)} .legend .l-control::before{background:var(--control)}
   .visual-body{display:flex;flex-direction:column;gap:18px}
   .diagram{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+  .diagram-part{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--data);margin:10px 0 6px}
   .so-what,.decision-implication{background:#fff;border-left:3px solid var(--data);padding:10px 14px;margin:14px 0 0;color:var(--ink)}
   .decision-implication{border-left-color:var(--control);color:var(--muted)}
   .story-spine{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
@@ -690,6 +755,71 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
     ${section("decisions", 17, "Open inputs required", "What the architecture leadership still needs to confirm.", decisionsBody || `<p class="empty">No open decisions outstanding.</p>`)}
   </div>
 </body></html>`;
+}
+
+export interface ArchitectureVisualExhibit {
+  id: ArchitectureExhibitKey;
+  title: string;
+  soWhat: string;
+  decisionImplication: string;
+  svg: string;
+  /** Extra full-size panels for a recorded flow set above one page's capacity. */
+  continuationSvgs?: string[];
+}
+
+/** Keep continuation panels at their original size in every Office export. */
+export function architectureVisualPanels(
+  visual: ArchitectureVisualExhibit,
+): ArchitectureVisualExhibit[] {
+  const svgs = [visual.svg, ...(visual.continuationSvgs ?? [])];
+  return svgs.map((svg, index) => ({
+    ...visual,
+    title:
+      svgs.length > 1
+        ? `${visual.title} · Part ${index + 1} of ${svgs.length}`
+        : visual.title,
+    svg,
+    continuationSvgs: undefined,
+  }));
+}
+
+/** Full recorded labels remain available when Office rasterises the SVG cards. */
+export function architecturePanelRecordedFlows(svg: string): string[] {
+  const unescape = (value: string): string =>
+    value
+      .replaceAll("&quot;", '"')
+      .replaceAll("&gt;", ">")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&amp;", "&");
+  return [...svg.matchAll(/<g data-arch-item-id="([^"]+)">\s*<title>([^<]+)<\/title>/g)].map(
+    ([, id, title]) => `${unescape(id)}: ${unescape(title)}`,
+  );
+}
+
+/** Use the exact governed diagrams shown in the HTML preview for Office exports. */
+export function renderArchitectureVisualExhibits(
+  model: ArchitectureModel,
+): ArchitectureVisualExhibit[] {
+  const html = renderArchitectureHtml(model);
+  return ARCHITECTURE_V2_EXHIBITS.map((id) => {
+    const section = html.match(
+      new RegExp(
+        `<section\\b[^>]*\\bdata-exhibit="${id}"[\\s\\S]*?<\\/section>`,
+        "i",
+      ),
+    )?.[0];
+    const svgs = section?.match(/<svg\b[\s\S]*?<\/svg>/gi) ?? [];
+    const svg = svgs[0];
+    if (!svg) {
+      throw new Error(`architecture_visual_missing: ${id}`);
+    }
+    return {
+      id,
+      ...exhibitMeta(model, id),
+      svg,
+      ...(svgs.length > 1 ? { continuationSvgs: svgs.slice(1) } : {}),
+    };
+  });
 }
 
 function blockHasSvg(html: string, id: ArchitectureExhibitKey): boolean {

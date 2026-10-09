@@ -3,6 +3,11 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { FileCabinetPanel } from "../FileCabinetPanel";
+import {
+  describeMoveUploadRefusal,
+  MOVE_UPLOAD_REFUSAL_CODES,
+} from "@/lib/programs/move-upload-refusal";
+import { REVIEWED_EXTRACTION_REFUSAL_LIMITS } from "@/lib/programs/evidence-review-contract";
 
 describe("Moves File Cabinet evidence review", () => {
   it("does not expose evidence approval controls without workspace approval permission", async () => {
@@ -265,7 +270,12 @@ describe("Moves File Cabinet evidence review", () => {
     );
     fireEvent.change(
       screen.getByRole("textbox", { name: "baseline.docx review rationale" }),
-      { target: { value: "Delegated automated smoke review on named operator instruction." } },
+      {
+        target: {
+          value:
+            "Delegated automated smoke review on named operator instruction.",
+        },
+      },
     );
     fireEvent.click(
       screen.getByRole("button", { name: "Approve reviewed version" }),
@@ -275,7 +285,8 @@ describe("Moves File Cabinet evidence review", () => {
     expect(postedBody).toEqual(
       expect.objectContaining({
         decision: "approved",
-        rationale: "Delegated automated smoke review on named operator instruction.",
+        rationale:
+          "Delegated automated smoke review on named operator instruction.",
         reviewedExtraction: expect.objectContaining({
           summary: "Human-confirmed baseline is 18%.",
           structured: expect.objectContaining({
@@ -532,6 +543,368 @@ describe("Moves File Cabinet evidence review", () => {
       expect(
         screen.queryByLabelText("Required evidence this file covers"),
       ).toBeNull();
+    });
+  });
+});
+
+// ── The rejected decision ─────────────────────────────────────────────────────
+//
+// `program_evidence_reviews.decision` admits `pending | approved | rejected`.
+// The cabinet's queue reads the first and its reviewed list reads the second,
+// so a REJECTED review was on no surface: the card left the queue on the
+// decision and arrived nowhere, taking the rationale the reviewer had just
+// recorded with it, while the queue's own explainer sentence told them that
+// "pending and rejected evidence is excluded from phase generation" — naming a
+// state the panel then refused to show.
+//
+// These cases render the real panel, so they pin the WIRING: that the panel
+// asks the route for the rejected list and renders what the presentation module
+// answers. Asserting the pure split and the sentence is that module's own
+// suite; neither case here passes if the panel stops asking.
+describe("Moves File Cabinet rejected evidence", () => {
+  const REJECTED = {
+    evidenceId: "evidence-9",
+    reviewId: "review-9",
+    title: "finance-baseline.xlsx",
+    familyKey: "kpi_baseline",
+    phase: 2,
+    reviewedAt: "2026-10-07T00:00:00.000Z",
+    rationale: "The parser merged two baselines into one row.",
+  };
+
+  const mockCabinet = (payload: Record<string, unknown>) => {
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        artifacts: [],
+        pendingEvidenceReviews: [],
+        reviewedEvidence: [],
+        rejectedEvidence: [],
+        evidenceReviewStatus: "available",
+        ...payload,
+      }),
+    })) as unknown as typeof fetch;
+  };
+
+  it("gives a rejected review a place, with the reason that was recorded", async () => {
+    mockCabinet({ rejectedEvidence: [REJECTED] });
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    const section = await screen.findByRole("region", {
+      name: "Rejected evidence",
+    });
+    // Before this, none of these reached any surface: not the file, not the
+    // state, not the reason.
+    expect(section).toHaveTextContent("finance-baseline.xlsx");
+    expect(section).toHaveTextContent("Rejected");
+    expect(section).toHaveTextContent(
+      "The parser merged two baselines into one row.",
+    );
+  });
+
+  it("states the action that can succeed and not the two that cannot", async () => {
+    mockCabinet({ rejectedEvidence: [REJECTED] });
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    const section = await screen.findByRole("region", {
+      name: "Rejected evidence",
+    });
+    // The stored decision is never re-decided (the guarded update filters on
+    // `pending`) and the same file parses to the extraction that was rejected,
+    // so the only instruction that works is a corrected or different source.
+    expect(section).toHaveTextContent(/cannot be re-decided/i);
+    expect(section).toHaveTextContent(/corrected file or a different source/i);
+    // And no approve control: there is nothing here approving can act on.
+    expect(section.querySelectorAll("button").length).toBe(0);
+  });
+
+  it("renders the rejected section only for a rejected review", async () => {
+    // The control for the fix. An approved review is the neighbouring state and
+    // has its own list; if the section rendered for it too, the first two cases
+    // would pass without the decision having been read at all.
+    mockCabinet({
+      reviewedEvidence: [
+        {
+          evidenceId: REJECTED.evidenceId,
+          reviewId: REJECTED.reviewId,
+          title: REJECTED.title,
+          familyKey: REJECTED.familyKey,
+          phase: REJECTED.phase,
+          reviewedAt: REJECTED.reviewedAt,
+        },
+      ],
+    });
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+
+    expect(
+      await screen.findByRole("region", { name: "Reviewed evidence" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Rejected evidence" }),
+    ).toBeNull();
+  });
+
+  it("shows a rejected review to a reader who cannot approve", async () => {
+    // Exclusion from generation is a fact about the Move, not a reviewer
+    // privilege, so the reader without approval rights must see it too.
+    mockCabinet({ rejectedEvidence: [REJECTED] });
+
+    render(<FileCabinetPanel moveId="move-1" phase={2} />);
+
+    expect(
+      await screen.findByRole("region", { name: "Rejected evidence" }),
+    ).toHaveTextContent("finance-baseline.xlsx");
+  });
+
+  // A refused upload is how off-platform evidence FAILS to enter a Move, and
+  // approved evidence is a HARD precondition for crossing the discovery gate.
+  // Every code the route declares used to reach this panel as its bare token,
+  // because the reader preferred `error` over `detail`.
+  describe("a refused upload states what the reviewer can do", () => {
+    function mockRefusal(payload: Record<string, unknown>, status = 400) {
+      global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes("/artifacts/upload") && init?.method === "POST") {
+          return {
+            ok: false,
+            status,
+            json: async () => ({ ok: false, ...payload }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            artifacts: [],
+            pendingEvidenceReviews: [],
+            evidenceReviewStatus: "available",
+          }),
+        } as Response;
+      }) as typeof fetch;
+    }
+
+    async function uploadAndReadMessage(payload: Record<string, unknown>) {
+      mockRefusal(payload);
+      render(<FileCabinetPanel moveId="move-1" phase={2} />);
+      fireEvent.change(screen.getByLabelText("Upload Move file"), {
+        target: {
+          files: [new File(["a,b"], "controls.csv", { type: "text/csv" })],
+        },
+      });
+      const sentence = describeMoveUploadRefusal({
+        code: payload.error,
+        detail: payload.detail,
+        fileName: "controls.csv",
+      });
+      await waitFor(() =>
+        expect(screen.getByText(sentence)).toBeInTheDocument(),
+      );
+      return sentence;
+    }
+
+    it.each([...MOVE_UPLOAD_REFUSAL_CODES])(
+      "renders the sentence for %s and not the code",
+      async (code) => {
+        const sentence = await uploadAndReadMessage({ error: code });
+        expect(sentence).not.toContain(code);
+        expect(screen.queryByText(code, { exact: false })).toBeNull();
+      },
+    );
+
+    it("does not put the raw MIME type on screen for an unreadable file", async () => {
+      await uploadAndReadMessage({
+        error: "unsupported_type",
+        detail: "application/zip",
+      });
+      expect(screen.queryByText(/application\/zip/)).toBeNull();
+      expect(
+        screen.getByText(/not a file type this workspace can read/),
+      ).toBeInTheDocument();
+    });
+
+    it("names the upload cap rather than a byte count", async () => {
+      await uploadAndReadMessage({
+        error: "file_too_large",
+        detail: "max 104857600 bytes",
+      });
+      expect(screen.queryByText(/104857600/)).toBeNull();
+      expect(screen.getByText(/100 MB upload limit/)).toBeInTheDocument();
+    });
+
+    it("renders the server sentence for a declared family the Move does not require", async () => {
+      await uploadAndReadMessage({
+        error: "unknown_evidence_family",
+        detail: "'ops_runbook' is not an evidence family this Move requires.",
+      });
+      expect(
+        screen.getByText(
+          "'ops_runbook' is not an evidence family this Move requires.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("still answers when the refusal carries no code at all", async () => {
+      await uploadAndReadMessage({});
+      expect(screen.getByText(/did not say why/)).toBeInTheDocument();
+    });
+  });
+  // The approval contract refuses a reviewed extraction whose list fields or
+  // evidence references are over its bounds, and the producer that fills this
+  // form bounds the references and not the lists — so a stored row can open a
+  // form the server already refuses. These cases pin that the form says which
+  // field is over, and that the button is both inert AND styled inert.
+  describe("approval bounds on the reviewed extraction", () => {
+    const listLimit = REVIEWED_EXTRACTION_REFUSAL_LIMITS.listItems;
+
+    function renderPendingReview(decisions: string[]) {
+      const posted: unknown[] = [];
+      global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+        if (String(url).includes("/approve")) {
+          posted.push(JSON.parse(String(init?.body ?? "{}")));
+          return { ok: true, json: async () => ({ ok: true }) } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            artifacts: [],
+            pendingEvidenceReviews: [
+              {
+                evidenceId: "evidence-1",
+                title: "controls.docx",
+                phase: 2,
+                parseMethod: "docx-parser",
+                confidence: 0.9,
+                sourceTextPreview: "Controls inventory",
+                extraction: {
+                  version: 1,
+                  summary: "Controls inventory as parsed.",
+                  structured: {
+                    decisions,
+                    risks: [],
+                    baselineCandidates: [],
+                    actionItems: [],
+                    observations: [],
+                    assumptions: [],
+                    openQuestions: [],
+                    citations: [],
+                  },
+                },
+              },
+            ],
+            evidenceReviewStatus: "available",
+          }),
+        } as Response;
+      }) as unknown as typeof fetch;
+      render(<FileCabinetPanel moveId="move-1" phase={2} canApproveGates />);
+      return posted;
+    }
+
+    const rows = (count: number) =>
+      Array.from({ length: count }, (_, index) => `control ${index + 1}`);
+
+    it("names the over-limit field and withholds approval when a stored row is over", async () => {
+      const posted = renderPendingReview(rows(listLimit + 4));
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+
+      const blockers = screen.getByRole("list", {
+        name: "controls.docx approval blockers",
+      });
+      expect(blockers).toHaveTextContent("Decisions");
+      expect(blockers).toHaveTextContent(String(listLimit + 4));
+      expect(blockers).toHaveTextContent("Remove 4 items");
+
+      const approve = screen.getByRole("button", {
+        name: "Approve reviewed version",
+      });
+      expect(approve).toBeDisabled();
+      // The styling has to agree with the attribute: a full-opacity,
+      // pointer-cursor button that does nothing is the original defect.
+      expect(approve).toHaveStyle({ opacity: "0.5", cursor: "default" });
+      fireEvent.click(approve);
+      expect(posted).toHaveLength(0);
+    });
+
+    it("clears the block and approves once the reviewer removes the overage", async () => {
+      const posted = renderPendingReview(rows(listLimit + 1));
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+      expect(
+        screen.getByRole("button", { name: "Approve reviewed version" }),
+      ).toBeDisabled();
+
+      fireEvent.change(
+        screen.getByRole("textbox", {
+          name: "controls.docx reviewed decisions",
+        }),
+        { target: { value: rows(listLimit).join("\n") } },
+      );
+      expect(
+        screen.queryByRole("list", {
+          name: "controls.docx approval blockers",
+        }),
+      ).toBeNull();
+      const approve = screen.getByRole("button", {
+        name: "Approve reviewed version",
+      });
+      expect(approve).toBeEnabled();
+      expect(approve).toHaveStyle({ opacity: "1", cursor: "pointer" });
+
+      fireEvent.click(approve);
+      await waitFor(() => expect(posted).toHaveLength(1));
+    });
+
+    it("withholds approval for an emptied summary and says why", async () => {
+      const posted = renderPendingReview([]);
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+      const approve = screen.getByRole("button", {
+        name: "Approve reviewed version",
+      });
+      expect(approve).toBeEnabled();
+
+      fireEvent.change(
+        screen.getByRole("textbox", { name: "controls.docx reviewed summary" }),
+        { target: { value: "   " } },
+      );
+      expect(
+        screen.getByRole("list", { name: "controls.docx approval blockers" }),
+      ).toHaveTextContent("A reviewed summary is required");
+      expect(approve).toBeDisabled();
+      expect(approve).toHaveStyle({ opacity: "0.5", cursor: "default" });
+      fireEvent.click(approve);
+      expect(posted).toHaveLength(0);
+    });
+
+    it("leaves rejection available while approval is blocked", async () => {
+      const posted = renderPendingReview(rows(listLimit + 1));
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+      expect(
+        screen.getByRole("button", { name: "Approve reviewed version" }),
+      ).toBeDisabled();
+      const reject = screen.getByRole("button", { name: "Reject" });
+      expect(reject).toBeEnabled();
+      fireEvent.click(reject);
+      await waitFor(() => expect(posted).toHaveLength(1));
+      expect(posted[0]).toEqual(
+        expect.objectContaining({ decision: "rejected" }),
+      );
+    });
+
+    it("offers approval with no blocker list on a row within the bounds", async () => {
+      renderPendingReview(rows(listLimit));
+      await screen.findByText("1 evidence item awaiting review");
+      fireEvent.click(screen.getByText(/Review extracted information/));
+      expect(
+        screen.queryByRole("list", {
+          name: "controls.docx approval blockers",
+        }),
+      ).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Approve reviewed version" }),
+      ).toBeEnabled();
     });
   });
 });

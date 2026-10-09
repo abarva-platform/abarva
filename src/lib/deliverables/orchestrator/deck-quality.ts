@@ -38,6 +38,7 @@ export type DeckFinding =
       message: string;
     }
   | { kind: "thin_slide"; slide: number; message: string }
+  | { kind: "empty_canvas"; slide: number; message: string }
   | { kind: "empty_table"; slide: number; message: string }
   | { kind: "slide_count"; message: string }
   | { kind: "canvas"; message: string };
@@ -58,6 +59,7 @@ const CHROME_RUNS = 3;
 function roleOf(policy: DeckPolicy, slide: InspectedSlide): SlideRole {
   const declared = policy.rolesByIndex?.[slide.index];
   if (declared) return declared;
+  if (slide.layoutRole === "divider") return "divider";
   if (slide.index === 1) return "cover";
   return "content";
 }
@@ -136,6 +138,24 @@ export function judgeRenderedDeck(
     }
 
     const role = roleOf(policy, slide);
+    const narrativeChars =
+      role === "cover" || role === "divider"
+        ? slide.textRuns.join(" ").trim().length
+        : supportingChars;
+    if (
+      slide.pictureCount === 0 &&
+      slide.tableCount === 0 &&
+      slide.chartCount === 0 &&
+      narrativeChars === 0
+    ) {
+      findings.push({
+        kind: "empty_canvas",
+        slide: slide.index,
+        message: `slide ${slide.index}: no narrative, table, chart, or exhibit was rendered on the canvas.`,
+      });
+      continue;
+    }
+
     if (role === "cover" || role === "divider") continue;
 
     if (!hasSubstance(slide)) {

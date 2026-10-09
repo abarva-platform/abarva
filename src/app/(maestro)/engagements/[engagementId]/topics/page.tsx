@@ -8,6 +8,7 @@ import {
   type TopicRow,
   type DiagnosticQuestion,
 } from '@/lib/topics/db';
+import { getPhaseChipLabel } from '@/lib/programs/phase-roster';
 import { assignTopicAction, unassignTopicAction, toggleQuestionAction, togglePrimaryAction } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,6 @@ const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const PANEL_BG = 'rgba(255,255,255,0.02)';
 const MONO = 'JetBrains Mono, monospace';
 
-const PHASE_LABEL = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
 
 function questionId(q: DiagnosticQuestion, idx: number): string {
   return q.id ?? `q-${idx}`;
@@ -281,7 +281,7 @@ export default async function EngagementTopicsPage({
                                 marginRight: 6,
                               }}
                             >
-                              P{phase} {PHASE_LABEL[phase]?.toUpperCase() ?? ''}
+                              P{phase} {getPhaseChipLabel(phase)}
                               {typeof q.probe_depth === 'number' ? ` · depth ${q.probe_depth}` : ''}
                             </span>
                             {q.question}

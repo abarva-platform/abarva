@@ -3,6 +3,7 @@ import type { DeliverablePlan } from "../deliverable-plan";
 import {
   DELIVERABLE_PLAN_MAX_TOKENS,
   DELIVERABLE_PLAN_RETRY_MAX_TOKENS,
+  DELIVERABLE_PLAN_SYSTEM_PROMPT,
   DELIVERABLE_PLAN_TOOL,
   buildDeliverablePlanUserMessage,
   generateDeliverablePlan,
@@ -177,6 +178,30 @@ describe("deliverable plan generation pass", () => {
     );
 
     expect(seenTool).toBe(DELIVERABLE_PLAN_TOOL);
+  });
+
+  it("requests a reader-visible brief while retaining the structured evidence fields", () => {
+    const instruction = [
+      DELIVERABLE_PLAN_SYSTEM_PROMPT,
+      DELIVERABLE_PLAN_TOOL.description,
+      buildDeliverablePlanUserMessage({
+        artifactType: "target_state_architecture",
+        audience: "architecture council",
+        decisionPurpose: "Select a governed design.",
+        client: "Synthetic organization",
+        initiative: "Data foundation",
+        contextText: "A fictional discovery record names open design controls.",
+      }),
+    ].join("\n");
+
+    expect(instruction).toMatch(/client-visible decision brief/i);
+    expect(instruction).toMatch(
+      /observed gap, design implication, and target state/i,
+    );
+    expect(instruction).toMatch(/Do not invent unsupported numbers/i);
+    expect(instruction).not.toMatch(
+      /hidden reason|private reasoning|chain.of.thought/i,
+    );
   });
 
   it("builds a grounded user message", () => {

@@ -27,6 +27,7 @@ import { EvaluationBafoReadinessPanel } from "@/components/source/canvas/respons
 import { VendorEvaluationScorecardPanel } from "@/components/source/canvas/responses/VendorEvaluationScorecardPanel";
 import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
+import styles from "./SourceAnalyticsCanvas.module.css";
 import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceAwardSowHandoffReadinessPanel";
 import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { applySourceApprovalPolicyToStageView } from "@/lib/source/approval-policy-stage-view";
@@ -956,7 +957,7 @@ export function SourceAnalyticsCanvas({
         context: `${event.code} · ${event.name}`,
       }}
     >
-      <main data-testid="source-analytics-canvas" style={MAIN_STYLE}>
+      <main data-testid="source-analytics-canvas" className={styles.canvas} style={MAIN_STYLE}>
         <div style={WORK_PANE_STYLE}>
           <SourceWorkflowFrame
             testId="source-workflow-frame"
@@ -966,8 +967,11 @@ export function SourceAnalyticsCanvas({
                 journey={journey}
                 workspace={workspace}
                 onWorkspaceChange={setWorkspace}
+                avaOpen={avaOpen}
+                onAvaToggle={() => setAvaOpen((value) => !value)}
               />
             }
+            paneTestId="source-workflow-pane"
             minHeight="100%"
             alignItems="stretch"
             paneStyle={{ padding: "28px 28px 150px" }}
@@ -1014,6 +1018,7 @@ export function SourceAnalyticsCanvas({
       </main>
       <AskAvaLauncher
         open={avaOpen}
+        withProgressDock={workspace === "steps"}
         onClick={() => setAvaOpen((value) => !value)}
       />
       {avaOpen ? (
@@ -1054,13 +1059,22 @@ function SourceShellRail({
   journey,
   workspace,
   onWorkspaceChange,
+  avaOpen,
+  onAvaToggle,
 }: {
   view: SourceEventShellView;
   journey?: SourceJourneyDefinition;
   workspace: SourceShellWorkspace;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
+  avaOpen: boolean;
+  onAvaToggle: () => void;
 }) {
   const readerJourney = sourceReaderJourneyCheckpoints(view, journey);
+  const [mobileRailOpen, setMobileRailOpen] = useState(false);
+  const selectWorkspace = (nextWorkspace: SourceShellWorkspace) => {
+    onWorkspaceChange(nextWorkspace);
+    setMobileRailOpen(false);
+  };
 
   return (
     <aside
@@ -1072,6 +1086,34 @@ function SourceShellRail({
         background: ANALYTICS.PAGE_BG,
       }}
     >
+      <div className={styles.mobileRailActions}>
+        <button
+          type="button"
+          className={styles.mobileRailToggle}
+          aria-controls="source-shell-mobile-rail-content"
+          aria-expanded={mobileRailOpen}
+          onClick={() => setMobileRailOpen((open) => !open)}
+        >
+          <span>Journey and workspaces</span>
+          <span aria-hidden="true">{mobileRailOpen ? "−" : "+"}</span>
+        </button>
+        <button
+          type="button"
+          data-testid="source-mobile-ask-ava-launcher"
+          className={styles.mobileAvaButton}
+          aria-label={avaOpen ? "Close aVa" : "Ask aVa"}
+          aria-expanded={avaOpen}
+          title={avaOpen ? "Close aVa" : "Ask aVa"}
+          onClick={onAvaToggle}
+        >
+          <span aria-hidden="true">{avaOpen ? "×" : "a"}</span>
+        </button>
+      </div>
+      <div
+        id="source-shell-mobile-rail-content"
+        className={styles.railContents}
+        data-open={mobileRailOpen}
+      >
       <Link
         href="/source/new"
         style={{
@@ -1135,8 +1177,7 @@ function SourceShellRail({
                   placeItems: "center",
                   background:
                     checkpointState === "past" ||
-                    checkpointState === "complete" ||
-                    checkpointState === "recorded"
+                    checkpointState === "complete"
                       ? ANALYTICS.INK
                       : checkpointState === "historical_gap"
                         ? ANALYTICS.AMBER_TINT
@@ -1146,7 +1187,6 @@ function SourceShellRail({
                   color:
                     checkpointState === "past" ||
                     checkpointState === "complete" ||
-                    checkpointState === "recorded" ||
                     checkpointState === "current"
                       ? "#fff"
                       : checkpointState === "historical_gap"
@@ -1155,7 +1195,6 @@ function SourceShellRail({
                   border:
                     checkpointState === "past" ||
                     checkpointState === "complete" ||
-                    checkpointState === "recorded" ||
                     checkpointState === "current"
                       ? "none"
                       : `1px solid ${ANALYTICS.LINE_STRONG}`,
@@ -1165,12 +1204,11 @@ function SourceShellRail({
                 }}
               >
                 {checkpointState === "past" ||
-                checkpointState === "complete" ||
-                checkpointState === "recorded"
+                checkpointState === "complete"
                   ? "✓"
                   : checkpointState === "historical_gap"
                     ? "!"
-                    : checkpointState === "no_record"
+                    : checkpointState === "no_record" || checkpointState === "recorded"
                       ? "–"
                   : String(index + 1).padStart(2, "0")}
               </span>
@@ -1202,7 +1240,7 @@ function SourceShellRail({
                   >
                     Historical gap
                   </span>
-                ) : checkpointState === "no_record" ? (
+                ) : checkpointState === "no_record" || checkpointState === "recorded" ? (
                   <span
                     style={{
                       color: ANALYTICS.MUTED,
@@ -1212,7 +1250,7 @@ function SourceShellRail({
                       textTransform: "uppercase",
                     }}
                   >
-                    No record
+                    {checkpointState === "recorded" ? "Recorded" : "No record"}
                   </span>
                 ) : null}
               </span>
@@ -1305,30 +1343,36 @@ function SourceShellRail({
       >
         <RailLabel>Workspace</RailLabel>
         <WorkspaceButton
+          workspaceKey="steps"
+          label="Current stage"
+          active={workspace === "steps"}
+          onClick={() => selectWorkspace("steps")}
+        />
+        <WorkspaceButton
           workspaceKey="files"
           label="Files & deliverables"
           active={workspace === "files"}
-          onClick={() => onWorkspaceChange("files")}
+          onClick={() => selectWorkspace("files")}
         />
         <WorkspaceButton
           workspaceKey="intelligence"
           label="Intelligence Explorer"
           badge={workspace === "intelligence" ? "open" : undefined}
           active={workspace === "intelligence"}
-          onClick={() => onWorkspaceChange("intelligence")}
+          onClick={() => selectWorkspace("intelligence")}
         />
         <WorkspaceButton
           workspaceKey="approvals"
           label="Approvals"
           active={workspace === "approvals"}
-          onClick={() => onWorkspaceChange("approvals")}
+          onClick={() => selectWorkspace("approvals")}
         />
         <WorkspaceButton
           workspaceKey="guidebook"
           label="Guidebook"
           badge={view.guidebook.available ? undefined : "default"}
           active={workspace === "guidebook"}
-          onClick={() => onWorkspaceChange("guidebook")}
+          onClick={() => selectWorkspace("guidebook")}
         />
       </div>
       <div
@@ -1350,6 +1394,7 @@ function SourceShellRail({
         <div style={{ marginTop: 14 }}>
           <SourceRailAdvisorNote view={view} />
         </div>
+      </div>
       </div>
     </aside>
   );
@@ -1904,6 +1949,8 @@ function StageHeader({
         Source › {view.event.code} › {view.stage.label}
       </div>
       <div
+        data-testid="source-stage-header-layout"
+        className={styles.stageHeaderLayout}
         style={{
           display: "flex",
           alignItems: "flex-end",
@@ -2295,6 +2342,8 @@ function FocusedWorkPanel({
   const activeMissingEvidence = activeStep
     ? requiredRowsForStep(activeStep).find((row) => row?.ready !== true)
     : null;
+  const firstMissingEvidence = requiredEvidenceRows.find((row) => !row.ready) ?? null;
+  const nextEvidenceBlocker = activeMissingEvidence ?? firstMissingEvidence;
   const canShowNext =
     activeComplete &&
     (activeIndex < flatSteps.length - 1 || stageInputsReady);
@@ -2504,6 +2553,7 @@ function FocusedWorkPanel({
             view={view}
             stageOperatingStatus={stageOperatingStatus}
             requiredEvidenceOpen={requiredEvidenceOpen}
+            firstMissingEvidence={firstMissingEvidence}
             awardSowHandoffReadiness={awardSowHandoffReadiness}
             onOpenApprovalPage={openApprovalPage}
             onOpenFiles={() => onWorkspaceChange("files")}
@@ -2637,10 +2687,16 @@ function FocusedWorkPanel({
                   onClick: goNext,
                   testId: "source-shell-progress-action",
                 } : null}
+                blockedAction={!canShowNext && nextEvidenceBlocker ? {
+                  label: evidenceBlockerActionLabel(nextEvidenceBlocker),
+                  onClick: () => onWorkspaceChange("files"),
+                } : null}
                 status={activeIndex >= flatSteps.length - 1
                   ? "Approval locked"
                   : "Continue locked"}
-                detail={continueGuidance}
+                detail={!canShowNext && nextEvidenceBlocker
+                  ? evidenceBlockerSummary(nextEvidenceBlocker)
+                  : continueGuidance}
               />
             </div>
           </>
@@ -2652,10 +2708,12 @@ function FocusedWorkPanel({
 
 function ProgressActionDock({
   action,
+  blockedAction,
   status,
   detail,
 }: {
   action: { label: string; onClick: () => void; testId: string } | null;
+  blockedAction?: { label: string; onClick: () => void } | null;
   status: string;
   detail?: string | null;
 }) {
@@ -2715,10 +2773,44 @@ function ProgressActionDock({
         >
           <strong style={{ fontSize: 13 }}>{status}</strong>
           {detail ? <span style={{ fontSize: 12, lineHeight: 1.35 }}>{detail}</span> : null}
+          {blockedAction ? (
+            <button
+              type="button"
+              onClick={blockedAction.onClick}
+              style={{
+                background: ANALYTICS.CARD,
+                border: `1px solid ${ANALYTICS.LINE_STRONG}`,
+                borderRadius: 6,
+                color: ANALYTICS.INK,
+                cursor: "pointer",
+                fontFamily: ANALYTICS.SANS,
+                fontSize: 13,
+                fontWeight: 750,
+                marginTop: 6,
+                minHeight: 40,
+                padding: "8px 12px",
+                textAlign: "left",
+              }}
+            >
+              {blockedAction.label}
+            </button>
+          ) : null}
         </div>
       )}
     </div>
   );
+}
+
+function evidenceBlockerSummary(row: StageEvidenceRequirementRow): string {
+  const { requirement, evidence } = row;
+  const currentState = requiresRecordedSource(requirement) && !hasRecordedSource(evidence)
+    ? "Not loaded"
+    : evidence?.currentState ?? "Not Requested";
+  return `${requirement.label} · Now: ${currentState} · Needed: ${requirement.minimumState}`;
+}
+
+function evidenceBlockerActionLabel(row: StageEvidenceRequirementRow): string {
+  return row.lifecycle.parsed ? "Review evidence in Files" : "Open evidence workspace";
 }
 
 function plainStageStepGroupLabel(label: string) {
@@ -2732,6 +2824,7 @@ function StageReadyPanel({
   view,
   stageOperatingStatus,
   requiredEvidenceOpen,
+  firstMissingEvidence,
   awardSowHandoffReadiness,
   onOpenApprovalPage,
   onOpenFiles,
@@ -2739,6 +2832,7 @@ function StageReadyPanel({
   view: SourceEventShellView;
   stageOperatingStatus: StageOperatingStatus | null;
   requiredEvidenceOpen: number;
+  firstMissingEvidence: StageEvidenceRequirementRow | null;
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   onOpenApprovalPage: () => void;
   onOpenFiles: () => void;
@@ -2949,10 +3043,16 @@ function StageReadyPanel({
           onClick: onOpenApprovalPage,
           testId: "source-stage-ready-open-approval",
         } : null}
+        blockedAction={!approvalRecorded && firstMissingEvidence ? {
+          label: evidenceBlockerActionLabel(firstMissingEvidence),
+          onClick: onOpenFiles,
+        } : null}
         status={approvalRecorded ? "Approval recorded" : "Approval locked"}
         detail={approvalRecorded
           ? "The decision is already recorded."
-          : `${gapSummary} remain. Review evidence before approval.`}
+          : firstMissingEvidence
+            ? evidenceBlockerSummary(firstMissingEvidence)
+            : `${gapSummary} remain. Review evidence before approval.`}
       />
       <Link
         href={view.stage.approvalHref}
@@ -9022,15 +9122,19 @@ function IntelligenceExplorerCard({ view }: { view: SourceEventShellView }) {
 
 function AskAvaLauncher({
   open,
+  withProgressDock,
   onClick,
 }: {
   open: boolean;
+  withProgressDock: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       data-testid="source-ask-ava-launcher"
+      className={withProgressDock ? styles.askAvaWithDock : styles.askAvaLauncher}
+      aria-label={open ? "Close aVa" : "Ask aVa"}
       aria-expanded={open}
       onClick={onClick}
       style={{

@@ -7,7 +7,6 @@
 
 import "server-only";
 
-import { Packer } from "docx";
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
@@ -36,14 +35,28 @@ import {
   validateArchitectureGenerationLineage,
 } from "@/lib/programs/approved-solution-approach";
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract";
+import { classifyP3ArchitectureLineagePrecondition } from "@/lib/programs/p3-architecture-lineage-precondition";
 import {
   approvedMoveEvidenceRevisionForPhase,
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  approvedEvidenceBasisRefusalCode,
+  classifyApprovedEvidenceBasisRefusal,
+  describeApprovedEvidenceBasisRefusal,
+  unevaluableApprovedEvidenceBasisRefusal,
+} from "@/lib/programs/approved-evidence-basis-refusal";
+// Each `error:` literal below is annotated `satisfies
+// MoveClientApprovalOwnRefusalCode`, so adding a refusal code here without
+// giving it a reviewer sentence in `move-client-approval-refusal.ts` is a
+// compile error rather than a bare token on a reviewer's screen.
+import type { MoveClientApprovalOwnRefusalCode } from "@/lib/programs/move-client-approval-refusal";
+import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approved-evidence-lineage";
 import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
-import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
+import { renderValidatedDocx } from "@/lib/deliverables/orchestrator/render-validated-doc";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
+import { architectureModelForArtifact } from "@/lib/deliverables/orchestrator/architecture-artifact-model";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 
 export const runtime = "nodejs";
@@ -241,7 +254,12 @@ async function renderAcceptedGeneratedDraft(args: {
   if (!args.doc) return null;
   const structuredDoc = args.doc as unknown as RenderableDeliverable;
   if (args.artifact.outputFormat === "pptx") {
-    const validated = await renderValidatedDeck(structuredDoc);
+    const architectureModel = architectureModelForArtifact(args.artifact);
+    const validated = await renderValidatedDeck(
+      structuredDoc,
+      {},
+      architectureModel,
+    );
     if (!validated.physicallyIntact || !validated.verdict.ok) {
       const details = validated.physicallyIntact
         ? validated.verdict.findings
@@ -260,7 +278,10 @@ async function renderAcceptedGeneratedDraft(args: {
       parseMethod: "generated_renderable_deliverable_pptx",
     };
   }
-  const docx = await Packer.toBuffer(renderDeliverableDocx(structuredDoc));
+  const docx = await renderValidatedDocx(
+    structuredDoc,
+    architectureModelForArtifact(args.artifact),
+  );
   return {
     body: Buffer.from(docx),
     fileName: safeArtifactFileName(args.title, "docx"),
@@ -279,7 +300,11 @@ export async function POST(
     const ctx = await requireTenancy();
     const { supabase } = await getProgramsRouteSupabase("mutation");
     const program = await getProgramById(ctx, programId, { supabase });
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    if (!program)
+      return Response.json(
+        { error: "not_found" satisfies MoveClientApprovalOwnRefusalCode },
+        { status: 404 },
+      );
 
     const artifact =
       (await getGeneratedArtifactById(artifactId, {
@@ -291,13 +316,16 @@ export async function POST(
           })
         : null);
     if (!artifact)
-      return Response.json({ error: "not_found" }, { status: 404 });
+      return Response.json(
+        { error: "not_found" satisfies MoveClientApprovalOwnRefusalCode },
+        { status: 404 },
+      );
     if (
       !generatedArtifactBelongsToMove(artifact.sourceArtifactRef, programId)
     ) {
       return Response.json(
         {
-          error: "wrong_move",
+          error: "wrong_move" satisfies MoveClientApprovalOwnRefusalCode,
           detail: "Generated artifact is not scoped to this Move.",
         },
         { status: 403 },
@@ -310,7 +338,8 @@ export async function POST(
     if (!deliverableTypeKey) {
       return Response.json(
         {
-          error: "unsupported_artifact_type",
+          error:
+            "unsupported_artifact_type" satisfies MoveClientApprovalOwnRefusalCode,
           detail: `"${artifact.artifactType}" cannot be resolved to a registered Move deliverable.`,
         },
         { status: 422 },
@@ -323,7 +352,7 @@ export async function POST(
     if (phase < 1 || phase > 5) {
       return Response.json(
         {
-          error: "unsupported_phase",
+          error: "unsupported_phase" satisfies MoveClientApprovalOwnRefusalCode,
           detail: "Only P1-P5 artifacts can be approved here.",
         },
         { status: 422 },
@@ -332,11 +361,15 @@ export async function POST(
 
     let verifiedGenerationLineage: Record<string, unknown> | null = null;
     if (!ctx.clientKey) {
+      // No tenant key means the approved-evidence read was never issued, so
+      // nothing was established about this document's currency.
+      const refusal = unevaluableApprovedEvidenceBasisRefusal(
+        "tenant_scope_unresolved",
+      );
       return Response.json(
         {
-          error: "evidence_snapshot_not_current",
-          detail:
-            "The active tenant key is unavailable; the evidence snapshot cannot be verified.",
+          error: approvedEvidenceBasisRefusalCode(refusal),
+          detail: describeApprovedEvidenceBasisRefusal(refusal, "approval"),
         },
         { status: 409 },
       );
@@ -351,25 +384,33 @@ export async function POST(
         : typeof artifact.metadata.evidenceSnapshotHash === "string"
           ? artifact.metadata.evidenceSnapshotHash
           : null;
-    if (
-      !currentEvidenceSnapshot ||
-      !artifactSnapshotHash ||
-      !isApprovedMoveEvidenceBasisCurrent({
-        snapshot: currentEvidenceSnapshot,
-        phase,
-        recordedRevision: artifactSnapshotHash,
-        scope:
-          typeof artifact.metadata.evidenceSnapshotScope === "string"
-            ? artifact.metadata.evidenceSnapshotScope
-            : null,
-        generatedAt: artifact.renderedAt,
-      })
-    ) {
+    const evidenceBasisRefusal = classifyApprovedEvidenceBasisRefusal({
+      basisEvaluable: Boolean(currentEvidenceSnapshot),
+      cause: "snapshot_unreadable",
+      recordedRevision: artifactSnapshotHash,
+      basisIsCurrent:
+        Boolean(currentEvidenceSnapshot) &&
+        isApprovedMoveEvidenceBasisCurrent({
+          snapshot: currentEvidenceSnapshot,
+          phase,
+          recordedRevision: artifactSnapshotHash,
+          scope:
+            typeof artifact.metadata.evidenceSnapshotScope === "string"
+              ? artifact.metadata.evidenceSnapshotScope
+              : null,
+          generatedAt: artifact.renderedAt,
+        }),
+    });
+    // The `!currentEvidenceSnapshot` disjunct narrows the snapshot for the
+    // lineage written below; a null snapshot already classifies as
+    // `basis_unevaluable`, so the fallback resolves to that same refusal.
+    if (evidenceBasisRefusal || !currentEvidenceSnapshot) {
+      const refusal =
+        evidenceBasisRefusal ?? unevaluableApprovedEvidenceBasisRefusal();
       return Response.json(
         {
-          error: "stale_evidence_snapshot",
-          detail:
-            "Approved evidence changed after this document was generated, or its evidence revision cannot be verified. Rebuild the phase outputs before approval.",
+          error: approvedEvidenceBasisRefusalCode(refusal),
+          detail: describeApprovedEvidenceBasisRefusal(refusal, "approval"),
         },
         { status: 409 },
       );
@@ -392,34 +433,47 @@ export async function POST(
       phase === 3 &&
       P3_ARCHITECTURE_DELIVERABLE_KEYS.has(deliverableTypeKey)
     ) {
-      if (!ctx.clientKey) {
+      const approved = ctx.clientKey
+        ? await loadApprovedSolutionApproach({
+            moveId: programId,
+            clientId: ctx.clientId,
+          })
+        : null;
+      const freshness = ctx.clientKey
+        ? await loadCurrentMoveContextExtractFreshness({
+            tenantKey: ctx.clientKey,
+            moveId: programId,
+            phase: 3,
+          })
+        : null;
+      // This path also refuses a non-`fresh` extract, which the sign-off path
+      // leaves to the lineage comparison. `staleRefuses: true` keeps that.
+      const precondition = classifyP3ArchitectureLineagePrecondition({
+        clientKey: ctx.clientKey,
+        approvedOptionPresent: Boolean(approved),
+        freshness,
+        staleRefuses: true,
+      });
+      if (precondition) {
         return Response.json(
           {
-            error: "architecture_lineage_not_current",
-            detail: "The active tenant key is unavailable.",
+            error:
+              "architecture_lineage_not_current" satisfies MoveClientApprovalOwnRefusalCode,
+            detail: precondition.detail,
           },
           { status: 409 },
         );
       }
-      const approved = await loadApprovedSolutionApproach({
-        moveId: programId,
-        clientId: ctx.clientId,
-      });
-      const freshness = await loadCurrentMoveContextExtractFreshness({
-        tenantKey: ctx.clientKey,
-        moveId: programId,
-        phase: 3,
-      });
-      if (
-        !approved ||
-        !freshness?.evidenceFingerprint ||
-        freshness.freshnessStatus !== "fresh"
-      ) {
+      if (!approved || !freshness) {
+        // Unreachable: the classifier refuses on every input that leaves either
+        // read unusable. Kept so the comparison below narrows without a
+        // non-null assertion.
         return Response.json(
           {
-            error: "architecture_lineage_not_current",
+            error:
+              "architecture_lineage_not_current" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
-              "The current approved option or P3 context snapshot is unavailable. Rebuild the architecture chain before approval.",
+              "The current approved option or P3 context snapshot is unavailable.",
           },
           { status: 409 },
         );
@@ -432,7 +486,8 @@ export async function POST(
       if (!validation.ok) {
         return Response.json(
           {
-            error: "architecture_lineage_not_current",
+            error:
+              "architecture_lineage_not_current" satisfies MoveClientApprovalOwnRefusalCode,
             detail: validation.detail,
           },
           { status: 409 },
@@ -457,7 +512,7 @@ export async function POST(
     ) {
       return Response.json(
         {
-          error: "forbidden",
+          error: "forbidden" satisfies MoveClientApprovalOwnRefusalCode,
           detail: "Authorized Move approval permission required.",
         },
         { status: 403 },
@@ -468,7 +523,8 @@ export async function POST(
     if (!generatedContent) {
       return Response.json(
         {
-          error: "generated_artifact_not_extractable",
+          error:
+            "generated_artifact_not_extractable" satisfies MoveClientApprovalOwnRefusalCode,
           detail:
             "The generated artifact has no extractable content to approve.",
         },
@@ -502,7 +558,7 @@ export async function POST(
       if (!(file instanceof File) || file.size === 0) {
         return Response.json(
           {
-            error: "file_required",
+            error: "file_required" satisfies MoveClientApprovalOwnRefusalCode,
             detail: "A client-approved file is required.",
           },
           { status: 400 },
@@ -511,7 +567,7 @@ export async function POST(
       if (!isWithinSizeLimit(file.size)) {
         return Response.json(
           {
-            error: "file_too_large",
+            error: "file_too_large" satisfies MoveClientApprovalOwnRefusalCode,
             detail: `max ${MAX_ATTACHMENT_SIZE_BYTES} bytes`,
           },
           { status: 413 },
@@ -519,7 +575,11 @@ export async function POST(
       }
       if (file.type && !isAllowedMimeType(file.type)) {
         return Response.json(
-          { error: "unsupported_type", detail: file.type },
+          {
+            error:
+              "unsupported_type" satisfies MoveClientApprovalOwnRefusalCode,
+            detail: file.type,
+          },
           { status: 415 },
         );
       }
@@ -535,7 +595,8 @@ export async function POST(
       if (!parsedText) {
         return Response.json(
           {
-            error: "approved_upload_not_extractable",
+            error:
+              "approved_upload_not_extractable" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               "Client-approved replacement files must contain extractable text before they can become the downstream source of truth.",
             parseMethod: parsed.extractedStructured.parse_method,
@@ -555,7 +616,8 @@ export async function POST(
       if (unsupportedFinancialClaims.length > 0) {
         return Response.json(
           {
-            error: "unsupported_financial_claim_delta",
+            error:
+              "unsupported_financial_claim_delta" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               "The reviewed file adds or strengthens financial claims that are not established by the generated source. Attach and approve supporting financial evidence, rebuild the deliverable, then review it again.",
             unsupportedClaims: unsupportedFinancialClaims,
@@ -634,7 +696,8 @@ export async function POST(
       } catch (err) {
         return Response.json(
           {
-            error: "generated_artifact_final_render_failed",
+            error:
+              "generated_artifact_final_render_failed" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               err instanceof Error
                 ? err.message
@@ -646,7 +709,8 @@ export async function POST(
       if (!renderedFinal) {
         return Response.json(
           {
-            error: "generated_artifact_final_not_available",
+            error:
+              "generated_artifact_final_not_available" satisfies MoveClientApprovalOwnRefusalCode,
             detail:
               "Accepting an AI draft requires a structured generated artifact that can render to a final DOCX or PPTX and be stored in the artifact vault.",
           },
@@ -702,7 +766,8 @@ export async function POST(
         ) {
           return Response.json(
             {
-              error: "artifact_storage_unavailable",
+              error:
+                "artifact_storage_unavailable" satisfies MoveClientApprovalOwnRefusalCode,
               detail:
                 "The final editable artifact could not be stored. Approval was not recorded; retry after artifact storage is available.",
             },
@@ -725,12 +790,13 @@ export async function POST(
         generatedArtifactId: artifact.id,
         generatedArtifactType: artifact.artifactType,
         sourceArtifactRef: artifact.sourceArtifactRef,
-        evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-        phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-          currentEvidenceSnapshot,
-          phase,
-        ),
-        evidenceSnapshotScope: "phase",
+        ...stampApprovedEvidenceLineage({
+          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+            currentEvidenceSnapshot,
+            phase,
+          ),
+        }),
         approvalReason: reason,
         mode: isFileUploadApproval
           ? "client_approved_replacement"
@@ -758,12 +824,13 @@ export async function POST(
         approvalLineage: {
           source: "generated_artifact_acceptance",
           generatedArtifactId: artifact.id,
-          evidenceSnapshotHash: currentEvidenceSnapshot.revision,
-          phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
-            currentEvidenceSnapshot,
-            phase,
-          ),
-          evidenceSnapshotScope: "phase",
+          ...stampApprovedEvidenceLineage({
+            evidenceSnapshotHash: currentEvidenceSnapshot.revision,
+            phaseEvidenceSnapshotHash: approvedMoveEvidenceRevisionForPhase(
+              currentEvidenceSnapshot,
+              phase,
+            ),
+          }),
           approvalMode: isFileUploadApproval
             ? "client_approved_replacement"
             : "accept_ai_draft_as_authoritative",
@@ -773,7 +840,7 @@ export async function POST(
     if (!signedOff) {
       return Response.json(
         {
-          error: "sign_off_failed",
+          error: "sign_off_failed" satisfies MoveClientApprovalOwnRefusalCode,
           detail: "Deliverable could not be signed off.",
         },
         { status: 409 },
@@ -802,7 +869,10 @@ export async function POST(
       err,
     );
     return Response.json(
-      { error: "internal_error", detail: (err as Error).message },
+      {
+        error: "internal_error" satisfies MoveClientApprovalOwnRefusalCode,
+        detail: (err as Error).message,
+      },
       { status: 500 },
     );
   }

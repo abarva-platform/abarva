@@ -4,6 +4,8 @@ import { notFound, redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import { getEngagementByAnyId } from '@/lib/db/engagement';
+import { engagementReadIsCrossTenant } from '@/lib/programs/engagement-tenant-fence';
+import { requireTenancy } from '@/app/api/v1/programs/_auth';
 import { getPersonById } from '@/lib/db/person';
 import { getRecentTurns } from '@/lib/db/turn';
 import {
@@ -18,6 +20,10 @@ import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { listAllTopics, listEngagementTopics } from '@/lib/topics/db';
 import { getActiveClientKey } from '@/lib/active-client';
 import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
+import {
+  buildGateApprovalEvents,
+  type DatedGateSnapshot,
+} from '@/lib/programs/gate-approval-events';
 
 type NormalizedDeliverable = {
   type: string;
@@ -116,6 +122,29 @@ export default async function EngagePage({
 
   const engagement = await getEngagementByAnyId(engagementId);
   if (!engagement) notFound();
+
+  // Tenancy fence. `getEngagementByAnyId` filters on the id alone, through the
+  // data-plane compat client, under a layout that guards only the
+  // responsible-AI gates -- so nothing above this line keeps one tenant's
+  // session out of another tenant's Move. The decision lives in
+  // `engagement-tenant-fence`, which refuses ONLY when both sides record a
+  // client and they differ; an unrecorded client and an unresolved context
+  // both fail open, so no surface that renders today stops rendering. It sits
+  // before the canonical-path redirect deliberately: redirecting on a Move the
+  // caller may not read would confirm that the Move exists.
+  const tenancyClientId = await requireTenancy()
+    .then((ctx) => ctx.clientId)
+    .catch(() => null);
+  if (
+    engagementReadIsCrossTenant({
+      engagementClientId: engagement.client_id,
+      contextClientId: tenancyClientId,
+    })
+  ) {
+    // Same answer as an id that resolves to no Move, so a cross-tenant id is
+    // indistinguishable from an absent one.
+    notFound();
+  }
 
   // C2-03 · if the engagement resolves to a seeded canonical program path,
   // redirect there instead of rendering the legacy console. Covers Tower
@@ -271,16 +300,33 @@ export default async function EngagePage({
       at: t.created_at,
     });
   }
-  const gates = (engagement.gates_passed as Array<{ phase?: number; signed_at?: string; status?: string; summary?: string }> | null) ?? [];
-  for (const g of gates) {
-    if (g.status === 'approved' && g.signed_at) {
-      events.push({
-        kind: 'gate',
-        label: `Phase ${g.phase} gate approved`,
-        detail: g.summary ?? 'Phase advanced',
-        at: g.signed_at,
-      });
-    }
+  // Gate approvals · `engagements.gates_passed` cannot date a gate crossing on
+  // the walked path: the advance SQL omits the column for phases 1-4 and the P5
+  // handoff appends a bare number, so asking it for a status plus a signed_at
+  // found nothing at any phase. The timestamped `phase_snapshots` rows both
+  // advance implementations write are what place a crossing in time.
+  let gateSnapshots: DatedGateSnapshot[] = [];
+  try {
+    const { data: snapshotRows } = await sb
+      .from('phase_snapshots')
+      .select('phase_number, approval_status, locked_at, created_at, snapshot_jsonb')
+      .eq('engagement_id', engagement.id)
+      .order('created_at', { ascending: false });
+    gateSnapshots = (snapshotRows as DatedGateSnapshot[] | null) ?? [];
+  } catch (err) {
+    console.warn('[engagement-page] phase_snapshots failed:', err);
+  }
+  const { events: gateEvents } = buildGateApprovalEvents({
+    gatesPassed: Array.isArray(engagement.gates_passed) ? engagement.gates_passed : null,
+    snapshots: gateSnapshots,
+  });
+  for (const gate of gateEvents) {
+    events.push({
+      kind: 'gate',
+      label: gate.label,
+      detail: gate.detail ?? 'Phase advanced',
+      at: gate.at,
+    });
   }
   for (const d of deliverables.slice(0, 3)) {
     const deliverableLabel = d.label ?? d.type.replace(/_/g, ' ');
@@ -298,6 +344,7 @@ export default async function EngagePage({
     <div style={{ padding: '24px 24px 40px', maxWidth: 1400, margin: '0 auto' }}>
       <EngagementMetaStrip
         engagement={engagement}
+        phaseSnapshots={gateSnapshots}
         sponsor={sponsor}
         turnCount={turns.length}
         lastTurnAt={lastTurn?.created_at ?? null}

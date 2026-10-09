@@ -10,7 +10,10 @@ import {
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
-import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  getAzureReadFluentClient,
+  getAzureWriteFluentClient,
+} from "@/lib/data-plane/postgresCompat";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   initialReviewedEvidenceExtraction,
@@ -20,6 +23,10 @@ import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
 } from "@/lib/programs/approved-move-evidence-snapshot";
+import {
+  DECIDED_EVIDENCE_REVIEW_DECISIONS,
+  splitDecidedEvidenceReviews,
+} from "@/lib/programs/evidence-review-dispositions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,6 +66,14 @@ interface CabinetArtifact {
   visualCompanionArtifactType?: string | null;
   contextExtract?: CabinetContextExtract | null;
   evidenceSnapshotStatus?: "current" | "stale" | "unverified";
+  // Sign-off state for generated_deliverable rows, read from the SAME
+  // deliverables_v2 projection PhaseDocumentsPanel uses. Carried so the gate
+  // step's in-workspace attestation ledger can show sign-off state inline
+  // instead of only on the /evidence page. Absent for non-deliverable rows or
+  // when no deliverables_v2 row matches the artifact's deliverable_type_key.
+  deliverableId?: string | null;
+  signedOffVersion?: number | null;
+  currentVersion?: number | null;
   downloadUrl: string;
 }
 
@@ -194,36 +209,57 @@ interface CabinetReviewedEvidence {
   reviewedAt: string | null;
 }
 
+/** A rejected review, which no cabinet list used to carry. */
+interface CabinetRejectedEvidence extends CabinetReviewedEvidence {
+  /** The reviewer's recorded reason, null when none was stored. */
+  rationale: string | null;
+}
+
 /**
- * Human-approved program evidence for this Move, as a light read-only list for
- * the Files & Evidence cabinet. Unlike the pending queue it carries no
- * extraction/source-text payload — it is an audit trail of what a reviewer
- * accepted, not an editing surface. Tenant match uses the per-tenant alias set
+ * The DECIDED program-evidence reviews for this Move, as light read-only lists
+ * for the Files & Evidence cabinet. Unlike the pending queue they carry no
+ * extraction/source-text payload — they are an audit trail of what a reviewer
+ * decided, not an editing surface. Tenant match uses the per-tenant alias set
  * so rows written under either representation surface (see the pending loader).
+ *
+ * Both decisions come from ONE read over
+ * `DECIDED_EVIDENCE_REVIEW_DECISIONS`. This read asked for `approved` alone,
+ * and the pending queue asks for `pending`, so a `rejected` row — the third
+ * value the column's CHECK constraint admits — was returned by neither and
+ * appeared in no list on the panel. Asking for the decided SET and splitting it
+ * is what stops a decision value going unread.
  */
-async function loadReviewedEvidence(
+async function loadDecidedEvidenceReviews(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
-): Promise<{ items: CabinetReviewedEvidence[]; available: boolean }> {
+): Promise<{
+  approved: CabinetReviewedEvidence[];
+  rejected: CabinetRejectedEvidence[];
+  available: boolean;
+}> {
+  const unavailable = { approved: [], rejected: [], available: false };
   try {
     const db = getAzureWriteFluentClient();
     const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
     const { data: reviews, error: reviewError } = await db
       .from("program_evidence_reviews")
-      .select("id, evidence_id, family_key, phase, source_ref, reviewed_at")
+      .select(
+        "id, evidence_id, family_key, phase, source_ref, reviewed_at, decision, rationale",
+      )
       .in("tenant_key", tenantKeys)
       .eq("program_id", programId)
-      .eq("decision", "approved")
+      .in("decision", [...DECIDED_EVIDENCE_REVIEW_DECISIONS])
       .order("reviewed_at", { ascending: false })
       .limit(200);
     if (reviewError || !Array.isArray(reviews)) {
-      return { items: [], available: false };
+      return unavailable;
     }
     const reviewRows = reviews as Array<Record<string, unknown>>;
     const evidenceIds = reviewRows
       .map((row) => row.evidence_id)
       .filter((id): id is string => typeof id === "string" && Boolean(id));
-    if (!evidenceIds.length) return { items: [], available: true };
+    if (!evidenceIds.length)
+      return { approved: [], rejected: [], available: true };
 
     const { data: evidenceRows, error: evidenceError } = await db
       .from("program_evidence_items")
@@ -232,7 +268,7 @@ async function loadReviewedEvidence(
       .eq("program_id", programId)
       .in("id", evidenceIds);
     if (evidenceError || !Array.isArray(evidenceRows)) {
-      return { items: [], available: false };
+      return unavailable;
     }
     const titleById = new Map(
       (evidenceRows as Array<Record<string, unknown>>).map((row) => [
@@ -240,36 +276,136 @@ async function loadReviewedEvidence(
         typeof row.title === "string" ? row.title : "",
       ]),
     );
+    const describe = (
+      review: Record<string, unknown>,
+      fallbackTitle: string,
+    ): CabinetReviewedEvidence | null => {
+      const evidenceId =
+        typeof review.evidence_id === "string" ? review.evidence_id : "";
+      if (!titleById.has(evidenceId)) return null;
+      const sourceRef = objectValue(review.source_ref);
+      return {
+        evidenceId,
+        reviewId: String(review.id ?? ""),
+        title: String(
+          sourceRef.filename ??
+            sourceRef.title ??
+            titleById.get(evidenceId) ??
+            fallbackTitle,
+        ),
+        familyKey: String(review.family_key ?? "uploaded_move_evidence"),
+        phase: typeof review.phase === "number" ? review.phase : null,
+        reviewedAt:
+          typeof review.reviewed_at === "string" ? review.reviewed_at : null,
+      };
+    };
+    const split = splitDecidedEvidenceReviews(reviewRows);
     return {
       available: true,
-      items: reviewRows.flatMap((review) => {
-        const evidenceId =
-          typeof review.evidence_id === "string" ? review.evidence_id : "";
-        if (!titleById.has(evidenceId)) return [];
-        const sourceRef = objectValue(review.source_ref);
+      // The approved list is an audit trail of acceptance; a rationale is not
+      // part of what it has ever shown, and widening it is not this change.
+      approved: split.approved.flatMap((review) => {
+        const item = describe(review, "Approved evidence");
+        return item ? [item] : [];
+      }),
+      rejected: split.rejected.flatMap((review) => {
+        const item = describe(review, "Rejected evidence");
+        if (!item) return [];
         return [
           {
-            evidenceId,
-            reviewId: String(review.id ?? ""),
-            title: String(
-              sourceRef.filename ??
-                sourceRef.title ??
-                titleById.get(evidenceId) ??
-                "Approved evidence",
-            ),
-            familyKey: String(review.family_key ?? "uploaded_move_evidence"),
-            phase: typeof review.phase === "number" ? review.phase : null,
-            reviewedAt:
-              typeof review.reviewed_at === "string"
-                ? review.reviewed_at
-                : null,
+            ...item,
+            rationale:
+              typeof review.rationale === "string" ? review.rationale : null,
           },
         ];
       }),
     };
   } catch {
-    return { items: [], available: false };
+    return unavailable;
   }
+}
+
+interface DeliverableSignOffState {
+  deliverableId: string;
+  signedOffVersion: number | null;
+  currentVersion: number | null;
+}
+
+/**
+ * Per-deliverable sign-off state from deliverables_v2, keyed by
+ * deliverable_type_key. This reuses the SAME projection (columns + engagement
+ * filter) that PhaseDocumentsPanel reads to render its "Signed off" badge and
+ * mount DeliverableApprovalAction. The gate step's attestation ledger consumes
+ * it through this route so it can show sign-off state inline rather than only
+ * on /evidence. Newest row per key wins (ordered by updated_at), matching the
+ * panel's dedupe intent.
+ *
+ * Non-fatal, but NOT silent: a read failure yields an empty map, and an empty
+ * map strips the sign-off columns from every row at once, so the ledger would
+ * report a phase whose documents are signed off as having no sign-off tracked
+ * at all. `available` is therefore returned alongside the map so the response
+ * can say which of the two it is; `gate-sign-off-readback.ts` turns that into
+ * what the ledger may assert. The fluent client resolves a failed query to
+ * `{ data: null, error }` rather than throwing, so `error` is the signal and
+ * the surrounding `catch` covers only client construction.
+ */
+async function loadDeliverableSignOffByKey(programId: string): Promise<{
+  byKey: Map<string, DeliverableSignOffState>;
+  available: boolean;
+}> {
+  const byKey = new Map<string, DeliverableSignOffState>();
+  try {
+    const sb = getAzureReadFluentClient();
+    const { data, error } = await sb
+      .from("deliverables_v2")
+      .select(
+        "id, deliverable_type_key, current_version, signed_off_version, updated_at",
+      )
+      .eq("engagement_id", programId)
+      .order("updated_at", { ascending: false });
+    if (error || !Array.isArray(data)) return { byKey, available: false };
+    for (const row of data as Array<Record<string, unknown>>) {
+      const key =
+        typeof row.deliverable_type_key === "string"
+          ? row.deliverable_type_key
+          : "";
+      // Newest-first ordering means the first row seen per key is the current
+      // one; later (older) rows for the same key are ignored.
+      if (!key || byKey.has(key)) continue;
+      byKey.set(key, {
+        deliverableId: String(row.id ?? ""),
+        signedOffVersion:
+          typeof row.signed_off_version === "number"
+            ? row.signed_off_version
+            : null,
+        currentVersion:
+          typeof row.current_version === "number" ? row.current_version : null,
+      });
+    }
+    return { byKey, available: true };
+  } catch {
+    return { byKey, available: false };
+  }
+}
+
+/** Sign-off fields for one artifact row, or {} when no deliverables_v2 row
+ * matches its deliverable_type_key. */
+function deliverableSignOffFields(
+  key: string | null,
+  byKey: Map<string, DeliverableSignOffState>,
+): Partial<
+  Pick<
+    CabinetArtifact,
+    "deliverableId" | "signedOffVersion" | "currentVersion"
+  >
+> {
+  const signOff = key ? byKey.get(key) : undefined;
+  if (!signOff) return {};
+  return {
+    deliverableId: signOff.deliverableId,
+    signedOffVersion: signOff.signedOffVersion,
+    currentVersion: signOff.currentVersion,
+  };
 }
 
 interface CabinetContextExtractItem {
@@ -601,7 +737,9 @@ export async function GET(
       ctx,
       programId,
     );
-    const reviewedEvidenceList = await loadReviewedEvidence(ctx, programId);
+    const decidedEvidence = await loadDecidedEvidenceReviews(ctx, programId);
+    const deliverableSignOff = await loadDeliverableSignOffByKey(programId);
+    const deliverableSignOffByKey = deliverableSignOff.byKey;
     const approvedSnapshot = ctx.clientKey
       ? await loadApprovedMoveEvidenceSnapshot({
           tenantKey: ctx.clientKey,
@@ -723,6 +861,12 @@ export async function GET(
         visualCompanionArtifactType: meta?.visualCompanionArtifactType ?? null,
         contextExtract,
         ...(evidenceSnapshotStatus ? { evidenceSnapshotStatus } : {}),
+        ...(r.artifact_family === "generated_deliverable"
+          ? deliverableSignOffFields(
+              deliverableKeyFromMoveArtifactMetadata(meta),
+              deliverableSignOffByKey,
+            )
+          : {}),
         downloadUrl: `/api/v1/programs/${programId}/artifacts/${r.artifact_id}/download`,
       };
     });
@@ -814,6 +958,10 @@ export async function GET(
                   : generatedEvidenceBasisCurrent
                     ? "current"
                     : "stale",
+              ...deliverableSignOffFields(
+                deliverableKeyFromGeneratedArtifactMetadata(meta),
+                deliverableSignOffByKey,
+              ),
               generatedBy: rec.renderedBy,
               createdAt: rec.renderedAt,
               downloadUrl: `/api/v1/artifacts/${rec.id}`,
@@ -841,8 +989,17 @@ export async function GET(
       count: artifacts.length,
       artifacts,
       pendingEvidenceReviews: evidenceReviewQueue.items,
-      reviewedEvidence: reviewedEvidenceList.items,
+      reviewedEvidence: decidedEvidence.approved,
+      // The third decision value, which no cabinet list carried before.
+      rejectedEvidence: decidedEvidence.rejected,
       evidenceReviewStatus: evidenceReviewQueue.available
+        ? "available"
+        : "unavailable",
+      // The deliverables_v2 sign-off projection is a separate read from the
+      // artifact vault, and its failure mode is an empty map — which strips
+      // the sign-off columns from every row. Report its health so the gate
+      // ledger can distinguish "no sign-off record" from "not read".
+      deliverableSignOffStatus: deliverableSignOff.available
         ? "available"
         : "unavailable",
     });

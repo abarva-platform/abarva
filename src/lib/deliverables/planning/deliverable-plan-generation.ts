@@ -41,7 +41,7 @@ const STORY_BEAT_SCHEMA = {
 export const DELIVERABLE_PLAN_TOOL = {
   name: "emit_deliverable_plan",
   description:
-    "Emit the reason-first DeliverablePlan for this client-facing artifact before any narrative or visual artifact is generated.",
+    "Emit the client-visible decision brief for this artifact before narrative or visual generation.",
   input_schema: {
     type: "object",
     required: [
@@ -81,17 +81,17 @@ export const DELIVERABLE_PLAN_TOOL = {
   },
 } as const;
 
-export const DELIVERABLE_PLAN_SYSTEM_PROMPT = `You are the planning director for a senior consulting deliverable.
-You must emit the hidden reason-first plan before any artifact is written.
+export const DELIVERABLE_PLAN_SYSTEM_PROMPT = `You are preparing a client-visible decision brief for a senior consulting deliverable.
+Fill the requested fields with concise conclusions and their evidence. These fields may be shown to the reader.
 
 Rules:
-- Ground the plan in the client's actual context. Do not create a generic section outline.
+- Ground the brief in the client's supplied context. Do not create a generic section outline.
 - State the decision the reader must make.
-- For architecture artifacts, reason current state -> observed gap -> design implication -> target state.
+- For architecture artifacts, state the current state, observed gap, design implication, and target state in finished business prose.
 - Every required exhibit must have a purpose and a so-what interpretation.
 - Do not invent unsupported numbers. Put missing facts in missingInputs.
 - Use client-facing judgment language, not system labels or raw ids.
-Call emit_deliverable_plan exactly once with the complete structured plan.`;
+Call emit_deliverable_plan exactly once with the complete structured brief.`;
 
 export interface DeliverablePlanGenRequest {
   artifactType: string;
@@ -142,7 +142,7 @@ export function buildDeliverablePlanUserMessage(
     "Governed context:",
     req.contextText,
     "",
-    "Produce the reason-first deliverable plan.",
+    "Produce the client-visible deliverable decision brief.",
   ].join("\n");
 }
 

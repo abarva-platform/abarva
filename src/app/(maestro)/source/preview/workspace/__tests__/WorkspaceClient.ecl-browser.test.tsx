@@ -548,9 +548,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByLabelText("Claim contract")).toBeNull();
     expect(screen.queryByText("What this tab lets you say")).toBeNull();
     expect(screen.queryByText("Blocked without more evidence")).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Back to contracts" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: /All contracts/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Back to contracts" })).toBeNull();
     expect(screen.getByRole("tab", { name: "Scope" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Economics" })).toBeTruthy();
     expect(screen.getAllByRole("tab", { name: "Optimize" })).toHaveLength(1);
@@ -663,7 +662,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
     expect(
-      screen.getByText("Archetype determines which levers are allowed"),
+      screen.getByText("Recorded value by declared archetype"),
     ).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: /Epic Systems Cor.*ready.*\$12\.0M/ }),
@@ -741,7 +740,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
     expect(
-      screen.getByText("Archetype determines which levers are allowed"),
+      screen.getByText("Recorded value by declared archetype"),
     ).toBeTruthy();
   });
 
@@ -799,7 +798,13 @@ describe("Source workspace ECL browser-surface proof", () => {
       ).toBeTruthy();
     });
 
-    expect(screen.getByText("Evidence depth updating")).toBeTruthy();
+    // The badge reports the LOAD, not how complete the evidence is. It used to
+    // read "Evidence depth updating" / "Evidence depth ready", and "ready"
+    // contradicted the body, which says "Evidence depth — Partial" and "5 of 8
+    // required evidence families" on the same screen. The behaviour under test
+    // is unchanged: a loading state must still be distinguishable from absence.
+    expect(screen.getByText("Loading evidence")).toBeTruthy();
+    expect(screen.queryByText("Evidence loaded")).toBeNull();
     expect(screen.getByText("Evidence depth is still loading.")).toBeTruthy();
     expect(
       screen.queryByText(
@@ -1212,7 +1217,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("Readiness by value")).toBeTruthy();
     expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
-    expect(screen.getByText("Declared plays")).toBeTruthy();
+    expect(screen.getByText("Declared archetypes")).toBeTruthy();
     expect(
       screen.queryByText(/No declared archetype rows are loaded/i),
     ).toBeNull();
@@ -1254,7 +1259,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.getByText("Legacy Claims Analytics")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Back to contracts" }));
+    fireEvent.click(screen.getByRole("button", { name: /All contracts/ }));
     const reopenedContractSearch = screen.getByRole("searchbox", {
       name: "Find a contract",
     });
@@ -1713,9 +1718,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     });
 
     // The governed Optimize headline is the lever list in prose, and the three
-    // sub-tabs to the left render those levers as tables. Because the statement
+    // available sub-tabs render those levers as tables. Because the statement
     // is keyed on the Contract 360 tab and not the sub-tab, it restated
-    // whichever sub-tab was open, on all three. The evidence gate is the one
+    // whichever sub-tab was open. The evidence gate is the one
     // claim with no other home, so it is what survives in the right column.
     expect(
       screen.queryByText("Two Databricks levers are governed for outreach."),
@@ -1737,7 +1742,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Levers" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Sequence" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Comparator" })).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
+    expect(screen.queryByText("No discount comparator is loaded.")).toBeNull();
     expect(screen.getByText("Serve notice")).toBeTruthy();
     expect(screen.getByText("Rationalize workload scope")).toBeTruthy();
     expect(screen.queryByText("Optimize evidenced opportunities")).toBeNull();

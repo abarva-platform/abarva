@@ -716,8 +716,9 @@ function artifactDecision(
   }
   if (artifactKey === "sourcing_strategy" && !signals.vendorSourcingDecision) {
     return {
-      applicability: "not_applicable",
-      reason: "No deterministic build/buy/vendor/partner decision is present.",
+      applicability: "lightweight",
+      reason:
+        "No build/buy/vendor/partner decision is evidenced. Record only the delivery-capacity assumptions, unresolved sourcing decision, and P4 sizing inputs; do not select or imply a vendor.",
     };
   }
   if (
@@ -1032,7 +1033,7 @@ export function renderAdaptiveDepthPrompt(
     "- Do not generate a separate artifact merely to state that it is not applicable.",
     "- Do not add empty Not Applicable sections.",
     "- Do not invent Basic / Intermediate / Advanced options when the evidence supports one reusable pattern.",
-    "- Do not include AI/model-risk, human-in-the-loop, physical architecture, sourcing, real-time, or operating-model content unless triggered above or marked required with Insufficient Evidence.",
+    "- Do not include AI/model-risk, human-in-the-loop, physical architecture, sourcing, real-time, or operating-model content unless this artifact's applicability calls for it, a story beat is triggered above, or a required dimension is marked Insufficient Evidence.",
     "- A missing required dimension must be rendered as Insufficient Evidence with closure path, never hidden as Not Applicable.",
   ]
     .filter(Boolean)

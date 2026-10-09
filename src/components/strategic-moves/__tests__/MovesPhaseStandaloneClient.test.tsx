@@ -38,7 +38,11 @@ import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import { buildPhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
 import { P1_CHARTER_EVIDENCE_FAMILIES } from "@/lib/programs/p1-charter-evidence";
+import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import { MOVE_UNREADABLE_REFUSAL_DETAIL } from "@/lib/programs/move-unreadable-refusal";
+import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
+import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -652,6 +656,11 @@ describe("MovesPhaseStandaloneClient", () => {
             status: 200,
             json: async () => ({
               ok: true,
+              // The route reports the health of its deliverables_v2 sign-off
+              // sub-read separately from the artifact rows. The default here is
+              // the healthy answer the live route gives; cases that need a
+              // degraded read override this branch.
+              deliverableSignOffStatus: "available",
               count:
                 generatedDeliverableArtifacts.length +
                 uploadedEvidenceArtifacts.length,
@@ -1229,7 +1238,9 @@ describe("MovesPhaseStandaloneClient", () => {
       // On a tab without the capture bar (Approvals) the stepper is the only
       // phase navigator and must still render.
       fireEvent.click(workspaceTab(/Approvals/));
-      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
       expect(
         screen.getByRole("navigation", { name: "Phase steps" }),
       ).toBeInTheDocument();
@@ -1284,6 +1295,132 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(metric).toBeEnabled();
       fireEvent.change(metric, { target: { value: "Intake cycle time" } });
       expect(metric.value).toBe("Intake cycle time");
+    });
+
+    // ─── P2's route decision: never offer a decision that cannot validate ───
+    // `solution_route_validated` is HARD in two consecutive gates (P2 -> P3 and
+    // P3 -> P4) and needs `resolveConfirmedSolutionRoute` to return a route.
+    // That resolver rejects `decision: "confirm"` whenever `selectedRoute !==
+    // recommendation`, and `selectedRoute` cannot hold `"unresolved"` — so when
+    // the recommendation is unresolved, confirming is incapable of validating
+    // anything. The form offered "Confirm recommendation" anyway, next to a
+    // recommendation displayed as "Not yet determined", and storing that answer
+    // wrote `selectedRoute: ""`, which the parser rejects outright. Every
+    // select was filled, nothing objected, and the gate then reported the route
+    // unvalidated while naming neither the cause nor the way out.
+    //
+    // `src/lib/programs/__tests__/solution-route-decision.test.ts` pins the
+    // rule against the resolver and enumerates the 4 of 45 form answers that
+    // reach it. These cases pin what the reviewer sees.
+    function renderP2RouteDecision(route: Record<string, unknown>) {
+      return render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+          initialSubstepKey="findings"
+          initialPhaseCaptureValues={{
+            current_state_findings: "Observed intake backlog.",
+            baseline_metrics: JSON.stringify([
+              {
+                metric: "Intake cycle time",
+                value: "9 days median",
+                source: "Intake work queue",
+              },
+            ]),
+            gaps_root_causes: "No single owner for intake triage.",
+            process_handoffs: "Three handoffs between intake and ops.",
+            data_quality_governance: "Ownership unclear on the master record.",
+            evidence_confidence: "Medium-high operationally.",
+            recommendation: "Proceed to design the governed intake path.",
+            solution_route_validation: JSON.stringify(route),
+          }}
+          move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+    }
+
+    /** Reaches `recommendSolutionRoute` -> "unresolved". */
+    const UNRESOLVED_ANSWER = {
+      solutionOutput: "mixed",
+      workflowChange: "limited",
+      roleAccountabilityChange: "limited",
+    } as const;
+
+    /** Reaches `recommendSolutionRoute` -> "technical_product". */
+    const RESOLVED_ANSWER = {
+      solutionOutput: "reports_dashboards",
+      workflowChange: "limited",
+      roleAccountabilityChange: "none",
+    } as const;
+
+    it("P2 withholds the confirm decision when no route follows from the answers", () => {
+      renderP2RouteDecision(UNRESOLVED_ANSWER);
+
+      // The state that makes confirming incapable, as the form displays it.
+      expect(screen.getByText("Not yet determined")).toBeInTheDocument();
+
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      const offered = Array.from(decision.options).map(
+        (option) => option.value,
+      );
+      expect(offered).not.toContain("confirm");
+      expect(offered).toContain("correct");
+    });
+
+    it("P2 says why confirming is unavailable and names the decision that is", () => {
+      renderP2RouteDecision(UNRESOLVED_ANSWER);
+
+      const reason = screen.getByText(/no recommendation to confirm/i);
+      expect(reason).toBeInTheDocument();
+      expect(reason).toHaveTextContent(/correct recommendation/i);
+    });
+
+    it("P2 keeps the confirm decision, and shows no objection, once a route follows", () => {
+      renderP2RouteDecision(RESOLVED_ANSWER);
+
+      expect(
+        screen.getByText("Technical product / data solution"),
+      ).toBeInTheDocument();
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      const offered = Array.from(decision.options).map(
+        (option) => option.value,
+      );
+      expect(offered).toContain("confirm");
+      expect(offered).toContain("correct");
+      expect(
+        screen.queryByText(/no recommendation to confirm/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("P2 does not show a stored confirm as the selected decision once it cannot validate", () => {
+      // A record written before this guard, or by an agent: the decision says
+      // confirm while the answers resolve to no route. Withholding the option
+      // is what makes the control stop presenting that dead answer as the
+      // reviewer's standing decision — a stored value matching no option
+      // cannot be the selected one. Asserted separately from the option set
+      // because this is the consequence a reviewer actually meets on reload.
+      renderP2RouteDecision({ ...UNRESOLVED_ANSWER, decision: "confirm" });
+
+      const decision = screen.getByLabelText(
+        "Human route decision",
+      ) as HTMLSelectElement;
+      // `selectedIndex`, not `value`: a controlled select whose value matches
+      // no option reports `value` as "" either way, so only the index shows
+      // whether the placeholder is actually the selected option (0) or the
+      // control renders with nothing selected at all (-1).
+      expect(decision.selectedIndex).toBe(0);
+      expect(decision.options[0]?.textContent).toBe("Review before confirming");
+      expect(
+        screen.getByText(/no recommendation to confirm/i),
+      ).toBeInTheDocument();
     });
 
     it("P2 on the redesigned flow does not render the baseline question read-only", () => {
@@ -1344,6 +1481,94 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
     }
+
+    it("lets P3 capture reach its workbook review while the transition workbook still holds the gate", () => {
+      const openWorkbook = {
+        ...coveredEvidencePacketsForPhase(3)[0],
+        artifactType: null,
+        evidenceSlot: "P3 to P4 readiness workbook",
+        familyId: "stage_readiness_p3_p4",
+        status: "missing" as const,
+        evidenceTitles: [],
+      };
+      const packets = [...coveredEvidencePacketsForPhase(3), openWorkbook];
+      const move = makeMove({ currentPhase: 3 });
+      const { unmount } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={packets}
+          initialPhaseCaptureValues={{
+            solution_approach: completeP3CaptureValues.solution_approach,
+            recommendation: completeP3CaptureValues.recommendation,
+          }}
+          initialSubstepKey="prepare"
+          move={move}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      expect(
+        screen.getByRole("heading", { name: "How it works" }),
+      ).toBeInTheDocument();
+      unmount();
+
+      const { unmount: unmountGate } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={packets}
+          initialPhaseCaptureValues={{
+            ...completeP3CaptureValues,
+            recommendation:
+              "Choose Option B: proceed to conditional design planning.",
+          }}
+          move={move}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByRole("link", { name: "Download P4 readiness workbook" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByLabelText("Upload completed readiness workbook"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: /Final build blocked by required evidence/i,
+        }),
+      ).toBeDisabled();
+      unmountGate();
+
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[
+            { ...coveredEvidencePacketsForPhase(3)[0], status: "missing" },
+            openWorkbook,
+          ]}
+          initialPhaseCaptureValues={{
+            solution_approach: completeP3CaptureValues.solution_approach,
+            recommendation: completeP3CaptureValues.recommendation,
+          }}
+          initialSubstepKey="prepare"
+          move={move}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    });
 
     it("P3 on the redesigned flow offers the solution-option choice beside the build control", () => {
       renderP3Capture();
@@ -1781,6 +2006,102 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("tablist", { name: "Move workspace views" }),
       ).toBeInTheDocument();
+    });
+
+    // ─── moves_workspace_v2 (Increment 1 of the phase-workspace shell) ───────
+    it("moves_workspace_v2 ON: the capture flow renders the single slim phase rail and the four-stage spine", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      const flow = within(dock).getByTestId("moves-capture-flow");
+      // the slim rail and the four-stage spine, not the legacy bars
+      expect(flow.querySelector(".mcf-v2-rail")).not.toBeNull();
+      expect(flow.querySelector(".mcf-v2-flow")).not.toBeNull();
+      expect(flow.querySelector(".mcf-phasebar")).toBeNull();
+      expect(flow.querySelector(".mcf-stepbar")).toBeNull();
+      expect(within(flow).getByText("→ Tower")).toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON: drops the stacked legacy gate stepper on the phase view (subsumes the composition polish)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // composition is implied — the duplicate phase navigator and the repeated
+      // stage head come off the phase view without the composition flag set.
+      expect(
+        screen.queryByRole("navigation", { name: "Phase steps" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { level: 1, name: "Charter" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON: the workspace-view row becomes a secondary control, still reachable", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const tablist = screen.getByRole("tablist", {
+        name: "Move workspace views",
+      });
+      expect(tablist).toHaveClass("mxw-surface-tabs--secondary");
+      // the views are still reachable from it
+      expect(
+        within(tablist).getByRole("tab", { name: /Files/ }),
+      ).toBeInTheDocument();
+      expect(
+        within(tablist).getByRole("tab", { name: /Approvals/ }),
+      ).toBeInTheDocument();
+    });
+
+    it("moves_workspace_v2 ON without moves_capture_v2: changes nothing (no flow to reshape)", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // the legacy canvas, head, stepper and standard tab row are all untouched
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(
+        screen.getByRole("navigation", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+      const tablist = screen.getByRole("tablist", {
+        name: "Move workspace views",
+      });
+      expect(tablist).not.toHaveClass("mxw-surface-tabs--secondary");
     });
 
     // ─── moves_charter_basis_v1: the HOST call site ─────────────────────────
@@ -2898,7 +3219,9 @@ describe("MovesPhaseStandaloneClient", () => {
       // state a P3 render holds, so a dropped or re-derived prop fails here.
       expect(screen.getByText("Priya Raman")).toBeInTheDocument();
       expect(
-        screen.getByText("Discover found billing already inside the same queue."),
+        screen.getByText(
+          "Discover found billing already inside the same queue.",
+        ),
       ).toBeInTheDocument();
       expect(band).toHaveAttribute("data-count", "2");
       expect(band).toHaveAttribute("data-known-wrong", "1");
@@ -3162,6 +3485,305 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
+    it("a partly filled uploaded workbook offers only its answered responses for acceptance", async () => {
+      // The review API refuses the whole batch if any accepted response is
+      // blank, and a blank row's checkbox is disabled, so a seed that
+      // pre-selected the blanks left the reviewer with a 422 and no way back.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const baseFetch = global.fetch as jest.Mock;
+      global.fetch = jest.fn(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = typeof input === "string" ? input : String(input);
+          if (
+            url.includes("/stage-readiness-workbook") &&
+            init?.method === "POST"
+          ) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => ({
+                ok: true,
+                summary: {
+                  totalQuestions: 2,
+                  answeredQuestions: 1,
+                  requiredAnswered: 1,
+                  requiredTotal: 2,
+                },
+                proposalSet: {
+                  artifactId: "proposal-artifact-1",
+                  artifactVersion: 2,
+                  status: "review_required",
+                  proposalCount: 2,
+                  pendingCount: 2,
+                  proposals: [
+                    {
+                      proposalId: "answered-1",
+                      questionId: "q-1",
+                      dimensionId: "baseline_metrics",
+                      requirement: "required",
+                      question: "Provide baseline metrics.",
+                      response: "41 days, measured.",
+                      answerState: "answered",
+                      disposition: "pending",
+                    },
+                    {
+                      proposalId: "blank-1",
+                      questionId: "q-2",
+                      dimensionId: "change_adoption_owner",
+                      requirement: "required",
+                      question: "Name the adoption owner.",
+                      response: "",
+                      answerState: "blank",
+                      disposition: "pending",
+                    },
+                  ],
+                },
+              }),
+            } as Response;
+          }
+          return baseFetch(input, init);
+        },
+      ) as unknown as typeof global.fetch;
+
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.change(
+        screen.getByLabelText("Upload completed readiness workbook"),
+        {
+          target: {
+            files: [
+              new File([Buffer.from("xlsx")], "partly-filled.xlsx", {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              }),
+            ],
+          },
+        },
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/1\/2 selected/)).toBeInTheDocument();
+      });
+      expect(screen.getByText(/1 blank response\./)).toBeInTheDocument();
+      expect(
+        screen.getByRole("checkbox", { name: /Provide baseline metrics/ }),
+      ).toBeChecked();
+      const blankRow = screen.getByRole("checkbox", {
+        name: /Name the adoption owner/,
+      });
+      expect(blankRow).not.toBeChecked();
+      expect(blankRow).toBeDisabled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Accept selected" }));
+      await waitFor(() => {
+        expect(
+          (global.fetch as jest.Mock).mock.calls.some(
+            ([, init]) => init?.method === "PATCH",
+          ),
+        ).toBe(true);
+      });
+      const patchCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(patchCall?.[1]?.body)).decisions).toEqual([
+        { proposalId: "answered-1", disposition: "accepted" },
+      ]);
+    });
+
+    it("lists every stored workbook response, not just the first few, so a long workbook can be judged row by row", () => {
+      // The selection is seeded from EVERY open proposal, but the list used to
+      // render only the first six. A reviewer was told "41/41 selected", shown
+      // six rows, and could accept all forty-one — and could never reject or
+      // flag any row past the sixth, because its checkbox did not exist. A
+      // real workbook carries roughly 33-55 proposals.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const proposals = Array.from({ length: 41 }, (_, index) => ({
+        proposalId: `proposal-${index + 1}`,
+        questionId: `q-${index + 1}`,
+        dimensionId: "baseline_metrics",
+        requirement: "required" as const,
+        question: `Workbook question ${index + 1}.`,
+        response: `Response ${index + 1}.`,
+        answerState: "answered",
+        disposition: "pending",
+      }));
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount: proposals.length,
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const list = screen.getByRole("group", {
+        name: "Stored workbook responses",
+      });
+      expect(within(list).getAllByRole("checkbox")).toHaveLength(41);
+      expect(
+        within(list).getByRole("checkbox", {
+          name: /Workbook question 41\./,
+        }),
+      ).toBeEnabled();
+      expect(screen.getByText(/41\/41 selected/)).toBeInTheDocument();
+    });
+
+    it("clears the seeded selection so one response out of many can be rejected on its own", async () => {
+      // Accept-all is one click because every open response starts ticked.
+      // Rejecting a single response out of forty-one used to mean unticking
+      // forty rows, which is why a reviewer with one bad answer had no
+      // practical move other than accepting it.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      const proposals = Array.from({ length: 41 }, (_, index) => ({
+        proposalId: `proposal-${index + 1}`,
+        questionId: `q-${index + 1}`,
+        dimensionId: "baseline_metrics",
+        requirement: "required" as const,
+        question: `Workbook question ${index + 1}.`,
+        response: `Response ${index + 1}.`,
+        answerState: "answered",
+        disposition: "pending",
+      }));
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount: proposals.length,
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+      expect(screen.getByText(/0\/41 selected/)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Reject selected" }),
+      ).toBeDisabled();
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Select all open responses" }),
+      );
+      expect(screen.getByText(/41\/41 selected/)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+      fireEvent.click(
+        screen.getByRole("checkbox", { name: /Workbook question 30\./ }),
+      );
+      expect(screen.getByText(/1\/41 selected/)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Reject selected" }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const patchCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(patchCall?.[1]?.body)).decisions).toEqual([
+        { proposalId: "proposal-30", disposition: "rejected" },
+      ]);
+    });
+    it("survives unticking and re-ticking a response row", () => {
+      // The row handler used to read event.currentTarget INSIDE the state
+      // updater. React can replay an updater on a later render, and the event
+      // is detached by then, so the second tick in one render pass threw a
+      // TypeError out of the whole phase workspace.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 2,
+              pendingCount: 2,
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  questionId: "q-1",
+                  dimensionId: "baseline_metrics",
+                  requirement: "required",
+                  question: "Provide baseline metrics.",
+                  response: "Confirmed in the Q3 close.",
+                  answerState: "answered",
+                  disposition: "pending",
+                },
+                {
+                  proposalId: "proposal-2",
+                  questionId: "q-2",
+                  dimensionId: "delay_volume",
+                  requirement: "required",
+                  question: "Provide addressable delay volume.",
+                  response: "Measured at 1,200 cases.",
+                  answerState: "answered",
+                  disposition: "pending",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const row = screen.getByRole("checkbox", {
+        name: /Provide baseline metrics\./,
+      });
+      expect(row).toBeChecked();
+      fireEvent.click(row);
+      expect(screen.getByText(/1\/2 selected/)).toBeInTheDocument();
+      fireEvent.click(row);
+      expect(screen.getByText(/2\/2 selected/)).toBeInTheDocument();
+    });
+
     it("restores a completed workbook review without reopening pending actions", () => {
       const move = makeMove({
         currentPhase: 1,
@@ -3229,6 +3851,318 @@ describe("MovesPhaseStandaloneClient", () => {
           name: /Provide baseline metrics.*accepted/,
         }),
       ).toBeDisabled();
+    });
+
+    it.each([
+      [
+        "says how many decisions a re-upload kept",
+        3,
+        /3 decisions kept from your previous upload of this workbook/,
+      ],
+      [
+        "counts one kept decision in the singular",
+        1,
+        /1 decision kept from your previous upload of this workbook/,
+      ],
+    ])("%s", (_label, carriedForward, expected) => {
+      // A reviewer who corrected one cell is looking at a workbook they
+      // uploaded again. Without this line the restored decisions read as
+      // decisions the product made for them.
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 3,
+              proposalSetId: "proposal-set-2",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 4,
+              pendingCount: 1,
+              review: {
+                status: "review_required",
+                acceptedCount: 3,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount: 1,
+                carriedForwardFromPriorUpload: carriedForward,
+              },
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  question: "Provide baseline metrics.",
+                  response: "Measured at 30 tickets per week.",
+                  answerState: "answered",
+                  disposition: "accepted",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.getByText(expected)).toBeInTheDocument();
+    });
+
+    it("says nothing about a previous upload when no decision was kept", () => {
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 2,
+              proposalSetId: "proposal-set-1",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: 1,
+              pendingCount: 0,
+              review: {
+                status: "review_required",
+                acceptedCount: 1,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount: 0,
+                carriedForwardFromPriorUpload: 0,
+              },
+              proposals: [
+                {
+                  proposalId: "proposal-1",
+                  question: "Provide baseline metrics.",
+                  response: "Measured at 30 tickets per week.",
+                  answerState: "answered",
+                  disposition: "accepted",
+                },
+              ],
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.queryByText(/kept from your previous upload/),
+      ).not.toBeInTheDocument();
+    });
+
+    /**
+     * A restored decision is shown and is not yet on record. Both halves are
+     * the reviewer's business: the first tells them not to re-judge the row,
+     * the second is why the phase is still held.
+     */
+    function renderRestoredReview(
+      proposals: Array<Record<string, unknown>>,
+      pendingCount = 0,
+    ) {
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialStageReadinessPreview={{
+            ok: true,
+            proposalSet: {
+              artifactId: "proposal-artifact-1",
+              artifactVersion: 3,
+              proposalSetId: "proposal-set-2",
+              transition: { fromPhase: 1, toPhase: 2 },
+              status: "review_required",
+              proposalCount: proposals.length,
+              pendingCount,
+              review: {
+                status: "review_required",
+                acceptedCount: proposals.length - pendingCount,
+                rejectedCount: 0,
+                needsValidationCount: 0,
+                pendingCount,
+                carriedForwardFromPriorUpload: proposals.filter(
+                  (proposal) =>
+                    proposal.dispositionRestoredFromPriorUpload === true,
+                ).length,
+              },
+              proposals,
+            },
+          }}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      return move;
+    }
+
+    it("marks the rows whose decision came from the previous upload, and only those", () => {
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "accepted",
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.getByText(/kept from your previous upload, not yet recorded/),
+      ).toBeInTheDocument();
+      // One marker, not one per row: the recorded decision is not restored.
+      expect(
+        screen.getAllByText(/kept from your previous upload, not yet recorded/)
+          .length,
+      ).toBe(1);
+    });
+
+    it("offers a control to record the kept decisions when the re-upload left nothing pending", async () => {
+      // The case the gate fix would otherwise strand. Every row reads decided,
+      // so no response is open and no required response is unaccepted, while
+      // the phase stays held because no review of THIS set exists. Before this
+      // control the whole action row was hidden in exactly that state.
+      const move = renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "rejected",
+            dispositionRestoredFromPriorUpload: true,
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.getByText(/review what changed, then record the kept decisions/),
+      ).toBeInTheDocument();
+      const record = screen.getByRole("button", {
+        name: "Record 2 kept decisions",
+      });
+      fireEvent.click(record);
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      // Each row is recorded as the disposition that was already made for it.
+      // Sending them all as "accepted" would overturn a human's rejection.
+      expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 3,
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          { proposalId: "proposal-2", disposition: "rejected" },
+        ],
+      });
+      expect(String(move.id).length).toBeGreaterThan(0);
+      // Once recorded, neither the marks nor the control remain.
+      expect(
+        screen.queryByRole("button", { name: /kept decision/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/kept from your previous upload, not yet recorded/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("keeps the review surface open when every restored decision is an acceptance", async () => {
+      // The actual dead end, and the only state in which the kept-decision
+      // term is load-bearing. A restored REJECTION already leaves a required
+      // response unaccepted, which holds the surface open on its own; when
+      // every restored decision is an acceptance, no response is open and none
+      // is unaccepted, so without that term the action row disappears while
+      // the phase is still held for want of a recorded review.
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+          {
+            proposalId: "proposal-2",
+            question: "Provide addressable delay volume.",
+            response: "Nine hundred delayed records.",
+            answerState: "answered",
+            disposition: "accepted",
+            dispositionRestoredFromPriorUpload: true,
+          },
+        ],
+        0,
+      );
+      const record = screen.getByRole("button", {
+        name: "Record 2 kept decisions",
+      });
+      expect(record).toBeEnabled();
+      fireEvent.click(record);
+      await waitFor(() => {
+        expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+      });
+      const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/stage-readiness-workbook") &&
+          init?.method === "PATCH",
+      );
+      expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+        decisions: [
+          { proposalId: "proposal-1", disposition: "accepted" },
+          { proposalId: "proposal-2", disposition: "accepted" },
+        ],
+      });
+    });
+
+    it("offers no kept-decision control when every decision is already on record", () => {
+      renderRestoredReview(
+        [
+          {
+            proposalId: "proposal-1",
+            question: "Provide baseline metrics.",
+            response: "Measured at 30 tickets per week.",
+            answerState: "answered",
+            disposition: "accepted",
+          },
+        ],
+        0,
+      );
+      expect(
+        screen.queryByRole("button", { name: /kept decision/ }),
+      ).not.toBeInTheDocument();
     });
 
     it("keeps a blocked P2 request on P1 with the server-derived why, remains, and next action above the fold", () => {
@@ -3383,6 +4317,206 @@ describe("MovesPhaseStandaloneClient", () => {
         ],
       });
       expect(mockRouterRefresh).toHaveBeenCalled();
+    });
+
+    // ─── a rejected required response must stay revisable ────────────────
+    //
+    // Rejecting a required response is not a resting state for it. Every
+    // forward control reads `disposition === "accepted"`: the P1 branch of
+    // `applyStageReadinessToEvidencePackets` requires every required proposal
+    // accepted, and `assessStageReadinessGate` raises a `review_required`
+    // blocker for any required proposal that is not. So the phase gate
+    // returns 409 and so does `generate-phase` — the transition AND the phase
+    // build both stay shut.
+    //
+    // The surface used to close completely in exactly that state. The action
+    // row rendered only while OPEN work remained, and once every response
+    // carried a disposition there was none; the rejected row's own checkbox
+    // was disabled because `rejected` was treated as closed. Not one control
+    // on the page could revise the single decision that was holding the
+    // phase, while the gate's blocker text went on saying to accept each
+    // required response. The server never locked it:
+    // `mergeStageReadinessReviewDecisions` states incoming decisions win.
+    describe("a review that holds the phase with no open work", () => {
+      const renderRejectedRequiredReview = () =>
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            initialStageReadinessPreview={{
+              ok: true,
+              proposalSet: {
+                artifactId: "proposal-artifact-1",
+                artifactVersion: 2,
+                proposalSetId: "proposal-set-1",
+                transition: { fromPhase: 1, toPhase: 2 },
+                status: "review_required",
+                proposalCount: 2,
+                pendingCount: 0,
+                review: {
+                  status: "review_required",
+                  acceptedCount: 1,
+                  rejectedCount: 1,
+                  needsValidationCount: 0,
+                  pendingCount: 0,
+                  readiness: {
+                    ready: 1,
+                    insufficientEvidence: 0,
+                    unknown: 0,
+                  },
+                },
+                proposals: [
+                  {
+                    proposalId: "proposal-1",
+                    questionId: "q-1",
+                    dimensionId: "it_systems_landscape",
+                    requirement: "required",
+                    question: "Which systems hold the record?",
+                    response: "The CMDB extract dated 2026-09-30.",
+                    answerState: "answered",
+                    disposition: "accepted",
+                  },
+                  {
+                    proposalId: "proposal-2",
+                    questionId: "q-2",
+                    dimensionId: "data_analytics_estate",
+                    requirement: "required",
+                    question: "Where does the governed number land?",
+                    response: "The warehouse, per the 2026-09 extract.",
+                    answerState: "answered",
+                    disposition: "rejected",
+                  },
+                ],
+              },
+            }}
+            move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+            phaseNum={1}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+      it("keeps the rejected required response changeable, and names it as holding the phase", () => {
+        renderRejectedRequiredReview();
+
+        expect(
+          screen.getByText(
+            "1 required response not accepted. This phase stays held until each one is accepted; select the response below to change its decision.",
+          ),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        ).toBeEnabled();
+        expect(
+          screen.getByRole("button", { name: "Accept selected" }),
+        ).toBeInTheDocument();
+      });
+
+      it("does not pre-select the rejected response, so one bulk accept cannot silently reverse a deliberate rejection", () => {
+        renderRejectedRequiredReview();
+
+        expect(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        ).not.toBeChecked();
+        expect(
+          screen.getByRole("button", { name: "Accept selected" }),
+        ).toBeDisabled();
+      });
+
+      it("sends only the response the reviewer ticked when the rejection is taken back", async () => {
+        renderRejectedRequiredReview();
+
+        fireEvent.click(
+          screen.getByRole("checkbox", {
+            name: /Where does the governed number land\?.*rejected/,
+          }),
+        );
+        fireEvent.click(
+          screen.getByRole("button", { name: "Accept selected" }),
+        );
+
+        await waitFor(() => {
+          expect(screen.getByText(/Review saved/)).toBeInTheDocument();
+        });
+        const reviewCall = (global.fetch as jest.Mock).mock.calls.find(
+          ([url, init]) =>
+            String(url).includes("/stage-readiness-workbook") &&
+            init?.method === "PATCH",
+        );
+        expect(reviewCall).toBeTruthy();
+        expect(JSON.parse(String(reviewCall?.[1]?.body))).toMatchObject({
+          proposalSetArtifactId: "proposal-artifact-1",
+          proposalSetArtifactVersion: 2,
+          decisions: [{ proposalId: "proposal-2", disposition: "accepted" }],
+        });
+
+        // The re-seed after a save must stay on the open-work predicate too.
+        // Widening it here would leave every row the reviewer just decided
+        // ticked, so the NEXT click of any action button would re-dispose
+        // decisions nobody reopened.
+        for (const checkbox of screen.getAllByRole("checkbox", {
+          name: /Which systems hold the record|Where does the governed number land/,
+        })) {
+          expect(checkbox).not.toBeChecked();
+        }
+      });
+
+      // A blank response can never be accepted, so reopening the action row
+      // for a workbook of nothing but blanks would offer buttons that could
+      // never enable. Completing the cells and uploading again is that
+      // workbook's only path, which is what the blank tally already says.
+      it("offers no action row for a workbook whose every response is blank", () => {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            initialStageReadinessPreview={{
+              ok: true,
+              proposalSet: {
+                artifactId: "proposal-artifact-1",
+                artifactVersion: 2,
+                proposalSetId: "proposal-set-1",
+                transition: { fromPhase: 1, toPhase: 2 },
+                status: "review_required",
+                proposalCount: 1,
+                pendingCount: 1,
+                proposals: [
+                  {
+                    proposalId: "proposal-1",
+                    questionId: "q-1",
+                    dimensionId: "it_systems_landscape",
+                    requirement: "required",
+                    question: "Which systems hold the record?",
+                    response: "",
+                    answerState: "blank",
+                    disposition: "pending",
+                  },
+                ],
+              },
+            }}
+            move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+            phaseNum={1}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+        expect(
+          screen.getByText(
+            /1 blank response\. Complete the Response cells and upload the workbook again before review\./,
+          ),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Accept selected" }),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: "Reject selected" }),
+        ).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -4862,6 +5996,62 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
   });
 
+  it("lets a discovery-phase upload declare the evidence family it covers", async () => {
+    // The checklist beside this uploader names the families P2 needs. While
+    // the picker was gated on P1 this surface offered none of them, so each
+    // file reached coverage with no declared identity and was placed by
+    // keyword inference instead -- which, for an archetype whose families
+    // carry no keyword list, turns on an exact phrase match.
+    const discoveryPackets = coveredEvidencePacketsForPhase(2).map(
+      (packet) => ({
+        ...packet,
+        evidenceSlot: "Data lineage and AI audit trail",
+        familyId: "data_lineage_audit_trail",
+        status: "missing" as const,
+      }),
+    );
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={discoveryPackets}
+        initialSubstepKey="current"
+        move={makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const picker = screen.getByLabelText("Required evidence family (optional)");
+    expect(picker).toBeEnabled();
+    expect(
+      screen.getByRole("option", { name: "Data lineage and AI audit trail" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(picker, {
+      target: { value: "data_lineage_audit_trail" },
+    });
+    fireEvent.change(screen.getByLabelText("Upload P2 files"), {
+      target: {
+        files: [
+          new File(["lineage"], "lineage-register.md", {
+            type: "text/markdown",
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(uploadedEvidenceRoutes).toEqual([
+        {
+          fileName: "lineage-register.md",
+          phase: 2,
+          evidenceFamily: "data_lineage_audit_trail",
+        },
+      ]);
+    });
+  });
+
   it("does not report an upload as usable evidence when parsing did not create a review record", async () => {
     render(
       <MovesPhaseStandaloneClient
@@ -4992,6 +6182,213 @@ describe("MovesPhaseStandaloneClient", () => {
       ]);
     });
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
+  });
+
+  // The P2 readiness panel is where the demo Move's discovery evidence is
+  // actually uploaded. It named the families the gate wants in its table while
+  // offering no way to say which family a file covered, so the file NAME
+  // decided — and a name the heuristic could not place was refused outright.
+  describe("the P2 readiness panel's evidence-family declaration", () => {
+    function renderLendingReadinessPanel() {
+      return render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          carriesForwardContent={[]}
+          currentStateReadiness={{
+            ...makeCurrentStateReadiness(),
+            archetypeId: "COMMERCIAL_LENDING_AGENT_ASSIST",
+            archetypeName: "Commercial Lending Agent Assist",
+            hardGaps: [
+              "commercial_lending_metrics_baseline",
+              "lending_systems_data_landscape",
+            ],
+            instruments: [
+              {
+                key: "commercial_lending_metrics_baseline",
+                label: "Commercial lending metrics baseline",
+                kind: "metric_baseline",
+                whyNeeded: "Cycle time, rework, and service-level baseline.",
+                sourceDocHint: "Metrics export",
+                severity: "hard",
+                status: "missing",
+                backingTable: "program_evidence_items",
+                committedRows: 0,
+                rationale: "Baseline metrics are required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+              {
+                key: "lending_systems_data_landscape",
+                label: "Lending systems and data landscape",
+                kind: "document",
+                whyNeeded: "Applications, data stores, and integrations.",
+                sourceDocHint: "Systems inventory",
+                severity: "hard",
+                status: "missing",
+                backingTable: "program_evidence_items",
+                committedRows: 0,
+                rationale: "Systems context is required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+              // Already satisfied, so it is not open. The picker must not
+              // offer it: a declaration naming it would be refused by the
+              // router, which would make the option a dead end of its own.
+              {
+                key: "credit_policy_knowledge_inventory",
+                label: "Credit policy and knowledge inventory",
+                kind: "document",
+                whyNeeded: "Policies, checklists, and covenant guidance.",
+                sourceDocHint: "Policy inventory",
+                severity: "hard",
+                status: "committed",
+                backingTable: "program_evidence_items",
+                committedRows: 4,
+                rationale: "Policy context is required at diagnose.",
+                documentFamily: true,
+                pendingReviews: [],
+                evidenceDigest: [],
+              },
+            ],
+          }}
+          evidenceNeedPackets={[]}
+          initialSubstepKey="current"
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Discover & Diagnose",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+    }
+
+    function uploadUnplaceableFile() {
+      fireEvent.change(
+        screen.getByLabelText(
+          "Upload P2 current-state evidence files",
+        ) as HTMLInputElement,
+        {
+          target: {
+            files: [
+              new File(["rows"], "Q3 export.xlsx", {
+                type: "application/vnd.ms-excel",
+              }),
+            ],
+          },
+        },
+      );
+    }
+
+    it("offers a declaration for every open family the readiness table names", () => {
+      renderLendingReadinessPanel();
+
+      const picker = screen.getByLabelText(
+        "Evidence family these files cover",
+      ) as HTMLSelectElement;
+      // Exactly the two open families, in the readiness map's order. The
+      // committed third family is deliberately absent.
+      expect(Array.from(picker.options).map((option) => option.value)).toEqual([
+        "",
+        "commercial_lending_metrics_baseline",
+        "lending_systems_data_landscape",
+      ]);
+      // The default keeps the previous behaviour available rather than forcing
+      // a declaration on a file whose name already places it correctly.
+      expect(picker.value).toBe("");
+      expect(
+        screen.getByRole("option", { name: "Decide from the file name" }),
+      ).toBeInTheDocument();
+    });
+
+    it("files a name the heuristic places nowhere under the declared family", async () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(
+        screen.getByLabelText("Evidence family these files cover"),
+        { target: { value: "lending_systems_data_landscape" } },
+      );
+      uploadUnplaceableFile();
+
+      await waitFor(() => {
+        expect(currentStateFamilyIngests).toEqual([
+          {
+            family: "lending_systems_data_landscape",
+            fileName: "Q3 export.xlsx",
+            phase: 2,
+          },
+        ]);
+      });
+      // Declaring routes review and nothing else: the row still says the
+      // upload is awaiting a human.
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Declared as this family\./),
+        ).toBeInTheDocument();
+      });
+      expect(screen.getByText(/awaiting human review/)).toBeInTheDocument();
+    });
+
+    it("refuses the same file when nothing is declared, and names the picker as the way through", async () => {
+      renderLendingReadinessPanel();
+
+      uploadUnplaceableFile();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Declare the family this file covers/),
+        ).toBeInTheDocument();
+      });
+      expect(currentStateFamilyIngests).toEqual([]);
+    });
+
+    it("says so when the family was guessed from the file name", async () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(
+        screen.getByLabelText(
+          "Upload P2 current-state evidence files",
+        ) as HTMLInputElement,
+        {
+          target: {
+            files: [
+              new File(["rows"], "systems-data-inventory.csv", {
+                type: "text/csv",
+              }),
+            ],
+          },
+        },
+      );
+
+      await waitFor(() => {
+        expect(currentStateFamilyIngests).toEqual([
+          {
+            family: "lending_systems_data_landscape",
+            fileName: "systems-data-inventory.csv",
+            phase: 2,
+          },
+        ]);
+      });
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Family guessed from the file name \(1 matched\)\./),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("hides the family declaration when the upload is session notes, which cover no family", () => {
+      renderLendingReadinessPanel();
+
+      fireEvent.change(screen.getByLabelText("P2 upload mode"), {
+        target: { value: "session_notes" },
+      });
+
+      expect(
+        screen.queryByLabelText("Evidence family these files cover"),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("routes contact-center evidence by its declared family and leaves unknown files unmapped", async () => {
@@ -5144,6 +6541,123 @@ describe("MovesPhaseStandaloneClient", () => {
     });
     expect(currentStateFamilyIngests).toEqual([]);
     expect(structuredFamilyIngests).toEqual([]);
+  });
+
+  // This panel folded TWO outcomes into one sentence ladder — a refusal that
+  // stored nothing, and a file that WAS stored but did not register for review
+  // — and the refusal half read `detail` first, which on this route is the raw
+  // MIME string. The pair below pins both halves: a refusal gets the product
+  // sentence, and a stored-but-uncaptured file keeps its ingestion warning,
+  // because "nothing was stored" would be false for it.
+  function renderP2SessionNotesUpload() {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="current"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("P2 upload mode"), {
+      target: { value: "session_notes" },
+    });
+    fireEvent.change(
+      screen.getByLabelText("Upload P2 current-state evidence files"),
+      {
+        target: {
+          files: [
+            new File(["PK"], "workshop-pack.zip", { type: "application/zip" }),
+          ],
+        },
+      },
+    );
+  }
+
+  it("a refused session-notes upload names a next action, not the MIME type the route sent", async () => {
+    const previousFetch = global.fetch;
+    global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+      if (
+        String(url).includes("/artifacts/upload") &&
+        init?.method === "POST"
+      ) {
+        return {
+          ok: false,
+          status: 415,
+          json: async () => ({
+            ok: false,
+            error: "unsupported_type",
+            detail: "application/zip",
+          }),
+        } as Response;
+      }
+      return previousFetch(url as RequestInfo, init);
+    }) as typeof fetch;
+
+    try {
+      renderP2SessionNotesUpload();
+      const sentence = describeMoveUploadRefusal({
+        code: "unsupported_type",
+        detail: "application/zip",
+        fileName: "workshop-pack.zip",
+      });
+      await waitFor(() =>
+        expect(screen.getByText(sentence)).toBeInTheDocument(),
+      );
+      expect(screen.queryByText(/application\/zip/)).toBeNull();
+      expect(screen.queryByText("unsupported_type")).toBeNull();
+    } finally {
+      global.fetch = previousFetch;
+    }
+  });
+
+  it("a stored file that did not register for review keeps its ingestion warning", async () => {
+    const previousFetch = global.fetch;
+    global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+      if (
+        String(url).includes("/artifacts/upload") &&
+        init?.method === "POST"
+      ) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            artifactId: "artifact-stored-1",
+            evidence: {
+              id: null,
+              status: "not_captured",
+              warning: "pdf text layer was empty",
+            },
+          }),
+        } as Response;
+      }
+      return previousFetch(url as RequestInfo, init);
+    }) as typeof fetch;
+
+    try {
+      renderP2SessionNotesUpload();
+      await waitFor(() =>
+        expect(
+          screen.getByText("pdf text layer was empty"),
+        ).toBeInTheDocument(),
+      );
+      // The refusal copy must NOT take this case: the bytes were stored, so
+      // every named sentence's "nothing was stored" would be a false claim.
+      expect(
+        screen.queryByText(
+          describeMoveUploadRefusal({ fileName: "workshop-pack.zip" }),
+        ),
+      ).toBeNull();
+    } finally {
+      global.fetch = previousFetch;
+    }
   });
 
   // The gap card says "Upload CMDB export as CSV". Before this dispatch the
@@ -6772,7 +8286,9 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByText("Upload the architecture constraints memo."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Likely source owner: Client owner \/ evidence steward/i),
+      screen.getByText(
+        /Likely source owner: Client owner \/ evidence steward/i,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("Accepted formats: DOCX")).toBeInTheDocument();
     expect(
@@ -7017,6 +8533,128 @@ describe("MovesPhaseStandaloneClient", () => {
     );
   });
 
+  // A phase gate whose HARD check reads a sign-off recorded AFTER the build can
+  // only be closed by a submission that does not rebuild: regeneration writes a
+  // new unapproved draft and clears that sign-off. The documents are already on
+  // the record here, so the host must submit the gate without touching the
+  // generator.
+  it("submits the gate from documents already on the record without starting a build", async () => {
+    const requested: string[] = [];
+    let releaseApproval: (() => void) | null = null;
+    const approvalHeld = new Promise<void>((resolve) => {
+      releaseApproval = resolve;
+    });
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        requested.push(url);
+        if (url.includes("/phase-gate-approval")) {
+          await approvalHeld;
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              error: "gate_blocked",
+              gate: {
+                failedChecks: [
+                  {
+                    severity: "hard",
+                    check: "handoff_package_signed_off",
+                    reason: "Execution handoff package signed off",
+                  },
+                ],
+              },
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(5)}
+        initialPhaseCaptureValues={completeP5CaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 5,
+          phaseLabel: "P5 Mobilize & Handoff",
+        })}
+        phaseBuildArtifacts={[
+          {
+            artifactId: "artifact-1",
+            deliverableTypeKey: "handoff_package",
+            documentTitle: "Execution Handoff Package",
+            phase: 5,
+            status: "board_ready",
+            version: 1,
+            downloadUrl: "/api/v1/programs/move/artifacts/artifact-1/download",
+          },
+          {
+            artifactId: "artifact-2",
+            deliverableTypeKey: "value_measurement_contract",
+            documentTitle: "Value Measurement Contract",
+            phase: 5,
+            status: "board_ready",
+            version: 1,
+            downloadUrl: "/api/v1/programs/move/artifacts/artifact-2/download",
+          },
+        ]}
+        phaseNum={5}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    const submit = await screen.findByRole("button", {
+      name: /Submit P5 Mobilize & Handoff gate approval/i,
+    });
+    await act(async () => {
+      fireEvent.click(submit);
+    });
+    const confirmDialog = await screen.findByRole("dialog");
+    await act(async () => {
+      fireEvent.click(
+        within(confirmDialog).getByRole("button", {
+          name: /^Submit gate approval$/i,
+        }),
+      );
+    });
+
+    // While the approval is in flight: the host must not claim it just built
+    // documents it only read off the record.
+    await waitFor(() => {
+      expect(screen.getByText(/already on the record/i)).toBeInTheDocument();
+    });
+    expect(requested.some((url) => url.includes("/phase-gate-approval"))).toBe(
+      true,
+    );
+    expect(requested.some((url) => url.includes("/generate-phase"))).toBe(
+      false,
+    );
+
+    await act(async () => {
+      releaseApproval?.();
+      await approvalHeld;
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Submitted, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(/use "Submit P5 Mobilize & Handoff gate approval"/i),
+    ).toBeInTheDocument();
+    // Still no build: the refusal must not have triggered a regeneration.
+    expect(requested.some((url) => url.includes("/generate-phase"))).toBe(
+      false,
+    );
+  });
+
   it("surfaces the hard gate blocker after generation succeeds but approval returns 409", async () => {
     const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
     (global.fetch as jest.Mock).mockImplementation(
@@ -7083,6 +8721,417 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/approve the draft or upload an edited version/i),
     ).toBeInTheDocument();
+    // The instruction must not be "re-run Approve & Build": regeneration writes
+    // a new unapproved draft and clears the sign-off the hard check is waiting
+    // for, so following it could never close the gate. The blocked message
+    // names the submission that does not rebuild, and says why.
+    expect(
+      screen.queryByText(/then re-run Approve & Build/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/use "Submit P3 Design Future State gate approval"/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /re-running Approve & Build would replace the document you just approved with a new unapproved draft/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  // The refusal ladder reads `detail` above `error`, so a refusal with no
+  // sentence falls through to the raw code. Both live Moves mutations answered
+  // an unreadable Move with a bare `not_found`, and this is the surface that
+  // printed it: a product reader was shown the literal refusal code, and then
+  // told to approve a draft and submit the gate again — which cannot clear a
+  // Move the loader will not return, for any of the three causes that reach it.
+  it("states why an unreadable Move refused the gate, and withholds the remedy none of its causes can clear", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 404,
+            json: async () => ({
+              error: "not_found",
+              detail: MOVE_UNREADABLE_REFUSAL_DETAIL,
+              resubmitCanSatisfy: false,
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    // The sentence reaches more than one region of the screen (the gate message
+    // and the error banner beside it), so count rather than expect one.
+    expect(
+      screen.getAllByText(/This Move could not be opened for your account/i)
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        /Reopen the Moves list to see the Moves you can work on/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    // The raw refusal code is what the reader saw before the route carried a
+    // sentence. It must not reach the screen.
+    expect(screen.queryByText(/\bnot_found\b/)).not.toBeInTheDocument();
+    // And the standing remedy must not follow it: no sign-off, upload, or
+    // re-submission clears a Move the loader will not return.
+    expect(
+      screen.queryByText(/approve the draft or upload an edited version/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Submit P3 Design Future State gate approval/i),
+    ).not.toBeInTheDocument();
+  });
+
+  /**
+   * An unanticipated failure in the route is not a gate refusal, and this
+   * surface's own framing reported it as one.
+   *
+   * The ladder landed on `error` — the literal `internal_error` — and wrapped
+   * it in "Build completed, but the phase gate is blocked: ...", a sentence
+   * about a verdict the gate never produced. It then appended the standing
+   * document remedy, because that is offered whenever the body does not rule a
+   * re-submission out, and an unexpected failure says nothing either way. So
+   * the reader was told the gate had judged them, and prescribed an
+   * approve-or-upload action that cannot touch a failure in the route.
+   */
+  it("reports a failed gate submission as a failure, not as a gate verdict", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 500,
+            json: async () =>
+              unexpectedWalkStepFailureBody("phase_gate_submission"),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/Submitting the gate did not finish/i).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(
+      screen.getAllByText(/The gate was not evaluated/i).length,
+    ).toBeGreaterThan(0);
+    // The framing this case exists to remove. Every other refusal on this
+    // surface keeps it; this one must not have it.
+    expect(
+      screen.queryByText(/the phase gate is blocked/i),
+    ).not.toBeInTheDocument();
+    // The code the reader used to be shown in its place.
+    expect(screen.queryByText(/\binternal_error\b/)).not.toBeInTheDocument();
+    // And the remedy that cannot clear a failure the gate never saw.
+    expect(
+      screen.queryByText(/approve the draft or upload an edited version/i),
+    ).not.toBeInTheDocument();
+  });
+
+  // `transition_evidence_incomplete` carries no `gate` and no `missing`, so the
+  // ladder used to land on `detail` — which states the CATEGORY of what is
+  // open and never which slot. The payload names them. For a
+  // governed-data-foundation Move a transition can be held by exactly one
+  // thing, and naming it is the difference between a next step and a dead end.
+  it("names the open evidence slot when approval returns 409 on transition evidence", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              error: "transition_evidence_incomplete",
+              phase: 3,
+              detail:
+                "Required evidence must be approved, linked to a sourced workbook answer, or formally resolved before this phase can close.",
+              requiredEvidenceGaps: [
+                {
+                  evidenceSlot: "P3 to P4 readiness workbook",
+                  status: "open",
+                  nextAction:
+                    "Complete the P3 to P4 readiness review and accept each answer.",
+                },
+              ],
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    // The route's own category sentence is kept, and the slot is named after
+    // it. The blocked message renders at more than one site, so assert that
+    // each part is present somewhere rather than that it is unique.
+    expect(
+      screen.getAllByText(
+        /Required evidence must be approved, linked to a sourced/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Open: P3 to P4 readiness workbook/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        /Complete the P3 to P4 readiness review and accept each answer/,
+      ).length,
+    ).toBeGreaterThan(0);
+  });
+
+  // The route classifies the transition-evidence basis failure per cause and
+  // says whether submitting again can answer it. These two cases differ in
+  // exactly that field and in nothing else, so neither can pass by the remedy
+  // simply never rendering.
+  it("withholds the submit-again remedy when the route says a re-submission cannot answer the refusal", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 422,
+            json: async () => ({
+              error: "transition_evidence_assessment_failed",
+              precondition: "transition_evidence_readiness_unavailable",
+              phase: 3,
+              basisUnevaluableCause: "gap_assessment_failed",
+              resubmitCanSatisfy: false,
+              detail:
+                "This Move's discovery evidence readiness and the next phase's workbook review were both read, but they could not be reduced to this phase's required evidence slots. Submitting the gate again will not change the answer — the same records are reduced the same way. The phase gate was not submitted and no evidence requirement was waived; this is an operational fault in the evidence assessment to resolve, not an open evidence item.",
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    // The route's own sentence is shown in full — nothing is relaxed or
+    // softened, and the reader still learns the gate did not pass.
+    expect(
+      screen.getAllByText(
+        /Submitting the gate again will not change the answer/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    // ...and the standing remedy, which prescribes the submission that
+    // sentence has just ruled out, is not appended to it.
+    expect(
+      screen.queryByText(/approve the draft or upload an edited version/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/use "Submit P3 Design Future State gate approval"/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        /re-running Approve & Build would replace the document you just approved/i,
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the submit-again remedy when the route says a re-submission can answer the refusal", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 503,
+            json: async () => ({
+              error: "transition_discovery_readiness_unreadable",
+              precondition: "transition_evidence_readiness_unavailable",
+              phase: 3,
+              basisUnevaluableCause: "discovery_readiness_unreadable",
+              resubmitCanSatisfy: true,
+              detail:
+                "This Move's discovery evidence readiness could not be read, so none of its transition evidence was measured and the next phase's readiness workbook was not reached. The phase gate was not submitted and no evidence requirement was waived. Submit the gate again; if the read keeps failing it is an operational fault, not an open evidence item.",
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+        initialPhaseCaptureValues={completeP3CaptureValues}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    selectP3Option(/Operational playbook and metric discipline/i);
+    fireEvent.click(workflowStepButton(/Record Decision/i));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Design Future State/i,
+      }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: /^Approve & Build$/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getAllByText(
+        /Submit the gate again; if the read keeps failing it is an operational fault/i,
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/approve the draft or upload an edited version/i)
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/use "Submit P3 Design Future State gate approval"/i)
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it("gates Approve & Build behind a confirmation dialog and does not enqueue a build until confirmed", async () => {
@@ -7370,6 +9419,110 @@ describe("MovesPhaseStandaloneClient", () => {
       "moveContextExtractEvidenceCount",
     );
     expect(chatBody.surfaceContext).not.toHaveProperty("moveEvidenceCount");
+  });
+
+  // A Move this account can no longer read refuses both walk steps the reader
+  // can reach from this screen, and both refusal ladders end `detail || error`.
+  // Before the route carried a `detail`, the fallthrough printed the literal
+  // `not_found` — once into the cited-draft panel's alert, and once into the
+  // per-section save slot beside the field just typed into. These two cases
+  // render the real host and assert the sentence, not the token, reaches it.
+  it("names the refusal in the cited-draft panel when the Move cannot be read", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-input-draft")) {
+          return {
+            ok: false,
+            status: 404,
+            json: async () => ({
+              error: "not_found",
+              detail: MOVE_UNREADABLE_REFUSAL_DETAIL,
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Draft proposed inputs" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/could not be opened for your account/i).length,
+      ).toBeGreaterThan(0);
+    });
+    // The whole point: the wire code never reaches the reader.
+    expect(screen.queryByText("not_found")).not.toBeInTheDocument();
+  });
+
+  it("names the refusal in the draft save slot when the Move cannot be read", async () => {
+    // The draft save is one of this route's four reader ladders. The drafting
+    // request itself is left on the default mock and succeeds, so the refusal
+    // under test is unambiguously the SAVE — a case where both failed could
+    // pass on the drafting panel's message alone.
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-capture") && init?.method === "POST") {
+          return {
+            ok: false,
+            status: 404,
+            json: async () => ({
+              error: "not_found",
+              detail: MOVE_UNREADABLE_REFUSAL_DETAIL,
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Draft proposed inputs" }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(/1 cited draft ready/i)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Insert as draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/could not be opened for your account/i).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText("not_found")).not.toBeInTheDocument();
   });
 
   it("gets cited aVa drafts without writing, then persists only after Save changes", async () => {
@@ -8060,6 +10213,78 @@ describe("MovesPhaseStandaloneClient", () => {
       ).not.toBeInTheDocument();
     });
 
+    // The same refusal the File Cabinet renders also reaches THIS control,
+    // which is the upload a tenant without the redesigned capture flow meets.
+    // It read `detail` FIRST, and on this route `detail` is the raw MIME
+    // string for `unsupported_type` — so the worse of the two renderings was
+    // here, not in the cabinet.
+    it("upload-type workflow step: a refused upload names a next action instead of the MIME type the route sent", async () => {
+      const previousFetch = global.fetch;
+      global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+        if (
+          String(url).includes("/artifacts/upload") &&
+          init?.method === "POST"
+        ) {
+          return {
+            ok: false,
+            status: 415,
+            json: async () => ({
+              ok: false,
+              error: "unsupported_type",
+              detail: "application/zip",
+            }),
+          } as Response;
+        }
+        return previousFetch(url as RequestInfo, init);
+      }) as typeof fetch;
+
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({
+              currentPhase: 2,
+              phaseLabel: "P2 Discover & Diagnose",
+            })}
+            phaseNum={2}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+        const menu = screen.getByLabelText("P2 steps");
+        fireEvent.click(
+          within(menu).getByRole("button", { name: /Upload & Review/i }),
+        );
+        fireEvent.change(screen.getByLabelText("Upload P2 files"), {
+          target: {
+            files: [
+              new File(["PK"], "evidence-bundle.zip", {
+                type: "application/zip",
+              }),
+            ],
+          },
+        });
+
+        await waitFor(() =>
+          expect(
+            screen.getByText(
+              describeMoveUploadRefusal({
+                code: "unsupported_type",
+                detail: "application/zip",
+                fileName: "evidence-bundle.zip",
+              }),
+            ),
+          ).toBeInTheDocument(),
+        );
+        expect(screen.queryByText(/application\/zip/)).toBeNull();
+        expect(screen.queryByText("unsupported_type")).toBeNull();
+      } finally {
+        global.fetch = previousFetch;
+      }
+    });
+
     it("upload-type workflow step: the real file input reachable from the step detail pane invokes the same existing upload wiring (no new handler built)", async () => {
       render(
         <MovesPhaseStandaloneClient
@@ -8231,6 +10456,51 @@ describe("MovesPhaseStandaloneClient", () => {
         ).not.toBeInTheDocument();
 
         fireEvent.click(workflowStepButton("Approve & Build"));
+
+        expect(
+          screen.getByRole("link", { name: workbook }),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByLabelText("Upload completed readiness workbook"),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("link", { name: "Download sample upload files" }),
+        ).toBeInTheDocument();
+      },
+    );
+
+    // The legacy rule above reads the contract-steps substep, which is the
+    // right reading only while that canvas is what renders. Under
+    // `moves_capture_v2` the 3-step flow keeps its own step state and nothing
+    // moves `substepIndex`, so the same rule hid the workbook for the WHOLE of
+    // P3 and P4 — and the accepted workbook review is a hard precondition for
+    // closing either phase (`transition_evidence_incomplete` /
+    // `required_evidence_open`), with this control its only producer.
+    it.each([
+      { phase: 3, workbook: "Download P4 readiness workbook" },
+      { phase: 4, workbook: "Download P5 readiness workbook" },
+    ])(
+      "P$phase offers the readiness workbook on the FIRST step when the redesigned capture flow is mounted",
+      ({ phase, workbook }) => {
+        const move = makeMove({ currentPhase: phase });
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            captureV2Enabled
+            carriesForwardContent={[]}
+            evidenceNeedPackets={coveredEvidencePacketsForPhase(phase)}
+            move={move}
+            phaseNum={phase}
+            phaseTallies={[...phaseTallies]}
+            syntheticEvidencePackHref={`/api/v1/programs/${move.id}/stage-readiness-evidence-pack?phase=${phase}`}
+          />,
+        );
+
+        // The redesigned flow is what renders, and no substep control exists.
+        expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+        expect(
+          screen.queryByTestId("mxw-contract-card"),
+        ).not.toBeInTheDocument();
 
         expect(
           screen.getByRole("link", { name: workbook }),
@@ -8868,9 +11138,7 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       // Continue is held even though every question is answered and saved, so
       // the band is the only thing that can explain the step.
-      expect(
-        screen.getByRole("button", { name: "Continue" }),
-      ).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
       const hold = screen.getByTestId("capture-evidence-hold");
       expect(hold).toHaveTextContent("Phase inputs are captured.");
       expect(hold).toHaveTextContent("1 required evidence item");
@@ -8957,9 +11225,768 @@ describe("MovesPhaseStandaloneClient", () => {
           phaseTallies={[...phaseTallies]}
         />,
       );
-      expect(
-        screen.getByTestId("capture-evidence-hold"),
-      ).toHaveTextContent("Phase inputs are captured.");
+      expect(screen.getByTestId("capture-evidence-hold")).toHaveTextContent(
+        "Phase inputs are captured.",
+      );
     });
+  });
+
+  // The gate attestation ledger's sign-off column comes from ONE read — the
+  // artifacts route's separate deliverables_v2 projection — and the host is the
+  // only thing that knows whether that read landed. The ledger's own suite pins
+  // what each readback state is allowed to say; what only the host can answer is
+  // whether it declares the state at all. Before it did, a refused artifacts read
+  // left the ledger reporting every gate document as having no sign-off tracked,
+  // in a neutral tone, with nothing on screen saying the state was unread.
+  describe("the gate sign-off ledger is told whether its own read landed", () => {
+    const renderGateStep = (overrides: Record<string, unknown> = {}) =>
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={completeP1CaptureValues}
+          initialSubstepKey="approve"
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+          {...overrides}
+        />,
+      );
+
+    const ledger = () =>
+      screen.getByRole("region", { name: /Gate deliverable sign-off/i });
+
+    it("states a sign-off count once the route reports its projection healthy", async () => {
+      renderGateStep();
+      await waitFor(() =>
+        expect(
+          within(ledger()).getByText(/\d+\/\d+ signed off/),
+        ).toBeInTheDocument(),
+      );
+      expect(within(ledger()).queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("says the sign-off state is unknown when the artifacts read is refused", async () => {
+      const baseFetch = (global.fetch as jest.Mock).getMockImplementation();
+      (global.fetch as jest.Mock).mockImplementation(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          if (url.includes("/api/v1/programs/") && url.endsWith("/artifacts")) {
+            return {
+              ok: false,
+              status: 503,
+              json: async () => ({}),
+            } as Response;
+          }
+          return baseFetch?.(input, init);
+        },
+      );
+
+      renderGateStep();
+      await waitFor(() =>
+        expect(
+          within(ledger()).getByText("Sign-off state unknown"),
+        ).toBeInTheDocument(),
+      );
+      // No tally may be stated from rows that carry no sign-off columns...
+      expect(
+        within(ledger()).queryByText(/\d+\/\d+ signed off/),
+      ).not.toBeInTheDocument();
+      // ...and the reader is told the state is unknown rather than negative.
+      expect(within(ledger()).getByRole("status")).toHaveTextContent(
+        /Reload before submitting the gate/i,
+      );
+      expect(
+        within(ledger()).queryByText(/No sign-off version is tracked/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("says the sign-off state is unavailable when the route reports that sub-read failed", async () => {
+      const baseFetch = (global.fetch as jest.Mock).getMockImplementation();
+      (global.fetch as jest.Mock).mockImplementation(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          if (url.includes("/api/v1/programs/") && url.endsWith("/artifacts")) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => ({
+                ok: true,
+                count: 0,
+                artifacts: [],
+                deliverableSignOffStatus: "unavailable",
+              }),
+            } as Response;
+          }
+          return baseFetch?.(input, init);
+        },
+      );
+
+      renderGateStep();
+      await waitFor(() =>
+        expect(
+          within(ledger()).getByText("Sign-off state unavailable"),
+        ).toBeInTheDocument(),
+      );
+      expect(within(ledger()).getByRole("status")).toHaveTextContent(
+        /unknown, not negative/i,
+      );
+    });
+  });
+});
+
+describe("P0 blocked framing excludes the criteria the approval itself completes", () => {
+  // `program_seed_recorded` and `value_hypothesis_seed` are both evaluated from
+  // the signed origination brief, and the P0 gate approval is what signs it.
+  // They are open in every pre-approval P0 state and no control can clear
+  // them, so they must not drive the blocked framing.
+  const approvalGeneratedOpen = [
+    {
+      id: "program_seed_recorded",
+      label: "Origination brief signed off with archetype classification",
+      completed: false,
+      severity: "hard" as const,
+      verified: true,
+    },
+    {
+      id: "value_hypothesis_seed",
+      label: "Value hypothesis seed names problem trigger and target outcome",
+      completed: false,
+      severity: "hard" as const,
+      verified: true,
+    },
+  ];
+
+  function renderP0(args: {
+    sourceCovered: boolean;
+    extraCriteria?: typeof approvalGeneratedOpen;
+  }) {
+    return render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[
+          p0SourceEvidenceNeedPacket({
+            moveId: makeMove().id,
+            evidenceTitles: args.sourceCovered
+              ? ["approved-origination-source.pdf"]
+              : [],
+          }),
+        ]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          gateCriteria: [
+            ...approvalGeneratedOpen,
+            ...(args.extraCriteria ?? []),
+          ],
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  it("a P0 whose only open hard criteria complete on approval reads as ready", () => {
+    renderP0({ sourceCovered: true });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).not.toHaveTextContent("P0 cannot advance yet");
+    expect(surface).toHaveTextContent("P0 is ready for Approve & Build");
+  });
+
+  it("does not tell a reader to upload a source file they already had reviewed", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.queryByText(/Why some checks are still open/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/P0 cannot advance on intake answers alone/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not name an approval-generated criterion as the blocker", () => {
+    renderP0({ sourceCovered: true });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).not.toHaveTextContent(
+      "Blocked by: Origination brief signed off with archetype classification.",
+    );
+    expect(surface).not.toHaveTextContent("Clear hard blockers");
+  });
+
+  it("still offers the approval control in that ready state", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.getByRole("button", { name: /Approve gate/i }),
+    ).toBeInTheDocument();
+  });
+
+  // The complement: the fix must not blanket-suppress the blocked state.
+  it("an uncovered P0 source file still blocks, and still explains why", () => {
+    renderP0({ sourceCovered: false });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).toHaveTextContent("P0 cannot advance yet");
+    expect(
+      screen.getByText(/P0 cannot advance on intake answers alone/i),
+    ).toBeInTheDocument();
+  });
+
+  it("a genuine non-approval-generated hard criterion still blocks", () => {
+    renderP0({
+      sourceCovered: true,
+      extraCriteria: [
+        {
+          id: "sponsor_assigned",
+          label: "Sponsor progress contact listed",
+          completed: false,
+          severity: "hard" as const,
+          verified: true,
+        },
+      ],
+    });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    expect(surface).toHaveTextContent("P0 cannot advance yet");
+    expect(surface).toHaveTextContent(
+      "Blocked by: Sponsor progress contact listed.",
+    );
+  });
+
+  it("still annotates the approval-generated criteria in the gate list", () => {
+    renderP0({ sourceCovered: true });
+    expect(
+      screen.getAllByText(/Completed by approving this gate/i).length,
+    ).toBeGreaterThanOrEqual(2);
+  });
+});
+
+// The gate ledger when the evaluator did not run.
+//
+// `buildGateCriteria` returns `verified: false` on every criterion when
+// `evaluateGate` could not evaluate the Move — which, since the compat client
+// never throws, now includes a failed state read reported as
+// `gate_state_unreadable`. The flag had ZERO readers: this ledger rendered
+// `completed ? "✓" : "○"` and `{met} of {total}`, both of which read an
+// unevaluated criterion exactly like an evaluated-and-unmet one, so the panel
+// stated `0 of N` in the ordinary met/unmet tone.
+describe("gate criteria the evaluator could not check", () => {
+  function unverifiedCriteria() {
+    return [
+      {
+        id: "discovery_report_signed_off",
+        label: "Discovery synthesis report signed off",
+        completed: false,
+        severity: "hard" as const,
+        verified: false,
+      },
+      {
+        id: "p2_readiness_cleared",
+        label: "Diagnosis clears P2 without unresolved hard gaps",
+        completed: false,
+        severity: "hard" as const,
+        verified: false,
+      },
+    ];
+  }
+
+  function renderPhase2(
+    gateCriteria: ReturnType<typeof unverifiedCriteria>,
+  ): void {
+    // Evidence readiness is seeded COVERED so the decision ladder's prior arms
+    // (readiness unverifiable, then open required evidence) do not win — the
+    // criteria arm is deliberately last, because an open evidence item is still
+    // true and still actionable when the criteria were not evaluated.
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+          gateCriteria,
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  it("does not state a met-of-total tally it never measured", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(screen.queryByText("0 of 2 hard met")).not.toBeInTheDocument();
+    expect(screen.getByText("Not evaluated")).toBeInTheDocument();
+  });
+
+  it("marks each row as unread rather than unmet", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(screen.getAllByText("State unread")).toHaveLength(2);
+  });
+
+  it("says an unchecked criterion is not a failed one", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(
+      screen.getByText(/no criterion below has been checked/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /nothing here says a deliverable is missing or unsigned/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("does not tell the reader to regenerate anything", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(screen.queryByText(/regenerate/i)).not.toBeInTheDocument();
+  });
+
+  // The regression direction, and the one the demo walk uses: an EVALUATED
+  // ledger must keep its tally, its glyphs and its silence.
+  it("an evaluated ledger still states its tally and carries no notice", () => {
+    renderPhase2(
+      unverifiedCriteria().map((criterion, index) => ({
+        ...criterion,
+        verified: true,
+        completed: index === 0,
+      })),
+    );
+    expect(screen.getByText("1 of 2 hard met")).toBeInTheDocument();
+    expect(screen.queryByText("Not evaluated")).not.toBeInTheDocument();
+    expect(screen.queryByText("State unread")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no criterion below has been checked/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("one unverified criterion among verified ones still stops the tally", () => {
+    const mixed = unverifiedCriteria();
+    mixed[0] = { ...mixed[0], verified: true, completed: true };
+    renderPhase2(mixed);
+    expect(screen.queryByText("1 of 2 hard met")).not.toBeInTheDocument();
+    expect(screen.getByText("Not evaluated")).toBeInTheDocument();
+  });
+
+  it("does not name a criterion as the blocker", () => {
+    renderPhase2(unverifiedCriteria());
+    expect(
+      screen.queryByText(/Blocked by: Discovery synthesis report signed off/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/gate state could not be read/i),
+    ).toBeInTheDocument();
+  });
+
+  it("an evaluated ledger still names its blocker and counts them", () => {
+    renderPhase2(
+      unverifiedCriteria().map((criterion) => ({
+        ...criterion,
+        verified: true,
+      })),
+    );
+    // The criterion is named in the ledger, which is what "still names its
+    // blocker" is about. It is deliberately NOT asserted on the "Why blocked"
+    // primary line: this fixture's evidence readiness is unverifiable, and
+    // `resolveGateBlockedCause` reports that cause first — the same cause the
+    // decision sentence and the next-action label on this panel already
+    // reported. Pinning a criterion name here pinned a panel whose three slots
+    // named three different causes at once.
+    expect(
+      screen.getAllByText(/Discovery synthesis report signed off/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByText(/gate state could not be read/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no count of open blockers can be stated/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("the row mark and the tally label are different words", () => {
+    // Same string in both slots would let either assertion above pass on the
+    // other, and a revert to the met/unmet wording would survive.
+    renderPhase2(unverifiedCriteria());
+    const tally = screen.getByText("Not evaluated");
+    const marks = screen.getAllByText("State unread");
+    expect(marks[0]).not.toBe(tally);
+    expect(marks[0]?.textContent).not.toBe(tally.textContent);
+  });
+});
+
+// The gate panel's blocked cause, on the surface that renders it three times.
+//
+// The four causes were written out by hand in each slot and the copies did not
+// agree: the decision sentence had all four in the right order, the next-action
+// label had three of them in a different order with NO phase-inputs arm, and
+// the "Why blocked" primary line collapsed all four onto "Blocked by an open
+// hard gate." whenever it had no criterion label to name.
+//
+// At a phase whose only open item was its capture, that rendered — on one
+// screen — "Complete 7 phase inputs before Approve & Build.", "1/1 hard gates
+// met", and then "Blocked by an open hard gate." plus "Clear hard blockers"
+// twice. `resolveGateBlockedCause` is now the only answer, so the slots cannot
+// name different causes.
+describe("the gate panel names one blocked cause", () => {
+  function renderPhase1(args: {
+    gateCriteria: StrategicMove["gateCriteria"];
+    phaseCaptureValues?: Record<string, string>;
+  }) {
+    return render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(1)}
+        initialPhaseCaptureValues={args.phaseCaptureValues}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+          gateCriteria: args.gateCriteria,
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  const hardGateMet: StrategicMove["gateCriteria"] = [
+    {
+      id: "charter_signed_off",
+      label: "Charter signed off",
+      completed: true,
+      severity: "hard" as const,
+      verified: true,
+    },
+  ];
+
+  function gateWhyText(): string {
+    return document.querySelector(".mxw-gate-why-copy")?.textContent ?? "";
+  }
+
+  // The decision sentence's OWN element. `mxw-decision-surface` encloses the
+  // gate-why block as well, so asserting the sentence on the surface let a
+  // decision text that had lost its cause pass on the why copy's wording.
+  function decisionText(): string {
+    return document.querySelector(".mxw-decision-primary p")?.textContent ?? "";
+  }
+
+  it("does not call an incomplete capture an open hard gate", () => {
+    renderPhase1({ gateCriteria: hardGateMet });
+    const why = gateWhyText();
+    expect(why).toContain("Why blocked");
+    expect(why).not.toContain("Blocked by an open hard gate.");
+    expect(why).not.toContain("Clear hard blockers");
+  });
+
+  it("prescribes the phase inputs, and the decision surface agrees", () => {
+    renderPhase1({ gateCriteria: hardGateMet });
+    const why = gateWhyText();
+    expect(why).toContain("phase input");
+    expect(why).toContain("Complete phase inputs");
+    // The same cause, in the slot that was already right — this is the pair
+    // that used to disagree. Read off the sentence's own element, and pinned
+    // as equality: the why copy is built from the cause's `summaryLine`, which
+    // for this cause IS the capture sentence, so a decision text that drifted
+    // to a hard-gate count would no longer match.
+    expect(decisionText()).toContain("phase input");
+    expect(why).toContain(decisionText());
+  });
+
+  it("never counts hard blockers it did not find", () => {
+    // `Resolve 0 hard gate blockers before advancing.` is what the decision
+    // sentence reads if it loses its capture arm while the capture is the only
+    // open item.
+    renderPhase1({ gateCriteria: hardGateMet });
+    expect(decisionText()).not.toMatch(/Resolve 0 hard gate/);
+    expect(screen.getByTestId("mxw-decision-surface")).not.toHaveTextContent(
+      /Resolve 0 hard gate/,
+    );
+  });
+
+  it("does not prescribe hard blockers beside a met hard-gate tally", () => {
+    renderPhase1({ gateCriteria: hardGateMet });
+    const surface = screen.getByTestId("mxw-decision-surface");
+    // The tally the old copy contradicted.
+    expect(surface).toHaveTextContent("1/1 hard gates met");
+    expect(surface).not.toHaveTextContent("Clear hard blockers");
+    expect(surface).not.toHaveTextContent("Blocked by an open hard gate.");
+  });
+
+  // The regression direction: a genuinely open hard criterion must still be
+  // named, and must still prescribe clearing it. Rendered at P0, where the
+  // capture ladder's arms are all gated on `phase >= 1` — so the hard cause is
+  // the one the resolver can reach, without having to satisfy a structured
+  // capture section to get there.
+  it("still names an open hard criterion as the blocker", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        evidenceNeedPackets={[
+          p0SourceEvidenceNeedPacket({
+            moveId: makeMove().id,
+            evidenceTitles: ["approved-origination-source.pdf"],
+          }),
+        ]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          gateCriteria: [
+            {
+              id: "sponsor_assigned",
+              label: "Sponsor progress contact listed",
+              completed: false,
+              severity: "hard" as const,
+              verified: true,
+            },
+          ],
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    const why = gateWhyText();
+    expect(why).toContain("Blocked by: Sponsor progress contact listed.");
+    expect(why).toContain("Clear hard blockers");
+  });
+
+  // The ordering the three slots disagreed about. With readiness unverifiable
+  // AND two hard criteria evaluated open, the panel used to say "Evidence
+  // readiness could not be verified." in the decision sentence, "Blocked by:
+  // Discovery synthesis report signed off." on the primary line, and "Refresh
+  // evidence status" on the action — three slots, three causes, one state.
+  it("names the same cause in all three slots when several are open", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(2)}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+          gateCriteria: [
+            {
+              id: "discovery_report_signed_off",
+              label: "Discovery synthesis report signed off",
+              completed: false,
+              severity: "hard" as const,
+              verified: true,
+            },
+          ],
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    const why = gateWhyText();
+    expect(why).toContain(
+      "Evidence readiness could not be verified. Refresh this phase before approval.",
+    );
+    expect(why).toContain("Refresh evidence status");
+    // The slot that used to name a criterion instead.
+    expect(why).not.toContain("Blocked by: Discovery synthesis report");
+    expect(decisionText()).toBe(
+      "Evidence readiness could not be verified. Refresh this phase before approval.",
+    );
+  });
+});
+
+// The gate panel's blocker list showed the open HARD criteria with a "{N} more"
+// remainder row and the open SOFT ones — its caveats — without one, three lines
+// below. The canonical soft counts are 3 / 1 / 0 / 2 / 6 / 1 for P0->P1 .. P5->P6
+// against a soft limit of 2, so four open caveats left the surface silently at
+// P4->P5 and one at P0->P1. The adjacent decision line understated the same set
+// the other way, reading "Ready with caveat: <first>." in the SINGULAR however
+// many were open. Both slots now read one digest; see `gate-criterion-digest`.
+describe("the gate panel accounts for every open caveat", () => {
+  function softCriteria(count: number) {
+    return Array.from({ length: count }, (_, index) => ({
+      id: `soft_${index + 1}`,
+      label: `Soft criterion ${index + 1}`,
+      completed: false,
+      severity: "soft" as const,
+      verified: true,
+    }));
+  }
+
+  function hardCriteria(count: number, completed: boolean) {
+    return Array.from({ length: count }, (_, index) => ({
+      id: `hard_${index + 1}`,
+      label: `Hard criterion ${index + 1}`,
+      completed,
+      severity: "hard" as const,
+      verified: true,
+    }));
+  }
+
+  // P0 is the phase this surface can render in a genuinely READY state: the
+  // capture-input blocker arms are all `phase.phase >= 1`, and P0's two
+  // brief-derived hard criteria are excluded from the blocked reckoning by
+  // `partitionOpenHardGateCriteria`. That is what makes the caveat SENTENCE
+  // reachable here.
+  function renderReadyP0(soft: StrategicMove["gateCriteria"]) {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[
+          p0SourceEvidenceNeedPacket({
+            moveId: makeMove().id,
+            evidenceTitles: ["approved-origination-source.pdf"],
+          }),
+        ]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          gateCriteria: [
+            {
+              id: "program_seed_recorded",
+              label:
+                "Origination brief signed off with archetype classification",
+              completed: false,
+              severity: "hard" as const,
+              verified: true,
+            },
+            ...soft,
+          ],
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  function renderP4(gateCriteria: StrategicMove["gateCriteria"]) {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        evidenceNeedPackets={coveredEvidencePacketsForPhase(4)}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 4,
+          phaseLabel: "P4 Plan",
+          gateCriteria,
+        })}
+        phaseNum={4}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+  }
+
+  const gateWhyLine = () =>
+    screen
+      .getByTestId("mxw-decision-surface")
+      .querySelector(".mxw-gate-why-copy strong")?.textContent ?? "";
+
+  const caveatRows = () =>
+    Array.from(
+      screen
+        .getByTestId("mxw-decision-surface")
+        .querySelectorAll(".mxw-gate-blocker-list li"),
+    )
+      .map((row) => row.textContent ?? "")
+      .filter((text) => text.startsWith("Caveat:"));
+
+  it("counts the four caveats a P4 list leaves out", () => {
+    // The real P4->P5 soft count. Before the digest these four were rendered
+    // nowhere on the surface and nothing said a caveat had been dropped.
+    renderP4([...hardCriteria(1, true), ...softCriteria(6)]);
+    expect(screen.getByTestId("mxw-gate-soft-remainder")).toHaveTextContent(
+      "4 more",
+    );
+    expect(caveatRows()).toEqual([
+      "Caveat: Soft criterion 1",
+      "Caveat: Soft criterion 2",
+      "Caveat: 4 more",
+    ]);
+  });
+
+  it("states the caveat TOTAL on a ready phase, not the singular", () => {
+    // The real P0->P1 soft count.
+    renderReadyP0(softCriteria(3));
+    expect(gateWhyLine()).toBe(
+      "Ready with 3 caveats, including: Soft criterion 1.",
+    );
+    expect(gateWhyLine()).not.toBe("Ready with caveat: Soft criterion 1.");
+  });
+
+  it("the sentence's number equals what the list accounts for", () => {
+    renderReadyP0(softCriteria(3));
+    const rows = caveatRows();
+    const remainder = Number(
+      /(\d+) more/.exec(
+        screen.getByTestId("mxw-gate-soft-remainder").textContent ?? "",
+      )?.[1],
+    );
+    const named = rows.filter((row) => !/\d+ more$/.test(row)).length;
+    expect(named + remainder).toBe(3);
+    expect(gateWhyLine()).toContain(String(named + remainder));
+  });
+
+  it("names a single open caveat and counts it as one", () => {
+    renderReadyP0(softCriteria(1));
+    expect(gateWhyLine()).toBe("Ready with 1 caveat: Soft criterion 1.");
+    expect(
+      screen.queryByTestId("mxw-gate-soft-remainder"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("states no remainder when the caveat list is complete at the limit", () => {
+    renderReadyP0(softCriteria(2));
+    expect(gateWhyLine()).toBe(
+      "Ready with 2 caveats, including: Soft criterion 1.",
+    );
+    expect(
+      screen.queryByTestId("mxw-gate-soft-remainder"),
+    ).not.toBeInTheDocument();
+    expect(caveatRows()).toHaveLength(2);
+  });
+
+  it("a ready phase with no open caveat says so and lists none", () => {
+    renderReadyP0([]);
+    expect(gateWhyLine()).toBe("No hard blockers are open.");
+    expect(caveatRows()).toHaveLength(0);
+    expect(
+      screen.queryByTestId("mxw-gate-soft-remainder"),
+    ).not.toBeInTheDocument();
+  });
+
+  // The regression direction: the hard half already counted what it left out
+  // and must keep doing so, from the same digest.
+  it("the hard half still counts what it leaves out", () => {
+    renderP4(hardCriteria(5, false));
+    expect(screen.getByTestId("mxw-gate-hard-remainder")).toHaveTextContent(
+      "2 more",
+    );
+    expect(
+      screen.queryByTestId("mxw-gate-soft-remainder"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("states no hard remainder when the hard list is complete at the limit", () => {
+    renderP4(hardCriteria(3, false));
+    expect(
+      screen.queryByTestId("mxw-gate-hard-remainder"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("the two remainder rows are distinct elements with distinct prefixes", () => {
+    // Both rows read "{N} more". Without this, a test for either could pass on
+    // the other and a half that lost its row again would stay green.
+    renderP4([...hardCriteria(5, false), ...softCriteria(6)]);
+    const hard = screen.getByTestId("mxw-gate-hard-remainder");
+    const soft = screen.getByTestId("mxw-gate-soft-remainder");
+    expect(hard).not.toBe(soft);
+    expect(hard).toHaveTextContent("Hard: 2 more");
+    expect(soft).toHaveTextContent("Caveat: 4 more");
+    expect(hard.textContent).not.toBe(soft.textContent);
   });
 });

@@ -1,3 +1,7 @@
+import {
+  originationSubmitAccessSentence,
+  originationSubmitFailureSentence,
+} from "./origination-submit-failure-text";
 import "server-only";
 
 import { requireTenancy, TenancyError } from "@/app/api/v1/programs/_auth";
@@ -358,9 +362,14 @@ async function resolvePersonByLabel(input: {
 
   const { data, error } = await query;
   if (error) {
+    // The raw driver text is what an operator needs and what a product user
+    // must not be handed; log it, answer with the sentence.
+    console.error("[origination-submit] sponsor lookup failed", {
+      message: error.message,
+    });
     throw new OriginationSubmitError(
       "person_lookup_failed",
-      error.message,
+      originationSubmitFailureSentence("person_lookup_failed"),
       500,
     );
   }
@@ -403,10 +412,12 @@ async function resolvePersonByLabel(input: {
       .select("id, name, role")
       .single();
     if (placeholderError || !placeholderRow) {
+      console.error("[origination-submit] sponsor placeholder insert failed", {
+        message: placeholderError?.message ?? null,
+      });
       throw new OriginationSubmitError(
         "person_placeholder_failed",
-        placeholderError?.message ??
-          `Could not register "${placeholderSpec.name}" as a pending sponsor in ${input.clientName}'s people records`,
+        originationSubmitFailureSentence("person_placeholder_failed"),
         500,
       );
     }
@@ -727,9 +738,12 @@ export async function submitOriginationBrief(
     tenancy = await requireTenancy();
   } catch (err) {
     if (err instanceof TenancyError) {
+      // The code stays the code; the MESSAGE has to be a sentence, because the
+      // product clients render `message` ahead of `error` and `TenancyError` is
+      // `super(code)` -- so without this the user read the bare token.
       throw new OriginationSubmitError(
         err.code,
-        err.code,
+        originationSubmitAccessSentence(err.code),
         err.code === "unauthenticated" ? 401 : 403,
       );
     }
@@ -799,8 +813,16 @@ export async function submitOriginationBrief(
       })
     : sponsor;
 
+  // Re-submit guard. A product user who double-submits, or a client that
+  // retries the POST, must land back on the Move the first submit created
+  // rather than get a second one. `data: null` is how the compat client
+  // reports BOTH "no such Move" and "the read failed" -- it resolves
+  // `{ data: null, error }` instead of throwing -- so `error` is the only
+  // signal that the absence was never actually established. Dropping it made
+  // a failed read look like a clean first submit and created the duplicate
+  // this query exists to prevent, which no product control can undo.
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
-  const { data: existing } = await sb
+  const { data: existing, error: existingError } = await sb
     .from("engagements")
     .select("id, name, lifecycle_state, created_at")
     .eq("client_id", tenancy.clientId)
@@ -809,6 +831,18 @@ export async function submitOriginationBrief(
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (existingError) {
+    // Fail closed: a second Move is unrecoverable from the product, a refusal
+    // the user can retry is not. The raw driver text is the operator's.
+    console.error("[origination-submit] re-submit check failed", {
+      message: existingError.message,
+    });
+    throw new OriginationSubmitError(
+      "duplicate_check_failed",
+      originationSubmitFailureSentence("duplicate_check_failed"),
+      503,
+    );
+  }
 
   if (existing) {
     const row = existing as {
@@ -1008,9 +1042,12 @@ export async function submitOriginationBrief(
   }
 
   if (insertError || !inserted) {
+    console.error("[origination-submit] engagement insert failed", {
+      message: insertError?.message ?? null,
+    });
     throw new OriginationSubmitError(
       "engagement_insert_failed",
-      insertError?.message ?? "Unknown engagement insert failure",
+      originationSubmitFailureSentence("engagement_insert_failed"),
       500,
     );
   }

@@ -1,0 +1,102 @@
+.mobileRailActions {
+  display: none;
+}
+
+.mobileRailToggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .stageHeaderLayout {
+    align-items: stretch !important;
+    flex-direction: column;
+    gap: 14px !important;
+  }
+
+  .canvas [data-testid="source-workflow-frame"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .canvas [data-testid="source-workflow-pane"] {
+    padding: 16px 14px 190px !important;
+  }
+
+  .canvas [data-testid="source-shell-v2-rail"] {
+    border-right: 0 !important;
+    border-bottom: 1px solid #d8dce2;
+    padding: 10px 14px !important;
+  }
+
+  .mobileRailActions {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+
+  .mobileRailToggle {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #0c1a3a;
+    cursor: pointer;
+    display: flex;
+    flex: 1;
+    font:
+      700 13px/1.4 Inter,
+      sans-serif;
+    justify-content: space-between;
+    min-height: 44px;
+    padding: 0 2px;
+    min-width: 0;
+  }
+
+  .mobileAvaButton {
+    align-items: center;
+    background: #006c62;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex: 0 0 44px;
+    font: 800 20px/1 Georgia, serif;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+  }
+
+  .mobileRailToggle span:last-child {
+    font-size: 20px;
+  }
+
+  .railContents[data-open="false"] {
+    display: none;
+  }
+
+  .canvas [data-testid="source-shell-focused-work-panel"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .canvas [data-testid="source-shell-focused-work-panel"] > div:first-child {
+    border-right: 0 !important;
+    border-bottom: 1px solid #d8dce2;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .canvas [data-testid="source-shell-focused-work-panel"] > div:last-child {
+    min-width: 0;
+  }
+
+  .canvas [data-testid="source-shell-progress-dock"] {
+    bottom: 12px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+  }
+
+  .askAvaLauncher,
+  .askAvaWithDock {
+    display: none !important;
+  }
+}

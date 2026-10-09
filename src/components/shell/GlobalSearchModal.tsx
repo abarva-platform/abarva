@@ -15,6 +15,7 @@ import { INDUSTRY_PATTERNS } from '@/lib/intelligence/seed-patterns-industry';
 import { META_PATTERNS } from '@/lib/intelligence/seed-patterns-meta';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
+import { getMovesStageName } from '@/lib/programs/phase-labels';
 
 // ── All patterns ───────────────────────────────────────────────────────────────
 
@@ -110,8 +111,18 @@ function buildResults(query: string): {
     })
     .slice(0, MAX_PER_GROUP)
     .map((inst) => {
-      const phaseLabels = ['Originate', 'Discovery', 'Assess', 'Build', 'Deploy', 'Validate', 'Operate'];
-      const currentStage = phaseLabels[inst.currentPhase] ?? `Phase ${inst.currentPhase}`;
+      // Global search names the stage from the canonical phase model. This
+      // read used to carry a local seven-entry
+      // Originate/Discovery/Assess/Build/Deploy/Validate/Operate array, which
+      // named every phase from P1 up as a different phase — and Build/Deploy
+      // are the downstream Tower vocabulary that `phase-labels.ts` retired
+      // for Strategic Moves outright.
+      //
+      // `getMovesStageName` rather than `getPhaseLabelShort`: a program
+      // instance's stage can be 6, meaning it has been handed to Tower and is
+      // no longer in a Move phase at all. The retired array called that
+      // 'Operate'; the canonical name is 'Tower Track Outcomes'.
+      const currentStage = getMovesStageName(inst.currentPhase);
       return {
         kind: 'instance' as const,
         id: inst.id,

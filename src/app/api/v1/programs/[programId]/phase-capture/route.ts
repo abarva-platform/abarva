@@ -62,6 +62,10 @@ import {
 } from "@/lib/programs/solution-route-assessment";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import {
+  PHASE_CAPTURE_SNAPSHOT_UNREADABLE_STATUS,
+  phaseCaptureSnapshotUnreadableBody,
+} from "@/lib/programs/phase-capture-snapshot-refusal";
+import {
   createP1CharterBasisRecord,
   isP1CharterEvidenceFamily,
   missingP1CaptureSections,
@@ -71,6 +75,8 @@ import {
   readP1CharterBasisRecord,
   type P1CharterBasisInput,
 } from "@/lib/programs/p1-charter-evidence";
+import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
+import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -233,7 +239,14 @@ export async function POST(
     const ctx = await requireTenancy();
     const { programId } = await params;
     const program = await getProgramById(ctx, programId);
-    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    // Four reader ladders on this route -- the two autosave paths, the aVa
+    // draft save and the gate finalize -- all fall through to `error`, so a
+    // bare code printed the literal `not_found` into a per-section save slot.
+    // The GET arm above keeps its bare body on purpose: no client fetches it,
+    // so a sentence there would change no screen.
+    if (!program) {
+      return Response.json(moveUnreadableRefusalBody(), { status: 404 });
+    }
 
     const body = (await req.json().catch(() => ({}))) as {
       phase?: number;
@@ -265,20 +278,32 @@ export async function POST(
         ctx.email ?? ctx.userId,
       );
     }
-    const currentSnapshot = await loadCaptureSnapshot(
-      ctx,
-      programId,
-      phase,
-    ).catch(() => ({
-      modules: [],
-      values: {},
-      p1BasisBySection: {} as Record<string, P1CharterBasisInput>,
-      businessChangeAssessment: "",
-      routeValidation: "",
-      approvedEvidenceReferences: [],
-      approvedP1EvidenceReferences: [],
-      confirmedSolutionRoute: null,
-    }));
+    // The authoritative snapshot is read BEFORE anything is written, and a
+    // failure to read it is answered as a failure to read it.
+    //
+    // This read used to sit behind `.catch(() => ({ values: {}, ... }))`, which
+    // substituted a snapshot asserting the Move had no saved answers at all.
+    // `loadCaptureSnapshot` has no legitimate throw — an unsaved Move reads as
+    // empty rows, not as an error — so the substitution only ever stood in for
+    // a data-plane read failure, and it reached the reader as either a
+    // `stale_revision` conflict carrying `values: {}` or, when the optional
+    // revision fence was not sent, a 200 reporting every unsent section as
+    // empty. Both client autosave call sites adopt those bodies as
+    // authoritative, so a transient read failure blanked the reader's view of
+    // answers the database still held. See
+    // `src/lib/programs/phase-capture-snapshot-refusal.ts`.
+    let currentSnapshot: Awaited<ReturnType<typeof loadCaptureSnapshot>>;
+    try {
+      currentSnapshot = await loadCaptureSnapshot(ctx, programId, phase);
+    } catch (snapshotError) {
+      console.error(
+        "[POST /api/v1/programs/:programId/phase-capture] capture snapshot unreadable",
+        snapshotError,
+      );
+      return Response.json(phaseCaptureSnapshotUnreadableBody(phase), {
+        status: PHASE_CAPTURE_SNAPSHOT_UNREADABLE_STATUS,
+      });
+    }
     const currentValues = currentSnapshot.values;
     const currentRevision = computeCaptureRevision(
       currentValues,
@@ -811,9 +836,8 @@ export async function POST(
       /* not a tenancy error */
     }
     console.error("[POST /api/v1/programs/:programId/phase-capture]", err);
-    return Response.json(
-      { error: "internal_error", message: (err as Error).message },
-      { status: 500 },
-    );
+    return Response.json(unexpectedWalkStepFailureBody("phase_capture_save"), {
+      status: 500,
+    });
   }
 }

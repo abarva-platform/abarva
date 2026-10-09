@@ -178,7 +178,7 @@
   top: 0;
   z-index: 25;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   margin: 14px 0 14px;
@@ -207,11 +207,6 @@
   background: #fff;
   border-color: #d3d1c7;
   color: #0a0a0b;
-}
-
-.sw-v2-contract-command {
-  background: #fff !important;
-  border-color: #d3d1c7 !important;
 }
 
 .sw-v2-contract-commandbar-tabs {
@@ -249,15 +244,6 @@
   background: #e1f5ee;
   border-color: rgba(29, 158, 117, 0.35);
   color: #0f6e56;
-}
-
-.sw-v2-contract-commandbar-id {
-  color: #888780;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
 }
 
 .sw-v2-impact-load-badge {
@@ -1105,6 +1091,50 @@
 
 .sw-v2-contract-detail-grid {
   grid-template-columns: minmax(0, 1.85fr) minmax(280px, 0.75fr);
+}
+
+.sw-c3-optimize-next-action {
+  max-width: 76ch;
+  padding: 4px 0 12px;
+}
+
+.sw-c3-optimize-action {
+  margin: 12px 0 6px;
+  color: #0a0a0b;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.sw-c3-optimize-next-action .sw-v2-muted {
+  margin: 8px 0 0;
+}
+
+.sw-c3-optimize-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 20px;
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid #d3d1c7;
+}
+
+.sw-c3-optimize-value > span {
+  flex: 1 0 100%;
+  color: #5f5e5a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sw-c3-optimize-value > div {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.sw-c3-optimize-value strong {
+  color: #0a0a0b;
 }
 
 .sw-c3-case-thread {
@@ -2358,19 +2388,6 @@
     grid-template-columns: 1fr;
   }
 
-  .sw-v2-contract-commandbar {
-    grid-template-columns: 1fr auto;
-  }
-
-  .sw-v2-contract-commandbar-tabs {
-    grid-column: 1 / -1;
-    order: 3;
-  }
-
-  .sw-v2-contract-commandbar-id {
-    display: none;
-  }
-
   .sw-v2-contract-context-panel {
     position: static;
   }
@@ -2412,13 +2429,14 @@
   }
 
   .sw-v2-contract-commandbar {
+    position: static;
     grid-template-columns: 1fr;
     align-items: stretch;
   }
 
   .sw-v2-contract-commandbar-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .sw-v2-contract-commandbar-tabs button {

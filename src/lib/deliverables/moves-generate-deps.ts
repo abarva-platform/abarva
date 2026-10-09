@@ -28,15 +28,19 @@ import {
   formatProgramsBrokerBundleForPrompt,
 } from "@/lib/programs/programs-broker-adapter";
 import { hasPriorPhaseDraftApproval } from "@/lib/programs/deliverables/artifact-review-decisions";
+import {
+  gatesPassedContainsPhase,
+  isGateApprovedForPhase,
+} from "@/lib/programs/approved-gate-phases";
 import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
 import {
   parseBusinessChangeAssessment,
   parseSolutionRouteValidation,
 } from "@/lib/programs/solution-route-assessment";
 import {
-  formatAcceptedStageReadinessContextForPrompt,
-  loadAcceptedStageReadinessContext,
-} from "@/lib/programs/stage-readiness-workbooks/accepted-context";
+  formatStageReadinessPromptContext,
+  loadStageReadinessPromptContext,
+} from "@/lib/programs/stage-readiness-workbooks/prompt-context";
 import type {
   PhaseDigest,
   SolutionDecision,
@@ -127,25 +131,6 @@ function structuredDigest(structuredData: unknown): PhaseDigest | null {
   return null;
 }
 
-function gatesPassedContains(gatesPassed: unknown[], phase: number): boolean {
-  return gatesPassed.some((entry) => {
-    if (entry === phase || entry === String(phase) || entry === `P${phase}`)
-      return true;
-    const gate = extractRecord(entry);
-    if (!gate) return false;
-    const gatePhase = gate.phase ?? gate.phase_number ?? gate.phaseNumber;
-    const status = String(
-      gate.status ?? gate.approval_status ?? "approved",
-    ).toLowerCase();
-    return (
-      (gatePhase === phase ||
-        gatePhase === String(phase) ||
-        gatePhase === `P${phase}`) &&
-      ["approved", "passed", "complete", "completed"].includes(status)
-    );
-  });
-}
-
 function canonicalPhaseForDeliverable(typeKey: string): number | null {
   for (const [phase, keys] of Object.entries(PHASE_CANONICAL_KEYS)) {
     if (keys.includes(typeKey)) return Number(phase);
@@ -231,10 +216,13 @@ export function createMovesGenerateArtifactDeps(
               .then(formatProgramEvidenceForPrompt)
               .catch(() => "")
           : "";
+        // Accepted transition answers reach the prompt from a review that is
+        // still open too; an undecided response excludes itself, not the
+        // answers a human already accepted.
         const stageReadinessBlock =
           moveId && typeof phase === "number"
-            ? await loadAcceptedStageReadinessContext(ctx, moveId, phase)
-                .then(formatAcceptedStageReadinessContextForPrompt)
+            ? await loadStageReadinessPromptContext(ctx, moveId, phase)
+                .then(formatStageReadinessPromptContext)
                 .catch(() => "")
             : "";
         return [promptBlock, evidenceBlock, stageReadinessBlock]
@@ -325,12 +313,19 @@ export function createMovesGenerateArtifactDeps(
       },
       async loadDecisions(moveId) {
         const decisions: SolutionDecision[] = [];
-        const program = await getProgramById(ctx, moveId).catch(() => null);
+        // Both gate records, because neither is complete on its own: the
+        // denormalized array is not appended to for phases 1-4 by any
+        // reachable control, so asking it alone reports a Move walked through
+        // the product as having approved no gate it was not seeded with.
+        const [program, snapshots] = await Promise.all([
+          getProgramById(ctx, moveId).catch(() => null),
+          getPhaseSnapshots(ctx, moveId).catch(() => []),
+        ]);
         const gatesPassed = Array.isArray(program?.gatesPassed)
           ? program.gatesPassed
           : [];
         for (let phase = 0; phase <= 5; phase += 1) {
-          if (gatesPassedContains(gatesPassed, phase)) {
+          if (isGateApprovedForPhase({ gatesPassed, snapshots }, phase)) {
             decisions.push({
               phase,
               decision: `P${phase} gate approved`,
@@ -346,9 +341,13 @@ export function createMovesGenerateArtifactDeps(
       async loadPhaseCapture(moveId, phase) {
         // Current capture can shape this phase's draft. Earlier capture is
         // inherited only after its modules are complete and its gate passed.
-        const [modules, program] = await Promise.all([
+        const [modules, program, snapshots] = await Promise.all([
           getModuleState(ctx, moveId).catch(() => []),
           getProgramById(ctx, moveId).catch(() => null),
+          // The authoritative approval record. Without it an earlier phase
+          // whose gate was approved in the product inherits nothing here,
+          // because the denormalized array is never appended to for P1-P4.
+          getPhaseSnapshots(ctx, moveId).catch(() => []),
         ]);
         const gatesPassed = Array.isArray(program?.gatesPassed)
           ? program.gatesPassed
@@ -365,7 +364,10 @@ export function createMovesGenerateArtifactDeps(
               typeof mod.phaseNumber === "number" &&
               mod.phaseNumber < phase &&
               mod.status === "completed" &&
-              gatesPassedContains(gatesPassed, mod.phaseNumber)
+              isGateApprovedForPhase(
+                { gatesPassed, snapshots },
+                mod.phaseNumber,
+              )
             );
           })
           .sort((a, b) => a.phaseNumber - b.phaseNumber);
@@ -479,14 +481,14 @@ export function createMovesGenerateArtifactDeps(
         const gatesPassed = Array.isArray(program?.gatesPassed)
           ? program.gatesPassed
           : [];
-        if (gatesPassedContains(gatesPassed, phase)) return true;
+        // Short-circuit before the snapshot read, as this reader always has:
+        // a Move whose array already names the phase needs no second record.
+        if (gatesPassedContainsPhase(gatesPassed, phase)) return true;
         if (typeof getPhaseSnapshots !== "function") return false;
         const snapshots = await getPhaseSnapshots(ctx, moveId, phase).catch(
           () => [],
         );
-        return snapshots.some(
-          (snapshot) => snapshot.approvalStatus === "approved",
-        );
+        return isGateApprovedForPhase({ gatesPassed, snapshots }, phase);
       },
       async priorPhaseDraftApproval(moveId, phase) {
         const result = await hasPriorPhaseDraftApproval(ctx, {

@@ -32,6 +32,7 @@ import {
 } from "@/lib/programs/discovery/auto-generate-discovery-plan";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import type { AiDecisionEvidencePacket } from "@/lib/ai-liability/human-decision-controls";
+import { closeRequiredEvidenceInstruction } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -296,7 +297,7 @@ export async function POST(request: NextRequest) {
           error: "precondition_failed",
           precondition: "discovery_evidence_readiness",
           readiness,
-          message: `Phase 2 → Phase 3 is blocked by ${readiness.requiredMissing} missing required discovery evidence family${readiness.requiredMissing === 1 ? "" : "ies"}. Upload the missing evidence or record a human waiver before advancing.`,
+          message: `Phase 2 → Phase 3 is blocked by ${readiness.requiredMissing} missing required discovery evidence family${readiness.requiredMissing === 1 ? "" : "ies"}. ${closeRequiredEvidenceInstruction()}`,
         },
         { status: 412 },
       );

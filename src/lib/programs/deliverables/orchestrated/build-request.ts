@@ -27,6 +27,10 @@ import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { selectRequiredEvidenceSignals } from "@/lib/deliverables/orchestrator/evidence-signals";
 import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
+import {
+  charterDeclaredUseCaseArchetype,
+  resolveMoveUseCaseArchetype,
+} from "./use-case-archetype-precedence";
 
 /** Board-grade defaults shared by orchestrated Move deliverables. */
 const FORMATTING_PROFILE: FormattingProfile = {
@@ -170,9 +174,12 @@ const UUID_RE =
  *
  * Binds only recorded facts (charter fields + baseline metrics) as governed
  * evidence; absent charter fields become missing-evidence entries. The
- * useCaseArchetype is derived from the Move's function-pack key (or charter
- * classification) and falls back to a generic strategic-move archetype — the
- * brief resolver has a sound default either way.
+ * useCaseArchetype is derived from the Move's declaration-bearing fields —
+ * whichever of the function-pack key and the charter classification NAMES a
+ * known archetype, per `use-case-archetype-precedence.ts` — and falls back to a
+ * generic strategic-move archetype. The brief resolver has a sound default
+ * either way, but a declared archetype no longer loses to a pack key that names
+ * nothing.
  */
 export function buildBusinessCaseRequest(
   input: MoveBusinessCaseInput,
@@ -316,13 +323,11 @@ export function buildMoveDeliverableRequest(
     });
   }
 
-  const useCaseArchetype =
-    asString(input.function_pack_key) ??
-    asString(
-      (charter.classification as Record<string, unknown> | undefined)
-        ?.archetype,
-    ) ??
-    "STRATEGIC_MOVE";
+  const useCaseArchetype = resolveMoveUseCaseArchetype({
+    functionPackKey: input.function_pack_key,
+    charterClassificationArchetype: charterDeclaredUseCaseArchetype(charter),
+    fallback: "STRATEGIC_MOVE",
+  });
 
   const initiativeDisplayName = asString(input.name) ?? "Strategic Move";
   const clientDisplayName =

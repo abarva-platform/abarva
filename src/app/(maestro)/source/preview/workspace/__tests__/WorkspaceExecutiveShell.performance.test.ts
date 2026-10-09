@@ -157,12 +157,14 @@ import {
   orderedActionRows,
   optimizeTypeRows,
   performanceActual,
+  selectPerformancePercentTrend,
   sizedOpportunityTotalUsd,
   resolveSelectedVendor,
   sourceImpactCoverageRowTotal,
   source360RecoverableCreditCoverageRows,
   source360RecoverableCreditFinding,
   topVendors,
+  archetypeRowsForDisplay,
   vendorArchetypeCoverage,
   vendorArchetypeRows,
   vendorCoverageRows,
@@ -879,10 +881,92 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   });
 
   it("renders numeric performance actuals from governed rows without throwing", () => {
-    expect(performanceActual(89, null)).toBe("89.0%");
+    // These used to assert a trailing "%" on every number. The performance
+    // table is keyed by metric name and those metrics are not all percentages,
+    // so a 45-minute response rendered as "45.0%". The row has always carried a
+    // `unit` column; the formatter ignored it and invented one.
+    expect(performanceActual(89, null)).toBe("89.0");
+    expect(performanceActual(null, 96)).toBe("96.0");
+    // A sub-unit actual with no declared unit is a ratio against a target;
+    // rendering 0.91 as "0.9" would lose the fact rather than preserve it.
     expect(performanceActual(null, 0.91)).toBe("91.0%");
-    expect(performanceActual(null, 96)).toBe("96.0%");
     expect(performanceActual("89%", null)).toBe("89%");
+  });
+
+  it("renders a performance actual in the unit its row declares", () => {
+    expect(performanceActual(45, null, "minutes")).toBe("45.0 minutes");
+    expect(performanceActual(8, null, "hours")).toBe("8.0 hours");
+    expect(performanceActual(120, null, "tickets")).toBe("120.0 tickets");
+    // A declared percentage still reads as one, from either shape.
+    expect(performanceActual(99.5, null, "%")).toBe("99.5%");
+    expect(performanceActual(null, 0.995, "percent")).toBe("99.5%");
+  });
+
+  // The loader stamps unit "%" on every service-performance row it writes,
+  // including metrics named in minutes, hours and counts. Reading the stored
+  // unit alone therefore still renders "45.0%" for a 45-minute response. These
+  // are the real metric names from the loaded LAAMS package.
+  it("refuses a stored unit the metric name contradicts", () => {
+    expect(performanceActual(35, null, "%", "critical_incident_response_minutes")).toBe("35.0");
+    expect(performanceActual(8, null, "%", "p1_p2_resolution_hours")).toBe("8.0");
+    expect(performanceActual(120, null, "%", "problem_backlog_older_30_days")).toBe("120.0");
+    for (const name of [
+      "critical_incident_response_minutes",
+      "p1_p2_resolution_hours",
+      "problem_backlog_older_30_days",
+    ]) {
+      expect(performanceActual(35, null, "%", name)).not.toContain("%");
+    }
+  });
+
+  it("does not return contradictory stored actual text before checking its unit", () => {
+    expect(performanceActual("30.0%", 30, "%", "critical_incident_response_minutes")).toBe("30.0");
+    expect(performanceActual("8.0%", 8, "%", "p1_p2_resolution_hours")).toBe("8.0");
+    expect(performanceActual("12.0%", 12, "%", "problem_backlog_older_30_days")).toBe("12.0");
+    expect(performanceActual("98.0%", 98, "%", "batch_completion_by_7am_pct")).toBe("98.0%");
+    expect(performanceActual("90%", 90, "percent", "Priority tickets resolved within SLA")).toBe("90%");
+    expect(performanceActual("30.0%", null, "%", "critical_incident_response_minutes"))
+      .toBe("Unit needs review");
+  });
+
+  it("charts one governed percentage metric across distinct periods", () => {
+    const rows = [
+      { metric_name: "critical_incident_response_minutes", unit: "%", actual_value: "30.0%", value_num: 30, period_start: "2026-07-01" },
+      { metric_name: "batch_completion_by_7am_pct", unit: "%", actual_value: "98.0%", value_num: 98, period_start: "2026-07-01" },
+      { metric_name: "change_success_rate_pct", unit: "%", actual_value: "95.0%", value_num: 95, period_start: "2026-07-01" },
+      { metric_name: "batch_completion_by_7am_pct", unit: "%", actual_value: "99.0%", value_num: 99, period_start: "2026-08-01" },
+      { metric_name: "p1_p2_resolution_hours", unit: "%", actual_value: "8.0%", value_num: 8, period_start: "2026-08-01" },
+      { metric_name: "critical_incident_response_minutes", unit: "%", actual_value: "29.0%", value_num: 29, period_start: "2026-08-01" },
+    ];
+    const trend = selectPerformancePercentTrend(rows);
+    expect(trend?.metricName).toBe("batch_completion_by_7am_pct");
+    expect(trend?.points.map((point) => point.actual)).toEqual([98, 99]);
+    expect(selectPerformancePercentTrend(rows.slice(0, 3))).toBeNull();
+    expect(selectPerformancePercentTrend(rows.filter((row) => row.metric_name.includes("minutes")))).toBeNull();
+    const slaRows = [
+      { metric_name: "Priority tickets resolved within SLA", unit: "percent", actual_value: "90%", value_num: 90, period_start: "2027-01-01" },
+      { metric_name: "Priority tickets resolved within SLA", unit: "percent", actual_value: "97%", value_num: 97, period_start: "2027-02-01" },
+    ];
+    expect(selectPerformancePercentTrend(slaRows)?.points.map((point) => point.actual)).toEqual([90, 97]);
+  });
+
+  it("keeps a percentage a percentage when name and stored unit agree", () => {
+    expect(performanceActual(96.2, null, "%", "report_refresh_timeliness_pct")).toBe("96.2%");
+    expect(performanceActual(null, 0.954, "%", "change_success_rate_pct")).toBe("95.4%");
+    // Control: the guard is not simply stripping every percent sign.
+    expect(performanceActual(96.2, null, "%", "batch_completion_by_7am_pct")).toContain("%");
+  });
+
+  it("takes the unit from the metric name when the row declares none", () => {
+    expect(performanceActual(35, null, null, "critical_incident_response_minutes")).toBe("35.0 minutes");
+    expect(performanceActual(8, null, "", "p1_p2_resolution_hours")).toBe("8.0 hours");
+  });
+
+  it("asserts no unit the row has not declared", () => {
+    // The defect in one line: a unitless quantity must not acquire a "%".
+    expect(performanceActual(45, null)).not.toContain("%");
+    expect(performanceActual(45, null, "")).not.toContain("%");
+    expect(performanceActual(45, null, null)).not.toContain("%");
   });
 
   it("collapses duplicate supplier display names before ranking concentration", () => {
@@ -2617,5 +2701,79 @@ describe("the source-hygiene scanner is comment-proof", () => {
     ]) {
       expect(stripped).toContain(anchor);
     }
+  });
+});
+
+/*
+ * The coverage panel used to be titled "Archetype determines which levers are
+ * allowed" under the eyebrow "Declared plays". It renders an archetype's name,
+ * recorded annual value, contract count and vendor count - and no lever at
+ * all. Nothing on this surface resolves a contract's declared archetype to a
+ * lever set either: the archetype playbook is resolved for a sourcing EVENT
+ * from its classified category and feeds deliverable prompts, and the contract
+ * register's archetype vocabulary does not overlap that registry's
+ * identifiers. So the title asserted a rule the product does not apply, on a
+ * panel that could not have shown it.
+ *
+ * The guard reads the comment-stripped module source, so this very paragraph
+ * cannot satisfy it and a future comment cannot trip it.
+ */
+describe("the archetype coverage panel claims only what it shows", () => {
+  it("no longer asserts that archetype selects the allowed levers", () => {
+    const stripped = sourceCode();
+
+    expect(stripped).not.toContain("determines which levers");
+    expect(stripped).not.toContain("Declared plays");
+    expect(stripped).toContain("Recorded value by declared archetype");
+  });
+});
+
+/*
+ * The panel caps its list for layout. A cap that drops a row silently makes a
+ * coverage panel understate the taxonomy it exists to report - the register
+ * carries seven declared archetypes against a cap of six, so exactly one was
+ * disappearing with nothing on screen to say so.
+ */
+describe("archetypeRowsForDisplay", () => {
+  const rows = (n: number) => Array.from({ length: n }, (_, i) => ({ i }));
+
+  it("reports the row it does not show", () => {
+    const { shown, notShown } = archetypeRowsForDisplay(rows(7));
+
+    expect(shown).toHaveLength(6);
+    expect(notShown).toBe(1);
+  });
+
+  it("reports every omitted row, not just that some were omitted", () => {
+    expect(archetypeRowsForDisplay(rows(11)).notShown).toBe(5);
+  });
+
+  it("claims nothing is omitted when the list exactly fills the cap", () => {
+    const { shown, notShown } = archetypeRowsForDisplay(rows(6));
+
+    expect(shown).toHaveLength(6);
+    expect(notShown).toBe(0);
+  });
+
+  it("omits nothing when the list is shorter than the cap", () => {
+    expect(archetypeRowsForDisplay(rows(2))).toEqual({
+      shown: [{ i: 0 }, { i: 1 }],
+      notShown: 0,
+    });
+  });
+
+  it("omits nothing when no archetype is declared", () => {
+    expect(archetypeRowsForDisplay([])).toEqual({ shown: [], notShown: 0 });
+  });
+
+  it("keeps the first rows, which the builder has already sorted by value", () => {
+    expect(archetypeRowsForDisplay(rows(7)).shown).toEqual([
+      { i: 0 },
+      { i: 1 },
+      { i: 2 },
+      { i: 3 },
+      { i: 4 },
+      { i: 5 },
+    ]);
   });
 });

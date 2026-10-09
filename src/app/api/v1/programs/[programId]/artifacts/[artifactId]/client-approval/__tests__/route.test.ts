@@ -1,3 +1,5 @@
+import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
+
 const mockRequireTenancy = jest.fn();
 const mockLoadUserProgramAccessPolicy = jest.fn();
 const mockGetProgramById = jest.fn();
@@ -15,6 +17,7 @@ const mockPackerToBuffer = jest.fn();
 const mockRenderDeliverableDocx = jest.fn();
 const mockRenderDeliverablePptx = jest.fn();
 const mockRenderValidatedDeck = jest.fn();
+const mockRenderValidatedDocx = jest.fn();
 let sponsorParticipantExists = true;
 let routeSupabase: ReturnType<typeof makeSupabase>;
 
@@ -139,7 +142,16 @@ jest.mock("@/lib/deliverables/orchestrator/renderers", () => ({
 }));
 
 jest.mock("@/lib/deliverables/orchestrator/render-validated-deck", () => ({
-  renderValidatedDeck: (doc: unknown) => mockRenderValidatedDeck(doc),
+  renderValidatedDeck: (
+    doc: unknown,
+    policy: unknown,
+    architectureModel: unknown,
+  ) => mockRenderValidatedDeck(doc, policy, architectureModel),
+}));
+
+jest.mock("@/lib/deliverables/orchestrator/render-validated-doc", () => ({
+  renderValidatedDocx: (doc: unknown, architectureModel: unknown) =>
+    mockRenderValidatedDocx(doc, architectureModel),
 }));
 
 jest.mock("@/lib/deliverables/quality/deliverable-key-map", () => ({
@@ -247,6 +259,8 @@ function uploadedReviewRequest(): Request {
   );
 }
 
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+
 const params = Promise.resolve({
   programId: "prog-1",
   artifactId: "artifact-1",
@@ -305,6 +319,7 @@ beforeEach(() => {
     verdict: { ok: true, findings: [], renderedPptxSlides: 3 },
   });
   mockPackerToBuffer.mockResolvedValue(Buffer.from("docx"));
+  mockRenderValidatedDocx.mockResolvedValue(Buffer.from("docx"));
   mockLoadApprovedSolutionApproach.mockResolvedValue({
     decisionHash: "decision-hash",
     selectedOptionId: "option-2",
@@ -404,6 +419,9 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
           evidenceSnapshotHash: "revision-current",
           phaseEvidenceSnapshotHash: "revision-current",
           evidenceSnapshotScope: "phase",
+          // The moment the two revisions above were read. Without it the gate's
+          // currency check cannot run and this approval reads as stale.
+          generatedAt: expect.stringMatching(ISO_TIMESTAMP),
           approvalMode: "accept_ai_draft_as_authoritative",
         },
       }),
@@ -447,6 +465,9 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
           evidenceSnapshotHash: "revision-current",
           phaseEvidenceSnapshotHash: "revision-current",
           evidenceSnapshotScope: "phase",
+          // The moment the two revisions above were read. Without it the gate's
+          // currency check cannot run and this approval reads as stale.
+          generatedAt: expect.stringMatching(ISO_TIMESTAMP),
           approvalMode: "client_approved_replacement",
         },
       }),
@@ -595,9 +616,16 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
   });
 
   it("does not approve a PPTX whose rendered slide quality gate remains blocked", async () => {
+    const architectureModel = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
     mockGetGeneratedArtifactById.mockResolvedValue({
       ...generatedArtifact,
       outputFormat: "pptx",
+      metadata: { ...generatedArtifact.metadata, architectureModel },
     });
     mockRenderValidatedDeck.mockResolvedValue({
       buffer: Buffer.from("pptx"),
@@ -625,8 +653,49 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       error: "generated_artifact_final_render_failed",
     });
     expect(json.detail).toContain("generated_artifact_pptx_quality_failed");
+    expect(mockRenderValidatedDeck).toHaveBeenCalledWith(
+      generatedArtifact.metadata.renderableDoc,
+      {},
+      architectureModel,
+    );
     expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("does not approve a DOCX whose declared figure failed packaged quality", async () => {
+    const architectureModel = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      metadata: { ...generatedArtifact.metadata, architectureModel },
+    });
+    mockRenderValidatedDocx.mockRejectedValue(
+      new Error("generated_docx_failed_quality:empty_figure"),
+    );
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({
+        reason: "Synthetic reviewer attempted a test approval.",
+      }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(422);
+    expect(json).toMatchObject({
+      error: "generated_artifact_final_render_failed",
+    });
+    expect(mockRenderValidatedDocx).toHaveBeenCalledWith(
+      generatedArtifact.metadata.renderableDoc,
+      architectureModel,
+    );
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
 
@@ -844,7 +913,88 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
   });
 
+  it("names the missing approved option rather than an unavailable snapshot", async () => {
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 3 });
+    mockLoadApprovedSolutionApproach.mockResolvedValue(null);
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      sourceArtifactRef: "move:prog-1:phase:3",
+      artifactType: "target_state_architecture",
+      metadata: {
+        evidenceSnapshotHash: "revision-current",
+        deliverableTypeKey: "target_state_architecture",
+        renderableDoc: {
+          title: "Target Architecture",
+          deliverableTypeKey: "target_state_architecture",
+          generatedSections: [
+            { title: "Architecture", bodyMarkdown: "Approved option." },
+          ],
+        },
+      },
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      request({ reason: "Approve the architecture." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(409);
+    expect(json.detail).toMatch(/no approved P3 solution option/i);
+    expect(json.detail).toMatch(/approve a P3 solution option/i);
+    // The sentence this replaces prescribed a rebuild, which cannot approve an
+    // option, and named neither of the two facts it collapsed.
+    expect(json.detail).not.toMatch(/Rebuild the architecture chain/);
+    expect(json.detail).not.toMatch(
+      /approved option or P3 context snapshot is unavailable/i,
+    );
+    expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("names a stale Context Extract as changed evidence, not as unavailable", async () => {
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 3 });
+    mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue({
+      evidenceFingerprint: "context-hash",
+      approvedEvidenceRevision: "revision-old",
+      freshnessStatus: "stale",
+    });
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      sourceArtifactRef: "move:prog-1:phase:3",
+      artifactType: "target_state_architecture",
+      metadata: {
+        evidenceSnapshotHash: "revision-current",
+        deliverableTypeKey: "target_state_architecture",
+        renderableDoc: {
+          title: "Target Architecture",
+          deliverableTypeKey: "target_state_architecture",
+          generatedSections: [
+            { title: "Architecture", bodyMarkdown: "Approved option." },
+          ],
+        },
+      },
+    });
+    const { POST } = await import("../route");
+    const res = await POST(
+      request({ reason: "Approve the architecture." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(409);
+    expect(json.detail).toMatch(/Move evidence changed after this document/);
+    expect(json.detail).not.toMatch(
+      /approved option or P3 context snapshot is unavailable/i,
+    );
+  });
+
   it("preserves verified P3 architecture lineage in the authoritative deliverable", async () => {
+    const architectureModel = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
     const lineage = {
       decisionHash: "decision-hash",
       decisionVersion: "v1",
@@ -862,6 +1012,7 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
         evidenceSnapshotHash: "revision-current",
         deliverableTypeKey: "target_state_architecture",
         generationLineage: lineage,
+        architectureModel,
         renderableDoc: {
           title: "Target Architecture",
           deliverableTypeKey: "target_state_architecture",
@@ -924,10 +1075,55 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
 
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({
-      error: "stale_evidence_snapshot",
+      error: "stale_approved_evidence_snapshot",
     });
     expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  // The route's own text already hedged — "or its evidence revision cannot be
+  // verified" — while the code stayed `stale_` and the prescription stayed
+  // "Rebuild the phase outputs before approval." For an unreadable basis the
+  // rebuild re-reads the same basis, and the rebuild path refuses it the same
+  // way, so the two controls pointed at each other. The refusal stands (this
+  // route stamps a lineage it cannot read); only the claim changes.
+  // `TenancyCtx` declares `clientKey?: string` and `assertTenancy` requires only
+  // clientId + userId, so this route can run with no tenant key — and then the
+  // approved-evidence read was never issued at all. Its own cause, distinct from
+  // a read that ran and could not answer, so an operator is not sent to look at
+  // the data when the request never reached it.
+  it("names a missing tenant key as its own unevaluable cause", async () => {
+    mockRequireTenancy.mockResolvedValue({ ...ctx, clientKey: undefined });
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Review the current generated document." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe("approved_evidence_basis_unevaluable");
+    expect(body.detail).toContain("no active tenant key was resolved");
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("refuses approval without calling the document stale when the evidence basis cannot be read", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue(null);
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Review the current generated document." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe("approved_evidence_basis_unevaluable");
+    expect(body.detail).toContain("was not verified as changed");
+    expect(body.detail).not.toMatch(/\bRebuild\b/);
+    expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });
 });

@@ -3,11 +3,124 @@ import type { ArchitectureModel } from "../architecture-model";
 import {
   deriveArchitectureContractSignals,
   renderArchitectureHtml,
+  renderArchitectureVisualExhibits,
 } from "../architecture-html-renderer";
 import { ARCHITECTURE_V2_EXHIBITS } from "../architecture-model";
 import { FIRST_CAPITAL_ARCHITECTURE } from "../__fixtures__/first-capital-architecture";
 
 describe("architecture model + HTML renderer (W2)", () => {
+  it("does not imply a sequence between unordered architecture components or recorded edges", () => {
+    const visuals = renderArchitectureVisualExhibits(
+      FIRST_CAPITAL_ARCHITECTURE,
+    );
+    const conceptual = visuals.find(
+      (visual) => visual.id === "target_conceptual_architecture",
+    );
+    const dataFlow = visuals.find(
+      (visual) => visual.id === "end_to_end_data_flow",
+    );
+    const operatingFlow = visuals.find(
+      (visual) => visual.id === "current_state_operating_flow",
+    );
+    expect(conceptual?.svg).toContain('class="diagram collection"');
+    expect(conceptual?.svg).not.toContain('marker-end="url(#arrow)"');
+    expect(dataFlow?.svg).toContain('class="diagram collection"');
+    expect(dataFlow?.svg).not.toContain('marker-end="url(#arrow)"');
+    expect(operatingFlow?.svg).not.toContain('marker-end="url(#arrow)"');
+    expect(operatingFlow?.svg).toContain('font-size="15"');
+  });
+  it("represents exactly the recorded flow ids in each data and control visual", () => {
+    const visuals = renderArchitectureVisualExhibits(
+      FIRST_CAPITAL_ARCHITECTURE,
+    );
+    const renderedIds = (id: string) => {
+      const svg = visuals.find((visual) => visual.id === id)?.svg ?? "";
+      return [...svg.matchAll(/data-arch-item-id="([^"]+)"/g)]
+        .map((match) => match[1])
+        .sort();
+    };
+    const expectedIds = (
+      flows: typeof FIRST_CAPITAL_ARCHITECTURE.target.flows,
+      kinds: string[],
+    ) =>
+      flows
+        .filter((flow) => kinds.includes(flow.kind))
+        .map((flow) => flow.id)
+        .sort();
+    expect(renderedIds("current_state_system_data_flow")).toEqual(
+      expectedIds(FIRST_CAPITAL_ARCHITECTURE.current.flows, ["data", "event"]),
+    );
+    expect(renderedIds("end_to_end_data_flow")).toEqual(
+      expectedIds(FIRST_CAPITAL_ARCHITECTURE.target.flows, ["data", "event"]),
+    );
+    expect(renderedIds("ai_recommendation_control_flow")).toEqual(
+      expectedIds(FIRST_CAPITAL_ARCHITECTURE.target.flows, [
+        "control",
+        "human_approval",
+      ]),
+    );
+  });
+  it("renders twelve explicit data flows in four legible rows without omitting an id", () => {
+    const flow = FIRST_CAPITAL_ARCHITECTURE.target.flows[0];
+    const model: ArchitectureModel = {
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      target: {
+        ...FIRST_CAPITAL_ARCHITECTURE.target,
+        flows: Array.from({ length: 12 }, (_, index) => ({
+          ...flow,
+          id: `flow-${index}`,
+          kind: "data" as const,
+        })),
+      },
+    };
+    const visual = renderArchitectureVisualExhibits(model).find(
+      (exhibit) => exhibit.id === "end_to_end_data_flow",
+    );
+    expect(visual?.svg).toContain('viewBox="0 0 980 574"');
+    expect(
+      [...(visual?.svg ?? "").matchAll(/data-arch-item-id="([^"]+)"/g)].map(
+        (match) => match[1],
+      ),
+    ).toEqual(Array.from({ length: 12 }, (_, index) => `flow-${index}`));
+    expect(visual?.svg).toContain("<title>");
+    expect(visual?.svg).toContain("RECORDED FLOW 12");
+    expect(visual?.svg).not.toContain('marker-end="url(#arrow)"');
+  });
+
+  it("paginates nineteen explicit flows into two readable panels without losing an id", () => {
+    const flow = FIRST_CAPITAL_ARCHITECTURE.target.flows[0];
+    const model: ArchitectureModel = {
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      target: {
+        ...FIRST_CAPITAL_ARCHITECTURE.target,
+        flows: Array.from({ length: 19 }, (_, index) => ({
+          ...flow,
+          id: `flow-${index}`,
+          kind: "data" as const,
+        })),
+      },
+    };
+    const visual = renderArchitectureVisualExhibits(model).find(
+      (exhibit) => exhibit.id === "end_to_end_data_flow",
+    );
+    expect(visual?.continuationSvgs).toHaveLength(1);
+    const panels = [visual?.svg ?? "", ...(visual?.continuationSvgs ?? [])];
+    expect(panels[0]).toContain('viewBox="0 0 980 574"');
+    expect(panels[1]).toContain('viewBox="0 0 980 436"');
+    expect(panels[0]).toContain("RECORDED FLOW 12");
+    expect(panels[1]).toContain("RECORDED FLOW 19");
+    expect(
+      panels.flatMap((svg) =>
+        [...svg.matchAll(/data-arch-item-id="([^"]+)"/g)].map(
+          (match) => match[1],
+        ),
+      ),
+    ).toEqual(Array.from({ length: 19 }, (_, index) => `flow-${index}`));
+    expect(panels.join("")).not.toContain('marker-end="url(#arrow)"');
+    const html = renderArchitectureHtml(model);
+    expect(html).toContain("Part 1 of 2");
+    expect(html).toContain("Part 2 of 2");
+  });
   it("the First Capital sample model is referentially valid (no errors)", () => {
     const issues = validateArchitectureModel(FIRST_CAPITAL_ARCHITECTURE);
     expect(issues.filter((i) => i.level === "error")).toHaveLength(0);

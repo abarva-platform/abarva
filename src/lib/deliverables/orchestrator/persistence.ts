@@ -8,7 +8,6 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { Packer } from "docx";
 import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
 import type {
   BoardPackRenderInput,
@@ -21,16 +20,17 @@ import {
   type GeneratedArtifactRecord,
 } from "@/lib/artifacts/repository";
 import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import { renderDeliverableDocx, renderDeliverableHtml } from "./renderers";
+import { renderDeliverableHtml } from "./renderers";
+import { renderValidatedDocx } from "./render-validated-doc";
 import { renderValidatedDeck } from "./render-validated-deck";
 import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
 import type { OrchestrationResult } from "./orchestrator";
 import { completeDeliverable } from "@/lib/programs/mutations";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
-import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
+import { resolveGeneratedCompanionPhase } from "./generated-companion-phase";
 import {
   buildContractInput,
   deliverableKeyForOrchestratorType,
@@ -90,6 +90,12 @@ export interface PersistDeliverableOptions {
   phaseEvidenceSnapshotHash?: string;
   /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
   deliverableTypeKey?: string;
+  /**
+   * Moves phase DECLARED by the generation request. It is the phase the enqueuing
+   * route scoped this run's approved evidence to, so it — not a re-derivation from
+   * the deliverable key — decides which phase the editable companion is filed under.
+   */
+  phase?: number;
   userId?: string;
   /**
    * When true (the `moves_decision_storytelling` flag), render the artifact as the exhibit-led
@@ -359,9 +365,10 @@ function safeFileStem(value: string): string {
 async function renderOfficeCompanion(
   doc: RenderableDeliverable,
   outputFormat: GeneratedArtifactFormat,
+  architectureModel?: ArchitectureModel,
 ): Promise<GeneratedOfficeCompanion | null> {
   if (outputFormat === "pptx") {
-    const rendered = await renderValidatedDeck(doc);
+    const rendered = await renderValidatedDeck(doc, {}, architectureModel);
     if (!rendered.physicallyIntact) {
       throw new Error(
         `generated_pptx_failed_physical_integrity: ${rendered.integrityFailures
@@ -390,21 +397,13 @@ async function renderOfficeCompanion(
 
   if (outputFormat === "docx") {
     return {
-      body: await Packer.toBuffer(renderDeliverableDocx(doc)),
+      body: await renderValidatedDocx(doc, architectureModel),
       fileFormat: "docx",
       fileName: `${safeFileStem(doc.title)}.docx`,
     };
   }
 
   return null;
-}
-
-function phaseForDeliverableType(deliverableTypeKey: string): number {
-  return (
-    DELIVERABLE_REGISTRY.find(
-      (spec) => spec.deliverableTypeKey === deliverableTypeKey,
-    )?.phase ?? 0
-  );
 }
 
 export async function persistDeliverable(
@@ -438,6 +437,12 @@ export async function persistDeliverable(
   });
   const resolvedDeliverableTypeKey =
     opts.deliverableTypeKey ?? deliverableKey ?? result.brief.deliverableType;
+  // Declared phase wins; the key derivation is the fallback. `basis` is persisted
+  // so an unresolved phase is not read back as Originate.
+  const companionPhase = resolveGeneratedCompanionPhase({
+    declaredPhase: opts.phase,
+    deliverableTypeKey: resolvedDeliverableTypeKey,
+  });
   let profileRenderedHtml = false;
   // True whenever a profile/deck renderer creates an HTML preview of the SAME
   // governed document. The persisted outputFormat remains the prescribed final
@@ -714,6 +719,9 @@ export async function persistDeliverable(
     const officeCompanion = await renderCompanion(
       renderableDocWithType,
       outputFormat,
+      usesStructuredArchitecturePreview(contractDeliverableKey)
+        ? opts.structuredModels?.architectureModel
+        : undefined,
     );
     const materialize = deps.materializeDeliverableDraft ?? completeDeliverable;
     const materialized = await materialize(
@@ -767,7 +775,7 @@ export async function persistDeliverable(
         } satisfies TenancyCtx,
         {
           moveId: opts.sourceArtifactRef,
-          phase: phaseForDeliverableType(resolvedDeliverableTypeKey),
+          phase: companionPhase.phase,
           artifactType: `${resolvedDeliverableTypeKey}_editable_${officeCompanion.fileFormat}`,
           artifactFamily: "generated_deliverable",
           title: doc.title,
@@ -788,13 +796,13 @@ export async function persistDeliverable(
             versionId: materialized.versionId,
             generatedArtifactId: record.id,
             outputFormat,
+            companionPhaseBasis: companionPhase.basis,
             ...(opts.evidenceSnapshotHash
               ? { evidenceSnapshotHash: opts.evidenceSnapshotHash }
               : {}),
             ...(opts.phaseEvidenceSnapshotHash
               ? {
-                  phaseEvidenceSnapshotHash:
-                    opts.phaseEvidenceSnapshotHash,
+                  phaseEvidenceSnapshotHash: opts.phaseEvidenceSnapshotHash,
                   evidenceSnapshotScope: "phase",
                 }
               : {}),

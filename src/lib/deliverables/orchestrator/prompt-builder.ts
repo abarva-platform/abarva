@@ -17,6 +17,11 @@ import type {
   PlannedSection,
 } from "./types";
 import { renderEvidenceForPrompt } from "./source-register";
+import {
+  sectionCapFor,
+  type SectionWordBudgetPlan,
+} from "./section-word-budget-plan";
+import { planRealizedSectionWordBudgets } from "./realized-section-word-budget";
 import type { GovernedEvidenceItem } from "./types";
 import { redactExcludedNumericClaims } from "./excluded-numeric-claims";
 import { resolvePassTokenBudget } from "@/lib/ai/document-generation-policy";
@@ -26,6 +31,10 @@ import {
   storySpineFor,
 } from "@/lib/deliverables/shared/executive-story-contract";
 import { renderAdaptiveDepthPrompt } from "@/lib/deliverables/adaptive-depth";
+import {
+  inboundArtifactMerges,
+  renderInboundMergeInstruction,
+} from "@/lib/deliverables/adaptive-depth-inbound-merges";
 import type {
   DeliverableKey,
   MovesDeliverableKey,
@@ -38,6 +47,10 @@ import {
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { CHARTER_CONTRACT } from "@/lib/deliverables/shared/artifact-contracts";
+import {
+  isWorkingSessionGuide,
+  workingSessionGuidePurposeRules,
+} from "./working-session-guide";
 
 const USE_CASE_TITLE: Record<string, string> = {
   AMS_IT_OUTSOURCING: "application management services and IT outsourcing",
@@ -47,14 +60,6 @@ const USE_CASE_TITLE: Record<string, string> = {
   ANALYTICS_CAPABILITY_REPATRIATION:
     "analytics capability repatriation and managed analytics exit",
 };
-
-function isMovesDesignWorkshopGuide(
-  req: DeliverableIntelligenceRequest,
-): boolean {
-  return (
-    req.module === "moves" && req.deliverableType === "design_workshop_guide"
-  );
-}
 
 function describeUseCase(archetype: string): string {
   return (
@@ -149,7 +154,7 @@ function buildContextBlock(
   brief: DeliverableArtifactBrief,
   evidence: GovernedEvidenceItem[],
 ): string {
-  const designGuide = isMovesDesignWorkshopGuide(req);
+  const workingGuide = isWorkingSessionGuide(req);
   const audience = req.audience.join(", ");
   const missing =
     req.missingEvidence.length === 0
@@ -253,36 +258,42 @@ function buildContextBlock(
       ? [`PURPOSE BOUNDARY: ${brief.prohibitedContent.join(" ")}`, ``]
       : []),
     `EXPECTED EXHIBITS:`,
-    designGuide
+    workingGuide
       ? "  (none; use only the required guide sections)"
       : brief.expectedExhibits.length > 0
         ? brief.expectedExhibits
             .map((e) =>
               e.requiredElements && e.requiredElements.length > 0
-                ? `  - ${e.title} [${e.kind}]: MUST show ${e.requiredElements.join(", ")}.${e.legendRequired ? " Include a legend marking each element illustrative, selected, or client-confirmed." : ""}`
-                : `  - ${e.title} [${e.kind}]: ${e.purpose}`,
+                ? `  - ${e.title} [key: ${e.key}; kind: ${e.kind}]: MUST show ${e.requiredElements.join(", ")}.${e.legendRequired ? " Include a legend marking each element illustrative, selected, or client-confirmed." : ""}`
+                : `  - ${e.title} [key: ${e.key}; kind: ${e.kind}]: ${e.purpose}`,
             )
             .join("\n")
         : "  (use judgment)",
-    `EXPECTED TABLES: ${designGuide ? "only the compact tables specified in the five required section instructions; no generic register" : brief.expectedTables.map((t) => t.title).join("; ") || "(use judgment)"}`,
+    `EXPECTED TABLES: ${workingGuide ? "only the compact tables specified in the five required section instructions; no generic register" : brief.expectedTables.map((t) => t.title).join("; ") || "(use judgment)"}`,
     ``,
-    `QUALITY BAR: ${designGuide ? "A client-ready operational facilitation guide: concise, evidence-honest, usable in a workshop, and bounded to the decisions needed for estimate-ready scope. Do not turn it into an executive decision memo or a completed design." : `${brief.qualityCriteria.join(" ")} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`}`,
+    `QUALITY BAR: ${workingGuide ? "A client-ready operational facilitation guide: concise, evidence-honest, usable in a workshop, and and bounded to preparing the sessions it names. Do not turn it into an executive decision memo, and do not complete the work those sessions exist to do." : `${brief.qualityCriteria.join(" ")} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`}`,
     storySpineInstruction(req),
     adaptiveDepthInstruction(req),
     narrativeSpineInstruction(req),
     sizeDisciplineInstruction(req),
     deterministicNumbersInstruction(req),
     ``,
-    `FORMATTING: ${designGuide ? "Use the five required numbered sections, readable concise prose, and compact tables only where specified. No cover memo, table of contents, generic risk register, or appendix narrative." : brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? "Move wide datasets into an Excel companion exhibit rather than tiny in-document tables." : ""} Output formats: ${req.outputFormats.join(", ")}.`,
+    `FORMATTING: ${workingGuide ? "Use the five required numbered sections, readable concise prose, and compact tables only where specified. No cover memo, table of contents, generic risk register, or appendix narrative." : brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? "Move wide datasets into an Excel companion exhibit rather than tiny in-document tables." : ""} Output formats: ${req.outputFormats.join(", ")}.`,
   ].join("\n");
 }
 
 function adaptiveDepthInstruction(req: DeliverableIntelligenceRequest): string {
   if (req.module !== "moves") return "";
-  return `\n${renderAdaptiveDepthPrompt(
-    req.adaptiveDepth,
-    req.deliverableType,
-  )}`;
+  // An artifact resolved to `merge_into_parent` is never built, so the "Merge
+  // into <parent>" line `renderAdaptiveDepthPrompt` puts in ITS prompt reaches
+  // nothing. The parent is the document that survives, so the parent is who has
+  // to be told. See `adaptive-depth-inbound-merges`.
+  const inbound = renderInboundMergeInstruction(
+    inboundArtifactMerges(req.adaptiveDepth, req.deliverableType),
+  );
+  return `\n${renderAdaptiveDepthPrompt(req.adaptiveDepth, req.deliverableType)}${
+    inbound ? `\n${inbound}` : ""
+  }`;
 }
 
 /**
@@ -394,8 +405,8 @@ function sizeDisciplineInstruction(
 ): string {
   const qb = req.qualityBar;
   if (!qb.targetBodyWordsMax) return "";
-  if (isMovesDesignWorkshopGuide(req)) {
-    return `\nSIZE DISCIPLINE: Keep the complete guide between ${qb.minBodyWords.toLocaleString()} and ${qb.targetBodyWordsMax.toLocaleString()} body words. This is a HARD QUALITY GATE, not a suggestion. The section budgets are designed to stay below the ceiling; do not add sections, appendices, a second discovery narrative, or execution-level design. This is an operational facilitation guide, not a sponsor decision memo.`;
+  if (isWorkingSessionGuide(req)) {
+    return `\nSIZE DISCIPLINE: Keep the complete guide between ${qb.minBodyWords.toLocaleString()} and ${qb.targetBodyWordsMax.toLocaleString()} body words. This is a HARD QUALITY GATE, not a suggestion. The section budgets are designed to stay below the ceiling; do not add sections, appendices, a second narrative of an earlier phase, or execution-level design. This is an operational facilitation guide, not a sponsor decision memo.`;
   }
   // When the band counts prose only, say so — otherwise the model budgets its
   // tables against a ceiling they do not consume, and under-exhibits to fit.
@@ -413,12 +424,12 @@ function conciseInstrumentDraftInstruction(
 ): string {
   const qb = req.qualityBar;
   if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return "";
-  if (isMovesDesignWorkshopGuide(req)) {
+  if (isWorkingSessionGuide(req)) {
     return [
-      `DESIGN-GUIDE LENGTH AND PURPOSE RULES:`,
+      `WORKING-GUIDE LENGTH AND PURPOSE RULES:`,
       `- Keep the complete body at or below ${qb.targetBodyWordsMax.toLocaleString()} words; follow the per-section hard caps in the REQUIRED STRUCTURE.`,
       `- Use exactly the five required sections. No extra report, methodology, appendix narrative, or repeated evidence summary.`,
-      `- The guide prepares focused design decisions and estimate-ready scope; it does not complete the process, operating model, solution design, or roadmap execution.`,
+      ...workingSessionGuidePurposeRules(req),
       `- Use compact tables for sessions, evidence carry-forward, and readiness. Include only questions and inputs that could change scope, estimate, risk, or accountability.`,
       `- Carry forward source status and assumptions exactly; do not repeat excluded or unvalidated numerical claims as facts.`,
     ].join("\n");
@@ -453,25 +464,79 @@ function extractSectionWordBudget(text?: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+/**
+ * The per-section word budget for one document, reconciled with the floor the
+ * quality gate measures against — see section-word-budget-plan.ts for why the
+ * two declarations have to be resolved together rather than read separately.
+ *
+ * Exported so the draft prompt, the repair prompt's cap, and the repair target
+ * the orchestrator asks for are all one reading. They were three.
+ *
+ * `plannedSectionKeys` is the key of every section the document will actually
+ * contain. Pass it wherever it is known: the invariants are only worth holding
+ * over the document being written, and the declared set is not it — see
+ * realized-section-word-budget.ts. Omitted, the budget is resolved over the
+ * declared structure, which is the answer this function gave before.
+ *
+ * Null when this artifact type states no per-section cap to the model (the
+ * concise rules below are gated on the same condition). There is then no cap
+ * for a repair target to contradict, so callers keep the even share.
+ */
+export function sectionWordBudgetPlanFor(
+  req: DeliverableIntelligenceRequest,
+  brief: DeliverableArtifactBrief,
+  plannedSectionKeys?: readonly string[],
+): SectionWordBudgetPlan | null {
+  const qb = req.qualityBar;
+  if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return null;
+  // The fallback cap stays an even share of the DECLARED structure, so the cap a
+  // section that declared nothing is given does not move with the architect's
+  // section count. It is the editorial default for this document, not a
+  // function of how many sections the model happened to plan.
+  const sectionCount = Math.max(brief.recommendedStructure.length, 1);
+  return planRealizedSectionWordBudgets({
+    declared: brief.recommendedStructure.map((s) => ({
+      key: s.key,
+      declaredCap: extractSectionWordBudget(s.expertLatitude),
+    })),
+    realizedKeys: plannedSectionKeys ?? [],
+    fallbackCap: Math.max(
+      120,
+      Math.floor(qb.targetBodyWordsMax / sectionCount),
+    ),
+    minBodyWords: qb.minBodyWords,
+    // The number the quality gate BLOCKS on. Between `targetBodyWordsMax` and
+    // `advisoryBandMax` the validator warns and lets the document through, so
+    // budgeting against the target would tighten every band that carries an
+    // advisory margin on purpose.
+    blockingCeiling: qb.advisoryBandMax ?? qb.targetBodyWordsMax,
+  });
+}
+
 function conciseSectionDraftInstruction(
   req: DeliverableIntelligenceRequest,
   brief: DeliverableArtifactBrief,
   section?: PlannedSection,
+  plannedSectionKeys?: readonly string[],
 ): string {
   const qb = req.qualityBar;
-  if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return "";
+  // The cap comes from the reconciled plan, not from this section's own
+  // declaration alone: a cap that is honest on its own can still be one of a
+  // set whose total cannot reach the document's floor. The plan is null on
+  // exactly the condition that makes these rules inapplicable — no blocking
+  // ceiling to budget against — so reading the guard off the plan keeps the two
+  // from drifting apart.
+  const plan = sectionWordBudgetPlanFor(req, brief, plannedSectionKeys);
+  if (!plan) return "";
   const structureSection = brief.recommendedStructure.find(
     (s) => s.key === section?.key,
   );
-  const sectionInstruction =
-    structureSection?.expertLatitude || section?.rationale || "";
-  const sectionCount = Math.max(brief.recommendedStructure.length, 1);
-  const fallbackBudget = Math.max(
-    120,
-    Math.floor(qb.targetBodyWordsMax / sectionCount),
-  );
-  const wordBudget =
-    extractSectionWordBudget(sectionInstruction) ?? fallbackBudget;
+  // DECLARED prose only. The planned section's `rationale` is authored by the
+  // model in Pass 1; it is stated to this pass on its own `Intent:` line above
+  // and must not supply the size control that line is held to, nor a second
+  // word limit beside the cap. See section-word-budget-plan.ts.
+  const sectionInstruction = structureSection?.expertLatitude || "";
+  const wordBudget = sectionCapFor(plan, section?.key);
 
   if (req.deliverableType !== "charter") {
     return [
@@ -499,7 +564,11 @@ function conciseSectionDraftInstruction(
     `- This is one section of a concise approval instrument, not a standalone report.`,
     ...(req.deliverableType === "charter" && charterProseTarget
       ? [
-          `- Target approximately ${charterProseTarget} prose words in this section; across all seven sections, the targets total ${charterProseTargetTotal} prose words to clear the ${qb.minBodyWords}-word prose quality floor.`,
+          // The section COUNT is derived like the total beside it. It was the
+          // word "seven" while the total was computed, so adding or removing a
+          // charter section would have told the model there were seven
+          // sections' worth of budget to spend when there were not.
+          `- Target approximately ${charterProseTarget} prose words in this section; across all ${CHARTER_CONTRACT.sections.length} sections, the targets total ${charterProseTargetTotal} prose words to clear the ${qb.minBodyWords}-word prose quality floor.`,
           `- These are completeness targets, not permission to pad. If evidence does not support detail, preserve the gap and explain what must be validated; never add filler or unsupported detail to reach a target.`,
         ]
       : []),
@@ -638,13 +707,18 @@ export function requiredExhibitsInstruction(
   const key = deliverableKeyForOrchestratorType(req.deliverableType);
   if (!key) return "";
   const required = DELIVERABLE_PROFILES[key].requiredExhibits.filter(
-    (id) => !EXHIBITS_PRODUCED_ELSEWHERE.has(id),
+    (id) =>
+      !EXHIBITS_PRODUCED_ELSEWHERE.has(id) ||
+      // The optional structured renderer runs after synthesis quality checks.
+      // Solution design must author these exact keys for that earlier gate.
+      (key === "solution_design" &&
+        (id === "control_points" || id === "data_flow")),
   );
   if (required.length === 0) return "";
   return `REQUIRED EXHIBITS: "exhibits" must contain one entry for each of these keys, spelled exactly as written: ${required.join(", ")}. The quality gate identifies an exhibit by its key and blocks the artifact when one is missing. Give each a title, a supported payload kind, and "data" populated from the drafted sections and the cited evidence. Never invent a value to fill an exhibit: where the content is not established, the exhibit shows what is open and who owns closing it. An exhibit is kept only if it meets both of these, and is discarded otherwise: (1) "data" uses one of the supported payload kinds below with real content — a flow with at least two nodes and one edge; a matrix, heatmap or comparison with at least two cells; a timeline or roadmap with at least one lane that has items; a value_tree with a root and at least one branch. A table-like exhibit (a RACI, a measurement table, a decision box, risks and mitigations, an operating cadence) is a matrix; lanes or dates over time are a timeline; dependencies are a flow. (2) "description" makes at least three distinct statements, separated by full stops or semicolons: what the exhibit shows, what it means for the decision, and what remains open.`;
 }
 
-const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
+export const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
 { "title","subtitle","recommendation","nextActions":[],
   "deckSlides":[{"key","title","governingMessage","points":[],"exhibitKey","speakerNotes","citationsUsed":[n]}],
   "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat":"docx","statusColumn":n}],
@@ -657,7 +731,7 @@ For exhibits, do not merely repeat the exhibit name or purpose. Populate data wi
 - matrix/heatmap/comparison: {"kind":"matrix","axes":{"x","y"},"cells":[{"x","y","label","value","weight"}]}
 - timeline/roadmap: {"kind":"roadmap","lanes":[{"label","items":[{"label","start","end"}]}]}
 - value_tree: {"kind":"value_tree","root":{"label","value"},"branches":[{"label","value","children":[{"label","value"}]}]}
-- conceptual_architecture/logical_architecture/physical_architecture/agent_orchestration: {"kind":"logical_architecture","lanes":[{"label","items":[]}]}
+- conceptual_architecture/logical_architecture/physical_architecture/agent_orchestration: {"kind":"logical_architecture","lanes":[{"label","items":["label"]}]}
 Every node, cell, lane item, metric, date, and label must be grounded in cited evidence or explicitly be a labeled assumption/open input in the source prose. If evidence is insufficient to populate real exhibit data, omit that exhibit so the quality gate can surface the missing visual; do not create a placeholder exhibit.
 Reason is an internal enum for workflow routing; do not copy snake_case reason codes into narrative prose, tables, or placeholder text.`;
 
@@ -689,6 +763,12 @@ export interface PassInputs {
   };
   /** decomposed: all section titles+intent, so an independent section stays coherent. */
   outlineSummary?: string;
+  /**
+   * decomposed: the key of EVERY section the document will contain, so the
+   * per-section cap stated here is reconciled with the floor over the real
+   * document rather than over the brief's declared structure.
+   */
+  plannedSectionKeys?: readonly string[];
   /** decomposed: section summaries fed to the synthesis pass. */
   sectionDrafts?: { title: string; summary: string }[];
 }
@@ -759,7 +839,7 @@ export function buildPassPrompt(
       ].join("\n");
       break;
     case "full_draft":
-      const draftRequirements = isMovesDesignWorkshopGuide(req)
+      const draftRequirements = isWorkingSessionGuide(req)
         ? `Write Markdown with exactly the required guide sections. Include only the compact tables specified in those sections; do not add a recommendation, risk register, separate Open Inputs table, evidence appendix, or next-phase analysis unless the brief explicitly requires it. Preserve citations and placeholders, and do not describe authoring rules in the document.`
         : `Include the required decision tables, risk/issues/dependencies table, Open Inputs Required table, evidence appendix, and a clear recommendation with next steps. Write in Markdown with numbered headings. Apply citation and evidence rules silently; do not describe those authoring rules in the document body.`;
       user = [
@@ -772,10 +852,10 @@ export function buildPassPrompt(
       ].join("\n");
       break;
     case "red_team":
-      const reviewRole = isMovesDesignWorkshopGuide(req)
+      const reviewRole = isWorkingSessionGuide(req)
         ? "a senior engagement lead reviewing a client workshop guide"
         : "a skeptical senior McKinsey partner and CIO advisor preparing an artifact for a board steering committee";
-      const reviewCriteria = isMovesDesignWorkshopGuide(req)
+      const reviewCriteria = isWorkingSessionGuide(req)
         ? `Check the guide against its five required sections, usefulness of the session plan, decision questions, role-based participants, evidence carry-forward, explicit assumptions, facilitation prompts, ownership, readiness checks, source-status accuracy, and section/whole-document size limits. Do not request a generic risk register, executive recommendation, full future-state process, or detailed implementation plan.`
         : `Identify, specifically and section by section: weak or generic language, missing exhibits/tables, UNSUPPORTED client claims (facts asserted without a [n] citation, an approved assumption, or a placeholder), unclear or missing decisions, thin synthesis, poor formatting, and any place client input is required but not flagged. Also flag if the draft followed the template too mechanically or is too short for a board-grade artifact.`;
       user = [
@@ -788,10 +868,10 @@ export function buildPassPrompt(
       ].join("\n");
       break;
     case "board_grade_rewrite":
-      const rewriteStandard = isMovesDesignWorkshopGuide(req)
+      const rewriteStandard = isWorkingSessionGuide(req)
         ? "client-ready facilitation-guide quality"
         : "board-grade quality";
-      const rewriteInstruction = isMovesDesignWorkshopGuide(req)
+      const rewriteInstruction = isWorkingSessionGuide(req)
         ? `Revise only within the five required sections. Improve usability, specificity, evidence status, and facilitation flow without adding a recommendation, generic risk register, full future-state design, execution plan, or appendix. Respect every section word cap and the total hard ceiling.`
         : `Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following.`;
       user = [
@@ -808,7 +888,7 @@ export function buildPassPrompt(
       ].join("\n");
       break;
     case "render_package":
-      const renderInstruction = isMovesDesignWorkshopGuide(req)
+      const renderInstruction = isWorkingSessionGuide(req)
         ? `Convert the final client workshop guide into the structured render package. Preserve the five required sections, citations [n], assumptions, caveats, compact tables, and readiness status exactly. Do not add an executive recommendation, generic risk register, appendix narrative, or detailed future-state design.`
         : `Convert the final board-grade document into the structured render package below. Preserve all content, citations [n], placeholders, tables, exhibits, assumptions, the Open Inputs Required table, the recommendation, and next actions. Keep evidence traceability in the evidence appendix, not repeated in the narrative body. Wide datasets should be expressed as tables with targetFormat "xlsx".`;
       user = [
@@ -848,7 +928,12 @@ export function buildPassPrompt(
           ? `REPAIR ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`
           : `WRITE ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`,
         `Intent: ${s?.rationale || s?.title || ""}`,
-        conciseSectionDraftInstruction(req, brief, s),
+        conciseSectionDraftInstruction(
+          req,
+          brief,
+          s,
+          inputs.plannedSectionKeys,
+        ),
         ...(repair
           ? [
               `SECTION QUALITY REPAIR: the existing draft has ${repair.currentWordCount} prose words; the section completeness target is ${repair.targetProseWords} prose words. Return a complete revised section with at least ${repair.targetProseWords} prose words, while staying under the hard cap above.`,
@@ -857,7 +942,7 @@ export function buildPassPrompt(
               `<existing_section_draft>\n${repair.currentBodyMarkdown}\n</existing_section_draft>`,
             ]
           : []),
-        `${isMovesDesignWorkshopGuide(req) ? "Write client-ready facilitation-guide Markdown" : "Write board-grade, senior-consulting Markdown"} for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY sentence that contains a number, date, dollar value, percentage, range, ratio, or approximation has a [n] citation in that same sentence or an explicit assumption/open-input tag.`,
+        `${isWorkingSessionGuide(req) ? "Write client-ready facilitation-guide Markdown" : "Write board-grade, senior-consulting Markdown"} for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY sentence that contains a number, date, dollar value, percentage, range, ratio, or approximation has a [n] citation in that same sentence or an explicit assumption/open-input tag.`,
         ``,
         `ASSIGNED EVIDENCE (the only [n] you may cite):`,
         assigned,
@@ -876,8 +961,8 @@ export function buildPassPrompt(
       const riskTableRequirement = req.qualityBar.requiresRiskTable
         ? `"tables" MUST include a risk/issues/dependencies table (key:"risk_register", title:"Risk / Issues / Dependencies", columns + rows).`
         : `Include only tables required by the brief; do not add a generic risk register unless it advances this artifact's purpose.`;
-      const nextActionsRequirement = isMovesDesignWorkshopGuide(req)
-        ? `"nextActions" is 3–6 concise design-session handoffs already reflected in the guide; do not create a project execution plan.`
+      const nextActionsRequirement = isWorkingSessionGuide(req)
+        ? `"nextActions" is 3–6 concise session handoffs already reflected in the guide; do not create a project execution plan.`
         : `"nextActions" is 3–6 concrete items appropriate to this artifact.`;
       user = [
         `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,

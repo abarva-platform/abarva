@@ -64,6 +64,19 @@ describe("executive story spine reaches the prompt", () => {
     expect(prompt).toContain("Runtime and activation flow");
   });
 
+  it("names every solution-design exhibit by its exact authored key", () => {
+    const prompt = promptFor("solution_design");
+    for (const key of [
+      "experience_flow",
+      "agent_workflow",
+      "exception_handling",
+      "control_points",
+      "data_flow",
+    ]) {
+      expect(prompt).toContain(`[key: ${key}; kind:`);
+    }
+  });
+
   it("forbids reordering the spine", () => {
     expect(promptFor("business_case")).toMatch(/NOT reorder/);
   });
@@ -208,6 +221,21 @@ describe("required exhibit keys reach the pass that authors exhibits", () => {
     expect(instruction).toContain("at least two cells");
     expect(instruction).toContain("at least three distinct statements");
     expect(instruction).toContain("a RACI");
+  });
+
+  it("asks solution design to author the exhibit keys checked before optional rendering", () => {
+    const req = movesRequest("solution_design");
+    const instruction = requiredExhibitsInstruction(req);
+    expect(instruction).toContain(
+      "experience_flow, agent_workflow, exception_handling, control_points, data_flow",
+    );
+    const synthesis = buildPassPrompt("synthesis", {
+      req,
+      brief: getArtifactBrief(req),
+      evidence: req.governedEvidenceBundle,
+      sectionDrafts: [],
+    } as never).user;
+    expect(synthesis).toContain(instruction);
   });
 
   it("leaves out exhibits another step produces", () => {

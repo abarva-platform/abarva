@@ -9,6 +9,7 @@ const mockPersistStageReadinessProposalSet = jest.fn();
 const mockPersistStageReadinessProposalReview = jest.fn();
 const mockGetMoveArtifactForTenant = jest.fn();
 const mockDownloadArtifactBytes = jest.fn();
+const mockListMoveArtifacts = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -50,9 +51,11 @@ jest.mock("@/lib/programs/stage-readiness-workbooks/parser", () => ({
     mockParseStageReadinessWorkbookXlsx(input, options),
 }));
 
+// The persist calls are mocked, but `isReviewForStageReadinessProposalSet` is
+// the real one: `review-accumulation` runs unmocked in this suite so the
+// multi-batch review path is exercised through the route, not around it.
 jest.mock("@/lib/programs/stage-readiness-workbooks/proposals", () => ({
-  STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE:
-    "stage_readiness_workbook_proposal_set",
+  ...jest.requireActual("@/lib/programs/stage-readiness-workbooks/proposals"),
   persistStageReadinessProposalSet: (input: unknown) =>
     mockPersistStageReadinessProposalSet(input),
   persistStageReadinessProposalReview: (input: unknown) =>
@@ -64,6 +67,8 @@ jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
     mockGetMoveArtifactForTenant(ctx, artifactId),
   downloadArtifactBytes: (ctx: unknown, artifactId: string) =>
     mockDownloadArtifactBytes(ctx, artifactId),
+  listMoveArtifacts: (ctx: unknown, moveId: string, options: unknown) =>
+    mockListMoveArtifacts(ctx, moveId, options),
 }));
 
 const params = Promise.resolve({ programId: "move-1" });
@@ -133,6 +138,9 @@ beforeEach(() => {
     metadata: { workbookContentHash: "abc123" },
   });
   mockRenderStageReadinessWorkbookXlsx.mockResolvedValue(Buffer.from("xlsx"));
+  // No stored review by default: the first review batch of a proposal set has
+  // nothing to carry forward.
+  mockListMoveArtifacts.mockResolvedValue([]);
   mockParseStageReadinessWorkbookXlsx.mockResolvedValue({
     ok: true,
     metadata: {
@@ -472,6 +480,246 @@ describe("POST /api/v1/programs/[programId]/stage-readiness-workbook", () => {
 });
 
 describe("PATCH /api/v1/programs/[programId]/stage-readiness-workbook", () => {
+  it("carries the dispositions of an earlier review batch forward, so a mixed review can clear the transition", async () => {
+    // The stored proposal set is always all-pending. Without accumulation a
+    // second batch recomputes the review from that set and discards the first
+    // batch, which left `acceptedCount: 0` and held the phase forever.
+    mockListMoveArtifacts.mockResolvedValue([
+      {
+        artifact_id: "review-artifact-1",
+        move_id: "move-1",
+        phase: 1,
+        version: 1,
+        artifact_type: "stage_readiness_workbook_proposal_review",
+        metadata: {
+          proposalSetId: "proposal-set-1",
+          sourceProposalSetArtifact: {
+            artifactId: "proposal-artifact-1",
+            artifactVersion: 2,
+          },
+        },
+      },
+    ]);
+    const priorReview = {
+      fileName: "review.json",
+      fileFormat: "json",
+      bytes: Buffer.from(
+        JSON.stringify({
+          proposalSetId: "proposal-set-1",
+          sourceProposalSetArtifact: {
+            artifactId: "proposal-artifact-1",
+            artifactVersion: 2,
+          },
+          proposals: [
+            { proposalId: "proposal-1", disposition: "accepted" },
+            { proposalId: "proposal-2", disposition: "pending" },
+          ],
+        }),
+      ),
+    };
+    const storedProposalSet = await mockDownloadArtifactBytes();
+    mockDownloadArtifactBytes.mockReset();
+    // The proposal set is read first, then the review this batch builds on.
+    mockDownloadArtifactBytes
+      .mockResolvedValueOnce(storedProposalSet)
+      .mockResolvedValueOnce(priorReview);
+
+    const { PATCH } = await import("../route");
+    const res = await PATCH(
+      patchReq({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 2,
+        decisions: [{ proposalId: "proposal-2", disposition: "rejected" }],
+      }),
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockPersistStageReadinessProposalReview).toHaveBeenCalledTimes(1);
+    const persisted = mockPersistStageReadinessProposalReview.mock
+      .calls[0][0] as {
+      decisions: { proposalId: string; disposition: string }[];
+    };
+    expect(
+      persisted.decisions.map((decision) => [
+        decision.proposalId,
+        decision.disposition,
+      ]),
+    ).toEqual([
+      ["proposal-2", "rejected"],
+      ["proposal-1", "accepted"],
+    ]);
+    // Exactly one of the two readings answers for a given set. A review that
+    // belongs to THIS set is the merge's business, so the superseded reading
+    // must stay silent and the two can never double-count a decision.
+    const body = (await res.json()) as {
+      proposalReview: { carriedForwardFromPriorUpload: number };
+    };
+    expect(body.proposalReview.carriedForwardFromPriorUpload).toBe(0);
+  });
+
+  // A corrected re-upload is a NEW proposal set with new ids for every row,
+  // including the rows nobody touched. Carrying the superseded review forward
+  // on ANSWER TEXT is what keeps one fixed cell from costing a whole re-review
+  // — the widest archetype in the catalog carries 55 required answers across
+  // a single transition.
+  it("restores a superseded review's decision for a re-uploaded answer that did not change", async () => {
+    mockListMoveArtifacts.mockResolvedValue([
+      {
+        artifact_id: "review-artifact-0",
+        move_id: "move-1",
+        phase: 1,
+        version: 1,
+        artifact_type: "stage_readiness_workbook_proposal_review",
+        metadata: {
+          proposalSetId: "a-superseded-set",
+          sourceProposalSetArtifact: {
+            artifactId: "proposal-artifact-0",
+            artifactVersion: 1,
+          },
+        },
+      },
+    ]);
+
+    const storedProposalSet = await mockDownloadArtifactBytes();
+    mockDownloadArtifactBytes.mockReset();
+    mockDownloadArtifactBytes
+      .mockResolvedValueOnce(storedProposalSet)
+      .mockResolvedValueOnce({
+        fileName: "review.json",
+        fileFormat: "json",
+        bytes: Buffer.from(
+          JSON.stringify({
+            proposalSetId: "a-superseded-set",
+            sourceProposalSetArtifact: {
+              artifactId: "proposal-artifact-0",
+              artifactVersion: 1,
+            },
+            // The predecessor's id for this row. It cannot match the current
+            // set's `proposal-1` — `buildProposal` hashes the uploaded file —
+            // so only the four answer fields can tie the two together.
+            proposals: [
+              {
+                proposalId: "superseded-row-id",
+                questionId: "q-1",
+                response: "Unknown",
+                context: "Current latency has not been measured.",
+                evidenceOrSource: "",
+                disposition: "accepted",
+              },
+            ],
+          }),
+        ),
+      });
+
+    const { PATCH } = await import("../route");
+    const res = await PATCH(
+      patchReq({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 2,
+        decisions: [{ proposalId: "proposal-2", disposition: "rejected" }],
+      }),
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    const persisted = mockPersistStageReadinessProposalReview.mock
+      .calls[0][0] as {
+      decisions: { proposalId: string; disposition: string; note?: string }[];
+    };
+    expect(
+      persisted.decisions.map((decision) => [
+        decision.proposalId,
+        decision.disposition,
+      ]),
+    ).toEqual([
+      ["proposal-2", "rejected"],
+      ["proposal-1", "accepted"],
+    ]);
+    expect(persisted.decisions[1].note).toContain("previous upload");
+    const body = (await res.json()) as {
+      proposalReview: {
+        carriedForwardFromPriorUpload: number;
+        message: string;
+      };
+    };
+    expect(body.proposalReview.carriedForwardFromPriorUpload).toBe(1);
+    expect(body.proposalReview.message).toContain("previous upload");
+  });
+
+  it("withholds a superseded review's decision when the answer was edited", async () => {
+    mockListMoveArtifacts.mockResolvedValue([
+      {
+        artifact_id: "review-artifact-0",
+        move_id: "move-1",
+        phase: 1,
+        version: 1,
+        artifact_type: "stage_readiness_workbook_proposal_review",
+        metadata: {
+          proposalSetId: "a-superseded-set",
+          sourceProposalSetArtifact: {
+            artifactId: "proposal-artifact-0",
+            artifactVersion: 1,
+          },
+        },
+      },
+    ]);
+
+    const storedProposalSet = await mockDownloadArtifactBytes();
+    mockDownloadArtifactBytes.mockReset();
+    mockDownloadArtifactBytes
+      .mockResolvedValueOnce(storedProposalSet)
+      .mockResolvedValueOnce({
+        fileName: "review.json",
+        fileFormat: "json",
+        bytes: Buffer.from(
+          JSON.stringify({
+            proposalSetId: "a-superseded-set",
+            sourceProposalSetArtifact: {
+              artifactId: "proposal-artifact-0",
+              artifactVersion: 1,
+            },
+            // Same question, DIFFERENT answer. An edited answer is a new
+            // answer: the acceptance recorded against the old text says
+            // nothing about this one, so it must be judged again.
+            proposals: [
+              {
+                proposalId: "superseded-row-id",
+                questionId: "q-1",
+                response: "Measured at 240ms against the September extract.",
+                context: "Current latency has not been measured.",
+                evidenceOrSource: "",
+                disposition: "accepted",
+              },
+            ],
+          }),
+        ),
+      });
+
+    const { PATCH } = await import("../route");
+    const res = await PATCH(
+      patchReq({
+        proposalSetArtifactId: "proposal-artifact-1",
+        proposalSetArtifactVersion: 2,
+        decisions: [{ proposalId: "proposal-2", disposition: "rejected" }],
+      }),
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    const persisted = mockPersistStageReadinessProposalReview.mock
+      .calls[0][0] as {
+      decisions: { proposalId: string; disposition: string }[];
+    };
+    expect(persisted.decisions).toEqual([
+      { proposalId: "proposal-2", disposition: "rejected" },
+    ]);
+    const body = (await res.json()) as {
+      proposalReview: { carriedForwardFromPriorUpload: number };
+    };
+    expect(body.proposalReview.carriedForwardFromPriorUpload).toBe(0);
+  });
+
   it("records human review decisions for a proposal set without accepting unreviewed upload state", async () => {
     const { PATCH } = await import("../route");
     const res = await PATCH(

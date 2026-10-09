@@ -10,6 +10,8 @@ const mockExtractProgramEvidenceFromUploadBuffer = jest.fn();
 const mockWriteAuditLog = jest.fn();
 const mockExtractOfficeText = jest.fn();
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
+const mockLoadApprovedSolutionApproach = jest.fn();
+const mockLoadCurrentMoveContextExtractFreshness = jest.fn();
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -54,6 +56,17 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
   ...jest.requireActual("@/lib/programs/approved-move-evidence-snapshot"),
   loadApprovedMoveEvidenceSnapshot: (...args: unknown[]) =>
     mockLoadApprovedMoveEvidenceSnapshot(...args),
+}));
+
+jest.mock("@/lib/programs/approved-solution-approach", () => ({
+  ...jest.requireActual("@/lib/programs/approved-solution-approach"),
+  loadApprovedSolutionApproach: (...args: unknown[]) =>
+    mockLoadApprovedSolutionApproach(...args),
+}));
+
+jest.mock("@/lib/programs/move-context-extract", () => ({
+  loadCurrentMoveContextExtractFreshness: (...args: unknown[]) =>
+    mockLoadCurrentMoveContextExtractFreshness(...args),
 }));
 
 let deliverableRow: {
@@ -224,6 +237,99 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       text: "clean generated office companion",
       partCount: 1,
     });
+    mockLoadApprovedSolutionApproach.mockResolvedValue({
+      decisionHash: "decision-hash",
+      selectedOptionId: "option-2",
+      selectedOptionVersion: "1",
+    });
+    mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue({
+      evidenceFingerprint: "context-hash",
+      approvedEvidenceRevision: "revision-current",
+      freshnessStatus: "fresh",
+    });
+  });
+
+  describe("a P3 architecture document whose lineage basis is not readable", () => {
+    beforeEach(() => {
+      deliverableRow = {
+        deliverable_type_key: "target_state_architecture",
+        title: "Target State Architecture",
+        current_version: 1,
+      };
+      versionRow = {
+        id: "version-1",
+        structured_data: {
+          source: "generated_by_orchestrator",
+          evidenceSnapshotHash: "revision-current",
+          generationLineage: {
+            decisionHash: "decision-hash",
+            decisionVersion: "v1",
+            approvedOptionId: "option-2",
+            approvedOptionVersion: "1",
+            contextSnapshotHash: "context-hash",
+            architectureModelVersion: "moves-architecture-model-v2",
+          },
+        },
+        content: "<p>The target architecture follows the approved option.</p>",
+      };
+    });
+
+    it("names the missing approved option, and the control that supplies it", async () => {
+      mockLoadApprovedSolutionApproach.mockResolvedValue(null);
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+      const json = (await res.json()) as Record<string, unknown>;
+
+      expect(res.status).toBe(409);
+      expect(json.detail).toMatch(/no approved P3 solution option/i);
+      expect(json.detail).toMatch(/approve a P3 solution option/i);
+      // The sentence this replaces named neither the fact nor an action.
+      expect(json.detail).not.toMatch(
+        /approved option or P3 context snapshot is unavailable/i,
+      );
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("names an absent Context Extract without reporting changed evidence", async () => {
+      mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue(null);
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+      const json = (await res.json()) as Record<string, unknown>;
+
+      expect(res.status).toBe(409);
+      expect(json.detail).toMatch(/No current P3 Context Extract/);
+      expect(json.detail).not.toMatch(/Move evidence changed/);
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+
+    it("does not refuse on a non-fresh extract alone", async () => {
+      // This path's own condition required only that an extract exist; the
+      // comparison that follows settles its currency. Refusing here would add a
+      // refusal the route never had.
+      mockLoadCurrentMoveContextExtractFreshness.mockResolvedValue({
+        evidenceFingerprint: "context-hash",
+        approvedEvidenceRevision: "revision-old",
+        freshnessStatus: "stale",
+      });
+
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+
+      expect(res.status).toBe(200);
+      expect(mockSignOffDeliverable).toHaveBeenCalled();
+    });
+
+    it("still signs off when both reads land", async () => {
+      // Non-vacuity: the two refusals above are produced by the input, not by
+      // the deliverable type key alone.
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params });
+
+      expect(res.status).toBe(200);
+      expect(mockSignOffDeliverable).toHaveBeenCalled();
+    });
   });
 
   it("PHASE CAPTURE EVIDENCE INTEGRITY: rejects sign-off for an unrecognized/stale deliverable type key", async () => {
@@ -324,7 +430,74 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
 
     expect(res.status).toBe(409);
     await expect(res.json()).resolves.toMatchObject({
-      error: "generated_artifact_evidence_not_current",
+      error: "stale_approved_evidence_snapshot",
+    });
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  // Until this case the route answered an UNREADABLE basis with the same code
+  // and the same text as the superseded case above: "not bound to the current
+  // approved evidence. Rebuild it from the current evidence set before
+  // approval." A null snapshot does not establish that the evidence moved — and
+  // the rebuild it prescribed re-reads the same unreadable basis, so there was
+  // no action that could satisfy the refusal. Both halves are asserted: the
+  // honest code, and the absence of the rebuild prescription.
+  it("refuses generated sign-off without calling it stale when the evidence basis cannot be read", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockResolvedValue(null);
+
+    const { POST } = await import("../route");
+    const res = await POST(req(), { params });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe("approved_evidence_basis_unevaluable");
+    expect(body.detail).toContain("was not verified as changed");
+    expect(body.detail).toContain("Regenerating this document will not change");
+    expect(body.detail).not.toMatch(/\bRebuild\b/);
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  // The third unevaluable cause, and the one that is NOT a fault: a signable
+  // deliverable whose type key the orchestrator registry does not carry
+  // resolves `deliverablePhase` to 0, so there is no phase evidence basis to
+  // compare against at all. `RECOGNIZED_DELIVERABLE_TYPE_KEYS` is the registry
+  // keys UNION `ALLOWED_PROGRAM_DELIVERABLE_TYPES`, and 35 of the 41 allowed
+  // keys are not registry keys — including this P3 hard-gate artifact — so the
+  // condition is reachable for a generated version, not theoretical. It was
+  // answered with the stale code and a rebuild prescription that could never
+  // resolve a phase, which is the same closed loop in a different input.
+  it("names an unresolvable deliverable phase as its own cause, not a stale document", async () => {
+    deliverableRow = {
+      deliverable_type_key: "requirements_design_outcome_trace",
+      title: "Requirements to Design Outcome Trace",
+      current_version: 1,
+    };
+
+    const { POST } = await import("../route");
+    const res = await POST(req(), { params });
+
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe("approved_evidence_basis_unevaluable");
+    expect(body.detail).toContain("canonical Move phase did not resolve");
+    expect(body.detail).not.toMatch(/\bRebuild\b/);
+    expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  // A loader that throws is the same fact to this route as one that returns
+  // null — the route already `.catch(() => null)`s it — so it must reach the
+  // same honest refusal rather than the stale one.
+  it("treats a thrown snapshot load as an unevaluable basis, not a stale one", async () => {
+    mockLoadApprovedMoveEvidenceSnapshot.mockRejectedValue(
+      new Error("read replica unavailable"),
+    );
+
+    const { POST } = await import("../route");
+    const res = await POST(req(), { params });
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "approved_evidence_basis_unevaluable",
     });
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
   });

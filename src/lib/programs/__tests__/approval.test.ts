@@ -501,6 +501,132 @@ describe("decideApprovalRequest", () => {
   });
 });
 
+/**
+ * The P0 close rides on an approval that must stand regardless, so it never
+ * throws: every stop comes back in its result. The comment at the call site
+ * promises "a failure logs loudly" — but the log was gated on
+ * `closed.blockedBy.length > 0`, and `blockedBy` is populated for the gate
+ * verdict ALONE. So every other stop, including the two unreadable-state
+ * refusals, left a decided approval, a Move still at P0, and NO record
+ * anywhere that the close had not happened. The gate on the one noisy stop
+ * silenced exactly the silent ones.
+ */
+describe("a P0 close that does not advance is always recorded", () => {
+  /** Drive one approved decision with `closeP0OnApproval` resolving to `result`. */
+  async function approveWith(result: Record<string, unknown>) {
+    mockCloseP0OnApproval.mockResolvedValue(result);
+    pendingResults.push({
+      maybeSingleResult: {
+        data: { program_id: "eng_1", tenant_key: "tenant-a" },
+        error: null,
+      },
+    });
+    pendingResults.push({
+      maybeSingleResult: { data: { current_phase: 0 }, error: null },
+    });
+    pendingResults.push({
+      singleResult: {
+        data: makeDbRow({
+          request_status: "approved",
+          decided_by_user_id: "admin_1",
+        }),
+        error: null,
+      },
+    });
+    await decideApprovalRequest({
+      requestId: "req_1",
+      decidedByUserId: "admin_1",
+      decision: "approved",
+    });
+  }
+
+  const STOP = {
+    briefEnsured: false,
+    briefSigned: false,
+    advanced: false,
+    newPhase: null,
+    blockedBy: [] as string[],
+    movePhase: null,
+  };
+
+  let errorSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  /** Every `[message, payload]` the close path logged. */
+  function closeLogs(): Array<[string, Record<string, unknown>]> {
+    return errorSpy.mock.calls.filter(
+      ([msg]) => typeof msg === "string" && msg.includes("P0 close"),
+    ) as Array<[string, Record<string, unknown>]>;
+  }
+
+  it("records a stop that names no blocked check, and names the outcome", async () => {
+    await approveWith({ ...STOP, outcome: "move_state_unreadable" });
+
+    const logs = closeLogs();
+    expect(logs).toHaveLength(1);
+    expect(logs[0]![1]).toEqual(
+      expect.objectContaining({ outcome: "move_state_unreadable" }),
+    );
+  });
+
+  it("records the brief-duplication refusal too", async () => {
+    await approveWith({ ...STOP, outcome: "brief_not_readable" });
+
+    expect(closeLogs()).toHaveLength(1);
+    expect(closeLogs()[0]![1]).toEqual(
+      expect.objectContaining({ outcome: "brief_not_readable" }),
+    );
+  });
+
+  it("still records a real gate block, with the checks it named", async () => {
+    await approveWith({
+      ...STOP,
+      outcome: "gate_hard_blocked",
+      briefEnsured: true,
+      briefSigned: true,
+      blockedBy: ["program_seed_recorded"],
+    });
+
+    expect(closeLogs()[0]![1]).toEqual(
+      expect.objectContaining({
+        outcome: "gate_hard_blocked",
+        blockedBy: ["program_seed_recorded"],
+      }),
+    );
+  });
+
+  it("does NOT record the already-advanced no-op as a failure", async () => {
+    await approveWith({
+      ...STOP,
+      outcome: "already_past_p0",
+      movePhase: 3,
+    });
+
+    expect(closeLogs()).toEqual([]);
+  });
+
+  it("does not record anything when the close advanced the Move", async () => {
+    await approveWith({
+      briefEnsured: true,
+      briefSigned: true,
+      advanced: true,
+      newPhase: 1,
+      blockedBy: [],
+      outcome: "advanced",
+      movePhase: 0,
+    });
+
+    expect(closeLogs()).toEqual([]);
+  });
+});
+
 describe("withdrawApprovalRequest", () => {
   it("only succeeds when the requesting user matches AND status is pending", async () => {
     const updated = makeDbRow({

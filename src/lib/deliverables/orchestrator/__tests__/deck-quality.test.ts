@@ -39,6 +39,40 @@ const kinds = (v: ReturnType<typeof judgeRenderedDeck>) =>
   v.findings.map((f) => f.kind);
 
 describe("planted defects must fail", () => {
+  it("allows only an explicitly marked, nonempty divider to be brief", () => {
+    const brief = slide({
+      index: 2,
+      textRuns: ["HEADER", "2/2", "ARCHITECTURE", "From current gaps to target"],
+      visibleChars: 69,
+    });
+    expect(judgeRenderedDeck(deckOf([slide({ index: 1 }), brief])).ok).toBe(
+      false,
+    );
+    expect(
+      judgeRenderedDeck(
+        deckOf([slide({ index: 1 }), { ...brief, layoutRole: "divider" }]),
+      ).ok,
+    ).toBe(true);
+    expect(
+      kinds(
+        judgeRenderedDeck(
+          deckOf([
+            slide({ index: 1 }),
+            { ...brief, layoutRole: "divider", textRuns: [], visibleChars: 0 },
+          ]),
+        ),
+      ),
+    ).toContain("empty_canvas");
+  });
+
+  it("empty cover", () => {
+    const v = judgeRenderedDeck(
+      deckOf([slide({ index: 1, textRuns: [], visibleChars: 0 })]),
+    );
+    expect(v.ok).toBe(false);
+    expect(kinds(v)).toContain("empty_canvas");
+  });
+
   it("title-only slide", () => {
     const v = judgeRenderedDeck(
       deckOf([
@@ -51,7 +85,7 @@ describe("planted defects must fail", () => {
       ]),
     );
     expect(v.ok).toBe(false);
-    expect(kinds(v)).toContain("thin_slide");
+    expect(kinds(v)).toContain("empty_canvas");
   });
 
   it("title plus one fragment", () => {

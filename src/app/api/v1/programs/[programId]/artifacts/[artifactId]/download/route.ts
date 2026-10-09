@@ -5,7 +5,8 @@
 
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
-import { downloadArtifactBytes } from "@/lib/programs/deliverables/move-artifacts";
+import { downloadArtifactOutcome } from "@/lib/programs/deliverables/move-artifacts";
+import { moveArtifactDownloadRefusal } from "@/lib/programs/move-artifact-download-refusal";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,16 +29,19 @@ export async function GET(
   try {
     const { artifactId, programId } = await params;
     const ctx = await requireTenancy();
-    const file = await downloadArtifactBytes(ctx, artifactId, programId);
-    if (!file) {
+    const outcome = await downloadArtifactOutcome(ctx, artifactId, programId);
+    if (!outcome.ok) {
+      // Both controls on a cabinet row are plain anchors at this URL, so this
+      // body is rendered to the reader as a page. Name the cause and its
+      // remedy: a file whose bytes were never retained is gone and must be
+      // replaced, while unreachable storage has lost nothing and wants a wait.
+      const refusal = moveArtifactDownloadRefusal(outcome.reason);
       return Response.json(
-        {
-          error: "artifact_unavailable",
-          detail: "not found or storage unconfigured",
-        },
-        { status: 404 },
+        { error: refusal.error, detail: refusal.detail },
+        { status: refusal.status },
       );
     }
+    const file = outcome.file;
     const inline = req.nextUrl.searchParams.get("inline") === "1";
     return new Response(new Uint8Array(file.bytes), {
       status: 200,

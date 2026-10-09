@@ -29,6 +29,7 @@ import { deckContract } from "@/lib/deliverables/shared/deck-story-contract";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import { factTokens } from "./numeric-lineage-tokens";
+import { citationsCarriedBySections } from "./rendered-section-citations";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -515,8 +516,10 @@ export function buildSourceRegister(
   evidence: readonly GovernedEvidenceItem[],
   sections: readonly RenderableSection[],
 ): SourceRegisterEntry[] {
-  const used = new Set<number>();
-  for (const s of sections) for (const n of s.citationsUsed ?? []) used.add(n);
+  // Every source the rendered sections cite, not only the ones the model
+  // reported citing — the deterministic citation repair adds `[n]` to the body
+  // after that report is taken. See rendered-section-citations.ts.
+  const used = citationsCarriedBySections(sections);
   return evidence
     .filter((e) => used.has(e.citationNumber))
     .map((e) => ({

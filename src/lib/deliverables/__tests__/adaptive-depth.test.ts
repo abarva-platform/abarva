@@ -51,7 +51,10 @@ describe("Moves adaptive depth", () => {
     expect(decision.signals.vendorSourcingDecision).toBe(false);
     expect(decision.signals.realTimeRequirement).toBe(false);
     expect(decision.signals.deploymentTopologyMature).toBe(false);
-    expect(shouldGenerateArtifact(decision, "sourcing_strategy")).toBe(false);
+    expect(shouldGenerateArtifact(decision, "sourcing_strategy")).toBe(true);
+    expect(decision.artifactApplicability.sourcing_strategy).toEqual(
+      expect.objectContaining({ applicability: "lightweight" }),
+    );
     expect(shouldGenerateArtifact(decision, "operating_model_design")).toBe(
       false,
     );
@@ -96,7 +99,7 @@ describe("Moves adaptive depth", () => {
     );
   });
 
-  it("omits Sourcing Strategy when no vendor/build-buy decision exists", () => {
+  it("keeps a bounded delivery-assumption brief when no vendor/build-buy decision exists", () => {
     const decision = resolveAdaptiveDepth({
       text: "Straightforward dashboard using an approved reusable internal pattern.",
       signals: {
@@ -107,9 +110,31 @@ describe("Moves adaptive depth", () => {
     });
 
     expect(shouldGenerateArtifact(decision, "solution_design")).toBe(true);
-    expect(shouldGenerateArtifact(decision, "sourcing_strategy")).toBe(false);
+    expect(shouldGenerateArtifact(decision, "sourcing_strategy")).toBe(true);
     expect(decision.artifactApplicability.sourcing_strategy).toEqual(
-      expect.objectContaining({ applicability: "not_applicable" }),
+      expect.objectContaining({
+        applicability: "lightweight",
+        reason: expect.stringContaining("do not select or imply a vendor"),
+      }),
+    );
+  });
+
+  it("keeps the declared P3 sourcing gate artifact without inventing a vendor decision", () => {
+    const decision = resolveAdaptiveDepth({
+      archetype: "AI_PRODUCT_ENABLEMENT",
+      text: "Certified semantic layer on an existing platform. Source access, internal capacity, and partner scope remain open; no vendor decision has been made.",
+      signals: { vendorSourcingDecision: false },
+      artifactKeys: [
+        "target_state_architecture",
+        "requirements_traceability",
+        "sourcing_strategy",
+      ],
+    });
+
+    expect(decision.signals.vendorSourcingDecision).toBe(false);
+    expect(shouldGenerateArtifact(decision, "sourcing_strategy")).toBe(true);
+    expect(renderAdaptiveDepthPrompt(decision, "sourcing_strategy")).toContain(
+      "do not select or imply a vendor",
     );
   });
 

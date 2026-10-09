@@ -18,10 +18,15 @@ import {
   DELIVERABLE_STRUCTURES,
   getDeliverableStructure,
 } from "../briefs/deliverable-structures";
+import {
+  ARCHETYPE_ASSET_WITHHELD,
+  withholdsArchetypeAssets,
+} from "../briefs/archetype-asset-withholding";
 import type { DeliverableStructure } from "../briefs/deliverable-structures";
 import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
 import type { DeliverableIntelligenceRequest } from "../types";
+import { getDeliverableProfile } from "../../profiles/registry";
 
 function req(
   over: Partial<DeliverableIntelligenceRequest>,
@@ -67,6 +72,14 @@ describe("archetype packs", () => {
 });
 
 describe("deliverable structures", () => {
+  it("keeps the solution-design brief aligned with its required exhibit contract", () => {
+    expect(
+      getDeliverableStructure(
+        "moves",
+        "solution_design",
+      )!.expectedExhibits?.map((exhibit) => exhibit.key),
+    ).toEqual(getDeliverableProfile("solution_design").requiredExhibits);
+  });
   it("cover Moves + Source artifact types with required sections", () => {
     expect(getDeliverableStructure("moves", "charter")).toBeTruthy();
     expect(getDeliverableStructure("moves", "business_case")).toBeTruthy();
@@ -180,7 +193,13 @@ describe("deliverable structures", () => {
     [
       "solution_design",
       6,
-      ["experience_flow", "component_interaction", "exception_control_flow"],
+      [
+        "experience_flow",
+        "agent_workflow",
+        "exception_handling",
+        "control_points",
+        "data_flow",
+      ],
     ],
     ["operating_model", 6, ["human_ai_work_split", "decision_rights"]],
     ["requirements_traceability", 5, []],
@@ -819,8 +838,11 @@ describe("structure-declared expected tables", () => {
 
   it("loses no table the archetype pack already supplied", () => {
     for (const s of DELIVERABLE_STRUCTURES) {
-      if (s.deliverableType === "charter" || s.deliverableType === "design_workshop_guide")
-        continue;
+      // The withheld set is declared, with a reason per type, in
+      // archetype-asset-withholding.ts; reading it here keeps this skip list
+      // from drifting as the set grows. The exact membership is pinned as a
+      // literal by moves-phase-session-guide-structures.
+      if (withholdsArchetypeAssets(s.deliverableType)) continue;
       if (s.deliverableType === "discovery_plan") continue; // routed to its own builder
       for (const a of ALL_ARCHETYPES) {
         const keys = new Set(
@@ -834,8 +856,12 @@ describe("structure-declared expected tables", () => {
     }
   });
 
-  it("still withholds the ARCHETYPE's tables from the approval instruments", () => {
-    for (const deliverableType of ["charter", "design_workshop_guide"])
+  it("still withholds the ARCHETYPE's tables from every withheld type", () => {
+    // Every declared member, not a pair written out here: a type added to the
+    // withheld set without its tables actually being withheld would otherwise
+    // pass unnoticed.
+    expect(ARCHETYPE_ASSET_WITHHELD.length).toBeGreaterThan(1);
+    for (const { deliverableType } of ARCHETYPE_ASSET_WITHHELD)
       for (const a of ALL_ARCHETYPES)
         expect(
           getArtifactBrief(req({ module: "moves", deliverableType, useCaseArchetype: a }))

@@ -228,6 +228,49 @@ function isRecoverableCreditCandidate(
   );
 }
 
+/**
+ * The contracts whose loaded actions include a credit claim.
+ *
+ * Both the fallback portfolio figure and the no-action report use this
+ * classification. An active load run can cause the figure to include rows
+ * without actions, so the two amounts are not always disjoint.
+ */
+function creditActionContractIdSet(
+  portfolio: RecoverableCreditInput,
+): ReadonlySet<string> {
+  return new Set(
+    portfolio.impact.actionCandidates
+      .filter(isRecoverableCreditCandidate)
+      .map((row) => row.contract_id),
+  );
+}
+
+/**
+ * Contracts holding unclaimed SLA credit that no loaded action would claim.
+ *
+ * A credit row without a matching action needs review regardless of whether
+ * the portfolio figure includes it. The figure may include all rows for a
+ * selected load run, or narrow to actionable rows in its fallback path.
+ *
+ * Nothing here estimates anything. The amount is the unclaimed credit already
+ * summed on the loaded coverage row, which is the same arithmetic the two
+ * authored credit actions carry.
+ */
+export function unexploitedRecoverableCreditRows(
+  portfolio: RecoverableCreditInput,
+): readonly SourceContractEvidenceCoverageRow[] {
+  const creditActionContractIds = creditActionContractIdSet(portfolio);
+  return portfolio.impact.evidenceCoverage
+    .filter((row) => (numberFromDb(row.unclaimed_credit_usd) ?? 0) > 0)
+    .filter((row) => !creditActionContractIds.has(row.contract_id))
+    .sort(
+      (left, right) =>
+        (numberFromDb(right.unclaimed_credit_usd) ?? 0) -
+          (numberFromDb(left.unclaimed_credit_usd) ?? 0) ||
+        left.contract_id.localeCompare(right.contract_id),
+    );
+}
+
 export function source360RecoverableCreditCoverageRows(
   portfolio: RecoverableCreditInput,
 ): readonly SourceContractEvidenceCoverageRow[] {
@@ -256,23 +299,7 @@ export function source360RecoverableCreditCoverageRows(
     }
   }
 
-  const creditActionContractIds = new Set(
-    portfolio.impact.actionCandidates
-      .filter((row) =>
-        /credit|recover/i.test(
-          [
-            row.action_type,
-            row.opportunity_type,
-            row.title,
-            row.finding_summary,
-            row.deterministic_basis,
-          ]
-            .filter(Boolean)
-            .join(" "),
-        ),
-      )
-      .map((row) => row.contract_id),
-  );
+  const creditActionContractIds = creditActionContractIdSet(portfolio);
   const actionableCreditRows = rowsWithCredits.filter((row) =>
     creditActionContractIds.has(row.contract_id),
   );
@@ -735,10 +762,21 @@ function daysBetweenIso(
   return Math.ceil((to.getTime() - from.getTime()) / 86_400_000);
 }
 
+/**
+ * When the decision is due, or null when no timing is recorded.
+ *
+ * The missing case used to read "Timing gate not loaded" on every row. That is
+ * the product's own pipeline state, printed on a client surface, directly under
+ * a headline declaring that notice timing is the constraint — so the portfolio
+ * view argued with itself five rows at a time. A row with no timing now says
+ * nothing where the timing would go, and the one place that needs a value in a
+ * definition list says "Not recorded", which is this product's own vocabulary
+ * for an absent fact rather than a description of its loader.
+ */
 function decisionDueLabel(
   candidate: SourceContractActionCandidateRow,
   asOfDateIso: string,
-) {
+): string | null {
   const days = daysBetweenIso(asOfDateIso, candidate.decision_due_date);
   if (days == null)
     return candidate.decision_due_date
@@ -749,7 +787,7 @@ function decisionDueLabel(
           "deadline",
           "next_step",
           "nextStep",
-        ]) ?? "Timing gate not loaded");
+        ]) ?? null);
   if (days < 0) return `${Math.abs(days)} days late`;
   if (days === 0) return "due today";
   return `${days} days`;
@@ -1162,8 +1200,6 @@ export function WorkspaceExecutiveShell({
             />
             <ContractCommandBar
               activeTab={logic.state.tabs.contract ?? "Story"}
-              contract={selectedContract}
-              onBackToContracts={() => logic.select("contractList", null)}
               onOpenPortfolioPage={selectPage}
               onOpenTab={(tab) => logic.setTab("contract", tab)}
             />
@@ -1310,12 +1346,20 @@ export function WorkspaceExecutiveShell({
 }
 
 function ImpactLoadBadge({ state }: { state: ImpactLoadState }) {
+  /*
+   * This badge reports whether the impact layer has finished LOADING. It used
+   * to say "Evidence depth ready", which a reader takes as a statement about
+   * how complete the evidence is — and the same screen says "Evidence depth —
+   * Partial" and "5 of 8 required evidence families" in the body. One screen
+   * cannot call the same thing ready and partial. The load state is named as a
+   * load state; completeness is left to the body, which measures it.
+   */
   const label =
     state === "loading"
-      ? "Evidence depth updating"
+      ? "Loading evidence"
       : state === "error"
-        ? "Evidence depth retry needed"
-        : "Evidence depth ready";
+        ? "Evidence failed to load"
+        : "Evidence loaded";
   return (
     <div
       className={`sw-v2-impact-load-badge is-${state}`}
@@ -1471,7 +1515,7 @@ function SourceActionDrawer({
           </div>
           <div>
             <dt>Deadline</dt>
-            <dd>{decisionDueLabel(candidate, asOfDateIso)}</dd>
+            <dd>{decisionDueLabel(candidate, asOfDateIso) ?? "Not recorded"}</dd>
           </div>
           <div>
             <dt>Accountable</dt>
@@ -1627,7 +1671,9 @@ function PortfolioPage({
                   </small>
                 </span>
                 <strong>{impactCreditMoney(row.candidate_amount_usd)}</strong>
-                <em>{decisionDueLabel(row, portfolio.asOfDateIso)}</em>
+                {decisionDueLabel(row, portfolio.asOfDateIso) ? (
+                  <em>{decisionDueLabel(row, portfolio.asOfDateIso)}</em>
+                ) : null}
               </button>
             ))}
             {actionSet.remainderCount > 0 ? (
@@ -1745,7 +1791,7 @@ function PortfolioPage({
   );
 }
 
-function CoveragePage({
+export function CoveragePage({
   portfolio,
   onOpenVendor,
 }: {
@@ -1766,7 +1812,9 @@ function CoveragePage({
             100,
         )
       : 0;
-  const archetypes = vendorArchetypeRows(portfolio).slice(0, 6);
+  const { shown: archetypes, notShown: archetypesNotShown } =
+    archetypeRowsForDisplay(vendorArchetypeRows(portfolio));
+  const unexploitedCredit = unexploitedRecoverableCreditRows(portfolio);
   const archetypeCoverageTitle =
     populations.declaredOutsideRegisterCount > 0
       ? `${populations.declaredInRegisterCount} of ${populations.registerCount} register contracts are classified`
@@ -1872,10 +1920,10 @@ function CoveragePage({
         ) : null}
         {populations.declaredOutsideRegisterCount > 0 ? (
           <p className="sw-v2-muted">
-            {populations.declaredOutsideRegisterCount} loaded evidence
-            contracts already carry a declared archetype, but their identifiers
-            are not linked to a register header yet. They are shown in the
-            declared plays below and excluded from the register percentage.
+            {populations.declaredOutsideRegisterCount} loaded evidence contracts
+            already carry a declared archetype, but their identifiers are not
+            linked to a register header yet. They are shown in the declared
+            archetypes below and excluded from the register percentage.
           </p>
         ) : null}
         {populations.undeclaredInRegisterCount > 0 ? (
@@ -1889,8 +1937,8 @@ function CoveragePage({
 
       <section className="sw-v2-panel sw-v2-coverage-archetypes">
         <PanelHead
-          eyebrow="Declared plays"
-          title="Archetype determines which levers are allowed"
+          eyebrow="Declared archetypes"
+          title="Recorded value by declared archetype"
         />
         <div className="sw-v2-archetype-list">
           {archetypes.map((row) => (
@@ -1907,8 +1955,44 @@ function CoveragePage({
               No declared archetype rows are loaded yet.
             </p>
           ) : null}
+          {archetypesNotShown > 0 ? (
+            <p className="sw-v2-muted">
+              {archetypesNotShown} further declared{" "}
+              {archetypesNotShown === 1
+                ? "archetype carries"
+                : "archetypes carry"}{" "}
+              recorded value and {archetypesNotShown === 1 ? "is" : "are"} not
+              listed here.
+            </p>
+          ) : null}
         </div>
       </section>
+      {unexploitedCredit.length > 0 ? (
+        <section className="sw-v2-panel sw-v2-coverage-unexploited">
+          <PanelHead
+            eyebrow="Loaded, unclaimed"
+            title="Credit in the rows that no action would claim"
+          />
+          <div className="sw-v2-archetype-list">
+            {unexploitedCredit.map((row) => (
+              <div key={row.contract_id}>
+                <span>
+                  {safeVendorDisplayName(row.vendor_name, row.contract_id)}
+                </span>
+                <b>{money(numberFromDb(row.unclaimed_credit_usd) ?? 0)}</b>
+                <small>
+                  {numberFromDb(row.performance_rows) ?? 0} performance rows ·
+                  no credit action loaded
+                </small>
+              </div>
+            ))}
+          </div>
+          <p className="sw-v2-muted">
+            Amounts come from loaded performance coverage. Review the governing
+            SLA and claim window before opening a credit action.
+          </p>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -2417,22 +2501,25 @@ function ContractPerformanceTrendChart({
 }: {
   periods: readonly SourceContractPerformancePeriodRow[];
 }) {
-  const data = periods.slice(0, 12).map((row) => ({
+  const trend = selectPerformancePercentTrend(periods);
+  const data = trend?.points.map(({ row, actual }) => ({
     period: shortMonth(row.period_start),
-    actual: numberFromDb(row.value_num),
+    actual,
     credit: numberFromDb(row.credit_calculated) ?? 0,
-  }));
+  })) ?? [];
 
-  if (data.length === 0) {
+  if (!trend) {
     return (
       <ChartEmptyState
         label="Contract performance trend chart"
-        title="No performance trend chart available."
-        body="This contract has no loaded period-by-period SLA rows, so Source will not draw a performance trend."
+        title="No comparable percentage trend available."
+        body="No single percentage metric has comparable observations across periods."
         compact
       />
     );
   }
+
+  const metricLabel = trend.metricName.replace(/_pct$/u, "").replaceAll("_", " ");
 
   return (
     <div
@@ -2460,7 +2547,7 @@ function ContractPerformanceTrendChart({
             />
             <YAxis
               yAxisId="actual"
-              domain={[80, 100]}
+              domain={[0, 100]}
               width={38}
               tickLine={false}
               axisLine={false}
@@ -2513,7 +2600,7 @@ function ContractPerformanceTrendChart({
       </MeasuredChartFrame>
       <div className="sw-v2-recharts-legend">
         <span>
-          <b>navy</b> actual SLA %
+          <b>navy</b> {metricLabel} %
         </span>
         <span>
           <b>amber</b> calculated credits
@@ -2521,6 +2608,37 @@ function ContractPerformanceTrendChart({
       </div>
     </div>
   );
+}
+
+export function selectPerformancePercentTrend<T extends Pick<
+  SourceContractPerformancePeriodRow,
+  "metric_name" | "unit" | "actual_value" | "value_num" | "period_start"
+>>(rows: readonly T[]): { metricName: string; points: { row: T; actual: number }[] } | null {
+  const byMetric = new Map<string, { row: T; actual: number }[]>();
+  for (const row of rows) {
+    const actualText = row.actual_value?.trim() ?? "";
+    const namedUnit = unitFromMetricName(row.metric_name);
+    if (!PERCENT_UNITS.has(row.unit?.trim().toLowerCase() ?? "") ||
+        (namedUnit !== "percent" && !(namedUnit === null && actualText.endsWith("%")))) continue;
+    if (actualText && !/^-?\d+(?:\.\d+)?%?$/u.test(actualText)) continue;
+    const rawActual = numberFromDb(row.value_num);
+    if (rawActual === null) continue;
+    const actual = rawActual <= 1 ? rawActual * 100 : rawActual;
+    if (actual < 0 || actual > 100) continue;
+    const points = byMetric.get(row.metric_name) ?? [];
+    points.push({ row, actual });
+    byMetric.set(row.metric_name, points);
+  }
+  const selected = [...byMetric.entries()]
+    .filter(([, points]) => points.length >= 2 &&
+      new Set(points.map(({ row }) => row.period_start)).size === points.length)
+    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))[0];
+  if (!selected) return null;
+  const [metricName, points] = selected;
+  return {
+    metricName,
+    points: points.sort((a, b) => a.row.period_start.localeCompare(b.row.period_start)).slice(-12),
+  };
 }
 
 function OptimizeTypeMixChart({
@@ -3180,7 +3298,7 @@ function ContractListTable({
               : "Outside book"}
           </span>
           <span>
-            {actionRows > 0 ? "Open Optimize" : "Review Contract 360"}
+            {actionRows > 0 ? "Review action" : "Review contract"}
           </span>
         </button>
       ))}
@@ -3438,27 +3556,9 @@ function ContractPage({
         {tab === "Optimize" ? (
           <>
             <ContractOptimizeContent vm={vm} />
-            {/*
-              The value-type ledger and the evidence gate follow the Optimize
-              body because Optimize no longer has a column for them to sit
-              beside.
-
-              Both used to render in the right-hand context panel. That panel is
-              not built on this tab any more — Optimize took the full three
-              columns — and both Optimize branches were left behind inside it,
-              each under a `tab === "Optimize"` test nested in a
-              `tab !== "Optimize"` one. Neither could run, so the tab lost them
-              silently rather than by decision.
-
-              They are the two claims with no other home here. The lever table
-              renders the levers and the sequence view renders their order, but
-              only the ledger keeps candidate, claimed and realized value in
-              separate columns that never sum, and only the gate names what a
-              signal row still needs before it can carry value at all. Both are
-              standing context for every sub-tab, so they close the tab rather
-              than flanking it.
-            */}
-            {vm.opportunityView ? (
+            {/* Keep the value ledger beside authored Optimize content; an
+                evidence-only next action does not imply a priced lever. */}
+            {vm.opportunityView && contractOptimizeAvailableTabs(vm).length > 0 ? (
               <>
                 <PanelHead
                   eyebrow="Optimization gates"
@@ -3541,7 +3641,12 @@ function ContractPage({
                   <span>{fmtDate(row.period_start)}</span>
                   <span>{row.metric_name}</span>
                   <span>
-                    {performanceActual(row.actual_value, row.value_num)}
+                    {performanceActual(
+                      row.actual_value,
+                      row.value_num,
+                      row.unit,
+                      row.metric_name,
+                    )}
                   </span>
                   <span>{money(numberFromDb(row.credit_calculated))}</span>
                 </div>
@@ -3647,32 +3752,41 @@ export function contractNoticeDays(
   return days >= 0 ? days : null;
 }
 
+export function keepSelectedContractTabVisible(tabList: HTMLElement) {
+  if (tabList.scrollWidth <= tabList.clientWidth) return;
+  const selected = tabList.querySelector<HTMLElement>('[aria-selected="true"]');
+  if (!selected) return;
+
+  const listBounds = tabList.getBoundingClientRect();
+  const selectedBounds = selected.getBoundingClientRect();
+  if (selectedBounds.left < listBounds.left) {
+    tabList.scrollLeft += selectedBounds.left - listBounds.left;
+  } else if (selectedBounds.right > listBounds.right) {
+    tabList.scrollLeft += selectedBounds.right - listBounds.right;
+  }
+}
+
 function ContractCommandBar({
   activeTab,
-  contract,
-  onBackToContracts,
   onOpenPortfolioPage,
   onOpenTab,
 }: {
   activeTab: string;
-  contract: SourceContract360Row;
-  onBackToContracts: () => void;
   onOpenPortfolioPage: (page: PageLabel) => void;
   onOpenTab: (tab: string) => void;
 }) {
+  const tabListRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (tabListRef.current) keepSelectedContractTabVisible(tabListRef.current);
+  }, [activeTab]);
+
   return (
     <nav
       className="sw-v2-contract-commandbar"
       aria-label="Contract command toolbar"
     >
-      <button
-        type="button"
-        className="sw-v2-contract-command"
-        onClick={onBackToContracts}
-      >
-        Back to contracts
-      </button>
       <div
+        ref={tabListRef}
         className="sw-v2-contract-commandbar-tabs sw-c3-tabrow"
         role="tablist"
       >
@@ -3694,9 +3808,6 @@ function ContractCommandBar({
           Evidence map
         </button>
       </div>
-      <span className="sw-v2-contract-commandbar-id">
-        {contract.contract_id}
-      </span>
     </nav>
   );
 }
@@ -4390,11 +4501,7 @@ function ContractStoryContextStack({
           closes.
         </p>
       ) : null}
-      <p className="sw-v2-muted">
-        Scope is bounded to {scopeRows.length} loaded row
-        {scopeRows.length === 1 ? "" : "s"}; Source will not expand this into
-        tower, CMDB, or ownership claims without matching rows.
-      </p>
+      
     </div>
   );
 }
@@ -4614,7 +4721,24 @@ function ProductShellCommercialPostureStrip({ vm }: { vm: SourceWorkspaceVM }) {
   );
 }
 
-function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
+function contractOptimizeAvailableTabs(vm: SourceWorkspaceVM) {
+  const opportunities = vm.opportunityView?.opportunities ?? [];
+  const hasLevers = leverTableRows(opportunities).length > 0;
+  const hasSequence = negotiationSequenceRows(opportunities).length > 0;
+  const comparator = portfolioDiscountComparatorSummary(
+    vm.c?.id,
+    vm.detail?.cloudCommitmentPeerCoverage ?? [],
+    opportunities,
+  );
+  const hasComparator =
+    comparator?.selectedDiscountPct != null &&
+    comparator.peerMedianPct != null;
+  return CONTRACT_OPTIMIZE_SUBTABS.filter((tab) =>
+    tab === "Levers" ? hasLevers : tab === "Sequence" ? hasSequence : hasComparator,
+  );
+}
+
+export function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
   const [subtab, setSubtab] =
     useState<(typeof CONTRACT_OPTIMIZE_SUBTABS)[number]>("Levers");
   const view = vm.opportunityView;
@@ -4631,26 +4755,67 @@ function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
     );
   }
 
+  const availableTabs = contractOptimizeAvailableTabs(vm);
+  if (availableTabs.length === 0) {
+    const value = contractValueTypeSummary(view);
+    return (
+      <div className="sw-c3-optimize-next-action">
+        <PanelHead eyebrow={view.caseThread?.state ?? "Optimization"} title="Next action" />
+        <p className="sw-c3-optimize-action">
+          {view.recommendation || "No next action is recorded for this contract."}
+        </p>
+        {view.recommendationDetail ? (
+          <p className="sw-v2-muted">{view.recommendationDetail}</p>
+        ) : null}
+        <p className="sw-v2-muted">No structured negotiation table is available yet.</p>
+        {value.established.length > 0 || value.confirmed ? (
+          <div className="sw-c3-optimize-value">
+            {value.established.length > 0 ? (
+              <span>Potential value, not booked</span>
+            ) : null}
+            {value.established.map(([label, amount]) => (
+              <div key={label}>
+                <b>{label}</b>
+                <strong>{amount}</strong>
+              </div>
+            ))}
+            {value.confirmed ? (
+              <div>
+                <b>Finance confirmed</b>
+                <strong>{value.confirmed}</strong>
+              </div>
+            ) : (
+              <p className="sw-v2-muted">No Finance-confirmed value is recorded.</p>
+            )}
+          </div>
+        ) : (
+          <p className="sw-v2-muted">
+            No opportunity value has been sized or Finance-confirmed.
+          </p>
+        )}
+        <ContractOptimizeGateStatement vm={vm} />
+      </div>
+    );
+  }
+
+  const activeTab = availableTabs.includes(subtab)
+    ? subtab
+    : availableTabs[0];
+
   return (
     <>
-      <SubtabBar
-        tabs={CONTRACT_OPTIMIZE_SUBTABS}
-        active={subtab}
-        onSelect={(tab) =>
-          setSubtab(
-            CONTRACT_OPTIMIZE_SUBTABS.includes(
-              tab as (typeof CONTRACT_OPTIMIZE_SUBTABS)[number],
-            )
-              ? (tab as (typeof CONTRACT_OPTIMIZE_SUBTABS)[number])
-              : "Levers",
-          )
-        }
-      />
-      {subtab === "Levers" ? <ContractLeverTableContent vm={vm} /> : null}
-      {subtab === "Sequence" ? (
+      {availableTabs.length > 1 ? (
+        <SubtabBar
+          tabs={availableTabs}
+          active={activeTab}
+          onSelect={setSubtab}
+        />
+      ) : null}
+      {activeTab === "Levers" ? <ContractLeverTableContent vm={vm} /> : null}
+      {activeTab === "Sequence" ? (
         <ContractNegotiationSequenceContent vm={vm} />
       ) : null}
-      {subtab === "Comparator" ? <ContractComparatorContent vm={vm} /> : null}
+      {activeTab === "Comparator" ? <ContractComparatorContent vm={vm} /> : null}
     </>
   );
 }
@@ -4819,7 +4984,7 @@ function SourceLeverSequence({
               </span>
               <span className="sw-v2-lever-sequence-owner">
                 <b>{row.accountable_role ?? "Owner not assigned"}</b>
-                <small>{dueLabel}</small>
+                {dueLabel ? <small>{dueLabel}</small> : null}
               </span>
               <span className="sw-v2-lever-sequence-next">
                 <b>Open the record</b>
@@ -4863,13 +5028,17 @@ export function contractValueTypeSummary(view: {
     ["Avoidable", view.potential.avoidable, "stops when you act, unilaterally"],
     ["Negotiable", view.potential.negotiable, "needs the vendor to agree"],
   ] as const;
+  const isUnset = (value: string) => !value || value === VALUE_TYPE_NOT_SET;
   return {
     established: labelled.filter(
-      ([, value]) => Boolean(value) && value !== VALUE_TYPE_NOT_SET,
+      ([, value]) => !isUnset(value) && value !== "Not sized",
     ),
     absent: labelled
       .filter(([label]) => label !== "Negotiable")
-      .filter(([, value]) => !value || value === VALUE_TYPE_NOT_SET)
+      .filter(([, value]) => isUnset(value))
+      .map(([label]) => label.toLowerCase()),
+    unpriced: labelled
+      .filter(([, value]) => value === "Not sized")
       .map(([label]) => label.toLowerCase()),
     confirmed:
       view.financeConfirmed && view.financeConfirmed !== VALUE_TYPE_NOT_SET
@@ -5148,18 +5317,15 @@ export function leverTableRows<
 /**
  * The value-type stack on a contract's evidence panel.
  *
- * Renders the value types that are actually established, then states in one
- * line which ones are not and what that absence means. A contract where
- * nothing was mischarged legitimately has no recoverable or avoidable
- * dollars; listing those as two empty rows made a correct reading look like
- * a data failure.
+ * Renders established value separately from unsized and absent categories.
+ * A placeholder must not look like a priced claim.
  */
 function ContractValueTypeStack({
   view,
 }: {
   view: NonNullable<SourceWorkspaceVM["opportunityView"]>;
 }) {
-  const { established, absent, confirmed } = contractValueTypeSummary(view);
+  const { established, absent, unpriced, confirmed } = contractValueTypeSummary(view);
 
   return (
     <div className="sw-v2-fact-stack">
@@ -5168,15 +5334,15 @@ function ContractValueTypeStack({
       ))}
       {absent.length > 0 ? (
         <p className="sw-v2-muted">
-          No {absent.join(" or ")} dollars on this contract — nothing has
-          been mischarged, so the whole opportunity has to be negotiated rather
-          than simply claimed.
+          No {absent.join(" or ")} value is established for this contract.
         </p>
       ) : null}
-      <Fact
-        label="Finance confirmed"
-        value={confirmed ?? "Nothing booked yet"}
-      />
+      {unpriced.length > 0 ? (
+        <p className="sw-v2-muted">
+          {unpriced.join(", ")} value is not sized.
+        </p>
+      ) : null}
+      <Fact label="Finance confirmed" value={confirmed ?? "Nothing booked yet"} />
       {/*
         A count of deterministic claim cards used to sit here. It is a builder's
         measure of the pipeline, not a fact about the contract, and a reader has
@@ -6968,6 +7134,21 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
     .sort((a, b) => b.annualValue - a.annualValue);
 }
 
+/**
+ * How many declared-archetype rows the coverage panel lists.
+ *
+ * The list is capped for layout. A cap that drops a row silently makes a
+ * coverage panel understate the very taxonomy it exists to report, so the
+ * count of omitted rows is returned alongside the ones shown and the panel
+ * states it.
+ */
+const ARCHETYPE_ROWS_SHOWN = 6;
+
+export function archetypeRowsForDisplay<Row>(rows: readonly Row[]) {
+  const shown = rows.slice(0, ARCHETYPE_ROWS_SHOWN);
+  return { shown, notShown: rows.length - shown.length };
+}
+
 export function vendorArchetypeCoverage(
   portfolio: SourceWorkspacePortfolioData,
 ) {
@@ -7483,7 +7664,10 @@ function subheadFor(
   if (page === "Evidence") {
     return "Evidence lanes, row counts, and blockers are visible without exposing raw diagnostics by default.";
   }
-  return `${portfolio.contracts.length} contracts · ${portfolio.vendors.length} vendors · unsupported dashboard claims are hidden.`;
+  // The trailing clause used to read "unsupported dashboard claims are hidden".
+  // The filtering is right; narrating it to the buyer is not — it invites the
+  // reader to discount the screen before reading it.
+  return `${portfolio.contracts.length} contracts · ${portfolio.vendors.length} vendors`;
 }
 
 function commandHeadline(
@@ -7879,17 +8063,86 @@ function detailStateLabel(state: SourceWorkspaceVM["detailState"]) {
   return "Header only";
 }
 
-export function performanceActual(actualValue: unknown, valueNum: unknown) {
-  const formatActual = (actual: number) =>
-    actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
+/** Unit strings that genuinely mean "this number is a percentage". */
+const PERCENT_UNITS = new Set(["%", "pct", "percent", "percentage"]);
+
+/**
+ * The unit a metric's own name declares, or null when it names none.
+ *
+ * The stored `unit` column cannot be trusted on its own: the contract-depth
+ * loader writes `unit: "%"` for every service-performance row it creates,
+ * including metrics named `critical_incident_response_minutes`,
+ * `p1_p2_resolution_hours` and `problem_backlog_older_30_days`. Reading the
+ * stored unit alone therefore still renders minutes and counts as percentages
+ * — the metric name is the only place those rows record what they measure.
+ */
+function unitFromMetricName(metricName: unknown): string | null {
+  const name = typeof metricName === "string" ? metricName.toLowerCase() : "";
+  if (!name) return null;
+  if (/(^|[^a-z])(pct|percent)([^a-z]|$)|%/.test(name)) return "percent";
+  if (/\bminutes?\b|_minutes?$/.test(name)) return "minutes";
+  if (/\bhours?\b|_hours?$/.test(name)) return "hours";
+  if (/\bdays?\b|_days?(_|$)|older_\d+_days/.test(name)) return "days";
+  if (/\bwithin\s+sla\b/.test(name)) return null;
+  if (/\bcount\b|\bbacklog\b|\bvolume\b|\btickets?\b/.test(name)) return "count";
+  return null;
+}
+
+/**
+ * A service-performance actual, in the unit the row declares.
+ *
+ * This used to append `%` to every numeric actual. The performance table is
+ * keyed by `metric_name`, and those metrics are not all percentages: a
+ * response time in minutes rendered as "45.0%", a resolution time in hours as
+ * "8.0%", a backlog count as "120.0%". That does not merely look wrong — it
+ * changes what the SLA evidence says.
+ *
+ * The row has carried a `unit` column all along; the formatter ignored it and
+ * invented one instead. It now reads the declared unit, and where no unit is
+ * declared it renders the number alone rather than guessing. A value at or
+ * below 1 with no declared unit is still shown as a percentage: an actual that
+ * small is a ratio against a target, and rendering 0.995 as "1.0" would lose
+ * the fact rather than preserve it.
+ */
+export function performanceActual(
+  actualValue: unknown,
+  valueNum: unknown,
+  unit?: string | null,
+  metricName?: unknown,
+) {
+  const declared = typeof unit === "string" ? unit.trim() : "";
+  const storedIsPercent = PERCENT_UNITS.has(declared.toLowerCase());
+  const named = unitFromMetricName(metricName);
+  const actualText = actualValue == null ? "" : String(actualValue).trim();
+  const textClaimsPercent = actualText.endsWith("%");
+  /*
+   * The stored unit and the metric's own name can disagree, and on today's
+   * loaded rows they routinely do: the loader stamps "%" on a metric called
+   * `p1_p2_resolution_hours`. When they contradict each other this row does not
+   * establish its unit, so none is asserted — the number renders alone rather
+   * than carrying a unit one of the two sources invented. Showing "8.0" where
+   * the truth is "8 hours" understates the fact; showing "8.0%" misstates it.
+   */
+  const conflicted =
+    (named !== null && declared !== "" && (named === "percent") !== storedIsPercent) ||
+    (textClaimsPercent && ((named !== null && named !== "percent") ||
+      (declared !== "" && !storedIsPercent)));
+  const isPercentUnit = !conflicted && (storedIsPercent || named === "percent");
+  const effectiveUnit = conflicted
+    ? ""
+    : declared || (named && named !== "percent" ? named : "");
+  const formatActual = (actual: number) => {
+    if (isPercentUnit) return actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
+    if (effectiveUnit) return `${actual.toFixed(1)} ${effectiveUnit}`;
+    // No unit this row establishes. A sub-unit actual is a ratio; anything
+    // larger is a quantity whose unit is not settled, so none is asserted.
+    return actual <= 1 && !conflicted ? pct(actual) : `${actual.toFixed(1)}`;
+  };
   if (typeof actualValue === "number" && Number.isFinite(actualValue)) {
     return formatActual(actualValue);
   }
-  if (actualValue != null) {
-    const actualText = String(actualValue).trim();
-    if (actualText) return actualText;
-  }
+  if (actualText && !conflicted) return actualText;
   const actual = numberFromDb(valueNum);
-  if (actual == null) return "Not established";
+  if (actual == null) return conflicted ? "Unit needs review" : "Not established";
   return formatActual(actual);
 }
