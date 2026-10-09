@@ -48,7 +48,9 @@ export const SLIDE_BANDS: Partial<Record<DeliverableKey, SlideBand>> = {
   },
   root_cause_worksheet: { min: 6, max: 10, purpose: 'P2 — why it is true' },
   solution_approach_options: { min: 8, max: 12, purpose: 'P3 — the options and the rejected ones' },
-  target_state_architecture: { min: 10, max: 16, purpose: 'P3 — the design and its control points' },
+  // Authored narrative only: the renderer adds governed architecture pages,
+  // cover, closing and reference appendix under a separate physical planner.
+  target_state_architecture: { min: 3, max: 6, purpose: 'P3 — the design and its control points' },
   solution_design: { min: 10, max: 16, purpose: 'P3 — how it is built' },
   operating_model_design: { min: 8, max: 12, purpose: 'P3 — who runs it afterwards' },
   execution_roadmap: { min: 8, max: 14, purpose: 'P4 — sequence, waves, dependencies' },

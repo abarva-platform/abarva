@@ -82,7 +82,7 @@ describe("architecture Office export", () => {
     };
     const rendered = await renderValidatedDeck(doc, {}, model);
 
-    // Physical proof: the new headline 2-up, divider, and takeaway-band layouts
+    // Physical proof: the headline and section-band layouts
     // are all on-canvas (renderValidatedDeck throws / flags otherwise).
     expect(rendered.physicallyIntact).toBe(true);
 
@@ -90,7 +90,7 @@ describe("architecture Office export", () => {
     const archPages = composeArchitectureDeckPages(
       renderArchitectureVisualExhibits(model),
     );
-    // All 13 governed visuals, plus a section divider and a reference divider.
+    // Both logical dividers become bands on the first visual in each run.
     expect(archPages.length).toBe(ARCHITECTURE_V2_EXHIBITS.length + 2);
     expect(archPages.filter((p) => p.kind === "divider")).toHaveLength(2);
     expect(archPages.filter((p) => p.kind === "headline")).toHaveLength(5);
@@ -103,11 +103,11 @@ describe("architecture Office export", () => {
       /^ppt\/media\/.*\.png$/i.test(name),
     );
 
-    // This sparse, eight-section story is paired into four legible two-column
-    // slides; no section is dropped and all architecture pages remain.
-    expect(slides).toHaveLength(
-      doc.generatedSections.length / 2 + archPages.length + 2,
-    );
+    // The source narrative is condensed to its six-page ceiling and every
+    // governed visual remains a physical slide. No divider consumes a page.
+    const visualPageCount = archPages.filter((page) => page.kind !== "divider").length;
+    expect(slides.length).toBeLessThanOrEqual(1 + 6 + visualPageCount + 1);
+    expect(slides.length).toBeGreaterThanOrEqual(1 + visualPageCount + 1);
     // Every governed visual is rendered exactly once — none dropped, none doubled.
     expect(images).toHaveLength(ARCHITECTURE_V2_EXHIBITS.length);
     const architectureVerdict = await judgeArchitectureDeck(
@@ -139,8 +139,15 @@ describe("architecture Office export", () => {
       orderedSlides.map((name) => zip.file(name)!.async("string")),
     );
     const allXml = slideXml.join("\n");
+    const allNotesXml = (
+      await Promise.all(
+        Object.keys(zip.files)
+          .filter((name) => /^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(name))
+          .map((name) => zip.file(name)!.async("string")),
+      )
+    ).join("\n");
     for (const section of doc.generatedSections) {
-      expect(allXml).toContain(section.title.replace(/&/g, "&amp;"));
+      expect(allXml + allNotesXml).toContain(section.title.replace(/&/g, "&amp;"));
     }
     // The new section structure is present.
     expect(allXml).toContain("ARCHITECTURE");
@@ -151,9 +158,8 @@ describe("architecture Office export", () => {
     const appendixIndex = slideXml.findIndex((xml) => xml.includes("APPENDIX A"));
     expect(closingIndex).toBeGreaterThan(0);
     expect(appendixIndex).toBeGreaterThan(closingIndex);
-    expect(slideXml.length).toBeLessThanOrEqual(22);
+    expect(slideXml.length).toBeLessThanOrEqual(24);
     expect(slideXml[appendixIndex]).toContain("A1");
-    expect(slideXml[appendixIndex]).toContain("a:hlinkClick");
     // The governed diagrams still carry their titles.
     expect(
       slideXml.some((xml) => xml.includes("conceptual architecture")),

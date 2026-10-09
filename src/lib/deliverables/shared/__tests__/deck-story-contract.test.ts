@@ -89,9 +89,14 @@ describe("every deck projects the shared spine", () => {
 
   it("stays within the core slide count", () => {
     for (const id of ALL) {
-      const n = deckContract(id).slides.length;
-      expect(n).toBeGreaterThanOrEqual(CORE_SLIDE_COUNT.min);
-      expect(n).toBeLessThanOrEqual(CORE_SLIDE_COUNT.max);
+      const contract = deckContract(id);
+      const n = contract.slides.length;
+      if (contract.narrativeTablePageCeiling) {
+        expect(n).toBeLessThanOrEqual(contract.narrativeTablePageCeiling);
+      } else {
+        expect(n).toBeGreaterThanOrEqual(CORE_SLIDE_COUNT.min);
+        expect(n).toBeLessThanOrEqual(CORE_SLIDE_COUNT.max);
+      }
     }
   });
 
@@ -99,7 +104,7 @@ describe("every deck projects the shared spine", () => {
     for (const id of ALL) {
       const slides = deckContract(id).slides;
       expect(slides[0].primaryVisual).toBe("decision_card");
-      expect(["decision_card", "table"]).toContain(
+      expect(["decision_card", "table", "roadmap"]).toContain(
         slides.at(-1)!.primaryVisual,
       );
     }
@@ -298,7 +303,7 @@ describe("deckContractIdForDeliverable", () => {
     const cases: Array<[string, DeckContractId]> = [
       ["discovery_report", "REF_DECK_P2_DISCOVERY_READOUT"],
       ["root_cause_worksheet", "REF_DECK_P2_DISCOVERY_READOUT"],
-      ["target_state_architecture", "REF_DECK_P3_SOLUTION_DECISION"],
+      ["target_state_architecture", "REF_DECK_P3_ARCHITECTURE"],
       ["solution_design", "REF_DECK_P3_SOLUTION_DECISION"],
       ["operating_model_design", "REF_DECK_P3_SOLUTION_DECISION"],
       ["business_case", "REF_DECK_P4_BUSINESS_CASE"],

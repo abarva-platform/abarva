@@ -47,18 +47,19 @@ describe("slide contract", () => {
   // A document must not be failed by a deck rule. Absence of a band is "not a
   // deck", and that has to read differently from "a deck that forgot its band".
   it("a depth-aware floor override lowers the min but never raises it or the ceiling", () => {
-    // Architecture band is 10–16. A smaller-scope Move may lower the floor to 6.
-    expect(judgeSlideCount("target_state_architecture", 7, 6).ok).toBe(true);
-    const tooFew = judgeSlideCount("target_state_architecture", 5, 6);
+    // This band counts authored narrative; governed visuals are added by the
+    // physical planner. A smaller scope can lower the narrative floor.
+    expect(judgeSlideCount("target_state_architecture", 3, 2).ok).toBe(true);
+    const tooFew = judgeSlideCount("target_state_architecture", 1, 2);
     expect(tooFew.ok).toBe(false);
     if (!tooFew.ok) {
       expect(tooFew.reason).toBe("too_few");
-      expect(tooFew.message).toContain("at least 6");
+      expect(tooFew.message).toContain("at least 2");
     }
     // An override cannot RAISE the min above the band's own floor.
-    expect(judgeSlideCount("target_state_architecture", 10, 20).ok).toBe(true);
+    expect(judgeSlideCount("target_state_architecture", 3, 20).ok).toBe(true);
     // The ceiling is untouched by the override.
-    expect(judgeSlideCount("target_state_architecture", 17, 6).ok).toBe(false);
+    expect(judgeSlideCount("target_state_architecture", 7, 2).ok).toBe(false);
   });
 
   it("does not judge a deliverable that is not a deck", () => {
