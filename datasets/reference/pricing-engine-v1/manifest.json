@@ -1,7 +1,7 @@
 {
   "dataset_id": "pricing-engine-v1",
-  "version": "1.2.0",
-  "version_bump_reason": "ROM increment 2a adds 3 files imported from two workbook sheets the PR1 converter never read: pricing_pod_templates.csv and pricing_pod_template_roles.csv (\"Delivery Pods\") and pricing_agent_profiles.csv (\"Agent Economics\"). See `rom_pod_library`. The 17 earlier CSVs are unchanged.",
+  "version": "1.3.0",
+  "version_bump_reason": "ROM increment 2b (product-owner decisions 2026-10-10): pricing_pod_template_roles.csv gains original_level_code, level_adjustment, mapping_status and mapping_rule_id. Unmatched labels may be proposed a role by an explicit tower + label rule (match_method proposed_by_tower, mapping_status proposed_unapproved), and a role's level is the pod's blended level clamped into the role's allowed range. See `rom_pod_library`. The 17 taxonomy CSVs, pricing_pod_templates.csv and pricing_agent_profiles.csv are unchanged.",
   "generated_at": "2026-07-24T01:26:35.579Z",
   "generated_from": {
     "source_file_name": "Workforce_Taxonomy_Master.xlsx",
@@ -378,6 +378,10 @@
     {
       "version": "1.1.0",
       "version_bump_reason": "PR4 adds the 8 effort-engine reference objects this manifest's own deferred_pr4_objects section named as explicitly out of PR1 scope (pricing_archetypes, pricing_activity_packs, pricing_effort_drivers, pricing_effort_rules, pricing_activity_role_mix, pricing_archetype_activity_map, pricing_range_policies, pricing_agent_costs). PR1's original 9 taxonomy CSVs (towers/capabilities/role_families/roles/role_aliases/seniority_levels/rate_bands/provider_classes/delivery_locations) are UNCHANGED by this bump — their own `pricing_taxonomy_versions` DB version stays independent (see pr4_effort_engine_pack.versioning_note below). This top-level `version` field is the dataset-PACK's own semantic version, distinct from the DB's `pricing_taxonomy_versions.version` and `pricing_model_versions.version` integers."
+    },
+    {
+      "version": "1.2.0",
+      "version_bump_reason": "ROM increment 2a adds 3 files imported from two workbook sheets the PR1 converter never read: pricing_pod_templates.csv and pricing_pod_template_roles.csv (\"Delivery Pods\") and pricing_agent_profiles.csv (\"Agent Economics\"). See `rom_pod_library`. The 17 earlier CSVs are unchanged."
     }
   ],
   "rom_pod_library": {
@@ -387,8 +391,607 @@
       "Agent Economics": "header row 'Platform | Type | Monthly $ | Annual $ | Equiv Eng FTE | Util % | Productivity | Documentation | Testing | Architecture' (B5), data rows below it"
     },
     "honesty_disclosure": "pricing_agent_profiles.csv holds product-owner planning assumptions with no external source (the sheet is labelled provider-neutral, '1.00 = no gain'). Every row is confidence=low, approval_status=global_starter_unapproved, assumption_basis=product_owner_planning_assumption_no_external_source. They are not researched benchmarks. The productivity/documentation/testing/architecture multipliers are carried for reference and applied nowhere by default; the capacity scenario (effort-engine/pod-templates.ts#agentCapacityScenario) runs only when explicitly requested and labels its output an unconfirmed planning assumption.",
-    "role_matching_rule": "Each role-mix entry ('3x Role' / 'Role x3' = fte 3, else fte 1) is matched by exact string equality against pricing_roles.csv canonical_name and pricing_role_aliases.csv alias_label. Exactly one distinct role = exact/alias; zero or several = unmatched with an empty role_code. No fuzzy, case-folded, abbreviation or tower-based matching.",
-    "level_rule": "The workbook carries one blended level per pod and no per-role level, so every role row's level_code is the pod's blended level.",
+    "role_matching_rule": "Each role-mix entry ('3x Role' / 'Role x3' = fte 3, else fte 1) is matched by exact string equality against pricing_roles.csv canonical_name and pricing_role_aliases.csv alias_label. Exactly one distinct role = exact/alias, mapping_status confirmed. Otherwise, if a generic_role_rules row names the pod's tower and the exact label, the row is proposed_by_tower with that rule's role, mapping_status proposed_unapproved and mapping_rule_id set (product-owner decision 2026-10-10: proposed mapping by tower, never silent). A label naming several roles is resolved only by a rule marked resolves_ambiguity that names one of them. Anything else is unmatched with an empty role_code. No fuzzy, case-folded or similarity matching.",
+    "level_rule": "The workbook carries one blended level per pod and no per-role level. original_level_code is the pod's blended level; level_code is that level clamped into the role's allowed_level_min..allowed_level_max (product-owner decision 2026-10-10), and level_adjustment records none, clamped_up (raised to the junior bound) or clamped_down (lowered to the senior bound). An unmatched row keeps the pod's level.",
+    "generic_role_rules": [
+      {
+        "id": "GR-01",
+        "tower_code": "TWR-02",
+        "labels": [
+          "AI Architect"
+        ],
+        "role_code": "ROL-204",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Industry SMEs has no AI role; the AI & GenAI tower's AI Solution Architect is the one architect the label names"
+      },
+      {
+        "id": "GR-02",
+        "tower_code": "TWR-02",
+        "labels": [
+          "Banking SME"
+        ],
+        "role_code": "ROL-152",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "the tower's one Banking SME role (Banking Principal SME)"
+      },
+      {
+        "id": "GR-03",
+        "tower_code": "TWR-02",
+        "labels": [
+          "Insurance SME"
+        ],
+        "role_code": "ROL-156",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "the tower's one Insurance SME role (Insurance Principal SME)"
+      },
+      {
+        "id": "GR-04",
+        "tower_code": "TWR-02",
+        "labels": [
+          "Payments SME"
+        ],
+        "role_code": "ROL-158",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "the tower's one Payments SME role (Payments Principal SME)"
+      },
+      {
+        "id": "GR-05",
+        "tower_code": "TWR-02",
+        "labels": [
+          "Provider SME"
+        ],
+        "role_code": "ROL-162",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "the tower's one Provider SME role (Provider Principal SME)"
+      },
+      {
+        "id": "GR-06",
+        "tower_code": "TWR-03",
+        "labels": [
+          "Process Lead"
+        ],
+        "role_code": "ROL-017",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Process Design Lead, the tower's one process lead"
+      },
+      {
+        "id": "GR-07",
+        "tower_code": "TWR-03",
+        "labels": [
+          "Mining Consultant"
+        ],
+        "role_code": "ROL-018",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Process Mining Consultant"
+      },
+      {
+        "id": "GR-08",
+        "tower_code": "TWR-04",
+        "labels": [
+          "Data Product Mgr"
+        ],
+        "role_code": "ROL-024",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Data Product Manager"
+      },
+      {
+        "id": "GR-09",
+        "tower_code": "TWR-04",
+        "labels": [
+          "BI Dev"
+        ],
+        "role_code": "ROL-041",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "BI Developer"
+      },
+      {
+        "id": "GR-10",
+        "tower_code": "TWR-04",
+        "labels": [
+          "Governance Lead"
+        ],
+        "role_code": "ROL-026",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Data Governance Lead, the tower's one governance lead"
+      },
+      {
+        "id": "GR-11",
+        "tower_code": "TWR-04",
+        "labels": [
+          "Steward"
+        ],
+        "role_code": "ROL-027",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Data Steward"
+      },
+      {
+        "id": "GR-12",
+        "tower_code": "TWR-04",
+        "labels": [
+          "Streaming Engineer"
+        ],
+        "role_code": "ROL-177",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Streaming Data Engineer"
+      },
+      {
+        "id": "GR-13",
+        "tower_code": "TWR-04",
+        "labels": [
+          "Analytics Engineer"
+        ],
+        "role_code": "ROL-176",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Analytics Engineer (dbt), the tower's one analytics engineer"
+      },
+      {
+        "id": "GR-14",
+        "tower_code": "TWR-05",
+        "labels": [
+          "AI Architect"
+        ],
+        "role_code": "ROL-204",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "AI Solution Architect, the tower's delivery-level AI architect (Chief AI Architect is the director-level role)"
+      },
+      {
+        "id": "GR-15",
+        "tower_code": "TWR-05",
+        "labels": [
+          "FDE"
+        ],
+        "role_code": "ROL-050",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Forward Deployed Engineer"
+      },
+      {
+        "id": "GR-16",
+        "tower_code": "TWR-05",
+        "labels": [
+          "LLMOps"
+        ],
+        "role_code": "ROL-056",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "LLMOps Engineer"
+      },
+      {
+        "id": "GR-17",
+        "tower_code": "TWR-05",
+        "labels": [
+          "CV Engineer"
+        ],
+        "role_code": "ROL-196",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Computer Vision Engineer"
+      },
+      {
+        "id": "GR-18",
+        "tower_code": "TWR-07",
+        "labels": [
+          "Engineer"
+        ],
+        "role_code": "ROL-211",
+        "kind": "generic_family",
+        "resolves_ambiguity": false,
+        "rationale": "MarTech Engineer, the tower's generic engineer (CDP Engineer is platform-specific)"
+      },
+      {
+        "id": "GR-19",
+        "tower_code": "TWR-07",
+        "labels": [
+          "Target Specialist"
+        ],
+        "role_code": "ROL-210",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Adobe Target Specialist"
+      },
+      {
+        "id": "GR-20",
+        "tower_code": "TWR-08",
+        "labels": [
+          "Eng Lead"
+        ],
+        "role_code": "ROL-078",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Product Management has no engineering role; Engineering Lead is the one role the label names"
+      },
+      {
+        "id": "GR-21",
+        "tower_code": "TWR-08",
+        "labels": [
+          "Designer"
+        ],
+        "role_code": "ROL-217",
+        "kind": "generic_family",
+        "resolves_ambiguity": false,
+        "rationale": "Product Designer, the tower's one designer"
+      },
+      {
+        "id": "GR-22",
+        "tower_code": "TWR-09",
+        "labels": [
+          "Developer",
+          "Engineer"
+        ],
+        "role_code": "ROL-080",
+        "kind": "generic_family",
+        "resolves_ambiguity": false,
+        "rationale": "Software Engineer, the tower's generic developer/engineer (the others name a stack or platform)"
+      },
+      {
+        "id": "GR-23",
+        "tower_code": "TWR-09",
+        "labels": [
+          "Eng Lead"
+        ],
+        "role_code": "ROL-078",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Engineering Lead"
+      },
+      {
+        "id": "GR-24",
+        "tower_code": "TWR-09",
+        "labels": [
+          "SF Architect"
+        ],
+        "role_code": "ROL-232",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Salesforce Architect"
+      },
+      {
+        "id": "GR-25",
+        "tower_code": "TWR-09",
+        "labels": [
+          "SN Architect"
+        ],
+        "role_code": "ROL-227",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "ServiceNow Architect"
+      },
+      {
+        "id": "GR-26",
+        "tower_code": "TWR-09",
+        "labels": [
+          "ITOM Consultant"
+        ],
+        "role_code": "ROL-230",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "ServiceNow ITOM Consultant, the tower's one ITOM role"
+      },
+      {
+        "id": "GR-27",
+        "tower_code": "TWR-09",
+        "labels": [
+          "SecOps Consultant"
+        ],
+        "role_code": "ROL-231",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "ServiceNow SecOps Consultant, the tower's one SecOps role"
+      },
+      {
+        "id": "GR-28",
+        "tower_code": "TWR-09",
+        "labels": [
+          "Sales Cloud Consultant"
+        ],
+        "role_code": "ROL-233",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Salesforce Sales Cloud Consultant"
+      },
+      {
+        "id": "GR-29",
+        "tower_code": "TWR-09",
+        "labels": [
+          "Service Cloud Consultant"
+        ],
+        "role_code": "ROL-234",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Salesforce Service Cloud Consultant"
+      },
+      {
+        "id": "GR-30",
+        "tower_code": "TWR-10",
+        "labels": [
+          "Developer"
+        ],
+        "role_code": "ROL-086",
+        "kind": "generic_family",
+        "resolves_ambiguity": false,
+        "rationale": "iPaaS Developer, the tower's generic developer (MuleSoft Developer is platform-specific)"
+      },
+      {
+        "id": "GR-31",
+        "tower_code": "TWR-10",
+        "labels": [
+          "iPaaS Dev"
+        ],
+        "role_code": "ROL-086",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "iPaaS Developer"
+      },
+      {
+        "id": "GR-32",
+        "tower_code": "TWR-10",
+        "labels": [
+          "Event Engineer"
+        ],
+        "role_code": "ROL-087",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Event Streaming Engineer"
+      },
+      {
+        "id": "GR-33",
+        "tower_code": "TWR-11",
+        "labels": [
+          "Functional Lead"
+        ],
+        "role_code": "ROL-097",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Workday Functional Lead, the tower's one functional lead"
+      },
+      {
+        "id": "GR-34",
+        "tower_code": "TWR-11",
+        "labels": [
+          "Basis"
+        ],
+        "role_code": "ROL-093",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP Basis Consultant, the tower's one Basis role"
+      },
+      {
+        "id": "GR-35",
+        "tower_code": "TWR-11",
+        "labels": [
+          "SAP SCM Architect"
+        ],
+        "role_code": "ROL-091",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP Supply Chain Architect"
+      },
+      {
+        "id": "GR-36",
+        "tower_code": "TWR-11",
+        "labels": [
+          "MM Consultant"
+        ],
+        "role_code": "ROL-244",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP MM Consultant"
+      },
+      {
+        "id": "GR-37",
+        "tower_code": "TWR-11",
+        "labels": [
+          "SD Consultant"
+        ],
+        "role_code": "ROL-245",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP SD Consultant"
+      },
+      {
+        "id": "GR-38",
+        "tower_code": "TWR-11",
+        "labels": [
+          "BTP Architect"
+        ],
+        "role_code": "ROL-250",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP BTP Architect"
+      },
+      {
+        "id": "GR-39",
+        "tower_code": "TWR-11",
+        "labels": [
+          "CPI Consultant"
+        ],
+        "role_code": "ROL-251",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP CPI Consultant"
+      },
+      {
+        "id": "GR-40",
+        "tower_code": "TWR-11",
+        "labels": [
+          "ABAP Developer"
+        ],
+        "role_code": "ROL-248",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP ABAP Developer"
+      },
+      {
+        "id": "GR-41",
+        "tower_code": "TWR-11",
+        "labels": [
+          "Fiori Developer"
+        ],
+        "role_code": "ROL-249",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP Fiori Developer"
+      },
+      {
+        "id": "GR-42",
+        "tower_code": "TWR-11",
+        "labels": [
+          "SuccessFactors Consultant"
+        ],
+        "role_code": "ROL-254",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SAP SuccessFactors Consultant"
+      },
+      {
+        "id": "GR-43",
+        "tower_code": "TWR-12",
+        "labels": [
+          "SRE"
+        ],
+        "role_code": "ROL-274",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "SRE Engineer (SRE Architect is the architect role)"
+      },
+      {
+        "id": "GR-44",
+        "tower_code": "TWR-12",
+        "labels": [
+          "IaC Engineer"
+        ],
+        "role_code": "ROL-271",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "IaC / Terraform Engineer"
+      },
+      {
+        "id": "GR-45",
+        "tower_code": "TWR-13",
+        "labels": [
+          "AD Engineer"
+        ],
+        "role_code": "ROL-278",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Active Directory Engineer"
+      },
+      {
+        "id": "GR-46",
+        "tower_code": "TWR-13",
+        "labels": [
+          "Backup/DR Engineer"
+        ],
+        "role_code": "ROL-277",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Backup & DR Engineer"
+      },
+      {
+        "id": "GR-47",
+        "tower_code": "TWR-13",
+        "labels": [
+          "Infra Architect"
+        ],
+        "role_code": "ROL-108",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Infrastructure Architect"
+      },
+      {
+        "id": "GR-48",
+        "tower_code": "TWR-14",
+        "labels": [
+          "AppSec Engineer"
+        ],
+        "role_code": "ROL-116",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Application Security Engineer"
+      },
+      {
+        "id": "GR-49",
+        "tower_code": "TWR-15",
+        "labels": [
+          "Automation Engineer"
+        ],
+        "role_code": "ROL-120",
+        "kind": "ambiguity_resolution",
+        "resolves_ambiguity": true,
+        "rationale": "two roles are named Automation Engineer (Business Process and Quality Engineering); in a Quality Engineering pod it is the Quality Engineering one"
+      },
+      {
+        "id": "GR-50",
+        "tower_code": "TWR-16",
+        "labels": [
+          "SRE"
+        ],
+        "role_code": "ROL-125",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Site Reliability Engineer"
+      },
+      {
+        "id": "GR-51",
+        "tower_code": "TWR-17",
+        "labels": [
+          "L1"
+        ],
+        "role_code": "ROL-129",
+        "kind": "support_tier",
+        "resolves_ambiguity": false,
+        "rationale": "L1 Support Analyst"
+      },
+      {
+        "id": "GR-52",
+        "tower_code": "TWR-17",
+        "labels": [
+          "L2"
+        ],
+        "role_code": "ROL-128",
+        "kind": "support_tier",
+        "resolves_ambiguity": false,
+        "rationale": "L2 Support Engineer"
+      },
+      {
+        "id": "GR-53",
+        "tower_code": "TWR-17",
+        "labels": [
+          "L3",
+          "L3 (Cloud)",
+          "L3 (ERP)"
+        ],
+        "role_code": "ROL-127",
+        "kind": "support_tier",
+        "resolves_ambiguity": false,
+        "rationale": "L3 Support Engineer (the parenthetical names the supported platform, not a different tier)"
+      },
+      {
+        "id": "GR-54",
+        "tower_code": "TWR-19",
+        "labels": [
+          "Comms Lead"
+        ],
+        "role_code": "ROL-136",
+        "kind": "abbreviation",
+        "resolves_ambiguity": false,
+        "rationale": "Communications Lead"
+      }
+    ],
     "not_imported": [
       "Delivery Pods 'Use Cases / Est. Monthly $' — a formula (headcount × Internal Cost Model) with no cached value; pod cost comes from the pod pricer.",
       "Agent Economics 'Annual $' — a formula (Monthly $ × 12) with no cached value."
@@ -401,28 +1004,64 @@
     },
     "file_checksums_sha256": {
       "pricing_pod_templates.csv": "509b19ae1c1ae69627c2229e2860e01db99a2929985549031b1ddb75b92e1dc3",
-      "pricing_pod_template_roles.csv": "900fcb9105fcc0e7f43c67ca1eeab100c83989a63f979ed365a51567dacbe236",
+      "pricing_pod_template_roles.csv": "4bb1c5e142aef40bc21f8bb8b14068ec4533e4bf444f678b34a453a6df450c38",
       "pricing_agent_profiles.csv": "0c04ba472946e2dce6adcea43dfa712dd82dbeb78b5fc90b0b0343d0005bb87e"
     },
     "role_match_coverage": {
       "pods_total": 107,
-      "pods_fully_matched": 43,
-      "pods_fully_matched_with_rate_bands_at_blended_level": 14,
+      "pods_fully_matched": 90,
+      "pods_fully_confirmed": 43,
+      "pods_with_proposed_mappings": 47,
+      "pods_priceable": 90,
+      "pods_priceable_confirmed_only": 43,
       "role_rows_total": 258,
       "role_rows_exact": 156,
       "role_rows_alias": 0,
-      "role_rows_unmatched": 102,
-      "matched_role_rows_without_rate_band_at_blended_level": 58,
-      "distinct_unmatched_labels": 58,
-      "ambiguous_labels": [
+      "role_rows_proposed": 85,
+      "role_rows_unmatched": 17,
+      "role_rows_clamped_up": 81,
+      "role_rows_clamped_down": 11,
+      "matched_role_rows_without_rate_band": 0,
+      "distinct_unmatched_labels": 7,
+      "unmatched_labels": [
         {
-          "label": "Automation Engineer",
-          "candidates": [
-            "ROL-020",
-            "ROL-120"
-          ]
+          "label": "Engineer",
+          "reason": "no_match",
+          "occurrences": 6
+        },
+        {
+          "label": "Consultant",
+          "reason": "no_match",
+          "occurrences": 5
+        },
+        {
+          "label": "AMS Lead",
+          "reason": "no_match",
+          "occurrences": 2
+        },
+        {
+          "label": "Analyst",
+          "reason": "no_match",
+          "occurrences": 1
+        },
+        {
+          "label": "Delivery Mgr",
+          "reason": "no_match",
+          "occurrences": 1
+        },
+        {
+          "label": "Integration",
+          "reason": "no_match",
+          "occurrences": 1
+        },
+        {
+          "label": "PM",
+          "reason": "no_match",
+          "occurrences": 1
         }
-      ]
+      ],
+      "unused_rule_ids": [],
+      "ambiguous_labels": []
     }
   }
 }
