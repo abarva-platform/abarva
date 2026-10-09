@@ -44,6 +44,25 @@ narrative explains them.
   the engine can evaluate it. Free-text value plans complete exactly as
   before. With the flag off, nothing changes.
 
+## Product decisions recorded
+
+Settled by the product team for this engine:
+- **Risk is not discounted twice.** Lever probability × attribution prices risk;
+  the expert-kernel haircut is reported as a cross-check only, never applied
+  on top.
+- **Hours saved count $0** unless a release path (a role or contract
+  released) references a counted input; hours still report as a non-money
+  metric.
+- **A released cost is also scaled by attribution × probability:** a credited
+  saving is a share of the saving, like any other lever.
+- **The low scenario pairs low value with high cost** (the downside case is
+  conservative).
+- **A blocked case shows no partial totals**, so an incomplete number cannot
+  be read as the case.
+- **Breakeven is steady-state:** the driver value at which steady-state annual
+  cash × horizon equals cost. It is labelled as such; it is not a timed or
+  discounted breakeven.
+
 ## Layer Impact
 
 - Release lane: `experimental` (feature-flagged; default off).
