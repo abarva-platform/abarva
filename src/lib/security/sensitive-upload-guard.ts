@@ -199,13 +199,21 @@ export function evaluateSensitiveUpload(
   };
 }
 
+/**
+ * The refusal code `sensitiveUploadRejectedResponse` answers with. Exported so
+ * the product copy that has to name it — `describeMoveUploadRefusal` and its
+ * Source/Tower siblings — can be checked against this declaration instead of
+ * retyping the string and drifting from it silently.
+ */
+export const SENSITIVE_UPLOAD_QUARANTINE_CODE = "sensitive_data_quarantined";
+
 export function sensitiveUploadRejectedResponse(
   result: UploadProtectionResult,
 ): Response {
   return Response.json(
     {
       ok: false,
-      error: "sensitive_data_quarantined",
+      error: SENSITIVE_UPLOAD_QUARANTINE_CODE,
       detail: result.message,
       dataProtection: result,
     },
