@@ -4,8 +4,15 @@
  *   raw module hours = base hours + Σ(driver quantity × unit hours)
  *   expected module hours = raw module hours × complexity factor
  *                           × novelty/reuse factor × assurance factor
+ *                           [× program friction factor, when supplied]
  *   role hours = expected module hours × approved role allocation
  *   labor cost = role hours × resolved hourly rate
+ *
+ * ROM increment 1 adds, all opt-in (absent = the original arithmetic and
+ * text trace, unchanged): `programFactors` (friction after module factors),
+ * `pricingBasis: 'pod'` (hours-only lines, priced by `pod-pricer.ts`),
+ * `unitHoursOverrides` (a reasoned replacement for a rule's reference unit
+ * hours), and per-line structured `formulaTerms` (`formula-terms.ts`).
  *
  * PURE — no I/O. Callers assemble an already-loaded `EffortEnginePack`
  * (`model-registry.ts`) and an already-resolved rate map
@@ -21,6 +28,7 @@
 import { resolveActivityPacksForArchetype, technicalPackCodes, type ResolvedActivityPack } from "./activity-packs";
 import { getArchetype } from "./archetypes";
 import { aggregateTotals } from "./cost-engine";
+import { appendCostTerms, closeHoursTerms } from "./formula-terms";
 import { hoursToCents, roundHours } from "./money";
 import { evaluateHours } from "./rule-interpreter";
 import { getScenarioDefinition, scenarioHoursMultiplier, selectAgentCostLinesForScenario, type ScenarioActivityOverride } from "./scenarios";
@@ -31,10 +39,14 @@ import type {
   EffortOperation,
   EffortOperationKind,
   EffortEnginePack,
+  FormulaTerm,
   LineClassification,
   ModuleMultipliers,
+  PricingBasis,
+  ProgramFactors,
   ResolvedRate,
   ScenarioKey,
+  UnitHoursOverride,
 } from "./types";
 import { DEFAULT_MODULE_MULTIPLIERS } from "./types";
 
@@ -49,6 +61,33 @@ export class CircularSelectionScopeError extends Error {
   constructor(packCode: string) {
     super(`circular_selection_scope: activity pack '${packCode}' is both a percentage_of_selected_labor SOURCE pack and part of a selection scope another rule reads from — not supported`);
     this.name = "CircularSelectionScopeError";
+  }
+}
+
+export class InvalidProgramFactorError extends Error {
+  constructor(detail: string) {
+    super(`invalid_program_factor: ${detail}`);
+    this.name = "InvalidProgramFactorError";
+  }
+}
+
+export class InvalidPricingBasisError extends Error {
+  constructor(basis: string) {
+    super(`invalid_pricing_basis: '${basis}' is not one of role_mix | pod`);
+    this.name = "InvalidPricingBasisError";
+  }
+}
+
+export type UnitHoursOverrideRefusal = "unknown_rule" | "unsupported_operation" | "invalid_value" | "missing_reason";
+
+export class InvalidUnitHoursOverrideError extends Error {
+  readonly refusal: UnitHoursOverrideRefusal;
+  readonly ruleCode: string;
+  constructor(ruleCode: string, refusal: UnitHoursOverrideRefusal, detail: string) {
+    super(`invalid_unit_hours_override: rule '${ruleCode}' (${refusal}) — ${detail}`);
+    this.name = "InvalidUnitHoursOverrideError";
+    this.refusal = refusal;
+    this.ruleCode = ruleCode;
   }
 }
 
@@ -70,6 +109,136 @@ export interface EffortEngineInput {
   customScenarioOverrides?: Readonly<Record<string, ScenarioActivityOverride>>;
   /** role_code -> ResolvedRate, pre-resolved by rate-card-resolver.ts (or a test fixture). Must contain an entry for every role in every in-scope pack's role mix. */
   rates: ReadonlyMap<string, ResolvedRate>;
+  /** Program-wide factors applied after every module factor. Absent = none (results unchanged). */
+  programFactors?: ProgramFactors;
+  /** Default `role_mix` (the original behaviour). `pod` emits hours-only lines and never reads `rates`. */
+  pricingBasis?: PricingBasis;
+  /**
+   * rule_code -> replacement unit hours (with a required reason). Supported
+   * for `fixed_hours` (the base hours), `per_unit_hours` and every
+   * `hours_per_*` operation. Refused (throws `InvalidUnitHoursOverrideError`)
+   * for a rule not in scope for this archetype, a tiered / percentage /
+   * manual rule, a negative or non-finite value, or a blank reason.
+   */
+  unitHoursOverrides?: Readonly<Record<string, UnitHoursOverride>>;
+}
+
+/** Render a factor with at least two decimals ("1.10"), never dropping precision ("1.125"). */
+function formatFactor(value: number): string {
+  const text = String(value);
+  const decimals = text.includes(".") ? text.split(".")[1].length : 0;
+  return decimals >= 2 ? text : value.toFixed(2);
+}
+
+/** The single unit-hours parameter an override replaces, per operation; null = override not supported. */
+function unitHoursOf(op: EffortOperation): number | null {
+  switch (op.op) {
+    case "fixed_hours":
+      return op.hours;
+    case "per_unit_hours":
+      return op.unitHours;
+    case "hours_per_week":
+      return op.hoursPerWeek;
+    case "hours_per_wave":
+      return op.hoursPerWave;
+    case "hours_per_stakeholder_group":
+      return op.hoursPerGroup;
+    case "hours_per_course":
+      return op.hoursPerCourse;
+    case "hours_per_training_session":
+      return op.hoursPerSession;
+    case "hours_per_supplier_month":
+      return op.hoursPerSupplierMonth;
+    default:
+      return null;
+  }
+}
+
+function withUnitHours(op: EffortOperation, unitHours: number): EffortOperation {
+  switch (op.op) {
+    case "fixed_hours":
+      return { ...op, hours: unitHours };
+    case "per_unit_hours":
+      return { ...op, unitHours };
+    case "hours_per_week":
+      return { ...op, hoursPerWeek: unitHours };
+    case "hours_per_wave":
+      return { ...op, hoursPerWave: unitHours };
+    case "hours_per_stakeholder_group":
+      return { ...op, hoursPerGroup: unitHours };
+    case "hours_per_course":
+      return { ...op, hoursPerCourse: unitHours };
+    case "hours_per_training_session":
+      return { ...op, hoursPerSession: unitHours };
+    case "hours_per_supplier_month":
+      return { ...op, hoursPerSupplierMonth: unitHours };
+    default:
+      return op;
+  }
+}
+
+function validateProgramFactors(factors: ProgramFactors | undefined): void {
+  if (factors === undefined) return;
+  const f = factors.frictionFactor;
+  if (typeof f !== "number" || !Number.isFinite(f) || f <= 0) {
+    throw new InvalidProgramFactorError(`frictionFactor must be a finite number > 0, got ${String(f)}`);
+  }
+}
+
+function validateUnitHoursOverride(ruleCode: string, override: UnitHoursOverride): void {
+  if (typeof override.unitHours !== "number" || !Number.isFinite(override.unitHours) || override.unitHours < 0) {
+    throw new InvalidUnitHoursOverrideError(ruleCode, "invalid_value", `unitHours must be a finite number >= 0, got ${String(override.unitHours)}`);
+  }
+  if (typeof override.reason !== "string" || override.reason.trim().length === 0) {
+    throw new InvalidUnitHoursOverrideError(ruleCode, "missing_reason", "an override must state its reason");
+  }
+}
+
+interface AppliedUnitHoursOverride {
+  referenceUnitHours: number;
+  unitHours: number;
+  reason: string;
+}
+
+/** The multiplied input terms whose product is a contribution's raw hours. */
+function rawHoursTerms(contribution: RuleHoursContribution, driverQuantity: number | null): FormulaTerm[] {
+  const op = contribution.operation;
+  const ruleSource = contribution.override ? `override:${contribution.ruleCode}` : `rule:${contribution.ruleCode}`;
+  const overrideNote = contribution.override
+    ? ` (override: ${contribution.override.reason}; reference ${contribution.override.referenceUnitHours} h)`
+    : "";
+  switch (op.op) {
+    case "fixed_hours":
+      return [{ label: `fixed base hours${overrideNote}`, value: op.hours, source: ruleSource, cellRole: "base_hours" }];
+    case "tiered_unit_hours":
+      return [
+        {
+          label: `tiered hours for ${driverQuantity} ${op.driverCode} across ${op.tiers.length} tiers`,
+          value: contribution.hours,
+          source: `rule:${contribution.ruleCode}`,
+          cellRole: "base_hours",
+        },
+      ];
+    case "percentage_of_selected_labor":
+      return [
+        { label: "share of selected labor", value: op.percentage, source: `rule:${contribution.ruleCode}`, cellRole: "percentage" },
+        {
+          label: "selected packs' expected hours",
+          value: contribution.selectedBaseHours ?? 0,
+          source: `selection:${op.selectionScope ?? (op.selectedActivityPackCodes ?? []).join("+")}`,
+          cellRole: "base_hours",
+        },
+      ];
+    case "manual_cost_line":
+      return [];
+    default: {
+      const unit = unitHoursOf(op) ?? 0;
+      return [
+        { label: `${op.driverCode} quantity`, value: driverQuantity ?? 0, source: `driver:${op.driverCode}`, cellRole: "count" },
+        { label: `hours per ${op.driverCode}${overrideNote}`, value: unit, source: ruleSource, cellRole: "unit_hours" },
+      ];
+    }
+  }
 }
 
 function resolveModuleMultipliers(
@@ -120,10 +289,22 @@ interface RuleHoursContribution {
   operation: EffortOperation;
   classification: LineClassification;
   hours: number; // raw, pre-factor, pre-selection (0 for percentage rules in the base pass)
+  /** Set when a `unitHoursOverrides` entry replaced this rule's reference unit hours. */
+  override?: AppliedUnitHoursOverride;
+  /** percentage_of_selected_labor only: the selected packs' summed (pre-friction) expected hours. */
+  selectedBaseHours?: number;
 }
 
 export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput): EffortEngineOutput {
   getArchetype(pack, input.archetypeCode); // throws UnknownArchetypeError if invalid — validates early
+  const pricingBasis: PricingBasis = input.pricingBasis ?? "role_mix";
+  if (pricingBasis !== "role_mix" && pricingBasis !== "pod") throw new InvalidPricingBasisError(String(pricingBasis));
+  validateProgramFactors(input.programFactors);
+  const hasProgramFactors = input.programFactors !== undefined;
+  const frictionFactor = input.programFactors?.frictionFactor ?? 1;
+  const unitHoursOverrides = input.unitHoursOverrides ?? {};
+  for (const [ruleCode, override] of Object.entries(unitHoursOverrides)) validateUnitHoursOverride(ruleCode, override);
+  const consumedOverrides = new Set<string>();
   const resolvedPacks = resolveActivityPacksForArchetype(pack, input.archetypeCode, {
     includeConditionalPackCodes: input.includeConditionalPackCodes,
   });
@@ -142,6 +323,24 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
     const contributions: RuleHoursContribution[] = [];
     for (const rule of resolved.rules) {
       const classification = effectiveClassification(resolved.pack.activity_pack_code, rule.classification);
+      const requestedOverride = Object.prototype.hasOwnProperty.call(unitHoursOverrides, rule.ruleCode)
+        ? unitHoursOverrides[rule.ruleCode]
+        : undefined;
+      let override: AppliedUnitHoursOverride | undefined;
+      let operation = rule.operation;
+      if (requestedOverride) {
+        const referenceUnitHours = unitHoursOf(rule.operation);
+        if (referenceUnitHours === null) {
+          throw new InvalidUnitHoursOverrideError(
+            rule.ruleCode,
+            "unsupported_operation",
+            `a '${rule.operation.op}' rule has no single unit-hours value to replace`,
+          );
+        }
+        consumedOverrides.add(rule.ruleCode);
+        override = { referenceUnitHours, unitHours: requestedOverride.unitHours, reason: requestedOverride.reason.trim() };
+        operation = withUnitHours(rule.operation, requestedOverride.unitHours);
+      }
       if (rule.operation.op === "manual_cost_line") {
         manualCostRules.push({ pack: resolved, ruleCode: rule.ruleCode, operation: rule.operation, classification });
         continue;
@@ -150,10 +349,15 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
         percentageRules.push({ pack: resolved, ruleCode: rule.ruleCode, operation: rule.operation, classification });
         continue;
       }
-      const hours = evaluateHours(rule.operation, input.scopeDrivers) ?? 0;
-      contributions.push({ pack: resolved, ruleCode: rule.ruleCode, operation: rule.operation, classification, hours });
+      const hours = evaluateHours(operation, input.scopeDrivers) ?? 0;
+      contributions.push({ pack: resolved, ruleCode: rule.ruleCode, operation, classification, hours, ...(override ? { override } : {}) });
     }
     baseContributionsByPack.set(resolved.pack.activity_pack_code, contributions);
+  }
+  for (const ruleCode of Object.keys(unitHoursOverrides)) {
+    if (!consumedOverrides.has(ruleCode)) {
+      throw new InvalidUnitHoursOverrideError(ruleCode, "unknown_rule", `no in-scope effort rule '${ruleCode}' for archetype '${input.archetypeCode}'`);
+    }
   }
 
   // Guard against a selection scope pointing at a pack that itself has a
@@ -206,7 +410,7 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
     const selectedExpectedSum = selected.reduce((acc, code) => acc + (baseExpectedHoursByPack.get(code) ?? 0), 0);
     const hours = roundHours(pr.operation.percentage * selectedExpectedSum);
     const list = percentageContributionsByPack.get(pr.pack.pack.activity_pack_code) ?? [];
-    list.push({ pack: pr.pack, ruleCode: pr.ruleCode, operation: pr.operation, classification: pr.classification, hours });
+    list.push({ pack: pr.pack, ruleCode: pr.ruleCode, operation: pr.operation, classification: pr.classification, hours, selectedBaseHours: selectedExpectedSum });
     percentageContributionsByPack.set(pr.pack.pack.activity_pack_code, list);
   }
 
@@ -220,7 +424,11 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
     allContributionsByPack.set(packCode, contributions);
     const rawTotal = roundHours(contributions.reduce((acc, c) => acc + c.hours, 0));
     const f = factorsFor(packCode);
-    const expected = roundHours(rawTotal * f.complexityFactor * f.noveltyFactor * f.assuranceFactor * f.scenarioFactor);
+    // Program friction is applied HERE, after every module factor — and only
+    // here: the percentage pass above read the pre-friction expected hours,
+    // so a percentage line receives friction once, on its own expected hours.
+    // `× 1` (no programFactors) is exact in IEEE-754, so absent = unchanged.
+    const expected = roundHours(rawTotal * f.complexityFactor * f.noveltyFactor * f.assuranceFactor * f.scenarioFactor * frictionFactor);
     finalRawHoursByPack.set(packCode, rawTotal);
     finalExpectedHoursByPack.set(packCode, expected);
   }
@@ -244,6 +452,71 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
           ? null
           : (input.scopeDrivers[driverCodeOf(contribution.operation) ?? ""] ?? null);
       const driverCode = driverCodeOf(contribution.operation);
+      const moduleHours: NonNullable<EffortLineItem["moduleHours"]> = {
+        raw: contribution.hours,
+        complexityFactor: f.complexityFactor,
+        noveltyFactor: f.noveltyFactor,
+        assuranceFactor: f.assuranceFactor,
+        scenarioFactor: f.scenarioFactor,
+        ...(hasProgramFactors ? { frictionFactor } : {}),
+        expected: ruleShareOfExpected,
+      };
+      const overrideTrace = contribution.override
+        ? ` [${contribution.override.referenceUnitHours} h (reference) → ${contribution.override.unitHours} h (override: ${contribution.override.reason})]`
+        : "";
+      const operationTrace = `${describeOperation(contribution.operation, driverQuantity)}${overrideTrace}`;
+      const factorTrace =
+        `× complexity ${f.complexityFactor} × novelty ${f.noveltyFactor} × assurance ${f.assuranceFactor} × scenario ${f.scenarioFactor}` +
+        (hasProgramFactors ? ` × friction ${formatFactor(frictionFactor)}` : "");
+      const shareInputTerms: FormulaTerm[] = [
+        ...rawHoursTerms(contribution, driverQuantity),
+        { label: "complexity factor", value: f.complexityFactor, source: `module:${packCode}`, cellRole: "factor" },
+        { label: "novelty factor", value: f.noveltyFactor, source: `module:${packCode}`, cellRole: "factor" },
+        { label: "assurance factor", value: f.assuranceFactor, source: `module:${packCode}`, cellRole: "factor" },
+        { label: "scenario factor", value: f.scenarioFactor, source: `scenario:${input.scenarioKey}`, cellRole: "factor" },
+        ...(hasProgramFactors ? [{ label: "program friction factor", value: frictionFactor, source: "program", cellRole: "factor" as const }] : []),
+      ];
+      const overrideRationale =
+        contribution.override && f.scenarioRationale
+          ? `${f.scenarioRationale}; unit-hours override: ${contribution.override.reason}`
+          : contribution.override
+            ? `unit-hours override: ${contribution.override.reason}`
+            : f.scenarioRationale;
+      const overrideField = contribution.override ? { unitHoursOverride: { ...contribution.override } } : {};
+
+      if (pricingBasis === "pod") {
+        // Hours only: no role allocation, no rate, and therefore no
+        // allocation gap — the pod pricer turns these hours into money.
+        lineItems.push({
+          archetypeCode: input.archetypeCode,
+          activityPackCode: packCode,
+          activityPackName: resolved.pack.activity_pack_name,
+          category: resolved.pack.category,
+          ruleCode: contribution.ruleCode,
+          operation: contribution.operation.op,
+          driverCode,
+          driverQuantity,
+          modelVersion: pack.modelVersion,
+          scenarioKey: input.scenarioKey,
+          classification: contribution.classification,
+          sharedCostRef: sharedRef,
+          roleCode: null,
+          allocationPct: null,
+          moduleHours,
+          roleHours: null,
+          rate: null,
+          laborCostCents: null,
+          manualCostCents: null,
+          gapReason: null,
+          overrideRationale,
+          formulaTrace:
+            `${operationTrace} = ${contribution.hours}h raw share; ${factorTrace} = ${ruleShareOfExpected}h expected share; ` +
+            `pod basis — hours only (priced by the pod pricer, not the role mix)`,
+          formulaTerms: closeHoursTerms(shareInputTerms, ruleShareOfExpected, "expected hours"),
+          ...overrideField,
+        });
+        continue;
+      }
 
       if (resolved.roleMix.length === 0) {
         // A pack with no role mix is a configuration gap, not silently skipped.
@@ -262,21 +535,16 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
           sharedCostRef: sharedRef,
           roleCode: null,
           allocationPct: null,
-          moduleHours: {
-            raw: contribution.hours,
-            complexityFactor: f.complexityFactor,
-            noveltyFactor: f.noveltyFactor,
-            assuranceFactor: f.assuranceFactor,
-            scenarioFactor: f.scenarioFactor,
-            expected: ruleShareOfExpected,
-          },
+          moduleHours,
           roleHours: null,
           rate: null,
           laborCostCents: null,
           manualCostCents: null,
           gapReason: `activity pack '${packCode}' has no pricing_activity_role_mix rows`,
-          overrideRationale: f.scenarioRationale,
-          formulaTrace: `${describeOperation(contribution.operation, driverQuantity)} — NO ROLE MIX CONFIGURED, cannot allocate hours to a role`,
+          overrideRationale,
+          formulaTrace: `${operationTrace} — NO ROLE MIX CONFIGURED, cannot allocate hours to a role`,
+          formulaTerms: closeHoursTerms(shareInputTerms, ruleShareOfExpected, "expected hours"),
+          ...overrideField,
         });
         continue;
       }
@@ -286,6 +554,17 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
         if (!rate) throw new MissingRoleRateEntryError(roleEntry.roleCode);
         const roleHours = roundHours(ruleShareOfExpected * (roleEntry.allocationPct / 100));
         const laborCostCents: Cents | null = rate.hourlyRateCents === null ? null : hoursToCents(roleHours, rate.hourlyRateCents);
+        const roleTerms = closeHoursTerms(
+          [
+            ...shareInputTerms,
+            { label: `${roleEntry.roleCode} allocation`, value: roleEntry.allocationPct / 100, source: `role_mix:${roleEntry.roleCode}`, cellRole: "allocation" },
+          ],
+          roleHours,
+          "role hours",
+        );
+        if (rate.hourlyRateCents !== null && laborCostCents !== null) {
+          appendCostTerms(roleTerms, rate.hourlyRateCents, `rate:${rate.resolvedFromScope}`, laborCostCents);
+        }
 
         lineItems.push({
           archetypeCode: input.archetypeCode,
@@ -302,23 +581,18 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
           sharedCostRef: sharedRef,
           roleCode: roleEntry.roleCode,
           allocationPct: roleEntry.allocationPct,
-          moduleHours: {
-            raw: contribution.hours,
-            complexityFactor: f.complexityFactor,
-            noveltyFactor: f.noveltyFactor,
-            assuranceFactor: f.assuranceFactor,
-            scenarioFactor: f.scenarioFactor,
-            expected: ruleShareOfExpected,
-          },
+          moduleHours,
           roleHours,
           rate,
           laborCostCents,
           manualCostCents: null,
           gapReason: rate.gapReason,
-          overrideRationale: f.scenarioRationale,
+          overrideRationale,
+          formulaTerms: roleTerms,
+          ...overrideField,
           formulaTrace:
-            `${describeOperation(contribution.operation, driverQuantity)} = ${contribution.hours}h raw share; ` +
-            `× complexity ${f.complexityFactor} × novelty ${f.noveltyFactor} × assurance ${f.assuranceFactor} × scenario ${f.scenarioFactor} ` +
+            `${operationTrace} = ${contribution.hours}h raw share; ` +
+            `${factorTrace} ` +
             `= ${ruleShareOfExpected}h expected share; × ${roleEntry.allocationPct}% allocation = ${roleHours}h role-hours; ` +
             (rate.hourlyRateCents === null
               ? `rate UNRESOLVED (${rate.gapReason})`
@@ -354,6 +628,7 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
       gapReason: null,
       overrideRationale: null,
       formulaTrace: `manual cost line: $${(manual.operation.costCents / 100).toFixed(2)} — ${manual.operation.rationale}`,
+      formulaTerms: [],
     });
   }
 
@@ -383,6 +658,7 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
       gapReason: null,
       overrideRationale: `AI-accelerated scenario approved cost assumption: ${added.costKey}`,
       formulaTrace: `AI-acceleration cost assumption '${added.costKey}': $${(added.costCents / 100).toFixed(2)} (${added.unit}) — ${added.rationale}`,
+      formulaTerms: [],
     });
   }
 
@@ -393,6 +669,7 @@ export function runEffortEngine(pack: EffortEnginePack, input: EffortEngineInput
     modelVersion: pack.modelVersion,
     scenarioKey: input.scenarioKey,
     tenantKey: input.tenantKey,
+    pricingBasis,
     lineItems,
     totals,
   };

@@ -13,6 +13,7 @@ import Papa from "papaparse";
 import { readEffortPackDir, type EffortPackData } from "../pack-loader";
 import type { EffortEnginePack, PricingEffortRuleRow } from "../types";
 import type { RoleRateSnapshot } from "../rate-card-resolver";
+import type { PodLocation, PodProviderClass, PodRateBand } from "../pod-rate-adapter";
 
 const PACK_DIR = path.resolve(__dirname, "..", "..", "..", "..", "..", "datasets", "reference", "pricing-engine-v1");
 
@@ -130,5 +131,42 @@ export function loadRealRoleRateSnapshot(): RoleRateSnapshot {
     })),
     clientLines: [],
     globalLines: [],
+  };
+}
+
+/**
+ * The committed reference rows the pod rate adapter reads — full rate bands
+ * (all three rate columns + basis/confidence/approval), delivery locations
+ * and provider classes — straight off PR1's CSVs. No database is touched.
+ */
+export function loadRealPodRateReference(): {
+  rateBands: PodRateBand[];
+  locations: PodLocation[];
+  providerClasses: PodProviderClass[];
+} {
+  const num = (v: string | undefined): number | null => (v ? Number.parseFloat(v) : null);
+  return {
+    rateBands: readCsv("pricing_rate_bands.csv").map((r) => ({
+      rate_band_code: r.rate_band_code,
+      role_code: r.role_code,
+      level_code: r.level_code,
+      currency: r.currency || "USD",
+      rate_basis: r.rate_basis,
+      loaded_rate: num(r.loaded_rate),
+      scarcity_adj_rate: num(r.scarcity_adj_rate),
+      indicative_bill_rate: num(r.indicative_bill_rate),
+      confidence: r.confidence || null,
+      approval_status: r.approval_status || null,
+    })),
+    locations: readCsv("pricing_delivery_locations.csv").map((r) => ({
+      location_code: r.location_code,
+      shore_category: r.shore_category,
+      salary_multiplier: Number.parseFloat(r.salary_multiplier),
+      rate_multiplier: Number.parseFloat(r.rate_multiplier),
+    })),
+    providerClasses: readCsv("pricing_provider_classes.csv").map((r) => ({
+      provider_class_code: r.provider_class_code,
+      tier_multiplier: Number.parseFloat(r.tier_multiplier),
+    })),
   };
 }
