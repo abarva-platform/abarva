@@ -36,6 +36,7 @@ export type SourceKind =
   | "ava"
   | "hard"
   | "soft"
+  | "public"
   | "team";
 
 export interface SourceRef {
@@ -52,6 +53,9 @@ const TAG: Record<SourceKind, { label: string; tone: string } | null> = {
   ava: { label: "Ava’s reading", tone: "t-ava" },
   hard: { label: "Required", tone: "t-fact" },
   soft: { label: "Advisory", tone: "t-pattern" },
+  // Template v1.9: a claim from an APPROVED public source. Muted, never FACT —
+  // a public source is not a fact about the client.
+  public: { label: "Public source", tone: "t-pattern" },
   team: null,
 };
 
