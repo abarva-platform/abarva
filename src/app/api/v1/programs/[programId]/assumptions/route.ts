@@ -51,9 +51,9 @@ export async function GET(
     return Response.json({
       ok: true,
       assumptions: records.map((record) =>
-        assumptionForViewer(record, opened.policy),
+        assumptionForViewer(record, opened.figures),
       ),
-      figuresRedacted: !opened.policy.canViewFinancialData,
+      figuresRedacted: !opened.figures.canViewFinancialData,
       canEdit: canWriteRegister(opened.policy, programId),
     });
   } catch (err) {
@@ -90,9 +90,9 @@ export async function POST(
         userId: ctx.userId,
       });
       if (!result.ok) return storeRefusalResponse(result.refusal);
-      return landedAssumptionResponse(result.record, opened.policy, 201);
+      return landedAssumptionResponse(result.record, opened.figures, 201);
     } catch (err) {
-      const landed = historyNotRecordedResponse(err, opened.policy, 201);
+      const landed = historyNotRecordedResponse(err, opened.figures, 201);
       if (landed) return landed;
       throw err;
     }

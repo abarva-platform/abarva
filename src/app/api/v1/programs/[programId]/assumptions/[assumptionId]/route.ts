@@ -62,9 +62,9 @@ export async function PATCH(
         { kind: "person", userId: ctx.userId },
       );
       if (!result.ok) return storeRefusalResponse(result.refusal);
-      return landedAssumptionResponse(result.record, opened.policy, 200);
+      return landedAssumptionResponse(result.record, opened.figures, 200);
     } catch (err) {
-      const landed = historyNotRecordedResponse(err, opened.policy, 200);
+      const landed = historyNotRecordedResponse(err, opened.figures, 200);
       if (landed) return landed;
       throw err;
     }

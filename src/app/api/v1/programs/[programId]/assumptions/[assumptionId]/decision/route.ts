@@ -56,7 +56,8 @@ export async function POST(
     const ctx = await requireTenancy();
     const opened = await openAssumptionRegister(ctx, programId, "write");
     if (!opened.ok) return opened.response;
-    const { policy } = opened;
+    // Figures are projected for this viewer (see `seesRegisterFigures`).
+    const policy = opened.figures;
     if (!isRegisterRowId(assumptionId)) {
       return registerRefusalResponse({
         code: "unknown_assumption",

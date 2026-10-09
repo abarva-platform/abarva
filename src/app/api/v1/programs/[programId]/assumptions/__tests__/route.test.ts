@@ -549,7 +549,7 @@ describe("GET .../assumptions", () => {
     expect(mockStore.listAssumptions).toHaveBeenCalledWith(CTX, MOVE);
   });
 
-  it("withholds every figure from a viewer without financial visibility", async () => {
+  it("withholds every figure from a read-only viewer without financial visibility", async () => {
     rows = [
       record({
         whyItMatters: "The $2.4M savings line rests on it.",
@@ -562,7 +562,9 @@ describe("GET .../assumptions", () => {
         answeredAt: "2026-10-02T00:00:00.000Z",
       }),
     ];
-    mockLoadPolicy.mockResolvedValue(policy({ canViewFinancialData: false }));
+    mockLoadPolicy.mockResolvedValue(
+      policy({ accessLevel: "program_viewer", canViewFinancialData: false }),
+    );
     const body = await (await list()).json();
     expect(body.figuresRedacted).toBe(true);
     const row = body.assumptions[0];
@@ -764,14 +766,24 @@ describe("POST .../assumptions", () => {
     });
   });
 
-  it("withholds the created row's figures from a viewer without financial visibility", async () => {
+  it("shows the created row's figures to the person working the Move, even without financial visibility", async () => {
+    // The register is the team's working tool (see seesRegisterFigures).
     mockLoadPolicy.mockResolvedValue(policy({ canViewFinancialData: false }));
     const body = await (await create(NEW_ROW_BODY)).json();
-    expect(body.assumption).toMatchObject({
-      workingFigure: null,
-      workingValue: null,
-      figuresRedacted: true,
-    });
+    expect(body.assumption.figuresRedacted).toBe(false);
+    expect(body.assumption.workingFigure).not.toBeNull();
+  });
+
+  it("lists figures for a member without financial visibility, and withholds them from a viewer on another Move's allow-list", async () => {
+    mockLoadPolicy.mockResolvedValue(policy({ canViewFinancialData: false }));
+    expect((await (await list()).json()).figuresRedacted).toBe(false);
+    mockLoadPolicy.mockResolvedValue(
+      policy({
+        canViewFinancialData: false,
+        programIdsAllowed: ["another-move"],
+      }),
+    );
+    expect((await (await list()).json()).figuresRedacted).toBe(true);
   });
 });
 
@@ -1415,7 +1427,7 @@ describe("POST .../assumptions/:assumptionId/decision", () => {
     expect((await res.json()).error).toBe("register_write_unconfirmed");
   });
 
-  it("withholds figures in a decision's answer from a viewer without financial visibility", async () => {
+  it("shows a decision's figures to the person who made it, even without financial visibility", async () => {
     mockLoadPolicy.mockResolvedValue(policy({ canViewFinancialData: false }));
     const body = await (
       await decide({
@@ -1428,9 +1440,8 @@ describe("POST .../assumptions/:assumptionId/decision", () => {
     ).json();
     expect(body.assumption).toMatchObject({
       status: "confirmed",
-      answerFigure: null,
-      workingFigure: null,
-      figuresRedacted: true,
+      answerFigure: "$2.4M",
+      figuresRedacted: false,
     });
   });
 });

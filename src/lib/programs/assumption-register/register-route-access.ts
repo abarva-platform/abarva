@@ -46,8 +46,30 @@ export function canWriteRegister(
   );
 }
 
+/**
+ * Who sees a register's working figures. The register is the team's working
+ * tool: anyone who can work this Move's register sees its figures, as does
+ * anyone with financial visibility. A read-only viewer without financial
+ * visibility gets them withheld (the restricted-financial rule exists for
+ * broad viewers, not for the people building the case).
+ */
+export function seesRegisterFigures(
+  policy: Pick<
+    UserProgramAccessPolicy,
+    "canViewFinancialData" | "accessLevel" | "programIdsAllowed"
+  >,
+  programId: string,
+): boolean {
+  return policy.canViewFinancialData || canWriteRegister(policy, programId);
+}
+
 export type OpenedRegister =
-  | { ok: true; policy: UserProgramAccessPolicy }
+  | {
+      ok: true;
+      policy: UserProgramAccessPolicy;
+      /** The viewer projection every response uses for figures. */
+      figures: { canViewFinancialData: boolean };
+    }
   | { ok: false; response: Response };
 
 /** Run the flag → Move → policy ladder for one request. */
@@ -79,7 +101,11 @@ export async function openAssumptionRegister(
       response: registerRefusalResponse({ code: "forbidden" }),
     };
   }
-  return { ok: true, policy };
+  return {
+    ok: true,
+    policy,
+    figures: { canViewFinancialData: seesRegisterFigures(policy, programId) },
+  };
 }
 
 const UUID_RE =

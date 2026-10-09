@@ -50,9 +50,10 @@ What this release adds on top of the storage and rules:
 - **Who may do what.** Anyone who can open the Move can read its register. Only
   a Move member who is not view-only can change it. Every refusal says, in a
   sentence, what was or was not saved and what to do next.
-- **Figures are withheld** from a viewer whose access does not include
-  financial data: every figure is removed and the text fields are passed
-  through the shared restricted-financial filter.
+- **Figures are visible to the people working the Move** (anyone who can
+  change its register) and **withheld from a read-only viewer** whose access
+  does not include financial data: for that viewer every figure is removed and
+  the text fields pass through the shared restricted-financial filter.
 - **aVa's propose tool** (`propose_assumption`) in the Moves chat. It can only
   add a proposed row, and it requires a statement, the working figure, a
   source, an owner role (it refuses something that reads like a person's
@@ -182,8 +183,9 @@ Routes and the aVa tool:
   a client admin, the read and mutation route families, every decision
   (accept, reject, answer confirmed, answer corrected, supersede to an existing
   row, supersede with a new row) and every refusal with its exact sentence. A
-  stale revision is a 409 that writes nothing. Figures are withheld from a
-  viewer without financial visibility. The body cannot set `origin` or
+  stale revision is a 409 that writes nothing. Figures are shown to anyone
+  who can work the register and withheld from a read-only viewer without
+  financial visibility. The body cannot set `origin` or
   `status`. A write whose history entry failed is reported as saved, and a
   supersede whose replacement landed names the replacement. The store stand-in
   applies the real domain model, so the transition cases run the real rules.
@@ -275,10 +277,12 @@ be sealed, and the sealed file must not be edited.
   supersede with a new replacement is three writes; if the replacement lands
   and the supersede does not, the refusal names the replacement so the
   supersede can be finished against it.
-- Figures are withheld for every area (value, data, delivery and adoption)
-  from a viewer without financial visibility, not only for value figures. The
-  canonical client-admin demo accounts resolve without financial visibility,
-  so they will see the register with figures withheld.
+- Figure visibility is a product decision recorded here: the register is the
+  team's working tool, so anyone who can work a Move's register sees its
+  working figures; a read-only viewer without financial visibility gets
+  figures withheld in every area (value, data, delivery and adoption). The
+  withholding covers every area on purpose: a data or delivery figure can
+  still be commercially sensitive.
 - The owner-role check in the aVa tool is a heuristic: it refuses an email
   address, an honorific, or two or three capitalised words with no role or
   function word. A personal name written another way could pass it, and an
