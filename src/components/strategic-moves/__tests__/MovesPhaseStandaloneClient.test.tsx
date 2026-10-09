@@ -1570,6 +1570,137 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     });
 
+    // The build control's `disabled` attribute read four terms; its colours
+    // read three, omitting the open-required-evidence term. So this state —
+    // every input answered and saved, the transition workbook still open,
+    // which is the ordinary state of the governed approve step because the
+    // workbook deliberately does not hold capture's Continue — rendered a
+    // genuinely inert button in the live primary green. The pre-existing case
+    // above asserted `toBeDisabled` and nothing about appearance, so the
+    // defect was green in CI. See `phase-build-action-state`.
+    it("paints the build control as held when open required evidence is its only hold", () => {
+      const openWorkbook = {
+        ...coveredEvidencePacketsForPhase(3)[0],
+        artifactType: null,
+        evidenceSlot: "P3 to P4 readiness workbook",
+        familyId: "stage_readiness_p3_p4",
+        status: "missing" as const,
+        evidenceTitles: [],
+      };
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[
+            ...coveredEvidencePacketsForPhase(3),
+            openWorkbook,
+          ]}
+          initialPhaseCaptureValues={{
+            ...completeP3CaptureValues,
+            recommendation:
+              "Choose Option B: proceed to conditional design planning.",
+          }}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const build = screen.getByRole("button", {
+        name: /Final build blocked by required evidence/i,
+      });
+      expect(build).toBeDisabled();
+      // The held treatment, not the primary green #147C5B on #FFFFFF.
+      expect(build).toHaveStyle({
+        backgroundColor: "#D8DDE5",
+        color: "#596579",
+        cursor: "default",
+      });
+    });
+
+    // An offerable build keeps the live treatment, so the assertion above is
+    // about this state's colours and not about the control always being grey.
+    it("paints the build control as live once nothing holds it", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(3)}
+          initialPhaseCaptureValues={{
+            ...completeP3CaptureValues,
+            recommendation:
+              "Choose Option B: proceed to conditional design planning.",
+          }}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const build = screen.getByRole("button", {
+        name: /Build P3/i,
+      });
+      expect(build).toBeEnabled();
+      expect(build).toHaveStyle({
+        backgroundColor: "#147C5B",
+        color: "#FFFFFF",
+        cursor: "pointer",
+      });
+    });
+
+    // One question — what should I do next? — answered by the button's label
+    // and by the sentence beside it. They resolved the same two holds in
+    // OPPOSITE orders, so with both open the control said "required evidence"
+    // while the line said "phase inputs".
+    it("names one hold in both the build label and the sentence beside it", () => {
+      const openWorkbook = {
+        ...coveredEvidencePacketsForPhase(3)[0],
+        artifactType: null,
+        evidenceSlot: "P3 to P4 readiness workbook",
+        familyId: "stage_readiness_p3_p4",
+        status: "missing" as const,
+        evidenceTitles: [],
+      };
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          workspaceV2Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[
+            ...coveredEvidencePacketsForPhase(3),
+            openWorkbook,
+          ]}
+          // The recommendation names no option, so P3's own capture blocker
+          // stands alongside the open workbook.
+          initialPhaseCaptureValues={{
+            ...completeP3CaptureValues,
+            recommendation: "Still weighing the routes.",
+          }}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByRole("button", {
+          name: /Complete phase inputs before build/i,
+        }),
+      ).toBeDisabled();
+      expect(
+        screen.queryByRole("button", {
+          name: /Final build blocked by required evidence/i,
+        }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Select the solution option that architecture should implement/i,
+        ),
+      ).toBeInTheDocument();
+    });
+
     it("P3 on the redesigned flow offers the solution-option choice beside the build control", () => {
       renderP3Capture();
       expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
