@@ -291,6 +291,109 @@ describe("assembleGovernedEvidence", () => {
     expect(out.evidence[1].evidenceFamily).toBe("Enterprise Ai Portfolio");
   });
 
+  it("cites a root-cause register as its ranked text, not its JSON", async () => {
+    const fakeQuery = (async () => [
+      chunk({
+        chunkId: "tenant-ai-portfolio",
+        sourceDoc: "First Capital AI portfolio",
+        sourceBasis: "enterprise_ai_portfolio",
+        text: "First Capital has several AI assets in financial crimes, regulatory change, and marketing operations.",
+        vectorScore: 0.92,
+      }),
+    ]) as never;
+    const fakeDb = {
+      from(table: string) {
+        if (table === "program_modules") {
+          return {
+            select: () => ({
+              eq: () => ({
+                order: () => ({
+                  order: () => ({
+                    limit: async () => ({
+                      data: [
+                        {
+                          id: "pm-1",
+                          module_key: "phase_2_gaps_root_causes",
+                          module_name: "Gaps / root causes",
+                          phase_number: 2,
+                          module_order: 1,
+                          status: "completed",
+                          state_jsonb: {
+                            capture_section_key: "gaps_root_causes",
+                            label: "Gaps / root causes",
+                            value: JSON.stringify({
+                              kind: "root_cause_register",
+                              version: 1,
+                              orderConfirmedAt: "2026-10-02",
+                              causes: [
+                                {
+                                  id: "RC-1",
+                                  cause: "Covenant setup has no accountable owner",
+                                  status: "accepted",
+                                  evidence: ["Onboarding workshop notes"],
+                                },
+                              ],
+                            }),
+                          },
+                          completed_at: "2026-07-22T12:00:00Z",
+                        },
+                      ],
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "evidence_ledger") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "program_evidence_reviews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    } as never;
+
+    const out = await assembleGovernedEvidence(
+      {
+        tenantClientKey: "arcturus",
+        clientId: "client-1",
+        sourceArtifactRef: "move-1",
+        query: "charter current state",
+      },
+      { queryTenantContext: fakeQuery, db: fakeDb },
+    );
+
+    const capture = out.evidence.find((e) =>
+      e.statement.includes("Covenant setup has no accountable owner"),
+    );
+    expect(capture?.statement).toContain(
+      "RC-1: Covenant setup has no accountable owner (accepted) · evidence: Onboarding workshop notes",
+    );
+    expect(out.evidence.some((e) => e.statement.includes('"kind"'))).toBe(false);
+  });
+
   it("expands current-phase capture and excludes later-phase signals", async () => {
     const fakeQuery = (async () => []) as never;
     const captureRows = [
