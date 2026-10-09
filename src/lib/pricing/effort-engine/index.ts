@@ -18,5 +18,8 @@ export * from "./range-policy";
 export * from "./scenarios";
 export * from "./cost-engine";
 export * from "./effort-engine";
+export * from "./formula-terms";
+export * from "./pod-pricer";
+export * from "./pod-rate-adapter";
 export * from "./validation";
 export * from "./snapshot-service";

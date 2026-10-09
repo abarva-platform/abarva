@@ -20,7 +20,7 @@
  */
 import type { PricingRangePolicyRow } from "./types";
 import { applyMultiplierToCents } from "./money";
-import type { Cents, RangePolicyInputs, RangeResult } from "./types";
+import type { Cents, NamedRangePolicy, NamedRangeResult, RangePolicyInputs, RangeResult } from "./types";
 
 function scoreTier(tier: "low" | "medium" | "high"): number {
   switch (tier) {
@@ -103,4 +103,40 @@ export function computeRange(
 ): RangeResult {
   const score = computeRangeScore(inputs);
   return applyRangePolicy(score, expectedCents, policies);
+}
+
+export class InvalidNamedRangePolicyError extends Error {
+  constructor(code: string, detail: string) {
+    super(`invalid_named_range_policy: '${code}' ${detail}`);
+    this.name = "InvalidNamedRangePolicyError";
+  }
+}
+
+/**
+ * Apply a NAMED low/high band directly — no five-dimension score, no tier
+ * lookup. For a release whose spread is set by its stage rather than by a
+ * score (e.g. every pre-design release carries the same band). Same
+ * invariant as the score tiers: finite, `0 <= low <= 1 <= high`, so
+ * `low <= expected <= high` always holds. The score-tier path
+ * (`applyRangePolicy` / `computeRange`) is unchanged.
+ */
+export function applyNamedRangePolicy(expectedCents: Cents, policy: NamedRangePolicy): NamedRangeResult {
+  if (typeof policy.code !== "string" || policy.code.trim().length === 0) {
+    throw new InvalidNamedRangePolicyError(String(policy.code), "must have a non-blank code");
+  }
+  if (!Number.isFinite(policy.low) || !Number.isFinite(policy.high)) {
+    throw new InvalidNamedRangePolicyError(policy.code, `has a non-finite band (low=${policy.low}, high=${policy.high})`);
+  }
+  if (policy.low < 0 || policy.low > 1 || policy.high < 1) {
+    throw new InvalidNamedRangePolicyError(policy.code, `has low=${policy.low}, high=${policy.high} — need 0 <= low <= 1 <= high`);
+  }
+  return {
+    basis: "named",
+    policyCode: policy.code,
+    lowMultiplier: policy.low,
+    highMultiplier: policy.high,
+    expectedCents,
+    lowCents: applyMultiplierToCents(expectedCents, policy.low),
+    highCents: applyMultiplierToCents(expectedCents, policy.high),
+  };
 }
