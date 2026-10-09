@@ -406,6 +406,64 @@ describe("GateReadinessStep", () => {
     ).toBeTruthy();
   });
 
+  it("a rebuild the server refuses leaves the signed documents signed and the gate submittable", async () => {
+    const fetchMock = jest.fn(async () => ({
+      ok: false,
+      status: 409,
+      json: async () => ({
+        error: "capture_incomplete",
+        detail: "Finish the Design steps before building.",
+      }),
+    }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const onSubmit = jest.fn<Promise<void>, [BuildSettledResult]>(
+      async () => undefined,
+    );
+    const { container } = render(
+      <GateReadinessStep
+        {...props({ onSubmit, onRecordChanged: jest.fn() })}
+      />,
+    );
+    fireEvent.click(
+      within(docsRow(container)).getByRole("button", {
+        name: "Rebuild the gate documents…",
+      }),
+    );
+    await act(async () => {
+      fireEvent.click(
+        within(docsRow(container)).getByRole("button", {
+          name: "Rebuild anyway",
+        }),
+      );
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/deliverables/generate-phase",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(docsRow(container).textContent).toContain(
+      "Finish the Design steps before building.",
+    );
+    // Nothing was queued, so nothing on the record changed.
+    expect(docsRow(container).textContent).not.toContain("Not built yet");
+    expect(within(docsRow(container)).getAllByText(/Signed v1/)).toHaveLength(
+      3,
+    );
+
+    writeRationale(container);
+    await act(async () => {
+      fireEvent.click(
+        within(footer(container)).getByRole("button", {
+          name: "Approve and submit Design",
+        }),
+      );
+    });
+    expect(container.querySelector("#row-SUBMIT")).toBeNull();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(
+      onSubmit.mock.calls[0][0].succeeded.map((s) => s.deliverableTypeKey),
+    ).toEqual(KEYS);
+  });
+
   it("a failed build offers one whole-set Build again, at row level", () => {
     const { container } = render(
       <GateReadinessStep
