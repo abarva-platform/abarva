@@ -46,6 +46,10 @@ import {
   type AdaptiveDepthDecision,
 } from "@/lib/deliverables/adaptive-depth";
 import { getModuleState, getProgramById } from "@/lib/programs/queries";
+import {
+  phaseBuildNotQueuedRefusal,
+  type PhaseBuildEnqueueOutcome,
+} from "@/lib/programs/phase-build-enqueue-refusal";
 import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidence";
 import {
   approvedMoveEvidenceRevisionForPhase,
@@ -716,7 +720,17 @@ export async function POST(req: NextRequest) {
     };
 
     const results: EnqueuedDeliverable[] = [];
+    // Which enqueue path ran, declared where it is chosen rather than inferred
+    // from the result rows later. The two paths differ in what they may have
+    // written when nothing ends up queued, and the refusal below has to say
+    // which — see `phase-build-enqueue-refusal`. Deliberately left unassigned:
+    // a third enqueue path that forgets to declare its outcome is a compile
+    // error here, not a path that silently inherits another one's claim.
+    let enqueueOutcome: PhaseBuildEnqueueOutcome;
     if (phase === 3 && approvedSolutionApproach && decisionLineage) {
+      // The batch call reports success or throws; reaching the response with
+      // nothing queued means it was accepted and still returned no run.
+      enqueueOutcome = "accepted_without_runs";
       try {
         const runs = await createSequentialDeliverableRunBatch(
           specs.map((spec, sequenceNo) => ({
@@ -768,6 +782,9 @@ export async function POST(req: NextRequest) {
         );
       }
     } else {
+      // Each spec is its own insert, which throws only when the insert itself
+      // failed, so every attempt throwing means no run row exists.
+      enqueueOutcome = "every_attempt_failed";
       for (const spec of specs) {
         const deliverableType = orchestratorDeliverableType(
           spec.deliverableTypeKey,
@@ -805,22 +822,48 @@ export async function POST(req: NextRequest) {
     }
 
     const queued = results.filter((r) => r.status === "queued").length;
+    const enqueueReport = {
+      phase,
+      phaseLabel,
+      generationAttemptId,
+      contextExtract,
+      adaptiveDepth,
+      omittedDeliverables,
+      ...(confirmedSolutionRoute ? { confirmedSolutionRoute } : {}),
+      queued,
+      total: results.length,
+      deliverables: results,
+    };
     // 202 if anything queued; 500 only if every deliverable failed to enqueue.
-    return Response.json(
-      {
+    // That 500 used to carry no `error` and no `detail`, so the one product
+    // fetcher's ladder fell through to the literal `HTTP 500` and the
+    // per-document reasons below were drawn nowhere. They were logged nowhere
+    // either: each rejection is caught into a result row, so the most complete
+    // failure this route can have was its quietest.
+    if (queued === 0) {
+      console.error("[generate-phase] phase_build_not_queued", {
+        moveId,
         phase,
-        phaseLabel,
-        generationAttemptId,
-        contextExtract,
-        adaptiveDepth,
-        omittedDeliverables,
-        ...(confirmedSolutionRoute ? { confirmedSolutionRoute } : {}),
-        queued,
-        total: results.length,
-        deliverables: results,
-      },
-      { status: queued > 0 ? 202 : 500 },
-    );
+        enqueueOutcome,
+        attempted: results.length,
+        reasons: results.map((result) => ({
+          deliverableTypeKey: result.deliverableTypeKey,
+          error: result.error ?? null,
+        })),
+      });
+      return Response.json(
+        {
+          ...enqueueReport,
+          ...phaseBuildNotQueuedRefusal({
+            phase,
+            attempted: results.length,
+            outcome: enqueueOutcome,
+          }),
+        },
+        { status: 500 },
+      );
+    }
+    return Response.json(enqueueReport, { status: 202 });
   } catch (err) {
     try {
       return tenancyErrorResponse(err);
