@@ -47,6 +47,7 @@ import {
   GATE_STATE_UNREADABLE_CHECK,
   classifyGateStateReads,
   describeUnreadableGateState,
+  type GateStateRead,
 } from "./gate-state-readback";
 import {
   isApprovedMoveEvidenceBasisCurrent,
@@ -445,22 +446,68 @@ export function gateCriteriaForPhase(
   }));
 }
 
-async function hasProgramEvidence(
+/**
+ * Did this Move ingest discovery evidence for any of these phases — and was
+ * the question answerable at all?
+ *
+ * The compat client never throws, so a connection failure, a permission denial
+ * or a bad column arrives as `{ data: null, error }`. Returning a bare boolean
+ * collapsed that into `false`, which is the IDENTICAL answer to a Move that
+ * genuinely ingested nothing. `discovery_notes_ingested` is a HARD criterion
+ * on the P2→P3 gate, so the collapse let a failed read refuse the demo walk's
+ * own blocking transition while reporting "Discovery notes or workshop logs
+ * ingested" as an observed absence — the remedy for which is to upload or
+ * re-ingest notes that are already there.
+ */
+async function readProgramEvidence(
   programId: string,
   phase: number | number[],
   sb: SupabaseClient,
-): Promise<boolean> {
+): Promise<
+  // A discriminated union, not `{ present, error? }`: a presence answer and a
+  // read failure are mutually exclusive, and the flat shape left a `present`
+  // field on the failure arm that no caller may consult. Carrying it anyway
+  // would restore, as a dead value, exactly the `false` this function stopped
+  // returning.
+  { readable: true; present: boolean } | { readable: false }
+> {
   // Discovery / current-state evidence is ingested with an inconsistent phase tag
   // across routes (current-state/ingest → 1, …/orchestrate → 2). Accept any of the
   // supplied phases so a gate check isn't starved by which intake route was used.
   const phases = Array.isArray(phase) ? phase : [phase];
-  const { data } = await sb
+  const { data, error } = await sb
     .from("program_evidence_items")
     .select("id")
     .eq("program_id", programId)
     .in("phase", phases)
     .limit(1);
-  return ((data as Array<{ id: string }> | null) ?? []).length > 0;
+  if (error) return { readable: false };
+  return {
+    readable: true,
+    present: ((data as Array<{ id: string }> | null) ?? []).length > 0,
+  };
+}
+
+/**
+ * The gate's one refusal for a state it could not read.
+ *
+ * Shared by the pre-loop classification of the eight hoisted reads and by the
+ * ninth read inside the loop, so both produce the same single `failedChecks`
+ * entry rather than two shapes a client has to tell apart.
+ */
+function unreadableGateState(unreadable: readonly GateStateRead[]): GateCheck {
+  return {
+    pass: false,
+    failedChecks: [
+      {
+        check: GATE_STATE_UNREADABLE_CHECK,
+        reason: describeUnreadableGateState(unreadable),
+        severity: "hard",
+      },
+    ],
+    requiresApproval: false,
+    approverRole: null,
+  };
 }
 
 /**
@@ -1160,7 +1207,8 @@ export async function evaluateGate(
     ) &&
     !discoveryReportHasHardGap;
 
-  // Every criterion below answers from the seven reads above, and an unreadable
+  // Every criterion below answers from the eight reads above plus the ninth
+  // `program_evidence_items` read issued inside the loop, and an unreadable
   // read is indistinguishable from a Move that produced nothing. Refuse by name
   // rather than let 30 of the 38 branches report an absence nobody observed.
   // The verdict does not change — an unread state cannot clear a HARD
@@ -1186,18 +1234,7 @@ export async function evaluateGate(
       : null,
   });
   if (!stateReadback.readable) {
-    return {
-      pass: false,
-      failedChecks: [
-        {
-          check: GATE_STATE_UNREADABLE_CHECK,
-          reason: describeUnreadableGateState(stateReadback.unreadable),
-          severity: "hard",
-        },
-      ],
-      requiresApproval: false,
-      approverRole: null,
-    };
+    return unreadableGateState(stateReadback.unreadable);
   }
 
   const failedChecks: GateCheck["failedChecks"] = [];
@@ -1318,8 +1355,14 @@ export async function evaluateGate(
           captureCompleted(2, "solution_route_validation") &&
           confirmedSolutionRoute !== null;
         break;
-      case "discovery_notes_ingested":
-        pass =
+      case "discovery_notes_ingested": {
+        // Four of the five arms answer from state already read above, so they
+        // are tested first: the `program_evidence_items` read is then issued
+        // only when it DECIDES the criterion. That matters for the refusal —
+        // an unreadable evidence table must not refuse a gate some other arm
+        // had already cleared, and reordering pure predicates around a read
+        // cannot change the result of an `||` chain.
+        const clearedWithoutEvidenceRead =
           isPresent(
             findDeliverable(
               "discovery_notes",
@@ -1328,14 +1371,29 @@ export async function evaluateGate(
             ),
           ) ||
           moduleCompleted("discovery_notes_ingest", "workshop_notes_ingest") ||
-          (await hasProgramEvidence(programId, [1, 2], sb)) ||
           discoveryReportHasWorkshopEvidence ||
           (fromPhase === 2 &&
             /\b(current state|finding|baseline|metric|gap|root cause|handoff|process|data quality|governance|evidence confidence|recommendation)\b/.test(
               phaseCaptureText,
             ) &&
             phaseModulesCompleted(fromPhase));
+        if (clearedWithoutEvidenceRead) {
+          pass = true;
+          break;
+        }
+        const ingestedEvidence = await readProgramEvidence(
+          programId,
+          [1, 2],
+          sb,
+        );
+        if (!ingestedEvidence.readable) {
+          // Decisive and unread. Same refusal as the other eight reads: this
+          // is NOT a finding that no notes were ingested.
+          return unreadableGateState(["program_evidence"]);
+        }
+        pass = ingestedEvidence.present;
         break;
+      }
       case "current_state_summary_drafted":
         pass = isPresent(
           findDeliverable(
