@@ -31,7 +31,18 @@
 // The raw code is never returned. It is not an action a reviewer can take, and
 // it stays visible to an engineer in the response body itself.
 
-import { MAX_ATTACHMENT_SIZE_BYTES } from "@/lib/programs/attachments/mime";
+import {
+  ACCEPTED_UPLOAD_FORMATS,
+  describeUploadSizeLimit,
+} from "@/lib/programs/attachments/upload-control-bounds";
+
+/**
+ * Re-exported for the readers that already import it from here. The wording
+ * itself moved to `attachments/upload-control-bounds.ts`, which the upload
+ * CONTROL also reads, so the cap a reviewer is told before choosing a file and
+ * the cap a refusal names afterwards are one function.
+ */
+export { describeUploadSizeLimit };
 
 /**
  * The quarantine code, declared by `sensitiveUploadRejectedResponse` in
@@ -78,19 +89,6 @@ export const DETAIL_IS_REVIEWER_PROSE: readonly MoveUploadRefusalCode[] = [
   "evidence_family_requires_evidence_upload",
   "unknown_evidence_family",
 ];
-
-/** The upload cap as the limit itself states it, never a retyped literal. */
-export function describeUploadSizeLimit(
-  bytes: number = MAX_ATTACHMENT_SIZE_BYTES,
-): string {
-  const megabytes = bytes / (1024 * 1024);
-  return `${Number.isInteger(megabytes) ? megabytes : megabytes.toFixed(1)} MB`;
-}
-
-/** The file formats the upload allowlist accepts, in reviewer language. */
-const ACCEPTED_FORMATS =
-  "PDF, Word, Excel, PowerPoint, CSV, JSON, Markdown or plain text, a PNG or " +
-  "JPEG image, or an MP3/M4A/MP4 recording";
 
 function namedFile(fileName: unknown): string {
   const name = typeof fileName === "string" ? fileName.trim() : "";
@@ -146,7 +144,7 @@ export function describeMoveUploadRefusal(input: {
       case "unsupported_type":
         return (
           `${subject} is not a file type this workspace can read, so nothing ` +
-          `was stored. Upload it as ${ACCEPTED_FORMATS}.`
+          `was stored. Upload it as ${ACCEPTED_UPLOAD_FORMATS}.`
         );
       case "evidence_family_requires_evidence_upload":
         return (
