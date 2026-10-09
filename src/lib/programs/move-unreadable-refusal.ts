@@ -1,10 +1,9 @@
 /**
  * The sentence a Moves mutation owes the reader when the Move cannot be read.
  *
- * `getProgramById` returns `null` for exactly three reasons, and the two live
- * Moves mutation routes — `POST .../advance` and
- * `POST .../phase-gate-approval` — both turned that `null` into a 404 carrying
- * a code and nothing else:
+ * `getProgramById` returns `null` for exactly three reasons, and every walk
+ * step that reads a Move turned that `null` into a 404 carrying a code and
+ * nothing else:
  *
  *   1. per-Move RBAC: `canReadProgram` is false because the caller's grant list
  *      exists and does not include this Move;
@@ -20,6 +19,28 @@
  * the gate again — which cannot clear any of the three causes.
  * `PhaseAdvanceButton` reads `body.detail ?? "Failed to advance phase"`, so the
  * advance refusal named nothing at all.
+ *
+ * **Which steps this covers, enumerated rather than named.** This module first
+ * shipped for the two mutation routes above, and its own comment said "the two
+ * live Moves mutation routes" — a count, which went stale the moment the walk's
+ * other readers were looked at. The walk's five steps are the ones
+ * `MovesWalkStep` in `walk-step-unexpected-failure` lists, and of those five:
+ *
+ *   - `POST .../advance` and `POST .../phase-gate-approval` were named here
+ *     from the start;
+ *   - `POST .../phase-capture` has **four** reader ladders (both autosave
+ *     paths, the aVa draft save, the gate finalize) and every one of them ends
+ *     `detail || error`, so the per-section save slot printed `not_found`;
+ *   - `POST .../phase-input-draft` has one, the cited-draft panel, which
+ *     renders what it is handed into a `role="alert"` paragraph;
+ *   - `POST /api/v1/deliverables/generate-phase` has no 404 arm at all, so
+ *     there is nothing on it to name.
+ *
+ * `GET .../phase-capture` keeps its bare body deliberately, for the same reason
+ * it is absent from `MovesWalkStep`: no client fetches it, so a sentence there
+ * would change no screen. Bare `not_found` arms also remain on roughly thirty
+ * non-walk `/api/v1/programs/**` routes; they are a separate sweep, and each
+ * needs its own reader checked before it earns a sentence.
  *
  * Why one sentence for all three causes, and why it stays that way. Telling the
  * three apart would answer "does this Move exist?" to a caller who may not read
