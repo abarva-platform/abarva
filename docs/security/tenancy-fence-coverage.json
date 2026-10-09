@@ -10,12 +10,12 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 406,
+    "routes": 409,
     "fenced": 230,
     "fencedDirect": 106,
     "fencedIndirect": 124,
-    "unfenced": 176,
-    "unfencedButReachesFenceModule": 95,
+    "unfenced": 179,
+    "unfencedButReachesFenceModule": 98,
     "behavioral": 84,
     "byteScannerOnly": 7,
     "none": 139
@@ -4944,6 +4944,42 @@
     },
     {
       "route": "src/app/api/v1/programs/[programId]/artifacts/upload/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/assumptions/[assumptionId]/decision/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/assumptions/[assumptionId]/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/assumptions/route.ts",
       "fence": "none",
       "fenceSymbols": [],
       "fenceVia": [],
