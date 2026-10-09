@@ -16,6 +16,11 @@ import {
   moveArtifactBytesNeverRetained,
   type MoveArtifactDownloadRefusalReason,
 } from "@/lib/programs/move-artifact-download-refusal";
+import {
+  MOVE_ARTIFACT_SUPERSEDE_FAILED,
+  MOVE_ARTIFACT_VERSION_LINEAGE_UNREADABLE,
+  resolveMoveArtifactVersionLineage,
+} from "./move-artifact-version-lineage";
 
 const BUCKET = process.env.DATA_PLANE_OBJECT_STORE_CONTAINER ?? "context-drops";
 
@@ -139,28 +144,32 @@ export async function saveMoveArtifact(
   const sha = createHash("sha256").update(body).digest("hex");
   const family = input.artifactFamily ?? "generated_deliverable";
 
-  // Next version for this (move, artifactType) among current rows.
-  let version = 1;
-  let priorId: string | null = null;
-  try {
-    const { data } = await sb
+  // Next version for this (move, artifactType) among current rows. The version
+  // is the blob path, so a failed read cannot be answered with v1 — see
+  // `move-artifact-version-lineage`. This refusal precedes both writes.
+  const lineage = resolveMoveArtifactVersionLineage(
+    await sb
       .from("move_artifacts")
       .select("artifact_id, version")
       .eq("move_id", input.moveId)
       .eq("artifact_type", input.artifactType)
       .eq("lifecycle_state", "current")
       .order("version", { ascending: false })
-      .limit(1);
-    const prior = (
-      data as Array<{ artifact_id: string; version: number }>
-    )?.[0];
-    if (prior) {
-      version = prior.version + 1;
-      priorId = prior.artifact_id;
-    }
-  } catch {
-    /* fresh */
+      .limit(1),
+  );
+  if (lineage.kind === "unreadable") {
+    console.warn(
+      `[move-artifacts] ${MOVE_ARTIFACT_VERSION_LINEAGE_UNREADABLE}`,
+      {
+        moveId: input.moveId,
+        artifactType: input.artifactType,
+        reason: lineage.reason,
+      },
+    );
+    throw new Error(MOVE_ARTIFACT_VERSION_LINEAGE_UNREADABLE);
   }
+  const version = lineage.version;
+  const priorId = lineage.priorArtifactId;
 
   const folder =
     family === "uploaded_evidence"
@@ -228,8 +237,14 @@ export async function saveMoveArtifact(
   const artifactId = (data as { artifact_id: string }).artifact_id;
 
   // Supersede the prior current of this type (version history preserved).
+  // Both writes have already committed here, so a failure must NOT throw — the
+  // caller would read a refusal as "nothing landed" and file a second copy.
+  // It leaves two rows at `lifecycle_state: "current"` for one
+  // (move_id, artifact_type); readers order `created_at DESC`, so the new row
+  // still wins, but the duplicate is visible in the cabinet and is an operator
+  // repair, not something the uploader can act on. Hence a log, not a field.
   if (priorId) {
-    await sb
+    const { error: supersedeError } = await sb
       .from("move_artifacts")
       .update({
         lifecycle_state: "superseded",
@@ -238,6 +253,15 @@ export async function saveMoveArtifact(
         updated_at: new Date().toISOString(),
       })
       .eq("artifact_id", priorId);
+    if (supersedeError) {
+      console.warn(`[move-artifacts] ${MOVE_ARTIFACT_SUPERSEDE_FAILED}`, {
+        moveId: input.moveId,
+        artifactType: input.artifactType,
+        priorArtifactId: priorId,
+        supersededByArtifactId: artifactId,
+        detail: supersedeError.message,
+      });
+    }
   }
 
   return { artifactId, version, blobPath, blobStored };
