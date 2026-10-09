@@ -3480,6 +3480,25 @@ export function MovesPhaseStandaloneClient({
         onBeforeBuild={finalizePhaseCapture}
         onSubmit={approvePhaseGateAfterBuild}
         onBack={() => window.location.assign(phaseHref(phase.phase))}
+        // aVa is the product's one dock — the same collapse, hide, expand and
+        // full-screen behaviour and the same thread as the capture flow.
+        frame={(page, briefing) => (
+          <MovesCaptureWorkspace
+            moveId={move.id}
+            moveName={displayMoveName}
+            phase={phase.phase}
+            avaRole={phase.avaRole}
+            avaThread={avaThread}
+            avaQuestions={visibleAvaQuestions}
+            avaStreaming={avaStreaming}
+            avaLeadingActions={avaDraftLeadingActions}
+            onAvaMessage={(text) => {
+              void sendAvaMessage(text);
+            }}
+            openingBriefing={briefing}
+            content={page}
+          />
+        )}
       />
     );
   }

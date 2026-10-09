@@ -4660,8 +4660,7 @@ describe("MovesPhaseStandaloneClient", () => {
   // quietly reports the default question set's size for a Move whose P3 asks a
   // different one. P3 Design is the only route-dependent phase.
   describe("P3 Gate readiness step page (moves_step_pages_v3)", () => {
-    const p3Move = () =>
-      makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
+    const p3Move = () => makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
 
     it("renders the gate step page for P3 with the flag on and ?step=gate", () => {
       render(
@@ -4678,10 +4677,22 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       expect(
-        screen.getByRole("heading", { name: "Check the gate and sign off Design" }),
+        screen.getByRole("heading", {
+          name: "Check the gate and sign off Design",
+        }),
       ).toBeInTheDocument();
-      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("moves-phase-standalone")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-phase-standalone"),
+      ).not.toBeInTheDocument();
+      // aVa is the product's one dock, not a panel the step page draws.
+      expect(
+        within(screen.getByTestId("agent-dock")).getByRole("heading", {
+          name: "Check the gate and sign off Design",
+        }),
+      ).toBeInTheDocument();
       // Approving and submitting are one governed action, held until the
       // required checks and the approver's rationale are in place.
       expect(
@@ -4689,9 +4700,9 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeDisabled();
       // The step bar comes from the phase workflow registry: five P3 steps.
       expect(
-        within(screen.getByRole("navigation", { name: "Design steps" })).getAllByRole(
-          "listitem",
-        ),
+        within(
+          screen.getByRole("navigation", { name: "Design steps" }),
+        ).getAllByRole("listitem"),
       ).toHaveLength(5);
     });
 
@@ -4709,7 +4720,9 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       expect(
-        screen.queryByRole("heading", { name: "Check the gate and sign off Design" }),
+        screen.queryByRole("heading", {
+          name: "Check the gate and sign off Design",
+        }),
       ).not.toBeInTheDocument();
       expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
     });
@@ -4728,7 +4741,9 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       expect(
-        screen.queryByRole("heading", { name: "Check the gate and sign off Design" }),
+        screen.queryByRole("heading", {
+          name: "Check the gate and sign off Design",
+        }),
       ).not.toBeInTheDocument();
     });
 
@@ -4768,8 +4783,12 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.queryByRole("button", { name: /Approve and submit/ }),
       ).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Sign off" })).not.toBeInTheDocument();
-      expect(screen.getByText("An authorized gate approver approves this gate.")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Sign off" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText("An authorized gate approver approves this gate."),
+      ).toBeInTheDocument();
     });
   });
 

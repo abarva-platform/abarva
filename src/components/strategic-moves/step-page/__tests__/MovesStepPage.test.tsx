@@ -92,7 +92,6 @@ function props(
       details: [{ term: "Depth", detail: "Full." }],
     },
     rows,
-    ava: <p>I read both files.</p>,
     ...extra,
   };
 }

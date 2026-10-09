@@ -472,6 +472,22 @@ describe("GateReadinessStep", () => {
     ).toBe(true);
   });
 
+  it("draws no aVa panel of its own and hands aVa's briefing to the host's dock", () => {
+    const frame = jest.fn<React.ReactNode, [React.ReactNode, string]>(
+      (page) => <div data-testid="dock">{page}</div>,
+    );
+    const { container } = render(<GateReadinessStep {...props({ frame })} />);
+    expect(container.querySelector('[data-testid="dock"]')).not.toBeNull();
+    expect(container.querySelector("aside")).toBeNull();
+    expect(container.textContent).not.toContain("Read from your evidence");
+    const briefing = frame.mock.calls[0][1];
+    expect(briefing).toContain(
+      "I checked every Design gate rule against this Move.",
+    );
+    expect(briefing).toContain("I left out Sourcing Strategy Brief");
+    expect(briefing).not.toMatch(/\d/);
+  });
+
   it("lists the documents this profile does not build, with why", () => {
     const { container } = render(<GateReadinessStep {...props()} />);
     expect(docsRow(container).textContent).toContain(

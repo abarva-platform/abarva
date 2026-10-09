@@ -103,6 +103,11 @@ export interface GateReadinessStepProps {
    * the server. Default: reload, so the server-rendered page reads them.
    */
   onRecordChanged?: () => void;
+  /**
+   * Wraps the page in the product's aVa dock. Receives aVa's opening briefing
+   * for this step; without it the page renders on its own.
+   */
+  frame?: (page: ReactNode, briefing: string) => ReactNode;
 }
 
 function DocumentLine({
@@ -742,7 +747,31 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
       ? "Gate documents building"
       : `${signedCount} of ${documents.length} gate documents signed`;
 
-  return (
+  // aVa's opening turn in the dock: what it checked, left out and did not
+  // draft. Plain sentences, no figures.
+  const briefing = (
+    model.nextAction.state === "blocked"
+      ? [
+          "I couldn't read the gate state, so I won't guess at any check. Nothing here changed.",
+        ]
+      : [
+          `I checked every ${props.phaseName} gate rule against this Move.`,
+          noneBuilt
+            ? "The gate documents aren't built yet. Build them on this page; signing comes after."
+            : null,
+          props.notBuilt.length > 0
+            ? `I left out ${listNames(props.notBuilt.map((d) => d.title))} for this Move's change profile. If the profile changes, they come back.`
+            : null,
+          props.canApprove && !rationale.trim()
+            ? "I haven't drafted the approval rationale. It is yours to write; it is recorded only when you approve and submit."
+            : null,
+          "Drafts stay drafts until you accept them. Numbers come only from approved evidence or labelled estimates; I never write them.",
+        ]
+  )
+    .filter(Boolean)
+    .join("\n\n");
+
+  const page = (
     <MovesStepPage
       moveName={props.moveName}
       syntheticNote={props.syntheticNote}
@@ -778,37 +807,7 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         details: [{ term: "Depth", detail: <span>{props.depthDetail}</span> }],
       }}
       blockedWork="Documents, signatures and the rationale are unchanged. They will appear again once the gate state can be read."
-      avaBlocked="I couldn’t read the gate state, so I won’t guess at any check. Nothing here changed."
       rows={[...submitRow, docsRow, rationaleRow]}
-      ava={
-        <ul className={cx("ava-read")}>
-          <li>
-            I checked every {props.phaseName} gate rule against this Move.
-          </li>
-          {noneBuilt ? (
-            <li>
-              <b>The gate documents aren’t built yet.</b>{" "}
-              <a href={`#row-${GATE_DOCUMENTS_ROW_ID}`}>Build them here</a>;
-              signing comes after.
-            </li>
-          ) : null}
-          {props.notBuilt.length > 0 ? (
-            <li>
-              <b>I left out</b>{" "}
-              {props.notBuilt.map((d) => d.title).join(" and ")} for this Move’s
-              change profile. If the profile changes, they come back.
-            </li>
-          ) : null}
-          {props.canApprove && !rationale.trim() ? (
-            <li>
-              <b>I haven’t drafted</b> the{" "}
-              <a href={`#row-${GATE_RATIONALE_ROW_ID}`}>approval rationale</a>.
-              It is yours to write; it is recorded only when you approve and
-              submit.
-            </li>
-          ) : null}
-        </ul>
-      }
       submittedLabel={
         !props.canApprove && model.footerNote ? model.footerNote : undefined
       }
@@ -819,4 +818,5 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
       onBack={props.onBack}
     />
   );
+  return props.frame ? props.frame(page, briefing) : page;
 }

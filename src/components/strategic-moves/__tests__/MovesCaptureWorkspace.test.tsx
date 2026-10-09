@@ -19,6 +19,7 @@ jest.mock("@/components/agent/AgentDock", () => ({
       data-name={props.agent.name}
       data-surface={props.surface}
       data-thread-count={props.thread.length}
+      data-first-message={props.thread[0] ? `${props.thread[0].role}:${props.thread[0].body}` : ""}
       data-actions={(props.suggestedActions ?? []).length}
     >
       {props.workspace}
@@ -54,6 +55,34 @@ const captureProps: MovesCaptureFlowProps = {
 };
 
 describe("MovesCaptureWorkspace", () => {
+  it("hosts a step page in the same aVa dock, with aVa's briefing as its opening turn", () => {
+    render(
+      <MovesCaptureWorkspace
+        moveId="move-1"
+        moveName="Governed data foundation"
+        phase={3}
+        avaRole="Design partner"
+        avaThread={[{ id: "t1", role: "user", text: "What is open?" }]}
+        avaQuestions={[]}
+        onAvaMessage={jest.fn()}
+        openingBriefing="I checked every Design gate rule against this Move."
+        content={<h1>Check the gate and sign off Design</h1>}
+      />,
+    );
+    const dock = screen.getByTestId("agent-dock");
+    expect(
+      within(dock).getByRole("heading", { name: "Check the gate and sign off Design" }),
+    ).toBeInTheDocument();
+    // The step page replaces the capture flow inside the one dock.
+    expect(within(dock).queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+    expect(dock).toHaveAttribute("data-thread-count", "2");
+    expect(dock).toHaveAttribute(
+      "data-first-message",
+      "agent:I checked every Design gate rule against this Move.",
+    );
+  });
+
+
   it("renders AgentDock (aVa) wrapping the capture flow, with the phase role", () => {
     render(
       <MovesCaptureWorkspace
