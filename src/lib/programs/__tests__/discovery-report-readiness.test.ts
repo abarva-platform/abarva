@@ -1,4 +1,8 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import {
+  GENERATED_REPORT_SOURCE,
   discoveryReportTextFromLatestVersion,
   p2ReadinessBlockedReason,
 } from "@/lib/programs/discovery-report-readiness";
@@ -65,6 +69,80 @@ describe("discoveryReportTextFromLatestVersion", () => {
         structured_data: null,
       }),
     ).toBe("only the narrative");
+  });
+});
+
+describe("a generated report is judged by its words, not by what generation read", () => {
+  const generatedRecord = {
+    source: GENERATED_REPORT_SOURCE,
+    // What persistMoveGeneratedArtifact stores beside the HTML: the inputs it
+    // generated from, and the quality measurement of the output.
+    solution_context: {
+      gaps: ["Claims lineage unverified across the warehouse"],
+      currentState: "Stakeholder interviews pending; baseline not attested",
+    },
+    golden_bar: {
+      missingExactEvidenceTerms: [
+        "stakeholder map",
+        "baseline source of record",
+      ],
+    },
+  };
+
+  it("reads only the content of a version the generator wrote", () => {
+    expect(
+      discoveryReportTextFromLatestVersion({
+        content: "Narrative body",
+        structured_data: generatedRecord,
+      }),
+    ).toBe("narrative body");
+  });
+
+  it("does not read a capture finding as the report's own hard gap", () => {
+    const text = discoveryReportTextFromLatestVersion({
+      content: "No open hard gaps. Recommendation: proceed to P3 Design.",
+      structured_data: generatedRecord,
+    });
+    expect(text).not.toMatch(/\bunverified\b/);
+  });
+
+  it("does not credit a report with words only its inputs or its missing-terms list carry", () => {
+    const text = discoveryReportTextFromLatestVersion({
+      content: "Recommendation: proceed to P3 Design.",
+      structured_data: generatedRecord,
+    });
+    expect(text).not.toMatch(/stakeholder/);
+    expect(text).not.toMatch(/baseline/);
+  });
+
+  it("is empty when a generated version has no content, whatever its record holds", () => {
+    expect(
+      discoveryReportTextFromLatestVersion({
+        content: null,
+        structured_data: generatedRecord,
+      }),
+    ).toBe("");
+  });
+
+  it("names the source the generator actually stamps", () => {
+    // If the writer's stamp drifts, every generated report silently goes back
+    // to being judged by its inputs.
+    const writer = readFileSync(
+      join(
+        process.cwd(),
+        "src/lib/deliverables/persist-move-generated-artifact.ts",
+      ),
+      "utf8",
+    );
+    expect(writer).toContain(`source: "${GENERATED_REPORT_SOURCE}"`);
+  });
+
+  it("still reads structured data written by anything other than the generator", () => {
+    const text = discoveryReportTextFromLatestVersion({
+      content: "Narrative body",
+      structured_data: { source: "client_upload", decision: "Proceed" },
+    });
+    expect(text).toContain('"decision":"proceed"');
   });
 });
 
