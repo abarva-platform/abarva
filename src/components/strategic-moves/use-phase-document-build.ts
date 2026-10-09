@@ -249,6 +249,11 @@ export function usePhaseDocumentBuild({
   // effect below never fires from the component's initial idle render or
   // from unrelated row updates.
   const runInFlight = useRef(false);
+  // The rows as last rendered, so a build request can keep what it replaces.
+  const latestRows = useRef<DeliverableRow[]>(rows);
+  useEffect(() => {
+    latestRows.current = rows;
+  }, [rows]);
 
   useEffect(() => {
     const t = timers.current;
@@ -421,6 +426,9 @@ export function usePhaseDocumentBuild({
     setHandOffSentence(null);
     lastChangeAt.current = {};
     lastSeenState.current = {};
+    // A request the server refuses queues nothing, so the record is unchanged
+    // and these rows are still true; see the refusal arm below.
+    const rowsBeforeRequest = latestRows.current;
     setRows((prev) =>
       prev.map((r) => ({
         ...r,
@@ -491,7 +499,11 @@ export function usePhaseDocumentBuild({
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Approve & Build failed");
-      setRows((prev) => prev.map((r) => ({ ...r, status: "idle" })));
+      // Nothing was queued, so every document is where it was before the
+      // request. Resetting them all to "idle" erased built and signed
+      // documents from the page: they read "Not built", and the gate refused
+      // its submission as "not on the record" until a reload.
+      setRows(rowsBeforeRequest);
       setOmittedDeliverables([]);
       setAdaptiveSummary(null);
       runInFlight.current = false;
