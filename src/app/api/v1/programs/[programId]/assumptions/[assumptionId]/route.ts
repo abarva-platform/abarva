@@ -23,6 +23,7 @@ import {
   isRegisterRowId,
   landedAssumptionResponse,
   openAssumptionRegister,
+  personAsOwnerRoleResponse,
 } from "@/lib/programs/assumption-register/register-route-access";
 
 export const runtime = "nodejs";
@@ -51,6 +52,10 @@ export async function PATCH(
         field: parsed.field,
       });
     }
+    const personAsOwner = personAsOwnerRoleResponse(
+      parsed.value.edit.ownerRole,
+    );
+    if (personAsOwner) return personAsOwner;
 
     try {
       const result = await editAssumption(

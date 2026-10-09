@@ -93,6 +93,18 @@ export function carriedCharterAssumptions(input: {
    * open and still owed to its owner.
    */
   resolutionReadEnabled?: boolean;
+  /**
+   * `moves_assumption_register_v1`: the charter sections whose register row is
+   * answered against the current wording (`charterRegisterStanding` in
+   * `assumption-register/charter-bridge.ts`). The register owns a carried
+   * assumption's resolution once it has a row, so an answered row drops the
+   * assumption from this list exactly as a stored resolution does.
+   *
+   * Absent or `null` (flag off, or the register could not be read) ⇒ the list
+   * reads as it did before the register existed: an unknown standing is never
+   * reported as resolved.
+   */
+  registerResolvedSectionKeys?: readonly string[] | null;
 }): CarriedCharterAssumption[] | null {
   if (!input.active) return null;
   const carried: CarriedCharterAssumption[] = [];
@@ -117,6 +129,9 @@ export function carriedCharterAssumptions(input: {
         answer,
       )
     ) {
+      continue;
+    }
+    if (input.registerResolvedSectionKeys?.includes(family.sectionKey)) {
       continue;
     }
     carried.push({

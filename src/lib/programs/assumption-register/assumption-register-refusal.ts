@@ -85,6 +85,7 @@ export const REGISTER_REFUSAL_STATUS = {
   register_read_failed: 500,
   register_write_unconfirmed: 500,
   supersede_incomplete: 500,
+  owner_role_is_a_person: 400,
 } as const satisfies Record<string, number>;
 
 export type RegisterRefusalCode = keyof typeof REGISTER_REFUSAL_STATUS;
@@ -106,6 +107,10 @@ export type RegisterRefusal =
   | { code: "id_allocation_conflict" }
   | { code: "register_read_failed" }
   | { code: "register_write_unconfirmed" }
+  | {
+      /** `ownerRole` reads like a person (`looksLikePersonalName`, owner-role.ts). */
+      code: "owner_role_is_a_person";
+    }
   | {
       /** The replacement row landed; the supersede of the old row did not. */
       code: "supersede_incomplete";
@@ -208,6 +213,12 @@ export function describeRegisterRefusal(refusal: RegisterRefusal): string {
       return (
         "The change could not be confirmed: it may or may not have been saved. " +
         "Reload the register to see the assumption's current state before trying again."
+      );
+    case "owner_role_is_a_person":
+      return (
+        "The owner role reads like a person's name or an email address. Nothing was saved. " +
+        "The owner field takes a role, such as CFO office or Finance Director, because documents and aVa read the owner role and must never carry a person's name. " +
+        "Enter the role, and put the person's name in the owner name field if you need it."
       );
     case "supersede_incomplete":
       return (

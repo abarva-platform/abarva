@@ -32,6 +32,7 @@ import {
   createAssumption,
   RegisterHistoryWriteError,
 } from "@/lib/programs/assumption-register/store";
+import { looksLikePersonalName } from "@/lib/programs/assumption-register/owner-role";
 import {
   ASSUMPTION_REGISTER_FLAG,
   canWriteRegister,
@@ -49,79 +50,6 @@ interface ProposeAssumptionInput {
   confidence: number;
   why_it_matters?: string;
   raised_phase?: number;
-}
-
-/**
- * Words that mark an owner value as a ROLE or a function. A value with none of
- * them that reads like a person's name (two or three capitalised words) is
- * refused, as is anything carrying an email address or an honorific.
- */
-const ROLE_WORDS = new Set([
-  "administrator",
-  "analyst",
-  "architect",
-  "board",
-  "business",
-  "care",
-  "chief",
-  "clinical",
-  "committee",
-  "compliance",
-  "controller",
-  "coordinator",
-  "council",
-  "customer",
-  "data",
-  "department",
-  "digital",
-  "director",
-  "engineering",
-  "finance",
-  "financial",
-  "group",
-  "head",
-  "lead",
-  "leader",
-  "legal",
-  "manager",
-  "nursing",
-  "office",
-  "officer",
-  "operations",
-  "owner",
-  "partner",
-  "people",
-  "platform",
-  "pmo",
-  "president",
-  "procurement",
-  "product",
-  "program",
-  "project",
-  "quality",
-  "revenue",
-  "risk",
-  "security",
-  "sponsor",
-  "steward",
-  "strategy",
-  "supply",
-  "team",
-  "technology",
-  "unit",
-  "vice",
-  "vp",
-]);
-
-/** Does an owner value read like a person rather than a role? */
-export function looksLikePersonalName(value: string): boolean {
-  const trimmed = value.trim();
-  if (trimmed.includes("@")) return true;
-  if (/^(mr|mrs|ms|miss|mx|dr|prof)\.?\s/i.test(trimmed)) return true;
-  const words = trimmed.split(/\s+/);
-  if (words.length < 2 || words.length > 3) return false;
-  if (!words.every((word) => /^[A-Z][a-z'’-]+$/.test(word))) return false;
-  return !words.some((word) => ROLE_WORDS.has(word.toLowerCase()));
 }
 
 function text(value: unknown): string {
