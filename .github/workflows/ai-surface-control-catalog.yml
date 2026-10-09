@@ -298,6 +298,7 @@ jobs:
           src/components/strategic-moves/__tests__/BoardArtifactsPanel.test.tsx
           src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
           src/components/strategic-moves/__tests__/FileCabinetPanel.evidence-review.test.tsx
+          src/components/strategic-moves/__tests__/FileCabinetPanel.review-readback.test.tsx
           src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx
           src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.ts
           src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx
