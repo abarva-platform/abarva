@@ -54,6 +54,16 @@ function update(
   return { ...register, causes };
 }
 
+/** A copy of the entry without the named fields. */
+function without(
+  entry: RootCauseEntry,
+  ...keys: Array<keyof RootCauseEntry>
+): RootCauseEntry {
+  const copy = { ...entry };
+  for (const key of keys) delete copy[key];
+  return copy;
+}
+
 function nextId(register: RootCauseRegister, prefix: "RC" | "S"): string {
   const used = register.causes
     .map((c) => new RegExp(`^${prefix}-(\\d+)$`).exec(c.id)?.[1])
@@ -145,7 +155,7 @@ export function reopenRootCause(
   id: string,
 ): RootCauseEdit {
   const next = update(register, id, (c) => {
-    const { owner: _owner, decidedBy: _by, decidedAt: _at, ...rest } = c;
+    const rest = without(c, "owner", "decidedBy", "decidedAt");
     return { ...rest, status: c.evidence?.length ? "draft" : "no_evidence" };
   });
   return next
@@ -159,7 +169,7 @@ export function setAsideAsSymptom(
   symptomOf?: string,
 ): RootCauseEdit {
   const next = update(register, id, (c) => {
-    const { owner: _owner, decidedBy: _by, decidedAt: _at, ...rest } = c;
+    const rest = without(c, "owner", "decidedBy", "decidedAt");
     return { ...rest, status: "symptom", ...(symptomOf ? { symptomOf } : {}) };
   });
   return next
@@ -176,7 +186,7 @@ export function promoteSymptom(
     (c) => c.id === id && c.status === "symptom",
   );
   if (!entry) return refuse("Only a set-aside symptom can be promoted.");
-  const { symptomOf: _of, ...rest } = entry;
+  const rest = without(entry, "symptomOf");
   const promoted: RootCauseEntry = {
     ...rest,
     id: nextId(register, "RC"),
@@ -234,7 +244,7 @@ export function editRootCause(
   if (!cause) return refuse("A cause cannot be blank.");
   const evidence = (input.evidence ?? []).map((e) => e.trim()).filter(Boolean);
   const next = update(register, id, (c) => {
-    const { drives: _d, evidence: _e, confidence: _c, ...rest } = c;
+    const rest = without(c, "drives", "evidence", "confidence");
     const lostEvidence = c.status === "accepted" && evidence.length === 0;
     return {
       ...rest,
