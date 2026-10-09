@@ -8,6 +8,7 @@
 // deliverable-version persistence contract.
 
 import { useRef, useState } from "react";
+import { useDeliverableSignOff } from "@/components/strategic-moves/use-deliverable-sign-off";
 
 interface Props {
   moveId: string;
@@ -16,102 +17,24 @@ interface Props {
   alreadyApproved: boolean;
 }
 
-type ReadinessBlocker = {
-  kind?: string;
-  match?: string;
-  why?: string;
-  context?: string;
-};
-
-type ApprovalErrorState = {
-  message: string;
-  blockers?: ReadinessBlocker[];
-  canAcknowledge?: boolean;
-};
-
 export function DeliverableApprovalAction({
   moveId,
   deliverableId,
   alreadyApproved,
 }: Props) {
-  const [busy, setBusy] = useState<"idle" | "approving" | "uploading">("idle");
-  const [error, setError] = useState<ApprovalErrorState | null>(null);
-  const [pendingUpload, setPendingUpload] = useState<File | null>(null);
+  const { busy, error, pendingUpload, submit } = useDeliverableSignOff({
+    moveId,
+    deliverableId,
+  });
   const [approvalRationale, setApprovalRationale] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function submitApproval(
-    file?: File,
-    acknowledgeReadinessBlockers = false,
-  ) {
-    setError(null);
-    setBusy(file ? "uploading" : "approving");
-    try {
-      const rationale = approvalRationale.trim();
-      const init: RequestInit = file
-        ? {
-            method: "POST",
-            body: (() => {
-              const form = new FormData();
-              form.append("file", file);
-              if (rationale) form.append("approvalRationale", rationale);
-              if (acknowledgeReadinessBlockers) {
-                form.append("acknowledgeReadinessBlockers", "true");
-              }
-              return form;
-            })(),
-          }
-        : acknowledgeReadinessBlockers || rationale
-          ? {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                ...(rationale ? { approvalRationale: rationale } : {}),
-                ...(acknowledgeReadinessBlockers
-                  ? { acknowledgeReadinessBlockers: true }
-                  : {}),
-              }),
-            }
-          : { method: "POST" };
-      const res = await fetch(
-        `/api/v1/programs/${moveId}/deliverables/${deliverableId}/sign-off`,
-        init,
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        if (body?.error === "client_readiness_blockers") {
-          if (file) setPendingUpload(file);
-          setError({
-            message:
-              body?.detail ||
-              "Client-readiness blockers must be acknowledged before sign-off.",
-            blockers: Array.isArray(body?.blockers) ? body.blockers : [],
-            canAcknowledge: true,
-          });
-          setBusy("idle");
-          return;
-        }
-        setPendingUpload(null);
-        setError({
-          message:
-            body?.detail ||
-            body?.scannerDetail ||
-            body?.error ||
-            `HTTP ${res.status}`,
-        });
-        setBusy("idle");
-        return;
-      }
-      // Server state changed (status/signed_off_version) — the page's next
-      // load reflects it. A full reload keeps this component simple and
-      // matches the rest of this server-rendered panel.
-      window.location.reload();
-    } catch (err) {
-      setError({
-        message: err instanceof Error ? err.message : "Approval failed",
-      });
-      setBusy("idle");
-    }
+  function submitApproval(file?: File, acknowledgeReadinessBlockers = false) {
+    return submit({
+      file,
+      rationale: approvalRationale,
+      acknowledgeReadinessBlockers,
+    });
   }
 
   if (alreadyApproved) {

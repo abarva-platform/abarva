@@ -1,5 +1,10 @@
 "use client";
 
+import { GateReadinessStep } from "@/components/strategic-moves/step-page/GateReadinessStep";
+import { StepPageTabs } from "@/components/strategic-moves/step-page/MovesStepPage";
+import { resolvePhaseWorkflow } from "@/lib/programs/phase-workflow-registry";
+import { describeGateSignOffReadback } from "@/lib/programs/gate-sign-off-readback";
+import { resolvePhaseBuildBlock } from "@/lib/programs/phase-build-action-state";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -56,6 +61,7 @@ import { SolutionOptionChooser } from "@/components/strategic-moves/SolutionOpti
 import {
   MovesCaptureFlow,
   type MovesCaptureFlowPhase,
+  type MovesCaptureFlowProps,
 } from "@/components/strategic-moves/MovesCaptureFlow";
 import { captureSectionSpan } from "@/lib/programs/moves-capture-section-width";
 import { CharterAssumptionsCarryForward } from "@/components/strategic-moves/CharterAssumptionsCarryForward";
@@ -63,6 +69,7 @@ import { CharterStandingAfterDiscover } from "@/components/strategic-moves/Chart
 import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumptions-carry-forward";
 import type { PostDiscoverCharterAnswer } from "@/lib/programs/charter-standing-after-discover";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
+import type { SuggestedAction } from "@/components/agent/AgentDock";
 import {
   MovesPhaseFindings,
   FindingsReviewGateSummary,
@@ -207,11 +214,12 @@ import {
 import { buildMovesChatAvaAnswerPacket } from "@/lib/programs/moves-chat-answer-packet";
 import { demoSafeClientText } from "@/lib/client-config";
 import {
+  DELIVERABLE_REGISTRY,
   PHASE_CANONICAL_KEYS,
   phaseCanonicalKeysForRoute,
 } from "@/lib/programs/deliverable-registry";
 import type { StrategicMove } from "@/lib/programs/types.ui";
-import { getPhaseName } from "@/lib/programs/phase-labels";
+import { PHASE_LABELS_SHORT, getPhaseName } from "@/lib/programs/phase-labels";
 import { requiredEvidenceCompletionNotice } from "@/lib/programs/evidence-readiness/evidence-waiver-availability";
 
 interface AvaChatMessage {
@@ -316,6 +324,13 @@ interface MovesPhaseStandaloneClientProps {
   solutionPatternGateEnabled?: boolean;
   /** `moves_capture_v2` feature flag, resolved server-side (tenant-gated, default OFF). When true, phases 1–5 render the redesigned 3-step capture flow (`MovesCaptureFlow`) in place of the contract-steps canvas. Same canonical sections/keys, saves, and structured inputs; only the capture presentation changes. */
   captureV2Enabled?: boolean;
+  /**
+   * `moves_step_pages_v3`: render phase steps as the finalized step page
+   * template. Today that is P3 Gate readiness, opened with `?step=gate`.
+   */
+  stepPagesV3Enabled?: boolean;
+  /** The step page the URL asked for (`?step=gate`), when the flag is on. */
+  initialStepView?: "gate" | null;
   /** `moves_capture_p0_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true AND `captureV2Enabled` is true, P0 Originate also renders the redesigned 3-step capture flow instead of the legacy finder-columns canvas. P0's eleven canonical sections/keys, saves, structured inputs, authorization check and required-evidence gate are unchanged; only which phases render the flow differs. */
   captureP0Enabled?: boolean;
   /** `moves_charter_basis_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, each P1 Charter field carries a "How do you know this?" basis control (approved evidence / an assertion / an owned assumption) and an assumption is badged at the question. When false NOTHING here renders and the legacy approved-evidence lock is unchanged. */
@@ -950,6 +965,8 @@ function samePhaseBuildArtifactIds(
 }
 
 export function MovesPhaseStandaloneClient({
+  stepPagesV3Enabled = false,
+  initialStepView = null,
   canApproveGates = false,
   initialPhaseCaptureValues,
   initialReferenceDraftValues = {},
@@ -1017,6 +1034,13 @@ export function MovesPhaseStandaloneClient({
     terminalComplete,
   );
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
+  // The finalized step page for P3 Gate readiness, behind `moves_step_pages_v3`
+  // and only with the redesigned capture on. Opened with `?step=gate`.
+  const gateStepPageActive =
+    stepPagesV3Enabled &&
+    Boolean(captureV2Enabled) &&
+    phaseNum === 3 &&
+    initialStepView === "gate";
   const [substepIndex, setSubstepIndex] = useState(initialSubstepIndex);
   // Which step is showing in the detail pane: a real
   // phase-capture section key, or null for the current workflow step.
@@ -2639,7 +2663,8 @@ export function MovesPhaseStandaloneClient({
         body: JSON.stringify({
           phase: phase.phase,
           rationale:
-            `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.` +
+            (result.humanRationale?.trim() ||
+              `P${phase.phase} reviewed, required phase outputs reached terminal build status, and gate approval submitted through the standalone Moves workspace.`) +
             (settlement.workingDocumentCaveat
               ? ` ${settlement.workingDocumentCaveat}`
               : ""),
@@ -3308,6 +3333,17 @@ export function MovesPhaseStandaloneClient({
         />
       </>
     )
+  ) : stepPagesV3Enabled && captureV2Enabled && phase.phase === 3 ? (
+    // Gate readiness is its own step page under `moves_step_pages_v3`: build,
+    // sign-off and approve-and-submit all happen there, once.
+    <a
+      className="mcf-btn-primary"
+      style={{ display: "inline-block", textDecoration: "none" }}
+      data-testid="open-gate-readiness"
+      href={`/strategic-moves/${move.id}/phase/${phase.phase}?step=gate`}
+    >
+      Open Gate readiness →
+    </a>
   ) : phase.phase >= 1 && phase.phase <= 5 ? (
     canApproveGates ? (
       <>
@@ -3353,6 +3389,139 @@ export function MovesPhaseStandaloneClient({
       </span>
     )
   ) : null;
+
+  // aVa's one dock mount for every Steps view. The capture flow and the step
+  // pages hand it their content; the streaming flag, thread and send handler
+  // are wired here once, so no view can mount aVa without them.
+  const renderAvaDock = (dock: {
+    captureProps?: MovesCaptureFlowProps;
+    content?: ReactNode;
+    notesFill?: ReactNode;
+    openingBriefing?: string;
+    leadingActions?: readonly SuggestedAction[];
+  }) => (
+    <MovesCaptureWorkspace
+      moveId={move.id}
+      moveName={displayMoveName}
+      phase={phase.phase}
+      avaRole={phase.avaRole}
+      avaThread={avaThread}
+      avaQuestions={visibleAvaQuestions}
+      avaStreaming={avaStreaming}
+      notesFill={dock.notesFill}
+      avaLeadingActions={[
+        ...(dock.leadingActions ?? []),
+        ...avaDraftLeadingActions,
+      ]}
+      onAvaMessage={(text) => {
+        void sendAvaMessage(text);
+      }}
+      openingBriefing={dock.openingBriefing}
+      content={dock.content}
+      captureProps={dock.captureProps}
+    />
+  );
+
+  // `moves_step_pages_v3`: P3 Gate readiness as the finalized step page. The
+  // build, sign-off and submission run through the same governed paths as the
+  // ledger above; only where and how the consultant acts changes.
+  if (gateStepPageActive) {
+    const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
+    const routeKeys = phaseCanonicalKeysForRoute(phase.phase, confirmedSolutionRoute);
+    const notBuilt = (PHASE_CANONICAL_KEYS[phase.phase] ?? [])
+      .filter((key) => !routeKeys.includes(key))
+      .map((key) => ({
+        title:
+          DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key)
+            ?.documentTitle ?? key,
+        reason:
+          "Not built for this Move's change profile, set by the solution route confirmed in P2.",
+      }));
+    const requiredGaps = currentPhaseRequiredEvidenceGaps(
+      evidenceNeedPackets,
+      phase.phase,
+    );
+    const buildHold = resolvePhaseBuildBlock({
+      building: false,
+      anyRunning: false,
+      parentBlockerText: phaseCaptureBlocker,
+      requiredEvidenceGapCount: requiredGaps.length,
+      phaseLabel: `${phase.code} ${phase.title}`,
+    });
+    const phaseHref = (n: number) => `/strategic-moves/${move.id}/phase/${n}`;
+    const next = PHASES.find((p) => p.phase === phase.phase + 1);
+    return (
+      <GateReadinessStep
+        moveId={move.id}
+        moveName={displayMoveName}
+        archetype={move.archetype}
+        clientDisplayName={move.tenant.name}
+        phaseNum={phase.phase}
+        phaseCode={phase.code}
+        phaseName={PHASE_LABELS_SHORT[phase.phase] ?? phase.navLabel}
+        nextPhaseLabel={
+          next
+            ? `${next.code} ${PHASE_LABELS_SHORT[next.phase] ?? next.navLabel}`
+            : "Tower"
+        }
+        tabs={
+          <StepPageTabs
+            current="steps"
+            hrefs={{
+              steps: `${phaseHref(phase.phase)}?step=gate`,
+              files: phaseHref(phase.phase),
+              record: phaseHref(phase.phase),
+            }}
+          />
+        }
+        phases={PHASES.map((p) => {
+          const tally = phaseTallies.find((t) => t.phase === p.phase);
+          return {
+            code: p.code,
+            name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
+            status: tally?.state === "done" ? "Done" : "Not started",
+            current: p.phase === phase.phase,
+            href:
+              tally && tally.state !== "upcoming" ? phaseHref(p.phase) : undefined,
+          };
+        })}
+        steps={workflow.map((step, index) => ({
+          title: step.title,
+          depth: step.depth,
+          href: index < workflow.length - 1 ? phaseHref(phase.phase) : undefined,
+          // Ticked only when every capture key the step owns is answered; a
+          // step with no capture key cannot be proven done, so it is not.
+          done:
+            index === workflow.length - 1
+              ? undefined
+              : step.sectionKeys.length > 0 &&
+                step.sectionKeys.every(
+                  (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
+                ),
+        }))}
+        stepIndex={Math.max(0, workflow.length - 1)}
+        criteria={move.gateCriteria}
+        routeDocumentKeys={routeKeys}
+        notBuilt={notBuilt}
+        initialArtifacts={visiblePhaseBuildArtifacts}
+        signOffReadable={
+          describeGateSignOffReadback(signOffReadback).state === "available"
+        }
+        canApprove={canApproveGates}
+        approverName="An authorized gate approver"
+        buildHeldReason={buildHold?.statusLine ?? null}
+        depthDetail="Full. The gate step is always Full, whatever the change profile."
+        onBeforeBuild={finalizePhaseCapture}
+        onSubmit={approvePhaseGateAfterBuild}
+        onBack={() => window.location.assign(phaseHref(phase.phase))}
+        // aVa is the product's one dock — the same collapse, hide, expand and
+        // full-screen behaviour and the same thread as the capture flow.
+        frame={(page, briefing) =>
+          renderAvaDock({ content: page, openingBriefing: briefing })
+        }
+      />
+    );
+  }
 
   return (
     <main
@@ -3708,16 +3877,8 @@ export function MovesPhaseStandaloneClient({
                   </div>
 
                   {captureFlowMounted ? (
-                    <MovesCaptureWorkspace
-                      moveId={move.id}
-                      moveName={displayMoveName}
-                      phase={phase.phase}
-                      avaRole={phase.avaRole}
-                      avaThread={avaThread}
-                      avaQuestions={visibleAvaQuestions}
-                      avaStreaming={avaStreaming}
-                      notesFill={
-                        captureNotesEnabled ? (
+                    renderAvaDock({
+                      notesFill: captureNotesEnabled ? (
                           <CaptureNotesFill
                             targets={phaseCaptureSections.map((section) => ({
                               section,
@@ -3727,13 +3888,8 @@ export function MovesPhaseStandaloneClient({
                             onInsert={insertPhaseCaptureValueFromNotes}
                             recordsBasisFor={notesBasisRecordingKeys}
                           />
-                        ) : null
-                      }
-                      avaLeadingActions={avaDraftLeadingActions}
-                      onAvaMessage={(text) => {
-                        void sendAvaMessage(text);
-                      }}
-                      captureProps={{
+                        ) : null,
+                      captureProps: {
                         phases: capturePhases,
                         phase: phase.phase,
                         sections: phaseCaptureSections,
@@ -3856,8 +4012,8 @@ export function MovesPhaseStandaloneClient({
                               charts={phaseChartsModel}
                             />
                           ) : null,
-                      }}
-                    />
+                      },
+                    })
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (
                     <PhaseContractStepsCanvas
                       avaDraftProposalsByKey={avaDraftProposalsByKey}

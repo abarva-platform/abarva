@@ -52,7 +52,18 @@ export interface MovesCaptureWorkspaceProps {
    */
   notesFill?: ReactNode;
   /** The 3-step capture flow props (sections, slots, handlers). */
-  captureProps: MovesCaptureFlowProps;
+  captureProps?: MovesCaptureFlowProps;
+  /**
+   * A step page rendered as the dock's workspace instead of the capture flow
+   * (`moves_step_pages_v3`). aVa stays this same dock — collapse, hide,
+   * expand and full screen included — rather than a second panel.
+   */
+  content?: ReactNode;
+  /**
+   * aVa's opening turn for a step page: what it read, drafted, could not find
+   * or noticed. Rendered as the first agent message of the thread.
+   */
+  openingBriefing?: string;
 }
 
 export function MovesCaptureWorkspace({
@@ -68,11 +79,18 @@ export function MovesCaptureWorkspace({
   tabs,
   notesFill,
   captureProps,
+  content,
+  openingBriefing,
 }: MovesCaptureWorkspaceProps) {
-  const thread = useMemo(
-    () => avaThreadToDockMessages(avaThread),
-    [avaThread],
-  );
+  const thread = useMemo(() => {
+    const messages = avaThreadToDockMessages(avaThread);
+    return openingBriefing?.trim()
+      ? [
+          { id: "step-briefing", role: "agent" as const, body: openingBriefing.trim() },
+          ...messages,
+        ]
+      : messages;
+  }, [avaThread, openingBriefing]);
   const suggestedActions = useMemo(
     () => avaSuggestedActions(avaQuestions, avaLeadingActions),
     [avaQuestions, avaLeadingActions],
@@ -98,7 +116,7 @@ export function MovesCaptureWorkspace({
         <>
           {notesFill}
           {tabs}
-          <MovesCaptureFlow {...captureProps} />
+          {content ?? (captureProps ? <MovesCaptureFlow {...captureProps} /> : null)}
         </>
       }
     />

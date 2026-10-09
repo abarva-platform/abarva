@@ -94,6 +94,8 @@ interface Props {
     focus?: string | string[];
     blockedPhase?: string | string[];
     phaseLocked?: string | string[];
+    /** `gate` opens the P3 Gate readiness step page (moves_step_pages_v3). */
+    step?: string | string[];
   }>;
 }
 
@@ -415,6 +417,10 @@ export default async function StrategicMovePhaseWorkspacePage({
   const captureV2Enabled = isFeatureEnabled(
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_capture_v2",
+  );
+  const stepPagesV3Enabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_step_pages_v3",
   );
   // P0 Originate was left on the legacy canvas when the 3-step capture shipped
   // for phases 1-5. This flag extends the same flow to P0; it is deliberately
@@ -1045,6 +1051,12 @@ export default async function StrategicMovePhaseWorkspacePage({
         riskAssessmentEnabled={riskAssessmentEnabled}
         solutionPatternGateEnabled={solutionPatternGateEnabled}
         captureV2Enabled={captureV2Enabled}
+        stepPagesV3Enabled={stepPagesV3Enabled}
+        initialStepView={
+          stepPagesV3Enabled && resolvedSearchParams.step === "gate"
+            ? "gate"
+            : null
+        }
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}
         captureCompositionEnabled={captureCompositionEnabled}
