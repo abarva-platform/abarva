@@ -37,6 +37,8 @@ import type { ReactElement } from "react";
 import { rasteriseSvg } from "@/lib/programs/expert-kernel/exports/board-grade/svg-raster";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
 import {
+  architectureVisualPanels,
+  architecturePanelRecordedFlows,
   renderArchitectureVisualExhibits,
   type ArchitectureVisualExhibit,
 } from "@/lib/visual-system/architecture-html-renderer";
@@ -527,18 +529,23 @@ export function renderDeliverableDocx(
     exhibitToDocxBlocks(exhibit, index),
   );
   const architectureBlocks = architectureModel
-    ? renderArchitectureVisualExhibits(architectureModel).flatMap(
-        (visual, index) =>
+    ? renderArchitectureVisualExhibits(architectureModel)
+        .flatMap(architectureVisualPanels)
+        .flatMap((visual, index) =>
           svgToDocxBlocks(
             {
-              key: visual.id,
+              key: `architecture-exhibit:${visual.id}:${architectureVisualDigest(visual.svg)}`,
               title: visual.title,
               description: `${visual.soWhat} Decision implication: ${visual.decisionImplication}`,
+              accessibleDescription: [
+                visual.soWhat,
+                ...architecturePanelRecordedFlows(visual.svg),
+              ].join("\n"),
               svg: visual.svg,
             },
             doc.exhibits.length + index,
           ),
-      )
+        )
     : [];
   if (exhibitBlocks.length || architectureBlocks.length) {
     children.push(designedHeading("Visual Exhibits", 1));
@@ -1763,6 +1770,7 @@ function svgToDocxBlocks(
     key: string;
     title: string;
     description: string;
+    accessibleDescription?: string;
     svg: string;
   },
   index: number,
@@ -1788,7 +1796,7 @@ function svgToDocxBlocks(
           transformation: { width, height },
           altText: {
             title: exhibit.title,
-            description: exhibit.description,
+            description: exhibit.accessibleDescription ?? exhibit.description,
             name: exhibit.key,
           },
         }),
@@ -2453,6 +2461,7 @@ function addPptxArchitectureVisualSlide(
   totalSlides: number,
   appendixLabel?: string,
 ): void {
+  const recordedFlows = architecturePanelRecordedFlows(exhibit.svg);
   const { png, aspect } = rasteriseSvg(
     withXmlns(resolveSvgTokens(exhibit.svg)),
     3,
@@ -2489,7 +2498,10 @@ function addPptxArchitectureVisualSlide(
   slide.addImage({
     data: `data:image/png;base64,${png.toString("base64")}`,
     objectName: `architecture-exhibit:${exhibit.id}:${architectureVisualDigest(exhibit.svg)}`,
-    altText: `${exhibit.title}. ${exhibit.soWhat} ${exhibit.decisionImplication}`,
+    altText: [
+      `${exhibit.title}. ${exhibit.soWhat} ${exhibit.decisionImplication}`,
+      ...recordedFlows,
+    ].join("\n"),
     x: PPTX_GRID.x(0) + (maxW - w) / 2,
     y: SLIDE_DESIGN.masters.fullBleedExhibit.exhibitTopIn + (maxH - h) / 2,
     w,
@@ -2517,7 +2529,11 @@ function addPptxArchitectureVisualSlide(
     fit: "shrink",
   });
   slide.addNotes(
-    `Exhibit: ${exhibit.id}\nDecision implication: ${exhibit.decisionImplication}`,
+    [
+      `Exhibit: ${exhibit.id}`,
+      `Decision implication: ${exhibit.decisionImplication}`,
+      ...recordedFlows,
+    ].join("\n"),
   );
 }
 
@@ -3244,6 +3260,14 @@ export async function renderDeliverablePptx(
   const totalSlides =
     1 + storyPages.length + inDeckTables.length + architecturePages.length + 1;
   if (architecturePages.length > 0) {
+    // Keep the board-story budget fixed. Only full-size continuation panels for
+    // explicitly recorded flows may add pages beyond its visual page counts.
+    const bodyContinuations = architectureRuns.body.filter(
+      (page) => page.kind !== "divider" && page.continuation,
+    ).length;
+    const appendixContinuations = architectureRuns.appendix.filter(
+      (page) => page.kind !== "divider" && page.continuation,
+    ).length;
     const bodySlides =
       1 +
       storyPages.length +
@@ -3251,9 +3275,9 @@ export async function renderDeliverablePptx(
       inDeckTables.length +
       1;
     if (
-      bodySlides > 20 ||
-      architectureRuns.body.length > 8 ||
-      architectureRuns.appendix.length > 7 ||
+      bodySlides - bodyContinuations > 20 ||
+      architectureRuns.body.length - bodyContinuations > 8 ||
+      architectureRuns.appendix.length - appendixContinuations > 7 ||
       totalSlides > 27
     ) {
       throw new Error(

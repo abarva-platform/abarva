@@ -2,7 +2,10 @@ import {
   ARCHITECTURE_V2_EXHIBITS,
   type ArchitectureExhibitKey,
 } from "@/lib/visual-system/architecture-model";
-import type { ArchitectureVisualExhibit } from "@/lib/visual-system/architecture-html-renderer";
+import {
+  architectureVisualPanels,
+  type ArchitectureVisualExhibit,
+} from "@/lib/visual-system/architecture-html-renderer";
 
 /**
  * How the architecture section of a generated deck is shaped, from a Claude
@@ -56,8 +59,8 @@ export const ARCHITECTURE_BODY_STANDALONE: ReadonlyArray<{
 
 export type ArchitectureDeckPage =
   | { kind: "divider"; eyebrow: string; title: string }
-  | { kind: "headline"; visual: ArchitectureVisualExhibit }
-  | { kind: "standalone"; visual: ArchitectureVisualExhibit };
+  | { kind: "headline"; visual: ArchitectureVisualExhibit; continuation?: boolean }
+  | { kind: "standalone"; visual: ArchitectureVisualExhibit; continuation?: boolean };
 
 /** Keep the executive argument ahead of the reference visuals. */
 export function splitArchitectureDeckPages(
@@ -80,8 +83,8 @@ export function splitArchitectureDeckPages(
 
 /**
  * Order the present architecture visuals into the bounded board storyline.
- * Every present visual is emitted exactly once; dividers are added only when a
- * section has content. Returns an empty list when no visuals are present.
+ * Every present visual panel is emitted exactly once; dividers are added only
+ * when a section has content. Returns an empty list when no visuals are present.
  */
 export function composeArchitectureDeckPages(
   visuals: readonly ArchitectureVisualExhibit[],
@@ -89,6 +92,18 @@ export function composeArchitectureDeckPages(
   const byId = new Map(visuals.map((v) => [v.id, v]));
   const pages: ArchitectureDeckPage[] = [];
   const emitted = new Set<ArchitectureExhibitKey>();
+  const addPanels = (
+    kind: "headline" | "standalone",
+    visual: ArchitectureVisualExhibit,
+  ) => {
+    architectureVisualPanels(visual).forEach((panel, index) => {
+      pages.push({
+        kind: index === 0 ? kind : "standalone",
+        continuation: index > 0,
+        visual: panel,
+      });
+    });
+  };
 
   const headlinesPresent = ARCHITECTURE_HEADLINE_ORDER.filter((id) =>
     byId.has(id),
@@ -103,14 +118,14 @@ export function composeArchitectureDeckPages(
     for (const id of ARCHITECTURE_HEADLINE_ORDER) {
       const visual = byId.get(id);
       if (!visual) continue;
-      pages.push({ kind: "headline", visual });
+      addPanels("headline", visual);
       emitted.add(id);
       // Body standalones anchored to this beat, right after it.
       for (const { id: stId, anchor } of ARCHITECTURE_BODY_STANDALONE) {
         if (anchor !== id) continue;
         const st = byId.get(stId);
         if (st && !emitted.has(stId)) {
-          pages.push({ kind: "standalone", visual: st });
+          addPanels("standalone", st);
           emitted.add(stId);
         }
       }
@@ -137,7 +152,7 @@ export function composeArchitectureDeckPages(
     for (const id of rest) {
       const visual = byId.get(id);
       if (visual) {
-        pages.push({ kind: "standalone", visual });
+        addPanels("standalone", visual);
         emitted.add(id);
       }
     }

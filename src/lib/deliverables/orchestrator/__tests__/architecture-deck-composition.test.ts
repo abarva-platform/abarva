@@ -54,6 +54,30 @@ describe("composeArchitectureDeckPages", () => {
     expect(got).toEqual(want);
   });
 
+  it("keeps a second flow panel adjacent to its first panel at full size", () => {
+    const flow = {
+      ...visual("end_to_end_data_flow"),
+      continuationSvgs: ['<svg data-panel="2"></svg>'],
+    };
+    const pages = composeArchitectureDeckPages([...all.filter((v) => v.id !== flow.id), flow]);
+    const first = pages.findIndex(
+      (page) => page.kind !== "divider" && page.visual.id === flow.id,
+    );
+    expect(first).toBeGreaterThan(0);
+    expect(pages[first]).toMatchObject({
+      kind: "standalone",
+      visual: { title: `${flow.title} · Part 1 of 2`, svg: flow.svg },
+    });
+    expect(pages[first + 1]).toMatchObject({
+      kind: "standalone",
+      visual: {
+        id: flow.id,
+        title: `${flow.title} · Part 2 of 2`,
+        svg: '<svg data-panel="2"></svg>',
+      },
+    });
+  });
+
   it("opens with a divider then the five headline beats in fixed order", () => {
     const pages = composeArchitectureDeckPages(all);
     expect(pages[0]).toMatchObject({

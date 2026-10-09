@@ -785,6 +785,63 @@ describe("HTML renderer — complete structured exhibit data", () => {
 });
 
 describe("DOCX renderer — visual exhibits", () => {
+  it("embeds both full-size panels for nineteen recorded architecture flows", async () => {
+    const base = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText: "A governed serving layer is proposed.",
+    });
+    const seed = base.target.flows[0];
+    const model = {
+      ...base,
+      target: {
+        ...base.target,
+        flows: [
+          ...Array.from({ length: 19 }, (_, index) => ({
+            ...seed,
+            id: `explicit-flow-${index + 1}`,
+            kind: "data" as const,
+            label: `Recorded transfer ${index + 1} with an accountable owner and governed source-to-use lineage`,
+          })),
+          ...base.target.flows.filter(
+            (flow) => flow.kind === "control" || flow.kind === "human_approval",
+          ),
+        ],
+      },
+    };
+    const doc = { ...goodDocument(), exhibits: [] };
+    const buffer = await Packer.toBuffer(renderDeliverableDocx(doc, model));
+    const verdict = await judgeRenderedDocx(buffer, doc, model);
+    expect(verdict.findings).toEqual([]);
+    expect(verdict.figures).toBe(ARCHITECTURE_V2_EXHIBITS.length + 1);
+    const zip = await JSZip.loadAsync(buffer);
+    const xml = await zip.file("word/document.xml")!.async("string");
+    expect(xml).toContain("End-to-end data flow · Part 1 of 2");
+    expect(xml).toContain("End-to-end data flow · Part 2 of 2");
+    expect(xml).toContain("accountable owner and governed source-to-use lineage");
+    for (let index = 1; index <= 19; index += 1) {
+      expect(xml).toContain(`explicit-flow-${index}:`);
+    }
+    const markers = [
+      ...xml.matchAll(/architecture-exhibit:end_to_end_data_flow:[a-f0-9]{16}/g),
+    ];
+    expect(markers).toHaveLength(2);
+    expect(markers[0][0]).not.toBe(markers[1][0]);
+
+    zip.file(
+      "word/document.xml",
+      xml.replace(markers[1][0], "unidentified-exhibit:second-panel"),
+    );
+    const missingPanel = await judgeRenderedDocx(
+      await zip.generateAsync({ type: "nodebuffer" }),
+      doc,
+      model,
+    );
+    expect(missingPanel.findings).toContain(
+      "architecture_figure_count:end_to_end_data_flow:1",
+    );
+  }, 120_000);
+
   it("renders and judges every governed architecture figure by key", async () => {
     const model = buildGroundedArchitectureFallback({
       engagement: "Synthetic architecture review",
