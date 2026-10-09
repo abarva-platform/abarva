@@ -1,0 +1,20 @@
+{
+  "dataset_id": "moves_demo_assumption_register_seed_v1",
+  "title": "Synthetic assumptions register seed for the demo governed-data-foundation Move",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "move",
+  "classification": "confidential",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Sixteen fictional, non-client-attested register rows in a committed seed definition. Each row cites the synthetic tenant intake file or synthetic discovery-evidence fixture its figure comes from, or is labelled a demo planning assumption; owners are roles, never people.",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 16,
+  "approved_by": "AbarVa product owner authorization",
+  "approved_at": "2026-10-09",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration only. The seed is written by the operator ACA job scripts/moves/seed-demo-assumption-register-job.ts through the register store, so the register's domain rules and append-only history apply; rows land with origin team, twelve open and four confirmed with a named answer source. Tenancy and the Move come from declarations, never from this manifest: the job refuses any tenant other than the synthetic demo tenant declared synthetic-demo in the tenant input registry, writes only the Move whose id the committed discovery-evidence load approval declares, and authenticates that Move's client and declared archetype from the Move registry. The job refuses to apply until a named person adds a load_approval here bound to that Move and the exact seed hash (printed by --seed-hash). A dry run reads the Move and its register and writes nothing. Rows project as Move-scoped governed objects that never claim agent_ready; no indexing, serving approval or surface change is implied."
+}
