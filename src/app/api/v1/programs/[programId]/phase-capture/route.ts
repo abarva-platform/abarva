@@ -89,6 +89,21 @@ function parsePhase(value: string | null | undefined): number | null {
   return parsed;
 }
 
+// `moves_value_engine_v1`: when on, a P4 `value_plan` written as a structured
+// value model completes only when the value engine can evaluate it. The
+// check reads `=== true` so a mocked or async flag reader can never switch it
+// on by returning a truthy non-boolean.
+function valueEngineEnabled(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+): boolean {
+  return (
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_value_engine_v1",
+    ) === true
+  );
+}
+
 function readModuleValue(
   moduleState: Record<string, unknown> | null | undefined,
 ): string {
@@ -202,6 +217,7 @@ export async function GET(
         (item) => item.evidenceId,
       ),
       confirmedSolutionRoute: snapshot.confirmedSolutionRoute,
+      valueEngineV1: valueEngineEnabled(ctx),
     });
     return Response.json({
       ok: true,
@@ -345,6 +361,7 @@ export async function POST(
                 (item) => item.evidenceId,
               ),
             confirmedSolutionRoute: currentSnapshot.confirmedSolutionRoute,
+            valueEngineV1: valueEngineEnabled(ctx),
           }),
           detail:
             "This page was loaded before the capture state changed. Reload the authoritative values and re-apply the edit.",
@@ -401,6 +418,7 @@ export async function POST(
           (item) => item.evidenceId,
         ),
       confirmedSolutionRoute,
+      valueEngineV1: valueEngineEnabled(ctx),
     });
     // The normalised values the write loop below actually persists. This is
     // what the response must report — see the comment on the return.
