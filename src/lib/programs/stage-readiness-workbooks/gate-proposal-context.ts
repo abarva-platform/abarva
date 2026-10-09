@@ -5,11 +5,14 @@ import {
   listMoveArtifacts,
 } from "@/lib/programs/deliverables/move-artifacts";
 import type { TenancyCtx } from "@/lib/programs/types.db";
-import type { StageReadinessGateProposal } from "./gate-readiness";
 import {
-  STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
-  type StageReadinessProposalReview,
-} from "./proposals";
+  findCurrentStageReadinessProposalSetArtifact,
+  toStageReadinessGateProposal,
+  undecidedStageReadinessGateProposals,
+} from "./current-proposal-set";
+import type { StageReadinessGateProposal } from "./gate-readiness";
+import type { StageReadinessWorkbookProposalSet } from "./proposals";
+import { loadStageReadinessStoredReview } from "./review-accumulation";
 
 /**
  * The stored transition review AS IT STANDS, for reading the gate's blockers.
@@ -51,65 +54,64 @@ export async function loadStageReadinessGateProposals(
   const sourcePhase = targetPhase - 1;
   if (sourcePhase < 0) return null;
 
+  // The upload under review, chosen exactly as the phase page chooses it. A
+  // review is judged against THIS set: one recorded against an earlier upload
+  // holds decisions about answers this upload may have changed or emptied.
+  // See `./current-proposal-set`.
   const artifacts = await listMoveArtifacts(ctx, moveId, {
     family: "approval_artifact",
     currentOnly: true,
   });
-  const reviewArtifact = artifacts.find(
-    (artifact) =>
-      artifact.phase === sourcePhase &&
-      artifact.artifact_type === STAGE_READINESS_PROPOSAL_REVIEW_ARTIFACT_TYPE,
+  const proposalSetArtifact = findCurrentStageReadinessProposalSetArtifact(
+    artifacts,
+    sourcePhase,
   );
-  if (!reviewArtifact) return null;
+  if (!proposalSetArtifact) return null;
 
-  const downloaded = await downloadArtifactBytes(
+  const setBytes = await downloadArtifactBytes(
     ctx,
-    reviewArtifact.artifact_id,
+    proposalSetArtifact.artifact_id,
   );
-  if (!downloaded) return null;
-
-  let review: StageReadinessProposalReview;
+  if (!setBytes) return null;
+  let proposalSet: StageReadinessWorkbookProposalSet;
   try {
-    review = JSON.parse(
-      downloaded.bytes.toString("utf-8"),
-    ) as StageReadinessProposalReview;
+    proposalSet = JSON.parse(
+      setBytes.bytes.toString("utf-8"),
+    ) as StageReadinessWorkbookProposalSet;
   } catch {
-    // An unreadable review is not a reviewed workbook. Returning null leaves
+    // An unreadable upload is not a reviewed workbook. Returning null leaves
     // the gate on its wholly-unreviewed reading, which is the safe one.
     return null;
   }
 
-  // A review stored against another Move or another transition says nothing
+  // A set stored against another Move or another transition says nothing
   // about this one.
   if (
-    review.moveId !== moveId ||
-    review.transition?.fromPhase !== sourcePhase ||
-    review.transition?.toPhase !== targetPhase
+    proposalSet.moveId !== moveId ||
+    proposalSet.transition?.fromPhase !== sourcePhase ||
+    proposalSet.transition?.toPhase !== targetPhase
   ) {
     return null;
   }
 
-  const proposals = (review.proposals ?? []).map(
-    (proposal): StageReadinessGateProposal => ({
-      questionId: proposal.questionId ?? "",
-      dimensionId: proposal.dimensionId ?? "",
-      requirement:
-        proposal.requirement === "recommended" ? "recommended" : "required",
-      answerState:
-        proposal.answerState === "answered" ||
-        proposal.answerState === "unknown" ||
-        proposal.answerState === "insufficient_evidence"
-          ? proposal.answerState
-          : "blank",
-      disposition:
-        proposal.disposition === "accepted" ||
-        proposal.disposition === "rejected" ||
-        proposal.disposition === "needs_validation"
-          ? proposal.disposition
-          : "pending",
-      evidenceOrSource: proposal.evidenceOrSource ?? "",
-    }),
+  const storedReview = await loadStageReadinessStoredReview(
+    ctx,
+    moveId,
+    sourcePhase,
+    {
+      proposalSetId: proposalSet.proposalSetId ?? "",
+      artifactId: proposalSetArtifact.artifact_id,
+      artifactVersion: proposalSetArtifact.version,
+    },
   );
+
+  // Only a review of this set carries decisions the gate may honour. With none
+  // on record — never reviewed, or reviewed only on an earlier upload — every
+  // response of this upload is undecided, which is what the page shows.
+  const proposals =
+    storedReview?.kind === "current_set"
+      ? storedReview.proposals.map(toStageReadinessGateProposal)
+      : undecidedStageReadinessGateProposals(proposalSet.proposals ?? []);
 
   // An empty review is indistinguishable from no review for gate purposes, and
   // the callers' `?? null` already means "no workbook".
