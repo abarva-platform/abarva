@@ -21,8 +21,12 @@
 import { z } from "zod";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 
-/** Bump when the contract changes; forces re-validation. */
-export const POLICY_VERSION = "1.0.0";
+/**
+ * Bump when the contract changes; forces re-validation.
+ * 1.1.0 — adds the `public_source` source layer (governed public-web research
+ * for Moves: tenant- and Move-scoped, reviewed before use, never agent_ready).
+ */
+export const POLICY_VERSION = "1.1.0";
 
 /** Scope sentinel for tenant-neutral (shared corpus) objects. */
 export const CORPUS_GLOBAL_SCOPE = "corpus_global";
@@ -45,6 +49,9 @@ export const SOURCE_LAYERS = [
   "financial",
   "graph_edge",
   "search_chunk",
+  // A public web page retrieved by the audited research step for one Move.
+  // Never a fact about the client; tenant-scoped, never corpus_global.
+  "public_source",
 ] as const;
 export type SourceLayer = (typeof SOURCE_LAYERS)[number];
 
@@ -246,6 +253,20 @@ export function evaluateGovernedObject(input: unknown): PolicyEvaluation {
     errors.push(
       `sensitive classification "${o.classification}" cannot be in shared corpus`,
     );
+  }
+
+  // A public source is research about the world, never shared corpus and never
+  // agent_ready on its own: it is cited only after a consultant approves it, and
+  // only for the tenant and Move it was retrieved for.
+  if (o.source_layer === "public_source") {
+    if (o.client_key === CORPUS_GLOBAL_SCOPE) {
+      errors.push(
+        "public_source objects are tenant-scoped and cannot be corpus_global",
+      );
+    }
+    if (o.agent_readiness_status === "agent_ready") {
+      errors.push("public_source objects are never agent_ready");
+    }
   }
 
   // Requirements to be agent_ready (else warn + not ready, but not a hard block).

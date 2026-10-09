@@ -3,6 +3,7 @@ import {
   isAgentUsable,
   isCanonicalClientKey,
   POLICY_VERSION,
+  SOURCE_LAYERS,
   type GovernedObject,
 } from "../context-corpus-policy";
 
@@ -119,6 +120,73 @@ describe("context-corpus policy contract", () => {
 
   it("blocks an object that fails the schema entirely", () => {
     expect(evaluateGovernedObject({ id: "" }).decision).toBe("block");
+  });
+
+  describe("public_source layer (v1.1.0)", () => {
+    // A public web page found by Move research, reviewed before use.
+    function publicSource(over: Partial<GovernedObject> = {}): GovernedObject {
+      return ready({
+        object_type: "move_public_source",
+        source_layer: "public_source",
+        classification: "internal",
+        agent_readiness_status: "not_reviewed",
+        retrievability: "not_indexed",
+        cited_render_verified_at: null,
+        applicable_agents: ["nexus"],
+        source_basis:
+          "Public web pages retrieved by the Anthropic web search/fetch tools; URL and retrieval date per object",
+        provenance: {
+          source_file: "https://example.org/rule",
+          ingestion_run_id: "run-1",
+          parse_method: "anthropic_web_citation",
+          committed_at: "2026-10-10T00:00:00Z",
+        },
+        ...over,
+      });
+    }
+
+    it("is a declared layer under policy version 1.1.0", () => {
+      expect(POLICY_VERSION).toBe("1.1.0");
+      expect(SOURCE_LAYERS).toContain("public_source");
+    });
+
+    it("admits a tenant-scoped, not-yet-reviewed public source as warn, never ready", () => {
+      const r = evaluateGovernedObject(publicSource());
+      expect(r.decision).toBe("warn");
+      expect(r.agentReady).toBe(false);
+    });
+
+    it("BLOCKS a public source in shared corpus", () => {
+      const r = evaluateGovernedObject(
+        publicSource({ client_key: "corpus_global", tenant_id: null }),
+      );
+      expect(r.decision).toBe("block");
+      expect(r.errors.join(" ")).toMatch(/cannot be corpus_global/);
+    });
+
+    it("BLOCKS a public source claiming agent_ready, even when fully grounded", () => {
+      const r = evaluateGovernedObject(
+        publicSource({
+          agent_readiness_status: "agent_ready",
+          retrievability: "search_indexed",
+          cited_render_verified_at: "2026-10-10T00:00:00Z",
+        }),
+      );
+      expect(r.decision).toBe("block");
+      expect(r.agentReady).toBe(false);
+      expect(r.errors).toEqual(["public_source objects are never agent_ready"]);
+      // The same fully-grounded object on another layer is ready.
+      expect(
+        evaluateGovernedObject(
+          publicSource({
+            source_layer: "uploaded_evidence",
+            agent_readiness_status: "agent_ready",
+            retrievability: "search_indexed",
+            cited_render_verified_at: "2026-10-10T00:00:00Z",
+          }),
+        ).agentReady,
+      ).toBe(true);
+    });
   });
 
   it("recognizes canonical client keys + corpus_global", () => {
