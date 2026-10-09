@@ -115,7 +115,8 @@ export type FeatureFlagKey =
   | "moves_charter_standing_after_discover_v1"
   | "moves_step_pages_v3"
   | "moves_public_source_research"
-  | "moves_assumption_register_v1";
+  | "moves_assumption_register_v1"
+  | "moves_value_engine_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -433,6 +434,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_assumption_register_v1",
     summary:
       "2026-10-10: Turns on the Move-level assumptions register: each working figure a Move's documents rest on becomes a register row with a stable ID (V value, D data, DL delivery, A adoption; never reused) that documents cite as [A:V3], a named source, an owner role, a confidence of 1, 3 or 5, and a status (proposed, open, confirmed, corrected, superseded, rejected). aVa may only propose a row; a person accepts, rejects, answers or supersedes it, and every change is kept in an append-only history. This release adds the storage, the domain rules, the register API (list, add, edit, and accept, reject, answer or supersede) and the aVa propose_assumption tool, which can only add proposed rows. Working figures are shown to anyone who can work the Move's register; a read-only viewer without financial visibility gets them withheld. There is no screen and no document generation reading the register yet, so a user sees a change only when aVa proposes an assumption in the Moves chat. Enabled for the synthetic demo tenant; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_value_engine_v1",
+    summary:
+      "2026-10-10: Moves deterministic value engine, increment 1 (core engine). When on, a P4 value plan saved as a structured value model (levers with a driver, ordered terms, attribution, probability, timing and an overlap group) completes only when the engine can evaluate it: every input resolved and every conversion rule met (volume needs a refill share and margin; a cost reduction needs a spend base and a bought-less assumption; hours saved count $0 without a role or contract release path; avoided risk stays out of cash). The engine computes annual low/base/high in integer cents with formula terms, the monthly cash curve, NPV, payback month, breakeven and sensitivity; the expert-kernel haircut is a cross-check only, never applied on top. Free-text value plans complete exactly as before. No editor, generation, gate or Tower change yet. Enabled for the synthetic demo tenant; off for everyone else.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
