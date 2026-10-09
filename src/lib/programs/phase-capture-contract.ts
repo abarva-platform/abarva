@@ -8,6 +8,7 @@ import {
   parseRootCauseRegister,
 } from "@/lib/programs/root-cause-register";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
+import { evaluateValueModelCapture } from "@/lib/programs/value-model-capture";
 import { p1CharterEvidenceFamilyForSection } from "@/lib/programs/p1-charter-evidence";
 import { resolveChangeProfile } from "@/lib/programs/phase-workflow-registry";
 
@@ -526,6 +527,9 @@ function stringValue(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/** The P4 capture key that may hold a structured value model (no other phase declares it). */
+export const VALUE_MODEL_SECTION_KEY = "value_plan";
+
 export function evaluatePhaseCapture(
   phase: number,
   values: Record<string, unknown>,
@@ -533,6 +537,15 @@ export function evaluatePhaseCapture(
     businessChangeAssessment?: unknown;
     approvedEvidenceReferences?: readonly string[];
     confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+    /**
+     * `moves_value_engine_v1`, resolved by the caller for the Move's tenant.
+     * When true, a P4 `value_plan` that is a structured value model
+     * (`value-model-capture.ts`) completes only when the value engine can
+     * evaluate it — every input resolved, every conversion rule met. Legacy
+     * free text completes exactly as before. When false or absent, P4
+     * `value_plan` is plain free text, unchanged.
+     */
+    valueEngineV1?: boolean;
   } = {},
 ): PhaseCaptureEvaluation {
   const sections = getPhaseCaptureSections(
@@ -554,7 +567,10 @@ export function evaluatePhaseCapture(
             ? evaluateEstimateModel(value).readyForApproval
             : section.key === "gaps_root_causes"
               ? rootCauseValueComplete(value)
-              : true;
+              : section.key === VALUE_MODEL_SECTION_KEY &&
+                  context.valueEngineV1 === true
+                ? evaluateValueModelCapture(value).complete
+                : true;
     return {
       ...section,
       value,
