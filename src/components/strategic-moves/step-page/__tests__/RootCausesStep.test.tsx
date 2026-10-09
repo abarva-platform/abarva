@@ -158,6 +158,85 @@ describe("RootCausesStep", () => {
     expect(status(container).textContent).not.toContain("Find evidence");
   });
 
+  it("reviews an extraction inline in the canon form and approves it through the governed route", async () => {
+    const calls: Array<{ url: string; body?: unknown }> = [];
+    global.fetch = jest.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        calls.push({
+          url,
+          body: init?.body ? JSON.parse(String(init.body)) : undefined,
+        });
+        if (url.endsWith("/approve"))
+          return { ok: true, json: async () => ({ ok: true }) };
+        return {
+          ok: true,
+          json: async () => ({
+            evidenceReviewStatus: "available",
+            pendingEvidenceReviews: [
+              {
+                evidenceId: "ev-9",
+                title: "Duplicate-match report.xlsx",
+                phase: 2,
+                parseMethod: "xlsx",
+                confidence: 0.8,
+                sourceTextPreview: "Member ids drift.",
+                extraction: {
+                  version: 1,
+                  summary: "Member ids drift between claims and EHR.",
+                  structured: {
+                    decisions: [],
+                    risks: [],
+                    baselineCandidates: [],
+                    actionItems: [],
+                    observations: ["Ids drift"],
+                    assumptions: [],
+                    openQuestions: [],
+                    citations: [
+                      { quote: "Member ids drift", locator: "Sheet 1" },
+                    ],
+                  },
+                },
+              },
+            ],
+            reviewedEvidence: [],
+          }),
+        };
+      },
+    ) as unknown as typeof fetch;
+    const { container, findByText } = render(
+      <Harness
+        initial={register(
+          [{ id: "RC-1", cause: "A", status: "accepted", evidence: ["P"] }],
+          true,
+        )}
+      />,
+    );
+    await findByText("Member ids drift between claims and EHR.");
+    fireEvent.click(
+      within(row(container, "EV-1")).getByRole("button", {
+        name: "Review extraction",
+      }),
+    );
+    const evRow = row(container, "EV-1");
+    expect(within(evRow).getByLabelText("What the file says")).toBeTruthy();
+    expect(within(evRow).getByRole("button", { name: "Reject" })).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(
+        within(evRow).getByRole("button", { name: "Approve extraction" }),
+      );
+    });
+    const approve = calls.find((c) =>
+      c.url.endsWith("/current-state/evidence/ev-9/approve"),
+    );
+    expect(approve?.body).toMatchObject({
+      decision: "approved",
+      reviewedExtraction: expect.objectContaining({
+        summary: "Member ids drift between claims and EHR.",
+      }),
+    });
+  });
+
   it("an uploaded extraction awaiting review leads the step and holds it", async () => {
     const fetchMock = jest.fn(async () => ({
       ok: true,

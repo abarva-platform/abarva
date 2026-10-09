@@ -7,10 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  EvidenceReviewEditor,
-  type PendingEvidenceReview,
-} from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import type { PendingEvidenceReview } from "@/components/strategic-moves/CurrentStateReadinessPanel";
+import { StepEvidenceReviewForm } from "./StepEvidenceReviewForm";
 import { describeEvidenceCabinetReadback } from "@/lib/programs/evidence-cabinet-readback";
 import { describeMoveUploadOutcome } from "@/lib/programs/move-artifact-storage-state";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
@@ -213,7 +211,7 @@ export function useStepEvidence({
     ],
     middle:
       openReview === review.evidenceId && canReview ? (
-        <EvidenceReviewEditor
+        <StepEvidenceReviewForm
           review={review}
           programId={moveId}
           busy={deciding === review.evidenceId}
@@ -221,6 +219,7 @@ export function useStepEvidence({
           onDecision={(decision, extraction, rationale) =>
             void decide(review, decision, extraction, rationale)
           }
+          onCancel={() => setOpenReview(null)}
         />
       ) : (
         <p className={cx("proposal")}>
@@ -232,15 +231,7 @@ export function useStepEvidence({
       ),
     actions: !canReview ? (
       <span className={cx("item-state")}>Awaiting review</span>
-    ) : openReview === review.evidenceId ? (
-      <button
-        type="button"
-        className={cx("link-btn")}
-        onClick={() => setOpenReview(null)}
-      >
-        Close review
-      </button>
-    ) : (
+    ) : openReview === review.evidenceId ? null : (
       <button
         type="button"
         className={cx("btn-ink")}

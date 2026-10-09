@@ -379,23 +379,14 @@ export function normalizeReviewSignalLines(text: string): string[] {
     .filter(Boolean);
 }
 
-export function EvidenceReviewEditor({
-  review,
-  programId,
-  busy,
-  disabled,
-  onDecision,
-}: {
-  review: PendingEvidenceReview;
-  programId?: string;
-  busy: boolean;
-  disabled: boolean;
-  onDecision: (
-    decision: "approved" | "rejected",
-    extraction?: ReviewedEvidenceExtraction,
-    rationale?: string,
-  ) => void;
-}) {
+/**
+ * The governed evidence-review form: the reviewer's working text, its
+ * normalisation, and the verdict on what an approval would send. Shared by
+ * every surface that reviews an extraction (this panel's editor, the Files
+ * library, a step page's evidence row), so the rules cannot drift between
+ * them. Only the rendering differs.
+ */
+export function useEvidenceReviewForm(review: PendingEvidenceReview) {
   const [extraction, setExtraction] = useState(review.extraction);
   const [reviewRationale, setReviewRationale] = useState("");
   const [citationText, setCitationText] = useState(
@@ -463,6 +454,61 @@ export function EvidenceReviewEditor({
     lists: reviewedSignals(),
     citations: parsedCitations,
   });
+  /** What an approval sends: the reviewed snapshot. */
+  const approvedExtraction = (): ReviewedEvidenceExtraction => ({
+    ...extraction,
+    structured: {
+      ...extraction.structured,
+      ...reviewedSignals(),
+      citations: parsedCitations,
+    },
+  });
+  return {
+    extraction,
+    setSummary: (summary: string) =>
+      setExtraction((current) => ({ ...current, summary })),
+    signalText,
+    setSignalLines,
+    citationText,
+    setCitationText,
+    reviewRationale,
+    setReviewRationale,
+    fieldLabels,
+    formVerdict,
+    approvedExtraction,
+  };
+}
+
+export function EvidenceReviewEditor({
+  review,
+  programId,
+  busy,
+  disabled,
+  onDecision,
+}: {
+  review: PendingEvidenceReview;
+  programId?: string;
+  busy: boolean;
+  disabled: boolean;
+  onDecision: (
+    decision: "approved" | "rejected",
+    extraction?: ReviewedEvidenceExtraction,
+    rationale?: string,
+  ) => void;
+}) {
+  const {
+    extraction,
+    setSummary,
+    signalText,
+    setSignalLines,
+    citationText,
+    setCitationText,
+    reviewRationale,
+    setReviewRationale,
+    fieldLabels,
+    formVerdict,
+    approvedExtraction,
+  } = useEvidenceReviewForm(review);
   const approveBlocked = disabled || busy || !formVerdict.canApprove;
 
   return (
@@ -512,12 +558,7 @@ export function EvidenceReviewEditor({
           <textarea
             aria-label={`${review.title} reviewed summary`}
             value={extraction.summary}
-            onChange={(event) =>
-              setExtraction((current) => ({
-                ...current,
-                summary: event.target.value,
-              }))
-            }
+            onChange={(event) => setSummary(event.target.value)}
             rows={3}
             style={{
               width: "100%",
@@ -687,14 +728,7 @@ export function EvidenceReviewEditor({
               onClick={() =>
                 onDecision(
                   "approved",
-                  {
-                    ...extraction,
-                    structured: {
-                      ...extraction.structured,
-                      ...reviewedSignals(),
-                      citations: parsedCitations,
-                    },
-                  },
+                  approvedExtraction(),
                   reviewRationale.trim() || undefined,
                 )
               }

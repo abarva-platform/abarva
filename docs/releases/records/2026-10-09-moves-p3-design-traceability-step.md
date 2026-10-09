@@ -45,6 +45,10 @@ This change also applies Claude Design's second review of the real components
 - The step bar's "open" state is visible.
 - The approver is named by role consistently.
 - Gate documents show their purpose.
+- An extraction is reviewed inside its step in the canon form (Approve
+  extraction / Reject / Cancel at the foot). The form's rules now live in one
+  hook (`useEvidenceReviewForm`) shared with the Files library's editor, whose
+  11 suites (457 tests) pass unchanged.
 
 ## Layer Impact
 
@@ -129,8 +133,6 @@ capture and, as free text, by generation.
 
 ## Known Gaps
 
-- The evidence review editor still opens in its older styling. Restyling it
-  to the canon is next (design review 2).
 - The approver's real name is not yet resolved. Role wording is used.
 - Signed lines do not yet show who signed and when, because the
   artifact read does not carry them.
