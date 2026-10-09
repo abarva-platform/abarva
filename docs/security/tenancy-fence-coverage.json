@@ -10,12 +10,12 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 410,
+    "routes": 411,
     "fenced": 229,
     "fencedDirect": 105,
     "fencedIndirect": 124,
-    "unfenced": 181,
-    "unfencedButReachesFenceModule": 100,
+    "unfenced": 182,
+    "unfencedButReachesFenceModule": 101,
     "behavioral": 83,
     "byteScannerOnly": 7,
     "none": 139
@@ -5688,6 +5688,18 @@
     },
     {
       "route": "src/app/api/v1/programs/[programId]/stage-readiness-workbook/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/value-case/route.ts",
       "fence": "none",
       "fenceSymbols": [],
       "fenceVia": [],
