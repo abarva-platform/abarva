@@ -12,6 +12,11 @@ import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import { normalizeReviewedEvidenceExtraction } from "@/lib/programs/evidence-review-contract";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
+import {
+  describeAlreadyDecidedEvidenceReview,
+  describeEvidenceDecisionRefusal,
+} from "@/lib/programs/evidence-cabinet-readback";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,16 +67,50 @@ export async function POST(
     });
 
     if (!result.ok) {
-      // No pending review for this evidence in this move — already decided or
-      // not found. Honest 409 rather than a silent success.
+      // Three different situations arrive here and they do NOT share a next
+      // action, so the promotion reports WHICH one it is and this answers each
+      // on its own. They were collapsed into one `no_pending_review`, whose
+      // sentence tells the reviewer the decision was already recorded and to
+      // reload to read it — true when a review exists, and a fabrication when
+      // the evidence is not on the Move at all, which is what an upload whose
+      // evidence was never captured looks like from here.
+      //
+      // `reviewed_extraction_missing` is NOT given an arm: the 400 above
+      // refuses an approval without the reviewed extraction before this call
+      // can be made, and the promotion re-derives it from the same argument, so
+      // that reason is unreachable from this route. The route suite asserts the
+      // unreachability instead of exercising an arm nothing can reach.
+      //
+      // The status stays 409 for every one of them. A cross-tenant id must keep
+      // answering exactly as a nonexistent one does, and the code is what
+      // carries the distinction a reviewer can act on.
+      const notOnMove = result.reason === "evidence_not_found";
+      const code = notOnMove ? "evidence_not_in_move" : "no_pending_review";
+      // The recorded decision rides in the SENTENCE, not in a field of its own.
+      // The cabinet renders `detail` and nothing else from this body, so a
+      // `recordedDecision` field beside it would be read by no client at all.
+      const detail = notOnMove
+        ? describeEvidenceDecisionRefusal({ code })
+        : describeAlreadyDecidedEvidenceReview(result.decision);
       return Response.json(
-        { error: "no_pending_review", evidenceId },
+        { ok: false, error: code, detail, evidenceId },
         { status: 409 },
       );
     }
 
     return Response.json(result, { status: 200 });
   } catch (err) {
-    return tenancyErrorResponse(err);
+    // `tenancyErrorResponse` re-throws anything that is not a `TenancyError`,
+    // which left every storage/DB failure here as an unbodied 500: the cabinet
+    // read no body, fell through to its unnamed-refusal sentence, and told the
+    // reviewer nothing was approved. This arm is reachable on either side of
+    // the promotion's one write, so it claims NEITHER direction and sends the
+    // reviewer to read the evidence's own state.
+    return tenancyOrNamedErrorResponse(err, tenancyErrorResponse, {
+      code: "review_decision_unconfirmed",
+      detail: describeEvidenceDecisionRefusal({
+        code: "review_decision_unconfirmed",
+      }),
+    });
   }
 }
