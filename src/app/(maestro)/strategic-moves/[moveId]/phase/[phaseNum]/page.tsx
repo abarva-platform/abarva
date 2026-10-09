@@ -35,8 +35,9 @@ import {
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
 import {
-  STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE,
-} from "@/lib/programs/stage-readiness-workbooks/proposals";
+  findCurrentStageReadinessProposalSetArtifact,
+  toStageReadinessGateProposal,
+} from "@/lib/programs/stage-readiness-workbooks/current-proposal-set";
 import { loadStageReadinessStoredReview } from "@/lib/programs/stage-readiness-workbooks/review-accumulation";
 import { previewStageReadinessStoredReview } from "@/lib/programs/stage-readiness-workbooks/review-preview";
 import {
@@ -515,11 +516,11 @@ export default async function StrategicMovePhaseWorkspacePage({
       family: "approval_artifact",
       currentOnly: true,
     });
-    const currentProposalSet = approvalArtifacts.find(
-      (artifact) =>
-        artifact.phase === readinessWorkbookPhase &&
-        artifact.artifact_type === STAGE_READINESS_PROPOSAL_SET_ARTIFACT_TYPE &&
-        artifact.status === "review_required",
+    // Chosen by the same finder the gate route uses, so the page and the gate
+    // judge the transition on the same upload.
+    const currentProposalSet = findCurrentStageReadinessProposalSetArtifact(
+      approvalArtifacts,
+      readinessWorkbookPhase,
     );
     if (currentProposalSet) {
       const downloaded = await downloadArtifactBytes(
@@ -698,29 +699,7 @@ export default async function StrategicMovePhaseWorkspacePage({
       readinessWorkbookPhase === parsedPhase
         ? recordedDispositionsOnly(
             initialStageReadinessPreview?.proposalSet?.proposals,
-          ).map(
-            (proposal): StageReadinessGateProposal => ({
-              questionId: proposal.questionId ?? "",
-              dimensionId: proposal.dimensionId ?? "",
-              requirement:
-                proposal.requirement === "recommended"
-                  ? ("recommended" as const)
-                  : ("required" as const),
-              answerState:
-                proposal.answerState === "answered" ||
-                proposal.answerState === "unknown" ||
-                proposal.answerState === "insufficient_evidence"
-                  ? proposal.answerState
-                  : ("blank" as const),
-              disposition:
-                proposal.disposition === "accepted" ||
-                proposal.disposition === "rejected" ||
-                proposal.disposition === "needs_validation"
-                  ? proposal.disposition
-                  : ("pending" as const),
-              evidenceOrSource: proposal.evidenceOrSource ?? "",
-            }),
-          )
+          ).map(toStageReadinessGateProposal)
         : null;
     evidenceNeedPackets = applyStageReadinessToEvidencePackets(
       evidenceNeedPackets,

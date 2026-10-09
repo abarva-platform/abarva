@@ -193,6 +193,10 @@ describe("accepted stage readiness context", () => {
  * The partial-review sibling, tested beside the strict loader on purpose: the
  * ONLY difference between them that matters is which dispositions they admit,
  * and these cases pin that difference against the same fake artifact store.
+ *
+ * The gate reads the UPLOAD under review first and honours a stored review
+ * only when it was recorded against that upload — the reading the phase page
+ * has always made. So the store here holds both artifacts, keyed by id.
  */
 describe("stage readiness gate proposals — the review as it stands", () => {
   /** The same review, except one RECOMMENDED response was never decided. */
@@ -216,32 +220,110 @@ describe("stage readiness gate proposals — the review as it stands", () => {
     ],
   };
 
+  /** The upload that review was recorded against: every row as uploaded. */
+  const reviewedUpload = {
+    proposalSetId: "proposal-set-1",
+    moveId: "move-1",
+    transition: { fromPhase: 1, toPhase: 2, stage: "P1 to P2" },
+    proposals: heldByRecommended.proposals.map((proposal) => ({
+      ...proposal,
+      disposition: "pending",
+    })),
+  };
+
+  /**
+   * The workbook uploaded again after that review, with the volume answer
+   * emptied. A new upload is a new set and a new artifact; the review on file
+   * still names the first one.
+   */
+  const reUpload = {
+    ...reviewedUpload,
+    proposalSetId: "proposal-set-2",
+    proposals: reviewedUpload.proposals.map((proposal) =>
+      proposal.questionId === "q_volume"
+        ? { ...proposal, answerState: "blank" }
+        : proposal,
+    ),
+  };
+
+  const setRow = (artifactId: string, version: number) => ({
+    artifact_id: artifactId,
+    version,
+    phase: 1,
+    artifact_type: "stage_readiness_workbook_proposal_set",
+    status: "review_required",
+    metadata: {},
+  });
+  const reviewRow = {
+    artifact_id: "review-artifact-1",
+    version: 3,
+    phase: 1,
+    artifact_type: "stage_readiness_workbook_proposal_review",
+    status: "review_required",
+    metadata: {
+      acceptedCount: 2,
+      pendingCount: 1,
+      needsValidationCount: 0,
+      proposalSetId: "proposal-set-1",
+      sourceProposalSetArtifact: {
+        artifactId: "proposal-artifact-1",
+        artifactVersion: 1,
+      },
+    },
+  };
+
+  let rows: unknown[];
+  let bodies: Record<string, string | null>;
+  const store = (input: {
+    rows: unknown[];
+    bodies: Record<string, unknown>;
+  }) => {
+    rows = input.rows;
+    bodies = Object.fromEntries(
+      Object.entries(input.bodies).map(([id, body]) => [
+        id,
+        body === null
+          ? null
+          : typeof body === "string"
+            ? body
+            : JSON.stringify(body),
+      ]),
+    );
+  };
+
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
-    listMoveArtifacts.mockResolvedValue([
-      {
-        artifact_id: "review-artifact-1",
-        version: 3,
-        phase: 1,
-        artifact_type: "stage_readiness_workbook_proposal_review",
-        metadata: { acceptedCount: 2, pendingCount: 1, needsValidationCount: 0 },
+    store({
+      rows: [setRow("proposal-artifact-1", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-1": reviewedUpload,
+        "review-artifact-1": heldByRecommended,
       },
-    ]);
-    downloadArtifactBytes.mockResolvedValue({
-      fileName: "review.json",
-      fileFormat: "json",
-      bytes: Buffer.from(JSON.stringify(heldByRecommended)),
     });
+    listMoveArtifacts.mockImplementation(async () => rows);
+    downloadArtifactBytes.mockImplementation(
+      async (_ctx: unknown, artifactId: string) => {
+        const body = bodies[artifactId];
+        if (body === undefined || body === null) return null;
+        return {
+          fileName: `${artifactId}.json`,
+          fileFormat: "json",
+          bytes: Buffer.from(body),
+        };
+      },
+    );
   });
 
+  const load = async (targetPhase = 2) => {
+    const { loadStageReadinessGateProposals } =
+      await import("../gate-proposal-context");
+    return loadStageReadinessGateProposals(ctx, "move-1", targetPhase);
+  };
+
   it("reads a review the strict loader refuses, which is the whole point", async () => {
-    const { loadStageReadinessGateProposals } = await import(
-      "../gate-proposal-context"
-    );
-    const { loadAcceptedStageReadinessContext } = await import(
-      "../accepted-context"
-    );
+    const { loadAcceptedStageReadinessContext } =
+      await import("../accepted-context");
 
     // Strict: one undecided response means the review is not finished, so no
     // response may feed the next phase's prompt.
@@ -250,7 +332,7 @@ describe("stage readiness gate proposals — the review as it stands", () => {
     ).resolves.toBeNull();
 
     // Gate: the review exists and both required responses are accepted.
-    const proposals = await loadStageReadinessGateProposals(ctx, "move-1", 2);
+    const proposals = await load();
     expect(proposals).toHaveLength(3);
     expect(proposals).toEqual([
       expect.objectContaining({
@@ -272,116 +354,241 @@ describe("stage readiness gate proposals — the review as it stands", () => {
     ]);
   });
 
-  it("is still null when no review artifact exists for the source phase", async () => {
-    listMoveArtifacts.mockResolvedValueOnce([
-      {
-        artifact_id: "other-artifact",
-        version: 1,
-        // A review for a DIFFERENT transition is not this transition's review.
-        phase: 2,
-        artifact_type: "stage_readiness_workbook_proposal_review",
-        metadata: {},
+  it("does not judge a re-uploaded workbook on the previous upload's decisions", async () => {
+    store({
+      rows: [setRow("proposal-artifact-2", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-2": reUpload,
+        "review-artifact-1": heldByRecommended,
       },
-    ]);
-    const { loadStageReadinessGateProposals } = await import(
-      "../gate-proposal-context"
-    );
+    });
 
-    await expect(
-      loadStageReadinessGateProposals(ctx, "move-1", 2),
-    ).resolves.toBeNull();
+    const proposals = await load();
+
+    // The rows are the NEW upload's — the emptied volume answer is what the
+    // gate sees — and none carries the earlier review's acceptance.
+    expect(proposals).toEqual([
+      expect.objectContaining({
+        questionId: "q_baseline",
+        answerState: "unknown",
+        disposition: "pending",
+      }),
+      expect.objectContaining({
+        questionId: "q_volume",
+        answerState: "blank",
+        disposition: "pending",
+      }),
+      expect.objectContaining({
+        questionId: "q_optional_context",
+        disposition: "pending",
+      }),
+    ]);
+  });
+
+  it("holds the transition the page holds when the review names another upload", async () => {
+    store({
+      rows: [setRow("proposal-artifact-2", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-2": reUpload,
+        "review-artifact-1": heldByRecommended,
+      },
+    });
+    const { recordedDispositionsOnly } = await import("../review-provenance");
+    const { toStageReadinessGateProposal } =
+      await import("../current-proposal-set");
+
+    // What the page hands the gate reading for this upload: the earlier
+    // review's decisions are shown as restored and returned to pending.
+    const pageReading = recordedDispositionsOnly(
+      reUpload.proposals.map((proposal) => ({
+        ...proposal,
+        disposition:
+          proposal.requirement === "required" ? "accepted" : "pending",
+        dispositionRestoredFromPriorUpload:
+          proposal.requirement === "required" ? true : undefined,
+      })),
+    ).map(toStageReadinessGateProposal);
+
+    await expect(load()).resolves.toEqual(pageReading);
+  });
+
+  it("honours a review only of this exact upload version", async () => {
+    // Same set id, but the set artifact the review names was version 1.
+    store({
+      rows: [setRow("proposal-artifact-1", 2), reviewRow],
+      bodies: {
+        "proposal-artifact-1": reviewedUpload,
+        "review-artifact-1": heldByRecommended,
+      },
+    });
+
+    const proposals = await load();
+    expect(proposals?.map((proposal) => proposal.disposition)).toEqual([
+      "pending",
+      "pending",
+      "pending",
+    ]);
+  });
+
+  it("reads an upload nobody has reviewed as every response undecided", async () => {
+    store({
+      rows: [setRow("proposal-artifact-1", 1)],
+      bodies: { "proposal-artifact-1": reviewedUpload },
+    });
+
+    const proposals = await load();
+    expect(proposals).toHaveLength(3);
+    expect(
+      proposals?.every((proposal) => proposal.disposition === "pending"),
+    ).toBe(true);
+  });
+
+  it("never reads a decision off the upload itself", async () => {
+    // An upload is parsed answers awaiting review; a disposition stored on one
+    // of its rows was recorded by nobody.
+    store({
+      rows: [setRow("proposal-artifact-2", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-2": {
+          ...reUpload,
+          proposals: reUpload.proposals.map((proposal) => ({
+            ...proposal,
+            disposition: "accepted",
+          })),
+        },
+        "review-artifact-1": heldByRecommended,
+      },
+    });
+
+    const proposals = await load();
+    expect(proposals?.map((proposal) => proposal.disposition)).toEqual([
+      "pending",
+      "pending",
+      "pending",
+    ]);
+  });
+
+  it("reads an unreadable review as no decision on record, not as no upload", async () => {
+    store({
+      rows: [setRow("proposal-artifact-1", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-1": reviewedUpload,
+        "review-artifact-1": "{ not json",
+      },
+    });
+
+    const proposals = await load();
+    expect(proposals?.map((proposal) => proposal.disposition)).toEqual([
+      "pending",
+      "pending",
+      "pending",
+    ]);
+  });
+
+  it("is null when no upload is on file for the source phase, even with a review", async () => {
+    store({
+      rows: [
+        // An upload for a DIFFERENT transition is not this transition's.
+        { ...setRow("proposal-artifact-9", 1), phase: 2 },
+        reviewRow,
+      ],
+      bodies: { "review-artifact-1": heldByRecommended },
+    });
+
+    await expect(load()).resolves.toBeNull();
     expect(downloadArtifactBytes).not.toHaveBeenCalled();
   });
 
-  it("refuses a review whose stored move or transition no longer matches", async () => {
-    const { loadStageReadinessGateProposals } = await import(
-      "../gate-proposal-context"
-    );
-
-    downloadArtifactBytes.mockResolvedValueOnce({
-      fileName: "review.json",
-      fileFormat: "json",
-      bytes: Buffer.from(
-        JSON.stringify({ ...heldByRecommended, moveId: "move-2" }),
-      ),
+  it("refuses an upload whose stored move or transition no longer matches", async () => {
+    store({
+      rows: [setRow("proposal-artifact-1", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-1": { ...reviewedUpload, moveId: "move-2" },
+        "review-artifact-1": heldByRecommended,
+      },
     });
-    await expect(
-      loadStageReadinessGateProposals(ctx, "move-1", 2),
-    ).resolves.toBeNull();
+    await expect(load()).resolves.toBeNull();
 
-    downloadArtifactBytes.mockResolvedValueOnce({
-      fileName: "review.json",
-      fileFormat: "json",
-      bytes: Buffer.from(
-        JSON.stringify({
-          ...heldByRecommended,
+    store({
+      rows: [setRow("proposal-artifact-1", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-1": {
+          ...reviewedUpload,
           transition: { fromPhase: 1, toPhase: 3, stage: "wrong" },
-        }),
-      ),
+        },
+        "review-artifact-1": heldByRecommended,
+      },
     });
-    await expect(
-      loadStageReadinessGateProposals(ctx, "move-1", 2),
-    ).resolves.toBeNull();
+    await expect(load()).resolves.toBeNull();
+
+    store({
+      rows: [setRow("proposal-artifact-1", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-1": {
+          ...reviewedUpload,
+          transition: { fromPhase: 0, toPhase: 2, stage: "wrong" },
+        },
+        "review-artifact-1": heldByRecommended,
+      },
+    });
+    await expect(load()).resolves.toBeNull();
   });
 
-  it("treats unreadable or empty review bytes as no review at all", async () => {
-    const { loadStageReadinessGateProposals } = await import(
-      "../gate-proposal-context"
-    );
-
-    downloadArtifactBytes.mockResolvedValueOnce({
-      fileName: "review.json",
-      fileFormat: "json",
-      bytes: Buffer.from("{ not json"),
+  it("takes only an upload still under review, as the page does", async () => {
+    store({
+      rows: [{ ...setRow("proposal-artifact-1", 1), status: "superseded" }],
+      bodies: { "proposal-artifact-1": reviewedUpload },
     });
-    await expect(
-      loadStageReadinessGateProposals(ctx, "move-1", 2),
-    ).resolves.toBeNull();
 
-    downloadArtifactBytes.mockResolvedValueOnce({
-      fileName: "review.json",
-      fileFormat: "json",
-      bytes: Buffer.from(JSON.stringify({ ...heldByRecommended, proposals: [] })),
+    await expect(load()).resolves.toBeNull();
+    expect(downloadArtifactBytes).not.toHaveBeenCalled();
+  });
+
+  it("treats unreadable, missing or empty upload bytes as no workbook at all", async () => {
+    store({
+      rows: [setRow("proposal-artifact-1", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-1": "{ not json",
+        "review-artifact-1": heldByRecommended,
+      },
     });
-    await expect(
-      loadStageReadinessGateProposals(ctx, "move-1", 2),
-    ).resolves.toBeNull();
+    await expect(load()).resolves.toBeNull();
 
-    downloadArtifactBytes.mockResolvedValueOnce(null);
-    await expect(
-      loadStageReadinessGateProposals(ctx, "move-1", 2),
-    ).resolves.toBeNull();
+    store({
+      rows: [setRow("proposal-artifact-1", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-1": null,
+        "review-artifact-1": heldByRecommended,
+      },
+    });
+    await expect(load()).resolves.toBeNull();
+
+    store({
+      rows: [setRow("proposal-artifact-1", 1)],
+      bodies: { "proposal-artifact-1": { ...reviewedUpload, proposals: [] } },
+    });
+    await expect(load()).resolves.toBeNull();
   });
 
   it("fails closed on an unrecognised requirement, disposition or answer state", async () => {
-    const { loadStageReadinessGateProposals } = await import(
-      "../gate-proposal-context"
-    );
-
-    downloadArtifactBytes.mockResolvedValueOnce({
-      fileName: "review.json",
-      fileFormat: "json",
-      bytes: Buffer.from(
-        JSON.stringify({
-          ...heldByRecommended,
-          proposals: [
-            {
-              questionId: "q_odd",
-              dimensionId: "odd_family",
-              requirement: "whatever",
-              answerState: "whatever",
-              disposition: "whatever",
-            },
-          ],
-        }),
-      ),
+    const oddRow = {
+      questionId: "q_odd",
+      dimensionId: "odd_family",
+      requirement: "whatever",
+      answerState: "whatever",
+      disposition: "whatever",
+    };
+    store({
+      rows: [setRow("proposal-artifact-1", 1), reviewRow],
+      bodies: {
+        "proposal-artifact-1": { ...reviewedUpload, proposals: [oddRow] },
+        "review-artifact-1": { ...heldByRecommended, proposals: [oddRow] },
+      },
     });
 
     // An unreadable requirement must gate, an unreadable decision must not
     // count as a decision, and an unreadable answer must not count as answered.
-    await expect(
-      loadStageReadinessGateProposals(ctx, "move-1", 2),
-    ).resolves.toEqual([
+    await expect(load()).resolves.toEqual([
       {
         questionId: "q_odd",
         dimensionId: "odd_family",
@@ -394,13 +601,7 @@ describe("stage readiness gate proposals — the review as it stands", () => {
   });
 
   it("asks the store for nothing when the target phase has no predecessor", async () => {
-    const { loadStageReadinessGateProposals } = await import(
-      "../gate-proposal-context"
-    );
-
-    await expect(
-      loadStageReadinessGateProposals(ctx, "move-1", 0),
-    ).resolves.toBeNull();
+    await expect(load(0)).resolves.toBeNull();
     expect(listMoveArtifacts).not.toHaveBeenCalled();
   });
 });
