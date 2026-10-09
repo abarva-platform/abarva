@@ -113,7 +113,8 @@ export type FeatureFlagKey =
   | "moves_charter_assumption_resolution_v1"
   | "moves_capture_phase_rollup_v1"
   | "moves_charter_standing_after_discover_v1"
-  | "moves_step_pages_v3";
+  | "moves_step_pages_v3"
+  | "moves_assumption_register_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -417,6 +418,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_step_pages_v3",
     summary:
       "2026-10-09: Renders Moves phase steps as the finalized step page template (five regions: step head, one next-action sentence with its count, a collapsed context line, grouped work rows, footer), one page per step declared in the phase workflow registry, with depth from the Move's change profile. First step: P3 Gate readiness, where gate checks, gate-document sign-off and the governed gate submission happen on one page through the existing build, sign-off and phase-gate-approval paths. Same capture keys, saves, documents and gate rules; only where and how the consultant acts changes. Requires moves_capture_v2. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_assumption_register_v1",
+    summary:
+      "2026-10-10: Turns on the Move-level assumptions register: each working figure a Move's documents rest on becomes a register row with a stable ID (V value, D data, DL delivery, A adoption; never reused) that documents cite as [A:V3], a named source, an owner role, a confidence of 1, 3 or 5, and a status (proposed, open, confirmed, corrected, superseded, rejected). aVa may only propose a row; a person accepts, rejects, answers or supersedes it, and every change is kept in an append-only history. This first release adds the storage, the domain rules and the server store only - there are no routes, no screen and no document generation reading the register yet, so turning the flag on changes nothing a user sees. Enabled for the synthetic demo tenant; off for everyone else.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
