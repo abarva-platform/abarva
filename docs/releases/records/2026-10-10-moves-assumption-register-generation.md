@@ -227,6 +227,12 @@ the data plane.
 
 ## Known Gaps
 
+- Generation is governed by its own flag, `moves_assumption_register_generation_v1`,
+  OFF for every tenant at merge (the register itself stays on for the demo
+  tenant). Enrol the demo tenant only after the register migration is applied
+  through the migration lane and the demo Move's register holds its working
+  figures: under enforcement an unreadable register stops the build before any
+  model call, and an empty one admits no figure outside evidence.
 - Validation outcome changes with the flag on. For the demo tenant, any Move
   document whose model output carries a figure labelled only
   `[ASSUMPTION TO VALIDATE]` is now blocked by the unsupported-claim blocker.
