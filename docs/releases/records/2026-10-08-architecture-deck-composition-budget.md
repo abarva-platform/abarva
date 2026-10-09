@@ -36,7 +36,7 @@ Architecture presentations now combine short adjacent narrative sections, place 
 ## QA / Validation
 
 - Architecture composition, export, and HTML-renderer suites: 29 tests passed locally.
-- Full typecheck, scoped lint, test census, and release check are required before merge.
+- Full typecheck, scoped lint, test census, and release check (11/11) passed locally.
 - Local synthetic preview reopened in LibreOffice and visually reviewed as a full contact sheet: 21 slides, reduced from 25; all 13 visual keys embedded, body before appendix, no physical slide findings.
 - Signed-in generated presentation review remains pending deployment and the phase build gate.
 
