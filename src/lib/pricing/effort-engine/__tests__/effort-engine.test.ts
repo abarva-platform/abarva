@@ -126,6 +126,17 @@ describe("runEffortEngine — core formula (brief §7.4), hand-verified arithmet
     expect(output.totals.totalCostCents).toBe(4_792_000);
   });
 
+  it("totals count each rule's hours once, not once per role line: 40 + 50 + 400 + 49 = 539h (the 400h tiered rule is split 50/50 across two roles)", () => {
+    const output = runEffortEngine(SYNTHETIC_PACK, baseInput());
+    // Summing the repeated pack-level moduleHours per role line would give
+    // 40 + 50 + 400 + 400 + 49 = 939h.
+    expect(output.totals.totalRawHours).toBe(539);
+    expect(output.totals.totalExpectedHours).toBe(539);
+    // The allocated role hours reconcile to the same total: 90 + 200 + 200 + 49.
+    const roleHours = output.lineItems.reduce((acc, l) => acc + (l.roleHours ?? 0), 0);
+    expect(roleHours).toBe(539);
+  });
+
   it("every line item carries full formula provenance: driver, rule, model version, role mix, rate", () => {
     const output = runEffortEngine(SYNTHETIC_PACK, baseInput());
     for (const line of output.lineItems) {
