@@ -40,7 +40,12 @@ import {
   renderArchitectureVisualExhibits,
   type ArchitectureVisualExhibit,
 } from "@/lib/visual-system/architecture-html-renderer";
-import { composeArchitectureDeckPages } from "@/lib/deliverables/orchestrator/architecture-deck-composition";
+import {
+  composeArchitectureDeckPages,
+  splitArchitectureDeckPages,
+  type ArchitectureDeckPage,
+} from "@/lib/deliverables/orchestrator/architecture-deck-composition";
+import { architectureVisualDigest } from "@/lib/deliverables/orchestrator/architecture-deck-quality";
 
 import {
   ORDERED_NUMBERING_CONFIG,
@@ -2339,16 +2344,15 @@ function addPptxArchitectureHeadlineSlide(
   slideNumber: number,
   totalSlides: number,
 ): void {
-  // A board-storyline beat: the governed argument (soWhat) and its decision
-  // implication on the left, the governed diagram on the right. The claim is
-  // the model's own field, never an LLM-authored assertion about the diagram.
+  // A board-storyline beat with the governed argument above a wide diagram.
+  // The claim is the model's own field, never an inferred diagram summary.
   const slide = pptx.addSlide();
   slide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(slide, doc, slideNumber, totalSlides);
   slide.addText(safePptxText(visual.title), {
     x: PPTX_GRID.x(0),
     y: 0.85,
-    w: PPTX_GRID.w(4),
+    w: PPTX_GRID.w(12),
     h: 0.4,
     fontFace: PPTX_FONT.body,
     fontSize: 11,
@@ -2358,21 +2362,21 @@ function addPptxArchitectureHeadlineSlide(
   });
   slide.addText(safePptxText(visual.soWhat), {
     x: PPTX_GRID.x(0),
-    y: 1.42,
-    w: PPTX_GRID.w(4),
-    h: 2.6,
+    y: 1.35,
+    w: PPTX_GRID.w(12),
+    h: 0.85,
     fontFace: PPTX_FONT.display,
-    fontSize: 22,
+    fontSize: 23,
     color: PPTX_COLOR.ink,
     fit: "shrink",
   });
   slide.addText(safePptxText(visual.decisionImplication), {
     x: PPTX_GRID.x(0),
-    y: 4.3,
-    w: PPTX_GRID.w(4),
-    h: 2.2,
+    y: 6.1,
+    w: PPTX_GRID.w(12),
+    h: 0.65,
     fontFace: PPTX_FONT.body,
-    fontSize: 14,
+    fontSize: 13,
     color: PPTX_COLOR.muted,
     fit: "shrink",
   });
@@ -2380,17 +2384,17 @@ function addPptxArchitectureHeadlineSlide(
     withXmlns(resolveSvgTokens(visual.svg)),
     3,
   );
-  const imageX = PPTX_GRID.x(4);
-  const maxW = PPTX_GRID.w(8);
-  const maxH = SLIDE_DESIGN.masters.twoUp.exhibitMaxHeightIn;
+  const imageX = PPTX_GRID.x(0);
+  const maxW = PPTX_GRID.w(12);
+  const maxH = 3.65;
   const w = Math.min(maxW, maxH * aspect);
   const h = w / aspect;
   slide.addImage({
     data: `data:image/png;base64,${png.toString("base64")}`,
-    objectName: `architecture-exhibit:${visual.id}`,
+    objectName: `architecture-exhibit:${visual.id}:${architectureVisualDigest(visual.svg)}`,
     altText: `${visual.title}. ${visual.soWhat} ${visual.decisionImplication}`,
     x: imageX + (maxW - w) / 2,
-    y: SLIDE_DESIGN.masters.twoUp.exhibitTopIn + (maxH - h) / 2,
+    y: 2.3 + (maxH - h) / 2,
     w,
     h,
   });
@@ -2405,6 +2409,7 @@ function addPptxArchitectureVisualSlide(
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
+  appendixLabel?: string,
 ): void {
   const { png, aspect } = rasteriseSvg(
     withXmlns(resolveSvgTokens(exhibit.svg)),
@@ -2413,9 +2418,21 @@ function addPptxArchitectureVisualSlide(
   const slide = pptx.addSlide();
   slide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(slide, doc, slideNumber, totalSlides);
+  if (appendixLabel) {
+    slide.addText(appendixLabel, {
+      x: PPTX_GRID.x(0),
+      y: 0.8,
+      w: PPTX_GRID.w(2),
+      h: 0.2,
+      fontFace: PPTX_FONT.body,
+      fontSize: 9,
+      bold: true,
+      color: PPTX_COLOR.accent,
+    });
+  }
   slide.addText(safePptxText(exhibit.title), {
     x: PPTX_GRID.x(0),
-    y: 0.85,
+    y: appendixLabel ? 1.05 : 0.85,
     w: PPTX_GRID.w(12),
     h: 0.55,
     fontFace: PPTX_FONT.display,
@@ -2429,7 +2446,7 @@ function addPptxArchitectureVisualSlide(
   const h = w / aspect;
   slide.addImage({
     data: `data:image/png;base64,${png.toString("base64")}`,
-    objectName: `architecture-exhibit:${exhibit.id}`,
+    objectName: `architecture-exhibit:${exhibit.id}:${architectureVisualDigest(exhibit.svg)}`,
     altText: `${exhibit.title}. ${exhibit.soWhat} ${exhibit.decisionImplication}`,
     x: PPTX_GRID.x(0) + (maxW - w) / 2,
     y: SLIDE_DESIGN.masters.fullBleedExhibit.exhibitTopIn + (maxH - h) / 2,
@@ -2460,6 +2477,53 @@ function addPptxArchitectureVisualSlide(
   slide.addNotes(
     `Exhibit: ${exhibit.id}\nDecision implication: ${exhibit.decisionImplication}`,
   );
+}
+
+function addPptxArchitectureAppendixDivider(
+  pptx: PptxGenJSInstance,
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+  entries: readonly { label: string; title: string; slide: number }[],
+): void {
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  slide.addText("APPENDIX A", {
+    x: PPTX_GRID.x(0),
+    y: 0.93,
+    w: PPTX_GRID.w(12),
+    h: 0.3,
+    fontFace: PPTX_FONT.body,
+    fontSize: 11,
+    bold: true,
+    color: PPTX_COLOR.accent,
+    charSpacing: 0.6,
+  });
+  slide.addText("Architecture reference", {
+    x: PPTX_GRID.x(0),
+    y: 1.65,
+    w: PPTX_GRID.w(12),
+    h: 0.8,
+    fontFace: PPTX_FONT.display,
+    fontSize: 31,
+    color: PPTX_COLOR.ink,
+  });
+  entries.forEach((entry, index) => {
+    const column = Math.floor(index / 4);
+    const row = index % 4;
+    slide.addText(`${entry.label}  ${entry.title}  ·  ${entry.slide}`, {
+      x: PPTX_GRID.x(column * 6),
+      y: 2.75 + row * 0.82,
+      w: PPTX_GRID.w(6),
+      h: 0.6,
+      fontFace: PPTX_FONT.body,
+      fontSize: 13,
+      color: PPTX_COLOR.ink,
+      breakLine: false,
+      hyperlink: { slide: entry.slide, tooltip: `Open ${entry.label}` },
+    });
+  });
 }
 
 function addPptxTwoUpExhibitNarrativeLayout(
@@ -2617,6 +2681,74 @@ function addPptxSectionDividerLayout(
   if (notes.length) slide.addNotes(notes.join("\n"));
 }
 
+function addPptxPairedNarrativeLayout(
+  pptx: PptxGenJSInstance,
+  sections: readonly [RenderableDeckSlide, RenderableDeckSlide],
+  doc: RenderableDeliverable,
+  slideNumber: number,
+  totalSlides: number,
+): void {
+  const slide = pptx.addSlide();
+  slide.background = { color: PPTX_COLOR.cream };
+  addPptxChrome(slide, doc, slideNumber, totalSlides);
+  sections.forEach((section, index) => {
+    const start = index * 6;
+    const x = PPTX_GRID.x(start);
+    const width = PPTX_GRID.w(5.75);
+    slide.addText(safePptxText(section.title ?? `Section ${index + 1}`), {
+      x,
+      y: 0.93,
+      w: width,
+      h: 0.38,
+      fontFace: PPTX_FONT.body,
+      fontSize: 11,
+      bold: true,
+      color: PPTX_COLOR.accent,
+      charSpacing: 0.5,
+      fit: "shrink",
+    });
+    slide.addText(safePptxText(section.governingMessage), {
+      x,
+      y: 1.6,
+      w: width,
+      h: 2.1,
+      fontFace: PPTX_FONT.display,
+      fontSize: 25,
+      color: PPTX_COLOR.ink,
+      fit: "shrink",
+    });
+    const points = (section.points ?? []).map(safePptxText);
+    if (points.length) {
+      slide.addText(
+        points.map((point) => ({ text: point, options: PPTX_BULLET })),
+        {
+          x: x + 0.15,
+          y: 4.0,
+          w: width - 0.15,
+          h: 2.35,
+          fontFace: PPTX_FONT.body,
+          fontSize: 16,
+          color: PPTX_COLOR.ink,
+          fit: "shrink",
+        },
+      );
+    }
+  });
+  slide.addShape("line", {
+    x: PPTX_GRID.x(6) - 0.18,
+    y: 1.45,
+    w: 0,
+    h: 5.0,
+    line: { color: PPTX_COLOR.line, width: 1 },
+  });
+  const notes = sections
+    .map((section) =>
+      [section.title, section.speakerNotes].filter(Boolean).join(": "),
+    )
+    .filter(Boolean);
+  if (notes.length) slide.addNotes(notes.join("\n"));
+}
+
 function addPptxComparisonLayout(
   pptx: PptxGenJSInstance,
   content: RenderableDeckSlide,
@@ -2638,7 +2770,30 @@ function addPptxComparisonLayout(
 type PptxExhibitRef = { exhibit: RenderableExhibit; index: number };
 type PptxStoryPage =
   | { kind: "narrative"; slide: RenderableDeckSlide; exhibit?: PptxExhibitRef }
+  | { kind: "paired-narrative"; slides: [RenderableDeckSlide, RenderableDeckSlide] }
   | { kind: "exhibit"; exhibit: PptxExhibitRef };
+
+function compactArchitectureStory(pages: PptxStoryPage[]): PptxStoryPage[] {
+  const compact: PptxStoryPage[] = [];
+  for (let index = 0; index < pages.length; index += 1) {
+    const first = pages[index];
+    const second = pages[index + 1];
+    const light = (page: PptxStoryPage | undefined): page is Extract<PptxStoryPage, { kind: "narrative" }> =>
+      Boolean(
+        page?.kind === "narrative" &&
+          !page.exhibit &&
+          page.slide.governingMessage.length <= 180 &&
+          (page.slide.points?.length ?? 0) <= 2,
+      );
+    if (light(first) && light(second)) {
+      compact.push({ kind: "paired-narrative", slides: [first.slide, second.slide] });
+      index += 1;
+    } else {
+      compact.push(first);
+    }
+  }
+  return compact;
+}
 
 function composePptxStory(
   doc: RenderableDeliverable,
@@ -3037,9 +3192,31 @@ export async function renderDeliverablePptx(
     ? renderArchitectureVisualExhibits(architectureModel)
     : [];
   const architecturePages = composeArchitectureDeckPages(architectureVisuals);
-  const storyPages = composePptxStory(doc, renderableExhibits);
+  const architectureRuns = splitArchitectureDeckPages(architecturePages);
+  const uncompressedStory = composePptxStory(doc, renderableExhibits);
+  const storyPages = architecturePages.length
+    ? compactArchitectureStory(uncompressedStory)
+    : uncompressedStory;
   const totalSlides =
     1 + storyPages.length + inDeckTables.length + architecturePages.length + 1;
+  if (architecturePages.length > 0) {
+    const bodySlides =
+      1 +
+      storyPages.length +
+      architectureRuns.body.length +
+      inDeckTables.length +
+      1;
+    if (
+      bodySlides > 20 ||
+      architectureRuns.body.length > 8 ||
+      architectureRuns.appendix.length > 7 ||
+      totalSlides > 27
+    ) {
+      throw new Error(
+        `architecture_deck_length_budget: body=${bodySlides}, architecture_body=${architectureRuns.body.length}, appendix=${architectureRuns.appendix.length}, total=${totalSlides}`,
+      );
+    }
+  }
   let slideNumber = 1;
 
   addPptxTitleLayout(pptx, doc);
@@ -3051,6 +3228,14 @@ export async function renderDeliverablePptx(
         pptx,
         page.exhibit.exhibit,
         page.exhibit.index,
+        doc,
+        slideNumber,
+        totalSlides,
+      );
+    } else if (page.kind === "paired-narrative") {
+      addPptxPairedNarrativeLayout(
+        pptx,
+        page.slides,
         doc,
         slideNumber,
         totalSlides,
@@ -3085,7 +3270,10 @@ export async function renderDeliverablePptx(
     slideNumber += 1;
   }
 
-  for (const page of architecturePages) {
+  const renderArchitecturePage = (
+    page: ArchitectureDeckPage,
+    appendixLabel?: string,
+  ) => {
     if (page.kind === "divider") {
       addPptxSectionDividerLayout(
         pptx,
@@ -3109,10 +3297,13 @@ export async function renderDeliverablePptx(
         doc,
         slideNumber,
         totalSlides,
+        appendixLabel,
       );
     }
     slideNumber += 1;
-  }
+  };
+
+  for (const page of architectureRuns.body) renderArchitecturePage(page);
 
   // One native table slide per in-deck table (xlsx-targeted tables live only in the Excel companion).
   inDeckTables.forEach((table) => {
@@ -3121,6 +3312,39 @@ export async function renderDeliverablePptx(
   });
 
   addPptxClosingLayout(pptx, doc, slideNumber, totalSlides);
+  slideNumber += 1;
+
+  const appendixEntries = architectureRuns.appendix
+    .map((page, index) => ({ page, slide: slideNumber + index }))
+    .filter(
+      (entry): entry is {
+        page: Extract<ArchitectureDeckPage, { kind: "standalone" }>;
+        slide: number;
+      } => entry.page.kind === "standalone",
+    )
+    .map((entry, index) => ({
+      label: `A${index + 1}`,
+      title: entry.page.visual.title,
+      slide: entry.slide,
+      id: entry.page.visual.id,
+    }));
+  const appendixLabelById = new Map(
+    appendixEntries.map((entry) => [entry.id, entry.label]),
+  );
+  for (const page of architectureRuns.appendix) {
+    if (page.kind === "divider") {
+      addPptxArchitectureAppendixDivider(
+        pptx,
+        doc,
+        slideNumber,
+        totalSlides,
+        appendixEntries,
+      );
+      slideNumber += 1;
+    } else {
+      renderArchitecturePage(page, appendixLabelById.get(page.visual.id));
+    }
+  }
 
   const buffer = (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
   const verdict = judgeRenderedDeck(await inspectDeck(buffer));

@@ -121,14 +121,19 @@ nothing here is flag-gated.
   two new files and `MovesPhaseStandaloneClient.test.tsx` — which was clean at
   base — were formatted, and the resulting diff on that suite is insertions
   only.
-- **PASS** Census. Basis stated: the committed census on the base commit reads
-  2879/2715, but a clean regeneration in a detached worktree of that same
-  commit reads **2880/2716** — the base carries one pre-existing unit of drift
-  from two earlier changes that each regenerated against the same parent. This
-  branch reads **2881/2717**, which is base-regeneration **+1**, exactly the one
-  new test file; against the committed file it reads +2. `uncoveredTestFiles`
-  unchanged at 164.
+- **PASS** Census. Basis stated: at the branch's ORIGINAL base the committed
+  census read 2879/2715 while a clean regeneration in a detached worktree of
+  that same commit read **2880/2716** — one pre-existing unit of drift from two
+  earlier changes that each regenerated against the same parent. That drift has
+  since been corrected on `main`, which this branch is merged forward onto, so
+  the committed census and a clean regeneration now **agree at 2880/2716**.
+  This branch reads **2881/2717** = committed **+1**, exactly the one new test
+  file, with no basis discrepancy left to state. `uncoveredTestFiles` unchanged
+  at 164.
 - **PASS** `npm run release:check -- --base origin/main --head HEAD`.
+- **PASS** Re-validated after merging `main` forward (the predicted census
+  collision, resolved by taking `main`'s file and regenerating): 235 suites /
+  3,357 tests green, type-check exit 0, release:check 11 of 11.
 - **NOT RUN** Signed-in walk. No live proof is claimed.
 
 ## Rollout Plan

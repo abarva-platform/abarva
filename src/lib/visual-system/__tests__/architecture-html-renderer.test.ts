@@ -26,7 +26,8 @@ describe("architecture model + HTML renderer (W2)", () => {
     expect(conceptual?.svg).not.toContain('marker-end="url(#arrow)"');
     expect(dataFlow?.svg).toContain('class="diagram collection"');
     expect(dataFlow?.svg).not.toContain('marker-end="url(#arrow)"');
-    expect(operatingFlow?.svg).toContain('marker-end="url(#arrow)"');
+    expect(operatingFlow?.svg).not.toContain('marker-end="url(#arrow)"');
+    expect(operatingFlow?.svg).toContain('font-size="15"');
   });
   it("represents exactly the recorded flow ids in each data and control visual", () => {
     const visuals = renderArchitectureVisualExhibits(
