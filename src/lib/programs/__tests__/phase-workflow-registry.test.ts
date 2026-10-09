@@ -240,11 +240,12 @@ describe("step-page records", () => {
     }
   });
 
-  it("gives P3 Step 1 its traceability record, Step 2 its choice and Step 3 its owners", () => {
+  it("gives P3 Step 1 its traceability record, Step 2 its choice, Step 3 its owners and Step 4 its estimate", () => {
     expect(phaseStepRecordSections(3).map((r) => [r.key, r.stepId])).toEqual([
       ["design_traceability", "P3.1"],
       ["architecture_choice", "P3.2"],
       ["operating_adoption", "P3.3"],
+      ["rom_estimate", "P3.4"],
     ]);
     // Every record a step declares is a record section, and vice versa.
     const declared = resolvePhaseWorkflow(3, null).flatMap((s) =>
@@ -260,6 +261,19 @@ describe("step-page records", () => {
     ({ route: r }) => {
       const step = resolvePhaseWorkflow(3, r).find((s) => s.id === "P3.3");
       expect(step?.recordKeys).toEqual(["operating_adoption"]);
+    },
+  );
+});
+
+describe("P3 Step 4 owns its estimate on every route", () => {
+  it.each(CASES)(
+    "$name: P3.4 records rom_estimate and is no capture gap",
+    ({ route: r }) => {
+      const step = resolvePhaseWorkflow(3, r).find((s) => s.id === "P3.4");
+      expect(step?.recordKeys).toEqual(["rom_estimate"]);
+      expect(KNOWN_CAPTURE_GAPS.some((gap) => gap.stepId === "P3.4")).toBe(
+        false,
+      );
     },
   );
 });

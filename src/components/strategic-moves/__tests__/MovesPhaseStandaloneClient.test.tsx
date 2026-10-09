@@ -46,6 +46,11 @@ import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpect
 import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+import {
+  emptyRomEstimate,
+  romInputsFingerprint,
+  serializeRomEstimate,
+} from "@/lib/programs/rom-estimate";
 
 // jsdom's test environment doesn't provide these globally; the component
 // runs in a real browser in production, where all three always exist.
@@ -5353,6 +5358,173 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByTestId("open-operating-adoption").getAttribute("href"),
       ).toMatch(/\/phase\/3\?step=operating-adoption$/);
+    });
+  });
+
+  describe("P3 Step 4 bottom-up estimate (moves_step_pages_v3 + moves_rom_engine_v1)", () => {
+    const p3Move = () => makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
+    const stepFour = (container: HTMLElement) =>
+      container.querySelectorAll('nav[aria-label="Design steps"] li')[3] as HTMLElement;
+    const approvedEstimate = (stale = false) => {
+      const record = {
+        ...emptyRomEstimate(),
+        useCases: [
+          {
+            code: "UC-1",
+            name: "Certified measure layer",
+            counts: { data_source_count: 2 },
+            source: { kind: "team" as const },
+            confirmedBy: "me",
+            confirmedAt: "2026-10-16",
+          },
+        ],
+      };
+      const approved = {
+        ...record,
+        snapshotsIssued: 1,
+        approval: {
+          version: 1,
+          approvedBy: "me",
+          approvedAt: "2026-10-16",
+          inputsFingerprint: romInputsFingerprint(record),
+          unitHours: {},
+          releases: [],
+          foundation: null,
+          combined: { hours: 10, weeks: 1, lowCents: 1, planCents: 2, highCents: 3 },
+        },
+      };
+      // A stale approval: the inputs changed after it was given.
+      return serializeRomEstimate(
+        stale ? { ...approved, useCases: [{ ...record.useCases[0], name: "Renamed" }] } : approved,
+      );
+    };
+
+    it("mounts Step 4 inside the aVa dock with both flags and ?step=rom-estimate", () => {
+      const { container } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          romEngineEnabled
+          initialStepView="rom-estimate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      expect(
+        within(dock).getByRole("heading", { name: "Estimate the work bottom-up" }),
+      ).toBeInTheDocument();
+      // Step 3 has no record, so only an unfinished Step 2 blocks it.
+      expect(within(dock).getByText(/Waiting on Step 2/)).toBeInTheDocument();
+      expect(
+        within(dock).getByRole("link", { name: "Open Step 2 →" }).getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=architecture-options$/);
+      expect(stepFour(container).querySelector('[aria-current="step"]')).not.toBeNull();
+      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+    });
+
+    it("ignores ?step=rom-estimate while either flag is off", () => {
+      const { unmount } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="rom-estimate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Estimate the work bottom-up" }),
+      ).not.toBeInTheDocument();
+      unmount();
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          romEngineEnabled
+          initialStepView="rom-estimate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Estimate the work bottom-up" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("ticks Step 4 in the step bar only while its approval matches its inputs", () => {
+      const renderStepTwo = (rom: string, romEngineEnabled = true) =>
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            captureV2Enabled
+            stepPagesV3Enabled
+            romEngineEnabled={romEngineEnabled}
+            initialStepView="architecture-options"
+            initialPhaseCaptureValues={{ rom_estimate: rom }}
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={p3Move()}
+            phaseNum={3}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+      let view = renderStepTwo(approvedEstimate());
+      expect(stepFour(view.container).className).toMatch(/is-done/);
+      expect(stepFour(view.container).querySelector("a")?.getAttribute("href")).toMatch(
+        /\/phase\/3\?step=rom-estimate$/,
+      );
+      view.unmount();
+      view = renderStepTwo(approvedEstimate(true));
+      expect(stepFour(view.container).className).not.toMatch(/is-done/);
+      view.unmount();
+      // Without the ROM flag the step keeps its capture-answer reading.
+      view = renderStepTwo(approvedEstimate(), false);
+      expect(stepFour(view.container).className).not.toMatch(/is-done/);
+    });
+
+    it("the P3 capture opens Step 4 only with the ROM flag", () => {
+      const { unmount } = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          romEngineEnabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getByTestId("open-rom-estimate").getAttribute("href")).toMatch(
+        /\/phase\/3\?step=rom-estimate$/,
+      );
+      unmount();
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.queryByTestId("open-rom-estimate")).not.toBeInTheDocument();
     });
   });
 

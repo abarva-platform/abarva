@@ -12,6 +12,10 @@ import {
   operatingAdoptionText,
   parseOperatingAdoption,
 } from "@/lib/programs/operating-adoption";
+  parseRomEstimate,
+  romEstimateGateText,
+  romEstimateText,
+} from "@/lib/programs/rom-estimate";
 import {
   designTraceabilityGateText,
   designTraceabilityText,
@@ -42,6 +46,10 @@ export function captureValueText(key: string, raw: string): string {
     const value = parseOperatingAdoption(raw);
     return value ? operatingAdoptionText(value) : raw;
   }
+  if (key === "rom_estimate") {
+    const value = parseRomEstimate(raw);
+    return value ? romEstimateText(value) : raw;
+  }
   return raw;
 }
 
@@ -59,6 +67,10 @@ export function captureValueGateText(key: string, raw: string): string {
   if (key === "operating_adoption") {
     const value = parseOperatingAdoption(raw);
     return value ? operatingAdoptionGateText(value) : raw;
+  }
+  if (key === "rom_estimate") {
+    const value = parseRomEstimate(raw);
+    return value ? romEstimateGateText(value) : raw;
   }
   return raw;
 }

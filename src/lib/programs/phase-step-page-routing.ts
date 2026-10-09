@@ -10,6 +10,7 @@ export const EXISTING_STEP_PAGE_VIEWS: readonly StepPageView[] = [
   "root-cause-design",
   "architecture-options",
   "operating-adoption",
+  "rom-estimate",
   "gate",
 ];
 
