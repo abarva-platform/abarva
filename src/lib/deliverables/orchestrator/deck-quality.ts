@@ -59,6 +59,7 @@ const CHROME_RUNS = 3;
 function roleOf(policy: DeckPolicy, slide: InspectedSlide): SlideRole {
   const declared = policy.rolesByIndex?.[slide.index];
   if (declared) return declared;
+  if (slide.layoutRole === "divider") return "divider";
   if (slide.index === 1) return "cover";
   return "content";
 }

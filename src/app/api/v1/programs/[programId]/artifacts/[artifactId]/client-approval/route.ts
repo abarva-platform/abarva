@@ -51,6 +51,7 @@ import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approv
 import { findUnsupportedFinancialClaimDeltas } from "@/lib/programs/reviewed-deliverable-financial-claims";
 import { renderValidatedDocx } from "@/lib/deliverables/orchestrator/render-validated-doc";
 import { renderValidatedDeck } from "@/lib/deliverables/orchestrator/render-validated-deck";
+import { architectureModelForArtifact } from "@/lib/deliverables/orchestrator/architecture-artifact-model";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 
 export const runtime = "nodejs";
@@ -248,7 +249,12 @@ async function renderAcceptedGeneratedDraft(args: {
   if (!args.doc) return null;
   const structuredDoc = args.doc as unknown as RenderableDeliverable;
   if (args.artifact.outputFormat === "pptx") {
-    const validated = await renderValidatedDeck(structuredDoc);
+    const architectureModel = architectureModelForArtifact(args.artifact);
+    const validated = await renderValidatedDeck(
+      structuredDoc,
+      {},
+      architectureModel,
+    );
     if (!validated.physicallyIntact || !validated.verdict.ok) {
       const details = validated.physicallyIntact
         ? validated.verdict.findings

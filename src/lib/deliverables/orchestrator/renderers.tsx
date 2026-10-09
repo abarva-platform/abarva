@@ -2629,11 +2629,13 @@ function addPptxSectionDividerLayout(
   doc: RenderableDeliverable,
   slideNumber: number,
   totalSlides: number,
+  architectureDivider = false,
 ): void {
   const slide = pptx.addSlide();
   slide.background = { color: PPTX_COLOR.cream };
   addPptxChrome(slide, doc, slideNumber, totalSlides);
   slide.addText(safePptxText(content.title ?? doc.title), {
+    ...(architectureDivider ? { objectName: "abarva:layout:divider" } : {}),
     x: PPTX_GRID.x(0),
     y: 0.93,
     w: PPTX_GRID.w(12),
@@ -3281,6 +3283,7 @@ export async function renderDeliverablePptx(
         doc,
         slideNumber,
         totalSlides,
+        true,
       );
     } else if (page.kind === "headline") {
       addPptxArchitectureHeadlineSlide(
