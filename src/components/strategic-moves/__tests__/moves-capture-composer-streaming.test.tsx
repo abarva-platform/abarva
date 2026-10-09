@@ -262,16 +262,26 @@ describe("MovesPhaseStandaloneClient · hands the dock its streaming flag", () =
     "utf8",
   );
 
+  // Every Steps view (the capture flow and each step page) mounts aVa through
+  // the host's one `renderAvaDock` helper, so there is still exactly one mount
+  // to read, ending at its own self-closing tag.
   function captureWorkspaceMount(): string {
     const open = source.indexOf("<MovesCaptureWorkspace");
     expect(open).toBeGreaterThan(-1);
-    const close = source.indexOf("captureProps={{", open);
+    const close = source.indexOf("/>", open);
     expect(close).toBeGreaterThan(open);
     return source.slice(open, close);
   }
 
   it("finds exactly one product mount to reason about", () => {
     expect(source.split("<MovesCaptureWorkspace").length - 1).toBe(1);
+  });
+
+  it("routes every Steps view through that one mount", () => {
+    expect(source).toContain("const renderAvaDock = (");
+    expect(source.split("renderAvaDock({").length - 1).toBeGreaterThanOrEqual(
+      2,
+    );
   });
 
   it("passes the host's own streaming state, not a literal", () => {

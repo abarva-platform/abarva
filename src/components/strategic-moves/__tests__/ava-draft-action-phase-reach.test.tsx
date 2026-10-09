@@ -274,8 +274,10 @@ describe("the drafting handler states a reason rather than returning silently", 
   });
 
   it("builds the dock's leading actions from that same authority", () => {
-    expect(handlerSource.source).toContain(
-      "avaLeadingActions={avaDraftLeadingActions}",
+    // The one dock mount always carries the drafting actions, after any
+    // actions a step page adds (e.g. "Fill this step from my notes").
+    expect(handlerSource.source).toMatch(
+      /avaLeadingActions=\{\[\s*\.\.\.\(dock\.leadingActions \?\? \[\]\),\s*\.\.\.avaDraftLeadingActions,\s*\]\}/,
     );
     expect(handlerSource.source).toContain(
       "avaPhaseInputDraftLeadingActions(phase.phase",

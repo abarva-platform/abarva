@@ -61,6 +61,7 @@ import { SolutionOptionChooser } from "@/components/strategic-moves/SolutionOpti
 import {
   MovesCaptureFlow,
   type MovesCaptureFlowPhase,
+  type MovesCaptureFlowProps,
 } from "@/components/strategic-moves/MovesCaptureFlow";
 import { captureSectionSpan } from "@/lib/programs/moves-capture-section-width";
 import { CharterAssumptionsCarryForward } from "@/components/strategic-moves/CharterAssumptionsCarryForward";
@@ -68,6 +69,7 @@ import { CharterStandingAfterDiscover } from "@/components/strategic-moves/Chart
 import type { CarriedCharterAssumption } from "@/lib/programs/charter-assumptions-carry-forward";
 import type { PostDiscoverCharterAnswer } from "@/lib/programs/charter-standing-after-discover";
 import { MovesCaptureWorkspace } from "@/components/strategic-moves/MovesCaptureWorkspace";
+import type { SuggestedAction } from "@/components/agent/AgentDock";
 import {
   MovesPhaseFindings,
   FindingsReviewGateSummary,
@@ -3388,6 +3390,38 @@ export function MovesPhaseStandaloneClient({
     )
   ) : null;
 
+  // aVa's one dock mount for every Steps view. The capture flow and the step
+  // pages hand it their content; the streaming flag, thread and send handler
+  // are wired here once, so no view can mount aVa without them.
+  const renderAvaDock = (dock: {
+    captureProps?: MovesCaptureFlowProps;
+    content?: ReactNode;
+    notesFill?: ReactNode;
+    openingBriefing?: string;
+    leadingActions?: readonly SuggestedAction[];
+  }) => (
+    <MovesCaptureWorkspace
+      moveId={move.id}
+      moveName={displayMoveName}
+      phase={phase.phase}
+      avaRole={phase.avaRole}
+      avaThread={avaThread}
+      avaQuestions={visibleAvaQuestions}
+      avaStreaming={avaStreaming}
+      notesFill={dock.notesFill}
+      avaLeadingActions={[
+        ...(dock.leadingActions ?? []),
+        ...avaDraftLeadingActions,
+      ]}
+      onAvaMessage={(text) => {
+        void sendAvaMessage(text);
+      }}
+      openingBriefing={dock.openingBriefing}
+      content={dock.content}
+      captureProps={dock.captureProps}
+    />
+  );
+
   // `moves_step_pages_v3`: P3 Gate readiness as the finalized step page. The
   // build, sign-off and submission run through the same governed paths as the
   // ledger above; only where and how the consultant acts changes.
@@ -3482,23 +3516,9 @@ export function MovesPhaseStandaloneClient({
         onBack={() => window.location.assign(phaseHref(phase.phase))}
         // aVa is the product's one dock — the same collapse, hide, expand and
         // full-screen behaviour and the same thread as the capture flow.
-        frame={(page, briefing) => (
-          <MovesCaptureWorkspace
-            moveId={move.id}
-            moveName={displayMoveName}
-            phase={phase.phase}
-            avaRole={phase.avaRole}
-            avaThread={avaThread}
-            avaQuestions={visibleAvaQuestions}
-            avaStreaming={avaStreaming}
-            avaLeadingActions={avaDraftLeadingActions}
-            onAvaMessage={(text) => {
-              void sendAvaMessage(text);
-            }}
-            openingBriefing={briefing}
-            content={page}
-          />
-        )}
+        frame={(page, briefing) =>
+          renderAvaDock({ content: page, openingBriefing: briefing })
+        }
       />
     );
   }
@@ -3857,16 +3877,8 @@ export function MovesPhaseStandaloneClient({
                   </div>
 
                   {captureFlowMounted ? (
-                    <MovesCaptureWorkspace
-                      moveId={move.id}
-                      moveName={displayMoveName}
-                      phase={phase.phase}
-                      avaRole={phase.avaRole}
-                      avaThread={avaThread}
-                      avaQuestions={visibleAvaQuestions}
-                      avaStreaming={avaStreaming}
-                      notesFill={
-                        captureNotesEnabled ? (
+                    renderAvaDock({
+                      notesFill: captureNotesEnabled ? (
                           <CaptureNotesFill
                             targets={phaseCaptureSections.map((section) => ({
                               section,
@@ -3876,13 +3888,8 @@ export function MovesPhaseStandaloneClient({
                             onInsert={insertPhaseCaptureValueFromNotes}
                             recordsBasisFor={notesBasisRecordingKeys}
                           />
-                        ) : null
-                      }
-                      avaLeadingActions={avaDraftLeadingActions}
-                      onAvaMessage={(text) => {
-                        void sendAvaMessage(text);
-                      }}
-                      captureProps={{
+                        ) : null,
+                      captureProps: {
                         phases: capturePhases,
                         phase: phase.phase,
                         sections: phaseCaptureSections,
@@ -4005,8 +4012,8 @@ export function MovesPhaseStandaloneClient({
                               charts={phaseChartsModel}
                             />
                           ) : null,
-                      }}
-                    />
+                      },
+                    })
                   ) : phase.phase >= 1 && phase.phase <= 5 ? (
                     <PhaseContractStepsCanvas
                       avaDraftProposalsByKey={avaDraftProposalsByKey}
