@@ -36,6 +36,7 @@ import { describeRequiredEvidenceRefusal } from "@/lib/programs/evidence-readine
 import { GateApprovalConfirmDialog } from "@/components/strategic-moves/GateApprovalConfirmDialog";
 import { DeliverableApprovalAction } from "@/components/strategic-moves/DeliverableApprovalAction";
 import { currentPhaseRequiredEvidenceGaps } from "@/lib/programs/phase-progress-readiness";
+import { resolvePhaseBuildBlock } from "@/lib/programs/phase-build-action-state";
 import { describeGateSignOffReadback } from "@/lib/programs/gate-sign-off-readback";
 import {
   heldArtifactBlocker,
@@ -814,30 +815,36 @@ export function PhaseApproveAndBuild({
   const hasEvidenceGuidanceGaps = requiredGaps.length > 0;
   const hasRequiredGaps = blockOnEvidenceGaps && hasEvidenceGuidanceGaps;
   const hasParentBlocker = Boolean(disabledReason);
-  const buildLabel = hasRequiredGaps
-    ? "Final build blocked by required evidence"
-    : hasParentBlocker
-      ? "Complete phase inputs before build"
-      : // A document already on the record makes this a re-run, whether that
-        // document built or is held below gate. A held row's own blocker
-        // sentence tells the reader to re-run, so the control it names has to
-        // read as a re-run rather than as a first build.
-        builtCount > 0 || blockedCount > 0
-        ? `Re-run & Build ${phaseLabel} →`
-        : `Approve & Build ${phaseLabel} →`;
-  const phaseStatusLine = handOffSentence
-    ? handOffSentence
-    : anyRunning
-      ? `Building ${phaseLabel}. Keep this page open while the governed batch finishes.`
-      : hasParentBlocker
-        ? String(disabledReason)
-        : hasRequiredGaps
-          ? `${requiredGaps.length} required evidence item${requiredGaps.length === 1 ? "" : "s"} must be covered before final build.`
-          : blockedCount > 0
-            ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} blocked by evidence or build-quality checks before the phase can advance.`
-            : builtCount === specs.length
-              ? `${phaseLabel} documents are built. Review them before relying on them.`
-              : "Capture is separate from gate readiness. Build once the record is ready for review.";
+  // One resolution of what holds the build, for the control's disabled state,
+  // its colours, its cursor, its label and the sentence beside it. The colours
+  // used to read a SHORTER condition than the attribute — they omitted the
+  // required-evidence term — so an inert button was painted in the live
+  // primary green. See `phase-build-action-state`.
+  const buildBlock = resolvePhaseBuildBlock({
+    building,
+    anyRunning,
+    parentBlockerText: disabledReason,
+    requiredEvidenceGapCount: hasRequiredGaps ? requiredGaps.length : 0,
+    phaseLabel,
+  });
+  const buildHeld = buildBlock !== null;
+  const buildLabel =
+    buildBlock?.actionLabel ??
+    // A document already on the record makes this a re-run, whether that
+    // document built or is held below gate. A held row's own blocker
+    // sentence tells the reader to re-run, so the control it names has to
+    // read as a re-run rather than as a first build.
+    (builtCount > 0 || blockedCount > 0
+      ? `Re-run & Build ${phaseLabel} →`
+      : `Approve & Build ${phaseLabel} →`);
+  const phaseStatusLine =
+    handOffSentence ??
+    buildBlock?.statusLine ??
+    (blockedCount > 0
+      ? `${blockedCount} output${blockedCount === 1 ? "" : "s"} blocked by evidence or build-quality checks before the phase can advance.`
+      : builtCount === specs.length
+        ? `${phaseLabel} documents are built. Review them before relying on them.`
+        : "Capture is separate from gate readiness. Build once the record is ready for review.");
 
   const submitGateWithoutBuild = async () => {
     if (!gateSubmitPlan.submittable) return;
@@ -920,26 +927,21 @@ export function PhaseApproveAndBuild({
     <button
       type="button"
       onClick={() => setConfirmOpen(true)}
-      disabled={building || anyRunning || hasRequiredGaps || hasParentBlocker}
+      disabled={buildHeld}
       className="mxw-phase-progress-button"
       style={{
         padding: "10px 16px",
-        background:
-          building || anyRunning || hasParentBlocker ? "#D8DDE5" : "#147C5B",
-        color:
-          building || anyRunning || hasParentBlocker ? "#596579" : "#FFFFFF",
+        background: buildHeld ? "#D8DDE5" : "#147C5B",
+        color: buildHeld ? "#596579" : "#FFFFFF",
         border: "1px solid transparent",
         borderRadius: 8,
         fontSize: 13,
         fontWeight: 800,
-        cursor:
-          building || anyRunning || hasRequiredGaps || hasParentBlocker
-            ? "default"
-            : "pointer",
+        cursor: buildHeld ? "default" : "pointer",
         whiteSpace: "nowrap",
       }}
     >
-      {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
+      {buildLabel}
     </button>
   );
 
