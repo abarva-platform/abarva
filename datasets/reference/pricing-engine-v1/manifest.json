@@ -373,5 +373,38 @@
     "The role-coverage validator's 'active roles have a rate' check only verifies a pricing_rate_bands.csv row exists (or an explicit no_default_rate status) — the full 6-tier fallback resolver (tenant -> provider -> global, etc.) is PR2/PR5 scope and is not implemented here.",
     "Ambiguous-alias validation is global-scope only for PR1 (no tenant/provider-scoped rate cards exist yet to make the ambiguity tenant-relative).",
     "Topics 10, 11, 18 in the tower reconciliation are accepted as 'partial/adequate' coverage without hand-authored additions, per the PR1 execution prompt's explicit fix-list (only topics 15, 16, 20 were called out) — a future PR could add a dedicated Backup & DR capability, a DBA/database-operations capability, and Finance/Commercial/Sourcing/Vendor-Management capabilities under Program Management if the effort model needs that granularity."
-  ]
+  ],
+  "derived_reference_objects": {
+    "global_moves_pricing_extension": {
+      "version": "1.0.0",
+      "generated_at": "2026-08-05T00:00:00.000Z",
+      "generation_script": "scripts/pricing/generate-global-rate-card-extension.mjs",
+      "purpose": "Global AbarVa pricing asset for Moves solution pricing across tenants. Tenant, vendor, deal, or SOW-specific rates supersede these planning defaults.",
+      "formula_contract": {
+        "provider_bill_rate": "indicative_bill_rate * location_rate_multiplier * (target_provider_multiplier / SI_T1_multiplier)",
+        "internal_loaded_rate": "loaded_rate * salary_multiplier",
+        "internal_scarcity_adjusted_rate": "scarcity_adj_rate * salary_multiplier"
+      },
+      "update_contract": "Client changed files should be reprocessed through governed parse, validation, diff preview, approval, and new version creation. Draft/open Moves can be repriced from the new effective version; approved historical pricing snapshots remain frozen unless explicitly revised.",
+      "row_counts": {
+        "pricing_technologies.csv": 39,
+        "pricing_role_technology_map.csv": 678,
+        "pricing_provider_location_eligibility.csv": 510,
+        "pricing_materialized_internal_rates.csv": 15436,
+        "pricing_materialized_provider_rates.csv": 66404,
+        "pricing_rate_selection_policies.csv": 5,
+        "pricing_industry_overlays.csv": 39
+      },
+      "file_checksums_sha256": {
+        "pricing_technologies.csv": "70e8c42b7bc916f0d49222def6e61aa361e0005e0bd46ef3d36b6d72fef06ba5",
+        "pricing_role_technology_map.csv": "91e4a0e1f1b1083a65ac55b2b398fb4c6710ebee9f45c4493787beaded69e578",
+        "pricing_provider_location_eligibility.csv": "a4a82806af76bbc73b2c94b3dbd3baf1ded0125250eb37b884ceec874da78937",
+        "pricing_materialized_internal_rates.csv": "0ffb7fb2f09219556bda5b9ae111786e421ab17d38b56d7c0bf7fd46c622a385",
+        "pricing_materialized_provider_rates.csv": "b9ab4f4cb5348a76936a20a81c91499bafceb7196716dca975f0933147112f42",
+        "pricing_rate_selection_policies.csv": "51368c5b373acb9fb5e1e2c564ce61787817c9f24e1d5c63164c31f6b7f9faf2",
+        "pricing_industry_overlays.csv": "9979d622ebc7aff2ed04419ede4ca5c80a050193d35a78cc51a1da5907b9b631"
+      },
+      "governance": "Planning-grade reference data only; does not change Moves runtime, load a database, deploy, or activate pricing."
+    }
+  }
 }
