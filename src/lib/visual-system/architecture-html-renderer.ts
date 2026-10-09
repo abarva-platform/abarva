@@ -307,36 +307,33 @@ function svgTimeline(
     .map((item, i) => {
       const x = leftGutter + (ordered ? i : i % columns) * step;
       const y = ordered ? 92 : 65 + Math.floor(i / columns) * 165;
-      const line =
-        ordered && i < items.length - 1
-          ? `<path d="M${x + 48} ${y} L${x + step - 48} ${y}" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
-          : "";
-      return `${line}<g data-arch-item-id="${esc(item.id)}">
+      // Ordering alone is not a governed relationship. Only explicit model
+      // flows may be shown as connections; this timeline carries no edge set.
+      return `<g data-arch-item-id="${esc(item.id)}">
         <circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>${
           ordered
             ? `
-        <text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="700">${i + 1}</text>`
+        <text x="${x}" y="${y + 5}" text-anchor="middle" font-size="15" font-weight="700">${i + 1}</text>`
             : ""
         }
         ${svgTextBlock(item.label, x, y + 48, {
-          maxChars: ordered ? 24 : 30,
+          maxChars: ordered ? 22 : 24,
           maxLines: ordered ? 2 : 3,
-          lineHeight: 14,
-          fontSize: 12,
+          lineHeight: 17,
+          fontSize: 15,
           weight: 700,
         })}
         ${svgTextBlock(item.detail, x, y + (ordered ? 82 : 100), {
-          maxChars: 32,
+          maxChars: 27,
           maxLines: 2,
-          lineHeight: 12,
-          fontSize: 10,
+          lineHeight: 14,
+          fontSize: 12,
           fill: "#6b6b66",
         })}
       </g>`;
     })
     .join("");
   return `<svg class="diagram ${ordered ? "timeline" : "collection"}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${ordered ? "Ordered architecture flow" : "Architecture components"}">
-    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${accent}"/></marker></defs>
     ${nodes}
   </svg>`;
 }
