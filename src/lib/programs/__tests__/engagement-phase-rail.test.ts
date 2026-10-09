@@ -29,7 +29,7 @@ describe("the rail states the canonical phase model", () => {
     expect(markers.map((marker) => marker.label)).toEqual([
       "Originate",
       "Charter",
-      "Diagnose",
+      "Discover",
       "Design",
       "Roadmap",
       "Mobilize",

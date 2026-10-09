@@ -22,7 +22,7 @@ export const PHASE_LABELS: Record<number, string> = {
 export const PHASE_LABELS_SHORT: Record<number, string> = {
   0: 'Originate',
   1: 'Charter',
-  2: 'Diagnose',
+  2: 'Discover',
   3: 'Design',
   4: 'Roadmap',
   5: 'Mobilize',

@@ -144,7 +144,7 @@ describe('SponsorConsole phase stepper', () => {
   it.each([
     [0, 'Originate'],
     [1, 'Charter'],
-    [2, 'Diagnose'],
+    [2, 'Discover'],
     [3, 'Design'],
     [4, 'Roadmap'],
     [5, 'Mobilize'],

@@ -2245,6 +2245,60 @@ describe("evaluateGate", () => {
     expect(result.requiresApproval).toBe(true);
   });
 
+  it("does not read a generated Discovery Report's stored inputs as its own hard gap", async () => {
+    // A report generated and approved as-is keeps the generator's record in
+    // structured_data: the whole P2 capture (a current-state finding such as
+    // "lineage unverified" is ordinary discovery content) and the quality
+    // measurement. The report itself clears P2.
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 2,
+      archetype: "analytics_modernization",
+    });
+    deliverablesFixture = [
+      {
+        id: "discovery-report",
+        deliverable_type_key: "discovery_report",
+        status: "signed_off",
+      },
+    ];
+    evidenceFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content:
+          "P2 Discovery Report. Attendees: sponsor, data owner, clinical informatics lead, and security lead. " +
+          "Workshop notes: lineage discovery session mapped claims and coding feeds. " +
+          "Baselines captured and owner attestation recorded. Source of record: analytics intake log. " +
+          "Stakeholder map names required owners. No open hard gaps. " +
+          "P3 readiness recommendation: proceed to Design.",
+        structured_data: {
+          source: "moves_program_generate",
+          solution_context: {
+            gaps: [
+              "Claims lineage unverified across the warehouse",
+              "Hold on new feeds until the steward is named",
+            ],
+          },
+          golden_bar: { missingExactEvidenceTerms: [] },
+        },
+        generated_at: "2026-05-02T00:00:00.000Z",
+      },
+    ];
+    addApprovedTechnicalRouteCapture();
+
+    const result = await evaluateGate(
+      { clientId: "client-1", userId: "person-1" },
+      "program-1",
+      2,
+      3,
+    );
+
+    expect(
+      result.failedChecks.filter((check) => check.severity === "hard"),
+    ).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
   it("accepts completed P2 phase capture as discovery notes and stakeholder evidence", async () => {
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
