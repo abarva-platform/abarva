@@ -1,12 +1,19 @@
 // Did the gate evaluator READ this Move's recorded state, or merely fail to?
 //
-// `evaluateGate` is the single evaluator behind every phase gate. It collects
-// the Move's state in five parallel reads (`deliverables_v2`,
+// `evaluateGate` is the single evaluator behind every phase gate. It reads the
+// Move's state NINE times: five parallel reads (`deliverables_v2`,
 // `program_modules`, `engagement_participants`, `program_approval_requests`,
 // `program_milestones`), two conditional latest-version reads over
 // `deliverable_versions` for the origination brief and the discovery report,
-// and one over `move_artifacts` for the artifacts deliverables point at. Every
-// one of those eight destructured `{ data }` ALONE and dropped `error`.
+// one over `move_artifacts` for the artifacts deliverables point at, and one
+// over `program_evidence_items` issued from INSIDE the criterion loop. Every
+// one of those nine destructured `{ data }` ALONE and dropped `error`.
+//
+// The ninth was missed when the other eight were fixed, because the first pass
+// enumerated the reads whose text sits in `evaluateGate`'s own body and this
+// one sits a frame deeper, in a helper the `discovery_notes_ingested` branch
+// awaits — the same shape as
+// [[feedback_an_enumeration_built_from_a_predicates_name_misses_its_wrapper]].
 //
 // The fluent compat client never throws: `execute()` catches internally and
 // returns `{ data: null, error: { message } }` for a connection failure, a
@@ -83,7 +90,15 @@ export type GateStateRead =
    * failure `approved-evidence-currency-basis.ts` documents for the OTHER
    * input to that same comparison.
    */
-  | "linked_artifacts";
+  | "linked_artifacts"
+  /**
+   * `program_evidence_items` — the ingested-evidence arm of
+   * `discovery_notes_ingested`, a HARD criterion on the P2→P3 gate. Issued
+   * from inside the criterion loop rather than with the other eight, and only
+   * when no in-memory arm has already cleared the criterion, so it is the one
+   * read whose failure is always decisive when it happens.
+   */
+  | "program_evidence";
 
 /**
  * The only part of a compat-client result this classification reads.
@@ -113,10 +128,17 @@ const READ_LABELS: Record<GateStateRead, string> = {
   origination_brief_version: "the Origination Brief's latest version",
   discovery_report_version: "the Discovery Report's latest version",
   linked_artifacts: "the artifacts those deliverables point at",
+  program_evidence: "the Move's ingested discovery evidence",
 };
 
-/** Declaration order, so a refusal's wording is stable across runs. */
-const READ_ORDER: readonly GateStateRead[] = [
+/**
+ * Declaration order, so a refusal's wording is stable across runs.
+ *
+ * Exported because the only other way to enumerate the reads is to hand-type
+ * them, and a hand-typed list silently omits the next read someone adds —
+ * which is exactly how `program_evidence` went unclassified for a release.
+ */
+export const GATE_STATE_READS: readonly GateStateRead[] = [
   "deliverables",
   "program_modules",
   "engagement_participants",
@@ -125,6 +147,7 @@ const READ_ORDER: readonly GateStateRead[] = [
   "origination_brief_version",
   "discovery_report_version",
   "linked_artifacts",
+  "program_evidence",
 ];
 
 /**
@@ -137,7 +160,9 @@ const READ_ORDER: readonly GateStateRead[] = [
 export function classifyGateStateReads(
   reads: Partial<Record<GateStateRead, GateStateReadResult | null | undefined>>,
 ): GateStateReadback {
-  const unreadable = READ_ORDER.filter((key) => Boolean(reads[key]?.error));
+  const unreadable = GATE_STATE_READS.filter((key) =>
+    Boolean(reads[key]?.error),
+  );
   if (unreadable.length === 0) return { readable: true, unreadable: [] };
   return { readable: false, unreadable };
 }
@@ -153,7 +178,7 @@ export function classifyGateStateReads(
 export function describeUnreadableGateState(
   unreadable: readonly GateStateRead[],
 ): string {
-  const named = READ_ORDER.filter((key) => unreadable.includes(key)).map(
+  const named = GATE_STATE_READS.filter((key) => unreadable.includes(key)).map(
     (key) => READ_LABELS[key],
   );
   const list = named.length > 0 ? named.join("; ") : "the Move's gate state";

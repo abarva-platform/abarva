@@ -52,7 +52,8 @@ type Table =
   | "program_approval_requests"
   | "program_milestones"
   | "deliverable_versions"
-  | "move_artifacts";
+  | "move_artifacts"
+  | "program_evidence_items";
 
 interface FakeOptions {
   /** Tables whose read returns `{ data: null, error }`, as the client does. */
@@ -253,6 +254,196 @@ describe("evaluateGate with an unreadable state read", () => {
     expect(reason).toContain("the Move's deliverable records");
     expect(reason).toContain("the phase capture modules");
   });
+});
+
+/**
+ * The NINTH read. `program_evidence_items` is reached from inside the criterion
+ * loop, not with the eight hoisted reads, so the first pass at this guard did
+ * not classify it. It is the ingested-evidence arm of `discovery_notes_ingested`
+ * — a HARD criterion on the P2→P3 gate, which is the demo walk's own blocking
+ * transition.
+ */
+describe("evaluateGate when the ingested-evidence read fails", () => {
+  it("refuses by name rather than reporting notes as un-ingested", async () => {
+    const gate = await run({ fail: ["program_evidence_items"] }).result;
+    expect(gate.pass).toBe(false);
+    expect(gate.failedChecks).toHaveLength(1);
+    expect(gate.failedChecks[0]?.check).toBe(GATE_STATE_UNREADABLE_CHECK);
+    expect(gate.failedChecks[0]?.severity).toBe("hard");
+    expect(gate.failedChecks[0]?.reason).toContain(
+      "the Move's ingested discovery evidence",
+    );
+  });
+
+  it("does not report discovery_notes_ingested as a failed criterion", async () => {
+    // The pre-fix sentence. Its remedy is to upload or re-ingest notes that
+    // may well already be there, and the read never said they were not.
+    const gate = await run({ fail: ["program_evidence_items"] }).result;
+    const keys = gate.failedChecks.map((check) => check.check);
+    expect(keys).not.toContain("discovery_notes_ingested");
+    expect(gate.failedChecks[0]?.reason).not.toMatch(
+      /Discovery notes or workshop logs ingested/,
+    );
+  });
+
+  it("names ONLY the evidence read when the other eight landed", async () => {
+    const gate = await run({ fail: ["program_evidence_items"] }).result;
+    const reason = gate.failedChecks[0]?.reason ?? "";
+    expect(reason).toContain("the Move's ingested discovery evidence");
+    expect(reason).not.toContain("the Move's deliverable records");
+    expect(reason).not.toContain("the phase capture modules");
+  });
+
+  it("still refuses — an unread arm cannot clear a HARD criterion", async () => {
+    const gate = await run({ fail: ["program_evidence_items"] }).result;
+    expect(gate.pass).toBe(false);
+    expect(gate.requiresApproval).toBe(false);
+    expect(gate.approverRole).toBeNull();
+  });
+
+  it("does NOT refuse when another arm already cleared the criterion", async () => {
+    // The arms are OR'd, so an unreadable evidence table is only decisive when
+    // nothing else answered. A completed ingest module clears the criterion
+    // without the read, and the gate must then fail on its OTHER criteria with
+    // concrete reasons rather than collapse into the read refusal.
+    const { client, result } = run({
+      fail: ["program_evidence_items"],
+      rows: {
+        program_modules: [
+          {
+            id: "m-1",
+            phase: 2,
+            module_key: "discovery_notes_ingest",
+            status: "completed",
+          },
+        ],
+      },
+    });
+    const gate = await result;
+    const keys = gate.failedChecks.map((check) => check.check);
+    expect(keys).not.toContain(GATE_STATE_UNREADABLE_CHECK);
+    expect(keys).not.toContain("discovery_notes_ingested");
+    expect(client.tablesRead).not.toContain("program_evidence_items");
+  });
+
+  it("clears the criterion from an ingested row when the read lands", async () => {
+    // The healthy direction, and the one the demo walk uses.
+    const gate = await run({
+      rows: {
+        program_evidence_items: [{ id: "e-1" }],
+      },
+    }).result;
+    const keys = gate.failedChecks.map((check) => check.check);
+    expect(keys).not.toContain(GATE_STATE_UNREADABLE_CHECK);
+    expect(keys).not.toContain("discovery_notes_ingested");
+  });
+
+  it("reports the criterion, not the read refusal, on an EMPTY evidence read", async () => {
+    // An empty read is a legitimate state: this Move really ingested nothing.
+    const gate = await run({ rows: { program_evidence_items: [] } }).result;
+    const keys = gate.failedChecks.map((check) => check.check);
+    expect(keys).not.toContain(GATE_STATE_UNREADABLE_CHECK);
+    expect(keys).toContain("discovery_notes_ingested");
+  });
+
+  it("issues the evidence read when it is the deciding arm", async () => {
+    const { client, result } = run({});
+    await result;
+    expect(client.tablesRead).toContain("program_evidence_items");
+  });
+});
+
+/**
+ * The reorder's own regression surface.
+ *
+ * Moving the `program_evidence_items` read behind the four in-memory arms is
+ * what makes an unreadable evidence table refuse ONLY when it decides the
+ * criterion. `||` is commutative over side-effect-free predicates, so the
+ * verdict cannot change — but that only holds if all four arms survived the
+ * move, so each is exercised on its own and each must skip the read.
+ */
+describe("discovery_notes_ingested arms that answer without the read", () => {
+  const ARMS: Array<[string, FakeOptions]> = [
+    [
+      "an ingested discovery-notes deliverable",
+      {
+        rows: {
+          deliverables_v2: [
+            {
+              id: "d-n",
+              deliverable_type_key: "discovery_notes",
+              status: "draft",
+            },
+          ],
+        },
+      },
+    ],
+    [
+      "a completed notes-ingest module",
+      {
+        rows: {
+          program_modules: [
+            {
+              id: "m-1",
+              phase: 2,
+              module_key: "workshop_notes_ingest",
+              status: "completed",
+            },
+          ],
+        },
+      },
+    ],
+    [
+      "a discovery report carrying workshop evidence",
+      {
+        rows: {
+          deliverables_v2: [
+            {
+              id: "d-r",
+              deliverable_type_key: "discovery_report",
+              status: "signed_off",
+              current_version: 1,
+            },
+          ],
+          deliverable_versions: [
+            {
+              id: "v-1",
+              version: 1,
+              generated_at: "2026-10-01T00:00:00.000Z",
+              content:
+                "Workshop with attendees recorded the baseline decision and one contradiction.",
+            },
+          ],
+        },
+      },
+    ],
+  ];
+
+  it.each(ARMS)(
+    "%s clears it without reading the table",
+    async (_, options) => {
+      const { client, result } = run(options);
+      const gate = await result;
+      const keys = gate.failedChecks.map((check) => check.check);
+      expect(keys).not.toContain("discovery_notes_ingested");
+      expect(keys).not.toContain(GATE_STATE_UNREADABLE_CHECK);
+      expect(client.tablesRead).not.toContain("program_evidence_items");
+    },
+  );
+
+  it.each(ARMS)(
+    "%s survives an unreadable evidence table",
+    async (_, options) => {
+      // The property the reorder buys: a read that cannot decide cannot refuse.
+      const gate = await run({
+        ...options,
+        fail: ["program_evidence_items"],
+      }).result;
+      const keys = gate.failedChecks.map((check) => check.check);
+      expect(keys).not.toContain(GATE_STATE_UNREADABLE_CHECK);
+      expect(keys).not.toContain("discovery_notes_ingested");
+    },
+  );
 });
 
 describe("evaluateGate when every state read lands", () => {
