@@ -161,6 +161,13 @@ jobs:
       - name: Run governed clean-demo Move load suites
         run: npx jest scripts/demo/__tests__ --no-coverage --ci
 
+      # The pricing reference-pack converter and validator suites. The census
+      # walks `src/` only, so a suite under `scripts/` that no command names
+      # is dark without any report saying so; both files here were green and
+      # unrun before this step.
+      - name: Run the pricing reference-pack script suites
+        run: npx jest scripts/pricing/__tests__ --no-coverage --ci
+
       - name: Run the deliverables worker boundary suite
         run: npx jest --runTestsByPath src/scripts/__tests__/process-deliverable-queue-worker-boundary.test.ts --no-coverage --ci
 
