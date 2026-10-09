@@ -46,6 +46,8 @@ import {
   type PodTemplateRoleCsvRow,
 } from "../../../scripts/pricing/validate-pricing-role-coverage";
 import type {
+  PodLevelAdjustment,
+  PodRoleMappingStatus,
   PodRoleMatchMethod,
   PricingAgentProfileRow,
   PricingPodTemplateRoleRow,
@@ -252,9 +254,13 @@ export function parsePodLibrary(raw: PodLibraryRawData): PodLibraryData {
       pod_code: r.pod_code,
       role_code: r.role_code || null,
       level_code: r.level_code,
+      original_level_code: r.original_level_code,
+      level_adjustment: r.level_adjustment as PodLevelAdjustment,
       fte: requiredNumber(r.fte, `pod ${r.pod_code} role "${r.raw_role_text}" fte`),
       raw_role_text: r.raw_role_text,
       match_method: r.match_method as PodRoleMatchMethod,
+      mapping_status: r.mapping_status as PodRoleMappingStatus,
+      mapping_rule_id: r.mapping_rule_id || null,
       source_row: requiredNumber(r.source_row, `pod ${r.pod_code} role source_row`),
     })),
     agentProfiles: raw.agentProfiles.map((r) => {
