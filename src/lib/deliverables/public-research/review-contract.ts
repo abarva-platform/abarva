@@ -66,6 +66,41 @@ export function toPublicSourceReviewItem(
   };
 }
 
+/**
+ * The citation number of each approved source on a Move: an approved source
+ * is cited as `[S:n]`. The store keeps no number, so it is derived here, in
+ * one place, from approval order: approved sources sorted by `reviewedAt`,
+ * oldest first, ties broken by id. A decision is made once and never changed,
+ * so a source's number never moves once given; a later approval only appends.
+ * Pending and rejected sources get no number — they are never cited.
+ *
+ * The derivation reads the list it is handed, so it is exact only when that
+ * list holds every approved source on the Move (the review list's limit is
+ * far above any Move's research yield; a deliverable that cites must number
+ * from the same full approved set).
+ */
+export function publicSourceCiteNumbers(
+  sources: ReadonlyArray<
+    Pick<PublicSourceReviewItem, "id" | "decision" | "reviewedAt">
+  >,
+): Map<string, number> {
+  const approved = sources
+    .filter((source) => source.decision === "approved")
+    .slice()
+    .sort((a, b) => {
+      const at = a.reviewedAt ?? "";
+      const bt = b.reviewedAt ?? "";
+      if (at !== bt) {
+        // A missing stamp sorts last: it cannot claim an earlier number.
+        if (!at) return 1;
+        if (!bt) return -1;
+        return at < bt ? -1 : 1;
+      }
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
+  return new Map(approved.map((source, index) => [source.id, index + 1]));
+}
+
 export type PublicSourceReviewRefusalCode =
   | "not_enabled"
   | "forbidden"
