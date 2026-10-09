@@ -3,6 +3,12 @@ import {
   moveUnreadableRefusalBody,
 } from "@/lib/programs/move-unreadable-refusal";
 import { unexpectedWalkStepDetail } from "@/lib/programs/walk-step-unexpected-failure";
+import {
+  ORIGINATION_CLOSE_NON_GATE_STOPS,
+  ORIGINATION_CLOSE_OUTCOMES,
+  originationCloseErrorCode,
+  describeOriginationCloseOutcome,
+} from "@/lib/programs/origination-close-outcome";
 
 // INCIDENT 2026-07-20 regression coverage. This route previously called
 // preparePhaseGateApprovalRecords, which fabricated-and-signed-off a
@@ -93,10 +99,13 @@ jest.mock("@/lib/programs/discovery/evidence-readiness", () => ({
     mockLoadDiscoveryEvidenceReadiness(...args),
 }));
 
-jest.mock("@/lib/programs/evidence-readiness/move-evidence-need-packet", () => ({
-  buildMoveEvidenceNeedPackets: (...args: unknown[]) =>
-    mockBuildMoveEvidenceNeedPackets(...args),
-}));
+jest.mock(
+  "@/lib/programs/evidence-readiness/move-evidence-need-packet",
+  () => ({
+    buildMoveEvidenceNeedPackets: (...args: unknown[]) =>
+      mockBuildMoveEvidenceNeedPackets(...args),
+  }),
+);
 
 jest.mock("@/lib/programs/stage-readiness-workbooks/accepted-context", () => ({
   loadAcceptedStageReadinessContext: (...args: unknown[]) =>
@@ -1742,13 +1751,14 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     expect(body.detail).not.toMatch(/server log/i);
   });
 
-  it("never answers an empty blockedBy with a server-log instruction", async () => {
-    for (const outcome of [
-      "move_not_readable",
-      "close_errored",
-      "brief_not_created",
-      "already_past_p0",
-    ] as const) {
+  // This sweep is the ONLY place the route's answer is checked for a stop that
+  // is not the gate's own verdict, and the group it walks used to be a
+  // hand-typed four. The close helper now reports six such stops: the list
+  // stopped growing when the helper did, so the two newest reached this route
+  // with nothing here exercising them. The group is imported from the module
+  // that classifies it, which the compiler requires to be exhaustive.
+  it("answers every non-gate stop with its own named refusal", async () => {
+    for (const outcome of ORIGINATION_CLOSE_NON_GATE_STOPS) {
       p0AtPhase0();
       mockCloseP0OnApproval.mockResolvedValue({
         advanced: false,
@@ -1772,7 +1782,42 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
       expect(body.detail.length).toBeGreaterThan(0);
       // Only a real gate verdict may borrow the word.
       expect(body.error).not.toBe("gate_blocked");
+      // The route must pass the stop's OWN code and sentence through rather
+      // than collapsing the group onto one of them.
+      expect(body.error).toBe(originationCloseErrorCode(outcome));
+      expect(body.detail).toBe(
+        describeOriginationCloseOutcome({
+          outcome,
+          blockedBy: [],
+          movePhase: 0,
+        }),
+      );
     }
+  });
+
+  // The group above is iterated, so a member that quietly leaves it is not
+  // failed — merely unchecked. Pin it against an independent property: a
+  // non-gate stop is exactly an outcome whose error code is neither absent
+  // (the success arm) nor `gate_blocked` (the verdict).
+  it("derives the non-gate stops in agreement with the error codes", () => {
+    for (const outcome of ORIGINATION_CLOSE_NON_GATE_STOPS) {
+      const code = originationCloseErrorCode(outcome);
+      expect(code).not.toBeNull();
+      expect(code).not.toBe("gate_blocked");
+    }
+    // Exactly two outcomes are excluded — the success arm and the gate's own
+    // verdict — so the group's size is pinned rather than merely non-empty. A
+    // group that shrinks fails here instead of silently sweeping less.
+    expect(ORIGINATION_CLOSE_NON_GATE_STOPS).toHaveLength(
+      ORIGINATION_CLOSE_OUTCOMES.length - 2,
+    );
+    expect(ORIGINATION_CLOSE_NON_GATE_STOPS).not.toContain("advanced");
+    expect(ORIGINATION_CLOSE_NON_GATE_STOPS).not.toContain("gate_hard_blocked");
+    // Every stop the group names is distinct, so no outcome is swept twice
+    // while another is swept not at all.
+    expect(new Set(ORIGINATION_CLOSE_NON_GATE_STOPS).size).toBe(
+      ORIGINATION_CLOSE_NON_GATE_STOPS.length,
+    );
   });
 
   it("rejects approval when the caller lacks gate-approval permission", async () => {
@@ -1944,9 +1989,7 @@ describe("a transition-evidence refusal names the step that failed", () => {
     };
     expect(body.error).toBe("transition_discovery_readiness_unreadable");
     // The code a reader of the old refusal matched on is kept.
-    expect(body.precondition).toBe(
-      "transition_evidence_readiness_unavailable",
-    );
+    expect(body.precondition).toBe("transition_evidence_readiness_unavailable");
     expect(body.basisUnevaluableCause).toBe("discovery_readiness_unreadable");
     expect(body.resubmitCanSatisfy).toBe(true);
     expect(body.detail).toContain("was not reached");
@@ -2019,7 +2062,9 @@ describe("a transition-evidence refusal names the step that failed", () => {
     const { POST } = await import("../route");
     await POST(req({ phase: 3 }) as never, { params });
 
-    const logged = errorSpy.mock.calls.map((call) => String(call[0])).join("\n");
+    const logged = errorSpy.mock.calls
+      .map((call) => String(call[0]))
+      .join("\n");
     expect(logged).toContain("cause=discovery_readiness_unreadable");
     expect(logged).toContain("phase=3");
     expect(logged).toContain("pg: connection terminated");
