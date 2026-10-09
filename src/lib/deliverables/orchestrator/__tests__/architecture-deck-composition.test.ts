@@ -1,5 +1,6 @@
 import {
   composeArchitectureDeckPages,
+  splitArchitectureDeckPages,
   ARCHITECTURE_HEADLINE_ORDER,
 } from "@/lib/deliverables/orchestrator/architecture-deck-composition";
 import {
@@ -23,6 +24,26 @@ const ids = (pages: ReturnType<typeof composeArchitectureDeckPages>) =>
     .map((p) => p.visual.id);
 
 describe("composeArchitectureDeckPages", () => {
+  it("places only the headline argument before the closing decision", () => {
+    const { body, appendix } = splitArchitectureDeckPages(
+      composeArchitectureDeckPages(all),
+    );
+    expect(body).toHaveLength(8);
+    expect(appendix).toHaveLength(7);
+    expect(body.some((page) => page.kind === "headline")).toBe(true);
+    expect(appendix.some((page) => page.kind === "headline")).toBe(false);
+  });
+
+  it("routes an architecture model without headline beats wholly to the appendix", () => {
+    const pages = composeArchitectureDeckPages([
+      visual("target_logical_architecture"),
+      visual("integration_map"),
+    ]);
+    expect(splitArchitectureDeckPages(pages)).toEqual({
+      body: [],
+      appendix: pages,
+    });
+  });
   it("returns nothing when there are no visuals", () => {
     expect(composeArchitectureDeckPages([])).toEqual([]);
   });
