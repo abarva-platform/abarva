@@ -10,8 +10,9 @@
 
 ## Plain-English Summary
 
-Two counting defects in the pricing effort engine's roll-up code
-(`src/lib/pricing/effort-engine/cost-engine.ts`) are fixed.
+Three counting defects are fixed: two in the pricing effort engine's
+roll-up code (`src/lib/pricing/effort-engine/cost-engine.ts`) and one in the
+estimate breakdowns (`src/lib/pricing/moves-workflow/execution-service.ts`).
 
 - **Hours totals counted a rule's hours once per role.** The engine emits
   one line per (activity pack, rule, role). Every role line repeats the
@@ -29,6 +30,14 @@ Two counting defects in the pricing effort engine's roll-up code
   reference owns it, every line of the block in that Move counts, and every
   later Move's copy is dropped. `occurrenceCount` now counts Moves, not
   lines, as its docstring always said.
+- **Estimate breakdown hours repeated the rule's hours per role.** The
+  by-pack, by-role and change/adoption buckets of an estimate run summed
+  `moduleHours.expected` on every line. A by-pack bucket counted a rule once
+  per role. A by-role bucket gave each role the rule's full hours instead of
+  its own share. Now by-pack and change/adoption buckets count each rule's
+  hours once. By-role buckets use each role line's `roleHours`. A line with
+  no role (an allocation gap) keeps its rule's hours. Bucket hours are
+  rounded like engine totals.
 
 ## Layer Impact
 
@@ -37,6 +46,9 @@ Two counting defects in the pricing effort engine's roll-up code
   reference data, route or UI code changes.
 - Products: the Moves cost/effort estimate shows the corrected hours on its
   next run. `rollUpPortfolio` has no product caller yet.
+- API: the estimate run route
+  (`/api/v1/programs/[programId]/pricing/estimates/[estimateId]/run`)
+  returns the buckets, so its `expectedHours` per bucket changes.
 
 ## Client Applicability
 
@@ -61,6 +73,12 @@ Two counting defects in the pricing effort engine's roll-up code
   rows are not rewritten and keep the hours they were approved with. A
   snapshot approved after this release records the corrected hours. The
   business-case projection that reads snapshots does not read hours.
+- **Breakdown buckets (API only):** `costByActivityPack`, `costByRole` and
+  `changeAdoptionBreakdown` carry corrected `expectedHours` in the run
+  route's JSON. The cost/effort results view does not show bucket hours.
+  Its bucket tables render label and cost only, so nothing on screen
+  changes there. Bucket keys, labels, order and every bucket cost are
+  unchanged. Snapshots do not store buckets.
 - **Portfolio:** `rollUpPortfolio` deduplicated totals rise to include every
   line of each shared block once. It has no product caller, so nothing
   displayed or stored changes.
@@ -77,6 +95,14 @@ Two counting defects in the pricing effort engine's roll-up code
   own total. One existing case is changed (see QA).
 - `__tests__/effort-engine.test.ts`: an engine-level case — the synthetic
   pack's hours total is 539 h, not 939 h, and equals the summed role hours.
+- `moves-workflow/execution-service.ts`: `groupBy` takes an hours basis.
+  The basis is `per_rule` for by-pack and change/adoption buckets, and
+  `per_role_line` for by-role buckets.
+- `moves-workflow/__tests__/execution-service.test.ts`: three cases that
+  run `runEstimate` on a synthetic pack. The pack covers a multi-rule
+  multi-role pack, a 96% allocation, two change packs sharing a rule code,
+  an allocation gap and an out-of-scope rule. Exact hours and costs are
+  asserted per bucket.
 - `__tests__/golden-fixtures.test.ts`: the two hours columns are re-pinned
   (costs unchanged), with a comment saying why, and a new per-archetype
   check that role-mix and pod hours agree.
@@ -113,13 +139,29 @@ Two counting defects in the pricing effort engine's roll-up code
   one-Move portfolio equals the Move's own total in 8 of 8 archetypes (old
   code: 0 of 8). With shared references removed, old and new outputs are
   identical in 56 of 56.
+- Breakdown comparison (temporary script, deleted): old and new `groupBy`
+  on all three views, over every archetype in the reference pack in four
+  scenarios. 32 outputs and 1,843 buckets. Cost fields differing: 0. Keys
+  differing: 0. Order differing: 0. Hours changed in 460 by-pack, 1,124
+  by-role and 160 change/adoption buckets. Unchanged were 48 by-pack
+  buckets (all single-line packs) and 51 by-role buckets. Every by-pack and
+  by-role view now sums to the estimate's total expected hours (64 of 64).
+- Breakdown failing tests first: all three new cases failed on the old code
+  (for example, 160 h instead of 80 h for a pack). Costs already matched.
+- Breakdown mutation checks: 12 of 12 killed, using an in-memory copy. They
+  include the whole pre-fix file, the rule key, dedup, the role view using
+  rule hours, a role-less line getting 0, rounding, each view's basis
+  swapped and the out-of-scope skip. One possible mutant is
+  behaviour-neutral by construction: dropping the bucket prefix from the
+  rule key. Every per-rule view is keyed by pack, so a rule never spans two
+  buckets.
 - Mutation checks: 16 of 16 mutants killed, one edit at a time with an
   in-memory restore. They cover the hours key (pack only, rule only), no
   dedup, out-of-scope hours, raw versus expected, block owner (inverted,
   never set, last instead of first), first-line-only, per-line occurrence
   counting, block cost not summed or not totalled, and shared-class
   membership.
-- `npx jest src/lib/pricing scripts/pricing`: 47 suites, 515 tests, pass.
+- `npx jest src/lib/pricing scripts/pricing`: 47 suites, 518 tests, pass.
 - `npm run typecheck`: clean. `npx eslint` on the changed files: pass.
 - `npm run audit:lib-orphans`: no change against the baseline.
 - `npm run audit:test-ci-coverage:write`: no new test files; the census is
@@ -158,11 +200,10 @@ a revert.
 
 ## Known Gaps
 
-- The per-bucket hours in `moves-workflow/execution-service.ts` (`groupBy`)
-  still sum `moduleHours.expected` per line. The by-pack breakdown
-  overstates multi-role packs. The by-role breakdown shows each role the
-  rule's full hours instead of its `roleHours` share. This is a separate
-  change.
+- By-role bucket hours sum to the allocated hours. When a pack's role mix
+  is inside the 95–105% tolerance but not exactly 100%, they differ from
+  the estimate's total hours by the unallocated share. By-pack buckets
+  always sum to the total.
 - Snapshots approved before this release keep the overstated hours. They
   are not rewritten, and no marker says which ones predate the fix.
 - The hours key is (activity pack, rule) within one output. A hand-built
