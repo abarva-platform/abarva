@@ -17,6 +17,8 @@ export {};
 import { goodDocument } from "@/lib/deliverables/orchestrator/__fixtures__/ams-rfp";
 import type { GeneratedArtifactRecord } from "@/lib/artifacts/repository";
 import JSZip from "jszip";
+import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
+import { judgeArchitectureDeck } from "@/lib/deliverables/orchestrator/architecture-deck-quality";
 
 const mockGetUser = jest.fn();
 const mockGetClientKey = jest.fn();
@@ -201,6 +203,59 @@ describe("GET /api/v1/artifacts/[artifactId]", () => {
       expect.arrayContaining([expect.stringContaining("title and")]),
     );
   }, 60_000);
+
+  it("exports every saved architecture exhibit through the download route", async () => {
+    const architectureModel = buildGroundedArchitectureFallback({
+      engagement: "Synthetic architecture review",
+      client: "Demo organization",
+      contextText:
+        "A governed intake and certified serving layer are proposed.",
+    });
+    const doc = {
+      ...goodDocument(),
+      title: "Target State Architecture",
+      clientDisplayName: "Demo organization",
+      exhibits: [],
+      tables: [],
+      deckSlides: [],
+      nextActions: [
+        "Confirm the accountable owners and record their decision on the initial certified measures.",
+        "Review the proposed controls against the source access and platform readiness evidence.",
+        "Resolve the documented open inputs before committing implementation scope or value.",
+      ],
+    };
+    mockGetArtifact.mockResolvedValue(
+      recordWith("docx", {
+        registryKey: "target_state_architecture",
+        renderableDoc: doc,
+        architectureModel,
+      }),
+    );
+
+    const res = await GET(reqUrl("?format=pptx"), { params });
+    expect(res.status).toBe(200);
+    const verdict = await judgeArchitectureDeck(
+      Buffer.from(await res.arrayBuffer()),
+      architectureModel,
+    );
+    expect(verdict.findings).toEqual([]);
+  }, 120_000);
+
+  it("refuses an architecture PPTX when its stored model is missing", async () => {
+    mockGetArtifact.mockResolvedValue(
+      recordWith("docx", {
+        registryKey: "target_state_architecture",
+        renderableDoc: goodDocument(),
+      }),
+    );
+
+    const res = await GET(reqUrl("?format=pptx"), { params });
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({
+      error: "artifact_render_failed",
+      format: "pptx",
+    });
+  });
 
   it("honors ?format=pdf on a docx-prescribed artifact", async () => {
     mockGetArtifact.mockResolvedValue(

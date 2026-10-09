@@ -29,6 +29,8 @@ export interface InspectedShape {
 
 export interface InspectedSlide {
   index: number;
+  /** Explicit renderer marker; never inferred from a slide's lack of content. */
+  layoutRole?: 'divider';
   textRuns: string[];
   visibleChars: number;
   tableCount: number;
@@ -108,6 +110,9 @@ export async function inspectDeck(buffer: Buffer): Promise<InspectedDeck> {
 
     slides.push({
       index: i + 1,
+      ...(xml.includes('name="abarva:layout:divider"')
+        ? { layoutRole: 'divider' as const }
+        : {}),
       textRuns,
       visibleChars: textRuns.join(' ').length,
       tableCount: (xml.match(/<a:tbl>/g) ?? []).length,

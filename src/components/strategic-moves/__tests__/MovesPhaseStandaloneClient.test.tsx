@@ -42,6 +42,7 @@ import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readin
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import { MOVE_UNREADABLE_REFUSAL_DETAIL } from "@/lib/programs/move-unreadable-refusal";
 import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpected-failure";
+import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -6537,6 +6538,123 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(structuredFamilyIngests).toEqual([]);
   });
 
+  // This panel folded TWO outcomes into one sentence ladder — a refusal that
+  // stored nothing, and a file that WAS stored but did not register for review
+  // — and the refusal half read `detail` first, which on this route is the raw
+  // MIME string. The pair below pins both halves: a refusal gets the product
+  // sentence, and a stored-but-uncaptured file keeps its ingestion warning,
+  // because "nothing was stored" would be false for it.
+  function renderP2SessionNotesUpload() {
+    render(
+      <MovesPhaseStandaloneClient
+        canApproveGates
+        carriesForwardContent={[]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="current"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Discover & Diagnose",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("P2 upload mode"), {
+      target: { value: "session_notes" },
+    });
+    fireEvent.change(
+      screen.getByLabelText("Upload P2 current-state evidence files"),
+      {
+        target: {
+          files: [
+            new File(["PK"], "workshop-pack.zip", { type: "application/zip" }),
+          ],
+        },
+      },
+    );
+  }
+
+  it("a refused session-notes upload names a next action, not the MIME type the route sent", async () => {
+    const previousFetch = global.fetch;
+    global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+      if (
+        String(url).includes("/artifacts/upload") &&
+        init?.method === "POST"
+      ) {
+        return {
+          ok: false,
+          status: 415,
+          json: async () => ({
+            ok: false,
+            error: "unsupported_type",
+            detail: "application/zip",
+          }),
+        } as Response;
+      }
+      return previousFetch(url as RequestInfo, init);
+    }) as typeof fetch;
+
+    try {
+      renderP2SessionNotesUpload();
+      const sentence = describeMoveUploadRefusal({
+        code: "unsupported_type",
+        detail: "application/zip",
+        fileName: "workshop-pack.zip",
+      });
+      await waitFor(() =>
+        expect(screen.getByText(sentence)).toBeInTheDocument(),
+      );
+      expect(screen.queryByText(/application\/zip/)).toBeNull();
+      expect(screen.queryByText("unsupported_type")).toBeNull();
+    } finally {
+      global.fetch = previousFetch;
+    }
+  });
+
+  it("a stored file that did not register for review keeps its ingestion warning", async () => {
+    const previousFetch = global.fetch;
+    global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+      if (
+        String(url).includes("/artifacts/upload") &&
+        init?.method === "POST"
+      ) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            artifactId: "artifact-stored-1",
+            evidence: {
+              id: null,
+              status: "not_captured",
+              warning: "pdf text layer was empty",
+            },
+          }),
+        } as Response;
+      }
+      return previousFetch(url as RequestInfo, init);
+    }) as typeof fetch;
+
+    try {
+      renderP2SessionNotesUpload();
+      await waitFor(() =>
+        expect(
+          screen.getByText("pdf text layer was empty"),
+        ).toBeInTheDocument(),
+      );
+      // The refusal copy must NOT take this case: the bytes were stored, so
+      // every named sentence's "nothing was stored" would be a false claim.
+      expect(
+        screen.queryByText(
+          describeMoveUploadRefusal({ fileName: "workshop-pack.zip" }),
+        ),
+      ).toBeNull();
+    } finally {
+      global.fetch = previousFetch;
+    }
+  });
+
   // The gap card says "Upload CMDB export as CSV". Before this dispatch the
   // only uploader on the step routed canonical-backed families to the document
   // path, which cannot map them, so a user following that instruction exactly
@@ -9984,6 +10102,78 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.queryByText("Intake work queue export"),
       ).not.toBeInTheDocument();
+    });
+
+    // The same refusal the File Cabinet renders also reaches THIS control,
+    // which is the upload a tenant without the redesigned capture flow meets.
+    // It read `detail` FIRST, and on this route `detail` is the raw MIME
+    // string for `unsupported_type` — so the worse of the two renderings was
+    // here, not in the cabinet.
+    it("upload-type workflow step: a refused upload names a next action instead of the MIME type the route sent", async () => {
+      const previousFetch = global.fetch;
+      global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
+        if (
+          String(url).includes("/artifacts/upload") &&
+          init?.method === "POST"
+        ) {
+          return {
+            ok: false,
+            status: 415,
+            json: async () => ({
+              ok: false,
+              error: "unsupported_type",
+              detail: "application/zip",
+            }),
+          } as Response;
+        }
+        return previousFetch(url as RequestInfo, init);
+      }) as typeof fetch;
+
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({
+              currentPhase: 2,
+              phaseLabel: "P2 Discover & Diagnose",
+            })}
+            phaseNum={2}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+
+        const menu = screen.getByLabelText("P2 steps");
+        fireEvent.click(
+          within(menu).getByRole("button", { name: /Upload & Review/i }),
+        );
+        fireEvent.change(screen.getByLabelText("Upload P2 files"), {
+          target: {
+            files: [
+              new File(["PK"], "evidence-bundle.zip", {
+                type: "application/zip",
+              }),
+            ],
+          },
+        });
+
+        await waitFor(() =>
+          expect(
+            screen.getByText(
+              describeMoveUploadRefusal({
+                code: "unsupported_type",
+                detail: "application/zip",
+                fileName: "evidence-bundle.zip",
+              }),
+            ),
+          ).toBeInTheDocument(),
+        );
+        expect(screen.queryByText(/application\/zip/)).toBeNull();
+        expect(screen.queryByText("unsupported_type")).toBeNull();
+      } finally {
+        global.fetch = previousFetch;
+      }
     });
 
     it("upload-type workflow step: the real file input reachable from the step detail pane invokes the same existing upload wiring (no new handler built)", async () => {
