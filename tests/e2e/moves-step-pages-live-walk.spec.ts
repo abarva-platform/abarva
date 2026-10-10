@@ -208,11 +208,13 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             const body = await page.locator("body").innerText();
             const badReads = body.match(BAD_READ);
             if (badReads) {
+              // A known gap cannot excuse another read error on the same page.
               const allowance = KNOWN_GAPS.find(
                 (gap) =>
                   gap.phase === phase &&
                   gap.view === view &&
-                  body.includes(gap.text),
+                  body.includes(gap.text) &&
+                  gap.text.toLowerCase().includes(badReads[0].toLowerCase()),
               );
               if (!allowance) throw new Error(`Unreviewed read gap: ${badReads[0]}`);
             }
