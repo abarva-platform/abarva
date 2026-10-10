@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 411,
-    "fenced": 230,
-    "fencedDirect": 106,
+    "routes": 412,
+    "fenced": 231,
+    "fencedDirect": 107,
     "fencedIndirect": 124,
     "unfenced": 181,
     "unfencedButReachesFenceModule": 100,
-    "behavioral": 84,
+    "behavioral": 85,
     "byteScannerOnly": 7,
     "none": 139
   },

@@ -66,7 +66,8 @@ phase. A redirect shows the target step name while navigation completes.
 - Library orphan audit, route reachability and export reachability: pass; no new findings.
 - Test CI census: pass, two new test files and a covered-file delta of +2
   (2,800 to 2,802); no new unrun test file.
-- Tenancy fence census write/check: pass; no API route added.
+- Tenancy fence census write/check: pass. The census picks up one newly merged
+  mainline route; this PR adds no API route.
 - Nexus manual generation/check: pass; generated manual unchanged.
 - Release control: pass (11 of 11 gates).
 - Local visual previews: 168 screenshots at 1440px and 390px, light and
