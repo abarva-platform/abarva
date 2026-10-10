@@ -40,6 +40,7 @@ Design authority: `docs/design/source-end-to-end-redesign-brief.md:65` specifies
 - PASS: Full TypeScript check using Node 24 with an 8 GB heap budget.
 - PASS: Scoped ESLint and CI coverage census. Existing suites remain registered; no threshold or test exemption changed.
 - PASS: Independent read-only review; identified history/availability issues were repaired with red-first tests and re-reviewed.
+- CI correction: The broader core suite exposed an older last-phase assertion. It now pins the three-stage market/response/evaluation sequence and both current-phase mappings while retaining and extending renegotiation exclusion checks. No test was disabled or exempted.
 - PASS: Local CUA desktop (1180 px) and mobile (390 px) inspection of actual workspace components with explicitly synthetic fixtures. Six-phase navigation, return-to-current-work, region-level future preview, read-only historical intake and off-path exclusion were checked. DOM measurements found no horizontal/text overflow. This isolated harness mocks shell services and is not authenticated product acceptance.
 - PENDING: Final-head PR CI, deployment and signed-in navigation readback.
 
