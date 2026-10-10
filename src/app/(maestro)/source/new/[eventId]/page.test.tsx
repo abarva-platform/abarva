@@ -4,6 +4,7 @@ import { requireTenancy } from "@/lib/auth/tenancy";
 import { getSourcingEventForResolvedClient } from "@/lib/source/queries";
 import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
 import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import { readSourceResponseUploadReceipts } from "@/lib/source/new-workspace/response-upload-receipts";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 
 jest.mock("next/navigation", () => ({
@@ -15,6 +16,9 @@ jest.mock("@/lib/source/queries", () => ({ getSourcingEventForResolvedClient: je
 jest.mock("@/lib/source/file-cabinet/repository", () => ({ listSourceArtifacts: jest.fn() }));
 jest.mock("@/lib/source/new-workspace/stage05-nda-coverage", () => ({
   readSourceNewStage05NdaCoverage: jest.fn(),
+}));
+jest.mock("@/lib/source/new-workspace/response-upload-receipts", () => ({
+  readSourceResponseUploadReceipts: jest.fn(),
 }));
 // The authority read itself is NOT mocked: the point of the case below is that
 // the real `resolveAuthority` decides, and the page carries its decision.
@@ -96,6 +100,7 @@ beforeEach(() => {
   jest.mocked(requireTenancy).mockResolvedValue(tenancy as never);
   jest.mocked(getSourcingEventForResolvedClient).mockResolvedValue(null);
   jest.mocked(listSourceArtifacts).mockResolvedValue([]);
+  jest.mocked(readSourceResponseUploadReceipts).mockResolvedValue([]);
   // Default: no authority row. Every pre-existing case ran against a read that
   // could not answer, and must keep doing so — only the two cases that set a
   // row below are asking the authority anything.
@@ -243,5 +248,17 @@ describe("Source New event route authorization", () => {
     } as never);
     jest.mocked(listSourceArtifacts).mockRejectedValue(new Error("artifact_read_failed"));
     await expect(SourceNewEventPage(params)).rejects.toThrow("artifact_read_failed");
+  });
+
+  it("blocks response intake when the upload receipt log cannot be read", async () => {
+    jest.mocked(getSourcingEventForResolvedClient).mockResolvedValue(governedEvent as never);
+    jest.mocked(readSourceResponseUploadReceipts).mockRejectedValueOnce(new Error("receipt_unavailable"));
+
+    const page = await SourceNewEventPage(params);
+
+    expect(page.props.responseIntake.status).toBe("blocked");
+    expect(page.props.responseIntake.blockers).toContain(
+      "The response upload receipt log could not be read.",
+    );
   });
 });

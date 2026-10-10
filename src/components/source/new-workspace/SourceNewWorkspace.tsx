@@ -1252,15 +1252,15 @@ function SourceNewResponseIntakePanel({
             <label>
               Accepted supplier
               <select
-                name="vendorName"
-                defaultValue={firstSupplier?.legalName ?? ""}
+                name="supplierId"
+                defaultValue={firstSupplier?.supplierId ?? ""}
                 disabled={intake.rows.length === 0}
               >
                 {intake.rows.length === 0 ? (
                   <option value="">No accepted supplier recorded</option>
                 ) : (
                   intake.rows.map((row) => (
-                    <option key={row.authorityId} value={row.legalName}>
+                    <option key={row.authorityId} value={row.supplierId}>
                       {row.legalName}
                     </option>
                   ))
@@ -1316,7 +1316,7 @@ function SourceNewResponseIntakePanel({
                   </div>
                   <div>
                     <dt>Workbook</dt>
-                    <dd>{row.workbookName ?? "Not uploaded"}</dd>
+                    <dd>{row.workbookName ?? "No linked workbook"}</dd>
                   </div>
                   <div>
                     <dt>Normalized rows</dt>

@@ -84,6 +84,18 @@ async function syntheticWorkbookBytes(): Promise<Buffer> {
 }
 
 describe("normalized vendor response workbook", () => {
+  it("preserves a resolved canonical supplier ID instead of deriving identity from a display name", async () => {
+    const parsed = await parseNormalizedVendorResponseWorkbook({
+      buffer: await workbookBytes(),
+      vendorId: "source-vendor-42",
+      vendorName: "Example Services LLC",
+    });
+
+    expect(parsed?.vendorId).toBe("source-vendor-42");
+    expect(parsed?.vendorName).toBe("Example Services LLC");
+    expect(parsed?.declaredVendorName).toBe("Example Services LLC");
+  });
+
   it("parses the issued workbook shape and computes traceability", async () => {
     const parsed = await parseNormalizedVendorResponseWorkbook({
       buffer: await workbookBytes(),

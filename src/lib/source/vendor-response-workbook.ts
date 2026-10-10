@@ -39,6 +39,7 @@ const HEADERS = {
 export interface ParsedNormalizedVendorResponse {
   vendorId: string;
   vendorName: string;
+  declaredVendorName?: string | null;
   rows: NormalizedRequirementResponse[];
   analytics: NormalizedResponseQualityAnalytics;
   parserWarnings: string[];
@@ -47,6 +48,7 @@ export interface ParsedNormalizedVendorResponse {
 
 export async function parseNormalizedVendorResponseWorkbook(args: {
   buffer: Buffer;
+  vendorId?: string;
   vendorName?: string;
 }): Promise<ParsedNormalizedVendorResponse | null> {
   const workbook = new ExcelJS.Workbook();
@@ -143,11 +145,13 @@ export async function parseNormalizedVendorResponseWorkbook(args: {
   }
 
   if (rows.length === 0) return null;
+  const declaredVendorName = readVendorName(workbook);
   const vendorName =
-    args.vendorName?.trim() || readVendorName(workbook) || "Vendor not identified";
+    args.vendorName?.trim() || declaredVendorName || "Vendor not identified";
   return {
-    vendorId: slug(vendorName),
+    vendorId: args.vendorId?.trim() || slug(vendorName),
     vendorName,
+    declaredVendorName,
     rows,
     analytics: analyzeNormalizedResponseQuality(rows),
     parserWarnings,
