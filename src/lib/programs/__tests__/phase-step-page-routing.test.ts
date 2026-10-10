@@ -124,11 +124,15 @@ describe("phase step-page sunset routing", () => {
       "root-cause-design",
       "architecture-options",
       "operating-adoption",
+      "rom-estimate",
     ] as const;
     for (const view of direct) {
       expect(host).toContain(`initialStepView === "${view}"`);
       expect(EXISTING_STEP_PAGE_VIEWS).toContain(view);
     }
+    expect(host).toMatch(
+      /if \(romEstimateStepPageActive\)[\s\S]*?<RomEstimateStep/,
+    );
     const mounted = new Set<StepPageView>([
       ...direct,
       ...gates,

@@ -5612,7 +5612,9 @@ describe("MovesPhaseStandaloneClient", () => {
   describe("P3 Step 4 bottom-up estimate (moves_step_pages_v3 + moves_rom_engine_v1)", () => {
     const p3Move = () => makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
     const stepFour = (container: HTMLElement) =>
-      container.querySelectorAll('nav[aria-label="Design steps"] li')[3] as HTMLElement;
+      container.querySelectorAll(
+        'nav[aria-label="Design steps"] li',
+      )[3] as HTMLElement;
     const approvedEstimate = (stale = false) => {
       const record = {
         ...emptyRomEstimate(),
@@ -5638,12 +5640,23 @@ describe("MovesPhaseStandaloneClient", () => {
           unitHours: {},
           releases: [],
           foundation: null,
-          combined: { hours: 10, weeks: 1, lowCents: 1, planCents: 2, highCents: 3 },
+          combined: {
+            hours: 10,
+            weeks: 1,
+            lowCents: 1,
+            planCents: 2,
+            highCents: 3,
+          },
         },
       };
       // A stale approval: the inputs changed after it was given.
       return serializeRomEstimate(
-        stale ? { ...approved, useCases: [{ ...record.useCases[0], name: "Renamed" }] } : approved,
+        stale
+          ? {
+              ...approved,
+              useCases: [{ ...record.useCases[0], name: "Renamed" }],
+            }
+          : approved,
       );
     };
 
@@ -5664,15 +5677,26 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       const dock = screen.getByTestId("agent-dock");
       expect(
-        within(dock).getByRole("heading", { name: "Estimate the work bottom-up" }),
+        within(dock).getByRole("heading", {
+          name: "Estimate the work bottom-up",
+        }),
       ).toBeInTheDocument();
       // Step 3 has no record, so only an unfinished Step 2 blocks it.
       expect(within(dock).getByText(/Waiting on Step 2/)).toBeInTheDocument();
       expect(
-        within(dock).getByRole("link", { name: "Open Step 2 →" }).getAttribute("href"),
+        within(dock)
+          .getByRole("link", { name: "Open Step 2 →" })
+          .getAttribute("href"),
       ).toMatch(/\/phase\/3\?step=architecture-options$/);
-      expect(stepFour(container).querySelector('[aria-current="step"]')).not.toBeNull();
-      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        stepFour(container).querySelector('[aria-current="step"]'),
+      ).not.toBeNull();
+      expect(
+        container.querySelectorAll('nav[aria-label="Design steps"] li'),
+      ).toHaveLength(5);
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
     });
 
     it("ignores ?step=rom-estimate while either flag is off", () => {
@@ -5730,9 +5754,9 @@ describe("MovesPhaseStandaloneClient", () => {
         );
       let view = renderStepTwo(approvedEstimate());
       expect(stepFour(view.container).className).toMatch(/is-done/);
-      expect(stepFour(view.container).querySelector("a")?.getAttribute("href")).toMatch(
-        /\/phase\/3\?step=rom-estimate$/,
-      );
+      expect(
+        stepFour(view.container).querySelector("a")?.getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=rom-estimate$/);
       view.unmount();
       view = renderStepTwo(approvedEstimate(true));
       expect(stepFour(view.container).className).not.toMatch(/is-done/);
@@ -5771,9 +5795,9 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       expect(mockRouterReplace).not.toHaveBeenCalled();
-      expect(screen.getByTestId("open-rom-estimate").getAttribute("href")).toMatch(
-        /\/phase\/3\?step=rom-estimate$/,
-      );
+      expect(
+        screen.getByTestId("open-rom-estimate").getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=rom-estimate$/);
       legacy.unmount();
 
       // Without the ROM flag Step 4 is not a page, so P3 does not switch.
