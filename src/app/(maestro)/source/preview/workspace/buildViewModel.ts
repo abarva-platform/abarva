@@ -2070,10 +2070,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         invoiceRows: detail?.evidencePerformance?.invoice_line_count ?? 0,
         performanceRows:
           numberFromDb(contractCoverage?.performance_rows) ?? performancePeriods.length,
-        documentRows:
-          numberFromDb(contractCoverage?.document_page_text_rows) ??
-          detail?.docExtractions.length ??
-          0,
+        documentRows: documentExtractions.length,
         opportunityRows:
           numberFromDb(contractCoverage?.opportunity_rows) ??
           opportunitySet?.opportunities.length ??

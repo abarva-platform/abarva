@@ -72,7 +72,7 @@ describe("contractCoverageWithDetailLanes", () => {
       contract_id: contract.contract_id,
       spend_rows: 0,
       performance_rows: 0,
-      document_page_text_rows: 0,
+      document_page_text_rows: 8,
       opportunity_rows: 0,
     } as never;
     const vm = {
@@ -106,6 +106,63 @@ describe("contractCoverageWithDetailLanes", () => {
       document_page_text_rows: 8,
       opportunity_rows: 4,
       scope_rows: 4,
+    });
+  });
+
+  it("keeps a loaded zero for page text when extraction facts are present", () => {
+    const contract = {
+      tenant_key: "synthetic_test",
+      contract_id: "CONTRACT-COUNT-ZERO",
+      vendor_ref: "VENDOR-COUNT-ZERO",
+      vendor_name: "Synthetic Vendor",
+      contract_name: "Synthetic agreement",
+    } as unknown as SourceContract360Row;
+    const resolved = contractCoverageWithDetailLanes(
+      { contract_id: contract.contract_id, document_page_text_rows: 0 } as never,
+      contract,
+      [],
+      {
+        detail: {
+          spendMonths: [],
+          performancePeriods: [],
+          docExtractions: Array.from({ length: 8 }),
+          optimizationOpportunitySet: null,
+        },
+        opportunityView: null,
+      } as never,
+    );
+
+    expect(resolved?.document_page_text_rows).toBe(0);
+  });
+
+  it("preserves persisted page-text count when detail has a different extraction count", () => {
+    const contract = {
+      tenant_key: "synthetic_test",
+      contract_id: "CONTRACT-COUNT-001",
+      vendor_ref: "VENDOR-COUNT-001",
+      vendor_name: "Synthetic Vendor",
+      contract_name: "Synthetic agreement",
+    } as unknown as SourceContract360Row;
+    const resolved = contractCoverageWithDetailLanes(
+      {
+        contract_id: contract.contract_id,
+        document_page_text_rows: 7,
+      } as never,
+      contract,
+      [],
+      {
+        detail: {
+          spendMonths: [],
+          performancePeriods: [],
+          docExtractions: Array.from({ length: 8 }),
+          optimizationOpportunitySet: null,
+        },
+        opportunityView: null,
+      } as never,
+    );
+
+    expect(resolved).toMatchObject({
+      document_page_text_rows: 7,
     });
   });
 
