@@ -1573,3 +1573,38 @@ textarea.q-input {
 .reg-empty { padding: 16px 24px; margin: 0; font-size: 13px; color: var(--mv-muted); }
 .reg-subform { display: flex; flex-direction: column; gap: 10px; }
 .reg-copy { min-height: 160px; font-family: var(--mv-font-mono); font-size: 12px; }
+/* ═════════ Template v1.10: P3 Step 3, operating & adoption (existing tokens only) ═════════ */
+/* The skipped context line's action (core.css `.ctx-actions`). */
+.ctx-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+/* An ink action that is a link (the route flag's `Re-check the P2 route →`). */
+.root a.btn-ink {
+  color: var(--mv-current-ink);
+  text-decoration: none;
+  display: inline-block;
+}
+/* A decision right in the owners grid: reads as the mock's Yes / No, edits in place. */
+.cell-toggle {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--mv-ink);
+  cursor: pointer;
+  text-decoration: underline dotted var(--mv-line-strong);
+  text-underline-offset: 3px;
+}
+.cell-toggle.no {
+  color: var(--mv-faint);
+}
+.cell-toggle:hover {
+  text-decoration-color: var(--mv-ink);
+}
+.card-rights {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}

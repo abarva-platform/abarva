@@ -8,6 +8,11 @@ import {
   parseArchitectureChoice,
 } from "@/lib/programs/architecture-choice";
 import {
+  operatingAdoptionGateText,
+  operatingAdoptionText,
+  parseOperatingAdoption,
+} from "@/lib/programs/operating-adoption";
+import {
   designTraceabilityGateText,
   designTraceabilityText,
   parseDesignTraceability,
@@ -33,6 +38,10 @@ export function captureValueText(key: string, raw: string): string {
     const value = parseArchitectureChoice(raw);
     return value ? architectureChoiceText(value) : raw;
   }
+  if (key === "operating_adoption") {
+    const value = parseOperatingAdoption(raw);
+    return value ? operatingAdoptionText(value) : raw;
+  }
   return raw;
 }
 
@@ -46,6 +55,10 @@ export function captureValueGateText(key: string, raw: string): string {
   if (key === "architecture_choice") {
     const value = parseArchitectureChoice(raw);
     return value ? architectureChoiceGateText(value) : raw;
+  }
+  if (key === "operating_adoption") {
+    const value = parseOperatingAdoption(raw);
+    return value ? operatingAdoptionGateText(value) : raw;
   }
   return raw;
 }
