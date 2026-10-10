@@ -46,7 +46,11 @@ function host(
           "Handoff package & acceptance",
         ];
   return {
-    move: { id: "move-1", name: "Synthetic Move" } as StepPageHostProps["move"],
+    move: {
+      id: "move-1",
+      name: "Synthetic Move",
+      tenant: { name: "Demo tenant" },
+    } as StepPageHostProps["move"],
     phase,
     values,
     setValue: jest.fn(),

@@ -41,6 +41,7 @@ function host(
       id: "move-1",
       displayCode: "SYNTHETIC-MOVE",
       name: "Synthetic Move",
+      tenant: { name: "Demo tenant" },
       archetype: "technical_product",
       participants,
     } as StepPageHostProps["move"],

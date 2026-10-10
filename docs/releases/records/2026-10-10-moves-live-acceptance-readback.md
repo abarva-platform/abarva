@@ -34,7 +34,7 @@ Production signed-in checks now require a dedicated production Clerk credential 
 
 ## QA / Validation
 
-- Focused Jest suites: 8 passed, 137 tests passed.
+- Full step-page Jest suite: 9 passed, 157 tests passed. Transformer suite: 17 tests passed.
 - Mutation checks: removing the tenant label failed its page test; returning the current gate for a historical view failed its transformer test. Both original files were restored.
 - Typecheck: pass.
 - Focused ESLint: pass.
