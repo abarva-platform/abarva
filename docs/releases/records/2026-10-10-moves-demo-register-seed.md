@@ -16,6 +16,18 @@ The rows live in a committed, reviewable seed definition. They cover value (4), 
 
 The job writes through the register store, so every register rule and the append-only history apply as they do for a person in the product. It refuses every tenant except the synthetic demo tenant, writes only the Move whose id the committed discovery-evidence load approval already declares, and authenticates that Move's client and declared archetype from the Move registry. A dry run reads and plans and writes nothing. An apply needs a separate, named-person load approval in the dataset manifest for this Move and the exact seed hash. That approval is deliberately not included here, because an agent must not write it on a person's behalf. A re-run writes nothing new.
 
+## Load approval
+
+The product owner (Anand Sundaram) approved this load on 2026-10-10. The
+approval was recorded in the dataset manifest's `load_approval` and is pinned to:
+- the demo Move `1557f032-5a5c-4475-abe5-b1a841576649`;
+- the seed hash `19401a9627284bbfb7054f7e43faa25e9b400e3cda6f2a9297f9dfd0cafd2a33`;
+- 16 rows;
+- this release record.
+
+A test checks the committed approval against the committed seed, so editing the
+seed without a fresh approval fails CI.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`. AGENTS.md assigns client-scoped seed and ingestion changes to this lane, and this job writes tenant-scoped rows into the canonical register through the data plane. The data is synthetic, but the lane follows which layer is written, not whether the content is real. `public-demo` covers public routes, demo paths and investor-facing artifacts, and this change touches none of them.

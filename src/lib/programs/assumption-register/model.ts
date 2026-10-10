@@ -17,6 +17,7 @@
 // I/O lives in `./store.ts`; nothing here reads or writes.
 
 import type { ApprovedAssumption } from "@/lib/deliverables/orchestrator/types";
+import { REGISTER_ID_PATTERN } from "@/lib/deliverables/orchestrator/numeric-lineage-tokens";
 import {
   POLICY_VERSION,
   evaluateGovernedObject,
@@ -25,6 +26,25 @@ import {
   type MovePhase,
 } from "@/lib/governance/context-corpus-policy";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+
+/** The tenant flag that turns the register on (routes, aVa tool, generation). */
+export const ASSUMPTION_REGISTER_FLAG = "moves_assumption_register_v1" as const;
+/**
+ * Generation is governed by its own flag, off for every tenant until the
+ * register migration is applied and a Move's register is populated: under
+ * enforcement an unreadable register stops the build, and an empty one admits
+ * no figure outside evidence.
+ */
+export const ASSUMPTION_REGISTER_GENERATION_FLAG =
+  "moves_assumption_register_generation_v1" as const;
+
+/**
+ * The reader's sentence when a generation the register governs could not read
+ * it. It names no internal error text; the caller logs the cause.
+ */
+export const REGISTER_UNAVAILABLE_DETAIL =
+  "The Move's assumptions register could not be read, so the document was not generated: " +
+  "its working figures cannot be cited without it. Nothing was saved; try the build again.";
 
 // ── Controlled vocabularies ──────────────────────────────────────────────────
 
@@ -158,9 +178,10 @@ export interface AssumptionRecord {
 /**
  * Every use of this body is anchored (`^…$`, or between `[A:` and `]`), so
  * `DL3` can only ever read as delivery row 3 — the alternation order does not
- * decide it, the anchors do.
+ * decide it, the anchors do. One definition, shared with the generation
+ * lineage check (`numeric-lineage-tokens.ts`).
  */
-const REGISTER_ID_BODY = "(DL|V|D|A)([1-9]\\d*)";
+const REGISTER_ID_BODY = REGISTER_ID_PATTERN;
 const REGISTER_ID_RE = new RegExp(`^${REGISTER_ID_BODY}$`);
 const AREA_BY_PREFIX: ReadonlyMap<string, AssumptionArea> = new Map(
   ASSUMPTION_AREAS.map((area) => [AREA_ID_PREFIX[area], area] as const),
@@ -935,4 +956,22 @@ export function agentContextAssumptions(
       evaluateGovernedObject(toGovernedObject(record, scope)).decision !==
         "block",
   );
+}
+
+/**
+ * The register as a generation feed: the rows an agent may use (counted
+ * statuses whose governed object the policy does not block), each projected
+ * to the generation-facing `ApprovedAssumption` — owner ROLE only, the answer
+ * figure for a confirmed or corrected row, `mustValidate` only while open.
+ */
+export function approvedAssumptionsFromRegister(
+  records: ReadonlyArray<AssumptionRecord>,
+  scope: { tenantId: string },
+): ApprovedAssumption[] {
+  const out: ApprovedAssumption[] = [];
+  for (const record of agentContextAssumptions(records, scope)) {
+    const approved = toApprovedAssumption(record);
+    if (approved) out.push(approved);
+  }
+  return out;
 }

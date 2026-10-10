@@ -374,7 +374,14 @@ export function buildMoveDeliverableRequest(
       : selectRequiredEvidenceSignals(governedEvidenceBundle),
     missingEvidence,
     clientCompleteItems: [],
-    approvedAssumptions: [],
+    // The Move assumptions register, only when it governs generation. Present
+    // (loaded or not), the request is enforced: a figure not in evidence
+    // traces only to a register row cited [A:ID]. Absent: exactly as before.
+    approvedAssumptions:
+      input.assumptionRegister?.status === "loaded"
+        ? [...input.assumptionRegister.assumptions]
+        : [],
+    ...(input.assumptionRegister ? { assumptionRegisterEnforced: true } : {}),
     artifactStandard: options.artifactStandard,
     outputFormats: options.outputFormats ?? ["html"],
     formattingProfile: FORMATTING_PROFILE,

@@ -24,7 +24,7 @@ import {
 } from "@/lib/auth/program-access-policy";
 import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
 import type { TenancyCtx } from "@/lib/programs/types.db";
-import type { AssumptionRecord } from "./model";
+import { ASSUMPTION_REGISTER_FLAG, type AssumptionRecord } from "./model";
 import { RegisterHistoryWriteError } from "./store";
 import {
   describeHistoryNotRecorded,
@@ -33,7 +33,7 @@ import {
 import { assumptionForViewer } from "./register-request";
 import { looksLikePersonalName } from "./owner-role";
 
-export const ASSUMPTION_REGISTER_FLAG = "moves_assumption_register_v1";
+export { ASSUMPTION_REGISTER_FLAG };
 
 /** May this policy change this Move's register? */
 export function canWriteRegister(

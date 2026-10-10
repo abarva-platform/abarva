@@ -67,7 +67,91 @@ function describeUseCase(archetype: string): string {
   );
 }
 
+// ── Assumptions register (moves_assumption_register_v1) ──────────────────────
+//
+// When the Move assumptions register governs a generation
+// (`req.assumptionRegisterEnforced`), a figure not in the governed evidence may
+// appear ONLY as a register working figure cited `[A:ID]`; a bare
+// `[ASSUMPTION TO VALIDATE]` tag no longer makes a figure traceable, and the
+// quality gate blocks it. Every instruction below that told the model to
+// label an ungrounded figure as an assumption is swapped for the register
+// rule — only under enforcement, so a flag-off prompt is byte-identical.
+
+/** True when the Move assumptions register governs this generation. */
+function registerEnforced(req: DeliverableIntelligenceRequest): boolean {
+  return req.assumptionRegisterEnforced === true;
+}
+
+export const REGISTER_FIGURE_RULE =
+  "REGISTER RULE: a figure not in the governed evidence may appear only as an assumptions-register working figure, stated exactly as the register states it and cited [A:ID] in the same sentence. Never put [ASSUMPTION TO VALIDATE] on a figure: that tag does not make a figure traceable. A figure that neither the evidence nor the register carries is left out, and its input goes to the Open Inputs Required table. This rule overrides any other instruction to label a figure as an assumption.";
+
+/** The legacy "label an ungrounded figure as an assumption" clauses, and their register replacements. */
+const REGISTER_DISCIPLINE_REWRITES: ReadonlyArray<readonly [string, string]> = [
+  [
+    "label it [ASSUMPTION TO VALIDATE: ...] or put it in the single Open Inputs Required table",
+    "state it only as an assumptions-register working figure cited [A:ID], or put it in the single Open Inputs Required table",
+  ],
+  [
+    "or labeled [ASSUMPTION TO VALIDATE: indicative timeline pending capacity confirmation]",
+    "or stated as an assumptions-register working figure cited [A:ID]",
+  ],
+  [
+    "or explicitly labeled as an assumption",
+    "or be an assumptions-register working figure cited [A:ID]",
+  ],
+  [
+    "or labeled as assumptions",
+    "or be assumptions-register working figures cited [A:ID]",
+  ],
+];
+
 export function artifactHonestyDiscipline(
+  req: DeliverableIntelligenceRequest,
+): string {
+  const discipline = legacyArtifactHonestyDiscipline(req);
+  if (!registerEnforced(req)) return discipline;
+  const rewritten = REGISTER_DISCIPLINE_REWRITES.reduce(
+    (text, [from, to]) => text.split(from).join(to),
+    discipline,
+  );
+  return `${rewritten} ${REGISTER_FIGURE_RULE}`;
+}
+
+/** A register row as the model reads it: ID, statement, figure, confidence, owner ROLE, status. */
+function renderRegisterRow(
+  a: DeliverableIntelligenceRequest["approvedAssumptions"][number],
+): string {
+  const figure = a.figure ? `working figure ${a.figure}` : "no working figure";
+  const confidence =
+    a.confidence !== undefined ? `confidence ${a.confidence}; ` : "";
+  const owner = a.ownerRole ? `owner: ${a.ownerRole}; ` : "";
+  const status = a.status === "open" ? "open → VALIDATE" : (a.status ?? "");
+  return `- [A:${a.registerId}] ${a.statement} — ${figure} (${confidence}${owner}${status})`;
+}
+
+function renderAssumptionsForPrompt(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (!registerEnforced(req)) {
+    return req.approvedAssumptions.length === 0
+      ? "(none approved)"
+      : req.approvedAssumptions
+          .map(
+            (a) =>
+              `- ${a.statement} (basis: ${a.basis}${a.mustValidate ? "; VALIDATE" : ""})`,
+          )
+          .join("\n");
+  }
+  const rows = req.approvedAssumptions.filter((a) => a.registerId);
+  return [
+    rows.length === 0
+      ? "(no register rows — a figure not in the governed evidence may not appear)"
+      : rows.map(renderRegisterRow).join("\n"),
+    REGISTER_FIGURE_RULE,
+  ].join("\n");
+}
+
+function legacyArtifactHonestyDiscipline(
   req: DeliverableIntelligenceRequest,
 ): string {
   if (req.module !== "moves") {
@@ -128,7 +212,9 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     ``,
     `Hard rules:`,
     `- Cite every client-specific fact with [n] tied to the evidence appendix.`,
-    `- No numeric, date, currency, percentage, timeline, ROI, NPV, payback, or value claim may appear as an asserted fact without [n]. If not grounded, label it [ASSUMPTION TO VALIDATE: ...] or route it to Open Inputs Required.`,
+    registerEnforced(req)
+      ? `- No numeric, date, currency, percentage, timeline, ROI, NPV, payback, or value claim may appear as an asserted fact without [n]. If not grounded, it may appear only as an assumptions-register working figure cited [A:ID]; never put [ASSUMPTION TO VALIDATE] on a figure. Otherwise route it to Open Inputs Required.`
+      : `- No numeric, date, currency, percentage, timeline, ROI, NPV, payback, or value claim may appear as an asserted fact without [n]. If not grounded, label it [ASSUMPTION TO VALIDATE: ...] or route it to Open Inputs Required.`,
     `- Use ONE consolidated Open Inputs Required table for missing inputs. Do not scatter [CLIENT TO COMPLETE] tags through the narrative.`,
     `- Where a client fact is missing, write [EVIDENCE MISSING: <what>], [ASSUMPTION TO VALIDATE: <what>], or [CLIENT TO COMPLETE: <what>] — never fabricate.`,
     `- Never expose internal source ids, chunk ids, table names, fact keys, or system status words in the body.`,
@@ -171,15 +257,7 @@ function buildContextBlock(
       : req.clientCompleteItems
           .map((c) => `- ${c.label} [owner: ${c.owner}; ${c.reason}]`)
           .join("\n");
-  const assumptions =
-    req.approvedAssumptions.length === 0
-      ? "(none approved)"
-      : req.approvedAssumptions
-          .map(
-            (a) =>
-              `- ${a.statement} (basis: ${a.basis}${a.mustValidate ? "; VALIDATE" : ""})`,
-          )
-          .join("\n");
+  const assumptions = renderAssumptionsForPrompt(req);
   const requiredSignals =
     req.requiredEvidenceSignals && req.requiredEvidenceSignals.length > 0
       ? req.requiredEvidenceSignals
@@ -231,7 +309,9 @@ function buildContextBlock(
           ``,
         ]
       : []),
-    `APPROVED ASSUMPTIONS (use, labelled):`,
+    registerEnforced(req)
+      ? `ASSUMPTIONS REGISTER (cite a row as [A:ID]; its figure is a labelled working assumption, never a fact):`
+      : `APPROVED ASSUMPTIONS (use, labelled):`,
     assumptions,
     ``,
     `${structureLabel}:`,
@@ -333,7 +413,10 @@ function deterministicNumbersInstruction(
       "so every sentence containing a number, date, dollar value, percentage, " +
       "range, ratio, approximation such as about/roughly/~, or arithmetic-derived " +
       "claim must carry its own [n] citation in that same sentence, or an explicit " +
-      "[ASSUMPTION TO VALIDATE: ...], [EVIDENCE MISSING: ...], or [CLIENT TO COMPLETE: ...] " +
+      (registerEnforced(req)
+        ? "assumptions-register citation [A:ID] whose working figure it states, or an " +
+          "[EVIDENCE MISSING: ...] or [CLIENT TO COMPLETE: ...] "
+        : "[ASSUMPTION TO VALIDATE: ...], [EVIDENCE MISSING: ...], or [CLIENT TO COMPLETE: ...] ") +
       "tag. Do not write uncited numeric implications such as disagreement rates, " +
       "counts, totals, dates, throughput, or thresholds; if the source is not in the " +
       "assigned evidence, route the claim to Open Inputs Required instead."
@@ -945,7 +1028,7 @@ export function buildPassPrompt(
               `<existing_section_draft>\n${repair.currentBodyMarkdown}\n</existing_section_draft>`,
             ]
           : []),
-        `${isWorkingSessionGuide(req) ? "Write client-ready facilitation-guide Markdown" : "Write board-grade, senior-consulting Markdown"} for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY sentence that contains a number, date, dollar value, percentage, range, ratio, or approximation has a [n] citation in that same sentence or an explicit assumption/open-input tag.`,
+        `${isWorkingSessionGuide(req) ? "Write client-ready facilitation-guide Markdown" : "Write board-grade, senior-consulting Markdown"} for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. ${registerEnforced(req) ? "For any client-specific number / $ / % / date you cannot ground, use an assumptions-register working figure cited [A:ID] (never [ASSUMPTION TO VALIDATE] on a figure) or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY sentence that contains a number, date, dollar value, percentage, range, ratio, or approximation has a [n] citation, or an [A:ID] citation whose working figure it states, in that same sentence, or an explicit open-input tag." : "For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY sentence that contains a number, date, dollar value, percentage, range, ratio, or approximation has a [n] citation in that same sentence or an explicit assumption/open-input tag."}`,
         ``,
         `ASSIGNED EVIDENCE (the only [n] you may cite):`,
         assigned,

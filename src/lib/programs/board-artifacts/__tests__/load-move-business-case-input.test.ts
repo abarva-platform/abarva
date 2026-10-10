@@ -18,6 +18,11 @@ jest.mock('../../queries', () => ({
   getProgramById: (...args: unknown[]) => mockGetProgramById(...args),
 }));
 
+const mockListAssumptions = jest.fn();
+jest.mock('@/lib/programs/assumption-register/store', () => ({
+  listAssumptions: (...args: unknown[]) => mockListAssumptions(...args),
+}));
+
 import { canonicalClientDisplayName } from '@/lib/client-config';
 
 import { loadMoveBusinessCaseInput } from '../load-move-business-case-input';
@@ -28,6 +33,7 @@ describe('loadMoveBusinessCaseInput', () => {
     mockAzureSelect.mockReset();
     mockRequireTenancy.mockReset();
     mockGetProgramById.mockReset();
+    mockListAssumptions.mockReset();
     mockAzureSelect.mockResolvedValue([]);
     mockRequireTenancy.mockResolvedValue({
       clientId: 'client-1',
@@ -126,5 +132,107 @@ describe('loadMoveBusinessCaseInput', () => {
 
     await expect(loadMoveBusinessCaseInput('move-1')).resolves.toBeNull();
     expect(mockAzureMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  describe('the Move assumptions register (moves_assumption_register_v1)', () => {
+    const registerRow = (status: string, seq: number) => ({
+      id: `a-${seq}`,
+      tenant_key: 'meridian',
+      program_id: 'move-1',
+      area: 'value',
+      seq,
+      register_id: `V${seq}`,
+      statement: `Assumption ${seq}`,
+      working_figure: '12%',
+      source: 'Ops review',
+      confidence: 3,
+      owner_role: 'CFO office',
+      owner_name: 'Pat Example',
+      status,
+      origin: 'team',
+      answer_figure: status === 'confirmed' ? '10%' : null,
+      answer_source: status === 'confirmed' ? 'Finance close' : null,
+      answered_at: status === 'confirmed' ? '2026-10-02T00:00:00Z' : null,
+      revision: 1,
+      created_at: '2026-10-01T00:00:00Z',
+    });
+
+    async function recordsOf(rows: Record<string, unknown>[]) {
+      const { assumptionFromRow } = await import(
+        '@/lib/programs/assumption-register/model'
+      );
+      return rows.map((r) => assumptionFromRow(r));
+    }
+
+    const GENERATION_FLAG_ENV =
+      'ABARVA_FEATURE_MOVES_ASSUMPTION_REGISTER_GENERATION_V1_TENANTS';
+    // Generation is off for every tenant in the registry; these cases enrol
+    // the demo tenant explicitly, and one proves the default stays off.
+    afterEach(() => {
+      delete process.env[GENERATION_FLAG_ENV];
+    });
+
+    beforeEach(() => {
+      process.env[GENERATION_FLAG_ENV] = 'meridian';
+      mockRequireTenancy.mockResolvedValue({
+        clientId: 'client-1',
+        clientKey: 'meridian',
+        userId: 'user-1',
+      });
+      mockAzureMaybeSingle.mockResolvedValue(null);
+    });
+
+    it('leaves the register out while generation is not enrolled, even with the register on', async () => {
+      delete process.env[GENERATION_FLAG_ENV];
+      const input = await loadMoveBusinessCaseInput('move-1');
+      expect(input?.assumptionRegister).toBeUndefined();
+      expect(mockListAssumptions).not.toHaveBeenCalled();
+    });
+
+    it('carries the citable register rows when the flag is on for the tenant', async () => {
+      mockListAssumptions.mockResolvedValue(
+        await recordsOf([
+          registerRow('open', 1),
+          registerRow('proposed', 2),
+          registerRow('confirmed', 3),
+          registerRow('rejected', 4),
+        ]),
+      );
+      const input = await loadMoveBusinessCaseInput('move-1');
+      expect(mockListAssumptions).toHaveBeenCalledWith(
+        expect.objectContaining({ clientId: 'client-1', clientKey: 'meridian' }),
+        'move-1',
+      );
+      expect(input?.assumptionRegister?.status).toBe('loaded');
+      const assumptions =
+        input?.assumptionRegister?.status === 'loaded'
+          ? input.assumptionRegister.assumptions
+          : [];
+      expect(assumptions.map((a) => [a.registerId, a.figure])).toEqual([
+        ['V1', '12%'],
+        ['V3', '10%'],
+      ]);
+      expect(JSON.stringify(assumptions)).not.toContain('Pat Example');
+    });
+
+    it('carries a failed register read as unavailable, never as an empty register', async () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      mockListAssumptions.mockRejectedValue(new Error('connection reset'));
+      const input = await loadMoveBusinessCaseInput('move-1');
+      errorSpy.mockRestore();
+      expect(input?.assumptionRegister).toEqual({ status: 'unavailable' });
+    });
+
+    it('leaves the input exactly as before when the flag is off for the tenant', async () => {
+      mockRequireTenancy.mockResolvedValue({
+        clientId: 'client-1',
+        clientKey: 'apexretail',
+        userId: 'user-1',
+      });
+      const input = await loadMoveBusinessCaseInput('move-1');
+      expect(input).not.toBeNull();
+      expect(input && 'assumptionRegister' in input).toBe(false);
+      expect(mockListAssumptions).not.toHaveBeenCalled();
+    });
   });
 });
