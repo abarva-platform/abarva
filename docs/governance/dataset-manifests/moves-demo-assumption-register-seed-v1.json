@@ -14,7 +14,14 @@
   "expected_object_count": 16,
   "approved_by": "AbarVa product owner authorization",
   "approved_at": "2026-10-09",
-  "load_approval": null,
+  "load_approval": {
+    "approved_by": "Anand Sundaram",
+    "approved_at": "2026-10-10",
+    "assessment_id": "1557f032-5a5c-4475-abe5-b1a841576649",
+    "source_set_hash": "19401a9627284bbfb7054f7e43faa25e9b400e3cda6f2a9297f9dfd0cafd2a33",
+    "release_record": "docs/releases/records/2026-10-10-moves-demo-register-seed.md",
+    "move_id": "1557f032-5a5c-4475-abe5-b1a841576649"
+  },
   "serving_approval": null,
   "notes": "Declaration only. The seed is written by the operator ACA job scripts/moves/seed-demo-assumption-register-job.ts through the register store, so the register's domain rules and append-only history apply; rows land with origin team, twelve open and four confirmed with a named answer source. Tenancy and the Move come from declarations, never from this manifest: the job refuses any tenant other than the synthetic demo tenant declared synthetic-demo in the tenant input registry, writes only the Move whose id the committed discovery-evidence load approval declares, and authenticates that Move's client and declared archetype from the Move registry. The job refuses to apply until a named person adds a load_approval here bound to that Move and the exact seed hash (printed by --seed-hash). A dry run reads the Move and its register and writes nothing. Rows project as Move-scoped governed objects that never claim agent_ready; no indexing, serving approval or surface change is implied."
 }
