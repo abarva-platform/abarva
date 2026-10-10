@@ -3632,15 +3632,54 @@ function unplacedSplit(dir) {
  * Both directions are asserted, because a bucket listing every merged item is
  * noise and a bucket listing none is the defect unchanged:
  *   (a) per-unit + rung 1-6            -> MUST appear, and must NOT be claimable
- *   (b) per-unit + finished (rung 7)   -> must NOT appear
+ *   (b) per-unit + rung 7              -> MUST appear  (item T-837; see below)
  *   (c) aggregate acceptance + rung 6  -> must NOT appear
  *   (d) the stated count equals the ids listed
+ *   (e) per-unit + verdict `Closed`    -> must NOT appear
+ *   (f) aggregate + rung 7             -> must NOT appear
+ *   (g) per-unit phrased "one X per PR" + rung 1-6 -> MUST appear
+ *
+ * ITEM T-837 — THE TOP RUNG IS WHERE A PER-UNIT REMAINDER GOES DARKEST, AND
+ * CASE (b) ASSERTED THE DEFECT.
+ *
+ * Case (b) read "a per-unit item that is FINISHED is not offered as a
+ * residual", and drove it with a per-unit acceptance at rung 7. That is the
+ * one combination where the reasoning behind it does not hold. `isFinished`
+ * is `rung === 7 || rungLabel === "Closed"`, and for a WHOLE-ITEM acceptance
+ * rung 7 is indeed the item's proof. For a per-unit acceptance rung 7 means
+ * **one unit** reached signed-in proof; it says nothing about the row set, and
+ * it is strictly worse than rung 5 or 6 because the row now reads as fully
+ * proven to every later reader.
+ *
+ * Measured on the live summary of 790 items rather than argued: `C-593` sits
+ * at rung 7 "Signed-in proven" with `blocker: null`, lane C, acceptance "One
+ * workflow per pull request, not six in one" — and appears in NO bucket of the
+ * queue. Its own release line records four of five workflows untouched, and
+ * three were still red at their newest scheduled run when this was written.
+ *
+ * TWO INDEPENDENT CAUSES, which is why there are two halves and a case for
+ * each. Adding the phrase alone moves the live residual set 18 -> 21 and
+ * C-593 stays dark; letting rung 7 through alone moves it 18 -> 19 and C-593
+ * stays dark; both together give 23 and reach it.
+ *
+ * The negative control is NOT dropped, it is moved to the boundary that still
+ * means something: case (e). A `Closed` verdict is a human settling the item,
+ * and it still finishes it regardless of phrasing. Case (f) holds the change
+ * scoped — a rung-7 item with an aggregate acceptance is still excluded, so
+ * this is not a blanket un-finishing of rung 7.
  * ------------------------------------------------------------------------ */
 {
   const PER_UNIT_ACCEPTANCE =
     "Catalogue them one row at a time and verify per row rather than in aggregate, never as a count.";
   const AGGREGATE_ACCEPTANCE =
     "Add the validator and make the whole suite green in one pass.";
+  /*
+   * The same per-unit meaning written the way the live `C-593` writes it. It
+   * deliberately shares NO token with the phrases already in the list, so a
+   * case driven by it cannot pass on one of those by accident.
+   */
+  const PER_PR_ACCEPTANCE =
+    "One workflow per pull request, not six in one. Say which you repaired and why.";
   const RESIDUAL_HEADING = /^## Residual work a proof rung cannot close.*$/m;
 
   /** Add an item whose body carries `proof` and whose acceptance is `acceptance`. */
@@ -3709,19 +3748,22 @@ function unplacedSplit(dir) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 
-  /* --- (b) NEGATIVE. Per-unit but FINISHED: must not appear. --------------- */
+  /* --- (b) ITEM T-837. Per-unit at the TOP rung: must still be reachable. -- */
   {
     const dir = freshFixture();
     addRungItem(dir, "T-912", PER_UNIT_ACCEPTANCE, "Merged, deployed and live-proven signed in.");
     const q = buildBoardAndQueue(dir);
     const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = residualSection(rendered);
     check(
-      "a per-unit item that is FINISHED is not offered as a residual",
-      // The section must EXIST for this to mean anything. Asserting only that
-      // the id is absent passes on a file with no such section at all, which is
-      // the defect state — so the exclusion would read identical to the bug.
-      q.status === 0 && Boolean(residualSection(rendered)) && !residualSection(rendered).includes("T-912"),
-      `exit=${q.status}\nsectionFound=${Boolean(residualSection(rendered))}\nsection=${residualSection(rendered).slice(0, 700)}`,
+      "a per-unit item at rung 7 is STILL reachable as a residual, because one unit proven is not the row set",
+      q.status === 0 && section.includes("T-912"),
+      `exit=${q.status}\nsectionFound=${Boolean(section)}\nanywhereInFile=${rendered.includes("T-912")}\nsection=${section.slice(0, 700)}`,
+    );
+    check(
+      "and rung 7 does not make it claimable either — the shipped unit is real",
+      q.status === 0 && !laneTables(rendered).includes("T-912"),
+      `laneRows=${JSON.stringify(laneTables(rendered).split("\n").filter((l) => l.includes("T-912")))}`,
     );
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -3755,6 +3797,70 @@ function unplacedSplit(dir) {
       "the residual bucket's stated count equals the ids it lists",
       q.status === 0 && listed.length === 2 && stated === 2,
       `stated=${stated} listed=${JSON.stringify(listed)}\nsection=${section.slice(0, 900)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (e) ITEM T-837. The negative control that still means something. ----
+   *
+   * A `Closed` verdict is a human settling the item, not a rung the item
+   * climbed, so it finishes the row regardless of phrasing. Without this case
+   * the T-837 change would read as "nothing finishes a per-unit item", and the
+   * bucket would accumulate every per-unit row ever settled.
+   *
+   * This asserts the OUTCOME, not the clause. The generator carries no
+   * `rungLabel !== "Closed"` test any more: every `Closed` return in
+   * `deriveRung` is `rung: 0`, so such a clause sat unreachable behind
+   * `rung > 0` and deleting it killed no test. The exclusion is real but it is
+   * `rung > 0` doing it, and this case is what holds that shut — if `Closed`
+   * ever becomes rung-bearing, this fails.
+   * ------------------------------------------------------------------------ */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-917", PER_UNIT_ACCEPTANCE, "CLOSED — every unit in the set is settled.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a per-unit item whose verdict is CLOSED is not offered as a residual",
+      // The section must EXIST for this to mean anything. Asserting only that
+      // the id is absent passes on a file with no such section at all, which is
+      // the defect state — so the exclusion would read identical to the bug.
+      q.status === 0 && Boolean(residualSection(rendered)) && !residualSection(rendered).includes("T-917"),
+      `exit=${q.status}\nsectionFound=${Boolean(residualSection(rendered))}\nsection=${residualSection(rendered).slice(0, 700)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (f) ITEM T-837. The change is scoped to per-unit, not to rung 7. ---- */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-918", AGGREGATE_ACCEPTANCE, "Merged, deployed and live-proven signed in.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    check(
+      "a rung-7 item with an AGGREGATE acceptance is still excluded, so rung 7 was not un-finished for everyone",
+      q.status === 0 && Boolean(residualSection(rendered)) && !residualSection(rendered).includes("T-918"),
+      `exit=${q.status}\nsectionFound=${Boolean(residualSection(rendered))}\nsection=${residualSection(rendered).slice(0, 700)}`,
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  /* --- (g) ITEM T-837. The per-PR phrasing of a per-unit acceptance. -------
+   *
+   * Held at rung 6 on purpose, so this case turns on the PHRASE alone and the
+   * rung half of T-837 cannot carry it. Case (b) is the mirror: existing
+   * phrasing at rung 7, turning on the rung alone.
+   * ------------------------------------------------------------------------ */
+  {
+    const dir = freshFixture();
+    addRungItem(dir, "T-919", PER_PR_ACCEPTANCE, "The first slice merged and deployed.");
+    const q = buildBoardAndQueue(dir);
+    const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+    const section = residualSection(rendered);
+    check(
+      "a per-unit acceptance phrased as one unit per pull request is reachable as a residual",
+      q.status === 0 && section.includes("T-919"),
+      `exit=${q.status}\nsectionFound=${Boolean(section)}\nanywhereInFile=${rendered.includes("T-919")}\nsection=${section.slice(0, 700)}`,
     );
     fs.rmSync(dir, { recursive: true, force: true });
   }

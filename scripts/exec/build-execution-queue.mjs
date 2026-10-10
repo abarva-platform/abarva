@@ -1275,6 +1275,21 @@ const PER_UNIT_PHRASES = [
   /\bsettle each\b/i,
   /\bper record rather than\b/i,
   /\bwhich [a-z]+ you took\b/i,
+  /*
+   * Item T-837, and measured on the same terms as the rest of this list. The
+   * idiom "one <unit> at a time" has a sibling nobody wrote a pattern for:
+   * "one <unit> per pull request". `C-593` is the live instance — "One
+   * workflow per pull request, not six in one" — and it matched nothing here.
+   *
+   * Over the live summary of 790 items this pattern matches SIX acceptances
+   * and every one is genuinely per-unit: "One line per PR" on `T-581`,
+   * `T-584`, `T-586` and `T-474`, "One caller per PR" on `C-527`, and
+   * `C-593`. Three of the six are at rung 1-6 and so enter the bucket, taking
+   * the residual set 18 -> 21. That is the measurement the earlier rejected
+   * widening failed: it went 9 -> 21 by matching per-DIRECTION proof language,
+   * which is a proof obligation and not a per-unit settlement.
+   */
+  /\bone [a-z]+ per (?:pull request|pr)\b/i,
 ];
 
 /** The phrase that selected an item, so the bucket can show its own reason. */
@@ -1287,8 +1302,44 @@ function perUnitPhrase(item) {
   return "";
 }
 
+/*
+ * ITEM T-837 — RUNG 7 DOES NOT FINISH A PER-UNIT ITEM, AND IT IS THE RUNG
+ * WHERE THE REMAINDER GOES DARKEST.
+ *
+ * This filter used `!isFinished(i)`, which is `rung === 7 || rungLabel ===
+ * "Closed"`. The rung-7 half is wrong here and only here. For a whole-item
+ * acceptance rung 7 IS the item's proof. For a per-unit acceptance it means
+ * **one unit** reached signed-in proof, and the row set is no more settled
+ * than it was at rung 5 — except that the row now reads as fully proven, so
+ * this is strictly worse than the rung-5 and rung-6 cases this bucket was
+ * built for.
+ *
+ * `C-593` is the live instance and it is why this is a filed item rather than
+ * a tidy-up: rung 7 "Signed-in proven", `blocker: null`, acceptance "One
+ * workflow per pull request, not six in one", four of five workflows untouched
+ * by its own release line, and three still red at their newest scheduled run.
+ * It was in NO bucket of this file — not claimable (above rung 0), not
+ * residual (finished, and its phrase unmatched), not blocked (no blocker).
+ *
+ * A CLOSED ITEM IS STILL EXCLUDED, AND `rung > 0` IS WHAT EXCLUDES IT — which
+ * is why `isFinished`'s other half is not carried over here. The first draft of
+ * this change kept `rungLabel !== "Closed"` for symmetry; deleting that clause
+ * killed NO test, and the diagnosis is that it can never fire. All three
+ * `Closed` returns in `deriveRung` are `rung: 0`, and all 25 `Closed` items in
+ * the live summary are at rung 0, so the clause sits unreachable behind
+ * `rung > 0`. A guard that cannot fail is the thing this directory exists to
+ * stop shipping, so it is gone and the behaviour is asserted instead: case (e)
+ * of the suite drives a per-unit item to a `CLOSED` verdict and requires it to
+ * stay out of the bucket. If `Closed` ever becomes rung-bearing, that case
+ * fails rather than a dead clause silently covering for it.
+ *
+ * SCOPE IS DELIBERATELY ONE FILTER. `isFinished` has two other call sites —
+ * `partlyGated` and the *Blocked on Anand* partition — and neither changes.
+ * An item with an aggregate acceptance at rung 7 is still excluded here,
+ * because this filter requires a per-unit phrase to begin with.
+ */
 const residualAtRung = all
-  .filter((i) => !isFinished(i) && i.rung > 0 && Boolean(perUnitPhrase(i)))
+  .filter((i) => i.rung > 0 && Boolean(perUnitPhrase(i)))
   .sort((a, b) => compareItemIds(normalizeItemId(a.num), normalizeItemId(b.num)));
 
 /**
