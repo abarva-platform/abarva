@@ -342,4 +342,42 @@ describe("buildSourceNewResponseIntake", () => {
       ["supplier-beta", "not_uploaded", "not_parsed"],
     ]);
   });
+
+  it("credits a bound response workbook even when filename inference calls it pricing", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [{ ...artifact, artifactFamily: "pricing_workbook" }],
+      normalizedPackages: [normalizedPackage],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "uploaded",
+      parseState: "parsed",
+      artifactId: artifact.id,
+    });
+  });
+
+  it("does not claim a parsed response without its registered artifact", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [],
+      normalizedPackages: [normalizedPackage],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "not_uploaded",
+      parseState: "not_parsed",
+      artifactId: null,
+    });
+  });
 });

@@ -33,7 +33,7 @@ The Source New supplier selector, response upload route, workbook parser, and re
 
 ## QA / Validation
 
-- PASS: Four focused Jest suites, 104 tests, cover canonical ID submission, upload refusal before Blob storage, parser ID propagation, and readback isolation between same-named suppliers.
+- PASS: Four focused Jest suites cover canonical ID submission, upload refusal before Blob storage, parser ID propagation, readback isolation between same-named suppliers, and exact-artifact readback when filename inference uses a pricing family.
 - PASS: Mutation proof: replacing exact-ID package matching with name matching fails both the wrong-ID and same-name cases; the original matcher was restored.
 - PASS: Typecheck on the candidate tree.
 - PASS: All 11 release gates and the CI coverage census; targeted ESLint has zero errors and three existing test-file warnings.

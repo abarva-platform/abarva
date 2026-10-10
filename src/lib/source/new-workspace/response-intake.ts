@@ -198,8 +198,7 @@ function matchResponseArtifact(
     artifacts.find(
       (artifact) =>
         artifact.id === normalizedPackage.artifactId &&
-        artifact.stageKey === "responses" &&
-        artifact.artifactFamily === "proposal",
+        artifact.stageKey === "responses",
     ) ?? null
   );
 }
