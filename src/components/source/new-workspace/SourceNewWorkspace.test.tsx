@@ -268,7 +268,7 @@ describe("SourceNewWorkspace", () => {
       ),
     );
     const preview = screen.getByRole("region", { name: "Phase preview" });
-    expect(within(preview).getByText("Preview only. No step below is recorded for this event.")).toBeTruthy();
+    expect(within(preview).getByText("Preview only. These steps show no event records or decisions.")).toBeTruthy();
     const steps = within(preview).getByRole("tablist", { name: "Preview steps" });
     expect(within(steps).getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
       "01 Candidate panel",
@@ -277,6 +277,7 @@ describe("SourceNewWorkspace", () => {
     ]);
     fireEvent.click(within(steps).getByRole("tab", { name: "03 NDA coverage" }));
     expect(within(preview).getByRole("tabpanel").textContent).toContain("Executed NDA");
+    expect(within(preview).getByRole("tabpanel").getAttribute("tabindex")).toBe("0");
     fireEvent.keyDown(within(steps).getByRole("tab", { name: "03 NDA coverage" }), { key: "Home" });
     expect(within(steps).getByRole("tab", { name: "01 Candidate panel" }).getAttribute("aria-selected")).toBe("true");
     fireEvent.keyDown(within(steps).getByRole("tab", { name: "01 Candidate panel" }), { key: "ArrowRight" });
@@ -299,7 +300,7 @@ describe("SourceNewWorkspace", () => {
       ),
     );
     const preview = screen.getByRole("region", { name: "Phase preview" });
-    expect(within(preview).getByText("Preview only. No step below is recorded for this event.")).toBeTruthy();
+    expect(within(preview).getByText("Preview only. These steps show no event records or decisions.")).toBeTruthy();
     const steps = within(preview).getByRole("tablist", { name: "Preview steps" });
     expect(within(steps).getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
       "01 Package content",
@@ -307,6 +308,8 @@ describe("SourceNewWorkspace", () => {
       "03 Issue record",
     ]);
     expect(within(preview).queryByText("Sourcing package draft")).toBeNull();
+    expect(within(preview).queryByText("Not recorded")).toBeNull();
+    expect(within(preview).getAllByText("Not shown in preview")).toHaveLength(2);
     const textNodes: string[] = [];
     const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) textNodes.push(walker.currentNode.textContent?.trim() ?? "");
@@ -332,6 +335,26 @@ describe("SourceNewWorkspace", () => {
     expect(screen.queryByRole("region", { name: "Phase preview" })).toBeNull();
     expect(screen.queryByText("Recorded earlier in this event")).toBeNull();
     expect(screen.queryByText("Package content")).toBeNull();
+  });
+
+  it("surfaces files that contradict an off-path market phase without previewing it", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "scope", lifecycle: "active", sourcingMotion: "contract_optimization" }}
+        files={[marketPackageFile]}
+      />,
+    );
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Event phases" })).getByRole(
+        "button",
+        { name: /Market package/ },
+      ),
+    );
+    expect(screen.getByRole("heading", { name: "Not on this path" })).toBeTruthy();
+    expect(screen.getByText(/1 filed item is associated with this phase/)).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Phase preview" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "View filed items" }));
+    expect(screen.getByRole("button", { name: "Files" }).getAttribute("aria-current")).toBe("page");
   });
 
   it("does not acknowledge an off-path phase during a demo walkthrough", () => {
@@ -377,7 +400,7 @@ describe("SourceNewWorkspace", () => {
         screen.getByRole("heading", { name: "Suppliers & NDA demo preview" }),
       ).toBeTruthy();
       expect(screen.getByText(/governed stage remains Scope/i)).toBeTruthy();
-      expect(screen.getByText("Preview only. No step below is recorded for this event.")).toBeTruthy();
+      expect(screen.getByText("Preview only. These steps show no event records or decisions.")).toBeTruthy();
       expect(screen.queryByText(/candidate authority could not be read/i)).toBeNull();
       fireEvent.click(
         screen.getByRole("button", { name: "Self-approve for demo" }),

@@ -80,9 +80,13 @@ export function SourceNewPhasePreview({ phase }: { phase: SourceNewPhaseKey }) {
   return (
     <section className="snw-preview" aria-label="Phase preview">
       <p className="snw-preview-status">
-        Preview only. No step below is recorded for this event.
+        Preview only. These steps show no event records or decisions.
       </p>
-      <div className="snw-preview-steps" role="tablist" aria-label="Preview steps">
+      <div
+        className="snw-preview-steps"
+        role="tablist"
+        aria-label="Preview steps"
+      >
         {steps.map((item, index) => (
           <button
             key={item.title}
@@ -96,15 +100,16 @@ export function SourceNewPhasePreview({ phase }: { phase: SourceNewPhaseKey }) {
             onKeyDown={(event) => {
               let next = index;
               if (event.key === "ArrowRight") next = (index + 1) % steps.length;
-              else if (event.key === "ArrowLeft") next = (index - 1 + steps.length) % steps.length;
+              else if (event.key === "ArrowLeft")
+                next = (index - 1 + steps.length) % steps.length;
               else if (event.key === "Home") next = 0;
               else if (event.key === "End") next = steps.length - 1;
               else return;
               event.preventDefault();
               setSelected(next);
               event.currentTarget.parentElement
-                ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]
-                ?.focus();
+                ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                [next]?.focus();
             }}
           >
             <span>{String(index + 1).padStart(2, "0")}</span> {item.title}
@@ -116,6 +121,7 @@ export function SourceNewPhasePreview({ phase }: { phase: SourceNewPhaseKey }) {
         id={`${panelId}-panel`}
         role="tabpanel"
         aria-labelledby={`${panelId}-tab-${selected}`}
+        tabIndex={0}
       >
         <h3>{step.title}</h3>
         <p>{step.question}</p>
@@ -123,7 +129,7 @@ export function SourceNewPhasePreview({ phase }: { phase: SourceNewPhaseKey }) {
           {step.fields.map((field) => (
             <div key={field}>
               <dt>{field}</dt>
-              <dd>Not recorded</dd>
+              <dd>Not shown in preview</dd>
             </div>
           ))}
         </dl>

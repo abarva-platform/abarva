@@ -417,6 +417,7 @@ export function SourceNewWorkspace({
   const action = sourceNewNextAction(event);
   const actionLabel = action.label;
   const isCurrentPhase = phase === current;
+  const phaseFileCount = files.filter((file) => file.phase === phase).length;
   const responsesStage = isResponsesStage(event);
   const scorecardAuthorityStage = isScorecardAuthorityStage(event);
   const [scorecardRefresh, setScorecardRefresh] = useState(0);
@@ -664,6 +665,20 @@ export function SourceNewWorkspace({
                     This event&apos;s declared sourcing path does not include this
                     phase. No phase work is expected here.
                   </p>
+                  {phaseFileCount > 0 && (
+                    <p className="snw-note">
+                      {phaseFileCount} filed{" "}
+                      {phaseFileCount === 1 ? "item is" : "items are"} associated
+                      with this phase despite its off-path status.{" "}
+                      <button
+                        className="snw-text-action"
+                        type="button"
+                        onClick={() => setView("files")}
+                      >
+                        View filed items
+                      </button>
+                    </p>
+                  )}
                 </>
               ) : stateOf(phase) === "not_open" ? (
                 <>

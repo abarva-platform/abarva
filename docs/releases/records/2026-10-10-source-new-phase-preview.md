@@ -11,9 +11,11 @@ Candidate. Local validation passed; not merged, deployed, or live-proven by this
 ## Plain-English Summary
 
 An event phase that has not opened now shows a navigable outline of its planned steps. The outline
-contains empty questions and an always-visible preview notice. It does not display supplier,
-agreement, package, approval, or release data as completed work. A phase excluded by the event's
-declared sourcing path instead says "Not on this path" and shows no preview.
+contains empty questions and an always-visible preview notice. The fields say values are not shown
+in the preview, which remains true when an early file is already recorded. It does not display
+supplier, agreement, package, approval, or release data as completed work. A phase excluded by the
+event's declared sourcing path instead says "Not on this path" and shows no preview; any files
+associated with that phase remain reachable from Files.
 
 ## Layer Impact
 
@@ -32,7 +34,7 @@ All clients using the Source New workspace. No feature flag or client-specific d
 
 ## QA / Validation
 
-- Focused workspace suite: 72 passed.
+- Focused workspace and phase-state suites: 123 passed.
 - TypeScript: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` passed.
   The default 4 GB Node heap exhausted before reporting diagnostics.
 - ESLint on changed TypeScript files and `git diff --check`: passed.
@@ -41,6 +43,9 @@ All clients using the Source New workspace. No feature flag or client-specific d
   phase-specific inventory failed the market-package render test. Each mutation was restored and
   the clean focused suite passed again.
 - Signed-in acceptance: not run. No client data or workflow was mutated.
+- Independent read-only review found three gaps in the candidate: premature absence copy, hidden
+  off-path file associations, and non-focusable static tab content. Regression tests were added and
+  all three were corrected before merge.
 
 ## Rollout Plan
 
