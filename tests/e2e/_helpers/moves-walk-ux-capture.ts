@@ -100,7 +100,7 @@ export async function captureWalkDomSnapshot(
       stepHead: Boolean(main?.querySelector("#step-panel-title")),
       nextAction: Boolean(next),
       contextLine: Boolean(
-        main?.querySelector('[class*="context-line"], details.context'),
+        main?.querySelector("[data-step-context]"),
       ),
       workGroupOrEmptyState: Boolean(
         work?.querySelector('section[class*="group"], [class*="empty-note"]'),

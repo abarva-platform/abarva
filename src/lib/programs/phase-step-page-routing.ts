@@ -98,3 +98,40 @@ export function resolvePhaseStepPageLanding(input: {
     input.implementedViews,
   );
 }
+
+/** Resolve a bare phase address before secondary page reads or hydration. */
+export function resolveBarePhaseStepPageLanding(input: {
+  moveId: string;
+  phase: number;
+  currentPhase: number;
+  implementedViews: readonly StepPageView[];
+  enabled: boolean;
+  searchParams: Record<string, string | string[] | undefined>;
+}): string | null {
+  const query = input.searchParams;
+  if (
+    input.phase > input.currentPhase ||
+    query.step !== undefined ||
+    query.legacy === "1" ||
+    query.workspace !== undefined ||
+    query.section !== undefined ||
+    query.focus !== undefined ||
+    query.blockedPhase !== undefined ||
+    query.phaseLocked !== undefined
+  ) {
+    return null;
+  }
+  // Completion is deliberately not guessed from a partial server snapshot.
+  // A bare address starts at the phase's first page; explicit step links keep
+  // the reader's position, and the step rail shows persisted progress there.
+  return resolvePhaseStepPageLanding({
+    moveId: input.moveId,
+    phase: input.phase,
+    route: null,
+    implementedViews: input.implementedViews,
+    doneByStep: {},
+    enabled: input.enabled,
+    legacy: false,
+    requestedView: null,
+  });
+}

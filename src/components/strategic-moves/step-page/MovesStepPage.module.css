@@ -12,10 +12,10 @@
   --mv-surface: #ffffff;
   --mv-ink: #2c2c2a;
   --mv-muted: #5f5e5a;
-  --mv-faint: #888780;
+  --mv-faint: #6b6a64;
   --mv-line: rgba(10, 10, 11, 0.12);
   --mv-line-strong: rgba(10, 10, 11, 0.24);
-  --mv-accent: #1d9e75;
+  --mv-accent: #0f6e56;
   --mv-accent-hover: #0f6e56;
   --mv-accent-ink: #ffffff;
   --mv-current-bg: #2c2c2a;
@@ -41,7 +41,7 @@
     --mv-line-strong: rgba(241, 239, 232, 0.28);
     --mv-accent: #1d9e75;
     --mv-accent-hover: #24b386;
-    --mv-accent-ink: #ffffff;
+    --mv-accent-ink: #141413;
     --mv-current-bg: #f1efe8;
     --mv-current-ink: #141413;
     --mv-disabled-bg: #2a2a28;
@@ -58,7 +58,7 @@
   --mv-line-strong: rgba(241, 239, 232, 0.28);
   --mv-accent: #1d9e75;
   --mv-accent-hover: #24b386;
-  --mv-accent-ink: #ffffff;
+  --mv-accent-ink: #141413;
   --mv-current-bg: #f1efe8;
   --mv-current-ink: #141413;
   --mv-disabled-bg: #2a2a28;
@@ -627,6 +627,12 @@
   .step-bar li.is-current {
     flex: 1 1 auto;
   }
+  .step-bar li.is-current .step-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
   .step-bar li:not(.is-current) .step-title,
   .step-bar li:not(.is-current) .step-depth {
     display: none;
@@ -814,6 +820,16 @@
 }
 
 /* ───────── Region 3 · Context (depth · session · evidence), one line ───────── */
+.context-disclosure-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.context-disclosure-row .context {
+  flex: 1 1 300px;
+  min-width: 0;
+}
 .context > summary {
   display: flex;
   justify-content: space-between;

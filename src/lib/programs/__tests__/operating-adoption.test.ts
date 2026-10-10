@@ -12,7 +12,6 @@ import {
   missingOwnerCount,
   nameTeamRow,
   OPERATING_BLOCKED_SENTENCE,
-  OPERATING_READY_SENTENCE,
   OPERATING_SKIPPED_SENTENCE,
   openRouteFlag,
   operatingAdoptionGateText,
@@ -759,7 +758,7 @@ describe("next action, clauses, count, done and blocked", () => {
       state: "in_progress",
       eyebrow: "Next",
       sentence:
-        "Name 2 owners and accept the decision rights, confirm the workflow change, and 3 more below.",
+        "Name 2 owners and accept the decision rights; confirm the workflow change; 3 more below.",
       settled: 0,
       total: 4,
       continueEnabled: false,
@@ -783,7 +782,7 @@ describe("next action, clauses, count, done and blocked", () => {
       operatingAdoptionNextAction({ input: input("full", r), step2Done: true })
         .sentence,
     ).toBe(
-      "Name 2 owners and accept the decision rights, confirm the operating model, and 2 more below.",
+      "Name 2 owners and accept the decision rights; confirm the operating model; 2 more below.",
     );
   });
 
@@ -810,7 +809,7 @@ describe("next action, clauses, count, done and blocked", () => {
         step2Done: true,
       }).sentence,
     ).toBe(
-      "Accept the owners and decision rights, write the workflow change, and 3 more below.",
+      "Accept the owners and decision rights; write the workflow change; 3 more below.",
     );
   });
 
@@ -862,7 +861,8 @@ describe("next action, clauses, count, done and blocked", () => {
       });
       expect(next).toMatchObject({
         state: "ready",
-        sentence: `${OPERATING_READY_SENTENCE}.`,
+        sentence:
+          "Owners are named, the change is written in the team’s words, and the baseline owner is named; continue to Delivery & estimate.",
         settled: 4,
         total: 4,
         continueEnabled: true,
@@ -960,7 +960,7 @@ describe("next action, clauses, count, done and blocked", () => {
       ],
     });
     expect(next.sentence).toBe(
-      "Review the extraction of notes.docx, name 2 owners and accept the decision rights, and 3 more below.",
+      "Review the extraction of notes.docx; name 2 owners and accept the decision rights; 3 more below.",
     );
     expect(next.total).toBe(5);
   });

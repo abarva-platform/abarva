@@ -338,7 +338,7 @@ describe("OperatingAdoptionStep · limited (Light)", () => {
   it("starts at 0 of 4 settled with the clauses in row order", () => {
     const { container } = render(<Harness />);
     expect(status(container).textContent).toContain(
-      "Name 2 owners and accept the decision rights, write the workflow change, and 2 more below.",
+      "Name 2 owners and accept the decision rights; write the workflow change; 2 more below.",
     );
     expect(status(container).textContent).toContain("0 of 4 settled");
     expect(row(container, "workflow_delta").textContent).toContain(
@@ -698,7 +698,7 @@ describe("OperatingAdoptionStep · limited (Light)", () => {
         .getByRole("link", { name: "Re-check the P2 route →" })
         .getAttribute("href"),
     ).toBe("/p2-route");
-    expect(status(container).textContent).toContain("and 3 more below");
+    expect(status(container).textContent).toContain("; 3 more below.");
     expect(status(container).textContent).toContain("0 of 4 settled");
     fireEvent.click(within(flag).getByRole("button", { name: "Dismiss" }));
     expect(last().routeFlag).toMatchObject({
@@ -706,7 +706,7 @@ describe("OperatingAdoptionStep · limited (Light)", () => {
       dismissedAt: "2026-10-14",
     });
     expect(row(container, "FLAG")).toBeNull();
-    expect(status(container).textContent).toContain("and 2 more below");
+    expect(status(container).textContent).toContain("; 2 more below.");
   });
 
   it("the size lines are a FACT and register-cited ESTIMATEs, never money", async () => {
@@ -876,7 +876,7 @@ describe("OperatingAdoptionStep · limited (Light)", () => {
       />,
     );
     expect(status(container).textContent).toContain(
-      "Owners are named, the change is written in the team’s words, and the baseline owner is named. Continue to Delivery & estimate.",
+      "Owners are named, the change is written in the team’s words, and the baseline owner is named; continue to Delivery & estimate.",
     );
     expect(status(container).textContent).toContain("4 of 4 settled");
     expect(
@@ -898,7 +898,7 @@ describe("OperatingAdoptionStep · limited (Light)", () => {
   it("blocked until Step 2 is settled: no work, no fill", () => {
     const { container } = render(<Harness step2Done={false} />);
     expect(status(container).textContent).toContain(
-      "Waiting on Step 2: no direction is settled yet, so there is nothing to staff.",
+      "Waiting on Step 2: no direction is settled yet, so there is nothing to staff; Open Step 2 →",
     );
     expect(
       within(status(container))
@@ -942,7 +942,7 @@ describe("OperatingAdoptionStep · full", () => {
     );
     expect(row(container, "workflow_delta")).toBeNull();
     expect(status(container).textContent).toContain(
-      "Name 2 owners and accept the decision rights, confirm the operating model, and 2 more below.",
+      "Name 2 owners and accept the decision rights; confirm the operating model; 2 more below.",
     );
     pick(container, "Stewardship council", "Rosa Delgado");
     pick(container, "Lineage capture", "Kenji Watanabe");

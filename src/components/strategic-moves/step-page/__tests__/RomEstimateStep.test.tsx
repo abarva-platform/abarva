@@ -423,7 +423,7 @@ describe("RomEstimateStep", () => {
     );
     await waitFor(() =>
       expect(next(container).textContent).toContain(
-        "Confirm counts for 2 use cases, answer A:DL3 to set dashboard view hours, and 2 more below.",
+        "Confirm counts for 2 use cases; answer A:DL3 to set dashboard view hours; 2 more below.",
       ),
     );
     expect(next(container).textContent).toContain("0 of 4 inputs confirmed");
@@ -455,7 +455,7 @@ describe("RomEstimateStep", () => {
       confirmedAt: AT,
     });
     expect(next(container).textContent).toContain(
-      "Confirm counts for 1 use case,",
+      "Confirm counts for 1 use case;",
     );
     await estimateReady(container);
   });
@@ -1031,7 +1031,7 @@ describe("RomEstimateStep", () => {
   it("is blocked, with a link to Step 2, until Step 2 is done; the inputs are kept", () => {
     const { container } = render(<Harness step2Done={false} />);
     expect(next(container).textContent).toContain(
-      "Waiting on Step 2: the direction isn’t chosen and confirmed yet, so there is nothing to estimate.",
+      "Waiting on Step 2: the direction isn’t chosen and confirmed yet, so there is nothing to estimate; Open Step 2 →",
     );
     expect(
       within(next(container))

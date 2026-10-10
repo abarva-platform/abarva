@@ -86,7 +86,7 @@ describe("buildNextActionSentence", () => {
     ).toBe("Settle the quality-handling conflict and review 2 drafts.");
   });
 
-  it("joins three or more clauses with commas and a final ', and'", () => {
+  it("keeps three instructions distinct with semicolons", () => {
     expect(
       buildNextActionSentence([
         row({
@@ -109,7 +109,7 @@ describe("buildNextActionSentence", () => {
         }),
       ]),
     ).toBe(
-      "Decide who designs identity resolution, settle the quality-handling conflict, and review the PHI access draft.",
+      "Decide who designs identity resolution; settle the quality-handling conflict; review the PHI access draft.",
     );
   });
 
@@ -121,7 +121,7 @@ describe("buildNextActionSentence", () => {
         row({ id: "C", rank: 3, state: "decision", clause: "decide c" }),
         row({ id: "D", rank: 4, state: "draft" }),
       ]),
-    ).toBe("Decide a, decide b, and 2 more below.");
+    ).toBe("Decide a; decide b; 2 more below.");
   });
 
   it("states exactly three clauses in full", () => {
@@ -131,7 +131,7 @@ describe("buildNextActionSentence", () => {
         row({ id: "B", rank: 2, state: "decision", clause: "decide b" }),
         row({ id: "D", rank: 4, state: "draft" }),
       ]),
-    ).toBe("Decide a, decide b, and review 1 draft.");
+    ).toBe("Decide a; decide b; review 1 draft.");
   });
 
   it("puts the ranking's one clause between decisions and reviews", () => {
@@ -151,7 +151,7 @@ describe("buildNextActionSentence", () => {
         { rankingClause: "confirm the order of the root causes" },
       ),
     ).toBe(
-      "Find evidence for identity or name its owner, confirm the order of the root causes, and review 1 draft.",
+      "Find evidence for identity or name its owner; confirm the order of the root causes; review 1 draft.",
     );
   });
 
@@ -231,7 +231,7 @@ describe("resolveStepNextAction", () => {
     expect(action.state).toBe("ready");
     expect(action.eyebrow).toBe("✓ Ready");
     expect(action.sentence).toBe(
-      "Every root cause has a design element. Continue to Architecture options.",
+      "Every root cause has a design element; continue to Architecture options.",
     );
     expect(action.continueEnabled).toBe(true);
   });
@@ -393,7 +393,7 @@ describe("advisory rows and row-order clauses (template v1.10)", () => {
       }),
     ];
     expect(buildNextActionSentence(rows, { clausesInRowOrder: true })).toBe(
-      "Name 2 owners, confirm the workflow change, and 2 more below.",
+      "Name 2 owners; confirm the workflow change; 2 more below.",
     );
     expect(
       buildNextActionSentence(rows.slice(0, 2), { clausesInRowOrder: true }),

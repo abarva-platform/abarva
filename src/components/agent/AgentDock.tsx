@@ -109,7 +109,10 @@ function shouldRenderAvaArtifactsInDock(
   return hasRenderableAvaArtifacts(answer);
 }
 
-function avaAnswerTextForDock(surface: string, answer?: AvaAnswerPacket | null): string {
+function avaAnswerTextForDock(
+  surface: string,
+  answer?: AvaAnswerPacket | null,
+): string {
   if (!answer) return "";
   const directAnswer = answer.directAnswer?.trim();
   const prose = answer.prose?.trim();
@@ -776,7 +779,8 @@ export function AgentDock(props: AgentDockProps) {
     : safeThread;
   const focused = variant === "focused";
   const chatOnly = layout === "chat-only";
-  const showReviewChrome = (!focused || surface === "home-preview") && !quietReviewChrome;
+  const showReviewChrome =
+    (!focused || surface === "home-preview") && !quietReviewChrome;
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
   // it will be nice to show a spinning icon / throbber or similar to show
@@ -825,17 +829,24 @@ export function AgentDock(props: AgentDockProps) {
     },
     [disableStoredMode, surface],
   );
+  const compactSheet = defaultMode === "collapsed" && disableStoredMode;
 
   // Esc closes (collapses)
   useEffect(() => {
     if (mode !== "expand") return;
     function onKey(e: globalThis.KeyboardEvent) {
       if (e.key === "Escape")
-        setMode(lastRichMode === "expand" ? "side-rail" : lastRichMode);
+        setMode(
+          compactSheet
+            ? "collapsed"
+            : lastRichMode === "expand"
+              ? "side-rail"
+              : lastRichMode,
+        );
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mode, lastRichMode, setMode]);
+  }, [compactSheet, mode, lastRichMode, setMode]);
 
   useEffect(() => {
     if (mode !== "expand") return;
@@ -1150,7 +1161,9 @@ export function AgentDock(props: AgentDockProps) {
     const openingSuggestions = (
       <div
         style={expanded ? EXPANDED_SUGGESTIONS_STYLE : SUGGESTIONS_STYLE}
+        role="region"
         aria-label="Suggested actions"
+        tabIndex={0}
       >
         {expanded ? null : (
           <div style={SUGGESTIONS_LABEL_STYLE}>Suggested questions</div>
@@ -1236,7 +1249,12 @@ export function AgentDock(props: AgentDockProps) {
                 />
               ) : null}
               {chatOnly ? null : (
-                <ModePicker mode={mode} onChange={setMode} dockId={dockId} />
+                <ModePicker
+                  mode={mode}
+                  onChange={setMode}
+                  dockId={dockId}
+                  compactSheet={compactSheet}
+                />
               )}
             </div>
           </div>
@@ -1244,7 +1262,7 @@ export function AgentDock(props: AgentDockProps) {
 
         {/* Optional quote */}
         {initialQuote ? (
-          <div style={QUOTE_STYLE} aria-label="Quoted context">
+          <div style={QUOTE_STYLE} role="group" aria-label="Quoted context">
             <span style={QUOTE_LABEL_STYLE}>In reply to</span>
             <span style={QUOTE_BODY_STYLE}>{initialQuote}</span>
           </div>
@@ -1253,6 +1271,9 @@ export function AgentDock(props: AgentDockProps) {
         {/* Thread */}
         <div
           ref={threadScrollRef}
+          role="region"
+          aria-label="aVa conversation"
+          tabIndex={0}
           onScroll={onThreadScroll}
           style={{
             ...(focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE),
@@ -1574,6 +1595,7 @@ export function AgentDock(props: AgentDockProps) {
   }, [
     agent,
     chatOnly,
+    compactSheet,
     composerDisabled,
     composerDisabledReason,
     dockId,
@@ -1602,6 +1624,7 @@ export function AgentDock(props: AgentDockProps) {
     showReviewChrome,
     submitSuggestedAction,
     surface,
+    surfaceContext,
     startUploads,
     submit,
     submitting,
@@ -1751,7 +1774,11 @@ function SessionExportActions({
   onExport,
 }: SessionExportActionsProps) {
   return (
-    <div aria-label="Export aVa chat session only" style={SESSION_EXPORT_STYLE}>
+    <div
+      role="group"
+      aria-label="Export aVa chat session only"
+      style={SESSION_EXPORT_STYLE}
+    >
       <span style={SESSION_EXPORT_LABEL_STYLE}>Chat export</span>
       <div style={SESSION_EXPORT_BUTTON_GROUP_STYLE}>
         <button
@@ -1788,86 +1815,112 @@ interface ModePickerProps {
   mode: DockMode;
   onChange: (mode: DockMode) => void;
   dockId: string;
+  compactSheet?: boolean;
 }
 
-function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
+function ModePicker({
+  mode,
+  onChange,
+  dockId,
+  compactSheet = false,
+}: ModePickerProps) {
   return (
     <div
+      role="group"
       aria-label="Chat window actions"
       data-testid="agent-dock-mode-picker"
       style={MODE_PICKER_STYLE}
     >
-      {/* Pin-right (side-rail-right) */}
-      <ModeButton
-        mode="side-rail-right"
-        active={mode === "side-rail-right"}
-        onClick={() =>
-          onChange(mode === "side-rail-right" ? "side-rail" : "side-rail-right")
-        }
-        aria-label="Pin right"
-        title="Pin right"
-        dockId={dockId}
-      >
-        <SideRailRightIcon />
-      </ModeButton>
-      {/* Pin-bottom */}
-      <ModeButton
-        mode="pin-bottom"
-        active={mode === "pin-bottom"}
-        onClick={() =>
-          onChange(mode === "pin-bottom" ? "side-rail" : "pin-bottom")
-        }
-        aria-label="Pin bottom"
-        title="Pin bottom"
-        dockId={dockId}
-      >
-        <PinBottomIcon />
-      </ModeButton>
-      {/* Pin-top */}
-      <ModeButton
-        mode="pin-top"
-        active={mode === "pin-top"}
-        onClick={() => onChange(mode === "pin-top" ? "side-rail" : "pin-top")}
-        aria-label="Pin top"
-        title="Pin top"
-        dockId={dockId}
-      >
-        <PinTopIcon />
-      </ModeButton>
-      {/* Expand / restore */}
-      {mode === "expand" ? (
+      {compactSheet ? (
         <ModeButton
-          mode="side-rail"
+          mode="collapsed"
           active={false}
-          onClick={() => onChange("side-rail")}
+          onClick={() => onChange("collapsed")}
           aria-label="Return to page"
           title="Return to page"
           dockId={dockId}
         >
-          <SideRailIcon />
+          <CloseIcon />
         </ModeButton>
       ) : (
-        <ModeButton
-          mode="expand"
-          active={false}
-          onClick={() => onChange("expand")}
-          aria-label="Expand chat"
-          title="Expand chat"
-          dockId={dockId}
-        >
-          <MaximizeIcon />
-        </ModeButton>
+        <>
+          {/* Pin-right (side-rail-right) */}
+          <ModeButton
+            mode="side-rail-right"
+            active={mode === "side-rail-right"}
+            onClick={() =>
+              onChange(
+                mode === "side-rail-right" ? "side-rail" : "side-rail-right",
+              )
+            }
+            aria-label="Pin right"
+            title="Pin right"
+            dockId={dockId}
+          >
+            <SideRailRightIcon />
+          </ModeButton>
+          {/* Pin-bottom */}
+          <ModeButton
+            mode="pin-bottom"
+            active={mode === "pin-bottom"}
+            onClick={() =>
+              onChange(mode === "pin-bottom" ? "side-rail" : "pin-bottom")
+            }
+            aria-label="Pin bottom"
+            title="Pin bottom"
+            dockId={dockId}
+          >
+            <PinBottomIcon />
+          </ModeButton>
+          {/* Pin-top */}
+          <ModeButton
+            mode="pin-top"
+            active={mode === "pin-top"}
+            onClick={() =>
+              onChange(mode === "pin-top" ? "side-rail" : "pin-top")
+            }
+            aria-label="Pin top"
+            title="Pin top"
+            dockId={dockId}
+          >
+            <PinTopIcon />
+          </ModeButton>
+          {/* Expand / restore */}
+          {mode === "expand" ? (
+            <ModeButton
+              mode="side-rail"
+              active={false}
+              onClick={() => onChange("side-rail")}
+              aria-label="Return to page"
+              title="Return to page"
+              dockId={dockId}
+            >
+              <SideRailIcon />
+            </ModeButton>
+          ) : (
+            <ModeButton
+              mode="expand"
+              active={false}
+              onClick={() => onChange("expand")}
+              aria-label="Expand chat"
+              title="Expand chat"
+              dockId={dockId}
+            >
+              <MaximizeIcon />
+            </ModeButton>
+          )}
+          <ModeButton
+            mode="collapsed"
+            active={false}
+            onClick={() => onChange("collapsed")}
+            aria-label="Close chat"
+            title="Close chat"
+            dockId={dockId}
+          >
+            <CloseIcon />
+          </ModeButton>
+        </>
       )}
-      <ModeButton
-        mode="collapsed"
-        active={false}
-        onClick={() => onChange("collapsed")}
-        aria-label="Close chat"
-        title="Close chat"
-        dockId={dockId}
-      >
-        <CloseIcon />
-      </ModeButton>
     </div>
   );
 }

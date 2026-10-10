@@ -162,6 +162,7 @@ export function NexusTopNav({
           <>
             <div
               className={styles.userCluster}
+              role="group"
               aria-label={`Signed in as ${displayName}`}
             >
               <span className={styles.avatar} aria-hidden="true">

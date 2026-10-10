@@ -21,6 +21,9 @@ jest.mock("@/components/agent/AgentDock", () => ({
       data-thread-count={props.thread.length}
       data-first-message={props.thread[0] ? `${props.thread[0].role}:${props.thread[0].body}` : ""}
       data-actions={(props.suggestedActions ?? []).length}
+      data-mode={props.defaultMode}
+      data-disable-stored-mode={String(Boolean(props.disableStoredMode))}
+      data-restore-mode={props.collapsedRestoreMode ?? ""}
     >
       {props.workspace}
     </div>
@@ -55,6 +58,41 @@ const captureProps: MovesCaptureFlowProps = {
 };
 
 describe("MovesCaptureWorkspace", () => {
+  it("uses the existing dock sheet mode at phone width", () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: () => ({
+        matches: true,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }),
+    });
+    try {
+      render(
+        <MovesCaptureWorkspace
+          moveId="move-1"
+          moveName="Synthetic design walk"
+          phase={3}
+          avaRole="Design partner"
+          avaThread={[]}
+          avaQuestions={[]}
+          onAvaMessage={jest.fn()}
+          content={<h1>Review the design</h1>}
+        />,
+      );
+      const dock = screen.getByTestId("agent-dock");
+      expect(dock).toHaveAttribute("data-mode", "collapsed");
+      expect(dock).toHaveAttribute("data-disable-stored-mode", "true");
+      expect(dock).toHaveAttribute("data-restore-mode", "expand");
+    } finally {
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        value: originalMatchMedia,
+      });
+    }
+  });
+
   it("hosts a step page in the same aVa dock, with aVa's briefing as its opening turn", () => {
     render(
       <MovesCaptureWorkspace

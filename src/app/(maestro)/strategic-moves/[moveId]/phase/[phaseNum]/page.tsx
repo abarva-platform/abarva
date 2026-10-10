@@ -77,8 +77,15 @@ import {
 } from "@/lib/programs/current-state-readiness";
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { phaseStepRecordSections } from "@/lib/programs/phase-workflow-registry";
-import { parseStepPageView } from "@/lib/programs/step-page-views";
-import { phaseStepPageFlagEnabled } from "@/lib/programs/phase-step-page-routing";
+import {
+  parseStepPageView,
+  STEP_PAGE_VIEWS,
+  type StepPageView,
+} from "@/lib/programs/step-page-views";
+import {
+  phaseStepPageFlagEnabled,
+  resolveBarePhaseStepPageLanding,
+} from "@/lib/programs/phase-step-page-routing";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
@@ -394,11 +401,11 @@ export default async function StrategicMovePhaseWorkspacePage({
     notFound();
   }
 
-  const loadedMove = await getStrategicMoveById(ctx, moveId);
+  const [loadedMove, approvalPolicy] = await Promise.all([
+    getStrategicMoveById(ctx, moveId),
+    loadUserProgramAccessPolicy(ctx, { programId: moveId }).catch(() => null),
+  ]);
   if (!loadedMove) notFound();
-  const approvalPolicy = await loadUserProgramAccessPolicy(ctx, {
-    programId: moveId,
-  }).catch(() => null);
   const canApproveGates = approvalPolicy?.canApproveGates === true;
   const {
     effectivePhase: effectiveCurrentPhase,
@@ -419,11 +426,6 @@ export default async function StrategicMovePhaseWorkspacePage({
             { allowHistoricalPhase: reopenedForGateReview },
           ),
         };
-  const move = {
-    ...effectiveMove,
-    gateCriteria: await gateCriteriaForViewedPhase(ctx, effectiveMove, parsedPhase),
-  };
-
   const pricingEngineEnabled = isFeatureEnabled(
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_pricing_engine",
@@ -542,6 +544,31 @@ export default async function StrategicMovePhaseWorkspacePage({
       "moves_capture_handoff_recap_v1",
     );
 
+  // A bare phase address has no step state to preserve. Resolve it on the
+  // server before the secondary evidence and artifact reads, so it never
+  // paints a client-side "Opening…" interstitial. The first page is a safe
+  // landing even if the persisted step completion is still being reconciled;
+  // explicit step, legacy, intelligence and gate links retain their targets.
+  const earlyStepTarget = resolveBarePhaseStepPageLanding({
+    moveId,
+    phase: parsedPhase,
+    currentPhase: effectiveMove.currentPhase ?? 0,
+    implementedViews: (Object.keys(STEP_PAGE_VIEWS) as StepPageView[]).filter(
+      (view) => view !== "rom-estimate" || romEngineEnabled,
+    ),
+    enabled: phaseStepPagesEnabled,
+    searchParams: resolvedSearchParams,
+  });
+  if (earlyStepTarget) redirect(earlyStepTarget);
+  const move = {
+    ...effectiveMove,
+    gateCriteria: await gateCriteriaForViewedPhase(
+      ctx,
+      effectiveMove,
+      parsedPhase,
+    ),
+  };
+
   // CONJUNCTION with `moves_capture_v2`: the phase strip this rollup feeds is
   // part of the redesigned capture flow, so there is no row to label unless the
   // flow is what rendered.
@@ -566,6 +593,42 @@ export default async function StrategicMovePhaseWorkspacePage({
   // would contradict the Overview/Documents/File Cabinet. Redirect forward-
   // looking requests back to the true current phase.
   const currentPhase = move.currentPhase ?? 0;
+  // These reads do not depend on the workbook, cabinet or evidence packets.
+  // Start them together so the step head is not held behind a serial chain of
+  // unrelated projections. Each read keeps its existing fail-closed result.
+  const captureModulesPromise = getModuleState(ctx, move.id).then(
+    (modules) => ({ modules, unavailable: false }),
+    () => ({ modules: [], unavailable: true }),
+  );
+  const currentStateReadinessPromise =
+    (async (): Promise<ReadinessReport | null> => {
+      try {
+        const tctx = await requireTenancy();
+        const [archetype, profile] = await Promise.all([
+          resolveMoveArchetypeForProgram(tctx, moveId),
+          inferMoveProfile(tctx),
+        ]);
+        return await resolveCurrentStateReadiness(
+          tctx,
+          archetype,
+          profile,
+          parsedPhase,
+          moveId,
+        );
+      } catch {
+        return null;
+      }
+    })();
+  const carriesForwardContentPromise = readPhaseGateContentSignals(
+    moveId,
+    parsedPhase,
+  ).catch(() => [] as DeliverableContentSignal[]);
+  const p3PriorPhaseContentPromise =
+    parsedPhase === 3
+      ? readApprovedPhaseGateContentSignals(moveId, 2).catch(
+          () => [] as DeliverableContentSignal[],
+        )
+      : Promise.resolve([] as DeliverableContentSignal[]);
   let p1ToP2WorkbookReview: StageReadinessReviewGateStatus | null = null;
   let initialStageReadinessPreview: StageReadinessProposalSetPreview | null =
     null;
@@ -870,42 +933,12 @@ export default async function StrategicMovePhaseWorkspacePage({
   // Keep current-phase carry-forward separate from P2 evidence used to score
   // P3 options. Otherwise P3 can score itself from its own outputs and omit
   // the approved discovery limits that should constrain the design choice.
-  let carriesForwardContent: DeliverableContentSignal[] = [];
-  let p3PriorPhaseContent: DeliverableContentSignal[] = [];
-  try {
-    carriesForwardContent = await readPhaseGateContentSignals(
-      moveId,
-      parsedPhase,
-    );
-  } catch {
-    carriesForwardContent = [];
-  }
-  if (parsedPhase === 3) {
-    try {
-      p3PriorPhaseContent = await readApprovedPhaseGateContentSignals(
-        moveId,
-        2,
-      );
-    } catch {
-      p3PriorPhaseContent = [];
-    }
-  }
-
-  let currentStateReadiness: ReadinessReport | null = null;
-  try {
-    const tctx = await requireTenancy();
-    const archetype = await resolveMoveArchetypeForProgram(tctx, moveId);
-    const profile = await inferMoveProfile(tctx);
-    currentStateReadiness = await resolveCurrentStateReadiness(
-      tctx,
-      archetype,
-      profile,
-      parsedPhase,
-      moveId,
-    );
-  } catch {
-    currentStateReadiness = null;
-  }
+  const [carriesForwardContent, p3PriorPhaseContent, currentStateReadiness] =
+    await Promise.all([
+      carriesForwardContentPromise,
+      p3PriorPhaseContentPromise,
+      currentStateReadinessPromise,
+    ]);
 
   // Preload the AUTHORITATIVE phase-capture values server-side rather than
   // letting the client synthesize or fetch-after-mount. The client previously
@@ -916,11 +949,8 @@ export default async function StrategicMovePhaseWorkspacePage({
   // A failed read is remembered: an empty list would otherwise read as "the
   // charter declares no assumptions" to the register bridge below, which would
   // then report every charter row as stale.
-  let captureModulesUnavailable = false;
-  const captureModules = await getModuleState(ctx, move.id).catch(() => {
-    captureModulesUnavailable = true;
-    return [];
-  });
+  const { modules: captureModules, unavailable: captureModulesUnavailable } =
+    await captureModulesPromise;
   const captureValue = (capturePhase: number, key: string) => {
     const moduleRow = captureModules.find(
       (entry) => entry.moduleKey === phaseCaptureModuleKey(capturePhase, key),
@@ -932,45 +962,49 @@ export default async function StrategicMovePhaseWorkspacePage({
     1,
     "business_change_assessment",
   );
-  const initialApprovedEvidenceReferences = await listApprovedPhaseEvidence(
-    ctx,
-    move.id,
-    2,
-  );
-  const initialApprovedP1CaptureEvidenceReferences =
-    parsedPhase === 1 ? await listApprovedPhaseEvidence(ctx, move.id, 1) : [];
+  const [
+    initialApprovedEvidenceReferences,
+    initialApprovedP1CaptureEvidenceReferences,
+  ] = await Promise.all([
+    listApprovedPhaseEvidence(ctx, move.id, 2),
+    parsedPhase === 1
+      ? listApprovedPhaseEvidence(ctx, move.id, 1)
+      : Promise.resolve([]),
+  ]);
   // The design phase decides between options. When the Move's approved
   // evidence declares its own option set, that set — not a template one — is
   // what is offered and what gets recorded as approved.
-  const uploadedSolutionOptionSet =
-    parsedPhase === 3
-      ? await loadApprovedMoveEvidenceSnapshot({
-          tenantKey: ctx.clientKey ?? ctx.clientId,
-          moveId,
-        })
-          .then((snapshot) =>
-            snapshot ? parseUploadedSolutionOptions(snapshot.rows) : null,
-          )
-          .catch(() => null)
-      : null;
+  const [uploadedSolutionOptionSet, approvedSolutionOption] = await Promise.all(
+    [
+      parsedPhase === 3
+        ? loadApprovedMoveEvidenceSnapshot({
+            tenantKey: ctx.clientKey ?? ctx.clientId,
+            moveId,
+          })
+            .then((snapshot) =>
+              snapshot ? parseUploadedSolutionOptions(snapshot.rows) : null,
+            )
+            .catch(() => null)
+        : Promise.resolve(null),
+      parsedPhase === 3
+        ? loadApprovedSolutionApproach({
+            moveId,
+            clientId: ctx.clientId,
+          })
+            .then((approved) =>
+              approved
+                ? {
+                    selectedOptionId: approved.selectedOptionId,
+                    chosenOption: approved.chosenOption,
+                  }
+                : null,
+            )
+            .catch(() => null)
+        : Promise.resolve(null),
+    ],
+  );
   // The design decision already recorded for this Move. The page restores it
   // as the selected option, so a reload does not ask for it again.
-  const approvedSolutionOption =
-    parsedPhase === 3
-      ? await loadApprovedSolutionApproach({
-          moveId,
-          clientId: ctx.clientId,
-        })
-          .then((approved) =>
-            approved
-              ? {
-                  selectedOptionId: approved.selectedOptionId,
-                  chosenOption: approved.chosenOption,
-                }
-              : null,
-          )
-          .catch(() => null)
-      : null;
   const initialConfirmedSolutionRoute = resolveConfirmedSolutionRoute({
     businessChangeAssessment: initialBusinessChangeAssessment,
     routeValidation: captureValue(2, "solution_route_validation"),
