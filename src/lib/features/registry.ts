@@ -114,10 +114,13 @@ export type FeatureFlagKey =
   | "moves_capture_phase_rollup_v1"
   | "moves_charter_standing_after_discover_v1"
   | "moves_step_pages_v3"
+  | "moves_step_pages_p0p1_v1"
+  | "moves_step_pages_p4p5_v1"
   | "moves_public_source_research"
   | "moves_assumption_register_v1"
   | "moves_value_engine_v1"
-  | "moves_assumption_register_generation_v1";
+  | "moves_assumption_register_generation_v1"
+  | "moves_rom_engine_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -425,6 +428,20 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     includeTenants: ["meridian"],
   },
   {
+    key: "moves_step_pages_p0p1_v1",
+    summary:
+      "Opt-in P0 and P1 step-page mount and sunset routing. A phase defaults to step pages only after every step has an implemented page; the existing capture remains available during transition. Requires moves_step_pages_v3 and moves_capture_v2.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_step_pages_p4p5_v1",
+    summary:
+      "Opt-in P4 and P5 step-page mount and sunset routing. A phase defaults to step pages only after every step has an implemented page; the existing capture remains available during transition. Requires moves_step_pages_v3 and moves_capture_v2.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
     key: "moves_public_source_research",
     summary:
       "2026-10-10: Governed public-source research for Moves deliverable builds. Before a build assembles its evidence, a research step asks the audited Anthropic egress path (workload moves_public_research, offline lane) to search and fetch PUBLIC web pages on client-neutral subjects - program rules, payment rules, published studies - from a brief that carries no client names, figures or client text. Each source is stored for that tenant and Move only, with its https URL, retrieval date and a verbatim excerpt of at most 300 characters, and stays pending until a consultant approves it; nothing unapproved is cited, and an outside source is never presented as a fact about the client. This release adds the storage contract (runs and sources tables, repository, governance manifest) and the research step: a flagged Moves build searches once per brief (reused for 14 days), stores what the API cited as pending sources, and reports 'N outside sources found, awaiting review'; a timeout, denial or unreadable answer is recorded and the build continues with no outside sources. A review queue in the Move's Files & Evidence view lists the pending sources apart from the client's own evidence, labelled as not facts about the client, with publisher, dates, the excerpt and a link out; an authorized workspace user (the evidence review's authority) approves or rejects each one, once, with an optional note, and the reviewer and time are recorded. Nothing is cited yet; the citation rules ship later under this same flag. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
@@ -448,9 +465,16 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_assumption_register_generation_v1",
     summary:
-      "2026-10-10: Makes the Move assumptions register govern document generation. A Move document's prompt lists the register's open, confirmed and corrected rows (owner role only); a figure not in evidence may appear only as a register working figure cited [A:ID] whose figure matches; a bare [ASSUMPTION TO VALIDATE] tag no longer makes a figure traceable; an [A:ID] naming no citable row blocks the document; and the rendered Move document carries the register table. A register that cannot be read stops the build before any model call. Requires moves_assumption_register_v1 and its applied migration. Off for every tenant until the register migration is applied and the demo Move's register is populated.",
+      "2026-10-10: Makes the Move assumptions register govern document generation. A Move document's prompt lists the register's open, confirmed and corrected rows (owner role only); a figure not in evidence may appear only as a register working figure cited [A:ID] whose figure matches; a bare [ASSUMPTION TO VALIDATE] tag no longer makes a figure traceable; an [A:ID] naming no citable row blocks the document; and the rendered Move document carries the register table. A register that cannot be read stops the build before any model call. Requires moves_assumption_register_v1 and its applied migration. The register migration is applied and the demo Move's register is populated (governed seed job, 2026-10-10), so it is enabled for the synthetic demo tenant only; off for everyone else.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_rom_engine_v1",
+    summary:
+      "2026-10-10: Opens the read-only ROM preview route for a Move (POST /api/v1/programs/:programId/rom/preview). The caller posts a ROM structure - use cases with component counts, unit hours per driver with a source and a confidence, releases with a design status, one shared foundation, a pod and the friction and productive share with their sources - and the ROM engine prices it: hours are count x unit hours x friction, each release and the foundation buys whole weeks of the pod at rates from the cost foundation (role x level x location x provider class, with provenance), not-designed releases carry a 0.75 / 1.50 band and designed ones the existing score tiers, and the total counts the shared foundation once. Returns JSON, or a live-formula workbook with ?format=xlsx. Missing unit hours are refused, never defaulted; no AI productivity credit is applied; nothing is written. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
   },
   {
     key: "moves_home_v2",

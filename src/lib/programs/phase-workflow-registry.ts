@@ -3,8 +3,8 @@ import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-asses
 /**
  * The Moves phase workflow, declared once.
  *
- * Each phase runs the same small set of steps (the P2/P3 design packs define
- * five each). The use case decides how deep a step goes — "full", "light" or
+ * Each phase declares its own small set of steps. The use case decides how
+ * deep a step goes — "full", "light" or
  * "skip" — and that depth is derived from ONE change profile, read from the
  * solution route the consultant confirmed in P2.
  *
@@ -13,7 +13,8 @@ import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-asses
  * to build. Declaring the steps here gives capture (and, next, sessions,
  * documents and the gate) one answer to read. This first version reproduces
  * today's capture contract exactly — the parity tests pin that — so nothing a
- * consultant sees or a document receives changes yet.
+ * consultant sees or a document receives changes outside the flagged step
+ * pages.
  *
  * Depth means how fully a step is ASSESSED AND ESTIMATED, never executed:
  * Moves decides, sizes and justifies the work; execution delivers it. A skipped
@@ -51,7 +52,7 @@ export function resolveChangeProfile(
 export interface PhaseWorkflowStep {
   /** Design-pack step id, e.g. "P3.3". */
   id: string;
-  phase: 2 | 3;
+  phase: 0 | 1 | 2 | 3 | 4 | 5;
   title: string;
   /** How deep this step goes for each change profile. */
   depth: Readonly<Record<ChangeProfile, StepDepth>>;
@@ -83,6 +84,159 @@ const allFull: Record<ChangeProfile, StepDepth> = {
   limited: "full",
   full: "full",
 };
+
+const P0_STEPS: readonly PhaseWorkflowStep[] = [
+  {
+    id: "P0.1",
+    phase: 0,
+    title: "Signal & problem",
+    depth: allFull,
+    sectionKeys: same(["business_trigger", "problem_statement"]),
+  },
+  {
+    id: "P0.2",
+    phase: 0,
+    title: "Scope boundary",
+    depth: allFull,
+    sectionKeys: same(["affected_function_process", "scope_out"]),
+  },
+  {
+    id: "P0.3",
+    phase: 0,
+    title: "Value hypothesis",
+    depth: allFull,
+    sectionKeys: same([
+      "initial_value_hypothesis",
+      "outcomes_success",
+      "discovery_questions",
+    ]),
+  },
+  {
+    id: "P0.4",
+    phase: 0,
+    title: "Owner & evidence",
+    depth: allFull,
+    sectionKeys: same([
+      "stakeholder_owner_view",
+      "known_evidence",
+      "missing_evidence_open_questions",
+    ]),
+  },
+  {
+    id: "P0.5",
+    phase: 0,
+    title: "Approve origination",
+    depth: allFull,
+    sectionKeys: same(["recommendation_to_advance"]),
+  },
+];
+
+const P1_STEPS: readonly PhaseWorkflowStep[] = [
+  {
+    id: "P1.1",
+    phase: 1,
+    title: "Sponsor & scope",
+    depth: allFull,
+    sectionKeys: same(["sponsor_commitment", "scope_boundary"]),
+  },
+  {
+    id: "P1.2",
+    phase: 1,
+    title: "Stakeholders & decision rights",
+    depth: allFull,
+    sectionKeys: same(["stakeholder_map", "decision_rights"]),
+  },
+  {
+    id: "P1.3",
+    phase: 1,
+    title: "Success measures",
+    depth: allFull,
+    sectionKeys: same(["success_criteria"]),
+  },
+  {
+    id: "P1.4",
+    phase: 1,
+    title: "Evidence plan & change",
+    depth: allFull,
+    sectionKeys: same(["evidence_plan", "business_change_assessment"]),
+  },
+  {
+    id: "P1.5",
+    phase: 1,
+    title: "Charter & gate",
+    depth: allFull,
+    sectionKeys: same([]),
+  },
+];
+
+const P4_STEPS: readonly PhaseWorkflowStep[] = [
+  {
+    id: "P4.1",
+    phase: 4,
+    title: "Workstreams & milestones",
+    depth: allFull,
+    sectionKeys: same(["roadmap_sequencing"]),
+  },
+  {
+    id: "P4.2",
+    phase: 4,
+    title: "Estimate & capacity",
+    depth: allFull,
+    sectionKeys: same(["estimates_capacity"]),
+  },
+  {
+    id: "P4.3",
+    phase: 4,
+    title: "Value plan & funding",
+    depth: allFull,
+    sectionKeys: same(["value_plan", "funding_governance"]),
+  },
+  {
+    id: "P4.4",
+    phase: 4,
+    title: "Tower metrics & handoff plan",
+    depth: allFull,
+    sectionKeys: same(["handoff_plan"]),
+  },
+  {
+    id: "P4.5",
+    phase: 4,
+    title: "Risks, readiness & gate",
+    depth: allFull,
+    sectionKeys: same(["risks_dependencies", "recommendation"]),
+  },
+];
+
+const P5_STEPS: readonly PhaseWorkflowStep[] = [
+  {
+    id: "P5.1",
+    phase: 5,
+    title: "Handoff owners & readiness",
+    depth: allFull,
+    sectionKeys: same(["mobilization_plan", "launch_readiness"]),
+  },
+  {
+    id: "P5.2",
+    phase: 5,
+    title: "Tower measurement",
+    depth: allFull,
+    sectionKeys: same(["value_proof_rules", "governance_cadence"]),
+  },
+  {
+    id: "P5.3",
+    phase: 5,
+    title: "First 90 days & open items",
+    depth: allFull,
+    sectionKeys: same(["first_90_days", "risks_open_items"]),
+  },
+  {
+    id: "P5.4",
+    phase: 5,
+    title: "Handoff package & acceptance",
+    depth: allFull,
+    sectionKeys: same(["recommendation"]),
+  },
+];
 
 const P2_STEPS: readonly PhaseWorkflowStep[] = [
   {
@@ -159,6 +313,10 @@ const P3_STEPS: readonly PhaseWorkflowStep[] = [
     phase: 3,
     title: "Operating & adoption",
     depth: { technical: "skip", limited: "light", full: "full" },
+    // The owners grid, the baseline owner, the drafts and who wrote them are
+    // a step record (`operating-adoption.ts`); the team's words stay in the
+    // capture answers below, which generation and the gate read.
+    recordKeys: same(["operating_adoption"]),
     sectionKeys: {
       technical: ["business_change_boundary"],
       limited: ["workflow_delta", "process_adoption_boundary"],
@@ -188,8 +346,12 @@ const P3_STEPS: readonly PhaseWorkflowStep[] = [
 ];
 
 const STEPS_BY_PHASE: Readonly<Record<number, readonly PhaseWorkflowStep[]>> = {
+  0: P0_STEPS,
+  1: P1_STEPS,
   2: P2_STEPS,
   3: P3_STEPS,
+  4: P4_STEPS,
+  5: P5_STEPS,
 };
 
 /**
@@ -202,6 +364,12 @@ export const KNOWN_CAPTURE_GAPS: ReadonlyArray<{
   profiles: readonly ChangeProfile[];
   reason: string;
 }> = [
+  {
+    stepId: "P1.5",
+    profiles: ["technical", "limited", "full"],
+    reason:
+      "The gate builds and signs the charter and discovery plan; it has no capture question.",
+  },
   {
     stepId: "P2.1",
     profiles: ["technical", "limited", "full"],
@@ -272,6 +440,13 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
       label: "Chosen architecture option and coverage",
       description:
         "The option the team chose from the options it brought, as written, and what it answers of each Step 1 design element.",
+    },
+    {
+      key: "operating_adoption",
+      stepId: "P3.3",
+      label: "Owners, decision rights and baseline owner",
+      description:
+        "An accountable owner and decision rights for each Step 1 design element and any row the team added, who receives the baseline, and who wrote each entry.",
     },
   ],
 };

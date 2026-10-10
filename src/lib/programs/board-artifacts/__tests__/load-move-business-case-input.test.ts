@@ -166,8 +166,9 @@ describe('loadMoveBusinessCaseInput', () => {
 
     const GENERATION_FLAG_ENV =
       'ABARVA_FEATURE_MOVES_ASSUMPTION_REGISTER_GENERATION_V1_TENANTS';
-    // Generation is off for every tenant in the registry; these cases enrol
-    // the demo tenant explicitly, and one proves the default stays off.
+    // The registry enrols only the synthetic demo tenant in generation; these
+    // cases enrol it explicitly, and one proves a tenant outside the list
+    // stays off even with the register itself on.
     afterEach(() => {
       delete process.env[GENERATION_FLAG_ENV];
     });
@@ -183,10 +184,27 @@ describe('loadMoveBusinessCaseInput', () => {
     });
 
     it('leaves the register out while generation is not enrolled, even with the register on', async () => {
+      const REGISTER_FLAG_ENV = 'ABARVA_FEATURE_MOVES_ASSUMPTION_REGISTER_V1_TENANTS';
       delete process.env[GENERATION_FLAG_ENV];
-      const input = await loadMoveBusinessCaseInput('move-1');
-      expect(input?.assumptionRegister).toBeUndefined();
-      expect(mockListAssumptions).not.toHaveBeenCalled();
+      process.env[REGISTER_FLAG_ENV] = 'lakeshore';
+      mockRequireTenancy.mockResolvedValue({
+        clientId: 'client-2',
+        clientKey: 'lakeshore',
+        userId: 'user-1',
+      });
+      try {
+        const { isFeatureEnabled } = await import(
+          '@/lib/features/is-feature-enabled'
+        );
+        expect(
+          isFeatureEnabled({ clientKey: 'lakeshore' }, 'moves_assumption_register_v1'),
+        ).toBe(true);
+        const input = await loadMoveBusinessCaseInput('move-1');
+        expect(input?.assumptionRegister).toBeUndefined();
+        expect(mockListAssumptions).not.toHaveBeenCalled();
+      } finally {
+        delete process.env[REGISTER_FLAG_ENV];
+      }
     });
 
     it('carries the citable register rows when the flag is on for the tenant', async () => {

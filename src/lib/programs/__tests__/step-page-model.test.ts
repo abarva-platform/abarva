@@ -335,3 +335,95 @@ describe("resolveStepNextAction", () => {
     ).toBe("ready");
   });
 });
+
+describe("advisory rows and row-order clauses (template v1.10)", () => {
+  const advisory = row({
+    id: "FLAG",
+    rank: 9,
+    state: "advisory",
+    clause: "decide whether to re-check the P2 route",
+  });
+
+  it("groups an advisory apart, after the drafts", () => {
+    const groups = groupStepRows([
+      advisory,
+      row({ id: "D", rank: 1, state: "draft" }),
+    ]);
+    expect(groups.advisory.map((r) => r.id)).toEqual(["FLAG"]);
+    expect(groups.draft.map((r) => r.id)).toEqual(["D"]);
+  });
+
+  it("states the advisory's clause last, and only beside another clause", () => {
+    expect(
+      buildNextActionSentence([
+        advisory,
+        row({ id: "A", rank: 1, state: "decision", clause: "name the owner" }),
+      ]),
+    ).toBe("Name the owner and decide whether to re-check the P2 route.");
+    expect(buildNextActionSentence([advisory])).toBeNull();
+  });
+
+  it("never counts an advisory and never lets it hold a step", () => {
+    const action = resolveStepNextAction(
+      base([row({ id: "A", rank: 1 }), advisory]),
+    );
+    expect(action).toMatchObject({ state: "ready", settled: 1, total: 1 });
+  });
+
+  it("in row order, decisions and drafts keep rank, each in its own words", () => {
+    const rows = [
+      row({
+        id: "B",
+        rank: 4,
+        state: "decision",
+        clause: "name who receives the baseline",
+      }),
+      row({
+        id: "W",
+        rank: 2,
+        state: "draft",
+        draftClause: "confirm the workflow change",
+      }),
+      row({ id: "O", rank: 1, state: "decision", clause: "name 2 owners" }),
+      row({
+        id: "X",
+        rank: 3,
+        state: "draft",
+        draftName: "the boundary draft",
+      }),
+    ];
+    expect(buildNextActionSentence(rows, { clausesInRowOrder: true })).toBe(
+      "Name 2 owners, confirm the workflow change, and 2 more below.",
+    );
+    expect(
+      buildNextActionSentence(rows.slice(0, 2), { clausesInRowOrder: true }),
+    ).toBe("Confirm the workflow change and name who receives the baseline.");
+    expect(
+      buildNextActionSentence([rows[3]], { clausesInRowOrder: true }),
+    ).toBe("Review the boundary draft.");
+    expect(
+      buildNextActionSentence([row({ id: "Y", rank: 1, state: "draft" })], {
+        clausesInRowOrder: true,
+      }),
+    ).toBe("Review the draft.");
+    // Without the option the template's default order holds: decisions first.
+    expect(buildNextActionSentence(rows.slice(0, 2))).toBe(
+      "Name who receives the baseline and review 1 draft.",
+    );
+  });
+
+  it("a step's own Skipped sentence replaces the generic one", () => {
+    expect(
+      resolveStepNextAction(
+        base([], {
+          depth: "skip",
+          skippedSentence: "Nothing to do here. The route stands in",
+        }),
+      ).sentence,
+    ).toBe("Nothing to do here. The route stands in.");
+    expect(
+      resolveStepNextAction(base([], { depth: "skip", skippedSentence: " " }))
+        .sentence,
+    ).toBe(SKIPPED_SENTENCE);
+  });
+});

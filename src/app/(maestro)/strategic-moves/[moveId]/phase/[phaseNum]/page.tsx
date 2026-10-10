@@ -78,6 +78,7 @@ import {
 import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { phaseStepRecordSections } from "@/lib/programs/phase-workflow-registry";
 import { parseStepPageView } from "@/lib/programs/step-page-views";
+import { phaseStepPageFlagEnabled } from "@/lib/programs/phase-step-page-routing";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
@@ -107,6 +108,8 @@ interface Props {
      * (moves_step_pages_v3).
      */
     step?: string | string[];
+    legacy?: string | string[];
+    section?: string | string[];
   }>;
 }
 
@@ -433,6 +436,18 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_step_pages_v3",
   );
+  const phaseStepPagesEnabled = phaseStepPageFlagEnabled(parsedPhase, {
+    captureV2: captureV2Enabled,
+    stepPagesV3: stepPagesV3Enabled,
+    p0p1: isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_step_pages_p0p1_v1",
+    ),
+    p4p5: isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_step_pages_p4p5_v1",
+    ),
+  });
   // P0 Originate was left on the legacy canvas when the 3-step capture shipped
   // for phases 1-5. This flag extends the same flow to P0; it is deliberately
   // separate from `moves_capture_v2` so a tenant already on the redesigned
@@ -961,6 +976,21 @@ export default async function StrategicMovePhaseWorkspacePage({
       )
     : undefined;
   const initialPhaseCaptureValues: Record<string, string> = {};
+  const priorPhaseCaptureValues: Record<string, string> | null =
+    parsedPhase > 0
+      ? Object.fromEntries(
+          [
+            ...getPhaseCaptureSections(
+              parsedPhase - 1,
+              initialConfirmedSolutionRoute,
+            ),
+            ...phaseStepRecordSections(parsedPhase - 1),
+          ].map((section) => [
+            section.key,
+            captureValue(parsedPhase - 1, section.key),
+          ]),
+        )
+      : null;
   const initialP1CharterBasisBySection: Record<string, P1CharterBasisInput> =
     {};
   const initialReferenceDraftValues: Record<string, string> = {};
@@ -1091,6 +1121,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
+        priorPhaseCaptureValues={priorPhaseCaptureValues}
         initialReferenceDraftValues={initialReferenceDraftValues}
         initialBusinessChangeAssessment={initialBusinessChangeAssessment}
         initialApprovedEvidenceReferences={initialApprovedEvidenceReferences}
@@ -1117,6 +1148,13 @@ export default async function StrategicMovePhaseWorkspacePage({
         solutionPatternGateEnabled={solutionPatternGateEnabled}
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
+        phaseStepPagesEnabled={phaseStepPagesEnabled}
+        legacyCaptureRequested={resolvedSearchParams.legacy === "1"}
+        initialLegacySectionKey={
+          typeof resolvedSearchParams.section === "string"
+            ? resolvedSearchParams.section
+            : null
+        }
         priorPhaseCapture={
           stepPagesV3Enabled && parsedPhase === 3
             ? {
@@ -1126,7 +1164,7 @@ export default async function StrategicMovePhaseWorkspacePage({
             : null
         }
         initialStepView={
-          stepPagesV3Enabled
+          phaseStepPagesEnabled && resolvedSearchParams.legacy !== "1"
             ? parseStepPageView(resolvedSearchParams.step)
             : null
         }

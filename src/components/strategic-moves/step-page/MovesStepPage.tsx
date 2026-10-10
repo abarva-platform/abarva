@@ -22,9 +22,13 @@ import styles from "./MovesStepPage.module.css";
  * come from `step-page-model`, so no step page owns layout or state logic.
  */
 
+// A name may carry several classes ("list settled"): each is mapped, so a
+// module class is never passed through unhashed.
 const cx = (...names: Array<string | false | null | undefined>) =>
   names
     .filter((name): name is string => Boolean(name))
+    .flatMap((name) => name.split(/\s+/))
+    .filter(Boolean)
     .map((name) => styles[name] ?? name)
     .join(" ");
 
@@ -90,7 +94,8 @@ export function SourceLine({ source }: { source: SourceRef }) {
   );
 }
 
-function Disclosure({
+/** The template's disclosure: a summary that reads "Show" / "Hide". */
+export function Disclosure({
   closed,
   opened,
   className,
@@ -320,8 +325,25 @@ export interface MovesStepPageProps {
     items: readonly ReactNode[];
     details: ReadonlyArray<{ term: string; detail: ReactNode }>;
   };
-  /** The skip attestation the gate checks. Required when the depth is skip. */
-  skipped?: { statement: string; owner: string; date: string };
+  /**
+   * The skip attestation the gate checks. Required when the depth is skip.
+   * Template v1.10: a step skipped by its route names the attestation
+   * (`title`), labels its owner (`ownerLabel`), says how it was recorded, and
+   * replaces the context line with its route's own (`context`). The only way
+   * out of Skipped is `Re-check the P2 route →` (`routeHref`); depth is never
+   * changed on a step page.
+   */
+  skipped?: {
+    /** The team's words; null when the attestation is not written yet. */
+    statement: string | null;
+    owner: string;
+    date: string;
+    title?: string;
+    ownerLabel?: string;
+    recorded?: string;
+    context?: ReactNode;
+    routeHref?: string;
+  };
   /**
    * What the Work region shows while blocked: one muted sentence, plus any
    * unsaved input the step must keep (template v1.5: unsaved input survives
@@ -337,6 +359,11 @@ export interface MovesStepPageProps {
   carry?: { label: string; text: ReactNode };
   /** Closes the Work region at a gate step instead of a carry line: the Next card. */
   workEnd?: ReactNode;
+  /**
+   * Sits after the Settled group, before the carry line: e.g. the collapsed
+   * "Assumptions this step relies on" (template v1.10).
+   */
+  afterGroups?: ReactNode;
   /** The workspace tab strip (Steps · Files · Record), under the header. */
   tabs?: ReactNode;
   /** The ranked list's foot: "Confirm this order". */
@@ -644,38 +671,29 @@ export function MovesStepPage(props: MovesStepPageProps) {
             </section>
 
             {state === "skipped" && props.skipped ? (
-              <Disclosure
-                closed="Details"
-                opened="Hide details"
-                className="context"
-                summaryExtra={
-                  <span className={cx("ctx-items")}>
-                    <span>
-                      <b>Skipped</b>
-                    </span>
-                    <span className={cx("sep")}>·</span>
-                    <span>
-                      Attested by {props.skipped.owner}, {props.skipped.date}
-                    </span>
-                    <span className={cx("sep")}>·</span>
-                    <span>No session needed</span>
+              // v1.10: a plain line, no Details; the only action is the route.
+              <div className={cx("context-line")}>
+                <span className={cx("ctx-items")}>
+                  <span>
+                    <b>Skipped</b>
                   </span>
-                }
-              >
-                <div className={cx("ctx-body")}>
-                  <dl className={cx("ctx-dl")}>
-                    <div>
-                      <dt className={cx("eyebrow")}>Depth</dt>
-                      <dd>
-                        <span>
-                          Skipped. The attestation below is what the gate
-                          checks.
-                        </span>
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </Disclosure>
+                  <span className={cx("sep")}>·</span>
+                  <span>
+                    {props.skipped.context ??
+                      `Attested by ${props.skipped.owner}, ${props.skipped.date}`}
+                  </span>
+                </span>
+                {props.skipped.routeHref ? (
+                  <span className={cx("ctx-actions")}>
+                    <a
+                      className={cx("link-btn", "inline")}
+                      href={props.skipped.routeHref}
+                    >
+                      Re-check the P2 route →
+                    </a>
+                  </span>
+                ) : null}
+              </div>
             ) : props.context.details.length === 0 ? (
               // Nothing to expand: the line stands alone, with no Details
               // toggle that would only repeat it (v1.6).
@@ -722,27 +740,42 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   )}
                 </div>
               ) : state === "skipped" && props.skipped ? (
-                <section className={cx("group")}>
-                  <h2 className={cx("eyebrow", "group-title")}>Attestation</h2>
-                  <div className={cx("list")}>
-                    <dl className={cx("attest")}>
-                      <div>
-                        <dt>Statement</dt>
-                        <dd>“{props.skipped.statement}”</dd>
-                      </div>
-                      <div>
-                        <dt>Owner</dt>
-                        <dd>{props.skipped.owner}</dd>
-                      </div>
-                      <div>
-                        <dt>Recorded</dt>
-                        <dd>
-                          {props.skipped.date}, with the use-case profile in P2
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-                </section>
+                <>
+                  <section className={cx("group")}>
+                    <h2 className={cx("eyebrow", "group-title")}>
+                      {props.skipped.title ?? "Attestation"}
+                    </h2>
+                    <div className={cx("list")}>
+                      <dl className={cx("attest")}>
+                        <div>
+                          <dt>Statement</dt>
+                          <dd>
+                            {props.skipped.statement?.trim() ? (
+                              `“${props.skipped.statement.trim()}”`
+                            ) : (
+                              <span className={cx("no")}>
+                                Not written yet. Write it as the Move’s
+                                business-change boundary answer.
+                              </span>
+                            )}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{props.skipped.ownerLabel ?? "Owner"}</dt>
+                          <dd>{props.skipped.owner}</dd>
+                        </div>
+                        <div>
+                          <dt>Recorded</dt>
+                          <dd>
+                            {props.skipped.recorded ??
+                              `${props.skipped.date}, with the use-case profile in P2`}
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </section>
+                  <Group title="Advisory" rows={groups.advisory} />
+                </>
               ) : (
                 <>
                   <Group
@@ -755,6 +788,8 @@ export function MovesStepPage(props: MovesStepPageProps) {
                     after={props.rankingFoot}
                   />
                   <Group title="Drafts to review" rows={groups.draft} />
+                  {/* v1.10: flags this page cannot settle; never counted. */}
+                  <Group title="Advisory" rows={groups.advisory} />
                   <CollapsedGroup
                     title="Set aside"
                     rows={groups.setAside}
@@ -765,6 +800,7 @@ export function MovesStepPage(props: MovesStepPageProps) {
                     rows={groups.settled}
                     defaultOpen={state === "done"}
                   />
+                  {props.afterGroups}
                   {props.workEnd}
                   {props.carry ? (
                     <p className={cx("carry")}>

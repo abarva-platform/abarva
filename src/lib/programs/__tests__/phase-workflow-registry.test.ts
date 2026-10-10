@@ -117,9 +117,23 @@ describe("phase workflow registry reproduces today's capture contract", () => {
   );
 
   it.each(CASES)("$name: no key is owned by two steps", ({ route: r }) => {
-    for (const phase of [2, 3]) {
+    for (const phase of [0, 1, 2, 3, 4, 5]) {
       const keys = registryKeys(phase, r);
       expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
+
+  it.each(CASES)("$name: new phases own exactly their own capture keys", ({ route: r }) => {
+    for (const phase of [0, 1, 4, 5]) {
+      const keys = registryKeys(phase, r);
+      const contract = keysOf(phase, r);
+      expect([...keys].sort()).toEqual([...contract].sort());
+      expect(keys).toHaveLength(new Set(keys).size);
+      for (const step of resolvePhaseWorkflow(phase, r)) {
+        expect(step.id.startsWith(`P${phase}.`)).toBe(true);
+        expect(step.depth).toBe("full");
+        expect(step.sectionKeys.every((key) => contract.includes(key))).toBe(true);
+      }
     }
   });
 
@@ -181,7 +195,7 @@ describe("known capture gaps", () => {
   it("lists exactly the steps that capture nothing at a non-skip depth", () => {
     const found: string[] = [];
     for (const profile of ["technical", "limited", "full"] as ChangeProfile[]) {
-      for (const phase of [2, 3]) {
+      for (const phase of [0, 1, 2, 3, 4, 5]) {
         for (const step of resolvePhaseWorkflow(
           phase,
           PROFILE_ROUTE[profile],
@@ -226,10 +240,11 @@ describe("step-page records", () => {
     }
   });
 
-  it("gives P3 Step 1 its traceability record and Step 2 its choice", () => {
+  it("gives P3 Step 1 its traceability record, Step 2 its choice and Step 3 its owners", () => {
     expect(phaseStepRecordSections(3).map((r) => [r.key, r.stepId])).toEqual([
       ["design_traceability", "P3.1"],
       ["architecture_choice", "P3.2"],
+      ["operating_adoption", "P3.3"],
     ]);
     // Every record a step declares is a record section, and vice versa.
     const declared = resolvePhaseWorkflow(3, null).flatMap((s) =>
@@ -239,10 +254,18 @@ describe("step-page records", () => {
       phaseStepRecordSections(3).map((r) => [r.key, r.stepId]),
     );
   });
+
+  it.each(CASES)(
+    "P3 Step 3 keeps its record on every route, even when skipped ($name)",
+    ({ route: r }) => {
+      const step = resolvePhaseWorkflow(3, r).find((s) => s.id === "P3.3");
+      expect(step?.recordKeys).toEqual(["operating_adoption"]);
+    },
+  );
 });
 
 describe("unmodelled phases", () => {
   it("returns no steps for a phase the registry does not model", () => {
-    expect(resolvePhaseWorkflow(4, null)).toEqual([]);
+    expect(resolvePhaseWorkflow(6, null)).toEqual([]);
   });
 });

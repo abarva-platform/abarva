@@ -1,10 +1,32 @@
 "use client";
 
-import { GateReadinessStep } from "@/components/strategic-moves/step-page/GateReadinessStep";
+import {
+  GateReadinessStep,
+  type GateReadinessStepProps,
+} from "@/components/strategic-moves/step-page/GateReadinessStep";
+import {
+  PHASE_STEP_PAGES,
+  renderPhaseStepPage,
+} from "@/components/strategic-moves/step-page/phase-step-pages";
+import {
+  EXISTING_STEP_PAGE_VIEWS,
+  availableStepPageView,
+  phaseStepPageHref,
+  resolvePhaseStepPageLanding,
+} from "@/lib/programs/phase-step-page-routing";
+import { STEP_PAGE_VIEWS } from "@/lib/programs/step-page-views";
+import { resolvePhaseStepGroups } from "@/lib/programs/moves-phase-step-plan";
 import { captureValueText } from "@/lib/programs/structured-capture-text";
 import { RootCausesStep } from "@/components/strategic-moves/step-page/RootCausesStep";
 import { DesignTraceabilityStep } from "@/components/strategic-moves/step-page/DesignTraceabilityStep";
 import { ArchitectureOptionsStep } from "@/components/strategic-moves/step-page/ArchitectureOptionsStep";
+import { OperatingAdoptionStep } from "@/components/strategic-moves/step-page/OperatingAdoptionStep";
+import {
+  emptyOperatingAdoption,
+  isOperatingAdoptionComplete,
+  ownerGrid,
+  parseOperatingAdoption,
+} from "@/lib/programs/operating-adoption";
 import {
   stepPageHref,
   type StepPageView,
@@ -84,7 +106,6 @@ import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelE
 import { DiagnosisFactsEditor } from "@/components/strategic-moves/DiagnosisFactsEditor";
 import { SolutionOptionChooser } from "@/components/strategic-moves/SolutionOptionChooser";
 import {
-  MovesCaptureFlow,
   type MovesCaptureFlowPhase,
   type MovesCaptureFlowProps,
 } from "@/components/strategic-moves/MovesCaptureFlow";
@@ -316,6 +337,7 @@ interface MovesPhaseStandaloneClientProps {
    * displayed boilerplate as if it were the client's own answers.
    */
   initialPhaseCaptureValues?: Record<string, string>;
+  priorPhaseCaptureValues?: Readonly<Record<string, string>> | null;
   /** Synthetic proposals stay separate from client-captured values and never count as complete. */
   initialReferenceDraftValues?: Record<string, string>;
   /** Revision of those values; echoed on save so a stale write is rejected. */
@@ -358,6 +380,9 @@ interface MovesPhaseStandaloneClientProps {
    * template. Today that is P3 Gate readiness, opened with `?step=gate`.
    */
   stepPagesV3Enabled?: boolean;
+  phaseStepPagesEnabled?: boolean;
+  legacyCaptureRequested?: boolean;
+  initialLegacySectionKey?: string | null;
   /**
    * The step page the URL asked for, when the flag is on: `gate` (P3 Gate
    * readiness) or `root-causes` (P2 Step 3).
@@ -1017,10 +1042,14 @@ function samePhaseBuildArtifactIds(
 
 export function MovesPhaseStandaloneClient({
   stepPagesV3Enabled = false,
+  phaseStepPagesEnabled: requestedPhaseStepPagesEnabled,
+  legacyCaptureRequested = false,
+  initialLegacySectionKey = null,
   initialStepView = null,
   priorPhaseCapture = null,
   canApproveGates = false,
   initialPhaseCaptureValues,
+  priorPhaseCaptureValues = null,
   initialReferenceDraftValues = {},
   initialPhaseCaptureRevision,
   initialBusinessChangeAssessment = "",
@@ -1066,6 +1095,11 @@ export function MovesPhaseStandaloneClient({
       ? `${currentUser.email} · ${currentUser.role}`
       : (currentUser?.email ?? null);
   const phase = phaseFor(phaseNum);
+  const phaseStepPagesEnabled =
+    requestedPhaseStepPagesEnabled ??
+    ((phaseNum === 2 || phaseNum === 3) &&
+      stepPagesV3Enabled &&
+      captureV2Enabled);
   const readinessWorkbookHref =
     phase.phase < 5
       ? `/api/v1/programs/${encodeURIComponent(move.id)}/stage-readiness-workbook?phase=${phase.phase}`
@@ -1090,11 +1124,14 @@ export function MovesPhaseStandaloneClient({
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
   // The finalized step page for P3 Gate readiness, behind `moves_step_pages_v3`
   // and only with the redesigned capture on. Opened with `?step=gate`.
+  const gateStepId = resolvePhaseWorkflow(phaseNum, initialConfirmedSolutionRoute).at(-1)?.id;
   const gateStepPageActive =
-    stepPagesV3Enabled &&
-    Boolean(captureV2Enabled) &&
-    phaseNum === 3 &&
-    initialStepView === "gate";
+    phaseStepPagesEnabled &&
+    !legacyCaptureRequested &&
+    initialStepView !== null &&
+    STEP_PAGE_VIEWS[initialStepView].phase === phaseNum &&
+    STEP_PAGE_VIEWS[initialStepView].stepId === gateStepId &&
+    !PHASE_STEP_PAGES[initialStepView];
   // P2 Step 3, "Rank what's causing the gap", behind the same flag. Opened
   // with `?step=root-causes`; it edits the `gaps_root_causes` answer through
   // the capture autosave.
@@ -1104,6 +1141,7 @@ export function MovesPhaseStandaloneClient({
   const designTraceStepPageActive =
     stepPagesV3Enabled &&
     Boolean(captureV2Enabled) &&
+    !legacyCaptureRequested &&
     phaseNum === 3 &&
     initialStepView === "root-cause-design";
   // P3 Step 2, "Choose a direction and size it", behind the same flag.
@@ -1112,11 +1150,22 @@ export function MovesPhaseStandaloneClient({
   const architectureStepPageActive =
     stepPagesV3Enabled &&
     Boolean(captureV2Enabled) &&
+    !legacyCaptureRequested &&
     phaseNum === 3 &&
     initialStepView === "architecture-options";
+  // P3 Step 3, "Name the owners and describe the change", behind the same
+  // flag. Opened with `?step=operating-adoption`; it writes the
+  // `operating_adoption` step record and the profile's capture answers.
+  const operatingStepPageActive =
+    stepPagesV3Enabled &&
+    Boolean(captureV2Enabled) &&
+    !legacyCaptureRequested &&
+    phaseNum === 3 &&
+    initialStepView === "operating-adoption";
   const rootCauseStepPageActive =
     stepPagesV3Enabled &&
     Boolean(captureV2Enabled) &&
+    !legacyCaptureRequested &&
     phaseNum === 2 &&
     initialStepView === "root-causes";
   const [substepIndex, setSubstepIndex] = useState(initialSubstepIndex);
@@ -3341,6 +3390,15 @@ export function MovesPhaseStandaloneClient({
   const captureFlowMounted =
     (captureV2Enabled && phase.phase >= 1 && phase.phase <= 5) ||
     captureP0Active;
+  const legacySection =
+    phaseCaptureSections.some((section) => section.key === initialLegacySectionKey)
+      ? initialLegacySectionKey
+      : null;
+  const legacySectionGroup = legacySection
+    ? resolvePhaseStepGroups(phase.phase, phaseCaptureSections).findIndex(
+        (group) => group.sectionKeys.includes(legacySection),
+      )
+    : -1;
 
   // `moves_capture_composition_v1` (flag, default OFF, already conjoined with
   // moves_capture_v2 server-side). Composition only: where the surface tabs sit
@@ -3566,7 +3624,14 @@ export function MovesPhaseStandaloneClient({
     parseDesignTraceability(displayPhaseCaptureValues.design_traceability) ??
       emptyDesignTraceability(),
   );
-  const recordStepDone: Record<string, boolean> = {
+  const recordStepDone: Record<string, boolean> = Object.fromEntries(
+    resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute).map((step) => [
+      step.id,
+      step.sectionKeys.length > 0 &&
+        step.sectionKeys.every((key) => isCaptureSectionComplete(key)),
+    ]),
+  );
+  Object.assign(recordStepDone, {
     "P3.1": isDesignTraceabilityComplete(
       priorPhaseCapture?.gapsRootCauses ?? "",
       parseDesignTraceability(displayPhaseCaptureValues.design_traceability) ??
@@ -3578,7 +3643,44 @@ export function MovesPhaseStandaloneClient({
       p3Elements,
       displayPhaseCaptureValues.recommendation ?? "",
     ),
-  };
+  });
+  // Step 3 reads the same rows its page counts: Skipped counts as done on a
+  // technical route; otherwise every counted row is settled.
+  const p3OperatingRecord =
+    parseOperatingAdoption(displayPhaseCaptureValues.operating_adoption) ??
+    emptyOperatingAdoption();
+  recordStepDone["P3.3"] = isOperatingAdoptionComplete({
+    profile: resolveChangeProfile(confirmedSolutionRoute),
+    record: p3OperatingRecord,
+    grid: ownerGrid(
+      priorPhaseCapture?.gapsRootCauses ?? "",
+      parseDesignTraceability(displayPhaseCaptureValues.design_traceability) ??
+        emptyDesignTraceability(),
+      p3OperatingRecord,
+    ),
+    values: displayPhaseCaptureValues,
+    avaDraftKeys: Object.keys(avaDraftValues),
+  });
+  // A capture answer is not a gate approval. The final step stays open until
+  // the governed transition has actually been recorded.
+  if (gateStepId) recordStepDone[gateStepId] = gateApproved;
+  const implementedStepViews = [
+    ...EXISTING_STEP_PAGE_VIEWS,
+    ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+  ];
+  const defaultStepTarget = resolvePhaseStepPageLanding({
+    moveId: move.id,
+    phase: phase.phase,
+    route: confirmedSolutionRoute,
+    implementedViews: implementedStepViews,
+    doneByStep: recordStepDone,
+    enabled: phaseStepPagesEnabled,
+    legacy: legacyCaptureRequested,
+    requestedView: initialStepView,
+  });
+  useEffect(() => {
+    if (defaultStepTarget) router.replace(defaultStepTarget);
+  }, [defaultStepTarget, router]);
   const charterPlatformFit = (() => {
     const fields = readSolutionPatternFromCharter(
       (move.charter as Record<string, unknown> | null) ?? null,
@@ -3593,10 +3695,10 @@ export function MovesPhaseStandaloneClient({
     };
   })();
 
-  // Shared chrome for the P3 step pages: the phase bar, the step bar (each
+  // Shared chrome for every step page: the phase bar, the step bar (each
   // step links to its own page when it has one) and the tabs.
-  const p3StepPageChrome = (stepId: string) => {
-    const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
+  const stepPageChrome = (phaseNumber: number, stepId: string) => {
+    const workflow = resolvePhaseWorkflow(phaseNumber, confirmedSolutionRoute);
     const stepIndex = Math.max(
       0,
       workflow.findIndex((step) => step.id === stepId),
@@ -3609,9 +3711,9 @@ export function MovesPhaseStandaloneClient({
         <StepPageTabs
           current="steps"
           hrefs={{
-            steps: stepPageHref(move.id, phase.phase, stepId),
-            files: phaseHref(phase.phase),
-            record: phaseHref(phase.phase),
+            steps: phaseStepPageHref(move.id, phaseNumber, stepId, workflow[stepIndex]?.sectionKeys ?? [], implementedStepViews),
+            files: phaseHref(phaseNumber),
+            record: phaseHref(phaseNumber),
           }}
         />
       ),
@@ -3621,7 +3723,7 @@ export function MovesPhaseStandaloneClient({
           code: p.code,
           name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
           status: tally?.state === "done" ? "Done" : "Not started",
-          current: p.phase === phase.phase,
+          current: p.phase === phaseNumber,
           href:
             tally && tally.state !== "upcoming"
               ? phaseHref(p.phase)
@@ -3634,16 +3736,13 @@ export function MovesPhaseStandaloneClient({
         href:
           index === stepIndex
             ? undefined
-            : stepPageHref(move.id, phase.phase, step.id),
+            : phaseStepPageHref(move.id, phaseNumber, step.id, step.sectionKeys, implementedStepViews),
         done:
           index === stepIndex
             ? undefined
             : step.id in recordStepDone
               ? recordStepDone[step.id]
-              : step.sectionKeys.length > 0 &&
-                step.sectionKeys.every(
-                  (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
-                ),
+              : false,
       })),
     };
   };
@@ -3667,8 +3766,113 @@ export function MovesPhaseStandaloneClient({
       })),
     });
 
+  const gateStepProps = (): GateReadinessStepProps => {
+    const chrome = stepPageChrome(phase.phase, gateStepId ?? "");
+    const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
+    const previousStep = workflow[workflow.length - 2];
+    const routeKeys = phaseCanonicalKeysForRoute(
+      phase.phase,
+      confirmedSolutionRoute,
+    );
+    const notBuilt = (PHASE_CANONICAL_KEYS[phase.phase] ?? [])
+      .filter((key) => !routeKeys.includes(key))
+      .map((key) => ({
+        title:
+          DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key)
+            ?.documentTitle ?? key,
+        reason:
+          "Not built for this Move's change profile, set by the solution route confirmed in P2.",
+      }));
+    const requiredGaps = currentPhaseRequiredEvidenceGaps(
+      evidenceNeedPackets,
+      phase.phase,
+    );
+    const buildHold = resolvePhaseBuildBlock({
+      building: false,
+      anyRunning: false,
+      parentBlockerText: phaseCaptureBlocker,
+      requiredEvidenceGapCount: requiredGaps.length,
+      phaseLabel: `${phase.code} ${phase.title}`,
+    });
+    const next = PHASES.find((p) => p.phase === phase.phase + 1);
+    return {
+      moveId: move.id,
+      moveName: displayMoveName,
+      archetype: move.archetype,
+      clientDisplayName: move.tenant.name,
+      phaseNum: phase.phase,
+      phaseCode: phase.code,
+      phaseName: PHASE_LABELS_SHORT[phase.phase] ?? phase.navLabel,
+      nextPhaseLabel: next
+        ? `${next.code} ${PHASE_LABELS_SHORT[next.phase] ?? next.navLabel}`
+        : "Tower",
+      tabs: chrome.tabs,
+      phases: chrome.phases,
+      steps: chrome.steps,
+      stepIndex: chrome.stepIndex,
+      criteria: move.gateCriteria,
+      routeDocumentKeys: routeKeys,
+      notBuilt,
+      initialArtifacts: visiblePhaseBuildArtifacts,
+      signOffReadable:
+        describeGateSignOffReadback(signOffReadback).state === "available",
+      canApprove: canApproveGates,
+      approverName: "the gate approver",
+      approverIsRole: true,
+      changeProfile: resolveChangeProfile(confirmedSolutionRoute),
+      buildHeldReason: buildHold?.statusLine ?? null,
+      originationReady:
+        phase.phase === 0
+          ? phaseCaptureSections.every((section) =>
+              isCaptureSectionComplete(section.key),
+            ) && topLevelEvidenceReady
+          : undefined,
+      onBeforeBuild: finalizePhaseCapture,
+      onSubmit: approvePhaseGateAfterBuild,
+      onBack: () =>
+        window.location.assign(
+          previousStep
+            ? phaseStepPageHref(
+                move.id,
+                phase.phase,
+                previousStep.id,
+                previousStep.sectionKeys,
+                implementedStepViews,
+              )
+            : `/strategic-moves/${move.id}/phase/${phase.phase}`,
+        ),
+      frame: (page, briefing) =>
+        renderAvaDock({ content: page, openingBriefing: briefing }),
+    };
+  };
+
+  if (defaultStepTarget) return null;
+
+  if (
+    phaseStepPagesEnabled &&
+    !legacyCaptureRequested &&
+    initialStepView &&
+    STEP_PAGE_VIEWS[initialStepView].phase === phase.phase &&
+    PHASE_STEP_PAGES[initialStepView]
+  ) {
+    const stepId = STEP_PAGE_VIEWS[initialStepView].stepId;
+    return renderPhaseStepPage(initialStepView, {
+      move,
+      phase: phase.phase,
+      values: phaseCaptureValues,
+      setValue: setVisiblePhaseCaptureValue,
+      priorPhaseCapture: priorPhaseCaptureValues,
+      canApproveGates,
+      currentUser,
+      chrome: stepPageChrome(phase.phase, stepId),
+      stepDone: recordStepDone,
+      dock: stepPageDock,
+      gateProps: gateStepProps(),
+    });
+  }
+
   if (designTraceStepPageActive) {
-    const chrome = p3StepPageChrome("P3.1");
+    const chrome = stepPageChrome(phase.phase, "P3.1");
     return (
       <DesignTraceabilityStep
         moveId={move.id}
@@ -3698,7 +3902,7 @@ export function MovesPhaseStandaloneClient({
   }
 
   if (architectureStepPageActive) {
-    const chrome = p3StepPageChrome("P3.2");
+    const chrome = stepPageChrome(phase.phase, "P3.2");
     return (
       <ArchitectureOptionsStep
         moveId={move.id}
@@ -3727,7 +3931,62 @@ export function MovesPhaseStandaloneClient({
         onBack={() =>
           window.location.assign(stepPageHref(move.id, phase.phase, "P3.1"))
         }
-        onContinue={() => window.location.assign(chrome.phaseHref(phase.phase))}
+        onContinue={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.3"))
+        }
+        frame={stepPageDock}
+      />
+    );
+  }
+
+  if (operatingStepPageActive) {
+    const chrome = stepPageChrome(phase.phase, "P3.3");
+    return (
+      <OperatingAdoptionStep
+        moveId={move.id}
+        canReviewEvidence={canApproveGates}
+        onEvidenceChanged={() => window.location.reload()}
+        moveName={displayMoveName}
+        tabs={chrome.tabs}
+        phases={chrome.phases}
+        steps={chrome.steps}
+        stepIndex={chrome.stepIndex}
+        value={displayPhaseCaptureValues.operating_adoption ?? ""}
+        onChange={(value) =>
+          setVisiblePhaseCaptureValue("operating_adoption", value)
+        }
+        answers={displayPhaseCaptureValues}
+        onAnswerChange={setVisiblePhaseCaptureValue}
+        avaDraftKeys={Object.keys(avaDraftValues)}
+        route={confirmedSolutionRoute}
+        p2RouteHref={stepPageHref(move.id, 2, "P2.4")}
+        people={[
+          ...(move.sponsor
+            ? [
+                {
+                  name: move.sponsor.name,
+                  role: move.sponsor.role || "sponsor",
+                },
+              ]
+            : []),
+          ...(move.participants ?? []).map((p) => ({
+            name: p.name,
+            role: p.role || "participant",
+          })),
+        ]}
+        p2RootCauses={priorPhaseCapture?.gapsRootCauses ?? ""}
+        designTraceability={displayPhaseCaptureValues.design_traceability ?? ""}
+        step2Done={recordStepDone["P3.2"]}
+        step2Href={stepPageHref(move.id, phase.phase, "P3.2")}
+        registerProgramId={assumptionRegister?.programId ?? null}
+        decidedBy={currentUser?.email ?? "signed-in reviewer"}
+        today={new Date().toISOString().slice(0, 10)}
+        onBack={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.2"))
+        }
+        onContinue={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.4"))
+        }
         frame={stepPageDock}
       />
     );
@@ -3814,106 +4073,10 @@ export function MovesPhaseStandaloneClient({
     );
   }
 
-  // `moves_step_pages_v3`: P3 Gate readiness as the finalized step page. The
-  // build, sign-off and submission run through the same governed paths as the
-  // ledger above; only where and how the consultant acts changes.
+  // Every phase's gate page consumes the same governed build, sign-off and
+  // submission path. P0 uses the origination approval branch without a build.
   if (gateStepPageActive) {
-    const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
-    const routeKeys = phaseCanonicalKeysForRoute(phase.phase, confirmedSolutionRoute);
-    const notBuilt = (PHASE_CANONICAL_KEYS[phase.phase] ?? [])
-      .filter((key) => !routeKeys.includes(key))
-      .map((key) => ({
-        title:
-          DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key)
-            ?.documentTitle ?? key,
-        reason:
-          "Not built for this Move's change profile, set by the solution route confirmed in P2.",
-      }));
-    const requiredGaps = currentPhaseRequiredEvidenceGaps(
-      evidenceNeedPackets,
-      phase.phase,
-    );
-    const buildHold = resolvePhaseBuildBlock({
-      building: false,
-      anyRunning: false,
-      parentBlockerText: phaseCaptureBlocker,
-      requiredEvidenceGapCount: requiredGaps.length,
-      phaseLabel: `${phase.code} ${phase.title}`,
-    });
-    const phaseHref = (n: number) => `/strategic-moves/${move.id}/phase/${n}`;
-    const next = PHASES.find((p) => p.phase === phase.phase + 1);
-    return (
-      <GateReadinessStep
-        moveId={move.id}
-        moveName={displayMoveName}
-        archetype={move.archetype}
-        clientDisplayName={move.tenant.name}
-        phaseNum={phase.phase}
-        phaseCode={phase.code}
-        phaseName={PHASE_LABELS_SHORT[phase.phase] ?? phase.navLabel}
-        nextPhaseLabel={
-          next
-            ? `${next.code} ${PHASE_LABELS_SHORT[next.phase] ?? next.navLabel}`
-            : "Tower"
-        }
-        tabs={
-          <StepPageTabs
-            current="steps"
-            hrefs={{
-              steps: `${phaseHref(phase.phase)}?step=gate`,
-              files: phaseHref(phase.phase),
-              record: phaseHref(phase.phase),
-            }}
-          />
-        }
-        phases={PHASES.map((p) => {
-          const tally = phaseTallies.find((t) => t.phase === p.phase);
-          return {
-            code: p.code,
-            name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
-            status: tally?.state === "done" ? "Done" : "Not started",
-            current: p.phase === phase.phase,
-            href:
-              tally && tally.state !== "upcoming" ? phaseHref(p.phase) : undefined,
-          };
-        })}
-        steps={workflow.map((step, index) => ({
-          title: step.title,
-          depth: step.depth,
-          href: index < workflow.length - 1 ? phaseHref(phase.phase) : undefined,
-          // Ticked only when every capture key the step owns is answered; a
-          // step with no capture key cannot be proven done, so it is not.
-          done:
-            index === workflow.length - 1
-              ? undefined
-              : step.sectionKeys.length > 0 &&
-                step.sectionKeys.every(
-                  (key) => (phaseCaptureValues[key] ?? "").trim().length > 0,
-                ),
-        }))}
-        stepIndex={Math.max(0, workflow.length - 1)}
-        criteria={move.gateCriteria}
-        routeDocumentKeys={routeKeys}
-        notBuilt={notBuilt}
-        initialArtifacts={visiblePhaseBuildArtifacts}
-        signOffReadable={
-          describeGateSignOffReadback(signOffReadback).state === "available"
-        }
-        canApprove={canApproveGates}
-        approverName="the gate approver"
-        approverIsRole
-        changeProfile={resolveChangeProfile(confirmedSolutionRoute)}
-        buildHeldReason={buildHold?.statusLine ?? null}
-        onBeforeBuild={finalizePhaseCapture}
-        onSubmit={approvePhaseGateAfterBuild}
-        onBack={() => window.location.assign(phaseHref(phase.phase))}
-        // aVa is the product's one dock — the same collapse, hide, expand and
-        // full-screen behaviour and the same thread as the capture flow.
-        frame={(page, briefing) =>
-          renderAvaDock({ content: page, openingBriefing: briefing })
-        }
-      />
-    );
+    return <GateReadinessStep {...gateStepProps()} />;
   }
 
   return (
@@ -4341,6 +4504,41 @@ export function MovesPhaseStandaloneClient({
                         handoffSummary: charterBasisRollup,
                         openingBand: (
                           <>
+                            {phaseStepPagesEnabled &&
+                            !legacyCaptureRequested &&
+                            (Object.keys(PHASE_STEP_PAGES) as StepPageView[])
+                              .some(
+                                (view) =>
+                                  STEP_PAGE_VIEWS[view].phase === phase.phase,
+                              ) ? (
+                              <p className="mcf-gate-note">
+                                <a
+                                  href={(() => {
+                                    const first = resolvePhaseWorkflow(
+                                      phase.phase,
+                                      confirmedSolutionRoute,
+                                    ).find((step) =>
+                                      availableStepPageView(
+                                        phase.phase,
+                                        step.id,
+                                        Object.keys(PHASE_STEP_PAGES) as StepPageView[],
+                                      ),
+                                    );
+                                    return first
+                                      ? phaseStepPageHref(
+                                          move.id,
+                                          phase.phase,
+                                          first.id,
+                                          first.sectionKeys,
+                                          implementedStepViews,
+                                        )
+                                      : `/strategic-moves/${move.id}/phase/${phase.phase}`;
+                                  })()}
+                                >
+                                  Open the step pages →
+                                </a>
+                              </p>
+                            ) : null}
                             {/* P3 Step 1 is its own step page under
                                 moves_step_pages_v3: its record is not a
                                 capture question, so the capture opens it. */}
@@ -4361,6 +4559,14 @@ export function MovesPhaseStandaloneClient({
                                   href={`/strategic-moves/${move.id}/phase/3?step=architecture-options`}
                                 >
                                   Choose a direction →
+                                </a>{" "}
+                                Step 3 names the owners and describes the
+                                change.{" "}
+                                <a
+                                  data-testid="open-operating-adoption"
+                                  href={`/strategic-moves/${move.id}/phase/3?step=operating-adoption`}
+                                >
+                                  Name the owners →
                                 </a>
                               </p>
                             ) : null}
@@ -4410,9 +4616,13 @@ export function MovesPhaseStandaloneClient({
                               name: nextCapturePhase.navLabel,
                             }
                           : null,
-                        initialStep: initialSubstepKey
-                          ? (Math.min(substepIndex, 2) as 0 | 1 | 2)
-                          : undefined,
+                        initialStep:
+                          legacySectionGroup >= 0 && legacySectionGroup <= 2
+                            ? (legacySectionGroup as 0 | 1 | 2)
+                            : initialSubstepKey
+                              ? (Math.min(substepIndex, 2) as 0 | 1 | 2)
+                              : undefined,
+                        initialFocusSectionKey: legacySection,
                         approveSlot: captureApproveSlot,
                         allowReviewBeforeSubmit: captureHandoffRecapEnabled,
                         workspaceV2: workspaceV2Active,

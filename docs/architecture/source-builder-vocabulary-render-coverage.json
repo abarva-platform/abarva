@@ -5,11 +5,17 @@
   "method": "Population: non-test .tsx under src/components/source, walked with the same walk/isExcluded the route-reachability audit uses. Reachability: docs/architecture/unreachable-components.json. Covered: the transitive IMPORT closure of each audited root, intersected with the route-reachable population.",
   "upperBoundCaveat": "coveredUpperBound is an UPPER bound on what the control proves: an import closure is a superset of a render closure, because importing a module is not rendering it and a branch the fixtures never take renders nothing. remainderPaths is therefore a sound LOWER bound on the gap — no audited root can reach any of them under any props.",
   "population": {
-    "sourceComponentFiles": 208,
+    "sourceComponentFiles": 209,
     "unreachable": 103,
-    "routeReachable": 105
+    "routeReachable": 106
   },
   "auditedRoots": [
+    {
+      "surfaceName": "source new · phase preview (all steps)",
+      "path": "src/components/source/new-workspace/SourceNewPhasePreview.tsx",
+      "routeReachable": true,
+      "importClosureFiles": 12
+    },
     {
       "surfaceName": "renewal cockpit · action bar (all panels opened)",
       "path": "src/components/source/RenewalCockpitActionBar.tsx",
@@ -43,8 +49,8 @@
     }
   ],
   "coverage": {
-    "coveredUpperBound": 44,
-    "population": 105,
+    "coveredUpperBound": 45,
+    "population": 106,
     "remainder": 61
   },
   "coveredPaths": [
@@ -91,7 +97,8 @@
     "src/components/source/canvas/responses/VendorResponsePackageCockpit.tsx",
     "src/components/source/canvas/responses/VendorResponseProfilesPanel.tsx",
     "src/components/source/canvas/workspace-tabs/AcceptClientFinalButton.tsx",
-    "src/components/source/canvas/workspace-tabs/StageDecisionLensPanel.tsx"
+    "src/components/source/canvas/workspace-tabs/StageDecisionLensPanel.tsx",
+    "src/components/source/new-workspace/SourceNewPhasePreview.tsx"
   ],
   "remainderPaths": [
     "src/components/source/EstimateAssumptionDisclosure.tsx",

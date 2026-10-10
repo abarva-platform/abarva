@@ -83,6 +83,11 @@ export interface AuditedSurfaceRoot {
  */
 export const AUDITED_SURFACE_ROOTS: readonly AuditedSurfaceRoot[] = [
   {
+    surfaceName: "source new · phase preview (all steps)",
+    path: "src/components/source/new-workspace/SourceNewPhasePreview.tsx",
+    routeReachable: true,
+  },
+  {
     surfaceName: "renewal cockpit · action bar (all panels opened)",
     path: "src/components/source/RenewalCockpitActionBar.tsx",
     routeReachable: true,

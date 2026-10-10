@@ -33,6 +33,7 @@ import {
   gateOnlyConfirmSummaryFor,
   movesPhaseCopyAuditBlocks,
 } from "../MovesPhaseStandaloneClient";
+import { PHASE_STEP_PAGES } from "@/components/strategic-moves/step-page/phase-step-pages";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -110,6 +111,7 @@ function selectP3Option(name: RegExp | string): void {
 
 const mockRouterPush = jest.fn();
 const mockRouterRefresh = jest.fn();
+const mockRouterReplace = jest.fn();
 
 jest.mock("next/link", () => {
   return function MockLink({
@@ -131,6 +133,7 @@ jest.mock("next/link", () => {
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockRouterPush,
+    replace: mockRouterReplace,
     refresh: mockRouterRefresh,
   }),
 }));
@@ -4911,6 +4914,143 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
+  describe("phase-generic step page mount", () => {
+    it("renders a phase-owned page through the shared host props", () => {
+      PHASE_STEP_PAGES["p4-milestones"] = (props) => (
+        <div data-testid="phase-owned-step-page">
+          {props.phase}:{props.chrome.steps.length}:{props.values.roadmap_sequencing ?? ""}
+        </div>
+      );
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled
+            initialStepView="p4-milestones"
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+            phaseNum={4}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(screen.getByTestId("phase-owned-step-page")).toHaveTextContent("4:5:");
+      } finally {
+        delete PHASE_STEP_PAGES["p4-milestones"];
+      }
+    });
+
+    it("does not mount a registered page when the phase flag is off", () => {
+      PHASE_STEP_PAGES["p4-milestones"] = () => (
+        <div data-testid="phase-owned-step-page" />
+      );
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled={false}
+            initialStepView="p4-milestones"
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+            phaseNum={4}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(screen.queryByTestId("phase-owned-step-page")).not.toBeInTheDocument();
+        expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      } finally {
+        delete PHASE_STEP_PAGES["p4-milestones"];
+      }
+    });
+
+    it("redirects the default address only when all phase pages are registered", () => {
+      const keys = [
+        "p4-milestones",
+        "p4-estimate",
+        "p4-value",
+        "p4-tower",
+        "p4-gate",
+      ] as const;
+      mockRouterReplace.mockClear();
+      for (const key of keys) PHASE_STEP_PAGES[key] = () => null;
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+            phaseNum={4}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(mockRouterReplace).toHaveBeenCalledWith(
+          expect.stringContaining("/phase/4?step=p4-milestones"),
+        );
+      } finally {
+        for (const key of keys) delete PHASE_STEP_PAGES[key];
+      }
+    });
+
+    it("mounts the governed gate in a later phase under the phase flag", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          phaseStepPagesEnabled
+          initialStepView="p4-gate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByRole("heading", { name: /Check the gate and sign off/i }),
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        within(screen.getByTestId("agent-dock")).getByRole("navigation", {
+          name: /steps/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps capture when the phase flag is off or the legacy hatch is requested", () => {
+      const input = {
+        captureV2Enabled: true,
+        stepPagesV3Enabled: true,
+        initialStepView: "p4-gate" as const,
+        carriesForwardContent: [],
+        evidenceNeedPackets: [],
+        move: makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" }),
+        phaseNum: 4,
+        phaseTallies: [...phaseTallies],
+      };
+      const off = render(<MovesPhaseStandaloneClient {...input} />);
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      off.unmount();
+      render(
+        <MovesPhaseStandaloneClient
+          {...input}
+          phaseStepPagesEnabled
+          legacyCaptureRequested
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: /Check the gate and sign off/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe("P3 Step 1 design traceability (moves_step_pages_v3)", () => {
     const p3Move = () => makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
 
@@ -5080,6 +5220,139 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByTestId("open-architecture-options").getAttribute("href")).toMatch(
         /\/phase\/3\?step=architecture-options$/,
       );
+    });
+  });
+
+  describe("P3 Step 3 operating & adoption (moves_step_pages_v3)", () => {
+    const p3Move = () =>
+      makeMove({
+        currentPhase: 3,
+        phaseLabel: "P3 Design",
+        participants: [
+          { personId: "p-1", name: "Rosa Delgado", role: "Data steward" },
+        ],
+      });
+    const route = (
+      overrides: Partial<ConfirmedSolutionRoute> = {},
+    ): ConfirmedSolutionRoute => ({
+      route: "process_change",
+      recommendation: "process_change",
+      solutionOutput: "data_product",
+      workflowChange: "limited",
+      roleAccountabilityChange: "limited",
+      adoptionOwner: "Named business owner",
+      adoptionResponsibility: "business",
+      decision: "confirm",
+      evidenceReference: "evidence-ref",
+      validatedBy: "Validator",
+      rationale: "fixture",
+      ...overrides,
+    });
+    const TECHNICAL = route({
+      route: "technical_product",
+      recommendation: "technical_product",
+      workflowChange: "none",
+      roleAccountabilityChange: "none",
+    });
+    const stepItem = (container: HTMLElement, index: number) =>
+      container.querySelectorAll('nav[aria-label="Design steps"] li')[
+        index
+      ] as HTMLElement;
+    const mount = (args: {
+      flag?: boolean;
+      view?: "operating-adoption" | "architecture-options";
+      route?: ConfirmedSolutionRoute | null;
+    }) =>
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled={args.flag ?? true}
+          initialStepView={args.view ?? "operating-adoption"}
+          initialConfirmedSolutionRoute={args.route ?? route()}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+    it("renders Step 3 in the dock under the flag, blocked on Step 2, which the step bar shows open", () => {
+      const { container } = mount({});
+      const dock = screen.getByTestId("agent-dock");
+      expect(
+        within(dock).getByRole("heading", {
+          name: "Name the owners and describe the change",
+        }),
+      ).toBeInTheDocument();
+      expect(within(dock).getByText(/Waiting on Step 2/)).toBeInTheDocument();
+      // One readiness source: Step 2 is not done in the step bar either.
+      expect(stepItem(container, 1).className).not.toMatch(/is-done/);
+      expect(
+        stepItem(container, 1).querySelector("a")?.getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=architecture-options$/);
+      expect(stepItem(container, 2).getAttribute("class")).toMatch(
+        /is-current/,
+      );
+      expect(stepItem(container, 2).textContent).toContain(
+        "Operating & adoption· Light",
+      );
+    });
+
+    it("ignores ?step=operating-adoption while the flag is off", () => {
+      mount({ flag: false });
+      expect(
+        screen.queryByRole("heading", {
+          name: "Name the owners and describe the change",
+        }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("on a technical route the step is Skipped by its attestation, Continue enabled", () => {
+      const { container } = mount({ route: TECHNICAL });
+      expect(
+        screen.getByText(/The P2 route makes this a technical change/),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Named business owner")).toBeInTheDocument();
+      expect(stepItem(container, 2).textContent).toContain("· Skipped");
+      expect(
+        (screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false);
+    });
+
+    it("the other P3 pages show Step 3 Skipped and done on a technical route, and link to it", () => {
+      const { container, unmount } = mount({
+        view: "architecture-options",
+        route: TECHNICAL,
+      });
+      const item = stepItem(container, 2);
+      expect(item.textContent).toContain("Operating & adoption· Skipped");
+      expect(item.className).toMatch(/is-done/);
+      unmount();
+      const limited = mount({ view: "architecture-options" });
+      const open = stepItem(limited.container, 2);
+      expect(open.className).not.toMatch(/is-done/);
+      expect(open.textContent).toContain("· Light");
+    });
+
+    it("the P3 capture opens Step 3 under the flag", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByTestId("open-operating-adoption").getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=operating-adoption$/);
     });
   });
 
