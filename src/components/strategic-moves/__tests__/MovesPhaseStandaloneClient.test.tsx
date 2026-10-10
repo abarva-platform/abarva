@@ -5494,36 +5494,44 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(stepFour(view.container).className).not.toMatch(/is-done/);
     });
 
-    it("the P3 capture opens Step 4 only with the ROM flag", () => {
+    it("with every P3 step a page, the P3 address opens the first open step; ?legacy=1 keeps the capture", () => {
+      const props: React.ComponentProps<typeof MovesPhaseStandaloneClient> = {
+        canApproveGates: true,
+        captureV2Enabled: true,
+        stepPagesV3Enabled: true,
+        carriesForwardContent: [],
+        evidenceNeedPackets: [],
+        move: p3Move(),
+        phaseNum: 3,
+        phaseTallies: [...phaseTallies],
+      };
+      mockRouterReplace.mockClear();
       const { unmount } = render(
+        <MovesPhaseStandaloneClient {...props} romEngineEnabled />,
+      );
+      expect(mockRouterReplace).toHaveBeenCalledWith(
+        expect.stringMatching(/\/phase\/3\?step=root-cause-design$/),
+      );
+      unmount();
+
+      mockRouterReplace.mockClear();
+      const legacy = render(
         <MovesPhaseStandaloneClient
-          canApproveGates
-          captureV2Enabled
-          stepPagesV3Enabled
+          {...props}
           romEngineEnabled
-          carriesForwardContent={[]}
-          evidenceNeedPackets={[]}
-          move={p3Move()}
-          phaseNum={3}
-          phaseTallies={[...phaseTallies]}
+          legacyCaptureRequested
         />,
       );
+      expect(mockRouterReplace).not.toHaveBeenCalled();
       expect(screen.getByTestId("open-rom-estimate").getAttribute("href")).toMatch(
         /\/phase\/3\?step=rom-estimate$/,
       );
-      unmount();
-      render(
-        <MovesPhaseStandaloneClient
-          canApproveGates
-          captureV2Enabled
-          stepPagesV3Enabled
-          carriesForwardContent={[]}
-          evidenceNeedPackets={[]}
-          move={p3Move()}
-          phaseNum={3}
-          phaseTallies={[...phaseTallies]}
-        />,
-      );
+      legacy.unmount();
+
+      // Without the ROM flag Step 4 is not a page, so P3 does not switch.
+      mockRouterReplace.mockClear();
+      render(<MovesPhaseStandaloneClient {...props} />);
+      expect(mockRouterReplace).not.toHaveBeenCalled();
       expect(screen.queryByTestId("open-rom-estimate")).not.toBeInTheDocument();
     });
   });

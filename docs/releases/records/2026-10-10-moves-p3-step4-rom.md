@@ -51,6 +51,10 @@ What the page does:
   with the line they came from, into use cases nobody has confirmed. It never
   overwrites a typed count and never fills unit hours or rates.
 
+### P3 switches to step pages (sunset)
+
+With this page, every P3 step has a page. For a tenant with `moves_step_pages_v3`, `moves_capture_v2` and `moves_rom_engine_v1` (today only the synthetic demo tenant), the P3 address therefore opens the first open step page instead of the capture flow. This uses the sunset routing from `2026-10-10-moves-step-pages-scaffold-p0145`. `?legacy=1` keeps the old flow for comparison. Without the ROM flag, Step 4 is not counted as a page, so P3 does not switch. The P3 rows in `docs/build/moves-legacy-sunset.md` are now `hatch-only`. Deleting the old code is a separate PR after a signed-in walk.
+
 ## Layer Impact
 
 - Release lane: `global-control-lane`, behind two tenant flags.

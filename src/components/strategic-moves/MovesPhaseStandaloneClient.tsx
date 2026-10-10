@@ -3696,10 +3696,12 @@ export function MovesPhaseStandaloneClient({
   // A capture answer is not a gate approval. The final step stays open until
   // the governed transition has actually been recorded.
   if (gateStepId) recordStepDone[gateStepId] = gateApproved;
+  // P3 Step 4 mounts only with the ROM flag; without it the step is not a
+  // page, so P3 keeps its capture flow rather than redirecting to nothing.
   const implementedStepViews = [
     ...EXISTING_STEP_PAGE_VIEWS,
     ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
-  ];
+  ].filter((view) => view !== "rom-estimate" || romEngineEnabled);
   const defaultStepTarget = resolvePhaseStepPageLanding({
     moveId: move.id,
     phase: phase.phase,
