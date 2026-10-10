@@ -1,6 +1,7 @@
 /** Signed-in, read-only evidence for the deployed Moves step pages. */
 import fs from "node:fs";
 import path from "node:path";
+import JSZip from "jszip";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { DEMO_SAFE_CLIENT_NAMES } from "../../src/lib/client-config";
@@ -594,4 +595,67 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
   ].filter((entry) => entry.status === "fail");
   expect(failures, "Every failed view remains visible in proof.json").toEqual([]);
   expect(proof.journeyReadbackErrors, "The live journey must be readable").toEqual([]);
+});
+
+test("fetches both read-only reference-deck editions from the signed-in Move", async ({ page }, testInfo) => {
+  test.setTimeout(8 * 60_000);
+  expect(BASE_URL).toBe("https://app.abarva.ai");
+  expect(MOVE_ID).toBe("1557f032-5a5c-4475-abe5-b1a841576649");
+  expect(process.env.E2E_MOVES_CLIENT_KEY).toBe("meridian");
+  expect(CLERK_SECRET_KEY).toMatch(/^sk_live_/);
+  await withClerkAuth(page, {
+    activeClient: process.env.E2E_MOVES_CLIENT_KEY,
+    email: process.env.E2E_MOVES_OPERATOR_EMAIL,
+  });
+  const proof: Array<{ edition: string; format: string; status: number; score: number | null; bytes: number; file: string; figureHash: string }> = [];
+  for (const edition of ["validation", "investment"] as const) {
+    let editionHash: string | null = null;
+    for (const format of ["pptx", "pdf"] as const) {
+      const response = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/preview?format=${format}`, { timeout: 120_000 });
+      if (response.status() !== 200) {
+        throw new Error(`${edition} ${format}: HTTP ${response.status()} ${await response.text().catch(() => "")}`);
+      }
+      expect(response.headers()["x-abarva-preview"]).toBe("not-persisted");
+      expect(response.headers()["cache-control"]).toContain("no-store");
+      const score = Number(response.headers()["x-abarva-deck-fidelity-score"]);
+      expect(Number.isFinite(score) && score >= 0 && score <= 100).toBe(true);
+      const figureHash = response.headers()["x-abarva-deck-figure-hash"];
+      expect(figureHash).toMatch(/^[0-9a-f]{64}$/);
+      if (editionHash) expect(figureHash).toBe(editionHash);
+      editionHash = figureHash;
+      const bytes = await response.body();
+      expect(bytes.length).toBeGreaterThan(500);
+      const file = testInfo.outputPath(`${edition}.${format}`);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, bytes);
+      if (format === "pptx") {
+        const zip = await JSZip.loadAsync(bytes);
+        const slideFiles = Object.keys(zip.files).filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name));
+        expect(slideFiles.length).toBe(edition === "validation" ? 11 : 22);
+        const xml = (await Promise.all(slideFiles.map((name) => zip.file(name)!.async("string")))).join("\n");
+        expect(xml).toContain("ref:source-line");
+        if (edition === "validation") expect(xml).not.toMatch(/ref:body:(?:timeline|architecture)/);
+      } else {
+        expect(bytes.subarray(0, 4).toString()).toBe("%PDF");
+      }
+      await testInfo.attach(`${edition}.${format}`, { path: file, contentType: format === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
+      proof.push({ edition, format, status: response.status(), score, bytes: bytes.length, file: path.basename(file), figureHash });
+    }
+    const workbookResponse = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/workbook`, { timeout: 120_000 });
+    if (workbookResponse.status() !== 200) {
+      throw new Error(`${edition} workbook: HTTP ${workbookResponse.status()} ${await workbookResponse.text().catch(() => "")}`);
+    }
+    expect(workbookResponse.headers()["x-abarva-preview"]).toBe("not-persisted");
+    expect(workbookResponse.headers()["x-abarva-deck-figure-hash"]).toBe(editionHash);
+    const workbookBytes = await workbookResponse.body();
+    const workbookZip = await JSZip.loadAsync(workbookBytes);
+    expect(await workbookZip.file("xl/workbook.xml")?.async("string")).toContain("Deck Figures");
+    const workbookFile = testInfo.outputPath(`${edition}.xlsx`);
+    fs.writeFileSync(workbookFile, workbookBytes);
+    await testInfo.attach(`${edition}.xlsx`, { path: workbookFile, contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    proof.push({ edition, format: "xlsx", status: workbookResponse.status(), score: null, bytes: workbookBytes.length, file: path.basename(workbookFile), figureHash: editionHash! });
+  }
+  const proofFile = testInfo.outputPath("deck-fidelity.json");
+  fs.writeFileSync(proofFile, `${JSON.stringify({ moveId: MOVE_ID, deployedSha: DEPLOYED_SHA, previews: proof }, null, 2)}\n`);
+  await testInfo.attach("deck-fidelity.json", { path: proofFile, contentType: "application/json" });
 });

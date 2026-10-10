@@ -106,9 +106,10 @@ function judgeReferenceSlide(
     if (!sourceLine.includes(sourceId))
       add("reference_source", `slide ${slide.index}: rendered source line omits ${sourceId}.`);
   }
-  const bodyText = Object.entries(named)
-    .filter(([name]) => name !== "ref:source-line")
-    .map(([, value]) => value).join(" ");
+  // `namedText` has one value per object name. Repeated KPI tiles share the
+  // metric marker, so that map keeps only the last tile; inspect every text
+  // run in the physical file when checking bound figures.
+  const bodyText = slide.textRuns.join(" ");
   for (const value of figureValues) {
     if (!bodyText.includes(value))
       add("reference_source", `slide ${slide.index}: bound figure is absent from the rendered slide.`);

@@ -131,6 +131,7 @@ describe("reference deck components", () => {
       { change: { objectNames: target.objectNames!.filter((n) => n !== "ref:source-line"), namedText: { ...target.namedText, "ref:source-line": "" } }, kind: "reference_source" },
       { change: { notesText: "" }, kind: "reference_structure" },
       { change: { pictureCount: 1 }, kind: "reference_editability" },
+      { change: { textRuns: target.textRuns.filter((run) => !run.includes("$1,000")) }, kind: "reference_source" },
     ] as const;
     for (const { change, kind } of cases) {
       const slides = [...rendered.slides];

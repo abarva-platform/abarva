@@ -30,6 +30,7 @@ export type ReferenceBlock =
   | { kind: "architecture"; layers: { name: string; items: string[] }[]; governance: string }
   | { kind: "bars"; items: { label: string; value: ReferenceFigure; magnitude: number }[] }
   | { kind: "timeline"; quarters: string[]; rows: { label: string; from: number; to: number; cost?: ReferenceFigure }[]; today: number; commit: number }
+  | { kind: "gap"; title: string; detail: string; nextAction: string }
   | { kind: "text"; lines: string[] };
 
 export interface ReferenceSlide {
@@ -196,6 +197,7 @@ export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFin
         case "architecture": return [...block.layers.flatMap((layer) => [layer.name, ...layer.items]), block.governance];
         case "bars": return block.items.map((item) => item.label);
         case "timeline": return [...block.quarters, ...block.rows.map((row) => row.label)];
+        case "gap": return [block.title, block.detail, block.nextAction];
         case "text": return block.lines;
       }
     });

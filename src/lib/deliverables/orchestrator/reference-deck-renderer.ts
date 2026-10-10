@@ -255,6 +255,20 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
         fontFace: BODY, fontSize: 14, color: C.accent, objectName: "ref:body:commit" });
       return y + 4.17;
     }
+    case "gap": {
+      slide.addShape("rect", { x, y, w, h: 3.55,
+        line: { color: C.rule, width: 0.8 }, fill: { color: C.panel },
+        objectName: "ref:body:governed-gap" });
+      slide.addShape("rect", { x, y, w: 0.1, h: 3.55,
+        line: { color: C.accent, transparency: 100 }, fill: { color: C.accent } });
+      slide.addText(block.title, { x: x + 0.36, y: y + 0.43, w: w - 0.8, h: 0.55,
+        fontFace: SERIF, fontSize: 25, color: C.ink, fit: "shrink", objectName: "ref:body:gap-title" });
+      slide.addText(block.detail, { x: x + 0.36, y: y + 1.24, w: w - 0.8, h: 0.66,
+        fontFace: BODY, fontSize: 16, color: C.ink, fit: "shrink", objectName: "ref:body:gap-detail" });
+      slide.addText(`NEXT READ  ${block.nextAction}`, { x: x + 0.36, y: y + 2.58, w: w - 0.8, h: 0.45,
+        fontFace: BODY, fontSize: 12, bold: true, color: C.accent, fit: "shrink", objectName: "ref:body:gap-action" });
+      return y + 3.67;
+    }
     case "text": {
       slide.addText(block.lines.join("\n"), { x, y, w, h: Math.min(3.7, Math.max(0.52, block.lines.length * 0.47)),
         fontFace: BODY, fontSize: 15, color: C.ink, breakLine: false,
