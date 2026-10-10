@@ -15,7 +15,7 @@ import "server-only";
 // The second governs.
 
 import type { InspectedDeck, InspectedSlide } from "./deck-inspection";
-import { figuresOnSlide, referenceArchetypeGaps, type ReferenceDeckSpec } from "./reference-deck-model";
+import { figuresOnSlide, referenceArchetypeGaps, referenceSourceLine, type ReferenceDeckSpec } from "./reference-deck-model";
 
 /**
  * Slide role. A cover or divider is legitimately thin and must SAY so — it is
@@ -100,11 +100,11 @@ function judgeReferenceSlide(
     add("reference_structure", `slide ${slide.index}: answer bar is missing.`);
   const figureValues = figuresOnSlide(expected).map((figure) => figure.display);
   const sourceLine = named["ref:source-line"] ?? "";
-  if (figureValues.length && !sourceLine.trim())
-    add("reference_source", `slide ${slide.index}: figure has no rendered source line.`);
+  if (figureValues.length && sourceLine !== referenceSourceLine(expected))
+    add("reference_source", `slide ${slide.index}: rendered source line does not match its governed source groups.`);
   for (const sourceId of expected.sourceIds ?? []) {
-    if (!sourceLine.includes(sourceId))
-      add("reference_source", `slide ${slide.index}: rendered source line omits ${sourceId}.`);
+    if (!slide.notesText?.includes(sourceId))
+      add("reference_source", `slide ${slide.index}: rendered notes omit ${sourceId}.`);
   }
   // `namedText` has one value per object name. Repeated KPI tiles share the
   // metric marker, so that map keeps only the last tile; inspect every text

@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 416,
-    "fenced": 231,
-    "fencedDirect": 107,
+    "routes": 418,
+    "fenced": 233,
+    "fencedDirect": 109,
     "fencedIndirect": 124,
     "unfenced": 185,
     "unfencedButReachesFenceModule": 101,
-    "behavioral": 86,
+    "behavioral": 88,
     "byteScannerOnly": 7,
     "none": 138
   },
@@ -5150,6 +5150,40 @@
       "coverage": null,
       "suites": {
         "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/decks/[edition]/preview/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/programs/[programId]/decks/[edition]/preview/__tests__/route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/decks/[edition]/workbook/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/app/api/v1/programs/[programId]/decks/[edition]/workbook/__tests__/route.test.ts"
+        ],
         "byteScanner": []
       }
     },

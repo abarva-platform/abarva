@@ -9,7 +9,7 @@ const mockRender = jest.fn();
 const mockInspect = jest.fn();
 const mockJudge = jest.fn();
 
-jest.mock("@/app/api/v1/programs/_auth", () => ({
+jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => mockRequireTenancy(),
   tenancyErrorResponse: () => Response.json({ error: "unauthorized" }, { status: 401 }),
 }));

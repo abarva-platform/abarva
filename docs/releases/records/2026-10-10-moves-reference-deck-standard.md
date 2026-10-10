@@ -27,7 +27,10 @@ those words are marked `draft words unavailable`.
 
 The value engine now exposes credited and program value, measured when earned
 and when paid, over the first three years. These figures are engine outputs,
-not slide arithmetic.
+not slide arithmetic. The investment value exhibit now shows those four bases,
+their engine-computed ROI, and the case cost basis. The slide source line stays
+readable while the exact source IDs and workbook cells remain in speaker notes
+and the companion workbook.
 
 ## Layer Impact
 

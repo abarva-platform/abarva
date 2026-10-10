@@ -2,7 +2,7 @@ import "server-only";
 
 import { Document, Page, Text, View, type DocumentProps } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
-import type { ReferenceBlock, ReferenceCell, ReferenceDeckSpec } from "./reference-deck-model";
+import { referenceSourceLine, type ReferenceBlock, type ReferenceCell, type ReferenceDeckSpec } from "./reference-deck-model";
 
 const ink = "#17202B";
 const paper = "#F8F7F3";
@@ -87,7 +87,7 @@ export function buildReferenceDeckPdf(spec: ReferenceDeckSpec): ReactElement<Doc
         {slide.archetype !== "cover" && slide.archetype !== "divider" && <View style={{ marginTop: 14, padding: 8, backgroundColor: ink }}><Text style={{ fontSize: 10, color: "#FFFFFF" }}>{slide.answerLabel}: {slide.answer}</Text></View>}
         {slide.blocks.map((block, blockIndex) => <PdfBlock key={blockIndex} block={block} />)}
         <Text style={{ position: "absolute", bottom: 29, left: 45, right: 45, fontSize: 8, color: dark ? "#FFFFFF" : muted }}>
-          {slide.sourceIds?.length ? `Sources: ${slide.sourceIds.join(" · ")}` : `${spec.program} · Discussion draft`}  ·  {index + 1}
+          {slide.sourceIds?.length ? referenceSourceLine(slide) : `${spec.program} · Discussion draft`}  ·  {index + 1}
         </Text>
       </Page>;
     })}

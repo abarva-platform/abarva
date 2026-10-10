@@ -32,6 +32,7 @@ const safeCaptured = (value: unknown): string => {
   return factTokens(line).length ? "Gap — captured figure needs a governed source" : line;
 };
 const money = (cents: number): string => `$${Math.round(cents / 100).toLocaleString("en-US")}`;
+const percent = (ratio: number): string => `${(ratio * 100).toFixed(1)}%`;
 const cell = (row: number): string => `Deck Figures!B${row}`;
 
 /** All figure bindings are assembled here; Claude has no route to mint one. */
@@ -74,12 +75,20 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     typeof value === "number" && Number.isSafeInteger(value)
       ? bind(`engine:${id}`, `Value engine: ${id.replace(/_/g, " ")}`, money(value)) : null;
   const annualCash = obj(economics?.annualCashCents);
+  const costCents = obj(economics?.costCents);
   const credited = basis("creditedEarned");
   const creditedPaid = basis("creditedPaid");
   const programEarned = basis("programEarned");
   const programPaid = basis("programPaid");
   const annual = dollars("annual_cash_base", annualCash?.base);
+  const caseCost = inputs.edition === "investment" ? dollars("case_cost_base", costCents?.base) : null;
   const threeTotal = dollars("three_year_credited_earned", credited?.totalCents);
+  const roi = (basisKey: string): ReferenceFigure | null => {
+    if (inputs.edition !== "investment") return null;
+    const value = basis(basisKey)?.roi;
+    return typeof value === "number" && Number.isFinite(value)
+      ? bind(`engine:${basisKey}_roi`, `Value engine: ${basisKey} ROI`, percent(value)) : null;
+  };
   const valueCell = (value: ReferenceFigure | null): ReferenceCell => value ??
     (inputs.valueCase.status === "gap" ? `Gap — ${inputs.valueCase.detail}` : GAP);
   const yearFigure = (basisKey: string, year: number): ReferenceFigure | null => {
@@ -159,7 +168,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
           { label: "Annual value", value: valueCell(annual), meaning: "Value-engine basis" },
           { label: "Credited value", value: valueCell(threeTotal), meaning: "Earned basis" },
           { label: "Approved ROM", value: valueCell(romCombined), meaning: "Delivery basis" },
-          { label: "Working assumptions", value: assumptions.length ? "Register rows open for review" : GAP, meaning: "Review status" },
+          { label: "Three-year ROI", value: valueCell(roi("creditedEarned")), meaning: "Value-engine base" },
         ]),
         { kind: "text", lines: [
           `Problem: ${safeRead(inputs.move.problemStatement)}`,
@@ -206,9 +215,13 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         const rows: ReferenceCell[][] = ["creditedEarned", "creditedPaid", "programEarned", "programPaid"]
           .filter((key) => inputs.edition === "investment" || key !== "programPaid")
           .map((key) => [key === "creditedEarned" ? "Credited · earned" : key === "creditedPaid" ? "Credited · paid" : key === "programEarned" ? "Program · earned" : "Program · paid",
-            valueCell(yearFigure(key, 0)), valueCell(yearFigure(key, 1)), valueCell(yearFigure(key, 2)), valueCell(dollars(`${key}_total`, basis(key)?.totalCents))]);
+            valueCell(yearFigure(key, 0)), valueCell(yearFigure(key, 1)), valueCell(yearFigure(key, 2)), valueCell(dollars(`${key}_total`, basis(key)?.totalCents)),
+            ...(inputs.edition === "investment" ? [valueCell(roi(key))] : [])]);
         if (inputs.edition === "validation") rows.push(["Counting basis", "Credited", "Earned", "No cash claim", "Confirm"]);
-        const blocks: ReferenceBlock[] = [table(["Basis", "Year one", "Year two", "Year three", "Total"], rows)];
+        else rows.push(["Case cost basis", "Not phased", "Not phased", "Not phased", valueCell(caseCost), "Value-engine cost"]);
+        const blocks: ReferenceBlock[] = [table(inputs.edition === "investment"
+          ? ["Basis", "Year one", "Year two", "Year three", "Total", "ROI"]
+          : ["Basis", "Year one", "Year two", "Year three", "Total"], rows)];
         const bars = [0, 1, 2].map((year) => ({ label: `Year ${["one", "two", "three"][year]}`, value: yearFigure("creditedEarned", year), magnitude: Number((credited?.annualCents as number[] | undefined)?.[year] ?? 0) }))
           .filter((row): row is { label: string; value: ReferenceFigure; magnitude: number } => row.value !== null);
         if (bars.length) blocks.push({ kind: "bars", items: bars });

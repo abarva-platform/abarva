@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
-import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/programs/_auth";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { assembleEditionInputs, ReferenceMoveUnavailable } from "@/lib/deliverables/orchestrator/reference-deck-inputs";
 import { VALIDATION_SEQUENCE, INVESTMENT_SEQUENCE, buildReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-edition";

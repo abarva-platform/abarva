@@ -6,7 +6,7 @@ const mockAssemble = jest.fn();
 const mockBuild = jest.fn();
 const mockWorkbook = jest.fn();
 
-jest.mock("@/app/api/v1/programs/_auth", () => ({
+jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => mockRequireTenancy(),
   tenancyErrorResponse: () => Response.json({ error: "unauthorized" }, { status: 401 }),
 }));

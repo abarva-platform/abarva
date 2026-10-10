@@ -4,6 +4,7 @@ import type PptxGenJS from "pptxgenjs";
 import { COLORS } from "@/lib/design/design-tokens";
 import {
   figuresOnSlide,
+  referenceSourceLine,
   validateReferenceDeck,
   type ReferenceBlock,
   type ReferenceCell,
@@ -125,7 +126,7 @@ function addChrome(slide: Slide, spec: ReferenceDeckSpec, content: ReferenceSlid
   });
   const sourceIds = content.sourceIds ?? [];
   if (sourceIds.length) {
-    slide.addText(`Sources: ${sourceIds.map((id) => `${id} ${spec.sources[id]}`).join(" · ")}`, {
+    slide.addText(referenceSourceLine(content), {
       x: 0.72, y: 6.88, w: 11.9, h: 0.22, fontFace: BODY,
       fontSize: 8, italic: true, color: C.muted, fit: "shrink",
       objectName: "ref:source-line",
@@ -147,7 +148,8 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
   switch (block.kind) {
     case "table": {
       const rows = block.rows.map((row) => row.map(display));
-      const rowH = Math.min(0.48, 3.95 / Math.max(1, rows.length + 1));
+      const rowH = block.columns.length >= 6 && rows.length >= 5
+        ? 0.4 : Math.min(0.48, 3.95 / Math.max(1, rows.length + 1));
       const cells = [block.columns, ...rows];
       const colW = w / block.columns.length;
       cells.forEach((row, rowIndex) => row.forEach((value, colIndex) => {
@@ -298,7 +300,14 @@ export async function renderReferenceDeck(spec: ReferenceDeckSpec): Promise<Buff
       for (const block of content.blocks) y = addBlock(slide, block, y);
       if (y > 6.16) throw new Error(`reference_deck_body_overflow: slide ${index + 1}`);
     }
-    if (content.speakerNotes) slide.addNotes(content.speakerNotes);
+    if (content.speakerNotes) {
+      const lineage = (content.sourceIds ?? []).map((id) => {
+        const cells = figuresOnSlide(content).filter((figure) => figure.sourceId === id)
+          .map((figure) => `${figure.workbookCell} ${figure.display}`).join(", ");
+        return `${id}: ${spec.sources[id]}${cells ? `; ${cells}` : ""}`;
+      });
+      slide.addNotes(`${content.speakerNotes}${lineage.length ? `\nLineage: ${lineage.join(" | ")}` : ""}`);
+    }
     if (figuresOnSlide(content).length && !(content.sourceIds ?? []).length)
       throw new Error(`reference_deck_missing_sources: slide ${index + 1}`);
   });

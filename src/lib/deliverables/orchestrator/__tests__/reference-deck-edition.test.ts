@@ -9,7 +9,10 @@ import fs from "node:fs";
 import type { EditionInputs } from "../reference-deck-inputs";
 import type { EditionWords } from "../reference-deck-words";
 
-const basis = (values: number[]) => ({ annualCents: values, totalCents: values.reduce((sum, item) => sum + item, 0), roi: null });
+const basis = (values: number[]) => {
+  const totalCents = values.reduce((sum, item) => sum + item, 0);
+  return { annualCents: values, totalCents, roi: (totalCents - 30000000) / 30000000 };
+};
 const words = (count: number): EditionWords[] => Array.from({ length: count }, () => ({
   title: "The governed read identifies the next decision.",
   answer: "Confirm the source and the owner before advancing.",
@@ -23,6 +26,7 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
     valueCase: { status: "ready", value: { ok: true, programId: "synthetic", figuresRedacted: false, case: {
       status: "evaluated", economics: {
         annualCashCents: { base: 120000000 },
+        costCents: { base: 30000000 },
         threeYearBases: { base: {
           creditedEarned: basis([100000000, 120000000, 140000000]),
           creditedPaid: basis([90000000, 110000000, 130000000]),

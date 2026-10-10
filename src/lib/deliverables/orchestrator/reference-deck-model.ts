@@ -61,6 +61,26 @@ export interface ReferenceDeckSpec {
   slides: ReferenceSlide[];
 }
 
+/** Human-readable source line; exact IDs remain in notes and the figure ledger. */
+export function referenceSourceLine(slide: ReferenceSlide): string {
+  const ids = slide.sourceIds ?? [];
+  if (!ids.length) return "";
+  const groups: string[] = [];
+  const engine = ids.filter((id) => id.startsWith("engine:"));
+  const rom = ids.filter((id) => id.startsWith("rom:"));
+  const assumptions = ids.filter((id) => id.startsWith("[A:"));
+  const publicSources = ids.filter((id) => id.startsWith("[S:"));
+  const capture = ids.filter((id) => id.startsWith("evidence:"));
+  if (engine.length) groups.push("Move value engine (case and three-year bases)");
+  if (rom.length) groups.push("Approved ROM snapshot");
+  if (assumptions.length) groups.push(`Assumptions register ${assumptions.join(", ")}`);
+  if (publicSources.length) groups.push(`Approved public sources ${publicSources.join(", ")}`);
+  if (capture.length) groups.push("Signed-in phase capture");
+  const known = new Set([...engine, ...rom, ...assumptions, ...publicSources, ...capture]);
+  groups.push(...ids.filter((id) => !known.has(id)));
+  return `Sources: ${groups.join(" · ")}. Exact figure IDs and cells: companion workbook.`;
+}
+
 const REQUIRED_BLOCK: Partial<Record<ReferenceArchetype, ReferenceBlock["kind"]>> = {
   one_page: "metrics", contents: "table", big_number_context: "metrics",
   plain_english_table: "table", flow_today: "flow", one_step_value: "table",
