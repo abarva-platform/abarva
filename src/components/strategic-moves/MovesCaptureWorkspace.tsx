@@ -84,11 +84,12 @@ export function MovesCaptureWorkspace({
 }: MovesCaptureWorkspaceProps) {
   const [compactDock, setCompactDock] = useState(false);
   useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
     const query = window.matchMedia("(max-width: 767px)");
     const update = () => setCompactDock(query.matches);
     update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
+    query.addEventListener?.("change", update);
+    return () => query.removeEventListener?.("change", update);
   }, []);
   const thread = useMemo(() => {
     const messages = avaThreadToDockMessages(avaThread);
