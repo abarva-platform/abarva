@@ -10,11 +10,11 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 412,
+    "routes": 415,
     "fenced": 231,
     "fencedDirect": 107,
     "fencedIndirect": 124,
-    "unfenced": 181,
+    "unfenced": 184,
     "unfencedButReachesFenceModule": 100,
     "behavioral": 85,
     "byteScannerOnly": 7,
@@ -7092,6 +7092,42 @@
         "behavioral": [
           "src/app/api/v1/source/intake/servicenow/review/__tests__/route.test.ts"
         ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/acknowledge/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/sign-in/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/sign-out/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
         "byteScanner": []
       }
     },
