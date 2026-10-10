@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { resolvePhaseWorkflow } from "../../src/lib/programs/phase-workflow-registry";
 import { STEP_PAGE_VIEWS, type StepPageView } from "../../src/lib/programs/step-page-views";
 import { withClerkAuth } from "./_helpers/auth";
 import { BASE_URL, CLERK_SECRET_KEY } from "./_helpers/env";
@@ -23,6 +24,9 @@ const PHASES = [0, 1, 2, 3, 4, 5] as const;
 const VIEW_ENTRIES = Object.entries(STEP_PAGE_VIEWS) as Array<
   [StepPageView, (typeof STEP_PAGE_VIEWS)[StepPageView]]
 >;
+const P2_HAS_EVERY_STEP_PAGE = resolvePhaseWorkflow(2, null).every((step) =>
+  VIEW_ENTRIES.some(([, entry]) => entry.phase === 2 && entry.stepId === step.id),
+);
 
 // Add an exact phase, view, visible text, and reason only for a reviewed gap.
 // An empty list means every read failure remains a test failure.
@@ -149,7 +153,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
       const landing = await inspectPage(page, routeFor(MOVE_ID!, phase), async () => {
         await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/);
         await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME!);
-        if (phase === 2) {
+        if (phase === 2 && !P2_HAS_EVERY_STEP_PAGE) {
           await expect(page.getByTestId("moves-capture-flow")).toBeVisible();
           expect(new URL(page.url()).searchParams.has("step")).toBe(false);
         } else {
