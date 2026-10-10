@@ -10,6 +10,7 @@ describe("step page views", () => {
     expect(parseStepPageView("architecture-options")).toBe(
       "architecture-options",
     );
+    expect(parseStepPageView("operating-adoption")).toBe("operating-adoption");
     expect(parseStepPageView("toString")).toBeNull();
     expect(parseStepPageView(["gate"])).toBeNull();
     expect(parseStepPageView(undefined)).toBeNull();
@@ -19,7 +20,10 @@ describe("step page views", () => {
     expect(stepPageHref("m1", 3, "P3.2")).toBe(
       "/strategic-moves/m1/phase/3?step=architecture-options",
     );
-    expect(stepPageHref("m1", 3, "P3.3")).toBe("/strategic-moves/m1/phase/3");
+    expect(stepPageHref("m1", 3, "P3.3")).toBe(
+      "/strategic-moves/m1/phase/3?step=operating-adoption",
+    );
+    expect(stepPageHref("m1", 3, "P3.4")).toBe("/strategic-moves/m1/phase/3");
   });
 
   it("names only steps the workflow registry declares", () => {

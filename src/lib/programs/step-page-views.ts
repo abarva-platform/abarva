@@ -9,6 +9,7 @@ export const STEP_PAGE_VIEWS = {
   "root-causes": { phase: 2, stepId: "P2.3" },
   "root-cause-design": { phase: 3, stepId: "P3.1" },
   "architecture-options": { phase: 3, stepId: "P3.2" },
+  "operating-adoption": { phase: 3, stepId: "P3.3" },
   gate: { phase: 3, stepId: "P3.5" },
 } as const satisfies Record<string, { phase: number; stepId: string }>;
 

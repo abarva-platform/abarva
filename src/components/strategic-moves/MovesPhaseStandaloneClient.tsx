@@ -5,6 +5,13 @@ import { captureValueText } from "@/lib/programs/structured-capture-text";
 import { RootCausesStep } from "@/components/strategic-moves/step-page/RootCausesStep";
 import { DesignTraceabilityStep } from "@/components/strategic-moves/step-page/DesignTraceabilityStep";
 import { ArchitectureOptionsStep } from "@/components/strategic-moves/step-page/ArchitectureOptionsStep";
+import { OperatingAdoptionStep } from "@/components/strategic-moves/step-page/OperatingAdoptionStep";
+import {
+  emptyOperatingAdoption,
+  isOperatingAdoptionComplete,
+  ownerGrid,
+  parseOperatingAdoption,
+} from "@/lib/programs/operating-adoption";
 import {
   stepPageHref,
   type StepPageView,
@@ -1114,6 +1121,14 @@ export function MovesPhaseStandaloneClient({
     Boolean(captureV2Enabled) &&
     phaseNum === 3 &&
     initialStepView === "architecture-options";
+  // P3 Step 3, "Name the owners and describe the change", behind the same
+  // flag. Opened with `?step=operating-adoption`; it writes the
+  // `operating_adoption` step record and the profile's capture answers.
+  const operatingStepPageActive =
+    stepPagesV3Enabled &&
+    Boolean(captureV2Enabled) &&
+    phaseNum === 3 &&
+    initialStepView === "operating-adoption";
   const rootCauseStepPageActive =
     stepPagesV3Enabled &&
     Boolean(captureV2Enabled) &&
@@ -3579,6 +3594,23 @@ export function MovesPhaseStandaloneClient({
       displayPhaseCaptureValues.recommendation ?? "",
     ),
   };
+  // Step 3 reads the same rows its page counts: Skipped counts as done on a
+  // technical route; otherwise every counted row is settled.
+  const p3OperatingRecord =
+    parseOperatingAdoption(displayPhaseCaptureValues.operating_adoption) ??
+    emptyOperatingAdoption();
+  recordStepDone["P3.3"] = isOperatingAdoptionComplete({
+    profile: resolveChangeProfile(confirmedSolutionRoute),
+    record: p3OperatingRecord,
+    grid: ownerGrid(
+      priorPhaseCapture?.gapsRootCauses ?? "",
+      parseDesignTraceability(displayPhaseCaptureValues.design_traceability) ??
+        emptyDesignTraceability(),
+      p3OperatingRecord,
+    ),
+    values: displayPhaseCaptureValues,
+    avaDraftKeys: Object.keys(avaDraftValues),
+  });
   const charterPlatformFit = (() => {
     const fields = readSolutionPatternFromCharter(
       (move.charter as Record<string, unknown> | null) ?? null,
@@ -3727,7 +3759,62 @@ export function MovesPhaseStandaloneClient({
         onBack={() =>
           window.location.assign(stepPageHref(move.id, phase.phase, "P3.1"))
         }
-        onContinue={() => window.location.assign(chrome.phaseHref(phase.phase))}
+        onContinue={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.3"))
+        }
+        frame={stepPageDock}
+      />
+    );
+  }
+
+  if (operatingStepPageActive) {
+    const chrome = p3StepPageChrome("P3.3");
+    return (
+      <OperatingAdoptionStep
+        moveId={move.id}
+        canReviewEvidence={canApproveGates}
+        onEvidenceChanged={() => window.location.reload()}
+        moveName={displayMoveName}
+        tabs={chrome.tabs}
+        phases={chrome.phases}
+        steps={chrome.steps}
+        stepIndex={chrome.stepIndex}
+        value={displayPhaseCaptureValues.operating_adoption ?? ""}
+        onChange={(value) =>
+          setVisiblePhaseCaptureValue("operating_adoption", value)
+        }
+        answers={displayPhaseCaptureValues}
+        onAnswerChange={setVisiblePhaseCaptureValue}
+        avaDraftKeys={Object.keys(avaDraftValues)}
+        route={confirmedSolutionRoute}
+        p2RouteHref={stepPageHref(move.id, 2, "P2.4")}
+        people={[
+          ...(move.sponsor
+            ? [
+                {
+                  name: move.sponsor.name,
+                  role: move.sponsor.role || "sponsor",
+                },
+              ]
+            : []),
+          ...(move.participants ?? []).map((p) => ({
+            name: p.name,
+            role: p.role || "participant",
+          })),
+        ]}
+        p2RootCauses={priorPhaseCapture?.gapsRootCauses ?? ""}
+        designTraceability={displayPhaseCaptureValues.design_traceability ?? ""}
+        step2Done={recordStepDone["P3.2"]}
+        step2Href={stepPageHref(move.id, phase.phase, "P3.2")}
+        registerProgramId={assumptionRegister?.programId ?? null}
+        decidedBy={currentUser?.email ?? "signed-in reviewer"}
+        today={new Date().toISOString().slice(0, 10)}
+        onBack={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.2"))
+        }
+        onContinue={() =>
+          window.location.assign(stepPageHref(move.id, phase.phase, "P3.4"))
+        }
         frame={stepPageDock}
       />
     );
@@ -4361,6 +4448,14 @@ export function MovesPhaseStandaloneClient({
                                   href={`/strategic-moves/${move.id}/phase/3?step=architecture-options`}
                                 >
                                   Choose a direction →
+                                </a>{" "}
+                                Step 3 names the owners and describes the
+                                change.{" "}
+                                <a
+                                  data-testid="open-operating-adoption"
+                                  href={`/strategic-moves/${move.id}/phase/3?step=operating-adoption`}
+                                >
+                                  Name the owners →
                                 </a>
                               </p>
                             ) : null}
