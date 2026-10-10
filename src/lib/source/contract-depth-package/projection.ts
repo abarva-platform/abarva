@@ -5,6 +5,13 @@ import {
   buildContractIntelligenceRecords,
 } from "../contract-intelligence/build";
 import type { ContractIntelligenceRecord } from "../contract-intelligence/types";
+import {
+  EXTRACTED_CLAUSE_TEXT_BASIS,
+  classifyContractClauseTextBasis,
+} from "./clause-text-basis";
+
+/** Stamped only on rows a document actually produced. */
+const CLAUSE_EXTRACTOR_VERSION = "synthetic-contract-depth-v1";
 
 export interface ContractDepthPackageInput {
   readonly contracts: readonly CsvRecord[];
@@ -478,16 +485,33 @@ export function projectContractDepthPackage(
     loaded_policy: value(doc, "synthetic_policy"),
   }));
 
-  const contractPdfClauseExtractions = input.contractClauses.map((clause) => ({
-    _tenant_key: value(clause, "tenant_key"),
-    _dataset_id: value(clause, "dataset_version"),
-    ...clause,
-    source_file_name: `${value(clause, "source_file_id")}.docx`,
-    source_file_sha256: "",
-    source_excerpt: value(clause, "value_text"),
-    extractor_version: "synthetic-contract-depth-v1",
-    extracted_at: "2026-08-28T00:00:00.000Z",
-  }));
+  const contractPdfClauseExtractions = input.contractClauses.map((clause) => {
+    // A clause row whose text was generated has no excerpt, no page and no
+    // extraction confidence, because no extractor ran over a document to
+    // produce it. These four fields were previously asserted unconditionally,
+    // so a sentence stating only the row's own provenance was projected as a
+    // page-cited excerpt at 0.91.
+    const basis = classifyContractClauseTextBasis(clause, {
+      extractorVersion: CLAUSE_EXTRACTOR_VERSION,
+    });
+    return {
+      _tenant_key: value(clause, "tenant_key"),
+      _dataset_id: value(clause, "dataset_version"),
+      ...clause,
+      source_file_name: `${value(clause, "source_file_id")}.docx`,
+      source_file_sha256: "",
+      clause_text_basis: basis.textBasis,
+      review_state: basis.reviewState,
+      confidence: basis.confidence === null ? "" : String(basis.confidence),
+      source_page: basis.sourcePage ?? "",
+      source_excerpt: basis.sourceExcerpt ?? "",
+      extractor_version: basis.extractorVersion ?? "",
+      extracted_at:
+        basis.textBasis === EXTRACTED_CLAUSE_TEXT_BASIS
+          ? "2026-08-28T00:00:00.000Z"
+          : "",
+    };
+  });
 
   const contractPdfPageText = input.contractPageText.map((page) => ({
     _tenant_key: value(page, "tenant_key"),

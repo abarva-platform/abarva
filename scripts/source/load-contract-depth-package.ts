@@ -11,6 +11,7 @@ import {
   type ContractDepthAdapterOutput,
   type ContractDepthSourceFileInput,
 } from "../../src/lib/source/contract-depth-package/adapter";
+import { contractTermGovernance } from "../../src/lib/source/contract-depth-package/clause-text-basis";
 import { projectContractDepthPackage } from "../../src/lib/source/contract-depth-package/projection";
 import type { CsvRecord } from "../../src/lib/source/contract-depth-package/projection";
 import { performanceMeasureFromSource } from "../../src/lib/source/contract-intelligence/performance-units";
@@ -1335,6 +1336,7 @@ async function upsertContractTerms(
   clauses: readonly CsvRecord[],
 ): Promise<void> {
   for (const clause of clauses) {
+    const governance = contractTermGovernance(clause);
     await client.query(
       `INSERT INTO source.contract_term (
          tenant_key, term_id, contract_id, term_type, term_name, term_value,
@@ -1344,13 +1346,14 @@ async function upsertContractTerms(
        )
        VALUES (
          $1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, $2,
-         CURRENT_DATE, $11, 'reviewed', $12, $13, $14::jsonb
+         CURRENT_DATE, $11, $15, $12, $13, $14::jsonb
        )
        ON CONFLICT (tenant_key, term_id)
        DO UPDATE SET term_value = EXCLUDED.term_value,
                      value_num = EXCLUDED.value_num,
                      page_ref = EXCLUDED.page_ref,
                      confidence = EXCLUDED.confidence,
+                     quality_state = EXCLUDED.quality_state,
                      evidence_reference = EXCLUDED.evidence_reference,
                      load_run_id = EXCLUDED.load_run_id,
                      raw_payload = EXCLUDED.raw_payload,
@@ -1364,13 +1367,21 @@ async function upsertContractTerms(
         stringValue(clause, "concept_ref"),
         stringValue(clause, "value_text"),
         numberValue(clause, "value_num"),
-        stringValue(clause, "source_page"),
+        // `page_ref`, `confidence` and `quality_state` come from the governed
+        // classification rather than from the row verbatim. Read verbatim,
+        // this write asserted `quality_state: 'reviewed'` for every clause
+        // unconditionally and substituted `0.82` for a missing confidence, so
+        // clearing those columns in the source file would not have been
+        // enough on its own. A derived row now loads page-less, score-less
+        // and unreviewed, which is what it is.
+        governance.pageRef,
         stringValue(clause, "source_section"),
         SOURCE_SYSTEM,
-        numberValue(clause, "confidence") ?? 0.82,
+        governance.confidence,
         `source_contract_depth_package:${args.datasetVersion}`,
         args.loadRunId,
-        JSON.stringify(clause),
+        JSON.stringify({ ...clause, clause_text_basis: governance.textBasis }),
+        governance.qualityState,
       ],
     );
   }

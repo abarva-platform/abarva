@@ -70,3 +70,20 @@ jobs:
       # render gated nothing. Naming the directory wires it in the same step.
       - name: Home walkthrough export suites
         run: npx jest src/lib/home/export --no-coverage --ci --runInBand
+
+      # Clause rows whose `value_text` was generated must not present themselves as
+      # reviewed, page-cited extractions. A governed contract-depth package carried 56
+      # such rows at `confidence: 0.91` with a populated `source_page`, and both sinks
+      # — the contract-term load and the clause projection — manufactured those
+      # assertions back when the row was silent, so clearing the columns in the source
+      # file alone would not have held.
+      #
+      # Wired HERE rather than into `unit-suites.yml`: `Unit suites that pass on main`
+      # is in none of the 19 contexts in `docs/ci/required-status-checks.json`, so a
+      # suite registered only there cannot fail a merge. `Routes and disclaimers` is
+      # required, which is the whole point of the step. The two suites already in
+      # that directory are reached by `unit-suites.yml` alone, so they are counted
+      # as covered by the census and still gate nothing; this step is the first
+      # required reader of the directory.
+      - name: Governed clause text basis
+        run: npx jest --runTestsByPath src/lib/source/contract-depth-package/__tests__/clause-text-basis.test.ts --no-coverage --ci --runInBand
