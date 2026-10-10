@@ -36,7 +36,15 @@ const KNOWN_GAPS: ReadonlyArray<{
   view: StepPageView;
   text: string;
   reason: string;
-}> = [];
+}> = [
+  {
+    phase: 4,
+    view: "p4-estimate",
+    text: "No approved estimate yet",
+    reason:
+      "This existing fixture has no approved P3 estimate. The P4 estimate step remains blocked until a real approval is recorded.",
+  },
+];
 const BAD_READ = /could not be read|unavailable/i;
 
 function routeFor(moveId: string, phase: number, query = ""): string {

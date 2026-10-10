@@ -70,5 +70,5 @@ Revert the PR through the normal release lane. No database rollback is needed.
 ## Known Gaps
 
 - A production Clerk E2E key must be configured as `CLERK_PRODUCTION_E2E_SECRET_KEY`; the key itself must not enter this repository. The shared development secret remains separate.
-- A read-only walk of an existing fixture can reveal missing approved upstream inputs. Such a page remains blocked and must not be treated as a software pass by inventing approval state.
+- A read-only walk of an existing fixture can reveal a missing approved upstream estimate. The walk records this one exact P4 view as a known gap; the page remains blocked and no approval state is invented.
 - The candidate has no post-deploy signed-in proof yet.
