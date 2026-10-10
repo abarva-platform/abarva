@@ -6,10 +6,29 @@
  */
 
 export const STEP_PAGE_VIEWS = {
+  "p0-signal": { phase: 0, stepId: "P0.1" },
+  "p0-scope": { phase: 0, stepId: "P0.2" },
+  "p0-value": { phase: 0, stepId: "P0.3" },
+  "p0-owner-evidence": { phase: 0, stepId: "P0.4" },
+  "p0-approve": { phase: 0, stepId: "P0.5" },
+  "p1-sponsor-scope": { phase: 1, stepId: "P1.1" },
+  "p1-stakeholders": { phase: 1, stepId: "P1.2" },
+  "p1-success": { phase: 1, stepId: "P1.3" },
+  "p1-evidence-change": { phase: 1, stepId: "P1.4" },
+  "p1-charter-gate": { phase: 1, stepId: "P1.5" },
   "root-causes": { phase: 2, stepId: "P2.3" },
   "root-cause-design": { phase: 3, stepId: "P3.1" },
   "architecture-options": { phase: 3, stepId: "P3.2" },
   gate: { phase: 3, stepId: "P3.5" },
+  "p4-milestones": { phase: 4, stepId: "P4.1" },
+  "p4-estimate": { phase: 4, stepId: "P4.2" },
+  "p4-value": { phase: 4, stepId: "P4.3" },
+  "p4-tower": { phase: 4, stepId: "P4.4" },
+  "p4-gate": { phase: 4, stepId: "P4.5" },
+  "p5-owners": { phase: 5, stepId: "P5.1" },
+  "p5-measurement": { phase: 5, stepId: "P5.2" },
+  "p5-first-90": { phase: 5, stepId: "P5.3" },
+  "p5-handoff": { phase: 5, stepId: "P5.4" },
 } as const satisfies Record<string, { phase: number; stepId: string }>;
 
 export type StepPageView = keyof typeof STEP_PAGE_VIEWS;

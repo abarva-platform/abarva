@@ -128,6 +128,8 @@ export interface MovesCaptureFlowProps {
   requireAnswers?: boolean;
   /** Start on this step (0..2). Defaults to 0. */
   initialStep?: 0 | 1 | 2;
+  /** During step-page transition, open the one legacy section a missing page owns. */
+  initialFocusSectionKey?: string | null;
   /**
    * Governed submit control for the final step. When provided, it replaces the
    * built-in "Submit" button on step 3 — the host passes the real approve/build
@@ -214,6 +216,7 @@ export function MovesCaptureFlow({
   ava,
   requireAnswers = false,
   initialStep,
+  initialFocusSectionKey = null,
   approveSlot,
   allowReviewBeforeSubmit = false,
   workspaceV2 = false,
@@ -274,11 +277,17 @@ export function MovesCaptureFlow({
     () =>
       new Set(
         groupSections(groups[initialStep ?? resumeStep] ?? groups[0])
-          .filter((section) => !isSectionComplete(section.key))
+          .filter(
+            (section) =>
+              !isSectionComplete(section.key) ||
+              section.key === initialFocusSectionKey,
+          )
           .map((section) => section.key),
       ),
   );
-  const [focusSectionKey, setFocusSectionKey] = useState<string | null>(null);
+  const [focusSectionKey, setFocusSectionKey] = useState<string | null>(
+    initialFocusSectionKey,
+  );
   const stepHeading = useRef<HTMLHeadingElement>(null);
   const hasNavigated = useRef(false);
   useEffect(() => {

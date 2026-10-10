@@ -126,6 +126,86 @@ function writeRationale(
 }
 
 describe("GateReadinessStep", () => {
+  it("keeps P0 seed checks pending until a person approves the brief", async () => {
+    const onSubmit = jest.fn<Promise<void>, [BuildSettledResult]>(
+      async () => undefined,
+    );
+    const p0 = props({
+      phaseNum: 0,
+      phaseCode: "P0",
+      phaseName: "Originate",
+      nextPhaseLabel: "P1 Charter",
+      routeDocumentKeys: [],
+      initialArtifacts: [],
+      criteria: [
+        {
+          id: "program_seed_recorded",
+          label: "Origination brief signed off",
+          severity: "hard",
+          completed: false,
+          verified: true,
+        },
+        {
+          id: "value_hypothesis_seed",
+          label: "Value hypothesis seed recorded",
+          severity: "hard",
+          completed: false,
+          verified: true,
+        },
+      ],
+      originationReady: true,
+      onSubmit,
+    });
+    const { container } = render(<GateReadinessStep {...p0} />);
+    expect(container.textContent).toContain(
+      "The seed checks clear only after that approval.",
+    );
+    expect(
+      within(container).getByRole("heading", {
+        name: /^Needs your decision/,
+      }),
+    ).toBeTruthy();
+    expect(container.textContent).toContain(
+      "Why origination should pass the gate",
+    );
+    expect(container.querySelectorAll("#gate-rationale")).toHaveLength(1);
+    const button = within(footer(container)).getByRole("button", {
+      name: "Approve origination",
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    writeRationale(container, "I approve this synthetic origination brief.");
+    expect(container.querySelectorAll("#gate-rationale")).toHaveLength(1);
+    expect(button.disabled).toBe(false);
+    await act(async () => fireEvent.click(button));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        humanRationale: "I approve this synthetic origination brief.",
+        succeededKeys: ["origination_brief"],
+      }),
+    );
+  });
+
+  it("does not offer P0 approval without reviewed source evidence", () => {
+    const { container } = render(
+      <GateReadinessStep
+        {...props({
+          phaseNum: 0,
+          phaseCode: "P0",
+          phaseName: "Originate",
+          routeDocumentKeys: [],
+          initialArtifacts: [],
+          originationReady: false,
+        })}
+      />,
+    );
+    writeRationale(container);
+    expect(
+      (within(footer(container)).getByRole("button", {
+        name: "Approve origination",
+      }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
   it("holds submission until the approver writes a rationale, then records it with the submission", async () => {
     const onSubmit = jest.fn<Promise<void>, [BuildSettledResult]>(
       async () => undefined,
