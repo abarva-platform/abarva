@@ -31,10 +31,11 @@ Production signed-in checks now require a dedicated production Clerk credential 
 - Four workflows that sign in to the production app require the dedicated production E2E secret and refuse a key without the production prefix. Development browser checks retain their separate credential.
 - Shared step-page header and call sites show the tenant name from the authenticated Move projection.
 - The phase route evaluates the viewed historical phase's gate while preserving current-phase navigation tallies.
+- The read-only walk treats network idle as a bounded settling aid and checks final readback text; its one named upstream-estimate gap cannot mask a separate read failure.
 
 ## QA / Validation
 
-- Full step-page Jest suite: 9 passed, 157 tests passed. Transformer suite: 17 tests passed.
+- Full step-page Jest suite: 9 passed, 157 tests passed. Transformer suite: 17 tests passed. Full Programs suite: 238 suites and 3,740 tests passed.
 - Mutation checks: removing the tenant label failed its page test; returning the current gate for a historical view failed its transformer test. Both original files were restored.
 - Typecheck: pass.
 - Focused ESLint: pass.
@@ -69,6 +70,6 @@ Revert the PR through the normal release lane. No database rollback is needed.
 
 ## Known Gaps
 
-- A production Clerk E2E key must be configured as `CLERK_PRODUCTION_E2E_SECRET_KEY`; the key itself must not enter this repository. The shared development secret remains separate.
+- The production E2E key is configured as the `CLERK_PRODUCTION_E2E_SECRET_KEY` GitHub Actions secret; the key itself is absent from this repository. The shared development secret remains separate.
 - A read-only walk of an existing fixture can reveal a missing approved upstream estimate. The walk records this one exact P4 view as a known gap; the page remains blocked and no approval state is invented.
 - The candidate has no post-deploy signed-in proof yet.
