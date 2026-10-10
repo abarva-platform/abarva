@@ -254,6 +254,103 @@ function SourceNewWorkspace({
 }
 
 describe("SourceNewWorkspace", () => {
+  it("lets an operator walk empty supplier steps without presenting a supplier record", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "scope", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Event phases" })).getByRole(
+        "button",
+        { name: /Suppliers & NDA/ },
+      ),
+    );
+    const preview = screen.getByRole("region", { name: "Phase preview" });
+    expect(within(preview).getByText("Preview only. No step below is recorded for this event.")).toBeTruthy();
+    const steps = within(preview).getByRole("tablist", { name: "Preview steps" });
+    expect(within(steps).getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "01 Candidate panel",
+      "02 Contact authority",
+      "03 NDA coverage",
+    ]);
+    fireEvent.click(within(steps).getByRole("tab", { name: "03 NDA coverage" }));
+    expect(within(preview).getByRole("tabpanel").textContent).toContain("Executed NDA");
+    fireEvent.keyDown(within(steps).getByRole("tab", { name: "03 NDA coverage" }), { key: "Home" });
+    expect(within(steps).getByRole("tab", { name: "01 Candidate panel" }).getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(within(steps).getByRole("tab", { name: "01 Candidate panel" }), { key: "ArrowRight" });
+    expect(within(steps).getByRole("tab", { name: "02 Contact authority" }).getAttribute("aria-selected")).toBe("true");
+    expect(within(preview).queryByRole("button", { name: /record|send|publish/i })).toBeNull();
+    expect(screen.queryByText("Recorded earlier in this event")).toBeNull();
+  });
+
+  it("previews market package steps with no borrowed supplier or release state", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "scope", lifecycle: "active" }}
+        files={[marketPackageFile]}
+      />,
+    );
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Event phases" })).getByRole(
+        "button",
+        { name: /Market package/ },
+      ),
+    );
+    const preview = screen.getByRole("region", { name: "Phase preview" });
+    expect(within(preview).getByText("Preview only. No step below is recorded for this event.")).toBeTruthy();
+    const steps = within(preview).getByRole("tablist", { name: "Preview steps" });
+    expect(within(steps).getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "01 Package content",
+      "02 Release review",
+      "03 Issue record",
+    ]);
+    expect(within(preview).queryByText("Sourcing package draft")).toBeNull();
+    const textNodes: string[] = [];
+    const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) textNodes.push(walker.currentNode.textContent?.trim() ?? "");
+    expect(textNodes).not.toContain("Recorded");
+    expect(textNodes).not.toContain("Current");
+    expect(textNodes).not.toContain("Approved");
+  });
+
+  it("keeps an off-path market phase out of the preview and recorded views", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "scope", lifecycle: "active", sourcingMotion: "contract_optimization" }}
+        files={[]}
+      />,
+    );
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Event phases" })).getByRole(
+        "button",
+        { name: /Market package/ },
+      ),
+    );
+    expect(screen.getByRole("heading", { name: "Not on this path" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Phase preview" })).toBeNull();
+    expect(screen.queryByText("Recorded earlier in this event")).toBeNull();
+    expect(screen.queryByText("Package content")).toBeNull();
+  });
+
+  it("does not acknowledge an off-path phase during a demo walkthrough", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "scope", lifecycle: "active", sourcingMotion: "contract_optimization" }}
+        files={[]}
+        demoMode
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Self-approve for demo" }));
+    expect(screen.getByRole("heading", { name: "Suppliers & NDA demo preview" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Self-approve for demo" }));
+    expect(screen.getByRole("heading", { name: "Demo walkthrough complete" })).toBeTruthy();
+    const phases = screen.getByRole("navigation", { name: "Event phases" });
+    expect(within(phases).getByRole("button", { name: /Market package/ }).textContent).toContain("Not on this path");
+    expect(within(phases).getByRole("button", { name: /Market package/ }).textContent).not.toContain("Demo acknowledged");
+  });
+
   it("keeps demo self-acknowledgements separate from governed stage and decisions", () => {
     const originalFetch = global.fetch;
     const fetchSpy = jest.fn(() => {
@@ -280,7 +377,8 @@ describe("SourceNewWorkspace", () => {
         screen.getByRole("heading", { name: "Suppliers & NDA demo preview" }),
       ).toBeTruthy();
       expect(screen.getByText(/governed stage remains Scope/i)).toBeTruthy();
-      expect(screen.getByText(/candidate authority could not be read/i)).toBeTruthy();
+      expect(screen.getByText("Preview only. No step below is recorded for this event.")).toBeTruthy();
+      expect(screen.queryByText(/candidate authority could not be read/i)).toBeNull();
       fireEvent.click(
         screen.getByRole("button", { name: "Self-approve for demo" }),
       );
@@ -2370,7 +2468,7 @@ describe("SourceNewWorkspace", () => {
 
     // Navigate to a later phase (Suppliers & NDA is after Define)
     fireEvent.click(getPhaseButtons()[2]);
-    expect(screen.getByText("This phase is not yet open")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Phase preview" })).toBeTruthy();
     expect(screen.queryByText("Recorded earlier in this event")).toBeNull();
     // Sidebar still offers one return action
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();

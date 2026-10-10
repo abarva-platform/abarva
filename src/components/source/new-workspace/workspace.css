@@ -35,6 +35,20 @@
 .snw-panel { padding-top: 35px; }
 .snw-plain { max-width: 750px; }
 .snw-note { font-size: 13px; color: #925817; padding: 12px 0; }
+.snw-preview { border-top: 1px solid #d8ddd9; }
+.snw-preview-status { position: sticky; top: 0; z-index: 2; margin: 0; padding: 11px 14px; border-left: 3px solid #176b55; background: #eaf4ef; color: #145642; font-size: 13px; font-weight: 650; }
+.snw-preview-steps { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid #dededb; padding-top: 12px; }
+.snw-preview-steps button { flex: 0 0 auto; appearance: none; border: 0; border-bottom: 2px solid transparent; background: none; padding: 10px 12px; color: #666; font: 600 12px Inter, system-ui, sans-serif; cursor: pointer; }
+.snw-preview-steps button[aria-selected="true"] { border-bottom-color: #176b55; color: #145642; }
+.snw-preview-steps button span { color: #777; font: 10px "JetBrains Mono", ui-monospace, monospace; }
+.snw-preview-panel { min-height: 225px; padding: 18px 0 4px; }
+.snw-preview-panel h3 { margin: 0 0 8px; font-size: 15px; }
+.snw-preview-panel p { margin: 0 0 18px; color: #5e5e5e; font-size: 13px; line-height: 1.5; }
+.snw-preview-panel dl { margin: 0; }
+.snw-preview-panel dl div { display: grid; grid-template-columns: minmax(115px, 24%) minmax(0, 1fr); gap: 20px; border-top: 1px solid #e8e8e5; padding: 12px 0; font-size: 13px; }
+.snw-preview-panel dt { color: #777; }
+.snw-preview-panel dd { margin: 0; color: #5e5e5e; }
+.snw-preview-gate { max-width: 68ch; color: #6d6252; font-size: 12px; line-height: 1.5; }
 .snw-text-action { font-size: 13px; color: #0052a3; }
 .snw-inline-form { display: grid; grid-template-columns: minmax(180px, 1fr) auto; gap: 8px; align-items: end; margin-top: 10px; max-width: 620px; }
 .snw-inline-form label { display: grid; gap: 4px; color: #5f5f5b; font-size: 11px; font-weight: 650; text-transform: uppercase; }

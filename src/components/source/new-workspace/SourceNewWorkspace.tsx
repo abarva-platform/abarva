@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
+import { SourceNewPhasePreview } from "./SourceNewPhasePreview";
 import { SourceNewNdaCapture } from "./SourceNewNdaCapture";
 import { SourceNewProspectiveSupplierForm } from "./SourceNewProspectiveSupplierForm";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
@@ -389,14 +390,17 @@ export function SourceNewWorkspace({
   const demoActive = demoMode && current !== null && !completedEvent;
   const currentIndex =
     current === null ? -1 : SOURCE_NEW_PHASE_ORDER.indexOf(current);
-  const demoIndex = Math.min(
-    currentIndex + demoAcknowledged.length,
-    SOURCE_NEW_PHASE_ORDER.length - 1,
+  const demoPath = SOURCE_NEW_PHASE_ORDER.slice(currentIndex).filter(
+    (item) => stateOf(item) !== "off_path",
   );
-  const demoPhase = demoActive ? SOURCE_NEW_PHASE_ORDER[demoIndex] : null;
+  const demoIndex = Math.min(
+    demoAcknowledged.length,
+    demoPath.length - 1,
+  );
+  const demoPhase = demoActive ? demoPath[demoIndex] : null;
   const demoFinished =
     demoActive &&
-    demoAcknowledged.length >= SOURCE_NEW_PHASE_ORDER.length - currentIndex;
+    demoAcknowledged.length >= demoPath.length;
   const historicalGapPhases = sourceNewHistoricalGapPhases(event, evidence);
   const completionReviewNeeded = historicalGapPhases.length > 0;
   const phases = phasesFor(event);
@@ -653,41 +657,26 @@ export function SourceNewWorkspace({
                     </dl>
                   </div>
                 </>
-              ) : demoActive &&
-                phase === demoPhase &&
-                stateOf(phase) === "not_open" ? (
+              ) : stateOf(phase) === "off_path" ? (
                 <>
-                  <h2>
-                    {phases.find((item) => item.key === phase)?.label} demo
-                    preview
-                  </h2>
+                  <h2>Not on this path</h2>
                   <p className="snw-lede">
-                    This is a presentation preview. The governed phase is still
-                    closed, and this decision does not meet its approval or
-                    evidence requirements.
+                    This event&apos;s declared sourcing path does not include this
+                    phase. No phase work is expected here.
                   </p>
-                  <p className="snw-note">
-                    Before this phase can open in a real event:{" "}
-                    {PREVIEW_UNMET_CONDITIONS[phase]}
-                  </p>
-                  <SupplierPhasePanels
-                    phase={phase}
-                    event={event}
-                    panel={stage04VendorPanel}
-                    coverage={stage05NdaCoverage}
-                    eventHref={eventHref}
-                    files={files}
-                  />
                 </>
               ) : stateOf(phase) === "not_open" ? (
                 <>
-                  <h2>This phase is not yet open</h2>
+                  <h2>
+                    {phases.find((item) => item.key === phase)?.label}
+                    {demoActive && phase === demoPhase ? " demo" : ""} preview
+                  </h2>
                   <p className="snw-lede">
-                    The event has not reached this phase. Earlier gates must be
-                    cleared before this work can begin. Browsing here does not
+                    This phase is not yet open. Browsing its steps does not
                     advance the event.
                   </p>
-                  <p className="snw-note">
+                  <SourceNewPhasePreview key={phase} phase={phase} />
+                  <p className="snw-preview-gate">
                     Before this phase can open:{" "}
                     {PREVIEW_UNMET_CONDITIONS[phase]}
                   </p>
@@ -833,6 +822,8 @@ export function SourceNewWorkspace({
                     ? action.detail
                     : stateOf(phase) === "not_open"
                       ? "This phase is locked. The event must advance to open it."
+                      : stateOf(phase) === "off_path"
+                        ? "This phase does not apply to this event's declared sourcing path."
                       : "You are reviewing a phase the event has moved past. No gate is changed here."}
               </p>
               {demoActive && phase === demoPhase ? (
@@ -853,7 +844,7 @@ export function SourceNewWorkspace({
                     type="button"
                     onClick={() => {
                       setDemoAcknowledged((previous) => [...previous, phase]);
-                      const next = SOURCE_NEW_PHASE_ORDER[demoIndex + 1];
+                      const next = demoPath[demoIndex + 1];
                       if (next) setPhase(next);
                     }}
                   >
