@@ -30,14 +30,14 @@ Eight capture step pages in phase-owned slots, existing generic gate pages for e
 
 ## QA / Validation
 
-- Pass: focused P0/P1 page, host, routing and text-reader tests.
-- Pass after rebasing onto current main: 3,557 Programs unit tests across
-  230 suites and 382 focused page, gate, host, text-reader and routing tests
-  across five suites. The newer mounted P3 view remains in routing.
-- Pass: twelve behavior mutations each caused a focused test failure, then were restored.
-- Pass: 160 real-component renders across desktop/mobile, light/dark, capture and gate states; no horizontal overflow at 390px.
+- Pass: opening Edit leaves the persisted capture intact; Cancel and navigation away leave the saved answer readable, and only Save changes writes a replacement.
+- Pass: P0 and P1 host tests confirm the phase address opens the first incomplete step with all pages present and the flag on; the explicit legacy query stays on the capture flow.
+- Pass after rebasing onto current main: 6,790 Programs unit tests across 424 suites and 386 focused page, gate, host, text-reader and routing tests across five suites. The mounted P3 Step 3 view remains in routing.
+- Pass: fifteen behavior mutations each caused a focused test failure, then were restored, including Edit clearing capture, legacy redirect, and missing flag-on landing.
+- Pass: 164 real-component renders across desktop/mobile, light/dark, capture, gate and Edit states; no horizontal overflow at 390px.
 - Pass: TypeScript, changed-file lint, orphan and route/export reachability checks.
-- Pass: test census and tenancy-fence census checks; generated product manual check.
+- Pass: test census rose by exactly two covered files to 2,800; tenancy-fence census checks and generated product manual check passed.
+- Pass: Prettier ran on every added or changed file.
 - Pass: release check.
 - Not run: signed-in product walk; requires the deployed revision and test identity after merge.
 
@@ -65,4 +65,4 @@ The PR diff, local test and quality-check output, mutation-probe notes, and P0/P
 
 ## Known Gaps
 
-Signed-in parity and the deployed runtime invariant require later verification. Users & Access provisions Move participants but does not currently assign their sponsor role; the direct sponsor-assignment UI path remains open. The legacy flow remains as a hatch until a signed-in walk supports a separate removal PR.
+Signed-in parity and the deployed runtime invariant require later verification. Users & Access provisions Move participants but does not currently assign their sponsor role; the direct sponsor-assignment UI path remains open. The legacy flow remains as a hatch until a signed-in walk supports a separate removal PR. The pending P3 Step 4 step-page change requires a final rebase and routing/page-count check before this candidate merges.

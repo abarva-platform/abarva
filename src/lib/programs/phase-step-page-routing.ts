@@ -11,7 +11,7 @@ const DEDICATED_STEP_PAGE_VIEWS = [
   "architecture-options",
   "operating-adoption",
   "rom-estimate",
- ] as const satisfies readonly StepPageView[];
+] as const satisfies readonly StepPageView[];
 
 // GateReadinessStep is mounted for the last workflow step in every phase.
 // Derive those views from the workflow instead of maintaining a second gate list.

@@ -6,7 +6,10 @@ import type {
   StepPageStep,
 } from "@/components/strategic-moves/step-page/MovesStepPage";
 import type { GateReadinessStepProps } from "@/components/strategic-moves/step-page/GateReadinessStep";
-import type { CharterBasisValue, CharterBasisApprovedSource } from "@/components/strategic-moves/CharterBasisField";
+import type {
+  CharterBasisValue,
+  CharterBasisApprovedSource,
+} from "@/components/strategic-moves/CharterBasisField";
 import { P0_STEP_PAGES } from "./p0-step-pages";
 import { P1_STEP_PAGES } from "./p1-step-pages";
 import { P4_STEP_PAGES } from "./p4-step-pages";
@@ -45,7 +48,9 @@ export interface StepPageHostProps {
   charterBasis?: {
     active: boolean;
     values: Readonly<Record<string, CharterBasisValue>>;
-    approvedSources: Readonly<Record<string, readonly CharterBasisApprovedSource[]>>;
+    approvedSources: Readonly<
+      Record<string, readonly CharterBasisApprovedSource[]>
+    >;
     errors: Readonly<Record<string, string>>;
     setValue: (sectionKey: string, value: CharterBasisValue | null) => void;
   };

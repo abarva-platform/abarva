@@ -432,16 +432,64 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
   Record<number, readonly PhaseStepRecordSection[]>
 > = {
   0: [
-    { key: "p0_signal_step", stepId: "P0.1", label: "Signal and problem review", description: "Team-reviewed capture answers and pending session-note drafts." },
-    { key: "p0_scope_step", stepId: "P0.2", label: "Scope boundary review", description: "Team-reviewed capture answers and pending session-note drafts." },
-    { key: "p0_value_step", stepId: "P0.3", label: "Value hypothesis review", description: "Team-reviewed capture answers and pending session-note drafts." },
-    { key: "p0_owner_evidence_step", stepId: "P0.4", label: "Owner and evidence review", description: "Team-reviewed capture answers and pending session-note drafts." },
+    {
+      key: "p0_signal_step",
+      stepId: "P0.1",
+      label: "Signal and problem review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p0_scope_step",
+      stepId: "P0.2",
+      label: "Scope boundary review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p0_value_step",
+      stepId: "P0.3",
+      label: "Value hypothesis review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p0_owner_evidence_step",
+      stepId: "P0.4",
+      label: "Owner and evidence review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
   ],
   1: [
-    { key: "p1_sponsor_scope_step", stepId: "P1.1", label: "Sponsor and scope review", description: "Team-reviewed capture answers and pending session-note drafts." },
-    { key: "p1_stakeholders_step", stepId: "P1.2", label: "Stakeholder and decision rights review", description: "Team-reviewed capture answers and pending session-note drafts." },
-    { key: "p1_success_step", stepId: "P1.3", label: "Success measures review", description: "Team-reviewed capture answers and pending session-note drafts." },
-    { key: "p1_evidence_change_step", stepId: "P1.4", label: "Evidence and change review", description: "Team-reviewed capture answers and pending session-note drafts." },
+    {
+      key: "p1_sponsor_scope_step",
+      stepId: "P1.1",
+      label: "Sponsor and scope review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p1_stakeholders_step",
+      stepId: "P1.2",
+      label: "Stakeholder and decision rights review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p1_success_step",
+      stepId: "P1.3",
+      label: "Success measures review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p1_evidence_change_step",
+      stepId: "P1.4",
+      label: "Evidence and change review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
   ],
   3: [
     {

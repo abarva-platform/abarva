@@ -22,7 +22,10 @@ import {
   designTraceabilityText,
   parseDesignTraceability,
 } from "@/lib/programs/design-traceability";
-import { CAPTURE_TEXT_STEP_RECORD_KEYS, captureTextStepWords } from "@/lib/programs/capture-text-step-record";
+import {
+  CAPTURE_TEXT_STEP_RECORD_KEYS,
+  captureTextStepWords,
+} from "@/lib/programs/capture-text-step-record";
 
 /**
  * How a capture answer reads as text, by section key. Step pages store some
@@ -35,7 +38,8 @@ import { CAPTURE_TEXT_STEP_RECORD_KEYS, captureTextStepWords } from "@/lib/progr
  */
 
 export function captureValueText(key: string, raw: string): string {
-  if ((CAPTURE_TEXT_STEP_RECORD_KEYS as readonly string[]).includes(key)) return captureTextStepWords(raw);
+  if ((CAPTURE_TEXT_STEP_RECORD_KEYS as readonly string[]).includes(key))
+    return captureTextStepWords(raw);
   if (key === "gaps_root_causes") return rootCauseCaptureText(raw);
   if (key === "design_traceability") {
     const value = parseDesignTraceability(raw);
@@ -58,7 +62,8 @@ export function captureValueText(key: string, raw: string): string {
 
 /** Only the team's own words, never a register's labels, for phrase checks. */
 export function captureValueGateText(key: string, raw: string): string {
-  if ((CAPTURE_TEXT_STEP_RECORD_KEYS as readonly string[]).includes(key)) return captureTextStepWords(raw);
+  if ((CAPTURE_TEXT_STEP_RECORD_KEYS as readonly string[]).includes(key))
+    return captureTextStepWords(raw);
   if (key === "gaps_root_causes") return rootCauseGateText(raw);
   if (key === "design_traceability") {
     const value = parseDesignTraceability(raw);

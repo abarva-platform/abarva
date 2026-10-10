@@ -402,9 +402,12 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     .map((d) => d.title);
 
   const model = resolveGateStep({
-    criteria: props.phaseNum === 1
-      ? props.criteria.filter((criterion) => criterion.id !== "baseline_captured")
-      : props.criteria,
+    criteria:
+      props.phaseNum === 1
+        ? props.criteria.filter(
+            (criterion) => criterion.id !== "baseline_captured",
+          )
+        : props.criteria,
     documents,
     signOffReadable: props.signOffReadable,
     canApprove: props.canApprove,
@@ -771,35 +774,65 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
 
   if (props.phaseNum === 0) {
     const recommendation = props.originationRecommendation;
-    const recommendationReady = !recommendation ||
-      (recommendation.value.trim().length > 0 && recommendation.saved &&
+    const recommendationReady =
+      !recommendation ||
+      (recommendation.value.trim().length > 0 &&
+        recommendation.saved &&
         recommendationDraft.trim() === recommendation.value.trim());
-    const recommendationRow: StepPageRow[] = recommendation ? [{
-      id: "P0-RECOMMENDATION",
-      eyebrow: "Origination decision",
-      rank: 1,
-      shortName: "recommendation to advance",
-      subject: "Recommendation to advance",
-      state: recommendationReady ? "settled" : "decision",
-      clause: "record the recommendation to advance",
-      middle: <div className={cx("field")}>
-        <label className={cx("q-label")} htmlFor="p0-recommendation">Why should this Move advance to Charter?</label>
-        <textarea id="p0-recommendation" className={cx("q-input")} rows={3}
-          value={recommendationDraft}
-          onChange={(event) => setRecommendationDraft(event.target.value)} />
-        {!recommendationReady && recommendation.value.trim() && !recommendation.saved ? <p className={cx("item-note")}>Saving the recommendation…</p> : null}
-      </div>,
-      actions: recommendationReady ? null : <button type="button" className={cx("btn-ink")}
-        disabled={!recommendationDraft.trim()}
-        onClick={() => recommendation.onSave(recommendationDraft.trim())}>Save recommendation</button>,
-    }] : [];
+    const recommendationRow: StepPageRow[] = recommendation
+      ? [
+          {
+            id: "P0-RECOMMENDATION",
+            eyebrow: "Origination decision",
+            rank: 1,
+            shortName: "recommendation to advance",
+            subject: "Recommendation to advance",
+            state: recommendationReady ? "settled" : "decision",
+            clause: "record the recommendation to advance",
+            middle: (
+              <div className={cx("field")}>
+                <label className={cx("q-label")} htmlFor="p0-recommendation">
+                  Why should this Move advance to Charter?
+                </label>
+                <textarea
+                  id="p0-recommendation"
+                  className={cx("q-input")}
+                  rows={3}
+                  value={recommendationDraft}
+                  onChange={(event) =>
+                    setRecommendationDraft(event.target.value)
+                  }
+                />
+                {!recommendationReady &&
+                recommendation.value.trim() &&
+                !recommendation.saved ? (
+                  <p className={cx("item-note")}>Saving the recommendation…</p>
+                ) : null}
+              </div>
+            ),
+            actions: recommendationReady ? null : (
+              <button
+                type="button"
+                className={cx("btn-ink")}
+                disabled={!recommendationDraft.trim()}
+                onClick={() =>
+                  recommendation.onSave(recommendationDraft.trim())
+                }
+              >
+                Save recommendation
+              </button>
+            ),
+          },
+        ]
+      : [];
     const readable = props.criteria.every((criterion) => criterion.verified);
     const approvalInputsReady =
-      readable && props.originationReady === true && recommendationReady && props.canApprove;
+      readable &&
+      props.originationReady === true &&
+      recommendationReady &&
+      props.canApprove;
     const mayApprove =
-      approvalInputsReady &&
-      rationale.trim().length > 0 &&
-      !submitting;
+      approvalInputsReady && rationale.trim().length > 0 && !submitting;
     const approveOrigination = async () => {
       if (!mayApprove) return;
       setSubmitError(null);
@@ -818,7 +851,9 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         });
       } catch (err) {
         setSubmitError(
-          err instanceof Error ? err.message : "The origination approval failed.",
+          err instanceof Error
+            ? err.message
+            : "The origination approval failed.",
         );
       } finally {
         setSubmitting(false);
@@ -850,11 +885,12 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
             ? "Wait for the gate checks to be read."
             : !props.canApprove
               ? "Wait for an authorized approver."
-            : !recommendationReady
-              ? "Record the recommendation to advance."
-            : !props.originationReady
-              ? props.buildHeldReason ?? "Complete the brief and review its source evidence."
-              : "Write the approval rationale and approve the origination brief.",
+              : !recommendationReady
+                ? "Record the recommendation to advance."
+                : !props.originationReady
+                  ? (props.buildHeldReason ??
+                    "Complete the brief and review its source evidence.")
+                  : "Write the approval rationale and approve the origination brief.",
           settled: recommendationReady ? 1 : 0,
           total: recommendation ? 2 : 1,
           continueEnabled: mayApprove,
@@ -875,20 +911,28 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         checksWhenBlocked
         countLabel="Approval not yet recorded"
         context={{ items: [<b key="depth">Full depth</b>], details: [] }}
-        blockedWork={props.canApprove ? <div className={cx("warn-inline")}>
-          {!recommendationReady ? <section className={cx("field")}>
-            {recommendationRow[0]?.middle}
-            {recommendationRow[0]?.actions}
-          </section> : null}
-          {rationaleField}
-        </div> : undefined}
+        blockedWork={
+          props.canApprove ? (
+            <div className={cx("warn-inline")}>
+              {!recommendationReady ? (
+                <section className={cx("field")}>
+                  {recommendationRow[0]?.middle}
+                  {recommendationRow[0]?.actions}
+                </section>
+              ) : null}
+              {rationaleField}
+            </div>
+          ) : undefined
+        }
         rows={[...submitRow, ...recommendationRow, rationaleRow]}
         continueLabel={submitting ? "Approving…" : "Approve origination"}
         onContinue={() => void approveOrigination()}
         onBack={props.onBack}
       />
     );
-    return props.frame ? props.frame(originationPage, briefing) : originationPage;
+    return props.frame
+      ? props.frame(originationPage, briefing)
+      : originationPage;
   }
 
   const page = (

@@ -124,10 +124,10 @@
   --cbf-line: var(--mv-line);
   --cbf-amber-bg: var(--mv-surface);
 }
-.root :global(.cbf) :global(.cbf-option[data-selected=on]) {
+.root :global(.cbf) :global(.cbf-option[data-selected="on"]) {
   color: var(--mv-current-ink);
 }
-.root :global(.cbf-is-assumption) :global(.cbf-option[data-selected=on]) {
+.root :global(.cbf-is-assumption) :global(.cbf-option[data-selected="on"]) {
   color: var(--mv-accent-ink);
 }
 .root button:focus-visible,
@@ -1525,24 +1525,85 @@ textarea.q-input {
 }
 
 /* Template v1.6: an unfinished earlier step is "open" — reachable, numbered, never ticked. */
-.is-open .step-rule { background: var(--mv-line-strong); }
-.is-open .step-dot { border-color: var(--mv-ink); color: var(--mv-ink); }
-.is-open .step-title { color: var(--mv-muted); font-weight: 500; }
-.is-open .step-depth { color: var(--mv-ink); }
-.is-open .step-btn { cursor: pointer; }
+.is-open .step-rule {
+  background: var(--mv-line-strong);
+}
+.is-open .step-dot {
+  border-color: var(--mv-ink);
+  color: var(--mv-ink);
+}
+.is-open .step-title {
+  color: var(--mv-muted);
+  font-weight: 500;
+}
+.is-open .step-depth {
+  color: var(--mv-ink);
+}
+.is-open .step-btn {
+  cursor: pointer;
+}
 /* Template v1.6: the in-step upload sits at the right end of the Context line. */
-.ctx-action { margin-left: auto; display: inline-flex; align-items: baseline; gap: 12px; }
-.context-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; font-size: 14px; color: var(--mv-muted); padding: 0 4px; }
+.ctx-action {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.context-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--mv-muted);
+  padding: 0 4px;
+}
 
 /* Template v1.7: the Coverage instrument. The segmented control is product UI
    here, not review chrome; `.seg-sm` sizes it for a list item. */
-.seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 4px; background: var(--mv-bg); border: 1px solid var(--mv-line); border-radius: var(--mv-radius); padding: 3px; }
-.seg button { border: 0; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-weight: 500; cursor: pointer; background: transparent; color: var(--mv-muted); }
-.seg button[aria-checked="true"] { background: var(--mv-surface); color: var(--mv-ink); }
-.seg-sm { display: inline-grid; grid-template-columns: repeat(3, auto); padding: 2px; }
-.seg-sm button { padding: 5px 10px; font-size: 13px; white-space: nowrap; }
-.cov-how { margin-top: 8px; }
-.field .ava-badge, td .ava-badge, .card dd .ava-badge { margin: 4px 0 0; align-self: flex-start; }
+.seg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 4px;
+  background: var(--mv-bg);
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius);
+  padding: 3px;
+}
+.seg button {
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: var(--mv-muted);
+}
+.seg button[aria-checked="true"] {
+  background: var(--mv-surface);
+  color: var(--mv-ink);
+}
+.seg-sm {
+  display: inline-grid;
+  grid-template-columns: repeat(3, auto);
+  padding: 2px;
+}
+.seg-sm button {
+  padding: 5px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.cov-how {
+  margin-top: 8px;
+}
+.field .ava-badge,
+td .ava-badge,
+.card dd .ava-badge {
+  margin: 4px 0 0;
+  align-self: flex-start;
+}
 
 /* ═════════ Template v1.9: public sources (Files tab) ═════════ */
 /* Ported from core.css v1.9; every value is a canonical token. */
@@ -1608,16 +1669,47 @@ textarea.q-input {
   color: var(--mv-ink);
 }
 /* ═════════ Template v1.9: the assumptions register (from core.css; existing tokens only) ═════════ */
-.withheld { color: var(--mv-faint); font-style: italic; }
+.withheld {
+  color: var(--mv-faint);
+  font-style: italic;
+}
 /* Product port: the mock's inline paddings and the register's own container. */
-.reg-root { min-height: 0; container: main / inline-size; }
-.toolbar .seg { flex: 0 1 280px; }
-.reg-list .items, .settled .items { padding: 16px 24px; }
-.settled .items { padding-top: 4px; }
-.reg-foot { padding: 0 24px 16px; margin: 0; font-size: 13px; color: var(--mv-muted); }
-.reg-empty { padding: 16px 24px; margin: 0; font-size: 13px; color: var(--mv-muted); }
-.reg-subform { display: flex; flex-direction: column; gap: 10px; }
-.reg-copy { min-height: 160px; font-family: var(--mv-font-mono); font-size: 12px; }
+.reg-root {
+  min-height: 0;
+  container: main / inline-size;
+}
+.toolbar .seg {
+  flex: 0 1 280px;
+}
+.reg-list .items,
+.settled .items {
+  padding: 16px 24px;
+}
+.settled .items {
+  padding-top: 4px;
+}
+.reg-foot {
+  padding: 0 24px 16px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--mv-muted);
+}
+.reg-empty {
+  padding: 16px 24px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--mv-muted);
+}
+.reg-subform {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.reg-copy {
+  min-height: 160px;
+  font-family: var(--mv-font-mono);
+  font-size: 12px;
+}
 /* ═════════ Template v1.10: P3 Step 3, operating & adoption (existing tokens only) ═════════ */
 /* The skipped context line's action (core.css `.ctx-actions`). */
 .ctx-actions {

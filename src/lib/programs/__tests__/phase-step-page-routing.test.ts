@@ -5,7 +5,10 @@ import {
   phaseStepPageHref,
   resolvePhaseStepPageLanding,
 } from "@/lib/programs/phase-step-page-routing";
-import { STEP_PAGE_VIEWS, type StepPageView } from "@/lib/programs/step-page-views";
+import {
+  STEP_PAGE_VIEWS,
+  type StepPageView,
+} from "@/lib/programs/step-page-views";
 import { PHASE_STEP_PAGES } from "@/components/strategic-moves/step-page/phase-step-pages";
 import { resolvePhaseWorkflow } from "@/lib/programs/phase-workflow-registry";
 import { readFileSync } from "node:fs";
@@ -51,9 +54,9 @@ describe("phase step-page sunset routing", () => {
     expect(
       phaseStepPageHref("move-1", 0, "P0.2", ["scope_out"], [p0Views[0]]),
     ).toBe("/strategic-moves/move-1/phase/0?section=scope_out");
-    expect(
-      phaseStepPageHref("move-1", 1, "P1.5", [], []),
-    ).toBe("/strategic-moves/move-1/phase/1");
+    expect(phaseStepPageHref("move-1", 1, "P1.5", [], [])).toBe(
+      "/strategic-moves/move-1/phase/1",
+    );
     expect(availableStepPageView(0, "P0.2", [p0Views[0]])).toBeNull();
   });
 
@@ -89,24 +92,52 @@ describe("phase step-page sunset routing", () => {
   });
 
   it("derives every gate view and includes all mounted P0/P1 pages in both directions", () => {
-    const gates = (Object.keys(STEP_PAGE_VIEWS) as StepPageView[]).filter((view) => {
-      const entry = STEP_PAGE_VIEWS[view];
-      return resolvePhaseWorkflow(entry.phase, null).at(-1)?.id === entry.stepId;
-    });
-    expect(gates).toEqual(expect.arrayContaining([
-      "p0-approve", "p1-charter-gate", "gate", "p4-gate", "p5-handoff",
-    ]));
+    const gates = (Object.keys(STEP_PAGE_VIEWS) as StepPageView[]).filter(
+      (view) => {
+        const entry = STEP_PAGE_VIEWS[view];
+        return (
+          resolvePhaseWorkflow(entry.phase, null).at(-1)?.id === entry.stepId
+        );
+      },
+    );
+    expect(gates).toEqual(
+      expect.arrayContaining([
+        "p0-approve",
+        "p1-charter-gate",
+        "gate",
+        "p4-gate",
+        "p5-handoff",
+      ]),
+    );
     for (const gate of gates) expect(EXISTING_STEP_PAGE_VIEWS).toContain(gate);
-    const host = readFileSync(join(process.cwd(), "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx"), "utf8");
+    const host = readFileSync(
+      join(
+        process.cwd(),
+        "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx",
+      ),
+      "utf8",
+    );
     expect(host).toMatch(/if \(gateStepPageActive\)[\s\S]*?<GateReadinessStep/);
     expect(host).toContain("PHASE_STEP_PAGES[initialStepView]");
-    const direct = ["root-causes", "root-cause-design", "architecture-options", "operating-adoption"] as const;
+    const direct = [
+      "root-causes",
+      "root-cause-design",
+      "architecture-options",
+      "operating-adoption",
+    ] as const;
     for (const view of direct) {
       expect(host).toContain(`initialStepView === "${view}"`);
       expect(EXISTING_STEP_PAGE_VIEWS).toContain(view);
     }
-    const mounted = new Set<StepPageView>([...direct, ...gates, ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[])]);
-    const implemented = new Set<StepPageView>([...EXISTING_STEP_PAGE_VIEWS, ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[])]);
+    const mounted = new Set<StepPageView>([
+      ...direct,
+      ...gates,
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+    ]);
+    const implemented = new Set<StepPageView>([
+      ...EXISTING_STEP_PAGE_VIEWS,
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+    ]);
     expect([...implemented].sort()).toEqual([...mounted].sort());
     for (const view of implemented) expect(STEP_PAGE_VIEWS[view]).toBeDefined();
   });
