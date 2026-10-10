@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
+import { SourceNewPhasePreview } from "./SourceNewPhasePreview";
 
 const base: SourceNewFileRow = {
   id: "current",
@@ -139,6 +140,57 @@ describe("SourceNewFiles", () => {
     expect(
       screen.getByRole("option", { name: /Evaluation score summary/ }),
     ).toBeTruthy();
+  });
+
+  it("keeps response and evaluation files in their own folders", () => {
+    const response = {
+      ...base,
+      id: "response",
+      phase: "responses" as const,
+      title: "Supplier response workbook",
+    };
+    const evaluation = {
+      ...base,
+      id: "evaluation",
+      phase: "evaluation" as const,
+      title: "Evidence review notes",
+    };
+    const onUpload = jest.fn();
+    render(
+      <SourceNewFiles
+        rows={[response, evaluation]}
+        initialPhase="responses"
+        onUpload={onUpload}
+      />,
+    );
+
+    const folders = screen.getByRole("navigation", { name: "File folders" });
+    expect(
+      within(folders).getByRole("button", { name: "Responses" }),
+    ).toBeTruthy();
+    expect(
+      within(folders).getByRole("button", { name: "Evaluation" }),
+    ).toBeTruthy();
+    expect(
+      within(folders).queryByRole("button", { name: "Other stages" }),
+    ).toBeNull();
+    expect(
+      screen
+        .getByRole("option", { name: /Supplier response workbook/ }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      within(folders).getByRole("button", { name: "Evaluation" }),
+    );
+    expect(
+      screen
+        .getByRole("option", { name: /Evidence review notes/ }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("option", { name: /Supplier response workbook/ }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Upload" }));
+    expect(onUpload).toHaveBeenCalledWith("evaluation");
   });
 
   it("filters by folder and search, hiding superseded versions until requested", () => {
@@ -590,5 +642,69 @@ describe("SourceNewFiles", () => {
       name: "Selected file details",
     });
     expect(within(detail).getByText("strategy brief")).toBeTruthy();
+  });
+});
+
+describe("SourceNewPhasePreview", () => {
+  it("previews response receipt, parsing and availability without event records", () => {
+    render(<SourceNewPhasePreview phase="responses" />);
+
+    const preview = screen
+        .getByRole("region", { name: "Phase preview" });
+    expect(
+      within(preview).getByText(
+        "Preview only. These steps show no event records or decisions.",
+      ),
+    ).toBeTruthy();
+    const steps = within(preview).getByRole("tablist", {
+      name: "Preview steps",
+    });
+    expect(
+      within(steps)
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent),
+    ).toEqual(["01 Response workbook", "02 Parse and availability"]);
+    fireEvent.click(
+      within(steps).getByRole("tab", { name: "02 Parse and availability" }),
+    );
+    const panel = within(preview).getByRole("tabpanel");
+    expect(within(panel).getByText("Parse state")).toBeTruthy();
+    expect(within(panel).getByText("Available evidence")).toBeTruthy();
+    expect(within(panel).getAllByText("Not shown in preview")).toHaveLength(2);
+    expect(
+      within(preview).queryByRole("button", { name: /approve|score|send/i }),
+    ).toBeNull();
+  });
+
+  it("previews criteria, weights and evidence-bound score review without a score", () => {
+    render(<SourceNewPhasePreview phase="evaluation" />);
+
+    const preview = screen
+        .getByRole("region", { name: "Phase preview" });
+    expect(
+      within(preview).getByText(
+        "Preview only. These steps show no event records or decisions.",
+      ),
+    ).toBeTruthy();
+    const steps = within(preview).getByRole("tablist", {
+      name: "Preview steps",
+    });
+    expect(
+      within(steps)
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent),
+    ).toEqual(["01 Criteria and weights", "02 Evidence-bound score review"]);
+    fireEvent.click(
+      within(steps).getByRole("tab", {
+        name: "02 Evidence-bound score review",
+      }),
+    );
+    const panel = within(preview).getByRole("tabpanel");
+    expect(within(panel).getByText("Evidence basis")).toBeTruthy();
+    expect(within(panel).getByText("Score review")).toBeTruthy();
+    expect(within(panel).getAllByText("Not shown in preview")).toHaveLength(2);
+    expect(
+      within(preview).queryByRole("button", { name: /approve|score|send/i }),
+    ).toBeNull();
   });
 });

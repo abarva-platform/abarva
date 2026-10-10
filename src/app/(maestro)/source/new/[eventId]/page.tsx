@@ -313,6 +313,7 @@ export default async function SourceNewEventPage({
 
   return (
     <SourceNewWorkspace
+      key={`${event.id}:${projectedCurrentStage}:${event.status}`}
       demoMode={demoMode}
       activity={activity}
       intelligence={intelligence}
