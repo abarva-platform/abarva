@@ -1217,6 +1217,42 @@ describe("Source Workspace visual aVa answer", () => {
     );
   });
 
+  it("keeps contract measures distinct and refuses unsupported financial amounts", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: { selectedContract: Record<string, unknown> };
+    };
+    context.sourceV4.selectedContract.annualValueUsd = 40_000_000;
+    context.sourceV4.selectedContract.committedAnnualSpendUsd = 32_000_000;
+    context.sourceV4.selectedContract.totalCommittedValueUsd = 175_000_000;
+    context.sourceV4.selectedContract.actualAnnualSpendUsd = 7_000_000;
+    context.sourceV4.selectedContract.contractedToActualVarianceUsd = 25_000_000;
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query:
+        "Separate annual value, commitment, support fee, consumption, invoiced and paid amounts for CTR-090.",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("recorded annual value $40.0M");
+    expect(answer?.directAnswer).toContain("annual committed spend $32.0M");
+    expect(answer?.directAnswer).toContain("full-term committed value $175.0M");
+    expect(answer?.directAnswer).toContain("actual annual spend $7.0M");
+    expect(answer?.directAnswer).toContain("support fee amount Not established");
+    expect(answer?.directAnswer).toContain("consumption amount Not established");
+    expect(answer?.directAnswer).toContain("invoiced amount Not established");
+    expect(answer?.directAnswer).toContain("paid amount Not established");
+    expect(answer?.directAnswer).toContain(
+      "Actual annual spend is not proof of consumption, invoicing, or payment.",
+    );
+
+    const paidOnly = buildSourceWorkspaceVisualAnswer({
+      query: "What was paid on CTR-090?",
+      surfaceContext: context,
+    });
+    expect(paidOnly?.directAnswer).toContain("paid amount Not established");
+    expect(paidOnly?.directAnswer).not.toContain("paid amount $7.0M");
+  });
+
   it("uses the Contract 360 stated annual value with conflict wording over a direct page hint", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: { selectedContract: Record<string, unknown> };

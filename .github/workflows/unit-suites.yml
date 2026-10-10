@@ -1436,6 +1436,7 @@ jobs:
         run: >-
           npx jest --runTestsByPath
           src/lib/source/ava/__tests__/export-answer-packet.test.ts
+          src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts
           src/lib/source/archetypes/__tests__/differentiation.test.ts
           src/lib/source/archetypes/__tests__/event-archetype-resolver.test.ts
           src/lib/source/archetypes/__tests__/evidence-readiness.test.ts
