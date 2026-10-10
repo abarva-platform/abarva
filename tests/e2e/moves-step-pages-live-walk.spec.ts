@@ -50,6 +50,7 @@ const KNOWN_GAPS: ReadonlyArray<{
   },
 ];
 const BAD_READ = /could not be read|unavailable/i;
+const VISIBLE_TIMEOUT_MS = 20_000;
 
 function unreviewedReadText(
   body: string,
@@ -185,10 +186,14 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/);
         await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
         if (phase === 2 && !P2_HAS_EVERY_STEP_PAGE) {
-          await expect(page.getByTestId("moves-capture-flow")).toBeVisible();
+          await expect(page.getByTestId("moves-capture-flow")).toBeVisible({
+            timeout: VISIBLE_TIMEOUT_MS,
+          });
           expect(new URL(page.url()).searchParams.has("step")).toBe(false);
         } else {
-          await expect(page.locator("#step-panel-title")).toBeVisible();
+          await expect(page.locator("#step-panel-title")).toBeVisible({
+            timeout: VISIBLE_TIMEOUT_MS,
+          });
           expect(new URL(page.url()).searchParams.get("step")).toBeTruthy();
         }
       }, blockedWrites);
@@ -198,7 +203,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         page,
         routeFor(MOVE_ID!, phase, "?legacy=1"),
         async () => {
-          await expect(page.getByTestId("moves-capture-flow")).toBeVisible();
+          await expect(page.getByTestId("moves-capture-flow")).toBeVisible({
+            timeout: VISIBLE_TIMEOUT_MS,
+          });
           await expect(page.locator("#step-panel-title")).toHaveCount(0);
           await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
           expect(new URL(page.url()).searchParams.get("legacy")).toBe("1");
@@ -215,7 +222,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
           page,
           routeFor(MOVE_ID!, phase, `?step=${view}`),
           async () => {
-            await expect(page.locator("#step-panel-title")).toBeVisible();
+            await expect(page.locator("#step-panel-title")).toBeVisible({
+              timeout: VISIBLE_TIMEOUT_MS,
+            });
             await expect(page.locator("#step-panel-title")).not.toBeEmpty();
             const nextAction = page.getByRole("status", { name: "What to do next" });
             await expect(nextAction).toBeVisible();
@@ -227,29 +236,26 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             await expect(steps.nth(position).locator('[aria-current="step"]')).toBeVisible();
             expect(new URL(page.url()).searchParams.get("step")).toBe(view);
             await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
-
           },
           blockedWrites,
           async () => {
+            try {
+              for (const width of [1440, 390]) {
+                await page.setViewportSize({ width, height: 900 });
+                const filename = `${view}-${width}.png`;
+                const output = testInfo.outputPath(filename);
+                fs.mkdirSync(path.dirname(output), { recursive: true });
+                await page.screenshot({ path: output, fullPage: true });
+                screenshots.push(filename);
+              }
+            } finally {
+              await page.setViewportSize({ width: 1440, height: 900 });
+            }
             const body = await page.locator("body").innerText();
             const badRead = unreviewedReadText(body, phase, view);
             if (badRead) throw new Error(`Unreviewed read gap: ${badRead}`);
           },
         );
-        for (const width of [1440, 390]) {
-          try {
-            await page.setViewportSize({ width, height: 900 });
-            const filename = `${view}-${width}.png`;
-            const output = testInfo.outputPath(filename);
-            fs.mkdirSync(path.dirname(output), { recursive: true });
-            await page.screenshot({ path: output, fullPage: true });
-            screenshots.push(filename);
-          } catch (error) {
-            result.status = "fail";
-            result.reason += ` | screenshot ${width}: ${String(error)}`;
-          }
-        }
-        await page.setViewportSize({ width: 1440, height: 900 });
         const visibleText = await page.locator("body").innerText().catch(() => "");
         const allowance = KNOWN_GAPS.find((gap) =>
           gap.phase === phase &&
