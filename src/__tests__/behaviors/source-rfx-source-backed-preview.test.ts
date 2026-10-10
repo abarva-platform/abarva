@@ -7,6 +7,7 @@ import type { NdaAuthorityRead } from "@/lib/source/nda/nda-authority-repository
 import type { RfxReleaseSnapshotInput } from "@/lib/source/rfx-delivery/release-snapshot";
 
 const HASH = "a".repeat(64);
+const NDA_HASH = "b".repeat(64);
 const AS_OF = "2026-09-25T00:00:00Z";
 
 function proposal(): RfxReleaseSnapshotInput {
@@ -55,6 +56,7 @@ function proposal(): RfxReleaseSnapshotInput {
       contactApprovedAt: "2026-09-24T00:00:00Z",
       contactEvidenceReference: "contact-evidence-1",
       ndaAuthorityId: "nda-1",
+      ndaDocumentSha256: NDA_HASH,
       ndaTenantKey: "tenant-1",
       ndaEventId: "event-1",
       ndaLegalEntityId: "vendor-1",
@@ -120,7 +122,7 @@ function sourceRows(): {
         effectiveTo: "2026-10-15T00:00:00Z",
         uploadedBy: "operator-1",
         signatureEvidence: {
-          documentSha256: HASH,
+          documentSha256: NDA_HASH,
           signatureMethod: "wet_ink" as const,
           signedAt: "2026-09-23T00:00:00Z",
           supplierSignatoryName: "Supplier signer",
@@ -224,6 +226,17 @@ describe("Source-backed RFx preparation preview", () => {
     expect(result.defects).toContain("nda_signature_unproven");
   });
 
+  it("rejects a changed executed-NDA document even when its NDA ID is unchanged", async () => {
+    const rows = sourceRows();
+    rows.nda.executedNdas[0].signatureEvidence = {
+      ...rows.nda.executedNdas[0].signatureEvidence,
+      documentSha256: "c".repeat(64),
+    };
+    const result = await previewRfxReleaseAgainstAuthority(proposal(), readers(rows));
+    expect(result.defects).toContain("nda_document_hash_mismatch");
+    expect(result.sourceAuthoritiesConsistent).toBe(false);
+  });
+
   it("rejects an expired NDA even when the proposal claims it is recorded", async () => {
     const rows = sourceRows();
     rows.nda.executedNdas[0].effectiveTo = "2026-09-24T00:00:00Z";
@@ -258,6 +271,7 @@ describe("Source-backed RFx preparation preview", () => {
       recipientAuthorities: [{
         ...base.recipientAuthorities[0],
         ndaAuthorityId: undefined,
+        ndaDocumentSha256: undefined,
         waiverAuthorityId: "waiver-1",
         waiverTenantKey: "tenant-1",
         waiverEventId: "event-1",
