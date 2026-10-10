@@ -1,6 +1,15 @@
 import { findGateRule } from "@/lib/programs/governance";
 
 describe("program governance gate map (6-phase doctrine)", () => {
+  it("keeps the P4 and P5 required checks and advisories at their governed severities", () => {
+    const p4 = findGateRule(4, 5);
+    const p5 = findGateRule(5, 6);
+    expect(p4?.checks.find((check) => check.key === "readiness_and_change_plan_signed_off")?.severity).toBe("hard");
+    expect(p4?.checks.find((check) => check.key === "tower_metric_plan_drafted")?.severity).toBe("soft");
+    expect(p4?.checks.find((check) => check.key === "funding_approval_recorded")?.severity).toBe("soft");
+    expect(p5?.checks.find((check) => check.key === "launch_readiness_attested")?.severity).toBe("hard");
+    expect(p5?.checks.find((check) => check.key === "tower_cadence_defined")?.severity).toBe("hard");
+  });
   it("defines six gate transitions: P0→P1 through P5→Tower", () => {
     expect(findGateRule(0, 1)).toBeTruthy();
     expect(findGateRule(1, 2)).toBeTruthy();

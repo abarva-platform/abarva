@@ -3880,7 +3880,16 @@ export function MovesPhaseStandaloneClient({
     };
   };
 
-  if (defaultStepTarget) return null;
+  if (defaultStepTarget) {
+    const targetView = new URL(defaultStepTarget, "https://moves.invalid").searchParams.get("step");
+    const target = targetView && STEP_PAGE_VIEWS[targetView as StepPageView];
+    const label = target
+      ? resolvePhaseWorkflow(target.phase, confirmedSolutionRoute).find(
+          (step) => step.id === target.stepId,
+        )?.title
+      : null;
+    return <p role="status">Opening {label ?? "step"}…</p>;
+  }
 
   if (
     phaseStepPagesEnabled &&

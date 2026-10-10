@@ -74,6 +74,7 @@ describe("CaptureNotesFill", () => {
     expect(onInsert).toHaveBeenCalledWith(
       "sponsor_commitment",
       "Sponsor is the COO; she committed to a fortnightly cadence of progress updates.",
+      1,
     );
   });
 

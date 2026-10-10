@@ -32,7 +32,7 @@ export interface CaptureNotesFillProps {
    * Write one proposal into a field. Called only from an explicit per-field
    * Insert. The host owns persistence, exactly as it does for a typed answer.
    */
-  onInsert: (sectionKey: string, value: string) => void;
+  onInsert: (sectionKey: string, value: string, sourceLine?: number) => void;
   /**
    * Section keys where inserting ALSO records "I'm asserting this" as the
    * field's charter basis, because the host has the per-field basis control
@@ -236,7 +236,7 @@ export function CaptureNotesFill({
                         className="cnf-insert"
                         data-testid={`capture-notes-insert-${proposal.sectionKey}`}
                         onClick={() => {
-                          onInsert(proposal.sectionKey, proposal.excerpt);
+                          onInsert(proposal.sectionKey, proposal.excerpt, proposal.sourceLine);
                           setInserted((prev) => [...prev, proposal.sectionKey]);
                         }}
                       >
