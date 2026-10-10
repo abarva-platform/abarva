@@ -4924,7 +4924,8 @@ describe("MovesPhaseStandaloneClient", () => {
       const original = PHASE_STEP_PAGES["p4-milestones"];
       PHASE_STEP_PAGES["p4-milestones"] = (props) => (
         <div data-testid="phase-owned-step-page">
-          {props.phase}:{props.chrome.steps.length}:{props.values.roadmap_sequencing ?? ""}
+          {props.phase}:{props.chrome.steps.length}:
+          {props.values.roadmap_sequencing ?? ""}
         </div>
       );
       try {
@@ -4941,7 +4942,9 @@ describe("MovesPhaseStandaloneClient", () => {
             phaseTallies={[...phaseTallies]}
           />,
         );
-        expect(screen.getByTestId("phase-owned-step-page")).toHaveTextContent("4:5:");
+        expect(screen.getByTestId("phase-owned-step-page")).toHaveTextContent(
+          "4:5:",
+        );
       } finally {
         PHASE_STEP_PAGES["p4-milestones"] = original;
       }
@@ -4966,7 +4969,9 @@ describe("MovesPhaseStandaloneClient", () => {
             phaseTallies={[...phaseTallies]}
           />,
         );
-        expect(screen.queryByTestId("phase-owned-step-page")).not.toBeInTheDocument();
+        expect(
+          screen.queryByTestId("phase-owned-step-page"),
+        ).not.toBeInTheDocument();
         expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
       } finally {
         PHASE_STEP_PAGES["p4-milestones"] = original;
@@ -4993,6 +4998,56 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByRole("status")).toHaveTextContent("Opening");
     });
 
+    it.each([
+      { phaseNum: 4, phaseLabel: "P4 Roadmap", firstView: "p4-milestones" },
+      { phaseNum: 5, phaseLabel: "P5 Mobilize", firstView: "p5-owners" },
+    ])(
+      "routes a flagged P$phaseNum address to its first open step",
+      ({ phaseNum, phaseLabel, firstView }) => {
+        mockRouterReplace.mockClear();
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: phaseNum, phaseLabel })}
+            phaseNum={phaseNum}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(mockRouterReplace).toHaveBeenCalledWith(
+          expect.stringContaining(`/phase/${phaseNum}?step=${firstView}`),
+        );
+      },
+    );
+
+    it.each([
+      { phaseNum: 4, phaseLabel: "P4 Roadmap" },
+      { phaseNum: 5, phaseLabel: "P5 Mobilize" },
+    ])(
+      "keeps the P$phaseNum legacy hatch on capture",
+      ({ phaseNum, phaseLabel }) => {
+        mockRouterReplace.mockClear();
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled
+            legacyCaptureRequested
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: phaseNum, phaseLabel })}
+            phaseNum={phaseNum}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(mockRouterReplace).not.toHaveBeenCalled();
+        expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      },
+    );
+
     it("mounts the governed gate in a later phase under the phase flag", () => {
       render(
         <MovesPhaseStandaloneClient
@@ -5011,7 +5066,9 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("heading", { name: /Check the gate and sign off/i }),
       ).toBeInTheDocument();
-      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-capture-flow"),
+      ).not.toBeInTheDocument();
       expect(
         within(screen.getByTestId("agent-dock")).getByRole("navigation", {
           name: /steps/i,
@@ -5062,7 +5119,14 @@ describe("MovesPhaseStandaloneClient", () => {
               kind: "root_cause_register",
               version: 1,
               orderConfirmedAt: "2026-10-02",
-              causes: [{ id: "RC-1", cause: "No ownership", status: "accepted", evidence: ["Interviews"] }],
+              causes: [
+                {
+                  id: "RC-1",
+                  cause: "No ownership",
+                  status: "accepted",
+                  evidence: ["Interviews"],
+                },
+              ],
             }),
             baselineMetrics: "",
           }}
@@ -5075,7 +5139,9 @@ describe("MovesPhaseStandaloneClient", () => {
       );
       const dock = screen.getByTestId("agent-dock");
       expect(
-        within(dock).getByRole("heading", { name: "Map every root cause to a design element" }),
+        within(dock).getByRole("heading", {
+          name: "Map every root cause to a design element",
+        }),
       ).toBeInTheDocument();
       expect(within(dock).getByText("No ownership")).toBeInTheDocument();
     });
@@ -5094,7 +5160,9 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       expect(
-        screen.queryByRole("heading", { name: "Map every root cause to a design element" }),
+        screen.queryByRole("heading", {
+          name: "Map every root cause to a design element",
+        }),
       ).not.toBeInTheDocument();
     });
 
@@ -5111,9 +5179,9 @@ describe("MovesPhaseStandaloneClient", () => {
           phaseTallies={[...phaseTallies]}
         />,
       );
-      expect(screen.getByTestId("open-design-traceability").getAttribute("href")).toMatch(
-        /\/phase\/3\?step=root-cause-design$/,
-      );
+      expect(
+        screen.getByTestId("open-design-traceability").getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=root-cause-design$/);
       unmount();
       render(
         <MovesPhaseStandaloneClient
@@ -5126,7 +5194,9 @@ describe("MovesPhaseStandaloneClient", () => {
           phaseTallies={[...phaseTallies]}
         />,
       );
-      expect(screen.queryByTestId("open-design-traceability")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("open-design-traceability"),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -5136,7 +5206,14 @@ describe("MovesPhaseStandaloneClient", () => {
       kind: "root_cause_register",
       version: 1,
       orderConfirmedAt: "2026-10-02",
-      causes: [{ id: "RC-1", cause: "No ownership", status: "accepted", evidence: ["Interviews"] }],
+      causes: [
+        {
+          id: "RC-1",
+          cause: "No ownership",
+          status: "accepted",
+          evidence: ["Interviews"],
+        },
+      ],
     });
     const trace = JSON.stringify({
       kind: "design_traceability",
@@ -5152,7 +5229,9 @@ describe("MovesPhaseStandaloneClient", () => {
       ],
     });
     const stepOne = (container: HTMLElement) =>
-      container.querySelector('nav[aria-label="Design steps"] li') as HTMLElement;
+      container.querySelector(
+        'nav[aria-label="Design steps"] li',
+      ) as HTMLElement;
 
     it("renders Step 2 in the dock, blocked, with Step 1 open in the step bar, while Step 1 is unsettled", () => {
       const { container } = render(
@@ -5170,13 +5249,15 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
       const dock = screen.getByTestId("agent-dock");
-      expect(within(dock).getByRole("heading", { name: "Choose a direction" })).toBeInTheDocument();
+      expect(
+        within(dock).getByRole("heading", { name: "Choose a direction" }),
+      ).toBeInTheDocument();
       expect(within(dock).getByText(/Waiting on Step 1/)).toBeInTheDocument();
       // The step bar and the Blocked sentence read one source: Step 1 is not done.
       expect(stepOne(container).className).not.toMatch(/is-done/);
-      expect(stepOne(container).querySelector("a")?.getAttribute("href")).toMatch(
-        /\/phase\/3\?step=root-cause-design$/,
-      );
+      expect(
+        stepOne(container).querySelector("a")?.getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=root-cause-design$/);
     });
 
     it("marks Step 1 done once its record is complete, and leaves Step 2 unblocked", () => {
@@ -5213,9 +5294,9 @@ describe("MovesPhaseStandaloneClient", () => {
           phaseTallies={[...phaseTallies]}
         />,
       );
-      expect(screen.getByTestId("open-architecture-options").getAttribute("href")).toMatch(
-        /\/phase\/3\?step=architecture-options$/,
-      );
+      expect(
+        screen.getByTestId("open-architecture-options").getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=architecture-options$/);
     });
   });
 

@@ -404,7 +404,10 @@ interface MovesPhaseStandaloneClientProps {
    * P2's saved root causes and baseline, for P3 Step 1 (whose rows are P2's
    * settled causes). Read server-side; absent outside P3 or with the flag off.
    */
-  priorPhaseCapture?: { gapsRootCauses: string; baselineMetrics: string } | null;
+  priorPhaseCapture?: {
+    gapsRootCauses: string;
+    baselineMetrics: string;
+  } | null;
   /** `moves_capture_p0_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true AND `captureV2Enabled` is true, P0 Originate also renders the redesigned 3-step capture flow instead of the legacy finder-columns canvas. P0's eleven canonical sections/keys, saves, structured inputs, authorization check and required-evidence gate are unchanged; only which phases render the flow differs. */
   captureP0Enabled?: boolean;
   /** `moves_charter_basis_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, each P1 Charter field carries a "How do you know this?" basis control (approved evidence / an assertion / an owned assumption) and an assumption is badged at the question. When false NOTHING here renders and the legacy approved-evidence lock is unchanged. */
@@ -1137,7 +1140,10 @@ export function MovesPhaseStandaloneClient({
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
   // The finalized step page for P3 Gate readiness, behind `moves_step_pages_v3`
   // and only with the redesigned capture on. Opened with `?step=gate`.
-  const gateStepId = resolvePhaseWorkflow(phaseNum, initialConfirmedSolutionRoute).at(-1)?.id;
+  const gateStepId = resolvePhaseWorkflow(
+    phaseNum,
+    initialConfirmedSolutionRoute,
+  ).at(-1)?.id;
   const gateStepPageActive =
     phaseStepPagesEnabled &&
     !legacyCaptureRequested &&
@@ -2993,7 +2999,13 @@ export function MovesPhaseStandaloneClient({
       return (
         <div className="mcf-root-causes-entry">
           {value.trim() ? (
-            <pre style={{ whiteSpace: "pre-wrap", font: "inherit", margin: "0 0 12px" }}>
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+                font: "inherit",
+                margin: "0 0 12px",
+              }}
+            >
               {captureValueText(section.key, value)}
             </pre>
           ) : null}
@@ -3413,10 +3425,11 @@ export function MovesPhaseStandaloneClient({
   const captureFlowMounted =
     (captureV2Enabled && phase.phase >= 1 && phase.phase <= 5) ||
     captureP0Active;
-  const legacySection =
-    phaseCaptureSections.some((section) => section.key === initialLegacySectionKey)
-      ? initialLegacySectionKey
-      : null;
+  const legacySection = phaseCaptureSections.some(
+    (section) => section.key === initialLegacySectionKey,
+  )
+    ? initialLegacySectionKey
+    : null;
   const legacySectionGroup = legacySection
     ? resolvePhaseStepGroups(phase.phase, phaseCaptureSections).findIndex(
         (group) => group.sectionKeys.includes(legacySection),
@@ -3745,7 +3758,13 @@ export function MovesPhaseStandaloneClient({
         <StepPageTabs
           current="steps"
           hrefs={{
-            steps: phaseStepPageHref(move.id, phaseNumber, stepId, workflow[stepIndex]?.sectionKeys ?? [], implementedStepViews),
+            steps: phaseStepPageHref(
+              move.id,
+              phaseNumber,
+              stepId,
+              workflow[stepIndex]?.sectionKeys ?? [],
+              implementedStepViews,
+            ),
             files: phaseHref(phaseNumber),
             record: phaseHref(phaseNumber),
           }}
@@ -3770,7 +3789,13 @@ export function MovesPhaseStandaloneClient({
         href:
           index === stepIndex
             ? undefined
-            : phaseStepPageHref(move.id, phaseNumber, step.id, step.sectionKeys, implementedStepViews),
+            : phaseStepPageHref(
+                move.id,
+                phaseNumber,
+                step.id,
+                step.sectionKeys,
+                implementedStepViews,
+              ),
         done:
           index === stepIndex
             ? undefined
@@ -3881,7 +3906,10 @@ export function MovesPhaseStandaloneClient({
   };
 
   if (defaultStepTarget) {
-    const targetView = new URL(defaultStepTarget, "https://moves.invalid").searchParams.get("step");
+    const targetView = new URL(
+      defaultStepTarget,
+      "https://moves.invalid",
+    ).searchParams.get("step");
     const target = targetView && STEP_PAGE_VIEWS[targetView as StepPageView];
     const label = target
       ? resolvePhaseWorkflow(target.phase, confirmedSolutionRoute).find(
@@ -4104,7 +4132,9 @@ export function MovesPhaseStandaloneClient({
             status: tally?.state === "done" ? "Done" : "Not started",
             current: p.phase === phase.phase,
             href:
-              tally && tally.state !== "upcoming" ? phaseHref(p.phase) : undefined,
+              tally && tally.state !== "upcoming"
+                ? phaseHref(p.phase)
+                : undefined,
           };
         })}
         steps={workflow.map((step, index) => ({
@@ -4525,16 +4555,15 @@ export function MovesPhaseStandaloneClient({
                   {captureFlowMounted ? (
                     renderAvaDock({
                       notesFill: captureNotesEnabled ? (
-                          <CaptureNotesFill
-                            targets={phaseCaptureSections.map((section) => ({
-                              section,
-                              value:
-                                displayPhaseCaptureValues[section.key] ?? "",
-                            }))}
-                            onInsert={insertPhaseCaptureValueFromNotes}
-                            recordsBasisFor={notesBasisRecordingKeys}
-                          />
-                        ) : null,
+                        <CaptureNotesFill
+                          targets={phaseCaptureSections.map((section) => ({
+                            section,
+                            value: displayPhaseCaptureValues[section.key] ?? "",
+                          }))}
+                          onInsert={insertPhaseCaptureValueFromNotes}
+                          recordsBasisFor={notesBasisRecordingKeys}
+                        />
+                      ) : null,
                       captureProps: {
                         phases: capturePhases,
                         phase: phase.phase,
@@ -4584,11 +4613,12 @@ export function MovesPhaseStandaloneClient({
                           <>
                             {phaseStepPagesEnabled &&
                             !legacyCaptureRequested &&
-                            (Object.keys(PHASE_STEP_PAGES) as StepPageView[])
-                              .some(
-                                (view) =>
-                                  STEP_PAGE_VIEWS[view].phase === phase.phase,
-                              ) ? (
+                            (
+                              Object.keys(PHASE_STEP_PAGES) as StepPageView[]
+                            ).some(
+                              (view) =>
+                                STEP_PAGE_VIEWS[view].phase === phase.phase,
+                            ) ? (
                               <p className="mcf-gate-note">
                                 <a
                                   href={(() => {
@@ -4599,7 +4629,9 @@ export function MovesPhaseStandaloneClient({
                                       availableStepPageView(
                                         phase.phase,
                                         step.id,
-                                        Object.keys(PHASE_STEP_PAGES) as StepPageView[],
+                                        Object.keys(
+                                          PHASE_STEP_PAGES,
+                                        ) as StepPageView[],
                                       ),
                                     );
                                     return first
@@ -9423,7 +9455,10 @@ function StageReadinessWorkbookPreviewControl({
       // Leaving the marks up would keep telling the reviewer that work is
       // still unrecorded, and would keep the gate projection discarding it.
       const submitted = new Map(
-        decisions.map((decision) => [decision.proposalId, decision.disposition]),
+        decisions.map((decision) => [
+          decision.proposalId,
+          decision.disposition,
+        ]),
       );
       const reviewedProposals = (proposalSet.proposals ?? []).map(
         (proposal) => {
@@ -9523,9 +9558,7 @@ function StageReadinessWorkbookPreviewControl({
   // positive, while the gate still holds the phase because nothing is on
   // record. Without this term the fix that stops the gate reading a preview
   // would leave the reviewer a blocker and no control.
-  const keptDecisions = keptDecisionsToRecord(
-    preview?.proposalSet?.proposals,
-  );
+  const keptDecisions = keptDecisionsToRecord(preview?.proposalSet?.proposals);
   const reviewRevisable =
     anyProposalReviewable &&
     (reviewActionCount > 0 ||

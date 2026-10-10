@@ -194,8 +194,8 @@ export function CaptureNotesFill({
 
             {visible.length === 0 ? (
               <p className="cnf-skipped" data-testid="capture-notes-empty">
-                No passage matched an unanswered question on this phase. Edit the
-                notes and propose again, or answer the fields directly.
+                No passage matched an unanswered question on this phase. Edit
+                the notes and propose again, or answer the fields directly.
               </p>
             ) : (
               <ul className="cnf-list">
@@ -225,9 +225,10 @@ export function CaptureNotesFill({
                         className="cnf-records"
                         data-testid={`capture-notes-records-basis-${proposal.sectionKey}`}
                       >
-                        Inserting also records <strong>I&rsquo;m asserting
-                        this</strong> as how you know this answer. It completes
-                        the charter and never reads as evidence.
+                        Inserting also records{" "}
+                        <strong>I&rsquo;m asserting this</strong> as how you
+                        know this answer. It completes the charter and never
+                        reads as evidence.
                       </p>
                     ) : null}
                     <div className="cnf-item-actions">
@@ -236,7 +237,11 @@ export function CaptureNotesFill({
                         className="cnf-insert"
                         data-testid={`capture-notes-insert-${proposal.sectionKey}`}
                         onClick={() => {
-                          onInsert(proposal.sectionKey, proposal.excerpt, proposal.sourceLine);
+                          onInsert(
+                            proposal.sectionKey,
+                            proposal.excerpt,
+                            proposal.sourceLine,
+                          );
                           setInserted((prev) => [...prev, proposal.sectionKey]);
                         }}
                       >

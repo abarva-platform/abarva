@@ -5,7 +5,10 @@ import {
   phaseStepPageHref,
   resolvePhaseStepPageLanding,
 } from "@/lib/programs/phase-step-page-routing";
-import { STEP_PAGE_VIEWS, type StepPageView } from "@/lib/programs/step-page-views";
+import {
+  STEP_PAGE_VIEWS,
+  type StepPageView,
+} from "@/lib/programs/step-page-views";
 import { PHASE_STEP_PAGES } from "@/components/strategic-moves/step-page/phase-step-pages";
 import { resolvePhaseWorkflow } from "@/lib/programs/phase-workflow-registry";
 import { readFileSync } from "node:fs";
@@ -28,25 +31,46 @@ const base = {
 
 describe("phase step-page sunset routing", () => {
   it("matches the host's dedicated mounts, every gate, and every slot in both directions", () => {
-    const host = readFileSync(join(process.cwd(), "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx"), "utf8");
-    const dedicatedMounts = [...host.matchAll(/initialStepView === "([^"]+)"/g)].map((match) => match[1]);
-    const gateViews = (Object.keys(STEP_PAGE_VIEWS) as StepPageView[]).filter((view) => {
-      const entry = STEP_PAGE_VIEWS[view];
-      return resolvePhaseWorkflow(entry.phase, null).at(-1)?.id === entry.stepId;
-    });
+    const host = readFileSync(
+      join(
+        process.cwd(),
+        "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx",
+      ),
+      "utf8",
+    );
+    const dedicatedMounts = [
+      ...host.matchAll(/initialStepView === "([^"]+)"/g),
+    ].map((match) => match[1]);
+    const gateViews = (Object.keys(STEP_PAGE_VIEWS) as StepPageView[]).filter(
+      (view) => {
+        const entry = STEP_PAGE_VIEWS[view];
+        return (
+          resolvePhaseWorkflow(entry.phase, null).at(-1)?.id === entry.stepId
+        );
+      },
+    );
     expect(host).toContain("if (gateStepPageActive)");
     expect(host).toContain("PHASE_STEP_PAGES[initialStepView]");
     const mounted = new Set<StepPageView>([
-      ...dedicatedMounts as StepPageView[],
+      ...(dedicatedMounts as StepPageView[]),
       ...gateViews,
-      ...Object.keys(PHASE_STEP_PAGES) as StepPageView[],
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
     ]);
     const implemented = new Set<StepPageView>([
       ...EXISTING_STEP_PAGE_VIEWS,
-      ...Object.keys(PHASE_STEP_PAGES) as StepPageView[],
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
     ]);
     expect([...implemented].sort()).toEqual([...mounted].sort());
-    expect(gateViews).toEqual(expect.arrayContaining(["p0-approve", "p1-charter-gate", "p2-gate", "gate", "p4-gate", "p5-handoff"]));
+    expect(gateViews).toEqual(
+      expect.arrayContaining([
+        "p0-approve",
+        "p1-charter-gate",
+        "p2-gate",
+        "gate",
+        "p4-gate",
+        "p5-handoff",
+      ]),
+    );
   });
   it("defaults a complete phase to its first step not done", () => {
     expect(resolvePhaseStepPageLanding(base)).toBe(
@@ -65,15 +89,20 @@ describe("phase step-page sunset routing", () => {
   it("lands both completed P4 and P5 page sets on their first open step", () => {
     const implementedViews = [
       ...EXISTING_STEP_PAGE_VIEWS,
-      ...Object.keys(PHASE_STEP_PAGES) as StepPageView[],
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
     ];
-    for (const [phase, expectedView] of [[4, "p4-milestones"], [5, "p5-owners"]] as const) {
-      expect(resolvePhaseStepPageLanding({
-        ...base,
-        phase,
-        implementedViews,
-        doneByStep: {},
-      })).toBe(`/strategic-moves/move-1/phase/${phase}?step=${expectedView}`);
+    for (const [phase, expectedView] of [
+      [4, "p4-milestones"],
+      [5, "p5-owners"],
+    ] as const) {
+      expect(
+        resolvePhaseStepPageLanding({
+          ...base,
+          phase,
+          implementedViews,
+          doneByStep: {},
+        }),
+      ).toBe(`/strategic-moves/move-1/phase/${phase}?step=${expectedView}`);
     }
   });
 
@@ -87,9 +116,9 @@ describe("phase step-page sunset routing", () => {
     expect(
       phaseStepPageHref("move-1", 0, "P0.2", ["scope_out"], [p0Views[0]]),
     ).toBe("/strategic-moves/move-1/phase/0?section=scope_out");
-    expect(
-      phaseStepPageHref("move-1", 1, "P1.5", [], []),
-    ).toBe("/strategic-moves/move-1/phase/1");
+    expect(phaseStepPageHref("move-1", 1, "P1.5", [], [])).toBe(
+      "/strategic-moves/move-1/phase/1",
+    );
     expect(availableStepPageView(0, "P0.2", [p0Views[0]])).toBeNull();
   });
 

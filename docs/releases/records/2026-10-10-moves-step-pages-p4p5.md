@@ -39,6 +39,9 @@ phase. A redirect shows the target step name while navigation completes.
 ## Changes Included
 
 - P4.1–P4.4 and P5.1–P5.3 step-page slots.
+- Review fixes: Context reads the actual step depth, milestone readiness follows
+  the milestone route, value readback formats engine cents as dollars and names
+  driver units, and P4.2 reads through an approval-backed ROM snapshot seam.
 - Gate-view routing derivation, P2 gate view registration, and visible redirect status.
 - Tests for slot coverage, view/mount parity and page states.
 - Legacy-surface sunset ledger update.
@@ -46,19 +49,26 @@ phase. A redirect shows the target step name while navigation completes.
 
 ## QA / Validation
 
-- Page, notes-fill, host, routing and governance tests: pass (359 tests across five suites).
-- After rebasing onto current main: Programs unit suites pass (3,556 tests
-  across 229 suites); focused page, host and routing suites pass (336 tests
-  across three suites). The newly mounted upstream view remains in routing.
-- Six mutation probes: pass; each changed behavior failed a focused test before restoration.
+- Page, notes-fill, host, routing, governance and money formatter tests: pass
+  (377 tests across seven focused suites). Host tests cover first-open routing
+  and the `?legacy=1` hatch in both P4 and P5.
+- After rebasing onto current main: Programs unit suites pass (3,558 tests
+  across 230 suites). The newly mounted upstream view remains in routing.
+- Eleven representative mutation probes: pass. Five review-fix probes
+  (depth, zero milestones, NPV display, approved ROM read and cents conversion)
+  and six earlier step-page probes each failed a focused test before restoration.
 - Typecheck: pass with zero errors.
 - ESLint on changed source: pass with zero warnings.
 - Library orphan audit, route reachability and export reachability: pass; no new findings.
-- Test CI census: pass, one new covered test file and a covered-file delta of +1.
+- Test CI census: pass, two new test files and a covered-file delta of +2
+  (2,798 to 2,800); no new unrun test file.
 - Tenancy fence census write/check: pass; no API route added.
 - Nexus manual generation/check: pass; generated manual unchanged.
 - Release control: pass (11 of 11 gates).
-- Local visual previews: 168 screenshots at 1440px and 390px, light and dark; 140 shared-template state fixtures and 28 actual initial adapter renders. The P4.2 initial render was refreshed after its blocked-state adjustment.
+- Local visual previews: 168 screenshots at 1440px and 390px, light and
+  dark; 140 shared-template state fixtures and 28 actual initial adapter
+  renders. The 28 actual initial renders were refreshed after the review
+  fixes and local readbacks settled.
 
 ## Rollout Plan
 
@@ -90,15 +100,17 @@ step-page routing needs to be removed from a later image.
 
 ## Known Gaps
 
-- The current baseline does not contain the approved ROM snapshot service or
-  the read-only value-case route. P4.2 and P4.3 show explicit unavailable
-  states rather than fabricated figures. Per-release ROM rows, workbook links
-  and engine formula readback need those upstream services.
+- The ROM calculator and preview route are present, but the approved P3 ROM
+  snapshot read path is not. The single read function returns `null` today;
+  P4.2 remains blocked until a governed approved snapshot can be supplied.
+  Its per-release display and workbook link are tested with a synthetic
+  approved snapshot. The read-only value-case route is also absent, so P4.3
+  shows an explicit unavailable state rather than fabricated figures.
 - Value-lever editing here is limited to conversion and register references
   for attribution and probability. Creating a new lever model remains open.
 - The phase host does not provide the P2 route confirmer, a linked session
-  date, or a per-step completion timestamp. The pages label missing session
-  context instead of inventing it; a stored capture answer reaches Ready but
+  date, or a per-step completion timestamp. The pages state only the actual
+  step depth and evidence summary; a stored capture answer reaches Ready but
   does not claim a dated Done state.
 - P4/P5-specific HTML mocks do not exist in the design handoff. Visual review
   used template v1.10 and its P3 instances. Static previews omit the existing

@@ -66,41 +66,151 @@
 }
 
 /* Existing estimate editor, composed inside the P4.2 step workspace. */
-.root :global(.mxw-estimate-model) { display: grid; gap: 12px; min-width: 0; }
-.root :global(.mxw-estimate-toolbar) { display: flex; justify-content: space-between; align-items: end; gap: 10px; flex-wrap: wrap; }
-.root :global(.mxw-estimate-field) { display: grid; gap: 5px; min-width: 0; color: var(--mv-muted); font-size: 12px; font-weight: 600; }
+.root :global(.mxw-estimate-model) {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.root :global(.mxw-estimate-toolbar) {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.root :global(.mxw-estimate-field) {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: var(--mv-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
 .root :global(.mxw-estimate-field input),
-.root :global(.mxw-estimate-field select) { width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--mv-line-strong); border-radius: var(--mv-radius-sm); background: var(--mv-surface); color: var(--mv-ink); font: inherit; }
+.root :global(.mxw-estimate-field select) {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--mv-line-strong);
+  border-radius: var(--mv-radius-sm);
+  background: var(--mv-surface);
+  color: var(--mv-ink);
+  font: inherit;
+}
 .root :global(.mxw-estimate-add),
 .root :global(.mxw-estimate-remove),
-.root :global(.mxw-estimate-legacy button) { border: 1px solid var(--mv-line-strong); border-radius: var(--mv-radius-sm); padding: 8px; background: var(--mv-surface); color: var(--mv-ink); cursor: pointer; }
-.root :global(.mxw-estimate-pair) { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--mv-line); border-radius: var(--mv-radius); background: var(--mv-surface); }
-.root :global(.mxw-estimate-pair-head) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 9px; align-items: end; }
-.root :global(.mxw-estimate-scenarios) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.root :global(.mxw-estimate-scenario) { display: grid; gap: 9px; min-width: 0; margin: 0; padding: 10px; border: 1px solid var(--mv-line); border-radius: var(--mv-radius-sm); }
-.root :global(.mxw-estimate-scenario legend) { color: var(--mv-ink); font-weight: 600; }
-.root :global(.mxw-estimate-numbers) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.root :global(.mxw-estimate-inputs) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.root :global(.mxw-estimate-wide) { grid-column: 1 / -1; }
+.root :global(.mxw-estimate-legacy button) {
+  border: 1px solid var(--mv-line-strong);
+  border-radius: var(--mv-radius-sm);
+  padding: 8px;
+  background: var(--mv-surface);
+  color: var(--mv-ink);
+  cursor: pointer;
+}
+.root :global(.mxw-estimate-pair) {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius);
+  background: var(--mv-surface);
+}
+.root :global(.mxw-estimate-pair-head) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: end;
+}
+.root :global(.mxw-estimate-scenarios) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.root :global(.mxw-estimate-scenario) {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius-sm);
+}
+.root :global(.mxw-estimate-scenario legend) {
+  color: var(--mv-ink);
+  font-weight: 600;
+}
+.root :global(.mxw-estimate-numbers) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.root :global(.mxw-estimate-inputs) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.root :global(.mxw-estimate-wide) {
+  grid-column: 1 / -1;
+}
 .root :global(.mxw-estimate-empty),
 .root :global(.mxw-estimate-legacy),
 .root :global(.mxw-estimate-notes),
 .root :global(.mxw-estimate-errors),
-.root :global(.mxw-estimate-ready) { padding: 10px; border: 1px solid var(--mv-line); border-radius: var(--mv-radius-sm); color: var(--mv-muted); }
-.root :global(.mxw-estimate-totals) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 11px; border: 1px solid var(--mv-line); border-left: 3px solid var(--mv-accent); border-radius: var(--mv-radius-sm); }
-.hide-estimate-total :global(.mxw-estimate-totals) { display: none; }
+.root :global(.mxw-estimate-ready) {
+  padding: 10px;
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius-sm);
+  color: var(--mv-muted);
+}
+.root :global(.mxw-estimate-totals) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  padding: 11px;
+  border: 1px solid var(--mv-line);
+  border-left: 3px solid var(--mv-accent);
+  border-radius: var(--mv-radius-sm);
+}
+.hide-estimate-total :global(.mxw-estimate-totals) {
+  display: none;
+}
 .root :global(.mxw-estimate-totals h3),
-.root :global(.mxw-estimate-totals p) { grid-column: 1 / -1; margin: 0; }
-.root :global(.mxw-estimate-totals > div) { display: grid; gap: 3px; padding: 8px; border: 1px solid var(--mv-line); border-radius: var(--mv-radius-sm); }
-.root :global(.mxw-estimate-totals span) { color: var(--mv-accent); font-weight: 600; }
-.root :global(.mxw-estimate-review) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
-.root :global(.mxw-estimate-attestation) { display: flex; gap: 8px; align-items: start; color: var(--mv-ink); }
+.root :global(.mxw-estimate-totals p) {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.root :global(.mxw-estimate-totals > div) {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius-sm);
+}
+.root :global(.mxw-estimate-totals span) {
+  color: var(--mv-accent);
+  font-weight: 600;
+}
+.root :global(.mxw-estimate-review) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.root :global(.mxw-estimate-attestation) {
+  display: flex;
+  gap: 8px;
+  align-items: start;
+  color: var(--mv-ink);
+}
 @container main (max-width: 679px) {
   .root :global(.mxw-estimate-scenarios),
   .root :global(.mxw-estimate-review),
-  .root :global(.mxw-estimate-pair-head) { grid-template-columns: minmax(0, 1fr); }
+  .root :global(.mxw-estimate-pair-head) {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .root :global(.mxw-estimate-numbers),
-  .root :global(.mxw-estimate-inputs) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .root :global(.mxw-estimate-inputs) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ───────── Base (canonical) ───────── */
@@ -1518,24 +1628,85 @@ textarea.q-input {
 }
 
 /* Template v1.6: an unfinished earlier step is "open" — reachable, numbered, never ticked. */
-.is-open .step-rule { background: var(--mv-line-strong); }
-.is-open .step-dot { border-color: var(--mv-ink); color: var(--mv-ink); }
-.is-open .step-title { color: var(--mv-muted); font-weight: 500; }
-.is-open .step-depth { color: var(--mv-ink); }
-.is-open .step-btn { cursor: pointer; }
+.is-open .step-rule {
+  background: var(--mv-line-strong);
+}
+.is-open .step-dot {
+  border-color: var(--mv-ink);
+  color: var(--mv-ink);
+}
+.is-open .step-title {
+  color: var(--mv-muted);
+  font-weight: 500;
+}
+.is-open .step-depth {
+  color: var(--mv-ink);
+}
+.is-open .step-btn {
+  cursor: pointer;
+}
 /* Template v1.6: the in-step upload sits at the right end of the Context line. */
-.ctx-action { margin-left: auto; display: inline-flex; align-items: baseline; gap: 12px; }
-.context-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; font-size: 14px; color: var(--mv-muted); padding: 0 4px; }
+.ctx-action {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.context-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--mv-muted);
+  padding: 0 4px;
+}
 
 /* Template v1.7: the Coverage instrument. The segmented control is product UI
    here, not review chrome; `.seg-sm` sizes it for a list item. */
-.seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 4px; background: var(--mv-bg); border: 1px solid var(--mv-line); border-radius: var(--mv-radius); padding: 3px; }
-.seg button { border: 0; border-radius: 7px; padding: 7px 10px; font-size: 13px; font-weight: 500; cursor: pointer; background: transparent; color: var(--mv-muted); }
-.seg button[aria-checked="true"] { background: var(--mv-surface); color: var(--mv-ink); }
-.seg-sm { display: inline-grid; grid-template-columns: repeat(3, auto); padding: 2px; }
-.seg-sm button { padding: 5px 10px; font-size: 13px; white-space: nowrap; }
-.cov-how { margin-top: 8px; }
-.field .ava-badge, td .ava-badge, .card dd .ava-badge { margin: 4px 0 0; align-self: flex-start; }
+.seg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 4px;
+  background: var(--mv-bg);
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius);
+  padding: 3px;
+}
+.seg button {
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: var(--mv-muted);
+}
+.seg button[aria-checked="true"] {
+  background: var(--mv-surface);
+  color: var(--mv-ink);
+}
+.seg-sm {
+  display: inline-grid;
+  grid-template-columns: repeat(3, auto);
+  padding: 2px;
+}
+.seg-sm button {
+  padding: 5px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.cov-how {
+  margin-top: 8px;
+}
+.field .ava-badge,
+td .ava-badge,
+.card dd .ava-badge {
+  margin: 4px 0 0;
+  align-self: flex-start;
+}
 
 /* ═════════ Template v1.9: public sources (Files tab) ═════════ */
 /* Ported from core.css v1.9; every value is a canonical token. */
@@ -1601,16 +1772,47 @@ textarea.q-input {
   color: var(--mv-ink);
 }
 /* ═════════ Template v1.9: the assumptions register (from core.css; existing tokens only) ═════════ */
-.withheld { color: var(--mv-faint); font-style: italic; }
+.withheld {
+  color: var(--mv-faint);
+  font-style: italic;
+}
 /* Product port: the mock's inline paddings and the register's own container. */
-.reg-root { min-height: 0; container: main / inline-size; }
-.toolbar .seg { flex: 0 1 280px; }
-.reg-list .items, .settled .items { padding: 16px 24px; }
-.settled .items { padding-top: 4px; }
-.reg-foot { padding: 0 24px 16px; margin: 0; font-size: 13px; color: var(--mv-muted); }
-.reg-empty { padding: 16px 24px; margin: 0; font-size: 13px; color: var(--mv-muted); }
-.reg-subform { display: flex; flex-direction: column; gap: 10px; }
-.reg-copy { min-height: 160px; font-family: var(--mv-font-mono); font-size: 12px; }
+.reg-root {
+  min-height: 0;
+  container: main / inline-size;
+}
+.toolbar .seg {
+  flex: 0 1 280px;
+}
+.reg-list .items,
+.settled .items {
+  padding: 16px 24px;
+}
+.settled .items {
+  padding-top: 4px;
+}
+.reg-foot {
+  padding: 0 24px 16px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--mv-muted);
+}
+.reg-empty {
+  padding: 16px 24px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--mv-muted);
+}
+.reg-subform {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.reg-copy {
+  min-height: 160px;
+  font-family: var(--mv-font-mono);
+  font-size: 12px;
+}
 /* ═════════ Template v1.10: P3 Step 3, operating & adoption (existing tokens only) ═════════ */
 /* The skipped context line's action (core.css `.ctx-actions`). */
 .ctx-actions {

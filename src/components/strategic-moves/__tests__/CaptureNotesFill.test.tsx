@@ -246,9 +246,9 @@ describe("CaptureNotesFill", () => {
         screen.queryByTestId("capture-notes-records-basis-sponsor_commitment"),
       ).not.toBeInTheDocument();
       // The standing warning is unconditional: a paste is never evidence.
-      expect(screen.getByTestId("capture-notes-basis-warning")).toHaveTextContent(
-        /your assertion/i,
-      );
+      expect(
+        screen.getByTestId("capture-notes-basis-warning"),
+      ).toHaveTextContent(/your assertion/i);
     });
 
     it("still refuses to read as evidence, recorded basis or not", () => {
