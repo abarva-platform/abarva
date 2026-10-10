@@ -42,6 +42,7 @@ import {
   confidenceLevel,
   confidenceScore,
   effectiveFigure,
+  effectiveValue,
   findRegisterCitations,
   formatRegisterId,
   isRegisterConfidence,
@@ -696,6 +697,81 @@ describe("generation view", () => {
         record({ status, answer: "x", answerSource: "y" }),
       );
       expect(JSON.stringify(view ?? {})).not.toContain("Pat Example");
+    },
+  );
+});
+
+describe("effective value (the value engine's numeric twin of the figure)", () => {
+  it.each(["proposed", "rejected", "superseded"] as const)(
+    "a %s row stands on no value, whatever numbers it holds",
+    (status) => {
+      expect(
+        effectiveValue(record({ status, workingValue: 12, answerValue: 9 })),
+      ).toBeNull();
+    },
+  );
+
+  it("an open row stands on its working value, counts, and must be validated", () => {
+    expect(effectiveValue(record({ answerValue: 9 }))).toEqual({
+      value: 12,
+      confidence: 3,
+      status: "open",
+      mustValidate: true,
+    });
+  });
+
+  it("a confirmed row stands on its answer value, else the working value it confirmed", () => {
+    const confirmed = record({ status: "confirmed", confidence: 5 });
+    expect(effectiveValue(confirmed)).toEqual({
+      value: 12,
+      confidence: 5,
+      status: "confirmed",
+      mustValidate: false,
+    });
+    expect(effectiveValue({ ...confirmed, answerValue: 11 })?.value).toBe(11);
+  });
+
+  it("a corrected row stands ONLY on its answer value, never the value that was wrong", () => {
+    const corrected = record({
+      status: "corrected",
+      confidence: 1,
+      answerValue: 9,
+    });
+    expect(effectiveValue(corrected)).toEqual({
+      value: 9,
+      confidence: 1,
+      status: "corrected",
+      mustValidate: false,
+    });
+    expect(effectiveValue({ ...corrected, answerValue: null })).toBeNull();
+  });
+
+  it("a counted row with no finite value stands on nothing, never zero", () => {
+    expect(effectiveValue(record({ workingValue: null }))).toBeNull();
+    expect(
+      effectiveValue(record({ workingValue: Number.POSITIVE_INFINITY })),
+    ).toBeNull();
+    expect(
+      effectiveValue(record({ status: "confirmed", answerValue: Number.NaN })),
+    ).toBeNull();
+  });
+
+  it("zero is a value, not an absence", () => {
+    expect(effectiveValue(record({ workingValue: 0 }))?.value).toBe(0);
+  });
+
+  it.each(ASSUMPTION_STATUSES)(
+    "agrees with the figure rule on whether a %s row stands on anything",
+    (status) => {
+      const both = record({
+        status,
+        workingFigure: "12%",
+        answerFigure: "9%",
+        answerValue: 9,
+      });
+      expect(effectiveValue(both) === null).toBe(
+        effectiveFigure(both) === null,
+      );
     },
   );
 });
