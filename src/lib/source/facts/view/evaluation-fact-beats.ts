@@ -73,6 +73,7 @@ import type {
 import {
   citedDocFor,
   idSegment,
+  ruleIndex,
   usd,
 } from '@/lib/source/facts/view/stage-beat-formatters';
 import type { ValueLeverResult } from '@/lib/source/facts/evaluators/types';
@@ -97,14 +98,6 @@ export interface EvaluationFactBeatInput {
   citations: Record<string, FactSourceCitation | null>;
   /** The computed next-stage label, already resolved from the canonical order. */
   nextStageName: string | null;
-}
-
-function ruleIndex(
-  archetype: SourceEventArchetype,
-): Map<string, ValueLeverRule> {
-  return new Map(
-    (archetype.valueLeverRules ?? []).map((rule) => [rule.key, rule]),
-  );
 }
 
 /** A weight as a reader reads it: `0.3` → `30%`. */
