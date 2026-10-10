@@ -85,7 +85,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | --- | --- | --- |
 | client | 99 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
 | admin | 70 | Explain setup/governance controls; avoid tenant data claims unless scoped evidence is supplied. |
-| public | 38 | Describe public/product material; never imply authenticated capability proof. |
+| public | 40 | Describe public/product material; never imply authenticated capability proof. |
 | internal | 8 | Treat as preview/demo/operator-only unless release evidence says otherwise. |
 
 | Product area | Route count |
@@ -98,7 +98,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | Moves | 16 |
 | Platform | 5 |
 | Shared | 55 |
-| Source | 35 |
+| Source | 37 |
 | Tenant workspace | 6 |
 | Tower | 5 |
 
@@ -253,6 +253,8 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | /responsible-ai | public | Shared | src/app/(public)/responsible-ai/page.tsx |
 | /responsible-ai/acknowledgment | public | Shared | src/app/(public)/responsible-ai/acknowledgment/page.tsx |
 | /responsible-ai/training | public | Shared | src/app/(public)/responsible-ai/training/page.tsx |
+| /rfp/[eventId] | public | Source | src/app/rfp/[eventId]/page.tsx |
+| /rfp/[eventId]/sign-in | public | Source | src/app/rfp/[eventId]/sign-in/page.tsx |
 | /session-expired | public | Shared | src/app/session-expired/page.tsx |
 | /setup | client | Shared | src/app/setup/page.tsx |
 | /setup/files | client | Shared | src/app/(maestro)/setup/files/page.tsx |

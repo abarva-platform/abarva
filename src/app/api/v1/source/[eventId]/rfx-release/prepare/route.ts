@@ -40,6 +40,7 @@ const recipientAuthority = z.object({
   contactApprovedAt: dateTime.optional(),
   contactEvidenceReference: text.optional(),
   ndaAuthorityId: text.optional(),
+  ndaDocumentSha256: z.string().regex(/^[0-9a-f]{64}$/i).optional(),
   ndaTenantKey: text.optional(),
   ndaEventId: text.optional(),
   ndaLegalEntityId: text.optional(),

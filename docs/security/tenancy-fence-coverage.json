@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 412,
-    "fenced": 230,
-    "fencedDirect": 106,
+    "routes": 416,
+    "fenced": 231,
+    "fencedDirect": 107,
     "fencedIndirect": 124,
-    "unfenced": 182,
+    "unfenced": 185,
     "unfencedButReachesFenceModule": 101,
-    "behavioral": 84,
+    "behavioral": 85,
     "byteScannerOnly": 7,
     "none": 139
   },
@@ -6681,6 +6681,23 @@
       }
     },
     {
+      "route": "src/app/api/v1/source/[eventId]/rfx-release/authorize/route.ts",
+      "fence": "direct",
+      "fenceSymbols": [
+        "requireTenancy",
+        "tenancyErrorResponse"
+      ],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": "behavioral",
+      "suites": {
+        "behavioral": [
+          "src/__tests__/behaviors/source-rfx-prepare-route.test.ts"
+        ],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/v1/source/[eventId]/rfx-release/contacts/approve/route.ts",
       "fence": "direct",
       "fenceSymbols": [
@@ -7087,6 +7104,42 @@
         "behavioral": [
           "src/app/api/v1/source/intake/servicenow/review/__tests__/route.test.ts"
         ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/acknowledge/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/sign-in/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/sign-out/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
         "byteScanner": []
       }
     },
