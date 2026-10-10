@@ -4920,6 +4920,96 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   describe("phase-generic step page mount", () => {
+    const p0p1Views = [
+      ["p0-signal", 0, "Name the signal and problem"],
+      ["p0-scope", 0, "Draw the scope boundary"],
+      ["p0-value", 0, "State the value hypothesis"],
+      ["p0-owner-evidence", 0, "Name owners and evidence"],
+      ["p0-approve", 0, "Approve origination"],
+      ["p1-sponsor-scope", 1, "Name sponsor and scope"],
+      ["p1-stakeholders", 1, "Set decision rights"],
+      ["p1-success", 1, "Name success measures"],
+      ["p1-evidence-change", 1, "Plan evidence and change"],
+      ["p1-charter-gate", 1, "Check the gate and sign off"],
+    ] as const;
+
+    it.each(p0p1Views)("mounts %s under the phase flag and keeps capture when off", (view, phase, title) => {
+      const input = {
+        captureV2Enabled: true,
+        stepPagesV3Enabled: true,
+        initialStepView: view,
+        carriesForwardContent: [],
+        evidenceNeedPackets: [],
+        move: makeMove({ currentPhase: phase, phaseLabel: phase === 0 ? "P0 Originate" : "P1 Charter" }),
+        phaseNum: phase,
+        phaseTallies: [...phaseTallies],
+      };
+      const mounted = render(<MovesPhaseStandaloneClient {...input} phaseStepPagesEnabled />);
+      expect(screen.getByRole("heading", { name: new RegExp(title) })).toBeInTheDocument();
+      mounted.unmount();
+      render(<MovesPhaseStandaloneClient {...input} phaseStepPagesEnabled={false} />);
+      expect(screen.getByTestId("moves-phase-standalone")).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: new RegExp(title) })).not.toBeInTheDocument();
+    });
+
+    it("autosaves a P0 step answer through the existing capture route", async () => {
+      render(<MovesPhaseStandaloneClient
+        captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled
+        initialStepView="p0-signal" carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 0, phaseLabel: "P0 Originate" })}
+        phaseNum={0} phaseTallies={[...phaseTallies]}
+      />);
+      fireEvent.change(screen.getByRole("textbox", { name: "Business trigger" }), {
+        target: { value: "Observed change in the synthetic process" },
+      });
+      fireEvent.click(screen.getAllByRole("button", { name: "Save" })[0]);
+      await waitFor(() => {
+        const call = (global.fetch as jest.Mock).mock.calls.find(([url, init]) =>
+          String(url).includes("/phase-capture") && init?.method === "POST",
+        );
+        expect(JSON.parse(String(call?.[1]?.body ?? "{}"))).toEqual(expect.objectContaining({
+          phase: 0,
+          sections: expect.objectContaining({ business_trigger: "Observed change in the synthetic process" }),
+        }));
+      });
+    });
+
+    it("autosaves the P0 gate recommendation before approval", async () => {
+      render(<MovesPhaseStandaloneClient
+        captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled canApproveGates
+        initialStepView="p0-approve" carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 0, phaseLabel: "P0 Originate" })}
+        phaseNum={0} phaseTallies={[...phaseTallies]}
+      />);
+      fireEvent.change(screen.getByRole("textbox", { name: "Why should this Move advance to Charter?" }), {
+        target: { value: "Proceed to Charter for a documented Discovery decision." },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save recommendation" }));
+      await waitFor(() => {
+        const call = (global.fetch as jest.Mock).mock.calls.find(([url, init]) =>
+          String(url).includes("/phase-capture") && init?.method === "POST",
+        );
+        expect(JSON.parse(String(call?.[1]?.body ?? "{}"))).toEqual(expect.objectContaining({
+          phase: 0,
+          sections: expect.objectContaining({ recommendation_to_advance: "Proceed to Charter for a documented Discovery decision." }),
+        }));
+      });
+    });
+
+    it("shows the target step while the default-route redirect is pending", () => {
+      mockRouterReplace.mockClear();
+      render(<MovesPhaseStandaloneClient
+        captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled
+        carriesForwardContent={[]} evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 0, phaseLabel: "P0 Originate" })}
+        phaseNum={0} phaseTallies={[...phaseTallies]}
+      />);
+      expect(mockRouterReplace).toHaveBeenCalledWith(expect.stringContaining("?step=p0-signal"));
+      expect(screen.getByRole("status")).toHaveTextContent("Opening Signal & problem…");
+    });
+
     it("renders a phase-owned page through the shared host props", () => {
       PHASE_STEP_PAGES["p4-milestones"] = (props) => (
         <div data-testid="phase-owned-step-page">

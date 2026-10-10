@@ -85,6 +85,51 @@
 .root button {
   font-family: inherit;
 }
+
+/* The existing structured P1 editor now also lives inside the step workspace. */
+.root :global(.mxw-structured-form) {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+.root :global(.mxw-structured-form label) {
+  display: grid;
+  gap: 5px;
+  color: var(--mv-muted);
+  font-size: 13px;
+}
+.root :global(.mxw-structured-form input),
+.root :global(.mxw-structured-form select) {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--mv-line-strong);
+  border-radius: var(--mv-radius-sm);
+  background: var(--mv-surface);
+  color: var(--mv-ink);
+  font: inherit;
+}
+.root :global(.mxw-structured-note) {
+  color: var(--mv-muted);
+  font-size: 13px;
+}
+
+/* The existing charter-basis control inherits the step page's active palette. */
+.root :global(.cbf) {
+  --cbf-bg: var(--mv-bg);
+  --cbf-surface: var(--mv-surface);
+  --cbf-ink: var(--mv-ink);
+  --cbf-muted: var(--mv-muted);
+  --cbf-faint: var(--mv-faint);
+  --cbf-line: var(--mv-line);
+  --cbf-amber-bg: var(--mv-surface);
+}
+.root :global(.cbf) :global(.cbf-option[data-selected=on]) {
+  color: var(--mv-current-ink);
+}
+.root :global(.cbf-is-assumption) :global(.cbf-option[data-selected=on]) {
+  color: var(--mv-accent-ink);
+}
 .root button:focus-visible,
 .root input:focus-visible,
 .root textarea:focus-visible,

@@ -9,10 +9,10 @@ for the enrolled synthetic demo tenant.
 
 | Surface (file and symbol) | Phase | Replacement step page | Status | Removal criteria |
 | --- | --- | --- | --- | --- |
-| `MovesCaptureFlow.tsx` `MovesCaptureFlow` opening and capture slots | P0 | P0.1–P0.4 | live-default | Signed-in walk recorded; phase flag default for the enrolled synthetic demo tenant |
-| `MovesCaptureFlow.tsx` `MovesCaptureFlow` gate and approve slots | P0 | P0.5 | live-default | Signed-in walk recorded; phase flag default for the enrolled synthetic demo tenant; origination evidence and approval parity |
-| `MovesCaptureFlow.tsx` `MovesCaptureFlow` opening and capture slots | P1 | P1.1–P1.4 | live-default | Signed-in walk recorded; phase flag default for the enrolled synthetic demo tenant |
-| `MovesCaptureFlow.tsx` `MovesCaptureFlow` gate and approve slots | P1 | P1.5 | live-default | Signed-in walk recorded; phase flag default for the enrolled synthetic demo tenant; charter sign-off parity |
+| `MovesCaptureFlow.tsx` `MovesCaptureFlow` opening and capture slots | P0 | P0.1–P0.4 | hatch-only | Signed-in step-page walk recorded; P0 source evidence, autosave, and gate parity confirmed; phase flag remains enrolled for the synthetic demo tenant |
+| `MovesCaptureFlow.tsx` `MovesCaptureFlow` gate and approve slots | P0 | P0.5 | hatch-only | Signed-in step-page walk recorded; server refusal, origination evidence, approval and seed-check parity confirmed |
+| `MovesCaptureFlow.tsx` `MovesCaptureFlow` opening and capture slots | P1 | P1.1–P1.4 | hatch-only | Signed-in step-page walk recorded; charter basis, structured business-change edit, sponsor role and autosave parity confirmed; phase flag remains enrolled for the synthetic demo tenant |
+| `MovesCaptureFlow.tsx` `MovesCaptureFlow` gate and approve slots | P1 | P1.5 | hatch-only | Signed-in step-page walk recorded; charter and discovery-plan build, basis refusal and sign-off parity confirmed |
 | `MovesCaptureFlow.tsx` `MovesCaptureFlow` opening and capture slots | P2 | P2.1–P2.4 | live-default | Signed-in walk recorded; phase flag default for the enrolled synthetic demo tenant |
 | `MovesCaptureFlow.tsx` `MovesCaptureFlow` gate and approve slots | P2 | P2.5 | live-default | Signed-in walk recorded; phase flag default for the enrolled synthetic demo tenant |
 | `MovesCaptureFlow.tsx` `MovesCaptureFlow` opening and capture slots | P3 | P3.1–P3.4 | hatch-only | Signed-in walk recorded; phase flag default for the enrolled synthetic demo tenant |

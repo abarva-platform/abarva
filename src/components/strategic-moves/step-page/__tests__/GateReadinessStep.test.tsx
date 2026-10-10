@@ -126,6 +126,21 @@ function writeRationale(
 }
 
 describe("GateReadinessStep", () => {
+  it("shows P1 charter sign-off and sponsor checks without claiming a Discovery baseline", () => {
+    const p1 = props({
+      phaseNum: 1, phaseCode: "P1", phaseName: "Charter", nextPhaseLabel: "P2 Discover",
+      criteria: [
+        { id: "charter_signed_off", label: "Charter signed off", severity: "hard", completed: false, verified: true },
+        { id: "sponsor_assigned", label: "Sponsor participant assigned", severity: "hard", completed: false, verified: true },
+        { id: "baseline_captured", label: "Baseline captured", severity: "soft", completed: false, verified: true },
+      ],
+    });
+    const { container } = render(<GateReadinessStep {...p1} />);
+    expect(container.textContent).toContain("Sponsor participant assigned");
+    expect(container.textContent).toContain("Charter signed off");
+    expect(container.textContent).not.toContain("Baseline captured");
+  });
+
   it("keeps P0 seed checks pending until a person approves the brief", async () => {
     const onSubmit = jest.fn<Promise<void>, [BuildSettledResult]>(
       async () => undefined,
@@ -183,6 +198,27 @@ describe("GateReadinessStep", () => {
         succeededKeys: ["origination_brief"],
       }),
     );
+  });
+
+  it("captures the remaining P0 recommendation before enabling approval", () => {
+    const onSave = jest.fn();
+    const gate = props({
+      phaseNum: 0, phaseCode: "P0", phaseName: "Originate",
+      routeDocumentKeys: [], initialArtifacts: [], originationReady: false,
+      originationRecommendation: { value: "", saved: false, onSave },
+    });
+    const mounted = render(<GateReadinessStep {...gate} />);
+    expect(status(mounted.container).textContent).toContain("Record the recommendation to advance");
+    fireEvent.change(within(mounted.container).getByRole("textbox", { name: "Why should this Move advance to Charter?" }), {
+      target: { value: "The reviewed source supports a Discovery decision." },
+    });
+    fireEvent.click(within(mounted.container).getByRole("button", { name: "Save recommendation" }));
+    expect(onSave).toHaveBeenCalledWith("The reviewed source supports a Discovery decision.");
+    expect((within(footer(mounted.container)).getByRole("button", { name: "Approve origination" }) as HTMLButtonElement).disabled).toBe(true);
+    mounted.rerender(<GateReadinessStep {...gate} originationReady
+      originationRecommendation={{ value: "The reviewed source supports a Discovery decision.", saved: true, onSave }} />);
+    expect(within(mounted.container).getByText("Recommendation to advance", { selector: ".rc-cause" })).toBeTruthy();
+    expect(status(mounted.container).textContent).toContain("Write the approval rationale");
   });
 
   it("does not offer P0 approval without reviewed source evidence", () => {
