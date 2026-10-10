@@ -27,6 +27,12 @@ describe("step page views", () => {
   });
 
   it("names only steps the workflow registry declares", () => {
+    expect(Object.keys(STEP_PAGE_VIEWS)).toHaveLength(23);
+    expect(
+      Object.values(STEP_PAGE_VIEWS).filter(({ phase }) =>
+        [0, 1, 4, 5].includes(phase),
+      ),
+    ).toHaveLength(19);
     for (const { phase, stepId } of Object.values(STEP_PAGE_VIEWS)) {
       expect(resolvePhaseWorkflow(phase, null).map((s) => s.id)).toContain(
         stepId,

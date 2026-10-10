@@ -33,6 +33,7 @@ import {
   gateOnlyConfirmSummaryFor,
   movesPhaseCopyAuditBlocks,
 } from "../MovesPhaseStandaloneClient";
+import { PHASE_STEP_PAGES } from "@/components/strategic-moves/step-page/phase-step-pages";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -110,6 +111,7 @@ function selectP3Option(name: RegExp | string): void {
 
 const mockRouterPush = jest.fn();
 const mockRouterRefresh = jest.fn();
+const mockRouterReplace = jest.fn();
 
 jest.mock("next/link", () => {
   return function MockLink({
@@ -131,6 +133,7 @@ jest.mock("next/link", () => {
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockRouterPush,
+    replace: mockRouterReplace,
     refresh: mockRouterRefresh,
   }),
 }));
@@ -4908,6 +4911,143 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByText("Only a gate approver can approve this gate."),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("phase-generic step page mount", () => {
+    it("renders a phase-owned page through the shared host props", () => {
+      PHASE_STEP_PAGES["p4-milestones"] = (props) => (
+        <div data-testid="phase-owned-step-page">
+          {props.phase}:{props.chrome.steps.length}:{props.values.roadmap_sequencing ?? ""}
+        </div>
+      );
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled
+            initialStepView="p4-milestones"
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+            phaseNum={4}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(screen.getByTestId("phase-owned-step-page")).toHaveTextContent("4:5:");
+      } finally {
+        delete PHASE_STEP_PAGES["p4-milestones"];
+      }
+    });
+
+    it("does not mount a registered page when the phase flag is off", () => {
+      PHASE_STEP_PAGES["p4-milestones"] = () => (
+        <div data-testid="phase-owned-step-page" />
+      );
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled={false}
+            initialStepView="p4-milestones"
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+            phaseNum={4}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(screen.queryByTestId("phase-owned-step-page")).not.toBeInTheDocument();
+        expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      } finally {
+        delete PHASE_STEP_PAGES["p4-milestones"];
+      }
+    });
+
+    it("redirects the default address only when all phase pages are registered", () => {
+      const keys = [
+        "p4-milestones",
+        "p4-estimate",
+        "p4-value",
+        "p4-tower",
+        "p4-gate",
+      ] as const;
+      mockRouterReplace.mockClear();
+      for (const key of keys) PHASE_STEP_PAGES[key] = () => null;
+      try {
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+            phaseNum={4}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(mockRouterReplace).toHaveBeenCalledWith(
+          expect.stringContaining("/phase/4?step=p4-milestones"),
+        );
+      } finally {
+        for (const key of keys) delete PHASE_STEP_PAGES[key];
+      }
+    });
+
+    it("mounts the governed gate in a later phase under the phase flag", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          phaseStepPagesEnabled
+          initialStepView="p4-gate"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+          phaseNum={4}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByRole("heading", { name: /Check the gate and sign off/i }),
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId("moves-capture-flow")).not.toBeInTheDocument();
+      expect(
+        within(screen.getByTestId("agent-dock")).getByRole("navigation", {
+          name: /steps/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps capture when the phase flag is off or the legacy hatch is requested", () => {
+      const input = {
+        captureV2Enabled: true,
+        stepPagesV3Enabled: true,
+        initialStepView: "p4-gate" as const,
+        carriesForwardContent: [],
+        evidenceNeedPackets: [],
+        move: makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" }),
+        phaseNum: 4,
+        phaseTallies: [...phaseTallies],
+      };
+      const off = render(<MovesPhaseStandaloneClient {...input} />);
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      off.unmount();
+      render(
+        <MovesPhaseStandaloneClient
+          {...input}
+          phaseStepPagesEnabled
+          legacyCaptureRequested
+        />,
+      );
+      expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: /Check the gate and sign off/i }),
+      ).not.toBeInTheDocument();
     });
   });
 

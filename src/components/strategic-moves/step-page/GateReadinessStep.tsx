@@ -100,6 +100,8 @@ export interface GateReadinessStepProps {
   onBeforeBuild?: () => Promise<void>;
   /** The governed gate submission. Throws with the refusal sentence. */
   onSubmit: (settlement: BuildSettledResult) => Promise<void>;
+  /** P0 is approved from its captured brief and reviewed source evidence; it has no build batch. */
+  originationReady?: boolean;
   /** Back to the previous step. */
   onBack?: () => void;
   /**
@@ -624,7 +626,9 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
   const rationaleField = (
     <div className={cx("field")}>
       <label className={cx("q-label")} htmlFor="gate-rationale">
-        Why this {props.phaseName.toLowerCase()} should pass the gate
+        {props.phaseNum === 0
+          ? "Why origination should pass the gate"
+          : `Why this ${props.phaseName.toLowerCase()} should pass the gate`}
       </label>
       <textarea
         id="gate-rationale"
@@ -632,7 +636,11 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         rows={4}
         maxLength={2000}
         value={rationale}
-        placeholder="e.g. The design maps every root cause to a design element and follows the route the approved evidence supports."
+        placeholder={
+          props.phaseNum === 0
+            ? "e.g. I reviewed the origination brief and source evidence and approve moving into Charter because…"
+            : `e.g. I reviewed the ${props.phaseName.toLowerCase()} answers, evidence and signed deliverables and approve this transition because…`
+        }
         onChange={(event) => setRationale(event.target.value)}
       />
     </div>
@@ -649,7 +657,10 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     facts: [
       {
         kind: "team",
-        text: `Recorded with ${props.canApprove ? "your" : "the approver's"} approval · approving also submits ${props.phaseName}`,
+        text:
+          props.phaseNum === 0
+            ? `Recorded with ${props.canApprove ? "your" : "the approver's"} approval of the origination brief`
+            : `Recorded with ${props.canApprove ? "your" : "the approver's"} approval · approving also submits ${props.phaseName}`,
       },
     ],
     middle: !props.canApprove ? (
@@ -747,6 +758,97 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     .filter(Boolean)
     .join("\n\n");
 
+  if (props.phaseNum === 0) {
+    const readable = props.criteria.every((criterion) => criterion.verified);
+    const approvalInputsReady =
+      readable && props.originationReady === true && props.canApprove;
+    const mayApprove =
+      approvalInputsReady &&
+      rationale.trim().length > 0 &&
+      !submitting;
+    const approveOrigination = async () => {
+      if (!mayApprove) return;
+      setSubmitError(null);
+      setSubmitting(true);
+      try {
+        await props.onSubmit({
+          succeededKeys: ["origination_brief"],
+          failedKeys: [],
+          total: 1,
+          succeeded: [
+            { deliverableTypeKey: "origination_brief", gateArtifact: true },
+          ],
+          failed: [],
+          source: "existing_documents",
+          humanRationale: rationale.trim(),
+        });
+      } catch (err) {
+        setSubmitError(
+          err instanceof Error ? err.message : "The origination approval failed.",
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    };
+    const originationPage = (
+      <MovesStepPage
+        moveName={props.moveName}
+        tabs={props.tabs}
+        phases={props.phases}
+        phaseCode={props.phaseCode}
+        phaseName={props.phaseName}
+        steps={props.steps}
+        stepIndex={props.stepIndex}
+        title="Approve origination"
+        intro="Review the captured brief and source evidence, then record a person's approval. The seed checks clear only after that approval."
+        nextAction={{
+          state: mayApprove
+            ? "ready"
+            : approvalInputsReady
+              ? "in_progress"
+              : "blocked",
+          eyebrow: mayApprove
+            ? "Ready for approval"
+            : approvalInputsReady
+              ? "Your approval"
+              : "Approval pending",
+          sentence: !readable
+            ? "Wait for the gate checks to be read."
+            : !props.originationReady
+              ? props.buildHeldReason ?? "Complete the brief and review its source evidence."
+              : !props.canApprove
+                ? "Wait for an authorized approver."
+                : "Write the approval rationale and approve the origination brief.",
+          settled: 0,
+          total: 1,
+          continueEnabled: mayApprove,
+        }}
+        checks={model.checks.map((check) => ({
+          met: check.met,
+          unknown: check.unknown,
+          level: check.level,
+          text: check.text,
+          note:
+            !check.met &&
+            (check.id === "program_seed_recorded" ||
+              check.id === "value_hypothesis_seed")
+              ? "Recorded only after a person approves the origination brief."
+              : check.note,
+        }))}
+        checksLabel={`Show all ${model.checks.length} checks`}
+        checksWhenBlocked
+        countLabel="Approval not yet recorded"
+        context={{ items: [<b key="depth">Full depth</b>], details: [] }}
+        blockedWork={props.canApprove ? rationaleField : undefined}
+        rows={[...submitRow, rationaleRow]}
+        continueLabel={submitting ? "Approving…" : "Approve origination"}
+        onContinue={() => void approveOrigination()}
+        onBack={props.onBack}
+      />
+    );
+    return props.frame ? props.frame(originationPage, briefing) : originationPage;
+  }
+
   const page = (
     <MovesStepPage
       moveName={props.moveName}
@@ -790,7 +892,10 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
       }
       blockedAction={{ label: "Try again", onClick: onRecordChanged }}
       carry={{
-        label: "Carries to P4",
+        label:
+          props.phaseNum === 5
+            ? "Carries to Tower"
+            : `Carries to P${props.phaseNum + 1}`,
         text: " This phase's approved answers and signed documents.",
       }}
       decisionGroupTitle={

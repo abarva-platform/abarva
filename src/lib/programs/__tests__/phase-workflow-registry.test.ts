@@ -117,9 +117,23 @@ describe("phase workflow registry reproduces today's capture contract", () => {
   );
 
   it.each(CASES)("$name: no key is owned by two steps", ({ route: r }) => {
-    for (const phase of [2, 3]) {
+    for (const phase of [0, 1, 2, 3, 4, 5]) {
       const keys = registryKeys(phase, r);
       expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
+
+  it.each(CASES)("$name: new phases own exactly their own capture keys", ({ route: r }) => {
+    for (const phase of [0, 1, 4, 5]) {
+      const keys = registryKeys(phase, r);
+      const contract = keysOf(phase, r);
+      expect([...keys].sort()).toEqual([...contract].sort());
+      expect(keys).toHaveLength(new Set(keys).size);
+      for (const step of resolvePhaseWorkflow(phase, r)) {
+        expect(step.id.startsWith(`P${phase}.`)).toBe(true);
+        expect(step.depth).toBe("full");
+        expect(step.sectionKeys.every((key) => contract.includes(key))).toBe(true);
+      }
     }
   });
 
@@ -181,7 +195,7 @@ describe("known capture gaps", () => {
   it("lists exactly the steps that capture nothing at a non-skip depth", () => {
     const found: string[] = [];
     for (const profile of ["technical", "limited", "full"] as ChangeProfile[]) {
-      for (const phase of [2, 3]) {
+      for (const phase of [0, 1, 2, 3, 4, 5]) {
         for (const step of resolvePhaseWorkflow(
           phase,
           PROFILE_ROUTE[profile],
@@ -252,6 +266,6 @@ describe("step-page records", () => {
 
 describe("unmodelled phases", () => {
   it("returns no steps for a phase the registry does not model", () => {
-    expect(resolvePhaseWorkflow(4, null)).toEqual([]);
+    expect(resolvePhaseWorkflow(6, null)).toEqual([]);
   });
 });
