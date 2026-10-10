@@ -537,7 +537,7 @@ describe("categories and the next action", () => {
     expect(na.nextAction.state).toBe("in_progress");
     expect(na.nextAction.eyebrow).toBe("Next");
     expect(na.nextAction.sentence).toBe(
-      "Confirm counts for 2 use cases, answer A:DL3 to set dashboard view hours, and 2 more below.",
+      "Confirm counts for 2 use cases; answer A:DL3 to set dashboard view hours; 2 more below.",
     );
     // Two count rows, A:DL3, one mapping, the grouping, and the approval.
     expect(na.nextAction.total - na.nextAction.settled).toBe(6);
@@ -569,7 +569,7 @@ describe("categories and the next action", () => {
     });
     expect(na.countLabel).toBe("1 of 4 inputs confirmed");
     expect(na.nextAction.sentence).toBe(
-      "Answer A:DL3 to set dashboard view hours, approve 1 pod role mapping, and review the release grouping.",
+      "Answer A:DL3 to set dashboard view hours; approve 1 pod role mapping; review the release grouping.",
     );
     r = (approveMapping(r, "ROL-AE", "me", AT) as { value: RomEstimate }).value;
     na = romEstimateNextAction({
@@ -600,7 +600,7 @@ describe("categories and the next action", () => {
       depth: "full",
     });
     expect(empty.nextAction.sentence).toBe(
-      "Add the use cases and their counts, count something before setting unit hours, and 3 more below.",
+      "Add the use cases and their counts; count something before setting unit hours; 3 more below.",
     );
   });
 
@@ -665,7 +665,7 @@ describe("categories and the next action", () => {
     expect(na.nextAction.state).toBe("ready");
     expect(na.nextAction.eyebrow).toBe("✓ Ready");
     expect(na.nextAction.sentence).toBe(
-      "Every input is confirmed and the estimate is approved. P4 plans from snapshot v1. Continue to Gate readiness.",
+      "Every input is confirmed and the estimate is approved; P4 plans from snapshot v1; continue to Gate readiness.",
     );
     expect(na.nextAction.continueEnabled).toBe(true);
     expect(na.nextAction.total - na.nextAction.settled).toBe(0);
@@ -699,7 +699,7 @@ describe("categories and the next action", () => {
       ],
     });
     expect(na.nextAction.sentence).toBe(
-      "Review the staffing note extraction, confirm counts for 2 use cases, and 3 more below.",
+      "Review the staffing note extraction; confirm counts for 2 use cases; 3 more below.",
     );
     expect(na.nextAction.total - na.nextAction.settled).toBe(7);
   });

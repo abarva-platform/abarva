@@ -914,7 +914,8 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         context={{ items: [<b key="depth">Full depth</b>], details: [] }}
         blockedWork={
           props.canApprove ? (
-            <div className={cx("warn-inline")}>
+            <section className={cx("group", "warn-inline")}>
+              <h2 className={cx("eyebrow", "group-title")}>Approval inputs</h2>
               {!recommendationReady ? (
                 <section className={cx("field")}>
                   {recommendationRow[0]?.middle}
@@ -922,7 +923,7 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
                 </section>
               ) : null}
               {rationaleField}
-            </div>
+            </section>
           ) : undefined
         }
         rows={[...submitRow, ...recommendationRow, rationaleRow]}

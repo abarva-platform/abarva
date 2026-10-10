@@ -100,12 +100,25 @@ function joinClauses(all: readonly string[]): string {
       : all;
   if (clauses.length <= 1) return clauses[0] ?? "";
   if (clauses.length === 2) return `${clauses[0]} and ${clauses[1]}`;
-  return `${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}`;
+  // Semicolons keep three substantial instructions distinct, especially
+  // when a row's own short name contains a conjunction.
+  return clauses.join("; ");
 }
 
 function sentence(body: string): string {
   const trimmed = body.trim().replace(/[.\s]+$/, "");
   return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}.`;
+}
+
+function readyActionSentence(body: string): string {
+  // Ready copy can contain a completion statement, provenance, and a
+  // forward action. Keep all three facts in one action line without dropping
+  // the source wording or introducing a second sentence.
+  return sentence(
+    body
+      .replace(/\.\s+(?=[A-Z])/g, "; ")
+      .replace(/;\s+Continue\s+to\s+/i, "; continue to "),
+  );
 }
 
 const decisionClause = (row: StepRow) =>
@@ -293,7 +306,7 @@ export function resolveStepNextAction(input: StepPageInput): StepNextAction {
   return {
     state: "ready",
     eyebrow: "✓ Ready",
-    sentence: sentence(input.readySentence),
+    sentence: readyActionSentence(input.readySentence),
     ...count,
     continueEnabled: true,
   };

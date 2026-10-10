@@ -430,10 +430,16 @@ export function MovesStepPage(props: MovesStepPageProps) {
       : state === "blocked"
         ? " · blocked"
         : "";
-  const showCount =
+  const showChecks =
     (state !== "blocked" && state !== "skipped") ||
-    (state === "blocked" &&
-      Boolean(props.checksWhenBlocked && props.countLabel));
+    (state === "blocked" && props.checksWhenBlocked);
+  const countCopy =
+    props.countLabel ??
+    (nextAction.total === 0
+      ? state === "skipped"
+        ? "0 actions required"
+        : "0 actions ready"
+      : `${nextAction.settled} of ${nextAction.total} settled`);
   const doneEyebrow = state === "ready" || state === "done";
   const contextItems = (
     <span className={cx("ctx-items")}>
@@ -446,13 +452,7 @@ export function MovesStepPage(props: MovesStepPageProps) {
     </span>
   );
   const contextAction = props.contextAction ? (
-    // A click here must not toggle the Details disclosure around it.
-    <span
-      className={cx("ctx-action")}
-      onClick={(event) => event.preventDefault()}
-    >
-      {props.contextAction}
-    </span>
+    <span className={cx("ctx-action")}>{props.contextAction}</span>
   ) : null;
 
   return (
@@ -461,7 +461,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
         <div className={cx("topline")}>
           <div className={cx("topline-identity")}>
             <span className={cx("eyebrow")}>{props.moveName}</span>
-            <span className={cx("tenant-identity")}>{props.clientDisplayName}</span>
+            <span className={cx("tenant-identity")}>
+              {props.clientDisplayName}
+            </span>
           </div>
           <div className={cx("topline-right")}>
             {props.syntheticNote ? (
@@ -483,7 +485,11 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   <span className={cx("code")}>
                     {phase.code}
                     {phase.status === "Done" ? (
-                      <span className={cx("tick")} aria-label="complete">
+                      <span
+                        className={cx("tick")}
+                        role="img"
+                        aria-label="complete"
+                      >
                         ✓
                       </span>
                     ) : null}
@@ -604,7 +610,10 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   <span className={cx("eyebrow")}>{nextAction.eyebrow}</span>
                 )}
                 <p className={cx("next-do")}>
-                  {nextAction.sentence}
+                  {state === "blocked" &&
+                  (props.blockedLink || props.blockedAction)
+                    ? nextAction.sentence.replace(/\.$/, ";")
+                    : nextAction.sentence}
                   {state === "blocked" && props.blockedLink ? (
                     <>
                       {" "}
@@ -626,9 +635,7 @@ export function MovesStepPage(props: MovesStepPageProps) {
                     </>
                   ) : null}
                 </p>
-                {(showCount ||
-                  (state === "blocked" && props.checksWhenBlocked)) &&
-                props.checks?.length ? (
+                {showChecks && props.checks?.length ? (
                   <Disclosure
                     closed={props.checksLabel ?? "Show checks"}
                     opened="Hide checks"
@@ -641,15 +648,21 @@ export function MovesStepPage(props: MovesStepPageProps) {
                             {check.unknown ? (
                               <span
                                 className={cx("chk-unknown")}
+                                role="img"
                                 aria-label="not evaluated"
                               />
                             ) : check.met ? (
-                              <span className={cx("tick")} aria-label="met">
+                              <span
+                                className={cx("tick")}
+                                role="img"
+                                aria-label="met"
+                              >
                                 ✓
                               </span>
                             ) : (
                               <span
                                 className={cx("chk-open")}
+                                role="img"
                                 aria-label="not met"
                               />
                             )}
@@ -673,17 +686,12 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   </Disclosure>
                 ) : null}
               </div>
-              {showCount ? (
-                <span className={cx("next-count")}>
-                  {props.countLabel ??
-                    `${nextAction.settled} of ${nextAction.total} settled`}
-                </span>
-              ) : null}
+              <span className={cx("next-count")}>{countCopy}</span>
             </section>
 
             {state === "skipped" && props.skipped ? (
               // v1.10: a plain line, no Details; the only action is the route.
-              <div className={cx("context-line")}>
+              <div className={cx("context-line")} data-step-context>
                 <span className={cx("ctx-items")}>
                   <span>
                     <b>Skipped</b>
@@ -708,33 +716,31 @@ export function MovesStepPage(props: MovesStepPageProps) {
             ) : props.context.details.length === 0 ? (
               // Nothing to expand: the line stands alone, with no Details
               // toggle that would only repeat it (v1.6).
-              <div className={cx("context-line")}>
+              <div className={cx("context-line")} data-step-context>
                 {contextItems}
                 {contextAction}
               </div>
             ) : (
-              <Disclosure
-                closed="Details"
-                opened="Hide details"
-                className="context"
-                summaryExtra={
-                  <>
-                    {contextItems}
-                    {contextAction}
-                  </>
-                }
-              >
-                <div className={cx("ctx-body")}>
-                  <dl className={cx("ctx-dl")}>
-                    {props.context.details.map(({ term, detail }) => (
-                      <div key={term}>
-                        <dt className={cx("eyebrow")}>{term}</dt>
-                        <dd>{detail}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              </Disclosure>
+              <div className={cx("context-disclosure-row")} data-step-context>
+                <Disclosure
+                  closed="Details"
+                  opened="Hide details"
+                  className="context"
+                  summaryExtra={contextItems}
+                >
+                  <div className={cx("ctx-body")}>
+                    <dl className={cx("ctx-dl")}>
+                      {props.context.details.map(({ term, detail }) => (
+                        <div key={term}>
+                          <dt className={cx("eyebrow")}>{term}</dt>
+                          <dd>{detail}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                </Disclosure>
+                {contextAction}
+              </div>
             )}
 
             <div className={cx("work")}>

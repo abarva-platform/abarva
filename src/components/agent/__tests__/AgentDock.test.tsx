@@ -182,6 +182,33 @@ describe("AgentDock · default mode", () => {
     expect(screen.queryByTestId("agent-dock-expand-overlay")).toBeNull();
   });
 
+  it("opens a compact dock as a sheet and returns to the page", async () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="collapsed"
+        disableStoredMode
+        collapsedRestoreMode="expand"
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+    expect(screen.getByTestId("agent-dock-expand-overlay")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Pin right" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Return to page" }));
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
+    expect(screen.queryByTestId("agent-dock-side-rail-shell")).toBeNull();
+
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument(),
+    );
+  });
+
   it("softens stale gate wording on Moves surfaces", () => {
     render(
       <AgentDock

@@ -117,6 +117,9 @@ export function ResizableSplitter({
         role="separator"
         aria-orientation="vertical"
         aria-label="Resize chat and workspace"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(leftPercent)}
         tabIndex={0}
         onMouseDown={onMouseDown}
         onMouseEnter={() => setHovering(true)}
