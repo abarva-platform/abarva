@@ -16,6 +16,13 @@ import {
   resolvePhaseStepPageLanding,
 } from "@/lib/programs/phase-step-page-routing";
 import { STEP_PAGE_VIEWS } from "@/lib/programs/step-page-views";
+import type { AssumptionView } from "@/lib/programs/assumption-register/register-request";
+import {
+  citableP2RegisterIds,
+  p2CheckState,
+  p2EvidencePlanReady,
+  uncitedP2BaselineReasons,
+} from "@/lib/programs/p2-step-readiness";
 import { resolvePhaseStepGroups } from "@/lib/programs/moves-phase-step-plan";
 import { captureValueText } from "@/lib/programs/structured-capture-text";
 import { RootCausesStep } from "@/components/strategic-moves/step-page/RootCausesStep";
@@ -401,6 +408,7 @@ interface MovesPhaseStandaloneClientProps {
    * readiness) or `root-causes` (P2 Step 3).
    */
   initialStepView?: StepPageView | null;
+  initialWorkspaceView?: "phase" | "intelligence";
   /**
    * P2's saved root causes and baseline, for P3 Step 1 (whose rows are P2's
    * settled causes). Read server-side; absent outside P3 or with the flag off.
@@ -1063,6 +1071,7 @@ export function MovesPhaseStandaloneClient({
   initialLegacySectionKey = null,
   romEngineEnabled = false,
   initialStepView = null,
+  initialWorkspaceView = "phase",
   priorPhaseCapture = null,
   canApproveGates = false,
   initialPhaseCaptureValues,
@@ -1138,7 +1147,8 @@ export function MovesPhaseStandaloneClient({
     initialSubstepKey,
     terminalComplete,
   );
-  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
+  const [workspaceView, setWorkspaceView] =
+    useState<WorkspaceView>(initialWorkspaceView);
   // The finalized step page for P3 Gate readiness, behind `moves_step_pages_v3`
   // and only with the redesigned capture on. Opened with `?step=gate`.
   const gateStepId = resolvePhaseWorkflow(
@@ -1606,6 +1616,30 @@ export function MovesPhaseStandaloneClient({
     );
   const [confirmedSolutionRoute, setConfirmedSolutionRoute] =
     useState<ConfirmedSolutionRoute | null>(initialConfirmedSolutionRoute);
+  const [p2RegisterRows, setP2RegisterRows] = useState<AssumptionView[] | null>(
+    null,
+  );
+  useEffect(() => {
+    if (phase.phase !== 2 || !phaseStepPagesEnabled) return;
+    let live = true;
+    fetch(`/api/v1/programs/${encodeURIComponent(move.id)}/assumptions`, {
+      credentials: "include",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("register read failed");
+        return response.json() as Promise<{ assumptions?: AssumptionView[] }>;
+      })
+      .then((body) => {
+        if (live) setP2RegisterRows(body.assumptions ?? []);
+      })
+      .catch(() => {
+        if (live) setP2RegisterRows(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [phase.phase, phaseStepPagesEnabled, move.id]);
+  const p2RegisterIds = citableP2RegisterIds(p2RegisterRows);
   const businessChangeAssessment =
     phase.phase === 1
       ? (phaseCaptureValues.business_change_assessment ??
@@ -3739,6 +3773,32 @@ export function MovesPhaseStandaloneClient({
         (participant) => participant.role.toLowerCase() === "sponsor",
       );
   }
+  if (phase.phase === 2) {
+    const p2Criteria = move.gateCriteria;
+    recordStepDone["P2.1"] =
+      p2EvidencePlanReady({
+        packets: evidenceNeedPackets,
+        readiness: currentStateReadiness,
+        readable: topLevelEvidenceCheckAvailable,
+        criteria: p2Criteria,
+      }) && p2CheckState(p2Criteria, "discovery_notes_ingested") === "met";
+    recordStepDone["P2.2"] =
+      Boolean(recordStepDone["P2.2"]) &&
+      uncitedP2BaselineReasons({
+        findings: phaseCaptureValues.current_state_findings ?? "",
+        baseline: phaseCaptureValues.baseline_metrics ?? "",
+        registerIds: p2RegisterIds,
+        approvedEvidenceIds: initialApprovedEvidenceReferences.map(
+          (reference) => reference.evidenceId,
+        ),
+      }).length === 0 &&
+      p2CheckState(p2Criteria, "discovery_baseline_attested") === "met" &&
+      p2CheckState(p2Criteria, "discovery_stakeholders_named") === "met";
+    recordStepDone["P2.4"] =
+      Boolean(recordStepDone["P2.4"]) &&
+      confirmedSolutionRoute !== null &&
+      p2CheckState(p2Criteria, "solution_route_validated") === "met";
+  }
   if (phase.phase === 0) {
     recordStepDone["P0.4"] =
       Boolean(recordStepDone["P0.4"]) &&
@@ -3760,7 +3820,7 @@ export function MovesPhaseStandaloneClient({
     route: confirmedSolutionRoute,
     implementedViews: implementedStepViews,
     doneByStep: recordStepDone,
-    enabled: phaseStepPagesEnabled,
+    enabled: phaseStepPagesEnabled && workspaceView === "phase",
     legacy: legacyCaptureRequested,
     requestedView: initialStepView,
   });
@@ -3804,8 +3864,8 @@ export function MovesPhaseStandaloneClient({
               workflow[stepIndex]?.sectionKeys ?? [],
               implementedStepViews,
             ),
-            files: phaseHref(phaseNumber),
-            record: phaseHref(phaseNumber),
+            files: `/strategic-moves/${encodeURIComponent(move.id)}/evidence`,
+            record: `${phaseHref(phaseNumber)}?workspace=intelligence`,
           }}
         />
       ),
@@ -3996,6 +4056,37 @@ export function MovesPhaseStandaloneClient({
       p0SourceEvidenceReady:
         topLevelEvidenceCheckAvailable &&
         p0EvidencePacket?.status === "covered",
+      p2Evidence:
+        phase.phase === 2
+          ? {
+              packets: evidenceNeedPackets,
+              readiness: currentStateReadiness,
+              readable: topLevelEvidenceCheckAvailable,
+              approvedReferences: initialApprovedEvidenceReferences.map(
+                (reference) => ({
+                  evidenceId: reference.evidenceId,
+                  title: reference.title,
+                }),
+              ),
+              registerIds: p2RegisterIds,
+              registerRows: p2RegisterRows,
+              confirmedRoute: confirmedSolutionRoute,
+              routeEditor: (
+                <SolutionRouteValidationForm
+                  assessment={businessChangeAssessment}
+                  approvedEvidenceReferences={initialApprovedEvidenceReferences}
+                  reviewerIdentity={currentUser?.email ?? "signed-in reviewer"}
+                  value={phaseCaptureValues.solution_route_validation ?? ""}
+                  onChange={(value) =>
+                    setVisiblePhaseCaptureValue(
+                      "solution_route_validation",
+                      value,
+                    )
+                  }
+                />
+              ),
+            }
+          : undefined,
       dock: stepPageDock,
       gateProps: gateStepProps(),
       charterBasis: {

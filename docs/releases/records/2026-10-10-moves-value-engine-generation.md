@@ -84,7 +84,7 @@ if hours saved are monetized without a counted release path.
 - Route reachability: PASS, no new unreachable components or exports.
 - Export reachability: PASS, 19 tests and exact recorded baseline.
 - Test CI coverage census: PASS, three new swept suites; covered test files
-  2,814 → 2,817, uncovered count unchanged at 164.
+  2,816 → 2,819, uncovered count unchanged at 164.
 - Tenancy fence census: PASS, 15 tests and matching 416-route census.
 - `npm run docs:nexus-manual:check`: PASS, manual current.
 - `npm run release:check`: PASS, 11 of 11 gates.

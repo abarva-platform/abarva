@@ -254,6 +254,7 @@ const P2_STEPS: readonly PhaseWorkflowStep[] = [
     depth: allFull,
     // Served by evidence readiness and the file cabinet, not a capture field.
     sectionKeys: same([]),
+    recordKeys: same(["p2_evidence_plan_step"]),
   },
   {
     id: "P2.2",
@@ -261,6 +262,7 @@ const P2_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Baseline",
     depth: allFull,
     sectionKeys: same(["current_state_findings", "baseline_metrics"]),
+    recordKeys: same(["p2_baseline_step"]),
   },
   {
     id: "P2.3",
@@ -380,12 +382,6 @@ export const KNOWN_CAPTURE_GAPS: ReadonlyArray<{
     reason:
       "The gate builds and signs the charter and discovery plan; it has no capture question.",
   },
-  {
-    stepId: "P2.1",
-    profiles: ["technical", "limited", "full"],
-    reason:
-      "Evidence planning is served by evidence readiness, not a capture field.",
-  },
 ];
 
 export interface ResolvedWorkflowStep {
@@ -489,6 +485,22 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
       label: "Evidence and change review",
       description:
         "Team-reviewed capture answers and pending session-note drafts.",
+    },
+  ],
+  2: [
+    {
+      key: "p2_evidence_plan_step",
+      stepId: "P2.1",
+      label: "Acknowledged evidence gaps",
+      description:
+        "Acknowledged open evidence needs with owner roles. This record does not approve evidence or clear a gate check.",
+    },
+    {
+      key: "p2_baseline_step",
+      stepId: "P2.2",
+      label: "Baseline review provenance",
+      description:
+        "The team's accepted baseline words and their cited source references; attestation remains a separate governed gate check.",
     },
   ],
   3: [

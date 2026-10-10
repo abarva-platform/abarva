@@ -5921,7 +5921,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
     });
 
-    it("the capture's root-causes question opens the step page under the flag, and stays a field without it", () => {
+    it("defaults P2 to step pages, while the legacy hatch links root causes and flag-off stays a field", () => {
       const values = {
         current_state_findings: "Findings captured.",
         baseline_metrics: JSON.stringify([
@@ -5946,14 +5946,33 @@ describe("MovesPhaseStandaloneClient", () => {
           phaseTallies={[...phaseTallies]}
         />,
       );
-      // Opened on the capture step that holds the root-causes question.
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Opening Evidence plan",
+      );
+      unmount();
+      const legacy = render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          legacyCaptureRequested
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          initialPhaseCaptureValues={values}
+          initialSubstepKey="current"
+          move={p2Move()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      // The hatch keeps the old capture step and its link to root causes.
       expect(
         screen.getByRole("heading", { name: "Why it happens" }),
       ).toBeInTheDocument();
       expect(
         screen.getByTestId("open-root-causes").getAttribute("href"),
       ).toMatch(/^\/strategic-moves\/[^/]+\/phase\/2\?step=root-causes$/);
-      unmount();
+      legacy.unmount();
       render(
         <MovesPhaseStandaloneClient
           canApproveGates
