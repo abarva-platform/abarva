@@ -70,3 +70,48 @@ jobs:
       # render gated nothing. Naming the directory wires it in the same step.
       - name: Home walkthrough export suites
         run: npx jest src/lib/home/export --no-coverage --ci --runInBand
+
+      # The vendor RFP portal's own suites, here for the same two reasons.
+      #
+      # REQUIRED job, because `/rfp` and `/api/v1/source/rfp` are on
+      # `PUBLIC_ROUTE_PATTERNS`: Clerk does not stand in front of them, so the
+      # only thing stopping a new handler under that prefix from being
+      # published to the internet is `public-surface.test.ts`, which walks every
+      # route file there and requires a `resolveVendorBySession(` call. A guard
+      # on external attack surface that no required job runs is not a guard.
+      # This is also the job that owns route surface, which is what the guard
+      # asserts about.
+      #
+      # `--no-coverage`, following the step above: the portal's session, DAO and
+      # credential modules would enter the `Behavior coverage floor` gate's
+      # denominator, which has no `collectCoverageFrom` and so counts whatever
+      # the run loaded. The floor should not move because a library suite was
+      # wired into a different job.
+      #
+      # The directory, not three named files, so a fourth suite added beside
+      # them is run rather than silently unwired - which is how these three
+      # came to be reached by no workflow at all.
+      - name: Source vendor portal suites
+        run: npx jest src/lib/source/vendor-portal --no-coverage --ci --runInBand
+
+      # The vendor RFP portal's own suites, here for the same two reasons.
+      #
+      # REQUIRED job, because `/rfp` and `/api/v1/source/rfp` are on
+      # `PUBLIC_ROUTE_PATTERNS`: Clerk does not stand in front of them, so the
+      # only thing stopping a new handler under that prefix from being
+      # published to the internet is `public-surface.test.ts`, which walks every
+      # route file there and requires a `resolveVendorBySession(` call. A guard
+      # on external attack surface that no required job runs is not a guard.
+      # This is also the job that owns route surface, which is what the guard
+      # asserts about.
+      #
+      # `--no-coverage`, following the step above: the portal's session, DAO and
+      # credential modules would enter the `Behavior coverage floor` gate's
+      # denominator, which has no `collectCoverageFrom` and so counts whatever
+      # the run loaded. The floor should not move because a library suite was
+      # wired into a different job.
+      #
+      # The directory, not three named files, so a fourth suite added beside
+      # them is run rather than silently unwired - which is how these three
+      # came to be reached by no workflow at all.
+
