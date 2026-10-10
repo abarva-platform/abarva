@@ -465,9 +465,9 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_assumption_register_generation_v1",
     summary:
-      "2026-10-10: Makes the Move assumptions register govern document generation. A Move document's prompt lists the register's open, confirmed and corrected rows (owner role only); a figure not in evidence may appear only as a register working figure cited [A:ID] whose figure matches; a bare [ASSUMPTION TO VALIDATE] tag no longer makes a figure traceable; an [A:ID] naming no citable row blocks the document; and the rendered Move document carries the register table. A register that cannot be read stops the build before any model call. Requires moves_assumption_register_v1 and its applied migration. Off for every tenant until the register migration is applied and the demo Move's register is populated.",
+      "2026-10-10: Makes the Move assumptions register govern document generation. A Move document's prompt lists the register's open, confirmed and corrected rows (owner role only); a figure not in evidence may appear only as a register working figure cited [A:ID] whose figure matches; a bare [ASSUMPTION TO VALIDATE] tag no longer makes a figure traceable; an [A:ID] naming no citable row blocks the document; and the rendered Move document carries the register table. A register that cannot be read stops the build before any model call. Requires moves_assumption_register_v1 and its applied migration. The register migration is applied and the demo Move's register is populated (governed seed job, 2026-10-10), so it is enabled for the synthetic demo tenant only; off for everyone else.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["meridian"],
   },
   {
     key: "moves_rom_engine_v1",
