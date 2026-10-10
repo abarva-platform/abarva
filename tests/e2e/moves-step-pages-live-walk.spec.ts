@@ -256,6 +256,23 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             if (badRead) throw new Error(`Unreviewed read gap: ${badRead}`);
           },
         );
+        // Keep a visual record even when a structural check prevented the
+        // settled-read callback from running.
+        for (const width of [1440, 390]) {
+          const filename = `${view}-${width}.png`;
+          if (screenshots.includes(filename)) continue;
+          try {
+            await page.setViewportSize({ width, height: 900 });
+            const output = testInfo.outputPath(filename);
+            fs.mkdirSync(path.dirname(output), { recursive: true });
+            await page.screenshot({ path: output, fullPage: true });
+            screenshots.push(filename);
+          } catch (error) {
+            result.status = "fail";
+            result.reason += ` | screenshot ${width}: ${String(error)}`;
+          }
+        }
+        await page.setViewportSize({ width: 1440, height: 900 });
         const visibleText = await page.locator("body").innerText().catch(() => "");
         const allowance = KNOWN_GAPS.find((gap) =>
           gap.phase === phase &&
