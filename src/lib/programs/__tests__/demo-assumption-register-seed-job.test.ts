@@ -1726,6 +1726,35 @@ describe("the dispatch workflow", () => {
     );
   });
 
+  it("supplies every variable the job requires in apply mode, and the proof store only to the apply", () => {
+    // The job refuses before starting when a required variable is unset, so a
+    // name the job reads but the dispatch never passes fails only live.
+    const source = read("scripts/moves/seed-demo-assumption-register-job.ts");
+    const requiredNames = [
+      ...source.matchAll(/required\(\s*env,\s*"([A-Z0-9_]+)"/g),
+    ].map((match) => match[1]);
+    expect(requiredNames).toEqual(
+      expect.arrayContaining([
+        "AZURE_STORAGE_ACCOUNT_NAME",
+        "ECL_SYNTHETIC_STORAGE_IDENTITY_CLIENT_ID",
+      ]),
+    );
+    const apply = step(
+      "Run separately approved apply through private ACA operator",
+    ).run!;
+    for (const name of new Set(requiredNames)) {
+      expect(
+        apply.includes(`--env ${name}=`) ||
+          apply.includes(`--secret-env ${name}=`),
+      ).toBe(true);
+    }
+    const dryRun = step("Run dry-run through private ACA operator").run!;
+    expect(dryRun).not.toContain("AZURE_STORAGE_ACCOUNT_NAME");
+    expect(dryRun).not.toContain("ECL_SYNTHETIC_STORAGE_IDENTITY_CLIENT_ID");
+    const scope = job.steps.find((candidate) => candidate.id === "scope")!.run!;
+    expect(scope).toContain("Private Blob proof target is not configured");
+  });
+
   it("deploys nothing", () => {
     for (const forbidden of [
       /az\s+containerapp\s+update/,
