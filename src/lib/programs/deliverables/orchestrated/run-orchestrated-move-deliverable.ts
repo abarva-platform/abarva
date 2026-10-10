@@ -21,6 +21,7 @@ import {
 } from "./build-request";
 import { renderDeliverableHtml } from "./render-html";
 import { REGISTER_UNAVAILABLE_DETAIL } from "@/lib/programs/assumption-register/model";
+import { PUBLIC_SOURCES_UNAVAILABLE_DETAIL } from "@/lib/deliverables/public-research/generation-feed";
 
 export interface RunOrchestratedMoveDeliverableInput extends BuildMoveDeliverableRequestInput {
   moveInput: MoveBusinessCaseInput;
@@ -61,6 +62,15 @@ export async function runOrchestratedMoveDeliverable(
       evidenceCount,
       citedInputIds,
       blockedReason: `assumption_register_unavailable: ${REGISTER_UNAVAILABLE_DETAIL}`,
+    };
+  }
+
+  if (input.moveInput.publicSourceResearch?.status === "unavailable") {
+    return {
+      ok: false,
+      evidenceCount,
+      citedInputIds,
+      blockedReason: `public_sources_unavailable: ${PUBLIC_SOURCES_UNAVAILABLE_DETAIL}`,
     };
   }
 
@@ -117,7 +127,11 @@ export async function runOrchestratedMoveDeliverable(
 
   return {
     ok: true,
-    html: renderDeliverableHtml(result.document, input.generatedOn),
+    html: renderDeliverableHtml(
+      result.document,
+      input.generatedOn,
+      request.publicSources,
+    ),
     document: result.document,
     evidenceCount,
     citedInputIds,

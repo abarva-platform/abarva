@@ -10,8 +10,10 @@
 
 import { humanizeSourceFamily } from "@/lib/deliverables/orchestrator/source-register";
 import { REGISTER_CITATION_RE } from "@/lib/deliverables/orchestrator/numeric-lineage-tokens";
+import { citedPublicSources } from "@/lib/deliverables/orchestrator/public-source-citations";
 import type {
   ApprovedAssumption,
+  PublicCitationSource,
   RenderableDeliverable,
 } from "@/lib/deliverables/orchestrator/types";
 
@@ -154,6 +156,11 @@ table.md tbody tr:nth-child(even){background:#f8f8f6}
 .status-footer{font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:#8a6d1a;text-align:center;margin-top:8px;padding:8px 0;border-top:1px dashed #e8cf8a}
 `;
 
+const SOURCES_STYLE = `
+.sources-scroll{max-width:100%;overflow-x:auto}
+.sources-scroll table{min-width:640px}
+.sources-scroll td:last-child{overflow-wrap:anywhere}`;
+
 /** The in-page anchor for a register row: `#assumption-V3`. */
 export function registerAnchorId(registerId: string): string {
   return `assumption-${registerId}`;
@@ -216,6 +223,7 @@ function renderDocStatusBlock(): string {
 export function renderDeliverableHtml(
   doc: RenderableDeliverable,
   generatedOn: string,
+  publicSources: readonly PublicCitationSource[] = doc.publicSources ?? [],
 ): string {
   const toc = doc.generatedSections
     .map((s) => `<a href="#${esc(s.key)}">${esc(s.title)}</a>`)
@@ -282,16 +290,26 @@ ${linkRegisterCitations(markdownToHtml(s.bodyMarkdown), registerIds)}
         .join("")}</ul></section>`
     : "";
 
+  const citedSources = citedPublicSources(doc, publicSources);
   const sourceRegister = doc.sourceRegister.length
-    ? `<section id="source-register"><h2>Source Register</h2><table class="md"><thead><tr><th>[n]</th><th>Source</th><th>Family</th><th>Confidence</th><th>As of</th></tr></thead><tbody>${doc.sourceRegister
+    ? `<section id="source-register"><h2>Source Register</h2>${citedSources.length ? '<div class="sources-scroll">' : ""}<table class="md"><thead><tr><th>[n]</th><th>Source</th><th>Family</th><th>Confidence</th><th>As of</th></tr></thead><tbody>${doc.sourceRegister
         .map(
           (e) =>
             `<tr><td>[${e.citationNumber}]</td><td>${esc(e.label)}</td><td>${esc(humanizeSourceFamily(e.evidenceFamily))}</td><td>${esc(e.confidence)}</td><td>${esc(e.asOf ?? "—")}</td></tr>`,
         )
-        .join("")}</tbody></table></section>`
+        .join("")}</tbody></table>${citedSources.length ? "</div>" : ""}</section>`
     : "";
 
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(doc.title)}</title><style>${STYLE}</style></head><body><div class="page">
+  const sourcesTable = citedSources.length
+    ? `<section id="public-sources"><h2>Sources</h2><div class="sources-scroll"><table class="md"><thead><tr><th>n</th><th>Title</th><th>Publisher</th><th>Published</th><th>Retrieved</th><th>URL</th></tr></thead><tbody>${citedSources
+        .map(
+          (source) =>
+            `<tr id="public-source-${source.citationNumber}"><td>[S:${source.citationNumber}]</td><td>${esc(source.title)}</td><td>${esc(source.publisher ?? "—")}</td><td>${esc(source.publishedAt ?? "—")}</td><td>${esc(source.retrievedAt.slice(0, 10))}</td><td>${esc(source.url)}</td></tr>`,
+        )
+        .join("")}</tbody></table></div></section>`
+    : "";
+
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(doc.title)}</title><style>${STYLE}${citedSources.length ? SOURCES_STYLE : ""}</style></head><body><div class="page">
 <div class="cover">
 <div class="kicker">${esc(doc.clientDisplayName)} · Board-Grade Deliverable</div>
 <h1>${esc(doc.title)}</h1>
@@ -306,7 +324,7 @@ ${tables}
 ${assumptions}
 ${clientComplete}
 ${nextActions}
-${sourceRegister}
+${sourceRegister}${sourcesTable ? `\n${sourcesTable}` : ""}
 <div class="meta">Generated ${esc(generatedOn)} · Authored by the Deliverable Intelligence Orchestrator (governed multi-pass) · Every client-specific fact is cited [n], an approved assumption, or a labelled placeholder.</div>
 <div class="status-footer">AI-generated working draft. Human review, update, approval, and approved re-upload are required before this artifact becomes authoritative.</div>
 </div></body></html>`;

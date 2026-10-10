@@ -511,6 +511,7 @@ export async function runDeliverableOrchestration(
       unsupportedClaims: unsupportedFigureClaims,
     },
   );
+  if (req.publicSources) document.publicSources = [...req.publicSources];
 
   // Quality gate. The brief is passed so the gate can count the exhibits it
   // asked for against the ones that arrived (C-514) — the request side lives

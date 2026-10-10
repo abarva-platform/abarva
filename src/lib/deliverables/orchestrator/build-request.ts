@@ -7,6 +7,7 @@
 
 import type {
   ApprovedAssumption,
+  PublicCitationSource,
   AudienceRole,
   DeliverableIntelligenceRequest,
   DeliverableModule,
@@ -38,6 +39,7 @@ export interface BuildRequestParams {
    * and the pre-register lineage rule, exactly as before.
    */
   approvedAssumptions?: ApprovedAssumption[];
+  publicSources?: PublicCitationSource[];
 }
 
 const DEFAULT_AUDIENCE: Record<DeliverableModule, AudienceRole[]> = {
@@ -99,6 +101,7 @@ export function buildDeliverableRequest(
       ? [...params.approvedAssumptions]
       : [],
     ...(params.approvedAssumptions ? { assumptionRegisterEnforced: true } : {}),
+    ...(params.publicSources ? { publicSources: [...params.publicSources] } : {}),
     artifactStandard: "ABARVA_BOARD_GRADE_DELIVERABLE_STANDARD",
     outputFormats: params.outputFormats?.length
       ? params.outputFormats

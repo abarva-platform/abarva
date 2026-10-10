@@ -892,6 +892,7 @@ describe("build hook", () => {
     assemble: assemble as never,
     generate: generate as never,
     research,
+    loadPublicSources: async () => [],
   });
 
   beforeEach(() => {

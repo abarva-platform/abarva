@@ -19,6 +19,7 @@ import { scanForInternalLeaks } from "./source-register";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
 import { findExcludedNumericClaims } from "./excluded-numeric-claims";
+import { validatePublicSourceCitations } from "./public-source-citations";
 import {
   LEGACY_FIGURE_LINEAGE,
   figureLineagePolicy,
@@ -170,6 +171,7 @@ function collectUnsupportedClaims(
   body: string,
   evidence: readonly GovernedEvidenceItem[] = [],
   policy: FigureLineagePolicy = LEGACY_FIGURE_LINEAGE,
+  allowExternalBenchmarkShortcut = true,
 ): string[] {
   // sentences asserting numbers/dollars/dates/percentages are client-fact candidates
   const sentences = body.split(/(?<=[.!?])\s+/);
@@ -177,7 +179,7 @@ function collectUnsupportedClaims(
     /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
   const claims: string[] = [];
   for (const s of sentences) {
-    if (!factLike.test(s) || isSupportedExternalBenchmarkClaim(s)) continue;
+    if (!factLike.test(s) || (allowExternalBenchmarkShortcut && isSupportedExternalBenchmarkClaim(s))) continue;
     const verdict = judgeFigureSentence(s, policy);
     if (verdict.supported) continue;
     if (verdict.citedRegisterIds.length > 0) {
@@ -327,6 +329,7 @@ export function validateDeliverableQuality(
       .join("\n\n"),
     req.governedEvidenceBundle,
     lineage,
+    req.publicSources === undefined,
   );
   const unsupportedClaimCount = unsupportedClaimExamples.length;
 
@@ -414,6 +417,7 @@ export function validateDeliverableQuality(
     : [];
 
   // ── BLOCKERS ──
+  blockers.push(...validatePublicSourceCitations(doc, req));
   if (unknownRegisterIds.length > 0)
     blockers.push(
       `cites assumptions-register row(s) that are not in this Move's citable register: ${unknownRegisterIds

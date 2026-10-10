@@ -34,9 +34,16 @@ import type {
   ApprovedAssumption,
   DeliverableArtifactBrief,
   OutputFormat,
+  PublicCitationSource,
 } from "./types";
 import { loadAssumptionRegisterForGeneration } from "@/lib/programs/assumption-register/generation-feed";
 import { REGISTER_UNAVAILABLE_DETAIL } from "@/lib/programs/assumption-register/model";
+import {
+  loadPublicSourcesForGeneration,
+  PUBLIC_SOURCES_UNAVAILABLE_DETAIL,
+} from "@/lib/deliverables/public-research/generation-feed";
+import { publicCitationSourcesFromApproved } from "@/lib/deliverables/public-research/citation-feed";
+import type { PublicSource } from "@/lib/deliverables/public-research/types";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
 import { getArtifactBrief } from "./artifact-brief-registry";
 import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
@@ -145,6 +152,13 @@ export interface GenerateServiceDeps {
     userId: string;
     programId: string;
   }) => Promise<ApprovedAssumption[] | null>;
+  /** Approved Move-scoped sources. A failed read blocks before model invocation. */
+  loadPublicSources?: (scope: {
+    tenantClientKey: string;
+    clientId: string;
+    userId: string;
+    programId: string;
+  }) => Promise<PublicSource[] | null>;
   /** Architecture model generation — defaults to the governed adapter. Injectable for tests. */
   generateArchitecture?: (req: {
     engagement: string;
@@ -331,6 +345,23 @@ function defaultLoadAssumptionRegister(scope: {
   );
 }
 
+function defaultLoadPublicSources(scope: {
+  tenantClientKey: string;
+  clientId: string;
+  userId: string;
+  programId: string;
+}): Promise<PublicSource[] | null> {
+  return loadPublicSourcesForGeneration(
+    {
+      clientId: scope.clientId,
+      clientKey: scope.tenantClientKey,
+      userId: scope.userId,
+    },
+    scope.programId,
+    scope.tenantClientKey,
+  );
+}
+
 export async function runDeliverableForTenant(
   input: GenerateDeliverableServiceInput,
   deps: GenerateServiceDeps = {},
@@ -374,6 +405,33 @@ export async function runDeliverableForTenant(
     input,
     preliminaryBrief,
   );
+
+  // A failed approved-source read blocks before either the research model or
+  // document model runs. Research found in this build remains pending review.
+  let publicSources: PublicCitationSource[] | null = null;
+  if (
+    input.module === "moves" &&
+    isFeatureEnabled({ clientKey: input.tenantClientKey }, PUBLIC_RESEARCH_FLAG)
+  ) {
+    try {
+      const approved = await (deps.loadPublicSources ?? defaultLoadPublicSources)({
+        tenantClientKey: input.tenantClientKey,
+        clientId: input.clientId,
+        userId: input.userId,
+        programId: input.sourceArtifactRef,
+      });
+      if (approved === null) throw new Error("approved-source read returned no result");
+      publicSources = publicCitationSourcesFromApproved(approved);
+    } catch (err) {
+      console.error("[generate-service] approved public source read failed; generation blocked", err);
+      return {
+        ok: false,
+        qualityPass: false,
+        blockers: [PUBLIC_SOURCES_UNAVAILABLE_DETAIL],
+        blockedReason: `public_sources_unavailable: ${PUBLIC_SOURCES_UNAVAILABLE_DETAIL}`,
+      };
+    }
+  }
 
   // 0 · public-source research (flagged). Stored pending review; not cited.
   const publicResearch = await runPublicResearchStep(input, deps);
@@ -445,6 +503,7 @@ export async function runDeliverableForTenant(
       ...(registerAssumptions
         ? { approvedAssumptions: registerAssumptions }
         : {}),
+      ...(publicSources ? { publicSources } : {}),
     },
     evidence,
     sourceRegister,
