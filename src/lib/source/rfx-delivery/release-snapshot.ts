@@ -30,6 +30,7 @@ export type RfxReleaseSnapshotInput = {
     contactApprovedAt?: string;
     contactEvidenceReference?: string;
     ndaAuthorityId?: string;
+    ndaDocumentSha256?: string;
     ndaTenantKey?: string;
     ndaEventId?: string;
     ndaLegalEntityId?: string;
@@ -69,6 +70,7 @@ export type RfxReleaseSnapshotResult =
           candidateAuthorityId: string;
           contactAuthorityId: string;
           ndaAuthorityId?: string;
+          ndaDocumentSha256?: string;
           waiverAuthorityId?: string;
         }[];
         approvedByUserId: string;
@@ -135,6 +137,12 @@ export function prepareRfxReleaseSnapshot(
   for (const recipient of recipients) {
     const authority = input.recipientAuthorities.find((item) => item.recipientId === recipient.recipientId);
     if (!authority) continue;
+    if (authority.ndaAuthorityId && !/^[0-9a-f]{64}$/i.test(authority.ndaDocumentSha256 ?? "")) {
+      defects.push(`Recipient ${recipient.recipientId} lacks a frozen executed-NDA document hash.`);
+    }
+    if (authority.waiverAuthorityId && authority.ndaDocumentSha256) {
+      defects.push(`Recipient ${recipient.recipientId} cannot bind an NDA document to a waiver.`);
+    }
     if (
       authority.candidateTenantKey !== pkg.tenantKey ||
       authority.candidateEventId !== pkg.eventId ||
@@ -195,6 +203,7 @@ export function prepareRfxReleaseSnapshot(
         candidateAuthorityId: authority.candidateAuthorityId,
         contactAuthorityId: authority.contactAuthorityId!,
         ...(authority.ndaAuthorityId ? { ndaAuthorityId: authority.ndaAuthorityId } : {}),
+        ...(authority.ndaAuthorityId ? { ndaDocumentSha256: authority.ndaDocumentSha256!.toLowerCase() } : {}),
         ...(authority.waiverAuthorityId ? { waiverAuthorityId: authority.waiverAuthorityId } : {}),
       };
     })

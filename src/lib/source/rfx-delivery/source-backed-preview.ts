@@ -163,6 +163,10 @@ export async function previewRfxReleaseAgainstAuthority(
         evaluateExecutedDocumentEvidence(grantingDocument.signatureEvidence, input.release.asOf).state !== "complete") {
         defects.add("nda_signature_unproven");
       }
+      if (grantingDocument?.signatureEvidence?.documentSha256?.toLowerCase() !==
+        supplied?.ndaDocumentSha256?.toLowerCase()) {
+        defects.add("nda_document_hash_mismatch");
+      }
     } else if (coverage.waiver?.waiverId !== supplied?.waiverAuthorityId || supplied?.ndaAuthorityId) {
       defects.add("nda_authority_mismatch");
     }
