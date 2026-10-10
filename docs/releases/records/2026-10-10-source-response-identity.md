@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Source New response workbooks must name an accepted supplier by its canonical ID. A matching supplier name or filename no longer makes a response appear uploaded or parsed for that supplier. If the accepted-supplier authority cannot be read, the upload refuses before storing the file.
+Source New response workbooks must name an accepted supplier by its canonical ID. A matching supplier name or filename no longer makes a response appear uploaded or parsed for that supplier. A durable event-activity receipt shows the upload before parser output is accepted. A workbook that declares a different supplier is refused before storage, and other event stages cannot write normalized response facts.
 
 ## Layer Impact
 
 - **Release lane:** `global-control-lane`; the behavior applies to the shared Source New product path.
 - **Source adapters:** The response workbook parser can carry an explicitly supplied canonical supplier ID; other callers retain their existing parsing behavior.
-- **Products:** Source New submits the selected accepted supplier ID and reads response state only through that ID and its exact registered artifact.
+- **Products:** Source New submits the selected accepted supplier ID and reads upload state through a scoped event-activity receipt plus the exact registered artifact. Parsed and accepted response facts remain separate from the upload receipt.
 - **Canonical model:** No schema or identity record changes. The existing accepted-candidate authority remains the source of supplier identity.
 
 ## Client Applicability
@@ -29,14 +29,14 @@ Source New response workbooks must name an accepted supplier by its canonical ID
 
 ## Changes Included
 
-The Source New supplier selector, response upload route, workbook parser, and response-intake read model. No migration or data load.
+The Source New supplier selector, response upload route, workbook parser, scoped activity-receipt reader, and response-intake read model. No migration or data load.
 
 ## QA / Validation
 
-- PASS: Four focused Jest suites cover canonical ID submission, upload refusal before Blob storage, parser ID propagation, readback isolation between same-named suppliers, exact-artifact readback when filename inference uses a pricing family, and refusal of packages from other event stages.
+- PASS: Seven focused Jest suites, 130 tests, cover canonical ID submission, pre-storage identity-conflict refusal, activity-receipt write/read failure, parser ID propagation, readback isolation between same-named suppliers, exact-artifact readback when filename inference uses a pricing family, and refusal of packages from other event stages.
 - PASS: Mutation proof: replacing exact-ID package matching with name matching fails both the wrong-ID and same-name cases; the original matcher was restored.
 - PASS: Typecheck on the candidate tree.
-- PASS: All 11 release gates and the CI coverage census; targeted ESLint has zero errors and three existing test-file warnings.
+- PASS: CI coverage census, all 11 release gates, and targeted ESLint with zero errors and three existing test-file warnings. The new reader suite is registered in the PR workflow.
 - NOT RUN: PR CI and signed-in runtime readback are separate promotion evidence.
 
 ## Rollout Plan
@@ -63,4 +63,4 @@ PR checks, focused Jest output, typecheck, mutation result, deployment run, dige
 
 ## Known Gaps
 
-Existing response packages with name-derived IDs are intentionally not reassigned. The external portal invitation and release-to-portal handoff remain separately gated by recipient authority and database readiness. This release does not claim the multi-response comparison or scoring experience is complete.
+Existing response packages with name-derived IDs are intentionally not reassigned. If a receipt write fails after artifact registration, the route returns an explicit error and artifact ID; operators must reconcile that unlinked artifact before retrying. The external portal invitation and release-to-portal handoff remain separately gated by recipient authority and database readiness. This release does not claim the multi-response comparison or scoring experience is complete.

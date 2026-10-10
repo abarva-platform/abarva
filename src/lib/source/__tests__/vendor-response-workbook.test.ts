@@ -93,6 +93,7 @@ describe("normalized vendor response workbook", () => {
 
     expect(parsed?.vendorId).toBe("source-vendor-42");
     expect(parsed?.vendorName).toBe("Example Services LLC");
+    expect(parsed?.declaredVendorName).toBe("Example Services LLC");
   });
 
   it("parses the issued workbook shape and computes traceability", async () => {

@@ -4,10 +4,11 @@ import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-respon
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { extractAcceptedResponseQuestions } from "@/lib/source/vendor-response-extraction-contract";
 import type { SourceNewStage04VendorPanel } from "./stage04-vendor-panel";
+import type { SourceResponseUploadReceipt } from "./response-upload-receipts";
 
 export type SourceNewResponseIntakeState = "available" | "empty" | "blocked";
 
-export type SourceNewResponseUploadState = "not_uploaded" | "uploaded";
+export type SourceNewResponseUploadState = "not_linked" | "uploaded";
 export type SourceNewResponseParseState =
   | "not_parsed"
   | "pending"
@@ -59,6 +60,7 @@ export type BuildSourceNewResponseIntakeInput = {
   files: readonly SourceNewFileRow[];
   responseArtifacts: readonly SourceArtifactRegistryRecord[] | null;
   normalizedPackages: readonly NormalizedVendorResponsePackage[] | null;
+  responseUploadReceipts?: readonly SourceResponseUploadReceipt[] | null;
   readBlockers?: readonly string[];
 };
 
@@ -75,6 +77,12 @@ export function buildSourceNewResponseIntake(
   if (input.responseArtifacts === null || input.normalizedPackages === null) {
     return blockedIntake(input, [
       "The response artifact registry could not be read.",
+      ...readBlockers,
+    ]);
+  }
+  if (input.responseUploadReceipts === null) {
+    return blockedIntake(input, [
+      "The response upload receipt log could not be read.",
       ...readBlockers,
     ]);
   }
@@ -113,8 +121,21 @@ export function buildSourceNewResponseIntake(
   }
 
   const rows = suppliers.map((supplier) => {
-    const normalizedPackage = matchNormalizedPackage(supplier, eventPackages);
-    const artifact = matchResponseArtifact(normalizedPackage, eventArtifacts);
+    const receipt = input.responseUploadReceipts?.find(
+      (item) =>
+        item.supplierId === supplier.legalEntityId &&
+        eventArtifactIds.has(item.artifactId),
+    );
+    const normalizedPackage = receipt
+      ? eventPackages.find(
+          (pkg) =>
+            pkg.vendorId === supplier.legalEntityId &&
+            pkg.artifactId === receipt.artifactId,
+        ) ?? null
+      : matchNormalizedPackage(supplier, eventPackages);
+    const artifact = receipt
+      ? eventArtifacts.find((item) => item.id === receipt.artifactId) ?? null
+      : matchResponseArtifact(normalizedPackage, eventArtifacts);
     const questionExtraction = extractAcceptedResponseQuestions({
       eventId: input.eventId,
       tenantKey: input.tenantKey,
@@ -136,12 +157,14 @@ export function buildSourceNewResponseIntake(
       acceptedByName: supplier.acceptedByName,
       acceptedAt: supplier.acceptedAt,
       evidenceReference: supplier.evidenceReference,
-      uploadState: artifact || file ? "uploaded" : "not_uploaded",
-      parseState: parseState(artifact, normalizedPackage),
+      uploadState: artifact ? "uploaded" : "not_linked",
+      parseState: normalizedPackage
+        ? "parsed"
+        : receipt?.parseState ?? parseState(artifact, null),
       availabilityReviewState: availabilityReviewState(file),
       workbookName:
-        normalizedPackage?.originalName ??
         artifact?.originalName ??
+        normalizedPackage?.originalName ??
         file?.fileName ??
         null,
       artifactId: artifact?.id ?? file?.sourceRegisterId ?? file?.id ?? null,
@@ -153,13 +176,26 @@ export function buildSourceNewResponseIntake(
     } satisfies SourceNewResponseIntakeRow;
   });
 
+  const linkedArtifactIds = new Set(rows.flatMap((row) => row.artifactId ? [row.artifactId] : []));
+  const unlinkedArtifactCount = eventArtifacts.filter(
+    (artifact) =>
+      artifact.sourceFormat === "xlsx" &&
+      artifact.artifactKind === "vendor_response_workbook" &&
+      !linkedArtifactIds.has(artifact.id),
+  ).length;
+
   return {
     status: "available",
-    blockers: rowBlockers(rows),
+    blockers: [
+      ...rowBlockers(rows),
+      ...(unlinkedArtifactCount > 0
+        ? ["An unlinked response workbook is recorded; review it before uploading another."]
+        : []),
+    ],
     asOf: input.asOf,
     uploadActionHref: input.uploadActionHref,
     rows,
-    nextAction: nextAction(rows),
+    nextAction: nextAction(rows, unlinkedArtifactCount),
   };
 }
 
@@ -244,8 +280,8 @@ function rowBlockers(
   rows: readonly SourceNewResponseIntakeRow[],
 ): readonly string[] {
   const blockers = [
-    rows.some((row) => row.uploadState === "not_uploaded")
-      ? "At least one accepted supplier is missing a response workbook upload."
+    rows.some((row) => row.uploadState === "not_linked")
+      ? "At least one accepted supplier has no linked response workbook."
       : null,
     rows.some((row) => row.parseState !== "parsed")
       ? "At least one uploaded workbook has no parsed normalized response output."
@@ -253,7 +289,7 @@ function rowBlockers(
     rows.some(
       (row) => row.parseState === "parsed" && row.parsedRequirementCount === 0,
     )
-      ? "At least one parsed workbook cannot be bound to an accepted supplier identity."
+      ? "At least one parsed workbook awaits accepted artifact review before question-level facts are available."
       : null,
     rows.some((row) => row.availabilityReviewState !== "available")
       ? "At least one parsed workbook still needs availability-only review."
@@ -262,8 +298,14 @@ function rowBlockers(
   return blockers;
 }
 
-function nextAction(rows: readonly SourceNewResponseIntakeRow[]) {
-  if (rows.some((row) => row.uploadState === "not_uploaded")) {
+function nextAction(rows: readonly SourceNewResponseIntakeRow[], unlinkedArtifactCount: number) {
+  if (unlinkedArtifactCount > 0) {
+    return {
+      label: "Review response workbook linkage",
+      detail: "A response-stage workbook has no proved supplier link; reconcile it before another upload.",
+    };
+  }
+  if (rows.some((row) => row.uploadState === "not_linked")) {
     return {
       label: "Upload synthetic response workbook",
       detail:

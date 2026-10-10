@@ -259,7 +259,7 @@ describe("buildSourceNewResponseIntake", () => {
         responseArtifacts: [foreignArtifact],
       });
       expect(intake.rows[0]).toMatchObject({
-        uploadState: "not_uploaded",
+        uploadState: "not_linked",
         parseState: "not_parsed",
         parsedRequirementCount: 0,
       });
@@ -281,7 +281,7 @@ describe("buildSourceNewResponseIntake", () => {
     });
 
     expect(intake.rows[0]).toMatchObject({
-      uploadState: "not_uploaded",
+      uploadState: "not_linked",
       parseState: "not_parsed",
       availabilityReviewState: "not_reviewed",
       parsedRequirementCount: 0,
@@ -302,7 +302,7 @@ describe("buildSourceNewResponseIntake", () => {
     });
 
     expect(intake.rows[0]).toMatchObject({
-      uploadState: "not_uploaded",
+      uploadState: "not_linked",
       parseState: "not_parsed",
       availabilityReviewState: "not_reviewed",
       artifactId: null,
@@ -339,7 +339,7 @@ describe("buildSourceNewResponseIntake", () => {
       ]),
     ).toEqual([
       ["supplier-alpha", "uploaded", "parsed"],
-      ["supplier-beta", "not_uploaded", "not_parsed"],
+      ["supplier-beta", "not_linked", "not_parsed"],
     ]);
   });
 
@@ -375,7 +375,7 @@ describe("buildSourceNewResponseIntake", () => {
     });
 
     expect(intake.rows[0]).toMatchObject({
-      uploadState: "not_uploaded",
+      uploadState: "not_linked",
       parseState: "not_parsed",
       artifactId: null,
     });
@@ -394,10 +394,55 @@ describe("buildSourceNewResponseIntake", () => {
     });
 
     expect(intake.rows[0]).toMatchObject({
-      uploadState: "not_uploaded",
+      uploadState: "not_linked",
       parseState: "not_parsed",
       parsedRequirementCount: 0,
       artifactId: null,
     });
+  });
+
+  it("shows a canonical upload receipt before a normalized package is accepted", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [],
+      responseUploadReceipts: [{
+        supplierId: "supplier-alpha",
+        artifactId: artifact.id,
+        parseState: "failed",
+        recordedAt: "2026-03-10T12:00:00Z",
+      }],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "uploaded",
+      parseState: "failed",
+      availabilityReviewState: "available",
+      artifactId: artifact.id,
+    });
+  });
+
+  it("labels an unbound response artifact without assigning it to a supplier", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [],
+      responseUploadReceipts: [],
+    });
+
+    expect(intake.rows[0].uploadState).toBe("not_linked");
+    expect(intake.blockers).toContain(
+      "An unlinked response workbook is recorded; review it before uploading another.",
+    );
   });
 });

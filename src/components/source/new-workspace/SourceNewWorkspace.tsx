@@ -1316,7 +1316,7 @@ function SourceNewResponseIntakePanel({
                   </div>
                   <div>
                     <dt>Workbook</dt>
-                    <dd>{row.workbookName ?? "Not uploaded"}</dd>
+                    <dd>{row.workbookName ?? "No linked workbook"}</dd>
                   </div>
                   <div>
                     <dt>Normalized rows</dt>

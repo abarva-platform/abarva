@@ -187,7 +187,7 @@ jest.mock('@/lib/source/canvas-substrate/upload-sync', () => ({
 
 // This suite owns upload/registry wiring, not normalized proposal parsing.
 // Keep an arbitrary byte buffer from being treated as a real XLSX ZIP.
-const parseNormalizedVendorResponseWorkbookMock = jest.fn<Promise<null>, [unknown]>(
+const parseNormalizedVendorResponseWorkbookMock = jest.fn<Promise<unknown>, [unknown]>(
   async () => null,
 );
 jest.mock('@/lib/source/vendor-response-workbook', () => ({
@@ -632,8 +632,113 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
     expect(parseNormalizedVendorResponseWorkbookMock).toHaveBeenCalledWith(
       expect.objectContaining({
         vendorId: 'supplier-1',
-        vendorName: 'Example Services',
       }),
     );
+    expect(insertActivityLogMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          responseSupplierId: 'supplier-1',
+          responseParseState: 'not_parsed',
+        }),
+      }),
+    ]);
+  });
+
+  it('refuses a workbook declaring a different supplier before storing bytes', async () => {
+    parseNormalizedVendorResponseWorkbookMock.mockResolvedValueOnce({
+      declaredVendorName: 'Different Services',
+    });
+    const res = await POST(
+      makeMultipartRequest('response.xlsx', XLSX_MIME, 2048, {
+        stageKey: 'responses',
+        artifactKind: 'vendor_response_workbook',
+        supplierId: 'supplier-1',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(409);
+    expect(storageUploadMock).not.toHaveBeenCalled();
+    expect(registerSourceArtifactUploadMock).not.toHaveBeenCalled();
+  });
+
+  it('records parsed only after normalized response facts persist', async () => {
+    parseNormalizedVendorResponseWorkbookMock.mockResolvedValueOnce({
+      vendorId: 'supplier-1',
+      vendorName: 'Example Services',
+      declaredVendorName: 'Example Services',
+      rows: [{ requirementId: 'REQ-1' }],
+      analytics: {},
+      parserWarnings: [],
+      syntheticDemo: true,
+    });
+    const res = await POST(
+      makeMultipartRequest('response.xlsx', XLSX_MIME, 2048, {
+        stageKey: 'responses',
+        artifactKind: 'vendor_response_workbook',
+        supplierId: 'supplier-1',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    expect(insertActivityLogMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        metadata: expect.objectContaining({ responseParseState: 'parsed' }),
+      }),
+    ]);
+    expect(await res.json()).toMatchObject({
+      normalizedResponse: { vendorId: 'supplier-1', requirementCount: 1 },
+    });
+  });
+
+  it('does not parse normalized response facts from an XLSX at another stage', async () => {
+    const res = await POST(
+      makeMultipartRequest('response.xlsx', XLSX_MIME, 2048, {
+        stageKey: 'strategy',
+        artifactKind: 'vendor_response_workbook',
+        vendorName: 'Example Services',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    expect(parseNormalizedVendorResponseWorkbookMock).not.toHaveBeenCalled();
+  });
+
+  it('does not report a successful response upload when its receipt write fails', async () => {
+    insertActivityLogMock.mockResolvedValueOnce({ ok: false });
+    const res = await POST(
+      makeMultipartRequest('response.xlsx', XLSX_MIME, 2048, {
+        stageKey: 'responses',
+        artifactKind: 'vendor_response_workbook',
+        supplierId: 'supplier-1',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({
+      ok: false,
+      error: 'response_receipt_failed',
+      artifactId: expect.any(String),
+    });
+  });
+
+  it('does not remove registered response bytes when the receipt writer throws', async () => {
+    insertActivityLogMock.mockRejectedValueOnce(new Error('receipt_unavailable'));
+    const res = await POST(
+      makeMultipartRequest('response.xlsx', XLSX_MIME, 2048, {
+        stageKey: 'responses',
+        artifactKind: 'vendor_response_workbook',
+        supplierId: 'supplier-1',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(503);
+    expect(storageUploadMock).toHaveBeenCalledTimes(1);
+    expect(registerSourceArtifactUploadMock).toHaveBeenCalledTimes(1);
+    expect(storageRemoveMock).not.toHaveBeenCalled();
   });
 });

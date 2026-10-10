@@ -39,6 +39,7 @@ const HEADERS = {
 export interface ParsedNormalizedVendorResponse {
   vendorId: string;
   vendorName: string;
+  declaredVendorName?: string | null;
   rows: NormalizedRequirementResponse[];
   analytics: NormalizedResponseQualityAnalytics;
   parserWarnings: string[];
@@ -144,11 +145,13 @@ export async function parseNormalizedVendorResponseWorkbook(args: {
   }
 
   if (rows.length === 0) return null;
+  const declaredVendorName = readVendorName(workbook);
   const vendorName =
-    args.vendorName?.trim() || readVendorName(workbook) || "Vendor not identified";
+    args.vendorName?.trim() || declaredVendorName || "Vendor not identified";
   return {
     vendorId: args.vendorId?.trim() || slug(vendorName),
     vendorName,
+    declaredVendorName,
     rows,
     analytics: analyzeNormalizedResponseQuality(rows),
     parserWarnings,
