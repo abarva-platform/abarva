@@ -290,6 +290,46 @@ jobs:
             --out-dir audit-artifacts/db-migration-lab/ledger \
             | tee audit-artifacts/db-migration-lab/ledger.log
 
+      # The step above asks whether a migration was applied. This one asks
+      # whether the database actually contains what "applied" claimed — the
+      # second half of the question that step's own comment raises.
+      #
+      # It exists because of a real failure. On 2026-10-10 an apply failed on
+      # the first of three pending migrations: the vendor portal migration
+      # ALTERs `source_event_pricing_submissions`, which was absent from the
+      # live database — while the ledger recorded its creating migration as
+      # applied on 2026-05-15. 267 of the 415 ledger rows carry no hash, and
+      # `run-migrations.ts --mark-all-applied` records a migration as applied
+      # WITHOUT running it, so for those rows the ledger is a claim and not
+      # evidence.
+      #
+      # Discovering that by applying is the expensive way: every attempt is a
+      # failed transaction against the live database, one missing object at a
+      # time, and the failing run produces no post-failure readback.
+      #
+      # MODE BEHAVIOUR, and the asymmetry is deliberate:
+      #   status — reports and never fails. Status is the investigation tool;
+      #            a known gap must not stop someone looking at the ledger.
+      #   apply  — fails the run. An apply must not begin against a schema that
+      #            is already missing tables its own ledger claims to have
+      #            created, because the next migration's assumptions are
+      #            exactly what cannot be trusted.
+      - name: Schema vs ledger reconciliation
+        id: reconcile
+        continue-on-error: ${{ github.event.inputs.mode != 'apply' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
+            --script db:schema:reconcile \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/reconcile \
+            | tee audit-artifacts/db-migration-lab/reconcile.log
+
       # "Schema exists" and "application can use it" are different claims.
       # This calls the real repository function (getSourceStageGuidebook),
       # the same seam production code uses — not a raw SQL assertion —
