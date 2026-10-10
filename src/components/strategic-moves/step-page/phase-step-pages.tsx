@@ -6,6 +6,10 @@ import type {
   StepPageStep,
 } from "@/components/strategic-moves/step-page/MovesStepPage";
 import type { GateReadinessStepProps } from "@/components/strategic-moves/step-page/GateReadinessStep";
+import type {
+  CharterBasisValue,
+  CharterBasisApprovedSource,
+} from "@/components/strategic-moves/CharterBasisField";
 import { P0_STEP_PAGES } from "./p0-step-pages";
 import { P1_STEP_PAGES } from "./p1-step-pages";
 import { P4_STEP_PAGES } from "./p4-step-pages";
@@ -35,9 +39,21 @@ export interface StepPageHostProps {
   currentUser: { email: string | null; role: string | null } | null;
   chrome: StepPageChrome;
   stepDone: Readonly<Record<string, boolean>>;
+  captureSaved?: Readonly<Record<string, boolean>>;
+  sectionReady?: Readonly<Record<string, boolean>>;
+  p0SourceEvidenceReady?: boolean;
   dock: (page: ReactNode, options: StepPageDockOptions) => ReactNode;
   /** The shared governed build, sign-off and submit path for this phase. */
   gateProps: GateReadinessStepProps;
+  charterBasis?: {
+    active: boolean;
+    values: Readonly<Record<string, CharterBasisValue>>;
+    approvedSources: Readonly<
+      Record<string, readonly CharterBasisApprovedSource[]>
+    >;
+    errors: Readonly<Record<string, string>>;
+    setValue: (sectionKey: string, value: CharterBasisValue | null) => void;
+  };
 }
 
 export type PhaseStepPage = (props: StepPageHostProps) => ReactNode;

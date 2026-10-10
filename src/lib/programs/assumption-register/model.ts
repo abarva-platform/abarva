@@ -782,6 +782,53 @@ export function effectiveFigure(
   }
 }
 
+/** The number a counted row stands on, for the value engine. */
+export interface EffectiveValue {
+  value: number;
+  /** The row's confidence: the value engine's default band reads it (1 → ±50%, 3 → ±25%, 5 → ±10%). */
+  confidence: RegisterConfidence;
+  status: CountedStatus;
+  /** An open row counts, but its figure has not been answered yet. */
+  mustValidate: boolean;
+}
+
+/**
+ * The numeric twin of `effectiveFigure`, by the same rule: an open row stands
+ * on its working value; a confirmed row on its answer value, falling back to
+ * the working value it confirmed; a corrected row ONLY on its answer value —
+ * the working value is the one that was wrong. Proposed, rejected and
+ * superseded rows stand on nothing (null), as does a counted row with no
+ * finite number to stand on: the engine then blocks, it never guesses.
+ */
+export function effectiveValue(
+  record: Pick<
+    AssumptionRecord,
+    "status" | "workingValue" | "answerValue" | "confidence"
+  >,
+): EffectiveValue | null {
+  let value: number | null;
+  switch (record.status) {
+    case "open":
+      value = record.workingValue;
+      break;
+    case "confirmed":
+      value = record.answerValue ?? record.workingValue;
+      break;
+    case "corrected":
+      value = record.answerValue;
+      break;
+    default:
+      return null;
+  }
+  if (value === null || !Number.isFinite(value)) return null;
+  return {
+    value,
+    confidence: record.confidence,
+    status: record.status,
+    mustValidate: record.status === "open",
+  };
+}
+
 /**
  * The generation-facing view of a register row, or null for a row that must
  * never reach a document (proposed, rejected, superseded). Carries the owner

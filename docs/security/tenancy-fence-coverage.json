@@ -10,13 +10,13 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 411,
-    "fenced": 230,
-    "fencedDirect": 106,
+    "routes": 416,
+    "fenced": 231,
+    "fencedDirect": 107,
     "fencedIndirect": 124,
-    "unfenced": 181,
-    "unfencedButReachesFenceModule": 100,
-    "behavioral": 84,
+    "unfenced": 185,
+    "unfencedButReachesFenceModule": 101,
+    "behavioral": 85,
     "byteScannerOnly": 7,
     "none": 139
   },
@@ -5716,6 +5716,18 @@
       }
     },
     {
+      "route": "src/app/api/v1/programs/[programId]/value-case/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/v1/programs/[programId]/work-items/[workItemId]/route.ts",
       "fence": "none",
       "fenceSymbols": [],
@@ -7092,6 +7104,42 @@
         "behavioral": [
           "src/app/api/v1/source/intake/servicenow/review/__tests__/route.test.ts"
         ],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/acknowledge/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/sign-in/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/source/rfp/[eventId]/sign-out/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
         "byteScanner": []
       }
     },
