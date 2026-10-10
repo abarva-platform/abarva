@@ -92,8 +92,8 @@ export function VendorResponseIntelligenceBrief({
             Open items are ranked by what they block, not by when they were
             found. Each one carries what review found, its impact signal, how it
             affects scoring, the ask to put to the vendor, and the evidence
-            behind it. Impact signals are qualitative until a vendor prices
-            them, so an unevidenced one is marked as a test, not a saving.
+            behind it. Impact signals are qualitative; leverage ratings reflect
+            severity and require vendor validation.
           </p>
         </div>
         <div style={SUMMARY}>
@@ -175,7 +175,7 @@ function buildInsightItems(
 
   // These are decision counts, not activity counts. "How many challenges did
   // we generate" does not tell a buyer what to do next; "how many of them stop
-  // a score" and "how much of our leverage is evidence-backed" do.
+  // a score" and "how severe our leverage items are" do.
   return [
     {
       label: "Blocks a score",
@@ -193,13 +193,12 @@ function buildInsightItems(
       tone: agenda.leverageOnlyCount > 0 ? "warn" : "neutral",
     },
     {
-      label: "Evidenced impact",
+      label: "High-severity leverage",
       value: `${agenda.evidencedImpactCount}/${
         agenda.evidencedImpactCount + agenda.testOnlyImpactCount
       }`,
-      detail:
-        "Commercial impact backed by cited evidence. The rest is worth testing, not booking.",
-      tone: agenda.evidencedImpactCount > 0 ? "good" : "neutral",
+      detail: "Leverage seeds rated high severity out of all leverage seeds.",
+      tone: agenda.evidencedImpactCount > 0 ? "warn" : "neutral",
     },
     {
       label: "Ready to score",
@@ -290,11 +289,7 @@ function AgendaRow({ item }: { item: DecisionAgendaItem }) {
           <>
             {item.worth}
             {item.impactConfidence ? (
-              <span style={CONFIDENCE}>
-                {item.impactConfidence === "high"
-                  ? "Evidenced"
-                  : "Test, do not book"}
-              </span>
+              <span style={CONFIDENCE}>Severity: {item.severity}</span>
             ) : null}
           </>
         ) : (

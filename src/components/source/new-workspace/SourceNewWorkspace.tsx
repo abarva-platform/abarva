@@ -31,7 +31,10 @@ import {
   type SourceNewPhaseKey,
   type SourceNewPhaseState,
 } from "@/lib/source/new-workspace/phase-state";
-import { normalizeSourceStageKey } from "@/lib/source/constants";
+import {
+  normalizeSourceStageKey,
+  SOURCE_STAGE_ORDER,
+} from "@/lib/source/constants";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
 import { recordedScopeFacts } from "@/lib/source/new-workspace/recorded-scope-facts";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
@@ -174,6 +177,9 @@ const PREVIEW_UNMET_CONDITIONS: Record<Phase, string> = {
   suppliers:
     "scope and strategy must advance, then supplier eligibility and required NDA coverage must be recorded.",
   rfi: "scope, supplier eligibility, and required NDA coverage must be ready.",
+  responses: "the market package must be released to the selected suppliers.",
+  evaluation:
+    "supplier response facts and approved scoring criteria must be available.",
 };
 const INTELLIGENCE_LIST_PREVIEW_COUNT = 5;
 const DECISION_TRAIL_PREVIEW_COUNT = 6;
@@ -188,6 +194,9 @@ function phaseEvidence(
   event: SourceNewEventView,
   files: readonly SourceNewFileRow[],
   stage05NdaCoverage: SourceNewStage05NdaCoverage,
+  responseIntake: SourceNewResponseIntake | undefined,
+  scorecardAuthority: ScorecardAuthorityView,
+  scorecardReadUnavailable: boolean,
 ): SourceNewPhaseEvidence {
   const hasFile = (phase: Phase) => files.some((file) => file.phase === phase);
   const recorded = (value: string | null) => Boolean(value?.trim());
@@ -199,6 +208,18 @@ function phaseEvidence(
       recorded(event.decisionOwner),
     suppliers: hasFile("suppliers") || stage05NdaCoverage.suppliers.length > 0,
     rfi: hasFile("rfi"),
+    responses:
+      responseIntake?.status === "blocked"
+        ? null
+        : hasFile("responses") ||
+          Boolean(
+            responseIntake?.rows.some((row) => row.uploadState === "uploaded"),
+          ),
+    evaluation: scorecardReadUnavailable
+      ? null
+      : hasFile("evaluation") ||
+        scorecardAuthority.criteria.length > 0 ||
+        scorecardAuthority.scoreRows.length > 0,
   };
 }
 
@@ -257,7 +278,9 @@ function responseEvidenceRows(
   files: readonly SourceNewFileRow[],
 ): SourceNewFileRow[] {
   return files.filter(
-    (file) => file.phase === "other" && /response/i.test(file.artifactType),
+    (file) =>
+      (file.phase === "responses" || file.phase === "other") &&
+      /response/i.test(file.artifactType),
   );
 }
 
@@ -371,17 +394,11 @@ export function SourceNewWorkspace({
   historicalRequestSummary,
   stepReadiness = null,
 }: SourceNewWorkspaceProps) {
-  const evidence = useMemo(
-    () => phaseEvidence(event, files, stage05NdaCoverage),
-    [event, files, stage05NdaCoverage],
-  );
-  const stateOf = (item: Phase): SourceNewPhaseState =>
-    sourceNewPhaseState(item, event, evidence);
   const current = sourceNewCurrentPhase(event);
   // An event past these phases opens on the last one it can show, not on a
   // phase the rail would otherwise present as the live one.
   const [phase, setPhase] = useState<Phase>(
-    () => sourceNewCurrentPhase(event) ?? "rfi",
+    () => sourceNewCurrentPhase(event) ?? "evaluation",
   );
   const [view, setView] = useState<View>("work");
   const [demoAcknowledged, setDemoAcknowledged] = useState<Phase[]>([]);
@@ -390,19 +407,6 @@ export function SourceNewWorkspace({
   const demoActive = demoMode && current !== null && !completedEvent;
   const currentIndex =
     current === null ? -1 : SOURCE_NEW_PHASE_ORDER.indexOf(current);
-  const demoPath = SOURCE_NEW_PHASE_ORDER.slice(currentIndex).filter(
-    (item) => stateOf(item) !== "off_path",
-  );
-  const demoIndex = Math.min(
-    demoAcknowledged.length,
-    demoPath.length - 1,
-  );
-  const demoPhase = demoActive ? demoPath[demoIndex] : null;
-  const demoFinished =
-    demoActive &&
-    demoAcknowledged.length >= demoPath.length;
-  const historicalGapPhases = sourceNewHistoricalGapPhases(event, evidence);
-  const completionReviewNeeded = historicalGapPhases.length > 0;
   const phases = phasesFor(event);
   const packageLabel = sourceNewMarketPackageLabel(event);
   // With no phase current, the rail shows no live step. Say where the event
@@ -420,6 +424,11 @@ export function SourceNewWorkspace({
   const phaseFileCount = files.filter((file) => file.phase === phase).length;
   const responsesStage = isResponsesStage(event);
   const scorecardAuthorityStage = isScorecardAuthorityStage(event);
+  const canonicalStage = normalizeSourceStageKey(event.currentStage);
+  const scorecardReadStage =
+    canonicalStage !== null &&
+    SOURCE_STAGE_ORDER.indexOf(canonicalStage) >=
+      SOURCE_STAGE_ORDER.indexOf("evaluation");
   const [scorecardRefresh, setScorecardRefresh] = useState(0);
   const [scorecardReadback, setScorecardReadback] = useState<{
     eventId: string;
@@ -430,7 +439,7 @@ export function SourceNewWorkspace({
     lockableScores: { vendorId: string; criterionId: string; criterionVersion: string }[];
   } | null>(null);
   useEffect(() => {
-    if (!scorecardAuthorityStage || typeof fetch !== "function") return;
+    if (!scorecardReadStage || typeof fetch !== "function") return;
     const controller = new AbortController();
     const readUrl = `/api/v1/source/events/${encodeURIComponent(event.id)}/scorecard-authority`;
     fetch(readUrl, { cache: "no-store", signal: controller.signal })
@@ -498,14 +507,14 @@ export function SourceNewWorkspace({
         }
       });
     return () => controller.abort();
-  }, [event.id, event.clientKey, scorecardAuthorityStage, scorecardRefresh]);
+  }, [event.id, event.clientKey, scorecardReadStage, scorecardRefresh]);
   const currentScorecardReadback =
     scorecardReadback?.eventId === event.id &&
     scorecardReadback.clientKey === event.clientKey
       ? scorecardReadback
       : null;
   const displayedScorecardAuthority = currentScorecardReadback
-    ? currentScorecardReadback.authority ?? {
+    ? (currentScorecardReadback.authority ?? {
         ...buildScorecardAuthorityView({
           tenantKey: event.clientKey,
           sourceEventId: event.id,
@@ -520,8 +529,35 @@ export function SourceNewWorkspace({
             nextAction: "Restore the scorecard authority read before review.",
           },
         ],
-      }
+      })
     : scorecardAuthority;
+  const evidence = phaseEvidence(
+    event,
+    files,
+    stage05NdaCoverage,
+    responseIntake,
+    displayedScorecardAuthority,
+    scorecardReadStage && !currentScorecardReadback?.authority,
+  );
+  const stateOf = (item: Phase): SourceNewPhaseState =>
+    sourceNewPhaseState(item, event, evidence);
+  const demoPath = SOURCE_NEW_PHASE_ORDER.slice(currentIndex).filter(
+    (item) => stateOf(item) !== "off_path",
+  );
+  const demoIndex = Math.min(
+    demoAcknowledged.length,
+    demoPath.length - 1,
+  );
+  const demoPhase = demoActive ? demoPath[demoIndex] : null;
+  const demoFinished =
+    demoActive &&
+    demoAcknowledged.length >= demoPath.length;
+  const historicalGapPhases = sourceNewHistoricalGapPhases(event, evidence);
+  const unavailableHistoryPhases = completedEvent
+    ? SOURCE_NEW_PHASE_ORDER.filter((item) => stateOf(item) === "unavailable")
+    : [];
+  const completionReviewNeeded =
+    historicalGapPhases.length > 0 || unavailableHistoryPhases.length > 0;
   const responseRows = responseEvidenceRows(files);
   const requestSummary =
     historicalRequestSummary ??
@@ -613,7 +649,21 @@ export function SourceNewWorkspace({
               <p className="snw-eyebrow">
                 {phases.find((item) => item.key === phase)?.label}
               </p>
-              {isCurrentPhase ? (
+              {isCurrentPhase &&
+              (phase === "responses" || phase === "evaluation") ? (
+                <>
+                  <h2>
+                    {phase === "responses"
+                      ? "Review supplier responses"
+                      : "Review evidence-bound scores"}
+                  </h2>
+                  <p className="snw-lede">
+                    {phase === "responses"
+                      ? "Review each accepted candidate's upload, parsed facts, and availability decision."
+                      : "Review the approved criteria, weights, and evaluator evidence before scoring."}
+                  </p>
+                </>
+              ) : isCurrentPhase ? (
                 <>
                   <h2>
                     {reviewPending
@@ -696,6 +746,17 @@ export function SourceNewWorkspace({
                     {PREVIEW_UNMET_CONDITIONS[phase]}
                   </p>
                 </>
+              ) : stateOf(phase) === "unavailable" ? (
+                <>
+                  <h2>Phase history is unavailable</h2>
+                  <p className="snw-lede">
+                    The governed records could not be read. Restore readback
+                    before deciding whether this phase has recorded work.
+                  </p>
+                  {completedEvent && (
+                    <p className="snw-note">{completedNote}</p>
+                  )}
+                </>
               ) : stateOf(phase) === "historical_gap" ? (
                 <>
                   <h2>Governed history is missing for this phase</h2>
@@ -727,16 +788,6 @@ export function SourceNewWorkspace({
                       {completedEvent ? completedNote : advancedNote}
                     </p>
                   )}
-                  {responsesStage && (
-                    responseIntake ? (
-                      <SourceNewResponseIntakePanel intake={responseIntake} />
-                    ) : (
-                      <SourceNewStage04VendorReadiness
-                        event={event}
-                        responseRows={responseRows}
-                      />
-                    )
-                  )}
                   <SupplierPhasePanels
                     phase={phase}
                     event={event}
@@ -745,16 +796,6 @@ export function SourceNewWorkspace({
                     eventHref={eventHref}
                     files={files}
                   />
-                  {scorecardAuthorityStage && (
-                    <SourceNewStage07ScorecardAuthority
-                      authority={displayedScorecardAuthority}
-                      eventId={event.id}
-                      canWrite={currentScorecardReadback?.canWrite ?? false}
-                      supplierOptions={currentScorecardReadback?.supplierOptions ?? []}
-                      lockableScores={currentScorecardReadback?.lockableScores ?? []}
-                      onChanged={() => setScorecardRefresh((value) => value + 1)}
-                    />
-                  )}
                 </>
               ) : (
                 <>
@@ -771,16 +812,6 @@ export function SourceNewWorkspace({
                       {completedEvent ? completedNote : advancedNote}
                     </p>
                   )}
-                  {responsesStage && (
-                    responseIntake ? (
-                      <SourceNewResponseIntakePanel intake={responseIntake} />
-                    ) : (
-                      <SourceNewStage04VendorReadiness
-                        event={event}
-                        responseRows={responseRows}
-                      />
-                    )
-                  )}
                   <SupplierPhasePanels
                     phase={phase}
                     event={event}
@@ -789,18 +820,39 @@ export function SourceNewWorkspace({
                     eventHref={eventHref}
                     files={files}
                   />
-                  {scorecardAuthorityStage && (
-                    <SourceNewStage07ScorecardAuthority
-                      authority={displayedScorecardAuthority}
-                      eventId={event.id}
-                      canWrite={currentScorecardReadback?.canWrite ?? false}
-                      supplierOptions={currentScorecardReadback?.supplierOptions ?? []}
-                      lockableScores={currentScorecardReadback?.lockableScores ?? []}
-                      onChanged={() => setScorecardRefresh((value) => value + 1)}
-                    />
-                  )}
                 </>
               )}
+              {phase === "responses" &&
+                stateOf(phase) !== "not_open" &&
+                stateOf(phase) !== "off_path" &&
+                (responseIntake ? (
+                  <SourceNewResponseIntakePanel
+                    intake={responseIntake}
+                    canWrite={responsesStage && !completedEvent}
+                  />
+                ) : (
+                      <SourceNewStage04VendorReadiness
+                        event={event}
+                        responseRows={responseRows}
+                      />
+                    ))}
+              {phase === "evaluation" &&
+                scorecardReadStage &&
+                stateOf(phase) !== "off_path" && (
+                  <SourceNewStage07ScorecardAuthority
+                    authority={displayedScorecardAuthority}
+                    eventId={event.id}
+                    canWrite={
+                      isCurrentPhase &&
+                      !completedEvent &&
+                      scorecardAuthorityStage &&
+                      (currentScorecardReadback?.canWrite ?? false)
+                    }
+                    supplierOptions={currentScorecardReadback?.supplierOptions ?? []}
+                    lockableScores={currentScorecardReadback?.lockableScores ?? []}
+                    onChanged={() => setScorecardRefresh((value) => value + 1)}
+                  />
+                )}
             </section>
             <aside
               className="snw-next"
@@ -830,10 +882,12 @@ export function SourceNewWorkspace({
                     ? "Only the presentation rail is complete. The governed event remains at its recorded stage."
                     : "Acknowledge this step to preview the next phase. This does not record a governed approval."
                   : completedEvent
-                  ? completionReviewNeeded
-                    ? `${historicalGapPhases.length} ${historicalGapPhases.length === 1 ? "phase has" : "phases have"} no governed history. Record the missing evidence or a named waiver before treating the event record as complete.`
-                    : "The governed event is complete. No next action is pending in Source New."
-                  : current === null || isCurrentPhase
+                    ? completionReviewNeeded
+                      ? unavailableHistoryPhases.length > 0
+                        ? "Phase history cannot be fully read. Restore governed readback before treating the event record as complete."
+                        : `${historicalGapPhases.length} ${historicalGapPhases.length === 1 ? "phase has" : "phases have"} no governed history. Record the missing evidence or a named waiver before treating the event record as complete.`
+                      : "The governed event is complete. No next action is pending in Source New."
+                    : current === null || isCurrentPhase
                     ? action.detail
                     : stateOf(phase) === "not_open"
                       ? "This phase is locked. The event must advance to open it."
@@ -1203,8 +1257,10 @@ function stateLabel(value: string): string {
 
 function SourceNewResponseIntakePanel({
   intake,
+  canWrite,
 }: {
   intake: SourceNewResponseIntake;
+  canWrite: boolean;
 }) {
   const firstSupplier = intake.rows[0] ?? null;
   return (
@@ -1214,12 +1270,19 @@ function SourceNewResponseIntakePanel({
     >
       <p className="snw-eyebrow">Responses · Intake</p>
       <h3>Vendor response intake</h3>
-      <p>
+      {canWrite ? (
+        <p>
         Select one accepted fictional supplier and upload that supplier&apos;s
         synthetic response workbook. This surface records intake state only: it
         does not contact suppliers, score responses, approve evaluation, or
         create an award recommendation.
       </p>
+      ) : (
+        <p>
+          Recorded supplier responses. This phase is read-only at the
+          event&apos;s current stage.
+        </p>
+      )}
       {intake.status === "blocked" ? (
         <div className="snw-vendor-readiness-blockers">
           <strong>Readback blocked</strong>
@@ -1231,7 +1294,8 @@ function SourceNewResponseIntakePanel({
         </div>
       ) : (
         <>
-          <form
+          {canWrite && (
+            <form
             className="snw-response-upload"
             action={intake.uploadActionHref}
             method="post"
@@ -1284,6 +1348,7 @@ function SourceNewResponseIntakePanel({
               Upload workbook
             </button>
           </form>
+          )}
           {intake.blockers.length > 0 && (
             <div className="snw-vendor-readiness-blockers">
               <strong>Open intake gaps</strong>
@@ -1884,7 +1949,9 @@ function SourceNewStage07ScorecardAuthority({
       {canWrite && supplierOptions.length === 0 && (
         <p className="snw-note">No accepted event suppliers are available for scoring.</p>
       )}
-      {writeMessage && <p className="snw-note" role="status">{writeMessage}</p>}
+      {writeMessage && (
+        <p className="snw-note" role="status">{writeMessage}</p>
+      )}
       <div className="snw-nda-next">
         <strong>Evaluator authority</strong>
         <ul>

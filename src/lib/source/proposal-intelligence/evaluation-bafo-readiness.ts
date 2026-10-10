@@ -420,7 +420,7 @@ function buildReceivedRow(
   };
 }
 
-function buildPricingRow(
+export function buildPricingRow(
   profile: VendorResponseProfile,
 ): EvaluationBafoPricingRow {
   const summary = profile.pricingSummary;

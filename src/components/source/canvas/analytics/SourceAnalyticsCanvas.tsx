@@ -1463,6 +1463,10 @@ function sourceReaderPhaseEvidence(
       recordedFilePhases.has("define") || approvedStages.has("scope"),
     suppliers: recordedFilePhases.has("suppliers"),
     rfi: recordedFilePhases.has("rfi") || approvedStages.has("rfp"),
+    responses:
+      recordedFilePhases.has("responses") || approvedStages.has("responses"),
+    evaluation:
+      recordedFilePhases.has("evaluation") || approvedStages.has("evaluation"),
   };
 }
 
@@ -1489,6 +1493,10 @@ function sourceReaderCheckpointHref(
       return `/source/events/${eventId}?stage=scope&workspace=files`;
     case "rfi":
       return `/source/events/${eventId}?stage=rfp`;
+    case "responses":
+      return `/source/events/${eventId}?stage=responses`;
+    case "evaluation":
+      return `/source/events/${eventId}?stage=evaluation`;
   }
 }
 

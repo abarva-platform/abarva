@@ -958,7 +958,7 @@ describe("vendor evaluation decision view", () => {
     );
     expect(view.comparisonRows.map((row) => row.label)).toEqual(
       expect.arrayContaining([
-        "Normalized 5-year TCO",
+        "Reported 5-year TCO",
         "Transition risk",
         "Automation/productivity credibility",
         "Evaluation readiness",
@@ -992,7 +992,10 @@ describe("vendor evaluation decision view", () => {
     expect(rankedSummaries[0].weightedScore).toBeGreaterThanOrEqual(
       rankedSummaries[rankedSummaries.length - 1].weightedScore,
     );
-    expect(view.cheapestVendorId).toContain("vendor-b");
+    expect(view.cheapestVendorId).toBeNull();
+    expect(view.priceRankingBlockers).toEqual(
+      expect.arrayContaining([expect.stringMatching(/uncapped/i)]),
+    );
     // Highest transition risk is the lowest transition-readiness score, not a
     // fixed vendor.
     const transitionScores = view.scorecardRows.find(
@@ -1046,6 +1049,187 @@ describe("vendor evaluation decision view", () => {
     expect(vendorB.finalistPosture).toMatch(/hold/i);
     expect(vendorB.conditions.join(" ")).toMatch(/coverage|staffing|retained/i);
     expect(vendorC.tradeoffs.join(" ")).toMatch(/SLA|scope|transition/i);
+  });
+
+  it("withholds every cost-ranking signal when any bid remains non-comparable", () => {
+    const view = buildVendorEvaluationDecisionView(set)!;
+    expect(view.cheapestVendorId).toBeNull();
+    expect(view.executiveTradeoffs.join(" ")).not.toMatch(
+      /lowest on normalized/i,
+    );
+    const costRow = view.comparisonRows.find(
+      (row) => row.comparisonId === "normalized-tco",
+    );
+    expect(costRow?.label).toBe("Reported 5-year TCO");
+    expect(costRow?.values.every((value) => value.posture === "watch")).toBe(
+      true,
+    );
+    const commercial = view.scorecardRows.find(
+      (row) => row.criterionId === "commercial-value",
+    )!;
+    expect(
+      commercial.scores.every((score) => score.weightedContribution === 0),
+    ).toBe(true);
+    expect(
+      commercial.scores.every(
+        (score) => score.scoreEligibility === "clarification_required",
+      ),
+    ).toBe(true);
+    expect(
+      commercial.scores.every((score) =>
+        /price comparison withheld/i.test(score.rationale),
+      ),
+    ).toBe(true);
+    expect(view.scoreBasis).toMatch(/not an approved archetype/i);
+    expect(view.recommendedAdvanceVendorIds).toEqual([]);
+    expect(
+      view.vendorSummaries.every((summary) =>
+        summary.conditions.some((condition) =>
+          /normalize the full bid field/i.test(condition),
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  const comparableSet = () => ({
+    ...set,
+    profiles: set.profiles.map((profile) => ({
+      ...profile,
+      pricingSummary: {
+        ...profile.pricingSummary,
+        pricingBasis:
+          "Normalized five-year scope including run, transition, one-time, optional and pass-through costs.",
+      },
+      exhibits: profile.exhibits.map((exhibit) =>
+        exhibit.kind === "pricing_workbook"
+          ? { ...exhibit, issue: null }
+          : exhibit,
+      ),
+    })),
+  });
+
+  it("names the lowest bid only when the whole comparison field has supported pricing", () => {
+    const comparable = comparableSet();
+    const view = buildVendorEvaluationDecisionView(comparable)!;
+    expect(view.priceRankingBlockers).toEqual([]);
+    expect(view.cheapestVendorId).toBe(comparable.profiles[1].vendorId);
+    expect(
+      view.comparisonRows.find((row) => row.comparisonId === "normalized-tco")
+        ?.values[1].posture,
+    ).toBe("strength");
+    expect(
+      view.scorecardRows
+        .find((row) => row.criterionId === "commercial-value")
+        ?.scores.some((score) => score.weightedContribution > 0),
+    ).toBe(true);
+  });
+
+  it("keeps completed comparable bids on the same scoring basis in BAFO scenarios", () => {
+    const comparable = comparableSet();
+    comparable.profiles = comparable.profiles.map((profile) => ({
+      ...profile,
+      readyForEvaluation: "yes",
+      unsupportedClaims: [],
+      exhibits: profile.exhibits.map((exhibit) => ({
+        ...exhibit,
+        status: "complete",
+        issue: null,
+      })),
+      extractionCards: profile.extractionCards.map((card) => ({
+        ...card,
+        structuredExhibitStatus: "supported",
+        missingFields: [],
+      })),
+    }));
+    const view = buildVendorEvaluationDecisionView(comparable)!;
+    expect(view.priceRankingBlockers).toEqual([]);
+    expect(
+      view.scoreImprovementScenarios.every(
+        (scenario) => scenario.scoreDelta === 0,
+      ),
+    ).toBe(true);
+  });
+
+  it("does not let a challenge turn absent pricing evidence into a numeric score", () => {
+    const absent = {
+      ...set,
+      profiles: set.profiles.map((profile) => ({
+        ...profile,
+        pricingSummary: {
+          ...profile.pricingSummary,
+          fiveYearTcoUsd: null,
+          yearOneRunCostUsd: null,
+          pricingBasis: "",
+        },
+        exhibits: profile.exhibits.filter(
+          (exhibit) => exhibit.kind !== "pricing_workbook",
+        ),
+        extractionCards: profile.extractionCards.filter(
+          (card) => card.type !== "pricing",
+        ),
+        sectionMap: profile.sectionMap.filter(
+          (section) => !/pricing/i.test(section.rfpSection),
+        ),
+      })),
+    };
+    const intelligence = buildVendorChallengeIntelligence(absent)!;
+    const view = buildVendorEvaluationDecisionView(absent, intelligence)!;
+    const pricing = view.scorecardRows.find(
+      (row) => row.criterionId === "pricing-transparency",
+    )!;
+    expect(
+      pricing.scores.every(
+        (score) => score.scoreEligibility === "not_scoreable",
+      ),
+    ).toBe(true);
+  });
+
+  it.each([null, Number.NaN, Number.POSITIVE_INFINITY, -1])(
+    "refuses a price ranking with an invalid total: %s",
+    (total) => {
+      const comparable = comparableSet();
+      comparable.profiles[1].pricingSummary.fiveYearTcoUsd = total;
+      const view = buildVendorEvaluationDecisionView(comparable)!;
+      expect(view.cheapestVendorId).toBeNull();
+      expect(view.priceRankingBlockers.length).toBeGreaterThan(0);
+    },
+  );
+
+  it("refuses a price ranking without cited complete pricing exhibits or a second bidder", () => {
+    const comparable = comparableSet();
+    comparable.profiles[1] = {
+      ...comparable.profiles[1],
+      exhibits: comparable.profiles[1].exhibits.map((exhibit) =>
+        exhibit.kind === "pricing_workbook"
+          ? { ...exhibit, evidenceReference: null }
+          : exhibit,
+      ),
+    };
+    expect(
+      buildVendorEvaluationDecisionView(comparable)?.cheapestVendorId,
+    ).toBeNull();
+    expect(
+      buildVendorEvaluationDecisionView({
+        ...set,
+        profiles: [set.profiles[0]],
+        profileCount: 1,
+      })?.cheapestVendorId,
+    ).toBeNull();
+  });
+
+  it("keeps generic SLA challenge rationale independent of client industry", () => {
+    const otherIndustry = buildVendorResponseMveProfiles({
+      id: "lake-evaluation",
+      name: "Lakeshore Shared Services AMS",
+      accountName: "Lakeshore",
+    })!;
+    const challenges = buildVendorChallengeIntelligence(otherIndustry)!;
+    expect(
+      challenges.challengeLog.some((row) => row.issueCategory === "sla_gap"),
+    ).toBe(true);
+    expect(
+      challenges.challengeLog.map((row) => row.whyItMatters).join(" "),
+    ).not.toMatch(/airline|airport|IROPS/i);
   });
 
   it("holds complete packages when a must-resolve commercial issue remains", () => {

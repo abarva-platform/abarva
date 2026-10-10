@@ -412,13 +412,27 @@ describe("SourceNewWorkspace", () => {
         screen.getByRole("button", { name: "Self-approve for demo" }),
       );
       expect(
+        screen
+        .getByRole("heading", { name: "Responses demo preview" }),
+      ).toBeTruthy();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Self-approve for demo" }),
+      );
+      expect(
+        screen
+        .getByRole("heading", { name: "Evaluation demo preview" }),
+      ).toBeTruthy();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Self-approve for demo" }),
+      );
+      expect(
         screen.getByRole("heading", { name: "Demo walkthrough complete" }),
       ).toBeTruthy();
       fireEvent.click(screen.getByRole("button", { name: "Approvals" }));
       const acknowledgements = screen.getByRole("region", {
         name: "Demo acknowledgements",
       });
-      expect(within(acknowledgements).getAllByRole("listitem")).toHaveLength(3);
+      expect(within(acknowledgements).getAllByRole("listitem")).toHaveLength(5);
       expect(screen.getByText(/No decisions have been recorded/i)).toBeTruthy();
       expect(fetchSpy).not.toHaveBeenCalled();
     } finally {
@@ -882,7 +896,7 @@ describe("SourceNewWorkspace", () => {
     const phases = within(
       screen.getByRole("navigation", { name: "Event phases" }),
     ).getAllByRole("button");
-    expect(phases).toHaveLength(4);
+    expect(phases).toHaveLength(6);
     expect(screen.getAllByText("Completed").length).toBeGreaterThan(0);
     expect(
       screen.getByText("This event is completed. Final stage: Value."),
@@ -895,7 +909,7 @@ describe("SourceNewWorkspace", () => {
     expect(within(status).getByText("Completion review needed")).toBeTruthy();
     expect(
       within(status).getByText(
-        "3 phases have no governed history. Record the missing evidence or a named waiver before treating the event record as complete.",
+        "Phase history cannot be fully read. Restore governed readback before treating the event record as complete.",
       ),
     ).toBeTruthy();
     expect(
@@ -905,8 +919,26 @@ describe("SourceNewWorkspace", () => {
     ).toBe("/source/events/event-1");
   });
 
-  it("keeps a completed event terminal when every visible phase has governed history", () => {
-    const supplierFile: SourceNewFileRow = {
+  it("keeps a completed event terminal when every visible phase has readable governed history", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        eventId: request.id,
+        clientKey: request.clientKey,
+        authority: buildScorecardAuthorityView({
+  tenantKey: request.clientKey,
+  sourceEventId: request.id,
+  criteria: [],
+  scores: [],
+}),
+        canWrite: false,
+        supplierOptions: [],
+        lockableScores: [],
+      }),
+    })) as unknown as typeof fetch;
+    try {
+      const supplierFile: SourceNewFileRow = {
       ...responseFile,
       id: "supplier-evidence-1",
       phase: "suppliers",
@@ -916,26 +948,41 @@ describe("SourceNewWorkspace", () => {
       blobSha256: "sha-supplier-evidence",
     };
 
-    render(
-      <SourceNewWorkspace
-        event={{
+      render(
+        <SourceNewWorkspace
+          event={{
           ...request,
           currentStage: "value",
           lifecycle: "completed",
           scope: "Managed application services scope",
         }}
-        files={[supplierFile, marketPackageFile]}
-      />,
-    );
+          files={[
+            supplierFile,
+            marketPackageFile,
+            { ...responseFile, phase: "responses" },
+            {
+              ...responseFile,
+              id: "evaluation-evidence",
+              phase: "evaluation",
+              artifactType: "score_summary",
+            },
+          ]}
+        />,
+      );
 
-    const status = screen.getByRole("complementary", { name: "Event status" });
-    expect(within(status).getByText("Event completed")).toBeTruthy();
-    expect(
+      const status = screen.getByRole("complementary", { name: "Event status" });
+      await waitFor(() =>
+        expect(within(status).getByText("Event completed")).toBeTruthy(),
+      );
+      expect(
       within(status).getByText(
         "The governed event is complete. No next action is pending in Source New.",
       ),
     ).toBeTruthy();
-    expect(within(status).queryByRole("link")).toBeNull();
+      expect(within(status).queryByRole("link")).toBeNull();
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 
   it("labels a missing completed-event phase as a historical gap", () => {
@@ -2236,13 +2283,262 @@ describe("SourceNewWorkspace", () => {
     });
     expect(buttons[0].textContent).toContain("Recorded");
     expect(buttons[3].textContent).toContain("No record");
-    // The rail shows no live step, so the surface says where the event actually is
-    expect(
-      screen.getByText(
-        "This event has moved past the phases shown here. Its current stage is Evaluation.",
-      ),
-    ).toBeTruthy();
+    expect(buttons[5].textContent).toContain("EvaluationCurrent");
+    expect(screen.queryByText(/moved past the phases shown here/)).toBeNull();
   });
+
+  it.each([
+    ["responses", "Responses", "Stage 04 vendor readiness"],
+    ["evaluation", "Evaluation", "Stage 07 scorecard authority"],
+  ])(
+    "opens %s as current work and keeps its panel out of earlier phases",
+    (currentStage, label, panelName) => {
+      render(
+        <SourceNewWorkspace
+          event={{ ...request, currentStage, lifecycle: "active" }}
+          files={[]}
+        />,
+      );
+      const rail = screen.getByRole("navigation", { name: "Event phases" });
+      const currentButton = within(rail).getByRole("button", {
+        name: new RegExp(`${label} Current`),
+      });
+      expect(currentButton.getAttribute("aria-current")).toBe("step");
+      expect(screen.getAllByRole("region", { name: panelName })).toHaveLength(
+        1,
+      );
+      expect(screen.queryByText(/moved past the phases shown here/)).toBeNull();
+      fireEvent.click(within(rail).getByRole("button", { name: /01 Request/ }));
+      expect(screen.queryByRole("region", { name: panelName })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Current work" }));
+      expect(screen.getAllByRole("region", { name: panelName })).toHaveLength(
+        1,
+      );
+    },
+  );
+
+  it.each(["Responses", "Evaluation"])(
+    "keeps %s off-path without a preview or live controls",
+    (label) => {
+      render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "scope", lifecycle: "active", sourcingMotion: "contract_optimization" }}
+        files={[]}
+      />,
+    );
+      const rail = screen.getByRole("navigation", { name: "Event phases" });
+      fireEvent.click(
+        within(rail).getByRole("button", {
+          name: new RegExp(`${label} Not on this path`),
+        }),
+      );
+      expect(screen.getByRole("heading", { name: "Not on this path" })).toBeTruthy();
+      expect(screen.queryByRole("region", { name: "Phase preview" })).toBeNull();
+      expect(
+        screen.queryByRole("region", {
+        name: "Vendor response intake",
+      }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("region", {
+      name: "Stage 07 scorecard authority",
+    }),
+      ).toBeNull();
+    },
+  );
+
+  it("keeps file-free response and score records visible as read-only history after advancement", async () => {
+    const originalFetch = global.fetch;
+    const authority = buildScorecardAuthorityView({
+      tenantKey: request.clientKey,
+      sourceEventId: request.id,
+      criteria: [
+        {
+          tenantKey: request.clientKey,
+          sourceEventId: request.id,
+          criterionId: "quality",
+          criterionVersion: "v1",
+          label: "Quality",
+          weight: 100,
+          weightsFrozen: true,
+          approvedCriterionVersion: "v1",
+          approvedBy: "Named reviewer",
+          approvedAt: "2026-10-10T12:00:00Z",
+        },
+      ],
+      scores: [],
+    });
+    global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({
+          eventId: request.id,
+          clientKey: request.clientKey,
+          authority,
+          canWrite: true,
+          supplierOptions: [{ id: "supplier-1", name: "Supplier One" }],
+          lockableScores: [],
+        }) })) as unknown as typeof fetch;
+    try {
+      render(
+        <SourceNewWorkspace
+          event={{ ...request, currentStage: "pricing", lifecycle: "active" }}
+          files={[]}
+          responseIntake={{
+            status: "available",
+            blockers: [],
+            asOf: request.asOfDate,
+            uploadActionHref: "/upload",
+            rows: [
+              {
+                supplierId: "supplier-1",
+                authorityId: "authority-1",
+                legalName: "Supplier One",
+                supplierGroup: "eligible_candidate",
+                acceptedByName: "Reviewer",
+                acceptedAt: "2026-10-10",
+                evidenceReference: "authority-1",
+                uploadState: "uploaded",
+                parseState: "pending",
+                availabilityReviewState: "not_reviewed",
+                workbookName: "proposal.xlsx",
+                artifactId: "artifact-1",
+                artifactVersion: 1,
+                parsedRequirementCount: 0,
+                uploadedAt: "2026-10-10",
+                reviewedBy: null,
+                reviewedAt: null,
+              },
+            ],
+            nextAction: {
+              label: "Review intake",
+              detail: "Review the response record.",
+            },
+          }}
+        />,
+      );
+      const rail = screen.getByRole("navigation", { name: "Event phases" });
+      await waitFor(() =>
+        expect(
+          within(rail).getByRole("button", { name: /Evaluation Recorded/ }),
+        ).toBeTruthy(),
+      );
+      fireEvent.click(
+        within(rail).getByRole("button", { name: /Responses Recorded/ }),
+      );
+      const responsePanel = screen.getByRole("region", {
+      name: "Vendor response intake",
+    });
+      expect(within(responsePanel).getByText("proposal.xlsx")).toBeTruthy();
+      expect(
+        within(responsePanel).queryByRole("button", {
+          name: "Upload workbook",
+        }),
+      ).toBeNull();
+      fireEvent.click(
+        within(rail).getByRole("button", { name: /Evaluation Recorded/ }),
+      );
+      const scorePanel = screen.getByRole("region", {
+      name: "Stage 07 scorecard authority",
+    });
+      expect(within(scorePanel).getByText(/Quality: version v1/)).toBeTruthy();
+      expect(
+        within(scorePanel).queryByRole("button", { name: "Save evaluator score" }),
+      ).toBeNull();
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/events/event-1/scorecard-authority",
+        expect.objectContaining({ cache: "no-store" }),
+      );
+      expect(
+        (global.fetch as jest.Mock).mock.calls.every(
+          ([, options]) => !options?.method,
+        ),
+      ).toBe(true);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it.each([false, true])(
+    "does not let filed artifacts (%s) mask failed history reads or certify completion",
+    async (withFiles) => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn(async () => ({
+        ok: false,
+      })) as unknown as typeof fetch;
+      try {
+        render(
+          <SourceNewWorkspace
+            event={{ ...request, currentStage: "value", lifecycle: "completed" }}
+            files={
+              withFiles
+                ? [
+                    { ...responseFile, phase: "responses" },
+                    {
+                      ...responseFile,
+                      id: "evaluation-file",
+                      phase: "evaluation",
+                      artifactType: "score_summary",
+                    },
+                  ]
+                : []
+            }
+            responseIntake={{
+              status: "blocked",
+              blockers: ["Response read unavailable"],
+              rows: [],
+              asOf: request.asOfDate,
+              uploadActionHref: "/upload",
+              nextAction: {
+                label: "Restore readback",
+                detail: "Restore response reads.",
+              },
+            }}
+          />,
+        );
+        await waitFor(() =>
+          expect(
+            screen.getByText(
+              "The governed scorecard authority could not be read.",
+            ),
+          ).toBeTruthy(),
+        );
+        expect(
+          screen
+        .getByRole("heading", { name: "Phase history is unavailable" }),
+        ).toBeTruthy();
+        const rail = screen.getByRole("navigation", { name: "Event phases" });
+        expect(
+          within(rail).getByRole("button", {
+            name: /Evaluation Read unavailable/,
+          }),
+        ).toBeTruthy();
+        fireEvent.click(
+          within(rail).getByRole("button", {
+            name: /Responses Read unavailable/,
+          }),
+        );
+        expect(
+          screen
+        .getByRole("heading", { name: "Phase history is unavailable" }),
+        ).toBeTruthy();
+        expect(
+          screen.queryByRole("heading", {
+        name: "Governed history is missing for this phase",
+      }),
+        ).toBeNull();
+        expect(
+          screen
+        .getByRole("heading", { name: "Completion review needed" }),
+        ).toBeTruthy();
+        expect(
+          screen.queryByRole("heading", { name: "Event completed" }),
+        ).toBeNull();
+        expect(
+          screen.queryByRole("button", { name: "Upload workbook" }),
+        ).toBeNull();
+      } finally {
+      global.fetch = originalFetch;
+    }
+    },
+  );
 
   it("mounts Stage 04 vendor readiness on the reachable Source New responses stage", () => {
     render(

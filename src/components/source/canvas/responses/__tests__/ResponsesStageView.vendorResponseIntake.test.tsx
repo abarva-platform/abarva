@@ -89,6 +89,41 @@ describe("ResponsesStageView vendor response intake", () => {
     jest.restoreAllMocks();
   });
 
+  it.each([
+    ["without readiness", undefined],
+    ["without response records", { ...readiness, records: [] }],
+    ["with response records", readiness],
+  ])("does not render fabricated Q&A activity %s", (_label, stageReadiness) => {
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <ResponsesStageView
+        readiness={stageReadiness}
+        documentWorkspace={<div>Documents</div>}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("source-vendor-response-intake"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("source-responses-completeness-matrix"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Documents")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("source-responses-qna-symmetry-log"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Q&A symmetry log")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Questions go to everyone"),
+    ).not.toBeInTheDocument();
+    for (const questionId of ["Q-014", "Q-017", "Q-021"]) {
+      expect(screen.queryByText(questionId)).not.toBeInTheDocument();
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("binds a selected supplier to the governed response upload and keeps review separate", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

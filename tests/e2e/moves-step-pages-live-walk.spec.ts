@@ -392,7 +392,6 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
       }
       const landing = await inspectPage(page, routeFor(MOVE_ID!, phase), async () => {
         await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/);
-        await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
         if (phase === 2 && !P2_HAS_EVERY_STEP_PAGE) {
           await expect(page.getByTestId("moves-capture-flow")).toBeVisible({
             timeout: VISIBLE_TIMEOUT_MS,
@@ -404,6 +403,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
           });
           expect(new URL(page.url()).searchParams.get("step")).toBeTruthy();
         }
+        await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME, {
+          timeout: VISIBLE_TIMEOUT_MS,
+        });
       }, blockedWrites);
       proof.landings.push({ phase, ...landing });
 

@@ -69,6 +69,32 @@ const PHASE_PREVIEW_STEPS: Record<SourceNewPhaseKey, readonly PreviewStep[]> = {
       fields: ["Recipients", "Issue evidence"],
     },
   ],
+  responses: [
+    {
+      title: "Response workbook",
+      question: "Which supplier proposals and exhibits were received?",
+      fields: ["Supplier identity", "Workbook and exhibits"],
+    },
+    {
+      title: "Parse and availability",
+      question:
+        "Which response facts were parsed, and what remains unavailable?",
+      fields: ["Parse state", "Available evidence"],
+    },
+  ],
+  evaluation: [
+    {
+      title: "Criteria and weights",
+      question: "Which archetype criteria and event weights govern comparison?",
+      fields: ["Criteria", "Weights"],
+    },
+    {
+      title: "Evidence-bound score review",
+      question:
+        "Which scores have response evidence, and what needs reviewer judgment?",
+      fields: ["Evidence basis", "Score review"],
+    },
+  ],
 };
 
 export function SourceNewPhasePreview({ phase }: { phase: SourceNewPhaseKey }) {

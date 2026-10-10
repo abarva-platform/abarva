@@ -26,31 +26,74 @@ const nothingRecorded: SourceNewPhaseEvidence = {
   define: false,
   suppliers: false,
   rfi: false,
+  responses: false,
+  evaluation: false,
 };
 
 describe("Source New external checkpoint contract", () => {
-  it("keeps the external flow to request intake plus four event phases", () => {
+  it("keeps the request-first flow through response intake and evaluation", () => {
     expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toEqual([
       "request_intake",
       "request",
       "define",
       "suppliers",
       "rfi",
+      "responses",
+      "evaluation",
     ]);
-    expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toHaveLength(5);
+    expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toHaveLength(7);
     expect(SOURCE_NEW_PHASE_ORDER).toEqual([
       "request",
       "define",
       "suppliers",
       "rfi",
+      "responses",
+      "evaluation",
     ]);
   });
 });
 
 describe("sourceNewCurrentPhase", () => {
+  it.each(["responses", "evaluation"] as const)(
+    "places %s in its own current phase",
+    (currentStage) => {
+      expect(sourceNewCurrentPhase({ currentStage, lifecycle: "active" })).toBe(
+        currentStage,
+      );
+      expect(isPastSourceNewPhases({ currentStage, lifecycle: "active" })).toBe(
+        false,
+      );
+      expect(
+        sourceNewFilePhase({
+          sourcingStage: currentStage,
+          artifactType: "evidence",
+        }),
+      ).toBe(currentStage);
+    },
+  );
   it("places an unreviewed request in the request phase", () => {
     expect(sourceNewCurrentPhase({ currentStage: "intake", lifecycle: "waiting_on_client" })).toBe("request");
   });
+
+  it.each(["responses", "evaluation"] as const)(
+    "keeps a completed %s event terminal and reviews its evidence",
+    (phase) => {
+      const event = { currentStage: phase, lifecycle: "completed" };
+      expect(sourceNewCurrentPhase(event)).toBeNull();
+      expect(sourceNewPhaseState(phase, event, nothingRecorded)).toBe(
+        "historical_gap",
+      );
+      expect(
+        sourceNewPhaseState(phase, event, {
+          ...nothingRecorded,
+          [phase]: true,
+        }),
+      ).toBe("recorded");
+      expect(sourceNewHistoricalGapPhases(event, nothingRecorded)).toContain(
+        phase,
+      );
+    },
+  );
 
   it("never makes suppliers the current phase, because no stage owns it", () => {
     const stages = ["intake", "strategy", "sourcing_strategy", "scope", "rfp", "rfp_rfi_package", "responses"];
@@ -59,8 +102,10 @@ describe("sourceNewCurrentPhase", () => {
     }
   });
 
-  it("does not place an event whose stage is past the market package", () => {
-    expect(sourceNewCurrentPhase({ currentStage: "evaluation", lifecycle: "active" })).toBeNull();
+  it("does not place an event whose stage is past evaluation", () => {
+    expect(
+      sourceNewCurrentPhase({ currentStage: "pricing", lifecycle: "active" }),
+    ).toBeNull();
   });
 });
 
@@ -85,8 +130,11 @@ describe("Source New operator context", () => {
 });
 
 describe("isPastSourceNewPhases", () => {
-  it("is true only for canonical stages after rfp", () => {
-    expect(isPastSourceNewPhases({ currentStage: "responses", lifecycle: "active" })).toBe(true);
+  it("is true only for canonical stages after evaluation", () => {
+    expect(isPastSourceNewPhases({ currentStage: "responses", lifecycle: "active" })).toBe(false);
+    expect(
+      isPastSourceNewPhases({ currentStage: "pricing", lifecycle: "active" }),
+    ).toBe(true);
     expect(isPastSourceNewPhases({ currentStage: "value", lifecycle: "active" })).toBe(true);
     expect(isPastSourceNewPhases({ currentStage: "rfp", lifecycle: "active" })).toBe(false);
     expect(isPastSourceNewPhases({ currentStage: "strategy", lifecycle: "active" })).toBe(false);
@@ -103,6 +151,19 @@ describe("isPastSourceNewPhases", () => {
 
 describe("sourceNewPhaseState", () => {
   const activeMarketPackage = { currentStage: "rfp", lifecycle: "active" };
+  it("keeps unread history separate from missing evidence on a completed event", () => {
+    const event = { currentStage: "value", lifecycle: "completed" };
+    const evidence = { ...nothingRecorded, responses: null, evaluation: null };
+    expect(sourceNewPhaseState("responses", event, evidence)).toBe(
+      "unavailable",
+    );
+    expect(sourceNewPhaseState("evaluation", event, evidence)).toBe(
+      "unavailable",
+    );
+    expect(sourceNewHistoricalGapPhases(event, evidence)).not.toContain(
+      "evaluation",
+    );
+  });
 
   it("does not call a supplier phase past merely because the event moved on", () => {
     expect(sourceNewPhaseState("suppliers", activeMarketPackage, nothingRecorded)).toBe("no_record");
@@ -137,7 +198,13 @@ describe("sourceNewPhaseState", () => {
 
   it("does not lock any phase once the event is past the four phases", () => {
     const event = { currentStage: "evaluation", lifecycle: "active" };
-    const evidence: SourceNewPhaseEvidence = { request: true, define: true, suppliers: false, rfi: true };
+    const evidence: SourceNewPhaseEvidence = {
+      ...nothingRecorded,
+      request: true,
+      define: true,
+      suppliers: false,
+      rfi: true,
+    };
     expect(sourceNewPhaseState("request", event, evidence)).toBe("recorded");
     expect(sourceNewPhaseState("define", event, evidence)).toBe("recorded");
     expect(sourceNewPhaseState("suppliers", event, evidence)).toBe("no_record");
@@ -147,6 +214,7 @@ describe("sourceNewPhaseState", () => {
   it("calls a missing phase on a completed event a historical gap", () => {
     const event = { currentStage: "value", lifecycle: "completed" };
     const evidence: SourceNewPhaseEvidence = {
+      ...nothingRecorded,
       request: true,
       define: true,
       suppliers: false,
@@ -171,13 +239,14 @@ describe("sourceNewHistoricalGapPhases", () => {
       sourceNewHistoricalGapPhases(
         { currentStage: "value", lifecycle: "completed" },
         {
+          ...nothingRecorded,
           request: true,
           define: false,
           suppliers: false,
           rfi: true,
         },
       ),
-    ).toEqual(["define", "suppliers"]);
+    ).toEqual(["define", "suppliers", "responses", "evaluation"]);
   });
 
   it("does not turn an active-event evidence gap into completion review", () => {
@@ -240,7 +309,12 @@ describe("sourceNewEventTypeLabel", () => {
 
 describe("sourceNewFilePhase", () => {
   it("files an artifact from a stage outside these phases rather than dropping it", () => {
-    expect(sourceNewFilePhase({ sourcingStage: "evaluation", artifactType: "score_summary" })).toBe("other");
+    expect(
+      sourceNewFilePhase({
+        sourcingStage: "pricing",
+        artifactType: "pricing_summary",
+      }),
+    ).toBe("other");
     expect(sourceNewFilePhase({ sourcingStage: null, artifactType: "meeting_notes" })).toBe("other");
     expect(sourceNewFilePhase({ sourcingStage: "not_a_stage", artifactType: "notes" })).toBe("other");
   });
@@ -390,6 +464,7 @@ describe("a phase the journey never visits reports itself as off-path", () => {
     sourcingMotion: "competitive_rfp",
   };
   const noEvidence = {
+    ...nothingRecorded,
     request: false,
     define: false,
     suppliers: false,
@@ -411,6 +486,19 @@ describe("a phase the journey never visits reports itself as off-path", () => {
   it("keeps the market package ahead for a competitive event", () => {
     expect(sourceNewPhaseState("rfi", competitive, noEvidence)).toBe("not_open");
   });
+
+  it.each(["responses", "evaluation"] as const)(
+    "keeps %s off-path only for a declared skipping journey",
+    (phase) => {
+      expect(sourceNewPhaseState(phase, renegotiation, noEvidence)).toBe(
+        "off_path",
+      );
+      expect(sourceNewPhaseState(phase, competitive, noEvidence)).toBe(
+        "not_open",
+      );
+      expect(SOURCE_NEW_PHASE_STAGE_KEYS[phase]).toEqual([phase]);
+    },
+  );
 
   it("never reports define off-path, because no journey skips both its stages", () => {
     for (const event of [renegotiation, competitive]) {

@@ -14,7 +14,6 @@ import type {
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 import { CANVAS } from "../canvas-tokens";
 import { CompletenessMatrix } from "./CompletenessMatrix";
-import { QnaSymmetryLog } from "./QnaSymmetryLog";
 import { ContractOptimizationProfilePanel } from "../contract-optimization/ContractOptimizationProfilePanel";
 import { VendorBafoInstructionPackPanel } from "./VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "./VendorChallengeLeveragePanel";
@@ -145,13 +144,11 @@ export function ResponsesStageView({
             )}
           </div>
 
-          {/* The completeness matrix carries one column per RFP section, so it
-              needs the full stage width. Sharing a row with the Q&A log left it
-              231px short and forced it to scroll, hiding two section columns and
-              clipping a status badge mid-pill. The log reads fine stacked below. */}
+          {/* The completeness matrix needs the full stage width for its RFP section columns. */}
           <CompletenessMatrix readiness={readiness} />
-          <NormalizedResponseQualityPanel packages={normalizedResponsePackages} />
-          <QnaSymmetryLog />
+          <NormalizedResponseQualityPanel
+            packages={normalizedResponsePackages}
+          />
         </>
       ) : null}
 
