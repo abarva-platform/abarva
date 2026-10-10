@@ -99,11 +99,12 @@ const REGISTER_SUPPORTED_MARKER_RE =
  *     `evidence` is the governed bundle a figure may otherwise trace to.
  */
 export type FigureLineagePolicy =
-  | { enforced: false }
+  | { enforced: false; publicSourceFigures?: ReadonlyMap<number, ReadonlySet<string>> }
   | {
       enforced: true;
       registerFigures: ReadonlyMap<string, ReadonlySet<string>>;
       evidence: readonly GovernedEvidenceItem[];
+      publicSourceFigures?: ReadonlyMap<number, ReadonlySet<string>>;
     };
 
 export const LEGACY_FIGURE_LINEAGE: FigureLineagePolicy = { enforced: false };
@@ -115,9 +116,21 @@ export function figureLineagePolicy(
     | "assumptionRegisterEnforced"
     | "approvedAssumptions"
     | "governedEvidenceBundle"
+    | "publicSources"
   >,
 ): FigureLineagePolicy {
-  if (req.assumptionRegisterEnforced !== true) return LEGACY_FIGURE_LINEAGE;
+  const publicSourceFigures = req.publicSources
+    ? new Map(
+        req.publicSources.map((source) => [
+          source.citationNumber,
+          new Set(factTokens(source.excerpt)),
+        ]),
+      )
+    : undefined;
+  if (req.assumptionRegisterEnforced !== true)
+    return publicSourceFigures
+      ? { enforced: false, publicSourceFigures }
+      : LEGACY_FIGURE_LINEAGE;
   const registerFigures = new Map<string, ReadonlySet<string>>();
   for (const row of req.approvedAssumptions ?? []) {
     if (!row.registerId) continue;
@@ -127,6 +140,7 @@ export function figureLineagePolicy(
     enforced: true,
     registerFigures,
     evidence: req.governedEvidenceBundle ?? [],
+    ...(publicSourceFigures ? { publicSourceFigures } : {}),
   };
 }
 
@@ -162,6 +176,19 @@ export function judgeFigureSentence(
   sentence: string,
   policy: FigureLineagePolicy,
 ): FigureSentenceVerdict {
+  const citedPublicNumbers = [...sentence.matchAll(/\[S:([1-9]\d*)\]/g)].map(
+    (match) => Number(match[1]),
+  );
+  if (citedPublicNumbers.length && policy.publicSourceFigures) {
+    const allowed = new Set<string>();
+    for (const number of citedPublicNumbers) {
+      for (const token of policy.publicSourceFigures.get(number) ?? [])
+        allowed.add(token);
+    }
+    if (factTokens(sentence).every((token) => allowed.has(token))) {
+      return { supported: true };
+    }
+  }
   if (supportedMarkerRe(policy).test(sentence)) return { supported: true };
   if (!policy.enforced) {
     return {

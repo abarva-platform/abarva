@@ -26,6 +26,7 @@ import { depthAwareFloors } from "@/lib/deliverables/shared/depth-aware-floor";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { selectRequiredEvidenceSignals } from "@/lib/deliverables/orchestrator/evidence-signals";
+import { publicCitationSourcesFromApproved } from "@/lib/deliverables/public-research/citation-feed";
 import { getDeliverableSpec } from "@/lib/programs/deliverable-registry";
 import {
   charterDeclaredUseCaseArchetype,
@@ -228,6 +229,10 @@ export function buildMoveDeliverableRequest(
   options: BuildMoveDeliverableRequestInput,
 ): BuildBusinessCaseRequestResult {
   const charter = (input.charter ?? {}) as Record<string, unknown>;
+  const publicSources =
+    input.publicSourceResearch?.status === "loaded"
+      ? publicCitationSourcesFromApproved(input.publicSourceResearch.sources)
+      : null;
 
   const governedEvidenceBundle: GovernedEvidenceItem[] = [];
   const sourceRegister: SourceRegisterEntry[] = [];
@@ -382,6 +387,7 @@ export function buildMoveDeliverableRequest(
         ? [...input.assumptionRegister.assumptions]
         : [],
     ...(input.assumptionRegister ? { assumptionRegisterEnforced: true } : {}),
+    ...(publicSources ? { publicSources } : {}),
     artifactStandard: options.artifactStandard,
     outputFormats: options.outputFormats ?? ["html"],
     formattingProfile: FORMATTING_PROFILE,

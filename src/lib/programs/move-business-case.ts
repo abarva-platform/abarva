@@ -196,7 +196,13 @@ export interface MoveBusinessCaseInput {
    * derivation ignores it.
    */
   assumptionRegister?: MoveAssumptionRegisterInput;
+  /** Approved public excerpts for this Move, only while the tenant flag governs generation. */
+  publicSourceResearch?: MovePublicSourceResearchInput;
 }
+
+export type MovePublicSourceResearchInput =
+  | { status: "loaded"; sources: readonly import("@/lib/deliverables/public-research/types").PublicSource[] }
+  | { status: "unavailable" };
 
 /**
  * The register as loaded for a Move: the citable rows, or a read that failed —

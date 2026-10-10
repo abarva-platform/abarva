@@ -60,6 +60,18 @@ export interface GovernedEvidenceItem {
   provenanceRef: string;
 }
 
+/** Approved outside source, scoped to one Move and cited separately as [S:n]. */
+export interface PublicCitationSource {
+  citationNumber: number;
+  url: string;
+  title: string;
+  publisher: string | null;
+  publishedAt: string | null;
+  retrievedAt: string;
+  excerpt: string;
+  claim: string | null;
+}
+
 /** A numeric value explicitly marked unsupported or excluded by governed evidence. */
 export interface ExcludedNumericClaim {
   citationNumber: number;
@@ -256,6 +268,8 @@ export interface DeliverableIntelligenceRequest {
   missingEvidence: MissingEvidenceItem[];
   clientCompleteItems: ClientCompleteItem[];
   approvedAssumptions: ApprovedAssumption[];
+  /** Omitted when the Move public research flag is off. */
+  publicSources?: PublicCitationSource[];
   /**
    * True only when the Move assumptions register governs this generation
    * (`moves_assumption_register_v1` on for the tenant). Then a figure not in
@@ -529,6 +543,8 @@ export interface RenderableDeliverable {
   exhibits: RenderableExhibit[];
   sourceRegister: SourceRegisterEntry[];
   assumptions: ApprovedAssumption[];
+  /** Supplied by the governed Move feed, never by the model. */
+  publicSources?: PublicCitationSource[];
   clientCompleteChecklist: ClientCompleteItem[];
   recommendation: string;
   nextActions: string[];

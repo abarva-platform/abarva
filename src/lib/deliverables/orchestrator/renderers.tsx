@@ -75,7 +75,9 @@ import type {
 } from "./types";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
 import { humanizeSourceFamily } from "./source-register";
+import { citedPublicSources } from "./public-source-citations";
 import { cellTone, CELL_TONE_HEX } from "@/lib/deliverables/shared/cell-tone";
+
 import {
   COLORS,
   EXHIBIT_DESIGN,
@@ -93,6 +95,23 @@ import {
   sectionSlideText,
   stripStructuralScaffolding,
 } from "./slide-text";
+
+const PUBLIC_SOURCE_COLUMNS = ["n", "Title", "Publisher", "Published", "Retrieved", "URL"];
+const PUBLIC_SOURCES_HTML_STYLE = `
+  .sources-scroll{max-width:100%;overflow-x:auto}
+  .sources-scroll table{min-width:640px}
+  .sources-scroll td:last-child{overflow-wrap:anywhere}`;
+
+function publicSourceRows(doc: RenderableDeliverable): string[][] {
+  return citedPublicSources(doc, doc.publicSources ?? []).map((source) => [
+    `[S:${source.citationNumber}]`,
+    source.title,
+    source.publisher ?? "—",
+    source.publishedAt ?? "—",
+    source.retrievedAt.slice(0, 10),
+    source.url,
+  ]);
+}
 
 // ── AI-generated disclosure — the single source of truth for this exact
 // text, per the Moves Continuous Execution Directive's requirement that
@@ -614,6 +633,12 @@ export function renderDeliverableDocx(
     );
   }
 
+  const citedSources = publicSourceRows(doc);
+  if (citedSources.length) {
+    children.push(designedHeading("Sources", 1));
+    children.push(lightTable(PUBLIC_SOURCE_COLUMNS, citedSources));
+  }
+
   return new Document({
     creator: "AbarVa",
     title: doc.title,
@@ -701,6 +726,13 @@ export function renderDeliverableExcelCompanion(
     addDocumentSummarySheets(wb, doc);
   }
   const expectedFigures = addExcelExhibits(wb, doc);
+  const citedSources = publicSourceRows(doc);
+  if (citedSources.length) {
+    const sheet = wb.addWorksheet("Sources");
+    const header = sheet.addRow(PUBLIC_SOURCE_COLUMNS);
+    for (const row of citedSources) sheet.addRow(row);
+    styleExcelDataSheet(sheet, header);
+  }
   const sheetVerdict = judgeSheetQuality(wb, expectedFigures);
   if (!sheetVerdict.ok) {
     throw new Error(
@@ -1862,6 +1894,12 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
         `<tr><td class="num">[${r.citationNumber}]</td><td>${esc(r.label)}</td><td>${esc(humanizeSourceFamily(r.evidenceFamily))}</td><td>${confidencePill(r.confidence)}</td><td class="muted">${r.asOf ? esc(r.asOf) : "—"}</td></tr>`,
     )
     .join("");
+  const citedSources = publicSourceRows(doc)
+    .map(
+      (row) =>
+        `<tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join("")}</tr>`,
+    )
+    .join("");
   const checklist = doc.clientCompleteChecklist
     .map(
       (c) =>
@@ -1911,7 +1949,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   .doc-status{font-size:12.5px;background:#FDF6E3;border:1px solid #E8CF8A;border-radius:8px;padding:12px 16px;margin:14px 0 20px}
   .doc-status .status-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;color:#8A6D1A;margin-bottom:6px}
   .doc-status .status-line{font-weight:600;color:#5A4A1A}
-  .doc-status ol{margin:6px 0 6px 18px;padding:0}
+  .doc-status ol{margin:6px 0 6px 18px;padding:0}${citedSources ? PUBLIC_SOURCES_HTML_STYLE : ""}
   </style></head><body><div class="wrap">
   <div class="eyebrow">${esc(DOC_COVER_EYEBROW)}</div>
   <h1>${esc(doc.title)}</h1>
@@ -1932,7 +1970,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   ${exhibits || tables ? `<h2>Tables &amp; Exhibits</h2>${exhibits}${tables}` : ""}
   ${nextActions ? `<h3>Next Actions</h3><ol>${nextActions}</ol>` : ""}
   ${checklist ? `<h2>Client-to-Complete Checklist</h2><ul class="checklist">${checklist}</ul>` : ""}
-  ${register ? `<h2>Source Register</h2><table class="md"><thead><tr><th>[n]</th><th>Source</th><th>Family</th><th>Confidence</th><th>As of</th></tr></thead><tbody>${register}</tbody></table>` : ""}
+  ${register ? `<h2>Source Register</h2>${citedSources ? '<div class="sources-scroll">' : ""}<table class="md"><thead><tr><th>[n]</th><th>Source</th><th>Family</th><th>Confidence</th><th>As of</th></tr></thead><tbody>${register}</tbody></table>${citedSources ? "</div>" : ""}` : ""}${citedSources ? `\n  <h2>Sources</h2><div class="sources-scroll"><table class="md"><thead><tr>${PUBLIC_SOURCE_COLUMNS.map((column) => `<th>${esc(column)}</th>`).join("")}</tr></thead><tbody>${citedSources}</tbody></table></div>` : ""}
   <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:32px;padding-top:10px;border-top:1px dashed var(--line)">${esc(DOC_STATUS_FOOTER)}</div>
   </div></body></html>`;
 }
@@ -2218,6 +2256,13 @@ export function renderDeliverablePdf(
                 `${r.confidence}${r.asOf ? ` · ${r.asOf}` : ""}`,
               ]),
             )}
+          </PdfView>
+        ) : null}
+
+        {publicSourceRows(doc).length > 0 ? (
+          <PdfView style={{ marginTop: 10 }}>
+            <PdfText style={PDF_STYLES.h1}>Sources</PdfText>
+            {pdfLightTable(PUBLIC_SOURCE_COLUMNS, publicSourceRows(doc))}
           </PdfView>
         ) : null}
 
@@ -3315,8 +3360,11 @@ export async function renderDeliverablePptx(
       })
     : undefined;
   if (deckPlan?.warning) console.warn(deckPlan.warning);
-  const totalSlides = deckPlan?.total ??
-    1 + storyPages.length + inDeckTables.length + 1;
+  const citedSourceRows = publicSourceRows(doc);
+  const sourcePageCount = Math.ceil(citedSourceRows.length / 14);
+  const totalSlides =
+    (deckPlan?.total ?? 1 + storyPages.length + inDeckTables.length + 1) +
+    sourcePageCount;
   let slideNumber = 1;
 
   addPptxTitleLayout(pptx, doc);
@@ -3434,6 +3482,23 @@ export async function renderDeliverablePptx(
       );
       appendixBand = undefined;
     }
+  }
+
+  for (let index = 0; index < sourcePageCount; index++) {
+    addPptxTableLayout(
+      pptx,
+      {
+        key: `public-sources-${index + 1}`,
+        title: "Sources",
+        columns: PUBLIC_SOURCE_COLUMNS,
+        rows: citedSourceRows.slice(index * 14, (index + 1) * 14),
+        targetFormat: "pptx",
+      },
+      doc,
+      slideNumber,
+      totalSlides,
+    );
+    slideNumber += 1;
   }
 
   const buffer = (await pptx.write({ outputType: "nodebuffer" })) as Buffer;

@@ -25,11 +25,16 @@ import type {
   MoveAssumptionRegisterInput,
   MoveBusinessCaseInput,
   MoveGovernedEvidenceItem,
+  MovePublicSourceResearchInput,
 } from "../move-business-case";
 import {
   assumptionRegisterGovernsGeneration,
   loadAssumptionRegisterForGeneration,
 } from "../assumption-register/generation-feed";
+import {
+  loadPublicSourcesForGeneration,
+  publicResearchGovernsGeneration,
+} from "@/lib/deliverables/public-research/generation-feed";
 
 /**
  * Load the `MoveBusinessCaseInput` for a Move by id, tenancy-scoped.
@@ -155,6 +160,22 @@ export async function loadMoveBusinessCaseInput(
     }
   }
 
+  let publicSourceResearch: MovePublicSourceResearchInput | undefined;
+  if (publicResearchGovernsGeneration(ctx)) {
+    try {
+      const sources = await loadPublicSourcesForGeneration(
+        ctx,
+        moveId,
+        ctx.clientKey ?? "",
+      );
+      if (sources === null) throw new Error("approved-source read returned no result");
+      publicSourceResearch = { status: "loaded", sources };
+    } catch (err) {
+      console.error("[load-move-business-case-input] public source read failed", err);
+      publicSourceResearch = { status: "unavailable" };
+    }
+  }
+
   return {
     industry_code: moveIndustryCode ?? industryCode,
     name: program.name,
@@ -168,5 +189,6 @@ export async function loadMoveBusinessCaseInput(
     tenant_key: tenantKey,
     tenant_name: tenantName,
     ...(assumptionRegister ? { assumptionRegister } : {}),
+    ...(publicSourceResearch ? { publicSourceResearch } : {}),
   };
 }

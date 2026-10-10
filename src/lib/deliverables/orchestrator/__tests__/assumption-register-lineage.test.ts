@@ -610,6 +610,7 @@ describe("generic build path", () => {
         generate,
         persist,
         loadAssumptionRegister,
+        loadPublicSources: async () => [],
       });
       expect(loadAssumptionRegister).toHaveBeenCalledWith({
         tenantClientKey: "meridian",
@@ -629,6 +630,7 @@ describe("generic build path", () => {
         generate,
         persist,
         loadAssumptionRegister: async () => null,
+        loadPublicSources: async () => [],
       });
       expect(seen[0].approvedAssumptions).toEqual([]);
       expect("assumptionRegisterEnforced" in seen[0]).toBe(false);
@@ -657,6 +659,7 @@ describe("generic build path", () => {
         loadAssumptionRegister: async () => {
           throw new Error("connection reset");
         },
+        loadPublicSources: async () => [],
       });
       errorSpy.mockRestore();
       expect(seen).toHaveLength(0);
