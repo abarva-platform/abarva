@@ -23,11 +23,14 @@ describe("step page views", () => {
     expect(stepPageHref("m1", 3, "P3.3")).toBe(
       "/strategic-moves/m1/phase/3?step=operating-adoption",
     );
-    expect(stepPageHref("m1", 3, "P3.4")).toBe("/strategic-moves/m1/phase/3");
+    expect(stepPageHref("m1", 3, "P3.4")).toBe(
+      "/strategic-moves/m1/phase/3?step=rom-estimate",
+    );
+    expect(parseStepPageView("rom-estimate")).toBe("rom-estimate");
   });
 
   it("names only steps the workflow registry declares", () => {
-    expect(Object.keys(STEP_PAGE_VIEWS)).toHaveLength(24);
+    expect(Object.keys(STEP_PAGE_VIEWS)).toHaveLength(25);
     expect(
       Object.values(STEP_PAGE_VIEWS).filter(({ phase }) =>
         [0, 1, 4, 5].includes(phase),

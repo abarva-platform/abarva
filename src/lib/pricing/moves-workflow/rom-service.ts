@@ -68,30 +68,14 @@ import type {
   PricingRangePolicyRow,
   RangePolicyInputs,
 } from "../effort-engine/types";
+import { ROM_DRIVERS, ROM_DRIVER_LABELS, type RomDriver } from "./rom-drivers";
 
 // ---------------------------------------------------------------------------
 // Input structure
 // ---------------------------------------------------------------------------
 
-/** The component drivers a ROM use case is counted by, in display order. */
-export const ROM_DRIVERS = [
-  "data_source_count",
-  "source_table_count",
-  "standard_data_entity_count",
-  "dashboard_view_count",
-  "design_row_count",
-  "validation_row_count",
-] as const;
-export type RomDriver = (typeof ROM_DRIVERS)[number];
-
-export const ROM_DRIVER_LABELS: Readonly<Record<RomDriver, string>> = {
-  data_source_count: "Data sources",
-  source_table_count: "Source tables",
-  standard_data_entity_count: "Standard data entities",
-  dashboard_view_count: "Dashboard views",
-  design_row_count: "Design rows",
-  validation_row_count: "Validation rows",
-};
+/** The component drivers and their labels live in `rom-drivers.ts`. */
+export { ROM_DRIVERS, ROM_DRIVER_LABELS, type RomDriver };
 
 export type RomConfidence = "low" | "medium" | "high";
 const ROM_CONFIDENCES: readonly RomConfidence[] = ["low", "medium", "high"];
@@ -282,6 +266,11 @@ export interface RomPodSummary {
 export interface RomTotal {
   /** Σ release hours + foundation hours, once. */
   hours: number;
+  /**
+   * Σ release weeks + foundation weeks, once: one pod delivers the blocks one
+   * after another, so their whole pod-weeks add up.
+   */
+  weeks: number;
   lowCents: Cents;
   planCents: Cents;
   highCents: Cents;
@@ -1117,6 +1106,9 @@ export function computeRom(
         releases.reduce((acc, r) => acc + r.own.hours, 0) +
           (foundation ? foundation.priced.hours : 0),
       ),
+      weeks:
+        releases.reduce((acc, r) => acc + r.own.weeks, 0) +
+        (foundation ? foundation.priced.weeks : 0),
       lowCents: ownSum("lowCents"),
       planCents: rollup.totalCostCents,
       highCents: ownSum("highCents"),

@@ -192,6 +192,12 @@ function RowView({ row }: { row: StepPageRow }) {
   );
 }
 
+/**
+ * One row as the page renders it, for a step's output block (template v1.9),
+ * which sits after the groups as its own section.
+ */
+export const StepRowView = RowView;
+
 function Group({
   title,
   rows,

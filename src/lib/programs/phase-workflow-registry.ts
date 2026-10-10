@@ -328,13 +328,15 @@ const P3_STEPS: readonly PhaseWorkflowStep[] = [
     phase: 3,
     title: "Delivery & estimate",
     depth: { technical: "light", limited: "full", full: "full" },
-    // Only the limited route captures estimate assumptions today; the design
-    // pack asks for them on every route. Tracked in KNOWN_CAPTURE_GAPS.
+    // The bottom-up ROM's inputs and its approved snapshot are a step record
+    // (`rom-estimate.ts`) on every route; the limited route also keeps its
+    // `estimate_assumptions` capture answer.
     sectionKeys: {
       technical: [],
       limited: ["estimate_assumptions"],
       full: [],
     },
+    recordKeys: same(["rom_estimate"]),
   },
   {
     id: "P3.5",
@@ -375,11 +377,6 @@ export const KNOWN_CAPTURE_GAPS: ReadonlyArray<{
     profiles: ["technical", "limited", "full"],
     reason:
       "Evidence planning is served by evidence readiness, not a capture field.",
-  },
-  {
-    stepId: "P3.4",
-    profiles: ["technical", "full"],
-    reason: "Estimate assumptions are captured on the limited route only.",
   },
 ];
 
@@ -447,6 +444,13 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
       label: "Owners, decision rights and baseline owner",
       description:
         "An accountable owner and decision rights for each Step 1 design element and any row the team added, who receives the baseline, and who wrote each entry.",
+    },
+    {
+      key: "rom_estimate",
+      stepId: "P3.4",
+      label: "Bottom-up estimate (ROM)",
+      description:
+        "The inputs of the bottom-up estimate, each with its source and status: counts per use case, a register or benchmark reference for each component's unit hours, the delivery pod, the delivery factors and the release grouping, plus the snapshot a person approved.",
     },
   ],
 };
