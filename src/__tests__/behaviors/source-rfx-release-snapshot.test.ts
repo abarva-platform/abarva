@@ -1,6 +1,7 @@
 import { prepareRfxReleaseSnapshot, type RfxReleaseSnapshotInput } from "@/lib/source/rfx-delivery/release-snapshot";
 
 const HASH = "a".repeat(64);
+const NDA_HASH = "b".repeat(64);
 
 function input(): RfxReleaseSnapshotInput {
   return {
@@ -51,6 +52,7 @@ function input(): RfxReleaseSnapshotInput {
       contactApprovedAt: "2026-09-24T00:00:00Z",
       contactEvidenceReference: "contact-evidence-1",
       ndaAuthorityId: "nda-1",
+      ndaDocumentSha256: NDA_HASH,
       ndaTenantKey: "tenant-1",
       ndaEventId: "event-1",
       ndaLegalEntityId: "vendor-1",
@@ -71,6 +73,7 @@ describe("Stage 06 release snapshot preparation", () => {
     if (!first.ready) return;
     expect(first.snapshot.snapshotSha256).toMatch(/^[0-9a-f]{64}$/);
     expect(first.snapshot.recipients).toHaveLength(1);
+    expect(first.snapshot.recipients[0]).toMatchObject({ ndaDocumentSha256: NDA_HASH });
     expect(first.snapshot.artifacts).toEqual([{ artifactId: "artifact-1", sha256: HASH }]);
   });
 
@@ -180,5 +183,24 @@ describe("Stage 06 release snapshot preparation", () => {
       recipientAuthorities: [{ ...base.recipientAuthorities[0], ndaEventId: "event-other" }],
     });
     expect(result.ready).toBe(false);
+  });
+
+  it("requires a frozen executed-NDA document hash and binds it to the digest", () => {
+    const base = input();
+    const missing = prepareRfxReleaseSnapshot({
+      ...base,
+      recipientAuthorities: [{ ...base.recipientAuthorities[0], ndaDocumentSha256: undefined }],
+    });
+    expect(missing.ready).toBe(false);
+    const changed = prepareRfxReleaseSnapshot({
+      ...base,
+      recipientAuthorities: [{ ...base.recipientAuthorities[0], ndaDocumentSha256: "c".repeat(64) }],
+    });
+    const original = prepareRfxReleaseSnapshot(base);
+    expect(changed.ready).toBe(true);
+    expect(original.ready).toBe(true);
+    if (changed.ready && original.ready) {
+      expect(changed.snapshot.snapshotSha256).not.toBe(original.snapshot.snapshotSha256);
+    }
   });
 });

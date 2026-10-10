@@ -18,6 +18,7 @@ export const STEP_PAGE_VIEWS = {
   "p1-evidence-change": { phase: 1, stepId: "P1.4" },
   "p1-charter-gate": { phase: 1, stepId: "P1.5" },
   "root-causes": { phase: 2, stepId: "P2.3" },
+  "p2-gate": { phase: 2, stepId: "P2.5" },
   "root-cause-design": { phase: 3, stepId: "P3.1" },
   "architecture-options": { phase: 3, stepId: "P3.2" },
   "operating-adoption": { phase: 3, stepId: "P3.3" },

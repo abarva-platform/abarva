@@ -3954,22 +3954,17 @@ export function MovesPhaseStandaloneClient({
   };
 
   if (defaultStepTarget) {
-    const openingView = new URL(
+    const targetView = new URL(
       defaultStepTarget,
-      "https://local.invalid",
+      "https://moves.invalid",
     ).searchParams.get("step");
-    const openingStep =
-      openingView && STEP_PAGE_VIEWS[openingView as StepPageView];
-    const openingTitle = openingStep
-      ? resolvePhaseWorkflow(openingStep.phase, confirmedSolutionRoute).find(
-          (step) => step.id === openingStep.stepId,
+    const target = targetView && STEP_PAGE_VIEWS[targetView as StepPageView];
+    const label = target
+      ? resolvePhaseWorkflow(target.phase, confirmedSolutionRoute).find(
+          (step) => step.id === target.stepId,
         )?.title
       : null;
-    return (
-      <main role="status" aria-live="polite">
-        Opening {openingTitle ?? "step"}…
-      </main>
-    );
+    return <p role="status">Opening {label ?? "step"}…</p>;
   }
 
   if (

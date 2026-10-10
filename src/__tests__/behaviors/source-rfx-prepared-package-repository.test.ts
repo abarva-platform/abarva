@@ -9,6 +9,8 @@ jest.mock("@/lib/data-plane/azureRead", () => ({
 
 import { readPreparedRfxPackagesForEvent } from "@/lib/source/rfx-delivery/prepared-package-repository";
 import { writePreparedRfxPackageVersion, type PreparedPackageWriteInput } from "@/lib/source/rfx-delivery/write-prepared-package-version";
+import { authorizePreparedRfxPackageVersion } from "@/lib/source/rfx-delivery/authorize-prepared-package-version";
+import { readRfxReleaseAuthorization } from "@/lib/source/rfx-delivery/release-authorization-repository";
 import type { SqlRunner, TxSessionRunner } from "@/lib/data-plane/read-adapters/azureSession";
 
 const eventId = "11111111-1111-4111-8111-111111111111";
@@ -32,6 +34,7 @@ const content = {
     candidateAuthorityId: "candidate-1",
     contactAuthorityId: "contact-authority-1",
     ndaAuthorityId: "nda-1",
+    ndaDocumentSha256: "b".repeat(64),
   }],
   approvedByUserId: "approver-1",
   approvedAt: "2026-09-25T00:00:00.000Z",
@@ -145,6 +148,7 @@ function writeInput(): PreparedPackageWriteInput {
       contactPolicy: "contact_allowed", contactState: "approved",
       contactApprovedByUserId: "contact-approver", contactApprovedAt: "2026-09-30T00:00:00Z",
       contactEvidenceReference: "contact-evidence", ndaAuthorityId: "nda-1",
+      ndaDocumentSha256: "b".repeat(64),
       ndaTenantKey: tenantKey, ndaEventId: eventId, ndaLegalEntityId: "vendor-1",
       ndaState: "recorded",
     }],
@@ -209,5 +213,116 @@ describe("prepared RFx package version write", () => {
     expect(await writePreparedRfxPackageVersion(proposed, db.tx, () => "version-1"))
       .toMatchObject({ ok: false, code: "release_not_ready" });
     expect(db.writes).toHaveLength(0);
+  });
+});
+
+describe("prepared RFx package authorization", () => {
+  const authorizationInput = {
+    clientKey: tenantKey,
+    eventId,
+    packageVersionId: content.packageVersionId,
+    snapshotSha256,
+    authorizedByUserId: "operator-1",
+    releaseEvidenceReference: "operator-confirmation-1",
+  };
+  const authorizationClock = () => new Date("2026-09-26T00:00:00.000Z");
+
+  function authorizationStore(packageRows: unknown[] = [row], existingRows: unknown[] = []) {
+    const sql: string[] = [];
+    const inserts: unknown[][] = [];
+    const run: SqlRunner = async <R>(query: string, params: unknown[]): Promise<R[]> => {
+      sql.push(query);
+      if (query.includes("FROM source_events")) return [{ id: eventId }] as R[];
+      if (query.includes("FROM source_event_rfx_package_version")) return packageRows as R[];
+      if (query.includes("FROM source_event_rfx_release_authorization")) return existingRows as R[];
+      if (query.includes("INSERT INTO source_event_rfx_release_authorization")) {
+        inserts.push(params);
+        return [{ id: "authorization-1" }] as R[];
+      }
+      return [];
+    };
+    const tx: TxSessionRunner = async (fn) => fn(run);
+    return { tx, sql, inserts };
+  }
+
+  it("authorizes one digest-bound prepared version without rewriting it", async () => {
+    const db = authorizationStore();
+    await expect(authorizePreparedRfxPackageVersion(authorizationInput, db.tx, authorizationClock))
+      .resolves.toEqual({ ok: true, authorizationId: "authorization-1", snapshotSha256 });
+    expect(db.inserts).toHaveLength(1);
+    expect(db.inserts[0]).toContain(content.packageVersionId);
+    expect(db.inserts[0]).toContain(snapshotSha256);
+    expect(db.sql.find((query) => query.includes("INSERT INTO source_event_rfx_release_authorization")))
+      .toContain("clock_timestamp()");
+    expect(db.sql.some((query) => /^\s*(UPDATE|DELETE)\b/i.test(query))).toBe(false);
+  });
+
+  it.each([
+    [{ snapshot_sha256: "0".repeat(64) }, "digest_mismatch"],
+    [{ snapshot_json: snapshotJson.replace("Named contact", "Changed contact") }, "digest_mismatch"],
+    [{ release_state: "issued" }, "package_unavailable"],
+    [{ client_key: "tenant-beta" }, "package_unavailable"],
+    [{ source_event_id: "33333333-3333-4333-8333-333333333333" }, "package_unavailable"],
+    [{ expires_at: new Date("2026-09-25T00:00:00.000Z") }, "package_expired"],
+  ] as const)("refuses a changed or expired prepared row: %p", async (change, code) => {
+    const db = authorizationStore([{ ...row, ...change }]);
+    await expect(authorizePreparedRfxPackageVersion(authorizationInput, db.tx, authorizationClock))
+      .resolves.toMatchObject({ ok: false, code });
+    expect(db.inserts).toHaveLength(0);
+  });
+
+  it("refuses duplicate authorization and unreadable authority", async () => {
+    const duplicate = authorizationStore([row], [{ id: "earlier-authorization" }]);
+    await expect(authorizePreparedRfxPackageVersion(authorizationInput, duplicate.tx, authorizationClock))
+      .resolves.toMatchObject({ ok: false, code: "already_authorized" });
+    expect(duplicate.inserts).toHaveLength(0);
+
+    const unreadable: TxSessionRunner = async () => { throw new Error("relation unavailable"); };
+    await expect(authorizePreparedRfxPackageVersion(authorizationInput, unreadable, authorizationClock))
+      .resolves.toMatchObject({ ok: false, code: "authority_unavailable" });
+  });
+});
+
+describe("RFx release authorization readback", () => {
+  const authorizedRow = {
+    ...row,
+    authorization_id: "authorization-1",
+    authorized_by_user_id: "operator-1",
+    authorized_at: new Date("2026-09-26T00:00:00.000Z"),
+    authorization_snapshot_sha256: snapshotSha256,
+  };
+
+  beforeEach(() => {
+    runMock.mockReset();
+    withSessionMock.mockReset();
+    withSessionMock.mockImplementation(
+      async (callback: (run: typeof runMock) => unknown) => callback(runMock),
+    );
+  });
+
+  it("reads only a digest-verified authorization in the requested tenant and event", async () => {
+    runMock.mockResolvedValueOnce([]).mockResolvedValueOnce([authorizedRow]);
+    await expect(readRfxReleaseAuthorization({ clientKey: tenantKey, eventId, packageVersionId: "version-1" }))
+      .resolves.toEqual({
+        state: "release_authorized", authorizationId: "authorization-1", packageVersionId: "version-1",
+        snapshotSha256, authorizedByUserId: "operator-1",
+        authorizedAt: "2026-09-26T00:00:00.000Z",
+      });
+    expect(runMock.mock.calls[1]?.[0]).toContain("source_event_rfx_release_authorization");
+    expect(runMock.mock.calls[1]?.[0]).toContain("source_event_id = $2::uuid");
+  });
+
+  it("distinguishes no authorization from an unreadable or inconsistent row", async () => {
+    runMock.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    await expect(readRfxReleaseAuthorization({ clientKey: tenantKey, eventId, packageVersionId: "version-1" }))
+      .resolves.toEqual({ state: "not_authorized" });
+
+    runMock.mockResolvedValueOnce([]).mockResolvedValueOnce([{ ...authorizedRow, authorization_snapshot_sha256: "0".repeat(64) }]);
+    await expect(readRfxReleaseAuthorization({ clientKey: tenantKey, eventId, packageVersionId: "version-1" }))
+      .resolves.toEqual({ state: "unavailable" });
+
+    withSessionMock.mockRejectedValueOnce(new Error("relation unavailable"));
+    await expect(readRfxReleaseAuthorization({ clientKey: tenantKey, eventId, packageVersionId: "version-1" }))
+      .resolves.toEqual({ state: "unavailable" });
   });
 });

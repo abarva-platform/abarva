@@ -30,6 +30,49 @@ const base = {
 };
 
 describe("phase step-page sunset routing", () => {
+  it("matches the host's dedicated mounts, every gate, and every slot in both directions", () => {
+    const host = readFileSync(
+      join(
+        process.cwd(),
+        "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx",
+      ),
+      "utf8",
+    );
+    const dedicatedMounts = [
+      ...host.matchAll(/initialStepView === "([^"]+)"/g),
+    ].map((match) => match[1]);
+    const gateViews = (Object.keys(STEP_PAGE_VIEWS) as StepPageView[]).filter(
+      (view) => {
+        const entry = STEP_PAGE_VIEWS[view];
+        return (
+          resolvePhaseWorkflow(entry.phase, null).at(-1)?.id === entry.stepId
+        );
+      },
+    );
+    expect(host).toContain("if (gateStepPageActive)");
+    expect(host).toContain("PHASE_STEP_PAGES[initialStepView]");
+    const mounted = new Set<StepPageView>([
+      ...(dedicatedMounts as StepPageView[]),
+      ...gateViews,
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+    ]);
+    const implemented = new Set<StepPageView>([
+      ...EXISTING_STEP_PAGE_VIEWS,
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+    ]);
+    expect([...implemented].sort()).toEqual([...mounted].sort());
+    expect([...implemented]).toContain("rom-estimate");
+    expect(gateViews).toEqual(
+      expect.arrayContaining([
+        "p0-approve",
+        "p1-charter-gate",
+        "p2-gate",
+        "gate",
+        "p4-gate",
+        "p5-handoff",
+      ]),
+    );
+  });
   it("defaults a complete phase to its first step not done", () => {
     expect(resolvePhaseStepPageLanding(base)).toBe(
       "/strategic-moves/move-1/phase/0?step=p0-scope",
@@ -42,6 +85,26 @@ describe("phase step-page sunset routing", () => {
         ),
       }),
     ).toBe("/strategic-moves/move-1/phase/0?step=p0-approve");
+  });
+
+  it("lands both completed P4 and P5 page sets on their first open step", () => {
+    const implementedViews = [
+      ...EXISTING_STEP_PAGE_VIEWS,
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+    ];
+    for (const [phase, expectedView] of [
+      [4, "p4-milestones"],
+      [5, "p5-owners"],
+    ] as const) {
+      expect(
+        resolvePhaseStepPageLanding({
+          ...base,
+          phase,
+          implementedViews,
+          doneByStep: {},
+        }),
+      ).toBe(`/strategic-moves/move-1/phase/${phase}?step=${expectedView}`);
+    }
   });
 
   it("keeps an incomplete phase on capture and links its missing step to its section", () => {
