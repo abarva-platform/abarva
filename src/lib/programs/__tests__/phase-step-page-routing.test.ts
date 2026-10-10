@@ -61,6 +61,7 @@ describe("phase step-page sunset routing", () => {
       ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
     ]);
     expect([...implemented].sort()).toEqual([...mounted].sort());
+    expect([...implemented]).toContain("rom-estimate");
     expect(gateViews).toEqual(
       expect.arrayContaining([
         "p0-approve",
