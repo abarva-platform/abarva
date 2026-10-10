@@ -46,8 +46,7 @@ const artifact: SourceArtifactRegistryRecord = {
   originalName: "northstar-response.xlsx",
   blobUri: "source/event-1/artifact-response-1/northstar-response.xlsx",
   uploaderUserId: "user-1",
-  mimeType:
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   sizeBytes: 2048,
   sha256: "sha-response",
   parseStatus: "parsed",
@@ -260,7 +259,7 @@ describe("buildSourceNewResponseIntake", () => {
         responseArtifacts: [foreignArtifact],
       });
       expect(intake.rows[0]).toMatchObject({
-        uploadState: "not_uploaded",
+        uploadState: "not_linked",
         parseState: "not_parsed",
         parsedRequirementCount: 0,
       });
@@ -281,9 +280,169 @@ describe("buildSourceNewResponseIntake", () => {
       ],
     });
 
-    expect(intake.rows[0].parsedRequirementCount).toBe(0);
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "not_linked",
+      parseState: "not_parsed",
+      availabilityReviewState: "not_reviewed",
+      parsedRequirementCount: 0,
+      artifactId: null,
+    });
+  });
+
+  it("does not credit a filename-only workbook without a canonical response package", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "not_linked",
+      parseState: "not_parsed",
+      availabilityReviewState: "not_reviewed",
+      artifactId: null,
+    });
+  });
+
+  it("keeps same-named suppliers' response states separate", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: {
+        ...acceptedPanel,
+        rows: [
+          ...acceptedPanel.rows,
+          {
+            ...acceptedPanel.rows[0],
+            authorityId: "authority-beta",
+            legalEntityId: "supplier-beta",
+          },
+        ],
+      },
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [normalizedPackage],
+    });
+
+    expect(
+      intake.rows.map((row) => [
+        row.supplierId,
+        row.uploadState,
+        row.parseState,
+      ]),
+    ).toEqual([
+      ["supplier-alpha", "uploaded", "parsed"],
+      ["supplier-beta", "not_linked", "not_parsed"],
+    ]);
+  });
+
+  it("credits a bound response workbook even when filename inference calls it pricing", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [{ ...artifact, artifactFamily: "pricing_workbook" }],
+      normalizedPackages: [normalizedPackage],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "uploaded",
+      parseState: "parsed",
+      artifactId: artifact.id,
+    });
+  });
+
+  it("does not claim a parsed response without its registered artifact", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [],
+      normalizedPackages: [normalizedPackage],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "not_linked",
+      parseState: "not_parsed",
+      artifactId: null,
+    });
+  });
+
+  it("does not credit a normalized package from another event stage", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [{ ...artifact, stageKey: "rfp" }],
+      normalizedPackages: [normalizedPackage],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "not_linked",
+      parseState: "not_parsed",
+      parsedRequirementCount: 0,
+      artifactId: null,
+    });
+  });
+
+  it("shows a canonical upload receipt before a normalized package is accepted", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [],
+      responseUploadReceipts: [{
+        supplierId: "supplier-alpha",
+        artifactId: artifact.id,
+        parseState: "failed",
+        recordedAt: "2026-03-10T12:00:00Z",
+      }],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "uploaded",
+      parseState: "failed",
+      availabilityReviewState: "available",
+      artifactId: artifact.id,
+    });
+  });
+
+  it("labels an unbound response artifact without assigning it to a supplier", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [],
+      responseUploadReceipts: [],
+    });
+
+    expect(intake.rows[0].uploadState).toBe("not_linked");
     expect(intake.blockers).toContain(
-      "At least one parsed workbook cannot be bound to an accepted supplier identity.",
+      "An unlinked response workbook is recorded; review it before uploading another.",
     );
   });
 });

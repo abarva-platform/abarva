@@ -50,6 +50,7 @@ import {
 } from "@/lib/source/canvas-substrate/upload-sync";
 import { parseNormalizedVendorResponseWorkbook } from "@/lib/source/vendor-response-workbook";
 import { persistNormalizedVendorResponsePackage } from "@/lib/source/vendor-response-persistence";
+import { readAcceptedCandidatesForEvent } from "@/lib/source/candidate-suppliers/event-candidate-authority-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -333,6 +334,22 @@ export async function POST(
   });
   if (!scope) return jsonError(403, "forbidden_event");
 
+  let responseSupplier: { supplierId: string; legalName: string } | null = null;
+  if (scope.stageKey === "responses" && sourceArtifactFormatFromMime(mimeType) === "xlsx") {
+    const supplierId = parseOptionalString(formData.get("supplierId"));
+    if (!supplierId) return jsonError(409, "accepted_supplier_required");
+    const accepted = await readAcceptedCandidatesForEvent({
+      clientKey: client.key,
+      eventId: scope.eventId,
+    }).catch(() => null);
+    if (!accepted?.registryAvailable) return jsonError(503, "candidate_panel_unavailable");
+    const matches = accepted.acceptedCandidates.filter((item) => item.supplierId === supplierId);
+    if (matches.length !== 1 || !matches[0].legalName.trim()) {
+      return jsonError(409, "supplier_not_accepted_for_event");
+    }
+    responseSupplier = { supplierId, legalName: matches[0].legalName };
+  }
+
   const requirementId = parseOptionalString(formData.get("evidenceRequirementId"));
   if (formData.has("evidenceRequirementId") && !requirementId)
     return jsonError(400, "invalid_evidence_requirement");
@@ -378,6 +395,30 @@ export async function POST(
   });
   if (dataProtection.decision === "quarantine") {
     return sensitiveUploadRejectedResponse(dataProtection);
+  }
+
+  let preparedResponse: Awaited<ReturnType<typeof parseNormalizedVendorResponseWorkbook>> = null;
+  let responseParseError: string | null = null;
+  if (responseSupplier) {
+    try {
+      preparedResponse = await parseNormalizedVendorResponseWorkbook({
+        buffer,
+        vendorId: responseSupplier.supplierId,
+      });
+      const declaredName = preparedResponse?.declaredVendorName;
+      if (
+        declaredName &&
+        declaredName.trim().replace(/\s+/g, " ").toLowerCase() !==
+          responseSupplier.legalName.trim().replace(/\s+/g, " ").toLowerCase()
+      ) {
+        return jsonError(409, "response_supplier_name_mismatch");
+      }
+      if (preparedResponse) {
+        preparedResponse = { ...preparedResponse, vendorName: responseSupplier.legalName };
+      }
+    } catch (error) {
+      responseParseError = describeUnknownError(error, "normalized vendor-response parse failed");
+    }
   }
 
   const sha256 = createHash("sha256").update(buffer).digest("hex");
@@ -509,25 +550,25 @@ export async function POST(
       );
     }
 
-    let normalizedResponse:
-      | Awaited<ReturnType<typeof parseNormalizedVendorResponseWorkbook>>
-      | undefined;
-    if (artifact.sourceFormat === "xlsx") {
+    let normalizedResponse: Awaited<ReturnType<typeof parseNormalizedVendorResponseWorkbook>> = null;
+    let responseParseState: "parsed" | "failed" | "not_parsed" = "not_parsed";
+    if (responseSupplier) {
+      if (responseParseError) {
+        responseParseState = "failed";
+        parseWarnings.push(responseParseError);
+      }
       try {
-        normalizedResponse =
-          (await parseNormalizedVendorResponseWorkbook({
-            buffer,
-            vendorName:
-              parseOptionalString(formData.get("vendorName")) ?? undefined,
-          })) ?? undefined;
-        if (normalizedResponse) {
+        if (preparedResponse) {
           await persistNormalizedVendorResponsePackage({
             artifact,
-            parsed: normalizedResponse,
+            parsed: preparedResponse,
           });
-          parseWarnings.push(...normalizedResponse.parserWarnings);
+          normalizedResponse = preparedResponse;
+          responseParseState = "parsed";
+          parseWarnings.push(...preparedResponse.parserWarnings);
         }
       } catch (normalizedError) {
+        responseParseState = "failed";
         const message = describeUnknownError(
           normalizedError,
           "normalized vendor-response parse failed",
@@ -594,7 +635,9 @@ export async function POST(
       actionLabel: `Uploaded Source document: ${filename}`,
       stageKey: scope.stageKey,
       artifactCode: parseOptionalString(formData.get("artifactCode")) ?? null,
-      reason: parseOptionalString(formData.get("vendorName"))
+      reason: responseSupplier
+        ? `Vendor response received from ${responseSupplier.legalName}`
+        : parseOptionalString(formData.get("vendorName"))
         ? `Vendor response received from ${parseOptionalString(formData.get("vendorName"))}`
         : null,
       metadata: {
@@ -607,14 +650,32 @@ export async function POST(
         parseStatus: artifact.parseStatus,
         parseWarnings,
         externalSend: false,
+        ...(responseSupplier
+          ? {
+              responseSupplierId: responseSupplier.supplierId,
+              responseParseState,
+            }
+          : {}),
       },
       occurredAtIso: new Date().toISOString(),
+    }).catch((error) => {
+      if (!responseSupplier) throw error;
+      return {
+        ok: false as const,
+        error: describeUnknownError(error, "response receipt write failed"),
+      };
     });
     if (!activityWrite.ok) {
       console.error(
         "[POST /api/v1/source/:eventId/artifacts/upload] activity_insert_failed",
         activityWrite.error,
       );
+      if (responseSupplier) {
+        return Response.json(
+          { ok: false, error: "response_receipt_failed", artifactId: artifact.id },
+          { status: 503 },
+        );
+      }
     }
 
     return Response.json(

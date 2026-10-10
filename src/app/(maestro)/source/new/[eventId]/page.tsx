@@ -25,6 +25,7 @@ import { buildSourceEventStagePlanSnapshot } from "@/lib/source/new-workspace/st
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import { buildSourceNewResponseIntake } from "@/lib/source/new-workspace/response-intake";
+import { readSourceResponseUploadReceipts } from "@/lib/source/new-workspace/response-upload-receipts";
 import {
   buildHistoricalRequestSummary,
   historicalRequestOriginForEvent,
@@ -97,6 +98,7 @@ export default async function SourceNewEventPage({
     stage05NdaCoverage,
     responseArtifactsResult,
     normalizedResponsePackagesResult,
+    responseUploadReceiptsResult,
     intakeRequestQueue,
   ] = await Promise.all([
     listSourceArtifacts(
@@ -135,6 +137,12 @@ export default async function SourceNewEventPage({
       .catch(() => ({ kind: "unavailable" as const, data: null })),
     readNormalizedVendorResponsePackages({
       tenantKey: activeClient.key,
+      eventId: event.id,
+    })
+      .then((data) => ({ kind: "available" as const, data }))
+      .catch(() => ({ kind: "unavailable" as const, data: null })),
+    readSourceResponseUploadReceipts({
+      clientKey: activeClient.key,
       eventId: event.id,
     })
       .then((data) => ({ kind: "available" as const, data }))
@@ -264,6 +272,9 @@ export default async function SourceNewEventPage({
     normalizedResponsePackagesResult.kind === "unavailable"
       ? "The normalized response parser output could not be read."
       : null,
+    responseUploadReceiptsResult.kind === "unavailable"
+      ? "The response upload receipt log could not be read."
+      : null,
   ].filter((blocker): blocker is string => Boolean(blocker));
   const responseIntake = buildSourceNewResponseIntake({
     eventId: event.id,
@@ -279,6 +290,10 @@ export default async function SourceNewEventPage({
     normalizedPackages:
       normalizedResponsePackagesResult.kind === "available"
         ? normalizedResponsePackagesResult.data
+        : null,
+    responseUploadReceipts:
+      responseUploadReceiptsResult.kind === "available"
+        ? responseUploadReceiptsResult.data
         : null,
     readBlockers: responseReadBlockers,
   });

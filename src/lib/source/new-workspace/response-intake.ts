@@ -4,13 +4,11 @@ import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-respon
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { extractAcceptedResponseQuestions } from "@/lib/source/vendor-response-extraction-contract";
 import type { SourceNewStage04VendorPanel } from "./stage04-vendor-panel";
+import type { SourceResponseUploadReceipt } from "./response-upload-receipts";
 
-export type SourceNewResponseIntakeState =
-  | "available"
-  | "empty"
-  | "blocked";
+export type SourceNewResponseIntakeState = "available" | "empty" | "blocked";
 
-export type SourceNewResponseUploadState = "not_uploaded" | "uploaded";
+export type SourceNewResponseUploadState = "not_linked" | "uploaded";
 export type SourceNewResponseParseState =
   | "not_parsed"
   | "pending"
@@ -62,10 +60,9 @@ export type BuildSourceNewResponseIntakeInput = {
   files: readonly SourceNewFileRow[];
   responseArtifacts: readonly SourceArtifactRegistryRecord[] | null;
   normalizedPackages: readonly NormalizedVendorResponsePackage[] | null;
+  responseUploadReceipts?: readonly SourceResponseUploadReceipt[] | null;
   readBlockers?: readonly string[];
 };
-
-const RESPONSE_NAME_PATTERN = /\b(response|proposal|submission)\b/i;
 
 export function buildSourceNewResponseIntake(
   input: BuildSourceNewResponseIntakeInput,
@@ -83,15 +80,24 @@ export function buildSourceNewResponseIntake(
       ...readBlockers,
     ]);
   }
+  if (input.responseUploadReceipts === null) {
+    return blockedIntake(input, [
+      "The response upload receipt log could not be read.",
+      ...readBlockers,
+    ]);
+  }
 
   const tenantKeys = new Set(tenantAliasesFor(input.tenantKey));
   const eventArtifacts = input.responseArtifacts.filter(
     (artifact) =>
       artifact.sourceEventId === input.eventId &&
       tenantKeys.has(artifact.tenantKey) &&
+      artifact.stageKey === "responses" &&
       artifact.deletedAt === null,
   );
-  const eventArtifactIds = new Set(eventArtifacts.map((artifact) => artifact.id));
+  const eventArtifactIds = new Set(
+    eventArtifacts.map((artifact) => artifact.id),
+  );
   const eventPackages = input.normalizedPackages.filter((pkg) =>
     eventArtifactIds.has(pkg.artifactId),
   );
@@ -115,15 +121,21 @@ export function buildSourceNewResponseIntake(
   }
 
   const rows = suppliers.map((supplier) => {
-    const normalizedPackage = matchNormalizedPackage(
-      supplier,
-      eventPackages,
+    const receipt = input.responseUploadReceipts?.find(
+      (item) =>
+        item.supplierId === supplier.legalEntityId &&
+        eventArtifactIds.has(item.artifactId),
     );
-    const artifact = matchResponseArtifact(
-      supplier,
-      normalizedPackage,
-      eventArtifacts,
-    );
+    const normalizedPackage = receipt
+      ? eventPackages.find(
+          (pkg) =>
+            pkg.vendorId === supplier.legalEntityId &&
+            pkg.artifactId === receipt.artifactId,
+        ) ?? null
+      : matchNormalizedPackage(supplier, eventPackages);
+    const artifact = receipt
+      ? eventArtifacts.find((item) => item.id === receipt.artifactId) ?? null
+      : matchResponseArtifact(normalizedPackage, eventArtifacts);
     const questionExtraction = extractAcceptedResponseQuestions({
       eventId: input.eventId,
       tenantKey: input.tenantKey,
@@ -133,7 +145,7 @@ export function buildSourceNewResponseIntake(
       artifact,
       responsePackage: normalizedPackage,
     });
-    const file = matchFileCabinetRow(supplier, artifact, input.files);
+    const file = matchFileCabinetRow(artifact, input.files);
     return {
       supplierId: supplier.legalEntityId,
       authorityId: supplier.authorityId,
@@ -145,12 +157,14 @@ export function buildSourceNewResponseIntake(
       acceptedByName: supplier.acceptedByName,
       acceptedAt: supplier.acceptedAt,
       evidenceReference: supplier.evidenceReference,
-      uploadState: artifact || file ? "uploaded" : "not_uploaded",
-      parseState: parseState(artifact, normalizedPackage),
+      uploadState: artifact ? "uploaded" : "not_linked",
+      parseState: normalizedPackage
+        ? "parsed"
+        : receipt?.parseState ?? parseState(artifact, null),
       availabilityReviewState: availabilityReviewState(file),
       workbookName:
-        normalizedPackage?.originalName ??
         artifact?.originalName ??
+        normalizedPackage?.originalName ??
         file?.fileName ??
         null,
       artifactId: artifact?.id ?? file?.sourceRegisterId ?? file?.id ?? null,
@@ -162,13 +176,26 @@ export function buildSourceNewResponseIntake(
     } satisfies SourceNewResponseIntakeRow;
   });
 
+  const linkedArtifactIds = new Set(rows.flatMap((row) => row.artifactId ? [row.artifactId] : []));
+  const unlinkedArtifactCount = eventArtifacts.filter(
+    (artifact) =>
+      artifact.sourceFormat === "xlsx" &&
+      artifact.artifactKind === "vendor_response_workbook" &&
+      !linkedArtifactIds.has(artifact.id),
+  ).length;
+
   return {
     status: "available",
-    blockers: rowBlockers(rows),
+    blockers: [
+      ...rowBlockers(rows),
+      ...(unlinkedArtifactCount > 0
+        ? ["An unlinked response workbook is recorded; review it before uploading another."]
+        : []),
+    ],
     asOf: input.asOf,
     uploadActionHref: input.uploadActionHref,
     rows,
-    nextAction: nextAction(rows),
+    nextAction: nextAction(rows, unlinkedArtifactCount),
   };
 }
 
@@ -190,88 +217,39 @@ function blockedIntake(
   };
 }
 
-function normalize(value: string | null | undefined): string {
-  return value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ") ?? "";
-}
-
-function matchesSupplierName(
-  supplier: SourceNewStage04VendorPanel["rows"][number],
-  value: string | null | undefined,
-): boolean {
-  const supplierName = normalize(supplier.legalName);
-  const candidate = normalize(value);
-  return (
-    supplierName.length > 0 &&
-    candidate.length > 0 &&
-    (candidate.includes(supplierName) || supplierName.includes(candidate))
-  );
-}
-
 function matchNormalizedPackage(
   supplier: SourceNewStage04VendorPanel["rows"][number],
   packages: readonly NormalizedVendorResponsePackage[],
 ): NormalizedVendorResponsePackage | null {
   return (
-    packages.find(
-      (pkg) =>
-        pkg.vendorId === supplier.legalEntityId ||
-        pkg.vendorId === supplier.authorityId ||
-        matchesSupplierName(supplier, pkg.vendorName),
-    ) ?? null
+    packages.find((pkg) => pkg.vendorId === supplier.legalEntityId) ?? null
   );
 }
 
 function matchResponseArtifact(
-  supplier: SourceNewStage04VendorPanel["rows"][number],
   normalizedPackage: NormalizedVendorResponsePackage | null,
   artifacts: readonly SourceArtifactRegistryRecord[],
 ): SourceArtifactRegistryRecord | null {
-  const exact = normalizedPackage
-    ? artifacts.find((artifact) => artifact.id === normalizedPackage.artifactId)
-    : null;
-  if (exact) return exact;
+  if (!normalizedPackage) return null;
   return (
     artifacts.find(
       (artifact) =>
-        isResponseArtifact(artifact) &&
-        matchesSupplierName(supplier, artifact.originalName),
+        artifact.id === normalizedPackage.artifactId &&
+        artifact.stageKey === "responses",
     ) ?? null
-  );
-}
-
-function isResponseArtifact(artifact: SourceArtifactRegistryRecord): boolean {
-  return (
-    artifact.stageKey === "responses" &&
-    (artifact.artifactFamily === "proposal" ||
-      RESPONSE_NAME_PATTERN.test(artifact.artifactKind) ||
-      RESPONSE_NAME_PATTERN.test(artifact.originalName))
   );
 }
 
 function matchFileCabinetRow(
-  supplier: SourceNewStage04VendorPanel["rows"][number],
   artifact: SourceArtifactRegistryRecord | null,
   files: readonly SourceNewFileRow[],
 ): SourceNewFileRow | null {
+  if (!artifact) return null;
   return (
     files.find(
       (file) =>
-        (artifact &&
-          (file.id === artifact.id || file.sourceRegisterId === artifact.id)) ||
-        (isResponseFile(file) &&
-          (matchesSupplierName(supplier, file.fileName) ||
-            matchesSupplierName(supplier, file.title))),
+        file.id === artifact.id || file.sourceRegisterId === artifact.id,
     ) ?? null
-  );
-}
-
-function isResponseFile(file: SourceNewFileRow): boolean {
-  return (
-    file.phase === "other" &&
-    (file.artifactFamily === "proposal" ||
-      RESPONSE_NAME_PATTERN.test(file.artifactType) ||
-      RESPONSE_NAME_PATTERN.test(file.fileName) ||
-      RESPONSE_NAME_PATTERN.test(file.title))
   );
 }
 
@@ -302,8 +280,8 @@ function rowBlockers(
   rows: readonly SourceNewResponseIntakeRow[],
 ): readonly string[] {
   const blockers = [
-    rows.some((row) => row.uploadState === "not_uploaded")
-      ? "At least one accepted supplier is missing a response workbook upload."
+    rows.some((row) => row.uploadState === "not_linked")
+      ? "At least one accepted supplier has no linked response workbook."
       : null,
     rows.some((row) => row.parseState !== "parsed")
       ? "At least one uploaded workbook has no parsed normalized response output."
@@ -311,7 +289,7 @@ function rowBlockers(
     rows.some(
       (row) => row.parseState === "parsed" && row.parsedRequirementCount === 0,
     )
-      ? "At least one parsed workbook cannot be bound to an accepted supplier identity."
+      ? "At least one parsed workbook awaits accepted artifact review before question-level facts are available."
       : null,
     rows.some((row) => row.availabilityReviewState !== "available")
       ? "At least one parsed workbook still needs availability-only review."
@@ -320,8 +298,14 @@ function rowBlockers(
   return blockers;
 }
 
-function nextAction(rows: readonly SourceNewResponseIntakeRow[]) {
-  if (rows.some((row) => row.uploadState === "not_uploaded")) {
+function nextAction(rows: readonly SourceNewResponseIntakeRow[], unlinkedArtifactCount: number) {
+  if (unlinkedArtifactCount > 0) {
+    return {
+      label: "Review response workbook linkage",
+      detail: "A response-stage workbook has no proved supplier link; reconcile it before another upload.",
+    };
+  }
+  if (rows.some((row) => row.uploadState === "not_linked")) {
     return {
       label: "Upload synthetic response workbook",
       detail:
