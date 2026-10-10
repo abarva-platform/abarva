@@ -521,3 +521,85 @@ export async function supersedeAssumption(
   }
   return { ok: true, record: superseded.record, replacement: created.record };
 }
+
+export type CharterUpsertResult =
+  | { ok: true; record: AssumptionRecord; created: boolean }
+  | { ok: false; refusal: StoreRefusal };
+
+async function readByCharterSection(
+  tenantKeys: string[],
+  programId: string,
+  charterSectionKey: string,
+): Promise<AssumptionRecord | null> {
+  const { data, error } = await getAzureWriteFluentClient()
+    .from(ASSUMPTIONS_TABLE)
+    .select(ASSUMPTION_COLUMNS)
+    .in("tenant_key", tenantKeys)
+    .eq("program_id", programId)
+    .eq("charter_section_key", charterSectionKey)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? recordOrThrow(data) : null;
+}
+
+/**
+ * The register row for one carried-forward P1 charter section: the row that
+ * already stands for it, or a new one. Keyed on `charter_section_key`, which
+ * the migration makes unique per Move
+ * (`uq_move_assumptions_program_charter_section`).
+ *
+ * An existing row is returned AS IS, never overwritten: the P1 basis stays the
+ * declaration and the register owns the resolution, so a re-declared charter
+ * answer must not silently rewrite (or re-open) a row someone has answered.
+ * Whether that row is now stale is the caller's reading
+ * (`charter-bridge.ts`), not a write.
+ *
+ * Two callers racing on the same section: the loser's insert hits the
+ * charter-section unique index, which `createAssumption` reads as a lost ID
+ * race and eventually refuses; the row the winner stored is then read back
+ * and returned with `created: false`.
+ */
+export async function upsertCharterAssumption(
+  ctx: TenancyCtx,
+  programId: string,
+  input: NewAssumptionInput,
+  actor: RegisterActor,
+): Promise<CharterUpsertResult> {
+  const charterSectionKey = input.charterSectionKey?.trim() ?? "";
+  if (input.origin !== "charter_carry_forward") {
+    return { ok: false, refusal: { code: "invalid_input", field: "origin" } };
+  }
+  if (!charterSectionKey) {
+    return {
+      ok: false,
+      refusal: { code: "invalid_input", field: "charterSectionKey" },
+    };
+  }
+  const tenantKeys = tenantKeysFor(ctx);
+  if (tenantKeys.length === 0 || !programId) {
+    return { ok: false, refusal: { code: "unknown_program" } };
+  }
+  const existing = await readByCharterSection(
+    tenantKeys,
+    programId,
+    charterSectionKey,
+  );
+  if (existing) return { ok: true, record: existing, created: false };
+
+  const created = await createAssumption(
+    ctx,
+    programId,
+    { ...input, charterSectionKey },
+    actor,
+  );
+  if (created.ok) return { ok: true, record: created.record, created: true };
+  if (created.refusal.code === "id_allocation_conflict") {
+    const raced = await readByCharterSection(
+      tenantKeys,
+      programId,
+      charterSectionKey,
+    );
+    if (raced) return { ok: true, record: raced, created: false };
+  }
+  return created;
+}
