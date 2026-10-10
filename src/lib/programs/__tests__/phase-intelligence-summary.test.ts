@@ -192,6 +192,63 @@ describe("buildPhaseIntelligenceSummary", () => {
     expect(buildGateCriteria).not.toHaveBeenCalled();
   });
 
+  it("adds the evaluator's criterion ids and reasons only for a requested readback", async () => {
+    const { buildPhaseIntelligenceSummary } =
+      await import("@/lib/programs/phase-intelligence-summary");
+    const ordinary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 2,
+    });
+    expect(ordinary).not.toHaveProperty("gateReadback");
+
+    getStrategicMoveById.mockResolvedValueOnce(
+      mockMove({ terminalComplete: false }),
+    );
+    const readback = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 2,
+      includeGateReadback: true,
+    });
+    expect(readback.gateReadback).toEqual({
+      currentPhase: 2,
+      terminalComplete: false,
+      criteria: mockMove().gateCriteria,
+      reason: null,
+    });
+  });
+
+  it("reads a historical phase from the same evaluator used by the page", async () => {
+    const { buildPhaseIntelligenceSummary } =
+      await import("@/lib/programs/phase-intelligence-summary");
+    const summary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 1,
+      includeGateReadback: true,
+    });
+    expect(buildGateCriteria).toHaveBeenCalledWith(ctx, "move-1", 1, {
+      allowHistoricalPhase: true,
+    });
+    expect(summary.gateReadback?.criteria).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "g1" })]),
+    );
+  });
+
+  it("preserves a verified gate read when the separate evidence summary fails", async () => {
+    loadDiscoveryEvidenceReadiness.mockRejectedValueOnce(
+      new Error("evidence read failed"),
+    );
+    const { buildPhaseIntelligenceSummary } =
+      await import("@/lib/programs/phase-intelligence-summary");
+    const summary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 2,
+      includeGateReadback: true,
+    });
+    expect(summary.items[2].title).toBe("Gate/evidence state unavailable.");
+    expect(summary.gateReadback?.criteria).toEqual(mockMove().gateCriteria);
+    expect(summary.gateReadback?.reason).toBeNull();
+  });
+
   it("evaluates a historical phase explicitly instead of borrowing the current gate", async () => {
     getStrategicMoveById.mockResolvedValue(
       mockMove({

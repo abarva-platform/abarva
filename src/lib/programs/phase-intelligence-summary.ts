@@ -8,6 +8,7 @@ import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/
 import { getStrategicMoveById } from "@/lib/programs/queries";
 import { buildGateCriteria } from "@/lib/programs/transformers";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import type { StrategicMove } from "@/lib/programs/types.ui";
 
 type StrategicMoveForPhaseIntelligence = NonNullable<
   Awaited<ReturnType<typeof getStrategicMoveById>>
@@ -33,6 +34,13 @@ export interface PhaseIntelligenceSummary {
   phase: number;
   generatedAt: string;
   items: PhaseIntelligenceItem[];
+  /** Optional evaluator readback for a flagged, read-only walk. */
+  gateReadback?: {
+    currentPhase: number | null;
+    terminalComplete: boolean | null;
+    criteria: StrategicMove["gateCriteria"] | null;
+    reason: string | null;
+  };
 }
 
 function compact(value: string | null | undefined, fallback: string): string {
@@ -217,18 +225,22 @@ async function buildGateEvidenceItem(
   moveId: string,
   phase: number,
   move: StrategicMoveForPhaseIntelligence | null,
-): Promise<PhaseIntelligenceItem> {
+): Promise<{
+  item: PhaseIntelligenceItem;
+  criteria: StrategicMove["gateCriteria"] | null;
+  reason: string | null;
+}> {
+  let gateCriteria: StrategicMove["gateCriteria"] | null = null;
   try {
-    const [gateCriteria, readiness] = await Promise.all([
+    gateCriteria =
       move && (move.currentPhase ?? 0) === phase
-        ? Promise.resolve(move.gateCriteria)
-        : buildGateCriteria(ctx, moveId, phase, {
+        ? move.gateCriteria
+        : await buildGateCriteria(ctx, moveId, phase, {
             allowHistoricalPhase: Boolean(
               move && phase < (move.currentPhase ?? 0),
             ),
-          }),
-      loadDiscoveryEvidenceReadiness(ctx, moveId),
-    ]);
+          });
+    const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
     const packets = buildMoveEvidenceNeedPackets({
       moveId,
       moveName: move?.name ?? "Strategic Move",
@@ -253,7 +265,7 @@ async function buildGateEvidenceItem(
         ? "Gate and required evidence are clear."
         : `${hardOpen.length} hard gate${hardOpen.length === 1 ? "" : "s"} open; ${requiredMissing.length} required evidence gap${requiredMissing.length === 1 ? "" : "s"}.`;
 
-    return {
+    return { criteria: gateCriteria, reason: null, item: {
       id: "gate_evidence",
       eyebrow: "Gate and evidence truth",
       title,
@@ -268,9 +280,10 @@ async function buildGateEvidenceItem(
         `${requiredCovered.length}/${requiredCovered.length + requiredMissing.length} required evidence families covered`,
         `Readiness score: ${readiness.readinessScore}%`,
       ],
-    };
+    } };
   } catch (error) {
-    return {
+    const reason = error instanceof Error ? error.message : "Gate/evidence read failed";
+    return { criteria: gateCriteria, reason: gateCriteria ? null : reason, item: {
       id: "gate_evidence",
       eyebrow: "Gate and evidence truth",
       title: "Gate/evidence state unavailable.",
@@ -278,14 +291,14 @@ async function buildGateEvidenceItem(
         "The canonical gate/evidence read failed, so this panel is not guessing readiness. Use the Approve & Build page as the current authority.",
       sourceLabel: "Governance + evidence readiness",
       tone: "warning",
-      facts: [error instanceof Error ? error.message : "Gate/evidence read failed"],
-    };
+      facts: [reason],
+    } };
   }
 }
 
 export async function buildPhaseIntelligenceSummary(
   ctx: TenancyCtx,
-  input: { moveId: string; phase: number },
+  input: { moveId: string; phase: number; includeGateReadback?: boolean },
 ): Promise<PhaseIntelligenceSummary> {
   const [decision, move] = await Promise.all([
     buildDecisionItem(ctx, input.moveId),
@@ -301,6 +314,16 @@ export async function buildPhaseIntelligenceSummary(
     moveId: input.moveId,
     phase: input.phase,
     generatedAt: new Date().toISOString(),
-    items: [decision, strategicSignal, gateEvidence],
+    items: [decision, strategicSignal, gateEvidence.item],
+    ...(input.includeGateReadback
+      ? {
+          gateReadback: {
+            currentPhase: move?.currentPhase ?? null,
+            terminalComplete: move?.terminalComplete ?? null,
+            criteria: gateEvidence.criteria,
+            reason: !move ? "Move could not be read" : gateEvidence.reason,
+          },
+        }
+      : {}),
   };
 }

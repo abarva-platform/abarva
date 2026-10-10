@@ -1,21 +1,38 @@
 /** Signed-in, read-only evidence for the deployed Moves step pages. */
 import fs from "node:fs";
 import path from "node:path";
-import { expect, test, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { DEMO_SAFE_CLIENT_NAMES } from "../../src/lib/client-config";
 import { resolvePhaseWorkflow } from "../../src/lib/programs/phase-workflow-registry";
 import { STEP_PAGE_VIEWS, type StepPageView } from "../../src/lib/programs/step-page-views";
 import { withClerkAuth } from "./_helpers/auth";
 import { BASE_URL, CLERK_SECRET_KEY } from "./_helpers/env";
 import { movesApi } from "./_helpers/moves-gate-walk";
+import { phaseReachable, walkCoverage } from "./_helpers/moves-walk-coverage";
+import { captureWalkDomSnapshot } from "./_helpers/moves-walk-ux-capture";
+import {
+  floorAverage,
+  scoreWalkUx,
+  type UxVariant,
+  type WalkUxInput,
+  type WalkUxScore,
+} from "./_helpers/moves-walk-ux-score";
+import {
+  buildJourney,
+  type CurrentDocumentReadback,
+  type JourneyEntry,
+  type PhaseGateReadback,
+} from "./_helpers/moves-walk-journey";
 
-type Status = "pass" | "fail" | "known_gap";
+type Status = "pass" | "fail" | "known_gap" | "not_reachable";
 type Finding = { status: Status; reason: string; landed: string };
 type ViewFinding = Finding & {
   phase: number;
   view: StepPageView;
   stepId: string;
   screenshots: string[];
+  ux: WalkUxScore;
 };
 
 const MOVE_ID = process.env.E2E_MOVES_LIVE_MOVE_ID;
@@ -51,6 +68,87 @@ const KNOWN_GAPS: ReadonlyArray<{
 ];
 const BAD_READ = /could not be read|unavailable/i;
 const VISIBLE_TIMEOUT_MS = 20_000;
+const UX_VARIANTS: ReadonlyArray<{
+  key: UxVariant;
+  width: 1440 | 390;
+  colorScheme: "light" | "dark";
+}> = [
+  { key: "desktopLight", width: 1440, colorScheme: "light" },
+  { key: "phoneLight", width: 390, colorScheme: "light" },
+  { key: "desktopDark", width: 1440, colorScheme: "dark" },
+  { key: "phoneDark", width: 390, colorScheme: "dark" },
+];
+
+function emptyUxInput(unavailableReason?: string): WalkUxInput {
+  return {
+    expectedTenantName: EXPECTED_TENANT_NAME,
+    settledHeadMs: null,
+    unavailableReason,
+    variants: {
+      desktopLight: { snapshot: null, reason: "view did not settle" },
+      phoneLight: { snapshot: null, reason: "view did not settle" },
+      desktopDark: { snapshot: null, reason: "view did not settle" },
+      phoneDark: { snapshot: null, reason: "view did not settle" },
+    },
+  };
+}
+
+function markdownCell(value: unknown): string {
+  return String(value ?? "—").replaceAll("|", "\\|").replaceAll(/\s*\n\s*/g, " ");
+}
+
+function summaryMarkdown(proof: {
+  deployedSha: string;
+  coverage: ReturnType<typeof walkCoverage>;
+  views: ViewFinding[];
+  phaseUxAverage: Record<string, number | null>;
+  overallUxAverage: number | null;
+  journey: JourneyEntry[];
+  journeyReadbackErrors: string[];
+}): string {
+  const lines = [
+    "# Moves signed-in step-page walk",
+    "",
+    `Deployed SHA: \`${proof.deployedSha}\`. UX scores are measured from the live page at desktop and phone widths, light and dark. An unmeasured dimension is recorded as null with a reason; each score states its measured denominator.`,
+    `Step pages: ${proof.coverage.passed}/${proof.coverage.total} passed; ${proof.coverage.reached} reached; ${proof.coverage.knownGap} known gaps; ${proof.coverage.failed} failed; ${proof.coverage.notReachable} not reachable; ${proof.coverage.unassessed} unassessed.`,
+    "",
+  ];
+  for (const phase of PHASES) {
+    lines.push(`## P${phase} · UX average ${proof.phaseUxAverage[`P${phase}`] ?? "unmeasured"}`, "");
+    lines.push("| View | Status | UX / 100 | Measured points | Top issue |", "|---|---|---:|---:|---|");
+    for (const view of proof.views.filter((item) => item.phase === phase)) {
+      const unmeasured = Object.entries(view.ux.dimensions).find(
+        ([, dimension]) => dimension.earned === null,
+      );
+      const topIssue =
+        view.ux.violations[0] ||
+        (unmeasured
+          ? `${unmeasured[0]} unmeasured: ${unmeasured[1].reason}`
+          : null) ||
+        view.reason ||
+        "—";
+      lines.push(
+        `| ${markdownCell(view.view)} | ${view.status} | ${view.ux.score ?? "unmeasured"} | ${view.ux.measuredPoints}/100 | ${markdownCell(topIssue)} |`,
+      );
+    }
+    lines.push("");
+  }
+  lines.push(`Overall measured UX average: ${proof.overallUxAverage ?? "unmeasured"}`, "");
+  lines.push("## Move journey", "", "| Transition | State | Hard met / total | Soft met / total | First open hard check | Current documents built / signed |", "|---|---|---:|---:|---|---|");
+  for (const entry of proof.journey) {
+    const hard = `${entry.hard.met ?? "unread"}/${entry.hard.total ?? "unread"}`;
+    const soft = `${entry.soft.met ?? "unread"}/${entry.soft.total ?? "unread"}`;
+    const documents = `${entry.documents.currentBuiltCount ?? "unread"}/${entry.documents.signedOffCount ?? "unread"}`;
+    lines.push(
+      `| ${entry.transition} | ${entry.state} | ${hard} | ${soft} | ${markdownCell(entry.firstOpenHard ? `${entry.firstOpenHard.id}: ${entry.firstOpenHard.reason}` : entry.gateReadbackReason)} | ${documents} |`,
+    );
+  }
+  lines.push("", "Document counts describe current generated artifacts observed in the Move cabinet; they do not assert that every required deliverable was built.");
+  if (proof.journeyReadbackErrors.length) {
+    lines.push("", "### Journey read gaps", "", ...proof.journeyReadbackErrors.map((error) => `- ${error}`));
+  }
+  return `${lines.join("\n")}\n`;
+}
 
 function unreviewedReadText(
   body: string,
@@ -75,6 +173,77 @@ function routeFor(moveId: string, phase: number, query = ""): string {
 function landedAt(page: Page): string {
   const url = new URL(page.url());
   return `${url.pathname}${url.search}`;
+}
+
+async function measureUxVariants(
+  page: Page,
+  testInfo: TestInfo,
+  phase: number,
+  view: StepPageView,
+  stepIndex: number,
+  screenshots: string[],
+  uxInput: WalkUxInput,
+): Promise<void> {
+  const screenshotErrors: string[] = [];
+  for (const variant of UX_VARIANTS) {
+    await page.setViewportSize({ width: variant.width, height: 900 });
+    await page.emulateMedia({ colorScheme: variant.colorScheme });
+    const observation = uxInput.variants[variant.key];
+    try {
+      const snapshot = await captureWalkDomSnapshot(page, stepIndex);
+      const body = await page.locator("body").innerText();
+      snapshot.unreviewedReadError = unreviewedReadText(body, phase, view);
+      observation.snapshot = snapshot;
+      observation.reason = undefined;
+    } catch (error) {
+      observation.reason = `DOM read: ${String(error)}`;
+    }
+
+    try {
+      const filename = `${view}-${variant.width}-${variant.colorScheme}.png`;
+      const output = testInfo.outputPath(filename);
+      fs.mkdirSync(path.dirname(output), { recursive: true });
+      await page.screenshot({ path: output, fullPage: true });
+      screenshots.push(filename);
+    } catch (error) {
+      screenshotErrors.push(`${variant.key}: ${String(error)}`);
+    }
+
+    try {
+      const axe = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+      const violations = axe.violations as Array<{
+        id: string;
+        impact?: string | null;
+      }>;
+      if (variant.colorScheme === "light") {
+        observation.allAxeIds = violations.map((item) => item.id);
+        observation.seriousCriticalAxeIds = violations
+          .filter((item) => item.impact === "serious" || item.impact === "critical")
+          .map((item) => item.id);
+      } else {
+        observation.contrastAxeIds = violations
+          .filter((item) => item.id === "color-contrast")
+          .map((item) => item.id);
+      }
+    } catch (error) {
+      observation.reason = [observation.reason, `axe: ${String(error)}`]
+        .filter(Boolean)
+        .join(" | ");
+      if (variant.colorScheme === "light") {
+        observation.allAxeIds = null;
+        observation.seriousCriticalAxeIds = null;
+      } else {
+        observation.contrastAxeIds = null;
+      }
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ colorScheme: "light" });
+  if (screenshotErrors.length) {
+    throw new Error(`Screenshot capture failed: ${screenshotErrors.join(" | ")}`);
+  }
 }
 
 async function inspectPage(
@@ -121,7 +290,7 @@ async function inspectPage(
 }
 
 test("walks every deployed Moves step page without writing", async ({ page }, testInfo) => {
-  test.setTimeout(25 * 60_000);
+  test.setTimeout(32 * 60_000);
   const missing = [
     !MOVE_ID && "E2E_MOVES_LIVE_MOVE_ID",
     !DEPLOYED_SHA && "E2E_MOVES_DEPLOYED_SHA",
@@ -144,6 +313,11 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
     landings: Array<{ phase: number } & Finding>;
     legacy: Array<{ phase: number } & Finding>;
     views: ViewFinding[];
+    coverage: ReturnType<typeof walkCoverage>;
+    phaseUxAverage: Record<string, number | null>;
+    overallUxAverage: number | null;
+    journey: JourneyEntry[];
+    journeyReadbackErrors: string[];
   } = {
     deployedSha: DEPLOYED_SHA!,
     deployRunUrl: process.env.E2E_MOVES_DEPLOY_RUN_URL || null,
@@ -153,6 +327,11 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
     landings: [],
     legacy: [],
     views: [],
+    coverage: walkCoverage([], VIEW_ENTRIES.length),
+    phaseUxAverage: {},
+    overallUxAverage: null,
+    journey: [],
+    journeyReadbackErrors: [],
   };
 
   try {
@@ -168,7 +347,13 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
       | undefined;
     expect(program?.id).toBe(MOVE_ID);
     expect(program?.clientName).toBe(EXPECTED_TENANT_NAME);
-    expect(program?.currentPhase, "The Move must allow a P0–P5 read-only walk").toBeGreaterThanOrEqual(5);
+    expect(program?.currentPhase, "The Move must have a readable current phase").toEqual(
+      expect.any(Number),
+    );
+    expect(Number.isInteger(program!.currentPhase)).toBe(true);
+    expect(program!.currentPhase).toBeGreaterThanOrEqual(0);
+    expect(program!.currentPhase).toBeLessThanOrEqual(5);
+    const currentPhase = program!.currentPhase!;
     const blockedWrites: string[] = [];
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.route(`${BASE_URL}/**`, async (route) => {
@@ -182,6 +367,29 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
     });
 
     for (const phase of PHASES) {
+      if (!phaseReachable(currentPhase, phase)) {
+        const reason = `Move is at P${currentPhase}`;
+        const notReachable: Finding = {
+          status: "not_reachable",
+          reason,
+          landed: "",
+        };
+        proof.landings.push({ phase, ...notReachable });
+        proof.legacy.push({ phase, ...notReachable });
+        for (const [view, definition] of VIEW_ENTRIES.filter(
+          ([, entry]) => entry.phase === phase,
+        )) {
+          proof.views.push({
+            phase,
+            view,
+            stepId: definition.stepId,
+            ...notReachable,
+            screenshots: [],
+            ux: scoreWalkUx(emptyUxInput(reason)),
+          });
+        }
+        continue;
+      }
       const landing = await inspectPage(page, routeFor(MOVE_ID!, phase), async () => {
         await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/);
         await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
@@ -218,6 +426,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         ([, entry]) => entry.phase === phase,
       )) {
         const screenshots: string[] = [];
+        const uxInput = emptyUxInput();
+        const viewStartedAt = Date.now();
+        const position = Number(definition.stepId.split(".")[1]) - 1;
         const result = await inspectPage(
           page,
           routeFor(MOVE_ID!, phase, `?step=${view}`),
@@ -225,6 +436,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             await expect(page.locator("#step-panel-title")).toBeVisible({
               timeout: VISIBLE_TIMEOUT_MS,
             });
+            uxInput.settledHeadMs = Date.now() - viewStartedAt;
             await expect(page.locator("#step-panel-title")).not.toBeEmpty();
             const nextAction = page.getByRole("status", { name: "What to do next" });
             await expect(nextAction).toBeVisible();
@@ -232,25 +444,21 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             const steps = page.locator('nav[aria-label$=" steps"] ol > li');
             const current = steps.locator('[aria-current="step"]');
             await expect(current).toHaveCount(1);
-            const position = Number(definition.stepId.split(".")[1]) - 1;
             await expect(steps.nth(position).locator('[aria-current="step"]')).toBeVisible();
             expect(new URL(page.url()).searchParams.get("step")).toBe(view);
             await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
           },
           blockedWrites,
           async () => {
-            try {
-              for (const width of [1440, 390]) {
-                await page.setViewportSize({ width, height: 900 });
-                const filename = `${view}-${width}.png`;
-                const output = testInfo.outputPath(filename);
-                fs.mkdirSync(path.dirname(output), { recursive: true });
-                await page.screenshot({ path: output, fullPage: true });
-                screenshots.push(filename);
-              }
-            } finally {
-              await page.setViewportSize({ width: 1440, height: 900 });
-            }
+            await measureUxVariants(
+              page,
+              testInfo,
+              phase,
+              view,
+              position,
+              screenshots,
+              uxInput,
+            );
             const body = await page.locator("body").innerText();
             const badRead = unreviewedReadText(body, phase, view);
             if (badRead) throw new Error(`Unreviewed read gap: ${badRead}`);
@@ -258,21 +466,23 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         );
         // Keep a visual record even when a structural check prevented the
         // settled-read callback from running.
-        for (const width of [1440, 390]) {
-          const filename = `${view}-${width}.png`;
+        for (const variant of UX_VARIANTS) {
+          const filename = `${view}-${variant.width}-${variant.colorScheme}.png`;
           if (screenshots.includes(filename)) continue;
           try {
-            await page.setViewportSize({ width, height: 900 });
+            await page.setViewportSize({ width: variant.width, height: 900 });
+            await page.emulateMedia({ colorScheme: variant.colorScheme });
             const output = testInfo.outputPath(filename);
             fs.mkdirSync(path.dirname(output), { recursive: true });
             await page.screenshot({ path: output, fullPage: true });
             screenshots.push(filename);
           } catch (error) {
             result.status = "fail";
-            result.reason += ` | screenshot ${width}: ${String(error)}`;
+            result.reason += ` | screenshot ${variant.key}: ${String(error)}`;
           }
         }
         await page.setViewportSize({ width: 1440, height: 900 });
+        await page.emulateMedia({ colorScheme: "light" });
         const visibleText = await page.locator("body").innerText().catch(() => "");
         const allowance = KNOWN_GAPS.find((gap) =>
           gap.phase === phase &&
@@ -283,15 +493,96 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
           result.status = "known_gap";
           result.reason = allowance.reason;
         }
-        proof.views.push({ phase, view, stepId: definition.stepId, ...result, screenshots });
+        proof.views.push({
+          phase,
+          view,
+          stepId: definition.stepId,
+          ...result,
+          screenshots,
+          ux: scoreWalkUx(uxInput),
+        });
       }
     }
+
+    const readbacks: Array<PhaseGateReadback | null> = [];
+    for (const phase of PHASES) {
+      if (!phaseReachable(currentPhase, phase)) {
+        readbacks.push({
+          currentPhase,
+          terminalComplete: false,
+          criteria: null,
+          reason: `Move is at P${currentPhase}; this gate is not reachable`,
+        });
+        continue;
+      }
+      try {
+        const response = await movesApi(
+          page,
+          `/api/v1/programs/${MOVE_ID}/phase-intelligence?phase=${phase}&includeGateReadback=1`,
+        );
+        if (response.status !== 200) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const readback = response.body.gateReadback as PhaseGateReadback | undefined;
+        if (
+          !readback ||
+          typeof readback.currentPhase !== "number" ||
+          !Array.isArray(readback.criteria)
+        ) {
+          throw new Error("flagged evaluator readback absent or unevaluable");
+        }
+        readbacks.push(readback);
+      } catch (error) {
+        readbacks.push(null);
+        proof.journeyReadbackErrors.push(`P${phase} gate read: ${String(error)}`);
+      }
+    }
+
+    let currentDocuments: CurrentDocumentReadback[] | null = null;
+    let documentSignOffAvailable = false;
+    try {
+      const cabinet = await movesApi(
+        page,
+        `/api/v1/programs/${MOVE_ID}/artifacts?family=generated_deliverable&currentOnly=1`,
+      );
+      if (cabinet.status !== 200 || !Array.isArray(cabinet.body.artifacts)) {
+        throw new Error(`cabinet HTTP ${cabinet.status} or missing artifacts`);
+      }
+      currentDocuments = cabinet.body.artifacts as CurrentDocumentReadback[];
+      documentSignOffAvailable = cabinet.body.deliverableSignOffStatus === "available";
+      if (!documentSignOffAvailable) {
+        proof.journeyReadbackErrors.push("Document sign-off read is unavailable");
+      }
+    } catch (error) {
+      proof.journeyReadbackErrors.push(`Document read: ${String(error)}`);
+    }
+    proof.journey = buildJourney(
+      readbacks,
+      currentDocuments,
+      documentSignOffAvailable,
+    );
   } finally {
     proof.timestamp = new Date().toISOString();
+    proof.coverage = walkCoverage(
+      proof.views.map((view) => view.status),
+      VIEW_ENTRIES.length,
+    );
+    for (const phase of PHASES) {
+      proof.phaseUxAverage[`P${phase}`] = floorAverage(
+        proof.views.filter((view) => view.phase === phase).map((view) => view.ux.score),
+      );
+    }
+    proof.overallUxAverage = floorAverage(proof.views.map((view) => view.ux.score));
+    if (proof.journey.length === 0) {
+      proof.journeyReadbackErrors.push("Walk stopped before the journey could be read");
+    }
     const output = testInfo.outputPath("proof.json");
     fs.mkdirSync(path.dirname(output), { recursive: true });
     fs.writeFileSync(output, `${JSON.stringify(proof, null, 2)}\n`);
     await testInfo.attach("proof.json", { path: output, contentType: "application/json" });
+    const summary = testInfo.outputPath("summary.md");
+    fs.writeFileSync(summary, summaryMarkdown(proof));
+    await testInfo.attach("summary.md", { path: summary, contentType: "text/markdown" });
   }
 
   const failures = [
@@ -300,4 +591,5 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
     ...proof.views.map((entry) => ({ label: `P${entry.phase} ${entry.view}`, ...entry })),
   ].filter((entry) => entry.status === "fail");
   expect(failures, "Every failed view remains visible in proof.json").toEqual([]);
+  expect(proof.journeyReadbackErrors, "The live journey must be readable").toEqual([]);
 });

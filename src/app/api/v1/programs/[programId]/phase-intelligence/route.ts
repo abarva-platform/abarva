@@ -5,6 +5,7 @@
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/programs/_auth";
 import { buildPhaseIntelligenceSummary } from "@/lib/programs/phase-intelligence-summary";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,17 @@ export async function GET(
     const ctx = await requireTenancy();
     const { programId } = await params;
     const phase = parsePhase(req.nextUrl.searchParams.get("phase"));
-    const summary = await buildPhaseIntelligenceSummary(ctx, { moveId: programId, phase });
+    const includeGateReadback =
+      req.nextUrl.searchParams.get("includeGateReadback") === "1" &&
+      isFeatureEnabled(
+        { clientKey: ctx.clientKey, clientId: ctx.clientId },
+        "moves_step_pages_v3",
+      );
+    const summary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: programId,
+      phase,
+      includeGateReadback,
+    });
     return Response.json(summary);
   } catch (err) {
     return tenancyErrorResponse(err);
