@@ -72,5 +72,16 @@ describe("P0/P1 capture text step records", () => {
     expect(
       hasUncitedPlanningFigure("Improve cycle time after Discovery."),
     ).toBe(false);
+    expect(
+      hasUncitedPlanningFigure("12 of 40 [E:1].", { allowEvidence: true }),
+    ).toBe(false);
+    expect(hasUncitedPlanningFigure("12 of 40 [E:1].")).toBe(true);
+  });
+
+  it("reads P2 step records as accepted team words only", () => {
+    for (const key of ["p2_evidence_plan_step", "p2_baseline_step"]) {
+      expect(captureValueText(key, record)).toBe("A team-owned trigger");
+      expect(captureValueGateText(key, record)).toBe("A team-owned trigger");
+    }
   });
 });

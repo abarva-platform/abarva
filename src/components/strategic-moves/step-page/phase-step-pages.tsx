@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
+import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
+import type { AssumptionView } from "@/lib/programs/assumption-register/register-request";
 import type { StepPageView } from "@/lib/programs/step-page-views";
 import type {
   StepPagePhase,
@@ -12,6 +16,7 @@ import type {
 } from "@/components/strategic-moves/CharterBasisField";
 import { P0_STEP_PAGES } from "./p0-step-pages";
 import { P1_STEP_PAGES } from "./p1-step-pages";
+import { P2_STEP_PAGES } from "./p2-step-pages";
 import { P4_STEP_PAGES } from "./p4-step-pages";
 import { P5_STEP_PAGES } from "./p5-step-pages";
 
@@ -42,6 +47,16 @@ export interface StepPageHostProps {
   captureSaved?: Readonly<Record<string, boolean>>;
   sectionReady?: Readonly<Record<string, boolean>>;
   p0SourceEvidenceReady?: boolean;
+  p2Evidence?: {
+    packets: readonly MoveEvidenceNeedPacket[];
+    readiness: ReadinessReport | null;
+    readable: boolean;
+    approvedReferences: ReadonlyArray<{ evidenceId: string; title: string }>;
+    registerIds: readonly string[] | null;
+    registerRows: readonly AssumptionView[] | null;
+    confirmedRoute: ConfirmedSolutionRoute | null;
+    routeEditor: ReactNode;
+  };
   dock: (page: ReactNode, options: StepPageDockOptions) => ReactNode;
   /** The shared governed build, sign-off and submit path for this phase. */
   gateProps: GateReadinessStepProps;
@@ -63,6 +78,7 @@ export type PhaseStepPageMap = Partial<Record<StepPageView, PhaseStepPage>>;
 export const PHASE_STEP_PAGES: PhaseStepPageMap = {
   ...P0_STEP_PAGES,
   ...P1_STEP_PAGES,
+  ...P2_STEP_PAGES,
   ...P4_STEP_PAGES,
   ...P5_STEP_PAGES,
 };

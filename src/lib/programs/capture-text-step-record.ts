@@ -20,6 +20,8 @@ export const CAPTURE_TEXT_STEP_RECORD_KEYS = [
   "p1_stakeholders_step",
   "p1_success_step",
   "p1_evidence_change_step",
+  "p2_evidence_plan_step",
+  "p2_baseline_step",
 ] as const;
 
 export function parseCaptureTextStepRecord(raw: string): CaptureTextStepRecord {
@@ -95,12 +97,18 @@ export function captureTextStepNotes(
 }
 
 /** A planning figure needs an explicit register reference before acceptance. */
-export function hasUncitedPlanningFigure(text: string): boolean {
+export function hasUncitedPlanningFigure(
+  text: string,
+  options: { allowEvidence?: boolean } = {},
+): boolean {
+  const citation = options.allowEvidence
+    ? /\[(?:A|E):[A-Za-z0-9_-]+\]/
+    : /\[A:[A-Za-z0-9_-]+\]/;
   return text
     .split(/[\n;]/)
     .some(
       (measure) =>
         /\d/.test(measure.replace(/\bP[0-5](?:\.\d+)?\b/g, "")) &&
-        !/\[A:[A-Za-z0-9_-]+\]/.test(measure),
+        !citation.test(measure),
     );
 }

@@ -108,6 +108,7 @@ interface Props {
      * (moves_step_pages_v3).
      */
     step?: string | string[];
+    workspace?: string | string[];
     legacy?: string | string[];
     section?: string | string[];
   }>;
@@ -1174,6 +1175,11 @@ export default async function StrategicMovePhaseWorkspacePage({
           phaseStepPagesEnabled && resolvedSearchParams.legacy !== "1"
             ? parseStepPageView(resolvedSearchParams.step)
             : null
+        }
+        initialWorkspaceView={
+          resolvedSearchParams.workspace === "intelligence"
+            ? "intelligence"
+            : "phase"
         }
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}

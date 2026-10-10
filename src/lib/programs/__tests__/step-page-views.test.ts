@@ -30,7 +30,7 @@ describe("step page views", () => {
   });
 
   it("names only steps the workflow registry declares", () => {
-    expect(Object.keys(STEP_PAGE_VIEWS)).toHaveLength(26);
+    expect(Object.keys(STEP_PAGE_VIEWS)).toHaveLength(29);
     expect(
       Object.values(STEP_PAGE_VIEWS).filter(({ phase }) =>
         [0, 1, 4, 5].includes(phase),
