@@ -34,6 +34,7 @@ interface SourceContractContext {
   committedAnnualSpendUsd: number | null;
   actualAnnualSpendUsd: number | null;
   totalCommittedValueUsd: number | null;
+  totalCommittedValueConflict?: boolean;
   contractedToActualVarianceUsd: number | null;
   endDate: string | null;
   noticeDate: string | null;
@@ -358,6 +359,8 @@ function contractContextFromRecord(
     committedAnnualSpendUsd: numberValue(raw.committedAnnualSpendUsd),
     actualAnnualSpendUsd: numberValue(raw.actualAnnualSpendUsd),
     totalCommittedValueUsd: numberValue(raw.totalCommittedValueUsd),
+    totalCommittedValueConflict:
+      booleanValue(raw.totalCommittedValueConflict) === true,
     contractedToActualVarianceUsd: numberValue(
       raw.contractedToActualVarianceUsd,
     ),
@@ -444,6 +447,7 @@ function selectedContractFrom(
           direct.actualAnnualSpendUsd ?? selected.actualAnnualSpendUsd,
         totalCommittedValueUsd:
           direct.totalCommittedValueUsd ?? selected.totalCommittedValueUsd,
+        totalCommittedValueConflict: selected.totalCommittedValueConflict,
         contractedToActualVarianceUsd:
           direct.contractedToActualVarianceUsd ??
           selected.contractedToActualVarianceUsd,
@@ -1562,7 +1566,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     `contract ID ${contract.contractId}`,
     `recorded annual value ${currencyLabel(contract.annualValueUsd)}${contract.annualValueConflict ? " (Contract 360 stated value; annual-value conflict unresolved, not a reconciled baseline)" : ""}`,
     `annual committed spend ${currencyLabel(contract.committedAnnualSpendUsd)}`,
-    `full-term committed value ${currencyLabel(contract.totalCommittedValueUsd)}`,
+    `full-term committed value ${currencyLabel(contract.totalCommittedValueUsd)}${contract.totalCommittedValueConflict ? " (Contract 360 stated value; full-term commitment conflict unresolved, not a reconciled baseline)" : ""}`,
     `actual annual spend ${currencyLabel(contract.actualAnnualSpendUsd)}`,
     contract.contractedToActualVarianceUsd == null
       ? "annual committed capacity not drawn on not established"
@@ -1604,7 +1608,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       `Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}`,
       leverTableSummary,
       negotiationStance,
-      "Caveat: Annual contract value is not the total committed value. Actual spend does not by itself establish that invoices were paid. Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.",
+      "Caveat: Annual contract value is not the total committed value. Annual committed spend is a different period from full-term committed value. Actual spend does not by itself establish that invoices were paid. Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.",
     ].join("\n\n"),
     artifacts,
     citations,
