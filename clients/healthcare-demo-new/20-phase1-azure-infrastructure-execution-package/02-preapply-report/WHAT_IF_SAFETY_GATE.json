@@ -1,0 +1,39 @@
+{
+  "schema": "abarva.healthcare-demo-new.phase1.what-if-gate/v1",
+  "source": "Azure what-if output must be captured in the next controlled apply-record PR after this plan is approved.",
+  "currentResult": "not_run_in_plan_pr",
+  "requiredCommand": "az deployment sub what-if --location eastus --template-file infra/azure/client-tenant-foundation.bicep --parameters clients/healthcare-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/phase1-healthcare-lab.bicepparam",
+  "requiredCommandContext": {
+    "tenant_key": "healthcare-demo-new",
+    "release_id": "healthcare-demo-new-source-corpus-v1.0.0",
+    "approval_manifest_sha256": "06f645913353988eb722eeccb2b89ee5f7d96fbf2b4c60d86d6bff3bee4412fd",
+    "subscription_id": "701a8554-a166-46e9-bf13-743bc50e3b20"
+  },
+  "allowedChangeTypes": [
+    "Create"
+  ],
+  "blockedChangeTypes": [
+    "Delete",
+    "Modify existing shared runtime",
+    "Modify unrelated tenant resource",
+    "Enable public network access",
+    "Create wildcard tenant access",
+    "Create product runtime wiring",
+    "Create source landing records",
+    "Apply PostgreSQL schema",
+    "Enable Apache AGE",
+    "Set shared_preload_libraries for AGE",
+    "Use legacy module tables or V6/V7 demo packs as upstream source data"
+  ],
+  "failIfOutputMentions": [
+    "airline-demo-new",
+    "tenant_key=*",
+    "release_id=latest",
+    "publicNetworkAccess: Enabled",
+    "CREATE EXTENSION age",
+    "shared_preload_libraries",
+    "legacy_home_packs",
+    "v6_demo_packs",
+    "v7_demo_packs"
+  ]
+}

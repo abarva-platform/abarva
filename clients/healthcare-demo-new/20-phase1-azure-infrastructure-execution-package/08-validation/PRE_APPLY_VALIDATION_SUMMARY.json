@@ -1,0 +1,29 @@
+{
+  "schema": "abarva.healthcare-demo-new.phase1.preapply-validation/v1",
+  "status": "local_package_validation_passed",
+  "tenant_key": "healthcare-demo-new",
+  "release_id": "healthcare-demo-new-source-corpus-v1.0.0",
+  "approval_manifest_sha256": "06f645913353988eb722eeccb2b89ee5f7d96fbf2b4c60d86d6bff3bee4412fd",
+  "checks": [
+    "phase0_manifest_hash_matches",
+    "tenant_key_is_healthcare_demo_new",
+    "release_id_is_explicit",
+    "no_latest_release_marker",
+    "no_wildcard_tenant_marker",
+    "airline_not_included",
+    "what_if_not_claimed",
+    "no_apply_authorized",
+    "no_migration_authorized",
+    "no_source_landing_authorized",
+    "no_product_wiring_authorized"
+  ],
+  "commands": [
+    "node scripts/knowledge/validate-healthcare-phase1-plan.mjs",
+    "POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD=plan-build-only az bicep build-params --file clients/healthcare-demo-new/20-phase1-azure-infrastructure-execution-package/01-infrastructure-as-code/phase1-healthcare-lab.bicepparam --outfile /tmp/phase1-healthcare-lab.parameters.json",
+    "npm run release:check"
+  ],
+  "notes": [
+    "The Bicep parameter build requires a local dummy POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD because the parameter file intentionally has no default.",
+    "The dummy password is used only for local parameter compilation and is not an Azure apply credential."
+  ]
+}

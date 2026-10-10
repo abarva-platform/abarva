@@ -1,0 +1,18 @@
+{
+  "schema": "abarva.healthcare-demo-new.phase1.destructive-change-report/v1",
+  "status": "plan_only",
+  "tenant_key": "healthcare-demo-new",
+  "destructive_changes_allowed": false,
+  "observed_destructive_changes": "not_run_in_plan_pr",
+  "blocked_operations": [
+    "Delete",
+    "Replace existing resource",
+    "Change shared web Container App image or traffic",
+    "Enable public network access",
+    "Disable storage versioning or soft delete",
+    "Grant non-evaluator access to hidden truth",
+    "Run source landing or parser mutation",
+    "Run PostgreSQL DDL"
+  ],
+  "required_operator_action_before_apply_pr": "Attach parsed Azure what-if output and prove zero destructive or out-of-scope changes."
+}
