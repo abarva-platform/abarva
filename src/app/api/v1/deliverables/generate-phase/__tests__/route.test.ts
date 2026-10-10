@@ -74,6 +74,8 @@ const loadApprovedSolutionApproach: jest.Mock = jest.fn(async () => ({
   },
 }));
 const getModuleState: jest.Mock = jest.fn(async () => []);
+let valueEngineFlagOn = false;
+const loadValueGenerationForMove: jest.Mock = jest.fn(async () => ({ kind: "legacy" }));
 // The program row the route reads to resolve what archetype a human DECLARED
 // for this Move. Default: a Move that declares nothing, so the archetype the
 // extract receives is whatever the request carried.
@@ -303,6 +305,12 @@ jest.mock("@/lib/programs/queries", () => ({
   getModuleState: (...args: unknown[]) => getModuleState(...args),
   getProgramById: (...args: unknown[]) => getProgramById(...args),
 }));
+jest.mock("@/lib/features/is-feature-enabled", () => ({
+  isFeatureEnabled: () => valueEngineFlagOn,
+}));
+jest.mock("@/lib/programs/value-model-generation", () => ({
+  loadValueGenerationForMove: (...args: unknown[]) => loadValueGenerationForMove(...args),
+}));
 jest.mock("@/lib/programs/approved-phase-evidence", () => ({
   listApprovedPhaseEvidence: (...args: unknown[]) =>
     listApprovedPhaseEvidence(...args),
@@ -390,6 +398,9 @@ beforeEach(() => {
   loadApprovedSolutionApproach.mockClear();
   getModuleState.mockClear();
   getModuleState.mockResolvedValue(confirmedRouteModules("process_change"));
+  valueEngineFlagOn = false;
+  loadValueGenerationForMove.mockReset();
+  loadValueGenerationForMove.mockResolvedValue({ kind: "legacy" });
   getProgramById.mockClear();
   getProgramById.mockResolvedValue(null);
   listApprovedPhaseEvidence.mockClear();
@@ -1457,6 +1468,34 @@ describe("POST /api/v1/deliverables/generate-phase", () => {
     );
     expect(createMoveContextExtract).not.toHaveBeenCalled();
     expect(createCalls).toHaveLength(0);
+  });
+
+  it("refuses a flagged structured value model with named blocked lever and row before enqueue", async () => {
+    valueEngineFlagOn = true;
+    loadValueGenerationForMove.mockResolvedValue({
+      kind: "review_required",
+      detail: "Blocked levers: L1. Resolve assumption-register row(s) [A:V3].",
+    });
+    const res = await POST(req({ moveId: "m-value-open", phase: 4, useCaseArchetype: "ams" }));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({
+      error: "value_model_review_required",
+      detail: "Blocked levers: L1. Resolve assumption-register row(s) [A:V3].",
+    });
+    expect(createCalls).toHaveLength(0);
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
+  });
+
+  it("carries a ready flagged value snapshot into every P4 document", async () => {
+    valueEngineFlagOn = true;
+    const snapshot = { prompt: "deterministic engine result", figures: [], quantities: [] };
+    loadValueGenerationForMove.mockResolvedValue({ kind: "ready", snapshot });
+    const res = await POST(req({ moveId: "m-value-ready", phase: 4, useCaseArchetype: "ams" }));
+    expect(res.status).toBe(202);
+    const payloads = createCalls.map((call) => call.jobPayload as { deliverableTypeKey: string; valueGeneration?: unknown });
+    expect(payloads.length).toBeGreaterThan(0);
+    expect(payloads.every((payload) => payload.valueGeneration === snapshot)).toBe(true);
+    expect(loadValueGenerationForMove).toHaveBeenCalledWith(expect.anything(), "m-value-ready", expect.any(Array));
   });
 
   it("passes calculated internal/vendor ranges and their reviewed basis to the roadmap build", async () => {

@@ -29,6 +29,9 @@ jest.mock('@/lib/deliverables/persist-move-generated-artifact', () => ({
 jest.mock('@/lib/programs/queries', () => ({
   getProgramById: jest.fn(),
 }));
+jest.mock('@/lib/programs/value-model-generation', () => ({
+  loadValueGenerationForMove: jest.fn(),
+}));
 jest.mock('@/lib/programs/approved-solution-approach', () => ({
   loadApprovedSolutionApproach: jest.fn(),
 }));
@@ -79,6 +82,9 @@ const contextExtract = jest.requireMock('@/lib/programs/move-context-extract-fre
 };
 const approvedEvidence = jest.requireMock('@/lib/programs/approved-move-evidence-snapshot') as {
   loadApprovedMoveEvidenceSnapshot: jest.Mock;
+};
+const valueModel = jest.requireMock('@/lib/programs/value-model-generation') as {
+  loadValueGenerationForMove: jest.Mock;
 };
 const { sweepStaleDeliverableRuns, claimNextDeliverableRun, completeDeliverableRun } = repo;
 const { runDeliverableForTenant } = svc;
@@ -217,6 +223,37 @@ beforeEach(() => {
 });
 
 describe('processDeliverableQueue', () => {
+  it('blocks a queued P4 run when its value-model input basis changed', async () => {
+    const queued = {
+      ...claimedRow('run-stale-value'),
+      tenantKey: 'synthetic-demo',
+      module: 'moves',
+      jobPayload: {
+        module: 'moves',
+        useCaseArchetype: 'generic',
+        deliverableType: 'business_case',
+        sourceArtifactRef: 'move-1',
+        phase: 4,
+        evidenceSnapshotHash: 'revision-current',
+        valueGeneration: { inputHash: 'queued-hash', prompt: 'Queued engine result' },
+      },
+    };
+    claimNextDeliverableRun.mockResolvedValueOnce(queued).mockResolvedValueOnce(null);
+    valueModel.loadValueGenerationForMove.mockResolvedValue({
+      kind: 'ready',
+      snapshot: { inputHash: 'new-hash', prompt: 'Queued engine result' },
+    });
+
+    await processDeliverableQueue({ workerId: 'worker-value-drift', batchSize: 2 });
+
+    expect(valueModel.loadValueGenerationForMove).toHaveBeenCalled();
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-stale-value',
+      expect.objectContaining({ status: 'blocked', error: 'stale_value_basis' }),
+    );
+  });
+
   it('blocks a queued phase build when same-phase review activity lands after enqueue', async () => {
     const queuedRun = {
       ...claimedRow('run-stale-phase-evidence'),

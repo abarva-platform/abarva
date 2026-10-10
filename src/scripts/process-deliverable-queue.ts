@@ -411,6 +411,30 @@ async function runClaimed(
       }
     }
 
+    if (orchestratorPayload.valueGeneration) {
+      const { loadValueGenerationForMove } =
+        await import("@/lib/programs/value-model-generation");
+      const current = await loadValueGenerationForMove(
+        workerCtxForRun(run),
+        orchestratorPayload.sourceArtifactRef,
+      );
+      if (
+        current.kind !== "ready" ||
+        !orchestratorPayload.valueGeneration.inputHash ||
+        current.snapshot.inputHash !== orchestratorPayload.valueGeneration.inputHash ||
+        current.snapshot.prompt !== orchestratorPayload.valueGeneration.prompt
+      ) {
+        await completeDeliverableRun(run.id, {
+          status: "blocked",
+          error: "stale_value_basis",
+          blockers: [
+            "The saved value model, its register inputs, or cost basis changed after this build was queued. Review the current case and start a new P4 build.",
+          ],
+        }).catch(() => {});
+        return;
+      }
+    }
+
     let upstreamArtifactContext = "";
     if (run.dependsOnRunId) {
       const predecessor = await getDeliverableRun(
@@ -468,6 +492,7 @@ async function runClaimed(
       evidenceSnapshotHash: orchestratorPayload.evidenceSnapshotHash,
       phaseEvidenceSnapshotHash:
         orchestratorPayload.phaseEvidenceSnapshotHash,
+      valueGeneration: orchestratorPayload.valueGeneration,
       clientDisplayName: orchestratorPayload.clientDisplayName || "Client",
       initiativeDisplayName:
         orchestratorPayload.initiativeDisplayName ||

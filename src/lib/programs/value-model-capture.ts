@@ -28,6 +28,8 @@ export interface ValueModelCapture {
   kind: typeof VALUE_MODEL_KIND;
   version: typeof VALUE_MODEL_VERSION;
   case: ValueCase;
+  /** Funding choice is explicit; the estimate prices both paths. */
+  deliveryModel?: "internal" | "vendor";
 }
 
 const rangeSchema = z.strictObject({ low: z.number(), high: z.number() });
@@ -136,6 +138,7 @@ const valueModelSchema = z.strictObject({
   kind: z.literal(VALUE_MODEL_KIND),
   version: z.literal(VALUE_MODEL_VERSION),
   case: valueCaseSchema,
+  deliveryModel: z.enum(["internal", "vendor"]).optional(),
 });
 
 export type ValueModelRead =

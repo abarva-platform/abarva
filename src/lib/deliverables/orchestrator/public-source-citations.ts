@@ -57,7 +57,7 @@ export function citedPublicSources(
   return sources.filter((source) => cited.has(source.citationNumber));
 }
 
-function clientApplication(segment: string, req: DeliverableIntelligenceRequest): boolean {
+export function clientApplication(segment: string, req: DeliverableIntelligenceRequest): boolean {
   const names = [req.clientDisplayName, req.initiativeDisplayName]
     .filter((name) => name.trim().length > 2)
     .map((name) => name.toLowerCase());

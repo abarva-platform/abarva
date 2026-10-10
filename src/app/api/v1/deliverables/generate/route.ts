@@ -19,6 +19,10 @@ import {
   loadApprovedMoveEvidenceSnapshot,
 } from '@/lib/programs/approved-move-evidence-snapshot';
 import { phaseForOrchestratorDeliverableType } from '@/lib/programs/orchestrated-deliverable-map';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
+import { VALUE_ENGINE_FLAG } from '@/lib/programs/value-engine/value-case-view';
+import { loadValueGenerationForMove } from '@/lib/programs/value-model-generation';
+import type { ValueGenerationSnapshot } from '@/lib/programs/value-model-capture-evidence';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -110,6 +114,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let valueGeneration: ValueGenerationSnapshot | undefined;
+    if (
+      body.module === 'moves' &&
+      phase === 4 &&
+      isFeatureEnabled({ clientKey, clientId: ctx.clientId }, VALUE_ENGINE_FLAG)
+    ) {
+      let read: Awaited<ReturnType<typeof loadValueGenerationForMove>>;
+      try {
+        read = await loadValueGenerationForMove(ctx, sourceArtifactRef);
+      } catch {
+        return Response.json(
+          { error: 'value_model_read_failed', detail: 'The value model or its register inputs could not be read. No artifact was queued.' },
+          { status: 503 },
+        );
+      }
+      if (read.kind === 'review_required') {
+        return Response.json(
+          { error: 'value_model_review_required', detail: read.detail },
+          { status: 409 },
+        );
+      }
+      if (read.kind === 'ready') valueGeneration = read.snapshot;
+    }
+
     const evidenceSnapshot =
       body.module === 'moves'
         ? await loadApprovedMoveEvidenceSnapshot({
@@ -149,6 +177,7 @@ export async function POST(req: NextRequest) {
       ...(body.evidenceQuery ? { evidenceQuery: body.evidenceQuery } : {}),
       ...(body.outputFormats ? { outputFormats: body.outputFormats } : {}),
       ...(body.model ? { model: body.model } : {}),
+      ...(valueGeneration ? { valueGeneration } : {}),
     };
 
     // Enqueue only — no model work in the request. The durable worker claims and runs it,

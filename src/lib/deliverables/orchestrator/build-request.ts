@@ -21,6 +21,7 @@ import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { depthAwareFloors } from "@/lib/deliverables/shared/depth-aware-floor";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
+import type { ValueGenerationSnapshot } from "@/lib/programs/value-model-capture-evidence";
 
 export interface BuildRequestParams {
   module: DeliverableModule;
@@ -40,6 +41,7 @@ export interface BuildRequestParams {
    */
   approvedAssumptions?: ApprovedAssumption[];
   publicSources?: PublicCitationSource[];
+  valueGeneration?: ValueGenerationSnapshot;
 }
 
 const DEFAULT_AUDIENCE: Record<DeliverableModule, AudienceRole[]> = {
@@ -102,6 +104,7 @@ export function buildDeliverableRequest(
       : [],
     ...(params.approvedAssumptions ? { assumptionRegisterEnforced: true } : {}),
     ...(params.publicSources ? { publicSources: [...params.publicSources] } : {}),
+    ...(params.valueGeneration ? { valueGeneration: params.valueGeneration } : {}),
     artifactStandard: "ABARVA_BOARD_GRADE_DELIVERABLE_STANDARD",
     outputFormats: params.outputFormats?.length
       ? params.outputFormats

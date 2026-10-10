@@ -68,6 +68,10 @@ import {
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
 import { formatEstimateModelForPrompt } from "@/lib/programs/estimate-model";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { VALUE_ENGINE_FLAG } from "@/lib/programs/value-engine/value-case-view";
+import { loadValueGenerationForMove } from "@/lib/programs/value-model-generation";
+import type { ValueGenerationSnapshot } from "@/lib/programs/value-model-capture-evidence";
 import {
   loadDiscoveryEvidenceReadiness,
   resolveDeclaredProgramArchetypeId,
@@ -169,6 +173,7 @@ async function buildPhaseCaptureDecisionContext(args: {
   phase: number;
   confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
   modules?: Awaited<ReturnType<typeof getModuleState>>;
+  valueGeneration?: ValueGenerationSnapshot;
 }): Promise<string | null> {
   const sections = getPhaseCaptureSections(
     args.phase,
@@ -186,6 +191,10 @@ async function buildPhaseCaptureDecisionContext(args: {
     const state = (captureModule?.state ?? {}) as Record<string, unknown>;
     const value = typeof state.value === "string" ? state.value.trim() : "";
     if (!value) continue;
+    if (args.phase === 4 && section.key === "value_plan" && args.valueGeneration) {
+      lines.push("- Value plan & business case: evaluated by the deterministic value engine; use the VALUE ENGINE RESULT block and its source markers, not the raw capture JSON.");
+      continue;
+    }
     if (section.structured === "estimate-model") {
       const formatted = formatEstimateModelForPrompt(value);
       if (formatted) lines.push(formatted);
@@ -307,6 +316,28 @@ export async function POST(req: NextRequest) {
         },
         { status: 409 },
       );
+    }
+    let valueGeneration: ValueGenerationSnapshot | undefined;
+    if (
+      phase === 4 &&
+      isFeatureEnabled({ clientKey, clientId: ctx.clientId }, VALUE_ENGINE_FLAG)
+    ) {
+      let read: Awaited<ReturnType<typeof loadValueGenerationForMove>>;
+      try {
+        read = await loadValueGenerationForMove(ctx, moveId, captureModules);
+      } catch {
+        return Response.json(
+          { error: "value_model_read_failed", detail: "The value model or its register inputs could not be read. No P4 build was queued." },
+          { status: 503 },
+        );
+      }
+      if (read.kind === "review_required") {
+        return Response.json(
+          { error: "value_model_review_required", detail: read.detail },
+          { status: 409 },
+        );
+      }
+      if (read.kind === "ready") valueGeneration = read.snapshot;
     }
     const confirmedSolutionRoute =
       phase >= 3
@@ -638,6 +669,7 @@ export async function POST(req: NextRequest) {
       phase,
       confirmedSolutionRoute,
       modules: captureModules,
+      valueGeneration,
     });
     const solutionRoutePromptBlock =
       phase === 3
@@ -731,6 +763,7 @@ export async function POST(req: NextRequest) {
         ...(decisionLineage ? { decisionLineage } : {}),
         evidenceSnapshotHash,
         phaseEvidenceSnapshotHash,
+        ...(valueGeneration ? { valueGeneration } : {}),
       };
     };
 

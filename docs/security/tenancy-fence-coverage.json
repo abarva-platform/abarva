@@ -750,6 +750,14 @@
       "fenceVia": []
     },
     {
+      "route": "src/app/api/v1/moves/board-grade-cfo-pack/route.ts",
+      "coverage": "none",
+      "fence": "indirect",
+      "fenceVia": [
+        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
+      ]
+    },
+    {
       "route": "src/app/api/v1/programs/[programId]/approve-brief/route.ts",
       "coverage": "none",
       "fence": "direct",
@@ -991,14 +999,6 @@
     },
     {
       "route": "src/app/api/v1/moves/board-grade-business-case/route.ts",
-      "coverage": "none",
-      "fence": "indirect",
-      "fenceVia": [
-        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
-      ]
-    },
-    {
-      "route": "src/app/api/v1/moves/board-grade-cfo-pack/route.ts",
       "coverage": "none",
       "fence": "indirect",
       "fenceVia": [
@@ -4622,7 +4622,8 @@
       "route": "src/app/api/v1/moves/board-grade-cfo-pack/route.ts",
       "fence": "indirect",
       "fenceSymbols": [
-        "loadMoveBusinessCaseInput"
+        "loadMoveBusinessCaseInput",
+        "requireTenancy"
       ],
       "fenceVia": [
         "src/lib/programs/board-artifacts/load-move-business-case-input.ts"

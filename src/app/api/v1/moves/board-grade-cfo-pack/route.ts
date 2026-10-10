@@ -36,6 +36,10 @@
 import type { NextRequest } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { requireTenancy } from "@/lib/auth/tenancy";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { VALUE_ENGINE_FLAG } from "@/lib/programs/value-engine/value-case-view";
+import { loadValueGenerationForMove } from "@/lib/programs/value-model-generation";
 import {
   renderApexCfoPackHtml,
   renderMoveCfoPackHtml,
@@ -86,6 +90,21 @@ export async function GET(req: NextRequest): Promise<Response> {
     }
 
     if (moveInput) {
+      if (isFeatureEnabled({ clientKey: moveInput.tenant_key ?? moveInput.tenantKey }, VALUE_ENGINE_FLAG)) {
+        const ctx = await requireTenancy();
+        let valueRead: Awaited<ReturnType<typeof loadValueGenerationForMove>>;
+        try {
+          valueRead = await loadValueGenerationForMove(ctx, moveId);
+        } catch {
+          return Response.json({ error: "value_model_read_failed", detail: "The saved value basis could not be read. No CFO artifact was generated." }, { status: 503 });
+        }
+        if (valueRead.kind === "review_required") {
+          return Response.json({ error: "value_model_review_required", detail: valueRead.detail }, { status: 409 });
+        }
+        if (valueRead.kind === "ready") {
+          return Response.json({ error: "value_engine_phase_build_required", detail: "Build this structured P4 case through the governed phase build, which uses the approved cost and value-engine validator. No legacy CFO artifact was generated." }, { status: 409 });
+        }
+      }
       const download = params.get("download") === "1";
       const filename = `cfo-pack-${moveId}-${generatedOn}.html`;
       const orchestrated = await maybeRenderOrchestratedMoveArtifact({

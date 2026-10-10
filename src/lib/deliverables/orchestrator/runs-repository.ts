@@ -15,6 +15,7 @@ import {
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
+import type { ValueGenerationSnapshot } from "@/lib/programs/value-model-capture-evidence";
 import { buildContextCoverage, type ContextCoverage } from "./context-coverage";
 
 export type DeliverableRunStatus =
@@ -54,6 +55,8 @@ export interface OrchestratorDeliverableRunJobPayload {
   evidenceSnapshotHash?: string;
   /** Phase-scoped approved-evidence basis captured when this run was queued. */
   phaseEvidenceSnapshotHash?: string;
+  /** Evaluated at enqueue from this Move's saved model and counted register rows. */
+  valueGeneration?: ValueGenerationSnapshot;
   /** Moves phase boundary used by the worker's governed evidence assembler. */
   phase?: number;
   clientDisplayName: string;

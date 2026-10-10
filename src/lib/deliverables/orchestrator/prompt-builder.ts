@@ -288,6 +288,9 @@ function buildContextBlock(
     `AVAILABLE GOVERNED EVIDENCE (cite by [n]):`,
     renderEvidenceForPrompt(evidence),
     ``,
+    ...(req.valueGeneration
+      ? [req.valueGeneration.prompt, ``]
+      : []),
     ...(req.publicSources
       ? [
           `OUTSIDE PUBLIC SOURCES — not facts about the client`,
