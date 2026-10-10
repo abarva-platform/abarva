@@ -11,8 +11,24 @@ describe('credentials', () => {
   it('verifies the issued password and rejects a near miss', async () => {
     const c = await issueCredential();
     await expect(verifyPassword(c.password, c.passwordHash, c.passwordSalt)).resolves.toBe(true);
+
+    /*
+     * The near miss must differ from the real password BY CONSTRUCTION.
+     *
+     * This replaced the last character with a fixed 'X', which made the test a
+     * 1-in-32 flake: PASSWORD_ALPHABET is 32 characters and contains 'X', so a
+     * password ending in 'X' produced a "near miss" that WAS the password, and
+     * the rejection assertion inverted - the test failed while the code was
+     * right. A password generator is exactly the place where a test must not
+     * depend on which characters happened to be drawn.
+     */
+    const nearMiss =
+      c.password.slice(0, -1) + (c.password.endsWith('X') ? 'Y' : 'X');
+    expect(nearMiss).not.toBe(c.password);
+    expect(nearMiss).toHaveLength(c.password.length);
+
     await expect(
-      verifyPassword(c.password.slice(0, -1) + 'X', c.passwordHash, c.passwordSalt),
+      verifyPassword(nearMiss, c.passwordHash, c.passwordSalt),
     ).resolves.toBe(false);
   });
 
