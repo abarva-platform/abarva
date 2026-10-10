@@ -438,6 +438,7 @@ export function TextCaptureStep({
   const page = (
     <MovesStepPage
       moveName={host.move.displayCode || host.move.name}
+      clientDisplayName={host.move.tenant.name}
       syntheticNote="Synthetic demo data"
       tabs={host.chrome.tabs}
       phases={host.chrome.phases}

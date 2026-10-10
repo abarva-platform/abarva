@@ -4129,6 +4129,7 @@ export function MovesPhaseStandaloneClient({
         canReviewEvidence={canApproveGates}
         onEvidenceChanged={() => window.location.reload()}
         moveName={displayMoveName}
+        clientDisplayName={move.tenant.name}
         tabs={chrome.tabs}
         phases={chrome.phases}
         steps={chrome.steps}
@@ -4159,6 +4160,7 @@ export function MovesPhaseStandaloneClient({
         canReviewEvidence={canApproveGates}
         onEvidenceChanged={() => window.location.reload()}
         moveName={displayMoveName}
+        clientDisplayName={move.tenant.name}
         tabs={chrome.tabs}
         phases={chrome.phases}
         steps={chrome.steps}
@@ -4197,6 +4199,7 @@ export function MovesPhaseStandaloneClient({
         canReviewEvidence={canApproveGates}
         onEvidenceChanged={() => window.location.reload()}
         moveName={displayMoveName}
+        clientDisplayName={move.tenant.name}
         tabs={chrome.tabs}
         phases={chrome.phases}
         steps={chrome.steps}
@@ -4250,6 +4253,7 @@ export function MovesPhaseStandaloneClient({
         canReviewEvidence={canApproveGates}
         onEvidenceChanged={() => window.location.reload()}
         moveName={displayMoveName}
+        clientDisplayName={move.tenant.name}
         tabs={chrome.tabs}
         phases={chrome.phases}
         steps={chrome.steps}
@@ -4293,6 +4297,7 @@ export function MovesPhaseStandaloneClient({
         // cause form can cite it.
         onEvidenceChanged={() => window.location.reload()}
         moveName={displayMoveName}
+        clientDisplayName={move.tenant.name}
         tabs={
           <StepPageTabs
             current="steps"

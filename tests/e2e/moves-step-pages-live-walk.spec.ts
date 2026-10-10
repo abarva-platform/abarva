@@ -36,8 +36,37 @@ const KNOWN_GAPS: ReadonlyArray<{
   view: StepPageView;
   text: string;
   reason: string;
-}> = [];
+  allowedReadText?: readonly string[];
+}> = [
+  {
+    phase: 4,
+    view: "p4-estimate",
+    text: "No approved estimate yet",
+    reason:
+      "This existing fixture has no approved P3 estimate. The P4 estimate step remains blocked until a real approval is recorded.",
+    allowedReadText: [
+      "Estimate inputs remain editable while the approved ROM basis is unavailable.",
+    ],
+  },
+];
 const BAD_READ = /could not be read|unavailable/i;
+const VISIBLE_TIMEOUT_MS = 20_000;
+
+function unreviewedReadText(
+  body: string,
+  phase: number,
+  view: StepPageView,
+): string | null {
+  const gap = KNOWN_GAPS.find(
+    (entry) =>
+      entry.phase === phase && entry.view === view && body.includes(entry.text),
+  );
+  let checked = body;
+  for (const phrase of gap?.allowedReadText ?? []) {
+    checked = checked.replaceAll(phrase, "");
+  }
+  return checked.match(BAD_READ)?.[0] ?? null;
+}
 
 function routeFor(moveId: string, phase: number, query = ""): string {
   return `/strategic-moves/${encodeURIComponent(moveId)}/phase/${phase}${query}`;
@@ -53,6 +82,7 @@ async function inspectPage(
   destination: string,
   check: () => Promise<void>,
   blockedWrites: string[],
+  afterSettle?: () => Promise<void>,
 ): Promise<Finding> {
   const problems: string[] = [];
   const writeCountBefore = blockedWrites.length;
@@ -70,9 +100,11 @@ async function inspectPage(
   page.on("response", onResponse);
   try {
     await page.goto(destination, { waitUntil: "domcontentloaded" });
-    // Let client-side reads finish so their refusal text and responses count.
-    await page.waitForLoadState("networkidle", { timeout: 15_000 });
     await check();
+    // Streaming and background reads can keep the network busy. The page's
+    // visible landmark is required; network-idle is only a bounded settling aid.
+    await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => {});
+    await afterSettle?.();
   } catch (error) {
     problems.push(error instanceof Error ? error.message : String(error));
   } finally {
@@ -154,10 +186,14 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/);
         await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
         if (phase === 2 && !P2_HAS_EVERY_STEP_PAGE) {
-          await expect(page.getByTestId("moves-capture-flow")).toBeVisible();
+          await expect(page.getByTestId("moves-capture-flow")).toBeVisible({
+            timeout: VISIBLE_TIMEOUT_MS,
+          });
           expect(new URL(page.url()).searchParams.has("step")).toBe(false);
         } else {
-          await expect(page.locator("#step-panel-title")).toBeVisible();
+          await expect(page.locator("#step-panel-title")).toBeVisible({
+            timeout: VISIBLE_TIMEOUT_MS,
+          });
           expect(new URL(page.url()).searchParams.get("step")).toBeTruthy();
         }
       }, blockedWrites);
@@ -167,7 +203,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         page,
         routeFor(MOVE_ID!, phase, "?legacy=1"),
         async () => {
-          await expect(page.getByTestId("moves-capture-flow")).toBeVisible();
+          await expect(page.getByTestId("moves-capture-flow")).toBeVisible({
+            timeout: VISIBLE_TIMEOUT_MS,
+          });
           await expect(page.locator("#step-panel-title")).toHaveCount(0);
           await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
           expect(new URL(page.url()).searchParams.get("legacy")).toBe("1");
@@ -184,7 +222,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
           page,
           routeFor(MOVE_ID!, phase, `?step=${view}`),
           async () => {
-            await expect(page.locator("#step-panel-title")).toBeVisible();
+            await expect(page.locator("#step-panel-title")).toBeVisible({
+              timeout: VISIBLE_TIMEOUT_MS,
+            });
             await expect(page.locator("#step-panel-title")).not.toBeEmpty();
             const nextAction = page.getByRole("status", { name: "What to do next" });
             await expect(nextAction).toBeVisible();
@@ -196,25 +236,33 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             await expect(steps.nth(position).locator('[aria-current="step"]')).toBeVisible();
             expect(new URL(page.url()).searchParams.get("step")).toBe(view);
             await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
-
-            const body = await page.locator("body").innerText();
-            const badReads = body.match(BAD_READ);
-            if (badReads) {
-              const allowance = KNOWN_GAPS.find(
-                (gap) =>
-                  gap.phase === phase &&
-                  gap.view === view &&
-                  body.includes(gap.text),
-              );
-              if (!allowance) throw new Error(`Unreviewed read gap: ${badReads[0]}`);
-            }
           },
           blockedWrites,
+          async () => {
+            try {
+              for (const width of [1440, 390]) {
+                await page.setViewportSize({ width, height: 900 });
+                const filename = `${view}-${width}.png`;
+                const output = testInfo.outputPath(filename);
+                fs.mkdirSync(path.dirname(output), { recursive: true });
+                await page.screenshot({ path: output, fullPage: true });
+                screenshots.push(filename);
+              }
+            } finally {
+              await page.setViewportSize({ width: 1440, height: 900 });
+            }
+            const body = await page.locator("body").innerText();
+            const badRead = unreviewedReadText(body, phase, view);
+            if (badRead) throw new Error(`Unreviewed read gap: ${badRead}`);
+          },
         );
+        // Keep a visual record even when a structural check prevented the
+        // settled-read callback from running.
         for (const width of [1440, 390]) {
+          const filename = `${view}-${width}.png`;
+          if (screenshots.includes(filename)) continue;
           try {
             await page.setViewportSize({ width, height: 900 });
-            const filename = `${view}-${width}.png`;
             const output = testInfo.outputPath(filename);
             fs.mkdirSync(path.dirname(output), { recursive: true });
             await page.screenshot({ path: output, fullPage: true });

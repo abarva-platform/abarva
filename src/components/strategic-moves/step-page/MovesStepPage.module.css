@@ -324,6 +324,18 @@
   gap: 16px;
   flex-wrap: wrap;
 }
+.topline-identity {
+  display: flex;
+  align-items: baseline;
+  column-gap: 12px;
+  row-gap: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.tenant-identity {
+  color: var(--mv-muted);
+  font-size: 13px;
+}
 .topline-right {
   display: flex;
   align-items: center;

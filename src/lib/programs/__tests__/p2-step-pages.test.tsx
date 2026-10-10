@@ -33,7 +33,11 @@ const criteria = (open?: string) =>
 
 function host(open?: string): StepPageHostProps {
   return {
-    move: { id: "move-1", name: "Synthetic Move" } as StepPageHostProps["move"],
+    move: {
+      id: "move-1",
+      name: "Synthetic Move",
+      tenant: { name: "Synthetic Client" },
+    } as StepPageHostProps["move"],
     phase: 2,
     values: {},
     setValue: jest.fn(),

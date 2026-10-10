@@ -96,7 +96,7 @@ const personaSwitcher = fs.readFileSync(
   "utf8",
 );
 assert.match(postDeployWorkflow, /CLERK_SECRET_KEY:/);
-assert.match(postDeployWorkflow, /AZURE_LAB_CLERK_SECRET_KEY/);
+assert.match(postDeployWorkflow, /CLERK_PRODUCTION_E2E_SECRET_KEY/);
 assert.match(postDeployWorkflow, /CLERK_TESTING_TOKEN_SECRET_KEY:/);
 assert.match(postDeployWorkflow, /NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: \$\{\{ vars\.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \}\}/);
 assert.match(postDeployWorkflow, /CRAWL_TOTAL_TIMEOUT_MS:/);

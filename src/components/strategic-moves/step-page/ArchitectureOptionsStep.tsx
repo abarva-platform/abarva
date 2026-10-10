@@ -82,6 +82,7 @@ export interface ArchitectureOptionsStepProps {
   canReviewEvidence: boolean;
   onEvidenceChanged?: () => void;
   moveName: string;
+  clientDisplayName: string;
   syntheticNote?: string;
   phases: readonly StepPagePhase[];
   steps: readonly StepPageStep[];
@@ -814,6 +815,7 @@ export function ArchitectureOptionsStep(props: ArchitectureOptionsStepProps) {
   const page = (
     <MovesStepPage
       moveName={props.moveName}
+      clientDisplayName={props.clientDisplayName}
       syntheticNote={props.syntheticNote}
       tabs={props.tabs}
       phases={props.phases}

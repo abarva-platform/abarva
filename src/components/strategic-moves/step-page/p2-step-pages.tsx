@@ -152,6 +152,7 @@ function P2Page({
   const page = (
     <MovesStepPage
       moveName={host.gateProps.moveName}
+      clientDisplayName={host.move.tenant.name}
       syntheticNote="Synthetic demo data"
       tabs={host.chrome.tabs}
       phases={host.chrome.phases}

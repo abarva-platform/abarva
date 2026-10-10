@@ -52,19 +52,27 @@ jobs:
       E2E_MOVES_LIVE_MOVE_ID: ${{ inputs.move_id || vars.MOVES_E2E_DEMO_MOVE_ID }}
       E2E_MOVES_CLIENT_KEY: ${{ vars.MOVES_E2E_CLIENT_KEY }}
       E2E_MOVES_OPERATOR_EMAIL: ${{ vars.MOVES_E2E_OPERATOR_EMAIL }}
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_PRODUCTION_E2E_SECRET_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check read-only proof configuration
         shell: bash
         run: |
           set -euo pipefail
-          for key in E2E_MOVES_LIVE_MOVE_ID E2E_MOVES_CLIENT_KEY E2E_MOVES_OPERATOR_EMAIL CLERK_SECRET_KEY; do
+          for key in E2E_MOVES_LIVE_MOVE_ID E2E_MOVES_CLIENT_KEY E2E_MOVES_OPERATOR_EMAIL; do
             if [[ -z "${!key}" ]]; then
               echo "Missing live proof input: $key" >&2
               exit 2
             fi
           done
+          if [[ -z "$CLERK_SECRET_KEY" ]]; then
+            echo "Missing live proof input: CLERK_PRODUCTION_E2E_SECRET_KEY" >&2
+            exit 2
+          fi
+          if [[ "$CLERK_SECRET_KEY" != sk_live_* ]]; then
+            echo "The live walk needs a production Clerk key. Set CLERK_PRODUCTION_E2E_SECRET_KEY for the app's production Clerk instance." >&2
+            exit 2
+          fi
           if [[ "$E2E_MOVES_CLIENT_KEY" != "meridian" ]]; then
             echo "The read-only walk is restricted to the synthetic demo tenant." >&2
             exit 2

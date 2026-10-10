@@ -63,6 +63,7 @@ function Harness({
       moveId="move-1"
       canReviewEvidence
       moveName="Governed data foundation"
+      clientDisplayName="Demo tenant"
       phases={[{ code: "P2", name: "Discover", status: "", current: true }]}
       steps={[
         { title: "Evidence plan", depth: "full", done: true },

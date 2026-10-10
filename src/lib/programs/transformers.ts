@@ -239,6 +239,18 @@ export async function buildGateCriteria(
   }));
 }
 
+/** A historical workspace reads that phase's gate, not the Move's current gate. */
+export async function gateCriteriaForViewedPhase(
+  ctx: TenancyCtx,
+  move: Pick<StrategicMove, "id" | "currentPhase" | "gateCriteria">,
+  viewedPhase: number,
+): Promise<StrategicMove["gateCriteria"]> {
+  if (viewedPhase >= (move.currentPhase ?? 0)) return move.gateCriteria;
+  return buildGateCriteria(ctx, move.id, viewedPhase, {
+    allowHistoricalPhase: true,
+  });
+}
+
 export function buildUnverifiedGateCriteria(
   currentPhase: number,
 ): StrategicMove["gateCriteria"] {

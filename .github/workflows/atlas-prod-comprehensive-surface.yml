@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 90
     env:
       PROD_URL: ${{ inputs.prod_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_PRODUCTION_E2E_SECRET_KEY }}
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       ATLAS_GAUNTLET_REPORT_DIR: reports/atlas-prod-comprehensive-surface
       ATLAS_GAUNTLET_API_TIMEOUT_MS: "90000"
@@ -55,9 +55,9 @@ jobs:
       - name: Verify production auth secret
         shell: bash
         run: |
-          if [ -z "$CLERK_SECRET_KEY" ]; then
-            echo "::error title=Missing CLERK_SECRET_KEY::Atlas production CXO gauntlet requires repository secret CLERK_SECRET_KEY."
-            exit 1
+          if [[ "$CLERK_SECRET_KEY" != sk_live_* ]]; then
+            echo "::error title=Production Clerk key required::Set CLERK_PRODUCTION_E2E_SECRET_KEY for the production instance."
+            exit 2
           fi
 
       - name: Run comprehensive Atlas production surface gauntlet

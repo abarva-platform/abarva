@@ -2,6 +2,7 @@ import {
   buildGateCriteria,
   buildStrategicMove,
   buildStrategicMovePortfolio,
+  gateCriteriaForViewedPhase,
   deriveDisplayCode,
   deriveMapLabel,
   hasTerminalTowerHandoffActivity,
@@ -307,6 +308,41 @@ describe("strategic move transformer helpers", () => {
       { allowHistoricalPhase: true },
     );
     expect(criteria[0]).toMatchObject({ verified: true, completed: false });
+  });
+
+  it("projects the viewed historical gate without replacing current-phase criteria", async () => {
+    const ctx = { clientId: "client-1", userId: "user-1" };
+    const currentCriteria = [
+      {
+        id: "measurement_owner_named",
+        label: "Measurement owner named",
+        severity: "hard" as const,
+        verified: true,
+        completed: true,
+      },
+    ];
+    const move = {
+      id: "move-1",
+      currentPhase: 5,
+      gateCriteria: currentCriteria,
+    };
+    evaluateGateMock.mockResolvedValue({
+      pass: true,
+      failedChecks: [],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const historical = await gateCriteriaForViewedPhase(ctx, move, 2);
+    expect(evaluateGateMock).toHaveBeenCalledWith(ctx, "move-1", 2, 3, {
+      allowHistoricalPhase: true,
+    });
+    expect(historical[0]).toMatchObject({ verified: true, completed: true });
+    expect(historical).not.toBe(currentCriteria);
+
+    evaluateGateMock.mockClear();
+    expect(await gateCriteriaForViewedPhase(ctx, move, 5)).toBe(currentCriteria);
+    expect(evaluateGateMock).not.toHaveBeenCalled();
   });
 
   it("carries the evaluator's reason on an unmet criterion and none on a met one", async () => {
