@@ -10,6 +10,15 @@ const tenancy = {
 };
 const created: Array<Record<string, unknown>> = [];
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
+let valueEngineFlagOn = false;
+const mockLoadValueGeneration: jest.Mock<Promise<unknown>, unknown[]> = jest.fn(async () => ({ kind: 'legacy' }));
+
+jest.mock('@/lib/features/is-feature-enabled', () => ({
+  isFeatureEnabled: () => valueEngineFlagOn,
+}));
+jest.mock('@/lib/programs/value-model-generation', () => ({
+  loadValueGenerationForMove: (...args: unknown[]) => mockLoadValueGeneration(...args),
+}));
 
 jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -59,6 +68,8 @@ const validBody = {
 };
 
 beforeEach(() => {
+  valueEngineFlagOn = false;
+  mockLoadValueGeneration.mockReset().mockResolvedValue({ kind: 'legacy' });
   created.length = 0;
   runDeliverableForTenant.mockClear();
   validateDeliverableTenantInvariant.mockClear();
@@ -157,6 +168,36 @@ describe('POST /api/v1/deliverables/generate (enqueue-only)', () => {
         phase: 1,
       }),
     );
+  });
+
+  it('returns 409 with blocked lever detail before a flagged P4 run can queue', async () => {
+    valueEngineFlagOn = true;
+    mockLoadValueGeneration.mockResolvedValue({ kind: 'review_required', detail: 'L1 is blocked by [A:V3].' });
+    const res = await POST(reqWith({
+      ...validBody,
+      module: 'moves',
+      deliverableType: 'business_case',
+      sourceArtifactRef: 'move-1',
+      clientDisplayName: 'Demo client',
+    }));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: 'value_model_review_required', detail: 'L1 is blocked by [A:V3].' });
+    expect(created).toHaveLength(0);
+  });
+
+  it('binds a ready engine snapshot to the flagged P4 queued job', async () => {
+    valueEngineFlagOn = true;
+    const snapshot = { prompt: 'VALUE ENGINE RESULT', figures: [], quantities: [] };
+    mockLoadValueGeneration.mockResolvedValue({ kind: 'ready', snapshot });
+    const res = await POST(reqWith({
+      ...validBody,
+      module: 'moves',
+      deliverableType: 'business_case',
+      sourceArtifactRef: 'move-1',
+      clientDisplayName: 'Demo client',
+    }));
+    expect(res.status).toBe(202);
+    expect((created[0].jobPayload as { valueGeneration?: unknown }).valueGeneration).toBe(snapshot);
   });
 
   it('fails closed when a Moves deliverable has no unique canonical phase', async () => {

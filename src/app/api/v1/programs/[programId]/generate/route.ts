@@ -19,6 +19,9 @@ import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
 import { createDeliverableRun, type DeliverableRunJobPayload } from "@/lib/deliverables/orchestrator/runs-repository";
 import { assertPhaseReadyForGeneration } from "@/lib/programs/assert-phase-ready";
 import { persistMoveGeneratedArtifact } from "@/lib/deliverables/persist-move-generated-artifact";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { VALUE_ENGINE_FLAG } from "@/lib/programs/value-engine/value-case-view";
+import { loadValueGenerationForMove } from "@/lib/programs/value-model-generation";
 import {
   approvedMoveEvidenceRevisionForPhase,
   loadApprovedMoveEvidenceSnapshot,
@@ -93,6 +96,35 @@ export async function POST(
   }
 
   const targetPhase = body.phase ?? program.currentPhase ?? 1;
+  if (
+    targetPhase === 4 &&
+    isFeatureEnabled({ clientKey, clientId: ctx.clientId }, VALUE_ENGINE_FLAG)
+  ) {
+    let valueRead: Awaited<ReturnType<typeof loadValueGenerationForMove>>;
+    try {
+      valueRead = await loadValueGenerationForMove(ctx, programId);
+    } catch {
+      return Response.json(
+        { error: "value_model_read_failed", detail: "The value model or its register inputs could not be read. No artifact was generated." },
+        { status: 503 },
+      );
+    }
+    if (valueRead.kind === "review_required") {
+      return Response.json(
+        { error: "value_model_review_required", detail: valueRead.detail },
+        { status: 409 },
+      );
+    }
+    if (valueRead.kind === "ready") {
+      return Response.json(
+        {
+          error: "value_engine_phase_build_required",
+          detail: "This structured value case must be built through the governed phase build, which carries the engine result into the document validator. No legacy artifact was generated.",
+        },
+        { status: 409 },
+      );
+    }
+  }
   const registryKey = body.deliverableTypeKey ?? `p${targetPhase}_package`;
   const generationMode = body.generationMode === "draft" ? "draft" : "final";
 

@@ -16,9 +16,9 @@
     "fencedIndirect": 124,
     "unfenced": 185,
     "unfencedButReachesFenceModule": 101,
-    "behavioral": 85,
+    "behavioral": 86,
     "byteScannerOnly": 7,
-    "none": 139
+    "none": 138
   },
   "ranking": [
     {
@@ -991,14 +991,6 @@
     },
     {
       "route": "src/app/api/v1/moves/board-grade-business-case/route.ts",
-      "coverage": "none",
-      "fence": "indirect",
-      "fenceVia": [
-        "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
-      ]
-    },
-    {
-      "route": "src/app/api/v1/moves/board-grade-cfo-pack/route.ts",
       "coverage": "none",
       "fence": "indirect",
       "fenceVia": [
@@ -4622,15 +4614,18 @@
       "route": "src/app/api/v1/moves/board-grade-cfo-pack/route.ts",
       "fence": "indirect",
       "fenceSymbols": [
-        "loadMoveBusinessCaseInput"
+        "loadMoveBusinessCaseInput",
+        "requireTenancy"
       ],
       "fenceVia": [
         "src/lib/programs/board-artifacts/load-move-business-case-input.ts"
       ],
       "reachesFenceModule": true,
-      "coverage": "none",
+      "coverage": "behavioral",
       "suites": {
-        "behavioral": [],
+        "behavioral": [
+          "src/app/api/v1/moves/board-grade-cfo-pack/__tests__/route.test.ts"
+        ],
         "byteScanner": []
       }
     },

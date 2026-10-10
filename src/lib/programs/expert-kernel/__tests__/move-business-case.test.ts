@@ -20,6 +20,8 @@ import {
   type MoveBusinessCaseInput,
 } from '../../move-business-case';
 import { CHARTER_FUNCTION_PACK_KEY } from '../../function-identity';
+import { evaluateValueCase, valueForecastFromEngine } from '../../value-engine';
+import type { ValueCase } from '../../value-engine/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal Move fixtures — one per vertical
@@ -195,6 +197,34 @@ describe('buildMoveBusinessCase — end-to-end across the three verticals', () =
       });
     });
   }
+});
+
+it('uses the evaluated engine cash once and leaves the expert haircut as a cross-check', () => {
+  const lit = (value: number) => ({ kind: 'literal' as const, value, source: 'fictional workshop' });
+  const valueCase: ValueCase = {
+    horizonYears: 2,
+    discountRate: lit(0.08),
+    cost: { kind: 'estimate', baseCents: 100_000 },
+    levers: [{
+      id: 'L1', name: 'Fictional cost reduction', conversion: 'cost_reduction',
+      driver: { name: 'share no longer bought', unit: 'share', direction: 'increase', baseline: lit(0), target: lit(0.1) },
+      terms: [{ role: 'base', label: 'fictional spend', ref: lit(10_000) }, { role: 'driver_delta' }],
+      attribution: lit(0.5), probability: lit(1),
+      timing: { startMonth: 1, rampMonths: 0, paymentLagMonths: 0 },
+    }],
+  };
+  const engineResult = evaluateValueCase(valueCase);
+  const expected = valueForecastFromEngine(engineResult, { moveName: retailMove.name! });
+  const compiled = buildMoveBusinessCase({ ...retailMove, valueEngineResult: engineResult });
+  expect(compiled.bound).toBe(true);
+  expect(compiled.skeleton?.valueRange).toEqual(expected.totalNetValue);
+  expect(compiled.kernelCrossCheck?.applied).toBe(false);
+  expect(compiled.kernelCrossCheck?.netIfApplied.point).toBeLessThan(expected.totalNetValue.point);
+  expect(compiled.derivationNotes.join(' ')).toContain('not applied again');
+  // Existing free-text/no-result path continues to use its planning proxy.
+  const legacy = buildMoveBusinessCase(retailMove);
+  expect(legacy.skeleton?.economics.monetisable).toBe(false);
+  expect(Object.hasOwn(legacy, 'kernelCrossCheck')).toBe(false);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

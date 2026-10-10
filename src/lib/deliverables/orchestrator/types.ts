@@ -270,6 +270,8 @@ export interface DeliverableIntelligenceRequest {
   approvedAssumptions: ApprovedAssumption[];
   /** Omitted when the Move public research flag is off. */
   publicSources?: PublicCitationSource[];
+  /** Evaluated P4 value case captured before enqueue, when the engine governs. */
+  valueGeneration?: import("@/lib/programs/value-model-capture-evidence").ValueGenerationSnapshot;
   /**
    * True only when the Move assumptions register governs this generation
    * (`moves_assumption_register_v1` on for the tenant). Then a figure not in

@@ -20,6 +20,7 @@ import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
 import { findExcludedNumericClaims } from "./excluded-numeric-claims";
 import { validatePublicSourceCitations } from "./public-source-citations";
+import { validateValueModelFigures } from "./value-model-figures";
 import {
   LEGACY_FIGURE_LINEAGE,
   figureLineagePolicy,
@@ -418,6 +419,7 @@ export function validateDeliverableQuality(
 
   // ── BLOCKERS ──
   blockers.push(...validatePublicSourceCitations(doc, req));
+  blockers.push(...validateValueModelFigures(doc, req));
   if (unknownRegisterIds.length > 0)
     blockers.push(
       `cites assumptions-register row(s) that are not in this Move's citable register: ${unknownRegisterIds

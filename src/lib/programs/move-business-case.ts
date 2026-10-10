@@ -75,6 +75,8 @@ import {
   type HaircutScores,
   type ValueForecast,
 } from "./expert-kernel/value-forecast";
+import { valueForecastFromEngine, type EngineValueForecast, type KernelHaircutCrossCheck } from "./value-engine/kernel-adapter";
+import type { ValueCaseResult } from "./value-engine/types";
 import {
   compileBusinessCase,
   type BusinessCaseSkeleton,
@@ -124,6 +126,8 @@ export interface MoveBaselineMetricEntry extends BaselineMetricEntry {
  * shape (DB row, view model, partial) can pass it.
  */
 export interface MoveBusinessCaseInput {
+  /** Present only for a flagged, evaluated structured P4 value plan. */
+  valueEngineResult?: ValueCaseResult;
   /** The `engagements.industry_code` column (snake_case DB row form). */
   industry_code?: string | null;
   /** The `industryCode` alias (camelCase view-model form). */
@@ -237,6 +241,8 @@ export interface MoveGovernedEvidenceItem {
  *    honest fallback note. The kernel did NOT run with fabricated depth.
  */
 export interface MoveBusinessCaseResult {
+  /** Available only when an evaluated value-engine result was explicitly supplied. */
+  kernelCrossCheck?: KernelHaircutCrossCheck | null;
   /** True when a curated pack bound and the kernel produced a real skeleton. */
   bound: boolean;
   /** The compiled business-case skeleton — `null` when unbound. */
@@ -351,7 +357,13 @@ export function buildMoveBusinessCase(
   );
   const assumptions = deriveAssumptions(pack, baseline, derivationNotes);
   const effort = deriveEffort(moveName, pack, readAiOperatingCost(move));
-  const value = deriveValue(moveName, pack, baseline, derivationNotes);
+  const value = deriveValue(
+    moveName,
+    pack,
+    baseline,
+    derivationNotes,
+    move.valueEngineResult,
+  );
   const towerHandoff = deriveTowerHandoff(pack, baseline);
 
   // (4) Run the kernel pipeline. The compiler runs the critic and folds its
@@ -370,6 +382,7 @@ export function buildMoveBusinessCase(
     binding,
     unboundReason: "",
     derivationNotes,
+    ...(move.valueEngineResult ? { kernelCrossCheck: (value as EngineValueForecast).kernelCrossCheck } : {}),
   };
 }
 
@@ -617,7 +630,17 @@ function deriveValue(
   pack: FunctionPack,
   baseline: BaselineModel,
   notes: string[],
+  engineResult?: ValueCaseResult,
 ): ValueForecast {
+  if (engineResult) {
+    notes.push(
+      "Value: the deterministic value engine supplies counted cash and NPV; the expert-kernel haircut is a cross-check only and is not applied again.",
+    );
+    return valueForecastFromEngine(engineResult, {
+      moveName,
+      haircutScores: deriveHaircutScores(pack),
+    });
+  }
   const grossIndex = buildGrossValueIndex(pack);
   const haircutScores = deriveHaircutScores(pack);
 

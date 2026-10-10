@@ -99,12 +99,13 @@ const REGISTER_SUPPORTED_MARKER_RE =
  *     `evidence` is the governed bundle a figure may otherwise trace to.
  */
 export type FigureLineagePolicy =
-  | { enforced: false; publicSourceFigures?: ReadonlyMap<number, ReadonlySet<string>> }
+  | { enforced: false; publicSourceFigures?: ReadonlyMap<number, ReadonlySet<string>>; valueEngineSources?: ReadonlySet<string> }
   | {
       enforced: true;
       registerFigures: ReadonlyMap<string, ReadonlySet<string>>;
       evidence: readonly GovernedEvidenceItem[];
       publicSourceFigures?: ReadonlyMap<number, ReadonlySet<string>>;
+      valueEngineSources?: ReadonlySet<string>;
     };
 
 export const LEGACY_FIGURE_LINEAGE: FigureLineagePolicy = { enforced: false };
@@ -117,6 +118,7 @@ export function figureLineagePolicy(
     | "approvedAssumptions"
     | "governedEvidenceBundle"
     | "publicSources"
+    | "valueGeneration"
   >,
 ): FigureLineagePolicy {
   const publicSourceFigures = req.publicSources
@@ -127,9 +129,12 @@ export function figureLineagePolicy(
         ]),
       )
     : undefined;
+  const valueEngineSources = req.valueGeneration
+    ? new Set(req.valueGeneration.figures.map((figure) => figure.sourceId))
+    : undefined;
   if (req.assumptionRegisterEnforced !== true)
-    return publicSourceFigures
-      ? { enforced: false, publicSourceFigures }
+    return publicSourceFigures || valueEngineSources
+      ? { enforced: false, ...(publicSourceFigures ? { publicSourceFigures } : {}), ...(valueEngineSources ? { valueEngineSources } : {}) }
       : LEGACY_FIGURE_LINEAGE;
   const registerFigures = new Map<string, ReadonlySet<string>>();
   for (const row of req.approvedAssumptions ?? []) {
@@ -141,6 +146,7 @@ export function figureLineagePolicy(
     registerFigures,
     evidence: req.governedEvidenceBundle ?? [],
     ...(publicSourceFigures ? { publicSourceFigures } : {}),
+    ...(valueEngineSources ? { valueEngineSources } : {}),
   };
 }
 
@@ -176,6 +182,15 @@ export function judgeFigureSentence(
   sentence: string,
   policy: FigureLineagePolicy,
 ): FigureSentenceVerdict {
+  if (
+    policy.valueEngineSources &&
+    [...sentence.matchAll(/\[VE:([A-Za-z0-9_-]+)\]/g)].some((match) =>
+      policy.valueEngineSources?.has(match[1]),
+    )
+  ) {
+    // The exact amount and its source are checked by value-model-figures.ts.
+    return { supported: true };
+  }
   const citedPublicNumbers = [...sentence.matchAll(/\[S:([1-9]\d*)\]/g)].map(
     (match) => Number(match[1]),
   );

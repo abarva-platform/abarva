@@ -59,6 +59,7 @@ import {
   type PublicResearchOutcome,
 } from "@/lib/deliverables/public-research/research-runner";
 import { resolveTenantAlias } from "@/lib/tenant/aliases";
+import type { ValueGenerationSnapshot } from "@/lib/programs/value-model-capture-evidence";
 
 const STRUCTURED_ARCHITECTURE_KEYS = new Set<DeliverableKey>([
   "target_state_architecture",
@@ -97,6 +98,7 @@ export interface GenerateDeliverableServiceInput extends Omit<
   };
   evidenceSnapshotHash?: string;
   phaseEvidenceSnapshotHash?: string;
+  valueGeneration?: ValueGenerationSnapshot;
   outputFormats?: OutputFormat[];
   adaptiveDepth?: AdaptiveDepthDecision;
   model?: string;
@@ -366,6 +368,18 @@ export async function runDeliverableForTenant(
   input: GenerateDeliverableServiceInput,
   deps: GenerateServiceDeps = {},
 ): Promise<GenerateDeliverableServiceResult> {
+  if (
+    input.valueGeneration &&
+    (!input.valueGeneration.result.readyForApproval ||
+      !input.valueGeneration.result.economics)
+  ) {
+    return {
+      ok: false,
+      qualityPass: false,
+      blockers: ["The queued value model is not ready for generation."],
+      blockedReason: "value_model_review_required",
+    };
+  }
   const assemble = deps.assemble ?? assembleGovernedEvidence;
   const loadPolicy = deps.loadPolicy ?? defaultLoadPolicy;
   const generate = deps.generate ?? defaultGenerate;
@@ -385,6 +399,7 @@ export async function runDeliverableForTenant(
       initiativeDisplayName: input.initiativeDisplayName,
       outputFormats: input.outputFormats,
       adaptiveDepth: input.adaptiveDepth,
+      ...(input.valueGeneration ? { valueGeneration: input.valueGeneration } : {}),
     },
     [],
     [],
@@ -504,6 +519,7 @@ export async function runDeliverableForTenant(
         ? { approvedAssumptions: registerAssumptions }
         : {}),
       ...(publicSources ? { publicSources } : {}),
+      ...(input.valueGeneration ? { valueGeneration: input.valueGeneration } : {}),
     },
     evidence,
     sourceRegister,

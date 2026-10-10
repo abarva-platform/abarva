@@ -5,6 +5,15 @@ const mockCreateDeliverableRun = jest.fn();
 const mockAssertPhaseReady = jest.fn();
 const mockPersist = jest.fn();
 const mockLoadEvidenceSnapshot = jest.fn();
+const mockIsFeatureEnabled = jest.fn(() => false);
+const mockLoadValueGeneration = jest.fn();
+
+jest.mock("@/lib/features/is-feature-enabled", () => ({
+  isFeatureEnabled: (...args: unknown[]) => mockIsFeatureEnabled(...(args as [])),
+}));
+jest.mock("@/lib/programs/value-model-generation", () => ({
+  loadValueGenerationForMove: (...args: unknown[]) => mockLoadValueGeneration(...args),
+}));
 
 jest.mock("../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -123,6 +132,8 @@ beforeEach(() => {
       5: null,
     },
   });
+  mockIsFeatureEnabled.mockReturnValue(false);
+  mockLoadValueGeneration.mockResolvedValue({ kind: "legacy" });
   mockGenerateArtifact.mockResolvedValue({
     status: "generated",
     html: "<html><body><svg></svg><table></table>Charter</body></html>",
@@ -294,5 +305,36 @@ describe("POST /api/v1/programs/[programId]/generate", () => {
         evidenceSnapshotHash: "approved-revision-1",
       }),
     );
+  });
+
+  it("keeps the P4 legacy path when the value flag is off or capture is free text", async () => {
+    const { POST } = await import("../route");
+    const off = await POST(req({ phase: 4, deliverableTypeKey: "business_case" }), routeParams);
+    expect(off.status).toBe(200);
+    expect(mockLoadValueGeneration).not.toHaveBeenCalled();
+    mockIsFeatureEnabled.mockReturnValue(true);
+    const freeText = await POST(req({ phase: 4, deliverableTypeKey: "business_case" }), routeParams);
+    expect(freeText.status).toBe(200);
+    expect(mockLoadValueGeneration).toHaveBeenCalledWith(expect.anything(), "move-1");
+  });
+
+  it("refuses a blocked structured P4 case with review detail before legacy generation", async () => {
+    mockIsFeatureEnabled.mockReturnValue(true);
+    mockLoadValueGeneration.mockResolvedValue({ kind: "review_required", detail: "Blocked lever L1; resolve [A:V3]." });
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 4, deliverableTypeKey: "business_case" }), routeParams);
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toEqual({ error: "value_model_review_required", detail: "Blocked lever L1; resolve [A:V3]." });
+    expect(mockGenerateArtifact).not.toHaveBeenCalled();
+  });
+
+  it("refuses a ready structured P4 case on the ungoverned HTML route", async () => {
+    mockIsFeatureEnabled.mockReturnValue(true);
+    mockLoadValueGeneration.mockResolvedValue({ kind: "ready", snapshot: { prompt: "engine" } });
+    const { POST } = await import("../route");
+    const res = await POST(req({ phase: 4, deliverableTypeKey: "business_case" }), routeParams);
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toEqual(expect.objectContaining({ error: "value_engine_phase_build_required" }));
+    expect(mockGenerateArtifact).not.toHaveBeenCalled();
   });
 });
