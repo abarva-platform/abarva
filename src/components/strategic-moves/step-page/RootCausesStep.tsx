@@ -72,6 +72,7 @@ export interface RootCausesStepProps {
   /** An approved upload changed what counts as evidence; re-read it. */
   onEvidenceChanged?: () => void;
   moveName: string;
+  clientDisplayName: string;
   syntheticNote?: string;
   phases: readonly StepPagePhase[];
   steps: readonly StepPageStep[];
@@ -853,6 +854,7 @@ export function RootCausesStep(props: RootCausesStepProps) {
   const page = (
     <MovesStepPage
       moveName={props.moveName}
+      clientDisplayName={props.clientDisplayName}
       syntheticNote={props.syntheticNote}
       tabs={props.tabs}
       phases={props.phases}

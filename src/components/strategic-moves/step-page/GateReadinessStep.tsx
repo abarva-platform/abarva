@@ -862,6 +862,7 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     const originationPage = (
       <MovesStepPage
         moveName={props.moveName}
+        clientDisplayName={props.clientDisplayName}
         tabs={props.tabs}
         phases={props.phases}
         phaseCode={props.phaseCode}
@@ -938,6 +939,7 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
   const page = (
     <MovesStepPage
       moveName={props.moveName}
+      clientDisplayName={props.clientDisplayName}
       syntheticNote={props.syntheticNote}
       tabs={props.tabs}
       phases={props.phases}

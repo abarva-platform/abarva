@@ -303,6 +303,8 @@ export interface StepPageStep {
 
 export interface MovesStepPageProps {
   moveName: string;
+  /** Authenticated Move tenant, visible on every step page. */
+  clientDisplayName: string;
   /** Shown beside the theme toggle when the Move's data is synthetic. */
   syntheticNote?: string;
   phases: readonly StepPagePhase[];
@@ -457,7 +459,10 @@ export function MovesStepPage(props: MovesStepPageProps) {
     <div className={cx("root")} data-theme={theme ?? undefined}>
       <div className={cx("shell")}>
         <div className={cx("topline")}>
-          <span className={cx("eyebrow")}>{props.moveName}</span>
+          <div className={cx("topline-identity")}>
+            <span className={cx("eyebrow")}>{props.moveName}</span>
+            <span className={cx("tenant-identity")}>{props.clientDisplayName}</span>
+          </div>
           <div className={cx("topline-right")}>
             {props.syntheticNote ? (
               <span className={cx("demo-note")}>{props.syntheticNote}</span>

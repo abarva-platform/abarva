@@ -121,6 +121,7 @@ export interface RomEstimateStepProps {
   canReviewEvidence: boolean;
   onEvidenceChanged?: () => void;
   moveName: string;
+  clientDisplayName: string;
   syntheticNote?: string;
   phases: readonly StepPagePhase[];
   steps: readonly StepPageStep[];
@@ -2117,6 +2118,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
   const page = (
     <MovesStepPage
       moveName={props.moveName}
+      clientDisplayName={props.clientDisplayName}
       syntheticNote={props.syntheticNote}
       tabs={props.tabs}
       phases={props.phases}

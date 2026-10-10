@@ -217,6 +217,7 @@ export function CaptureStepPage({
   const page = (
     <MovesStepPage
       moveName={host.gateProps.moveName}
+      clientDisplayName={host.move.tenant.name}
       phases={host.chrome.phases}
       phaseCode={`P${host.phase}`}
       phaseName={host.phase === 4 ? "Roadmap" : "Mobilize"}

@@ -86,7 +86,10 @@ import { resolveEffectiveMovePhase } from "@/lib/programs/effective-move-phase";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import { parseUploadedSolutionOptions } from "@/lib/programs/phase-templates/uploaded-solution-options";
 import { loadApprovedSolutionApproach } from "@/lib/programs/approved-solution-approach";
-import { buildGateCriteria } from "@/lib/programs/transformers";
+import {
+  buildGateCriteria,
+  gateCriteriaForViewedPhase,
+} from "@/lib/programs/transformers";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import { p0SourceEvidenceNeedPacket } from "@/lib/programs/phase-progress-readiness";
 import {
@@ -402,7 +405,7 @@ export default async function StrategicMovePhaseWorkspacePage({
     reopenedForEvidenceReview,
     reopenedForGateReview,
   } = await resolveEffectiveMovePhase(ctx, loadedMove);
-  const move =
+  const effectiveMove =
     effectiveCurrentPhase === loadedMove.currentPhase
       ? loadedMove
       : {
@@ -416,6 +419,10 @@ export default async function StrategicMovePhaseWorkspacePage({
             { allowHistoricalPhase: reopenedForGateReview },
           ),
         };
+  const move = {
+    ...effectiveMove,
+    gateCriteria: await gateCriteriaForViewedPhase(ctx, effectiveMove, parsedPhase),
+  };
 
   const pricingEngineEnabled = isFeatureEnabled(
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
@@ -1149,7 +1156,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         move={move}
         phaseNavigationStatus={phaseNavigationStatus}
         phaseNum={parsedPhase}
-        phaseTallies={getMovePhaseTallies(move)}
+        phaseTallies={getMovePhaseTallies(effectiveMove)}
         pricingEngineEnabled={pricingEngineEnabled}
         riskAssessmentEnabled={riskAssessmentEnabled}
         solutionPatternGateEnabled={solutionPatternGateEnabled}

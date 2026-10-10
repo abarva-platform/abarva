@@ -110,6 +110,7 @@ export interface OperatingAdoptionStepProps {
   canReviewEvidence: boolean;
   onEvidenceChanged?: () => void;
   moveName: string;
+  clientDisplayName: string;
   syntheticNote?: string;
   phases: readonly StepPagePhase[];
   steps: readonly StepPageStep[];
@@ -448,6 +449,7 @@ export function OperatingAdoptionStep(props: OperatingAdoptionStepProps) {
     const page = (
       <MovesStepPage
         moveName={props.moveName}
+        clientDisplayName={props.clientDisplayName}
         syntheticNote={props.syntheticNote}
         tabs={props.tabs}
         phases={props.phases}
@@ -1283,6 +1285,7 @@ export function OperatingAdoptionStep(props: OperatingAdoptionStepProps) {
   const page = (
     <MovesStepPage
       moveName={props.moveName}
+      clientDisplayName={props.clientDisplayName}
       syntheticNote={props.syntheticNote}
       tabs={props.tabs}
       phases={props.phases}

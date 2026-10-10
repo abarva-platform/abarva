@@ -70,6 +70,7 @@ function props(
   });
   return {
     moveName: "Governed data foundation",
+    clientDisplayName: "Demo tenant",
     syntheticNote: "Synthetic demo data",
     phases: [
       { code: "P2", name: "Discover", status: "Done" },
@@ -106,6 +107,13 @@ const groupTitles = (container: HTMLElement) =>
   Array.from(container.querySelectorAll("h2")).map((h) => h.textContent);
 
 describe("MovesStepPage", () => {
+  it("shows the authenticated Move tenant beside its name", () => {
+    const { container } = render(<MovesStepPage {...props(ROWS)} />);
+    expect(container.querySelector(".topline-identity")?.textContent).toContain(
+      "Demo tenant",
+    );
+  });
+
   it("in progress: one sentence, decisions first, the count, Continue disabled", () => {
     const { container } = render(<MovesStepPage {...props(ROWS)} />);
     expect(status(container).textContent).toContain(

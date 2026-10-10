@@ -34,8 +34,8 @@ jobs:
       CRAWL_TOTAL_TIMEOUT_MS: ${{ vars.CRAWL_TOTAL_TIMEOUT_MS || '2700000' }}
       CRAWL_SURFACE_TIMEOUT_MS: ${{ vars.CRAWL_SURFACE_TIMEOUT_MS || '900000' }}
       CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
-      CLERK_TESTING_TOKEN_SECRET_KEY: ${{ secrets.CLERK_TESTING_TOKEN_SECRET_KEY || secrets.CLERK_SECRET_KEY || secrets.AZURE_LAB_CLERK_SECRET_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_PRODUCTION_E2E_SECRET_KEY }}
+      CLERK_TESTING_TOKEN_SECRET_KEY: ${{ secrets.CLERK_PRODUCTION_E2E_SECRET_KEY }}
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       CRAWL_ENABLE_AUTO_ROLLBACK: ${{ vars.CRAWL_ENABLE_AUTO_ROLLBACK || 'false' }}
       CRAWL_PERSONA: ${{ inputs.persona || '' }}
@@ -43,6 +43,13 @@ jobs:
       CRAWL_QUESTION_SET: ${{ inputs.question_set || '' }}
       PLAYWRIGHT_CHROMIUM_CHANNEL: chrome
     steps:
+      - name: Verify production auth secret
+        shell: bash
+        run: |
+          if [[ "$CLERK_SECRET_KEY" != sk_live_* ]]; then
+            echo "Missing or non-production CLERK_PRODUCTION_E2E_SECRET_KEY." >&2
+            exit 2
+          fi
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:

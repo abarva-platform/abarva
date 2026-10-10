@@ -71,6 +71,7 @@ export interface DesignTraceabilityStepProps {
   canReviewEvidence: boolean;
   onEvidenceChanged?: () => void;
   moveName: string;
+  clientDisplayName: string;
   syntheticNote?: string;
   phases: readonly StepPagePhase[];
   steps: readonly StepPageStep[];
@@ -586,6 +587,7 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
   const page = (
     <MovesStepPage
       moveName={props.moveName}
+      clientDisplayName={props.clientDisplayName}
       syntheticNote={props.syntheticNote}
       tabs={props.tabs}
       phases={props.phases}
