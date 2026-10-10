@@ -46,8 +46,7 @@ const artifact: SourceArtifactRegistryRecord = {
   originalName: "northstar-response.xlsx",
   blobUri: "source/event-1/artifact-response-1/northstar-response.xlsx",
   uploaderUserId: "user-1",
-  mimeType:
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   sizeBytes: 2048,
   sha256: "sha-response",
   parseStatus: "parsed",
@@ -281,9 +280,66 @@ describe("buildSourceNewResponseIntake", () => {
       ],
     });
 
-    expect(intake.rows[0].parsedRequirementCount).toBe(0);
-    expect(intake.blockers).toContain(
-      "At least one parsed workbook cannot be bound to an accepted supplier identity.",
-    );
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "not_uploaded",
+      parseState: "not_parsed",
+      availabilityReviewState: "not_reviewed",
+      parsedRequirementCount: 0,
+      artifactId: null,
+    });
+  });
+
+  it("does not credit a filename-only workbook without a canonical response package", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "not_uploaded",
+      parseState: "not_parsed",
+      availabilityReviewState: "not_reviewed",
+      artifactId: null,
+    });
+  });
+
+  it("keeps same-named suppliers' response states separate", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: {
+        ...acceptedPanel,
+        rows: [
+          ...acceptedPanel.rows,
+          {
+            ...acceptedPanel.rows[0],
+            authorityId: "authority-beta",
+            legalEntityId: "supplier-beta",
+          },
+        ],
+      },
+      files: [fileRow],
+      responseArtifacts: [artifact],
+      normalizedPackages: [normalizedPackage],
+    });
+
+    expect(
+      intake.rows.map((row) => [
+        row.supplierId,
+        row.uploadState,
+        row.parseState,
+      ]),
+    ).toEqual([
+      ["supplier-alpha", "uploaded", "parsed"],
+      ["supplier-beta", "not_uploaded", "not_parsed"],
+    ]);
   });
 });

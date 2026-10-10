@@ -5,10 +5,7 @@ import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { extractAcceptedResponseQuestions } from "@/lib/source/vendor-response-extraction-contract";
 import type { SourceNewStage04VendorPanel } from "./stage04-vendor-panel";
 
-export type SourceNewResponseIntakeState =
-  | "available"
-  | "empty"
-  | "blocked";
+export type SourceNewResponseIntakeState = "available" | "empty" | "blocked";
 
 export type SourceNewResponseUploadState = "not_uploaded" | "uploaded";
 export type SourceNewResponseParseState =
@@ -65,8 +62,6 @@ export type BuildSourceNewResponseIntakeInput = {
   readBlockers?: readonly string[];
 };
 
-const RESPONSE_NAME_PATTERN = /\b(response|proposal|submission)\b/i;
-
 export function buildSourceNewResponseIntake(
   input: BuildSourceNewResponseIntakeInput,
 ): SourceNewResponseIntake {
@@ -91,7 +86,9 @@ export function buildSourceNewResponseIntake(
       tenantKeys.has(artifact.tenantKey) &&
       artifact.deletedAt === null,
   );
-  const eventArtifactIds = new Set(eventArtifacts.map((artifact) => artifact.id));
+  const eventArtifactIds = new Set(
+    eventArtifacts.map((artifact) => artifact.id),
+  );
   const eventPackages = input.normalizedPackages.filter((pkg) =>
     eventArtifactIds.has(pkg.artifactId),
   );
@@ -115,15 +112,8 @@ export function buildSourceNewResponseIntake(
   }
 
   const rows = suppliers.map((supplier) => {
-    const normalizedPackage = matchNormalizedPackage(
-      supplier,
-      eventPackages,
-    );
-    const artifact = matchResponseArtifact(
-      supplier,
-      normalizedPackage,
-      eventArtifacts,
-    );
+    const normalizedPackage = matchNormalizedPackage(supplier, eventPackages);
+    const artifact = matchResponseArtifact(normalizedPackage, eventArtifacts);
     const questionExtraction = extractAcceptedResponseQuestions({
       eventId: input.eventId,
       tenantKey: input.tenantKey,
@@ -133,7 +123,7 @@ export function buildSourceNewResponseIntake(
       artifact,
       responsePackage: normalizedPackage,
     });
-    const file = matchFileCabinetRow(supplier, artifact, input.files);
+    const file = matchFileCabinetRow(artifact, input.files);
     return {
       supplierId: supplier.legalEntityId,
       authorityId: supplier.authorityId,
@@ -190,88 +180,40 @@ function blockedIntake(
   };
 }
 
-function normalize(value: string | null | undefined): string {
-  return value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ") ?? "";
-}
-
-function matchesSupplierName(
-  supplier: SourceNewStage04VendorPanel["rows"][number],
-  value: string | null | undefined,
-): boolean {
-  const supplierName = normalize(supplier.legalName);
-  const candidate = normalize(value);
-  return (
-    supplierName.length > 0 &&
-    candidate.length > 0 &&
-    (candidate.includes(supplierName) || supplierName.includes(candidate))
-  );
-}
-
 function matchNormalizedPackage(
   supplier: SourceNewStage04VendorPanel["rows"][number],
   packages: readonly NormalizedVendorResponsePackage[],
 ): NormalizedVendorResponsePackage | null {
   return (
-    packages.find(
-      (pkg) =>
-        pkg.vendorId === supplier.legalEntityId ||
-        pkg.vendorId === supplier.authorityId ||
-        matchesSupplierName(supplier, pkg.vendorName),
-    ) ?? null
+    packages.find((pkg) => pkg.vendorId === supplier.legalEntityId) ?? null
   );
 }
 
 function matchResponseArtifact(
-  supplier: SourceNewStage04VendorPanel["rows"][number],
   normalizedPackage: NormalizedVendorResponsePackage | null,
   artifacts: readonly SourceArtifactRegistryRecord[],
 ): SourceArtifactRegistryRecord | null {
-  const exact = normalizedPackage
-    ? artifacts.find((artifact) => artifact.id === normalizedPackage.artifactId)
-    : null;
-  if (exact) return exact;
+  if (!normalizedPackage) return null;
   return (
     artifacts.find(
       (artifact) =>
-        isResponseArtifact(artifact) &&
-        matchesSupplierName(supplier, artifact.originalName),
+        artifact.id === normalizedPackage.artifactId &&
+        artifact.stageKey === "responses" &&
+        artifact.artifactFamily === "proposal",
     ) ?? null
-  );
-}
-
-function isResponseArtifact(artifact: SourceArtifactRegistryRecord): boolean {
-  return (
-    artifact.stageKey === "responses" &&
-    (artifact.artifactFamily === "proposal" ||
-      RESPONSE_NAME_PATTERN.test(artifact.artifactKind) ||
-      RESPONSE_NAME_PATTERN.test(artifact.originalName))
   );
 }
 
 function matchFileCabinetRow(
-  supplier: SourceNewStage04VendorPanel["rows"][number],
   artifact: SourceArtifactRegistryRecord | null,
   files: readonly SourceNewFileRow[],
 ): SourceNewFileRow | null {
+  if (!artifact) return null;
   return (
     files.find(
       (file) =>
-        (artifact &&
-          (file.id === artifact.id || file.sourceRegisterId === artifact.id)) ||
-        (isResponseFile(file) &&
-          (matchesSupplierName(supplier, file.fileName) ||
-            matchesSupplierName(supplier, file.title))),
+        file.id === artifact.id || file.sourceRegisterId === artifact.id,
     ) ?? null
-  );
-}
-
-function isResponseFile(file: SourceNewFileRow): boolean {
-  return (
-    file.phase === "other" &&
-    (file.artifactFamily === "proposal" ||
-      RESPONSE_NAME_PATTERN.test(file.artifactType) ||
-      RESPONSE_NAME_PATTERN.test(file.fileName) ||
-      RESPONSE_NAME_PATTERN.test(file.title))
   );
 }
 

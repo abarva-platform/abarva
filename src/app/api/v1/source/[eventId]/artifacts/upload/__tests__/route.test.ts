@@ -166,6 +166,11 @@ jest.mock('@/lib/source/artifact-registry/upload-text-extraction', () => ({
   extractSourceUploadText: () => extractSourceUploadTextMock(),
 }));
 
+const readAcceptedCandidatesForEventMock = jest.fn();
+jest.mock('@/lib/source/candidate-suppliers/event-candidate-authority-repository', () => ({
+  readAcceptedCandidatesForEvent: (input: unknown) => readAcceptedCandidatesForEventMock(input),
+}));
+
 jest.mock('@/lib/security/sensitive-upload-guard', () => ({
   evaluateSensitiveUpload: () => ({ decision: 'allow' }),
   sensitiveUploadRejectedResponse: () =>
@@ -182,8 +187,12 @@ jest.mock('@/lib/source/canvas-substrate/upload-sync', () => ({
 
 // This suite owns upload/registry wiring, not normalized proposal parsing.
 // Keep an arbitrary byte buffer from being treated as a real XLSX ZIP.
+const parseNormalizedVendorResponseWorkbookMock = jest.fn<Promise<null>, [unknown]>(
+  async () => null,
+);
 jest.mock('@/lib/source/vendor-response-workbook', () => ({
-  parseNormalizedVendorResponseWorkbook: async () => null,
+  parseNormalizedVendorResponseWorkbook: (input: unknown) =>
+    parseNormalizedVendorResponseWorkbookMock(input),
 }));
 jest.mock('@/lib/source/vendor-response-persistence', () => ({
   persistNormalizedVendorResponsePackage: async () => undefined,
@@ -263,6 +272,10 @@ beforeEach(() => {
     method: 'xlsx-exceljs',
     warnings: [],
   }));
+  readAcceptedCandidatesForEventMock.mockResolvedValue({
+    registryAvailable: true,
+    acceptedCandidates: [{ supplierId: 'supplier-1', legalName: 'Example Services' }],
+  });
 });
 
 describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
@@ -563,5 +576,64 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
     expect(res.status).toBe(415);
     expect(storageUploadMock).not.toHaveBeenCalled();
     expect(registerSourceArtifactUploadMock).not.toHaveBeenCalled();
+  });
+  it('refuses a response workbook without an accepted canonical supplier before storing bytes', async () => {
+    const fields = {
+      stageKey: 'responses',
+      artifactKind: 'vendor_response_workbook',
+    };
+    for (const supplierId of [undefined, 'unaccepted-supplier']) {
+      const req = makeMultipartRequest('response.xlsx', XLSX_MIME, 2048, {
+        ...fields,
+        ...(supplierId ? { supplierId } : {}),
+      });
+      const res = await POST(req, EVENT_PARAMS);
+      expect(res.status).toBe(409);
+      expect(storageUploadMock).not.toHaveBeenCalled();
+      expect(registerSourceArtifactUploadMock).not.toHaveBeenCalled();
+    }
+  });
+
+  it('refuses response workbook storage when accepted supplier authority is unavailable', async () => {
+    readAcceptedCandidatesForEventMock.mockResolvedValueOnce({
+      registryAvailable: false,
+      acceptedCandidates: [],
+    });
+    const res = await POST(
+      makeMultipartRequest('response.xlsx', XLSX_MIME, 2048, {
+        stageKey: 'responses',
+        artifactKind: 'vendor_response_workbook',
+        supplierId: 'supplier-1',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(503);
+    expect(storageUploadMock).not.toHaveBeenCalled();
+    expect(registerSourceArtifactUploadMock).not.toHaveBeenCalled();
+  });
+
+  it('passes the accepted supplier ID and governed display name to response parsing', async () => {
+    const res = await POST(
+      makeMultipartRequest('response.xlsx', XLSX_MIME, 2048, {
+        stageKey: 'responses',
+        artifactKind: 'vendor_response_workbook',
+        supplierId: 'supplier-1',
+        vendorName: 'Untrusted form name',
+      }),
+      EVENT_PARAMS,
+    );
+
+    expect(res.status).toBe(200);
+    expect(readAcceptedCandidatesForEventMock).toHaveBeenCalledWith({
+      clientKey: 'apexretail',
+      eventId: EVENT_ID,
+    });
+    expect(parseNormalizedVendorResponseWorkbookMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        vendorId: 'supplier-1',
+        vendorName: 'Example Services',
+      }),
+    );
   });
 });

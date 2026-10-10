@@ -50,6 +50,7 @@ import {
 } from "@/lib/source/canvas-substrate/upload-sync";
 import { parseNormalizedVendorResponseWorkbook } from "@/lib/source/vendor-response-workbook";
 import { persistNormalizedVendorResponsePackage } from "@/lib/source/vendor-response-persistence";
+import { readAcceptedCandidatesForEvent } from "@/lib/source/candidate-suppliers/event-candidate-authority-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -333,6 +334,22 @@ export async function POST(
   });
   if (!scope) return jsonError(403, "forbidden_event");
 
+  let responseSupplier: { supplierId: string; legalName: string } | null = null;
+  if (scope.stageKey === "responses" && sourceArtifactFormatFromMime(mimeType) === "xlsx") {
+    const supplierId = parseOptionalString(formData.get("supplierId"));
+    if (!supplierId) return jsonError(409, "accepted_supplier_required");
+    const accepted = await readAcceptedCandidatesForEvent({
+      clientKey: client.key,
+      eventId: scope.eventId,
+    }).catch(() => null);
+    if (!accepted?.registryAvailable) return jsonError(503, "candidate_panel_unavailable");
+    const matches = accepted.acceptedCandidates.filter((item) => item.supplierId === supplierId);
+    if (matches.length !== 1 || !matches[0].legalName.trim()) {
+      return jsonError(409, "supplier_not_accepted_for_event");
+    }
+    responseSupplier = { supplierId, legalName: matches[0].legalName };
+  }
+
   const requirementId = parseOptionalString(formData.get("evidenceRequirementId"));
   if (formData.has("evidenceRequirementId") && !requirementId)
     return jsonError(400, "invalid_evidence_requirement");
@@ -517,8 +534,9 @@ export async function POST(
         normalizedResponse =
           (await parseNormalizedVendorResponseWorkbook({
             buffer,
-            vendorName:
-              parseOptionalString(formData.get("vendorName")) ?? undefined,
+            vendorId: responseSupplier?.supplierId,
+            vendorName: responseSupplier?.legalName ??
+              parseOptionalString(formData.get("vendorName")),
           })) ?? undefined;
         if (normalizedResponse) {
           await persistNormalizedVendorResponsePackage({

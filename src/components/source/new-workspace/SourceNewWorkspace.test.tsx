@@ -1305,7 +1305,9 @@ describe("SourceNewWorkspace", () => {
     expect(
       within(panel).getByText("18 normalized requirement rows"),
     ).toBeTruthy();
-    expect(within(panel).getByLabelText("Accepted supplier")).toBeTruthy();
+    const supplierSelect = within(panel).getByLabelText("Accepted supplier") as HTMLSelectElement;
+    expect(supplierSelect.name).toBe("supplierId");
+    expect(supplierSelect.value).toBe("supplier-alpha");
     expect(within(panel).getByLabelText("Synthetic response workbook")).toBeTruthy();
     expect(document.body.textContent ?? "").not.toMatch(
       /selected supplier|award approved|score complete|client-final/i,

@@ -47,6 +47,7 @@ export interface ParsedNormalizedVendorResponse {
 
 export async function parseNormalizedVendorResponseWorkbook(args: {
   buffer: Buffer;
+  vendorId?: string;
   vendorName?: string;
 }): Promise<ParsedNormalizedVendorResponse | null> {
   const workbook = new ExcelJS.Workbook();
@@ -146,7 +147,7 @@ export async function parseNormalizedVendorResponseWorkbook(args: {
   const vendorName =
     args.vendorName?.trim() || readVendorName(workbook) || "Vendor not identified";
   return {
-    vendorId: slug(vendorName),
+    vendorId: args.vendorId?.trim() || slug(vendorName),
     vendorName,
     rows,
     analytics: analyzeNormalizedResponseQuality(rows),
