@@ -46,6 +46,7 @@
     "check:admin-integration-quarantine": "node scripts/quality/check-admin-integration-quarantine.mjs",
     "check:qa-integration-quarantine": "node scripts/quality/check-qa-integration-quarantine.mjs",
     "check:export-reachability": "node --test scripts/quality/export-reachability.test.mjs && node scripts/quality/export-reachability.mjs --check",
+    "check:scheduled-workflow-streak": "node --test scripts/ci/scheduled-workflow-streak.test.mjs && node scripts/ci/scheduled-workflow-streak.mjs --policy-check",
     "check:identity-ledger": "node --test scripts/data/assign-stable-identity.test.mjs scripts/data/identity-ledger-check.test.mjs scripts/data-refresh/generate-analytics-topology.test.mjs && node scripts/data/identity-ledger-check.mjs --check",
     "check:fixture-row-identity": "node --test scripts/data/fixtures/deepen-fixture-substrate.test.mjs && node scripts/data/fixtures/deepen-fixture-substrate.mjs --check",
     "check:cli-invocation-guard": "node --test scripts/quality/cli-invocation-guard.test.mjs",

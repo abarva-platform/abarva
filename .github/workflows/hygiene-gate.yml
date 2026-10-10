@@ -152,6 +152,25 @@ jobs:
           done
           exit "$status"
 
+      # C-578a. The offline half of the scheduled-workflow streak control.
+      #
+      # The live half reads the Actions API and runs on its own schedule in
+      # `scheduled-workflow-streak.yml`. What runs HERE is network-free and
+      # therefore safe on every pull request: the mechanism's own suite, and
+      # the policy file's validity -- a well-formed ceiling, every declared
+      # exception naming a workflow that is really scheduled, and no exception
+      # past its expiry date. AGENTS.md requires that CI fail on an expired
+      # exception, and this is where that happens; the monitor cannot be the
+      # enforcer of its own waivers' expiry, because a monitor nobody reads is
+      # the condition the item is about.
+      #
+      # In this job rather than in a new required context, for the reason
+      # written against the step above: adding a twentieth required context is
+      # a change to GitHub repository settings that no pull request can make,
+      # and this job already owns the repository's own tooling under scripts/.
+      - name: Prove the scheduled-workflow streak policy is valid
+        run: npm run check:scheduled-workflow-streak
+
       - name: Make hygiene gate executable
         run: chmod +x scripts/integration/hygiene_gate.sh
 
