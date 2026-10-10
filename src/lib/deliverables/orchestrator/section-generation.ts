@@ -29,7 +29,13 @@ import { deckContract } from "@/lib/deliverables/shared/deck-story-contract";
 import { SLIDE_BANDS } from "@/lib/deliverables/slide-contract";
 import { compactArchitectureDeckSlides } from "./architecture-deck-story";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
-import { factTokens } from "./numeric-lineage-tokens";
+import {
+  LEGACY_FIGURE_LINEAGE,
+  factTokens,
+  figureLineagePolicy,
+  judgeFigureSentence,
+  type FigureLineagePolicy,
+} from "./numeric-lineage-tokens";
 import { citationsCarriedBySections } from "./rendered-section-citations";
 
 /** Bounded-concurrency map that preserves input order. */
@@ -52,11 +58,38 @@ export async function mapWithConcurrency<T, R>(
   return out;
 }
 
-// Mirror of quality-validator.ts countUnsupportedClaims — keep in lockstep.
+// Mirror of quality-validator.ts collectUnsupportedClaims — keep in lockstep.
+// What counts as support is shared with the gate (`judgeFigureSentence` in
+// numeric-lineage-tokens.ts), so the two cannot drift on it.
 const FACT_LIKE =
   /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
-const SUPPORTED =
-  /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
+
+/** A figure-bearing sentence the lineage policy does not consider traced. */
+function isUntracedFigureSentence(
+  sentence: string,
+  lineage: FigureLineagePolicy,
+): boolean {
+  return (
+    FACT_LIKE.test(sentence) &&
+    !judgeFigureSentence(sentence, lineage).supported
+  );
+}
+
+/** The tag a repair appends to an untraced figure sentence. */
+const LEGACY_UNTRACED_FIGURE_TAG =
+  "[ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]";
+/**
+ * Under the assumptions register a figure is not an assumption unless it is a
+ * register row, so the repair names the gap for what it is.
+ */
+export const REGISTER_UNTRACED_FIGURE_TAG =
+  "[EVIDENCE MISSING: numeric/date/value claim has no cited evidence or matching assumptions-register figure; it must be sourced before it is treated as committed.]";
+
+function untracedFigureTag(lineage: FigureLineagePolicy): string {
+  return lineage.enforced
+    ? REGISTER_UNTRACED_FIGURE_TAG
+    : LEGACY_UNTRACED_FIGURE_TAG;
+}
 const DECISIVE_RECOMMENDATION =
   /\b(recommend|approve|approval|decision|decide|proceed|hold|stop|fund|invest|select|award|endorse|choose|do not approve)\b/i;
 
@@ -67,12 +100,15 @@ export interface UnsupportedFigureClaim {
   treatment: "assumption_to_validate" | "open_input_required";
 }
 
-export function extractUnsupportedFigureClaims(markdown: string): string[] {
+export function extractUnsupportedFigureClaims(
+  markdown: string,
+  lineage: FigureLineagePolicy = LEGACY_FIGURE_LINEAGE,
+): string[] {
   if (!markdown) return [];
   return markdown
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
-    .filter((s) => FACT_LIKE.test(s) && !SUPPORTED.test(s));
+    .filter((s) => isUntracedFigureSentence(s, lineage));
 }
 
 function sentenceEvidenceCitations(
@@ -119,12 +155,13 @@ function appendCitations(
 export function repairEvidenceBackedUncitedFigures(
   markdown: string,
   evidence: readonly GovernedEvidenceItem[],
+  lineage: FigureLineagePolicy = LEGACY_FIGURE_LINEAGE,
 ): string {
   if (!markdown || evidence.length === 0) return markdown;
   const sentences = markdown.split(/(?<=[.!?])\s+/);
   let changed = false;
   const repaired = sentences.map((sentence) => {
-    if (!FACT_LIKE.test(sentence) || SUPPORTED.test(sentence)) return sentence;
+    if (!isUntracedFigureSentence(sentence, lineage)) return sentence;
     const citations = sentenceEvidenceCitations(sentence, evidence);
     if (citations.length === 0) return sentence;
     changed = true;
@@ -140,17 +177,17 @@ export function repairEvidenceBackedUncitedFigures(
  * an ungrounded one as needing client input, which is exactly what the governance demands
  * (surface gaps, never fabricate). This is what keeps a decomposed section past the gate.
  */
-export function repairUncitedFigures(markdown: string): string {
+export function repairUncitedFigures(
+  markdown: string,
+  lineage: FigureLineagePolicy = LEGACY_FIGURE_LINEAGE,
+): string {
   if (!markdown) return markdown;
   const sentences = markdown.split(/(?<=[.!?])\s+/);
   let changed = false;
   const repaired = sentences.map((s) => {
-    if (FACT_LIKE.test(s) && !SUPPORTED.test(s)) {
+    if (isUntracedFigureSentence(s, lineage)) {
       changed = true;
-      return s.replace(
-        /([.!?])?\s*$/,
-        " [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]$1",
-      );
+      return s.replace(/([.!?])?\s*$/, ` ${untracedFigureTag(lineage)}$1`);
     }
     return s;
   });
@@ -211,18 +248,26 @@ function normalizeOpenInputDetail(detail: unknown): string {
   return normalized || "Client input required";
 }
 
-function normalizeUnsupportedClaimForOpenInputs(claim: string): string {
+function normalizeUnsupportedClaimForOpenInputs(
+  claim: string,
+  lineage: FigureLineagePolicy,
+): string {
   const normalized = normalizeOpenInputDetail(claim);
-  if (!FACT_LIKE.test(normalized) || SUPPORTED.test(normalized))
-    return normalized;
-  return `${normalized} [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]`;
+  if (!isUntracedFigureSentence(normalized, lineage)) return normalized;
+  return `${normalized} ${untracedFigureTag(lineage)}`;
 }
 
-function repairStructuredClientFactText(value: unknown): string {
-  return repairUncitedFigures(normalizeOpenInputDetail(value));
+function repairStructuredClientFactText(
+  value: unknown,
+  lineage: FigureLineagePolicy = LEGACY_FIGURE_LINEAGE,
+): string {
+  return repairUncitedFigures(normalizeOpenInputDetail(value), lineage);
 }
 
-function repairStructuredTable(table: RenderableTable): RenderableTable {
+function repairStructuredTable(
+  table: RenderableTable,
+  lineage: FigureLineagePolicy,
+): RenderableTable {
   const columns: unknown[] = Array.isArray(table.columns) ? table.columns : [];
   const rows: unknown[] = Array.isArray(table.rows) ? table.rows : [];
   return {
@@ -230,7 +275,7 @@ function repairStructuredTable(table: RenderableTable): RenderableTable {
     columns: columns.map((column) => normalizeOpenInputDetail(column)),
     rows: rows.map((row) =>
       (Array.isArray(row) ? row : [row]).map((cell) =>
-        repairStructuredClientFactText(cell),
+        repairStructuredClientFactText(cell, lineage),
       ),
     ),
   };
@@ -238,15 +283,19 @@ function repairStructuredTable(table: RenderableTable): RenderableTable {
 
 function repairStructuredChecklist(
   checklist: RenderableDeliverable["clientCompleteChecklist"],
+  lineage: FigureLineagePolicy,
 ): RenderableDeliverable["clientCompleteChecklist"] {
   return checklist.map((item) => ({
     ...item,
-    label: repairStructuredClientFactText(item.label),
-    owner: repairStructuredClientFactText(String(item.owner)),
+    label: repairStructuredClientFactText(item.label, lineage),
+    owner: repairStructuredClientFactText(String(item.owner), lineage),
     reason: item.reason,
     ...(item.placeholderText
       ? {
-          placeholderText: repairStructuredClientFactText(item.placeholderText),
+          placeholderText: repairStructuredClientFactText(
+            item.placeholderText,
+            lineage,
+          ),
         }
       : {}),
   }));
@@ -254,19 +303,28 @@ function repairStructuredChecklist(
 
 function repairStructuredDeckSlides(
   deckSlides: RenderableDeliverable["deckSlides"] | undefined,
+  lineage: FigureLineagePolicy,
 ): RenderableDeliverable["deckSlides"] | undefined {
   const repaired = (deckSlides ?? [])
     .map((slide) => ({
       ...slide,
       ...(slide.title
-        ? { title: repairStructuredClientFactText(slide.title) }
+        ? { title: repairStructuredClientFactText(slide.title, lineage) }
         : {}),
-      governingMessage: repairStructuredClientFactText(slide.governingMessage),
-      points: (Array.isArray(slide.points) ? slide.points : []).map(
-        repairStructuredClientFactText,
+      governingMessage: repairStructuredClientFactText(
+        slide.governingMessage,
+        lineage,
+      ),
+      points: (Array.isArray(slide.points) ? slide.points : []).map((point) =>
+        repairStructuredClientFactText(point, lineage),
       ),
       ...(slide.speakerNotes
-        ? { speakerNotes: repairStructuredClientFactText(slide.speakerNotes) }
+        ? {
+            speakerNotes: repairStructuredClientFactText(
+              slide.speakerNotes,
+              lineage,
+            ),
+          }
         : {}),
       citationsUsed: (slide.citationsUsed ?? []).filter((n) =>
         Number.isFinite(n),
@@ -576,6 +634,7 @@ function openInputsTable(
   req: DeliverableIntelligenceRequest,
   unsupportedClaims: readonly UnsupportedFigureClaim[],
 ): RenderableTable | null {
+  const lineage = figureLineagePolicy(req);
   const rows: string[][] = [];
   for (const m of req.missingEvidence ?? []) {
     rows.push([
@@ -588,7 +647,7 @@ function openInputsTable(
   for (const c of unsupportedClaims) {
     rows.push([
       c.sectionTitle,
-      normalizeUnsupportedClaimForOpenInputs(c.claim),
+      normalizeUnsupportedClaimForOpenInputs(c.claim, lineage),
       c.treatment === "assumption_to_validate"
         ? "Confirm the assumption or replace it with a cited source."
         : "Provide supporting source evidence before asserting this as fact.",
@@ -615,15 +674,19 @@ function openInputsTable(
 const GENERIC_EXHIBIT_DESCRIPTION =
   /profile-required view|populated from cited evidence|shows the user, ai, human decision|decision implication to confirm/i;
 
-function repairStructuredValue(value: unknown): unknown {
-  if (typeof value === "string") return repairStructuredClientFactText(value);
+function repairStructuredValue(
+  value: unknown,
+  lineage: FigureLineagePolicy,
+): unknown {
+  if (typeof value === "string")
+    return repairStructuredClientFactText(value, lineage);
   if (Array.isArray(value))
-    return value.map((item) => repairStructuredValue(item));
+    return value.map((item) => repairStructuredValue(item, lineage));
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value).map(([key, nested]) => [
         key,
-        repairStructuredValue(nested),
+        repairStructuredValue(nested, lineage),
       ]),
     );
   }
@@ -632,19 +695,22 @@ function repairStructuredValue(value: unknown): unknown {
 
 function repairStructuredExhibit(
   exhibit: RenderableExhibit,
+  lineage: FigureLineagePolicy,
 ): RenderableExhibit {
   return {
-    key: repairStructuredClientFactText(String(exhibit.key ?? "")),
-    title: repairStructuredClientFactText(String(exhibit.title ?? "")),
+    key: repairStructuredClientFactText(String(exhibit.key ?? ""), lineage),
+    title: repairStructuredClientFactText(String(exhibit.title ?? ""), lineage),
     kind: exhibit.kind,
     description: repairStructuredClientFactText(
       String(exhibit.description ?? ""),
+      lineage,
     ),
     targetFormat: exhibit.targetFormat,
     ...(exhibit.data
       ? {
           data: repairStructuredValue(
             exhibit.data,
+            lineage,
           ) as RenderableExhibit["data"],
         }
       : {}),
@@ -727,10 +793,11 @@ export function exhibitRejectionReason(
 
 function renderableExhibitsFromSynthesis(
   synth: SynthesisResult,
+  lineage: FigureLineagePolicy,
 ): RenderableExhibit[] {
   const byKey = new Map<string, RenderableExhibit>();
   for (const exhibit of synth.exhibits ?? []) {
-    const repaired = repairStructuredExhibit(exhibit);
+    const repaired = repairStructuredExhibit(exhibit, lineage);
     const rejection = exhibitRejectionReason(repaired);
     if (rejection) {
       console.warn(
@@ -918,16 +985,23 @@ export function assembleDeliverable(
   // gate judges what the model actually wrote. Repairing before validation made
   // the unsupported-claim blocker unreachable, because the tag repair appends is
   // itself one of the gate's own "supported" markers.
+  const lineage = figureLineagePolicy(req);
   const finalSections = cleanedSections.map((section) => ({
     ...section,
     bodyMarkdown: sanitizeClientFacingArtifactMarkdown(
       repairUncitedFigures(
-        repairEvidenceBackedUncitedFigures(section.bodyMarkdown, evidence),
+        repairEvidenceBackedUncitedFigures(
+          section.bodyMarkdown,
+          evidence,
+          lineage,
+        ),
+        lineage,
       ),
     ),
     rawBodyMarkdown: repairEvidenceBackedUncitedFigures(
       section.rawBodyMarkdown ?? section.bodyMarkdown,
       evidence,
+      lineage,
     ),
   }));
   const combinedClaims: UnsupportedFigureClaim[] = [
@@ -940,7 +1014,9 @@ export function assembleDeliverable(
     })),
   ];
   const openInputs = openInputsTable(req, combinedClaims);
-  const tables = (synth.tables ?? []).map(repairStructuredTable);
+  const tables = (synth.tables ?? []).map((table) =>
+    repairStructuredTable(table, lineage),
+  );
   if (openInputs && !tables.some((t) => t.key === openInputs.key)) {
     tables.push(openInputs);
   }
@@ -948,13 +1024,14 @@ export function assembleDeliverable(
   if (riskTable) tables.push(riskTable);
   const checklist =
     synth.clientCompleteChecklist && synth.clientCompleteChecklist.length > 0
-      ? repairStructuredChecklist(synth.clientCompleteChecklist)
-      : repairStructuredChecklist(req.clientCompleteItems ?? []);
-  const nextActions = (synth.nextActions ?? []).map(
-    repairStructuredClientFactText,
+      ? repairStructuredChecklist(synth.clientCompleteChecklist, lineage)
+      : repairStructuredChecklist(req.clientCompleteItems ?? [], lineage);
+  const nextActions = (synth.nextActions ?? []).map((action) =>
+    repairStructuredClientFactText(action, lineage),
   );
   const recommendation = repairStructuredClientFactText(
     fallbackRecommendation(req, finalSections, synth),
+    lineage,
   );
   const sectionsWithSignals = appendMissingEvidenceSignals(
     req,
@@ -967,7 +1044,7 @@ export function assembleDeliverable(
   const deckSlides = ensureContractedDeckSlides({
     req,
     sections: generatedSections,
-    repairedSlides: repairStructuredDeckSlides(synth.deckSlides),
+    repairedSlides: repairStructuredDeckSlides(synth.deckSlides, lineage),
     recommendation,
     nextActions,
     tablePages: tables.filter((table) => table.targetFormat !== "xlsx").length,
@@ -980,7 +1057,7 @@ export function assembleDeliverable(
     generatedSections,
     deckSlides,
     tables,
-    exhibits: renderableExhibitsFromSynthesis(synth),
+    exhibits: renderableExhibitsFromSynthesis(synth, lineage),
     sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),
     assumptions: req.approvedAssumptions ?? [],
     clientCompleteChecklist: checklist,

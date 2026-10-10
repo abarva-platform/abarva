@@ -6,6 +6,7 @@
 // with board-grade defaults.
 
 import type {
+  ApprovedAssumption,
   AudienceRole,
   DeliverableIntelligenceRequest,
   DeliverableModule,
@@ -30,6 +31,13 @@ export interface BuildRequestParams {
   initiativeDisplayName: string;
   outputFormats?: OutputFormat[];
   adaptiveDepth?: AdaptiveDepthDecision;
+  /**
+   * The Move assumptions register's citable rows, present only when the
+   * register governs this generation (`moves_assumption_register_v1`). Its
+   * presence — even empty — marks the request enforced. Absent: no assumptions
+   * and the pre-register lineage rule, exactly as before.
+   */
+  approvedAssumptions?: ApprovedAssumption[];
 }
 
 const DEFAULT_AUDIENCE: Record<DeliverableModule, AudienceRole[]> = {
@@ -87,7 +95,10 @@ export function buildDeliverableRequest(
     sourceRegister,
     missingEvidence: [],
     clientCompleteItems: [],
-    approvedAssumptions: [],
+    approvedAssumptions: params.approvedAssumptions
+      ? [...params.approvedAssumptions]
+      : [],
+    ...(params.approvedAssumptions ? { assumptionRegisterEnforced: true } : {}),
     artifactStandard: "ABARVA_BOARD_GRADE_DELIVERABLE_STANDARD",
     outputFormats: params.outputFormats?.length
       ? params.outputFormats

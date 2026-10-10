@@ -256,6 +256,14 @@ export interface DeliverableIntelligenceRequest {
   missingEvidence: MissingEvidenceItem[];
   clientCompleteItems: ClientCompleteItem[];
   approvedAssumptions: ApprovedAssumption[];
+  /**
+   * True only when the Move assumptions register governs this generation
+   * (`moves_assumption_register_v1` on for the tenant). Then a figure not in
+   * the governed evidence traces ONLY to a register row cited `[A:ID]` whose
+   * figure matches; a bare `[ASSUMPTION TO VALIDATE]` tag no longer counts as
+   * lineage. Absent = exactly the behaviour before the register existed.
+   */
+  assumptionRegisterEnforced?: boolean;
   artifactStandard: string; // reference to the standard doc/key
   exemplarGuidance?: string; // optional exemplar/style hint
   outputFormats: OutputFormat[];
