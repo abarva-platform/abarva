@@ -21,7 +21,8 @@ test.describe("Moves continuous P0 to Tower", () => {
   }) => {
     await openSignedInMove(page, moveId!, 0);
     for (let phase = 0; phase <= 5; phase += 1) {
-      await page.goto(`/strategic-moves/${moveId}/phase/${phase}`, {
+      // This gate suite asserts the capture flow; step-page tenants use the legacy hatch.
+      await page.goto(`/strategic-moves/${moveId}/phase/${phase}?legacy=1`, {
         waitUntil: "domcontentloaded",
       });
       const result = await approveReadyMovesGate(page, moveId!, phase);
@@ -31,7 +32,7 @@ test.describe("Moves continuous P0 to Tower", () => {
       }
     }
 
-    await page.goto(`/strategic-moves/${moveId}/phase/5`, {
+    await page.goto(`/strategic-moves/${moveId}/phase/5?legacy=1`, {
       waitUntil: "domcontentloaded",
     });
     await expect(page.locator("body")).toContainText("Tower handoff complete");

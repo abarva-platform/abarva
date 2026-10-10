@@ -25,7 +25,8 @@ export async function openSignedInMove(
     activeClient: process.env.E2E_MOVES_CLIENT_KEY,
     email: process.env.E2E_MOVES_OPERATOR_EMAIL,
   });
-  await page.goto(`/strategic-moves/${moveId}/phase/${phase}`, {
+  // Gate-walk callers inspect the capture flow, even when step pages are enrolled.
+  await page.goto(`/strategic-moves/${moveId}/phase/${phase}?legacy=1`, {
     waitUntil: "domcontentloaded",
   });
   expect(page.url()).not.toMatch(/\/sign-in(?:\?|$)/);

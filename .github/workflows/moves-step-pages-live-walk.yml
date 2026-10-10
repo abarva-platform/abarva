@@ -1,0 +1,135 @@
+name: Moves step pages live walk
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/moves-step-pages-live-walk.yml
+      - tests/e2e/moves-step-pages-live-walk.spec.ts
+      - tests/e2e/_helpers/moves-gate-walk.ts
+      - tests/e2e/programs-p0-to-tower.spec.ts
+      - tests/e2e/programs-phase-4-to-5.spec.ts
+      - tests/e2e/programs-phase-5-to-tower.spec.ts
+  workflow_dispatch:
+    inputs:
+      move_id:
+        description: "Existing synthetic demo Move ID that can open P0 through P5"
+        required: true
+        type: string
+  workflow_run:
+    workflows: ["ACA main deploy"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  discovery:
+    name: Discover read-only Moves live walk
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright test tests/e2e/moves-step-pages-live-walk.spec.ts --list
+
+  signed-in-walk:
+    name: Signed-in read-only Moves step walk
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      BASE_URL: https://app.abarva.ai
+      E2E_MOVES_LIVE_MOVE_ID: ${{ inputs.move_id || vars.MOVES_E2E_DEMO_MOVE_ID }}
+      E2E_MOVES_CLIENT_KEY: ${{ vars.MOVES_E2E_CLIENT_KEY }}
+      E2E_MOVES_TENANT_NAME: ${{ vars.MOVES_E2E_TENANT_NAME }}
+      E2E_MOVES_OPERATOR_EMAIL: ${{ vars.MOVES_E2E_OPERATOR_EMAIL }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check read-only proof configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in E2E_MOVES_LIVE_MOVE_ID E2E_MOVES_CLIENT_KEY E2E_MOVES_TENANT_NAME E2E_MOVES_OPERATOR_EMAIL CLERK_SECRET_KEY; do
+            if [[ -z "${!key}" ]]; then
+              echo "Missing live proof input: $key" >&2
+              exit 2
+            fi
+          done
+          if [[ "$E2E_MOVES_CLIENT_KEY" != "meridian" ]]; then
+            echo "The read-only walk is restricted to the synthetic demo tenant." >&2
+            exit 2
+          fi
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
+
+      - name: Read the successful deploy's ACA revision evidence
+        id: deployed
+        shell: bash
+        env:
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+          TRIGGER_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${TRIGGER_RUN_ID:-}" ]]; then
+            deploy_run_id="$TRIGGER_RUN_ID"
+          else
+            deploy_run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow aca-main-deploy.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          fi
+          if [[ -z "$deploy_run_id" || "$deploy_run_id" == "null" ]]; then
+            echo "No successful ACA main deploy run is available." >&2
+            exit 2
+          fi
+          gh run download "$deploy_run_id" --repo "$GITHUB_REPOSITORY" --name aca-main-deploy --dir deploy-proof
+          test -s deploy-proof/image.txt
+          test -s deploy-proof/traffic-target-revision.json
+          test -s deploy-proof/traffic-after.json
+          deployed_sha="$(awk -F= '$1 == "sha" { print $2 }' deploy-proof/image.txt)"
+          expected_image="$(awk -F= '$1 == "image" { print $2 }' deploy-proof/image.txt)"
+          revision_name="$(jq -r '.name | split("/") | last' deploy-proof/traffic-target-revision.json)"
+          revision_image="$(jq -r '.properties.template.containers[0].image // ""' deploy-proof/traffic-target-revision.json)"
+          traffic_holder="$(jq -r '[.[] | select(.weight == 100)] | if length == 1 then .[0].revisionName else "" end' deploy-proof/traffic-after.json)"
+          [[ "$deployed_sha" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$expected_image" == *@sha256:* ]]
+          [[ "$revision_image" == "$expected_image" ]]
+          [[ "$traffic_holder" == "$revision_name" ]]
+          if [[ -n "${TRIGGER_SHA:-}" && "$TRIGGER_SHA" != "$deployed_sha" ]]; then
+            echo "Deploy workflow SHA and ACA evidence SHA disagree." >&2
+            exit 2
+          fi
+          echo "E2E_MOVES_DEPLOYED_SHA=$deployed_sha" >> "$GITHUB_ENV"
+          echo "E2E_MOVES_DEPLOY_RUN_URL=https://github.com/$GITHUB_REPOSITORY/actions/runs/$deploy_run_id" >> "$GITHUB_ENV"
+          echo "Deployed revision: $revision_name"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+      - name: Capture every phase and step view
+        run: npx playwright test tests/e2e/moves-step-pages-live-walk.spec.ts --project=chromium --workers=1 --retries=0
+      - name: Upload signed-in proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: moves-step-pages-live-walk
+          path: |
+            test-results/
+            playwright-report/
+            deploy-proof/image.txt
+            deploy-proof/traffic-target-revision.json
+            deploy-proof/traffic-after.json
+          if-no-files-found: warn

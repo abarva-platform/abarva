@@ -21,7 +21,8 @@ test.describe("Moves P4 to P5", () => {
     await openSignedInMove(page, moveId!, 4);
     await approveReadyMovesGate(page, moveId!, 4);
 
-    await page.goto(`/strategic-moves/${moveId}/phase/5`, {
+    // This gate suite asserts the capture flow; step-page tenants use the legacy hatch.
+    await page.goto(`/strategic-moves/${moveId}/phase/5?legacy=1`, {
       waitUntil: "domcontentloaded",
     });
     await expect(page.locator("body")).toContainText("Mobilization Handoff");

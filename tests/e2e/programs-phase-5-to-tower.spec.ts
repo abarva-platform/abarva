@@ -23,7 +23,8 @@ test.describe("Moves P5 to Tower", () => {
     expect(approved.terminalHandoff).toBe(true);
     expect(approved.nextAction).toBe("open_tower_handoff");
 
-    await page.goto(`/strategic-moves/${moveId}/phase/5`, {
+    // This gate suite asserts the capture flow; step-page tenants use the legacy hatch.
+    await page.goto(`/strategic-moves/${moveId}/phase/5?legacy=1`, {
       waitUntil: "domcontentloaded",
     });
     await expect(page.locator("body")).toContainText("Tower handoff complete");
