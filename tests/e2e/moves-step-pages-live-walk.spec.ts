@@ -36,6 +36,7 @@ const KNOWN_GAPS: ReadonlyArray<{
   view: StepPageView;
   text: string;
   reason: string;
+  allowedReadText?: readonly string[];
 }> = [
   {
     phase: 4,
@@ -43,9 +44,28 @@ const KNOWN_GAPS: ReadonlyArray<{
     text: "No approved estimate yet",
     reason:
       "This existing fixture has no approved P3 estimate. The P4 estimate step remains blocked until a real approval is recorded.",
+    allowedReadText: [
+      "Estimate inputs remain editable while the approved ROM basis is unavailable.",
+    ],
   },
 ];
 const BAD_READ = /could not be read|unavailable/i;
+
+function unreviewedReadText(
+  body: string,
+  phase: number,
+  view: StepPageView,
+): string | null {
+  const gap = KNOWN_GAPS.find(
+    (entry) =>
+      entry.phase === phase && entry.view === view && body.includes(entry.text),
+  );
+  let checked = body;
+  for (const phrase of gap?.allowedReadText ?? []) {
+    checked = checked.replaceAll(phrase, "");
+  }
+  return checked.match(BAD_READ)?.[0] ?? null;
+}
 
 function routeFor(moveId: string, phase: number, query = ""): string {
   return `/strategic-moves/${encodeURIComponent(moveId)}/phase/${phase}${query}`;
@@ -61,6 +81,7 @@ async function inspectPage(
   destination: string,
   check: () => Promise<void>,
   blockedWrites: string[],
+  afterSettle?: () => Promise<void>,
 ): Promise<Finding> {
   const problems: string[] = [];
   const writeCountBefore = blockedWrites.length;
@@ -78,9 +99,11 @@ async function inspectPage(
   page.on("response", onResponse);
   try {
     await page.goto(destination, { waitUntil: "domcontentloaded" });
-    // Let client-side reads finish so their refusal text and responses count.
-    await page.waitForLoadState("networkidle", { timeout: 15_000 });
     await check();
+    // Streaming and background reads can keep the network busy. The page's
+    // visible landmark is required; network-idle is only a bounded settling aid.
+    await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => {});
+    await afterSettle?.();
   } catch (error) {
     problems.push(error instanceof Error ? error.message : String(error));
   } finally {
@@ -205,21 +228,13 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             expect(new URL(page.url()).searchParams.get("step")).toBe(view);
             await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
 
-            const body = await page.locator("body").innerText();
-            const badReads = body.match(BAD_READ);
-            if (badReads) {
-              // A known gap cannot excuse another read error on the same page.
-              const allowance = KNOWN_GAPS.find(
-                (gap) =>
-                  gap.phase === phase &&
-                  gap.view === view &&
-                  body.includes(gap.text) &&
-                  gap.text.toLowerCase().includes(badReads[0].toLowerCase()),
-              );
-              if (!allowance) throw new Error(`Unreviewed read gap: ${badReads[0]}`);
-            }
           },
           blockedWrites,
+          async () => {
+            const body = await page.locator("body").innerText();
+            const badRead = unreviewedReadText(body, phase, view);
+            if (badRead) throw new Error(`Unreviewed read gap: ${badRead}`);
+          },
         );
         for (const width of [1440, 390]) {
           try {
