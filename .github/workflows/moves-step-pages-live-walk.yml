@@ -51,7 +51,6 @@ jobs:
       BASE_URL: https://app.abarva.ai
       E2E_MOVES_LIVE_MOVE_ID: ${{ inputs.move_id || vars.MOVES_E2E_DEMO_MOVE_ID }}
       E2E_MOVES_CLIENT_KEY: ${{ vars.MOVES_E2E_CLIENT_KEY }}
-      E2E_MOVES_TENANT_NAME: ${{ vars.MOVES_E2E_TENANT_NAME }}
       E2E_MOVES_OPERATOR_EMAIL: ${{ vars.MOVES_E2E_OPERATOR_EMAIL }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
       GH_TOKEN: ${{ github.token }}
@@ -60,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for key in E2E_MOVES_LIVE_MOVE_ID E2E_MOVES_CLIENT_KEY E2E_MOVES_TENANT_NAME E2E_MOVES_OPERATOR_EMAIL CLERK_SECRET_KEY; do
+          for key in E2E_MOVES_LIVE_MOVE_ID E2E_MOVES_CLIENT_KEY E2E_MOVES_OPERATOR_EMAIL CLERK_SECRET_KEY; do
             if [[ -z "${!key}" ]]; then
               echo "Missing live proof input: $key" >&2
               exit 2

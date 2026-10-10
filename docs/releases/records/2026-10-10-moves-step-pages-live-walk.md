@@ -69,8 +69,9 @@ assertions concern the capture flow.
 
 Merge through a pull request. The next successful repo-owned ACA main deploy
 triggers the read-only walk. The workflow requires an existing synthetic demo
-Move that can open P0–P5 and a configured operator, client key, and displayed
-tenant name. No fixture creation or data job is part of this rollout.
+Move that can open P0–P5 and a configured operator and client key. The
+expected displayed name comes from the product's synthetic client-name
+registry. No fixture creation or data job is part of this rollout.
 
 ## Deployment Authority
 
@@ -103,8 +104,7 @@ reverting their small test-only edits.
 
 - No live signed-in artifact exists for this candidate. Local discovery and
   type checks do not establish deployed behavior.
-- The workflow requires repository variables for a reusable synthetic demo
-  Move ID and its displayed tenant name. If either is absent, the run fails
-  preflight without claiming proof.
+- The workflow requires a repository variable for a reusable synthetic demo
+  Move ID. If it is absent, the run fails preflight without claiming proof.
 - P2 has only a partial step-page set, so its default phase address is
   expected to remain on capture while direct P2 step views are checked.

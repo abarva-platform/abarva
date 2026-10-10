@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { DEMO_SAFE_CLIENT_NAMES } from "../../src/lib/client-config";
 import { resolvePhaseWorkflow } from "../../src/lib/programs/phase-workflow-registry";
 import { STEP_PAGE_VIEWS, type StepPageView } from "../../src/lib/programs/step-page-views";
 import { withClerkAuth } from "./_helpers/auth";
@@ -19,7 +20,7 @@ type ViewFinding = Finding & {
 
 const MOVE_ID = process.env.E2E_MOVES_LIVE_MOVE_ID;
 const DEPLOYED_SHA = process.env.E2E_MOVES_DEPLOYED_SHA;
-const EXPECTED_TENANT_NAME = process.env.E2E_MOVES_TENANT_NAME;
+const EXPECTED_TENANT_NAME = DEMO_SAFE_CLIENT_NAMES.meridian;
 const PHASES = [0, 1, 2, 3, 4, 5] as const;
 const VIEW_ENTRIES = Object.entries(STEP_PAGE_VIEWS) as Array<
   [StepPageView, (typeof STEP_PAGE_VIEWS)[StepPageView]]
@@ -92,7 +93,6 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
   const missing = [
     !MOVE_ID && "E2E_MOVES_LIVE_MOVE_ID",
     !DEPLOYED_SHA && "E2E_MOVES_DEPLOYED_SHA",
-    !EXPECTED_TENANT_NAME && "E2E_MOVES_TENANT_NAME",
     !process.env.E2E_MOVES_CLIENT_KEY && "E2E_MOVES_CLIENT_KEY",
     !process.env.E2E_MOVES_OPERATOR_EMAIL && "E2E_MOVES_OPERATOR_EMAIL",
     !CLERK_SECRET_KEY && "CLERK_SECRET_KEY",
@@ -117,7 +117,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
     deployRunUrl: process.env.E2E_MOVES_DEPLOY_RUN_URL || null,
     timestamp: new Date().toISOString(),
     moveId: MOVE_ID!,
-    tenantName: EXPECTED_TENANT_NAME!,
+    tenantName: EXPECTED_TENANT_NAME,
     landings: [],
     legacy: [],
     views: [],
@@ -152,7 +152,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
     for (const phase of PHASES) {
       const landing = await inspectPage(page, routeFor(MOVE_ID!, phase), async () => {
         await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/);
-        await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME!);
+        await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
         if (phase === 2 && !P2_HAS_EVERY_STEP_PAGE) {
           await expect(page.getByTestId("moves-capture-flow")).toBeVisible();
           expect(new URL(page.url()).searchParams.has("step")).toBe(false);
@@ -169,7 +169,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         async () => {
           await expect(page.getByTestId("moves-capture-flow")).toBeVisible();
           await expect(page.locator("#step-panel-title")).toHaveCount(0);
-          await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME!);
+          await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
           expect(new URL(page.url()).searchParams.get("legacy")).toBe("1");
         },
         blockedWrites,
@@ -195,7 +195,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             const position = Number(definition.stepId.split(".")[1]) - 1;
             await expect(steps.nth(position).locator('[aria-current="step"]')).toBeVisible();
             expect(new URL(page.url()).searchParams.get("step")).toBe(view);
-            await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME!);
+            await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
 
             const body = await page.locator("body").innerText();
             const badReads = body.match(BAD_READ);
