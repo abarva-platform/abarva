@@ -42,7 +42,7 @@ When the two existing step-page flags are on, every P2 step has a page and the p
 - Affected governance, route, registry, step-view and host suites: 11 suites, 613 tests passed. Host coverage includes P2 default landing, the legacy hatch and flag-off capture behavior.
 - Mutation checks: seven independent changes to packet coverage, citation hold, draft-register eligibility, confirmed-route consistency, upload family, accepted record words and invalid persisted findings were each caught by the focused tests, then restored.
 - `npm run typecheck`: passed. Changed-file ESLint: passed. Prettier applied to touched files.
-- Library orphan audit: no new orphans. Route and export reachability: no new findings. Test-coverage census: 2,813 to 2,815 covered files, matching two new test files. Tenancy census unchanged.
+- Library orphan audit: no new orphans. Route and export reachability: no new findings. After reconciling `main`, the test-coverage census is 2,814 to 2,816 covered files, matching two new test files. Tenancy census unchanged.
 - Temporary local component visual fixtures at 390px and 1440px in light and dark: all three pages had no horizontal overflow. P2.1's eleven needs were condensed after this check. The P2.4 visual fixture used a stand-in for the host-private structured route editor; its real embedding is covered by page and host code tests.
 - No live signed-in walkthrough, database mutation, migration, workflow dispatch, merge or deployment was performed for this candidate.
 

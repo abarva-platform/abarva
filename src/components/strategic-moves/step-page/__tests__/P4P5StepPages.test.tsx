@@ -4,6 +4,7 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import {
+  previewMatchesApproval,
   readApprovedRomSnapshot,
   type ApprovedRomSnapshot,
 } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
@@ -21,6 +22,7 @@ jest.mock("../StepEvidence", () => ({
 }));
 jest.mock("@/lib/pricing/moves-workflow/approved-rom-snapshot", () => ({
   readApprovedRomSnapshot: jest.fn(),
+  previewMatchesApproval: jest.fn().mockReturnValue(true),
 }));
 
 function host(
@@ -78,7 +80,10 @@ function page(
 }
 
 beforeEach(() => {
-  jest.mocked(readApprovedRomSnapshot).mockResolvedValue(null);
+  jest.mocked(readApprovedRomSnapshot).mockReset();
+  jest.mocked(readApprovedRomSnapshot).mockResolvedValue({ status: "missing" });
+  jest.mocked(previewMatchesApproval).mockReset();
+  jest.mocked(previewMatchesApproval).mockReturnValue(true);
 });
 
 afterEach(() => {
@@ -196,38 +201,189 @@ describe("P4 and P5 step pages", () => {
 
   it("shows an approved ROM basis and removes the outside block when supplied", async () => {
     jest.mocked(readApprovedRomSnapshot).mockResolvedValue({
-      id: "rom-1",
-      approvedAt: "2026-10-10",
-      workbookHref: "/workbooks/rom-1",
-      result: {
-        releases: [
-          {
-            code: "R1",
-            name: "Release 1",
-            standalone: {
+      status: "approved",
+      snapshot: {
+        id: "v1",
+        approvedAt: "2026-10-10",
+        workbookHref: "/api/v1/programs/move-1/rom/preview?format=xlsx",
+        workbookStructure: {} as ApprovedRomSnapshot["workbookStructure"],
+        result: {
+          releases: [
+            {
+              code: "R1",
+              name: "Release 1",
               lowCents: 84_000_000,
               planCents: 123_456_789,
               highCents: 150_000_000,
             },
-          },
-        ],
-      } as unknown as ApprovedRomSnapshot["result"],
+          ],
+        } as ApprovedRomSnapshot["result"],
+      },
     });
     render(page(P4_STEP_PAGES, "p4-estimate", host(4)));
     await waitFor(() =>
-      expect(
-        screen.getByText(/Approved ROM snapshot rom-1/),
-      ).toBeInTheDocument(),
+      expect(screen.getByText(/Approved ROM snapshot v1/)).toBeInTheDocument(),
     );
+    expect(screen.getByText(/APPROVED P3 estimate/)).toBeInTheDocument();
     expect(
       screen.getByText(/low \$840K · plan \$1.2M · high \$1.5M/),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Open ROM workbook/ }),
-    ).toHaveAttribute("href", "/workbooks/rom-1");
+      screen.getByRole("button", { name: /Download ROM workbook/ }),
+    ).toBeEnabled();
     expect(
       screen.getByRole("status", { name: "What to do next" }),
     ).not.toHaveTextContent("Blocked");
+  });
+
+  it("shows a stale approval with a link back to P3 Step 4", async () => {
+    jest.mocked(readApprovedRomSnapshot).mockResolvedValue({ status: "stale" });
+    render(page(P4_STEP_PAGES, "p4-estimate", host(4)));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/P3 estimate approval is stale/),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.getAllByRole("link", { name: /P3 Step 4/ })[0],
+    ).toHaveAttribute("href", stepPageHref("move-1", 3, "P3.4"));
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it("keeps failed read distinct from no approval and offers retry", async () => {
+    jest
+      .mocked(readApprovedRomSnapshot)
+      .mockResolvedValueOnce({ status: "failed" })
+      .mockResolvedValueOnce({ status: "missing" });
+    render(page(P4_STEP_PAGES, "p4-estimate", host(4)));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Approved ROM snapshot could not be read/),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByText(/No approved estimate yet/),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() =>
+      expect(screen.getByText(/No approved estimate yet/)).toBeInTheDocument(),
+    );
+    expect(readApprovedRomSnapshot).toHaveBeenCalledTimes(2);
+  });
+
+  it("blocks workbook download when current ROM preview differs from the approved figures", async () => {
+    const snapshot = {
+      id: "v1",
+      approvedAt: "2026-10-10",
+      workbookHref: "/api/v1/programs/move-1/rom/preview?format=xlsx",
+      workbookStructure: {
+        useCases: [],
+      } as unknown as ApprovedRomSnapshot["workbookStructure"],
+      result: { releases: [] } as unknown as ApprovedRomSnapshot["result"],
+    };
+    jest
+      .mocked(readApprovedRomSnapshot)
+      .mockResolvedValue({ status: "approved", snapshot });
+    jest.mocked(previewMatchesApproval).mockReturnValue(false);
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ rom: { ok: true } }),
+    });
+    render(page(P4_STEP_PAGES, "p4-estimate", host(4)));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Download ROM workbook" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /cost reference changed since approval/,
+      ),
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/programs/move-1/rom/preview",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("rechecks the P3 approval before starting any workbook request", async () => {
+    jest
+      .mocked(readApprovedRomSnapshot)
+      .mockResolvedValueOnce({
+        status: "approved",
+        snapshot: {
+          id: "v1",
+          approvedAt: "2026-10-10",
+          workbookHref: "/api/v1/programs/move-1/rom/preview?format=xlsx",
+          workbookStructure: {} as ApprovedRomSnapshot["workbookStructure"],
+          result: {
+            inputsFingerprint: "f1",
+            releases: [],
+          } as unknown as ApprovedRomSnapshot["result"],
+        },
+      })
+      .mockResolvedValueOnce({ status: "stale" });
+    global.fetch = jest.fn();
+    render(page(P4_STEP_PAGES, "p4-estimate", host(4)));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Download ROM workbook" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /approval changed or could not be rechecked/,
+      ),
+    );
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("posts the approved structure to the XLSX route after a matching preview", async () => {
+    const structure = {
+      useCases: [{ code: "UC1" }],
+    } as unknown as ApprovedRomSnapshot["workbookStructure"];
+    jest.mocked(readApprovedRomSnapshot).mockResolvedValue({
+      status: "approved",
+      snapshot: {
+        id: "v1",
+        approvedAt: "2026-10-10",
+        workbookHref: "/api/v1/programs/move-1/rom/preview?format=xlsx",
+        workbookStructure: structure,
+        result: { releases: [] } as unknown as ApprovedRomSnapshot["result"],
+      },
+    });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ rom: { ok: true } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        blob: async () => new Blob(["xlsx"]),
+      });
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: jest.fn().mockReturnValue("blob:rom-workbook"),
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: jest.fn(),
+    });
+    jest
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+    render(page(P4_STEP_PAGES, "p4-estimate", host(4)));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Download ROM workbook" }),
+    );
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      "/api/v1/programs/move-1/rom/preview?format=xlsx",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify(structure),
+      }),
+    );
+    expect(URL.createObjectURL).toHaveBeenCalled();
   });
 
   it("shows unavailable value-case readback without presenting client figures", async () => {
