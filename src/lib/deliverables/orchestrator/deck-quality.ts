@@ -15,6 +15,7 @@ import "server-only";
 // The second governs.
 
 import type { InspectedDeck, InspectedSlide } from "./deck-inspection";
+import { figuresOnSlide, referenceArchetypeGaps, type ReferenceDeckSpec } from "./reference-deck-model";
 
 /**
  * Slide role. A cover or divider is legitimately thin and must SAY so — it is
@@ -27,6 +28,7 @@ export interface DeckPolicy {
   maxSlides?: number;
   /** Roles by 1-based slide index. Anything unlisted is content. */
   rolesByIndex?: Record<number, SlideRole>;
+  referenceDeck?: ReferenceDeckSpec;
 }
 
 export type DeckFinding =
@@ -41,7 +43,8 @@ export type DeckFinding =
   | { kind: "empty_canvas"; slide: number; message: string }
   | { kind: "empty_table"; slide: number; message: string }
   | { kind: "slide_count"; message: string }
-  | { kind: "canvas"; message: string };
+  | { kind: "canvas"; message: string }
+  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability"; slide: number; message: string };
 
 export interface DeckVerdict {
   ok: boolean;
@@ -49,6 +52,7 @@ export interface DeckVerdict {
   canvasWidthIn: number;
   canvasHeightIn: number;
   findings: DeckFinding[];
+  fidelityScore?: number;
 }
 
 const MIN_CONTENT_CHARS = 120;
@@ -57,11 +61,67 @@ const MIN_SUPPORTING_RUNS = 2;
 const CHROME_RUNS = 3;
 
 function roleOf(policy: DeckPolicy, slide: InspectedSlide): SlideRole {
+  const archetype = policy.referenceDeck?.slides[slide.index - 1]?.archetype;
+  if (archetype === "cover") return "cover";
+  if (archetype === "divider") return "divider";
   const declared = policy.rolesByIndex?.[slide.index];
   if (declared) return declared;
   if (slide.layoutRole === "divider") return "divider";
   if (slide.index === 1) return "cover";
   return "content";
+}
+
+function judgeReferenceSlide(
+  slide: InspectedSlide,
+  spec: ReferenceDeckSpec,
+  findings: DeckFinding[],
+): void {
+  const expected = spec.slides[slide.index - 1];
+  if (!expected) return;
+  const names = slide.objectNames ?? [];
+  const named = slide.namedText ?? {};
+  const add = (kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability", message: string) =>
+    findings.push({ kind, slide: slide.index, message });
+  if (slide.pictureCount > names.filter((name) => name.startsWith("ref:logo:picture")).length)
+    add("reference_editability", `slide ${slide.index}: raster picture outside the logo is not editable.`);
+  if (!slide.notesText?.includes("The point:"))
+    add("reference_structure", `slide ${slide.index}: business-case speaker notes omit The point.`);
+  if (expected.archetype === "cover" || expected.archetype === "divider") return;
+  for (const gap of referenceArchetypeGaps(expected, spec.edition))
+    add("reference_structure", `slide ${slide.index}: ${expected.archetype} ${gap}.`);
+  const actionMarker = `ref:action:${expected.archetype}:${expected.section ?? ""}`;
+  const filled = names.filter((name) => /^ref:chip:.*:filled$/.test(name));
+  if (filled.length !== 1 || filled[0] !== `ref:chip:${expected.section}:filled`)
+    add("reference_structure", `slide ${slide.index}: filled chip does not match its section.`);
+  const title = named[actionMarker] ?? "";
+  if (title.split(/\s+/).length < 5 || /[.!?]\s+\S/.test(title))
+    add("reference_structure", `slide ${slide.index}: action title is missing or reads as a topic label.`);
+  if (!names.includes("ref:answer:bar") || !(named["ref:answer:text"] ?? "").trim())
+    add("reference_structure", `slide ${slide.index}: answer bar is missing.`);
+  const figureValues = figuresOnSlide(expected).map((figure) => figure.display);
+  const sourceLine = named["ref:source-line"] ?? "";
+  if (figureValues.length && !sourceLine.trim())
+    add("reference_source", `slide ${slide.index}: figure has no rendered source line.`);
+  for (const sourceId of expected.sourceIds ?? []) {
+    if (!sourceLine.includes(sourceId))
+      add("reference_source", `slide ${slide.index}: rendered source line omits ${sourceId}.`);
+  }
+  const bodyText = Object.entries(named)
+    .filter(([name]) => name !== "ref:source-line")
+    .map(([, value]) => value).join(" ");
+  for (const value of figureValues) {
+    if (!bodyText.includes(value))
+      add("reference_source", `slide ${slide.index}: bound figure is absent from the rendered slide.`);
+  }
+  for (const block of expected.blocks) {
+    if (block.kind !== "table" || slide.tableCount > 0) continue;
+    const expectedCells = (block.rows.length + 1) * block.columns.length;
+    const renderedCells = names.filter((name) => name.startsWith("ref:body:table-cell:")).length;
+    if (renderedCells < expectedCells)
+      add("reference_editability", `slide ${slide.index}: shape-built table is missing editable cells.`);
+  }
+  if (spec.edition === "validation" && /\b(cost|rom|roi|investment|solution|plan|roadmap|release)\b/i.test(slide.textRuns.join(" ")))
+    add("reference_edition", `slide ${slide.index}: validation edition contains investment or solution material.`);
 }
 
 /**
@@ -110,6 +170,7 @@ export function judgeRenderedDeck(
   }
 
   for (const slide of deck.slides) {
+    if (policy.referenceDeck) judgeReferenceSlide(slide, policy.referenceDeck, findings);
     if (slide.offCanvas.length > 0) {
       const worst = Math.max(
         ...slide.offCanvas.map((o) =>
@@ -173,5 +234,8 @@ export function judgeRenderedDeck(
     canvasWidthIn: deck.canvasWidthIn,
     canvasHeightIn: deck.canvasHeightIn,
     findings,
+    ...(policy.referenceDeck
+      ? { fidelityScore: Math.max(0, 100 - findings.length * 5) }
+      : {}),
   };
 }

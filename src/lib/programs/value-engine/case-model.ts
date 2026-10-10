@@ -31,7 +31,7 @@ import {
 } from "./lever-eval";
 import { resolveOverlapExclusions } from "./overlap";
 import { resolveInput, type ResolvedNumber } from "./resolve-inputs";
-import { monthlyCashCents } from "./timing";
+import { monthlyCashCents, monthlyEarnedCents } from "./timing";
 import type {
   Cents,
   InputIssue,
@@ -198,6 +198,9 @@ export interface ScenarioRun {
   annualCash: { figure: Cents; terms: ValueFormulaTerm[] };
   riskAvoidedCents: Cents;
   monthlyCash: Cents[];
+  monthlyCreditedEarned: Cents[];
+  monthlyProgramEarned: Cents[];
+  monthlyProgramPaid: Cents[];
   costCents: Cents;
   discountRate: number;
   npv: { figure: Cents; terms: ValueFormulaTerm[] };
@@ -231,6 +234,46 @@ export function runScenario(
     };
   });
   const cashLevers = levers.filter((lever) => lever.inCash);
+  // Program value retains the probability gate but removes only the declared
+  // attribution share. This is computed from the same resolved formula terms;
+  // a zero attribution never becomes division by zero.
+  const programAnnual = (lever: LeverRun): Cents =>
+    closeProductTerms(
+      lever.inputs.map((term) =>
+        term.cellRole === "attribution" ? { ...term, value: 1 } : term,
+      ),
+      `${lever.prepared.lever.id} program annual value (cents)`,
+    ).figure;
+  const monthlyCreditedEarned = sumCurves(
+    cashLevers.map((lever) =>
+      monthlyEarnedCents(
+        lever.cents,
+        lever.prepared.lever.timing,
+        ready.horizonMonths,
+      ),
+    ),
+    ready.horizonMonths,
+  );
+  const monthlyProgramEarned = sumCurves(
+    cashLevers.map((lever) =>
+      monthlyEarnedCents(
+        programAnnual(lever),
+        lever.prepared.lever.timing,
+        ready.horizonMonths,
+      ),
+    ),
+    ready.horizonMonths,
+  );
+  const monthlyProgramPaid = sumCurves(
+    cashLevers.map((lever) =>
+      monthlyCashCents(
+        programAnnual(lever),
+        lever.prepared.lever.timing,
+        ready.horizonMonths,
+      ),
+    ),
+    ready.horizonMonths,
+  );
   const annualCash = annualTotalWithTerms(
     cashLevers.map((lever) => ({
       leverId: lever.prepared.lever.id,
@@ -258,6 +301,9 @@ export function runScenario(
     annualCash,
     riskAvoidedCents,
     monthlyCash,
+    monthlyCreditedEarned,
+    monthlyProgramEarned,
+    monthlyProgramPaid,
     costCents,
     discountRate,
     npv: npvWithTerms(monthlyCash, costCents, discountRate, ready.horizonYears),

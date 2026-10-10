@@ -354,12 +354,31 @@ export interface CaseEconomics {
   annualCashTerms: ScenarioValues<ValueFormulaTerm[]>;
   riskAvoidedAnnualCents: ScenarioValues<Cents>;
   monthlyCashCents: ScenarioValues<Cents[]>;
+  /** Three-year edition bases. Null when the case horizon is shorter than 3 years. */
+  threeYearBases: ScenarioValues<ThreeYearValueBases> | null;
   costCents: ScenarioValues<Cents>;
   discountRate: number;
   npvCents: ScenarioValues<Cents>;
   npvTerms: ScenarioValues<ValueFormulaTerm[]>;
   /** First 1-based month whose cumulative cash ≥ cost; null if not within the horizon. */
   paybackMonth: ScenarioValues<number | null>;
+}
+
+export interface ThreeYearBasis {
+  /** Year 1, 2 and 3, summed from the engine's monthly curves. */
+  annualCents: [Cents, Cents, Cents];
+  totalCents: Cents;
+  /** (value - one-time investment) / investment; null for zero investment. */
+  roi: number | null;
+}
+
+export interface ThreeYearValueBases {
+  /** Attributed, probability-adjusted value when earned or received. */
+  creditedEarned: ThreeYearBasis;
+  creditedPaid: ThreeYearBasis;
+  /** Probability-adjusted value before the declared attribution share. */
+  programEarned: ThreeYearBasis;
+  programPaid: ThreeYearBasis;
 }
 
 export interface ValueCaseResult {

@@ -27,6 +27,8 @@ import type {
   ScenarioValues,
   ValueCase,
   ValueCaseResult,
+  ThreeYearBasis,
+  ThreeYearValueBases,
   ValueInputResolver,
 } from "./types";
 
@@ -36,6 +38,28 @@ function emptyScenarioTerms(): LeverResult["terms"] {
 
 function scenarioValues<T>(read: (scenario: Scenario) => T): ScenarioValues<T> {
   return { low: read("low"), base: read("base"), high: read("high") };
+}
+
+function threeYearBasis(monthly: readonly number[], costCents: number): ThreeYearBasis {
+  const annualCents = [0, 1, 2].map((year) =>
+    monthly.slice(year * 12, (year + 1) * 12).reduce((sum, value) => sum + value, 0),
+  ) as [number, number, number];
+  const totalCents = annualCents.reduce((sum, value) => sum + value, 0);
+  return {
+    annualCents,
+    totalCents,
+    roi: costCents === 0 ? null : (totalCents - costCents) / costCents,
+  };
+}
+
+function threeYearBases(run: ScenarioRun): ThreeYearValueBases {
+  const basis = (monthly: readonly number[]) => threeYearBasis(monthly, run.costCents);
+  return {
+    creditedEarned: basis(run.monthlyCreditedEarned),
+    creditedPaid: basis(run.monthlyCash),
+    programEarned: basis(run.monthlyProgramEarned),
+    programPaid: basis(run.monthlyProgramPaid),
+  };
 }
 
 function blockedLeverResult(lever: LeverPreparation): LeverResult {
@@ -129,6 +153,10 @@ export function evaluateValueCase(
       annualCashTerms: scenarioValues((s) => runs[s].annualCash.terms),
       riskAvoidedAnnualCents: scenarioValues((s) => runs[s].riskAvoidedCents),
       monthlyCashCents: scenarioValues((s) => runs[s].monthlyCash),
+      threeYearBases:
+        model.horizonYears >= 3
+          ? scenarioValues((s) => threeYearBases(runs[s]))
+          : null,
       costCents: scenarioValues((s) => runs[s].costCents),
       discountRate: runs.base.discountRate,
       npvCents: scenarioValues((s) => runs[s].npv.figure),

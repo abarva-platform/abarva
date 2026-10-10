@@ -1032,6 +1032,39 @@ describe("value engine · boundaries", () => {
       l.ruleViolations.map((v) => v.code),
     );
 
+  it("returns attributed and program value under earned and paid timing", () => {
+    const bases = evaluateValueCase(only(premiumLabour())).economics!.threeYearBases!.base;
+    expect(bases.creditedEarned.annualCents).toEqual([
+      24_960_000, 46_080_000, 46_080_000,
+    ]);
+    expect(bases.creditedPaid.annualCents).toEqual([
+      17_280_000, 46_080_000, 46_080_000,
+    ]);
+    expect(bases.programEarned.annualCents).toEqual([
+      41_600_000, 76_800_000, 76_800_000,
+    ]);
+    expect(bases.programPaid.annualCents).toEqual([
+      28_800_000, 76_800_000, 76_800_000,
+    ]);
+    expect(bases.creditedEarned.totalCents).toBe(117_120_000);
+    expect(bases.creditedPaid.roi).toBeCloseTo(
+      (109_440_000 - 240_000_000) / 240_000_000,
+    );
+  });
+
+  it("does not invent a three-year basis for a shorter horizon or divide by zero cost", () => {
+    expect(
+      evaluateValueCase({ ...only(premiumLabour()), horizonYears: 2 })
+        .economics!.threeYearBases,
+    ).toBeNull();
+    expect(
+      evaluateValueCase({
+        ...only(premiumLabour()),
+        cost: { kind: "estimate", baseCents: 0 },
+      }).economics!.threeYearBases!.base.creditedPaid.roi,
+    ).toBeNull();
+  });
+
   it("accepts a ten-year horizon", () => {
     const result = evaluateValueCase({ ...goldenCase(), horizonYears: 10 });
     expect(result.status).toBe("evaluated");
