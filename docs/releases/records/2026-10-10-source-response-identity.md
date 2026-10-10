@@ -29,7 +29,7 @@ Source New response workbooks must name an accepted supplier by its canonical ID
 
 ## Changes Included
 
-The Source New supplier selector, response upload route, workbook parser, scoped activity-receipt reader, and response-intake read model. No migration or data load.
+The Source New supplier selector, response upload route, workbook parser, scoped activity-receipt reader, and response-intake read model. The existing behavior coverage job has a longer time budget for its unchanged measurement and assertions. No migration or data load.
 
 ## QA / Validation
 
@@ -37,7 +37,8 @@ The Source New supplier selector, response upload route, workbook parser, scoped
 - PASS: Mutation proof: replacing exact-ID package matching with name matching fails both the wrong-ID and same-name cases; the original matcher was restored.
 - PASS: Typecheck on the candidate tree.
 - PASS: CI coverage census, all 11 release gates, and targeted ESLint with zero errors and three existing test-file warnings. The new reader suite is registered in the PR workflow.
-- NOT RUN: PR CI and signed-in runtime readback are separate promotion evidence.
+- CI capacity: The behavior coverage job passed the measurement but was cancelled by its 25-minute timeout during follow-up assertions on one run; the job budget is now 35 minutes, with no threshold or assertion change.
+- PENDING: PR CI on the final head and signed-in runtime readback are separate promotion evidence.
 
 ## Rollout Plan
 
