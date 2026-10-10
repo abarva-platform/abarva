@@ -48,7 +48,10 @@ function mockUnique(table: string, row: Row): boolean {
       (other) =>
         other.program_id === row.program_id &&
         ((other.area === row.area && other.seq === row.seq) ||
-          other.register_id === row.register_id),
+          other.register_id === row.register_id ||
+          // uq_move_assumptions_program_charter_section (partial: non-null only)
+          (row.charter_section_key != null &&
+            other.charter_section_key === row.charter_section_key)),
     );
   }
   if (table === "move_assumption_events") {
@@ -184,6 +187,7 @@ import {
   listAssumptions,
   supersedeAssumption,
   transitionAssumption,
+  upsertCharterAssumption,
 } from "../assumption-register/store";
 import type { TenancyCtx } from "../types.db";
 
@@ -891,5 +895,135 @@ describe("history", () => {
       expect(error.message).toContain("was saved");
     });
     expect(row.status).toBe("rejected");
+  });
+});
+
+describe("upsert by charter section", () => {
+  const CHARTER: NewAssumptionInput = {
+    area: "delivery",
+    statement: "Scope boundary: Claims intake only.",
+    source: "P1 charter, Scope boundary, declared as an assumption",
+    confidence: 1,
+    ownerRole: "Head of Shared Services",
+    origin: "charter_carry_forward",
+    raisedPhase: 1,
+    charterSectionKey: "scope_boundary",
+    charterValueRevision: "rev-1",
+  };
+
+  it("creates the row once, open, and returns it as created", async () => {
+    const result = await upsertCharterAssumption(ctx, MOVE_ID, CHARTER, PERSON);
+    expect(result).toMatchObject({
+      ok: true,
+      created: true,
+      record: {
+        status: "open",
+        origin: "charter_carry_forward",
+        charterSectionKey: "scope_boundary",
+        charterValueRevision: "rev-1",
+        confidence: 1,
+        raisedPhase: 1,
+      },
+    });
+    expect(mockTables.move_assumptions).toHaveLength(1);
+    expect(events()).toHaveLength(1);
+  });
+
+  it("a second call returns the existing row and writes nothing", async () => {
+    const first = await upsertCharterAssumption(ctx, MOVE_ID, CHARTER, PERSON);
+    mockCalls.length = 0;
+    const second = await upsertCharterAssumption(
+      ctx,
+      MOVE_ID,
+      { ...CHARTER, charterValueRevision: "rev-2", statement: "Changed" },
+      PERSON,
+    );
+    expect(second).toEqual({
+      ok: true,
+      created: false,
+      record: first.ok ? first.record : null,
+    });
+    expect(assumptionWrites()).toEqual([]);
+    // The stored row keeps the pin it was raised with; staleness is read, not written.
+    expect(mockTables.move_assumptions[0].charter_value_revision).toBe("rev-1");
+  });
+
+  it("finds the existing row under the tenant's other key, reading inside the tenant fence", async () => {
+    seedRow({
+      tenant_key: CANONICAL_KEY,
+      charter_section_key: "scope_boundary",
+    });
+    const mine = await upsertCharterAssumption(ctx, MOVE_ID, CHARTER, PERSON);
+    expect(mine).toMatchObject({ ok: true, created: false });
+    const read = mockCalls.find(
+      (call) =>
+        call.table === "move_assumptions" &&
+        call.filters.some(([column]) => column === "charter_section_key"),
+    )!;
+    expect(read.filters).toEqual(
+      expect.arrayContaining([
+        ["tenant_key", "in", tenantAliasesFor(APP_KEY)],
+        ["program_id", "eq", MOVE_ID],
+        ["charter_section_key", "eq", "scope_boundary"],
+      ]),
+    );
+  });
+
+  it("losing a race to another load returns the winner's row, not a refusal", async () => {
+    let raced = false;
+    mockHooks.beforeInsert = (table) => {
+      if (table !== "move_assumptions" || raced) return;
+      raced = true;
+      seedRow({
+        area: "delivery",
+        seq: 9,
+        register_id: "DL9",
+        charter_section_key: "scope_boundary",
+      });
+    };
+    const result = await upsertCharterAssumption(ctx, MOVE_ID, CHARTER, PERSON);
+    expect(result).toMatchObject({
+      ok: true,
+      created: false,
+      record: { registerId: "DL9" },
+    });
+    expect(mockTables.move_assumptions).toHaveLength(1);
+  });
+
+  it("refuses anything that is not a charter carry-forward with a section key, writing nothing", async () => {
+    await expect(
+      upsertCharterAssumption(
+        ctx,
+        MOVE_ID,
+        { ...CHARTER, origin: "team" },
+        PERSON,
+      ),
+    ).resolves.toEqual({
+      ok: false,
+      refusal: { code: "invalid_input", field: "origin" },
+    });
+    await expect(
+      upsertCharterAssumption(
+        ctx,
+        MOVE_ID,
+        { ...CHARTER, charterSectionKey: "  " },
+        PERSON,
+      ),
+    ).resolves.toEqual({
+      ok: false,
+      refusal: { code: "invalid_input", field: "charterSectionKey" },
+    });
+    expect(mockCalls).toEqual([]);
+  });
+
+  it("a Move the client does not own is refused and nothing is written", async () => {
+    const result = await upsertCharterAssumption(
+      ctx,
+      "move-foreign",
+      CHARTER,
+      PERSON,
+    );
+    expect(result).toEqual({ ok: false, refusal: { code: "unknown_program" } });
+    expect(assumptionWrites()).toEqual([]);
   });
 });

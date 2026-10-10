@@ -19,7 +19,14 @@ import { scanForInternalLeaks } from "./source-register";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
 import { findExcludedNumericClaims } from "./excluded-numeric-claims";
-import { untracedFigures } from "./numeric-lineage-tokens";
+import {
+  LEGACY_FIGURE_LINEAGE,
+  figureLineagePolicy,
+  judgeFigureSentence,
+  registerCitationIds,
+  untracedFigures,
+  type FigureLineagePolicy,
+} from "./numeric-lineage-tokens";
 import {
   classifySlideDensity,
   deckContractExpectsDiagram,
@@ -151,33 +158,44 @@ function isSupportedExternalBenchmarkClaim(sentence: string): boolean {
   );
 }
 
-/** Collect client-fact-looking claims that lack a [n] citation, assumption, or placeholder. */
+/**
+ * Collect client-fact-looking claims that lack a [n] citation, assumption, or placeholder.
+ *
+ * Under the assumptions register (`policy.enforced`) a bare
+ * `[ASSUMPTION TO VALIDATE` no longer supports a figure; a known `[A:ID]`
+ * does, when every figure the evidence does not back matches a cited row's
+ * figure. See `judgeFigureSentence`.
+ */
 function collectUnsupportedClaims(
   body: string,
   evidence: readonly GovernedEvidenceItem[] = [],
+  policy: FigureLineagePolicy = LEGACY_FIGURE_LINEAGE,
 ): string[] {
   // sentences asserting numbers/dollars/dates/percentages are client-fact candidates
   const sentences = body.split(/(?<=[.!?])\s+/);
   const factLike =
     /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
-  const supported =
-    /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
   const claims: string[] = [];
   for (const s of sentences) {
-    if (
-      factLike.test(s) &&
-      !supported.test(s) &&
-      !isSupportedExternalBenchmarkClaim(s)
-    ) {
-      // Name the figures that trace to nothing. The claim is blocked either
-      // way; this is what lets a reader find the figure inside a long table.
-      const untraced = untracedFigures(s, evidence).slice(0, 6);
+    if (!factLike.test(s) || isSupportedExternalBenchmarkClaim(s)) continue;
+    const verdict = judgeFigureSentence(s, policy);
+    if (verdict.supported) continue;
+    if (verdict.citedRegisterIds.length > 0) {
+      // A register citation was made and a figure in the sentence is not the
+      // cited row's figure (and not in evidence) — name both.
       claims.push(
-        untraced.length > 0
-          ? `${excerptSentence(s)} [figures with no match in evidence: ${untraced.join(", ")}]`
-          : excerptSentence(s),
+        `${excerptSentence(s)} [figures matching neither evidence nor the cited register row(s) ${verdict.citedRegisterIds.map((id) => `[A:${id}]`).join(", ")}: ${verdict.unmatchedFigures.slice(0, 6).join(", ")}]`,
       );
+      continue;
     }
+    // Name the figures that trace to nothing. The claim is blocked either
+    // way; this is what lets a reader find the figure inside a long table.
+    const untraced = untracedFigures(s, evidence).slice(0, 6);
+    claims.push(
+      untraced.length > 0
+        ? `${excerptSentence(s)} [figures with no match in evidence: ${untraced.join(", ")}]`
+        : excerptSentence(s),
+    );
   }
   return claims;
 }
@@ -302,11 +320,13 @@ export function validateDeliverableQuality(
   // made this blocker structurally unreachable, and an invented figure passed
   // purely because it had been relabelled. An assumption the model DECLARED
   // still passes; one it was caught inventing now fails.
+  const lineage = figureLineagePolicy(req);
   const unsupportedClaimExamples = collectUnsupportedClaims(
     doc.generatedSections
       .map((s) => s.rawBodyMarkdown ?? s.bodyMarkdown)
       .join("\n\n"),
     req.governedEvidenceBundle,
+    lineage,
   );
   const unsupportedClaimCount = unsupportedClaimExamples.length;
 
@@ -384,7 +404,22 @@ export function validateDeliverableQuality(
     )
     .map((signal) => `${signal.label} [${signal.citationNumber}]`);
 
+  // A register citation must resolve to a row this generation was given. An
+  // ID outside it — invented, proposed, rejected or superseded — is a citation
+  // a reader cannot follow, wherever in the document it sits.
+  const unknownRegisterIds = lineage.enforced
+    ? registerCitationIds(wholeDocumentText).filter(
+        (id) => !lineage.registerFigures.has(id),
+      )
+    : [];
+
   // ── BLOCKERS ──
+  if (unknownRegisterIds.length > 0)
+    blockers.push(
+      `cites assumptions-register row(s) that are not in this Move's citable register: ${unknownRegisterIds
+        .map((id) => `[A:${id}]`)
+        .join(", ")}`,
+    );
   if (leakedInternalTags.length > 0)
     blockers.push(
       `internal tags/ids leaked into body: ${leakedInternalTags.join(", ")}`,
@@ -395,7 +430,7 @@ export function validateDeliverableQuality(
     );
   if (unsupportedClaimCount > 0)
     blockers.push(
-      `${unsupportedClaimCount} unsupported client-fact claim(s) (number/date/$/% with no [n], assumption, or placeholder): ${unsupportedClaimExamples
+      `${unsupportedClaimCount} unsupported client-fact claim(s) (${lineage.enforced ? "number/date/$/% with no [n], matching register citation [A:ID], or placeholder" : "number/date/$/% with no [n], assumption, or placeholder"}): ${unsupportedClaimExamples
         .slice(0, 3)
         .map((s) => `"${s}"`)
         .join("; ")}`,

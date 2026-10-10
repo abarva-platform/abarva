@@ -33,6 +33,7 @@ import {
   historyNotRecordedResponse,
   landedAssumptionResponse,
   openAssumptionRegister,
+  personAsOwnerRoleResponse,
 } from "@/lib/programs/assumption-register/register-route-access";
 
 export const runtime = "nodejs";
@@ -83,6 +84,8 @@ export async function POST(
         field: parsed.field,
       });
     }
+    const personAsOwner = personAsOwnerRoleResponse(parsed.value.ownerRole);
+    if (personAsOwner) return personAsOwner;
 
     try {
       const result = await createAssumption(ctx, programId, parsed.value, {

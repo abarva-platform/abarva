@@ -117,6 +117,7 @@ export type FeatureFlagKey =
   | "moves_public_source_research"
   | "moves_assumption_register_v1"
   | "moves_value_engine_v1"
+  | "moves_assumption_register_generation_v1"
   | "moves_rom_engine_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
@@ -434,7 +435,7 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_assumption_register_v1",
     summary:
-      "2026-10-10: Turns on the Move-level assumptions register: each working figure a Move's documents rest on becomes a register row with a stable ID (V value, D data, DL delivery, A adoption; never reused) that documents cite as [A:V3], a named source, an owner role, a confidence of 1, 3 or 5, and a status (proposed, open, confirmed, corrected, superseded, rejected). aVa may only propose a row; a person accepts, rejects, answers or supersedes it, and every change is kept in an append-only history. This release adds the storage, the domain rules, the register API (list, add, edit, and accept, reject, answer or supersede) and the aVa propose_assumption tool, which can only add proposed rows. Working figures are shown to anyone who can work the Move's register; a read-only viewer without financial visibility gets them withheld. There is no screen and no document generation reading the register yet, so a user sees a change only when aVa proposes an assumption in the Moves chat. Enabled for the synthetic demo tenant; off for everyone else.",
+      "2026-10-10: Turns on the Move-level assumptions register: each working figure a Move's documents rest on becomes a register row with a stable ID (V value, D data, DL delivery, A adoption; never reused) that documents cite as [A:V3], a named source, an owner role, a confidence of 1, 3 or 5, and a status (proposed, open, confirmed, corrected, superseded, rejected). aVa may only propose a row; a person accepts, rejects, answers or supersedes it, and every change is kept in an append-only history. This release adds the storage, the domain rules, the register API (list, add, edit, and accept, reject, answer or supersede) and the aVa propose_assumption tool, which can only add proposed rows. Working figures are shown to anyone who can work the Move's register; a read-only viewer without financial visibility gets them withheld. The Moves phase page shows the register in the capture flow's opening band: a table of rows (ID, area, assumption, working figure tagged est, owner role, confidence as a word, status, and the answer with its source), aVa's proposals in their own group with Accept and Reject, and, for people who can change the register, add, answer and supersede; every refusal shows the route's own sentence. Each P1 charter answer left standing on an assumption becomes one register row (confidence 1, owner from the charter basis) once the Move is past the charter, written on page load by someone who can change the register and never written twice; an answered row resolves the assumption in the P2 carry-forward, and a row whose charter answer was later edited is flagged until it is answered again. Document generation reads the register only under moves_assumption_register_generation_v1. Enabled for the synthetic demo tenant; off for everyone else.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
@@ -446,6 +447,11 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     includeTenants: ["meridian"],
   },
   {
+    key: "moves_assumption_register_generation_v1",
+    summary:
+      "2026-10-10: Makes the Move assumptions register govern document generation. A Move document's prompt lists the register's open, confirmed and corrected rows (owner role only); a figure not in evidence may appear only as a register working figure cited [A:ID] whose figure matches; a bare [ASSUMPTION TO VALIDATE] tag no longer makes a figure traceable; an [A:ID] naming no citable row blocks the document; and the rendered Move document carries the register table. A register that cannot be read stops the build before any model call. Requires moves_assumption_register_v1 and its applied migration. Off for every tenant until the register migration is applied and the demo Move's register is populated.",
+    policy: "tenant",
+    includeTenants: [],
     key: "moves_rom_engine_v1",
     summary:
       "2026-10-10: Opens the read-only ROM preview route for a Move (POST /api/v1/programs/:programId/rom/preview). The caller posts a ROM structure - use cases with component counts, unit hours per driver with a source and a confidence, releases with a design status, one shared foundation, a pod and the friction and productive share with their sources - and the ROM engine prices it: hours are count x unit hours x friction, each release and the foundation buys whole weeks of the pod at rates from the cost foundation (role x level x location x provider class, with provenance), not-designed releases carry a 0.75 / 1.50 band and designed ones the existing score tiers, and the total counts the shared foundation once. Returns JSON, or a live-formula workbook with ?format=xlsx. Missing unit hours are refused, never defaulted; no AI productivity credit is applied; nothing is written. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",

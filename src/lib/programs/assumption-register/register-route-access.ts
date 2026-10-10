@@ -24,15 +24,16 @@ import {
 } from "@/lib/auth/program-access-policy";
 import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
 import type { TenancyCtx } from "@/lib/programs/types.db";
-import type { AssumptionRecord } from "./model";
+import { ASSUMPTION_REGISTER_FLAG, type AssumptionRecord } from "./model";
 import { RegisterHistoryWriteError } from "./store";
 import {
   describeHistoryNotRecorded,
   registerRefusalResponse,
 } from "./assumption-register-refusal";
 import { assumptionForViewer } from "./register-request";
+import { looksLikePersonalName } from "./owner-role";
 
-export const ASSUMPTION_REGISTER_FLAG = "moves_assumption_register_v1";
+export { ASSUMPTION_REGISTER_FLAG };
 
 /** May this policy change this Move's register? */
 export function canWriteRegister(
@@ -106,6 +107,20 @@ export async function openAssumptionRegister(
     policy,
     figures: { canViewFinancialData: seesRegisterFigures(policy, programId) },
   };
+}
+
+/**
+ * The refusal for an owner ROLE that reads like a person, or null. Documents
+ * and aVa read `owner_role`, so a person never goes there; `owner_name` may
+ * still carry one, and no generation view reads it. Checked before the store,
+ * so a refused row writes nothing.
+ */
+export function personAsOwnerRoleResponse(
+  ownerRole: string | null | undefined,
+): Response | null {
+  return typeof ownerRole === "string" && looksLikePersonalName(ownerRole)
+    ? registerRefusalResponse({ code: "owner_role_is_a_person" })
+    : null;
 }
 
 const UUID_RE =

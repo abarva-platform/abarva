@@ -351,7 +351,8 @@ export interface MovesStepPageProps {
   onBack?: () => void;
 }
 
-function useStepPageTheme() {
+/** The step pages' theme: the saved `mv-theme` toggle, else the system preference. */
+export function useStepPageTheme() {
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
   const [systemDark, setSystemDark] = useState(false);
   useEffect(() => {
