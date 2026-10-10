@@ -1,3 +1,4 @@
+/** @jest-environment jsdom */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
@@ -35,7 +36,8 @@ describe("VendorEvaluationScorecardPanel", () => {
       }),
     );
 
-    expect(html).toContain("Normalized Vendor Comparison");
+    expect(html).toContain("Vendor Comparison");
+    expect(html).not.toContain("Normalized Vendor Comparison");
     expect(html).toContain("Evaluation Scorecard");
     expect(html).toContain("Executive Tradeoff Summary");
     expect(html).toContain("Executive decision cockpit");
@@ -45,7 +47,7 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).toContain("BAFO upside to test");
     expect(html).toContain("Do not award yet");
     expect(html).toContain("Open conditions before award");
-    expect(html).toContain("do not confuse lowest price with lowest risk");
+    expect(html).toContain("Price ranking withheld");
     expect(html).toContain("How the score is defended");
     expect(html).toContain("BAFO Improvement Scenario");
     expect(html).toContain("Held");
@@ -77,5 +79,33 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).not.toMatch(
       /source_events|Sourcing Artifacts|Mode:|Current state:|Airline Demo|SKYH-NORMALIZE|Atlas Decision Brief|Steward sign-off|Sentinel Risk/i,
     );
+  });
+
+  it("does not name a vendor as a price benchmark when comparison is withheld", () => {
+    const profiles = buildVendorResponseMveProfiles({
+      id: "skyh-price-test",
+      name: "SkyHarbor AMS Outsourcing",
+      accountName: "SkyHarbor Air",
+    });
+    const view = buildVendorEvaluationDecisionView(profiles)!;
+    const html = renderToStaticMarkup(
+      createElement(VendorEvaluationScorecardPanel, { decisionView: view }),
+    );
+    const root = document.createElement("div");
+    root.innerHTML = html;
+    const cockpit = root.querySelector(
+      '[aria-label="Executive decision cockpit"]',
+    )!;
+    const label = Array.from(cockpit.querySelectorAll("span")).find(
+      (node) => node.textContent === "Price benchmark",
+    )!;
+    expect(label.parentElement?.textContent).toContain("Not comparable");
+    expect(label.parentElement?.textContent).not.toMatch(/Vendor [ABC]/);
+    expect(cockpit.textContent).toContain("Price ranking withheld");
+    const commercial = Array.from(root.querySelectorAll("tr")).find((node) =>
+      node.textContent?.includes("Commercial value"),
+    )!;
+    expect(commercial.textContent).toContain("Withheld");
+    expect(commercial.textContent).not.toContain("0.0");
   });
 });

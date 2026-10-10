@@ -5,9 +5,9 @@
   "method": "Population: non-test .tsx under src/components/source, walked with the same walk/isExcluded the route-reachability audit uses. Reachability: docs/architecture/unreachable-components.json. Covered: the transitive IMPORT closure of each audited root, intersected with the route-reachable population.",
   "upperBoundCaveat": "coveredUpperBound is an UPPER bound on what the control proves: an import closure is a superset of a render closure, because importing a module is not rendering it and a branch the fixtures never take renders nothing. remainderPaths is therefore a sound LOWER bound on the gap — no audited root can reach any of them under any props.",
   "population": {
-    "sourceComponentFiles": 209,
+    "sourceComponentFiles": 208,
     "unreachable": 103,
-    "routeReachable": 106
+    "routeReachable": 105
   },
   "auditedRoots": [
     {
@@ -39,7 +39,7 @@
       "surfaceName": "source canvas · every workspace and disclosure",
       "path": "src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx",
       "routeReachable": true,
-      "importClosureFiles": 440
+      "importClosureFiles": 439
     },
     {
       "surfaceName": "step insight panel · every insight kind",
@@ -49,8 +49,8 @@
     }
   ],
   "coverage": {
-    "coveredUpperBound": 45,
-    "population": 106,
+    "coveredUpperBound": 44,
+    "population": 105,
     "remainder": 61
   },
   "coveredPaths": [
@@ -83,7 +83,6 @@
     "src/components/source/canvas/responses/CompletenessMatrix.tsx",
     "src/components/source/canvas/responses/EvaluationBafoReadinessPanel.tsx",
     "src/components/source/canvas/responses/NormalizedResponseQualityPanel.tsx",
-    "src/components/source/canvas/responses/QnaSymmetryLog.tsx",
     "src/components/source/canvas/responses/ResponsesStageView.tsx",
     "src/components/source/canvas/responses/VendorBafoInstructionPackPanel.tsx",
     "src/components/source/canvas/responses/VendorChallengeLeveragePanel.tsx",

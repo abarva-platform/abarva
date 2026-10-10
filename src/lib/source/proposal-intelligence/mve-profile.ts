@@ -23,6 +23,7 @@ import {
   weightedScoreOverScorable,
   type CriterionEvidenceSpec,
 } from "./evidence-scoring";
+import { buildPricingRow } from "./evaluation-bafo-readiness";
 
 interface VendorResponsePackageFixture {
   sourceEventId: string;
@@ -1145,21 +1146,30 @@ export function buildVendorEvaluationDecisionView(
 ): VendorEvaluationDecisionView | null {
   if (!profileSet?.profiles.length) return null;
   const profiles = profileSet.profiles;
-  const scorecardRows = buildEvaluationScorecardRows(profiles, intelligence);
+  const priceRankingBlockers = pricingRankingBlockers(profiles);
+  const priceComparable = priceRankingBlockers.length === 0;
+  const scorecardRows = buildEvaluationScorecardRows(
+    profiles,
+    intelligence,
+    priceComparable,
+  );
   const vendorSummaries = buildEvaluationVendorSummaries({
     profiles,
     scorecardRows,
     intelligence,
     bafoPack,
+    priceComparable,
   });
   const sorted = [...vendorSummaries].sort(
     (a, b) => b.weightedScore - a.weightedScore,
   );
-  const cheapest = [...profiles].sort(
-    (a, b) =>
-      (a.pricingSummary.fiveYearTcoUsd ?? Number.MAX_SAFE_INTEGER) -
-      (b.pricingSummary.fiveYearTcoUsd ?? Number.MAX_SAFE_INTEGER),
-  )[0];
+  const cheapest = priceComparable
+    ? [...profiles].sort(
+        (a, b) =>
+          (a.pricingSummary.fiveYearTcoUsd ?? Number.MAX_SAFE_INTEGER) -
+          (b.pricingSummary.fiveYearTcoUsd ?? Number.MAX_SAFE_INTEGER),
+      )[0]
+    : null;
   // Highest transition risk is the vendor with the lowest transition-readiness
   // score, which is itself derived from that vendor's transition exhibit and
   // transition extraction cards. Ranking by score rather than by array order
@@ -1182,29 +1192,33 @@ export function buildVendorEvaluationDecisionView(
     tenantKey: profileSet.tenantKey,
     generatedAt: profileSet.generatedAt,
     scoreBasis:
-      "Default demo evaluation model derived from MVE profiles, challenge log, BAFO holdbacks, pricing summaries, SLA commitments, transition findings, assumptions, exceptions, and evidence completeness. Weighted scores are advisory and remain conditional until human reviewers validate BAFO evidence.",
+      "Default response evaluation model, not an approved archetype scorecard. Derived from MVE profiles, challenge log, BAFO holdbacks, pricing summaries, SLA commitments, transition findings, assumptions, exceptions, and evidence completeness. Weighted scores are advisory and remain conditional until human reviewers validate BAFO evidence.",
     finalistRecommendation: buildFinalistRecommendation(vendorSummaries),
     scoringTransparency: [
       "Weighted total = sum of each criterion score multiplied by its weight; weights total 100%. Only criteria that have parsed evidence are included. A criterion with no evidence is excluded and its weight is spread across the rest, rather than scored as zero.",
       "Every criterion score is derived from the evidence it cites: the extraction cards of that type, the structured exhibit behind them, and the response section map. The rationale on each score names the drivers that moved it.",
-      "Commercial value rewards lower normalized TCO only after pass-throughs, optional scope, retained effort, and transition costs are comparable.",
+      priceComparable
+        ? "Commercial value rewards lower normalized TCO only after pass-throughs, optional scope, retained effort, and transition costs are comparable."
+        : "Price ranking and commercial-value contribution are withheld for the whole field until pricing is comparable. The advisory total excludes commercial value; it is not a full commercial ranking.",
       "Execution-risk criteria can outweigh price when staffing, transition, SLA, scope, or exceptions remain conditional.",
       "A vendor can improve only by submitting cited BAFO exhibits that close the named scoring holdbacks.",
     ],
     vendorCount: profiles.length,
-    comparisonRows: buildEvaluationComparisonRows(profiles),
+    comparisonRows: buildEvaluationComparisonRows(profiles, priceComparable),
     scorecardRows,
     vendorSummaries,
     scoreImprovementScenarios: buildScoreImprovementScenarios(
       vendorSummaries,
       profiles,
+      priceComparable,
     ),
     executiveTradeoffs: buildExecutiveTradeoffs(
       vendorSummaries,
       cheapest ?? null,
     ),
     leadingVendorId: sorted[0]?.vendorId ?? profiles[0].vendorId,
-    cheapestVendorId: cheapest?.vendorId ?? profiles[0].vendorId,
+    cheapestVendorId: cheapest?.vendorId ?? null,
+    priceRankingBlockers,
     highestTransitionRiskVendorId:
       typeof highestTransitionRisk === "string"
         ? highestTransitionRisk
@@ -1213,6 +1227,40 @@ export function buildVendorEvaluationDecisionView(
       .filter((summary) => summary.recommendation !== "hold_until_clarified")
       .map((summary) => summary.vendorId),
   };
+}
+
+function pricingRankingBlockers(profiles: VendorResponseProfile[]): string[] {
+  const blockers = profiles.length < 2
+    ? ["At least two comparable bids are required for a price ranking."]
+    : [];
+  for (const profile of profiles) {
+    const row = buildPricingRow(profile);
+    if (row.comparability !== "comparable") {
+      blockers.push(`${profile.vendorName}: ${row.rationale}`);
+    }
+    const totals = [
+      profile.pricingSummary.fiveYearTcoUsd,
+      profile.pricingSummary.yearOneRunCostUsd,
+    ];
+    if (totals.some((value) => value === null || !Number.isFinite(value) || value < 0)) {
+      blockers.push(
+        `${profile.vendorName}: a finite non-negative cost total is not recorded.`,
+      );
+    }
+    const workbook = profile.exhibits.find(
+      (exhibit) => exhibit.kind === "pricing_workbook",
+    );
+    if (workbook?.status !== "complete" || !workbook.evidenceReference?.trim()) {
+      blockers.push(`${profile.vendorName}: cited complete pricing workbook required.`);
+    }
+    if (
+      workbook?.issue &&
+      /uncapped|not comparable|optional|unpriced|excluded|assumption/i.test(workbook.issue)
+    ) {
+      blockers.push(`${profile.vendorName}: ${workbook.issue}`);
+    }
+  }
+  return blockers;
 }
 
 /** Posture from the vendor's own structured exhibit for this dimension. */
@@ -1256,21 +1304,25 @@ function caveatFromCard(
 
 function buildEvaluationComparisonRows(
   profiles: VendorResponseProfile[],
+  priceComparable: boolean,
 ): VendorEvaluationComparisonRow[] {
   return [
     comparisonRow(profiles, {
       id: "normalized-tco",
-      label: "Normalized 5-year TCO",
-      decisionUse:
-        "Shows cost position after transition, optional, and one-time lines are visible.",
+      label: priceComparable ? "Normalized 5-year TCO" : "Reported 5-year TCO",
+      decisionUse: priceComparable
+        ? "Shows cost position after transition, optional, and one-time lines are visible."
+        : "Reported amounts are not a comparable price ranking; resolve pricing assumptions before comparison.",
       value: (profile) => money(profile.pricingSummary.fiveYearTcoUsd),
       caveat: (profile) => profile.pricingSummary.pricingBasis,
       posture: (profile) =>
-        postureFromCostRank(
-          profile,
-          profiles,
-          (candidate) => candidate.pricingSummary.fiveYearTcoUsd,
-        ),
+        priceComparable
+          ? postureFromCostRank(
+              profile,
+              profiles,
+              (candidate) => candidate.pricingSummary.fiveYearTcoUsd,
+            )
+          : "watch",
       evidence: (profile) => profile.pricingSummary.pricingBasis,
     }),
     comparisonRow(profiles, {
@@ -1282,11 +1334,13 @@ function buildEvaluationComparisonRows(
       caveat: (profile) =>
         caveatFromCard(profile, "pricing", profile.pricingSummary.pricingBasis),
       posture: (profile) =>
-        postureFromCostRank(
-          profile,
-          profiles,
-          (candidate) => candidate.pricingSummary.yearOneRunCostUsd,
-        ),
+        priceComparable
+          ? postureFromCostRank(
+              profile,
+              profiles,
+              (candidate) => candidate.pricingSummary.yearOneRunCostUsd,
+            )
+          : "watch",
       evidence: (profile) => profile.pricingSummary.pricingBasis,
     }),
     comparisonRow(profiles, {
@@ -1455,6 +1509,7 @@ const CRITERION_EVIDENCE: Record<string, CriterionEvidenceSpec> = {
 function buildEvaluationScorecardRows(
   profiles: VendorResponseProfile[],
   intelligence?: VendorChallengeIntelligence | null,
+  priceComparable = false,
 ): VendorEvaluationScorecardRow[] {
   const criteria: Array<{
     id: string;
@@ -1548,23 +1603,37 @@ function buildEvaluationScorecardRows(
           profile.vendorId,
           criterion.id,
         );
+        const priceWithheld =
+          criterion.id === "commercial-value" && !priceComparable;
         const readiness =
-          mustResolve.length > 0
-            ? {
-                eligibility: "clarification_required" as const,
-                label: "Must-resolve issue open",
-                action: mustResolve[0].clarificationQuestion,
-              }
-            : scoreReadinessFromEvidence(derived);
+          !derived.scorable && !priceWithheld
+            ? scoreReadinessFromEvidence(derived)
+            : priceWithheld && mustResolve.length === 0
+              ? {
+                  eligibility: "clarification_required" as const,
+                  label: "Price comparison withheld",
+                  action:
+                    "Normalize the full bid field and resolve pricing assumptions before commercial scoring.",
+                }
+              : mustResolve.length > 0
+                ? {
+                    eligibility: "clarification_required" as const,
+                    label: "Must-resolve issue open",
+                    action: mustResolve[0].clarificationQuestion,
+                  }
+                : scoreReadinessFromEvidence(derived);
         return {
           vendorId: profile.vendorId,
           vendorName: profile.vendorName,
-          score: derived.score,
-          weightedContribution: derived.scorable
-            ? weightedContribution(derived.score, criterion.weight)
-            : 0,
-          rationale:
-            mustResolve.length > 0
+          score: priceWithheld ? 0 : derived.score,
+          scoreWithheld: priceWithheld,
+          weightedContribution:
+            derived.scorable && !priceWithheld
+              ? weightedContribution(derived.score, criterion.weight)
+              : 0,
+          rationale: priceWithheld
+            ? "Price comparison withheld: the full bid field is not comparable. No commercial-value contribution is included in the advisory total."
+            : mustResolve.length > 0
               ? `${derived.rationale} Provisional: ${mustResolve.length} must-resolve issue(s) remain for this criterion.`
               : derived.rationale,
           evidenceLabel:
@@ -1648,6 +1717,7 @@ function buildEvaluationVendorSummaries(args: {
   scorecardRows: VendorEvaluationScorecardRow[];
   intelligence?: VendorChallengeIntelligence | null;
   bafoPack?: VendorBafoInstructionPack | null;
+  priceComparable: boolean;
 }): VendorEvaluationVendorSummary[] {
   const totals = args.profiles.map((profile) => {
     const weightedScore = weightedVendorScore(
@@ -1681,13 +1751,19 @@ function buildEvaluationVendorSummaries(args: {
         .filter((challenge) => challenge.severity === "high")
         .map((challenge) => challenge.clarificationQuestion);
       const conditions = Array.from(
-        new Set(
-          highChallengeQuestions.length > 0
+        new Set([
+          ...(highChallengeQuestions.length > 0
             ? highChallengeQuestions
-            : (bafoInstruction?.mustResolveBeforeScoring ?? []),
-        ),
+            : (bafoInstruction?.mustResolveBeforeScoring ?? [])),
+          ...(!args.priceComparable
+            ? [
+                "Normalize the full bid field before commercial ranking or advancement.",
+              ]
+            : []),
+        ]),
       );
       const hasMustResolve =
+        !args.priceComparable ||
         (bafoInstruction?.mustResolveBeforeScoring.length ?? 0) > 0 ||
         openChallenges.some((challenge) => challenge.severity === "high");
       const recommendation = recommendationForVendor(profile, {
@@ -1892,9 +1968,10 @@ function buildExecutiveTradeoffs(
 function buildScoreImprovementScenarios(
   summaries: VendorEvaluationVendorSummary[],
   profiles: VendorResponseProfile[],
+  priceComparable: boolean,
 ): VendorEvaluationScoreImpact[] {
   const cured = profiles.map(cureProfileGaps);
-  const curedRows = buildEvaluationScorecardRows(cured);
+  const curedRows = buildEvaluationScorecardRows(cured, null, priceComparable);
 
   return summaries.map((summary) => {
     const profile = profiles.find(
@@ -2246,7 +2323,7 @@ function whyItMatters(issueCategory: VendorChallengeIssueCategory): string {
     case "pricing_gap":
       return "Pricing that cannot be normalized can distort TCO, evaluation scoring, and BAFO leverage.";
     case "sla_gap":
-      return "Weak remedies reduce accountability on services that matter to airline operations.";
+      return "Weak remedies reduce accountability for business-critical services.";
     case "staffing_coverage_gap":
       return "Coverage claims without staffing detail create operational risk after transition.";
     case "transition_gap":
