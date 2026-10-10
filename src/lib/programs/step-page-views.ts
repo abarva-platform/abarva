@@ -2,7 +2,8 @@
  * The step pages that exist under `moves_step_pages_v3`, by the `?step=`
  * value that opens each one. One map, so the phase page parses the query
  * and every step page links to its siblings from the same source; a step
- * without a page links to the phase.
+ * without a page links to the phase. A view may need a flag of its own as
+ * well: `rom-estimate` (P3 Step 4) mounts only with `moves_rom_engine_v1`.
  */
 
 export const STEP_PAGE_VIEWS = {
@@ -20,6 +21,7 @@ export const STEP_PAGE_VIEWS = {
   "root-cause-design": { phase: 3, stepId: "P3.1" },
   "architecture-options": { phase: 3, stepId: "P3.2" },
   "operating-adoption": { phase: 3, stepId: "P3.3" },
+  "rom-estimate": { phase: 3, stepId: "P3.4" },
   gate: { phase: 3, stepId: "P3.5" },
   "p4-milestones": { phase: 4, stepId: "P4.1" },
   "p4-estimate": { phase: 4, stepId: "P4.2" },
