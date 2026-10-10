@@ -5,6 +5,13 @@ on:
     paths:
       - .github/workflows/moves-step-pages-live-walk.yml
       - tests/e2e/moves-step-pages-live-walk.spec.ts
+      - tests/e2e/_helpers/moves-walk-ux-capture.ts
+      - tests/e2e/_helpers/moves-walk-ux-score.ts
+      - tests/e2e/_helpers/moves-walk-journey.ts
+      - tests/e2e/_helpers/moves-walk-coverage.ts
+      - tests/behaviors/moves-walk-ux-quality.test.ts
+      - src/app/api/v1/programs/**/phase-intelligence/route.ts
+      - src/lib/programs/phase-intelligence-summary.ts
       - tests/e2e/_helpers/moves-gate-walk.ts
       - tests/e2e/programs-p0-to-tower.spec.ts
       - tests/e2e/programs-phase-4-to-5.spec.ts
@@ -12,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       move_id:
-        description: "Existing synthetic demo Move ID that can open P0 through P5"
+        description: "Existing active synthetic demo Move ID; later phases are reported as not reachable"
         required: true
         type: string
   workflow_run:
@@ -126,7 +133,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install chromium --with-deps
-      - name: Capture every phase and step view
+      - name: Capture phase views, UX scores, and the read-only journey
         run: npx playwright test tests/e2e/moves-step-pages-live-walk.spec.ts --project=chromium --workers=1 --retries=0
       - name: Upload signed-in proof
         if: always()
