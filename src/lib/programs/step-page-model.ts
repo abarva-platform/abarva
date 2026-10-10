@@ -111,9 +111,14 @@ function sentence(body: string): string {
 }
 
 function readyActionSentence(body: string): string {
-  // Authored ready copy commonly combines a completion statement and a
-  // "Continue to" instruction. Keep both facts in one clear action line.
-  return sentence(body.replace(/\.\s+Continue\s+to\s+/i, "; continue to "));
+  // Ready copy can contain a completion statement, provenance, and a
+  // forward action. Keep all three facts in one action line without dropping
+  // the source wording or introducing a second sentence.
+  return sentence(
+    body
+      .replace(/\.\s+(?=[A-Z])/g, "; ")
+      .replace(/;\s+Continue\s+to\s+/i, "; continue to "),
+  );
 }
 
 const decisionClause = (row: StepRow) =>
