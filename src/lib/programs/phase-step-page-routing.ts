@@ -5,13 +5,22 @@ import {
 } from "@/lib/programs/step-page-views";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 
-export const EXISTING_STEP_PAGE_VIEWS: readonly StepPageView[] = [
+const DEDICATED_STEP_PAGE_VIEWS = [
   "root-causes",
   "root-cause-design",
   "architecture-options",
   "operating-adoption",
   "rom-estimate",
-  "gate",
+] as const satisfies readonly StepPageView[];
+
+// GateReadinessStep is mounted for the last workflow step in every phase.
+// Derive those views from the workflow instead of maintaining a second gate list.
+export const EXISTING_STEP_PAGE_VIEWS: readonly StepPageView[] = [
+  ...DEDICATED_STEP_PAGE_VIEWS,
+  ...(Object.keys(STEP_PAGE_VIEWS) as StepPageView[]).filter((view) => {
+    const entry = STEP_PAGE_VIEWS[view];
+    return resolvePhaseWorkflow(entry.phase, null).at(-1)?.id === entry.stepId;
+  }),
 ];
 
 export function phaseStepPageFlagEnabled(
