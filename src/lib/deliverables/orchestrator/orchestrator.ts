@@ -34,6 +34,7 @@ import {
   validateGenerationPlan,
 } from "./generation-plan";
 import { validateDeliverableQuality } from "./quality-validator";
+import { figureLineagePolicy } from "./numeric-lineage-tokens";
 import {
   mapWithConcurrency,
   extractUnsupportedFigureClaims,
@@ -183,6 +184,8 @@ export async function runDeliverableOrchestration(
 
   const brief = adaptArtifactBriefForDepth(req, getArtifactBrief(req));
   const evidence = req.governedEvidenceBundle;
+  // How a figure is judged traced — the same policy the quality gate applies.
+  const lineage = figureLineagePolicy(req);
   const trace: PassTraceEntry[] = [];
 
   // Pass 1 — architect
@@ -273,8 +276,12 @@ export async function runDeliverableOrchestration(
       const citationRepairedBody = repairEvidenceBackedUncitedFigures(
         body,
         evidence,
+        lineage,
       );
-      const unsupported = extractUnsupportedFigureClaims(citationRepairedBody);
+      const unsupported = extractUnsupportedFigureClaims(
+        citationRepairedBody,
+        lineage,
+      );
       for (const claim of unsupported) {
         unsupportedFigureClaims.push({
           sectionKey: s.key,
@@ -297,7 +304,7 @@ export async function runDeliverableOrchestration(
       return {
         key: s.key,
         title: (parsed && parsed.title) || s.title,
-        bodyMarkdown: repairUncitedFigures(citationRepairedBody),
+        bodyMarkdown: repairUncitedFigures(citationRepairedBody, lineage),
         // Keep the evidence-backed citation repair visible to validation while
         // leaving invented/transformed figures unsupported.
         rawBodyMarkdown: citationRepairedBody,
@@ -416,9 +423,11 @@ export async function runDeliverableOrchestration(
         const citationRepairedBody = repairEvidenceBackedUncitedFigures(
           (parsed && parsed.bodyMarkdown) || res.text,
           evidence,
+          lineage,
         );
         const unsupportedClaims = extractUnsupportedFigureClaims(
           citationRepairedBody,
+          lineage,
         ).map((claim) => ({
           sectionKey: section.key,
           sectionTitle: (parsed && parsed.title) || section.title,
@@ -439,7 +448,7 @@ export async function runDeliverableOrchestration(
         const repairedSection = {
           ...section,
           title: (parsed && parsed.title) || section.title,
-          bodyMarkdown: repairUncitedFigures(citationRepairedBody),
+          bodyMarkdown: repairUncitedFigures(citationRepairedBody, lineage),
           rawBodyMarkdown: citationRepairedBody,
           citationsUsed,
         };

@@ -22,9 +22,14 @@ import { requireTenancy } from "@/lib/auth/tenancy";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { getProgramById } from "../queries";
 import type {
+  MoveAssumptionRegisterInput,
   MoveBusinessCaseInput,
   MoveGovernedEvidenceItem,
 } from "../move-business-case";
+import {
+  assumptionRegisterGovernsGeneration,
+  loadAssumptionRegisterForGeneration,
+} from "../assumption-register/generation-feed";
 
 /**
  * Load the `MoveBusinessCaseInput` for a Move by id, tenancy-scoped.
@@ -130,6 +135,26 @@ export async function loadMoveBusinessCaseInput(
     })
     .catch(() => []);
 
+  // The Move assumptions register — read only when it governs generation for
+  // this tenant. A failed read is carried as `unavailable`, never as an empty
+  // register: the orchestrated runner refuses to generate on it.
+  let assumptionRegister: MoveAssumptionRegisterInput | undefined;
+  if (assumptionRegisterGovernsGeneration(ctx)) {
+    try {
+      const assumptions = await loadAssumptionRegisterForGeneration(
+        ctx,
+        moveId,
+      );
+      assumptionRegister = { status: "loaded", assumptions: assumptions ?? [] };
+    } catch (err) {
+      console.error(
+        "[load-move-business-case-input] assumptions register read failed",
+        err,
+      );
+      assumptionRegister = { status: "unavailable" };
+    }
+  }
+
   return {
     industry_code: moveIndustryCode ?? industryCode,
     name: program.name,
@@ -142,5 +167,6 @@ export async function loadMoveBusinessCaseInput(
     governed_evidence_items: governedEvidenceItems,
     tenant_key: tenantKey,
     tenant_name: tenantName,
+    ...(assumptionRegister ? { assumptionRegister } : {}),
   };
 }

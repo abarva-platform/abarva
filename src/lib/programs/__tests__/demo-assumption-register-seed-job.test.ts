@@ -27,7 +27,10 @@ import path from "node:path";
 import yaml from "js-yaml";
 
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
-import { namesAPerson } from "@/lib/governance/dataset-manifest";
+import {
+  namesAPerson,
+  resolveLoadApproval,
+} from "@/lib/governance/dataset-manifest";
 import {
   formatRegisterId,
   INITIAL_STATUS_BY_ORIGIN,
@@ -92,6 +95,19 @@ function committedManifests(): Array<Record<string, unknown>> {
 }
 
 /** The committed manifests, with this seed's load approval as a person would add it. */
+/**
+ * The committed manifests with this dataset's load approval removed: the
+ * refusal paths are tested against a manifest no person has approved, whatever
+ * the committed manifest says today.
+ */
+function unapprovedManifests(): Array<Record<string, unknown>> {
+  return committedManifests().map((manifest) =>
+    manifest.dataset_id === "moves_demo_assumption_register_seed_v1"
+      ? { ...manifest, load_approval: null }
+      : manifest,
+  );
+}
+
 function approvedManifests(
   approval: Record<string, unknown> = {},
 ): Array<Record<string, unknown>> {
@@ -288,7 +304,7 @@ type Harness = {
 function harness(
   register: SeedRegisterPort,
   overrides: Partial<SeedJobDeps> = {},
-  manifests: Array<Record<string, unknown>> = committedManifests(),
+  manifests: Array<Record<string, unknown>> = unapprovedManifests(),
 ): Harness {
   const local: Record<string, unknown> = {};
   const blobs: Record<string, string> = {};
@@ -1721,5 +1737,34 @@ describe("the dispatch workflow", () => {
     ]) {
       expect(text).not.toMatch(forbidden);
     }
+  });
+});
+
+describe("the committed load approval", () => {
+  it("is a named person's approval of exactly the committed seed", () => {
+    const seedPath = path.join(
+      process.cwd(),
+      "datasets/tenant-inputs/meridian-health/moves/demo-assumption-register-seed.json",
+    );
+    const seedText = readFileSync(seedPath, "utf8");
+    const seedHash = createHash("sha256").update(seedText).digest("hex");
+    const seed = JSON.parse(seedText) as {
+      move: { move_id: string };
+      rows: unknown[];
+    };
+    const manifest = committedManifests().find(
+      (m) => m.dataset_id === "moves_demo_assumption_register_seed_v1",
+    ) as { client_key?: string } | undefined;
+    const decision = resolveLoadApproval(committedManifests(), {
+      dataset_id: "moves_demo_assumption_register_seed_v1",
+      tenant_key: String(manifest?.client_key ?? ""),
+      assessment_id: seed.move.move_id,
+      source_set_hash: seedHash,
+      object_count: seed.rows.length,
+      ingestion_method: "operator_aca_job",
+      move_id: seed.move.move_id,
+    });
+    // Editing the seed without a fresh approval fails here, not at apply time.
+    expect(decision).toMatchObject({ approved: true });
   });
 });
