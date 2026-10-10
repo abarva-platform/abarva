@@ -90,8 +90,8 @@ export async function GET(req: NextRequest): Promise<Response> {
     }
 
     if (moveInput) {
-      if (isFeatureEnabled({ clientKey: moveInput.tenant_key ?? moveInput.tenantKey }, VALUE_ENGINE_FLAG)) {
-        const ctx = await requireTenancy();
+      const ctx = await requireTenancy();
+      if (isFeatureEnabled({ clientKey: ctx.clientKey, clientId: ctx.clientId }, VALUE_ENGINE_FLAG)) {
         let valueRead: Awaited<ReturnType<typeof loadValueGenerationForMove>>;
         try {
           valueRead = await loadValueGenerationForMove(ctx, moveId);

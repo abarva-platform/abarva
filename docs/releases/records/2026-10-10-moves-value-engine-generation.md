@@ -51,7 +51,8 @@ if hours saved are monetized without a counted release path.
   checks pass. The separate legacy artifact route refuses a flagged structured
   value case and directs it to the governed phase build. The separate generic
   CFO-pack route does the same, before its older orchestration or deterministic
-  deck path can apply planning proxies.
+  deck path can apply planning proxies. Its flag check uses the authenticated
+  app client key even when the stored Move carries another tenant alias.
 - The worker checks the queued input hash and engine prompt against the
   current read before generation. A drifted basis blocks the run.
 - The prompt names each lever's conversion status, scenario figures, formula
@@ -67,7 +68,7 @@ if hours saved are monetized without a counted release path.
 
 ## QA / Validation
 
-- Focused tests: PASS, 10 suites and 182 tests — engine-to-prompt-to-validator, flagged route refusal,
+- Focused tests: PASS, 10 suites and 183 tests — engine-to-prompt-to-validator, flagged route refusal,
   free-text/flag-off behavior, scenario and source mismatch, external public
   benchmark separation, exhibit value strings, no second haircut,
   approved-ROM priority, stale or unreadable ROM, hours-release linkage,

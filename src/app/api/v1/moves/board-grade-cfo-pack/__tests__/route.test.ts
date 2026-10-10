@@ -56,6 +56,16 @@ describe("board-grade CFO route value-model boundary", () => {
     expect(mockPersist).not.toHaveBeenCalled();
   });
 
+  it("evaluates the guard from the authenticated app key when the Move stores an alias", async () => {
+    mockLoadMove.mockResolvedValue({ tenant_key: "substrate-alias", name: "Fictional Move" });
+    mockFlag.mockImplementation((ctx: { clientKey?: string }) => ctx.clientKey === "demo");
+    mockLoadValue.mockResolvedValue({ kind: "ready", snapshot: { inputHash: "hash" } });
+    const response = await GET(request());
+    expect(response.status).toBe(409);
+    expect(mockFlag).toHaveBeenCalledWith({ clientKey: "demo", clientId: "client-1" }, expect.any(String));
+    expect(mockRender).not.toHaveBeenCalled();
+  });
+
   it("passes through the specific review-required refusal", async () => {
     mockFlag.mockReturnValue(true);
     mockLoadValue.mockResolvedValue({ kind: "review_required", detail: "Review lever L1 and [A:V3]." });
