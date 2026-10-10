@@ -156,7 +156,11 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
         expect.stringContaining("Define"),
         expect.stringContaining("Suppliers & NDA"),
         expect.stringContaining("Market package"),
+        expect.stringContaining("Responses"),
+        expect.stringContaining("Evaluation"),
       ]);
+      expect(primaryJourneyItems[5]).toHaveAttribute("href", "/source/events/evt-src57?stage=responses");
+      expect(primaryJourneyItems[6]).toHaveAttribute("href", "/source/events/evt-src57?stage=evaluation");
       expect(
         primaryJourneyItems.map((item) => item.textContent).join(" "),
       ).not.toContain("Executive Decision");
@@ -177,17 +181,17 @@ describe("SourceAnalyticsCanvas New Event journey smoke", () => {
         minWidth: "0",
       });
       expect(
-        screen.queryByTestId("source-shell-v2-files"),
-      ).not.toBeInTheDocument();
+      screen.queryByTestId("source-shell-v2-files"),
+    ).not.toBeInTheDocument();
       expect(
-        screen.queryByTestId("source-shell-v2-intelligence"),
-      ).not.toBeInTheDocument();
+      screen.queryByTestId("source-shell-v2-intelligence"),
+    ).not.toBeInTheDocument();
       expect(
         screen.queryByTestId("source-shell-v2-approvals"),
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByTestId("source-shell-v2-guidebook"),
-      ).not.toBeInTheDocument();
+      screen.queryByTestId("source-shell-v2-guidebook"),
+    ).not.toBeInTheDocument();
 
       expect(
         screen.getByTestId("source-stage-header-readiness"),

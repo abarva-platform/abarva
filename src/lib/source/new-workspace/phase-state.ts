@@ -14,17 +14,25 @@ import type { SourceStageKey } from "@/lib/source/types";
 import { getSourceCategory } from "@/lib/source/taxonomy/category-taxonomy";
 
 /**
- * The four operator phases the Source New workspace can place an accepted
+ * The operator phases the Source New workspace can place an accepted
  * event in today. They are product vocabulary, not the eleven internal stage
  * keys.
  */
-export type SourceNewPhaseKey = "request" | "define" | "suppliers" | "rfi";
+export type SourceNewPhaseKey =
+  | "request"
+  | "define"
+  | "suppliers"
+  | "rfi"
+  | "responses"
+  | "evaluation";
 
 export const SOURCE_NEW_PHASE_ORDER: readonly SourceNewPhaseKey[] = [
   "request",
   "define",
   "suppliers",
   "rfi",
+  "responses",
+  "evaluation",
 ];
 
 export const SOURCE_NEW_PHASE_DISPLAY_LABELS: Record<SourceNewPhaseKey, string> = {
@@ -32,11 +40,13 @@ export const SOURCE_NEW_PHASE_DISPLAY_LABELS: Record<SourceNewPhaseKey, string> 
   define: "Define",
   suppliers: "Suppliers & NDA",
   rfi: "Market package",
+  responses: "Responses",
+  evaluation: "Evaluation",
 };
 
 /**
- * The public Source New flow has five visible checkpoints: the request-first
- * entry before an event exists, then the four event phases above. Internal
+ * The public Source New flow starts with request-first
+ * entry before an event exists, then the event phases above. Internal
  * stage keys remain governed by SOURCE_STAGE_ORDER; do not add internal stages
  * here to make a product rail look complete.
  */
@@ -62,6 +72,7 @@ export type SourceNewPhaseState =
   | "historical_gap"
   | "no_record"
   | "not_open"
+  | "unavailable"
   /**
    * A phase this event's journey never visits. Distinct from `not_open`, which
    * means "ahead of the event, and coming". Reporting an off-path phase as
@@ -78,9 +89,10 @@ export const SOURCE_NEW_PHASE_STATE_LABELS: Record<SourceNewPhaseState, string> 
   no_record: "No record",
   not_open: "Later",
   off_path: "Not on this path",
+  unavailable: "Read unavailable",
 };
 
-export type SourceNewPhaseEvidence = Record<SourceNewPhaseKey, boolean>;
+export type SourceNewPhaseEvidence = Record<SourceNewPhaseKey, boolean | null>;
 
 /**
  * The canonical stages each product phase stands for.
@@ -99,6 +111,8 @@ export const SOURCE_NEW_PHASE_STAGE_KEYS: Record<
   define: ["strategy", "scope"],
   suppliers: [],
   rfi: ["rfp"],
+  responses: ["responses"],
+  evaluation: ["evaluation"],
 };
 
 /**
@@ -205,16 +219,20 @@ export function awaitsIntakeReview(lifecycle: string): boolean {
 
 /**
  * The phase the event is working in, or `null` when no phase owns it: either
- * the event has advanced past the four phases this workspace covers, or its
+ * the event has advanced past the phases this workspace covers, or its
  * stage key is not one we recognise. `suppliers` is never current — Phase 1
  * has no supplier stage of its own, so supplier work is evidenced by its
  * artifacts, never asserted from the stage key.
  */
-export function sourceNewCurrentPhase(event: SourceNewPhasePositionInput): SourceNewPhaseKey | null {
+export function sourceNewCurrentPhase(
+  event: SourceNewPhasePositionInput,
+): SourceNewPhaseKey | null {
   if (awaitsIntakeReview(event.lifecycle)) return "request";
+  if (event.lifecycle === "completed") return null;
   const stage = event.currentStage.trim().toLowerCase();
   if (["intake", "strategy", "sourcing_strategy", "scope"].includes(stage)) return "define";
   if (["rfp", "rfp_rfi_package"].includes(stage)) return "rfi";
+  if (stage === "responses" || stage === "evaluation") return stage;
   return null;
 }
 
@@ -311,16 +329,18 @@ export function sourceNewNextAction(event: SourceNewOperatorContextInput): {
 }
 
 /**
- * True when the event's stage sits after `rfp` in the canonical stage order,
+ * True when the event's stage sits after `evaluation` in the canonical stage order,
  * so every phase this workspace shows is behind the event.
  */
-export function isPastSourceNewPhases(event: SourceNewPhasePositionInput): boolean {
+export function isPastSourceNewPhases(
+  event: SourceNewPhasePositionInput,
+): boolean {
   if (awaitsIntakeReview(event.lifecycle)) return false;
   const canonical = normalizeSourceStageKey(event.currentStage);
   if (!canonical) return false;
   const index = SOURCE_STAGE_ORDER.indexOf(canonical);
-  const rfpIndex = SOURCE_STAGE_ORDER.indexOf("rfp");
-  return index > rfpIndex;
+  const lastPhaseIndex = SOURCE_STAGE_ORDER.indexOf("evaluation");
+  return index > lastPhaseIndex;
 }
 
 /**
@@ -362,6 +382,7 @@ export function sourceNewPhaseState(
     return "off_path";
   }
   const behind = (): SourceNewPhaseState => {
+    if (evidence[phase] === null) return "unavailable";
     if (evidence[phase]) return "recorded";
     return event.lifecycle === "completed" ? "historical_gap" : "no_record";
   };
@@ -463,6 +484,7 @@ export function sourceNewFilePhase(artifact: {
   if (stage === "intake") return "request";
   if (stage === "strategy" || stage === "sourcing_strategy" || stage === "scope") return "define";
   if (stage === "rfp" || stage === "rfp_rfi_package") return "rfi";
+  if (stage === "responses" || stage === "evaluation") return stage;
   return "other";
 }
 

@@ -43,8 +43,10 @@ describe("Source old surface archive guard", () => {
       "define",
       "suppliers",
       "rfi",
+      "responses",
+      "evaluation",
     ]);
-    expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toHaveLength(5);
+    expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toHaveLength(7);
 
     expect(SOURCE_STAGE_ORDER).toEqual([
       "strategy",

@@ -8,7 +8,7 @@
 .snw-heading p { color: #686868; margin: 0; font-size: 13px; }
 .snw-event-state { color: #a46711; font-size: 12px; white-space: nowrap; padding-top: 5px; }
 .snw-event-state.is-active { color: #0f6e56; }
-.snw-phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid #d8d8d5; }
+.snw-phases { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-bottom: 1px solid #d8d8d5; }
 .snw-phases button { appearance: none; border: 0; border-bottom: 2px solid transparent; background: none; padding: 18px 4px 16px; text-align: left; display: flex; gap: 9px; min-width: 0; color: #666; cursor: pointer; }
 .snw-phases button[aria-current="step"] { color: #161616; border-bottom-color: #161616; }
 .snw-phase-number, .snw-eyebrow { font: 10px/1.4 "JetBrains Mono", ui-monospace, monospace; text-transform: uppercase; color: #6c6c6c; }
