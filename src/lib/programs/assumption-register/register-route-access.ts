@@ -31,6 +31,7 @@ import {
   registerRefusalResponse,
 } from "./assumption-register-refusal";
 import { assumptionForViewer } from "./register-request";
+import { looksLikePersonalName } from "./owner-role";
 
 export { ASSUMPTION_REGISTER_FLAG };
 
@@ -106,6 +107,20 @@ export async function openAssumptionRegister(
     policy,
     figures: { canViewFinancialData: seesRegisterFigures(policy, programId) },
   };
+}
+
+/**
+ * The refusal for an owner ROLE that reads like a person, or null. Documents
+ * and aVa read `owner_role`, so a person never goes there; `owner_name` may
+ * still carry one, and no generation view reads it. Checked before the store,
+ * so a refused row writes nothing.
+ */
+export function personAsOwnerRoleResponse(
+  ownerRole: string | null | undefined,
+): Response | null {
+  return typeof ownerRole === "string" && looksLikePersonalName(ownerRole)
+    ? registerRefusalResponse({ code: "owner_role_is_a_person" })
+    : null;
 }
 
 const UUID_RE =

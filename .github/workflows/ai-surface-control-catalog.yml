@@ -383,6 +383,7 @@ jobs:
           src/components/strategic-moves/__tests__/capture-phase-progress.test.ts
           src/components/strategic-moves/__tests__/CharterAssumptionsCarryForward.test.tsx
           src/components/strategic-moves/__tests__/CharterStandingAfterDiscover.test.tsx
+          src/components/strategic-moves/__tests__/AssumptionRegisterPanel.test.tsx
           src/components/strategic-moves/__tests__/phase-stepper-state-label.test.ts
           src/components/strategic-moves/__tests__/approvals-overview-labels.test.ts
           src/components/strategic-moves/__tests__/phase-approval-standing.test.ts

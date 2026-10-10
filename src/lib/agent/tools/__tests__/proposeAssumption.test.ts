@@ -59,10 +59,8 @@ jest.mock("@/lib/programs/assumption-register/store", () => ({
   createAssumption: (...args: unknown[]) => mockCreateAssumption(...args),
 }));
 
-import {
-  looksLikePersonalName,
-  proposeAssumptionTool,
-} from "../program/proposeAssumption";
+import { proposeAssumptionTool } from "../program/proposeAssumption";
+import { looksLikePersonalName } from "@/lib/programs/assumption-register/owner-role";
 import { TenancyError } from "@/app/api/v1/programs/_auth";
 import {
   INITIAL_STATUS_BY_ORIGIN,
