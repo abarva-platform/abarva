@@ -380,4 +380,24 @@ describe("buildSourceNewResponseIntake", () => {
       artifactId: null,
     });
   });
+
+  it("does not credit a normalized package from another event stage", () => {
+    const intake = buildSourceNewResponseIntake({
+      eventId: "event-1",
+      tenantKey: "example-client",
+      asOf: "2026-03-10",
+      uploadActionHref: "/api/v1/source/event-1/artifacts/upload",
+      vendorPanel: acceptedPanel,
+      files: [fileRow],
+      responseArtifacts: [{ ...artifact, stageKey: "rfp" }],
+      normalizedPackages: [normalizedPackage],
+    });
+
+    expect(intake.rows[0]).toMatchObject({
+      uploadState: "not_uploaded",
+      parseState: "not_parsed",
+      parsedRequirementCount: 0,
+      artifactId: null,
+    });
+  });
 });

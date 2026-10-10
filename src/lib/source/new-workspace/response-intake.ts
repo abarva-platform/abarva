@@ -84,6 +84,7 @@ export function buildSourceNewResponseIntake(
     (artifact) =>
       artifact.sourceEventId === input.eventId &&
       tenantKeys.has(artifact.tenantKey) &&
+      artifact.stageKey === "responses" &&
       artifact.deletedAt === null,
   );
   const eventArtifactIds = new Set(
