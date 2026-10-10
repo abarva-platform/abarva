@@ -47,6 +47,7 @@ import { ArtifactBlockerList } from "@/components/source/canvas/ArtifactBlockerL
 import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics/SourceAnalyticsCanvas";
 import { StepInsightPanel } from "@/components/source/canvas/analytics/insights/StepInsightPanel";
 import { RenewalCockpitActionBar } from "@/components/source/RenewalCockpitActionBar";
+import { SourceNewPhasePreview } from "@/components/source/new-workspace/SourceNewPhasePreview";
 import { SimpleStageFront } from "@/components/source/canvas/SimpleStageFront";
 import { resolveSimpleStageScreen } from "@/lib/source/simple-front";
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs/artifact-specs";
@@ -216,6 +217,31 @@ function canonicalArtifactCodeIn(term: string): string | null {
 }
 
 const SURFACES: readonly SurfaceUnderAudit[] = [
+  {
+    name: "source new · phase preview (all steps)",
+    rootPath: "src/components/source/new-workspace/SourceNewPhasePreview.tsx",
+    renderAndDrive: () => {
+      let text = "";
+      for (const phase of ["request", "define", "suppliers", "rfi"] as const) {
+        const { container, getAllByRole, unmount } = render(
+          <SourceNewPhasePreview phase={phase} />,
+        );
+        const tabs = getAllByRole("tab");
+        const panels = new Set<string>();
+        for (const tab of tabs) {
+          fireEvent.click(tab);
+          panels.add(getAllByRole("tabpanel")[0].textContent ?? "");
+          text += "\n" + (container.textContent ?? "");
+        }
+        if (panels.size !== tabs.length) {
+          throw new Error(`The ${phase} preview did not render every step panel.`);
+        }
+        unmount();
+      }
+      return text;
+    },
+    adjudicated: {},
+  },
   {
     name: "renewal cockpit · action bar (all panels opened)",
     rootPath: "src/components/source/RenewalCockpitActionBar.tsx",

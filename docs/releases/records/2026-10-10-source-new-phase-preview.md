@@ -31,6 +31,7 @@ All clients using the Source New workspace. No feature flag or client-specific d
 - Source New work view: empty step previews for unopened phases and an explicit off-path view.
 - Presentation-only step inventory for the four Source New phases; no new canonical stage keys.
 - Render tests for preview navigation, state honesty, and off-path exclusion.
+- Builder-vocabulary render audit now mounts every preview phase and step; the measured covered set gains this component without growing the unaudited remainder.
 
 ## QA / Validation
 
@@ -46,6 +47,9 @@ All clients using the Source New workspace. No feature flag or client-specific d
 - Independent read-only review found three gaps in the candidate: premature absence copy, hidden
   off-path file associations, and non-focusable static tab content. Regression tests were added and
   all three were corrected before merge.
+- The required behavior coverage gate exposed the new preview as unaudited. The rendered control now
+  drives every tab in all four phases, and the derived coverage artifact is regenerated. Disabling
+  tab clicks failed the focused audit; restoring them passed 51 tests across the render and coverage suites.
 
 ## Rollout Plan
 
