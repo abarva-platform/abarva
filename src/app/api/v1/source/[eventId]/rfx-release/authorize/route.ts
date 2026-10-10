@@ -17,6 +17,17 @@ const authorizationRequest = z.object({
   confirmAuthorize: z.literal("AUTHORIZE_RFX_RELEASE"),
 });
 
+function authorizationTenancyFailure(error: unknown): Response {
+  try {
+    return tenancyErrorResponse(error);
+  } catch {
+    return Response.json(
+      { ok: false, error: "tenancy_unavailable" },
+      { status: 503 },
+    );
+  }
+}
+
 export async function GET(
   request: Request,
   { params }: RouteContext,
@@ -26,7 +37,7 @@ export async function GET(
   try {
     tenancy = await requireTenancy();
   } catch (error) {
-    return tenancyErrorResponse(error);
+    return authorizationTenancyFailure(error);
   }
   const activeClient = await getActiveClientRow().catch(() => null);
   if (
@@ -79,7 +90,7 @@ export async function POST(
   try {
     tenancy = await requireTenancy();
   } catch (error) {
-    return tenancyErrorResponse(error);
+    return authorizationTenancyFailure(error);
   }
 
   const [activeClient, user] = await Promise.all([

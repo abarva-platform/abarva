@@ -1,4 +1,5 @@
 const requireTenancyMock = jest.fn();
+const tenancyErrorResponseMock = jest.fn();
 const getActiveClientRowMock = jest.fn();
 const getCurrentUserMock = jest.fn();
 const loadPolicyMock = jest.fn();
@@ -10,7 +11,7 @@ const revalidatePathMock = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => requireTenancyMock(),
-  tenancyErrorResponse: () => Response.json({ error: "forbidden" }, { status: 403 }),
+  tenancyErrorResponse: (...args: unknown[]) => tenancyErrorResponseMock(...args),
 }));
 jest.mock("@/lib/active-client", () => ({ getActiveClientRow: () => getActiveClientRowMock() }));
 jest.mock("@/lib/auth/current-user", () => ({ getCurrentUser: () => getCurrentUserMock() }));
@@ -76,6 +77,7 @@ function request(overrides: Record<string, unknown> = {}): Request {
 beforeEach(() => {
   jest.clearAllMocks();
   requireTenancyMock.mockResolvedValue({ clientKey: "tenant-alpha", userId: "person-1" });
+  tenancyErrorResponseMock.mockImplementation(() => Response.json({ error: "forbidden" }, { status: 403 }));
   getActiveClientRowMock.mockResolvedValue({ key: "tenant-alpha" });
   getCurrentUserMock.mockResolvedValue({ personId: "person-1", name: "Named reviewer" });
   loadPolicyMock.mockResolvedValue({ canApproveSourceStages: true, sourceEventIdsAllowed: null });
@@ -100,6 +102,21 @@ function authorizeRequest(overrides: Record<string, unknown> = {}): Request {
 }
 
 describe("RFx package authorization route", () => {
+  it("returns a retryable response when tenancy fails unexpectedly", async () => {
+    const failure = new Error("private lookup failure");
+    requireTenancyMock.mockRejectedValue(failure);
+    tenancyErrorResponseMock.mockImplementation(() => { throw failure; });
+    const readRequest = new Request(`https://app.example.test/api/v1/source/${eventId}/rfx-release/authorize?packageVersionId=version-1`);
+
+    const readResponse = await authorizeGET(readRequest, params);
+    const writeResponse = await authorizePOST(authorizeRequest(), params);
+    expect(readResponse.status).toBe(503);
+    expect(writeResponse.status).toBe(503);
+    await expect(readResponse.json()).resolves.toMatchObject({ error: "tenancy_unavailable" });
+    expect(readAuthorizationMock).not.toHaveBeenCalled();
+    expect(authorizeMock).not.toHaveBeenCalled();
+  });
+
   it("reads the exact version only for a signed-in operator scoped to the event", async () => {
     const request = new Request(`https://app.example.test/api/v1/source/${eventId}/rfx-release/authorize?packageVersionId=version-1`);
     const response = await authorizeGET(request, params);
