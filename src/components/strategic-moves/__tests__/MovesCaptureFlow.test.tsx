@@ -85,6 +85,15 @@ describe("MovesCaptureFlow", () => {
     expect(screen.getByRole("button", { name: /^Continue$/ })).toBeInTheDocument();
   });
 
+  it("opens only the requested legacy section when a missing page links into capture", () => {
+    renderFlow({
+      initialStep: 1,
+      initialFocusSectionKey: "decision_rights",
+    });
+    expect(screen.getByRole("heading", { name: "People & decisions" })).toBeInTheDocument();
+    expect(screen.getByTestId("input-decision_rights")).toHaveFocus();
+  });
+
   it("Continue walks the three steps; the last step submits and shows the hand-off", () => {
     const { onSubmitPhase } = renderFlow();
 

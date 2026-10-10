@@ -114,6 +114,8 @@ export type FeatureFlagKey =
   | "moves_capture_phase_rollup_v1"
   | "moves_charter_standing_after_discover_v1"
   | "moves_step_pages_v3"
+  | "moves_step_pages_p0p1_v1"
+  | "moves_step_pages_p4p5_v1"
   | "moves_public_source_research"
   | "moves_assumption_register_v1"
   | "moves_value_engine_v1"
@@ -422,6 +424,20 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_step_pages_v3",
     summary:
       "2026-10-09: Renders Moves phase steps as the finalized step page template (five regions: step head, one next-action sentence with its count, a collapsed context line, grouped work rows, footer), one page per step declared in the phase workflow registry, with depth from the Move's change profile. First step: P3 Gate readiness, where gate checks, gate-document sign-off and the governed gate submission happen on one page through the existing build, sign-off and phase-gate-approval paths. Same capture keys, saves, documents and gate rules; only where and how the consultant acts changes. Requires moves_capture_v2. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_step_pages_p0p1_v1",
+    summary:
+      "Opt-in P0 and P1 step-page mount and sunset routing. A phase defaults to step pages only after every step has an implemented page; the existing capture remains available during transition. Requires moves_step_pages_v3 and moves_capture_v2.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_step_pages_p4p5_v1",
+    summary:
+      "Opt-in P4 and P5 step-page mount and sunset routing. A phase defaults to step pages only after every step has an implemented page; the existing capture remains available during transition. Requires moves_step_pages_v3 and moves_capture_v2.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },

@@ -67,6 +67,11 @@ jobs:
       AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID }}
       EVIDENCE_DIR: audit-artifacts/moves-demo-register-seed-job
       PROOF_OUTPUT_DIR: ${{ inputs.mode == 'dry_run' && 'live-dry-run' || 'live-apply' }}
+      # An apply writes its proof bundle to the private data-plane Blob proof
+      # container through the operator job's managed identity (a Storage Blob
+      # Data Contributor there). A dry run writes nothing and needs neither.
+      PROOF_STORAGE_ACCOUNT: ${{ vars.MOVES_REGISTER_SEED_PROOF_STORAGE_ACCOUNT || 'stabarvaprivatedplab001' }}
+      PROOF_STORAGE_IDENTITY_CLIENT_ID: ${{ vars.MOVES_REGISTER_SEED_PROOF_IDENTITY_CLIENT_ID || '3b6e0c9d-2265-499f-af46-965e0ad78b95' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -87,6 +92,9 @@ jobs:
             [[ "$GITHUB_REF" == 'refs/heads/main' ]] || { echo 'Apply is main-only' >&2; exit 1; }
             [[ "$CONFIRM_APPLY" == 'APPLY_DEMO_ASSUMPTION_REGISTER_SEED' ]] || { echo 'Exact confirmation required' >&2; exit 1; }
             [[ -n "$APPROVAL_REFERENCE" ]] || { echo 'Separate data-load approval ID required' >&2; exit 1; }
+            [[ "$PROOF_STORAGE_ACCOUNT" =~ ^[a-z0-9]{3,24}$ && "$PROOF_STORAGE_IDENTITY_CLIENT_ID" =~ ^[0-9a-f-]{36}$ ]] || {
+              echo 'Private Blob proof target is not configured' >&2; exit 1;
+            }
             jq -e --arg hash "$actual" --arg move "$move_id" \
               '.load_approval.source_set_hash == $hash and .load_approval.move_id == $move' \
               "$SEED_MANIFEST_PATH" > /dev/null || {
@@ -164,6 +172,8 @@ jobs:
             --env MOVES_REGISTER_SEED_APPLY_APPROVED=true \
             --env MOVES_REGISTER_SEED_CONFIRMATION=APPLY_DEMO_ASSUMPTION_REGISTER_SEED \
             --env MOVES_REGISTER_SEED_APPROVAL_REFERENCE="$APPROVAL_REFERENCE" \
+            --env AZURE_STORAGE_ACCOUNT_NAME="$PROOF_STORAGE_ACCOUNT" \
+            --env ECL_SYNTHETIC_STORAGE_IDENTITY_CLIENT_ID="$PROOF_STORAGE_IDENTITY_CLIENT_ID" \
             --env MOVES_REGISTER_SEED_TENANT_KEY="$DEMO_TENANT_KEY" \
             --env MOVES_REGISTER_SEED_INPUT_SHA256="$INPUT_SHA256" \
             --env MOVES_REGISTER_SEED_IDEMPOTENCY_KEY="$IDEMPOTENCY_KEY" \

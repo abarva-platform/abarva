@@ -108,6 +108,6 @@ Data: register rows are never deleted by the product, and the history is append-
 ## Known Gaps
 
 - The apply is blocked until a named person adds the manifest load approval. This is intended.
-- The job assumes the private operator job carries the Blob proof storage account and identity environment that the existing Moves operator jobs use. A dispatch confirms or refutes this.
+- The job assumed the private operator job already had the Blob proof storage account and identity settings. The first apply dispatch refuted this: it stopped before starting (`AZURE_STORAGE_ACCOUNT_NAME_required`) and wrote nothing. Follow-up fix: the dispatch workflow now passes the private data-plane proof account and the operator job's attached managed identity (a Storage Blob Data Contributor on that account) to the apply only. Each can be overridden with a repository variable. The scope step refuses an apply when either is malformed. A new test checks that every variable the job requires in apply mode is supplied by the apply step.
 - Figures are synthetic and single-source. A confirmed row is confirmed only against the synthetic assessment it cites, and each answer says so. The tenant-intake lineage report marks the intake spend totals as single-source, so the spend baseline row is left open for Finance.
 - Generation is not switched on here.
