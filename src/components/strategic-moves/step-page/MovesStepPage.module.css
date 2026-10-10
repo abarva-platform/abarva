@@ -1562,3 +1562,14 @@ textarea.q-input {
   line-height: 1.5;
   color: var(--mv-ink);
 }
+/* ═════════ Template v1.9: the assumptions register (from core.css; existing tokens only) ═════════ */
+.withheld { color: var(--mv-faint); font-style: italic; }
+/* Product port: the mock's inline paddings and the register's own container. */
+.reg-root { min-height: 0; container: main / inline-size; }
+.toolbar .seg { flex: 0 1 280px; }
+.reg-list .items, .settled .items { padding: 16px 24px; }
+.settled .items { padding-top: 4px; }
+.reg-foot { padding: 0 24px 16px; margin: 0; font-size: 13px; color: var(--mv-muted); }
+.reg-empty { padding: 16px 24px; margin: 0; font-size: 13px; color: var(--mv-muted); }
+.reg-subform { display: flex; flex-direction: column; gap: 10px; }
+.reg-copy { min-height: 160px; font-family: var(--mv-font-mono); font-size: 12px; }

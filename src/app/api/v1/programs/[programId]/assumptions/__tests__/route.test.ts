@@ -1469,6 +1469,7 @@ describe("assumptions register refusals", () => {
       code: "supersede_incomplete",
       replacement: { registerId: "V2", revision: 1 },
     },
+    owner_role_is_a_person: { code: "owner_role_is_a_person" },
   };
 
   it.each(Object.keys(REGISTER_REFUSAL_STATUS) as RegisterRefusalCode[])(
@@ -1490,5 +1491,112 @@ describe("assumptions register refusals", () => {
       "Someone changed this assumption after you opened it. Nothing was saved. " +
         "Reload the register, check the current version, and make your change again.",
     );
+  });
+});
+
+// ── Owner role: a role, never a person ───────────────────────────────────────
+// Documents and aVa read `owner_role`. The shared heuristic
+// (`looksLikePersonalName`, assumption-register/owner-role.ts) refuses a value
+// that reads like a person; `owner_name` may still carry one.
+
+describe("assumptions register routes · the owner role is never a person", () => {
+  const PERSON_DETAIL =
+    "The owner role reads like a person's name or an email address. Nothing was saved. " +
+    "The owner field takes a role, such as CFO office or Finance Director, because documents and aVa read the owner role and must never carry a person's name. " +
+    "Enter the role, and put the person's name in the owner name field if you need it.";
+  // Synthetic: built to read as a name to the heuristic.
+  const PEOPLE = ["Avery Quill", "avery.quill@example.test", "Dr. Quill"];
+
+  it("the refusal's sentence is the one the screen shows", () => {
+    expect(detailOf({ code: "owner_role_is_a_person" })).toBe(PERSON_DETAIL);
+  });
+
+  it.each(PEOPLE)(
+    "create refuses %p as the owner role, saving nothing",
+    async (owner) => {
+      const res = await create({ ...NEW_ROW_BODY, ownerRole: owner });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({
+        ok: false,
+        error: "owner_role_is_a_person",
+        detail: PERSON_DETAIL,
+      });
+      expect(storeCalls()).toBe(0);
+    },
+  );
+
+  it.each(PEOPLE)(
+    "edit refuses %p as the owner role, saving nothing",
+    async (owner) => {
+      const res = await edit({ expectedRevision: 1, ownerRole: owner });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({
+        ok: false,
+        error: "owner_role_is_a_person",
+        detail: PERSON_DETAIL,
+      });
+      expect(storeCalls()).toBe(0);
+    },
+  );
+
+  it("a supersede's new replacement row is held to the same rule", async () => {
+    const res = await decide({
+      action: "supersede",
+      expectedRevision: 1,
+      replacement: { ...NEW_ROW_BODY, ownerRole: "Avery Quill" },
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("owner_role_is_a_person");
+    expect(storeCalls()).toBe(0);
+  });
+
+  it.each([
+    "CFO office",
+    "Finance Director",
+    "Head of Shared Services",
+    "Treasury",
+  ])("a role (%p) is accepted on create and on edit", async (role) => {
+    expect((await create({ ...NEW_ROW_BODY, ownerRole: role })).status).toBe(
+      201,
+    );
+    expect(mockStore.createAssumption.mock.calls[0][2].ownerRole).toBe(role);
+    expect((await edit({ expectedRevision: 1, ownerRole: role })).status).toBe(
+      200,
+    );
+    expect(mockStore.editAssumption.mock.calls[0][4]).toEqual({
+      ownerRole: role,
+    });
+  });
+
+  it("a person's name is still accepted in owner_name, beside a role", async () => {
+    const res = await create({
+      ...NEW_ROW_BODY,
+      ownerRole: "CFO office",
+      ownerName: "Avery Quill",
+    });
+    expect(res.status).toBe(201);
+    expect(mockStore.createAssumption.mock.calls[0][2]).toMatchObject({
+      ownerRole: "CFO office",
+      ownerName: "Avery Quill",
+    });
+    const edited = await edit({
+      expectedRevision: 1,
+      ownerName: "Avery Quill",
+    });
+    expect(edited.status).toBe(200);
+    expect(mockStore.editAssumption.mock.calls[0][4]).toEqual({
+      ownerName: "Avery Quill",
+    });
+  });
+
+  it("an edit that does not touch the owner role is not checked against it", async () => {
+    rows = [record({ ownerRole: "Avery Quill" })];
+    // Only `ownerRole` is held to the rule: a statement may name anyone.
+    const res = await edit({
+      expectedRevision: 1,
+      statement: "Avery Quill",
+      ownerName: "Avery Quill",
+    });
+    expect(res.status).toBe(200);
   });
 });

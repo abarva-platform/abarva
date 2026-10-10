@@ -1,0 +1,192 @@
+name: Moves demo assumption register seed job
+
+# Seeds the assumptions register of the synthetic demo tenant's demo Move from
+# the committed seed definition, through the private ACA operator job in the
+# CURRENTLY DEPLOYED, digest-pinned web image. It deploys nothing: no image
+# build, no Container App template change, no traffic change.
+#
+# dry_run authenticates the Move, reads its register and reports the planned
+# writes; it writes nothing. apply writes only after a separate, named-person
+# load approval in the dataset manifest, from main, with an exact confirmation.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry_run reports planned writes only; apply writes after a separate load approval"
+        required: true
+        type: choice
+        options: [dry_run, apply]
+        default: dry_run
+      input_sha256:
+        description: "Exact SHA-256 of the committed seed definition"
+        required: true
+        type: string
+      idempotency_key:
+        description: "moves-demo-register-seed-v1:<sha256 of '<move_id>|<input_sha256>'>"
+        required: true
+        type: string
+      approval_reference:
+        description: "Apply only: non-secret ID of the separate data-load approval"
+        required: false
+        type: string
+        default: ""
+      confirm_apply:
+        description: "Apply only: type APPLY_DEMO_ASSUMPTION_REGISTER_SEED"
+        required: false
+        type: string
+        default: ""
+
+concurrency:
+  group: moves-demo-register-seed-job
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  register-seed:
+    name: Dry-run or apply the demo assumption register seed
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      JOB_MODE: ${{ inputs.mode }}
+      INPUT_SHA256: ${{ inputs.input_sha256 }}
+      IDEMPOTENCY_KEY: ${{ inputs.idempotency_key }}
+      APPROVAL_REFERENCE: ${{ inputs.approval_reference }}
+      CONFIRM_APPLY: ${{ inputs.confirm_apply }}
+      SEED_PATH: datasets/tenant-inputs/meridian-health/moves/demo-assumption-register-seed.json
+      SEED_MANIFEST_PATH: docs/governance/dataset-manifests/moves-demo-assumption-register-seed-v1.json
+      DEMO_TENANT_KEY: meridian-health
+      CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+      RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+      AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+      AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+      AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID }}
+      EVIDENCE_DIR: audit-artifacts/moves-demo-register-seed-job
+      PROOF_OUTPUT_DIR: ${{ inputs.mode == 'dry_run' && 'live-dry-run' || 'live-apply' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify exact seed scope and approval boundary
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$INPUT_SHA256" =~ ^[a-f0-9]{64}$ ]] || { echo 'input_sha256 must be a lowercase SHA-256' >&2; exit 1; }
+          actual="$(sha256sum "$SEED_PATH" | cut -d' ' -f1)"
+          [[ "$actual" == "$INPUT_SHA256" ]] || { echo 'Committed seed hash differs from dispatch' >&2; exit 1; }
+          move_id="$(jq -r '.move.move_id' "$SEED_PATH")"
+          [[ "$move_id" =~ ^[0-9a-f-]{36}$ ]] || { echo 'Seed does not declare a Move id' >&2; exit 1; }
+          expected_key="moves-demo-register-seed-v1:$(printf '%s' "${move_id}|${actual}" | sha256sum | cut -d' ' -f1)"
+          [[ "$IDEMPOTENCY_KEY" == "$expected_key" ]] || { echo 'Idempotency key is not bound to this Move and seed' >&2; exit 1; }
+          if [[ "$JOB_MODE" == "apply" ]]; then
+            [[ "$GITHUB_REF" == 'refs/heads/main' ]] || { echo 'Apply is main-only' >&2; exit 1; }
+            [[ "$CONFIRM_APPLY" == 'APPLY_DEMO_ASSUMPTION_REGISTER_SEED' ]] || { echo 'Exact confirmation required' >&2; exit 1; }
+            [[ -n "$APPROVAL_REFERENCE" ]] || { echo 'Separate data-load approval ID required' >&2; exit 1; }
+            jq -e --arg hash "$actual" --arg move "$move_id" \
+              '.load_approval.source_set_hash == $hash and .load_approval.move_id == $move' \
+              "$SEED_MANIFEST_PATH" > /dev/null || {
+              echo 'The dataset manifest carries no load approval for this seed hash and Move' >&2; exit 1;
+            }
+          fi
+          run_id="moves-demo-register-seed-${GITHUB_RUN_ID}"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          mkdir -p "$EVIDENCE_DIR"
+          jq -n --arg mode "$JOB_MODE" --arg inputSha256 "$actual" --arg runId "$run_id" \
+            --arg moveId "$move_id" \
+            --arg idempotencyKeySha256 "$(printf '%s' "$IDEMPOTENCY_KEY" | sha256sum | cut -d' ' -f1)" \
+            '{mode:$mode,inputSha256:$inputSha256,runId:$runId,moveId:$moveId,idempotencyKeySha256:$idempotencyKeySha256}' \
+            > "$EVIDENCE_DIR/contract.json"
+
+      - name: Verify Azure OIDC configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AZURE_DEPLOY_CLIENT_ID"
+          test -n "$AZURE_DEPLOY_TENANT_ID"
+          test -n "$AZURE_DEPLOY_SUBSCRIPTION_ID"
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Resolve current digest-pinned image
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" \
+            --query 'properties.template.containers[0].image' -o tsv)"
+          [[ "$image" == *@sha256:* ]] || { echo 'Current web image is not digest-pinned' >&2; exit 1; }
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "digest=${image##*@}" >> "$GITHUB_OUTPUT"
+          jq --arg digest "${image##*@}" '. + {imageDigest:$digest}' "$EVIDENCE_DIR/contract.json" \
+            > "$EVIDENCE_DIR/contract.tmp"
+          mv "$EVIDENCE_DIR/contract.tmp" "$EVIDENCE_DIR/contract.json"
+
+      - name: Run dry-run through private ACA operator
+        if: inputs.mode == 'dry_run'
+        shell: bash
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" --script moves:demo-assumption-register:seed-job \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --env MOVES_REGISTER_SEED_MODE=dry_run \
+            --env MOVES_REGISTER_SEED_TENANT_KEY="$DEMO_TENANT_KEY" \
+            --env MOVES_REGISTER_SEED_INPUT_SHA256="$INPUT_SHA256" \
+            --env MOVES_REGISTER_SEED_IDEMPOTENCY_KEY="$IDEMPOTENCY_KEY" \
+            --env MOVES_REGISTER_SEED_RUN_ID="${{ steps.scope.outputs.run_id }}" \
+            --env MOVES_REGISTER_SEED_BUILD_VERSION="$GITHUB_SHA" \
+            --env MOVES_REGISTER_SEED_IMAGE_DIGEST="${{ steps.image.outputs.digest }}" \
+            --env MOVES_REGISTER_SEED_OPERATOR="$GITHUB_ACTOR" \
+            --env MOVES_REGISTER_SEED_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            --env MOVES_REGISTER_SEED_EMIT_PROOF_BUNDLE=true \
+            --out-dir "$EVIDENCE_DIR/$PROOF_OUTPUT_DIR" \
+            --poll-seconds 15 --idle-verify-wait-seconds 300
+
+      - name: Run separately approved apply through private ACA operator
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" --script moves:demo-assumption-register:seed-job \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --env MOVES_REGISTER_SEED_MODE=apply \
+            --env MOVES_REGISTER_SEED_APPLY_APPROVED=true \
+            --env MOVES_REGISTER_SEED_CONFIRMATION=APPLY_DEMO_ASSUMPTION_REGISTER_SEED \
+            --env MOVES_REGISTER_SEED_APPROVAL_REFERENCE="$APPROVAL_REFERENCE" \
+            --env MOVES_REGISTER_SEED_TENANT_KEY="$DEMO_TENANT_KEY" \
+            --env MOVES_REGISTER_SEED_INPUT_SHA256="$INPUT_SHA256" \
+            --env MOVES_REGISTER_SEED_IDEMPOTENCY_KEY="$IDEMPOTENCY_KEY" \
+            --env MOVES_REGISTER_SEED_RUN_ID="${{ steps.scope.outputs.run_id }}" \
+            --env MOVES_REGISTER_SEED_BUILD_VERSION="$GITHUB_SHA" \
+            --env MOVES_REGISTER_SEED_IMAGE_DIGEST="${{ steps.image.outputs.digest }}" \
+            --env MOVES_REGISTER_SEED_OPERATOR="$GITHUB_ACTOR" \
+            --env MOVES_REGISTER_SEED_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            --env MOVES_REGISTER_SEED_EMIT_PROOF_BUNDLE=true \
+            --out-dir "$EVIDENCE_DIR/$PROOF_OUTPUT_DIR" \
+            --poll-seconds 15 --idle-verify-wait-seconds 300
+
+      - name: Validate operator proof
+        shell: bash
+        run: |
+          node scripts/moves/validate-demo-assumption-register-seed-proof.mjs \
+            "$EVIDENCE_DIR/contract.json" \
+            "$EVIDENCE_DIR/$PROOF_OUTPUT_DIR/summary.json"
+
+      - name: Upload job evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: moves-demo-register-seed-job
+          path: audit-artifacts/moves-demo-register-seed-job
+          if-no-files-found: warn
