@@ -81,6 +81,7 @@ export function useStepEvidence({
   canReview,
   onEvidenceChanged,
   uploadLabel = "Upload evidence",
+  uploadEvidenceFamily,
 }: {
   moveId: string;
   phase: number;
@@ -92,6 +93,8 @@ export function useStepEvidence({
    * session output" on a design step (template v1.7).
    */
   uploadLabel?: string;
+  /** A selected governed need; the upload route validates it for this Move. */
+  uploadEvidenceFamily?: string;
 }): StepEvidence {
   const [pending, setPending] = useState<PendingEvidenceReview[]>([]);
   const [approvedCount, setApprovedCount] = useState(0);
@@ -147,6 +150,7 @@ export function useStepEvidence({
           file,
           phase,
           family: "uploaded_evidence",
+          evidenceFamily: uploadEvidenceFamily,
         });
         const outcome = describeMoveUploadOutcome({
           blobStored: body.blobStored,
@@ -168,7 +172,7 @@ export function useStepEvidence({
         setUploading(false);
       }
     },
-    [load, moveId, phase],
+    [load, moveId, phase, uploadEvidenceFamily],
   );
 
   const decide = useCallback(

@@ -107,6 +107,37 @@ describe("phase step-page sunset routing", () => {
     }
   });
 
+  it("lands P2 on its first open step while the unlinked legacy hatch stays available", () => {
+    const implementedViews = [
+      ...EXISTING_STEP_PAGE_VIEWS,
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+    ];
+    expect(
+      resolvePhaseStepPageLanding({
+        ...base,
+        phase: 2,
+        implementedViews,
+        doneByStep: { "P2.1": true },
+      }),
+    ).toBe("/strategic-moves/move-1/phase/2?step=p2-baseline");
+    expect(
+      resolvePhaseStepPageLanding({
+        ...base,
+        phase: 2,
+        implementedViews,
+        doneByStep: { "P2.1": true },
+        legacy: true,
+      }),
+    ).toBeNull();
+    expect(implementedViews).toEqual(
+      expect.arrayContaining([
+        "p2-evidence-plan",
+        "p2-baseline",
+        "p2-validate",
+      ]),
+    );
+  });
+
   it("keeps an incomplete phase on capture and links its missing step to its section", () => {
     expect(
       resolvePhaseStepPageLanding({
@@ -135,6 +166,17 @@ describe("phase step-page sunset routing", () => {
 
   it("leaves flag-off routing alone", () => {
     expect(resolvePhaseStepPageLanding({ ...base, enabled: false })).toBeNull();
+    expect(
+      resolvePhaseStepPageLanding({
+        ...base,
+        phase: 2,
+        implementedViews: [
+          ...EXISTING_STEP_PAGE_VIEWS,
+          ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+        ],
+        enabled: false,
+      }),
+    ).toBeNull();
     expect(
       phaseStepPageFlagEnabled(0, {
         captureV2: true,
