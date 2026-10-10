@@ -59,11 +59,10 @@ describe("Source request and strategy version authority", () => {
       versionId: "version-1",
       versionNumber: 1,
       contentHash: current.contentHash,
-      invalidatedApprovalVersionIds: [],
     });
   });
 
-  it("creates a new version and invalidates approvals for the prior current version on material edit", () => {
+  it("creates a superseding version on material edit, and invalidates nothing itself", () => {
     const current = currentVersion();
 
     expect(
@@ -86,7 +85,6 @@ describe("Source request and strategy version authority", () => {
       versionNumber: 2,
       supersedesVersionId: "version-1",
       createdByUserId: "person-1",
-      invalidatedApprovalVersionIds: ["version-1"],
     });
   });
 
