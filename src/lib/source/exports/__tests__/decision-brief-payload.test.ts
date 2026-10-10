@@ -183,8 +183,61 @@ describe("Source decision brief export payload", () => {
     expect(body).toContain("Vendor A");
     expect(body).toContain("Vendor B");
     expect(body).toContain("Vendor C");
-    expect(body).toContain("Lead BAFO lane");
+    expect(body).toContain("Hold until the named evidence gaps are resolved");
+    expect(body).not.toContain("Lead BAFO lane");
     expect(body).toContain("Executive actions:");
+    expect(body).toContain("Price ranking withheld");
+    expect(body).not.toMatch(
+      /keep Vendor B as a price benchmark|Keep Vendor B as a price benchmark|Use as commercial benchmark/i,
+    );
+    expect(body).not.toContain(
+      "Advance Vendor A as the risk-adjusted BAFO lead",
+    );
+    const commercialRow = body
+      .split("\n")
+      .find((line) => line.startsWith("| Commercial value |"));
+    expect(commercialRow).toContain("Withheld");
+    expect(commercialRow).not.toContain("0.0");
     expectNoForbiddenTerms(body);
+  });
+
+  it("exports absent criterion evidence as not scored in both the table and rationale", () => {
+    const profiles = buildVendorResponseMveProfiles({
+      id: "no-price",
+      name: "Lakeshore Shared Services AMS",
+      accountName: "Lakeshore",
+    })!;
+    const intelligence = buildVendorChallengeIntelligence(profiles)!;
+    const bafoPack = buildVendorBafoInstructionPack(intelligence)!;
+    const decisionView = buildVendorEvaluationDecisionView(
+      profiles,
+      intelligence,
+      bafoPack,
+    )!;
+    const pricing = decisionView.scorecardRows.find(
+      (row) => row.criterionId === "pricing-transparency",
+    )!;
+    pricing.scores = pricing.scores.map((score) => ({
+      ...score,
+      score: 0,
+      weightedContribution: 0,
+      scoreWithheld: false,
+      scoreEligibility: "not_scoreable",
+    }));
+    const body = buildEvaluationDecisionBriefMarkdown({
+      decisionView,
+      challengeIntelligence: intelligence,
+      bafoPack,
+      profiles: profiles.profiles,
+      generatedAt: "2026-10-10T12:00:00.000Z",
+    });
+    const lines = body
+      .split("\n")
+      .filter((line) =>
+        /^\| Pricing transparency \||^- Pricing transparency/.test(line),
+      );
+    expect(lines).toHaveLength(2);
+    expect(lines.every((line) => line.includes("Not scored"))).toBe(true);
+    expect(lines.join(" ")).not.toContain("0.0");
   });
 });

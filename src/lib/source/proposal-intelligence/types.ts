@@ -333,6 +333,7 @@ export interface VendorEvaluationScoreValue {
   vendorName: string;
   score: number;
   weightedContribution: number;
+  scoreWithheld?: boolean;
   rationale: string;
   evidenceLabel: string;
   confidence: "high" | "medium" | "low";
@@ -388,7 +389,8 @@ export interface VendorEvaluationDecisionView {
   scoreImprovementScenarios: VendorEvaluationScoreImpact[];
   executiveTradeoffs: string[];
   leadingVendorId: string;
-  cheapestVendorId: string;
+  cheapestVendorId: string | null;
+  priceRankingBlockers: string[];
   highestTransitionRiskVendorId: string;
   recommendedAdvanceVendorIds: string[];
 }

@@ -17,8 +17,7 @@ type ViewportResult = {
   scrollScrollWidth: number;
   documentScrollWidth: number;
   documentClientWidth: number;
-  qnaBelowMatrix: boolean;
-  qnaCompetesForMatrixWidth: boolean;
+  qnaAbsent: boolean;
   pageOverflowsHorizontally: boolean;
   matrixScrollContained: boolean;
   columns: Array<{
@@ -209,8 +208,8 @@ async function run() {
         if (!(matrix instanceof HTMLElement)) {
           throw new Error("Completeness matrix was not rendered.");
         }
-        if (!(qna instanceof HTMLElement)) {
-          throw new Error("Q&A symmetry log was not rendered.");
+        if (qna) {
+          throw new Error("Unrecorded Q&A symmetry log was rendered.");
         }
         if (!(stage instanceof HTMLElement)) {
           throw new Error("Stage canvas was not rendered.");
@@ -227,7 +226,6 @@ async function run() {
         }
 
         const matrixRect = matrix.getBoundingClientRect();
-        const qnaRect = qna.getBoundingClientRect();
         const stageRect = stage.getBoundingClientRect();
         const scrollRect = scrollWrap.getBoundingClientRect();
         const headers = Array.from(table.querySelectorAll("thead th")).map(
@@ -290,10 +288,7 @@ async function run() {
           scrollScrollWidth: scrollWrap.scrollWidth,
           documentScrollWidth: document.documentElement.scrollWidth,
           documentClientWidth: document.documentElement.clientWidth,
-          qnaBelowMatrix: qnaRect.top >= matrixRect.bottom - 1,
-          qnaCompetesForMatrixWidth:
-            qnaRect.top < matrixRect.bottom - 1 &&
-            qnaRect.left > matrixRect.left,
+          qnaAbsent: qna === null,
           matrixScrollContained:
             window.getComputedStyle(scrollWrap).overflowX === "auto" &&
             document.documentElement.scrollWidth <=
@@ -307,11 +302,8 @@ async function run() {
       const pageOverflowsHorizontally =
         metrics.documentScrollWidth > metrics.documentClientWidth + 1;
       const columnVisibilityRequired = viewport >= 900;
-      if (!metrics.qnaBelowMatrix) {
-        failures.push("Q&A log is not stacked below the completeness matrix.");
-      }
-      if (metrics.qnaCompetesForMatrixWidth) {
-        failures.push("Q&A log competes horizontally with the matrix.");
+      if (!metrics.qnaAbsent) {
+        failures.push("Unrecorded Q&A log is present.");
       }
       if (pageOverflowsHorizontally) {
         failures.push(
@@ -387,7 +379,7 @@ function renderMarkdown(summary: {
     `Generated: ${summary.generatedAt}`,
     `Status: ${summary.status}`,
     "",
-    "| Viewport | Stage width | Matrix width | Table scroll | Page overflow | Q&A below | Status |",
+    "| Viewport | Stage width | Matrix width | Table scroll | Page overflow | Unrecorded Q&A absent | Status |",
     "| --- | ---: | ---: | ---: | --- | --- | --- |",
     ...summary.viewports.map(
       (result) =>
@@ -395,7 +387,7 @@ function renderMarkdown(summary: {
           result.matrixWidth,
         )} | ${result.scrollScrollWidth}/${result.scrollClientWidth} | ${
           result.pageOverflowsHorizontally ? "yes" : "no"
-        } | ${result.qnaBelowMatrix ? "yes" : "no"} | ${result.status} |`,
+        } | ${result.qnaAbsent ? "yes" : "no"} | ${result.status} |`,
     ),
     "",
     "## Failures",

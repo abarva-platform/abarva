@@ -42,6 +42,7 @@ function scoreDisplay(
   score?: VendorEvaluationDecisionView["scorecardRows"][number]["scores"][number],
 ): string {
   if (!score || score.scoreEligibility === "not_scoreable") return "—";
+  if (score.scoreWithheld) return "Withheld";
   return score.score.toFixed(1);
 }
 
@@ -66,12 +67,12 @@ export function VendorEvaluationScorecardPanel({
     <section
       data-testid="source-vendor-evaluation-scorecard"
       style={CARD}
-      aria-label="Normalized Vendor Comparison and Evaluation Scorecard"
+      aria-label="Vendor Comparison and Evaluation Scorecard"
     >
       <div style={HEADER}>
         <div>
           <div style={EYEBROW}>Evaluation decision view</div>
-          <h3 style={TITLE}>Normalized Vendor Comparison + Scorecard</h3>
+          <h3 style={TITLE}>Vendor Comparison + Scorecard</h3>
           <p style={COPY}>{decisionView.scoreBasis}</p>
           <p style={RECOMMENDATION_COPY}>
             {decisionView.finalistRecommendation}
@@ -170,7 +171,7 @@ export function VendorEvaluationScorecardPanel({
 
       <div style={TABLE_SECTION}>
         <div>
-          <div style={EYEBROW}>Normalized Vendor Comparison</div>
+          <div style={EYEBROW}>Vendor Comparison</div>
           <p style={MINI_COPY}>
             Side-by-side sourcing-critical fields; narrative claims stay
             conditional unless backed by exhibits and pricing.
@@ -265,7 +266,9 @@ export function VendorEvaluationScorecardPanel({
                         </strong>
                         {score ? (
                           <em style={WEIGHTED_NOTE}>
-                            {score.weightedContribution.toFixed(2)} weighted
+                            {score.scoreWithheld
+                              ? "Excluded from total"
+                              : `${score.weightedContribution.toFixed(2)} weighted`}
                           </em>
                         ) : null}
                         {score ? (
@@ -416,11 +419,11 @@ function ExecutiveDecisionCockpit({
         />
         <DecisionTile
           label="Price benchmark"
-          value={shortVendor(cheapest?.vendorName)}
+          value={cheapest ? shortVendor(cheapest.vendorName) : "Not comparable"}
           detail={
             cheapest
               ? "Use to pressure commercials; do not confuse lowest price with lowest risk."
-              : "No price benchmark calculated."
+              : "Price ranking withheld. Resolve pricing assumptions and load cited comparable workbooks for all bidders."
           }
           tone="warn"
         />
@@ -493,7 +496,7 @@ function DecisionTile({
 
 function summaryById(
   decisionView: VendorEvaluationDecisionView,
-  vendorId: string,
+  vendorId: string | null,
 ): VendorEvaluationDecisionView["vendorSummaries"][number] | undefined {
   return decisionView.vendorSummaries.find(
     (summary) => summary.vendorId === vendorId,
