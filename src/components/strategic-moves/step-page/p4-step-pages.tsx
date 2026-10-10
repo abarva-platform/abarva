@@ -4,9 +4,12 @@ import { useEffect, useState, type ReactNode } from "react";
 import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
 import { CaptureNotesFill } from "@/components/strategic-moves/CaptureNotesFill";
 import {
+  previewMatchesApproval,
   readApprovedRomSnapshot,
+  type ApprovedRomRead,
   type ApprovedRomSnapshot,
 } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
+import type { RomResult } from "@/lib/pricing/moves-workflow/rom-service";
 import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 import type { PhaseCaptureSection } from "@/lib/programs/phase-capture-contract";
 import {
@@ -397,14 +400,74 @@ function Milestones({
 function EstimateBasis({
   moveId,
   snapshot,
+  stale,
 }: {
   moveId: string;
   snapshot: ApprovedRomSnapshot | null;
+  stale: boolean;
 }) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const downloadWorkbook = async () => {
+    if (!snapshot) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      const current = await readApprovedRomSnapshot(moveId);
+      if (
+        current.status !== "approved" ||
+        current.snapshot.id !== snapshot.id ||
+        current.snapshot.result.inputsFingerprint !==
+          snapshot.result.inputsFingerprint
+      ) {
+        throw new Error(
+          "The P3 estimate approval changed or could not be rechecked. Review it in P3 Step 4 before downloading a workbook.",
+        );
+      }
+      const jsonHref = snapshot.workbookHref.replace(/\?format=xlsx$/, "");
+      const request = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(snapshot.workbookStructure),
+      };
+      const preview = await fetch(jsonHref, request);
+      if (!preview.ok) throw new Error("The ROM preview could not be read.");
+      const body = (await preview.json()) as { rom?: RomResult };
+      if (!body.rom?.ok || !previewMatchesApproval(body.rom, snapshot.result)) {
+        throw new Error(
+          "The cost reference changed since approval. Reapprove the estimate in P3 Step 4 before downloading a workbook.",
+        );
+      }
+      const workbook = await fetch(snapshot.workbookHref, request);
+      if (!workbook.ok) throw new Error("The ROM workbook could not be read.");
+      const blob = await workbook.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `rom-estimate-${moveId}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error
+          ? error.message
+          : "The workbook could not be downloaded. Try again.",
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
   if (!snapshot) {
     return (
       <p className={cx("proposal")}>
-        <strong>No approved estimate yet.</strong> Approve it in{" "}
+        <strong>
+          {stale
+            ? "The P3 estimate approval is stale."
+            : "No approved estimate yet."}
+        </strong>{" "}
+        {stale ? "Review and reapprove it in " : "Approve it in "}
         <a href={stepPageHref(moveId, 3, "P3.4")}>P3 Step 4 →</a>
         <span className={cx("item-note")}>
           Per-release low / plan / high and the workbook link are unavailable
@@ -422,9 +485,9 @@ function EstimateBasis({
       {snapshot.result.releases.map((release) => (
         <p key={release.code} className={cx("proposal")}>
           <strong>{release.name}</strong> · low{" "}
-          {formatValueCents(release.standalone.lowCents)} · plan{" "}
-          {formatValueCents(release.standalone.planCents)} · high{" "}
-          {formatValueCents(release.standalone.highCents)}
+          {formatValueCents(release.lowCents)} · plan{" "}
+          {formatValueCents(release.planCents)} · high{" "}
+          {formatValueCents(release.highCents)}
           <SourceLine
             source={{
               kind: "est",
@@ -434,10 +497,18 @@ function EstimateBasis({
           />
         </p>
       ))}
-      {snapshot.workbookHref ? (
-        <a href={snapshot.workbookHref}>Open ROM workbook →</a>
-      ) : (
-        <p className={cx("item-note")}>Workbook link unavailable.</p>
+      <button
+        type="button"
+        className={cx("btn-ink")}
+        disabled={downloading}
+        onClick={() => void downloadWorkbook()}
+      >
+        {downloading ? "Checking ROM workbook…" : "Download ROM workbook"}
+      </button>
+      {downloadError && (
+        <p role="alert" className={cx("item-note")}>
+          {downloadError}
+        </p>
       )}
     </div>
   );
@@ -775,37 +846,32 @@ function P4MilestonesPage({ host }: { host: StepPageHostProps }) {
 }
 
 function P4EstimatePage({ host }: { host: StepPageHostProps }) {
-  const [snapshot, setSnapshot] = useState<ApprovedRomSnapshot | null>(null);
-  const [readStatus, setReadStatus] = useState<
-    "reading" | "available" | "missing" | "failed"
-  >("reading");
+  const [read, setRead] = useState<ApprovedRomRead | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   useEffect(() => {
     let live = true;
-    readApprovedRomSnapshot(host.move.id)
-      .then((value) => {
-        if (live) {
-          setSnapshot(value);
-          setReadStatus(value ? "available" : "missing");
-        }
-      })
-      .catch(() => {
-        if (live) setReadStatus("failed");
-      });
+    readApprovedRomSnapshot(host.move.id).then((value) => {
+      if (live) setRead(value);
+    });
     return () => {
       live = false;
     };
-  }, [host.move.id]);
+  }, [host.move.id, retryKey]);
+  const readStatus = read?.status ?? "reading";
+  const snapshot = read?.status === "approved" ? read.snapshot : null;
   const evaluation = evaluateEstimateModel(
     host.values.estimates_capacity ?? "",
   );
   const blockedBy =
-    readStatus === "available"
+    readStatus === "approved"
       ? null
       : readStatus === "reading"
         ? "Reading the approved estimate basis"
         : readStatus === "failed"
-          ? "Approved estimate could not be read"
-          : "No approved estimate yet. Approve it in P3 Step 4";
+          ? "Approved estimate could not be read · Try again"
+          : readStatus === "stale"
+            ? "P3 estimate approval is stale. Reapprove it in P3 Step 4"
+            : "No approved estimate yet. Approve it in P3 Step 4";
   const editor = (
     <div
       className={
@@ -827,7 +893,7 @@ function P4EstimatePage({ host }: { host: StepPageHostProps }) {
       fields={[]}
       blockedBy={blockedBy}
       blockedLink={
-        readStatus === "missing"
+        readStatus === "missing" || readStatus === "stale"
           ? {
               label: "Open P3 Step 4 →",
               href: stepPageHref(host.move.id, 3, "P3.4"),
@@ -835,19 +901,36 @@ function P4EstimatePage({ host }: { host: StepPageHostProps }) {
           : undefined
       }
       blockedWork={
-        <div>
+        <div className={cx("empty-note")}>
+          {readStatus === "failed" && (
+            <p className={cx("item-note")}>
+              Approved ROM snapshot could not be read. Try again.
+            </p>
+          )}
           <p className={cx("item-note")}>
             Estimate inputs remain editable while the approved ROM basis is
             unavailable.
           </p>
+          {readStatus === "failed" && (
+            <button
+              type="button"
+              className={cx("btn-ink")}
+              onClick={() => {
+                setRead(null);
+                setRetryKey((key) => key + 1);
+              }}
+            >
+              Try again
+            </button>
+          )}
           {editor}
         </div>
       }
       beforeRows={[
         {
-          id: "ROM",
+          id: "APPROVED",
           rank: 0,
-          shortName: "approved ROM basis",
+          shortName: "P3 estimate",
           subject: "Approved P3 estimate basis",
           state: snapshot ? "settled" : "decision",
           clause: "approve the P3 estimate basis",
@@ -859,7 +942,11 @@ function P4EstimatePage({ host }: { host: StepPageHostProps }) {
                 Approved ROM snapshot could not be read.
               </p>
             ) : (
-              <EstimateBasis moveId={host.move.id} snapshot={snapshot} />
+              <EstimateBasis
+                moveId={host.move.id}
+                snapshot={snapshot}
+                stale={readStatus === "stale"}
+              />
             ),
         },
         {
