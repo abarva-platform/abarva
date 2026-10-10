@@ -195,7 +195,19 @@ describe("P2 baseline citation hold", () => {
         findings: "12 of 40 [A:B1].",
         baseline: "",
       }),
-    ).toHaveLength(1);
+    ).toEqual([
+      "Finding 1: The assumptions register could not be read, so its citation cannot be checked.",
+    ]);
+    expect(
+      uncitedP2BaselineReasons({
+        ...base,
+        registerIds: null,
+        findings: "",
+        baseline: '[{"metric":"Coverage","value":"30%","source":"[A:B1]"}]',
+      }),
+    ).toEqual([
+      "Baseline row 1: The assumptions register could not be read, so its citation cannot be checked.",
+    ]);
     expect(
       uncitedP2BaselineReasons({
         ...base,

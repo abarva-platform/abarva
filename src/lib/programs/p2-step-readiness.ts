@@ -97,22 +97,27 @@ export function uncitedP2BaselineReasons(input: {
   const cited = (text: string) =>
     citationIds(text, "A").some((id) => knownAssumptions.has(id)) ||
     citationIds(text, "E").some(evidenceCitationValid);
+  const missingCitationReason = (subject: string, text: string) =>
+    input.registerIds === null && citationIds(text, "A").length > 0
+      ? `${subject}: The assumptions register could not be read, so its citation cannot be checked.`
+      : `${subject} has a figure without a resolvable [A:ID] or approved [E:n] citation.`;
 
   for (const [index, line] of input.findings.split(/[\n;]/).entries()) {
     if (
       hasUncitedPlanningFigure(line, { allowEvidence: true }) ||
       (/\d/.test(line.replace(/\bP[0-5](?:\.\d+)?\b/g, "")) && !cited(line))
     ) {
-      reasons.push(
-        `Finding ${index + 1} has a figure without a resolvable [A:ID] or approved [E:n] citation.`,
-      );
+      reasons.push(missingCitationReason(`Finding ${index + 1}`, line));
     }
   }
   for (const [index, fact] of parseDiagnosisFacts(input.baseline).entries()) {
     if (!/\d/.test(fact.value)) continue;
     if (!cited(`${fact.value} ${fact.source}`)) {
       reasons.push(
-        `Baseline row ${index + 1} has a figure without a resolvable [A:ID] or approved [E:n] citation.`,
+        missingCitationReason(
+          `Baseline row ${index + 1}`,
+          `${fact.value} ${fact.source}`,
+        ),
       );
     }
   }
