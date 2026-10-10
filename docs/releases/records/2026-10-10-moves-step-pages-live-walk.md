@@ -53,7 +53,8 @@ assertions concern the capture flow.
 - Typecheck: Pass, including the new Playwright spec.
 - Library-orphan audit: Pass, no new orphan.
 - Route and export reachability: Pass, no new unreachable code.
-- Test CI coverage census: Pass, unchanged at 2,813 covered Jest files.
+- Test CI coverage census: Pass, unchanged against the updated base at 2,814
+  covered Jest files.
   The new Playwright spec is outside this `src/` Jest census and is named by
   the workflow discovery job.
 - Tenancy-fence census write and check: Pass, unchanged; no API route added.
