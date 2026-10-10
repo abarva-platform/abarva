@@ -54,6 +54,7 @@ export interface StepEvidence {
   approvedCount: number;
   /** False when the evidence read failed: no claim about counts is made. */
   readable: boolean;
+  loaded: boolean;
   /** The last upload's or decision's sentence, for the Context line. */
   message: string | null;
   uploading: boolean;
@@ -311,6 +312,7 @@ export function useStepEvidence({
     pending,
     approvedCount,
     readable,
+    loaded,
     message,
     uploading,
     upload,

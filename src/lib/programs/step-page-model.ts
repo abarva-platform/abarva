@@ -45,7 +45,7 @@ export interface StepRow {
    * lower case: "decide who designs identity resolution". Names the decision,
    * never a control.
    */
-  clause?: string;
+  clause?: string | null;
   /**
    * A draft row's own clause, used only when a step states its clauses in
    * row order ("confirm the workflow change"); see `clausesInRowOrder`.
@@ -133,11 +133,15 @@ export function buildNextActionSentence(
   const inRowOrder = Boolean(options.clausesInRowOrder);
   const clauses = (
     inRowOrder ? [...decision, ...draft].sort(byRank) : decision
-  ).map((row) =>
-    row.state === "draft"
-      ? row.draftClause?.trim() ||
-        `review ${row.draftName?.trim() || "the draft"}`
-      : decisionClause(row),
+  ).flatMap((row) =>
+    row.clause === null
+      ? []
+      : [
+          row.state === "draft"
+            ? row.draftClause?.trim() ||
+              `review ${row.draftName?.trim() || "the draft"}`
+            : decisionClause(row),
+        ],
   );
   if (ranked.length > 0) {
     clauses.push(options.rankingClause?.trim() || "confirm the order");

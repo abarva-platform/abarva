@@ -153,4 +153,59 @@ describe("phase step-page sunset routing", () => {
     ).toBe(false);
     expect(EXISTING_STEP_PAGE_VIEWS).toContain("gate");
   });
+
+  it("derives every gate view and includes all mounted P0/P1 pages in both directions", () => {
+    const gates = (Object.keys(STEP_PAGE_VIEWS) as StepPageView[]).filter(
+      (view) => {
+        const entry = STEP_PAGE_VIEWS[view];
+        return (
+          resolvePhaseWorkflow(entry.phase, null).at(-1)?.id === entry.stepId
+        );
+      },
+    );
+    expect(gates).toEqual(
+      expect.arrayContaining([
+        "p0-approve",
+        "p1-charter-gate",
+        "gate",
+        "p4-gate",
+        "p5-handoff",
+      ]),
+    );
+    for (const gate of gates) expect(EXISTING_STEP_PAGE_VIEWS).toContain(gate);
+    const host = readFileSync(
+      join(
+        process.cwd(),
+        "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx",
+      ),
+      "utf8",
+    );
+    expect(host).toMatch(/if \(gateStepPageActive\)[\s\S]*?<GateReadinessStep/);
+    expect(host).toContain("PHASE_STEP_PAGES[initialStepView]");
+    const direct = [
+      "root-causes",
+      "root-cause-design",
+      "architecture-options",
+      "operating-adoption",
+      "rom-estimate",
+    ] as const;
+    for (const view of direct) {
+      expect(host).toContain(`initialStepView === "${view}"`);
+      expect(EXISTING_STEP_PAGE_VIEWS).toContain(view);
+    }
+    expect(host).toMatch(
+      /if \(romEstimateStepPageActive\)[\s\S]*?<RomEstimateStep/,
+    );
+    const mounted = new Set<StepPageView>([
+      ...direct,
+      ...gates,
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+    ]);
+    const implemented = new Set<StepPageView>([
+      ...EXISTING_STEP_PAGE_VIEWS,
+      ...(Object.keys(PHASE_STEP_PAGES) as StepPageView[]),
+    ]);
+    expect([...implemented].sort()).toEqual([...mounted].sort());
+    for (const view of implemented) expect(STEP_PAGE_VIEWS[view]).toBeDefined();
+  });
 });

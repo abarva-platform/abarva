@@ -92,6 +92,7 @@ const P0_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Signal & problem",
     depth: allFull,
     sectionKeys: same(["business_trigger", "problem_statement"]),
+    recordKeys: same(["p0_signal_step"]),
   },
   {
     id: "P0.2",
@@ -99,6 +100,7 @@ const P0_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Scope boundary",
     depth: allFull,
     sectionKeys: same(["affected_function_process", "scope_out"]),
+    recordKeys: same(["p0_scope_step"]),
   },
   {
     id: "P0.3",
@@ -110,6 +112,7 @@ const P0_STEPS: readonly PhaseWorkflowStep[] = [
       "outcomes_success",
       "discovery_questions",
     ]),
+    recordKeys: same(["p0_value_step"]),
   },
   {
     id: "P0.4",
@@ -121,6 +124,7 @@ const P0_STEPS: readonly PhaseWorkflowStep[] = [
       "known_evidence",
       "missing_evidence_open_questions",
     ]),
+    recordKeys: same(["p0_owner_evidence_step"]),
   },
   {
     id: "P0.5",
@@ -138,6 +142,7 @@ const P1_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Sponsor & scope",
     depth: allFull,
     sectionKeys: same(["sponsor_commitment", "scope_boundary"]),
+    recordKeys: same(["p1_sponsor_scope_step"]),
   },
   {
     id: "P1.2",
@@ -145,6 +150,7 @@ const P1_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Stakeholders & decision rights",
     depth: allFull,
     sectionKeys: same(["stakeholder_map", "decision_rights"]),
+    recordKeys: same(["p1_stakeholders_step"]),
   },
   {
     id: "P1.3",
@@ -152,6 +158,7 @@ const P1_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Success measures",
     depth: allFull,
     sectionKeys: same(["success_criteria"]),
+    recordKeys: same(["p1_success_step"]),
   },
   {
     id: "P1.4",
@@ -159,6 +166,7 @@ const P1_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Evidence plan & change",
     depth: allFull,
     sectionKeys: same(["evidence_plan", "business_change_assessment"]),
+    recordKeys: same(["p1_evidence_change_step"]),
   },
   {
     id: "P1.5",
@@ -423,6 +431,66 @@ export interface PhaseStepRecordSection {
 export const PHASE_STEP_RECORD_SECTIONS: Readonly<
   Record<number, readonly PhaseStepRecordSection[]>
 > = {
+  0: [
+    {
+      key: "p0_signal_step",
+      stepId: "P0.1",
+      label: "Signal and problem review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p0_scope_step",
+      stepId: "P0.2",
+      label: "Scope boundary review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p0_value_step",
+      stepId: "P0.3",
+      label: "Value hypothesis review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p0_owner_evidence_step",
+      stepId: "P0.4",
+      label: "Owner and evidence review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+  ],
+  1: [
+    {
+      key: "p1_sponsor_scope_step",
+      stepId: "P1.1",
+      label: "Sponsor and scope review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p1_stakeholders_step",
+      stepId: "P1.2",
+      label: "Stakeholder and decision rights review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p1_success_step",
+      stepId: "P1.3",
+      label: "Success measures review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+    {
+      key: "p1_evidence_change_step",
+      stepId: "P1.4",
+      label: "Evidence and change review",
+      description:
+        "Team-reviewed capture answers and pending session-note drafts.",
+    },
+  ],
   3: [
     {
       key: "design_traceability",

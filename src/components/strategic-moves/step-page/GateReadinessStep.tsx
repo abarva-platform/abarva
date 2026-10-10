@@ -102,6 +102,12 @@ export interface GateReadinessStepProps {
   onSubmit: (settlement: BuildSettledResult) => Promise<void>;
   /** P0 is approved from its captured brief and reviewed source evidence; it has no build batch. */
   originationReady?: boolean;
+  /** The last P0 capture decision remains editable before approval. */
+  originationRecommendation?: {
+    value: string;
+    saved: boolean;
+    onSave: (value: string) => void;
+  };
   /** Back to the previous step. */
   onBack?: () => void;
   /**
@@ -352,6 +358,9 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
   // The approver's own words, recorded with the approval. No confirm step:
   // the footer's approve-and-submit enables once there is text (v1.5).
   const [rationale, setRationale] = useState("");
+  const [recommendationDraft, setRecommendationDraft] = useState(
+    props.originationRecommendation?.value ?? "",
+  );
   const [rebuildAsk, setRebuildAsk] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -393,7 +402,12 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     .map((d) => d.title);
 
   const model = resolveGateStep({
-    criteria: props.criteria,
+    criteria:
+      props.phaseNum === 1
+        ? props.criteria.filter(
+            (criterion) => criterion.id !== "baseline_captured",
+          )
+        : props.criteria,
     documents,
     signOffReadable: props.signOffReadable,
     canApprove: props.canApprove,
@@ -759,13 +773,66 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     .join("\n\n");
 
   if (props.phaseNum === 0) {
+    const recommendation = props.originationRecommendation;
+    const recommendationReady =
+      !recommendation ||
+      (recommendation.value.trim().length > 0 &&
+        recommendation.saved &&
+        recommendationDraft.trim() === recommendation.value.trim());
+    const recommendationRow: StepPageRow[] = recommendation
+      ? [
+          {
+            id: "P0-RECOMMENDATION",
+            eyebrow: "Origination decision",
+            rank: 1,
+            shortName: "recommendation to advance",
+            subject: "Recommendation to advance",
+            state: recommendationReady ? "settled" : "decision",
+            clause: "record the recommendation to advance",
+            middle: (
+              <div className={cx("field")}>
+                <label className={cx("q-label")} htmlFor="p0-recommendation">
+                  Why should this Move advance to Charter?
+                </label>
+                <textarea
+                  id="p0-recommendation"
+                  className={cx("q-input")}
+                  rows={3}
+                  value={recommendationDraft}
+                  onChange={(event) =>
+                    setRecommendationDraft(event.target.value)
+                  }
+                />
+                {!recommendationReady &&
+                recommendation.value.trim() &&
+                !recommendation.saved ? (
+                  <p className={cx("item-note")}>Saving the recommendation…</p>
+                ) : null}
+              </div>
+            ),
+            actions: recommendationReady ? null : (
+              <button
+                type="button"
+                className={cx("btn-ink")}
+                disabled={!recommendationDraft.trim()}
+                onClick={() =>
+                  recommendation.onSave(recommendationDraft.trim())
+                }
+              >
+                Save recommendation
+              </button>
+            ),
+          },
+        ]
+      : [];
     const readable = props.criteria.every((criterion) => criterion.verified);
     const approvalInputsReady =
-      readable && props.originationReady === true && props.canApprove;
+      readable &&
+      props.originationReady === true &&
+      recommendationReady &&
+      props.canApprove;
     const mayApprove =
-      approvalInputsReady &&
-      rationale.trim().length > 0 &&
-      !submitting;
+      approvalInputsReady && rationale.trim().length > 0 && !submitting;
     const approveOrigination = async () => {
       if (!mayApprove) return;
       setSubmitError(null);
@@ -784,7 +851,9 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         });
       } catch (err) {
         setSubmitError(
-          err instanceof Error ? err.message : "The origination approval failed.",
+          err instanceof Error
+            ? err.message
+            : "The origination approval failed.",
         );
       } finally {
         setSubmitting(false);
@@ -814,13 +883,16 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
               : "Approval pending",
           sentence: !readable
             ? "Wait for the gate checks to be read."
-            : !props.originationReady
-              ? props.buildHeldReason ?? "Complete the brief and review its source evidence."
-              : !props.canApprove
-                ? "Wait for an authorized approver."
-                : "Write the approval rationale and approve the origination brief.",
-          settled: 0,
-          total: 1,
+            : !props.canApprove
+              ? "Wait for an authorized approver."
+              : !recommendationReady
+                ? "Record the recommendation to advance."
+                : !props.originationReady
+                  ? (props.buildHeldReason ??
+                    "Complete the brief and review its source evidence.")
+                  : "Write the approval rationale and approve the origination brief.",
+          settled: recommendationReady ? 1 : 0,
+          total: recommendation ? 2 : 1,
           continueEnabled: mayApprove,
         }}
         checks={model.checks.map((check) => ({
@@ -839,14 +911,28 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
         checksWhenBlocked
         countLabel="Approval not yet recorded"
         context={{ items: [<b key="depth">Full depth</b>], details: [] }}
-        blockedWork={props.canApprove ? rationaleField : undefined}
-        rows={[...submitRow, rationaleRow]}
+        blockedWork={
+          props.canApprove ? (
+            <div className={cx("warn-inline")}>
+              {!recommendationReady ? (
+                <section className={cx("field")}>
+                  {recommendationRow[0]?.middle}
+                  {recommendationRow[0]?.actions}
+                </section>
+              ) : null}
+              {rationaleField}
+            </div>
+          ) : undefined
+        }
+        rows={[...submitRow, ...recommendationRow, rationaleRow]}
         continueLabel={submitting ? "Approving…" : "Approve origination"}
         onContinue={() => void approveOrigination()}
         onBack={props.onBack}
       />
     );
-    return props.frame ? props.frame(originationPage, briefing) : originationPage;
+    return props.frame
+      ? props.frame(originationPage, briefing)
+      : originationPage;
   }
 
   const page = (
