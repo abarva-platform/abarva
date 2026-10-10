@@ -313,6 +313,10 @@ const P3_STEPS: readonly PhaseWorkflowStep[] = [
     phase: 3,
     title: "Operating & adoption",
     depth: { technical: "skip", limited: "light", full: "full" },
+    // The owners grid, the baseline owner, the drafts and who wrote them are
+    // a step record (`operating-adoption.ts`); the team's words stay in the
+    // capture answers below, which generation and the gate read.
+    recordKeys: same(["operating_adoption"]),
     sectionKeys: {
       technical: ["business_change_boundary"],
       limited: ["workflow_delta", "process_adoption_boundary"],
@@ -436,6 +440,13 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
       label: "Chosen architecture option and coverage",
       description:
         "The option the team chose from the options it brought, as written, and what it answers of each Step 1 design element.",
+    },
+    {
+      key: "operating_adoption",
+      stepId: "P3.3",
+      label: "Owners, decision rights and baseline owner",
+      description:
+        "An accountable owner and decision rights for each Step 1 design element and any row the team added, who receives the baseline, and who wrote each entry.",
     },
   ],
 };

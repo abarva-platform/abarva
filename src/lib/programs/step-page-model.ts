@@ -19,6 +19,8 @@ import type { StepDepth } from "@/lib/programs/phase-workflow-registry";
  * - decision: gaps, conflicts, missing owners, sign-offs, evidence to review
  * - ranked: an item in a ranking step's list, until the order is confirmed
  * - draft: an Ava draft or a team statement awaiting acceptance
+ * - advisory: a flag this page cannot settle, such as a route flag (template
+ *   v1.10). It never blocks and is never counted; its clause comes last.
  * - set_aside: ruled out of scope (a symptom, not a cause); not open
  * - settled: accepted by a person
  */
@@ -26,6 +28,7 @@ export type StepRowState =
   | "decision"
   | "ranked"
   | "draft"
+  | "advisory"
   | "set_aside"
   | "settled";
 
@@ -44,6 +47,11 @@ export interface StepRow {
    */
   clause?: string;
   /**
+   * A draft row's own clause, used only when a step states its clauses in
+   * row order ("confirm the workflow change"); see `clausesInRowOrder`.
+   */
+  draftClause?: string;
+  /**
    * A draft row's short name for the sentence when it is the only draft:
    * "the PHI access draft". Without it the sentence counts drafts.
    */
@@ -55,6 +63,7 @@ export interface StepRowGroups<R extends StepRow = StepRow> {
   decision: R[];
   ranked: R[];
   draft: R[];
+  advisory: R[];
   setAside: R[];
   settled: R[];
 }
@@ -72,6 +81,7 @@ export function groupStepRows<R extends StepRow>(
     decision: of("decision"),
     ranked: of("ranked"),
     draft: of("draft"),
+    advisory: of("advisory"),
     setAside: of("set_aside"),
     settled: of("settled"),
   };
@@ -98,34 +108,50 @@ function sentence(body: string): string {
   return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}.`;
 }
 
+const decisionClause = (row: StepRow) =>
+  row.clause?.trim() || `decide ${row.subject.trim()}`;
+
 /**
  * The one imperative sentence: decisions first, each in its own words and in
  * rank order, then the drafts — named when there is exactly one with a name,
- * counted otherwise. Past three clauses the first two stay and the rest read
- * "N more below". Returns null when nothing is open.
+ * counted otherwise. A step whose rows read as one ordered list
+ * (`clausesInRowOrder`, P3 Step 3) states every open row's own clause in rank
+ * order instead. Advisory clauses come last, and only beside another clause:
+ * an advisory alone never keeps a step open. Past three clauses the first two
+ * stay and the rest read "N more below". Returns null when nothing is open.
  */
 export function buildNextActionSentence(
   rows: readonly StepRow[],
   options: {
     /** The ranking's one clause while its order is unconfirmed: "confirm the order". */
     rankingClause?: string;
+    /** Every open row's own clause, in rank order (template v1.10). */
+    clausesInRowOrder?: boolean;
   } = {},
 ): string | null {
-  const { decision, ranked, draft } = groupStepRows(rows);
-  const clauses = decision.map(
-    (row) => row.clause?.trim() || `decide ${row.subject.trim()}`,
+  const { decision, ranked, draft, advisory } = groupStepRows(rows);
+  const inRowOrder = Boolean(options.clausesInRowOrder);
+  const clauses = (
+    inRowOrder ? [...decision, ...draft].sort(byRank) : decision
+  ).map((row) =>
+    row.state === "draft"
+      ? row.draftClause?.trim() ||
+        `review ${row.draftName?.trim() || "the draft"}`
+      : decisionClause(row),
   );
   if (ranked.length > 0) {
     clauses.push(options.rankingClause?.trim() || "confirm the order");
   }
-  if (draft.length === 1 && draft[0].draftName?.trim()) {
+  if (!inRowOrder && draft.length === 1 && draft[0].draftName?.trim()) {
     clauses.push(`review ${draft[0].draftName.trim()}`);
-  } else if (draft.length > 0) {
+  } else if (!inRowOrder && draft.length > 0) {
     clauses.push(
       `review ${draft.length} ${draft.length === 1 ? "draft" : "drafts"}`,
     );
   }
-  return clauses.length > 0 ? sentence(joinClauses(clauses)) : null;
+  if (clauses.length === 0) return null;
+  clauses.push(...advisory.map(decisionClause));
+  return sentence(joinClauses(clauses));
 }
 
 export type StepPageState =
@@ -152,6 +178,13 @@ export interface StepPageInput {
   emptySentence: string;
   /** The ranking's clause while its order is unconfirmed. */
   rankingClause?: string;
+  /** Every open row's own clause, in rank order (see `buildNextActionSentence`). */
+  clausesInRowOrder?: boolean;
+  /**
+   * The step's own Skipped sentence (template v1.10, profile-driven skip):
+   * "Nothing to do here. The P2 route makes this a technical change, …".
+   */
+  skippedSentence?: string;
 }
 
 export interface StepNextAction {
@@ -187,8 +220,10 @@ function formatDoneDate(iso: string): string | null {
  */
 export function resolveStepNextAction(input: StepPageInput): StepNextAction {
   // A set-aside row is resolved (ruled out), not settled, so it is neither
-  // open nor part of the count.
-  const counted = input.rows.filter((row) => row.state !== "set_aside");
+  // open nor part of the count; an advisory is never counted (v1.10).
+  const counted = input.rows.filter(
+    (row) => row.state !== "set_aside" && row.state !== "advisory",
+  );
   const total = counted.length;
   const settled = counted.filter((row) => row.state === "settled").length;
   const count = { settled, total };
@@ -197,7 +232,9 @@ export function resolveStepNextAction(input: StepPageInput): StepNextAction {
     return {
       state: "skipped",
       eyebrow: "Skipped",
-      sentence: SKIPPED_SENTENCE,
+      sentence: input.skippedSentence?.trim()
+        ? sentence(input.skippedSentence)
+        : SKIPPED_SENTENCE,
       ...count,
       continueEnabled: true,
     };
@@ -216,6 +253,7 @@ export function resolveStepNextAction(input: StepPageInput): StepNextAction {
 
   const open = buildNextActionSentence(input.rows, {
     rankingClause: input.rankingClause,
+    clausesInRowOrder: input.clausesInRowOrder,
   });
   if (open) {
     return {

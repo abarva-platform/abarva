@@ -5223,6 +5223,139 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
+  describe("P3 Step 3 operating & adoption (moves_step_pages_v3)", () => {
+    const p3Move = () =>
+      makeMove({
+        currentPhase: 3,
+        phaseLabel: "P3 Design",
+        participants: [
+          { personId: "p-1", name: "Rosa Delgado", role: "Data steward" },
+        ],
+      });
+    const route = (
+      overrides: Partial<ConfirmedSolutionRoute> = {},
+    ): ConfirmedSolutionRoute => ({
+      route: "process_change",
+      recommendation: "process_change",
+      solutionOutput: "data_product",
+      workflowChange: "limited",
+      roleAccountabilityChange: "limited",
+      adoptionOwner: "Named business owner",
+      adoptionResponsibility: "business",
+      decision: "confirm",
+      evidenceReference: "evidence-ref",
+      validatedBy: "Validator",
+      rationale: "fixture",
+      ...overrides,
+    });
+    const TECHNICAL = route({
+      route: "technical_product",
+      recommendation: "technical_product",
+      workflowChange: "none",
+      roleAccountabilityChange: "none",
+    });
+    const stepItem = (container: HTMLElement, index: number) =>
+      container.querySelectorAll('nav[aria-label="Design steps"] li')[
+        index
+      ] as HTMLElement;
+    const mount = (args: {
+      flag?: boolean;
+      view?: "operating-adoption" | "architecture-options";
+      route?: ConfirmedSolutionRoute | null;
+    }) =>
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled={args.flag ?? true}
+          initialStepView={args.view ?? "operating-adoption"}
+          initialConfirmedSolutionRoute={args.route ?? route()}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+    it("renders Step 3 in the dock under the flag, blocked on Step 2, which the step bar shows open", () => {
+      const { container } = mount({});
+      const dock = screen.getByTestId("agent-dock");
+      expect(
+        within(dock).getByRole("heading", {
+          name: "Name the owners and describe the change",
+        }),
+      ).toBeInTheDocument();
+      expect(within(dock).getByText(/Waiting on Step 2/)).toBeInTheDocument();
+      // One readiness source: Step 2 is not done in the step bar either.
+      expect(stepItem(container, 1).className).not.toMatch(/is-done/);
+      expect(
+        stepItem(container, 1).querySelector("a")?.getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=architecture-options$/);
+      expect(stepItem(container, 2).getAttribute("class")).toMatch(
+        /is-current/,
+      );
+      expect(stepItem(container, 2).textContent).toContain(
+        "Operating & adoption· Light",
+      );
+    });
+
+    it("ignores ?step=operating-adoption while the flag is off", () => {
+      mount({ flag: false });
+      expect(
+        screen.queryByRole("heading", {
+          name: "Name the owners and describe the change",
+        }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("on a technical route the step is Skipped by its attestation, Continue enabled", () => {
+      const { container } = mount({ route: TECHNICAL });
+      expect(
+        screen.getByText(/The P2 route makes this a technical change/),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Named business owner")).toBeInTheDocument();
+      expect(stepItem(container, 2).textContent).toContain("· Skipped");
+      expect(
+        (screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false);
+    });
+
+    it("the other P3 pages show Step 3 Skipped and done on a technical route, and link to it", () => {
+      const { container, unmount } = mount({
+        view: "architecture-options",
+        route: TECHNICAL,
+      });
+      const item = stepItem(container, 2);
+      expect(item.textContent).toContain("Operating & adoption· Skipped");
+      expect(item.className).toMatch(/is-done/);
+      unmount();
+      const limited = mount({ view: "architecture-options" });
+      const open = stepItem(limited.container, 2);
+      expect(open.className).not.toMatch(/is-done/);
+      expect(open.textContent).toContain("· Light");
+    });
+
+    it("the P3 capture opens Step 3 under the flag", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={p3Move()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getByTestId("open-operating-adoption").getAttribute("href"),
+      ).toMatch(/\/phase\/3\?step=operating-adoption$/);
+    });
+  });
+
   describe("P2 Root causes step page (moves_step_pages_v3)", () => {
     const p2Move = () =>
       makeMove({ currentPhase: 2, phaseLabel: "P2 Discover" });

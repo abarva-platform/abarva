@@ -240,10 +240,11 @@ describe("step-page records", () => {
     }
   });
 
-  it("gives P3 Step 1 its traceability record and Step 2 its choice", () => {
+  it("gives P3 Step 1 its traceability record, Step 2 its choice and Step 3 its owners", () => {
     expect(phaseStepRecordSections(3).map((r) => [r.key, r.stepId])).toEqual([
       ["design_traceability", "P3.1"],
       ["architecture_choice", "P3.2"],
+      ["operating_adoption", "P3.3"],
     ]);
     // Every record a step declares is a record section, and vice versa.
     const declared = resolvePhaseWorkflow(3, null).flatMap((s) =>
@@ -253,6 +254,14 @@ describe("step-page records", () => {
       phaseStepRecordSections(3).map((r) => [r.key, r.stepId]),
     );
   });
+
+  it.each(CASES)(
+    "P3 Step 3 keeps its record on every route, even when skipped ($name)",
+    ({ route: r }) => {
+      const step = resolvePhaseWorkflow(3, r).find((s) => s.id === "P3.3");
+      expect(step?.recordKeys).toEqual(["operating_adoption"]);
+    },
+  );
 });
 
 describe("unmodelled phases", () => {
