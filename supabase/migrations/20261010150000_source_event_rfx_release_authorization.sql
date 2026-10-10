@@ -188,6 +188,38 @@ BEGIN
     END IF;
   END LOOP;
 
+  -- Lock waits can cross an expiry boundary. Stamp and check the final decision
+  -- time after all referenced authority rows have been locked.
+  NEW.authorized_at := clock_timestamp();
+  IF NEW.authorized_at >= package_row.expires_at THEN
+    RAISE EXCEPTION 'RFx package expired before authorization completed';
+  END IF;
+  FOR recipient_record IN SELECT value FROM jsonb_array_elements(payload->'recipients') LOOP
+    IF recipient_record ? 'ndaAuthorityId' THEN
+      PERFORM 1
+      FROM source_executed_nda_authority nda
+      JOIN source_nda_template_versions template
+        ON template.client_key = nda.client_key
+       AND template.template_version = nda.template_version
+      WHERE nda.client_key = NEW.client_key
+        AND nda.source_event_id = NEW.source_event_id
+        AND nda.nda_id = recipient_record->>'ndaAuthorityId'
+        AND nda.effective_from <= NEW.authorized_at::date
+        AND (nda.effective_to IS NULL OR nda.effective_to >= NEW.authorized_at::date)
+        AND template.effective_from <= NEW.authorized_at::date
+        AND (template.effective_to IS NULL OR template.effective_to >= NEW.authorized_at::date);
+    ELSE
+      PERFORM 1 FROM source_event_nda_waivers waiver
+      WHERE waiver.client_key = NEW.client_key
+        AND waiver.source_event_id = NEW.source_event_id
+        AND waiver.waiver_id = recipient_record->>'waiverAuthorityId'
+        AND waiver.expires_at >= NEW.authorized_at;
+    END IF;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'RFx NDA or waiver expired before authorization completed';
+    END IF;
+  END LOOP;
+
   RETURN NEW;
 END;
 $$;
