@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AgentDock, type SuggestedAction } from "@/components/agent/AgentDock";
 import {
   MovesCaptureFlow,
@@ -82,6 +82,14 @@ export function MovesCaptureWorkspace({
   content,
   openingBriefing,
 }: MovesCaptureWorkspaceProps) {
+  const [compactDock, setCompactDock] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 767px)");
+    const update = () => setCompactDock(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   const thread = useMemo(() => {
     const messages = avaThreadToDockMessages(avaThread);
     return openingBriefing?.trim()
@@ -102,7 +110,9 @@ export function MovesCaptureWorkspace({
     <AgentDock
       agent={{ initials: "aVa", mark: "ava", name: "aVa", role: avaRole }}
       surface="strategic-moves/phase-capture"
-      defaultMode="side-rail"
+      defaultMode={compactDock ? "collapsed" : "side-rail"}
+      disableStoredMode={compactDock}
+      collapsedRestoreMode={compactDock ? "expand" : undefined}
       minLeftPx={300}
       defaultLeftPercent={24}
       surfaceContext={{ moveId, phase }}

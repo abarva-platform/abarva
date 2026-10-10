@@ -107,6 +107,18 @@ const groupTitles = (container: HTMLElement) =>
   Array.from(container.querySelectorAll("h2")).map((h) => h.textContent);
 
 describe("MovesStepPage", () => {
+  it("keeps the context action outside the disclosure summary", () => {
+    const { container } = render(
+      <MovesStepPage
+        {...props(ROWS, {}, { contextAction: <a href="/evidence">Open evidence</a> })}
+      />,
+    );
+    const context = container.querySelector("[data-step-context]");
+    expect(context?.querySelector("summary")?.textContent).toContain("Details");
+    expect(context?.querySelector("summary a")).toBeNull();
+    expect(context?.querySelector("a")?.getAttribute("href")).toBe("/evidence");
+  });
+
   it("shows the authenticated Move tenant beside its name", () => {
     const { container } = render(<MovesStepPage {...props(ROWS)} />);
     expect(container.querySelector(".topline-identity")?.textContent).toContain(
@@ -190,12 +202,12 @@ describe("MovesStepPage", () => {
     const { container } = render(<MovesStepPage {...props(settled)} />);
     expect(status(container).textContent).toContain("Ready");
     expect(status(container).textContent).toContain(
-      "Continue to Architecture options.",
+      "continue to Architecture options.",
     );
     expect(continueButton(container).disabled).toBe(false);
   });
 
-  it("blocked: the outside cause and its link, no count, rows withheld, Continue disabled", () => {
+  it("blocked: the outside cause, link and count, rows withheld, Continue disabled", () => {
     const { container } = render(
       <MovesStepPage
         {...props(
@@ -209,9 +221,9 @@ describe("MovesStepPage", () => {
       />,
     );
     expect(status(container).textContent).toContain(
-      "Waiting on P2: Discover was reopened. Open P2 Discover →",
+      "Waiting on P2: Discover was reopened; Open P2 Discover →",
     );
-    expect(status(container).textContent).not.toContain("settled");
+    expect(status(container).textContent).toContain("1 of 3 settled");
     expect(container.querySelector("#row-RC-4")).toBeNull();
     expect(container.textContent).toContain("Your accepted rows are kept.");
     expect(continueButton(container).disabled).toBe(true);
@@ -324,7 +336,7 @@ describe("MovesStepPage", () => {
     );
     expect(container.textContent).toContain("Confirm this order");
     expect(status(container).textContent).toContain(
-      "Find evidence for identity or name its owner, confirm the order, and review 1 draft.",
+      "Find evidence for identity or name its owner; confirm the order; review 1 draft.",
     );
   });
 

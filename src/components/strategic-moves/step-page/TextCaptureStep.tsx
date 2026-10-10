@@ -372,7 +372,7 @@ export function TextCaptureStep({
     pendingFieldRows[0].clause =
       pendingFieldRows.length === 2
         ? `record ${pendingFieldRows[0].shortName} and ${pendingFieldRows[1].shortName}`
-        : `record ${pendingFieldRows[0].shortName} and ${pendingFieldRows.length - 1} more answers`;
+        : `record ${pendingFieldRows.length} answers`;
     for (const row of pendingFieldRows.slice(1)) row.clause = null;
   }
   if (config.sponsorCheck) {

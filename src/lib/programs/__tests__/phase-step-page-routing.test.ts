@@ -3,6 +3,7 @@ import {
   availableStepPageView,
   phaseStepPageFlagEnabled,
   phaseStepPageHref,
+  resolveBarePhaseStepPageLanding,
   resolvePhaseStepPageLanding,
 } from "@/lib/programs/phase-step-page-routing";
 import {
@@ -162,6 +163,33 @@ describe("phase step-page sunset routing", () => {
     expect(
       phaseStepPageHref("move-1", 0, "P0.2", ["scope_out"], []),
     ).not.toContain("legacy=1");
+  });
+
+  it("redirects a bare reachable phase on the server and preserves explicit surfaces", () => {
+    const input = {
+      moveId: "move-1",
+      phase: 0,
+      currentPhase: 3,
+      implementedViews: p0Views,
+      enabled: true,
+      searchParams: {},
+    };
+    expect(resolveBarePhaseStepPageLanding(input)).toBe(
+      "/strategic-moves/move-1/phase/0?step=p0-signal",
+    );
+    for (const searchParams of [
+      { legacy: "1" },
+      { step: "p0-value" },
+      { workspace: "intelligence" },
+      { section: "business_trigger" },
+      { focus: "gate" },
+      { blockedPhase: "1" },
+    ]) {
+      expect(resolveBarePhaseStepPageLanding({ ...input, searchParams })).toBeNull();
+    }
+    expect(
+      resolveBarePhaseStepPageLanding({ ...input, currentPhase: 0, phase: 1 }),
+    ).toBeNull();
   });
 
   it("leaves flag-off routing alone", () => {

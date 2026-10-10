@@ -15,8 +15,9 @@ export function CitationGapNotice({
   return (
     <div
       className="agent-citation-gap-banner"
-      aria-label="Citation gap"
       data-citation-gap-notice="true"
+      role="note"
+      aria-label="Citation gap"
       style={{
         marginBottom: compact ? 8 : 12,
         padding: compact ? "6px 8px" : "8px 10px",

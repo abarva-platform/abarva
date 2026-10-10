@@ -22,8 +22,9 @@ export function AgentActionApprovalNotice({
 
   return (
     <div
-      aria-label="Human approval required for agent actions"
       data-agent-action-approval-notice="true"
+      role="note"
+      aria-label="Human approval required for agent actions"
       style={{
         padding: compact ? "6px 8px" : "8px 10px",
         borderRadius: 8,
