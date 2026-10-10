@@ -119,7 +119,7 @@ describe("cross-phase Source audit answer", () => {
       "Audit completion and Contract 360 / Optimize readiness are not proven",
     );
     expect(answer.directAnswer).toContain(
-      "Suppliers & NDA is a historical gap",
+      "Suppliers & NDA, Responses, Evaluation are historical gaps",
     );
     expect(answer.directAnswer).toContain("227 Source artifact records");
     expect(answer.directAnswer).toContain("47 are parsed");

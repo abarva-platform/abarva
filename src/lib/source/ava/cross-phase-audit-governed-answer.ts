@@ -94,6 +94,8 @@ function phaseEvidenceFor(
       stageRecorded(event, ["scope"]),
     suppliers: ndaCoverage.suppliers.length > 0,
     rfi: stageRecorded(event, ["rfp", "rfp_rfi_package"]),
+    responses: stageRecorded(event, ["responses"]),
+    evaluation: stageRecorded(event, ["evaluation"]),
   };
 }
 

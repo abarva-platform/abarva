@@ -9,6 +9,8 @@ export type SourceNewFilePhase =
   | "define"
   | "suppliers"
   | "rfi"
+  | "responses"
+  | "evaluation"
   | "other";
 
 export type SourceNewFileRow = Pick<
@@ -79,6 +81,8 @@ const PHASES: readonly { key: SourceNewFilePhase; label: string }[] = [
   { key: "define", label: "Define" },
   { key: "suppliers", label: "Suppliers" },
   { key: "rfi", label: "Market package" },
+  { key: "responses", label: "Responses" },
+  { key: "evaluation", label: "Evaluation" },
   // Artifacts from the rest of the event. The folder appears only when such
   // files exist, but they are never hidden: an empty folder beside a cabinet
   // that holds files would read as "no files" when the truth is "not here".
