@@ -282,6 +282,8 @@ export interface AvaAnswerPacket {
   directAnswer: string;
   /** Compatibility mirror for older AgentAnswer consumers. */
   prose?: string;
+  /** Presentation provenance only; never an authorization or claim-quality verdict. */
+  modelAuthored?: { rawText: string; protocolIssues: string[] };
   interpretation?: string;
   businessImplication?: string;
   recommendation?: string;

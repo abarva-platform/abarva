@@ -96,13 +96,16 @@ type TriageRecord = {
   pinnedDirectories: Record<string, { alreadyCovered: string[] }>;
   heldDirectories: Record<string, { successorFiledAs: string; holdKinds: HoldKind[] }>;
   suites: SuiteRow[];
+  wiringMaintenance?: { suites: SuiteRow[] };
 };
 
 const record = JSON.parse(
   readFileSync(path.join(repoRoot, TRIAGE_RECORD), "utf8"),
 ) as TriageRecord;
 
-const wiredRows = record.suites.filter((suite) => suite.wiredInThisItem);
+const additions = record.wiringMaintenance?.suites ?? [];
+// Later suites extend current wiring without changing the historical draw or holds.
+const wiredRows = [...record.suites.filter((suite) => suite.wiredInThisItem), ...additions];
 const wiredDirectories = [...record.wiring.directories].sort();
 const namedFiles = [...record.wiring.namedFiles].sort();
 const heldDirectories = Object.keys(record.heldDirectories).sort();
@@ -358,8 +361,8 @@ describe("T-788 — twelfth stale-suite draw, wiring and holds", () => {
       scanners: [],
       readers: [],
       wrongVerdict: [],
-      suitesWired: record.wiring.suitesWired,
-      casesWired: record.wiring.casesWired,
+      suitesWired: record.wiring.suitesWired + additions.length,
+      casesWired: record.wiring.casesWired + additions.reduce((sum, row) => sum + row.totalTests, 0),
       wiredPaths: [
         ...wiredDirectories.flatMap((dir) => directTestFiles(dir)),
         ...namedFiles,

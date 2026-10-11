@@ -8,6 +8,7 @@ export interface AvaChatSessionExportTurn {
   body: string;
   at?: string;
   answer?: AvaAnswerPacket | null;
+  reviewStatus?: "complete" | "failed" | "cancelled";
 }
 
 export interface AvaChatSessionExport {
@@ -15,6 +16,13 @@ export interface AvaChatSessionExport {
   surface: string;
   tenantKey?: string;
   turns: AvaChatSessionExportTurn[];
+  qualityReview?: {
+    suiteId: string;
+    startedAt: string;
+    finishedAt?: string;
+    plannedQuestions: number;
+    completedQuestions: number;
+  };
 }
 
 export interface AvaChatSessionExportStats {
