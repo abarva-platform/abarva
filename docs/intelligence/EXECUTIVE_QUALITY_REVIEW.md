@@ -6,6 +6,8 @@ The suite covers the four starter questions plus economics, capabilities, confir
 
 ## What to assess
 
+The answer flow is a direct conclusion, relevant company context, and a decision hinge: the uncertainty, tradeoff or condition that would change the conclusion. Three specific follow-up questions come from that hinge and the likely next decision, rather than a fixed menu.
+
 - Does the opening state the decision or consequential finding clearly?
 - Are the reasons specific to the company's evidence and properly sourced?
 - Is the recommended investment, validation, sequence or hold decision justified?
@@ -13,7 +15,7 @@ The suite covers the four starter questions plus economics, capabilities, confir
 - Do exhibits answer the question and use supported values or confirmed relationships?
 - Is the next action clear, with an owner where known and a validation gate?
 
-Opening and prose word counts are observations for human review, not quality scores. The prompt requires a 25–40 word opening and at most 120 prose words, reduced to 90 when an exhibit, ranking, plan or comparison carries the detail. The opening measurement skips leading Markdown headings without changing the response. A longer answer remains intact so it can be assessed. Explicit deep dives may be longer.
+Opening and prose word counts are observations for human review, not quality scores. The prompt requires a 20–30 word opening (35 maximum) and at most 90 prose words, reduced to 65 when an exhibit, ranking, plan or comparison carries the detail. The default total visible answer, including table cells and exhibit notes, is limited to 160 words by the prompt. Numeric charts use Recharts in the product; strategic tradeoffs can use a categorical low/high matrix explicitly labeled as advisory judgment. Neither path invents numeric priority scores. The opening measurement skips leading Markdown headings without changing the response. A longer answer remains intact so it can be assessed. Explicit deep dives may be longer.
 
 ## Output ownership
 

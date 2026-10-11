@@ -1,10 +1,8 @@
 "use client";
 
+import { ModelAuthoredChart } from "./ModelAuthoredChart";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
-import {
-  chartPlot,
-  graphPlot,
-} from "@/lib/intelligence/answer/model-exhibit-layout";
+import { graphPlot } from "@/lib/intelligence/answer/model-exhibit-layout";
 
 export function ModelAuthoredExhibits({ answer }: { answer: AvaAnswerPacket }) {
   return (
@@ -44,88 +42,7 @@ export function ModelAuthoredExhibits({ answer }: { answer: AvaAnswerPacket }) {
               {a.note && <p className="mt-2 text-sm">{a.note}</p>}
             </>
           ) : a.artifact === "chart" ? (
-            (() => {
-              const p = chartPlot(a);
-              return (
-                <>
-                  {a.subtitle && <p>{a.subtitle}</p>}
-                  <svg
-                    viewBox={`0 0 ${p.width} ${p.height}`}
-                    role="img"
-                    aria-label={a.title ?? "Chart"}
-                    className="w-full"
-                  >
-                    <line
-                      x1={p.horizontal ? p.baselineX : 30}
-                      x2={p.horizontal ? p.baselineX : 470}
-                      y1={p.horizontal ? 10 : p.baseline}
-                      y2={p.horizontal ? 200 : p.baseline}
-                      stroke="#a8a29e"
-                    />
-                    {a.kind === "line" && (
-                      <polyline
-                        points={p.points.map((v) => `${v.x},${v.y}`).join(" ")}
-                        fill="none"
-                        stroke="#166534"
-                        strokeWidth="2"
-                      />
-                    )}
-                    {p.points.map((v, i) => (
-                      <g key={i}>
-                        {a.kind === "line" ? (
-                          <circle cx={v.x} cy={v.y} r="4" fill="#166534" />
-                        ) : (
-                          <rect
-                            x={
-                              p.horizontal
-                                ? Math.min(v.x, p.baselineX)
-                                : v.x - 12
-                            }
-                            y={
-                              p.horizontal ? v.y - 7 : Math.min(v.y, p.baseline)
-                            }
-                            width={
-                              p.horizontal ? Math.abs(v.x - p.baselineX) : 24
-                            }
-                            height={
-                              p.horizontal ? 14 : Math.abs(v.y - p.baseline)
-                            }
-                            fill="#166534"
-                          />
-                        )}
-                        <text
-                          x={p.horizontal ? v.x + 8 : v.x}
-                          y={p.horizontal ? v.y + 3 : v.y - 8}
-                          textAnchor="middle"
-                          fontSize="10"
-                        >
-                          {String(v.value)}
-                        </text>
-                        <text
-                          x={p.horizontal ? 18 : v.x}
-                          y={p.horizontal ? v.y + 3 : 193}
-                          textAnchor="middle"
-                          fontSize="10"
-                        >
-                          {i + 1}
-                        </text>
-                      </g>
-                    ))}
-                  </svg>
-                  <p className="text-sm">{a.unit}</p>
-                  <ol className="list-inside list-decimal text-sm">
-                    {p.points.map((v, i) => (
-                      <li key={i}>
-                        {v.label}: {String(v.value)}
-                      </li>
-                    ))}
-                  </ol>
-                  {a.sourceNote && (
-                    <p className="mt-2 text-sm">{a.sourceNote}</p>
-                  )}
-                </>
-              );
-            })()
+            <ModelAuthoredChart chart={a} />
           ) : (
             (() => {
               const p = graphPlot(a);

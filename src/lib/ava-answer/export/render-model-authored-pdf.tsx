@@ -22,6 +22,7 @@ import type { AvaChatSessionExport } from "./session-types";
 import {
   chartPlot,
   graphPlot,
+  matrixQuadrants,
 } from "@/lib/intelligence/answer/model-exhibit-layout";
 import { measureExecutiveAnswer } from "@/lib/intelligence/answer/model-authored-answer";
 
@@ -92,7 +93,11 @@ function proseBlocks(body: string) {
 function exhibitBlock(a: AvaArtifact) {
   return (
     <View key={a.id} style={styles.card} wrap={a.artifact === "table"}>
-      {a.title && <Text style={styles.heading} minPresenceAhead={128}>{a.title}</Text>}
+      {a.title && (
+        <Text style={styles.heading} minPresenceAhead={128}>
+          {a.title}
+        </Text>
+      )}
       {a.artifact === "table" ? (
         <>
           <View style={styles.row} wrap={false}>
@@ -115,6 +120,55 @@ function exhibitBlock(a: AvaArtifact) {
         </>
       ) : a.artifact === "chart" ? (
         (() => {
+          if (a.kind === "quadrant-matrix") {
+            const quadrants = matrixQuadrants(a);
+            return (
+              <>
+                {a.subtitle && <Text style={styles.meta}>{a.subtitle}</Text>}
+                {[0, 2].map((offset) => (
+                  <View key={offset} style={{ flexDirection: "row" }}>
+                    {quadrants.slice(offset, offset + 2).map((q) => (
+                      <View
+                        key={`${q.x}-${q.y}`}
+                        style={{
+                          flex: 1,
+                          borderWidth: 1,
+                          borderColor: "#a7cdb2",
+                          backgroundColor: "#f0f7f2",
+                          padding: 8,
+                          minHeight: 75,
+                        }}
+                      >
+                        <Text style={[styles.meta, styles.bold]}>
+                          {a.xKey}: {q.x} · {a.yKey}: {q.y}
+                        </Text>
+                        {q.rows.map((row, i) => (
+                          <View key={i} style={{ marginBottom: 6 }}>
+                            <Text style={[styles.cell, styles.bold]}>
+                              {String(row.label)}
+                            </Text>
+                            {Object.entries(row)
+                              .filter(
+                                ([key]) =>
+                                  !["label", a.xKey!, a.yKey!].includes(key),
+                              )
+                              .map(([key, value]) => (
+                                <Text key={key} style={styles.cell}>
+                                  {key}: {String(value ?? "")}
+                                </Text>
+                              ))}
+                          </View>
+                        ))}
+                      </View>
+                    ))}
+                  </View>
+                ))}
+                {a.sourceNote && (
+                  <Text style={styles.meta}>{a.sourceNote}</Text>
+                )}
+              </>
+            );
+          }
           const p = chartPlot(a);
           return (
             <>
@@ -318,7 +372,7 @@ export function buildModelAuthoredSessionPdf(
               <Text style={styles.cell}>
                 {t.reviewStatus && t.reviewStatus !== "complete"
                   ? "—"
-                  : `${m.openingWords}${m.openingWithinTarget ? "" : " (over 40)"}`}
+                  : `${m.openingWords}${m.openingWithinTarget ? "" : " (over 35)"}`}
               </Text>
               <Text style={styles.cell}>{m.proseWords}</Text>
               <Text style={styles.cell}>{t.answer?.artifacts.length ?? 0}</Text>
