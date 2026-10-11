@@ -18,6 +18,7 @@ const evaluated: ValueCaseResult = {
     annualCashTerms: { low: [], base: [], high: [] },
     riskAvoidedAnnualCents: { low: 0, base: 0, high: 0 },
     monthlyCashCents: monthlyCash,
+    threeYearBases: null,
     costCents: { low: 20_000, base: 20_000, high: 20_000 },
     discountRate: 0.08,
     npvCents: { low: 0, base: 0, high: 0 },

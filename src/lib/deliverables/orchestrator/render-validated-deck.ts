@@ -47,7 +47,10 @@ export async function renderValidatedDeck(
     return {
       buffer,
       inspection,
-      verdict: judgeRenderedDeck(inspection, policy),
+      verdict: judgeRenderedDeck(inspection, {
+        ...policy,
+        ...(candidate.referenceDeck ? { referenceDeck: candidate.referenceDeck } : {}),
+      }),
     };
   };
 
@@ -62,6 +65,7 @@ export async function renderValidatedDeck(
 
   if (
     (doc.deckSlides?.length ?? 0) > 0 &&
+    !doc.referenceDeck &&
     hasThinAuthoredSlides &&
     hasSubstantiveSections
   ) {
@@ -97,7 +101,9 @@ export async function renderValidatedDeck(
       (f) =>
         f.kind === "off_canvas" ||
         f.kind === "canvas" ||
-        f.kind === "empty_canvas",
+        f.kind === "empty_canvas" ||
+        f.kind === "reference_source" ||
+        f.kind === "reference_edition",
     )
     .map((f) => f.message);
 

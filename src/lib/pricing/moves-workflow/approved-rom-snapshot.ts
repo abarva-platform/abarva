@@ -77,10 +77,11 @@ function validFigures(snapshot: RomSnapshot, releaseCodes: readonly string[]) {
  */
 export async function readApprovedRomSnapshot(
   moveId: string,
+  read: typeof fetch = fetch,
 ): Promise<ApprovedRomRead> {
   try {
     const movePath = `/api/v1/programs/${encodeURIComponent(moveId)}`;
-    const captureResponse = await fetch(`${movePath}/phase-capture?phase=3`, {
+    const captureResponse = await read(`${movePath}/phase-capture?phase=3`, {
       cache: "no-store",
     });
     if (!captureResponse.ok) return { status: "failed" };
@@ -116,7 +117,7 @@ export async function readApprovedRomSnapshot(
       return { status: "failed" };
     }
 
-    const registerResponse = await fetch(`${movePath}/assumptions`, {
+    const registerResponse = await read(`${movePath}/assumptions`, {
       cache: "no-store",
     });
     if (!registerResponse.ok) return { status: "failed" };
