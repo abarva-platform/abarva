@@ -44,6 +44,8 @@ export interface ReferenceSlide {
   blocks: ReferenceBlock[];
   /** Governed figures substituted into titles, answer bars or notes. */
   narrativeFigures?: ReferenceFigure[];
+  /** Subset substituted into visible title or answer text; notes-only figures stay in narrativeFigures. */
+  visibleNarrativeFigures?: ReferenceFigure[];
   /** Human-readable governed sources for substituted narrative slots. */
   narrativeSourceLabels?: string[];
   /** Exact governed source keys used in this slide, including narrative claims. */
@@ -159,8 +161,8 @@ export interface ReferenceDeckFinding {
   blocking: boolean;
 }
 
-export function figuresOnSlide(slide: ReferenceSlide): ReferenceFigure[] {
-  const figures: ReferenceFigure[] = [...(slide.narrativeFigures ?? [])];
+function blockFiguresOnSlide(slide: ReferenceSlide): ReferenceFigure[] {
+  const figures: ReferenceFigure[] = [];
   const take = (cell: ReferenceCell) => {
     if (typeof cell !== "string") figures.push(cell);
   };
@@ -171,6 +173,14 @@ export function figuresOnSlide(slide: ReferenceSlide): ReferenceFigure[] {
     if (block.kind === "timeline") block.rows.forEach((row) => row.cost && figures.push(row.cost));
   }
   return figures;
+}
+
+export function figuresOnSlide(slide: ReferenceSlide): ReferenceFigure[] {
+  return [...(slide.narrativeFigures ?? []), ...blockFiguresOnSlide(slide)];
+}
+
+export function visibleFiguresOnSlide(slide: ReferenceSlide): ReferenceFigure[] {
+  return [...(slide.visibleNarrativeFigures ?? slide.narrativeFigures ?? []), ...blockFiguresOnSlide(slide)];
 }
 
 export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFinding[] {

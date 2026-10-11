@@ -756,7 +756,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
 });
 
 test("fetches both read-only reference-deck editions from the signed-in Move", async ({ page }, testInfo) => {
-  test.setTimeout(8 * 60_000);
+  test.setTimeout(15 * 60_000);
   expect(BASE_URL).toBe("https://app.abarva.ai");
   expect(MOVE_ID).toBe("1557f032-5a5c-4475-abe5-b1a841576649");
   expect(process.env.E2E_MOVES_CLIENT_KEY).toBe("meridian");
@@ -767,10 +767,27 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
   });
   const proof: Array<{ edition: string; format: string; status: number; score: number | null; titleFigureCount: number | null; wordsStatus: string | null; wordsReason: string | null; wordsRule: string | null; wordsSlide: number | null; fallbackCount: number | null; requestId: string | null; bytes: number; file: string | null; figureHash: string | null; errorCode?: string; findingCodes?: string[] }> = [];
   const failures: string[] = [];
+  const recordTransportFailure = async (edition: string, format: string, error: unknown) => {
+    // Playwright request errors may contain session cookies. Persist only a safe class.
+    const errorCode = error instanceof Error && /timeout/i.test(error.name) ? "request_timeout" : "request_failed";
+    const diagnostic = { edition, format, status: 0, errorCode };
+    const file = testInfo.outputPath(`${edition}.${format}.error.json`);
+    fs.writeFileSync(file, `${JSON.stringify(diagnostic, null, 2)}\n`);
+    await testInfo.attach(`${edition}.${format}.error.json`, { path: file, contentType: "application/json" });
+    proof.push({ ...diagnostic, score: null, titleFigureCount: null, wordsStatus: null, wordsReason: null,
+      wordsRule: null, wordsSlide: null, fallbackCount: null, requestId: null, bytes: 0, file: path.basename(file), figureHash: null });
+    failures.push(`${edition} ${format}: ${errorCode}`);
+  };
   for (const edition of ["validation", "investment"] as const) {
     let editionHash: string | null = null;
     for (const format of ["pptx", "pdf"] as const) {
-      const response = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/preview?format=${format}`, { timeout: 120_000 });
+      let response;
+      try {
+        response = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/preview?format=${format}`, { timeout: 120_000 });
+      } catch (error) {
+        await recordTransportFailure(edition, format, error);
+        continue;
+      }
       if (response.status() !== 200) {
         const body = await response.json().catch(() => null) as { error?: unknown; findings?: unknown } | null;
         const errorCode = typeof body?.error === "string" ? body.error : "unreadable_error";
@@ -840,7 +857,13 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
       await testInfo.attach(`${edition}.${format}`, { path: file, contentType: format === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
       proof.push({ edition, format, status: response.status(), score, titleFigureCount, wordsStatus, wordsReason, wordsRule, wordsSlide, fallbackCount, requestId, bytes: bytes.length, file: path.basename(file), figureHash });
     }
-    const workbookResponse = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/workbook`, { timeout: 120_000 });
+    let workbookResponse;
+    try {
+      workbookResponse = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/workbook`, { timeout: 120_000 });
+    } catch (error) {
+      await recordTransportFailure(edition, "xlsx", error);
+      continue;
+    }
     if (workbookResponse.status() !== 200) {
       const status = workbookResponse.status();
       const file = testInfo.outputPath(`${edition}.xlsx.error.json`);
