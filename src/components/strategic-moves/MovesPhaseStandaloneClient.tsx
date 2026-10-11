@@ -3538,18 +3538,6 @@ export function MovesPhaseStandaloneClient({
     hasWorkbookTransition: readinessWorkbookHref !== null,
   });
 
-  const surfaceTabRow: ReactNode = (
-    <WorkspaceSurfaceTabs
-      activeView={workspaceView}
-      onSelect={setWorkspaceView}
-      tabs={workspaceTabs}
-      // v2 makes the slim phase rail the primary navigator, so the
-      // workspace-view row drops out of the primary phase-flow chrome to a
-      // quieter secondary control. The views themselves stay reachable.
-      variant={workspaceV2Active ? "secondary" : "default"}
-    />
-  );
-
   // The readiness-workbook download / upload / preview actions. Built once so
   // they sit in exactly one place: on the legacy/composition path they stay on
   // the stage head; under `moves_workspace_v2` they move off that per-step head
@@ -3866,6 +3854,28 @@ export function MovesPhaseStandaloneClient({
   useEffect(() => {
     if (defaultStepTarget) router.replace(defaultStepTarget);
   }, [defaultStepTarget, router]);
+  const phaseStepsHref = resolvePhaseStepPageLanding({
+    moveId: move.id,
+    phase: phase.phase,
+    route: confirmedSolutionRoute,
+    implementedViews: implementedStepViews,
+    doneByStep: recordStepDone,
+    enabled: phaseStepPagesEnabled,
+    legacy: legacyCaptureRequested,
+    requestedView: null,
+  });
+  const surfaceTabRow: ReactNode = (
+    <WorkspaceSurfaceTabs
+      activeView={workspaceView}
+      onSelect={setWorkspaceView}
+      phaseHref={phaseStepsHref}
+      tabs={workspaceTabs}
+      // v2 makes the slim phase rail the primary navigator, so the
+      // workspace-view row drops out of the primary phase-flow chrome to a
+      // quieter secondary control. The views themselves stay reachable.
+      variant={workspaceV2Active ? "secondary" : "default"}
+    />
+  );
   const charterPlatformFit = (() => {
     const fields = readSolutionPatternFromCharter(
       (move.charter as Record<string, unknown> | null) ?? null,
@@ -4444,6 +4454,7 @@ export function MovesPhaseStandaloneClient({
         currentMoveId={move.id}
         maxReachablePhase={move.currentPhase ?? 0}
         onSelectWorkspaceView={setWorkspaceView}
+        phaseHref={phaseStepsHref}
         viewingPhase={phase.phase}
         workspaceView={workspaceView}
         tabs={workspaceTabs}
@@ -5528,11 +5539,13 @@ function MovePhaseTopStepper({
 function WorkspaceSurfaceTabs({
   activeView,
   onSelect,
+  phaseHref,
   tabs,
   variant = "default",
 }: {
   activeView: WorkspaceView;
   onSelect: (view: WorkspaceView) => void;
+  phaseHref: string | null;
   tabs: Array<{ label: string; view: WorkspaceView }>;
   /** `secondary` de-emphasises the row (v2 shell), keeping the views reachable. */
   variant?: "default" | "secondary";
@@ -5547,7 +5560,17 @@ function WorkspaceSurfaceTabs({
       role="tablist"
       aria-label="Move workspace views"
     >
-      {tabs.map((tab) => (
+      {tabs.map((tab) => tab.view === "phase" && phaseHref ? (
+        <Link
+          aria-selected={activeView === tab.view}
+          className={activeView === tab.view ? "active" : ""}
+          href={phaseHref}
+          key={tab.view}
+          role="tab"
+        >
+          {tab.label}
+        </Link>
+      ) : (
         <button
           aria-selected={activeView === tab.view}
           className={activeView === tab.view ? "active" : ""}
@@ -5670,6 +5693,7 @@ function MobileMovesRailControls({
   currentMoveId,
   maxReachablePhase,
   onSelectWorkspaceView,
+  phaseHref,
   viewingPhase,
   workspaceView,
   tabs,
@@ -5677,6 +5701,7 @@ function MobileMovesRailControls({
   currentMoveId: string;
   maxReachablePhase: number;
   onSelectWorkspaceView: (view: WorkspaceView) => void;
+  phaseHref: string | null;
   viewingPhase: number;
   workspaceView: WorkspaceView;
   tabs: Array<{ label: string; view: WorkspaceView }>;
@@ -5707,7 +5732,17 @@ function MobileMovesRailControls({
         </select>
       </label>
       <div role="tablist" aria-label="Compact workspace views">
-        {tabs.map((view) => (
+        {tabs.map((view) => view.view === "phase" && phaseHref ? (
+          <Link
+            aria-selected={workspaceView === view.view}
+            className={workspaceView === view.view ? "viewing" : ""}
+            href={phaseHref}
+            key={view.view}
+            role="tab"
+          >
+            Stage
+          </Link>
+        ) : (
           <button
             aria-selected={workspaceView === view.view}
             className={workspaceView === view.view ? "viewing" : ""}
@@ -10673,7 +10708,7 @@ function MovesStandaloneStyles() {
 .mxw-mobile-rail label span{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:900}
 .mxw-mobile-rail select{min-width:140px;max-width:42vw;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:12px;font-weight:750;padding:7px 9px}
 .mxw-mobile-rail [role="tablist"]{display:flex;align-items:center;gap:4px;overflow-x:auto}
-.mxw-mobile-rail [role="tab"]{border:1px solid transparent;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:800;border-radius:8px;padding:7px 9px;white-space:nowrap;cursor:pointer}
+.mxw-mobile-rail [role="tab"]{display:inline-flex;align-items:center;border:1px solid transparent;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:800;border-radius:8px;padding:7px 9px;white-space:nowrap;cursor:pointer;text-decoration:none}
 .mxw-mobile-rail [role="tab"].viewing{background:#e4ecf9;border-color:rgba(42,90,168,.24);color:var(--blue)}
 .mxw-surface{display:block;min-height:calc(100% - 44px)}
 .mxw-back{font-size:12px;color:var(--muted);display:inline-flex;margin-bottom:12px}
@@ -10752,14 +10787,14 @@ function MovesStandaloneStyles() {
 .mxw-progress-signal.blocked{color:var(--amber)}
 .mxw-progress-signal.open{color:#8a5a12}
 .mxw-surface-tabs{display:inline-flex;align-items:center;gap:2px;background:rgba(12,26,58,.05);border-radius:10px;padding:3px;margin:0 0 20px;overflow-x:auto}
-.mxw-surface-tabs button{position:relative;border:0;background:transparent;color:var(--muted);padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
-.mxw-surface-tabs button:hover{color:var(--ink);background:rgba(255,255,255,.62)}
-.mxw-surface-tabs button.active{color:var(--ink);background:#fff;box-shadow:0 1px 2px rgba(12,26,58,.08)}
-.mxw-surface-tabs button.active::before{content:none}
+.mxw-surface-tabs :is(button,a){position:relative;display:inline-flex;align-items:center;border:0;background:transparent;color:var(--muted);padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none}
+.mxw-surface-tabs :is(button,a):hover{color:var(--ink);background:rgba(255,255,255,.62)}
+.mxw-surface-tabs :is(button,a).active{color:var(--ink);background:#fff;box-shadow:0 1px 2px rgba(12,26,58,.08)}
+.mxw-surface-tabs :is(button,a).active::before{content:none}
 .mxw-surface-tabs--secondary{background:transparent;padding:0;gap:4px;margin:0 0 14px;opacity:.9}
-.mxw-surface-tabs--secondary button{font-size:12px;font-weight:500;color:var(--muted);padding:5px 10px;border-radius:7px}
-.mxw-surface-tabs--secondary button.active{background:rgba(12,26,58,.06);color:var(--ink);box-shadow:none}
-.mxw-finder-on .mxw-surface-tabs--secondary button.active::before{content:none}
+.mxw-surface-tabs--secondary :is(button,a){font-size:12px;font-weight:500;color:var(--muted);padding:5px 10px;border-radius:7px}
+.mxw-surface-tabs--secondary :is(button,a).active{background:rgba(12,26,58,.06);color:var(--ink);box-shadow:none}
+.mxw-finder-on .mxw-surface-tabs--secondary :is(button,a).active::before{content:none}
 .mxw-progress{display:flex;align-items:center;gap:14px;flex:1}
 .mxw-track{flex:1;height:6px;border-radius:3px;background:rgba(20,20,19,.07);overflow:hidden;max-width:260px}
 .mxw-track span{display:block;height:100%;background:var(--green);border-radius:3px;transition:width .35s ease}
@@ -11290,7 +11325,7 @@ function MovesStandaloneStyles() {
  * Finder-shell visual polish. Tokens match the merged
  * MovePhaseExplorer.module.css palette (navy/blue/teal/amber).
  */
-.mxw-finder-on .mxw-surface-tabs button.active::before{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:999px;background:#2a5aa8}
+.mxw-finder-on .mxw-surface-tabs :is(button,a).active::before{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:999px;background:#2a5aa8}
 /*
  * Steps selector. Same token set as the finder-shell polish rules above
  * (navy/blue/teal/amber); no new colors introduced.
