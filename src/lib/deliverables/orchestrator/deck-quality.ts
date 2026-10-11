@@ -29,6 +29,8 @@ export interface DeckPolicy {
   /** Roles by 1-based slide index. Anything unlisted is content. */
   rolesByIndex?: Record<number, SlideRole>;
   referenceDeck?: ReferenceDeckSpec;
+  /** One-based slides that used deterministic words after model unavailability. */
+  fallbackWordSlides?: readonly number[];
 }
 
 export type DeckFinding =
@@ -44,7 +46,7 @@ export type DeckFinding =
   | { kind: "empty_table"; slide: number; message: string }
   | { kind: "slide_count"; message: string }
   | { kind: "canvas"; message: string }
-  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability"; slide: number; message: string };
+  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "fallback_words"; slide: number; message: string };
 
 export interface DeckVerdict {
   ok: boolean;
@@ -227,6 +229,10 @@ export function judgeRenderedDeck(
         message: `slide ${slide.index}: a title and ${slide.visibleChars} characters, with no table, visual or supporting argument. A section heading on a slide is not a slide.`,
       });
     }
+  }
+
+  for (const slide of new Set(policy.fallbackWordSlides ?? [])) {
+    findings.push({ kind: "fallback_words", slide, message: `slide ${slide}: deterministic words were used because drafted words were unavailable.` });
   }
 
   return {

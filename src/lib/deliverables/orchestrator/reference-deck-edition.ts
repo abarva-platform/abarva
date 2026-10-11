@@ -2,6 +2,7 @@ import { factTokens } from "./numeric-lineage-tokens";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
 import type { EditionInputs } from "./reference-deck-inputs";
 import type { EditionWords } from "./reference-deck-words";
+import { buildReferenceSlotTable, type ReferenceSlotTable } from "./reference-deck-slots";
 import {
   type ReferenceArchetype, type ReferenceBlock, type ReferenceCell,
   type ReferenceDeckSpec, type ReferenceFigure, type ReferenceSection,
@@ -36,7 +37,7 @@ const percent = (ratio: number): string => `${(ratio * 100).toFixed(1)}%`;
 const cell = (row: number): string => `Deck Figures!B${row}`;
 
 /** All figure bindings are assembled here; Claude has no route to mint one. */
-export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords[]): ReferenceDeckSpec {
+export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords[], providedSlots?: ReferenceSlotTable): ReferenceDeckSpec {
   const sequence = inputs.edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
   if (words.length !== sequence.length) throw new Error("reference_words_count_mismatch");
   const sources: Record<string, string> = {};
@@ -57,6 +58,13 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     figureLedger.push(result);
     return result;
   };
+  const slots = providedSlots ?? buildReferenceSlotTable(inputs);
+  // Reserve every permitted governed slot in a stable order. PPTX, PDF and the
+  // companion workbook then carry the same figure ledger even if model wording varies.
+  for (const slot of Object.values(slots)) {
+    if (slot.editions.includes(inputs.edition) && slot.display !== null)
+      bind(slot.sourceId, slot.sourceLabel, slot.display);
+  }
   const capture = (phase: 1 | 2 | 3, key: string): string =>
     inputs.capture[phase].status === "ready" ? safeRead(inputs.capture[phase].value[key])
       : `Gap — ${inputs.capture[phase].detail}`;
@@ -90,7 +98,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       ? bind(`engine:${basisKey}_roi`, `Value engine: ${basisKey} ROI`, percent(value)) : null;
   };
   const valueCell = (value: ReferenceFigure | null): ReferenceCell => value ??
-    (inputs.valueCase.status === "gap" ? `Gap — ${inputs.valueCase.detail}` : GAP);
+    (inputs.valueCase.status === "ready" ? GAP : `Gap — ${inputs.valueCase.detail}`);
   const yearFigure = (basisKey: string, year: number): ReferenceFigure | null => {
     const row = basis(basisKey);
     const values = row?.annualCents;
@@ -304,6 +312,26 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
   const slides: ReferenceSlide[] = sequence.map((archetype, index) => {
     const blocks = blocksFor(archetype);
     const authored = words[index]!;
+    const narrativeFigures = new Map<string, ReferenceFigure>();
+    const narrativeSourceIds = new Set<string>();
+    const narrativeSourceLabels = new Set<string>();
+    const resolveSlots = (prose: string): string => prose.replace(/\{([^{}]+)\}/g, (_, key: string) => {
+      const slot = slots[key];
+      if (!slot || !slot.editions.includes(inputs.edition))
+        throw new Error("reference_deck_lineage_refusal: unknown_or_disallowed_slot");
+      narrativeSourceIds.add(slot.sourceId);
+      narrativeSourceLabels.add(slot.sourceLabel);
+      if (slot.display === null) {
+        sources[slot.sourceId] = slot.sourceLabel;
+        return slot.missingPhrase;
+      }
+      const figure = bind(slot.sourceId, slot.sourceLabel, slot.display);
+      narrativeFigures.set(`${figure.sourceId}\u0000${figure.display}`, figure);
+      return slot.display;
+    });
+    const actionTitle = resolveSlots(authored.title);
+    const answer = resolveSlots(authored.answer);
+    const speakerNotes = resolveSlots(authored.notes);
     const extra = archetype === "plain_english_table" ? [sourceCapture(1, "sponsor_commitment"), sourceCapture(2, "current_state_findings"), sourceCapture(1, "success_criteria")]
       : archetype === "big_number_context" ? [sourceCapture(1, "scope_boundary"), sourceCapture(2, "current_state_findings")]
         : archetype === "flow_today" ? [sourceCapture(2, "process_handoffs"), sourceCapture(2, "current_state_findings")]
@@ -312,12 +340,14 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     return {
       archetype,
       ...(archetype === "cover" || archetype === "divider" ? {} : { section: sectionFor(archetype) }),
-      actionTitle: authored.title,
+      actionTitle,
       answerLabel: "The answer",
-      answer: authored.answer,
-      speakerNotes: authored.notes,
+      answer,
+      speakerNotes,
       blocks,
-      sourceIds: sourceIdsFor(blocks, extra),
+      narrativeFigures: [...narrativeFigures.values()],
+      narrativeSourceLabels: [...narrativeSourceLabels],
+      sourceIds: sourceIdsFor(blocks, [...extra, ...narrativeSourceIds]),
     };
   });
   if (inputs.edition === "validation") {

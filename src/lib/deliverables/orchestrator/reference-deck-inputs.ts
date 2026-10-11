@@ -16,6 +16,7 @@ import {
   type ApprovedRomSnapshot,
 } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
 import type { ReferenceEdition } from "./reference-deck-model";
+import { valueCaseRead, type ValueCaseRead } from "./reference-deck-value-case-read";
 
 type Read<T> = { status: "ready"; value: T } | { status: "gap"; detail: string };
 const gap = <T>(detail: string): Read<T> => ({ status: "gap", detail });
@@ -24,7 +25,7 @@ const ready = <T>(value: T): Read<T> => ({ status: "ready", value });
 export interface EditionInputs {
   edition: ReferenceEdition;
   move: ProgramCore;
-  valueCase: Read<Record<string, unknown>>;
+  valueCase: ValueCaseRead;
   register: Read<{ assumptions: Record<string, unknown>[]; figuresRedacted: boolean }>;
   rom: Read<ApprovedRomSnapshot>;
   citations: Read<PublicCitationSource[]>;
@@ -87,8 +88,7 @@ export async function assembleEditionInputs(moveId: string, edition: ReferenceEd
   if (!move || move.archivedAt || move.deletedAt) throw new ReferenceMoveUnavailable();
 
   const [valueCase, register, rom, citations, p1, p2, p3] = await Promise.all([
-    jsonRead(existingRouteRead(moveId, "value-case"), (body) =>
-      body.ok === true && body.programId === moveId ? body : null, "Value case"),
+    valueCaseRead(existingRouteRead(moveId, "value-case"), moveId),
     jsonRead(existingRouteRead(moveId, "assumptions"), (body) =>
       body.ok === true && Array.isArray(body.assumptions)
         ? { assumptions: body.assumptions.filter(isObject), figuresRedacted: body.figuresRedacted === true }

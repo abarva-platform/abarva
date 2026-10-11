@@ -59,6 +59,7 @@ export const AI_WORKLOADS = {
   moves_quality_review: { module: "moves", lane: "offline-generation" },
   /** Governed public-source web research before a Move build (flagged). */
   moves_public_research: { module: "moves", lane: "offline-generation" },
+  moves_reference_deck: { module: "moves", lane: "offline-generation" },
 
   source_rfp: { module: "source", lane: "offline-generation" },
   source_decision_brief: { module: "source", lane: "offline-generation" },

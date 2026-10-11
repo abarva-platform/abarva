@@ -27,6 +27,8 @@ const BODY = "DM Sans";
 const SERIF = "Georgia";
 const display = (cell: ReferenceCell): string =>
   typeof cell === "string" ? cell : cell.display;
+const identityLine = (spec: ReferenceDeckSpec): string =>
+  [spec.program, ...(spec.useCase.trim().toLocaleLowerCase() === spec.program.trim().toLocaleLowerCase() ? [] : [spec.useCase]), "Discussion draft"].join(" · ");
 
 function addCover(slide: Slide, spec: ReferenceDeckSpec, content: ReferenceSlide): void {
   slide.background = { color: C.ink };
@@ -77,7 +79,7 @@ function addDivider(slide: Slide, spec: ReferenceDeckSpec, content: ReferenceSli
     x: 0.72, y: 5.12, w: 10.5, h: 1.15, fontFace: BODY,
     fontSize: 13, color: C.white, breakLine: false,
   });
-  slide.addText(`${spec.program} · ${spec.useCase} · Discussion draft`, {
+  slide.addText(identityLine(spec), {
     x: 0.72, y: 7.16, w: 10.9, h: 0.18, fontFace: BODY, fontSize: 8, color: C.white,
   });
 }
@@ -132,7 +134,7 @@ function addChrome(slide: Slide, spec: ReferenceDeckSpec, content: ReferenceSlid
       objectName: "ref:source-line",
     });
   }
-  slide.addText(`${spec.program} · ${spec.useCase} · Discussion draft`, {
+  slide.addText(identityLine(spec), {
     x: 0.72, y: 7.2, w: 10.9, h: 0.18, fontFace: BODY,
     fontSize: 8, color: C.muted, objectName: "ref:footer",
   });

@@ -1,12 +1,13 @@
 import "server-only";
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { assembleEditionInputs, ReferenceMoveUnavailable } from "@/lib/deliverables/orchestrator/reference-deck-inputs";
 import { VALIDATION_SEQUENCE, INVESTMENT_SEQUENCE, buildReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-edition";
-import { draftEditionWords, type PhasePromptStage, type UseCasePromptType } from "@/lib/deliverables/orchestrator/reference-deck-words";
+import { draftEditionWords, type DraftEditionWordsResult, type PhasePromptStage, type UseCasePromptType } from "@/lib/deliverables/orchestrator/reference-deck-words";
+import { buildReferenceSlotTable } from "@/lib/deliverables/orchestrator/reference-deck-slots";
 import { validateReferenceDeck, type ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
 import { renderReferenceDeck } from "@/lib/deliverables/orchestrator/reference-deck-renderer";
 import { inspectDeck } from "@/lib/deliverables/orchestrator/deck-inspection";
@@ -18,10 +19,19 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const previewHeaders = (score?: number) => ({
+const previewHeaders = (score?: number, words?: DraftEditionWordsResult, requestId?: string, titleFigureCount?: number) => ({
   "X-AbarVa-Preview": "not-persisted",
   "Cache-Control": "private, no-store, max-age=0",
   ...(score === undefined ? {} : { "X-AbarVa-Deck-Fidelity-Score": String(score) }),
+  ...(titleFigureCount === undefined ? {} : { "X-AbarVa-Deck-Title-Figure-Count": String(titleFigureCount) }),
+  ...(requestId === undefined ? {} : { "X-AbarVa-Deck-Request-Id": requestId }),
+  ...(words === undefined ? {} : { "X-AbarVa-Deck-Words-Status": words.status }),
+  ...(words?.status !== "unavailable" ? {} : {
+    "X-AbarVa-Deck-Words-Reason": words.reason,
+    ...(words.rule ? { "X-AbarVa-Deck-Words-Rule": words.rule } : {}),
+    ...(words.slide ? { "X-AbarVa-Deck-Words-Slide": String(words.slide) } : {}),
+  }),
+  ...(words === undefined ? {} : { "X-AbarVa-Deck-Fallback-Count": String(words.fallbackSlides.length) }),
 });
 
 export async function GET(
@@ -29,6 +39,7 @@ export async function GET(
   { params }: { params: Promise<{ programId: string; edition: string }> },
 ) {
   const { programId, edition: rawEdition } = await params;
+  const requestId = randomUUID();
   const edition = rawEdition === "validation" || rawEdition === "investment" ? rawEdition as ReferenceEdition : null;
   const format = req.nextUrl.searchParams.get("format");
   if (!edition || (format !== "pptx" && format !== "pdf")) {
@@ -52,8 +63,10 @@ export async function GET(
     const phaseStage: PhasePromptStage = inputs.move.currentPhase == null ? "unclassified"
       : inputs.move.currentPhase <= 2 ? "need_validation"
         : inputs.move.currentPhase === 3 ? "design_review" : "delivery_review";
-    const words = await draftEditionWords({
+    const slots = buildReferenceSlotTable(inputs);
+    const wordsResult = await draftEditionWords({
       tenantId: ctx.clientKey, userId: ctx.userId, edition, archetypes: sequence,
+      slots,
       useCaseType: (inputs.move.archetype ?? "unclassified") as UseCasePromptType,
       phaseStage,
       available: {
@@ -64,7 +77,10 @@ export async function GET(
         owners: Boolean(ownerReadback?.ownersAcceptedAt && ownerReadback.rows.some((row) => row.owner)),
       },
     });
-    const spec = buildReferenceEdition(inputs, words);
+    if (wordsResult.status === "unavailable") {
+      console.warn("[reference-deck-words]", { requestId, edition, reason: wordsResult.reason, rule: wordsResult.rule, slide: wordsResult.slide });
+    }
+    const spec = buildReferenceEdition(inputs, wordsResult.words, slots);
     const figureHash = createHash("sha256").update(JSON.stringify(spec.figureLedger)).digest("hex");
     const blocked = validateReferenceDeck(spec).filter((finding) => finding.blocking);
     if (blocked.length) {
@@ -72,12 +88,24 @@ export async function GET(
     }
     const pptx = await renderReferenceDeck(spec);
     const inspected = await inspectDeck(pptx);
-    const verdict = judgeRenderedDeck(inspected, { referenceDeck: spec });
+    const verdict = judgeRenderedDeck(inspected, { referenceDeck: spec, fallbackWordSlides: wordsResult.fallbackSlides });
     const score = verdict.fidelityScore ?? 0;
+    const titleFigureCount = spec.slides.filter((slide) => slide.narrativeFigures?.some((figure) => slide.actionTitle.includes(figure.display))).length;
+    const hardRenderFindings = verdict.findings.filter((finding) => [
+      "canvas", "slide_count", "off_canvas", "empty_canvas",
+      "reference_source", "reference_edition", "reference_editability",
+    ].includes(finding.kind));
+    if (hardRenderFindings.length) {
+      return Response.json({
+        error: "deck_render_refusal",
+        detail: "The rendered deck failed a physical, source, edition or editability check.",
+        findings: hardRenderFindings.map((finding) => ({ kind: finding.kind, ...("slide" in finding ? { slide: finding.slide } : {}) })),
+      }, { status: 422, headers: previewHeaders(score, wordsResult, requestId, titleFigureCount) });
+    }
     if (format === "pptx") {
       return new Response(Uint8Array.from(pptx), {
         headers: {
-          ...previewHeaders(score),
+          ...previewHeaders(score, wordsResult, requestId, titleFigureCount),
           "X-AbarVa-Deck-Figure-Hash": figureHash,
           "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
           "Content-Disposition": `attachment; filename="move-${edition}-preview.pptx"`,
@@ -93,7 +121,7 @@ export async function GET(
     for await (const chunk of stream as AsyncIterable<Buffer | string>) chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
     return new Response(Uint8Array.from(Buffer.concat(chunks)), {
       headers: {
-        ...previewHeaders(score), "Content-Type": "application/pdf",
+        ...previewHeaders(score, wordsResult, requestId, titleFigureCount), "Content-Type": "application/pdf",
         "X-AbarVa-Deck-Figure-Hash": figureHash,
         "Content-Disposition": `attachment; filename="move-${edition}-preview.pdf"`,
       },
