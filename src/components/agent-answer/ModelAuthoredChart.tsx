@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import type { AnswerChart } from "@/lib/ava-answer/contract";
-import { matrixQuadrants } from "@/lib/intelligence/answer/model-exhibit-layout";
+import { ModelAuthoredMatrix } from "./ModelAuthoredMatrix";
 
 /** Chart libraries lay out Claude's data; they do not score or rewrite it. */
 export function ModelAuthoredChart({ chart }: { chart: AnswerChart }) {
@@ -20,42 +20,7 @@ export function ModelAuthoredChart({ chart }: { chart: AnswerChart }) {
   const xKey = chart.xKey!,
     yKey = chart.yKey!;
   if (chart.kind === "quadrant-matrix") {
-    return (
-      <div
-        data-chart-renderer="categorical-matrix"
-        role="group"
-        aria-label={chart.title}
-      >
-        {chart.subtitle && <p className="mb-3 text-sm">{chart.subtitle}</p>}
-        <div className="grid grid-cols-2 gap-2">
-          {matrixQuadrants(chart).map((q) => (
-            <section
-              key={`${q.x}-${q.y}`}
-              className="min-h-28 rounded border border-emerald-200 bg-emerald-50/50 p-3"
-            >
-              <h4 className="mb-2 text-xs font-semibold">
-                {xKey}: {q.x} · {yKey}: {q.y}
-              </h4>
-              <ul className="space-y-2 text-sm">
-                {q.rows.map((row, i) => (
-                  <li key={i}>
-                    <strong>{String(row.label)}</strong>
-                    {Object.entries(row)
-                      .filter(([key]) => !["label", xKey, yKey].includes(key))
-                      .map(([key, value]) => (
-                        <p key={key}>
-                          {key}: {String(value ?? "")}
-                        </p>
-                      ))}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-        {chart.sourceNote && <p className="mt-2 text-sm">{chart.sourceNote}</p>}
-      </div>
-    );
+    return <ModelAuthoredMatrix chart={chart} />;
   }
   const horizontal = chart.kind === "horizontal-bar";
   const axes = (
