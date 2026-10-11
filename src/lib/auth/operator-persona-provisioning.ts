@@ -26,6 +26,7 @@ import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { createPerson } from "@/lib/db/person";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import { canonicalTenantKey } from "@/lib/tenant-keys";
+import { isSyntheticE2eOperatorTenant } from "@/lib/auth/synthetic-e2e-operator";
 
 export interface ProvisionInput {
   clerkUserId: string;
@@ -36,12 +37,14 @@ export interface ProvisionInput {
   clientId: string; // resolved clients.id (uuid) for the active tenant
   clientKey: string; // active tenant key (must be canonical)
   clientName?: string | null;
+  syntheticE2eOperator?: boolean;
+  syntheticE2eApprovalRef?: string | null;
 }
 
 export interface ProvisionResult {
   personId: string;
   role: "maestro" | "client_viewer";
-  accessLevel: "client_admin" | "program_viewer";
+  accessLevel: "client_admin" | "program_member" | "program_viewer";
 }
 
 const PLACEHOLDER_PERSON_NAMES = new Set(["user", "unknown", "unknown user"]);
@@ -86,22 +89,33 @@ export async function ensureOperatorPersonProvisioned(
     if (!email) return null; // email is our idempotency key — no email, no provision
     if (!input.clientId) return null;
 
+    const dedicated = input.syntheticE2eOperator === true;
+    if (dedicated && (!isSyntheticE2eOperatorTenant(input.clientKey) ||
+      deriveIsAdmin(input, canonicalKey) ||
+      !input.syntheticE2eApprovalRef?.trim())) return null;
+
     const isAdmin = deriveIsAdmin(input, canonicalKey);
     const primaryRole: ProvisionResult["role"] = isAdmin
       ? "maestro"
       : "client_viewer";
     const accessLevel: ProvisionResult["accessLevel"] = isAdmin
       ? "client_admin"
-      : "program_viewer";
+      : dedicated ? "program_member" : "program_viewer";
 
     const sb = getAzureWriteFluentClient();
 
     // 1) persons — dedupe by email (idempotent).
-    const { data: existing } = await sb
+    const { data: existing, error: personReadError } = await sb
       .from("persons")
-      .select("id, name, primary_role")
+      .select("id, name, primary_role, graph_node_id")
       .eq("email", email)
       .maybeSingle();
+    if (dedicated && personReadError) return null;
+
+    const clerkPersonLink = `clerk:${input.clerkUserId}`;
+    if (dedicated && existing?.id &&
+      (existing.primary_role !== "client_viewer" || existing.graph_node_id !== clerkPersonLink))
+      return null;
 
     let personId: string;
     if (existing?.id) {
@@ -129,6 +143,7 @@ export async function ensureOperatorPersonProvisioned(
         email,
         role: primaryRole,
         organization: input.clientName ?? input.clientKey,
+        ...(dedicated ? { graph_node_id: clerkPersonLink } : {}),
       });
       personId = created.id;
       // Ensure primary_role is set (createPerson may default it).
@@ -139,13 +154,34 @@ export async function ensureOperatorPersonProvisioned(
     }
 
     // 2) person_client_memberships — exactly ONE, for the single active tenant.
-    const { data: membership } = await sb
-      .from("person_client_memberships")
-      .select("id")
-      .eq("person_id", personId)
-      .eq("client_id", input.clientId)
-      .maybeSingle();
-    if (!membership?.id) {
+    if (dedicated) {
+      const { data: memberships, error: membershipReadError } = await sb
+        .from("person_client_memberships")
+        .select("id, client_id, access_level, role, can_admin_users")
+        .eq("person_id", personId);
+      if (membershipReadError || !Array.isArray(memberships) || memberships.length > 1 ||
+        memberships.some((row) => row.client_id !== input.clientId ||
+          row.access_level === "client_admin" || row.can_admin_users === true)) return null;
+      const membership = memberships[0];
+      const fields = {
+        role: "client_viewer", access_level: "program_member",
+        financial_visibility: true, can_admin_users: false,
+        can_create_programs: true, can_approve_gates: true,
+      };
+      const write = membership?.id
+        ? await sb.from("person_client_memberships").update(fields).eq("id", membership.id)
+        : await sb.from("person_client_memberships").insert({
+            person_id: personId, client_id: input.clientId, ...fields,
+          });
+      if (write.error) return null;
+    } else {
+      const { data: membership } = await sb
+        .from("person_client_memberships")
+        .select("id")
+        .eq("person_id", personId)
+        .eq("client_id", input.clientId)
+        .maybeSingle();
+      if (!membership?.id) {
       await sb.from("person_client_memberships").insert({
         person_id: personId,
         client_id: input.clientId,
@@ -153,11 +189,34 @@ export async function ensureOperatorPersonProvisioned(
         access_level: accessLevel,
         financial_visibility: isAdmin,
       });
+      }
     }
 
-    // 3) audit (best-effort; never fatal).
+    // 3) Dedicated identity binds its Clerk actor in the tenant audit ledger.
+    if (dedicated) {
+      const { error } = await sb.from("admin_audit_log").insert({
+        client_id: input.clientId,
+        actor_person_id: personId,
+        category: "auth",
+        action: "synthetic_e2e_operator.identity_bound",
+        target_kind: "persons",
+        target_id: personId,
+        summary: "Dedicated automated proof identity bound to one client membership.",
+        metadata: {
+          clerkUserId: input.clerkUserId,
+          clerkPersonLink,
+          approvalRef: input.syntheticE2eApprovalRef,
+          programScope: "assigned_programs_only",
+          accessLevel,
+        },
+      });
+      if (error) return null;
+      return { personId, role: primaryRole, accessLevel };
+    }
+
+    // Generic persona audit is best-effort under the existing contract.
     try {
-      await sb.from("audit_log").insert({
+      const audit = await sb.from("audit_log").insert({
         action: "operator_persona.provisioned",
         target_table: "persons",
         target_id: personId,
@@ -171,8 +230,9 @@ export async function ensureOperatorPersonProvisioned(
           source: "jit_requireTenancy",
         },
       });
+      void audit;
     } catch {
-      // audit table shape may differ; do not fail provisioning on audit.
+      // Preserve existing generic behavior.
     }
 
     return { personId, role: primaryRole, accessLevel };

@@ -93,6 +93,21 @@ describe('approval admin auth', () => {
     });
   });
 
+  it('does not turn a scoped automated Move approver into an admin queue approver', async () => {
+    mockRequireTenancy.mockResolvedValue({
+      clientId: 'client-apex', userId: 'person-operator',
+      syntheticE2eOperator: true,
+    });
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      canAdminUsers: false, canApproveGates: true,
+    });
+    const { requireAdminAuth, requireAdminDecide } = await import('../_auth');
+    await expect(requireAdminAuth()).resolves.toMatchObject({ isAdmin: false });
+    await expect(requireAdminDecide()).rejects.toMatchObject({
+      status: 403, code: 'forbidden_admin_required',
+    });
+  });
+
   it('maps missing active tenant to no_tenant', async () => {
     mockGetActiveClientRow.mockResolvedValue(null);
 

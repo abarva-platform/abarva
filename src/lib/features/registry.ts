@@ -122,9 +122,16 @@ export type FeatureFlagKey =
   | "moves_value_engine_v1"
   | "moves_reference_deck_v1"
   | "moves_assumption_register_generation_v1"
-  | "moves_rom_engine_v1";
+  | "moves_rom_engine_v1"
+  | "moves_synthetic_e2e_operator_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "moves_synthetic_e2e_operator_v1",
+    summary: "Scoped automated Moves proof account for a synthetic tenant. The account must carry an exact signed Clerk profile, a bound persons identity, and an assigned-program membership. No client administration or cross-tenant access is granted.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
   {
     key: "moves_governed_roadmap_downloads",
     summary:
