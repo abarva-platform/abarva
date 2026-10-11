@@ -129,6 +129,25 @@ const SLOT_TOKEN = /\{([^{}]+)\}/g;
 const LITERAL_FIGURE = /\d|[$€£¥₹]|\b(?:percent|percentage|million|billion|thousand|hundred|dollars?|euros?|pounds?)\b/i;
 const VALIDATION_FORBIDDEN = /\b(?:cost|rom|roi|investment|solution|plan|roadmap|release)\b/i;
 
+/** Normalize only known, edition-allowed token wrappers; unknown braces still fail validation. */
+function normalizeKnownSlotTokens(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable): EditionWords {
+  const normalize = (prose: string): string => prose.replace(
+    /\{\{\s*([a-z][a-z0-9_.]*)\s*\}\}|\{\s*([a-z][a-z0-9_.]*)\s*\}/g,
+    (original, doubleKey: string | undefined, singleKey: string | undefined) => {
+      const key = doubleKey ?? singleKey!;
+      return slots[key]?.editions.includes(edition) ? `{${key}}` : original;
+    },
+  );
+  return { title: normalize(entry.title), answer: normalize(entry.answer), notes: normalize(entry.notes) };
+}
+
+const WORDS_OUTPUT_CONFIG = { format: { type: "json_schema" as const, schema: {
+  type: "object", properties: { words: { type: "array", items: {
+    type: "object", properties: { title: { type: "string" }, answer: { type: "string" }, notes: { type: "string" } },
+    required: ["title", "answer", "notes"], additionalProperties: false,
+  } } }, required: ["words"], additionalProperties: false,
+} } };
+
 export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable, archetype?: ReferenceArchetype): string | null {
   const prose = `${entry.title} ${entry.answer} ${entry.notes}`;
   const tokens = [...prose.matchAll(SLOT_TOKEN)];
@@ -169,11 +188,12 @@ export async function draftEditionWords(input: {
   const allSlides = input.archetypes.map((_, index) => index + 1);
   const failure = (reason: WordsUnavailableReason): DraftEditionWordsResult =>
     ({ status: "unavailable", reason, words: unavailable, fallbackSlides: allSlides });
-  const system = "Write clear slide language for an editable business-case deck as a JSON object with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Write a full-sentence action title for each slide. Every requiredTitleSlot must appear verbatim in that slide's title. You may use only the named slot tokens supplied to express figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Describe a specific Move fact only if it appears in an approved model-ready context bundle; none is supplied in this request. Do not claim an input is ready from its slot name: unavailable slots become visible gaps after generation. Notes begin 'The point:' and contain 'How to read:'. Validation slides contain no cost, ROM, ROI, investment, solution, plan, roadmap or release material.";
+  const system = "Write clear slide language for an editable business-case deck as a JSON object with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Write a full-sentence action title for each slide. Copy every requiredTitleSlot exactly into that slide's title. Figure slots use the supplied token string with one opening and one closing brace, for example {value.annual.base} when that token is supplied; never use double braces, a bare slot name, or a value. You may use only supplied, edition-allowed slot tokens to express figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Describe a specific Move fact only if it appears in an approved model-ready context bundle; none is supplied in this request. Do not claim an input is ready from its slot name: unavailable slots become visible gaps after generation. Notes begin 'The point:' and contain 'How to read:'. The server supplies the mandatory validation-cover disclosure, so its draft title, answer and notes must not repeat that disclosure. In every validation answer and notes, and on non-cover validation titles, avoid the words cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
   const user = JSON.stringify({
     profile: { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType] ?? DESIGN_LENS.unclassified, phaseStage: input.phaseStage, available: input.available },
-    slides: input.archetypes.map((archetype) => ({ archetype, ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[archetype]
-      ? { requiredTitleSlot: INVESTMENT_TITLE_SLOTS[archetype] } : {}) })),
+    slides: input.archetypes.map((archetype) => ({ archetype, ...(input.edition === "validation" && archetype === "cover"
+      ? { mandatoryCoverDisclosureProvidedByServer: true } : {}), ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[archetype]
+      ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[archetype]}}` } : {}) })),
     slots: promptSlotDefinitions(input.slots, input.edition),
   });
   try {
@@ -188,25 +208,66 @@ export async function draftEditionWords(input: {
     if (!preflight.ok) return failure("preflight_denied");
     const response = await preflight.client.messages.create({
       model, max_tokens: 6000, temperature: 0, system,
-      output_config: { format: { type: "json_schema", schema: {
-        type: "object", properties: { words: { type: "array", items: {
-          type: "object", properties: { title: { type: "string" }, answer: { type: "string" }, notes: { type: "string" } },
-          required: ["title", "answer", "notes"], additionalProperties: false,
-        } } }, required: ["words"], additionalProperties: false,
-      } } },
+      output_config: WORDS_OUTPUT_CONFIG,
       messages: [{ role: "user", content: user }],
     });
     const raw = response.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
     const parsed = parseWords(raw, input.archetypes.length);
     if (!parsed) return failure("parse_failed");
+    const words = parsed.map((entry) => normalizeKnownSlotTokens(entry, input.edition, input.slots));
+    // The validation-cover disclosure is a fixed edition requirement, not model prose.
+    if (input.edition === "validation" && input.archetypes[0] === "cover") words[0] = unavailable[0]!;
+    const ruleAt = (index: number) => input.edition === "validation" && input.archetypes[index] === "cover"
+      ? null : modelWordRule(words[index]!, input.edition, input.slots, input.archetypes[index]);
+    const rejected = words.flatMap((_, index) => {
+      const rule = ruleAt(index);
+      return rule ? [{ index, rule }] : [];
+    });
+    if (rejected.length) {
+      const repairSystem = `${system} This is a targeted retry. Return one words entry per rejected slide, in the same order. Correct each stated rule; never invent a fact or a figure.`;
+      const repairUser = JSON.stringify({
+        profile: { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType] ?? DESIGN_LENS.unclassified, phaseStage: input.phaseStage, available: input.available },
+        rejectedSlides: rejected.map(({ index, rule }) => ({
+          archetype: input.archetypes[index], rejectedRule: rule,
+          ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]
+            ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]}}` } : {}),
+        })),
+        slots: promptSlotDefinitions(input.slots, input.edition),
+      });
+      try {
+        const repairPreflight = await preflightAnthropicDirectClient({
+          tenantId: input.tenantId, userId: input.userId,
+          workflow: "moves:reference-deck:preview:words:repair", workload: "moves_reference_deck",
+          prompt: `${repairSystem}\n${repairUser}`, model, dataClass: "internal",
+          artifactType: "reference_deck_preview",
+          metadata: { edition: input.edition, slideCount: rejected.length, persist: false, repair: true },
+        });
+        if (repairPreflight.ok) {
+          const repairResponse = await repairPreflight.client.messages.create({
+            model, max_tokens: 6000, temperature: 0, system: repairSystem,
+            output_config: WORDS_OUTPUT_CONFIG,
+            messages: [{ role: "user", content: repairUser }],
+          });
+          const repairRaw = repairResponse.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
+          const repairs = parseWords(repairRaw, rejected.length);
+          repairs?.forEach((entry, repairIndex) => {
+            const index = rejected[repairIndex]!.index;
+            const candidate = normalizeKnownSlotTokens(entry, input.edition, input.slots);
+            if (!modelWordRule(candidate, input.edition, input.slots, input.archetypes[index])) words[index] = candidate;
+          });
+        }
+      } catch {
+        // Keep each initial rejection for the final, reason-coded fallback.
+      }
+    }
     const fallbackSlides: number[] = [];
     let firstRule: string | undefined;
-    const words = parsed.map((entry, index) => {
-      const rule = modelWordRule(entry, input.edition, input.slots, input.archetypes[index]);
-      if (!rule) return entry;
+    words.forEach((_, index) => {
+      const rule = ruleAt(index);
+      if (!rule) return;
       fallbackSlides.push(index + 1);
       firstRule ??= rule;
-      return unavailable[index]!;
+      words[index] = unavailable[index]!;
     });
     return fallbackSlides.length
       ? { status: "unavailable", reason: "slide_rejected", rule: firstRule, slide: fallbackSlides[0], words, fallbackSlides }

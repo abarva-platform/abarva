@@ -99,6 +99,8 @@ export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTab
   return Object.fromEntries(entries.map((slot) => [slot.key, slot]));
 }
 
-export function promptSlotDefinitions(table: ReferenceSlotTable, edition: ReferenceEdition): Array<{ name: string; meaning: string }> {
-  return Object.values(table).filter((slot) => slot.editions.includes(edition)).map((slot) => ({ name: slot.key, meaning: slot.meaning }));
+export function promptSlotDefinitions(table: ReferenceSlotTable, edition: ReferenceEdition): Array<{ name: string; token: string; meaning: string }> {
+  return Object.values(table).filter((slot) => slot.editions.includes(edition)).map((slot) => ({
+    name: slot.key, token: `{${slot.key}}`, meaning: slot.meaning,
+  }));
 }

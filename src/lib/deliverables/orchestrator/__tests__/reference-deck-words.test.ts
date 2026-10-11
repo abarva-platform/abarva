@@ -58,6 +58,7 @@ describe("reference-deck words", () => {
     }));
     expect(JSON.stringify(create.mock.calls[0][0])).not.toContain("$12,000");
     expect(JSON.stringify(create.mock.calls[0][0])).not.toContain("synthetic-user");
+    expect(JSON.stringify(create.mock.calls[0][0])).toContain('\\"token\\":\\"{value.annual.base}\\"');
   });
 
   it("rejects literal model figures and edition slots while accepting a governed slot", () => {
@@ -69,6 +70,64 @@ describe("reference-deck words", () => {
     expect(modelWordRule({ title: "The evidence defines the next decision for this case", answer: "Review the solution plan.", notes: "The point: review evidence. How to read: use the source line." }, "validation", slots, "cover")).toBe("edition_language");
     expect(modelWordRule({ ...safeWords.words[0]!, title: "The annual case needs a reviewed basis" }, "investment", slots, "one_page")).toBe("missing_title_slot");
     expect(modelWordRule({ ...safeWords.words[0]!, title: "The annual case counts {value.annual.plan} on its current basis" }, "investment", slots, "one_page")).toBeNull();
+    expect(modelWordRule({ ...safeWords.words[0]!, title: "The annual case counts {{value.annual.plan}} on its current basis" }, "investment", slots, "one_page")).toBe("malformed_slot");
+  });
+
+  it("uses the mandated validation-cover words without counting a model disclosure as fallback", async () => {
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [{
+      title: "A solution plan should follow this validation review",
+      answer: "No solution plan or cost is provided here.",
+      notes: "The point: no solution plan or cost. How to read: review evidence.",
+    }] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, archetypes: ["cover"] });
+    expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
+    expect(result.words).toEqual(unavailableEditionWords("validation", ["cover"]));
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("normalizes only known slot wrappers before the figure guard", async () => {
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [
+      { title: "The evidence defines the next decision for this case", answer: "Review the evidence and its gaps.", notes: "The point: review evidence. How to read: inspect the source line." },
+      { title: "The annual case counts {{ value.annual.plan }} on its current basis", answer: "Review the counted basis.", notes: "The point: confirm { value.annual.plan }. How to read: inspect the source line." },
+    ] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, edition: "investment", archetypes: ["cover", "one_page"] });
+    expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
+    expect(result.words[1]?.title).toContain("{value.annual.plan}");
+    expect(result.words[1]?.notes).toContain("{value.annual.plan}");
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(create.mock.calls[0][0])).toContain('\\"requiredTitleSlot\\":\\"{value.annual.plan}\\"');
+  });
+
+  it("retries a rejected slide through audited egress and keeps the guard on the repair", async () => {
+    const create = jest.fn()
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [{ ...safeWords.words[0], answer: "Review the solution plan." }] }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify(safeWords) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords(input);
+    expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(mockPreflight).toHaveBeenCalledTimes(2);
+    expect(mockPreflight.mock.calls[1][0]).toMatchObject({
+      workflow: "moves:reference-deck:preview:words:repair", workload: "moves_reference_deck",
+      metadata: expect.objectContaining({ repair: true, persist: false }),
+    });
+    expect(mockPreflight.mock.calls[1][0].prompt).not.toContain("$12,000");
+    expect(mockPreflight.mock.calls[1][0].prompt).not.toContain("synthetic-user");
+    expect(create.mock.calls[1][0]).toMatchObject({
+      output_config: expect.objectContaining({ format: expect.objectContaining({ type: "json_schema" }) }),
+    });
+  });
+
+  it("retains a reason-coded fallback when the repair still breaks the edition rule", async () => {
+    const invalid = { words: [{ ...safeWords.words[0], answer: "Review the solution plan." }] };
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(invalid) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords(input);
+    expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "edition_language", slide: 1, fallbackSlides: [1] });
+    expect(result.words).toEqual(unavailableEditionWords("validation", ["one_page"]));
+    expect(create).toHaveBeenCalledTimes(2);
   });
 
   it("keeps reason-coded fallbacks for egress denial, parse failure and rejected slide", async () => {
