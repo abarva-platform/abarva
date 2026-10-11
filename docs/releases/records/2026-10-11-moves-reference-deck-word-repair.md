@@ -37,7 +37,8 @@ Neither path can create a figure or bypass source lineage.
 - Prompt with exact single-brace slot tokens and required title tokens, without
   sending numeric values or raw Move prose to Claude.
 - Normalize only known, edition-allowed whitespace or double-brace wrappers.
-  Unknown tokens, literal figures and edition-disallowed slots remain refused.
+  Unknown tokens, bare or bracketed slot keys, literal figures and
+  edition-disallowed slots remain refused.
 - Use fixed wording for the mandatory validation-cover disclosure.
 - Retry rejected non-cover slides once through a separately audited egress
   preflight in bounded batches, then re-run the same slide guard.
@@ -55,9 +56,9 @@ Neither path can create a figure or bypass source lineage.
 - **Pass** — Twelve focused word-guard tests cover prompt syntax, safe token
   normalization, fixed cover wording, audited repair, whole-response parse
   recovery, short batching and partial-batch fallbacks.
-- **Pass** — Six one-at-a-time mutations were killed: bypassing known-slot
+- **Pass** — Seven one-at-a-time mutations were killed: bypassing known-slot
   normalization, fixed cover wording, targeted retry, parse recovery,
-  the short-batch bound, and a source-refusal subtype. Original code
+  the short-batch bound, a source-refusal subtype, and bare-slot refusal. Original code
   was restored and retested.
 - **Pass** — TypeScript and changed-file ESLint.
 - **Pass** — Seven focused deck/route suites, 53 tests; library orphan audit,

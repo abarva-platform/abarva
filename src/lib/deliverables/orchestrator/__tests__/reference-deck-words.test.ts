@@ -66,6 +66,8 @@ describe("reference-deck words", () => {
     expect(modelWordRule({ ...safeWords.words[0]!, title: "The annual case counts $12,000 on its current basis" }, "validation", slots, "one_page")).toBe("literal_figure");
     expect(modelWordRule({ ...safeWords.words[0]!, title: "The delivery estimate is {rom.total.plan} on its current basis" }, "validation", slots, "one_page")).toBe("edition_slot");
     expect(modelWordRule({ ...safeWords.words[0]!, title: "The case counts {unknown.amount} on its current basis" }, "validation", slots, "one_page")).toBe("unknown_slot");
+    expect(modelWordRule({ ...safeWords.words[0]!, answer: "Review [value.annual.base] on its basis." }, "validation", slots, "one_page")).toBe("malformed_slot");
+    expect(modelWordRule({ ...safeWords.words[0]!, answer: "Review value.annual.base on its basis." }, "validation", slots, "one_page")).toBe("malformed_slot");
     expect(modelWordRule({ ...safeWords.words[0]!, title: "The solution plan now has an owner review" }, "validation", slots, "one_page")).toBe("edition_language");
     expect(modelWordRule({ title: "The evidence defines the next decision for this case", answer: "Review the solution plan.", notes: "The point: review evidence. How to read: use the source line." }, "validation", slots, "cover")).toBe("edition_language");
     expect(modelWordRule({ ...safeWords.words[0]!, title: "The annual case needs a reviewed basis" }, "investment", slots, "one_page")).toBe("missing_title_slot");
