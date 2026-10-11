@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 import type { ArchitectureViewRefusal } from "@/lib/visual-system/resolveArchitectureView";
 import type { CanvasInspection } from "./ChapterCanvas";
@@ -169,7 +168,7 @@ export function FlowRecordCanvas({
           disabled={page === 0}
           onClick={() => setPage(page - 1)}
         >
-          <ChevronLeft size={16} aria-hidden="true" />
+          &lt;
         </button>
         <button
           title="Next page"
@@ -177,7 +176,7 @@ export function FlowRecordCanvas({
           disabled={page + 1 >= pages}
           onClick={() => setPage(page + 1)}
         >
-          <ChevronRight size={16} aria-hidden="true" />
+          &gt;
         </button>
         <Link href={recordsHref} scroll={false} prefetch={false}>
           Full data record
