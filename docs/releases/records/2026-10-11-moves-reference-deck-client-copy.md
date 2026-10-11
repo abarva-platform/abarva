@@ -48,6 +48,10 @@ write tenant data.
   independently check visible copy, layout, figures, and edition boundaries.
 - The existing preview route refuses a rendered deck with client-copy findings.
   It remains read-only and returns no persisted deliverable.
+- The signed-in walk checks both editions for the configured synthetic Move
+  after verifying its tenant, so a newly created demo case can be inspected.
+  It retains all downloaded files in the proof bundle and fails when either
+  format scores below 90 or uses fallback wording.
 
 ## QA / Validation
 
@@ -62,6 +66,8 @@ write tenant data.
   branch base. Tenancy fence census: **pass**; the existing route remains
   tenant-fenced.
 - Manual consistency check: **pass**; no flag or manual text changed.
+- The signed-in walk suite lists all five tests and its changed file passes
+  ESLint. The live walk itself is **pending** the final deployed image.
 - Synthetic PowerPoint rendered through LibreOffice for visual review. The
   real PDF renderer produced the expected 11-page and 22-page editions, and
   the numbered contents and six-stage workflow were inspected as page images.
@@ -104,6 +110,8 @@ be reversed.
 
 - The local synthetic fixture lacks an approved delivery estimate and a full
   source set, so its investment score is not an acceptance score for the demo.
+- PowerPoint and PDF preview requests draft words independently; the final
+  saved files need a side-by-side copy check even when their figure hashes match.
 - Current production behavior, populated demo figures, actual model wording,
   and human slide-by-slide acceptance remain to be verified after merge and
   deployment.
