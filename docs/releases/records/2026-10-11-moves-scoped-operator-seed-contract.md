@@ -41,6 +41,7 @@ An automated proof account can be recognized only when its signed Clerk profile 
 - Focused identity and binding tests passed, including cross-tenant, elevated-role, changed-source, and ID-collision refusals.
 - The new Source denial test passed. Four existing Source policy tests expecting a separate canonical-admin email mapping remain failing in the broader Source suite; they do not exercise this profile.
 - Typecheck, scoped lint, release check, manifest validation, and whitespace check passed locally.
+- Regenerated the CI test-coverage census from this rebased tree: 2,999 to 3,005 tests, 2,835 to 2,841 reached by pull-request workflows, and 164 still unreached. The tenancy-fence census and Nexus manual regenerated with no diff.
 - No live account or data-plane mutation was used to validate this candidate.
 
 ## Rollout Plan
