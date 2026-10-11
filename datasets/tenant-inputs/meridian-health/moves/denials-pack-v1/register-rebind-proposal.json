@@ -312,7 +312,21 @@
       "provider class",
       "rate key"
     ],
-    "rates": []
+    "rates": [],
+    "deliveryOptions": [
+      {
+        "key": "A",
+        "basis": "Foundation-priced top-tier onshore team",
+        "approved": false
+      },
+      {
+        "key": "B",
+        "basis": "Foundation-supported blended team; no invented rates",
+        "approved": false
+      }
+    ],
+    "unapprovedLabel": "planning rates, not approved",
+    "valueCostBasis": "Only the personally selected and approved option's current ROM snapshot"
   },
   "levers": [
     {

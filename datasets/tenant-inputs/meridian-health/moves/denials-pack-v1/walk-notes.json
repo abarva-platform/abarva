@@ -553,7 +553,10 @@
         "Open this step on the new Move; verify tenant and phase.",
         "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
         "Add the Shared foundation row before pasting counts; its notes parser fills an existing foundation, while UC-1 and UC-2 may be proposed as new use cases.",
-        "Confirm counts, counting foundation once; resolve unit-hour DL references only after a separately approved M rebind; select a pricing-engine-v1 pod and inspect role/level/location/provider provenance. Group UC-1 into R1 and UC-2 into R2 with foundation once, review calculated price and personally Approve the estimate. Never substitute a local or unapproved snapshot."
+        "Review the exact denials-Move seed rows, authenticated scope, register allocation and source-set hash; approve the seed by name before the designated operator applies it. Tooling merge alone is not load approval, and the fallback Move is not the seed target.",
+        "Confirm counts, counting foundation once; resolve unit-hour DL references only after the approved M rebind. Group UC-1 into R1 and UC-2 into R2 with foundation once.",
+        "Compare foundation-priced delivery options A and B with the same scope, counts and unit hours: top-tier onshore team versus a foundation-supported blended team. Inspect hours, low/plan/high, role, level, location, provider class and each rate source. Unapproved bands must say planning rates, not approved. Never tune rates or invent a cheaper location.",
+        "Choose the delivery option personally and verify the option actually recorded by the product before Approve the estimate. If two-option page support is pending, inspect the reviewed preview and report that gap; do not imply an unrecorded choice was approved. Never substitute a local or unapproved snapshot."
       ],
       "sourceFiles": [
         "01-use-case-brief.docx"
@@ -591,7 +594,7 @@
       "title": "Workstreams & milestones",
       "phase": 4,
       "parser": "capture-notes-proposal",
-      "pasteBlock": "Roadmap sequence: Roadmap sequence: foundation access and identity precede eligibility and authorization risk checks; reviewed correction routing precedes recovery reconciliation. Workstream dependencies, owner roles and planned milestones must be entered and reviewed in the milestone editor.",
+      "pasteBlock": "Roadmap sequence: foundation access and identity precede eligibility and authorization risk checks; reviewed correction routing precedes recovery reconciliation. Workstream dependencies, owner roles and planned milestones must be entered and reviewed in the milestone editor.",
       "manualFields": {},
       "fields": [
         {
@@ -645,7 +648,7 @@
       "humanClicks": [
         "Open this step on the new Move; verify tenant and phase.",
         "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
-        "Read the governed value-engine levers and approved ROM cost after the M rebind. Review any blocked input; do not paste legacy prose as an engine case. Keep rework cash zero without a recorded release and days-AR timing limitations visible."
+        "Read the governed value-engine levers after the M rebind. Only the personally selected and approved delivery option is the ROM cost basis; the budget remains a ceiling. The deck compares both options and identifies the approved one. Review blocked inputs, preserve zero-cash rework without a release, and keep days-AR timing limitations visible."
       ],
       "sourceFiles": [
         "01-use-case-brief.docx"
@@ -657,7 +660,7 @@
       "title": "Tower metrics & handoff plan",
       "phase": 4,
       "parser": "capture-notes-proposal",
-      "pasteBlock": "Tower handoff plan: Tower handoff plan: finance business partner owns incremental collected cash; revenue cycle director owns denial-rate and throughput metrics; data platform owner owns source lineage. Transfer reviewed baselines, comparator definitions, timing assumptions and unresolved conditions to Tower.",
+      "pasteBlock": "Tower handoff plan: finance business partner owns incremental collected cash; revenue cycle director owns denial-rate and throughput metrics; data platform owner owns source lineage. Transfer reviewed baselines, comparator definitions, timing assumptions and unresolved conditions to Tower.",
       "manualFields": {},
       "fields": [
         {
@@ -711,7 +714,7 @@
       "title": "Handoff owners & readiness",
       "phase": 5,
       "parser": "capture-notes-proposal",
-      "pasteBlock": "Mobilization plan: Mobilization plan: revenue cycle director is receiving outcome owner; integration lead is delivery owner; finance business partner is measurement owner; patient access and coding leads receive correction responsibilities. The owner assigns actual authorized participants before acceptance.\n\nLaunch readiness: Launch readiness: require approved roadmap and estimate, reviewed value assumptions, purpose-bound access, named receiving roles, rollback criteria and acknowledged dependencies. Handoff prepares external execution; it does not claim work has begun.",
+      "pasteBlock": "Mobilization plan: revenue cycle director is receiving outcome owner; integration lead is delivery owner; finance business partner is measurement owner; patient access and coding leads receive correction responsibilities. The owner assigns actual authorized participants before acceptance.\n\nLaunch readiness: require approved roadmap and estimate, reviewed value assumptions, purpose-bound access, named receiving roles, rollback criteria and acknowledged dependencies. Handoff prepares external execution; it does not claim work has begun.",
       "manualFields": {},
       "fields": [
         {
@@ -738,7 +741,7 @@
       "title": "Tower measurement",
       "phase": 5,
       "parser": "capture-notes-proposal",
-      "pasteBlock": "Value proof rules: Value proof rules: reconcile original submitted claims and mature denials by the same cohort; credit only incremental collected allowed revenue against a matched comparator; exclude contractual adjustments and existing recoveries. Rework hours count as capacity at zero cash without a documented release. Days in receivables affects timing without adding annual revenue again.\n\nGovernance cadence: Governance cadence: source owners review weekly exception completeness; finance business partner reconciles collections monthly; revenue cycle director chairs the monthly outcome review; unresolved access or comparator defects escalate to the receiving owner before any realized-value claim.",
+      "pasteBlock": "Value proof rules: reconcile original submitted claims and mature denials by the same cohort; credit only incremental collected allowed revenue against a matched comparator; exclude contractual adjustments and existing recoveries. Rework hours count as capacity at zero cash without a documented release. Days in receivables affects timing without adding annual revenue again.\n\nGovernance cadence: source owners review weekly exception completeness; finance business partner reconciles collections monthly; revenue cycle director chairs the monthly outcome review; unresolved access or comparator defects escalate to the receiving owner before any realized-value claim.",
       "manualFields": {},
       "fields": [
         {
@@ -765,7 +768,7 @@
       "title": "First 90 days & open items",
       "phase": 5,
       "parser": "capture-notes-proposal",
-      "pasteBlock": "First 90 days: First 90 days: plan access and lineage acceptance, then a shadow administrative-risk review, then a controlled correction-routing pilot and a mature-cohort collection reconciliation. Each future checkpoint needs a named role, dependency and stop criterion before handoff.\n\nRisks and open items: Risks and open items: policy interpretation needs source-owner review; payer response lag can mask benefit; coverage joins can be incomplete; pricing is unapproved until the cost foundation and pod are selected. No real clinical evidence or live execution is represented.",
+      "pasteBlock": "First 90 days: plan access and lineage acceptance, then a shadow administrative-risk review, then a controlled correction-routing pilot and a mature-cohort collection reconciliation. Each future checkpoint needs a named role, dependency and stop criterion before handoff.\n\nRisks and open items: policy interpretation needs source-owner review; payer response lag can mask benefit; coverage joins can be incomplete; pricing is unapproved until the cost foundation and pod are selected. No real clinical evidence or live execution is represented.",
       "manualFields": {},
       "fields": [
         {

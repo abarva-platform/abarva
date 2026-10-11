@@ -66,7 +66,11 @@ const proposal = JSON.parse(
     sourceFile: string;
     status: "proposed";
   }[];
-  ratePolicy: { rates: unknown[] };
+  ratePolicy: {
+    rates: unknown[];
+    deliveryOptions: { key: string; approved: boolean }[];
+    unapprovedLabel: string;
+  };
 };
 const step = (id: string) => walk.steps.find((s) => s.stepId === id)!;
 let snapshot: PackSnapshot & {
@@ -382,6 +386,13 @@ describe("value engine preserves missing approval and non-cash capacity", () => 
     expect(result.economics).toBeNull();
     expect(result.readyForApproval).toBe(false);
     expect(proposal.ratePolicy.rates).toEqual([]);
+    expect(proposal.ratePolicy.deliveryOptions).toEqual([
+      expect.objectContaining({ key: "A", approved: false }),
+      expect.objectContaining({ key: "B", approved: false }),
+    ]);
+    expect(proposal.ratePolicy.unapprovedLabel).toBe(
+      "planning rates, not approved",
+    );
     expect(proposal.moveId).toBeNull();
     expect(proposal.loadApproval).toBeNull();
   });

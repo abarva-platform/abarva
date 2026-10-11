@@ -202,7 +202,7 @@ const steps = Array.from({ length: 6 }, (_, phase) =>
         : sections
             .map(
               (x) =>
-                `${p4labels[x.key] ?? x.label}: ${words[x.key] ?? words.recommendation}`,
+                `${p4labels[x.key] ?? x.label}: ${String(words[x.key] ?? words.recommendation).replace(new RegExp(`^${p4labels[x.key] ?? x.label}:\\s*`, "i"), "")}`,
             )
             .join(step.phase >= 4 ? "\n\n" : "\n"),
     };
@@ -246,7 +246,10 @@ const steps = Array.from({ length: 6 }, (_, phase) =>
     if (step.id === "P3.4")
       humanClicks.push(
         "Add the Shared foundation row before pasting counts; its notes parser fills an existing foundation, while UC-1 and UC-2 may be proposed as new use cases.",
-        "Confirm counts, counting foundation once; resolve unit-hour DL references only after a separately approved M rebind; select a pricing-engine-v1 pod and inspect role/level/location/provider provenance. Group UC-1 into R1 and UC-2 into R2 with foundation once, review calculated price and personally Approve the estimate. Never substitute a local or unapproved snapshot.",
+        "Review the exact denials-Move seed rows, authenticated scope, register allocation and source-set hash; approve the seed by name before the designated operator applies it. Tooling merge alone is not load approval, and the fallback Move is not the seed target.",
+        "Confirm counts, counting foundation once; resolve unit-hour DL references only after the approved M rebind. Group UC-1 into R1 and UC-2 into R2 with foundation once.",
+        "Compare foundation-priced delivery options A and B with the same scope, counts and unit hours: top-tier onshore team versus a foundation-supported blended team. Inspect hours, low/plan/high, role, level, location, provider class and each rate source. Unapproved bands must say planning rates, not approved. Never tune rates or invent a cheaper location.",
+        "Choose the delivery option personally and verify the option actually recorded by the product before Approve the estimate. If two-option page support is pending, inspect the reviewed preview and report that gap; do not imply an unrecorded choice was approved. Never substitute a local or unapproved snapshot.",
       );
     if (step.id === "P4.1")
       humanClicks.push(
@@ -254,7 +257,7 @@ const steps = Array.from({ length: 6 }, (_, phase) =>
       );
     if (step.id === "P4.3")
       humanClicks.push(
-        "Read the governed value-engine levers and approved ROM cost after the M rebind. Review any blocked input; do not paste legacy prose as an engine case. Keep rework cash zero without a recorded release and days-AR timing limitations visible.",
+        "Read the governed value-engine levers after the M rebind. Only the personally selected and approved delivery option is the ROM cost basis; the budget remains a ceiling. The deck compares both options and identifies the approved one. Review blocked inputs, preserve zero-cash rework without a release, and keep days-AR timing limitations visible.",
       );
     if (step.id === "P5.4")
       humanClicks.push(
@@ -396,6 +399,21 @@ const rebind = {
       "rate key",
     ],
     rates: [],
+    deliveryOptions: [
+      {
+        key: "A",
+        basis: "Foundation-priced top-tier onshore team",
+        approved: false,
+      },
+      {
+        key: "B",
+        basis: "Foundation-supported blended team; no invented rates",
+        approved: false,
+      },
+    ],
+    unapprovedLabel: "planning rates, not approved",
+    valueCostBasis:
+      "Only the personally selected and approved option's current ROM snapshot",
   },
   levers: [
     {

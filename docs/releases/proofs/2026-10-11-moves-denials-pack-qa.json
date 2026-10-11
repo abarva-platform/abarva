@@ -28,6 +28,10 @@
     {
       "mutation": "denominator",
       "killed": true
+    },
+    {
+      "mutation": "delivery_option_approval",
+      "killed": true
     }
   ],
   "repositoryGates": {

@@ -35,7 +35,10 @@ surface or feature flag is introduced. The pack is not automatically served.
 ## Changes Included
 
 - Eight marked synthetic files, including four formula-backed workbooks.
-- All-step consultant notes, structured-field instructions and human actions.
+- All-step consultant notes, structured-field instructions and human actions,
+  including exact named seed review and foundation-priced delivery comparison.
+  Unapproved A/B options remain proposals; only the personally selected and
+  approved current ROM can fund the value case.
 - Unbound unit-hour/value register rebind proposal, with no rates or approval.
 - Pure scenario generation, actual-byte readers and fail-closed reconciliation.
 - Focused tests and SHA-256 reconciliation proof.
@@ -49,8 +52,9 @@ surface or feature flag is introduced. The pack is not automatically served.
 - PASS: all three DOCX pages, three PDF pages and eight workbook sheets rendered
   and visually inspected; formulas recalculated with no error cells. Changing an
   original-submission input updates the summary, then the input is restored.
-- PASS: four mutation checks killed: synthetic marking, financial controls,
-  disposition partition and denominator comparison. Originals restored.
+- PASS: five mutation checks killed: synthetic marking, financial controls,
+  disposition partition, denominator comparison and option approval. Originals
+  restored.
 - PASS: Node 24 full typecheck, scoped lint, all context/corpus commands, no new
   library orphans, route/export reachability and unchanged tenancy fence census.
 - PASS: one new swept suite; covered files 2,827 to 2,828 and uncovered 164.

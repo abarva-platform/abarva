@@ -62,7 +62,11 @@ intermediate; workbook inspection sidecars are also ignored.
   evidence, accepts drafts, confirms causes/ranking and signs off personally.
 - Add the shared-foundation row before pasting ROM counts. Count its sources
   once, group use cases into releases, inspect pricing provenance and personally
-  approve the estimate. Do not rebuild any signed document.
+  approve the estimate. Compare foundation-priced options A and B without changing
+  counts or tuning rates; unapproved bands say "planning rates, not approved".
+  The value case uses only the personally selected and approved option; the deck
+  compares both. Report missing option-selection support rather than claiming an
+  unrecorded choice. Do not rebuild any signed document.
 - The rebind proposal contains proposed register rows only. IDs, Move scope,
   input approval and the ROM snapshot remain unbound. Reusing the earlier seed
   job requires an exact schema/scope review, live ID preflight and a separate
