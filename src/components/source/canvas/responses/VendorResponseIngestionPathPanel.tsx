@@ -142,6 +142,9 @@ function buildSteps(
   summary: ReturnType<typeof buildSummary>,
 ): IngestionStep[] {
   const hasReports = reports.length > 0;
+  const hasScoreGaps = summary.blockers > 0 || summary.holdbacks > 0;
+  const allScoreReady =
+    hasReports && summary.readyToScore === reports.length && !hasScoreGaps;
   const allRequiredRolesReady =
     hasReports &&
     reports.every((report) =>
@@ -225,22 +228,27 @@ function buildSteps(
     },
     {
       label: "Score gate",
-      status:
-        summary.readyToScore === reports.length && reports.length > 0
+      status: !hasReports
+        ? "No response evidence"
+        : allScoreReady
           ? "Ready to score"
-          : `${summary.blockers} blockers, ${summary.holdbacks} holdbacks`,
-      tone:
-        summary.readyToScore === reports.length && reports.length > 0
-          ? "done"
-          : summary.blockers > 0
-            ? "blocked"
-            : "review",
+          : hasScoreGaps
+            ? `${summary.blockers} blockers, ${summary.holdbacks} holdbacks`
+            : "Score evidence incomplete",
+      tone: allScoreReady
+        ? "done"
+        : !hasReports || summary.blockers > 0
+          ? "blocked"
+          : "review",
       owner: "Evaluation lead",
       output: "AI suggested score posture with human-owned final score",
-      nextAction:
-        summary.blockers > 0 || summary.holdbacks > 0
-          ? "Close required evidence gaps or accept visible caveats."
-          : "Proceed to evaluator scoring.",
+      nextAction: !hasReports
+        ? "Load and parse vendor response packages before scoring."
+        : allScoreReady
+          ? "Proceed to evaluator scoring."
+          : hasScoreGaps
+            ? "Close required evidence gaps or accept visible caveats."
+            : "Resolve score readiness for every vendor before scoring.",
     },
     {
       label: "Decision outputs",
