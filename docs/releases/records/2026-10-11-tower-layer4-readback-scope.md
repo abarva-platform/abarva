@@ -35,7 +35,7 @@ The Tower reload check now distinguishes the rows made by the Tower package from
 ## QA / Validation
 
 - `node --check scripts/tower/load-healthcare-demo-layer4-products.mjs`: passed.
-- `node scripts/tower/__tests__/run-layer4-readback-scope-tests.mjs`: passed, six checks.
+- `node scripts/tower/__tests__/run-layer4-readback-scope-tests.mjs`: passed, seven checks, including physical table and serving view column contracts.
 - `node scripts/tower/__tests__/run-layer4-purge-mode-tests.mjs`: passed, seven checks.
 - `node scripts/tower/__tests__/run-layer4-freshness-stamp-tests.mjs`: passed, four checks.
 - Scoped ESLint: passed.

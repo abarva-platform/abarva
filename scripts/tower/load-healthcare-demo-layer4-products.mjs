@@ -1628,6 +1628,8 @@ function servingCountsSql(tenant, assessment, scope) {
 
 function bridgeSourceCountsSql(tenant, assessment) {
   return SERVING_SURFACES.map(([surface, table, pageKey]) => {
+    // The AI physical table has row_key but stores its page key in display_payload_json.
+    // Its serving views expose both keys as columns.
     const page = pageKey === null
       ? ""
       : table === "tower_ai_portfolio"

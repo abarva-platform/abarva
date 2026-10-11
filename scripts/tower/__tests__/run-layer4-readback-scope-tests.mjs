@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { readbackSql, validateReadback } from "../load-healthcare-demo-layer4-products.mjs";
 
 const options = { tenantKey: "fixture-tenant", assessmentId: "fixture-assessment" };
@@ -76,6 +77,21 @@ assert.match(sql, /row_key like 'source_cloud:%'/);
 assert.match(sql, /row_key like 'source_contract_depth:%'/);
 assert.match(sql, /from ecl_projection\.tower_ai_portfolio where[^\n]+coalesce\(display_payload_json ->> 'page_key', 'ai_portfolio'\) = 'adoption_lens'/);
 
+const baseline = fs.readFileSync(
+  new URL("../../../supabase/migrations/20260831031000_ecl_substrate_baseline.sql", import.meta.url),
+  "utf8",
+);
+const aiTable = baseline.split('create table if not exists "ecl_projection"."tower_ai_portfolio" (')[1]?.split("\n);", 1)[0];
+assert.ok(aiTable, "AI physical table definition missing");
+assert.match(aiTable, /"row_key" text not null/);
+assert.doesNotMatch(aiTable, /"page_key"/);
+for (const view of ["tower_ai_portfolio", "tower_adoption_lens"]) {
+  const viewSql = baseline.split(`create or replace view "serving"."${view}" as`)[1]?.split(";", 1)[0];
+  assert.ok(viewSql, `${view} definition missing`);
+  assert.match(viewSql, /\brow_key\b/);
+  assert.match(viewSql, /\bpage_key\b/);
+}
+
 assert.deepEqual(validateReadback(readback(), expected, options), []);
 
 const leakedGeneration = readback();
@@ -98,4 +114,4 @@ const inactiveTarget = readback();
 inactiveTarget.active_assessments = [{ assessment_id: "old-assessment", projection_version: 2 }];
 assert.ok(validateReadback(inactiveTarget, expected, options).includes("target_assessment_not_sole_active_generation"));
 
-console.log("Layer 4 readback scope: 6 checks passed");
+console.log("Layer 4 readback scope: 7 checks passed");
