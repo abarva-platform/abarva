@@ -305,6 +305,17 @@ function loadPackage(options) {
   };
 }
 
+function assertPackageCanMutate(options) {
+  if (!options.write && !options.purgeOnly) return;
+  const manifestPath = path.join(options.packageDir, "package_manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  if (manifest.no_runtime_load !== false) {
+    throw new Error(
+      "Refusing runtime mutation: package_manifest.json must explicitly set no_runtime_load=false",
+    );
+  }
+}
+
 function sumBy(rows, key) {
   return rows.reduce((sum, row) => sum + num(row[key]), 0);
 }
@@ -1969,6 +1980,7 @@ function emitProofBundle(outDir) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  assertPackageCanMutate(options);
   fs.mkdirSync(options.outDir, { recursive: true });
   const rows = buildRows(options);
   const loadSqlPath = path.join(options.outDir, "tower_layer4_product_cube_load.sql");
