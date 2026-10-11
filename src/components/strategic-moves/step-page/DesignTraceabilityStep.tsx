@@ -31,6 +31,7 @@ import {
 } from "./MovesStepPage";
 import type { StepAvaAction } from "./RootCausesStep";
 import { useStepEvidence } from "./StepEvidence";
+import type { PhaseCatchUp } from "@/lib/programs/phase-catch-up";
 import styles from "./MovesStepPage.module.css";
 
 /** "A", "A and B", "A, B and C" (inside one clause, so no serial comma). */
@@ -77,6 +78,7 @@ export interface DesignTraceabilityStepProps {
   steps: readonly StepPageStep[];
   stepIndex: number;
   tabs?: ReactNode;
+  catchUp?: PhaseCatchUp | null;
   /** The saved `design_traceability` record. */
   value: string;
   onChange: (value: string) => void;
@@ -496,7 +498,9 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
     rows: pageRows,
     blockedBy:
       rows.length === 0
-        ? "Waiting on P2: no root cause is settled there yet, so there is nothing to design for"
+        ? props.catchUp?.items.length
+          ? `Discover has ${props.catchUp.items.length} item${props.catchUp.items.length === 1 ? "" : "s"} to confirm`
+          : "Waiting on P2: no root cause is settled there yet, so there is nothing to design for"
         : null,
     readySentence:
       "Every root cause has a design element or an owned hand-off, and none is orphaned. Continue to Architecture options",
@@ -591,6 +595,7 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
       syntheticNote={props.syntheticNote}
       tabs={props.tabs}
       phases={props.phases}
+      catchUp={rows.length === 0 ? props.catchUp : null}
       phaseCode="P3"
       phaseName="Design"
       steps={props.steps}
@@ -598,7 +603,12 @@ export function DesignTraceabilityStep(props: DesignTraceabilityStepProps) {
       title="Map every root cause to a design element"
       intro="Each P2 root cause needs one design element that fixes it, and each design element needs a root cause that justifies it."
       nextAction={shownAction}
-      blockedLink={{ label: "Open P2 Discover →", href: props.p2StepHref }}
+      blockedLink={
+        props.catchUp?.items.length
+          ? undefined
+          : { label: "Open P2 Discover →", href: props.p2StepHref }
+      }
+      blockedItems={rows.length === 0 ? props.catchUp?.items : undefined}
       blockedWork="The root causes from P2 will appear here once Discover settles them. Your design elements are kept."
       context={{
         items:

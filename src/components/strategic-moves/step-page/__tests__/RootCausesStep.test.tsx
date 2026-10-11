@@ -112,6 +112,27 @@ const row = (c: HTMLElement, id: string) =>
   c.querySelector(`#row-${id}`) as HTMLElement;
 
 describe("RootCausesStep", () => {
+  it("condenses a generated paragraph in read view while keeping the full editor", () => {
+    const full =
+      "Identity matching is inconsistent across systems. The second sentence describes a long mechanism and repeats the diagnosis.";
+    const { container } = render(
+      <Harness
+        compactCauseRead
+        initial={register([{ id: "RC-1", cause: full, status: "no_evidence" }])}
+      />,
+    );
+    const causeRow = row(container, "RC-1");
+    expect(causeRow.querySelector(".rc-cause")?.textContent).toBe(
+      "Identity matching is inconsistent across systems.",
+    );
+    expect(within(causeRow).getByText("Show full text")).toBeTruthy();
+    fireEvent.click(
+      within(causeRow).getByRole("button", { name: "Add evidence…" }),
+    );
+    expect(
+      (within(causeRow).getByLabelText("Cause") as HTMLTextAreaElement).value,
+    ).toBe(full);
+  });
   it("a cause whose file is in review points to that review instead of asking for evidence", async () => {
     global.fetch = jest.fn(async () => ({
       ok: true,
