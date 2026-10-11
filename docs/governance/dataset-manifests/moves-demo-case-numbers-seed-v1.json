@@ -1,0 +1,20 @@
+{
+  "dataset_id": "moves_demo_case_numbers_seed_v1",
+  "title": "Synthetic ROM and value inputs for the governed demo Move",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "move",
+  "classification": "confidential",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "A committed synthetic benchmark fixture and the existing Move-scoped assumptions register seed. All new numeric inputs are invented for a product demonstration and are neither client-attested nor Finance-approved.",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": 18,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-10-10",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "The declaration sign-off records authorization to prepare this proposal only; it does not approve any row or load. Seventeen new register rows and one structured value_plan are proposed. The expected register IDs require exact live readback before apply. No load, serving decision, Finance attestation, agent readiness, phase advancement or signed-in proof is declared. A separately reviewed named-person load_approval must bind this Move and the exact source-set hash in a later commit."
+}

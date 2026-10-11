@@ -1,0 +1,716 @@
+{
+  "status": "local_synthetic_simulation_only",
+  "datasetId": "moves_demo_case_numbers_seed_v1",
+  "moveId": "1557f032-5a5c-4475-abe5-b1a841576649",
+  "seedSha256": "3dfcc831c0e11e8747d9d0a6bb6b81a9cd37ac33660e344d4bdba1552507c366",
+  "benchmarkSha256": "06dad811a50ca5b4d06f3a183bc75da2443abe46448eb840aac8dabf39c39e4a",
+  "existingSeedSha256": "19401a9627284bbfb7054f7e43faa25e9b400e3cda6f2a9297f9dfd0cafd2a33",
+  "sourceSetSha256": "7318ba9baaba6d6df4db6cdef5c83364946d2e4d484ea280250381444a05a04a",
+  "approval": "absent; no load authorized",
+  "liveRegisterReadback": "not_run",
+  "captureWrite": "not_run",
+  "proposedRows": [
+    {
+      "key": "delivery.data_source_count",
+      "expectedRegisterId": "DL5",
+      "value": 36,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.source_table_count",
+      "expectedRegisterId": "DL6",
+      "value": 8,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.standard_data_entity_count",
+      "expectedRegisterId": "DL7",
+      "value": 28,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.dashboard_view_count",
+      "expectedRegisterId": "DL8",
+      "value": 24,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.design_row_count",
+      "expectedRegisterId": "DL9",
+      "value": 3,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.validation_row_count",
+      "expectedRegisterId": "DL10",
+      "value": 2,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.friction",
+      "expectedRegisterId": "DL11",
+      "value": 1.18,
+      "unit": "multiplier",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.productive_share",
+      "expectedRegisterId": "DL12",
+      "value": 0.68,
+      "unit": "share",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.hours_per_fte_week",
+      "expectedRegisterId": "DL13",
+      "value": 40,
+      "unit": "hours per FTE-week",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.zero_baseline",
+      "expectedRegisterId": "V5",
+      "value": 0,
+      "unit": "baseline zero",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.platform_spend_reduction_share",
+      "expectedRegisterId": "V6",
+      "value": 0.12,
+      "unit": "share of annual spend",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.platform_attribution",
+      "expectedRegisterId": "V7",
+      "value": 0.6,
+      "unit": "share",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.platform_probability",
+      "expectedRegisterId": "V8",
+      "value": 0.8,
+      "unit": "probability",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.saved_hours_per_report_writer_year",
+      "expectedRegisterId": "V9",
+      "value": 80,
+      "unit": "hours per writer-year",
+      "ownerRole": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.analyst_attribution",
+      "expectedRegisterId": "V10",
+      "value": 0.5,
+      "unit": "share",
+      "ownerRole": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.analyst_probability",
+      "expectedRegisterId": "V11",
+      "value": 0.7,
+      "unit": "probability",
+      "ownerRole": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.discount_rate",
+      "expectedRegisterId": "V12",
+      "value": 0.1,
+      "unit": "annual share",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    }
+  ],
+  "existingRefs": {
+    "V1": "value.program_budget",
+    "V3": "value.benefit_start",
+    "V4": "value.platform_spend_baseline",
+    "A2": "adoption.report_writers_on_certified_measures",
+    "A3": "adoption.workbook_retirement"
+  },
+  "registerIdCaveat": "Expected IDs are conditional on exact live register state; apply must refuse drift.",
+  "levers": [
+    {
+      "id": "L1",
+      "name": "Duplicate analytics platform spend retired",
+      "conversion": "cost_reduction",
+      "registerRefs": [
+        {
+          "key": "L1.driver.baseline",
+          "registerId": "V5"
+        },
+        {
+          "key": "L1.driver.target",
+          "registerId": "V6"
+        },
+        {
+          "key": "L1.term[0]",
+          "registerId": "V4"
+        },
+        {
+          "key": "L1.attribution",
+          "registerId": "V7"
+        },
+        {
+          "key": "L1.probability",
+          "registerId": "V8"
+        }
+      ],
+      "timingRegisterRef": {
+        "registerId": "V3",
+        "scale": 1
+      },
+      "result": {
+        "leverId": "L1",
+        "name": "Duplicate analytics platform spend retired",
+        "conversion": "cost_reduction",
+        "status": "counted",
+        "inCash": true,
+        "annualCents": {
+          "low": 80554500,
+          "base": 254592000,
+          "high": 621562500
+        },
+        "terms": {
+          "low": [
+            {
+              "label": "annual platform spend ($)",
+              "value": 33150000,
+              "source": "register:V4",
+              "cellRole": "base"
+            },
+            {
+              "label": "share no longer bought",
+              "value": 0.09,
+              "source": "register:V5 → register:V6",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "attribution",
+              "value": 0.44999999999999996,
+              "source": "register:V7",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.6000000000000001,
+              "source": "register:V8",
+              "cellRole": "probability"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L1 annual value (cents)",
+              "value": 80554500,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ],
+          "base": [
+            {
+              "label": "annual platform spend ($)",
+              "value": 44200000,
+              "source": "register:V4",
+              "cellRole": "base"
+            },
+            {
+              "label": "share no longer bought",
+              "value": 0.12,
+              "source": "register:V5 → register:V6",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "attribution",
+              "value": 0.6,
+              "source": "register:V7",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.8,
+              "source": "register:V8",
+              "cellRole": "probability"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L1 annual value (cents)",
+              "value": 254592000,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ],
+          "high": [
+            {
+              "label": "annual platform spend ($)",
+              "value": 55250000,
+              "source": "register:V4",
+              "cellRole": "base"
+            },
+            {
+              "label": "share no longer bought",
+              "value": 0.15,
+              "source": "register:V5 → register:V6",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "attribution",
+              "value": 0.75,
+              "source": "register:V7",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 1,
+              "source": "register:V8",
+              "cellRole": "probability"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L1 annual value (cents)",
+              "value": 621562500,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ]
+        },
+        "driverDelta": {
+          "low": 0.09,
+          "base": 0.12,
+          "high": 0.15
+        },
+        "nonMoneyMetric": null,
+        "countedInsteadBy": null,
+        "monthlyCashCents": {
+          "low": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1118813,
+            2237625,
+            3356438,
+            4475250,
+            5594063,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875
+          ],
+          "base": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3536000,
+            7072000,
+            10608000,
+            14144000,
+            17680000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000
+          ],
+          "high": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8632813,
+            17265625,
+            25898438,
+            34531250,
+            43164063,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875
+          ]
+        },
+        "mustValidate": [
+          "L1.term[0]"
+        ],
+        "inputIssues": [],
+        "ruleViolations": []
+      }
+    },
+    {
+      "id": "L2",
+      "name": "Report writer capacity released",
+      "conversion": "non_cash",
+      "registerRefs": [
+        {
+          "key": "L2.driver.baseline",
+          "registerId": "V5"
+        },
+        {
+          "key": "L2.driver.target",
+          "registerId": "V9"
+        },
+        {
+          "key": "L2.term[1]",
+          "registerId": "A2"
+        },
+        {
+          "key": "L2.attribution",
+          "registerId": "V10"
+        },
+        {
+          "key": "L2.probability",
+          "registerId": "V11"
+        }
+      ],
+      "timingRegisterRef": {
+        "registerId": "V3",
+        "scale": 1
+      },
+      "result": {
+        "leverId": "L2",
+        "name": "Report writer capacity released",
+        "conversion": "non_cash",
+        "status": "zero_no_release_path",
+        "inCash": false,
+        "annualCents": {
+          "low": 0,
+          "base": 0,
+          "high": 0
+        },
+        "terms": {
+          "low": [
+            {
+              "label": "hours per writer-year",
+              "value": 60,
+              "source": "register:V5 → register:V9",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "report writers",
+              "value": 26.5,
+              "source": "register:A2",
+              "cellRole": "base"
+            },
+            {
+              "label": "attribution",
+              "value": 0.375,
+              "source": "register:V10",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.5249999999999999,
+              "source": "register:V11",
+              "cellRole": "probability"
+            },
+            {
+              "label": "no role or contract release path recorded — counts $0",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "release_gate"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L2 annual value (cents)",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ],
+          "base": [
+            {
+              "label": "hours per writer-year",
+              "value": 80,
+              "source": "register:V5 → register:V9",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "report writers",
+              "value": 53,
+              "source": "register:A2",
+              "cellRole": "base"
+            },
+            {
+              "label": "attribution",
+              "value": 0.5,
+              "source": "register:V10",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.7,
+              "source": "register:V11",
+              "cellRole": "probability"
+            },
+            {
+              "label": "no role or contract release path recorded — counts $0",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "release_gate"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L2 annual value (cents)",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ],
+          "high": [
+            {
+              "label": "hours per writer-year",
+              "value": 100,
+              "source": "register:V5 → register:V9",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "report writers",
+              "value": 79.5,
+              "source": "register:A2",
+              "cellRole": "base"
+            },
+            {
+              "label": "attribution",
+              "value": 0.625,
+              "source": "register:V10",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.875,
+              "source": "register:V11",
+              "cellRole": "probability"
+            },
+            {
+              "label": "no role or contract release path recorded — counts $0",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "release_gate"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L2 annual value (cents)",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ]
+        },
+        "driverDelta": {
+          "low": 60,
+          "base": 80,
+          "high": 100
+        },
+        "nonMoneyMetric": {
+          "unit": "hours per year",
+          "value": {
+            "low": 313.0312,
+            "base": 1484,
+            "high": 4347.6563
+          }
+        },
+        "countedInsteadBy": null,
+        "monthlyCashCents": {
+          "low": [],
+          "base": [],
+          "high": []
+        },
+        "mustValidate": [
+          "L2.term[1]"
+        ],
+        "inputIssues": [],
+        "ruleViolations": []
+      }
+    }
+  ],
+  "rom": {
+    "rateBasis": "synthetic local rate fixture only",
+    "releases": [
+      {
+        "code": "R1",
+        "name": "Certified foundation",
+        "hours": 934.56,
+        "weeks": 18,
+        "lowDollars": 45900,
+        "planDollars": 61200,
+        "highDollars": 91800
+      },
+      {
+        "code": "R2",
+        "name": "Controlled serving",
+        "hours": 847.24,
+        "weeks": 16,
+        "lowDollars": 40800,
+        "planDollars": 54400,
+        "highDollars": 81600
+      }
+    ],
+    "total": {
+      "hours": 1781.8,
+      "weeks": 34,
+      "lowDollars": 86700,
+      "planDollars": 115600,
+      "highDollars": 173400
+    }
+  },
+  "value": {
+    "status": "evaluated",
+    "engineReadyForApproval": true,
+    "approvalEligible": false,
+    "validationState": "provisional_open_register_inputs",
+    "mustValidate": [
+      "L1.term[0]",
+      "L2.term[1]"
+    ],
+    "annualCashDollars": 2545920,
+    "byYearPaidDollars": [
+      530400,
+      2545920,
+      2545920
+    ],
+    "npvDollars": -314869.25,
+    "paybackMonth": 34,
+    "roi": 0.124448,
+    "analystCapacityAnnualCents": 0,
+    "analystCapacityHours": 1484
+  }
+}

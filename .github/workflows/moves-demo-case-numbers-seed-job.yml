@@ -1,0 +1,102 @@
+name: Moves demo case numbers proposal dry run
+
+# Review lane only. There is no apply dispatch until a shared governed P4
+# capture writer and a separate named-person load approval both exist.
+on:
+  workflow_dispatch:
+    inputs:
+      source_set_sha256:
+        description: "Exact SHA-256 of seed, benchmark, and reused register seed bytes"
+        required: true
+        type: string
+      idempotency_key:
+        description: "moves-demo-case-numbers-seed-v1:<sha256 of Move ID and source-set hash>"
+        required: true
+        type: string
+
+concurrency:
+  group: moves-demo-case-numbers-seed-job
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  proposal-dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      SOURCE_SET_SHA256: ${{ inputs.source_set_sha256 }}
+      IDEMPOTENCY_KEY: ${{ inputs.idempotency_key }}
+      CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+      RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+      AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+      AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+      AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify proposal scope and exact bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == 'refs/heads/main' ]] || { echo 'Dry run uses reviewed main only' >&2; exit 1; }
+          [[ "$SOURCE_SET_SHA256" =~ ^[a-f0-9]{64}$ ]] || { echo 'Invalid source-set hash' >&2; exit 1; }
+          expected="$(node -e 'const c=require("node:crypto"); const m="1557f032-5a5c-4475-abe5-b1a841576649"; const s=process.env.SOURCE_SET_SHA256; process.stdout.write("moves-demo-case-numbers-seed-v1:"+c.createHash("sha256").update(m+"|"+s).digest("hex"))')"
+          [[ "$IDEMPOTENCY_KEY" == "$expected" ]] || { echo 'Idempotency key mismatch' >&2; exit 1; }
+          actual="$(node -e 'const c=require("node:crypto"),f=require("node:fs"); const p=["datasets/tenant-inputs/meridian-health/moves/demo-case-numbers-seed-v1.json","scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json","datasets/tenant-inputs/meridian-health/moves/demo-assumption-register-seed.json"]; process.stdout.write(c.createHash("sha256").update(p.map(x=>f.readFileSync(x,"utf8")).join("\n")).digest("hex"))')"
+          [[ "$actual" == "$SOURCE_SET_SHA256" ]] || { echo 'Committed source-set hash differs from dispatch' >&2; exit 1; }
+          jq -e '.load_approval == null and .serving_approval == null' docs/governance/dataset-manifests/moves-demo-case-numbers-seed-v1.json >/dev/null || { echo 'Review lane expects no approval' >&2; exit 1; }
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+      - name: Read approved digest-pinned image
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query 'properties.template.containers[0].image' -o tsv)"
+          [[ "$image" == *@sha256:* ]] || { echo 'Current image is not digest-pinned' >&2; exit 1; }
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "digest=${image##*@}" >> "$GITHUB_OUTPUT"
+      - name: Record exact dry-run contract
+        shell: bash
+        run: |
+          mkdir -p audit-artifacts/moves-demo-case-numbers-seed-job
+          jq -n --arg sourceSetHash "$SOURCE_SET_SHA256" --arg idempotencyKey "$IDEMPOTENCY_KEY" \
+            --arg runId "moves-case-proposal-${GITHUB_RUN_ID}" --arg imageDigest "${{ steps.image.outputs.digest }}" \
+            '{sourceSetHash:$sourceSetHash,idempotencyKey:$idempotencyKey,runId:$runId,imageDigest:$imageDigest}' \
+            > audit-artifacts/moves-demo-case-numbers-seed-job/contract.json
+      - name: Read-only governed dry run
+        shell: bash
+        run: |
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script moves:demo-case-numbers:seed-job \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --env MOVES_CASE_SEED_MODE=dry_run \
+            --env MOVES_CASE_SEED_TENANT_KEY=meridian-health \
+            --env MOVES_CASE_SEED_SOURCE_SET_SHA256="$SOURCE_SET_SHA256" \
+            --env MOVES_CASE_SEED_IDEMPOTENCY_KEY="$IDEMPOTENCY_KEY" \
+            --env MOVES_CASE_SEED_RUN_ID="moves-case-proposal-${GITHUB_RUN_ID}" \
+            --env MOVES_CASE_SEED_BUILD_VERSION="$GITHUB_SHA" \
+            --env MOVES_CASE_SEED_IMAGE_DIGEST="${{ steps.image.outputs.digest }}" \
+            --env MOVES_CASE_SEED_OPERATOR="$GITHUB_ACTOR" \
+            --out-dir audit-artifacts/moves-demo-case-numbers-seed-job \
+            --poll-seconds 15 --idle-verify-wait-seconds 300
+      - name: Validate operator proof and idle restoration
+        shell: bash
+        run: |
+          node scripts/moves/validate-demo-case-numbers-seed-proof.mjs \
+            audit-artifacts/moves-demo-case-numbers-seed-job/contract.json \
+            audit-artifacts/moves-demo-case-numbers-seed-job/summary.json
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: moves-demo-case-numbers-seed-dry-run
+          path: audit-artifacts/moves-demo-case-numbers-seed-job
+          if-no-files-found: warn
