@@ -710,7 +710,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = modelAuthored
-    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${EXECUTIVE_BRIEF_REMINDER}`
+    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${EXECUTIVE_BRIEF_REMINDER}\n\n${executiveContext?.decisionGuard ?? ""}`
     : answerOnly
       ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\n${universalAnswerVisualContract}`
       : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
@@ -741,9 +741,10 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
   );
 
   try {
-    const model = modelAuthored && isExplicitConciseAsk(args.query)
-      ? "claude-sonnet-4-6"
-      : chooseModel(args.intent, args.query);
+    const model =
+      modelAuthored && isExplicitConciseAsk(args.query)
+        ? "claude-sonnet-4-6"
+        : chooseModel(args.intent, args.query);
     const primaryTokenBudget = modelAuthored
       ? 8192
       : answerOnly
@@ -807,7 +808,10 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       stream: true,
       ...(modelAuthored
         ? {
-            thinking: { type: "adaptive" as const, display: "omitted" as const },
+            thinking: {
+              type: "adaptive" as const,
+              display: "omitted" as const,
+            },
             output_config: { effort: "high" as const },
           }
         : {}),
