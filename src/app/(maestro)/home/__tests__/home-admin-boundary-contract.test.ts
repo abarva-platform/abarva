@@ -8,11 +8,12 @@ function readRepoFile(relativePath: string): string {
 }
 
 describe("Home/Admin boundary contract", () => {
-  it("keeps /home on the v4 executive readout canvas", () => {
+  it("keeps /home on the canonical canvas with no retired runtime root", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
 
-    expect(pageSource).toContain("import { HomePreviewAppRoot }");
-    expect(pageSource).toContain("<HomePreviewAppRoot");
+    expect(pageSource).toContain("import { HomeCanvasApp }");
+    expect(pageSource).toContain("<HomeCanvasApp");
+    expect(pageSource).not.toMatch(/HomePreviewAppRoot|HomeV4App/);
     expect(pageSource).toContain("getHomeReviewBundle");
     expect(pageSource).toContain("HOME_PREVIEW_TENANT_KEYS");
     expect(pageSource).not.toContain("HomeEnterpriseLandscapeV2");
@@ -27,48 +28,40 @@ describe("Home/Admin boundary contract", () => {
     );
   });
 
-  it("keeps context and architecture inside the approved v4 Home canvas", () => {
+  it("keeps context and architecture inside the canonical Home canvas", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
-    const shellSource = readRepoFile("src/components/home/v4/HomeV4App.tsx");
+    const shellSource = readRepoFile(
+      "src/components/home/canvas/HomeCanvasApp.tsx",
+    );
     const chapterSource = readRepoFile(
-      "src/components/home/v4/ChapterPage.tsx",
+      "src/components/home/canvas/ChapterCanvas.tsx",
     );
     const architectureSource = readRepoFile(
-      "src/components/home/v4/ArchitecturePage.tsx",
+      "src/components/home/canvas/ArchitectureCanvas.tsx",
     );
     const browserSource = readRepoFile(
       "src/components/home/v4/RecordBrowser.tsx",
     );
 
-    expect(shellSource).toContain('"The briefing"');
-    expect(shellSource).toContain('"The evidence"');
+    expect(shellSource).toContain("The enterprise");
+    expect(shellSource).toContain("Evidence families");
     expect(shellSource).toContain("Current-state architecture");
     expect(shellSource).toContain("Browse the record");
-    expect(chapterSource).toContain("CXO readout");
-    expect(chapterSource).toContain("Leadership voice");
-    expect(architectureSource).toContain("Current-state architecture map");
-    expect(architectureSource).toContain("Enterprise relationship crosswalk");
+    expect(chapterSource).toContain("LeadershipCanvas");
+    expect(architectureSource).toContain("resolveArchitectureView");
     expect(browserSource).toContain("Slice / dice viewer");
     expect(browserSource).toContain("Relationship lens");
-    expect(pageSource).toContain("<HomePreviewAppRoot");
+    expect(pageSource).toContain("<HomeCanvasApp");
     expect(pageSource).not.toContain("HomeSurface");
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
   });
 
-  it("keeps Home preview first render deterministic for hydration", () => {
-    const shellSource = readRepoFile("src/components/home/v4/HomeV4App.tsx");
-
-    expect(shellSource).toContain(
-      'const [activeView, setActiveView] = useState<ActiveView>("executive_brief")',
+  it("resolves the initial Home view from URL parameters, not browser-only state", () => {
+    const shellSource = readRepoFile(
+      "src/components/home/canvas/HomeCanvasApp.tsx",
     );
-    expect(shellSource).toContain("function formatCompiledDate(");
-    expect(shellSource).toContain('timeZone: "UTC"');
-    expect(shellSource).not.toContain(
-      'useState<ActiveView>(() =>\\n    typeof window === "undefined"',
-    );
-    expect(shellSource).not.toContain(
-      "new Date(provenance.generated_at).toLocaleDateString",
-    );
+    expect(shellSource).toContain("resolveCanvasLocation(params, bundle)");
+    expect(shellSource).not.toContain("useState<ActiveView>");
   });
 
   it("keeps the Home explorer as canvas state, not hash-anchor document navigation", () => {
@@ -151,7 +144,7 @@ describe("Home/Admin boundary contract", () => {
     expect(pageSource).toContain("const activeTenantKey");
     expect(pageSource).toContain("const requestedTenantKey");
     expect(pageSource).toContain("tenantName,");
-    expect(pageSource).toContain("<HomePreviewAppRoot");
+    expect(pageSource).toContain("<HomeCanvasApp");
     expect(pageSource).toContain("bundle={bundle}");
     expect(pageSource).not.toContain("Governed Source L4 / cube");
     expect(pageSource).not.toContain("Source L4 / Cube");

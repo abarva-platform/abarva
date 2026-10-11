@@ -142,6 +142,7 @@ const COLUMN_ORDER: Record<TechObjectType, string[]> = {
     "businessCaseSponsorRole",
     "governanceCouncil",
     "regulatoryRegime",
+    "segmentNotes",
     "classificationBasis",
   ],
   business_function: [
@@ -467,6 +468,15 @@ function numberValue(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function listText(value: unknown): string | null {
+  if (Array.isArray(value)) {
+    return value.every((item) => typeof item === "string")
+      ? value.join("; ") || null
+      : null;
+  }
+  return typeof value === "string" ? text(value) : null;
+}
+
 function boolish(value: unknown): boolean | string | null {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "boolean") return value;
@@ -581,6 +591,7 @@ function enterpriseRow(row: HomeProjectionRow): JsonRecord {
         businessCaseSponsorRole: text(payload.business_case_sponsor_role),
         governanceCouncil: text(payload.governance_council),
         regulatoryRegime: text(payload.regulatory_regime),
+        segmentNotes: text(payload.segment_notes),
         classificationBasis: text(payload.classification_basis),
       };
     case "business_function":
@@ -591,7 +602,7 @@ function enterpriseRow(row: HomeProjectionRow): JsonRecord {
         businessSegmentKey: text(payload.business_segment_key),
         parentFunction: text(payload.parent_function),
         executiveOwner: text(payload.executive_owner),
-        businessCapabilities: text(payload.business_capabilities),
+        businessCapabilities: listText(payload.business_capabilities),
         criticality: text(payload.criticality),
         annualBudgetUsd: numberValue(payload.annual_budget_usd),
         fteCount: numberValue(payload.fte_count),

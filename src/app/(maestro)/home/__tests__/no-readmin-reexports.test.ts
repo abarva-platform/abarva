@@ -20,41 +20,49 @@
  *   - /home/training         (alias → /home/learn)
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
-import { render } from '@testing-library/react';
-import { createElement } from 'react';
+import { render } from "@testing-library/react";
+import { createElement } from "react";
 
-import { HomeV4App } from '@/components/home/v4/HomeV4App';
-import type { HomeReviewBundle } from '@/lib/home/preview/types';
+import { HomeCanvasApp } from "@/components/home/canvas/HomeCanvasApp";
+import { canvasViews } from "@/components/home/canvas/canvas-model";
+import type { HomeReviewBundle } from "@/lib/home/preview/types";
 
-jest.mock('@/components/home/preview/HomeAvaChat', () => ({
+jest.mock("@/components/home/preview/HomeAvaChat", () => ({
   HomeAvaChat: ({ children }: { children: unknown }) => children,
 }));
 
-const HOME_ROOT = path.resolve(__dirname, '..');
+let mockParams = new URLSearchParams();
+jest.mock("next/navigation", () => ({
+  useSearchParams: () => mockParams,
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+}));
+
+const HOME_ROOT = path.resolve(__dirname, "..");
 const GOLDEN_SNAPSHOTS = path.resolve(
   __dirname,
-  '../../../../lib/home/preview/golden-snapshots',
+  "../../../../lib/home/preview/golden-snapshots",
 );
 
 const DELETED_REEXPORT_SEGMENTS: ReadonlyArray<string> = [
-  'data-trust',
-  'connectors',
-  'agent-readiness',
-  'configuration',
-  'tenant-profile',
+  "data-trust",
+  "connectors",
+  "agent-readiness",
+  "configuration",
+  "tenant-profile",
 ];
 
-describe('no /home/* re-exports of /admin/* pages', () => {
+describe("no /home/* re-exports of /admin/* pages", () => {
   for (const segment of DELETED_REEXPORT_SEGMENTS) {
     it(`/home/${segment} must not exist as a route`, () => {
       const segmentDir = path.join(HOME_ROOT, segment);
-      const exists = fs.existsSync(path.join(segmentDir, 'page.tsx')) ||
-        fs.existsSync(path.join(segmentDir, 'page.ts')) ||
-        fs.existsSync(path.join(segmentDir, 'route.tsx')) ||
-        fs.existsSync(path.join(segmentDir, 'route.ts'));
+      const exists =
+        fs.existsSync(path.join(segmentDir, "page.tsx")) ||
+        fs.existsSync(path.join(segmentDir, "page.ts")) ||
+        fs.existsSync(path.join(segmentDir, "route.tsx")) ||
+        fs.existsSync(path.join(segmentDir, "route.ts"));
       if (exists) {
         throw new Error(
           `Home/Admin separation hygiene violation: src/app/(maestro)/home/${segment}/ has a route file. ` +
@@ -83,7 +91,7 @@ describe('no /home/* re-exports of /admin/* pages', () => {
    * is a comment, a type name, or a QA inventory string -- zero import
    * statements -- and the sibling suite `home-admin-boundary-contract.test.ts`
    * asserts that `/home/page.tsx` must NOT mention them, because `/home` serves
-   * the v4 canvas (`HomePreviewAppRoot` -> `HomeV4App`).
+   * the canonical `HomeCanvasApp` canvas.
    *
    * So the cases were not merely reading bytes. They were reading the bytes of
    * copy no reader can see, and a render-based replacement pointed at the same
@@ -113,43 +121,45 @@ describe('no /home/* re-exports of /admin/* pages', () => {
    * remembers to add it here. */
   const TENANT_KEYS: string[] = fs
     .readdirSync(GOLDEN_SNAPSHOTS)
-    .filter((name) => name.endsWith('.json'))
-    .map((name) => name.replace(/\.json$/, ''));
+    .filter((name) => name.endsWith(".json"))
+    .map((name) => name.replace(/\.json$/, ""));
 
   function bundleFor(tenantKey: string): HomeReviewBundle {
     return JSON.parse(
-      fs.readFileSync(path.join(GOLDEN_SNAPSHOTS, `${tenantKey}.json`), 'utf8'),
+      fs.readFileSync(path.join(GOLDEN_SNAPSHOTS, `${tenantKey}.json`), "utf8"),
     ) as HomeReviewBundle;
   }
 
-  /** The views a reader can reach: every chapter in the record, plus the four
-   * standing views and the four technology-estate lenses. */
+  /** Use the runtime view registry so newly supplied families join the sweep. */
   function surfacesFor(bundle: HomeReviewBundle): string[] {
-    return [
-      ...bundle.chapters.map((chapter) => chapter.chapterId),
-      'architecture',
-      'data-flow',
-      'browse-the-data',
-      'tech:application_system',
-      'tech:vendor_contract',
-      'tech:infrastructure_platform',
-      'tech:data_asset_or_integration',
-    ];
+    return canvasViews(bundle);
   }
 
   /** Visible text only. A value inside a `title` attribute or a `<style>` block
    * is not what a reader reads, and neither is a source comment. */
-  function renderedText(tenantKey: string, surface: string): string {
-    document.body.innerHTML = '';
-    window.location.hash = surface;
+  function renderedText(
+    tenantKey: string,
+    surface: string,
+    panel: string,
+  ): string {
+    document.body.innerHTML = "";
+    window.history.replaceState(null, "", "/home");
+    mockParams = new URLSearchParams({ view: surface, panel });
+    const bundle = bundleFor(tenantKey);
     render(
-      createElement(HomeV4App, {
-        bundle: bundleFor(tenantKey),
+      createElement(HomeCanvasApp, {
+        bundle,
         tenantKey: tenantKey as never,
+        tenantName: "Reference enterprise",
+        recordSource: {
+          kind: "reviewed_snapshot",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+        },
+        recordToken: "reviewed-test-binding",
       }),
     );
-    document.querySelectorAll('style').forEach((node) => node.remove());
-    return document.body.textContent ?? '';
+    document.querySelectorAll("style").forEach((node) => node.remove());
+    return document.body.textContent ?? "";
   }
 
   interface Sweep {
@@ -164,11 +174,14 @@ describe('no /home/* re-exports of /admin/* pages', () => {
     let views = 0;
     for (const tenantKey of TENANT_KEYS) {
       for (const surface of surfacesFor(bundleFor(tenantKey))) {
-        const text = renderedText(tenantKey, surface);
-        views += 1;
-        shortestView = Math.min(shortestView, text.length);
-        for (const phrase of banned) {
-          if (text.includes(phrase)) hits.push(`${tenantKey}#${surface}: ${phrase}`);
+        for (const panel of ["overview", "evidence", "reading"]) {
+          const text = renderedText(tenantKey, surface, panel);
+          views += 1;
+          shortestView = Math.min(shortestView, text.length);
+          for (const phrase of banned) {
+            if (text.includes(phrase))
+              hits.push(`${tenantKey}/${surface}/${panel}: ${phrase}`);
+          }
         }
       }
     }
@@ -178,29 +191,34 @@ describe('no /home/* re-exports of /admin/* pages', () => {
   /** A clean sweep over a surface that failed to render is indistinguishable
    * from a clean sweep over a surface that is clean. Both cases below take this
    * before believing an empty result. */
-  function assertTheSweepCouldHaveSeenSomething(result: Sweep, banned: readonly string[]) {
+  function assertTheSweepCouldHaveSeenSomething(
+    result: Sweep,
+    banned: readonly string[],
+  ) {
     expect(result.views).toBeGreaterThanOrEqual(2 * 11);
     expect(result.shortestView).toBeGreaterThan(1_000);
     // And the scanner itself is not blind: the same membership test, run over
     // text that does carry a banned phrase, finds it.
     const planted = `prefix ${banned[0]} suffix`;
-    expect(banned.filter((phrase) => planted.includes(phrase))).toContain(banned[0]);
+    expect(banned.filter((phrase) => planted.includes(phrase))).toContain(
+      banned[0],
+    );
   }
 
-  it('keeps visible Home copy tenant-scoped and free of setup/admin framing', () => {
+  it("keeps visible Home copy tenant-scoped and free of setup/admin framing", () => {
     // The banned list is the old case's, unchanged: cross-tenant framing and
     // build-surface vocabulary are the two things Home must not say.
     const BANNED = [
-      'Cross-workspace',
-      'cross-workspace',
-      'Cross-tenant',
-      'cross-tenant',
-      'Cross tenant',
-      'cross tenant',
-      'Data loads',
-      'Connectors',
-      'Templates',
-      'Setup workflows',
+      "Cross-workspace",
+      "cross-workspace",
+      "Cross-tenant",
+      "cross-tenant",
+      "Cross tenant",
+      "cross tenant",
+      "Data loads",
+      "Connectors",
+      "Templates",
+      "Setup workflows",
     ] as const;
 
     const result = sweep(BANNED);
@@ -208,16 +226,16 @@ describe('no /home/* re-exports of /admin/* pages', () => {
     expect(result.hits).toEqual([]);
   });
 
-  it('keeps visible Home copy free of the setup-era labels the entry surface retired', () => {
+  it("keeps visible Home copy free of the setup-era labels the entry surface retired", () => {
     // The strings the old case pinned to three component files, asserted here
     // against what a reader is shown. "Admin" and "Administration" on their own
     // are NOT banned: both appear in tenant content as the names of real
     // systems, and a sweep that flagged them would be a test of the fixture.
     const BANNED = [
-      'Admin Setup',
-      'Setup · dataset domains',
-      'access from Setup',
-      'Setup, access, readiness, and audit controls',
+      "Admin Setup",
+      "Setup · dataset domains",
+      "access from Setup",
+      "Setup, access, readiness, and audit controls",
     ] as const;
 
     const result = sweep(BANNED);
