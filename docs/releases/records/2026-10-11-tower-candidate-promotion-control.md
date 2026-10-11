@@ -37,7 +37,7 @@ Release lane: `global-control-lane` for the shared selector and operator control
 
 ## QA / Validation
 
-- Node tests cover candidate and physical-stage separation, source drift, receipt identity, nine page counts and fingerprints, unknown money claims, and selector fallback logic. Preflight also checks the staged canonical object count, source-file hashes, and projection manifests directly in the database.
+- Node tests cover candidate and physical-stage separation, source drift, receipt identity, private proof-bundle integrity, nine page counts and fingerprints, fact-lineage status, Layer 3 measure links, unknown money claims, and selector fallback logic. Preflight also checks staged canonical and source-record counts, source-file hashes, zero orphan references, excluded source details, and projection manifests directly in the database.
 - `node --check` and `git diff --check` passed locally.
 - No database write, migration apply, candidate staging, or signed-in product proof is claimed by this release candidate.
 
