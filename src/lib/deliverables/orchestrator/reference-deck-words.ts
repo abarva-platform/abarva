@@ -148,6 +148,9 @@ const WORDS_OUTPUT_CONFIG = { format: { type: "json_schema" as const, schema: {
   } } }, required: ["words"], additionalProperties: false,
 } } };
 const PARSE_RECOVERY_CHUNK_SIZE = 6;
+const INITIAL_BATCH_THRESHOLD = 12;
+const MODEL_CALL_TIMEOUT_MS = 25_000;
+const MODEL_CALL_OPTIONS = { timeout: MODEL_CALL_TIMEOUT_MS, maxRetries: 0 };
 
 export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable, archetype?: ReferenceArchetype): string | null {
   const prose = `${entry.title} ${entry.answer} ${entry.notes}`;
@@ -200,34 +203,55 @@ export async function draftEditionWords(input: {
   const user = JSON.stringify({ profile, slides: promptSlides, slots: slotDefinitions });
   try {
     const model = policyForTier("tier2_working_draft").model;
-    const preflight = await preflightAnthropicDirectClient({
-      tenantId: input.tenantId, userId: input.userId,
-      workflow: "moves:reference-deck:preview:words", workload: "moves_reference_deck",
-      prompt: `${system}\n${user}`, model, dataClass: "internal",
-      artifactType: "reference_deck_preview",
-      metadata: { edition: input.edition, slideCount: input.archetypes.length, persist: false },
-    });
-    if (!preflight.ok) return failure("preflight_denied");
-    const response = await preflight.client.messages.create({
-      model, max_tokens: 6000, temperature: 0, system,
-      output_config: WORDS_OUTPUT_CONFIG,
-      messages: [{ role: "user", content: user }],
-    });
-    const raw = response.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
-    const parsed = parseWords(raw, input.archetypes.length);
-    const candidates: Array<EditionWords | null> = parsed ?? input.archetypes.map(() => null);
-    if (!parsed) {
-      let receivedSlides: number | null = null;
-      try {
-        const body = JSON.parse(raw) as { words?: unknown };
-        if (Array.isArray(body?.words)) receivedSlides = body.words.length;
-      } catch { /* Shape diagnostics only; never log model prose. */ }
-      console.warn("[reference-deck-words-parse]", {
-        requestId: input.requestId ?? null, edition: input.edition,
-        expectedSlides: input.archetypes.length, receivedSlides,
-        stopReason: response.stop_reason ?? null, textLength: raw.length,
+    const batched = input.archetypes.length > INITIAL_BATCH_THRESHOLD;
+    const initialChunks = batched
+      ? Array.from({ length: Math.ceil(promptSlides.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) => {
+        const start = chunk * PARSE_RECOVERY_CHUNK_SIZE;
+        return { start, slides: promptSlides.slice(start, start + PARSE_RECOVERY_CHUNK_SIZE) };
+      })
+      : [{ start: 0, slides: promptSlides }];
+    const initialResults = await Promise.allSettled(initialChunks.map(async ({ start, slides }) => {
+      const batchUser = batched ? JSON.stringify({ profile, slides, slots: slotDefinitions }) : user;
+      const preflight = await preflightAnthropicDirectClient({
+        tenantId: input.tenantId, userId: input.userId,
+        workflow: batched ? "moves:reference-deck:preview:words:batch" : "moves:reference-deck:preview:words",
+        workload: "moves_reference_deck", prompt: `${system}\n${batchUser}`, model, dataClass: "internal",
+        artifactType: "reference_deck_preview",
+        metadata: { edition: input.edition, slideStart: start + 1, slideCount: slides.length, persist: false },
       });
-      const chunks = Array.from({ length: Math.ceil(input.archetypes.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) => {
+      if (!preflight.ok) return { start, slides, denied: true, parsed: null };
+      const response = await preflight.client.messages.create({
+        model, max_tokens: batched ? 2400 : 6000, temperature: 0, system,
+        output_config: WORDS_OUTPUT_CONFIG,
+        messages: [{ role: "user", content: batchUser }],
+      }, MODEL_CALL_OPTIONS);
+      const raw = response.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
+      const parsed = parseWords(raw, slides.length);
+      if (!parsed) {
+        let receivedSlides: number | null = null;
+        try {
+          const body = JSON.parse(raw) as { words?: unknown };
+          if (Array.isArray(body?.words)) receivedSlides = body.words.length;
+        } catch { /* Shape diagnostics only; never log model prose. */ }
+        console.warn("[reference-deck-words-parse]", {
+          requestId: input.requestId ?? null, edition: input.edition,
+          expectedSlides: slides.length, receivedSlides,
+          stopReason: response.stop_reason ?? null, textLength: raw.length,
+        });
+      }
+      return { start, slides, denied: false, parsed };
+    }));
+    if (initialResults.every((result) => result.status === "rejected")) return failure("model_error");
+    const initial = initialResults.map((result, index) => result.status === "fulfilled" ? result.value
+      : { ...initialChunks[index]!, denied: false, parsed: null });
+    if (!batched && initial[0]?.denied) return failure("preflight_denied");
+    const deniedSlides = new Set(initial.flatMap((batch) => batch.denied
+      ? batch.slides.map((_, index) => batch.start + index + 1) : []));
+    const candidates: Array<EditionWords | null> = input.archetypes.map(() => null);
+    initial.forEach(({ start, parsed }) => parsed?.forEach((entry, index) => { candidates[start + index] = entry; }));
+    if (candidates.some((entry) => entry === null)) {
+      const chunks = batched ? initial.filter((batch) => !batch.parsed && !batch.denied).map(({ start, slides }) => ({ start, slides }))
+        : Array.from({ length: Math.ceil(input.archetypes.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) => {
         const start = chunk * PARSE_RECOVERY_CHUNK_SIZE;
         return { start, slides: promptSlides.slice(start, start + PARSE_RECOVERY_CHUNK_SIZE) };
       });
@@ -243,10 +267,10 @@ export async function draftEditionWords(input: {
         });
         if (!recoveryPreflight.ok) return null;
         const recoveryResponse = await recoveryPreflight.client.messages.create({
-          model, max_tokens: 6000, temperature: 0, system: recoverySystem,
+          model, max_tokens: 2400, temperature: 0, system: recoverySystem,
           output_config: WORDS_OUTPUT_CONFIG,
           messages: [{ role: "user", content: recoveryUser }],
-        });
+        }, MODEL_CALL_OPTIONS);
         const recoveryRaw = recoveryResponse.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
         return parseWords(recoveryRaw, slides.length);
       }));
@@ -298,10 +322,10 @@ export async function draftEditionWords(input: {
         });
         if (repairPreflight.ok) {
           const repairResponse = await repairPreflight.client.messages.create({
-            model, max_tokens: 6000, temperature: 0, system: repairSystem,
+            model, max_tokens: 2400, temperature: 0, system: repairSystem,
             output_config: WORDS_OUTPUT_CONFIG,
             messages: [{ role: "user", content: repairUser }],
-          });
+          }, MODEL_CALL_OPTIONS);
           const repairRaw = repairResponse.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
           return parseWords(repairRaw, chunk.length);
         }
@@ -328,9 +352,11 @@ export async function draftEditionWords(input: {
     fallbackSlides.sort((a, b) => a - b);
     const firstParseFailure = parseFailedSlides[0];
     const firstSlide = fallbackSlides[0];
+    const reason = deniedSlides.has(firstSlide) ? "preflight_denied"
+      : firstParseFailure === firstSlide ? "parse_failed" : "slide_rejected";
     return fallbackSlides.length
-      ? { status: "unavailable", reason: firstParseFailure === firstSlide ? "parse_failed" : "slide_rejected",
-        ...(firstParseFailure === firstSlide ? {} : { rule: firstRule }), slide: firstSlide, words, fallbackSlides }
+      ? { status: "unavailable", reason,
+        ...(reason === "slide_rejected" ? { rule: firstRule } : {}), slide: firstSlide, words, fallbackSlides }
       : { status: "ok", words, fallbackSlides: [] };
   } catch {
     return failure("model_error");
