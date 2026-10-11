@@ -45,21 +45,29 @@ Neither path can create a figure or bypass source lineage.
   safe response-shape diagnostics by preview request ID, never log model
   prose. Retain fallbacks and
   their reason codes when a batch is denied, malformed, or still invalid.
+- Classify rendered source refusals with a safe subtype while keeping the
+  refusal in place. The signed-in walk records each failed format, continues
+  through both editions and workbooks, uploads the diagnostic proof, and fails
+  at the end if any fetch failed.
 
 ## QA / Validation
 
 - **Pass** — Twelve focused word-guard tests cover prompt syntax, safe token
   normalization, fixed cover wording, audited repair, whole-response parse
   recovery, short batching and partial-batch fallbacks.
-- **Pass** — Five one-at-a-time mutations were killed: bypassing known-slot
-  normalization, fixed cover wording, targeted retry, parse recovery, and
-  the short-batch bound. Original code was restored and retested.
+- **Pass** — Six one-at-a-time mutations were killed: bypassing known-slot
+  normalization, fixed cover wording, targeted retry, parse recovery,
+  the short-batch bound, and a source-refusal subtype. Original code
+  was restored and retested.
 - **Pass** — TypeScript and changed-file ESLint.
-- **Pass** — Seven focused deck/route suites, 52 tests; library orphan audit,
+- **Pass** — Seven focused deck/route suites, 53 tests; library orphan audit,
   route/export reachability, unchanged test-coverage census, and all 11
   release gates.
 - **Pending** — Current-head CI and the deployed signed-in walk of both deck
   editions.
+- **Pass** — The read-only walk spec lists all five tests, including the deck
+  fetch, after the failure-collection change. The failure branch awaits the
+  next signed-in run.
 
 ## Rollout Plan
 
@@ -98,3 +106,7 @@ new response-shape log will distinguish those causes on a later run.
 - The current P3 record does not yet expose two persisted delivery options
   and an owner-selected option through the governed deck reader. A separate
   read contract is required for that delivery-slide comparison.
+- A later read-only baseline returned a rendered-source refusal on one
+  validation format. Its response identified the slide but not which source
+  invariant failed. This release keeps that refusal and adds a safe subtype
+  for the next walk; the exact cause remains unverified.

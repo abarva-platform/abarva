@@ -123,6 +123,17 @@ describe("read-only reference deck preview", () => {
     expect(await result.json()).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "off_canvas", slide: 1 }] });
   });
 
+  it("reports a source refusal subtype without revealing the source value", async () => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 80, findings: [{
+      kind: "reference_source", slide: 9, detailCode: "notes_source_missing", message: "synthetic private source value",
+    }] });
+    const result = await GET(request("pdf"), params());
+    expect(result.status).toBe(422);
+    const body = await result.json();
+    expect(body).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "reference_source", slide: 9, detailCode: "notes_source_missing" }] });
+    expect(JSON.stringify(body)).not.toContain("synthetic private source value");
+  });
+
   it("serves an in-memory PDF under the same preview contract", async () => {
     mockWords.mockResolvedValueOnce({ words: [{ title: "The governed read identifies the next decision.", answer: "Review the exhibit.", notes: "The point: review. How to read: source line." }], status: "unavailable", reason: "preflight_denied", fallbackSlides: [1] });
     const result = await GET(request("pdf"), params());

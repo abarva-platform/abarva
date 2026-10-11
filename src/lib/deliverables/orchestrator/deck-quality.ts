@@ -46,7 +46,7 @@ export type DeckFinding =
   | { kind: "empty_table"; slide: number; message: string }
   | { kind: "slide_count"; message: string }
   | { kind: "canvas"; message: string }
-  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "fallback_words"; slide: number; message: string };
+  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "fallback_words"; slide: number; message: string; detailCode?: string };
 
 export interface DeckVerdict {
   ok: boolean;
@@ -82,8 +82,8 @@ function judgeReferenceSlide(
   if (!expected) return;
   const names = slide.objectNames ?? [];
   const named = slide.namedText ?? {};
-  const add = (kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability", message: string) =>
-    findings.push({ kind, slide: slide.index, message });
+  const add = (kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability", message: string, detailCode?: string) =>
+    findings.push({ kind, slide: slide.index, message, ...(detailCode ? { detailCode } : {}) });
   if (slide.pictureCount > names.filter((name) => name.startsWith("ref:logo:picture")).length)
     add("reference_editability", `slide ${slide.index}: raster picture outside the logo is not editable.`);
   if (!slide.notesText?.includes("The point:"))
@@ -103,10 +103,10 @@ function judgeReferenceSlide(
   const figureValues = figuresOnSlide(expected).map((figure) => figure.display);
   const sourceLine = named["ref:source-line"] ?? "";
   if (figureValues.length && sourceLine !== referenceSourceLine(expected))
-    add("reference_source", `slide ${slide.index}: rendered source line does not match its governed source groups.`);
+    add("reference_source", `slide ${slide.index}: rendered source line does not match its governed source groups.`, "source_line_mismatch");
   for (const sourceId of expected.sourceIds ?? []) {
     if (!slide.notesText?.includes(sourceId))
-      add("reference_source", `slide ${slide.index}: rendered notes omit ${sourceId}.`);
+      add("reference_source", `slide ${slide.index}: rendered notes omit ${sourceId}.`, "notes_source_missing");
   }
   // `namedText` has one value per object name. Repeated KPI tiles share the
   // metric marker, so that map keeps only the last tile; inspect every text
@@ -114,7 +114,7 @@ function judgeReferenceSlide(
   const bodyText = slide.textRuns.join(" ");
   for (const value of figureValues) {
     if (!bodyText.includes(value))
-      add("reference_source", `slide ${slide.index}: bound figure is absent from the rendered slide.`);
+      add("reference_source", `slide ${slide.index}: bound figure is absent from the rendered slide.`, "bound_figure_missing");
   }
   for (const block of expected.blocks) {
     if (block.kind !== "table" || slide.tableCount > 0) continue;
