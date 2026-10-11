@@ -1,4 +1,5 @@
 import "server-only";
+import { join } from "node:path";
 import {
   Document,
   Page,
@@ -12,6 +13,7 @@ import {
   Polyline,
   Polygon,
   StyleSheet,
+  Font,
   type DocumentProps,
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
@@ -23,17 +25,30 @@ import {
 } from "@/lib/intelligence/answer/model-exhibit-layout";
 import { measureExecutiveAnswer } from "@/lib/intelligence/answer/model-authored-answer";
 
+const fontDirectory = join(process.cwd(), "public", "fonts", "dejavu");
+Font.register({
+  family: "IntelligenceSans",
+  fonts: [
+    { src: join(fontDirectory, "DejaVuSans.ttf"), fontWeight: 400 },
+    { src: join(fontDirectory, "DejaVuSans-Bold.ttf"), fontWeight: 700 },
+  ],
+});
+Font.register({
+  family: "IntelligenceMono",
+  src: join(fontDirectory, "DejaVuSansMono.ttf"),
+});
+
 const styles = StyleSheet.create({
   page: {
     padding: 36,
     paddingBottom: 48,
-    fontFamily: "Helvetica",
+    fontFamily: "IntelligenceSans",
     color: "#17281e",
     fontSize: 10,
   },
   eyebrow: { color: "#166534", fontSize: 8, marginBottom: 8 },
-  title: { fontSize: 22, fontFamily: "Helvetica-Bold", marginBottom: 14 },
-  heading: { fontSize: 13, fontFamily: "Helvetica-Bold", marginBottom: 10 },
+  title: { fontSize: 22, fontWeight: 700, marginBottom: 14 },
+  heading: { fontSize: 13, fontWeight: 700, marginBottom: 10 },
   prose: { fontSize: 10, lineHeight: 1.5, marginBottom: 10 },
   meta: { fontSize: 8, lineHeight: 1.5, color: "#57534e", marginBottom: 12 },
   card: {
@@ -45,7 +60,7 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#e7e5e4" },
   cell: { flex: 1, padding: 5, fontSize: 8, lineHeight: 1.4 },
-  bold: { fontFamily: "Helvetica-Bold" },
+  bold: { fontWeight: 700 },
   footer: {
     position: "absolute",
     bottom: 22,
@@ -54,7 +69,7 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: "#78716c",
   },
-  raw: { fontSize: 7, lineHeight: 1.4, fontFamily: "Courier" },
+  raw: { fontSize: 7, lineHeight: 1.4, fontFamily: "IntelligenceMono" },
 });
 
 /** Formatting only; no public-language cleaner or content fallback. */
