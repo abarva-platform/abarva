@@ -5157,8 +5157,7 @@
       "route": "src/app/api/v1/programs/[programId]/decks/[edition]/preview/route.ts",
       "fence": "direct",
       "fenceSymbols": [
-        "requireTenancy",
-        "tenancyErrorResponse"
+        "requireTenancy"
       ],
       "fenceVia": [],
       "reachesFenceModule": true,
@@ -5174,8 +5173,7 @@
       "route": "src/app/api/v1/programs/[programId]/decks/[edition]/workbook/route.ts",
       "fence": "direct",
       "fenceSymbols": [
-        "requireTenancy",
-        "tenancyErrorResponse"
+        "requireTenancy"
       ],
       "fenceVia": [],
       "reachesFenceModule": true,

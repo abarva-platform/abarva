@@ -1,6 +1,7 @@
 jest.mock("server-only", () => ({}));
 
 const mockRequireTenancy = jest.fn();
+const mockTenancyResponse = jest.fn();
 const mockFlag = jest.fn();
 const mockAssemble = jest.fn();
 const mockBuild = jest.fn();
@@ -8,7 +9,7 @@ const mockWorkbook = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => mockRequireTenancy(),
-  tenancyErrorResponse: () => Response.json({ error: "unauthorized" }, { status: 401 }),
+  tenancyErrorResponse: (...args: unknown[]) => mockTenancyResponse(...args),
 }));
 jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: (...args: unknown[]) => mockFlag(...args) }));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-inputs", () => ({
@@ -35,6 +36,7 @@ const params = (edition = "validation") => ({ params: Promise.resolve({ programI
 beforeEach(() => {
   jest.clearAllMocks();
   mockRequireTenancy.mockResolvedValue({ clientKey: "meridian", clientId: "synthetic-client" });
+  mockTenancyResponse.mockImplementation(() => Response.json({ error: "unauthorized" }, { status: 401 }));
   mockFlag.mockReturnValue(true);
   mockAssemble.mockResolvedValue({ edition: "validation" });
   mockBuild.mockReturnValue({ edition: "validation", figureLedger: [] });
@@ -42,6 +44,17 @@ beforeEach(() => {
 });
 
 describe("read-only reference workbook", () => {
+  it("keeps tenancy refusals and names unexpected auth failures", async () => {
+    mockRequireTenancy.mockRejectedValueOnce(new Error("unauthenticated"));
+    expect((await GET(request(), params())).status).toBe(401);
+    mockRequireTenancy.mockRejectedValueOnce(new Error("auth backend unavailable"));
+    mockTenancyResponse.mockImplementationOnce(() => { throw new Error("auth backend unavailable"); });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(500);
+    expect(await result.json()).toEqual(expect.objectContaining({ error: "workbook_auth_failed" }));
+    expect(mockAssemble).not.toHaveBeenCalled();
+  });
+
   it("refuses a disabled tenant before reading the Move", async () => {
     mockFlag.mockReturnValue(false);
     const result = await GET(request(), params());

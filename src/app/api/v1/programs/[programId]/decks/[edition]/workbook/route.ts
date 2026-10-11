@@ -10,6 +10,7 @@ import { unavailableEditionWords } from "@/lib/deliverables/orchestrator/referen
 import { buildReferenceWorkbook } from "@/lib/deliverables/orchestrator/reference-deck-workbook";
 import { ROM_WORKBOOK_CONTENT_TYPE } from "@/lib/pricing/moves-workflow/rom-workbook";
 import type { ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
+import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +25,11 @@ export async function GET(
   const edition = rawEdition === "validation" || rawEdition === "investment" ? rawEdition as ReferenceEdition : null;
   if (!edition) return Response.json({ error: "invalid_edition", detail: "Choose validation or investment." }, { status: 400 });
   let ctx: Awaited<ReturnType<typeof requireTenancy>>;
-  try { ctx = await requireTenancy(); } catch (error) { return tenancyErrorResponse(error); }
+  try { ctx = await requireTenancy(); } catch (error) {
+    return tenancyOrNamedErrorResponse(error, tenancyErrorResponse, {
+      code: "workbook_auth_failed", detail: "The workbook preview could not verify workspace access.",
+    });
+  }
   if (isFeatureEnabled({ clientKey: ctx.clientKey, clientId: ctx.clientId }, "moves_reference_deck_v1") !== true || ctx.clientKey !== "meridian") {
     return Response.json({ error: "preview_not_enabled", detail: "Reference-deck preview is not enabled for this workspace." }, { status: 404 });
   }

@@ -1,7 +1,6 @@
 import "server-only";
 
 import { policyForTier } from "@/lib/ai/document-generation-policy";
-import { buildValidatedAgentContextBundle } from "@/lib/governance/agent-context-bundle";
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress/anthropic-direct";
 import type { ReferenceArchetype, ReferenceEdition } from "./reference-deck-model";
 
@@ -14,6 +13,7 @@ export interface EditionWords {
 export type UseCasePromptType =
   | "strategic_transformation" | "workflow_automation" | "platform_modernization"
   | "ai_product_enablement" | "operational_optimization" | "unclassified";
+export type PhasePromptStage = "need_validation" | "design_review" | "delivery_review" | "unclassified";
 
 const DESIGN_LENS: Record<UseCasePromptType, string> = {
   strategic_transformation: "Emphasize sponsor decision rights, changed work, and the validation ask.",
@@ -62,13 +62,14 @@ export async function draftEditionWords(input: {
   edition: ReferenceEdition;
   archetypes: ReferenceArchetype[];
   useCaseType: UseCasePromptType;
+  phaseStage: PhasePromptStage;
   available: { valueCase: boolean; register: boolean; rom: boolean; publicSources: boolean; owners: boolean };
 }): Promise<EditionWords[]> {
   const unavailable = unavailableEditionWords(input.edition, input.archetypes);
-  const bundle = buildValidatedAgentContextBundle([], { requireAgentReady: true });
-  if (bundle.usable.length !== 0) return unavailable;
-  const system = "Write slide language for an editable business-case deck. Return only a JSON array. Each object has exactly title, answer, notes. Use the supplied use-case lens and read-availability map to emphasize the right kind of review. Do not state or imply any client fact, figure, date, quantity, source, cost, solution, owner, or outcome. Do not use digits. Each title is one sentence of at least five words. Each notes value begins 'The point:' and contains 'How to read:'. The language must remain neutral because governed exhibits are added separately.";
-  const user = JSON.stringify({ edition: input.edition, archetypes: input.archetypes, useCaseLens: DESIGN_LENS[input.useCaseType], available: input.available });
+  // The read projections have no agent-ready retrieval and cite-render proof.
+  // Send only use-case and availability controls until a governed bundle exists.
+  const system = "Write slide language for an editable business-case deck. Return only a JSON array. Each object has exactly title, answer, notes. Use the supplied design profile: edition, use-case lens, phase stage, and read-availability map. Emphasize the appropriate review without claiming a client fact. Do not state or imply any client fact, figure, date, quantity, source, cost, solution, owner, or outcome. Do not use digits. Each title is one sentence of at least five words. Each notes value begins 'The point:' and contains 'How to read:'. The language must remain neutral because governed exhibits are added separately.";
+  const user = JSON.stringify({ profile: { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType], phaseStage: input.phaseStage, available: input.available }, archetypes: input.archetypes });
   try {
     const model = policyForTier("tier2_working_draft").model;
     const preflight = await preflightAnthropicDirectClient({

@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate — demo-only read-only preview; draft PR, no live proof`
+`candidate — demo-only read-only preview; no live proof`
 
 ## Plain-English Summary
 
@@ -20,8 +20,9 @@ path remains active.
 
 The PowerPoint exhibits are editable shapes and text. PDF and workbook companions
 are rendered from the same edition specification in each request. Claude drafts
-only neutral titles, answer bars, and notes through audited egress; its prompt
-varies by the Move's use-case category and read availability. No raw capture,
+only neutral titles, answer bars, and notes through audited egress; its design
+profile varies by edition, the Move's use-case category and phase stage, and
+read availability. No raw capture,
 register, ROM, or public-source text goes into that prompt. If egress fails,
 those words are marked `draft words unavailable`.
 
@@ -55,7 +56,8 @@ and the companion workbook.
 - Figure checks against an explicit governed ledger entry and workbook cell.
 - Additive three-year value bases in the value engine.
 - Signed-in in-memory PPTX/PDF preview, demo-only feature flag, and a dynamic
-  prompt lens selected from the canonical Move archetype and source readiness.
+  prompt lens selected from the canonical Move archetype, phase stage, edition,
+  and source readiness.
 - Phase readback includes the accepted P3 owner record and P1/P2 captured
   wording. The approved ROM's unit-hour drivers are used when available.
 - A prominent gap component replaces repeated blank ROM cells when the
@@ -86,15 +88,30 @@ and the companion workbook.
   an approved ROM, so its release and ROM-hour exhibits remain incomplete.
 - **Pass** — The in-memory PDF renderer was exercised with the same synthetic
   edition specifications; the files open at 11 and 22 landscape pages.
-- **Pending** — Full candidate gates and the signed-in walk after a compatible
-  preview environment or approved main-deploy proof lane is available.
+- **Pass** — The two new deck routes answer both tenancy refusals and unexpected
+  authentication failures with named JSON errors. The catch-site ratchet remains
+  at its previous ceiling.
+- **Pass** — A synthetic-only Anthropic pptx Skill lab generated the validation
+  edition. Both decks scored 100 on the same mechanical editability, notes,
+  source-line, answer-bar and bounds checks. Visual review found that the Skill
+  version crowds the title and footer on its dense value slide; the component
+  version preserves space for both. This score does not measure visual fit.
+- **Pass** — The same lab generated the 22-slide investment edition. Its
+  component deck scored 100 on the neutral structural rubric and 90 on the
+  product fidelity rubric because the fixture has no approved ROM. The Skill
+  deck scored 40 on the neutral rubric: answer-area objects extend below the
+  slide on 20 content slides. Visual review confirmed a clipped answer area
+  on the three-year value slide. These are synthetic-only comparisons, not
+  live Move scores.
+- **Pending** — The signed-in walk after the repository-owned main deploy.
 
 ## Rollout Plan
 
-Keep the PR draft until both editions render from the signed-in synthetic Move
-and the walk uploads both PPTX and PDF companions with scores. Shared runtime
-rollout remains with the repository-owned ACA main deploy workflow; the preview
-route does not shift traffic or persist deck artifacts.
+Merge behind the demo-only feature flag once CI is green and the Moves
+coverage-count collision check is clear. The repository-owned ACA main deploy
+workflow owns rollout. After deployment, the signed-in walk must upload both
+PPTX and PDF editions with scores. The preview route does not shift traffic or
+persist deck artifacts.
 
 ## Deployment Authority
 
@@ -115,17 +132,20 @@ visual review. No private reference file or client content is included.
 
 ## Known Gaps
 
-- Live signed-in rendering has not run. The walk currently targets deployed
-  `main`, so it cannot prove a still-draft branch against production without an
-  isolated preview deployment lane.
+- Live signed-in rendering has not run. The deck scores above come from a
+  synthetic fixture; they do not prove the deployed route or current Move data.
 - The companion workbook binds each slide figure to a cell on `Deck Figures`.
   The approved ROM workbook requires a current formula recomputation matching
   its approved snapshot; the live parity check is pending signed-in proof.
 - The assumptions-register fields for decisive rows and confirming data need
   a separately reviewed migration and UI change; no migration is in this PR.
 - The board-grade costed-case path is still active; its sunset remains open.
-- The offline Anthropic Skill comparison has not run. No client data was sent
-  to the Skill. Only the standard audited words call is in the preview path.
-- No Move corpus item was asserted to be `agent_ready` for model context. The
-  prompt therefore uses only canonical use-case type and read-state controls;
-  context-specific factual prose awaits a governed model-visible bundle.
+- The synthetic-only Anthropic Skill comparison is a lab script outside the
+  product path. No client data was sent to the Skill. Only the standard audited
+  words call is in the preview path.
+- The Move, value-case, register, capture, ROM, and public-source readers do
+  not return the `agent_ready`, retrieval, and cite-render evidence needed to
+  assemble a model-visible context bundle. The prompt therefore uses only
+  canonical use-case type and read-state controls. Context-specific factual
+  prose awaits a governed bundle; no readiness is inferred from a successful
+  product read.

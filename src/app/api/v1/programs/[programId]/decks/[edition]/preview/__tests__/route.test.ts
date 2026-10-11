@@ -1,6 +1,7 @@
 jest.mock("server-only", () => ({}));
 
 const mockRequireTenancy = jest.fn();
+const mockTenancyResponse = jest.fn();
 const mockFlag = jest.fn();
 const mockAssemble = jest.fn();
 const mockWords = jest.fn();
@@ -11,7 +12,7 @@ const mockJudge = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => mockRequireTenancy(),
-  tenancyErrorResponse: () => Response.json({ error: "unauthorized" }, { status: 401 }),
+  tenancyErrorResponse: (...args: unknown[]) => mockTenancyResponse(...args),
 }));
 jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: (...args: unknown[]) => mockFlag(...args) }));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-inputs", () => ({
@@ -51,8 +52,9 @@ const request = (format = "pptx") => new NextRequest(`https://example.invalid/ap
 beforeEach(() => {
   jest.clearAllMocks();
   mockRequireTenancy.mockResolvedValue({ clientKey: "meridian", clientId: "synthetic-client", userId: "synthetic-user" });
+  mockTenancyResponse.mockImplementation(() => Response.json({ error: "unauthorized" }, { status: 401 }));
   mockFlag.mockReturnValue(true);
-  mockAssemble.mockResolvedValue({ move: { archetype: "workflow_automation" }, valueCase: { status: "gap" }, register: { status: "gap" }, rom: { status: "gap" }, citations: { status: "gap" }, capture: { 3: { status: "gap" } } });
+  mockAssemble.mockResolvedValue({ move: { archetype: "workflow_automation", currentPhase: 3 }, valueCase: { status: "gap" }, register: { status: "gap" }, rom: { status: "gap" }, citations: { status: "gap" }, capture: { 3: { status: "gap" } } });
   mockWords.mockResolvedValue([{ title: "The governed read identifies the next decision.", answer: "Review the exhibit.", notes: "The point: review. How to read: source line." }]);
   mockBuild.mockReturnValue({ edition: "validation", slides: [], figureLedger: [] });
   mockRender.mockResolvedValue(Buffer.from("PK synthetic preview"));
@@ -61,6 +63,17 @@ beforeEach(() => {
 });
 
 describe("read-only reference deck preview", () => {
+  it("keeps tenancy refusals and names unexpected auth failures", async () => {
+    mockRequireTenancy.mockRejectedValueOnce(new Error("unauthenticated"));
+    expect((await GET(request(), params())).status).toBe(401);
+    mockRequireTenancy.mockRejectedValueOnce(new Error("auth backend unavailable"));
+    mockTenancyResponse.mockImplementationOnce(() => { throw new Error("auth backend unavailable"); });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(500);
+    expect(await result.json()).toEqual(expect.objectContaining({ error: "preview_auth_failed" }));
+    expect(mockAssemble).not.toHaveBeenCalled();
+  });
+
   it("refuses the disabled or non-demo tenant before any Move read", async () => {
     mockFlag.mockReturnValue(false);
     const disabled = await GET(request(), params());
@@ -82,6 +95,7 @@ describe("read-only reference deck preview", () => {
     expect(mockAssemble).toHaveBeenCalledWith("synthetic-move", "validation");
     expect(mockWords).toHaveBeenCalledWith(expect.objectContaining({
       useCaseType: "workflow_automation",
+      phaseStage: "design_review",
       available: expect.objectContaining({ rom: false, valueCase: false }),
     }));
     expect(Buffer.from(await result.arrayBuffer()).toString()).toBe("PK synthetic preview");

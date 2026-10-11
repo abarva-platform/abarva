@@ -6,12 +6,13 @@ import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { assembleEditionInputs, ReferenceMoveUnavailable } from "@/lib/deliverables/orchestrator/reference-deck-inputs";
 import { VALIDATION_SEQUENCE, INVESTMENT_SEQUENCE, buildReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-edition";
-import { draftEditionWords, type UseCasePromptType } from "@/lib/deliverables/orchestrator/reference-deck-words";
+import { draftEditionWords, type PhasePromptStage, type UseCasePromptType } from "@/lib/deliverables/orchestrator/reference-deck-words";
 import { validateReferenceDeck, type ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
 import { renderReferenceDeck } from "@/lib/deliverables/orchestrator/reference-deck-renderer";
 import { inspectDeck } from "@/lib/deliverables/orchestrator/deck-inspection";
 import { judgeRenderedDeck } from "@/lib/deliverables/orchestrator/deck-quality";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
+import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,7 +35,11 @@ export async function GET(
     return Response.json({ error: "invalid_preview_request", detail: "Choose validation or investment and format=pptx or pdf." }, { status: 400, headers: previewHeaders() });
   }
   let ctx: Awaited<ReturnType<typeof requireTenancy>>;
-  try { ctx = await requireTenancy(); } catch (error) { return tenancyErrorResponse(error); }
+  try { ctx = await requireTenancy(); } catch (error) {
+    return tenancyOrNamedErrorResponse(error, tenancyErrorResponse, {
+      code: "preview_auth_failed", detail: "The preview could not verify workspace access.",
+    });
+  }
   if (isFeatureEnabled({ clientKey: ctx.clientKey, clientId: ctx.clientId }, "moves_reference_deck_v1") !== true || ctx.clientKey !== "meridian") {
     return Response.json({ error: "preview_not_enabled", detail: "Reference-deck preview is not enabled for this workspace." }, { status: 404, headers: previewHeaders() });
   }
@@ -44,9 +49,13 @@ export async function GET(
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
     const ownerReadback = inputs.capture[3].status === "ready"
       ? parseOperatingAdoption(inputs.capture[3].value.operating_adoption) : null;
+    const phaseStage: PhasePromptStage = inputs.move.currentPhase == null ? "unclassified"
+      : inputs.move.currentPhase <= 2 ? "need_validation"
+        : inputs.move.currentPhase === 3 ? "design_review" : "delivery_review";
     const words = await draftEditionWords({
       tenantId: ctx.clientKey, userId: ctx.userId, edition, archetypes: sequence,
       useCaseType: (inputs.move.archetype ?? "unclassified") as UseCasePromptType,
+      phaseStage,
       available: {
         valueCase: inputs.valueCase.status === "ready" && inputs.valueCase.value.figuresRedacted !== true,
         register: inputs.register.status === "ready" && !inputs.register.value.figuresRedacted,
