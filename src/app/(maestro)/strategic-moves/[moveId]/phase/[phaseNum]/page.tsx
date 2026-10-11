@@ -447,6 +447,21 @@ export default async function StrategicMovePhaseWorkspacePage({
     notFound();
   }
 
+  const dataTenancyPromise = timed("dataTenancy", requireTenancy).catch(
+    () => null,
+  );
+  const readTenancy = async () => {
+    const value = await dataTenancyPromise;
+    if (!value) throw new Error("Move data tenancy unavailable");
+    return value;
+  };
+  const captureModulesPromise = timed("stepRecords", () =>
+    getModuleState(ctx, moveId).then(
+      (modules) => ({ modules, unavailable: false }),
+      () => ({ modules: [], unavailable: true }),
+    ),
+  );
+
   const [loadedMove, approvalPolicy] = await Promise.all([
     timed("move", () => getStrategicMoveById(ctx, moveId)),
     timed("accessPolicy", () =>
@@ -620,22 +635,8 @@ export default async function StrategicMovePhaseWorkspacePage({
     earlyTarget: earlyStepTarget,
   });
   if (earlyStepTarget && !deferCatchUpLanding) redirect(earlyStepTarget);
-  const dataTenancyPromise = timed("dataTenancy", requireTenancy).catch(
-    () => null,
-  );
-  const readTenancy = async () => {
-    const value = await dataTenancyPromise;
-    if (!value) throw new Error("Move data tenancy unavailable");
-    return value;
-  };
   const gateCriteriaPromise = timed("gateCriteria", () =>
     gateCriteriaForViewedPhase(ctx, effectiveMove, parsedPhase),
-  );
-  const captureModulesPromise = timed("stepRecords", () =>
-    getModuleState(ctx, moveId).then(
-      (modules) => ({ modules, unavailable: false }),
-      () => ({ modules: [], unavailable: true }),
-    ),
   );
   const p2GateSnapshotsPromise = timed("catchUpGate", () =>
     catchUpEnabled && (effectiveMove.currentPhase ?? 0) > 2

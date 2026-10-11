@@ -28,7 +28,7 @@ Moves step pages waited for several independent server reads in sequence before 
 
 ## Changes Included
 
-- The phase route begins independent gate, step-record, evidence, artifact, and register reads together and records server timings on flagged step views.
+- The phase route begins tenancy and step-record reads alongside the Move projection, then begins independent gate, evidence, artifact, and register reads together. It records server timings on flagged step views.
 - Effective phase resolution evaluates independent earlier-phase gates concurrently and still returns to the earliest blocked or unreadable gate.
 - The charter bridge accepts a previously read register result and makes the final rows available to the page, preserving an explicit unavailable state after a failed read.
 - The P2 step page uses the server register projection when present. The gate page uses the server sign-off projection and shows an explicit unavailable state if document or sign-off reads fail.
