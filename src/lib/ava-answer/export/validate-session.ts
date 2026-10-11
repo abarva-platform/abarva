@@ -152,6 +152,8 @@ export function validateSession(raw: AvaChatSessionExport): {
                 ? String(raw.qualityReview.finishedAt)
                 : undefined,
               plannedQuestions: 10,
+              includeOriginalResponses:
+                raw.qualityReview.includeOriginalResponses === true,
               completedQuestions: turns.filter(
                 (t) =>
                   t.role === "agent" &&

@@ -24,7 +24,7 @@ const tableSchema = z
     (t) => t.rows.every((r) => t.columns.every((c) => c.key in r)),
     "Missing table cell",
   );
-const chartSchema = z
+const numericChartSchema = z
   .object({
     ...common,
     kind: z.enum(["bar", "horizontal-bar", "line"]),
@@ -43,6 +43,28 @@ const chartSchema = z
       ),
     "Invalid chart axis values",
   );
+const matrixChartSchema = z
+  .object({
+    ...common,
+    kind: z.literal("quadrant-matrix"),
+    xKey: z.string().min(1),
+    yKey: z.string().min(1),
+    subtitle: z.string().min(1),
+    sourceNote: z.string().optional(),
+    data: z.array(z.record(z.string(), cell)).min(2).max(8),
+  })
+  .strict()
+  .refine(
+    (c) =>
+      c.data.every(
+        (r) =>
+          typeof r.label === "string" &&
+          ["low", "high"].includes(String(r[c.xKey])) &&
+          ["low", "high"].includes(String(r[c.yKey])),
+      ),
+    "Matrix needs authored labels and qualitative low/high categories",
+  );
+const chartSchema = z.union([numericChartSchema, matrixChartSchema]);
 const graphSchema = z
   .object({
     ...common,
@@ -72,18 +94,23 @@ const graphSchema = z
     );
   }, "Invalid graph endpoints");
 const followupSchema = z.array(z.string().min(1)).length(3);
+const sourceIdsSchema = z.array(z.string().regex(/^S[1-9]\d*$/)).min(1);
 
 /** Decode explicit transport blocks only. Invalid blocks stay verbatim in prose. */
 export function decodeModelAuthoredAnswer(rawText: string) {
   const artifacts: AvaArtifact[] = [];
   const followups: string[] = [];
+  const sourceIds: string[] = [];
   const protocolIssues: string[] = [];
   const prose = rawText.replace(
-    /^```(table|chart|graph|followups)[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
+    /^```(table|chart|graph|sources|followups)[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
     (block, kind: string, payload: string) => {
       try {
         const value: unknown = JSON.parse(payload);
-        if (kind === "followups") {
+        if (kind === "sources") {
+          if (sourceIds.length) throw new Error("Duplicate sources block");
+          sourceIds.push(...sourceIdsSchema.parse(value));
+        } else if (kind === "followups") {
           if (followups.length) throw new Error("Duplicate follow-up block");
           followups.push(...followupSchema.parse(value));
         } else {
@@ -107,7 +134,7 @@ export function decodeModelAuthoredAnswer(rawText: string) {
       }
     },
   );
-  return { prose, artifacts, followups, protocolIssues };
+  return { prose, artifacts, followups, sourceIds, protocolIssues };
 }
 
 export function modelAuthoredAnswerPacket(
@@ -117,9 +144,10 @@ export function modelAuthoredAnswerPacket(
   sources: AskSource[],
 ): AvaAnswerPacket {
   const decoded = decodeModelAuthoredAnswer(rawText);
-  const referenced = new Set(
-    decoded.artifacts.flatMap((a) => a.citationIds ?? []),
-  );
+  const referenced = new Set([
+    ...decoded.sourceIds,
+    ...decoded.artifacts.flatMap((a) => a.citationIds ?? []),
+  ]);
   for (const [i] of sources.entries()) {
     if (decoded.prose.includes(`[S${i + 1}]`)) referenced.add(`S${i + 1}`);
   }
@@ -184,17 +212,18 @@ export function measureExecutiveAnswer(prose: string) {
     .split(/\n\s*\n/)
     .filter(Boolean);
   const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
-  const opening = paragraphs
-    .map((paragraph) =>
-      paragraph.replace(/^ {0,3}#{1,6}[\t ]+[^\n]*(?:\n|$)/gm, "").trim(),
-    )
-    .find(Boolean) ?? "";
+  const opening =
+    paragraphs
+      .map((paragraph) =>
+        paragraph.replace(/^ {0,3}#{1,6}[\t ]+[^\n]*(?:\n|$)/gm, "").trim(),
+      )
+      .find(Boolean) ?? "";
   const openingWords = words(opening);
   return {
     openingWords,
     proseWords: words(prose),
     paragraphs: paragraphs.length,
-    openingWithinTarget: openingWords > 0 && openingWords <= 40,
+    openingWithinTarget: openingWords > 0 && openingWords <= 35,
   };
 }
 

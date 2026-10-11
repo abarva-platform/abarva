@@ -18,10 +18,10 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2993,
+    "testFiles": 2995,
     "coveredTestFiles": 2828,
     "pullRequestCoveredTestFiles": 2828,
-    "uncoveredTestFiles": 165,
+    "uncoveredTestFiles": 167,
     "directoriesWithTests": 525,
     "directoriesFullyCovered": 455,
     "directoriesPartiallyCovered": 27,
@@ -29,14 +29,14 @@
     "directoriesWithUnrunTestFiles": 70,
     "directoriesWithUntriagedUnrunTestFiles": 59,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 113,
+    "untriagedUnrunTestFiles": 115,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 1,
     "unclassifiedRiskDirectories": 58,
-    "rankedDirectories": 1,
-    "rankedUntriagedUnrunTestFiles": 20,
+    "rankedDirectories": 2,
+    "rankedUntriagedUnrunTestFiles": 23,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 52,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
@@ -227,10 +227,10 @@
     },
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 25,
+      "testFiles": 26,
       "coveredTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 21,
       "via": [
         "command"
       ]
@@ -356,6 +356,16 @@
       ]
     },
     {
+      "directory": "src/components/agent-answer/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/lib/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 2,
@@ -391,16 +401,6 @@
       "coveredTestFiles": 2,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 2,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]
@@ -689,6 +689,31 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testPath": "src/lib/intelligence/ask/__tests__/executive-context.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": null,
+      "drawable": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/executive-reasoning.test.ts",
       "enumerated": true,
       "collected": false,
       "run": false,
@@ -1201,14 +1226,15 @@
   "governedRiskRanking": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 25,
-      "unrunTestFiles": 20,
+      "testFiles": 26,
+      "unrunTestFiles": 21,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 21,
       "verdictHeldUntriagedUnrunTestFiles": 19,
-      "drawableUnrunTestFiles": 1,
+      "drawableUnrunTestFiles": 2,
       "drawableTestPaths": [
-        "src/lib/intelligence/ask/__tests__/executive-context.test.ts"
+        "src/lib/intelligence/ask/__tests__/executive-context.test.ts",
+        "src/lib/intelligence/ask/__tests__/executive-reasoning.test.ts"
       ],
       "admittedBy": "governed_risk_signal",
       "governedRisk": {
@@ -1220,11 +1246,31 @@
         "productSourceCount": 29,
         "rank": 1
       }
+    },
+    {
+      "directory": "src/components/agent-answer/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "verdictHeldUntriagedUnrunTestFiles": 1,
+      "drawableUnrunTestFiles": 1,
+      "drawableTestPaths": [
+        "src/components/agent-answer/__tests__/ModelAuthoredExhibits.test.tsx"
+      ],
+      "admittedBy": "untriaged_unrun_work",
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4,
+        "rank": 2
+      }
     }
   ],
   "triageVerdicts": {
     "heldUntriagedUnrunTestFiles": 112,
-    "drawableUntriagedUnrunTestFiles": 1,
+    "drawableUntriagedUnrunTestFiles": 3,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 36,
       "real": 1,
@@ -2413,19 +2459,6 @@
       }
     },
     {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 2
-      }
-    },
-    {
       "directory": "src/lib/cxo-canvas/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -2677,6 +2710,19 @@
       }
     },
     {
+      "directory": "src/components/agent-answer/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 2,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 2,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 4
+      }
+    },
+    {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 2,
@@ -2731,6 +2777,19 @@
       }
     },
     {
+      "directory": "src/lib/programs/mobilization/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5
+      }
+    },
+    {
       "directory": "src/lib/source/contract-intelligence/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 2,
@@ -2742,20 +2801,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 5
-      }
-    },
-    {
-      "directory": "src/lib/programs/mobilization/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 5
+        "productSourceCount": 6
       }
     },
     {
@@ -2860,8 +2906,8 @@
   "governedRiskEvidence": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 25,
-      "unrunTestFiles": 20,
+      "testFiles": 26,
+      "unrunTestFiles": 21,
       "governedRisk": {
         "score": 10,
         "band": "high",

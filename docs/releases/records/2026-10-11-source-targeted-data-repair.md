@@ -19,6 +19,7 @@ This is a targeted repair, not a package reload or financial certification.
 
 ## Layer Impact
 
+- Release lane: `client-data-lane`.
 - Layer 1: unchanged input files, hashes and declared identities.
 - Layer 2: source adapter evidence remains unchanged.
 - Layer 3: exact-ID canonical measurement and calculation-state corrections.
@@ -26,7 +27,6 @@ This is a targeted repair, not a package reload or financial certification.
 
 ## Client Applicability
 
-- Release lane: `client-data-lane`.
 - All clients: no bulk or automatic change.
 - Specific clients: only the synthetic scope in private audit record
   `SOURCE-DATA-REPAIR-20261011`.

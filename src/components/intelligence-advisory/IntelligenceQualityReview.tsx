@@ -33,6 +33,8 @@ export function IntelligenceQualityReview({
   const [running, setRunning] = useState(false);
   const [current, setCurrent] = useState(0);
   const [exporting, setExporting] = useState(false);
+  const [includeOriginalResponses, setIncludeOriginalResponses] =
+    useState(false);
   const [error, setError] = useState("");
   const abort = useRef<AbortController | null>(null);
   useEffect(() => () => abort.current?.abort(), []);
@@ -51,7 +53,7 @@ export function IntelligenceQualityReview({
     const startedAt = new Date().toISOString();
     const turns: AvaChatSessionExportTurn[] = [];
     const base = {
-      title: "Intelligence — 10-question quality review",
+      title: `${viewModel.tenantName} — Intelligence quality review`,
       surface: "intelligence",
       tenantKey: viewModel.clientKey,
     };
@@ -182,7 +184,15 @@ export function IntelligenceQualityReview({
       const response = await fetch("/api/intelligence/ask/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session, format: "pdf" }),
+        body: JSON.stringify({
+          session: {
+            ...session,
+            qualityReview: session.qualityReview
+              ? { ...session.qualityReview, includeOriginalResponses }
+              : undefined,
+          },
+          format: "pdf",
+        }),
       });
       if (!response.ok)
         throw new Error(`PDF export failed (${response.status}).`);
@@ -244,6 +254,17 @@ export function IntelligenceQualityReview({
               : "Ready"}
         </span>
       </div>
+      <label className="mt-3 flex items-center gap-2 text-sm text-stone-600">
+        <input
+          type="checkbox"
+          checked={includeOriginalResponses}
+          onChange={(event) =>
+            setIncludeOriginalResponses(event.target.checked)
+          }
+          disabled={exporting}
+        />
+        Include original response appendix
+      </label>
       {error && (
         <p role="alert" className="mt-2 text-sm text-red-700">
           {error}

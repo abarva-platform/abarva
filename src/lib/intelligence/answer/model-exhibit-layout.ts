@@ -1,5 +1,24 @@
 import type { AnswerChart, AnswerGraph } from "@/lib/ava-answer/contract";
 
+/** Categorical placement only; no numeric priority scores are inferred. */
+export function matrixQuadrants(chart: AnswerChart) {
+  const rows = chart.data as Record<string, string | number | null>[];
+  return (
+    [
+      ["low", "high"],
+      ["high", "high"],
+      ["low", "low"],
+      ["high", "low"],
+    ] as const
+  ).map(([x, y]) => ({
+    x,
+    y,
+    rows: rows.filter(
+      (row) => row[chart.xKey!] === x && row[chart.yKey!] === y,
+    ),
+  }));
+}
+
 /** Geometry only: labels, values and relationships remain model-authored. */
 export function chartPlot(chart: AnswerChart) {
   const rows = Array.isArray(chart.data)

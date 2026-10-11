@@ -40,6 +40,67 @@ const chart = {
 const fence = (kind: string, value: unknown) =>
   `\`\`\`${kind}\n${JSON.stringify(value)}\n\`\`\``;
 
+it("preserves qualitative matrix categories without inventing numeric priority scores", () => {
+  const matrix = {
+    id: "bets",
+    kind: "quadrant-matrix",
+    title: "Investment tradeoffs",
+    subtitle: "Advisory judgment; validate before investment",
+    xKey: "Effort",
+    yKey: "Potential",
+    data: [
+      {
+        label: "Assist",
+        Effort: "low",
+        Potential: "high",
+        reason: "Needs economics",
+      },
+      {
+        label: "Platform",
+        Effort: "high",
+        Potential: "high",
+        reason: "Needs dependency proof",
+      },
+    ],
+  };
+  const raw = `Validate first.\n\n${fence("chart", matrix)}`;
+  const answer = modelAuthoredAnswerPacket(raw, "Compare the bets", "test", []);
+  expect(answer.artifacts).toEqual([{ ...matrix, artifact: "chart" }]);
+  expect(answer.modelAuthored?.rawText).toBe(raw);
+  expect(isIntactModelAuthoredPacket(answer)).toBe(true);
+  const invalid = fence("chart", {
+    ...matrix,
+    data: [{ label: "Assist", Effort: 40, Potential: 80 }, matrix.data[1]],
+  });
+  expect(decodeModelAuthoredAnswer(invalid)).toEqual({
+    prose: invalid,
+    artifacts: [],
+    followups: [],
+    sourceIds: [],
+    protocolIssues: ["Unrendered chart block; original content retained."],
+  });
+});
+
+it("decodes source metadata into readable provenance without inserting source codes into prose", () => {
+  const raw = `Validate first.\n\n${fence("sources", ["S2"])}\n\n${fence("followups", ["Which gate?", "What economics?", "Who owns it?"])}`;
+  const answer = modelAuthoredAnswerPacket(raw, "What matters?", "test", [
+    { id: "unused", type: "TENANT", name: "Other evidence", detail: "Unused" },
+    {
+      id: "operating-plan",
+      type: "TENANT",
+      name: "Reviewed operating plan",
+      detail: "Decision evidence",
+    },
+  ]);
+  expect(answer.prose).toBe("Validate first.\n\n\n\n");
+  expect(answer.prose).not.toContain("S2");
+  expect(answer.citations.map((c) => c.label)).toEqual([
+    "Reviewed operating plan",
+  ]);
+  expect(answer.modelAuthored?.rawText).toBe(raw);
+  expect(isIntactModelAuthoredPacket(answer)).toBe(true);
+});
+
 it("decodes only authored exhibits and retains prose whitespace and original payload", () => {
   const raw = `**Validate first.**  [S1]\n\nSecond paragraph.\n\n${fence("table", table)}\n\n${fence("chart", chart)}\n\n${fence("graph", graph)}\n\n${fence("followups", ["Which gate?", "What economics?", "Who owns it?"])}`;
   const result = modelAuthoredAnswerPacket(raw, "What should we do?", "test", [
@@ -102,9 +163,13 @@ it("measures the first prose paragraph after headings without changing the answe
     const packet = modelAuthoredAnswerPacket(raw, "What decision?", "test", []);
     expect(packet.directAnswer).toBe(raw);
     expect(measureExecutiveAnswer(packet.directAnswer).openingWords).toBe(55);
-    expect(measureExecutiveAnswer(packet.directAnswer).openingWithinTarget).toBe(false);
+    expect(
+      measureExecutiveAnswer(packet.directAnswer).openingWithinTarget,
+    ).toBe(false);
   }
-  expect(measureExecutiveAnswer("## Heading only").openingWithinTarget).toBe(false);
+  expect(measureExecutiveAnswer("## Heading only").openingWithinTarget).toBe(
+    false,
+  );
 });
 
 it("keeps a duplicate follow-up block visible rather than hiding additional authored questions", () => {
