@@ -85,17 +85,21 @@ export async function provisionDedicatedOperator(): Promise<DedicatedOperator> {
   const created = !user;
   if (!user) {
     const phone = process.env.MOVES_E2E_OPERATOR_PHONE?.trim();
-    if (!phone || !/^\+[1-9]\d{7,14}$/.test(phone)) {
-      throw new Error("dedicated_operator_controlled_phone_required");
+    if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) {
+      throw new Error("dedicated_operator_phone_invalid");
     }
-    user = await clerk.users.createUser({
+    // Clerk's per-user BAPI option supports this email-identified automated
+    // account without changing instance settings or inventing a phone number.
+    // The installed SDK forwards this option, though its type omits it.
+    const createParams = {
       emailAddress: [OPERATOR_EMAIL],
-      phoneNumber: [phone],
+      ...(phone ? { phoneNumber: [phone] } : { skipUserRequirement: true }),
       firstName: "AbarVa E2E Operator",
       lastName: "(automated)",
       skipPasswordRequirement: true,
       publicMetadata: operatorMetadata(approvalRef),
-    });
+    };
+    user = await clerk.users.createUser(createParams);
   }
   // Existing identities are verified, never silently re-granted or renamed.
   validateOperatorMetadata(user.publicMetadata);

@@ -51,6 +51,8 @@ Release lane: `experimental`.
 - ROM persistence, member delivery terms, comparison and selection guards.
 - P3 UI, server-resolved feature flag and generated product manual.
 - Dedicated operator authentication helper and 29-step browser review runner.
+  Email-identified creation uses Clerk's documented per-user BAPI option;
+  it does not change global sign-in settings or supply a synthetic phone.
 - Existing ROM model and component suites extended with selection checks.
 
 ## QA / Validation
@@ -65,8 +67,10 @@ Release lane: `experimental`.
   Generated manual and the genuine coverage census are current. Targeted lint
   passed after removing an unused runner import. These gates are rerun after
   main reconciliation and recorded for the pushed candidate.
-- Playwright discovery: one operator walk discovered. No live walk, operator
-  sign-in, data apply, gate approval or artifact acceptance is inferred.
+- Playwright discovery: one operator walk discovered. Dedicated operator
+  Clerk sign-in passed in a fresh browser with exact identity/profile and an
+  active session without pending tasks. This is identity proof only; no
+  Move walk, data apply, gate approval or artifact acceptance is inferred.
   Forward phase and step navigation uses visible controls; URL visits are
   separately recorded as persisted-page readbacks. Downloaded documents need
   an actual byte-bound review before sign-off.
@@ -111,8 +115,9 @@ artifact hashes. Credentials and private approvals never enter public evidence.
 
 ## Known Gaps
 
-The dedicated operator provisioning and scoped identity release are separate
-dependencies. The fresh Move, seed apply, approved selected estimate, completed
+The dedicated operator was created and its exact identity/profile was read
+back in a private Clerk-only job. The scoped product identity release remains
+a separate dependency; account creation alone is not signed-in product proof. The fresh Move, seed apply, approved selected estimate, completed
 29-step run, final read-only walk and output visual acceptance remain unproven.
 The reference-deck workstream owns the delivery comparison slide and K3 review;
 this candidate does not supply model-ready inputs or infer deck acceptance.
