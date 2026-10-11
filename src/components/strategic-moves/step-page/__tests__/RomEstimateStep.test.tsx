@@ -30,6 +30,8 @@ import {
   emptyRomEstimate,
   parseRomEstimate,
   serializeRomEstimate,
+  saveRomDeliveryOption,
+  setPod,
   type RomEstimate,
   type RomRegisterRow,
 } from "@/lib/programs/rom-estimate";
@@ -229,6 +231,7 @@ function settledRecord(): RomEstimate {
 /** A result shaped like the ROM service's for a posted structure. Its figures are fixtures. */
 function fakeRom(structure: unknown): RomResult {
   const lines = [24500, 9500, 8500].map((cents, index) => ({
+    member: { roleCode: ["ROL-DA", "ROL-DE", "ROL-AE"][index], levelCode: "LVL-08", locationCode: "LOC-NEAR", providerClassCode: "SI-T2", fte: 1 },
     rate: { hourlyRateCents: cents, ...(index === 2 ? {
       baseSource: "rate_band:ROL-AE-LVL-08 [Role Rate Card row RC-TEST]",
       location: { source: "location:LOC-NEAR [Geography row 1]" },
@@ -1221,4 +1224,29 @@ describe("RomEstimateStep", () => {
     );
     expect(last().releases?.acceptedBy).toBe("me");
   });
+});
+
+it("shows both current previews and persists a reasoned choice before estimate approval", async () => {
+  let initial = settledRecord();
+  initial = ok(saveRomDeliveryOption(initial, "A", "Onshore pod"));
+  initial = ok(setPod(initial, { ...initial.pod!, locationCode: "LOC-INDIA" }));
+  initial = ok(saveRomDeliveryOption(initial, "B", "Blended pod"));
+  mockFetch({ register: REGISTER_ANSWERED, preview: (_url, init) => {
+    const rom = fakeRom(JSON.parse(String(init?.body)));
+    const lines = rom.foundation!.priced.pod.memberLines;
+    for (const [index, line] of lines.entries()) {
+      line.rate.baseSource = `fixture-rate-${index}`;
+      line.rate.location = { ...line.rate.location, source: "fixture-location" };
+      line.rate.provider = { ...line.rate.provider, source: "fixture-provider" };
+    }
+    return { status: 200, body: { ok: true, writes: false, rom } };
+  } });
+  const { getByRole, getByLabelText } = render(<Harness initial={serializeRomEstimate(initial)} deliveryOptionsEnabled />);
+  await waitFor(() => expect(isDisabled(getByRole("button", { name: "Choose option B" }))).toBe(true));
+  fireEvent.change(getByLabelText("Why this delivery option"), { target: { value: "Reviewed delivery capacity and rate provenance support B." } });
+  await waitFor(() => expect(isDisabled(getByRole("button", { name: "Choose option B" }))).toBe(false));
+  fireEvent.click(getByRole("button", { name: "Choose option B" }));
+  expect(last().deliverySelection).toMatchObject({ code: "B", selectedBy: "me", reason: "Reviewed delivery capacity and rate provenance support B." });
+  expect(last().pod?.locationCode).toBe("LOC-INDIA");
+  expect(last().deliverySelection?.comparison).toHaveLength(2);
 });

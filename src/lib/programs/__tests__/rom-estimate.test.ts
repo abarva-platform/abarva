@@ -40,6 +40,9 @@ import {
   setCount,
   setFactors,
   setPod,
+  saveRomDeliveryOption,
+  selectRomDeliveryOption,
+  isRomDeliverySelectionCurrent,
   setUnitHoursRef,
   type RomEstimate,
   type RomRegisterRow,
@@ -1546,5 +1549,61 @@ describe("the capture-text dispatcher", () => {
     expect(captureValueGateText("rom_estimate", "about 400 hours")).toBe(
       "about 400 hours",
     );
+  });
+});
+
+describe("saved delivery option selection", () => {
+  function options() {
+    const { record, register } = settled();
+    const a = saveRomDeliveryOption(record, "A", "Onshore delivery");
+    if (!a.ok) throw new Error(a.reason);
+    const changed = setPod(a.value, { ...record.pod!, locationCode: "LOC-INDIA",
+      members: record.pod!.members?.map((m) => ({ ...m, locationCode: "LOC-INDIA", providerClassCode: "SI-T2" })) });
+    if (!changed.ok) throw new Error(changed.reason);
+    const b = saveRomDeliveryOption(changed.value, "B", "Blended delivery");
+    if (!b.ok) throw new Error(b.reason);
+    const previews = Object.fromEntries(b.value.deliveryOptions!.map((o) =>
+      [o.code, fakeRom({ ...b.value, pod: o.pod }, register)]));
+    return { record: b.value, register, previews };
+  }
+
+  it("retains member delivery terms through persistence and into foundation pricing", () => {
+    const { record, register } = options();
+    const persisted = parseRomEstimate(serializeRomEstimate(record))!;
+    expect(persisted).toEqual(record);
+    const build = buildRomStructure(persisted, register);
+    expect(build.ok && build.structure.pod.members?.[0]).toMatchObject({ locationCode: "LOC-INDIA", providerClassCode: "SI-T2" });
+    expect(persisted.useCases).toEqual(settled().record.useCases);
+    expect(persisted.unitHours).toEqual(settled().record.unitHours);
+  });
+
+  it("requires both current engine previews and an attributed selection reason", () => {
+    const { record, register, previews } = options();
+    expect(selectRomDeliveryOption(record, register, "B", "", "operator", AT, previews).ok).toBe(false);
+    expect(selectRomDeliveryOption(record, register, "B", "Delivery evidence", "operator", AT, { A: previews.A }).ok).toBe(false);
+    const stale = fakeRom({ ...record, friction: { value: 1.4, source: "Other inputs" } }, register);
+    expect(selectRomDeliveryOption(record, register, "B", "Delivery evidence", "operator", AT, { ...previews, B: stale }).ok).toBe(false);
+    const unequal = { ...previews.B, total: { ...previews.B.total, hours: previews.B.total.hours + 1 } };
+    expect(selectRomDeliveryOption(record, register, "B", "Delivery evidence", "operator", AT, { ...previews, B: unequal }).ok).toBe(false);
+  });
+
+  it("approves only the selected current snapshot and invalidates changes to either option or unit values", () => {
+    const { record, register, previews } = options();
+    expect(approveRomEstimate(record, register, previews.B, "operator", AT).ok).toBe(false);
+    const choice = selectRomDeliveryOption(record, register, "B", "Review supports the blended team", "operator", AT, previews);
+    if (!choice.ok) throw new Error(choice.reason);
+    expect(isRomDeliverySelectionCurrent(choice.value, register)).toBe(true);
+    const changedPrice = { ...previews.B, total: { ...previews.B.total, planCents: previews.B.total.planCents + 1 } };
+    expect(approveRomEstimate(choice.value, register, changedPrice, "operator", AT).ok).toBe(false);
+    const approved = approveRomEstimate(choice.value, register, previews.B, "operator", AT);
+    if (!approved.ok) throw new Error(approved.reason);
+    expect(approved.value.approval?.selectedDeliveryOptionCode).toBe("B");
+    expect(isRomApprovalCurrent(parseRomEstimate(serializeRomEstimate(approved.value))!, register)).toBe(true);
+    const edited = { ...approved.value, deliveryOptions: approved.value.deliveryOptions!.map((o) => o.code === "A" ? { ...o, pod: { ...o.pod, locationCode: "LOC-OTHER" } } : o) };
+    expect(isRomApprovalCurrent(edited, register)).toBe(false);
+    expect(approveRomEstimate(edited, register, previews.B, "operator", AT).ok).toBe(false);
+    const changedRegister = register.map((r) => r.registerId === "DL3" ? { ...r, answerValue: 21 } : r);
+    expect(isRomDeliverySelectionCurrent(approved.value, changedRegister)).toBe(false);
+    expect(isRomApprovalCurrent(approved.value, changedRegister)).toBe(false);
   });
 });

@@ -122,7 +122,8 @@ export type FeatureFlagKey =
   | "moves_value_engine_v1"
   | "moves_reference_deck_v1"
   | "moves_assumption_register_generation_v1"
-  | "moves_rom_engine_v1";
+  | "moves_rom_engine_v1"
+  | "moves_delivery_options_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -489,6 +490,12 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_rom_engine_v1",
     summary:
       "2026-10-10: Opens the read-only ROM preview route for a Move (POST /api/v1/programs/:programId/rom/preview). The caller posts a ROM structure - use cases with component counts, unit hours per driver with a source and a confidence, releases with a design status, one shared foundation, a pod and the friction and productive share with their sources - and the ROM engine prices it: hours are count x unit hours x friction, each release and the foundation buys whole weeks of the pod at rates from the cost foundation (role x level x location x provider class, with provenance), not-designed releases carry a 0.75 / 1.50 band and designed ones the existing score tiers, and the total counts the shared foundation once. Returns JSON, or a live-formula workbook with ?format=xlsx. Missing unit hours are refused, never defaulted; no AI productivity credit is applied; nothing is written. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_delivery_options_v1",
+    summary: "Saves two delivery pods against one shared bottom-up scope. Both options are priced through the cost foundation, including member-specific location and provider terms. Selection records the reviewer, date, reason and current engine comparison. A changed scope, register unit value, option or selection invalidates approval; only the selected current approved snapshot feeds P4 and governed deck readers. Enabled for the synthetic demo tenant only.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
