@@ -6,7 +6,6 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/design-fixture";
-import { formatUsdM } from "@/lib/tower/command-center/format";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
 import { TowerCommandCenter } from "../TowerCommandCenter";
@@ -111,8 +110,8 @@ describe("TowerCommandCenter", () => {
       "Where the money goes",
       "AI bets",
       "Tools",
-      "What must happen next",
       "Foundations",
+      "What must happen next",
     ]);
     expect(tab(TAB.verdict)).toHaveAttribute("aria-selected", "true");
   });
@@ -125,23 +124,19 @@ describe("TowerCommandCenter", () => {
       screen.getByText("The three rules behind every number on this page"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Asserted value, and what survives each gate"),
+      screen.getByText("Annual assertion on Finance-validated cases"),
     ).toBeInTheDocument();
   });
 
-  it("keeps the decision rail and the value-loss waterfall reachable", () => {
-    // The design puts decisions under their own tab rather than on the verdict. The content is
-    // unchanged; only its home moved, and it must stay reachable.
+  it("keeps the decision rail and period-scoped value evidence reachable", () => {
     renderPage();
     goTo(TAB.decisions, /Decisions for this review/);
-    expect(screen.getByText("Where the value is lost")).toBeInTheDocument();
-    expect(screen.getByText("The drop is the finding")).toBeInTheDocument();
+    expect(screen.getByText("Value by evidence state")).toBeInTheDocument();
+    expect(screen.getByText("Outcome evidence gap")).toBeInTheDocument();
     expect(
-      screen.getByText("Ceiling on any sign-off today"),
+      screen.getByText("Finance attestation gap"),
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(formatUsdM(view.summary.claimableUsd)).length,
-    ).toBeGreaterThan(0);
+    expect(document.body).toHaveTextContent("Board-claimable not loaded");
   });
 
   it("does not substitute promised benefit when approved investment is not loaded", () => {
@@ -193,7 +188,7 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Close usage-to-value gaps on 230 claims"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("$210.6M").length).toBeGreaterThan(0);
+    expect(container).toHaveTextContent("Approved IT project portfolio");
     expect(container).toHaveTextContent(/open evidence actions/);
   });
 
@@ -251,15 +246,15 @@ describe("TowerCommandCenter", () => {
     goTo(TAB.initiatives, /Value proof/);
     expect(screen.getAllByText("Value proof").length).toBeGreaterThan(0);
     expect(
-      screen.getByText("Investment to value conversion"),
+      screen.getByText("Portfolio amounts by measure"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("No substitution between states"),
+      screen.getByText("Investment, planning value and YTD validation have different bases"),
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Seven gates · in order"),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Eight-quarter trajectory")).toBeInTheDocument();
+    expect(screen.getByText("Loaded quarterly trajectory")).toBeInTheDocument();
     expect(screen.getByText("Claim ledger")).toBeInTheDocument();
     expect(screen.getByText("Value case lanes")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
@@ -290,7 +285,7 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("Cost findings · evidenced")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Risk lens/ }));
     expect(
-      screen.getByText("Top value evidence gaps by amount at stake"),
+      screen.getByText(/value evidence gaps by amount at stake/),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/ }));
     expect(
@@ -374,7 +369,7 @@ describe("TowerCommandCenter", () => {
     const { container } = renderPage();
     goTo(TAB.decisions, /Evidence queue/);
     expect(
-      screen.getByText("Three populations, three names"),
+      screen.getByText("Distinct review populations"),
     ).toBeInTheDocument();
     expect(screen.getByText("Action campaigns")).toBeInTheDocument();
     expect(container).toHaveTextContent(
@@ -386,7 +381,7 @@ describe("TowerCommandCenter", () => {
     expect(container).not.toHaveTextContent(/Vendor leverage review/);
     expect(screen.getAllByText("Next step").length).toBeGreaterThan(0);
     expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
-    expect(screen.getByText("Projection reconciliation")).toBeInTheDocument();
+    expect(screen.getByText("Projection population counts")).toBeInTheDocument();
   });
 
   it("renders evidence campaign due keys as short next-step labels", () => {
@@ -410,9 +405,15 @@ describe("TowerCommandCenter", () => {
     expect(document.body.textContent).not.toContain("measured_outcome");
   });
 
-  it("opens the AI initiative drawer from the all-cases table", () => {
-    renderPage();
-    goTo(TAB.initiatives, /All cases/);
+  it("opens the AI initiative drawer from the business-cases table", () => {
+    renderCustomView({
+      ...view,
+      allInitiatives: view.allInitiatives.map((item) => ({
+        ...item,
+        sourceFile: "22_ai_business_cases.csv",
+      })),
+    });
+    goTo(TAB.initiatives, /Business cases/);
     const firstAi = [...view.allInitiatives].sort(
       (a, b) => b.aiSpendUsd - a.aiSpendUsd || a.name.localeCompare(b.name),
     )[0]!;

@@ -6,16 +6,17 @@ const SOURCE = fs.readFileSync(
   "utf-8",
 );
 
-describe("trajectory plan variance label", () => {
-  it("labels the trajectory gap as unproven value, not outperformance", () => {
-    expect(SOURCE).toMatch(/<span>Not yet proven<\/span>/);
-    expect(SOURCE).not.toMatch(/<span>Over plan<\/span>/);
+describe("trajectory period and value boundaries", () => {
+  it("labels the number of loaded quarters instead of promising an eight-quarter trend", () => {
+    expect(SOURCE).toMatch(/Loaded quarterly trajectory/);
+    expect(SOURCE).toMatch(/view\.valueTrajectory\.length/);
+    expect(SOURCE).not.toMatch(/Eight-quarter trajectory/);
   });
 
-  it("calculates unproven value from claimable value, not recorded actuals", () => {
-    expect(SOURCE).toMatch(/view\.summary\.promisedUsd - view\.summary\.claimableUsd/);
-    expect(SOURCE).not.toMatch(/Math\.max\(0, s\.promisedUsd - actual\)/);
-    expect(SOURCE).not.toMatch(/Math\.abs\(s\.promisedUsd - actual\)/);
+  it("does not subtract a YTD claimable amount from an annual plan", () => {
+    expect(SOURCE).not.toMatch(/promisedUsd\s*-\s*claimableUsd/);
+    expect(SOURCE).not.toMatch(/<span>Not yet proven<\/span>/);
+    expect(SOURCE).toMatch(/Outcome-measured claims/);
   });
 
   it("does not substitute finance run-rate or cash for recorded P&L", () => {

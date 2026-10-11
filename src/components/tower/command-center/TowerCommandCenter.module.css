@@ -353,6 +353,12 @@
   font-variant-numeric: tabular-nums;
 }
 @media (max-width: 1180px) {
+  .executiveTabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .executiveTab { flex: 0 0 auto; text-overflow: clip; }
   .boardPosture,
   .cockpitCanvas,
   .cockpitOps { grid-template-columns: 1fr; }
@@ -1781,7 +1787,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   .campaignRow { grid-template-columns: 34px minmax(0, 1fr) repeat(3, minmax(74px, auto)); }
 }
 @media (max-width: 760px) {
-  .executiveTabs { grid-template-columns: 1fr; }
+  .executiveTabs { display: flex; }
   .executiveSummaryGrid,
   .executiveMetrics,
   .executiveFindings,
