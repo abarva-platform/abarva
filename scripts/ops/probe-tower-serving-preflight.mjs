@@ -43,6 +43,11 @@ export function migrationStatus(record, localHash) {
   return record.sha256 === localHash ? "match" : "hash_mismatch";
 }
 
+function sameGeneration(a, b) {
+  return a.tenant_key === b.tenant_key && a.assessment_id === b.assessment_id
+    && Number(a.projection_version) === Number(b.projection_version);
+}
+
 export function anonymize(rows) {
   const tenants = [...new Set(rows.map((r) => r.tenant_key))].sort();
   const tenantMap = new Map(tenants.map((key, index) => [key, `tenant_${index + 1}`]));
@@ -58,6 +63,7 @@ export function anonymize(rows) {
 export async function inspect(client, localHashes) {
   const lines = [];
   const gaps = [];
+  const warnings = [];
   const records = [];
   const ledgerPresent = (await client.query("select to_regclass('schema_migrations') is not null as present")).rows[0]?.present === true;
   const ledgerHasHash = ledgerPresent && (await client.query(
@@ -136,17 +142,34 @@ export async function inspect(client, localHashes) {
     const declared = lifecycle.filter((r) => r.tenant_key === tenant && r.state === "active");
     const retired = lifecycle.filter((r) => r.tenant_key === tenant && r.state === "retired");
     const resolved = keys.filter((r) => r.tenant_key === tenant);
-    const same = declared.length === 1 && resolved.length === 1
-      && declared[0].assessment_id === resolved[0].assessment_id
-      && Number(declared[0].projection_version) === Number(resolved[0].projection_version);
-    const status = same ? "match" : declared.length === 0 && resolved.length === 1 ? "fallback" : "mismatch";
+    const same = declared.length === 1 && resolved.length === 1 && sameGeneration(declared[0], resolved[0]);
+    const selectedRetired = resolved.length === 1 && retired.some((row) => sameGeneration(row, resolved[0]));
+    const status = same ? "match" : selectedRetired ? "retired_selected"
+      : declared.length === 0 && resolved.length === 1 ? "fallback" : "mismatch";
     const representative = resolved[0] ?? declared[0] ?? { tenant_key: tenant };
     lines.push(`ACTIVE\t${label(representative)}\tdeclared=${declared.length}\tretired=${retired.length}\tresolved=${resolved.length}\tstatus=${status}`);
-    if (status !== "match") gaps.push(`active_${status}`);
+    if (status === "fallback") warnings.push(`active_${status}`);
+    else if (status !== "match") gaps.push(`active_${status}`);
   }
   for (const r of ai.sort(groupSort)) lines.push(`AI_PHYSICAL\t${label(r)}\tpage=${safePage(r.page_key)}\trows=${r.rows}`);
-  for (const r of viewRows.sort(groupSort)) lines.push(`VIEW_ROWS\t${r.view}\t${label(r)}\trows=${r.rows}`);
-  return { lines, gaps };
+  for (const r of viewRows.sort(groupSort)) {
+    const resolved = keys.filter((key) => key.tenant_key === r.tenant_key);
+    const active = resolved.length === 1 && sameGeneration(r, resolved[0]);
+    lines.push(`VIEW_ROWS\t${r.view}\t${label(r)}\trows=${r.rows}\tactive=${active}`);
+    if (!active) gaps.push(`view_inactive_generation:${r.view}`);
+  }
+  for (const key of keys.sort(groupSort)) {
+    for (const [page, view] of [["ai_portfolio", "tower_ai_portfolio"], ["adoption_lens", "tower_adoption_lens"]]) {
+      const physical = ai.filter((row) => sameGeneration(row, key) && row.page_key === page)
+        .reduce((sum, row) => sum + Number(row.rows), 0);
+      const served = viewRows.filter((row) => row.view === view && sameGeneration(row, key))
+        .reduce((sum, row) => sum + Number(row.rows), 0);
+      const match = physical === served;
+      lines.push(`AI_PAGE_PARITY\t${label(key)}\tpage=${page}\tphysical=${physical}\tserving=${served}\tmatch=${match}`);
+      if (!match) gaps.push(`ai_page_mismatch:${page}`);
+    }
+  }
+  return { lines, gaps, warnings };
 }
 
 function groupSort(a, b) {
@@ -171,7 +194,7 @@ async function main() {
     const result = await inspect(client, localHashes);
     await client.query("COMMIT");
     for (const line of result.lines) console.log(line);
-    console.log(`PREFLIGHT_STATUS\t${result.gaps.length ? "BLOCKED" : "PASS"}\tgaps=${result.gaps.length}`);
+    console.log(`PREFLIGHT_STATUS\t${result.gaps.length ? "BLOCKED" : result.warnings.length ? "WARN" : "PASS"}\tgaps=${result.gaps.length}\twarnings=${result.warnings.length}`);
     if (result.gaps.length) process.exitCode = 1;
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});

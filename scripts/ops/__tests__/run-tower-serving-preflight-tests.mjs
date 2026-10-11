@@ -38,7 +38,8 @@ const labels = anonymize([
 assert.equal(labels({ tenant_key: "secret-client", assessment_id: "secret-assessment", projection_version: 2 }),
   "tenant_1\tassessment_1\tv2");
 
-function fakeClient({ omitPage = false, lifecycleState = "active", missingMigration = false } = {}) {
+function fakeClient({ omitPage = false, lifecycleState = "active", missingMigration = false,
+  staleView = null, aiServingCount = 42 } = {}) {
   const tenant_key = "secret-client";
   const assessment_id = "secret-assessment";
   const identity = { tenant_key, assessment_id, projection_version: 2 };
@@ -51,7 +52,9 @@ function fakeClient({ omitPage = false, lifecycleState = "active", missingMigrat
         proname, body: `${join} ${omitPage && proname === "tower_ai_rows" ? "" : pages[proname]}`,
       })) };
       if (sql.includes("to_regclass('ecl_projection.tower_assessment_lifecycle')")) return { rows: [{ present: true }] };
-      if (sql.includes("from ecl_projection.tower_assessment_lifecycle")) return { rows: [{ ...identity, state: lifecycleState }] };
+      if (sql.includes("from ecl_projection.tower_assessment_lifecycle")) return {
+        rows: lifecycleState ? [{ ...identity, state: lifecycleState }] : [],
+      };
       if (sql.includes("to_regprocedure('serving.tower_active_assessment_keys()')")) return { rows: [{ present: true }] };
       if (sql.includes("from serving.tower_active_assessment_keys()")) return { rows: [identity] };
       if (sql.includes("to_regclass('ecl_projection.tower_ai_portfolio')")) return { rows: [{ present: true }] };
@@ -62,7 +65,10 @@ function fakeClient({ omitPage = false, lifecycleState = "active", missingMigrat
       if (sql.includes("from pg_class c join pg_namespace n")) return { rows: VIEWS.map((relname) => ({ relname })) };
       if (sql.includes("from serving.")) {
         assert.ok(VIEWS.some((name) => sql.includes(`from serving.${name} `)), "only allowlisted views may be queried");
-        return { rows: [{ ...identity, rows: 4 }] };
+        const view = VIEWS.find((name) => sql.includes(`from serving.${name} `));
+        if (view === staleView) return { rows: [{ ...identity, assessment_id: "older-assessment", rows: 4 }] };
+        return { rows: [{ ...identity, rows: view === "tower_ai_portfolio" ? aiServingCount
+          : view === "tower_adoption_lens" ? 13 : 4 }] };
       }
       throw new Error(`Unexpected query: ${sql}`);
     },
@@ -77,11 +83,21 @@ assert.equal(report.lines.filter((line) => line.startsWith("FUNCTION\t")).length
 assert.equal(report.lines.filter((line) => line.startsWith("VIEW\t")).length, 9);
 assert.equal(report.lines.filter((line) => line.startsWith("VIEW_ROWS\t")).length, 9);
 assert.equal(report.lines.filter((line) => line.startsWith("AI_PHYSICAL\t")).length, 2);
+assert.equal(report.lines.filter((line) => line.startsWith("AI_PAGE_PARITY\t")).length, 2);
 assert.ok(report.lines.some((line) => line.includes("status=match")));
 assert.doesNotMatch(report.lines.join("\n"), /secret-client|secret-assessment/);
 assert.ok((await inspect(fakeClient({ omitPage: true }), hashes)).gaps.includes("function_predicate:tower_ai_rows"));
-assert.ok((await inspect(fakeClient({ lifecycleState: "retired" }), hashes)).gaps.includes("active_fallback"));
+const fallback = await inspect(fakeClient({ lifecycleState: "retired" }), hashes);
+assert.ok(fallback.gaps.includes("active_retired_selected"));
+const noDeclaration = await inspect(fakeClient({ lifecycleState: null }), hashes);
+assert.deepEqual(noDeclaration.gaps, []);
+assert.ok(noDeclaration.warnings.includes("active_fallback"));
 assert.ok((await inspect(fakeClient({ missingMigration: true }), hashes)).gaps.some((gap) => gap.startsWith("migration_missing:")));
+const stale = await inspect(fakeClient({ staleView: "tower_cost_lens" }), hashes);
+assert.ok(stale.gaps.includes("view_inactive_generation:tower_cost_lens"));
+assert.ok(stale.lines.some((line) => line.startsWith("VIEW_ROWS\ttower_cost_lens\t") && line.endsWith("active=false")));
+assert.doesNotMatch(stale.lines.join("\n"), /older-assessment/);
+assert.ok((await inspect(fakeClient({ aiServingCount: 41 }), hashes)).gaps.includes("ai_page_mismatch:ai_portfolio"));
 
 const source = readFileSync(path.resolve(here, "../probe-tower-serving-preflight.mjs"), "utf8");
 assert.match(source, /BEGIN READ ONLY/);

@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds one operator command that checks which Tower serving migrations are recorded, whether the four row functions enforce the active generation and page filters, and how many rows each Tower page can read. It reports gaps without changing data. Identifiers are replaced with labels so operator output does not expose client or assessment names.
+Adds one operator command that checks which Tower serving migrations are recorded, whether the four row functions enforce the active generation and page filters, and how many rows each Tower page can read. It blocks on rows from an inactive generation or a mismatch between active AI page rows and the matching serving view. A valid selector fallback is reported as a warning. It reports gaps without changing data. Identifiers are replaced with labels so operator output does not expose client or assessment names.
 
 ## Layer Impact
 
@@ -32,7 +32,7 @@ Release lane: `internal-admin`. Layer 4 operations only. The command reads the T
 
 ## QA / Validation
 
-- `npm run test:tower-serving-preflight`: passed with synthetic in-process database responses, including missing migration, omitted page filter, lifecycle fallback, nine views, and identifier redaction.
+- `npm run test:tower-serving-preflight`: passed with synthetic in-process database responses, including missing migration, omitted page filter, lifecycle fallback, inactive view rows, AI page count mismatch, nine views, and identifier redaction.
 - `node --check scripts/ops/probe-tower-serving-preflight.mjs`: passed.
 - No private database or Azure execution in this candidate.
 
