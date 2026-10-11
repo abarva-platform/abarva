@@ -21,8 +21,8 @@ function optimizationWriter() {
     compilerOptions: { target: ts.ScriptTarget.ES2022 },
   }).outputText;
   return vm.runInNewContext(
-    `${compiled}\n({ upsertOptimizationSpine, expectedLayer3, layer3Readback })`,
-    { createHash, SOURCE_SYSTEM: "source_contract_depth_package_loader" },
+    `${compiled}\n({ upsertOptimizationSpine, expectedLayer3, layer3Readback, readSourceFiles })`,
+    { createHash, fs, path, SOURCE_SYSTEM: "source_contract_depth_package_loader" },
   );
 }
 
@@ -210,7 +210,7 @@ describe("Source contract depth package loader", () => {
     expect(validation).toBeLessThan(main.indexOf("const result = await withClient("));
   });
 
-  it("resolves every performance fixture with this loader's source columns", () => {
+  it("requires a declared unit in every performance fixture, including the alternate schema", () => {
     const packages = path.resolve(__dirname, "../../../datasets/source/contract-depth");
     let checked = 0;
     for (const packageName of fs.readdirSync(packages)) {
@@ -221,18 +221,38 @@ describe("Source contract depth package loader", () => {
         skipEmptyLines: true,
       });
       expect(parsed.errors).toEqual([]);
-      if (!parsed.meta.fields?.includes("metric_name")) continue;
+      expect(parsed.meta.fields).toContain("unit");
       for (const row of parsed.data) {
+        expect(["%", "minutes", "hours", "count"]).toContain(row.unit);
         expect(() => performanceMeasureFromSource(
-          row.metric_name,
-          row.actual_result_pct,
-          row.committed_threshold_pct,
+          row.metric_name || row.sla_metric,
+          row.actual_result_pct || row.actual_pct,
+          row.committed_threshold_pct || row.target_pct,
           row.unit,
         )).not.toThrow();
         checked += 1;
       }
     }
     expect(checked).toBeGreaterThan(0);
+  });
+
+  it("normalizes alternate SLA columns without losing their explicit unit", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "source-unit-input-"));
+    const sourceDir = path.join(root, "source-files");
+    fs.mkdirSync(sourceDir);
+    try {
+      fs.writeFileSync(path.join(sourceDir, "sla_performance.csv"), Papa.unparse([
+        { tenant_key: "tenant-test", dataset_version: "version-test", contract_id: "contract-test", month: "2026-01", sla_metric: "platform_uptime", target_pct: "99.95", actual_pct: "99.98", unit: "%" },
+        { tenant_key: "tenant-test", dataset_version: "version-test", contract_id: "contract-test", month: "2026-01", sla_metric: "critical_incident_response_minutes", target_pct: "30", actual_pct: "35", unit: "minutes" },
+      ]));
+      const rows = optimizationWriter().readSourceFiles(root, "tenant-test", "version-test").slaPerformance;
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toMatchObject({ metric_name: "platform_uptime", committed_threshold_pct: "99.95", actual_result_pct: "99.98", unit: "%", period_start: "2026-01-01", period_end: "2026-01-31" });
+      expect(rows[1]).toMatchObject({ metric_name: "critical_incident_response_minutes", committed_threshold_pct: "30", actual_result_pct: "35", unit: "minutes" });
+      expect(performanceMeasureFromSource(rows[1].metric_name, rows[1].actual_result_pct, rows[1].committed_threshold_pct, rows[1].unit).actualText).toBe("35 min");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("preserves explicit performance and ticket periods before month fallback", () => {
