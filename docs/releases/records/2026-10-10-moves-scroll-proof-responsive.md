@@ -20,7 +20,7 @@ The signed-in read-only walk now recognizes that the same long work page can scr
 
 ## Client Applicability
 
-- No client runtime behavior changes.
+- Not applicable to client runtime behavior; this changes only the read-only walk.
 - The synthetic demo Move is the current signed-in walk target.
 
 ## Changes Included

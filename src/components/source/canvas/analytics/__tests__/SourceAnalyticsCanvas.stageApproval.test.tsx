@@ -33,6 +33,7 @@ import {
   SAMPLE_BAFO_STAGE,
   SAMPLE_PRICING_STAGE,
   SAMPLE_RFP_STAGE,
+  SAMPLE_RESPONSES_STAGE,
   SAMPLE_SCOPE_STAGE,
   SAMPLE_TRANSITION_STAGE,
 } from "../sample-view-model";
@@ -2205,7 +2206,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
 
     const readyPanel = screen.getByTestId("source-shell-stage-ready-panel");
-    expect(readyPanel).toHaveTextContent("Stage approval recorded");
+    expect(readyPanel).toHaveTextContent("Prior stage decision");
     expect(readyPanel).toHaveTextContent("Stage 08 handoff remains blocked");
     expect(readyPanel).toHaveTextContent("Resolve Stage 08 handoff blockers");
     expect(readyPanel).not.toHaveTextContent("No further approval required");
@@ -2316,7 +2317,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
 
     const readyPanel = screen.getByTestId("source-shell-stage-ready-panel");
-    expect(readyPanel).toHaveTextContent("Stage approved");
+    expect(readyPanel).toHaveTextContent("Prior stage decision");
     expect(readyPanel).toHaveTextContent(
       "advanced before stage-level approval tracking",
     );
@@ -2325,6 +2326,93 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(readyPanel).toHaveTextContent("Current controls");
     expect(readyPanel).not.toHaveTextContent("Open approval gate");
     expect(readyPanel).not.toHaveTextContent("accepted exception record");
+  });
+
+  it("separates a prior Responses decision from the current empty forward gate", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{ ...EVENT, currentStageKey: "value", currentStageLabel: "Value" }}
+        viewStage="responses"
+        tenantName="Demo Client"
+        stageView={SAMPLE_RESPONSES_STAGE}
+        approvalLedger={[
+          {
+            stageKey: "responses",
+            stageLabel: "Responses",
+            index: 5,
+            state: "approved",
+            approverName: "Recorded reviewer",
+            approvedAtIso: "2026-09-09T12:00:00.000Z",
+            authorizationNote: "Approved by Recorded reviewer.",
+            approverRationale: "Recorded stage decision.",
+          },
+        ]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    const panel = screen.getByTestId("source-shell-stage-ready-panel");
+    expect(panel).toHaveTextContent("Prior stage decision");
+    expect(panel).toHaveTextContent("Responses was approved earlier.");
+    expect(panel).toHaveTextContent("Recorded reviewer");
+    expect(panel).toHaveTextContent("Sep 9, 2026");
+    expect(panel).toHaveTextContent("Evaluation remains blocked: 6 forward gate checks are open.");
+    expect(panel).toHaveTextContent("Resolve current response gate checks");
+    expect(panel).not.toHaveTextContent("Stage approved");
+    expect(panel).not.toHaveTextContent("The stage decision is complete");
+    expect(panel).not.toHaveTextContent("No further approval required");
+    const commercialSummary = screen.getByTestId("source-commercial-active-lens");
+    expect(commercialSummary).toHaveTextContent("Resolve current response gate checks");
+    expect(commercialSummary).not.toHaveTextContent("Open the approval gate");
+    expect(screen.getByTestId("source-commercial-nav-readiness")).toHaveTextContent("block");
+    expect(screen.queryByTestId("source-shell-progress-dock")).not.toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-active-workflow-pane"))
+      .toHaveStyle({ paddingBottom: "0px" });
+    expect(
+      within(screen.getByTestId("source-vendor-response-forward-gate"))
+        .getByRole("button", { name: "Continue to Evaluation" }),
+    ).toBeDisabled();
+    fireEvent.click(within(panel).getByRole("button", { name: "View approval record" }));
+    expect(screen.getByTestId("source-shell-approval-ledger")).toBeInTheDocument();
+    expect(routerPush).toHaveBeenCalledWith(
+      "/source/events/evt-scope?stage=responses&workspace=approvals",
+    );
+  });
+
+  it("does not erase current required evidence gaps when an earlier stage is approved", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{ ...EVENT, currentStageKey: "rfp", currentStageLabel: "RFP" }}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={COMPLETE_SCOPE_STAGE}
+        artifacts={SCOPE_READY_ARTIFACTS}
+        approvalLedger={[
+          {
+            stageKey: "scope",
+            stageLabel: "Scope",
+            index: 3,
+            state: "approved",
+            approverName: null,
+            approvedAtIso: null,
+            authorizationNote: "Approved - approver not recorded for this stage.",
+            approverRationale: null,
+          },
+        ]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    const panel = screen.getByTestId("source-shell-stage-ready-panel");
+    expect(panel).toHaveTextContent("Prior stage decision");
+    expect(panel).toHaveTextContent("required evidence");
+    expect(panel).toHaveTextContent("Remediate current evidence gaps");
+    expect(panel).toHaveTextContent("stage-level approval tracking");
+    expect(panel).not.toHaveTextContent("No further approval required");
+    expect(panel).not.toHaveTextContent("No blockers");
+    expect(panel).not.toHaveTextContent("Recorded reviewer");
+    expect(screen.queryByTestId("source-shell-progress-dock")).not.toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "View approval record" })).toBeEnabled();
   });
 
   it("consolidates commercial lenses above the active workflow canvas", () => {

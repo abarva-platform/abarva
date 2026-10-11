@@ -128,7 +128,7 @@ strings cite `DL13`–`DL15`, and a future writer must verify equality.
   rolls back prior writes, successful work commits once, and uncertain
   commit or rollback outcomes are reported as unknown.
 - Pass: typecheck, scoped lint, `audit:lib-orphans`, route and export
-  reachability, the 2,831-file test coverage census, tenancy census,
+  reachability, the 2,833-file test coverage census, tenancy census,
   manual check, and all context/corpus validation modes.
 - Pass: dataset manifest validation.
 - Pass: both delivery options resolve from the committed cost foundation with
