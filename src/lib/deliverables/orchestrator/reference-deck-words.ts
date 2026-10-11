@@ -178,6 +178,7 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
 export async function draftEditionWords(input: {
   tenantId: string;
   userId: string;
+  requestId?: string;
   edition: ReferenceEdition;
   archetypes: ReferenceArchetype[];
   useCaseType: UseCasePromptType;
@@ -221,7 +222,8 @@ export async function draftEditionWords(input: {
         if (Array.isArray(body?.words)) receivedSlides = body.words.length;
       } catch { /* Shape diagnostics only; never log model prose. */ }
       console.warn("[reference-deck-words-parse]", {
-        edition: input.edition, expectedSlides: input.archetypes.length, receivedSlides,
+        requestId: input.requestId ?? null, edition: input.edition,
+        expectedSlides: input.archetypes.length, receivedSlides,
         stopReason: response.stop_reason ?? null, textLength: raw.length,
       });
       const chunks = Array.from({ length: Math.ceil(input.archetypes.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) => {

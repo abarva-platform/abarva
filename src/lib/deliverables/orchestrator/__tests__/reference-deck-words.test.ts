@@ -153,7 +153,7 @@ describe("reference-deck words", () => {
     mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
     const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
     try {
-      const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(7).fill("one_page") });
+      const result = await draftEditionWords({ ...input, requestId: "synthetic-request", edition: "investment", archetypes: Array(7).fill("one_page") });
       expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
       expect(create).toHaveBeenCalledTimes(3);
       expect(mockPreflight.mock.calls.slice(1).map((call) => call[0])).toEqual([
@@ -161,7 +161,8 @@ describe("reference-deck words", () => {
         expect.objectContaining({ workflow: "moves:reference-deck:preview:words:parse-recovery", metadata: expect.objectContaining({ slideStart: 7, slideCount: 1, persist: false }) }),
       ]);
       expect(warn).toHaveBeenCalledWith("[reference-deck-words-parse]", {
-        edition: "investment", expectedSlides: 7, receivedSlides: null, stopReason: "max_tokens", textLength: 10,
+        requestId: "synthetic-request", edition: "investment", expectedSlides: 7,
+        receivedSlides: null, stopReason: "max_tokens", textLength: 10,
       });
       expect(JSON.stringify(create.mock.calls.slice(1).map((call) => call[0]))).not.toContain("$12,000");
     } finally {

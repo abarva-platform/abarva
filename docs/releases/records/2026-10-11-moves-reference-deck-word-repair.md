@@ -41,8 +41,9 @@ Neither path can create a figure or bypass source lineage.
 - Use fixed wording for the mandatory validation-cover disclosure.
 - Retry rejected non-cover slides once through a separately audited egress
   preflight in bounded batches, then re-run the same slide guard.
-- Retry a whole-response parse failure in shorter audited batches. Log only
-  safe response-shape diagnostics, never model prose. Retain fallbacks and
+- Retry a whole-response parse failure in shorter audited batches. Correlate
+  safe response-shape diagnostics by preview request ID, never log model
+  prose. Retain fallbacks and
   their reason codes when a batch is denied, malformed, or still invalid.
 
 ## QA / Validation

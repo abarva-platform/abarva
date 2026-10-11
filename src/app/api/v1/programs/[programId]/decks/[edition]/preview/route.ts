@@ -65,7 +65,7 @@ export async function GET(
         : inputs.move.currentPhase === 3 ? "design_review" : "delivery_review";
     const slots = buildReferenceSlotTable(inputs);
     const wordsResult = await draftEditionWords({
-      tenantId: ctx.clientKey, userId: ctx.userId, edition, archetypes: sequence,
+      tenantId: ctx.clientKey, userId: ctx.userId, requestId, edition, archetypes: sequence,
       slots,
       useCaseType: (inputs.move.archetype ?? "unclassified") as UseCasePromptType,
       phaseStage,

@@ -101,6 +101,7 @@ describe("read-only reference deck preview", () => {
     expect(result.headers.get("Cache-Control")).toContain("no-store");
     expect(mockAssemble).toHaveBeenCalledWith("synthetic-move", "validation");
     expect(mockWords).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: expect.any(String),
       useCaseType: "workflow_automation",
       phaseStage: "design_review",
       available: expect.objectContaining({ rom: false, valueCase: false }),
