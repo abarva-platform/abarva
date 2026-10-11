@@ -1404,7 +1404,9 @@ export default async function StrategicMovePhaseWorkspacePage({
         phaseBuildArtifacts={phaseBuildArtifacts}
         phaseBuildArtifactsAvailable={phaseBuildArtifactsAvailable}
         initialSignOffReadable={
-          flaggedStepView ? (deliverableSignOff?.available ?? false) : undefined
+          flaggedStepView && includeGateDocuments
+            ? (deliverableSignOff?.available ?? false)
+            : undefined
         }
         initialSubstepKey={
           parsedPhase === 0 && resolvedSearchParams.focus === "gate"
