@@ -36,7 +36,8 @@ Release lane: `client-data-lane`.
 - `scripts/tower/registered-intake-identity-contract.json` declares the aggregate spend Metric identity and basis.
 - `docs/governance/dataset-manifests/tower-registered-intake-partial-20261011.json` declares source selection. Its `load_approval` and `serving_approval` remain null.
 - `supabase/migrations/20261011173000_tower_value_chain_unknown_amounts.sql` permits null unproved value and unassessed evidence priority in new rows. Its new check applies to new or changed rows while leaving prior rows untouched.
-- `scripts/tower/probe-unknown-amount-schema.mjs` records a read-only numeric-row fingerprint before migration and requires an unchanged fingerprint after migration.
+- `scripts/tower/run-unknown-amount-schema-job.mjs` keeps the read-only before fingerprint, focused migration, and compared after fingerprint inside one private ACA job execution. It checks that all configured database URLs agree, refuses a missing migration ledger or an already-applied focused migration, and emits a proof bundle plus receipt into the ACA logs for extraction by the operator wrapper.
+- `scripts/tower/probe-unknown-amount-schema.mjs` records the before fingerprint and verifies unchanged existing numeric rows after migration.
 - `package.json` adds dry-stage and ACA-job entry points.
 - `scripts/ops/submit-aca-operator-job.mjs` adds a narrow Tower stage and re-attestation request binding.
 
@@ -45,14 +46,42 @@ Release lane: `client-data-lane`.
 - Local dry stage generated 17 source-file metadata entries, 299 selected source records, 237 canonical objects, 281 canonical measures, and nonempty rows for all nine views. Its quality gate passed and refused a write because exact load approval was absent.
 - The physical gate checks unique IDs, source hashes, cited rows, null unknown amounts, and exclusion of unapproved evidence content and user-level detail.
 - Focused wrapper plan-only test passes with matching digest/job/timeout and rejects a mismatched digest without contacting Azure.
-- Local checks: six focused Tower tests, 22 shared operator-wrapper tests, focused ESLint and Node syntax checks on changed scripts, the dataset-manifest validator, and all 11 release gates passed. The whole-repo TypeScript check was not run because this branch changes no TypeScript files.
-- Before migration apply: run `tower:migrate:unknown-amounts:probe` for a baseline and `tower:migrate:unknown-amounts:dry-job` on the digest-pinned private ACA operator image. Inspect target columns, existing numeric-row fingerprints, and the exact migration checksum.
-- After `tower:migrate:unknown-amounts:apply-job`, run the same probe with `--compare <baseline.json>` to verify nullability, defaults, check constraint, and unchanged existing numeric-row fingerprints. Capture the ACA execution, logs, proof Blob, and idle restoration.
+- Local checks: four physical Tower tests, five same-job schema proof tests, 22 shared operator-wrapper tests, focused ESLint and Node syntax checks on changed scripts, the dataset-manifest validator, and all 11 release gates passed. The whole-repo TypeScript check was not run because this branch changes no TypeScript files.
+- After the merged image is available, run `tower:migrate:unknown-amounts:dry-job` through `ops:aca-job` with the digest-pinned image, `db-migrate` container, and private `DATABASE_URL` secret reference. Its read-only baseline and ledger precheck produce an extracted proof receipt; do not continue if the focused migration is already recorded or if the target database is ambiguous.
+- In a separately authorized execution, run `tower:migrate:unknown-amounts:apply-job` with `TOWER_UNKNOWN_AMOUNTS_APPLY_CONFIRM=APPLY`. The same ephemeral job captures the baseline, checks the existing ledger, runs only `20261011173000_tower_value_chain_unknown_amounts.sql`, compares after readback, and checks the recorded migration hash. A failed check exits nonzero and emits a failed receipt. The wrapper requires the extracted proof receipt to pass, records the migration audit seal, and verifies idle restoration. Retain its local evidence directory in the private release record; the schema job itself does not claim a Blob upload.
+
+After the exact merged image digest is known, the private operator commands are:
+
+```bash
+npm run ops:aca-job -- --image <approved-acr-image@sha256:digest> \
+  --script tower:migrate:unknown-amounts:dry-job --container db-migrate \
+  --secret-env DATABASE_URL=azure-postgres-control-database-url \
+  --out-dir /tmp/tower-unknown-amount-schema-dry-proof
+
+npm run ops:aca-job -- --image <approved-acr-image@sha256:digest> \
+  --script tower:migrate:unknown-amounts:apply-job --container db-migrate \
+  --secret-env DATABASE_URL=azure-postgres-control-database-url \
+  --env TOWER_UNKNOWN_AMOUNTS_APPLY_CONFIRM=APPLY \
+  --out-dir /tmp/tower-unknown-amount-schema-apply-proof
+```
+
+Inspect each `summary.json`, extracted `proof/schema-job-receipt.json`, baseline/readback, migration seal, and idle-restoration evidence before any stage job. Both executions require the approved, digest-pinned image containing this code; do not substitute the current web or operator template image if it predates this change.
+
+If the apply job commits but its after readback or proof capture fails, **stop**. A repeat apply refuses the already-recorded migration. Run the read-only recovery command:
+
+```bash
+npm run ops:aca-job -- --image <approved-acr-image@sha256:digest> \
+  --script tower:migrate:unknown-amounts:reconcile-job --container db-migrate \
+  --secret-env DATABASE_URL=azure-postgres-control-database-url \
+  --out-dir /tmp/tower-unknown-amount-schema-reconcile-proof
+```
+
+Its receipt is deliberately `manual_review_required`: it verifies current schema and exact ledger hash but cannot know the original pre-apply numeric fingerprint. The wrapper records `tower_schema_proof_verified=false`, `tower_schema_manual_review_required=true`, and `summary.ok=false` even if the read-only ACA job succeeds. Compare its `current.json.unchanged_numeric_basis` with the original failed apply job's extracted `baseline.json.unchanged_numeric_basis` and record both proof hashes in the private release review. If the original baseline cannot be recovered or the fingerprints differ, resolve through a separately reviewed repair; do not stage the candidate. ACA success alone cannot produce a verified apply seal when the Tower proof receipt is missing or fails.
 - Before any stage write: run the dataset manifest validator, exact-tenant lifecycle preflight, physical dry stage, and receipt fingerprint review. No data write or live browser proof is claimed here.
 
 ## Rollout Plan
 
-Merge through a PR. Apply the narrow schema migration through the private, digest-pinned ACA operator job after a dry-run and migration review; this is a separate schema step and is not assumed to happen with a web deploy. Obtain a named `load_approval` on the exact assessment, source-set hash, and this release record. Run `tower:registered-intake:stage-job` only through `ops:aca-job` with explicit tenant, run ID, operator identity, git SHA, image digest, timeout, retries, and private Blob proof destination. The wrapper independently binds the supplied job name, image digest, and timeout to its own request. The job validates its transaction readback and uploads the proof bundle. A separate independent readback and named `serving_approval` gate any later lifecycle promotion.
+Merge through a PR. Apply the narrow schema migration through the private, digest-pinned ACA operator job after a dry-run and migration review; this is a separate schema step and is not assumed to happen with a web deploy. Use the focused Tower script, not the generic all-pending migration script. Obtain a named `load_approval` on the exact assessment, source-set hash, and this release record. Run `tower:registered-intake:stage-job` only through `ops:aca-job` with explicit tenant, run ID, operator identity, git SHA, image digest, timeout, retries, and private Blob proof destination. The wrapper independently binds the supplied job name, image digest, and timeout to its own request. The job validates its transaction readback and uploads the proof bundle. A separate independent readback and named `serving_approval` gate any later lifecycle promotion.
 
 ## Deployment Authority
 
