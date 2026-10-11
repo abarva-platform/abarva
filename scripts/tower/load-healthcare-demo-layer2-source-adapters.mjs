@@ -325,6 +325,18 @@ function buildSourceRows(options) {
   };
 }
 
+function assertPackageCanMutate(options) {
+  if (!options.write) return;
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(options.packageDir, "package_manifest.json"), "utf8"),
+  );
+  if (manifest.no_runtime_load !== false) {
+    throw new Error(
+      "Refusing runtime mutation: package_manifest.json must explicitly set no_runtime_load=false",
+    );
+  }
+}
+
 function writeLoadSql(outPath, options, sourceFiles, sourceRecords) {
   const sourceFileColumns = [
     "id",
@@ -517,6 +529,7 @@ function emitProofBundle(outDir) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  assertPackageCanMutate(options);
   fs.mkdirSync(options.outDir, { recursive: true });
 
   const sourceRows = buildSourceRows(options);

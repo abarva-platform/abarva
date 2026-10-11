@@ -52,12 +52,24 @@ type TriageRecord = {
   recordedAt: string;
   wiring: { directories: string[]; suitesWired: number; casesWired: number };
   suites: SuiteRow[];
+  wiringMaintenance?: { suites: SuiteRow[] };
 };
 
 const readJson = <T,>(relative: string): T =>
   JSON.parse(readFileSync(path.join(repoRoot, relative), "utf8")) as T;
 
-const record = readJson<TriageRecord>(RECORD);
+const originalRecord = readJson<TriageRecord>(RECORD);
+const additions = originalRecord.wiringMaintenance?.suites ?? [];
+// The original triage stays intact; current directory coverage includes later suites.
+const record = {
+  ...originalRecord,
+  suites: [...originalRecord.suites, ...additions],
+  wiring: {
+    ...originalRecord.wiring,
+    suitesWired: originalRecord.wiring.suitesWired + additions.length,
+    casesWired: originalRecord.wiring.casesWired + additions.reduce((sum, row) => sum + row.totalTests, 0),
+  },
+};
 const prior = readJson<TriageRecord>(PRIOR_RECORD);
 
 const packageScripts = readJson<{ scripts: Record<string, string> }>("package.json").scripts;

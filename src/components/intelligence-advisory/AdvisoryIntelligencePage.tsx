@@ -12,6 +12,8 @@ import type {
   ChatMessage,
   SuggestedAction,
 } from "@/components/agent/AgentDock";
+import { executiveReviewQuestions } from "@/lib/intelligence/answer/quality-review";
+import { IntelligenceQualityReview } from "./IntelligenceQualityReview";
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 
@@ -39,26 +41,7 @@ type UserMessage = { id: string; role: "user"; text: string };
 type ThreadMessage = AssistantMessage | UserMessage;
 
 function formatSafeAnswerBoundary(error?: string): string {
-  const reason =
-    error && !/^(unknown|ask_synthesis_empty)$/i.test(error)
-      ? `\n\nEvidence boundary: ${error.replace(/^retired_fact_violation:\s*/i, "A retired or stale fact was blocked: ")}`
-      : "";
-
-  return [
-    "I cannot make that client-ready claim from the loaded evidence yet.",
-    "",
-    "Executive read: do not name a person, date, approval status, or go-live decision unless that fact is loaded and reviewable. For a consequential finance-control workflow, keep the move in advisory/shadow mode until the accountable owner, backup authority, decision limits, training attestation, and control evidence are named.",
-    "",
-    "What is safe to use now:",
-    "- Show the confirmed facts already loaded for this tenant.",
-    "- Separate what is loaded, inferred, and missing.",
-    "- Turn the gap into a decision checklist: owner named, backup named, SLA accepted, attestation captured, SOX/control evidence attached, and approval authority confirmed.",
-    "",
-    "What needs to be loaded before this becomes board-ready: the named accountable role/person, the effective date or target timeline, the delegation or sign-off artifact, the training/attestation record, and the evidence owner who can certify it.",
-    reason,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  return `This answer could not be completed.${error ? `\n\n${error}` : ""}`;
 }
 
 const AVA_INTELLIGENCE_AGENT = {
@@ -105,12 +88,19 @@ function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
  * Stripping already-clean text is a no-op, so the packet branch is unaffected.
  */
 export function finalizeAssistantMessage<
-  T extends { status: string; answer: string; streamStatus?: string },
+  T extends {
+    status: string;
+    answer: string;
+    streamStatus?: string;
+    agentAnswer?: AvaAnswerPacket | null;
+  },
 >(message: T): T {
   return {
     ...message,
     status: message.status === "error" ? "error" : "done",
-    answer: stripGovernedArtifactPayloadsFromText(message.answer),
+    answer: message.agentAnswer?.modelAuthored
+      ? message.answer
+      : stripGovernedArtifactPayloadsFromText(message.answer),
     streamStatus: undefined,
   };
 }
@@ -139,6 +129,7 @@ export function AdvisoryIntelligencePage({
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [isAsking, setIsAsking] = useState(false);
+  const [isReviewRunning, setIsReviewRunning] = useState(false);
   const starterPrompts = useMemo(
     () => buildStarterPrompts(viewModel),
     [viewModel],
@@ -146,7 +137,7 @@ export function AdvisoryIntelligencePage({
 
   async function submitAsk(input: string = question) {
     const trimmed = input.trim();
-    if (!trimmed || isAsking) return;
+    if (!trimmed || isAsking || isReviewRunning) return;
     const messageIndex = messages.length;
 
     const userMsg: UserMessage = {
@@ -181,6 +172,7 @@ export function AdvisoryIntelligencePage({
           format: "rich",
           richText: true,
           answerOnlyStreaming: true,
+          modelAuthoredOutput: true,
           traceEnabled: true,
           surfaceContext: buildSurfaceContext(viewModel, sectionList),
         }),
@@ -285,11 +277,9 @@ export function AdvisoryIntelligencePage({
           return {
             ...m,
             agentAnswer: event.answer,
-            answer: resolveAssistantAnswerText(
-              m.answer,
-              packetBody,
-              hasArtifacts,
-            ),
+            answer: event.answer.modelAuthored
+              ? packetBody
+              : resolveAssistantAnswerText(m.answer, packetBody, hasArtifacts),
             sources: event.answer.citations.map((c) => ({
               id: c.id,
               type: askSourceTypeFromCitation(c.sourceClass),
@@ -345,9 +335,7 @@ export function AdvisoryIntelligencePage({
               body:
                 m.status === "error"
                   ? formatSafeAnswerBoundary(m.error)
-                  : m.answer.trim() ||
-                    m.streamStatus ||
-                    "Gathering client context...",
+                  : m.answer || m.streamStatus || "Gathering client context...",
               citations: m.sources.length > 0 ? m.sources : undefined,
               agentAnswer: m.agentAnswer ?? undefined,
             },
@@ -374,7 +362,7 @@ export function AdvisoryIntelligencePage({
       onClick: () => void submitAsk(p),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latestAssistant, starterPrompts]);
+  }, [latestAssistant, starterPrompts, isAsking, isReviewRunning]);
 
   // onMessage handler for AvaChatShell
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -383,22 +371,31 @@ export function AdvisoryIntelligencePage({
   };
 
   return (
-    <AvaChatShell
-      surface="intelligence"
-      agent={AVA_INTELLIGENCE_AGENT}
-      placeholder="Ask aVa"
-      layout="chat-only"
-      defaultLeftPercent={40}
-      minLeftPx={380}
-      thread={thread}
-      onMessage={handleMessage}
-      canvas={null}
-      suggestedActions={suggestedActions}
-      keepSuggestedActionsVisible={true}
-      isBusy={isAsking}
-      preserveVisibleText
-      surfaceContext={buildSurfaceContext(viewModel, sectionList)}
-    />
+    <div className="flex min-h-0 flex-1 flex-col">
+      <IntelligenceQualityReview
+        key={viewModel.clientKey}
+        viewModel={viewModel}
+        surfaceContext={buildSurfaceContext(viewModel, sectionList)}
+        disabled={isAsking}
+        onRunningChange={setIsReviewRunning}
+      />
+      <AvaChatShell
+        surface="intelligence"
+        agent={AVA_INTELLIGENCE_AGENT}
+        placeholder="Ask aVa"
+        layout="chat-only"
+        defaultLeftPercent={40}
+        minLeftPx={380}
+        thread={thread}
+        onMessage={handleMessage}
+        canvas={null}
+        suggestedActions={suggestedActions}
+        keepSuggestedActionsVisible={true}
+        isBusy={isAsking || isReviewRunning}
+        preserveVisibleText
+        surfaceContext={buildSurfaceContext(viewModel, sectionList)}
+      />
+    </div>
   );
 }
 
@@ -416,12 +413,7 @@ export function AdvisoryIntelligencePage({
 export function buildStarterPrompts(
   viewModel: EnterpriseLandscapeViewModel,
 ): string[] {
-  return [
-    `What should the executive team know about ${viewModel.tenantName}'s current state that is most consequential right now?`,
-    `What are the top 5 AI opportunities for ${viewModel.tenantName}, and which should we invest in now versus validate first?`,
-    `Which trends in our industry matter most over the next 12-24 months, and what do they mean for us specifically?`,
-    `Where does our current strategy appear out of step with our capabilities, evidence, or industry direction?`,
-  ];
+  return executiveReviewQuestions(viewModel).slice(0, 4);
 }
 
 function buildSurfaceContext(
@@ -453,6 +445,7 @@ function isAvaAnswerPacket(value: unknown): value is AvaAnswerPacket {
 }
 
 function answerBodyFromPacket(answer: AvaAnswerPacket): string {
+  if (answer.modelAuthored) return answer.prose ?? answer.directAnswer;
   const body =
     answer.prose?.trim() ||
     answer.directAnswer?.trim() ||

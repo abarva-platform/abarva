@@ -44,6 +44,7 @@ import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { demoSafeClientText } from "@/lib/client-config";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
+import { ModelAuthoredExhibits } from "@/components/agent-answer/ModelAuthoredExhibits";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentResponseParts } from "@/components/agent/AgentResponseParts";
@@ -106,7 +107,7 @@ function shouldRenderAvaArtifactsInDock(
   answer?: AvaAnswerPacket | null,
 ): answer is AvaAnswerPacket {
   void surface;
-  return hasRenderableAvaArtifacts(answer);
+  return Boolean(answer?.modelAuthored) || hasRenderableAvaArtifacts(answer);
 }
 
 function avaAnswerTextForDock(
@@ -214,6 +215,8 @@ function visibleAgentDockBody(
   agentAnswer?: AvaAnswerPacket | null,
   preserveVisibleText = false,
 ): string {
+  if (preserveVisibleText && agentAnswer?.modelAuthored)
+    return agentAnswer.prose ?? agentAnswer.directAnswer;
   const packetText = avaAnswerTextForDock(surface, agentAnswer);
   const bodyText =
     agentAnswer &&
@@ -1378,6 +1381,9 @@ export function AgentDock(props: AgentDockProps) {
                       <AgentResponseParts parts={turn.parts} />
                     ) : (
                       <AgentMarkdown
+                        preserveOutput={Boolean(
+                          turn.agentAnswer?.modelAuthored,
+                        )}
                         text={visibleAgentDockBody(
                           surface,
                           turn.body,
@@ -1418,12 +1424,16 @@ export function AgentDock(props: AgentDockProps) {
                     data-testid="agent-dock-artifacts"
                     style={{ marginTop: 12 }}
                   >
-                    <AgentAnswerRenderer
-                      answer={turn.agentAnswer}
-                      showChrome={!focused}
-                      showProse={!focused}
-                      preserveOutput={preserveVisibleText}
-                    />
+                    {turn.agentAnswer.modelAuthored ? (
+                      <ModelAuthoredExhibits answer={turn.agentAnswer} />
+                    ) : (
+                      <AgentAnswerRenderer
+                        answer={turn.agentAnswer}
+                        showChrome={!focused}
+                        showProse={!focused}
+                        preserveOutput={preserveVisibleText}
+                      />
+                    )}
                   </div>
                 ) : null}
                 {!focused && turn.role === "agent" && turn.feedbackEventId ? (
