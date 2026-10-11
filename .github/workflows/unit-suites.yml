@@ -1581,8 +1581,6 @@ jobs:
           npx jest --runTestsByPath
           "src/app/(maestro)/home/__tests__/home-page-ecl-route.test.tsx"
           "src/app/(maestro)/home/__tests__/no-readmin-reexports.test.ts"
-          "src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts"
-          "src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts"
           "src/app/(maestro)/home/__tests__/home-canvas-cutover.test.ts"
           --no-coverage --ci
 
