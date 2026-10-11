@@ -135,3 +135,17 @@ export function resolveBarePhaseStepPageLanding(input: {
     requestedView: null,
   });
 }
+
+/** Let the flagged host inspect saved completion before choosing a bare phase's step. */
+export function shouldDeferBarePhaseLanding(input: {
+  catchUpEnabled: boolean;
+  requestedPhase: number;
+  currentPhase: number;
+  earlyTarget: string | null;
+}): boolean {
+  return Boolean(
+    input.catchUpEnabled &&
+    input.earlyTarget &&
+    (input.requestedPhase === 2 || input.requestedPhase === input.currentPhase),
+  );
+}
