@@ -55,7 +55,7 @@ describe("reference-deck words", () => {
     }));
     expect(create).toHaveBeenCalledWith(expect.objectContaining({
       output_config: expect.objectContaining({ format: expect.objectContaining({ type: "json_schema" }) }),
-    }));
+    }), { timeout: 25_000, maxRetries: 0 });
     expect(JSON.stringify(create.mock.calls[0][0])).not.toContain("$12,000");
     expect(JSON.stringify(create.mock.calls[0][0])).not.toContain("synthetic-user");
     expect(JSON.stringify(create.mock.calls[0][0])).toContain('\\"token\\":\\"{value.annual.base}\\"');
@@ -144,6 +144,55 @@ describe("reference-deck words", () => {
     expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
     expect(create).toHaveBeenCalledTimes(3);
     expect(mockPreflight.mock.calls.slice(1).map((call) => call[0].metadata.slideCount)).toEqual([6, 1]);
+  });
+
+  it("drafts a full investment edition in short audited batches", async () => {
+    const valid = { ...safeWords.words[0]!, title: "The annual case counts {value.annual.plan} on its current basis" };
+    const create = jest.fn().mockImplementation((request: { messages: Array<{ content: string }> }) => {
+      const { slides } = JSON.parse(request.messages[0]!.content) as { slides: unknown[] };
+      return Promise.resolve({ content: [{ type: "text", text: JSON.stringify({ words: slides.map(() => valid) }) }] });
+    });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(22).fill("one_page") });
+    expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
+    expect(result.words).toHaveLength(22);
+    expect(create).toHaveBeenCalledTimes(4);
+    expect(create.mock.calls.map((call) => call[0].max_tokens)).toEqual([2400, 2400, 2400, 2400]);
+    expect(create.mock.calls.every((call) => call[1].timeout === 25_000 && call[1].maxRetries === 0)).toBe(true);
+    expect(mockPreflight.mock.calls.map((call) => call[0].metadata.slideCount)).toEqual([6, 6, 6, 4]);
+    expect(mockPreflight.mock.calls.every((call) => call[0].workflow === "moves:reference-deck:preview:words:batch")).toBe(true);
+  });
+
+  it("recovers only a failed initial investment batch", async () => {
+    const valid = { ...safeWords.words[0]!, title: "The annual case counts {value.annual.plan} on its current basis" };
+    const create = jest.fn().mockImplementation((request: { messages: Array<{ content: string }> }) => {
+      const { slides } = JSON.parse(request.messages[0]!.content) as { slides: unknown[] };
+      if (create.mock.calls.length === 2) return Promise.reject(new Error("synthetic provider timeout"));
+      return Promise.resolve({ content: [{ type: "text", text: JSON.stringify({ words: slides.map(() => valid) }) }] });
+    });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(22).fill("one_page") });
+    expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
+    expect(create).toHaveBeenCalledTimes(5);
+    expect(mockPreflight.mock.calls[4][0]).toMatchObject({
+      workflow: "moves:reference-deck:preview:words:parse-recovery",
+      metadata: { edition: "investment", slideStart: 7, slideCount: 6, persist: false, parseRecovery: true },
+    });
+  });
+
+  it("keeps successful batches when one audited preflight is denied", async () => {
+    const valid = { ...safeWords.words[0]!, title: "The annual case counts {value.annual.plan} on its current basis" };
+    const create = jest.fn().mockImplementation((request: { messages: Array<{ content: string }> }) => {
+      const { slides } = JSON.parse(request.messages[0]!.content) as { slides: unknown[] };
+      return Promise.resolve({ content: [{ type: "text", text: JSON.stringify({ words: slides.map(() => valid) }) }] });
+    });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    mockPreflight.mockResolvedValueOnce({ ok: false });
+    const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(22).fill("one_page") });
+    expect(result).toMatchObject({ status: "unavailable", reason: "preflight_denied", slide: 1,
+      fallbackSlides: [1, 2, 3, 4, 5, 6] });
+    expect(result.words.slice(6)).toEqual(Array(16).fill(valid));
+    expect(create).toHaveBeenCalledTimes(3);
   });
 
   it("recovers a whole-deck parse failure through smaller audited batches", async () => {
