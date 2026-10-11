@@ -14,6 +14,7 @@ import {
   Polygon,
   StyleSheet,
   Font,
+  Link,
   type DocumentProps,
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
@@ -22,6 +23,7 @@ import type { AvaChatSessionExport } from "./session-types";
 import {
   chartPlot,
   graphPlot,
+  matrixQuadrants,
 } from "@/lib/intelligence/answer/model-exhibit-layout";
 import { measureExecutiveAnswer } from "@/lib/intelligence/answer/model-authored-answer";
 
@@ -92,7 +94,11 @@ function proseBlocks(body: string) {
 function exhibitBlock(a: AvaArtifact) {
   return (
     <View key={a.id} style={styles.card} wrap={a.artifact === "table"}>
-      {a.title && <Text style={styles.heading} minPresenceAhead={128}>{a.title}</Text>}
+      {a.title && (
+        <Text style={styles.heading} minPresenceAhead={128}>
+          {a.title}
+        </Text>
+      )}
       {a.artifact === "table" ? (
         <>
           <View style={styles.row} wrap={false}>
@@ -115,6 +121,55 @@ function exhibitBlock(a: AvaArtifact) {
         </>
       ) : a.artifact === "chart" ? (
         (() => {
+          if (a.kind === "quadrant-matrix") {
+            const quadrants = matrixQuadrants(a);
+            return (
+              <>
+                {a.subtitle && <Text style={styles.meta}>{a.subtitle}</Text>}
+                {[0, 2].map((offset) => (
+                  <View key={offset} style={{ flexDirection: "row" }}>
+                    {quadrants.slice(offset, offset + 2).map((q) => (
+                      <View
+                        key={`${q.x}-${q.y}`}
+                        style={{
+                          flex: 1,
+                          borderWidth: 1,
+                          borderColor: "#a7cdb2",
+                          backgroundColor: "#f0f7f2",
+                          padding: 8,
+                          minHeight: 75,
+                        }}
+                      >
+                        <Text style={[styles.meta, styles.bold]}>
+                          {a.xKey}: {q.x} · {a.yKey}: {q.y}
+                        </Text>
+                        {q.rows.map((row, i) => (
+                          <View key={i} style={{ marginBottom: 6 }}>
+                            <Text style={[styles.cell, styles.bold]}>
+                              {String(row.label)}
+                            </Text>
+                            {Object.entries(row)
+                              .filter(
+                                ([key]) =>
+                                  !["label", a.xKey!, a.yKey!].includes(key),
+                              )
+                              .map(([key, value]) => (
+                                <Text key={key} style={styles.cell}>
+                                  {key}: {String(value ?? "")}
+                                </Text>
+                              ))}
+                          </View>
+                        ))}
+                      </View>
+                    ))}
+                  </View>
+                ))}
+                {a.sourceNote && (
+                  <Text style={styles.meta}>{a.sourceNote}</Text>
+                )}
+              </>
+            );
+          }
           const p = chartPlot(a);
           return (
             <>
@@ -249,11 +304,6 @@ function exhibitBlock(a: AvaArtifact) {
           );
         })()
       )}
-      {a.citationIds?.length ? (
-        <Text style={styles.meta}>
-          {a.citationIds.map((id) => `[${id}]`).join(" ")}
-        </Text>
-      ) : null}
     </View>
   );
 }
@@ -284,7 +334,6 @@ export function buildModelAuthoredSessionPdf(
           {session.title ?? "Executive answer review"}
         </Text>
         <Text style={styles.meta}>
-          {session.tenantKey} |{" "}
           {session.qualityReview?.startedAt ?? new Date().toISOString()}
         </Text>
         <Text style={styles.prose}>
@@ -292,8 +341,10 @@ export function buildModelAuthoredSessionPdf(
             ? `${session.qualityReview.completedQuestions} of ${session.qualityReview.plannedQuestions} questions completed.`
             : `${responses.length} responses.`}{" "}
           Each answer is reproduced with its authored exhibits. Length checks
-          are observations, not quality scores. The appendix retains the
-          original model response including exhibit protocols.
+          are observations, not quality scores.
+          {session.qualityReview?.includeOriginalResponses
+            ? " The appendix retains the original model response including exhibit protocols."
+            : ""}
         </Text>
         <Text style={styles.heading}>Review checklist</Text>
         <Text style={styles.prose}>
@@ -318,7 +369,7 @@ export function buildModelAuthoredSessionPdf(
               <Text style={styles.cell}>
                 {t.reviewStatus && t.reviewStatus !== "complete"
                   ? "—"
-                  : `${m.openingWords}${m.openingWithinTarget ? "" : " (over 40)"}`}
+                  : `${m.openingWords}${m.openingWithinTarget ? "" : " (over 35)"}`}
               </Text>
               <Text style={styles.cell}>{m.proseWords}</Text>
               <Text style={styles.cell}>{t.answer?.artifacts.length ?? 0}</Text>
@@ -350,11 +401,10 @@ export function buildModelAuthoredSessionPdf(
           )}
           {t.answer?.citations.length ? (
             <View wrap={false}>
-              <Text style={styles.heading}>Sources cited by Claude</Text>
+              <Text style={styles.heading}>Sources</Text>
               {t.answer.citations.map((c) => (
                 <Text key={c.id} style={styles.meta}>
-                  [{c.id}] {c.label}
-                  {c.url ? ` — ${c.url}` : ""}
+                  {c.url ? <Link src={c.url}>{c.label}</Link> : c.label}
                 </Text>
               ))}
             </View>
@@ -372,23 +422,24 @@ export function buildModelAuthoredSessionPdf(
           {footer}
         </Page>
       ))}
-      {responses
-        .filter((t) => t.answer?.modelAuthored)
-        .map((t) => (
-          <Page key={`raw-${t.id}`} size="LETTER" style={styles.page}>
-            <Text style={styles.eyebrow}>
-              APPENDIX · ORIGINAL MODEL RESPONSE · {t.id}
-            </Text>
-            <Text style={styles.meta}>
-              Transport payload retained for inspection. This is the complete
-              original response, including exhibit and follow-up blocks.
-            </Text>
-            <Text style={styles.raw} hyphenationCallback={(word) => [word]}>
-              {t.answer!.modelAuthored!.rawText}
-            </Text>
-            {footer}
-          </Page>
-        ))}
+      {session.qualityReview?.includeOriginalResponses &&
+        responses
+          .filter((t) => t.answer?.modelAuthored)
+          .map((t) => (
+            <Page key={`raw-${t.id}`} size="LETTER" style={styles.page}>
+              <Text style={styles.eyebrow}>
+                APPENDIX · ORIGINAL MODEL RESPONSE · {t.id}
+              </Text>
+              <Text style={styles.meta}>
+                Transport payload retained for inspection. This is the complete
+                original response, including exhibit and follow-up blocks.
+              </Text>
+              <Text style={styles.raw} hyphenationCallback={(word) => [word]}>
+                {t.answer!.modelAuthored!.rawText}
+              </Text>
+              {footer}
+            </Page>
+          ))}
     </Document>
   );
 }

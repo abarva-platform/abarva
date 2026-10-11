@@ -612,11 +612,11 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Story" })).toBeTruthy();
 
-    // Story's side panel has its own context stack rather than the tab
-    // narrative, so the statement keeps its blocker there. That is the
-    // differential: the statement is trimmed only where the panel beside it
-    // already renders the same paragraphs.
+    // Story retains the recorded statement in Source records, not a second
+    // executive summary and posture strip below the briefing.
     fireEvent.click(screen.getByRole("tab", { name: "Story" }));
+    expect(screen.queryByText("Why this contract matters")).toBeNull();
+    expect(container.querySelector(".sw-v2-contract-context-panel")).toBeNull();
     {
       const statement = screen
         .getByText("What Source can state")
@@ -1246,7 +1246,9 @@ describe("Source workspace ECL browser-surface proof", () => {
         ),
       ).toBeTruthy();
     });
-    expect(screen.getAllByText("Commercial posture").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Commercial posture")).toBeNull();
+    expect(screen.getByText("Commercial position")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Contract playbook" })).toBeTruthy();
     expect(
       screen.queryByText("Contract not found in governed Source rows"),
     ).toBeNull();

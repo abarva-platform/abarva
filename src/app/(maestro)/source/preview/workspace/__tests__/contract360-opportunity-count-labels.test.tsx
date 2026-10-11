@@ -26,9 +26,8 @@ import type { SourceWorkspaceVM } from "../buildViewModel";
  *    `source.optimization_opportunity` or derived from `source.golden_contract_*`
  *    when no persisted set exists.
  *
- * Neither is the authoritative count of the other, so they are labelled apart
- * rather than made to agree. These tests assert that from rendered output, and
- * a fixture where the two already agree is the negative control.
+ * Neither is the authoritative count of the other. Action candidates are now
+ * excluded from the source-evidence list; they remain in the action view.
  */
 
 const contract = {
@@ -79,7 +78,9 @@ const vmWithOpportunitySet = (count: number) =>
     optWorkflow: null,
     opportunityView: {
       contractId: "MER-TEST-001",
-      opportunities: Array.from({ length: count }, (_, i) => opportunity(i + 1)),
+      opportunities: Array.from({ length: count }, (_, i) =>
+        opportunity(i + 1),
+      ),
     },
   }) as unknown as SourceWorkspaceVM;
 
@@ -115,7 +116,7 @@ describe("U-518 — two opportunity counts, two labels", () => {
 
     // Before the fix this lane read "Opportunities · 0" beside "3 opportunities".
     expect(lanes).not.toContain("Opportunities · 0");
-    expect(lanes).toContain("Opportunity evidence rows · 0");
+    expect(lanes.some((label) => /opportunit/i.test(label))).toBe(false);
 
     // The opportunity set keeps the plain word, and its own number.
     expect(screen.getByText(/3 opportunities/)).toBeTruthy();
@@ -138,7 +139,7 @@ describe("U-518 — two opportunity counts, two labels", () => {
     }
   });
 
-  it("negative control — an agreeing fixture still prints the same number on both reads", () => {
+  it("keeps even an agreeing action count out of the source-evidence list", () => {
     // Coverage 3, set 3. This case must be green before and after the change:
     // the fix is a labelling change, not a recount.
     const { container } = render(
@@ -158,8 +159,10 @@ describe("U-518 — two opportunity counts, two labels", () => {
     );
 
     expect(
-      evidenceLaneLabels(container).some((label) => /opportunit/i.test(label) && label.endsWith("· 3")),
-    ).toBe(true);
+      evidenceLaneLabels(container).some(
+        (label) => /opportunit/i.test(label) && label.endsWith("· 3"),
+      ),
+    ).toBe(false);
     expect(screen.getByText(/3 opportunities/)).toBeTruthy();
   });
 });

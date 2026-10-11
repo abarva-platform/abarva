@@ -230,23 +230,10 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(css).toContain("grid-template-columns: 1fr");
   });
 
-  it("renders commercial posture on the product-shell Contract 360 page", () => {
-    /*
-     * HYGIENE, deliberately not retired. `WorkspaceClient.ecl-browser.test.tsx`
-     * line 1244 proves the posture eyebrow RENDERS on the product shell, so
-     * "the reader sees it" is covered. What it does not pin is WHICH
-     * component draws it — the four scans below say the product shell reaches
-     * it through `ProductShellCommercialPostureStrip` over `posture.items`,
-     * and a rewrite that satisfied the render from some other path would not
-     * trip that suite. The scans are a composition rule, so they stay and are
-     * comment-proofed rather than moved.
-     */
+  it("leaves Story composition to its briefing without a second posture strip", () => {
     const source = sourceCode();
-
-    expect(source).toContain("<ProductShellCommercialPostureStrip vm={vm} />");
-    expect(source).toContain('aria-label="Commercial posture"');
-    expect(source).toContain('PanelHead eyebrow="Commercial posture"');
-    expect(source).toContain("posture.items.map");
+    expect(source.includes("ProductShellCommercialPostureStrip")).toBe(false);
+    expect(source.includes('tab !== "Optimize" && tab !== "Story"')).toBe(true);
   });
 
   it("keeps Contract 360 Optimize table-first", () => {

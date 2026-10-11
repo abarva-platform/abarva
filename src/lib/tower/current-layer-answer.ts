@@ -154,6 +154,12 @@ function money(value: number | null | undefined): string {
   return formatted === "not loaded" ? "Not loaded" : formatted;
 }
 
+function clearedMoney(command: TowerCurrentView["command"]): string {
+  return command.claimableAmountLoaded === false
+    ? "Not verified"
+    : money(command.realizedValueYtdAllowed);
+}
+
 function roi(promisedUsd: number | null | undefined, investmentLoaded: boolean, investmentUsd: number): number | null {
   if (!loadedNumber(promisedUsd) || !investmentLoaded || investmentUsd <= 0) return null;
   return (promisedUsd as number) / investmentUsd;
@@ -431,10 +437,10 @@ function selectedEntityTables(
       table("tower_selected_program_detail", `Selected case: ${program.programName}`, ["Field", "Value"], [
         ["Owner", text(program.ownerRole)],
         ["Domain", text(program.domainName)],
-        ["Funding recorded in Tower", money(program.fundedAmount ?? program.approvedFundingUsd)],
+        ["Approved FY26 funding", program.fundingAmountLoaded === false ? "Not verified" : money(program.approvedFundingUsd)],
         ["Promised value", loadedNumber(program.promisedValueUsd) ? money(program.promisedValueUsd) : "Not loaded"],
         ["Usage supported", money(program.knownSupportedValue)],
-        ["Value checked by Finance", money(program.financeValidatedValueUsd)],
+        ["Value checked by Finance", program.financeValidatedAmountLoaded === false ? "Not verified" : money(program.financeValidatedValueUsd)],
         ["Next gate", text(program.nextGate)],
         ["Blocker", text(program.decisionRationale)],
       ]),
@@ -506,7 +512,7 @@ function answerFromIntent(
     : "";
   const metricCards = [
     { label: "Value claims", value: count(command.valueClaimCount) },
-    { label: "Value cleared for reporting", value: money(command.realizedValueYtdAllowed) },
+    { label: "Value cleared for reporting", value: clearedMoney(command) },
   ];
 
   if (intent === "selected") {
@@ -650,7 +656,7 @@ function answerFromIntent(
       }),
     );
     return {
-      answer: `${pageLead}${args.tenantName} has ${count(command.valueClaimCount)} Tower value claims in the current read model. Value cleared for reporting ${reportingPeriod} is ${money(command.realizedValueYtdAllowed)}. A claim needs a starting measure, a target, an actual result, and owner and Finance review before it can be reported.`,
+      answer: `${pageLead}${args.tenantName} has ${count(command.valueClaimCount)} Tower value claims in the current read model. Value cleared for reporting ${reportingPeriod} is ${clearedMoney(command)}. A claim needs a starting measure, a target, an actual result, and owner and Finance review before it can be reported.`,
       tables: [funnel],
       metricCards,
       gaps: view.requiredFieldGaps.slice(0, 5).map((gap) => gap.remediationAction),
@@ -731,11 +737,11 @@ function answerFromIntent(
       ["Run budget", "Not verified", "Requires the same source reconciliation"],
       ["Change budget", "Not verified", "Requires the same source reconciliation"],
       ["Combined AI amount", "Not comparable", "Approved funding and yearly tool cost have different bases"],
-      ["Value cleared for reporting", money(command.realizedValueYtdAllowed), reportingPeriod],
+      ["Value cleared for reporting", clearedMoney(command), reportingPeriod],
     ],
   );
   return {
-    answer: `${pageLead}Tower has budget fields, but this answer cannot verify their active intake reconciliation, so it cannot quote the budget. The combined AI amount also lacks one consistent basis: approved funding and yearly tool cost must be reviewed separately. Value cleared for reporting ${reportingPeriod} is ${money(command.realizedValueYtdAllowed)}.`,
+    answer: `${pageLead}Tower has budget fields, but this answer cannot verify their active intake reconciliation, so it cannot quote the budget. The combined AI amount also lacks one consistent basis: approved funding and yearly tool cost must be reviewed separately. Value cleared for reporting ${reportingPeriod} is ${clearedMoney(command)}.`,
     tables: [budget],
     metricCards,
     gaps: [

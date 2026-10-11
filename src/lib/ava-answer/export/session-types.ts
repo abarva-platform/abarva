@@ -22,6 +22,7 @@ export interface AvaChatSessionExport {
     finishedAt?: string;
     plannedQuestions: number;
     completedQuestions: number;
+    includeOriginalResponses?: boolean;
   };
 }
 
