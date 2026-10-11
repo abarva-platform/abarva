@@ -46,7 +46,10 @@ const PLAIN_TONE = {
 export function plainProgram(p: TowerProgramView): string {
   if (!p.promisedBenefitLoaded) {
     const gate = p.nextGate ? ` The next unlock is ${p.nextGate}.` : "";
-    return `${formatUsdM(p.fundedUsd)} is approved funding. A projected direct benefit is not loaded, so Tower cannot count one here.${gate}`;
+    const funding = p.fundingAmountLoaded === false
+      ? "Approved FY26 funding is not verified."
+      : `${formatUsdM(p.fundedUsd)} is approved FY26 funding.`;
+    return `${funding} A projected direct benefit is not loaded, so Tower cannot count one here.${gate}`;
   }
   if (p.promisedUsd <= 0) {
     return "This case records $0 in projected direct benefit. It may help other cases, but that link is not recorded here, so no downstream benefit is assigned to it.";
@@ -95,13 +98,13 @@ export function ProgramDrawer({
         ],
         [
           "Checked by Finance",
-          p.financeValidatedUsd,
+          p.financeValidatedUsd > 0 ? p.financeValidatedUsd : null,
           p.financeValidatedUsd > 0 ? "teal" : "red",
           "Finance has signed the measurement method",
         ],
         [
           "Cleared for reporting",
-          p.claimableUsd,
+          p.claimableUsd > 0 ? p.claimableUsd : null,
           p.claimableUsd > 0 ? "teal" : "red",
           "approved for reporting in the months loaded here",
         ],
@@ -159,7 +162,7 @@ export function ProgramDrawer({
           </div>
 
           <div className={styles.drGrid}>
-            <DrawerStat label="Approved funding" value={formatUsdM(p.fundedUsd)} />
+            <DrawerStat label="Approved FY26 funding" value={p.fundingAmountLoaded === false ? "Not verified" : formatUsdM(p.fundedUsd)} />
             <DrawerStat
               label="Projected direct benefit"
               value={
@@ -176,7 +179,7 @@ export function ProgramDrawer({
             />
             <DrawerStat
               label="Cleared in loaded months"
-              value={formatUsdM(p.claimableUsd)}
+              value={p.claimableUsd > 0 ? formatUsdM(p.claimableUsd) : "No amount cleared"}
               small
               tone={p.claimableUsd > 0 ? "vTeal" : "vRed"}
             />
@@ -197,6 +200,8 @@ export function ProgramDrawer({
                   ? "Not measured"
                   : label === "Amount still under review" && !p.blockedValueComparable
                     ? "Not comparable"
+                  : value === null
+                    ? "No amount recorded"
                   : formatUsdM(value)
               }
               valueColor={chainColor(tint)}

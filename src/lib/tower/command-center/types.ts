@@ -226,6 +226,8 @@ export interface TowerProgramView {
   lane: TowerLaneKey;
 
   fundedUsd: number;
+  /** False when a program has no source-approved FY26 funding amount. */
+  fundingAmountLoaded?: boolean;
   promisedUsd: number;
   promisedBenefitLoaded: boolean;
   usageSupportedUsd: number;

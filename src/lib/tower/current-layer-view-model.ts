@@ -135,6 +135,8 @@ export interface TowerMartProgramLane {
   decisionRationale: string;
   approvedFundingUsd: number;
   fundedAmount?: number;
+  /** The source explicitly records an approved FY26 amount for this program. */
+  fundingAmountLoaded?: boolean;
   aiTaggedSpendUsd: number;
   /** Whether any spend was recorded. The value above is coerced to 0 when nothing was. */
   aiSpendLoaded?: boolean;

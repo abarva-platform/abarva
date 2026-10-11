@@ -201,6 +201,48 @@ function displayNullableNumberFrom(
   return null;
 }
 
+/** A planning amount is never an approved FY26 budget by implication. */
+function approvedFy26Budget(
+  row: TowerServingRow | undefined,
+  amountKey: string,
+): number | null {
+  if (!row) return null;
+  const displayed = displayPayload(row);
+  const fiscalYear = nullableText(displayed.budget_fiscal_year ?? displayed.fiscal_year);
+  const approval = nullableText(displayed.budget_approval_status);
+  if (!fiscalYear || !["FY2026", "2026"].includes(fiscalYear.toUpperCase())) return null;
+  if (approval?.toLowerCase() !== "approved") return null;
+  return nullableNum(displayed[amountKey] as Numeric);
+}
+
+function reconciledAnnualBenefit(row: TowerServingRow | undefined): number | null {
+  if (!row) return null;
+  const displayed = displayPayload(row);
+  if (nullableText(displayed.benefit_reconciliation_status)?.toLowerCase() !== "reconciled") return null;
+  if (nullableText(displayed.benefit_period)?.toLowerCase() !== "annual") return null;
+  return nullableNum(
+    (displayed.projected_annual_value_low_usd ?? displayed.promised_value_usd) as Numeric,
+  );
+}
+
+function approvedFinanceEvidence(row: TowerServingRow): boolean {
+  const displayed = displayPayload(row);
+  return (
+    nullableText(displayed.evidence_approval_status)?.toLowerCase() === "approved" &&
+    nullableText(displayed.finance_validation_status)?.toLowerCase() === "finance_validated"
+  );
+}
+
+function reportableClaimAmount(row: TowerServingRow): number | null {
+  if (!approvedFinanceEvidence(row)) return null;
+  if (payloadText(row, "claim_gate_status") !== "claimable") return null;
+  const displayed = displayPayload(row);
+  const periodStart = nullableText(displayed.claimable_value_period_start);
+  const periodEnd = nullableText(displayed.claimable_value_period_end);
+  if (!periodStart || !periodEnd || periodEnd < periodStart) return null;
+  return displayNullableNumberFrom(row, ["claimable_value_usd"]);
+}
+
 function payloadNullableNumberFrom(
   row: TowerServingRow,
   keys: readonly string[],
@@ -446,10 +488,6 @@ async function readServingView(
   return rows;
 }
 
-function sumRows(rows: readonly TowerServingRow[], key: string): number {
-  return rows.reduce((sum, row) => sum + payloadNumber(row, key), 0);
-}
-
 function countByGate(rows: readonly TowerServingRow[], status: string): number {
   return rows.filter((row) => payloadText(row, "claim_gate_status") === status)
     .length;
@@ -463,11 +501,7 @@ function isSourceOpportunityValueRow(row: TowerServingRow): boolean {
 }
 
 function hasKnownBenefitValue(row: TowerServingRow): boolean {
-  return (
-    !isSourceOpportunityValueRow(row) &&
-    (payloadNullableNumber(row, "promised_value_usd") !== null ||
-      payloadNullableNumber(row, "baseline_value") !== null)
-  );
+  return !isSourceOpportunityValueRow(row) && reconciledAnnualBenefit(row) !== null;
 }
 
 function comparableBlockedAmount(row: TowerServingRow): number | null {
@@ -509,9 +543,9 @@ function buildFunnel(
   rows: readonly TowerServingRow[],
 ): TowerMartValueFunnelStage[] {
   const benefitRows = rows.filter((row) => !isSourceOpportunityValueRow(row));
-  const promised =
-    sumRows(benefitRows, "promised_value_usd") +
-    sumRows(benefitRows, "baseline_value");
+  const promised = benefitRows.reduce(
+    (sum, row) => sum + (reconciledAnnualBenefit(row) ?? 0), 0,
+  );
   const measuredUsageRows = rows.map(recordedUsageSupportedValue);
   const usageSupportedTotal = measuredUsageRows.reduce<number>(
     (sum, amount) => sum + (amount ?? 0),
@@ -520,8 +554,12 @@ function buildFunnel(
   const usageSupported = measuredUsageRows.some((amount) => amount !== null)
     ? usageSupportedTotal
     : null;
-  const financeValidated = sumRows(rows, "finance_validated_value_usd");
-  const claimable = sumRows(rows, "claimable_value_usd");
+  const financeRows = rows.filter(approvedFinanceEvidence);
+  const financeValidated = financeRows.reduce(
+    (sum, row) => sum + (displayNullableNumberFrom(row, ["finance_validated_value_usd"]) ?? 0), 0,
+  );
+  const reportableAmounts = rows.map(reportableClaimAmount);
+  const claimable = reportableAmounts.reduce<number>((sum, amount) => sum + (amount ?? 0), 0);
   const claimRows = rows.filter((row) => payloadText(row, "claim_id"));
   const claimCount = claimRows.length;
   const knownValueClaimCount = claimRows.filter(hasKnownBenefitValue).length;
@@ -554,7 +592,7 @@ function buildFunnel(
     denominatorStageKey: sequence === 1 ? null : "promised",
     // The annual plan and values from loaded months do not share a period.
     conversionRatio: null,
-    claimStatus: gatedCount > 0 ? "gated" : "claimable",
+    claimStatus: valueNumeric === null ? "not_loaded" : gatedCount > 0 ? "gated" : "claimable",
     caveat,
     sourceFile: sources,
     sourceRow: null,
@@ -564,9 +602,9 @@ function buildFunnel(
     stage(
       1,
       "promised",
-      "Source-backed value",
+      "Reconciled yearly estimate",
       promisedAmount,
-      "Aggregated from ECL serving rows with source-record references.",
+      "Shown only when the annual benefit and its source reconciliation are recorded.",
     ),
     stage(
       2,
@@ -581,14 +619,14 @@ function buildFunnel(
       3,
       "finance_validated",
       "Finance validated",
-      financeValidated,
+      financeRows.length > 0 ? financeValidated : null,
       "Finance validation remains separate from adoption and planning values.",
     ),
     stage(
       4,
       "claimable",
       "Claimable",
-      claimable,
+      reportableAmounts.some((amount) => amount !== null) ? claimable : null,
       "Claimable value requires the Tower evidence gate to clear.",
     ),
   ];
@@ -604,6 +642,7 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
     row.row_key;
   const gateStatus = payloadText(row, "claim_gate_status") ?? "gated";
   const nextGate = payloadText(row, "next_gate");
+  const approvedFunding = approvedFy26Budget(row, "approved_fy_budget_usd");
   return {
     laneKey: row.row_key,
     programCode:
@@ -623,8 +662,9 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
     decisionRationale:
       payloadText(row, "claim_gate_reason_detail", row.summary) ??
       "ECL serving row requires evidence review before the claim can advance.",
-    approvedFundingUsd: payloadNumber(row, "funded_amount_usd"),
+    approvedFundingUsd: approvedFunding ?? 0,
     fundedAmount: payloadNumber(row, "funded_amount_usd"),
+    fundingAmountLoaded: approvedFunding !== null,
     aiTaggedSpendUsd:
       row.page_key === "ai_portfolio"
         ? payloadNumber(row, "funded_amount_usd")
@@ -632,8 +672,10 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
     aiSpendLoaded:
       row.page_key === "ai_portfolio" &&
       payloadNullableNumber(row, "funded_amount_usd") !== null,
-    promisedValueUsd: payloadNullableNumber(row, "promised_value_usd"),
-    financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
+    promisedValueUsd: reconciledAnnualBenefit(row),
+    financeValidatedValueUsd: approvedFinanceEvidence(row)
+      ? displayNullableNumberFrom(row, ["finance_validated_value_usd"]) ?? 0
+      : 0,
     knownSupportedValue: recordedUsageSupportedValue(row),
     proofMaturityScore: payloadNullableNumber(row, "proof_maturity_score"),
     riskPressureScore: payloadNullableNumber(row, "risk_pressure_score"),
@@ -693,6 +735,7 @@ function controlBlockerFields(row: TowerServingRow): {
 function financeApprovalEvents(
   row: TowerServingRow,
 ): TowerMartFinanceApprovalEvent[] {
+  if (!approvedFinanceEvidence(row)) return [];
   const raw = displayPayload(row).finance_approval_events;
   if (!Array.isArray(raw)) return [];
   return raw.map((entry) => {
@@ -733,6 +776,7 @@ function evidenceItems(row: TowerServingRow): TowerMartEvidenceItem[] {
 function valueObservationMonths(
   row: TowerServingRow,
 ): TowerMartValueObservationMonth[] {
+  if (!approvedFinanceEvidence(row)) return [];
   const raw = displayPayload(row).value_observation_months;
   if (!Array.isArray(raw)) return [];
   return raw
@@ -765,11 +809,7 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     "monthly_active_users",
   ]);
   const enabledUsersRaw = payloadNullableNumberFrom(row, ["enabled_users"]);
-  const approvedFundingRaw = displayNullableNumberFrom(row, [
-    "approved_funding_usd",
-    "approved_investment_usd",
-    "funded_amount_usd",
-  ]);
+  const approvedFundingRaw = approvedFy26Budget(row, "approved_fy_budget_usd");
   const monthlyCostRaw = displayNullableNumberFrom(row, ["monthly_cost_usd"]);
   const aiAmountBasis =
     approvedFundingRaw !== null
@@ -781,10 +821,7 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const aiTaggedSpendUsd =
     approvedFundingRaw ?? (monthlyCostRaw !== null ? monthlyCostRaw * 12 : 0);
   const aiSpendLoaded = aiAmountBasis !== "unknown";
-  const promisedValueUsd = payloadNullableNumberFrom(row, [
-    "promised_value_usd",
-    "projected_annual_value_low_usd",
-  ]);
+  const promisedValueUsd = reconciledAnnualBenefit(row);
   const adoptionRatePct =
     payloadNullableNumberFrom(row, [
       "adoption_rate_percent",
@@ -841,7 +878,9 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     financeApprovalEvents: financeApprovalEvents(row),
     evidenceItems: evidenceItems(row),
     promisedValueUsd,
-    financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
+    financeValidatedValueUsd: approvedFinanceEvidence(row)
+      ? displayNullableNumberFrom(row, ["finance_validated_value_usd"]) ?? 0
+      : 0,
     usageMetric,
     rolloutGoal: payloadTextFrom(row, ["rollout_goal"]),
     rolloutStage: payloadTextFrom(row, ["rollout_stage", "funding_status"]),
@@ -1140,9 +1179,12 @@ function buildHeadline(
   if (claimable > 0) {
     return `${tenantName} has ${formatCioTowerMoney(claimable)} cleared in loaded months. ${valueClaims} claims need review across ${gatedRows} evidence rows.`;
   }
+  if (valueClaims === 0) {
+    return `${tenantName} has no loaded value claims. A cleared benefit amount is unknown.`;
+  }
   const claimWord = valueClaims === 1 ? "claim" : "claims";
   const claimVerb = valueClaims === 1 ? "remains" : "remain";
-  return `${tenantName} has $0 board-claimable value. ${valueClaims} value ${claimWord} ${claimVerb} behind evidence gates; ${gatedRows} separate review rows describe the supporting backlog.`;
+  return `${tenantName} has no benefit amount cleared for reporting. ${valueClaims} value ${claimWord} ${claimVerb} behind evidence gates; ${gatedRows} separate review rows describe the supporting backlog.`;
 }
 
 export async function readTowerCommandCenter(args: {
@@ -1247,29 +1289,29 @@ export async function readTowerCommandCenter(args: {
       const summaryRow =
         activeCommandRows.find((row) => row.row_key === "executive_summary") ??
         activeCommandRows.find((row) => row.page_key === "command_center");
-      const funded = sumRows(activeDecisionRows, "funded_amount_usd");
       const benefitRows = valueRowsForTotals.filter(
         (row) => !isSourceOpportunityValueRow(row),
       );
-      const promised =
-        sumRows(benefitRows, "promised_value_usd") +
-        sumRows(benefitRows, "baseline_value");
-      const financeValidated = sumRows(
-        valueRowsForTotals,
-        "finance_validated_value_usd",
+      const promised = benefitRows.reduce(
+        (sum, row) => sum + (reconciledAnnualBenefit(row) ?? 0), 0,
       );
-      const claimable = sumRows(valueRowsForTotals, "claimable_value_usd");
-      const executiveApproved =
-        summaryRow === undefined
-          ? null
-          : payloadNullableNumberFrom(summaryRow, [
-              "reviewed_project_budget_usd",
-              "approved_investment_usd",
-            ]);
-      const executiveTotalIt =
-        summaryRow === undefined
-          ? null
-          : payloadNullableNumber(summaryRow, "total_it_budget_usd");
+      const financeValidated = valueRowsForTotals
+        .filter(approvedFinanceEvidence)
+        .reduce(
+          (sum, row) => sum + (displayNullableNumberFrom(row, ["finance_validated_value_usd"]) ?? 0),
+          0,
+        );
+      const claimable = valueRowsForTotals.reduce(
+        (sum, row) => sum + (reportableClaimAmount(row) ?? 0), 0,
+      );
+      const executiveApproved = approvedFy26Budget(
+        summaryRow,
+        "approved_project_fy_budget_usd",
+      );
+      const executiveTotalIt = approvedFy26Budget(
+        summaryRow,
+        "approved_fy_budget_usd",
+      );
       const executiveReviewedProjectCount =
         summaryRow === undefined
           ? null
@@ -1278,20 +1320,7 @@ export async function readTowerCommandCenter(args: {
         summaryRow === undefined
           ? null
           : payloadNullableNumber(summaryRow, "ai_related_investment_usd");
-      const executivePromised =
-        summaryRow === undefined
-          ? null
-          : payloadNullableNumberFrom(summaryRow, [
-              "projected_annual_value_low_usd",
-              "promised_value_usd",
-            ]);
-      const executiveClaimable =
-        summaryRow === undefined
-          ? null
-          : payloadNullableNumberFrom(summaryRow, [
-              "board_claimable_ytd_usd",
-              "claimable_value_usd",
-            ]);
+      const executivePromised = reconciledAnnualBenefit(summaryRow);
       const asOfPeriod =
         summaryRow === undefined
           ? null
@@ -1353,20 +1382,19 @@ export async function readTowerCommandCenter(args: {
           totalItBudgetFy26: executiveTotalIt,
           runBudgetFy26: null,
           changeBudgetFy26: null,
-          approvedProgramBudgetFy26: executiveApproved ?? (funded || null),
+          approvedProgramBudgetFy26: executiveApproved,
           aiTaggedSpendFy26NonAdditive:
             executiveAiInvestment ??
             aiPortfolio.reduce((sum, row) => sum + row.aiTaggedSpendUsd, 0),
-          promisedValueFy26: executivePromised ?? (promised || null),
+          promisedValueFy26: executivePromised,
           partialFinanceValidatedValueYtd: financeValidated,
-          realizedValueYtdAllowed: executiveClaimable ?? claimable,
-          claimableValue: executiveClaimable ?? claimable,
+          realizedValueYtdAllowed: claimable,
+          claimableValue: claimable,
           financeValidatedBlockedValue: Math.max(
             0,
             financeValidated - claimable,
           ),
-          promisedValueExposure:
-            executivePromised ?? (promised || null),
+          promisedValueExposure: executivePromised,
           blockedValueComparable: false,
           comparableBlockedValue: null,
           totalProgramSubjectCount:
@@ -1378,16 +1406,17 @@ export async function readTowerCommandCenter(args: {
           valueClaimCount: claimRows.length,
           knownValueClaimCount: knownValueClaimRows.length,
           unknownValueClaimCount: unknownValueClaimRows.length,
-          knownZeroValueClaimCount: knownValueClaimRows.filter(
-            (row) => payloadNumber(row, "claimable_value_usd") === 0,
-          ).length,
+          knownZeroValueClaimCount: knownValueClaimRows.filter((row) => {
+            const amount = reportableClaimAmount(row);
+            return amount !== null && amount === 0;
+          }).length,
           knownValueAmountUsd: promised,
           financeAttestedClaimCount: claimRows.filter(
-            (row) => payloadNumber(row, "finance_validated_value_usd") > 0,
+            (row) => approvedFinanceEvidence(row) && (displayNullableNumberFrom(row, ["finance_validated_value_usd"]) ?? 0) > 0,
           ).length,
           businessAttestedClaimCount: 0,
           claimableClaimCount: claimRows.filter(
-            (row) => payloadNumber(row, "claimable_value_usd") > 0,
+            (row) => (reportableClaimAmount(row) ?? 0) > 0,
           ).length,
           usageSupportedClaimCount: claimRows.filter(
             (row) => (recordedUsageSupportedValue(row) ?? 0) > 0,

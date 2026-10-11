@@ -460,8 +460,8 @@ export function AiInitiativeDrawer({
               <DrawerSection>Finance trail</DrawerSection>
               {a.financeApprovalEvents.length === 0 ? (
                 <div className={styles.urow}>
-                  No finance events are recorded against this case. Nothing has
-                  been reviewed or validated in the dated Finance trail.
+                  No approved Finance trail is loaded for this case. A status
+                  in the source file alone does not prove a checked benefit.
                 </div>
               ) : (
                 a.financeApprovalEvents.map((e, i) => (

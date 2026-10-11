@@ -378,6 +378,7 @@ function toProgramView(
     lane: derived.lane,
 
     fundedUsd: num(row.approvedFundingUsd),
+    fundingAmountLoaded: row.fundingAmountLoaded,
     promisedUsd: num(row.promisedValueUsd),
     promisedBenefitLoaded: row.promisedValueUsd !== null,
     usageSupportedUsd: usageSupported,
