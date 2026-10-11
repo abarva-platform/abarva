@@ -24,6 +24,26 @@ test("registered intake candidate keeps unsupported money unknown and maps all v
   assert.equal(report.coverage_gaps.find((gap) => gap.id === "modeled_spend_rounding_reconciled")?.status, "gap");
   assert.deepEqual(Object.values(report.view_counts).every((count) => count > 0), true);
   assert.equal(report.coverage_gaps.find((gap) => gap.id === "source_evidence_approved")?.status, "gap");
+  assert.equal(report.coverage_gaps.find((gap) => gap.id === "claim_evidence_ids_registered")?.status, "gap");
+  assert.equal(report.unregistered_claim_evidence_ids.length, 18);
+  assert.ok(report.canonical.ai_claims.every((claim) => claim.evidence_reference_registered === false));
+  assert.equal(report.coverage_gaps.find((gap) => gap.id === "raw_tool_usage_validates_claim_feed")?.status, "gap");
+  assert.equal(report.raw_usage_validation.detail_row_count, 997);
+  assert.equal(report.raw_usage_validation.declared_use_case_join, false);
+  assert.equal(report.raw_usage_validation.declared_source_system_join, false);
+  assert.equal(report.raw_usage_validation.compatible_period, false);
+  assert.equal(report.raw_usage_validation.validates_claim_usage, false);
+  assert.equal(report.unlinked_claim_program_ids.length, 18);
+  assert.equal(report.finance_value_conflict_ids.length, 15);
+  assert.equal(report.claim_status_conflict_ids.length, 17);
+  assert.equal(report.coverage_gaps.find((gap) => gap.id === "claim_program_ids_linked_to_pmo")?.status, "gap");
+  assert.equal(report.coverage_gaps.find((gap) => gap.id === "finance_values_reconciled_across_feeds")?.status, "gap");
+  assert.equal(report.coverage_gaps.find((gap) => gap.id === "claim_status_reconciled_across_feeds")?.status, "gap");
+  assert.equal(report.coverage_gaps.find((gap) => gap.id === "usage_rate_denominator_consistent")?.status, "gap");
+  assert.equal(report.coverage_gaps.find((gap) => gap.id === "interview_evidence_linked")?.status, "gap");
+  assert.ok(report.canonical.ai_claims.every((claim) => claim.program_budget_linked === false &&
+    claim.benefit_feed_usage_rate_basis === "active_over_enabled_users" &&
+    claim.usage_feed_usage_rate_basis === "active_over_licensed_users"));
   assert.equal(report.coverage_gaps.find((gap) => gap.id === "ai_money_usage_reconciled")?.status, "gap");
   assert.equal(report.coverage_gaps.find((gap) => gap.id === "declared_case_claim_crosswalk")?.status, "gap");
   assert.ok(report.canonical.ai_claims.every((claim) => claim.claimable_value_usd === null));
@@ -33,6 +53,7 @@ test("registered intake candidate keeps unsupported money unknown and maps all v
   assert.ok(report.views.cost_lens.some((row) => row.additive_to_it_spend === false));
   assert.equal(report.source_manifest["extracts/ms365-copilot-usage-user-detail.csv"].detail_suppressed, true);
   assert.ok(!JSON.stringify(report).includes("userPrincipalName"));
+  assert.ok(!JSON.stringify(report).includes("displayName"));
 });
 
 test("registry identity rejects an inactive tenant", () => {

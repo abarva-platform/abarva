@@ -23,7 +23,7 @@ test("physical plan preserves source identity and unknown amounts", () => {
   assert.equal(plan.sourceFiles.length, 17);
   assert.equal(plan.sourceRecords.length, 299);
   assert.equal(plan.objects.length, 237);
-  assert.equal(plan.measures.length, 281);
+  assert.equal(plan.measures.length, 308);
   assert.equal(plan.sourceRecords.filter((row) => row.record_type === "13_evidence_sources").length, 0);
   assert.equal(plan.sourceFiles.filter((row) => row.file_name.startsWith("extracts/")).length, 0);
   assert.ok(plan.commandRows.every((row) => row.funded_amount_usd === null && row.claimable_value_usd === null));
@@ -32,8 +32,26 @@ test("physical plan preserves source identity and unknown amounts", () => {
   assert.equal(plan.objects.filter((row) => row.object_type === "metric" && row.object_key === "modeled_annual_it_spend_usd").length, 1);
   assert.equal(plan.objects.find((row) => row.object_key === "modeled_annual_it_spend_usd").attributes_json.source_refs.length, 27);
   assert.equal(plan.objects.filter((row) => row.object_type === "ai_use_case").length, 36);
+  assert.ok(plan.objects.filter((row) => row.attributes_json.source_population === "separate_benefit_usage_feed")
+    .every((row) => row.attributes_json.evidence_reference_registered === false &&
+      row.attributes_json.program_budget_linked === false));
+  assert.ok(plan.measures.filter((row) => row.metric_key === "usage_feed_active_users")
+    .every((row) => row.attributes_json.reported_usage_rate_denominator === "active_over_licensed_users" &&
+      row.attributes_json.benefit_feed_usage_rate_denominator === "active_over_enabled_users" &&
+      row.attributes_json.raw_detail_validates_usage === false));
   assert.ok(plan.valueRows.filter((row) => row.page_key === "cost_lens").every((row) => row.measure_id));
-  assert.equal(plan.projectionMeasureRefs.length, 207);
+  assert.equal(plan.projectionMeasureRefs.length, 234);
+  const categoryMeasures = plan.measures.filter((row) => row.metric_key === "modeled_annual_spend_category_usd");
+  const aggregate = plan.measures.find((row) => row.metric_key === "modeled_annual_it_spend_usd");
+  assert.equal(categoryMeasures.length, 27);
+  assert.equal(categoryMeasures.reduce((sum, row) => sum + row.value_number, 0), aggregate.value_number);
+  assert.ok(categoryMeasures.every((row) => row.source_record_id &&
+    row.attributes_json.category_business_id === null &&
+    row.attributes_json.do_not_add_to_aggregate === true));
+  assert.equal(plan.valueRows.filter((row) => row.page_key === "cost_lens" && row.row_key.startsWith("spend:")).length, 27);
+  assert.ok(plan.measures.filter((row) => row.metric_key === "outcome_source_value" && row.scenario === "actual")
+    .every((row) => row.period_start === null && row.period_end === null &&
+      Object.hasOwn(row.attributes_json, "source_period_text")));
   assert.equal(plan.measures.filter((row) => row.metric_key === "outcome_source_value").length, 134);
   assert.equal(plan.projectionManifests.length, 9);
   assert.ok(Object.values(viewCounts).every((count) => count > 0));
@@ -41,6 +59,16 @@ test("physical plan preserves source identity and unknown amounts", () => {
   const evidence = plan.evidenceRows.find((row) => row.page_key === "evidence");
   assert.equal(evidence.source_refs_json[0].scope, "register_coverage_only");
   assert.equal(evidence.source_refs_json[0].source_row, null);
+});
+
+test("physical gate refuses category drift that would misstate the spend breakdown", () => {
+  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey });
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  const category = plan.measures.find((row) => row.metric_key === "modeled_annual_spend_category_usd");
+  category.value_number += 1;
+  const gate = validatePhysicalPlan(report, plan, viewCounts);
+  assert.equal(gate.status, "fail");
+  assert.ok(gate.errors.some((error) => error.includes("spend categories do not reconcile")));
 });
 
 test("write mode refuses the unapproved exact version before opening a database", () => {

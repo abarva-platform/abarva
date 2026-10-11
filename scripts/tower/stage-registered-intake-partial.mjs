@@ -11,7 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const DATASET_ID = "tower-registered-intake-partial-20261011";
 const MANIFEST_PATH = path.join(ROOT, "docs/governance/dataset-manifests", `${DATASET_ID}.json`);
 const IDENTITY_PATH = path.join(ROOT, "scripts/tower/registered-intake-identity-contract.json");
-const RELEASE_RECORD = "docs/releases/records/2026-10-11-tower-registered-intake-physical-stage.md";
+const RELEASE_RECORD = "docs/releases/records/2026-10-11-tower-category-measure-basis.md";
 const PAGE_TABLE = {
   command_center: "tower_command_center",
   decision_lanes: "tower_command_center",
@@ -24,8 +24,8 @@ const PAGE_TABLE = {
   adoption_lens: "tower_ai_portfolio",
 };
 const PAGE_KEYS = Object.keys(PAGE_TABLE);
-const PROJECTION_VERSION = 3;
-const BUILD_VERSION = "tower-registered-intake-partial/v1";
+const PROJECTION_VERSION = 4;
+const BUILD_VERSION = "tower-registered-intake-partial/v2";
 const IDENTITY = JSON.parse(fs.readFileSync(IDENTITY_PATH, "utf8"));
 const SPEND_METRIC_KEY = IDENTITY.aggregate_spend_metric.object_key;
 
@@ -92,7 +92,8 @@ function addObject(plan, report, type, key, title, ref, attrs = {}, reviewState 
 function addMeasure(plan, report, object, metric, value, unit, ref, state, attrs = {}) {
   if (value === null || value === undefined) return;
   plan.measures.push({
-    id: uuid("measure", report.tenant_key, report.assessment_id, object, metric, ref?.source_file || "aggregate"),
+    id: uuid("measure", report.tenant_key, report.assessment_id, object, metric,
+      ref?.source_file || "aggregate", ref?.source_row || "aggregate"),
     tenant_key: report.tenant_key, assessment_id: report.assessment_id,
     subject_object_id: object, metric_key: metric, value_number: value,
     value_text: null, unit, period_start: null, period_end: null,
@@ -104,7 +105,7 @@ function addMeasure(plan, report, object, metric, value, unit, ref, state, attrs
   });
 }
 
-function addOutcomeTextMeasure(plan, report, object, value, scenario, sourceField, ref) {
+function addOutcomeTextMeasure(plan, report, object, value, scenario, sourceField, ref, sourcePeriodText = null) {
   if (typeof value !== "string" || value.trim() === "") return;
   plan.measures.push({
     id: uuid("measure", report.tenant_key, report.assessment_id, object,
@@ -116,7 +117,8 @@ function addOutcomeTextMeasure(plan, report, object, value, scenario, sourceFiel
     source_record_id: sourceRowId(report, ref), document_extraction_id: null,
     basis: "source_recorded", value_state: "known", quality_state: "insufficient",
     review_state: "not_reviewed", attributes_json: {
-      source_field: sourceField, unit_and_period_not_normalized: true,
+      source_field: sourceField, source_period_text: sourcePeriodText,
+      unit_and_period_not_normalized: true,
       claimable_value_usd: null,
     },
   });
@@ -197,13 +199,31 @@ function addCanonicalRows(plan, report) {
   spendObject.value_state = "estimated";
   addMeasure(plan, report, spendId, SPEND_METRIC_KEY, report.canonical.modeled_annual_spend.amount_usd,
     "USD", null, "estimated", { source_basis: IDENTITY.aggregate_spend_metric.basis,
-      period: "annual_unspecified_year", source_refs: spendRefs });
+      period: "annual_unspecified_year", source_refs: spendRefs,
+      money_population: "modeled_it_spend", amount_role: "aggregate",
+      do_not_add_to_category_rows: true, do_not_add_to_contract_spend: true });
   plan.measures.at(-1).basis = "calculated";
+  for (const row of report.views.cost_lens.filter((item) => item.row_key.startsWith("spend:"))) {
+    const ref = sourceRefsFor(row)[0];
+    if (!ref || row.category_business_id !== null || row.source_row_identity_only !== true) {
+      throw new Error(`Spend category lacks an explicit source-row-only identity: ${row.row_key}`);
+    }
+    addMeasure(plan, report, spendId, "modeled_annual_spend_category_usd", row.value,
+      "USD", ref, "estimated", {
+        category_business_id: null, category_label: row.category_label,
+        identity_basis: "source_row_only", money_population: "modeled_it_spend",
+        amount_role: "aggregate_component", parent_metric_key: SPEND_METRIC_KEY,
+        period: "annual_unspecified_year", do_not_add_to_aggregate: true,
+        do_not_add_to_contract_spend: true,
+      });
+  }
   for (const program of report.canonical.programs) {
     const id = addObject(plan, report, "program", program.id, program.name, program.source_ref,
-      { budget_basis: "planning_period_unapproved" });
+      { budget_basis: "planning_period_unapproved", fiscal_year: null,
+        funding_approval_status: "not_verified" });
     addMeasure(plan, report, id, "program_planning_budget_usd", program.planning_budget_usd, "USD", program.source_ref,
-      "estimated", { approved_fy_budget_usd: null });
+      "estimated", { approved_fy_budget_usd: null, fiscal_year: null,
+        funding_approval_status: "not_verified", period_basis: "unspecified" });
   }
   for (const item of report.canonical.ai_use_cases) {
     addObject(plan, report, "ai_use_case", item.id, item.name, item.source_refs[0],
@@ -212,9 +232,20 @@ function addCanonicalRows(plan, report) {
   for (const claim of report.canonical.ai_claims) {
     const ref = claim.source_refs.find((item) => item.source_file.startsWith("SA09_"));
     const id = addObject(plan, report, "ai_use_case", claim.id, claim.name, ref,
-      { source_population: "separate_benefit_usage_feed", linked_use_case_id: null, claimable_value_usd: null });
+      { source_population: "separate_benefit_usage_feed", linked_use_case_id: null,
+        claimable_value_usd: null, evidence_reference_registered: claim.evidence_reference_registered,
+        unregistered_evidence_ids: claim.unregistered_evidence_ids,
+        program_budget_linked: claim.program_budget_linked,
+        finance_feed_conflict: claim.finance_feed_conflict,
+        claim_status_feed_conflict: claim.claim_status_feed_conflict });
     addMeasure(plan, report, id, "usage_feed_active_users", claim.usage_active_users, "users", ref,
-      "known", { enabled_users: claim.usage_denominator, value_attribution_usd: null });
+      "known", { enabled_users: claim.usage_denominator,
+        licensed_users: claim.usage_licensed_users,
+        reported_usage_rate_pct: claim.usage_feed_reported_rate_pct,
+        reported_usage_rate_denominator: claim.usage_feed_usage_rate_basis,
+        benefit_feed_usage_rate_denominator: claim.benefit_feed_usage_rate_basis,
+        raw_detail_validates_usage: report.raw_usage_validation.validates_claim_usage,
+        value_attribution_usd: null });
     const benefitRef = claim.source_refs.find((item) => item.source_file.startsWith("SA08_"));
     addMeasure(plan, report, id, "benefit_feed_planning_promise_usd", claim.planning_promise_usd, "USD", benefitRef,
       "estimated", { cross_source_conflict: claim.source_conflict, claimable_value_usd: null });
@@ -223,7 +254,10 @@ function addCanonicalRows(plan, report) {
     const id = addObject(plan, report, "vendor", vendor.id, vendor.vendor, vendor.source_ref,
       { overlap_with_it_spend_unknown: true });
     addMeasure(plan, report, id, "vendor_annual_contract_spend_usd", vendor.annual_contract_spend_usd,
-      "USD", vendor.source_ref, "estimated", { additive_to_it_spend: false });
+      "USD", vendor.source_ref, "estimated", {
+        money_population: "vendor_contract_exposure", amount_role: "separate_exposure",
+        overlap_with_it_spend: "unknown", additive_to_it_spend: false,
+      });
   }
   for (const row of report.views.risk_lens) {
     addObject(plan, report, "risk", row.row_key, row.title, sourceRefsFor(row)[0],
@@ -231,19 +265,21 @@ function addCanonicalRows(plan, report) {
   }
   for (const metric of report.canonical.outcome_metrics) {
     const id = addObject(plan, report, "metric", metric.id, metric.name, metric.source_ref,
-      { baseline: metric.baseline, target: metric.target, observed: metric.observed,
+      { baseline: metric.baseline, baseline_period: metric.baseline_period,
+        target: metric.target, observed: metric.observed, observed_period: metric.observed_period,
         claimable_value_usd: null, blocked_reason: metric.blocked_reason });
-    addOutcomeTextMeasure(plan, report, id, metric.baseline, "baseline", "baseline", metric.source_ref);
+    addOutcomeTextMeasure(plan, report, id, metric.baseline, "baseline", "baseline", metric.source_ref,
+      metric.baseline_period);
     addOutcomeTextMeasure(plan, report, id, metric.target, "target", "target", metric.source_ref);
-    addOutcomeTextMeasure(plan, report, id, metric.observed, "actual", "observed", metric.source_ref);
+    addOutcomeTextMeasure(plan, report, id, metric.observed, "actual", "observed", metric.source_ref,
+      metric.observed_period);
   }
 }
 
 function physicalPreviewRows(report) {
   const result = Object.fromEntries(PAGE_KEYS.map((page) => [page, []]));
   for (const page of PAGE_KEYS) {
-    result[page] = report.views[page].filter((row) =>
-      page !== "cost_lens" || !row.row_key.startsWith("spend:"));
+    result[page] = report.views[page];
   }
   result.decision_lanes = result.decision_lanes.map((row) => ({ ...row,
     value: null, value_state: "unknown", planning_budget_usd: row.value,
@@ -252,21 +288,28 @@ function physicalPreviewRows(report) {
   const spendRefs = report.canonical.modeled_annual_spend.source_refs;
   result.cost_lens.unshift({
     row_key: "modeled_annual_spend", title: "Modeled annual IT spend",
-    plain_language: "Annual category spend is a one-source planning estimate, not an approved budget. Category rows need declared IDs before separate canonical objects can be loaded.",
+    plain_language: "Annual category spend is a one-source planning estimate, not an approved budget. The category breakdown is tied to source rows; category business IDs are still missing.",
     value: report.canonical.modeled_annual_spend.amount_usd,
     value_state: "estimated", source_refs: spendRefs,
     metric_label: "Modeled annual spend", additive_to_contract_spend: false,
+    additive_to_category_rows: false, money_population: "modeled_it_spend",
+    amount_role: "aggregate", period_basis: "annual_unspecified_year",
     source_narrative_difference_usd: report.canonical.modeled_annual_spend.row_sum_difference_usd,
   });
   result.evidence = [{
-    row_key: "evidence_approval_gap", title: "Evidence approval gap",
-    plain_language: `${report.evidence_rows_not_approved} source entries have not been approved for loading; no evidence content is presented as proof.`,
+    row_key: "evidence_approval_gap", title: "Evidence approval and reference gap",
+    plain_language: `${report.evidence_rows_not_approved} source entries have not been approved for loading. ${report.unregistered_claim_evidence_ids.length} claim evidence IDs do not appear in the register. No evidence content is presented as proof.`,
     value: null, value_state: "unknown", source_refs: [{
       source_file: "13_evidence_sources.csv",
       source_sha256: report.source_manifest["13_evidence_sources.csv"].sha256,
       source_row: null, scope: "register_coverage_only",
-    }],
+    }, ...["SA08_AI_Benefits_Realization_Usage_Ledger.csv", "SA09_AI_Tool_Usage_Feed.csv",
+      "SA11_AI_KPI_Operational_Outcome_Feed.csv"].map((file) => ({
+        source_file: file, source_sha256: report.source_manifest[file].sha256,
+        source_row: null, scope: "claim_evidence_id_coverage_only",
+      }))],
     approval_gap_count: report.evidence_rows_not_approved,
+    unregistered_claim_evidence_id_count: report.unregistered_claim_evidence_ids.length,
   }];
   return result;
 }
@@ -295,11 +338,14 @@ function addProjectionRows(plan, report, views) {
       let canonicalMeasureRefs = [];
       if (page === "cost_lens") {
         const contract = row.row_key.startsWith("contract:");
+        const category = row.row_key.startsWith("spend:");
         canonicalObjectId = contract ? objectId(report, "vendor", row.row_key.slice(9)) :
           objectId(report, "metric", SPEND_METRIC_KEY);
-        const metricKey = contract ? "vendor_annual_contract_spend_usd" : SPEND_METRIC_KEY;
+        const metricKey = contract ? "vendor_annual_contract_spend_usd" :
+          category ? "modeled_annual_spend_category_usd" : SPEND_METRIC_KEY;
         const matches = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
-          measure.metric_key === metricKey);
+          measure.metric_key === metricKey && (!category ||
+            measure.source_record_id === sourceRowId(report, sourceRefsFor(row)[0])));
         if (matches.length !== 1 || Number(matches[0].value_number) !== Number(row.value)) {
           throw new Error(`Canonical cost measure does not match ${row.row_key}`);
         }
@@ -383,7 +429,8 @@ function addProjectionRows(plan, report, views) {
             row.row_key === "modeled_annual_spend" ? objectId(report, "metric", SPEND_METRIC_KEY) :
             objectId(report, "ai_use_case", row.row_key)),
           claim_id: row.row_key, observation_key: `${page}:${row.row_key}`,
-          metric_key: isCost ? row.row_key.startsWith("contract:") ? "vendor_annual_contract_spend_usd" : SPEND_METRIC_KEY : "unverified_value_claim",
+          metric_key: isCost ? row.row_key.startsWith("contract:") ? "vendor_annual_contract_spend_usd" :
+            row.row_key.startsWith("spend:") ? "modeled_annual_spend_category_usd" : SPEND_METRIC_KEY : "unverified_value_claim",
           measure_id: canonicalMeasure?.id || null,
           source_record_id: row.row_key === "modeled_annual_spend" ? null :
             primaryRef ? sourceRowId(report, primaryRef) : null,
@@ -396,7 +443,10 @@ function addProjectionRows(plan, report, views) {
           baseline_value: null, current_value: null, target_value: null,
           claimable_value_usd: null, blocked_value_usd: null,
           value_state: isCost ? "estimated" : "unknown", quality_state: "warning",
-          gap_flags_json: isCost ? ["planning_estimate"] : ["value_not_claimable"],
+          gap_flags_json: isCost ? row.row_key.startsWith("spend:") ?
+            ["planning_estimate", "category_business_id_missing", "do_not_add_to_aggregate"] :
+            row.row_key.startsWith("contract:") ? ["planning_estimate", "spend_overlap_unknown"] :
+              ["planning_estimate", "do_not_add_to_category_rows"] : ["value_not_claimable"],
         });
       } else if (table === "tower_evidence_queue") {
         plan.evidenceRows.push({ ...common, page_key: page, row_type: "evidence_gap",
@@ -423,7 +473,9 @@ function addProjectionRows(plan, report, views) {
           usage_events: null, monthly_cost_usd: null, adoption_rate_percent: null,
           value_state: isAdoption ? "known" : "unknown", quality_state: "warning",
           review_state: "not_reviewed", metric_keys_json: isAdoption ? ["usage_feed_active_users"] : [],
-          gap_flags_json: ["value_attribution_unapproved"],
+          gap_flags_json: isAdoption && !report.raw_usage_validation.validates_claim_usage ?
+            ["value_attribution_unapproved", "raw_detail_not_validated"] :
+            ["value_attribution_unapproved"],
         });
       }
     }
@@ -449,6 +501,7 @@ export function buildPhysicalPlan(report) {
   };
   const metricDefinitions = [
     [SPEND_METRIC_KEY, "Modeled annual IT spend", "One-source sum of annual category-spend rows; a planning estimate, not an approved budget.", "USD", "annual", "none"],
+    ["modeled_annual_spend_category_usd", "Modeled annual spend category", "One source row within the modeled spend aggregate. Category business ID is unavailable; never add these rows to the aggregate or contract exposures.", "USD", "annual", "none"],
     ["program_planning_budget_usd", "Program planning budget", "Source-listed program budget with fiscal period and approval unverified.", "USD", "point_in_time", "none"],
     ["usage_feed_active_users", "AI usage feed active users", "Active users as reported by the usage source for its own denominator.", "users", "point_in_time", "none"],
     ["benefit_feed_planning_promise_usd", "AI benefit feed planning promise", "Source-specific planning promise; conflicting feeds prevent a claimable amount.", "USD", "point_in_time", "none"],
@@ -510,8 +563,10 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
   }
   const objectIds = new Set(plan.objects.map((row) => row.id));
   const sourceIds = new Set(plan.sourceRecords.map((row) => row.id));
+  const measureIds = new Set(plan.measures.map((row) => row.id));
   const sourceFiles = new Map(plan.sourceFiles.map((row) => [row.file_name, row.file_hash]));
-  if (objectIds.size !== plan.objects.length || sourceIds.size !== plan.sourceRecords.length) errors.push("duplicate identity");
+  if (objectIds.size !== plan.objects.length || sourceIds.size !== plan.sourceRecords.length ||
+      measureIds.size !== plan.measures.length) errors.push("duplicate identity");
   for (const row of [...plan.commandRows, ...plan.valueRows, ...plan.evidenceRows, ...plan.aiRows]) {
     if (row.primary_object_id && !objectIds.has(row.primary_object_id)) errors.push(`missing object for ${row.row_key}`);
     if (row.use_case_object_id && !objectIds.has(row.use_case_object_id)) errors.push(`missing use case for ${row.row_key}`);
@@ -527,6 +582,19 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
     errors.push("evidence gap is not aggregate-only");
   }
   const measuresById = new Map(plan.measures.map((measure) => [measure.id, measure]));
+  const spendAggregate = plan.measures.find((measure) => measure.metric_key === SPEND_METRIC_KEY);
+  const spendCategories = plan.measures.filter((measure) => measure.metric_key === "modeled_annual_spend_category_usd");
+  const spendCategoryRows = rowsForPage(plan, "cost_lens").filter((row) => row.row_key.startsWith("spend:"));
+  if (spendCategories.length !== report.canonical.modeled_annual_spend.source_refs.length ||
+      spendCategoryRows.length !== spendCategories.length ||
+      spendCategories.some((measure) => measure.subject_object_id !== spendAggregate?.subject_object_id ||
+        measure.source_record_id === null || measure.attributes_json.category_business_id !== null ||
+        measure.attributes_json.identity_basis !== "source_row_only" ||
+        measure.attributes_json.do_not_add_to_aggregate !== true ||
+        measure.attributes_json.do_not_add_to_contract_spend !== true) ||
+      spendCategories.reduce((sum, measure) => sum + Number(measure.value_number), 0) !== Number(spendAggregate?.value_number)) {
+    errors.push("spend categories do not reconcile to the single aggregate without double counting");
+  }
   for (const row of rowsForPage(plan, "cost_lens")) {
     const measure = measuresById.get(row.measure_id);
     if (!measure || measure.subject_object_id !== row.primary_object_id ||
@@ -546,6 +614,12 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
           measure.metric_key !== "outcome_source_value" || measure.scenario !== scenario ||
           measure.value_text !== sourceText || measure.source_record_id !== row.source_record_id)) {
         errors.push(`outcome text is not tied to its canonical measure: ${row.row_key}:${field}`);
+      }
+      const expectedPeriod = scenario === "baseline" ? row.display_payload_json.baseline_period :
+        scenario === "actual" ? row.display_payload_json.observed_period : null;
+      if (measure && (measure.attributes_json.source_period_text !== expectedPeriod ||
+          measure.period_start !== null || measure.period_end !== null)) {
+        errors.push(`outcome period was normalized or lost: ${row.row_key}:${field}`);
       }
     }
   }
