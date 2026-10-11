@@ -2,7 +2,9 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   buildVendorResponseMveProfiles,
+  buildVendorResponseParseReport,
   buildVendorResponseParseReportsFromProfiles,
+  type VendorResponseParseReport,
 } from "@/lib/source/proposal-intelligence";
 import { VendorResponseIngestionPathPanel } from "../VendorResponseIngestionPathPanel";
 
@@ -53,4 +55,151 @@ describe("VendorResponseIngestionPathPanel", () => {
       "Parse vendor packages before generating leverage or value proof.",
     );
   });
+
+  it.each([undefined, []])(
+    "withholds scoring when response reports are %s",
+    (parseReports) => {
+      const html = renderToStaticMarkup(
+        createElement(VendorResponseIngestionPathPanel, { parseReports }),
+      );
+
+      expect(html).toContain("No response evidence");
+      expect(html).toContain(
+        "Load and parse vendor response packages before scoring.",
+      );
+      expect(html).not.toContain("0 blockers, 0 holdbacks");
+      expect(html).not.toContain("Proceed to evaluator scoring.");
+      expect(html).not.toContain("Ready to score");
+    },
+  );
+
+  it.each(["not_ready", "score_with_caveats"] as const)(
+    "withholds scoring for %s even without counted missing inputs",
+    (scoreReadiness) => {
+      const html = renderToStaticMarkup(
+        createElement(VendorResponseIngestionPathPanel, {
+          parseReports: [report(scoreReadiness)],
+        }),
+      );
+
+      expect(html).toContain("Score evidence incomplete");
+      expect(html).toContain(
+        "Resolve score readiness for every vendor before scoring.",
+      );
+      expect(html).not.toContain("0 blockers, 0 holdbacks");
+      expect(html).not.toContain("Proceed to evaluator scoring.");
+    },
+  );
+
+  it("requires every response report to be ready", () => {
+    const html = renderToStaticMarkup(
+      createElement(VendorResponseIngestionPathPanel, {
+        parseReports: [report("ready_to_score"), report("not_ready")],
+      }),
+    );
+
+    expect(html).toContain("Score evidence incomplete");
+    expect(html).not.toContain("Ready to score");
+    expect(html).not.toContain("Proceed to evaluator scoring.");
+  });
+
+  it.each(["not_ready", "ready_to_score"] as const)(
+    "preserves evidence-gap instructions even when readiness is %s",
+    (scoreReadiness) => {
+      const blocked = report(scoreReadiness);
+      blocked.missingInputs = [
+        {
+          missingId: "missing-pricing",
+          severity: "blocker",
+          ownerRole: "Vendor response lead",
+          request: "Provide pricing evidence.",
+          scoringImpact: "Commercial comparison is blocked.",
+        },
+        {
+          missingId: "weak-transition",
+          severity: "holdback",
+          ownerRole: "Evaluation lead",
+          request: "Review transition evidence.",
+          scoringImpact: "Transition score needs review.",
+        },
+      ];
+      const html = renderToStaticMarkup(
+        createElement(VendorResponseIngestionPathPanel, {
+          parseReports: [blocked],
+        }),
+      );
+
+      expect(html).toContain("1 blockers, 1 holdbacks");
+      expect(html).toContain(
+        "Close required evidence gaps or accept visible caveats.",
+      );
+      expect(html).not.toContain("Proceed to evaluator scoring.");
+    },
+  );
+
+  it("allows the scoring instruction for a non-empty all-ready response set", () => {
+    const html = renderToStaticMarkup(
+      createElement(VendorResponseIngestionPathPanel, {
+        parseReports: [report("ready_to_score"), report("ready_to_score")],
+      }),
+    );
+
+    expect(html).toContain("Ready to score");
+    expect(html).toContain("Proceed to evaluator scoring.");
+    expect(html).not.toContain("No response evidence");
+  });
+
+  it("preserves holdback-only caveats without a blocker", () => {
+    const held = report("score_with_caveats");
+    held.missingInputs = [
+      {
+        missingId: "weak-transition",
+        severity: "holdback",
+        ownerRole: "Evaluation lead",
+        request: "Review transition evidence.",
+        scoringImpact: "Transition score needs review.",
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(VendorResponseIngestionPathPanel, {
+        parseReports: [held],
+      }),
+    );
+
+    expect(html).toContain("0 blockers, 1 holdbacks");
+    expect(html).toContain(
+      "Close required evidence gaps or accept visible caveats.",
+    );
+    expect(html).not.toContain("Proceed to evaluator scoring.");
+  });
 });
+
+function report(
+  scoreReadiness: VendorResponseParseReport["scoreReadiness"],
+): VendorResponseParseReport {
+  const parsed = buildVendorResponseParseReport({
+    sourceEventId: "test-score-gate",
+    tenantKey: "test-tenant",
+    vendorName: "Fixture supplier",
+    responseVersion: 1,
+    requiredSections: ["Service delivery"],
+    documents: [
+      {
+        fileName: "proposal.txt",
+        role: "response_package",
+        text: "Service delivery: named service leads provide managed support.",
+      },
+      {
+        fileName: "pricing.txt",
+        role: "pricing_workbook",
+        text: "Pricing: a fixed fee includes the agreed service scope.",
+      },
+    ],
+  });
+  return {
+    ...parsed,
+    scoreReadiness,
+    missingInputs: [],
+    health: { ...parsed.health, scoreReadiness },
+  };
+}
