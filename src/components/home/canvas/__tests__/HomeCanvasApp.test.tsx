@@ -183,6 +183,30 @@ describe("native Home preview", () => {
         .querySelectorAll("button").length,
     ).toBeGreaterThan(5);
   });
+  it.each(bundle().chapters)(
+    "$title keeps additional aligned context inspectable",
+    (chapter) => {
+      mockParams = new URLSearchParams(
+        `view=${chapter.chapterId}&panel=evidence`,
+      );
+      render(app());
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Additional on-topic context/ }),
+      );
+      expect(
+        screen.getByRole("heading", {
+          name: "Additional context in this record",
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getAllByRole("button", { name: "Read & verify" }).length,
+      ).toBeGreaterThan(0);
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Read & verify" })[0],
+      );
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    },
+  );
   it("retains full text and evidence in an accessible inspection dialog", () => {
     render(app());
     fireEvent.click(

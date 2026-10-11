@@ -303,7 +303,7 @@ export function buildCurrentStateFlow(options: CurrentStateFlowOptions): Current
       semanticRole:
         lane === "middleware" || lane === "data_integration"
           ? "integration"
-          : lane === "data_warehouse" || lane === "data_mart"
+          : lane === "enterprise_warehouse" || lane === "data_marts"
             ? "data_store"
             : lane === "analytics_bi"
               ? "analytics"
@@ -363,7 +363,7 @@ export function buildCurrentStateFlow(options: CurrentStateFlowOptions): Current
       id: `tail-${lane}`,
       label: `${t.count} more`,
       semanticRole:
-        lane === "data_warehouse" || lane === "data_mart"
+        lane === "enterprise_warehouse" || lane === "data_marts"
           ? "data_store"
           : lane === "analytics_bi"
             ? "analytics"

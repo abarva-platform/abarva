@@ -314,6 +314,7 @@ export function HomeCanvasApp({
                 tenantKey={tenantKey}
                 tenantName={tenantName}
                 flow={view === "data-flow"}
+                recordsHref={href("tech:data_asset_or_integration", "evidence")}
                 inspect={setInspection}
               />
             ) : view === "browse-the-data" ? (

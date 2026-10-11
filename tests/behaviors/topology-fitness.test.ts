@@ -21,7 +21,10 @@ describe("topology fitness", () => {
   it("REFUSES a tenant whose flows are one-to-one with opaque sequential ids", () => {
     // This is the whole point: every classification in that view can be correct and the picture
     // still asserts a structure the record does not contain.
-    const fit = assessTopologyFitness(flowsFor("skyharbor-air"));
+    const fit = assessTopologyFitness(Array.from({ length: 499 }, (_, i) => ({
+      source: "Recorded source",
+      target: `APP-${String(i + 1).padStart(4, "0")}`,
+    })));
     expect(fit.maxInbound).toBe(1);
     expect(fit.targetConvergenceRatio).toBe(0);
     expect(fit.fitForExecutiveFlow).toBe(false);

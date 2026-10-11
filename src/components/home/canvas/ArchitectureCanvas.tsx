@@ -6,6 +6,7 @@ import { renderArchitectureViewSvg } from "@/lib/visual-system/architecture-svg-
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 import type { CanvasInspection } from "./ChapterCanvas";
 import styles from "./HomeCanvas.module.css";
+import { FlowRecordCanvas } from "./FlowRecordCanvas";
 
 export function ArchitectureCanvas({
   bundle,
@@ -13,15 +14,18 @@ export function ArchitectureCanvas({
   tenantName,
   flow,
   inspect,
+  recordsHref,
 }: {
   bundle: HomeReviewBundle;
   tenantKey: string;
   tenantName: string;
   flow: boolean;
   inspect: (detail: CanvasInspection) => void;
+  recordsHref: string;
 }) {
   const [zoom, setZoom] = useState(100);
   const [capability, setCapability] = useState("");
+  const [showRecords, setShowRecords] = useState(false);
   const types = bundle.technologyEstate?.recordTypes ?? [];
   const applications = types.find(
     (family) => family.objectType === "application_system",
@@ -78,6 +82,31 @@ export function ArchitectureCanvas({
         ),
       ].sort()
     : [];
+  if (flow && showRecords && result.status === "ready")
+    return (
+      <section>
+        <button
+          className={styles.textButton}
+          onClick={() => setShowRecords(false)}
+        >
+          Back to diagram
+        </button>
+        <FlowRecordCanvas
+          bundle={bundle}
+          recordsHref={recordsHref}
+          inspect={inspect}
+        />
+      </section>
+    );
+  if (result.status === "refused" && flow)
+    return (
+      <FlowRecordCanvas
+        bundle={bundle}
+        refusal={result.refusal}
+        recordsHref={recordsHref}
+        inspect={inspect}
+      />
+    );
   if (result.status === "refused")
     return (
       <section className={styles.section}>
@@ -128,6 +157,14 @@ export function ArchitectureCanvas({
   return (
     <section className={styles.section}>
       <div className={styles.graphTools}>
+        {flow && (
+          <button
+            className={styles.textButton}
+            onClick={() => setShowRecords(true)}
+          >
+            Recorded movements
+          </button>
+        )}
         {!flow && capabilities.length > 0 && (
           <label className={styles.basis}>
             Business function{" "}

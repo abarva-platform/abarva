@@ -34,6 +34,8 @@ import {
   type CanvasPanel,
 } from "./canvas-model";
 import styles from "./HomeCanvas.module.css";
+import { LeadershipCanvas, OperatingCanvas } from "./ContextViews";
+import { chapterContext } from "./context-coverage";
 
 export interface CanvasInspection {
   title: string;
@@ -93,6 +95,7 @@ export function ChapterCanvas({
           tables={depth.tables}
           findings={findings}
           unsupported={depth.unsupported.map((item) => item.why)}
+          contextItems={chapterContext(bundle, source, chapter.chapterId)}
           href={href}
           inspect={inspect}
         />
@@ -116,6 +119,21 @@ export function ChapterCanvas({
           <span className={styles.eyebrow}>
             {current ? "Published interpretation" : "Prior interpretation"}
           </span>
+          {chapter.chapterId === "how_we_operate" &&
+            chapter.key_insights.every((claim) =>
+              claim.evidence_ids.every(
+                (id) =>
+                  bundle.thesis.signalPacket.signals.find(
+                    (signal) => signal.id === id,
+                  )?.kind === "dependency",
+              ),
+            ) && (
+              <div className={styles.notice}>
+                This published readout covers reporting dependencies, not
+                segment organization. It is retained as published; the operating
+                context is separate.
+              </div>
+            )}
           <h2>{cxoText(chapter.headline)}</h2>
           <p>{cxoText(chapter.executive_synthesis)}</p>
           <h3>What the record shows</h3>
@@ -199,6 +217,15 @@ export function ChapterCanvas({
       </div>
     );
 
+  if (chapter.chapterId === "leadership_perspective")
+    return (
+      <LeadershipCanvas bundle={bundle} source={source} inspect={inspect} />
+    );
+  if (chapter.chapterId === "how_we_operate")
+    return (
+      <OperatingCanvas bundle={bundle} source={source} inspect={inspect} />
+    );
+
   return (
     <div className={styles.overview} data-canvas-overview={chapter.chapterId}>
       {!current && (
@@ -207,18 +234,15 @@ export function ChapterCanvas({
           not verified against this version and is kept in Full reading.
         </div>
       )}
-      {bundle.declaredSyntheticDemo &&
-        chapter.chapterId === "leadership_perspective" && (
-          <div className={styles.notice}>
-            Synthetic reference record. Recorded leadership perspectives are not
-            client-attested testimony. Response basis is shown in the interview
-            evidence.
-          </div>
-        )}
       <div className={styles.metrics}>
         {canvasMetrics(chapter.chapterId, bundle, source).map((metric) => (
           <div key={metric.label} className={styles.metric}>
-            <strong data-unknown={metric.value === "Not recorded"}>
+            <strong
+              data-unknown={
+                metric.value === "Not recorded" ||
+                metric.value === "Not supplied"
+              }
+            >
               {metric.value}
             </strong>
             {metric.objectType &&
@@ -913,6 +937,7 @@ function EvidenceCanvas({
   tables,
   findings,
   unsupported,
+  contextItems,
   href,
   inspect,
 }: {
@@ -921,6 +946,7 @@ function EvidenceCanvas({
   tables: TableSpec[];
   findings: Finding[];
   unsupported: string[];
+  contextItems: ReturnType<typeof chapterContext>;
   href: Href;
   inspect: (detail: CanvasInspection) => void;
 }) {
@@ -970,6 +996,12 @@ function EvidenceCanvas({
           onClick={() => setSelected(tables.length + 2)}
         >
           Coverage gaps ({unsupported.length})
+        </button>
+        <button
+          aria-pressed={selected === tables.length + 3}
+          onClick={() => setSelected(tables.length + 3)}
+        >
+          Additional on-topic context ({contextItems.length})
         </button>
       </nav>
       <section className={styles.section}>
@@ -1085,6 +1117,43 @@ function EvidenceCanvas({
             ) : (
               <div className={styles.empty}>
                 No published claims for this chapter.
+              </div>
+            )}
+          </>
+        ) : selected === tables.length + 3 ? (
+          <>
+            <h2>Additional context in this record</h2>
+            <p className={styles.basis}>
+              Compiled facts and signals in the chapter&apos;s subject domains.
+              These are not a new narrative or new findings.
+            </p>
+            {contextItems.length ? (
+              <ul className={`${styles.list} ${styles.contextList}`}>
+                {contextItems.map((item) => (
+                  <li key={item.id}>
+                    <span>
+                      {cxoText(item.statement)}
+                      <button
+                        className={styles.textButton}
+                        style={{ display: "block", marginTop: 8 }}
+                        onClick={() =>
+                          inspect({
+                            title: "On-topic record context",
+                            text: item.statement,
+                            evidenceIds: [item.id],
+                          })
+                        }
+                      >
+                        Read & verify
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className={styles.empty}>
+                No aligned additional context is supplied. Earlier
+                interpretation is not substituted for current evidence.
               </div>
             )}
           </>

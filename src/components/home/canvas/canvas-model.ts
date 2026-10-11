@@ -38,7 +38,7 @@ export const CHAPTER_CONTRACTS: Record<
   leadership_perspective: {
     title: "Leadership Perspective",
     purpose:
-      "Where recorded perspectives converge, diverge or need validation.",
+      "Shared concerns, less widely raised themes and the voices behind them.",
   },
   what_needs_attention: {
     title: "What Needs Attention",
@@ -281,8 +281,14 @@ export function canvasMetrics(
   const count = (label: string, objectType: TechObjectType): CanvasMetric => ({
     label,
     objectType,
-    value: formatCanvasNumber(recordCount(bundle, objectType)),
-    basis: "Rows in the record on screen",
+    value:
+      recordCount(bundle, objectType) === null
+        ? "Not supplied"
+        : formatCanvasNumber(recordCount(bundle, objectType)),
+    basis:
+      recordCount(bundle, objectType) === null
+        ? "Detail rows absent from this bundle; not an enterprise absence"
+        : "Rows in the record on screen",
   });
   const profile: CanvasMetric[] = [
     {
