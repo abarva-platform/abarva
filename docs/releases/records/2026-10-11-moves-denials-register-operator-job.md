@@ -38,9 +38,9 @@ Add a private ACA operator job for one synthetic, newly created Move. Its read-o
 ## QA / Validation
 
 - Typecheck: pass.
-- Focused behavior tests: pass, 5 tests including preflight, stale scope/refusal, exact apply/readback, duplicate-load refusal, no-retry rollback and the private job envelope. One deliberate mutation of the P3 phase guard made all 4 affected tests fail; the original source was restored and all 5 passed again.
+- Focused behavior tests: pass, 12 tests including preflight, stale scope/refusal, exact apply/readback with a preserved pre-existing revision, duplicate-load refusal, no-retry rollback, private job envelope, live identity and register readback, transaction lock ordering, proof bundles and a post-commit proof collision. One deliberate mutation of the P3 phase guard made all 4 affected tests fail; the original source was restored and the focused suite passed again.
 - Scoped lint and offline source-hash command: pass.
-- Coverage census: regenerated from 3,005 to 3,006 test files and 2,841 to 2,842 pull-request-workflow-reached files; 164 remain unreached. Tenancy-fence census regenerated with no diff.
+- Coverage census: regenerated from 3,005 to 3,007 test files and 2,841 to 2,843 pull-request-workflow-reached files; 164 remain unreached. Tenancy-fence census regenerated with no diff. The first exact-head behavior coverage run found 89.86% lines against the 90% floor; the added private-runner tests exercise the previously uncovered operator paths, with the next full gate pending.
 - Manifest validation: pass with existing declaration-owner warnings outside this change. Release check: pass, 11 of 11 gates. Library-orphan, route/export reachability and tenancy-fence checks: pass with no new findings.
 - Live read-only preflight and apply: pending the fresh Move and exact named load approval.
 

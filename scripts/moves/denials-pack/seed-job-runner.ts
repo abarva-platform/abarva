@@ -77,7 +77,7 @@ export function parseArgs(env: Record<string, string | undefined> = process.env)
   };
 }
 
-async function readLiveScope(moveId: string, operatorPersonId: string): Promise<LiveScope> {
+export async function readLiveScope(moveId: string, operatorPersonId: string): Promise<LiveScope> {
   const { getAzureWriteFluentClient } = await import("../../../src/lib/data-plane/postgresCompat");
   const { listAssumptions } = await import("../../../src/lib/programs/assumption-register/store");
   const db = getAzureWriteFluentClient();
@@ -141,7 +141,7 @@ async function readLiveScope(moveId: string, operatorPersonId: string): Promise<
   };
 }
 
-function makeDeps(args: RunnerArgs): JobDeps {
+export function makeDeps(args: RunnerArgs): JobDeps {
   return {
     readLive: readLiveScope,
     manifests: loadManifests(),
@@ -162,7 +162,7 @@ function makeDeps(args: RunnerArgs): JobDeps {
   };
 }
 
-function writeProofBundle(outDir: string, proof: Record<string, unknown>,
+export function writeProofBundle(outDir: string, proof: Record<string, unknown>,
   status: "succeeded" | "failed", startedAtUtc: string, timeoutSeconds: number): void {
   mkdirSync(outDir, { recursive: true });
   const file = (name: string, body: Record<string, unknown>) =>
@@ -201,7 +201,7 @@ function writeProofBundle(outDir: string, proof: Record<string, unknown>,
   })}`);
 }
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   if (process.argv.includes("--seed-hash")) {
     console.log(JSON.stringify({ datasetId: SEED_DATASET_ID,
       proposalSha256: readExactProposal().sha256,

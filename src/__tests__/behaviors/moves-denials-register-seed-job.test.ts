@@ -157,6 +157,25 @@ it("applies once under the dedicated person with proposed status and actor event
   await expect(runDenialsSeedJob(apply, work)).rejects.toThrow("denials_seed_row_already_present");
 });
 
+it("preserves the exact pre-existing register revision through the write and readback", async () => {
+  const scope = liveScope();
+  const baseline = { id: "00000000-0000-4000-8000-000000000999",
+    area: "delivery", registerId: "DL1", statement: "Unrelated existing delivery assumption",
+    workingValue: 3, unit: "count", source: "existing", status: "open",
+    origin: "manual", createdByUserId: PERSON, revision: 4 } as unknown as AssumptionRecord;
+  scope.registerRows.push(baseline);
+  const work = deps(scope, true);
+  const preflight = await runDenialsSeedJob(args("preflight"), work, OBSERVED);
+  expect(preflight.binding.registerSnapshot).toEqual([{ id: baseline.id, area: "delivery",
+    registerId: "DL1", revision: 4, status: "open" }]);
+  expect(preflight.rows[0].registerId).toBe("DL2");
+  const result = await runDenialsSeedJob({ ...args("apply"), binding: preflight.binding,
+    idempotencyKey: preflight.idempotencyKey }, work);
+  expect(result.postcommitReadback).toBe("passed");
+  expect(scope.registerRows).toHaveLength(23);
+  expect(scope.registerRows[0]).toEqual(baseline);
+});
+
 it("rolls back a mid-batch refusal and does not retry the write", async () => {
   const scope = liveScope();
   const work = deps(scope, true);
