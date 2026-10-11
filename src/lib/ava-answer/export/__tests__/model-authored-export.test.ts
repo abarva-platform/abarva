@@ -86,12 +86,20 @@ it("exports categorical matrix labels and caveats without transforming advisory 
   };
   const raw = `Validate first.\n\n\`\`\`chart\n${JSON.stringify(chart)}\n\`\`\``;
   const answer = modelAuthoredAnswerPacket(raw, "Compare", "fixture", []);
-  session.turns[1] = { id: "a1", role: "agent", reviewStatus: "complete", body: answer.prose!, answer };
+  session.turns[1] = {
+    id: "a1",
+    role: "agent",
+    reviewStatus: "complete",
+    body: answer.prose!,
+    answer,
+  };
   const validated = validateSession(session);
   expect(validated.error).toBeUndefined();
   const html = renderModelAuthoredSessionHtml(validated.session!);
   expect(html).toContain('class="matrix"');
-  expect(html).toContain("Effort: low · Potential: high");
+  expect(html).toContain('<svg class="matrix"');
+  expect(html).toContain("rotate(-90)");
+  expect(html).not.toContain("reason:");
   expect(html).toContain("Needs dependency proof");
   expect(validated.session!.turns[1].answer!.modelAuthored!.rawText).toBe(raw);
 });
