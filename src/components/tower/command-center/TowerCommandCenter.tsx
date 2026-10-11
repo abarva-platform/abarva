@@ -34,6 +34,7 @@ import { QueueOwnerPanel } from "./views/QueueOwnerPanel";
 import { ToolsTablePanel } from "./views/ToolsTablePanel";
 import { ToolsVendorPanel } from "./views/ToolsVendorPanel";
 import { VerdictPanel } from "./views/VerdictPanel";
+import { isBusinessCase, isToolRollout } from "./views/portfolio-kind";
 import {
   AiPortfolioContractView,
   EvidenceActionsContractView,
@@ -63,8 +64,8 @@ const TABS: ReadonlyArray<{ id: TowerTab; label: string }> = [
   { id: "budget", label: "Where the money goes" },
   { id: "initiatives", label: "AI bets" },
   { id: "tools", label: "Tools" },
-  { id: "decisions", label: "What must happen next" },
   { id: "foundations", label: "Foundations" },
+  { id: "decisions", label: "What must happen next" },
 ];
 
 const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
@@ -94,12 +95,12 @@ type SubTab = { readonly id: string; readonly label: string };
 const SUB_TABS: Readonly<Record<TowerTab, readonly SubTab[]>> = {
   verdict: [],
   budget: [
-    { id: "shape", label: "Run, change, transform" },
-    { id: "domain", label: "By domain" },
+    { id: "shape", label: "Budget shape" },
+    { id: "domain", label: "Reviewed programs by domain" },
   ],
   initiatives: [
-    { id: "constraint", label: "What blocks value" },
-    { id: "table", label: "All cases" },
+    { id: "constraint", label: "Recorded constraints" },
+    { id: "table", label: "Business cases" },
     { id: "distribution", label: "Distribution" },
     { id: "proof", label: "Value proof" },
   ],
@@ -441,9 +442,9 @@ export function TowerCommandCenter({
               const selected = t.id === tab;
               const count =
                 t.id === "initiatives"
-                  ? (view?.summary.valueClaimCount ?? null)
+                  ? (view ? view.allInitiatives.filter(isBusinessCase).length : null)
                   : t.id === "tools"
-                    ? (view?.summary.aiInitiativeCount ?? null)
+                    ? (view ? view.allInitiatives.filter(isToolRollout).length : null)
                     : t.id === "decisions"
                       ? (view?.actions.length ?? null)
                       : null;

@@ -622,7 +622,7 @@ describe("the outcome fields survive the canonical layer", () => {
   });
 
   it("distinguishes a project that spent nothing from one never recorded", () => {
-    expect(drawer).toContain('a.actualSpendYtdUsd === null\n                ? "Not recorded"');
+    expect(drawer).toMatch(/a\.actualSpendYtdUsd === null\s+\? "Not recorded"/);
   });
 });
 

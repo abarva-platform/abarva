@@ -95,10 +95,7 @@ async function readTowerChatStream(
 
 function towerSummaryPrompt(view: TowerCommandCenterView | null): string {
   if (!view) return "What Tower evidence is loaded for this tenant?";
-  const blockedPrograms = view.gaps.filter(
-    (gap) => gap.primaryBlockingGap,
-  ).length;
-  return `Which ${blockedPrograms || "open"} Tower proof gaps should I close first?`;
+  return "Which primary Tower proof gaps should I close first, and which records support them?";
 }
 
 /**
@@ -119,7 +116,7 @@ function surfaceSuggestions(
   subTab: string | null | undefined,
 ): string[] {
   const rollouts = view.allInitiatives.filter(
-    (item) => item.usageHeadline !== null || item.usageBars.length > 0,
+    (item) => item.sourceFile === "23_ai_tool_rollout.csv",
   );
   const belowTarget = rollouts.filter((item) => {
     const adoption = item.usageBars.find((bar) => bar.label === "Adoption");
@@ -132,7 +129,9 @@ function surfaceSuggestions(
   const blockedRollouts = rollouts.filter(
     (item) => item.controlBlocker !== null,
   ).length;
-  const cases = view.allInitiatives.filter((item) => item.financeStatus !== null);
+  const cases = view.allInitiatives.filter(
+    (item) => item.sourceFile !== "23_ai_tool_rollout.csv",
+  );
   const unvalidated = cases.filter(
     (item) => item.financeStatus !== "finance_validated_actual",
   ).length;
@@ -451,11 +450,6 @@ export function TowerCommandCenterAvaShell({
         towerMeasures: view
           ? [
               {
-                measureKey: "total_it_budget_fy26",
-                label: "Total IT budget",
-                value: view.summary.budgetUsd,
-              },
-              {
                 measureKey: "ai_tagged_spend_fy26_non_additive",
                 label: "AI-tagged spend",
                 value: view.summary.aiTaggedUsd,
@@ -472,7 +466,12 @@ export function TowerCommandCenterAvaShell({
               },
             ]
           : [],
-        towerKnownGaps: view?.gaps.map((gap) => gap.missing).slice(0, 12) ?? [],
+        towerKnownGaps: view
+          ? [
+              "Total IT budget is omitted from assistant measures because the Tower projection amount has no reconciled active-intake lineage status. Treat it as unverified until that status is available.",
+              ...view.gaps.map((gap) => gap.missing).slice(0, 12),
+            ]
+          : [],
       }}
       defaultMode="collapsed"
       respectStoredMode={false}

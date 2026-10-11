@@ -219,8 +219,8 @@ const RULES: ReadonlyArray<{ title: string; body: string }> = [
     body: "A sponsor claim and a CFO target are both projections. Only a validation event moves value into the board number.",
   },
   {
-    title: "Foundation rows carry no direct value",
-    body: "Their $0 is a recorded fact, not missing data. They earn value only through the funded cases they carry.",
+    title: "Foundations need a linked value case",
+    body: "Do not count an enabler as a direct benefit. Where its value is not loaded, keep it unknown rather than treating it as $0.",
   },
   {
     title: "AI status comes from classification, not a label",
@@ -231,8 +231,9 @@ const RULES: ReadonlyArray<{ title: string; body: string }> = [
 export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   const s = view.summary;
 
+  const hasClaims = s.valueClaimCount > 0;
+  const hasAssertion = s.promisedBenefitLoaded;
   const asserted = M(s.promisedUsd);
-  const claimable = M(s.claimableUsd);
 
   // Cases that have reached Finance validation, and the asserted value sitting on them. This is
   // not the same as `financeValidatedUsd`: the design's middle bar is how much *asserted* value is
@@ -261,12 +262,6 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
       label: assertedOnValidated === null ? "Not recorded" : money(assertedOnValidated),
       fill: assertedOnValidated === null ? GREY : AMBER_LIGHT,
     },
-    {
-      name: "Board claimable",
-      value: claimable,
-      label: money(claimable),
-      fill: TEAL,
-    },
   ];
 
   // Business cases only. `allInitiatives` also carries tool rollouts, and counting both conflates
@@ -290,9 +285,6 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
     return { name, value: count, label: String(count), fill };
   });
 
-  const claimablePctOfAsserted =
-    s.promisedUsd > 0 ? (s.claimableUsd / s.promisedUsd) * 100 : null;
-
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
       <h2
@@ -306,9 +298,9 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
           color: "var(--abarva-ink-black)",
         }}
       >
-        {s.claimableUsd > 0
-          ? `${bigMoney(s.claimableUsd)} of ${bigMoney(s.promisedUsd)} asserted value clears the board.`
-          : "No asserted value clears the board today."}
+        {hasAssertion
+          ? `${bigMoney(s.promisedUsd)} annual benefit asserted; ${hasClaims ? `${bigMoney(s.claimableUsd)} claimable` : "board-claimable value not loaded"} year to date.`
+          : "Annual benefit assertion is not loaded; its value remains unknown."}
       </h2>
 
       <div
@@ -320,8 +312,8 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
       >
         <MetricCard
           label="Total IT budget"
-          value={bigMoney(s.budgetUsd)}
-          caption="IT Finance · annual · sums"
+          value={s.budgetUsd === null ? "Not loaded" : "Reconciliation needed"}
+          caption="Tower projection has no active-intake lineage status; amount withheld until reconciled"
         />
         <MetricCard
           label="AI-related investment"
@@ -329,19 +321,19 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
           // carried over from the panel it replaces — but those are different measures, and the
           // `||` fires on a legitimate 0, hiding "no AI spend attributed" behind a tagged total.
           value={bigMoney(s.aiAttributedInitiativeSpendUsd)}
-          caption="IT Finance · annual · by classification"
+          caption="Tower projection · annual · classification; intake lineage not certified here"
         />
         <MetricCard
           label="Asserted annual value"
-          value={bigMoney(s.promisedUsd)}
-          caption="Business sponsor · annual · sums"
+          value={hasAssertion ? bigMoney(s.promisedUsd) : "Not loaded"}
+          caption="Tower projection · sponsor assertions · annual; source reconciliation pending"
           accent="var(--canon-amber)"
           valueColor="var(--canon-amber)"
         />
         <MetricCard
           label="Board claimable YTD"
-          value={bigMoney(s.claimableUsd)}
-          caption="Finance · additive by month only"
+          value={hasClaims ? bigMoney(s.claimableUsd) : "Not loaded"}
+          caption="Tower projection · Finance YTD; sum by month only; source reconciliation pending"
           accent="var(--canon-teal)"
           valueColor="var(--canon-teal-dark)"
         />
@@ -350,19 +342,23 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 520px" }}>
           <h3 style={{ margin: "0 0 22px", fontSize: 15, fontWeight: 600 }}>
-            Asserted value, and what survives each gate
+            Annual assertion on Finance-validated cases
           </h3>
-          <HBar
-            data={gate}
-            axisLabel="Annual value"
-            height={190}
-            labelWidth={168}
-            axisFmt={money}
-          />
+          {hasAssertion ? (
+            <HBar
+              data={gate}
+              axisLabel="Asserted annual value"
+              height={190}
+              labelWidth={168}
+              axisFmt={money}
+            />
+          ) : (
+            <p>No value claims are loaded for this comparison.</p>
+          )}
           <p style={NOTE}>
-            {claimablePctOfAsserted === null
-              ? "No asserted value is recorded, so no share of it can be claimable."
-              : `${claimablePctOfAsserted.toFixed(1)}% of asserted value is claimable. The portfolio ROI band is a projection, not a result.`}
+            {hasAssertion
+              ? "The bars show annual assertions, including the portion attached to Finance-validated cases. Board-claimable value is year to date and cannot be divided by the annual assertion to form a conversion rate."
+              : "No annual benefit assertion is loaded, so Tower cannot calculate an assertion-to-proof share."}
           </p>
         </div>
 
@@ -383,8 +379,8 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
               ? "No case carries a finance status in this read, so there is nothing to place in the pipeline. This is a gap in the projection, not a portfolio without cases."
               : null}{" "}
             Validation and value are not the same gate: a case can be Finance
-            validated and still assert nothing, because foundations carry no
-            direct value.
+            validated and still assert no direct benefit. An enabler with no
+            loaded value remains unknown.
           </p>
         </div>
       </div>

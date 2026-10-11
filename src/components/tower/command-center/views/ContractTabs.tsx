@@ -69,14 +69,6 @@ const AI_KIND_LABEL: Record<TowerAiKind, string> = {
   platform: "platform",
 };
 
-function measuredUsd(view: TowerCommandCenterView): number {
-  return Math.max(
-    view.summary.financeValidatedUsd ?? 0,
-    view.summary.usageSupportedUsd ?? 0,
-    0,
-  );
-}
-
 function formatLoadedUsdM(value: number | null | undefined): string {
   return value === null || value === undefined
     ? "not loaded"
@@ -132,8 +124,8 @@ function contractSummaryLine(view: TowerCommandCenterView) {
   const claimCount = valueClaimCount(view);
   return (
     <>
-      {formatLoadedUsdM(s.approvedInvestmentUsd)} approved ·{" "}
-      <strong>{formatUsdM(s.claimableUsd)} board-claimable</strong> ·{" "}
+      {formatLoadedUsdM(s.approvedInvestmentUsd)} approved investment in Tower projection ·{" "}
+      <strong>{claimCount > 0 ? formatUsdM(s.claimableUsd) : "Not loaded"} board-claimable YTD</strong> ·{" "}
       {claimCount > 0
         ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} claims still need proof`
         : "Value claims not loaded"}
@@ -143,8 +135,8 @@ function contractSummaryLine(view: TowerCommandCenterView) {
 
 function lineageStatus(view: TowerCommandCenterView): string {
   return view.summary.conflictedProgramCount > 0
-    ? "LINEAGE UNRESOLVED"
-    : "LINEAGE CURRENT";
+    ? "PROGRAM CONFLICTS IN TOWER PROJECTION"
+    : "NO PROGRAM CONFLICTS IN TOWER PROJECTION";
 }
 
 function ContractMasthead({ view }: { view: TowerCommandCenterView }) {
@@ -163,12 +155,13 @@ function ContractMasthead({ view }: { view: TowerCommandCenterView }) {
             "Usage support not loaded"
           )}
         </span>
-        <span>{formatUsdM(measuredUsd(view))} ceiling</span>
+        <span>{formatCount(s.outcomeMeasuredClaimCount)}/{formatCount(s.valueClaimCount)} claims outcome-measured</span>
         <span>{formatCount(emittingAiCount(view))} tracked assets emitting</span>
         <span>
           {s.asOfPeriod ? `As of ${s.asOfPeriod}` : "As-of date not recorded"}
         </span>
         <span>{lineageStatus(view)}</span>
+        <span>INTAKE LINEAGE STATUS NOT LOADED · VERIFY BEFORE QUOTING</span>
       </div>
     </header>
   );
@@ -200,10 +193,6 @@ function cardTitle(title: string, subtitle?: string) {
   );
 }
 
-function moneyLabel(value: number | null | undefined): string {
-  return formatLoadedUsdM(value);
-}
-
 function topPrograms(
   view: TowerCommandCenterView,
   count = 20,
@@ -218,96 +207,47 @@ function topPrograms(
 
 function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
   const s = view.summary;
-  const rows = [
+  const groups = [
     {
-      gate: "Reviewed investment",
-      valueUsd: s.approvedInvestmentUsd,
-      fill: HEX.tealDark,
+      title: "Investment",
+      note: "Reviewed project capital and AI-attributed spend are investment measures, not benefit outcomes.",
+      rows: [
+        ["Reviewed investment", formatLoadedUsdM(s.approvedInvestmentUsd)],
+        ["AI spend tracked", formatUsdM(s.aiAttributedInitiativeSpendUsd)],
+      ],
     },
     {
-      gate: "AI spend tracked",
-      valueUsd: s.aiAttributedInitiativeSpendUsd,
-      fill: HEX.tealDark,
+      title: "Benefit and adoption",
+      note: "The assertion is annual. Usage-linked claim value has no reporting period in this summary and is not a measured outcome.",
+      rows: [
+        ["Promised annual value", s.promisedBenefitLoaded ? formatUsdM(s.promisedUsd) : "Not loaded"],
+        ["Usage-linked claim value", s.valueClaimCount > 0 ? formatUsdM(s.usageSupportedUsd) : "Not loaded"],
+      ],
     },
     {
-      gate: "Promised value",
-      valueUsd: s.promisedUsd,
-      fill: HEX.amber,
+      title: "Finance review · YTD",
+      note: "Validated value may still be blocked; only the claimable amount has cleared the board gate.",
+      rows: [
+        ["Finance validated YTD", s.valueClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "Not loaded"],
+        ["Board-claimable YTD", s.valueClaimCount > 0 ? formatUsdM(s.claimableUsd) : "Not loaded"],
+      ],
     },
-    {
-      gate: "Usage supported",
-      valueUsd: Math.min(s.usageSupportedUsd, s.promisedUsd),
-      fill: HEX.red,
-    },
-    {
-      gate: "Measured outcome",
-      valueUsd: Math.min(measuredUsd(view), s.promisedUsd),
-      fill: HEX.amber,
-    },
-    {
-      gate: "Finance approved",
-      valueUsd: s.financeValidatedUsd,
-      fill: HEX.red,
-    },
-    { gate: "Board-claimable", valueUsd: s.claimableUsd, fill: HEX.red },
   ];
-  const axisMax = Math.max(...rows.map((row) => toM(row.valueUsd ?? 0)), 1);
-  const data = rows.map((row) => ({
-    ...row,
-    value: row.valueUsd === null ? 0 : withSliver(toM(row.valueUsd), axisMax),
-    label: moneyLabel(row.valueUsd),
-  }));
-
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart
-        layout="vertical"
-        data={data}
-        margin={{ top: 8, right: 48, left: 12, bottom: 12 }}
-        barCategoryGap="27%"
-      >
-        <CartesianGrid horizontal={false} stroke={HEX.border} />
-        <XAxis
-          type="number"
-          tickFormatter={(value: number) => `$${Math.round(value)}M`}
-          tick={{
-            fontSize: 10,
-            fill: HEX.gray500,
-            fontFamily: "var(--abarva-mono)",
-          }}
-          axisLine={{ stroke: HEX.borderStrong }}
-          tickLine={false}
-        />
-        <YAxis
-          type="category"
-          dataKey="gate"
-          width={136}
-          tick={{
-            fontSize: 11,
-            fill: HEX.gray900,
-            fontFamily: "var(--abarva-mono)",
-          }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <ChartTooltip formatter={(value) => `$${Number(value).toFixed(1)}M`} />
-        <Bar dataKey="value" isAnimationActive={false} radius={[0, 4, 4, 0]}>
-          {data.map((row) => (
-            <Cell key={row.gate} fill={row.fill} />
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, height: "100%", overflowY: "auto" }}>
+      {groups.map((group) => (
+        <div key={group.title} style={{ border: "1px solid var(--canon-border)", padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+          <strong>{group.title}</strong>
+          {group.rows.map(([label, value]) => (
+            <div key={label} style={{ borderTop: "1px solid var(--canon-border)", paddingTop: 10 }}>
+              <span style={{ display: "block", fontSize: 12 }}>{label}</span>
+              <b style={{ display: "block", fontSize: 20 }}>{value}</b>
+            </div>
           ))}
-          <LabelList
-            dataKey="label"
-            position="right"
-            style={{
-              fill: HEX.gray700,
-              fontFamily: "var(--abarva-mono)",
-              fontSize: 11,
-              fontWeight: 700,
-            }}
-          />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+          <small style={{ marginTop: "auto", lineHeight: 1.5 }}>{group.note}</small>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -338,10 +278,6 @@ function sumLoadedUsd(values: readonly (number | null | undefined)[]): number | 
 
 function trajectoryRecordedPAndLUsd(view: TowerCommandCenterView): number | null {
   return sumLoadedUsd(view.valueTrajectory.map((point) => point.realizedPAndLUsd));
-}
-
-function unprovenPromisedUsd(view: TowerCommandCenterView): number {
-  return view.summary.promisedUsd - view.summary.claimableUsd;
 }
 
 function TrajectoryChart({ view }: { view: TowerCommandCenterView }) {
@@ -487,7 +423,6 @@ export function ValueProofContractView({
 }) {
   const s = view.summary;
   const recordedPAndL = trajectoryRecordedPAndLUsd(view);
-  const unproven = unprovenPromisedUsd(view);
   const programs = topPrograms(view, 20);
   const hasTrajectory = view.valueTrajectory.length > 0;
   return (
@@ -501,35 +436,36 @@ export function ValueProofContractView({
       <section className={styles.valueProofGrid}>
         <article className={styles.contractCard}>
           {cardTitle(
-            "Investment to value conversion",
-            "No substitution between states",
+            "Portfolio amounts by measure",
+            "Investment, planning value and YTD validation have different bases",
           )}
           <div className={styles.gateChart}>
             <ValueGateChart view={view} />
           </div>
           <p className={styles.contractCallout}>
-            Promised value, measured value, Finance approval and board-claimable
-            value stay separate.
+            Usage-linked claim value is evidence of adoption, not a measured
+            financial outcome. Investment and annual plans do not form a
+            conversion rate with year-to-date Finance amounts.
           </p>
         </article>
 
         <article className={styles.contractCard}>
           {cardTitle(
-            "Eight-quarter trajectory",
-            `${formatCount(valueClaimCount(view))} observations · ${s.sourceFiles[0] ?? s.sourceStandard}`,
+            "Loaded quarterly trajectory",
+            `${formatCount(view.valueTrajectory.length)} quarter${view.valueTrajectory.length === 1 ? "" : "s"} loaded · ${s.sourceFiles[0] ?? s.sourceStandard}`,
           )}
           <div className={styles.trajectoryStats}>
             <div>
-              <span>Planned</span>
+              <span>Asserted annual plan</span>
               <strong>{formatUsdM(s.promisedUsd)}</strong>
             </div>
             <div>
-              <span>Recorded P&amp;L</span>
+              <span>Recorded P&amp;L in loaded quarters</span>
               <strong>{formatLoadedUsdM(recordedPAndL)}</strong>
             </div>
             <div>
-              <span>Not yet proven</span>
-              <strong>{formatUsdM(unproven)}</strong>
+              <span>Outcome-measured claims</span>
+              <strong>{formatCount(s.outcomeMeasuredClaimCount)} / {formatCount(s.valueClaimCount)}</strong>
             </div>
           </div>
           {hasTrajectory ? (
@@ -542,8 +478,9 @@ export function ValueProofContractView({
             </div>
           )}
           <p className={styles.contractCallout}>
-            Red line is recorded actual value visible to Tower; gray bars are
-            the loaded planning path.
+            {recordedPAndL === null
+              ? "No P&L actual is recorded in the loaded quarters. Gray bars show only the loaded planning path."
+              : "Red line shows recorded P&L only for the loaded quarters; gray bars show their planning path. This is not a complete eight-quarter trend unless eight quarters are present."}
           </p>
         </article>
 
@@ -736,7 +673,9 @@ function topAiRows(view: TowerCommandCenterView): TowerAiView[] {
 
 function aiBenefitLabel(item: TowerAiView): string {
   if (!item.promisedBenefitLoaded) {
-    return "No benefit claim loaded";
+    return item.financeStatus === null
+      ? "No tool-level benefit claim loaded"
+      : "No case-level benefit claim loaded";
   }
   if (item.promisedUsd > 0) {
     return `${formatUsdM(item.promisedUsd)} sponsor-stated benefit`;
@@ -895,7 +834,7 @@ export function AiPortfolioContractView({
     {
       key: "risk" as const,
       label: "Risk lens",
-      detail: `${formatCount(view.gaps.length)} rows`,
+      detail: `${formatCount(view.gaps.length)} total · top ${formatCount(riskRows(view).length)} shown`,
     },
     {
       key: "adoption" as const,
@@ -999,7 +938,7 @@ export function AiPortfolioContractView({
 
       {lens === "risk" ? (
         <article className={cx(styles.contractCard, styles.contractFullCard)}>
-          {cardTitle("Risk lens", "Top value evidence gaps by amount at stake")}
+          {cardTitle("Risk lens", `Top ${formatCount(riskRows(view).length)} of ${formatCount(view.gaps.length)} value evidence gaps by amount at stake`)}
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>
               <thead>
@@ -1228,13 +1167,13 @@ function sourceContractActions(view: TowerCommandCenterView) {
 function reconciliationRows(view: TowerCommandCenterView) {
   const ai = view.summary.aiInitiativeCount;
   const tasks = view.actions.length;
-  const risk = Math.max(view.gaps.length + view.pipelineGaps.length, 0);
   const claims = valueClaimCount(view);
   return [
-    ["AI Portfolio", ai],
-    ["Value Claims", claims],
-    ["Risk Lens", risk],
-    ["Action Queue", tasks],
+    ["AI portfolio assets", ai],
+    ["Value claims", claims],
+    ["AI risk lens evidence gaps", view.gaps.length],
+    ["Pipeline field gaps (ops)", view.pipelineGaps.length],
+    ["Action queue tasks", tasks],
   ] as const;
 }
 
@@ -1255,18 +1194,13 @@ export function EvidenceActionsContractView({
   const campaigns = campaignRows(view);
   const sourceActions = sourceContractActions(view);
   const rowsByPage = reconciliationRows(view);
-  const rowsTotal = rowsByPage.reduce((sum, [, count]) => sum + count, 0);
-  const gated =
-    view.summary.blockedProgramCount + view.summary.claimableProgramCount;
-  const blocked = view.gaps.length + view.pipelineGaps.length;
-  const notApplicable = Math.max(0, rowsTotal - gated - blocked);
 
   return (
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
       <SectionTitle
-        title="Three populations, three names"
-        subtitle="They never reconciled because they were never the same thing"
+        title="Distinct review populations"
+        subtitle="Assets, claims, evidence gaps, pipeline gaps and tasks have different counting bases"
       />
 
       <section className={styles.populationGrid}>
@@ -1396,52 +1330,23 @@ export function EvidenceActionsContractView({
 
         <article className={styles.contractCard}>
           {cardTitle(
-            "Projection reconciliation",
-            `${formatCount(rowsTotal)} rows, both ways`,
+            "Projection population counts",
+            "Separate, overlapping populations; do not add these rows",
           )}
           <div className={styles.reconcileTables}>
             <div>
-              <h3>Rows by page</h3>
+              <h3>Rows by population</h3>
               {rowsByPage.map(([label, count]) => (
                 <p key={label}>
                   <span>{label}</span>
                   <strong>{formatCount(count)}</strong>
                 </p>
               ))}
-              <p>
-                <span>Total</span>
-                <strong>{formatCount(rowsTotal)}</strong>
-              </p>
-            </div>
-            <div>
-              <h3>Gate state</h3>
-              <p>
-                <span>
-                  <i className={styles.dotGray} /> Not applicable
-                </span>
-                <strong>{formatCount(notApplicable)}</strong>
-              </p>
-              <p>
-                <span>
-                  <i className={styles.dotAmber} /> Gated
-                </span>
-                <strong>{formatCount(gated)}</strong>
-              </p>
-              <p>
-                <span>
-                  <i className={styles.dotRed} /> Blocked
-                </span>
-                <strong>{formatCount(blocked)}</strong>
-              </p>
-              <p>
-                <span>Total</span>
-                <strong>{formatCount(rowsTotal)}</strong>
-              </p>
             </div>
           </div>
           <p className={styles.contractCallout}>
-            Both breakdowns reconcile to the same Tower projection; claim gates
-            still decide what can be represented.
+            The AI risk lens lists business evidence gaps only. Pipeline field
+            gaps are an operations backlog and do not appear in that lens.
           </p>
         </article>
       </section>

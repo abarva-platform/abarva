@@ -54,7 +54,7 @@ describe("Verdict panel", () => {
       screen.getByText(/Nothing is claimable until Finance validates actuals/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Foundation rows carry no direct value/),
+      screen.getByText(/Foundations need a linked value case/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/AI status comes from classification, not a label/),
@@ -75,23 +75,23 @@ describe("Verdict panel", () => {
     expect(budget?.textContent).not.toContain("$0");
   });
 
-  it("headlines the blocked state when nothing is claimable", () => {
+  it("labels an annual assertion without inventing a YTD claim population", () => {
     render(<VerdictPanel view={viewWith()} />);
     expect(
       screen.getByRole("heading", { level: 2 }).textContent,
-    ).toMatch(/No asserted value clears the board today\./);
+    ).toMatch(/annual benefit asserted; board-claimable value not loaded year to date/);
   });
 
-  it("does not claim a share of asserted value when none is asserted", () => {
-    render(<VerdictPanel view={viewWith({ promisedValueFy26: 0 })} />);
+  it("treats an absent annual assertion as unknown", () => {
+    render(<VerdictPanel view={viewWith({ promisedValueFy26: null })} />);
     expect(document.body.textContent).toMatch(
-      /No asserted value is recorded, so no share of it can be claimable\./,
+      /No annual benefit assertion is loaded, so Tower cannot calculate an assertion-to-proof share\./,
     );
   });
 });
 
 /**
- * Regressions found only against live Meridian data. The design fixture carries 8 programs, no tool
+ * Regressions found against a larger Tower projection. The design fixture carries 8 programs, no tool
  * rollouts and a finance status on every case, so none of these could surface against it.
  */
 describe("Verdict panel against live-shaped data", () => {
@@ -142,8 +142,7 @@ describe("Verdict panel against live-shaped data", () => {
     expect(document.body.textContent).toMatch(
       /No case carries a finance status in this read/,
     );
-    // "$0.0M" appears on the board-claimable card and its gate bar; a third occurrence would mean
-    // the middle bar had silently copied it.
+    // A repeated zero-width middle bar must not copy another figure into a missing case status.
     const repeats = (document.body.textContent ?? "").split("$0.0M").length - 1;
     expect(repeats).toBeLessThan(3);
   });
