@@ -111,28 +111,6 @@ export function cxoText(text: string): string {
 }
 
 /**
- * Every string a chapter shows a reader, put through `cxoText` once.
- *
- * Applied at the chapter, not at each of the dozen places its text is drawn, so a new display site
- * cannot be added that quietly skips the gate. Estate rows are deliberately untouched: a column
- * value is data the reader asked to see, not prose written at them.
- */
-export function launderChapter(chapter: ChapterView): ChapterView {
-  const claims = (list: ChapterView["key_insights"]) =>
-    list.map((claim) => ({ ...claim, statement: cxoText(claim.statement) }));
-  return {
-    ...chapter,
-    headline: cxoText(chapter.headline),
-    executive_synthesis: cxoText(chapter.executive_synthesis),
-    key_insights: claims(chapter.key_insights),
-    tensions: claims(chapter.tensions),
-    what_to_watch: claims(chapter.what_to_watch),
-    questions_to_ask: chapter.questions_to_ask.map(cxoText),
-    limitations: chapter.limitations.map(cxoText),
-  };
-}
-
-/**
  * A cell value shown to a reader, not the value used to filter on.
  *
  * `on_premise` and `legacy_stable` are how a column stores a state; "on premise" and "legacy
@@ -147,31 +125,4 @@ export function cellText(value: string | number | boolean | null): string {
   return value.replace(/\b[a-z][a-z]*(?:_[a-z]+)+\b/g, (m) =>
     m.replace(/_/g, " "),
   );
-}
-
-/**
- * Text the narrative generator emits when it declines to write a chapter.
- *
- * The same phrases in both generators, so the shape is matched rather than the source. A reader
- * opening a chapter must never be handed the generator's own status as the largest words on the
- * page: "Leadership Perspective is deferred pending stronger evidence" tells them nothing about
- * their enterprise and everything about our pipeline.
- */
-/**
- * Matched by shape, not by phrase.
- *
- * The earlier version listed the exact sentences one generator emitted. A second generator says
- * "deferred pending verified claims" instead of "deferred pending stronger evidence", and that one
- * word slipped a build state into the headline position on the live surface. A list of phrases
- * somebody thought of is the same mistake as a list of forbidden words: it only catches what was
- * already known.
- *
- * So: any "deferred pending <anything>", any "not ready for executive <anything>", and the handful
- * of stock refusals that do not fit that shape.
- */
-const DEFERRAL_RE =
-  /\bdeferred pending\b|\bnot ready for executive\b|\bdoes not yet (?:support|connect)\b|\bevidence needs resolution before\b|\bkeep this chapter in review\b|\bhave not been published for this tenant\b|\bbounded by the available evidence\b/i;
-
-export function isGeneratorDeferral(text: string | null | undefined): boolean {
-  return Boolean(text && DEFERRAL_RE.test(text));
 }
