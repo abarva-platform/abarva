@@ -741,7 +741,14 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
   );
 
   try {
-    const model = chooseModel(args.intent, args.query);
+    const model = modelAuthored && isExplicitConciseAsk(args.query)
+      ? "claude-sonnet-4-6"
+      : chooseModel(args.intent, args.query);
+    const primaryTokenBudget = modelAuthored
+      ? 8192
+      : answerOnly
+        ? 5000
+        : chooseSynthesisTokenBudget(args.query);
     // Pre-generation source pre-screen (defense-in-depth) — answer-only path
     // ONLY, so the flag-off path stays byte-identical. If retrieval is
     // contaminated with another tenant's identity, refuse BEFORE any tokens
@@ -789,15 +796,21 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
     emitTiming(
       latencyTrace.mark("claude.primary.start", {
         model,
-        maxTokens: chooseSynthesisTokenBudget(args.query),
+        maxTokens: primaryTokenBudget,
       }),
     );
     const stream = await client.messages.create({
       model,
-      max_tokens: answerOnly ? 5000 : chooseSynthesisTokenBudget(args.query),
+      max_tokens: primaryTokenBudget,
       system: systemWithContinuity,
       messages: [{ role: "user", content: prompt }],
       stream: true,
+      ...(modelAuthored
+        ? {
+            thinking: { type: "adaptive" as const, display: "omitted" as const },
+            output_config: { effort: "high" as const },
+          }
+        : {}),
     });
 
     // ANSWER-ONLY TRUE STREAMING PATH.
