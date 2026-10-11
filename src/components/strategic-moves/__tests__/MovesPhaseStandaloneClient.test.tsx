@@ -5920,6 +5920,20 @@ describe("MovesPhaseStandaloneClient", () => {
           screen.getByRole("heading", { name: title }),
         ).toBeInTheDocument();
         expect(mockRouterReplace).not.toHaveBeenCalled();
+        expect(
+          within(screen.getByRole("tablist", { name: "Move workspace views" }))
+            .getByRole("tab", { name: "Steps" }).getAttribute("href"),
+        ).toMatch(
+          new RegExp(`/strategic-moves/${p2Move().id}/phase/2\\?step=`),
+        );
+        expect(
+          within(screen.getByRole("tablist", {
+            name: "Compact workspace views",
+            hidden: true,
+          })).getByRole("tab", { name: "Stage", hidden: true }).getAttribute("href"),
+        ).toMatch(
+          new RegExp(`/strategic-moves/${p2Move().id}/phase/2\\?step=`),
+        );
       },
     );
 

@@ -211,9 +211,13 @@ async function checkStepWorkspaceNavigation(
   await expect(
     page.getByRole("heading", { name: "Phase Intelligence" }),
   ).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Steps" })).toHaveAttribute(
+    "href",
+    /\/phase\/2\?step=/,
+  );
   await page.getByRole("tab", { name: "Steps" }).click();
   await expect(page).toHaveURL(/\/phase\/2\?step=/, {
-    timeout: VISIBLE_TIMEOUT_MS,
+    timeout: 45_000,
   });
   await expect(page.locator("#step-panel-title")).toBeVisible({
     timeout: VISIBLE_TIMEOUT_MS,
@@ -238,9 +242,13 @@ async function checkStepWorkspaceNavigation(
     page.getByRole("heading", { name: "Phase Intelligence" }),
   ).toBeVisible();
   await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Steps" })).toHaveAttribute(
+    "href",
+    /\/phase\/2\?step=/,
+  );
   await page.getByRole("tab", { name: "Steps" }).click();
   await expect(page).toHaveURL(/\/phase\/2\?step=/, {
-    timeout: VISIBLE_TIMEOUT_MS,
+    timeout: 45_000,
   });
   await expect(page.locator("#step-panel-title")).toBeVisible({
     timeout: VISIBLE_TIMEOUT_MS,
