@@ -20,6 +20,7 @@ import {
 import type React from "react";
 
 import styles from "../TowerCommandCenter.module.css";
+import { isToolRollout } from "./portfolio-kind";
 
 type ToolRow = {
   readonly item: TowerAiView;
@@ -48,15 +49,11 @@ function adoptionMetric(item: TowerAiView): number | null {
   return bar ? bar.pct : null;
 }
 
-function isToolRolloutRow(item: TowerAiView): boolean {
-  return item.sourceFile === "23_ai_tool_rollout.csv";
-}
-
 function toolRows(view: TowerCommandCenterView): readonly ToolRow[] {
   return view.allInitiatives
     .filter(
       (item) =>
-        isToolRolloutRow(item) &&
+        isToolRollout(item) &&
         (item.usageHeadline !== null || item.usageBars.length > 0),
     )
     .map((item) => {

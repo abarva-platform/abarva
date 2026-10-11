@@ -3,24 +3,10 @@
 // The action drawer — opened from any action card on the Evidence & Actions
 // tab. Transcribed from `actionDrawer()` (design line ~1181).
 //
-// ── On "Approve & route" ───────────────────────────────────────────────────
-//
-// The design (lines 1196–1203) swaps the drawer body for a confirmation reading
-// "Routed to <role> — created as a Move — with its evidence chain attached",
-// and swaps the footer to Close / View in Moves.
-//
-// There is no governed Tower → Moves create path in the repo today.
-// `TowerMartCxoAction.moduleHandoff` is a display label — the Command Center
-// renders it as text and nothing more — and `src/app/api/tower/decision/route.ts`
-// writes a fund/pause/kill signal into `program_audit_log` against an EXISTING
-// programId or moveId. Neither creates a Move.
-//
-// Per §5 of the handoff prompt — "Do not ship a button that shows 'Routed to
-// CFO' without anything having been routed" — the button is therefore rendered
-// DISABLED with the reason stated in the drawer. The confirmation state is
-// implemented and unit-tested behind `canRoute`, so the day a governed create
-// path lands, wiring it is a one-line change and the transition is already
-// correct. This is a stop-and-ask item in the PR.
+// The current page has no governed Tower → Moves create path. `moduleHandoff`
+// names a destination, while the existing decision route writes a signal to an
+// existing program or Move. Keep creation disabled until a governed create path
+// is wired and returns a confirmed result.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -39,6 +25,36 @@ const LANE_TONE = {
 } as const;
 
 const EYEBROW_TONE = { teal: "eTeal", amber: "eAmber", red: "eRed" } as const;
+
+function dueRead(due: string | null): {
+  label: string;
+  value: string;
+  gate: string | null;
+} {
+  const value = due?.trim() ?? "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return { label: "Due date", value, gate: null };
+  }
+  if (
+    /\b(today|tomorrow|immediate(?:ly)?|\d+\s+(?:day|week|month)s?)\b/i.test(
+      value,
+    )
+  ) {
+    return { label: "Target window", value, gate: null };
+  }
+  return {
+    label: "Due date",
+    value: "No calendar date recorded",
+    gate: value ? value.replace(/_/g, " ") : null,
+  };
+}
+
+function evidenceRead(action: TowerActionView): string {
+  if (action.evidenceRequirement) {
+    return action.evidenceRequirement.replace(/_/g, " ");
+  }
+  return "No specific evidence requirement is recorded for this action.";
+}
 
 export function ActionDrawer({
   action,
@@ -68,6 +84,7 @@ export function ActionDrawer({
   }, [action?.id]);
 
   const tone = action ? LANE_TONE[action.lane] : "amber";
+  const due = dueRead(action?.due ?? null);
   const sourceContractHref =
     action?.moduleHandoff?.trim().toLowerCase() === "source" &&
     action.handoffEntityId
@@ -157,8 +174,8 @@ export function ActionDrawer({
                 small
               />
               <DrawerStat
-                label="Due window"
-                value={action.due ?? "Not recorded"}
+                label={due.label}
+                value={due.value}
                 small
                 tone={
                   tone === "red"
@@ -169,8 +186,8 @@ export function ActionDrawer({
                 }
               />
               <DrawerStat
-                label="Linked program"
-                value={action.linkedProgram ?? "Not linked"}
+                label="Linked program ID"
+                value={action.linkedProgram ?? "No program linked"}
                 small
               />
               <DrawerStat label="Owner" value={action.ownerRole} small />
@@ -186,8 +203,25 @@ export function ActionDrawer({
             <DrawerSection>Why now</DrawerSection>
             <p className={cx(styles.recBox, styles.muted)}>{action.why}</p>
 
+            {due.gate ? (
+              <>
+                <DrawerSection>Required proof gate</DrawerSection>
+                <p className={styles.recBox}>{due.gate}</p>
+              </>
+            ) : null}
+
             <DrawerSection>Evidence needed</DrawerSection>
-            <p className={styles.recBox}>{action.evidence}</p>
+            <p className={styles.recBox}>{evidenceRead(action)}</p>
+            {action.expectedSourceSystem ? (
+              <p className={cx(styles.recBox, styles.muted)}>
+                Expected source: {action.expectedSourceSystem}
+              </p>
+            ) : null}
+            {action.evidencePackageId ? (
+              <p className={cx(styles.recBox, styles.muted)}>
+                Evidence package: {action.evidencePackageId}
+              </p>
+            ) : null}
 
             <div className={styles.approveNote}>
               <Dot tone={canRoute ? "amber" : "red"} />
@@ -204,9 +238,8 @@ export function ActionDrawer({
                     <b>Routing is not available yet.</b> There is no governed
                     Tower → Moves create path, so approving here would change
                     nothing. The button is disabled rather than showing a
-                    confirmation for work that did not happen. Raise the Move in
-                    Strategic Moves directly, against{" "}
-                    <b>{action.moduleHandoff ?? "the owning module"}</b>.
+                    confirmation for work that did not happen. Ask the named
+                    owner to record the evidence request in the owning workflow.
                   </>
                 )}
               </span>

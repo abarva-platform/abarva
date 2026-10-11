@@ -26,6 +26,7 @@ import type React from "react";
 
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import { formatCount } from "@/lib/tower/command-center/format";
+import { isToolRollout, unclassifiedPortfolioCount } from "./portfolio-kind";
 
 type VendorRow = {
   readonly vendor: string;
@@ -50,6 +51,7 @@ function activeUsers(item: TowerAiView): number | null {
 export function buildToolVendorRows(view: TowerCommandCenterView): readonly VendorRow[] {
   const map = new Map<string, VendorRow>();
   for (const item of view.allInitiatives) {
+    if (!isToolRollout(item)) continue;
     if (item.usageHeadline === null && item.usageBars.length === 0) continue;
     const vendor = item.vendor ?? "Vendor not loaded";
     const current = map.get(vendor) ?? {
@@ -172,7 +174,8 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
       </div>
       <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-500)" }}>
         Seats purchased are not loaded, so this counts people actually using each vendor&rsquo;s tools
-        — not what the contract entitles you to.
+        — not what the contract entitles you to. Rollout counts use the current source-template marker;
+        {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without a recognized marker are excluded.
       </p>
     </section>
   );

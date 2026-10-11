@@ -22,6 +22,7 @@ import type React from "react";
 
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import { formatUsdM } from "@/lib/tower/command-center/format";
+import { isBusinessCase } from "./portfolio-kind";
 
 type GroupRow = {
   readonly name: string;
@@ -137,12 +138,14 @@ function HBar({
 }
 
 export function InitiativesDistributionPanel({ view }: { view: TowerCommandCenterView }) {
-  const byType = groupBy(view, (item) => item.businessValueType);
-  const byDomain = groupBy(view, (item) => item.category);
-  const missingTypes = view.allInitiatives.filter((item) => !item.businessValueType).length;
-  const missingDomains = view.allInitiatives.filter((item) => !item.category).length;
+  const cases = view.allInitiatives.filter(isBusinessCase);
+  const caseView = { ...view, allInitiatives: cases };
+  const byType = groupBy(caseView, (item) => item.businessValueType);
+  const byCategory = groupBy(caseView, (item) => item.category);
+  const missingTypes = cases.filter((item) => !item.businessValueType).length;
+  const missingCategories = cases.filter((item) => !item.category).length;
   const topType = byType.find((row) => row.name !== "Not loaded");
-  const topDomain = byDomain.find((row) => row.name !== "Not loaded");
+  const topCategory = byCategory.find((row) => row.name !== "Not loaded");
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -156,8 +159,8 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
           letterSpacing: "-0.02em",
         }}
       >
-        {topType && topDomain
-          ? `${topType.name} leads value type; ${topDomain.name} leads spend.`
+        {topType && topCategory
+          ? `${topType.name} leads value type; ${topCategory.name} leads AI spend category.`
           : "Initiative distribution is only partially loaded."}
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
@@ -176,14 +179,14 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
       </div>
       <div style={PANEL}>
         <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600 }}>
-          By domain — investment
+          By AI spend category — investment
         </h3>
-        <HBar rows={byDomain} metric="investmentUsd" fill="#b4b2a9" />
+        <HBar rows={byCategory} metric="investmentUsd" fill="#b4b2a9" />
       </div>
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--canon-gray-500)" }}>
-        {missingTypes === 0 && missingDomains === 0
-          ? "Every initiative has both a value type and a domain in this view."
-          : `${missingTypes} rows have no value type and ${missingDomains} rows have no domain, so the distribution names those gaps instead of allocating them by assumption.`}
+        {missingTypes} cases have no value type and {missingCategories} have no AI spend category.
+        Business domain is not loaded on these case rows; a domain distribution needs a canonical
+        case-to-domain relationship before it can be shown.
       </p>
     </section>
   );

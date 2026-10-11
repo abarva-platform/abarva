@@ -36,8 +36,9 @@ const GRID: React.CSSProperties = {
 };
 
 function isFoundation(item: TowerAiView): boolean {
-  const text = `${item.kind} ${item.displayBucket} ${item.category ?? ""} ${item.name}`;
-  return item.kind === "platform" || item.kind === "governance" || /foundation|platform|governance/i.test(text);
+  // Only a declared spend category can identify an enabler here. Display buckets with keyword
+  // fallback and names are presentation mappings, not canonical classifications.
+  return /\b(foundation|platform|governance)\b/i.test(item.category ?? "");
 }
 
 function totalAiSpend(view: TowerCommandCenterView): number {
@@ -76,10 +77,13 @@ function hasHave(count: number): string {
 export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
   const rows = foundationRows(view);
   const spendUsd = rows.reduce((sum, row) => sum + row.item.aiSpendUsd, 0);
+  const missingSpendRows = rows.filter((row) => !row.item.aiSpendLoaded).length;
   const loadedValueRows = rows.filter((row) => row.item.promisedBenefitLoaded);
   const promisedUsd = loadedValueRows.reduce((sum, row) => sum + row.item.promisedUsd, 0);
   const missingValueRows = rows.length - loadedValueRows.length;
-  const share = totalAiSpend(view) > 0 ? Math.round((spendUsd / totalAiSpend(view)) * 100) : null;
+  const share = missingSpendRows === 0 && view.allInitiatives.every((item) => item.aiSpendLoaded) && totalAiSpend(view) > 0
+    ? Math.round((spendUsd / totalAiSpend(view)) * 100)
+    : null;
   const allLoadedValuesAreZero = loadedValueRows.length > 0 && missingValueRows === 0 && promisedUsd === 0;
   const noRows = rows.length === 0;
 
@@ -97,6 +101,8 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
       >
         {noRows
           ? "No foundation rows are loaded in the AI portfolio."
+          : missingSpendRows > 0
+            ? `${formatCount(rows.length)} classified enablers are shown; ${formatCount(missingSpendRows)} ${hasHave(missingSpendRows)} no investment amount loaded.`
           : missingValueRows > 0
             ? `${formatCount(rows.length)} foundation rows support AI delivery; ${formatCount(missingValueRows)} ${hasHave(missingValueRows)} no sponsor-stated value loaded.`
             : allLoadedValuesAreZero
@@ -105,15 +111,15 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
       </h2>
 
       <p style={{ margin: "-10px 0 0", maxWidth: 980, fontSize: 15, lineHeight: 1.55, color: "var(--canon-gray-700)" }}>
-        Foundations are cross-functional AI enablers: platforms, data products, governance controls
-        or reusable services that make multiple business cases and tool rollouts possible. They are
-        tracked as investment, but their benefit should be claimed through the use cases they enable.
+        These rows have an explicit platform, governance or foundation spend category. Which cases
+        each enabler supports is not loaded here; a relationship is needed before allocating
+        investment or benefit to downstream cases.
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 }}>
         {[
           ["Foundation rows", noRows ? "Not loaded" : formatCount(rows.length)],
-          ["Investment", noRows ? "Not loaded" : formatUsdM(spendUsd)],
+          ["Recorded investment", noRows || missingSpendRows > 0 ? "Partial" : formatUsdM(spendUsd)],
           ["AI spend share", share === null ? "Not loaded" : formatPct(share)],
           ["Sponsor-stated value", loadedValueRows.length === 0 ? "Not loaded" : formatUsdM(promisedUsd)],
         ].map(([label, value]) => (
@@ -155,7 +161,7 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
         </div>
         {rows.length === 0 ? (
           <p style={{ margin: 0, padding: "18px 22px", fontSize: 15, color: "var(--canon-gray-700)" }}>
-            No rows match platform, governance, or foundation classification.
+            No rows carry an explicit platform, governance, or foundation spend category.
           </p>
         ) : (
           rows.map(({ item, valueLabel }) => (
@@ -177,7 +183,7 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
               </span>
               <span style={{ color: "var(--canon-gray-500)" }}>{item.category ?? item.kind}</span>
               <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
-                {formatUsdM(item.aiSpendUsd)}
+                {item.aiSpendLoaded ? formatUsdM(item.aiSpendUsd) : "Not loaded"}
               </span>
               <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
                 {costRange(item)}

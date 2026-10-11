@@ -11,25 +11,7 @@ import type {
   TowerCommandCenterView,
   TowerEvidenceGapView,
 } from "@/lib/tower/command-center/types";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
-
 import styles from "../TowerCommandCenter.module.css";
-import {
-  ChartTooltip,
-  HEX,
-  toM,
-  twoLineTick,
-  withSliver,
-} from "../charts/chart-kit";
 import { cx } from "../primitives";
 
 interface ExecutiveMetric {
@@ -50,21 +32,6 @@ interface ExecutiveDecision {
   due: string;
   tone: "red" | "amber" | "gray";
   reviewTarget: "funnel" | "ai" | "actions";
-}
-
-function percent(numerator: number, denominator: number): string {
-  if (denominator <= 0) return "Not loaded";
-  return `${Math.round((numerator / denominator) * 1000) / 10}%`;
-}
-
-function measuredUsd(view: TowerCommandCenterView): number {
-  if (valueClaimCount(view) <= 0) return 0;
-
-  return Math.max(
-    view.summary.financeValidatedUsd ?? 0,
-    view.summary.usageSupportedUsd ?? 0,
-    0,
-  );
 }
 
 function formatLoadedUsdM(value: number | null | undefined): string {
@@ -113,14 +80,14 @@ function executiveHeadline(view: TowerCommandCenterView): string {
   const s = view.summary;
   const claims = valueClaimCount(view);
   if (claims <= 0) {
-    return `${formatLoadedUsdM(
+    return `Tower projection: ${formatLoadedUsdM(
       s.approvedInvestmentUsd,
     )} approved. Board-claimable not loaded. No value claims loaded.`;
   }
 
-  return `${formatLoadedUsdM(s.approvedInvestmentUsd)} approved. ${formatUsdM(
+  return `Tower projection: ${formatLoadedUsdM(s.approvedInvestmentUsd)} approved. ${formatUsdM(
     s.claimableUsd,
-  )} board-claimable. ${formatCount(openClaimCount(view))} of ${formatCount(
+  )} board-claimable YTD. ${formatCount(openClaimCount(view))} of ${formatCount(
     claims,
   )} claims still need proof.`;
 }
@@ -144,7 +111,7 @@ function executiveSummary(view: TowerCommandCenterView): string {
     s.promisedUsd,
   )} of annual value; ${formatUsdM(
     s.claimableUsd,
-  )} is board-claimable today, and ${formatCount(
+  )} is board-claimable year to date, and ${formatCount(
     Math.max(0, claims - s.claimableClaimCount),
   )} claims still need usage, outcome, or Finance proof.`;
 }
@@ -231,7 +198,6 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const claims = valueClaimCount(view);
   if (claims <= 0) return [];
 
-  const measured = measuredUsd(view);
   const claimsMissingUsage = Math.max(0, claims - s.usageSupportedClaimCount);
   const claimsMissingActual = Math.max(0, claims - s.outcomeMeasuredClaimCount);
   const claimsMissingFinance = Math.max(0, claims - s.financeAttestedClaimCount);
@@ -276,13 +242,9 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       order: "3",
       kicker: "Assign · only then",
       title: `Finance-attest the ${formatCount(claimsMissingFinance)} claims still outside the board number`,
-      detail: `${formatUsdM(
-        measured,
-      )} is the current evidence-backed ceiling. Only ${formatUsdM(
-        s.claimableUsd,
-      )} is board-claimable until Finance signs the method and amount.`,
-      metricLabel: "Claimable / ceiling",
-      metricValue: `${formatUsdM(s.claimableUsd)} / ${formatUsdM(measured)}`,
+      detail: `${formatCount(s.financeAttestedClaimCount)} of ${formatCount(claims)} claims carry Finance attestation. ${formatUsdM(s.claimableUsd)} is board-claimable year to date; usage support alone does not establish a measured financial outcome.`,
+      metricLabel: "Finance-attested claims",
+      metricValue: `${formatCount(s.financeAttestedClaimCount)}/${formatCount(claims)}`,
       due: "Following review",
       tone: "gray",
       reviewTarget: "actions",
@@ -300,127 +262,45 @@ function evidenceQueue(gaps: readonly TowerEvidenceGapView[]) {
     .slice(0, 5);
 }
 
-function executiveWaterfallRows(view: TowerCommandCenterView) {
+function ValueEvidenceGroups({ view }: { view: TowerCommandCenterView }) {
   const s = view.summary;
-  const approved = s.approvedInvestmentUsd;
-  const approvedValue = approved ?? 0;
-  const asserted = s.promisedUsd ?? 0;
-  const measured = measuredUsd(view);
-  const claimable = s.claimableUsd ?? 0;
-  const noBenefit = approved === null ? 0 : Math.max(0, approved - asserted);
-  const noMeasured = Math.max(0, asserted - measured);
-
-  return [
+  if (s.valueClaimCount <= 0) {
+    return <div className={styles.emptyPanel}>Value claims are not loaded, so these amounts are unknown.</div>;
+  }
+  const groups = [
     {
-      name: "Approved|investment",
-      baseUsd: 0,
-      usd: approvedValue,
-      fill: HEX.tealDark,
-      label: formatLoadedUsdM(approved),
+      heading: "Planning and adoption evidence",
+      note: "The annual assertion is a plan. Usage-linked claim value shows adoption support, not a measured financial outcome; its reporting period is not recorded here.",
+      rows: [
+        ["Asserted annual benefit", formatUsdM(s.promisedUsd)],
+        ["Usage-linked claim value", formatUsdM(s.usageSupportedUsd)],
+      ],
     },
     {
-      name: "No benefit|asserted",
-      baseUsd: asserted,
-      usd: noBenefit,
-      fill: HEX.gray300,
-      label: formatUsdM(noBenefit),
-    },
-    {
-      name: "Asserted|benefit",
-      baseUsd: 0,
-      usd: asserted,
-      fill: HEX.amber,
-      label: formatUsdM(asserted),
-    },
-    {
-      name: "No measured|amount",
-      baseUsd: measured,
-      usd: noMeasured,
-      fill: "#cfcbc1",
-      label: formatUsdM(noMeasured),
-    },
-    {
-      name: "Measured|amount",
-      baseUsd: 0,
-      usd: measured,
-      fill: HEX.red,
-      label: formatUsdM(measured),
-    },
-    {
-      name: "Board-|claimable",
-      baseUsd: 0,
-      usd: claimable,
-      fill: HEX.red,
-      label: formatUsdM(claimable),
+      heading: "Finance review · year to date",
+      note: "Finance-validated value can still be blocked. Board-claimable is the amount that has cleared the claim gate.",
+      rows: [
+        ["Finance validated YTD", formatUsdM(s.financeValidatedUsd)],
+        ["Board claimable YTD", formatUsdM(s.claimableUsd)],
+      ],
     },
   ];
-}
-
-function ExecutiveWaterfallChart({ view }: { view: TowerCommandCenterView }) {
-  const rows = executiveWaterfallRows(view);
-  const axisMax = Math.max(...rows.map((row) => toM(row.baseUsd + row.usd)), 1);
-  const data = rows.map((row) => ({
-    ...row,
-    base: toM(row.baseUsd),
-    visible: withSliver(toM(row.usd), axisMax),
-  }));
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart
-        data={data}
-        margin={{ top: 28, right: 18, left: 6, bottom: 10 }}
-        barCategoryGap="24%"
-      >
-        <CartesianGrid vertical={false} stroke={HEX.border} />
-        <XAxis
-          dataKey="name"
-          interval={0}
-          tickLine={false}
-          axisLine={{ stroke: HEX.borderStrong }}
-          height={48}
-          tick={twoLineTick}
-        />
-        <YAxis
-          tickFormatter={(value: number) => `$${Math.round(value)}M`}
-          tick={{
-            fontSize: 10,
-            fill: HEX.gray500,
-            fontFamily: "var(--abarva-mono)",
-          }}
-          axisLine={false}
-          tickLine={false}
-          width={48}
-        />
-        <ChartTooltip formatter={(value) => `$${Number(value).toFixed(1)}M`} />
-        <Bar
-          dataKey="base"
-          stackId="value"
-          fill="transparent"
-          isAnimationActive={false}
-        />
-        <Bar
-          dataKey="visible"
-          stackId="value"
-          radius={[4, 4, 0, 0]}
-          isAnimationActive={false}
-        >
-          {data.map((row) => (
-            <Cell key={row.name} fill={row.fill} />
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18, height: "100%" }}>
+      {groups.map((group) => (
+        <article key={group.heading} style={{ border: "1px solid var(--canon-border)", padding: "24px", display: "flex", flexDirection: "column", gap: 18 }}>
+          <h3 style={{ margin: 0, fontSize: 17 }}>{group.heading}</h3>
+          {group.rows.map(([label, value]) => (
+            <div key={label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, borderBottom: "1px solid var(--canon-border)", paddingBottom: 12 }}>
+              <span>{label}</span>
+              <strong style={{ fontSize: 22, whiteSpace: "nowrap" }}>{value}</strong>
+            </div>
           ))}
-          <LabelList
-            dataKey="label"
-            position="top"
-            style={{
-              fontFamily: "var(--abarva-mono)",
-              fontSize: 11,
-              fontWeight: 700,
-              fill: HEX.gray700,
-            }}
-          />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+          <p style={{ margin: "auto 0 0", lineHeight: 1.5 }}>{group.note}</p>
+        </article>
+      ))}
+    </div>
   );
 }
 
@@ -439,10 +319,8 @@ export function CommandCenterView({
 }) {
   const s = view.summary;
   const claims = valueClaimCount(view);
-  const measured = measuredUsd(view);
-  const unmeasured = Math.max(0, s.promisedUsd - measured);
-  const unmeasuredPct = percent(unmeasured, s.promisedUsd);
-  const measuredLabel = claims > 0 ? formatUsdM(measured) : "Not loaded";
+  const missingActualClaims = Math.max(0, claims - s.outcomeMeasuredClaimCount);
+  const missingFinanceClaims = Math.max(0, claims - s.financeAttestedClaimCount);
   const executiveMetrics = metrics(view);
   const executiveDecisions = decisions(view);
 
@@ -450,23 +328,24 @@ export function CommandCenterView({
     <div className={styles.executiveView}>
       <header className={styles.executiveHero}>
         <div className={styles.executiveEyebrow}>
-          IT Investment Tower · FY26 · Today&apos;s verdict
+          IT Investment Tower · Today&apos;s verdict
         </div>
         <h1>{executiveHeadline(view)}</h1>
         <div className={styles.executiveSummaryGrid}>
           <p>{executiveSummary(view)}</p>
           <aside className={styles.executiveAudit}>
             <div>{commandFreshnessLine(view)}</div>
+            <div>Intake lineage status not loaded · verify before quoting</div>
             <div>{s.sourceStandard}</div>
             <div>
               {s.sourceFiles.slice(0, 4).join(" · ") || "No source files"}
             </div>
             <div className={styles.auditBadges}>
               <span className={styles.auditRed}>
-                {formatCount(conflictCount(view))} conflict
+                {formatCount(conflictCount(view))} Tower projection conflicts
               </span>
               <span className={styles.auditAmber}>
-                {formatCount(absentCount(view))} absent
+                {formatCount(absentCount(view))} Tower projection gaps
               </span>
               <span>
                 {s.refreshTimestamp
@@ -556,46 +435,40 @@ export function CommandCenterView({
 
       <section className={styles.valueLoss}>
         <div className={styles.sectionTitle}>
-          <h2>Where the value is lost</h2>
-          <p>Double-click for the records behind any figure</p>
+          <h2>Value by evidence state</h2>
+          <p>Distinct measures and periods; use the claim ledger for record detail</p>
         </div>
         <div className={styles.valueChartCard}>
           <div className={styles.executiveWaterfall}>
-            <ExecutiveWaterfallChart view={view} />
+            <ValueEvidenceGroups view={view} />
           </div>
           <div className={styles.valueChartLegend}>
             {claims > 0
-              ? `Each drop is a gate, not a loss. Of the ${formatUsdM(
-                  s.promisedUsd,
-                )} asserted, only ${formatUsdM(
-                  measured,
-                )} has a measured amount behind it — and only ${formatUsdM(
-                  s.claimableUsd,
-                )} is claimable.`
-              : "No value claims are loaded, so Tower cannot calculate a value-loss waterfall yet."}
+              ? `Annual asserted benefit and usage-linked claim value are planning measures. Finance-validated and board-claimable amounts are year to date. These bars are separate states, not an additive waterfall or a conversion rate.`
+              : "No value claims are loaded, so Tower cannot assess the value evidence states yet."}
           </div>
         </div>
       </section>
 
       <section className={styles.executiveFindings}>
         <article className={styles.findingRed}>
-          <div className={styles.findingKicker}>The drop is the finding</div>
-          <strong>{unmeasuredPct}</strong>
+          <div className={styles.findingKicker}>Outcome evidence gap</div>
+          <strong>{claims > 0 ? `${formatCount(missingActualClaims)} of ${formatCount(claims)}` : "Not loaded"}</strong>
           <p>
             {claims > 0
-              ? "of asserted benefit has no measured amount in the governed Tower read. Nothing here is promoted to claimable value until evidence clears."
+              ? "claims have no outcome-measured flag in the governed Tower read. Their monetary amount cannot be inferred from usage support."
               : "No asserted-benefit population is loaded yet. Tower cannot mark value as proven or unproven without claims."}
           </p>
         </article>
         <article className={styles.findingTeal}>
           <div className={styles.findingKicker}>
-            Ceiling on any sign-off today
+            Finance attestation gap
           </div>
-          <strong>{measuredLabel}</strong>
+          <strong>{claims > 0 ? `${formatCount(missingFinanceClaims)} of ${formatCount(claims)}` : "Not loaded"}</strong>
           <p>
             {claims > 0
-              ? `${measuredLabel} is the measured amount currently visible in the portfolio. No attestation can release more than that without new measured evidence.`
-              : "No measured claim ceiling is loaded because no value-claim population is loaded."}
+              ? `claims remain outside Finance attestation. ${formatUsdM(s.claimableUsd)} is board-claimable year to date; there is no defensible portfolio ceiling in this projection.`
+              : "No Finance-attestation population is loaded because no value claims are loaded."}
           </p>
         </article>
       </section>

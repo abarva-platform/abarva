@@ -17,6 +17,7 @@ import {
 } from "@/lib/tower/command-center/format";
 
 import styles from "../TowerCommandCenter.module.css";
+import { isBusinessCase, unclassifiedPortfolioCount } from "./portfolio-kind";
 
 type FilterKey = "all" | TowerAiKind;
 type SortKey = "name" | "valueType" | "domain" | "constraint" | "investment" | "value" | "claimable";
@@ -76,8 +77,17 @@ function valueLabel(item: TowerAiView): string {
   return item.promisedBenefitLoaded ? formatUsdM(item.promisedUsd) : "Not loaded";
 }
 
-function claimableProxy(item: TowerAiView): string {
-  return item.financeValidatedUsd > 0 ? formatUsdM(item.financeValidatedUsd) : "Not loaded";
+function financeActualLabel(item: TowerAiView): string {
+  if (item.financeValidatedUsd > 0) return formatUsdM(item.financeValidatedUsd);
+  const hasValidationRecord =
+    /validat/i.test(item.financeStatus ?? "") ||
+    item.financeApprovalEvents.some((event) =>
+      /validat/i.test(`${event.eventType ?? ""} ${event.approvalState ?? ""}`),
+    ) ||
+    item.valueObservationMonths.some((month) =>
+      /validat/i.test(month.validationState ?? ""),
+    );
+  return hasValidationRecord ? formatUsdM(0) : "Not loaded";
 }
 
 function sortValue(item: TowerAiView, key: SortKey): number | string {
@@ -100,9 +110,17 @@ export function InitiativesTablePanel({
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("investment");
   const [desc, setDesc] = useState(true);
-  const chips: FilterKey[] = ["all", "funded", "embedded", "platform", "governance", "candidate"];
+  const cases = useMemo(
+    () => view.allInitiatives.filter(isBusinessCase),
+    [view.allInitiatives],
+  );
+  const chips: FilterKey[] = [
+    "all",
+    ...(["funded", "embedded", "platform", "governance", "candidate"] as TowerAiKind[])
+      .filter((kind) => cases.some((item) => item.kind === kind)),
+  ];
   const rows = useMemo(() => {
-    return [...view.allInitiatives]
+    return [...cases]
       .filter((item) => filter === "all" || item.kind === filter)
       .sort((a, b) => {
         const av = sortValue(a, sort);
@@ -113,7 +131,7 @@ export function InitiativesTablePanel({
             : String(av).localeCompare(String(bv));
         return desc ? -cmp : cmp;
       });
-  }, [desc, filter, sort, view.allInitiatives]);
+  }, [cases, desc, filter, sort]);
 
   function updateSort(next: SortKey) {
     if (next === sort) setDesc((current) => !current);
@@ -154,7 +172,7 @@ export function InitiativesTablePanel({
           </button>
         ))}
         <span style={{ marginLeft: "auto", fontSize: 14, color: "var(--canon-gray-500)" }}>
-          {rows.length} of {view.allInitiatives.length} shown
+          {rows.length} of {cases.length} shown
         </span>
       </div>
 
@@ -163,11 +181,11 @@ export function InitiativesTablePanel({
           {[
             ["name", "Initiative"],
             ["valueType", "Value type"],
-            ["domain", "Portfolio tag"],
+            ["domain", "AI spend category"],
             ["constraint", "Constraint"],
             ["investment", "Invested"],
             ["value", "Sponsor-stated"],
-            ["claimable", "Finance actual"],
+            ["claimable", "Finance validated"],
             ["detail", "Detail"],
           ].map(([key, label], i) => (
             <button
@@ -227,7 +245,7 @@ export function InitiativesTablePanel({
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{formatUsdM(item.aiSpendUsd)}</span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{valueLabel(item)}</span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
-              {claimableProxy(item)}
+              {financeActualLabel(item)}
             </span>
             <span style={{ textAlign: "right" }}>
               <button
@@ -244,8 +262,10 @@ export function InitiativesTablePanel({
         ))}
       </div>
       <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-500)" }}>
-        Readiness is available per row but is not used as a proxy for outcome. Loaded readiness:
-        {" "}{view.allInitiatives.filter((item) => item.readinessScoreLoaded).length} rows.
+        Case and tool counts use the current source-template markers. {unclassifiedPortfolioCount(view.allInitiatives)}
+        rows have no recognized marker and remain unclassified. Tool rollouts are shown on the Tools tab.
+        Readiness is not used as a proxy for outcome.
+        Loaded readiness: {cases.filter((item) => item.readinessScoreLoaded).length} cases.
       </p>
     </section>
   );

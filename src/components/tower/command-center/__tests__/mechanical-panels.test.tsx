@@ -87,7 +87,7 @@ function initiative(overrides: Partial<TowerAiView> = {}): TowerAiView {
     usageHeadline: null,
     usageBars: [],
     note: null,
-    sourceFile: null,
+    sourceFile: "22_ai_business_cases.csv",
     ...overrides,
   };
 }
@@ -220,7 +220,7 @@ describe("mechanical Tower Command Center panels", () => {
 
     const text = document.body.textContent ?? "";
     expect(text).toContain("Not loaded");
-    expect(text).toContain("attributed AI investment or change budget is not loaded");
+    expect(text).toContain("source and counting basis are verified");
     // "cases", not "initiatives": the queue counts business cases, and a tool rollout carries a
     // business owner without being one.
     expect(text).toContain("1 of 1 cases have no sponsor loaded");
@@ -488,7 +488,7 @@ describe("mechanical Tower Command Center panels", () => {
 
     expect(screen.getByText("Control / gate")).toBeInTheDocument();
     expect(screen.queryByText("Risk")).not.toBeInTheDocument();
-    expect(document.body.textContent).toContain("No benefit claim loaded");
+    expect(document.body.textContent).toContain("No case-level benefit claim loaded");
     expect(document.body.textContent).toContain("Not loaded");
     expect(document.body.textContent).not.toContain("$9M finance-validated");
   });
