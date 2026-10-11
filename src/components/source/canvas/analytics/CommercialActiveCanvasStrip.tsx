@@ -65,14 +65,22 @@ const PANEL_STYLE: CSSProperties = {
 
 export function CommercialActiveCanvasStrip({
   view,
+  requiredEvidenceOpen = 0,
+  responseForwardChecksOpen = null,
   onWorkspaceChange,
 }: {
   view: SourceEventShellView;
+  requiredEvidenceOpen?: number;
+  responseForwardChecksOpen?: number | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const stageKey = view.stage.key;
 
-  const lenses = buildCommercialLenses(view);
+  const lenses = buildCommercialLenses(
+    view,
+    requiredEvidenceOpen,
+    responseForwardChecksOpen,
+  );
   const defaultLens =
     lenses.find((lens) => lens.state === "active") ?? lenses[0] ?? null;
   const [activeLensKey, setActiveLensKey] = useState<CommercialLensKey>(
@@ -203,15 +211,20 @@ export function CommercialActiveCanvasStrip({
 
 export function buildCommercialLenses(
   view: SourceEventShellView,
+  requiredEvidenceOpen = 0,
+  responseForwardChecksOpen: number | null = null,
 ): readonly CommercialLens[] {
   const stageKey = view.stage.key;
   const ready = `${view.stage.ready}/${view.stage.total}`;
   const artifactBlockers = view.stage.artifactReadiness.blockerCount;
   const inputsComplete = view.stage.ready === view.stage.total;
-  const stageReady = inputsComplete && artifactBlockers === 0;
+  const responseForwardBlocked = (responseForwardChecksOpen ?? 0) > 0;
+  const evidenceBlocked = requiredEvidenceOpen > 0 || responseForwardBlocked;
+  const stageReady =
+    inputsComplete && artifactBlockers === 0 && !evidenceBlocked;
   const readinessState = stageReady
     ? "ready"
-    : artifactBlockers > 0
+    : artifactBlockers > 0 || evidenceBlocked
       ? "blocked"
       : "open";
 
@@ -222,11 +235,17 @@ export function buildCommercialLenses(
       state: "active",
       question: `Where are we commercially in ${view.stage.label}?`,
       answer: `${ready} stage inputs are complete. This lens keeps the current commercial work, required evidence, and approval path in one place.`,
-      nextAction: stageReady
-        ? "Open the approval gate"
-        : inputsComplete
-          ? `Review and accept ${artifactBlockers} artifact${artifactBlockers === 1 ? "" : "s"} in Files`
-          : "Complete the highlighted step below",
+      nextAction: responseForwardBlocked
+        ? "Resolve current response gate checks"
+        : requiredEvidenceOpen > 0
+          ? "Review required evidence in Files"
+          : stageReady
+            ? view.stage.approvalRecorded
+              ? "Review prior approval record"
+              : "Open the approval gate"
+            : inputsComplete
+              ? `Review and accept ${artifactBlockers} artifact${artifactBlockers === 1 ? "" : "s"} in Files`
+              : "Complete the highlighted step below",
       evidence: "Stage checklist and artifact readiness",
     },
     {
@@ -279,13 +298,24 @@ export function buildCommercialLenses(
       label: "Readiness",
       state: readinessState,
       question: "Can this move to a decision owner?",
-      answer: stageReady
-        ? "Stage inputs and gate artifacts are ready for the owner to review."
-        : "Readiness is not final yet; finish required steps or clear artifact review gaps first.",
-      nextAction: stageReady
-        ? "Open Approvals"
-        : "Resolve the blocking readiness item",
-      evidence: "Required step completion and client-final artifact status",
+      answer: responseForwardBlocked
+        ? `Evaluation remains blocked by ${responseForwardChecksOpen} current forward gate check${responseForwardChecksOpen === 1 ? "" : "s"}. A prior decision does not clear the current evidence checks.`
+        : requiredEvidenceOpen > 0
+          ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? " remains" : "s remain"} open.`
+          : stageReady
+            ? view.stage.approvalRecorded
+              ? "The prior stage decision is recorded. No current evidence or artifact-review gaps are recorded."
+              : "Stage inputs and gate artifacts are ready for the owner to review."
+            : "Readiness is not final yet; finish required steps or clear artifact review gaps first.",
+      nextAction: responseForwardBlocked
+        ? "Resolve current response gate checks"
+        : stageReady
+          ? view.stage.approvalRecorded
+            ? "Review prior approval record"
+            : "Open Approvals"
+          : "Resolve the blocking readiness item",
+      evidence:
+        "Required evidence, response gate checks, and client-final artifact status",
       workspace: stageReady ? "approvals" : undefined,
     },
     {

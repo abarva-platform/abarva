@@ -41,7 +41,7 @@ export function VendorResponseForwardGate({
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
   parseReports?: VendorResponseParseReport[];
 }) {
-  const checks = buildGateChecks(
+  const checks = buildVendorResponseForwardGateChecks(
     readiness,
     profileSet,
     challengeIntelligence,
@@ -102,7 +102,10 @@ export function VendorResponseForwardGate({
 
       {openBlockers.length > 0 ? (
         <div style={BLOCKER_STRIP}>
-          <strong>{openBlockers.length} gate check still open</strong>
+          <strong>
+            {openBlockers.length} gate check
+            {openBlockers.length === 1 ? "" : "s"} still open
+          </strong>
           <span>
             Do not move to Evaluation until the open items above are resolved or
             explicitly accepted as scoring caveats.
@@ -113,7 +116,7 @@ export function VendorResponseForwardGate({
   );
 }
 
-function buildGateChecks(
+export function buildVendorResponseForwardGateChecks(
   readiness?: SourceVendorResponseCompleteness,
   profileSet?: VendorResponseProfileSet | null,
   challengeIntelligence?: VendorChallengeIntelligence | null,
