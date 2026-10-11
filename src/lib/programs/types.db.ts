@@ -106,6 +106,8 @@ export interface TenancyCtx {
   tenantRole?: string | null;
   role?: string;
   email?: string | null;
+  /** Set only from the exact signed Clerk proof-account profile after identity binding. */
+  syntheticE2eOperator?: boolean;
 }
 
 export interface ProgramCore {
