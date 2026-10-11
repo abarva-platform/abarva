@@ -1039,4 +1039,57 @@ describe("readTowerCommandCenter", () => {
     expect(zeroMart?.aiPortfolio[0]?.aiTaggedSpendUsd).toBe(0);
     expect(zeroView?.allInitiatives[0]?.financeValidatedAmountLoaded).toBe(true);
   });
+
+  it("shows only a reconciled active cost breakdown and keeps contracts separate", async () => {
+    const ref = (file: string, row: number) => ({ source_file: file, source_row: row, source_sha256: "source-hash" });
+    const cost = (key: string, value: number, title: string, refs: ReturnType<typeof ref>[], extras: Record<string, unknown>) => ({
+      ...servingRow({
+        row_key: key,
+        page_key: "cost_lens",
+        display_payload_json: { title, value, canonical_measure_id: `measure:${key}`, ...extras },
+      }),
+      row_type: "cost_exposure",
+      value_state: "estimated",
+      projection_version: 4,
+      source_refs_json: refs,
+    });
+    const categoryRefs = [ref("08_spend_value.csv", 2), ref("08_spend_value.csv", 3)];
+    const rows = [
+      cost("modeled_annual_spend", 10_000_000, "Modeled annual IT spend", categoryRefs, {
+        money_population: "modeled_it_spend", amount_role: "aggregate",
+        period_basis: "annual_unspecified_year", additive_to_category_rows: false,
+        additive_to_contract_spend: false, source_narrative_difference_usd: 100_000,
+      }),
+      cost("spend:2", 6_000_000, "Infrastructure", [categoryRefs[0]], {
+        source_row_identity_only: true, category_business_id: null,
+        additive_to_aggregate_spend: false, additive_to_contract_spend: false,
+        period_basis: "annual_unspecified_year",
+      }),
+      cost("spend:3", 4_000_000, "Applications", [categoryRefs[1]], {
+        source_row_identity_only: true, category_business_id: null,
+        additive_to_aggregate_spend: false, additive_to_contract_spend: false,
+        period_basis: "annual_unspecified_year",
+      }),
+      cost("contract:one", 9_000_000, "Vendor one", [ref("07_vendors_contracts.csv", 2)], {
+        additive_to_it_spend: false,
+      }),
+    ];
+    mockServingRows({
+      tower_command_center: [{ ...servingRow({ row_key: "executive_summary", page_key: "command_center" }), projection_version: 4 }],
+      tower_cost_lens: [...rows, { ...rows[0], projection_version: 3, source_refs_json: [] }],
+    });
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
+    expect(view?.costLens?.modeledAnnualSpendUsd).toBe(10_000_000);
+    expect(view?.costLens?.categories).toHaveLength(2);
+    expect(view?.costLens?.contractExposure[0]?.amountUsd).toBe(9_000_000);
+    expect(view?.costLens?.categories[0]?.sourceRow).toBe(2);
+
+    mockServingRows({
+      tower_command_center: [{ ...servingRow({ row_key: "executive_summary", page_key: "command_center" }), projection_version: 4 }],
+      tower_cost_lens: [rows[0], { ...rows[1], payload_json: { ...rows[1].payload_json, display_payload_json: { ...rows[1].payload_json.display_payload_json, value: 6_000_001 } } }, rows[2], rows[3]],
+    });
+    const mismatched = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    expect(mismatched?.costLens).toBeNull();
+  });
 });

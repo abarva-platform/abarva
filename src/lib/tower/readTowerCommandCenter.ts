@@ -10,6 +10,8 @@ import type {
   TowerMartFinanceApprovalEvent,
   TowerMartValueObservationMonth,
   TowerMartCommandViewModel,
+  TowerMartCostDetail,
+  TowerMartCostLens,
   TowerMartCxoAction,
   TowerMartEvidenceLineage,
   TowerMartProgramLane,
@@ -160,6 +162,90 @@ function payloadNullableNumber(
   const body = payload(row);
   const display = displayPayload(row);
   return nullableNum((body[key] ?? display[key]) as Numeric);
+}
+
+function payloadField(row: TowerServingRow, key: string): unknown {
+  return payload(row)[key] ?? displayPayload(row)[key];
+}
+
+function costSourceRef(row: TowerServingRow, expectedFile: string): TowerMartCostDetail["sourceFile"] | null {
+  const refs = sourceRefs(row);
+  if (refs.length !== 1 || nullableText(refs[0].source_file) !== expectedFile) return null;
+  const sourceRow = nullableNum(refs[0].source_row as Numeric);
+  const sourceSha256 = nullableText(refs[0].source_sha256);
+  if (!Number.isSafeInteger(sourceRow) || sourceRow === null || sourceRow < 2 || !sourceSha256) return null;
+  return expectedFile;
+}
+
+function costDetail(row: TowerServingRow, expectedFile: string): TowerMartCostDetail | null {
+  const sourceFile = costSourceRef(row, expectedFile);
+  const ref = sourceRefs(row)[0];
+  const amountUsd = payloadNullableNumber(row, "value");
+  const label = payloadText(row, "title") ?? nullableText(row.title);
+  const sourceRow = nullableNum(ref?.source_row as Numeric);
+  const sourceSha256 = nullableText(ref?.source_sha256);
+  if (!sourceFile || !Number.isSafeInteger(amountUsd) || amountUsd === null || amountUsd < 0 ||
+      !label || sourceRow === null || !sourceSha256 ||
+      !payloadText(row, "canonical_measure_id") || row.row_type !== "cost_exposure" ||
+      row.value_state !== "estimated") return null;
+  return { id: row.row_key, label, amountUsd, sourceFile, sourceRow, sourceSha256 };
+}
+
+function activeCostLens(rows: readonly TowerServingRow[]): TowerMartCostLens | null {
+  const aggregates = rows.filter((row) => row.row_key === "modeled_annual_spend");
+  const categoryRows = rows.filter((row) => row.row_key.startsWith("spend:"));
+  const contractRows = rows.filter((row) => row.row_key.startsWith("contract:"));
+  if (aggregates.length !== 1 || categoryRows.length === 0 || contractRows.length === 0 ||
+      rows.length !== 1 + categoryRows.length + contractRows.length) return null;
+  const aggregate = aggregates[0];
+  const modeledAnnualSpendUsd = payloadNullableNumber(aggregate, "value");
+  const aggregateRefs = sourceRefs(aggregate);
+  if (!Number.isSafeInteger(modeledAnnualSpendUsd) || modeledAnnualSpendUsd === null ||
+      modeledAnnualSpendUsd < 0 || aggregate.row_type !== "cost_exposure" ||
+      aggregate.value_state !== "estimated" ||
+      !payloadText(aggregate, "canonical_measure_id") ||
+      payloadText(aggregate, "money_population") !== "modeled_it_spend" ||
+      payloadText(aggregate, "amount_role") !== "aggregate" ||
+      payloadText(aggregate, "period_basis") !== "annual_unspecified_year" ||
+      payloadField(aggregate, "additive_to_category_rows") !== false ||
+      payloadField(aggregate, "additive_to_contract_spend") !== false) return null;
+
+  const categories = categoryRows.map((row) => {
+    if (payloadField(row, "source_row_identity_only") !== true ||
+        payloadField(row, "category_business_id") !== null ||
+        payloadField(row, "additive_to_aggregate_spend") !== false ||
+        payloadField(row, "additive_to_contract_spend") !== false ||
+        payloadText(row, "period_basis") !== "annual_unspecified_year") return null;
+    return costDetail(row, "08_spend_value.csv");
+  });
+  const contracts = contractRows.map((row) => {
+    if (payloadField(row, "additive_to_it_spend") !== false) return null;
+    return costDetail(row, "07_vendors_contracts.csv");
+  });
+  if (categories.some((row) => row === null) || contracts.some((row) => row === null)) return null;
+  const completeCategories = categories as TowerMartCostDetail[];
+  const completeContracts = contracts as TowerMartCostDetail[];
+  const refKey = (ref: { sourceFile: string; sourceRow: number; sourceSha256: string }) =>
+    `${ref.sourceFile}:${ref.sourceRow}:${ref.sourceSha256}`;
+  const aggregateKeys = aggregateRefs.map((ref) => refKey({
+    sourceFile: String(ref.source_file ?? ""),
+    sourceRow: Number(ref.source_row),
+    sourceSha256: String(ref.source_sha256 ?? ""),
+  }));
+  const categoryKeys = completeCategories.map(refKey);
+  if (new Set(categoryRows.map((row) => row.row_key)).size !== categoryRows.length ||
+      new Set(contractRows.map((row) => row.row_key)).size !== contractRows.length ||
+      new Set(categoryKeys).size !== categoryKeys.length ||
+      new Set(completeContracts.map(refKey)).size !== completeContracts.length ||
+      aggregateKeys.length !== categoryKeys.length ||
+      aggregateKeys.some((key) => !categoryKeys.includes(key)) ||
+      completeCategories.reduce((sum, row) => sum + row.amountUsd, 0) !== modeledAnnualSpendUsd) return null;
+  return {
+    modeledAnnualSpendUsd,
+    sourceNarrativeDifferenceUsd: payloadNullableNumber(aggregate, "source_narrative_difference_usd"),
+    categories: completeCategories.sort((a, b) => b.amountUsd - a.amountUsd || a.label.localeCompare(b.label)),
+    contractExposure: completeContracts.sort((a, b) => b.amountUsd - a.amountUsd || a.label.localeCompare(b.label)),
+  };
 }
 
 /**
@@ -1377,6 +1463,7 @@ export async function readTowerCommandCenter(args: {
           gatedRows,
           claimRows.length,
         ),
+        costLens: activeCostLens(activeCostRows),
         command: {
           commandCenterKey: `tower:ecl:${tenantKey}:command-center`,
           tenantKey,

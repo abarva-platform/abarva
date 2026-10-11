@@ -620,6 +620,35 @@ describe("mechanical Tower Command Center panels", () => {
     expect(text).not.toContain("A cohort of contracts protects the vendor");
   });
 
+  it("explains annual spend, unknown budget, and separate contract amounts in the cost tab", () => {
+    const view = viewWith({ actions: [], gaps: [], pipelineGaps: [], summary: { budgetUsd: null } });
+    view.costLens = {
+      modeledAnnualSpendUsd: 10 * M,
+      sourceNarrativeDifferenceUsd: 100_000,
+      categories: [
+        { id: "spend:2", label: "Infrastructure", amountUsd: 6 * M, sourceFile: "08_spend_value.csv", sourceRow: 2, sourceSha256: "hash" },
+        { id: "spend:3", label: "Applications", amountUsd: 4 * M, sourceFile: "08_spend_value.csv", sourceRow: 3, sourceSha256: "hash" },
+      ],
+      contractExposure: [
+        { id: "contract:one", label: "Vendor one", amountUsd: 9 * M, sourceFile: "07_vendors_contracts.csv", sourceRow: 2, sourceSha256: "hash" },
+      ],
+    };
+    render(<AiPortfolioContractView view={view} onOpenAi={jest.fn()} onOpenAction={jest.fn()} onOpenGap={jest.fn()} />);
+    fireEvent.click(screen.getByRole("tab", { name: /Funding and cost/i }));
+    expect(screen.getByText("$10,000,000")).toBeInTheDocument();
+    expect(screen.getByText(/Approved FY budget:/).closest("p")?.textContent).toContain("Unknown");
+    expect(screen.getByText(/One-source planning estimate/)).toBeInTheDocument();
+    expect(screen.getByText(/overlap with the IT spend categories is unknown/)).toBeInTheDocument();
+    expect(screen.getByText("AI amount needs a source check")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("See all 2 spend categories"));
+    fireEvent.click(screen.getByText("See 1 vendor contract amount"));
+    expect(screen.getByText("Infrastructure")).toBeInTheDocument();
+    expect(screen.getByText("$6,000,000")).toBeInTheDocument();
+    expect(screen.getByText("Vendor one")).toBeInTheDocument();
+    expect(screen.getByText("$9,000,000")).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("$19,000,000");
+  });
+
   it("does not fabricate action campaigns or 0-of-0 claim ratios", () => {
     render(
       <EvidenceActionsContractView
