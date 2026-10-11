@@ -220,6 +220,8 @@
 }
 .root {
   min-height: 100%;
+  /* The workspace host clips its pane; keep the step content scrollable here. */
+  overflow-y: auto;
   background: var(--mv-bg);
   color: var(--mv-ink);
   font-family: var(--mv-font-sans);

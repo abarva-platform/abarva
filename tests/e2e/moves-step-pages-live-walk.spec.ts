@@ -290,6 +290,43 @@ async function inspectPage(
   };
 }
 
+test("keeps long step content reachable inside the clipped workspace", async ({
+  page,
+}) => {
+  const css = fs.readFileSync(
+    path.resolve(
+      process.cwd(),
+      "src/components/strategic-moves/step-page/MovesStepPage.module.css",
+    ),
+    "utf8",
+  );
+  for (const width of [390, 1440]) {
+    for (const colorScheme of ["light", "dark"] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ colorScheme });
+      await page.setContent(
+        '<div style="display:flex;height:571px;overflow:hidden"><div class="root" style="flex:1"><div class="shell"><main><h1>Long step</h1><div style="height:900px"></div><footer data-testid="step-end">End of step</footer></main></div></div></div>',
+      );
+      await page.addStyleTag({ content: css });
+      const root = page.locator(".root");
+      expect(
+        await root.evaluate((element) => element.scrollHeight),
+      ).toBeGreaterThan(await root.evaluate((element) => element.clientHeight));
+      await root.hover();
+      await page.mouse.wheel(0, 1200);
+      await expect
+        .poll(() => root.evaluate((element) => element.scrollTop))
+        .toBeGreaterThan(0);
+      await expect(page.getByTestId("step-end")).toBeInViewport();
+      expect(
+        await root.evaluate(
+          (element) => element.scrollWidth > element.clientWidth + 1,
+        ),
+      ).toBe(false);
+    }
+  }
+});
+
 test("walks every deployed Moves step page without writing", async ({ page }, testInfo) => {
   test.setTimeout(32 * 60_000);
   const missing = [
