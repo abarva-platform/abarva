@@ -75,6 +75,31 @@ describe("source access policy", () => {
     fromMock.mockReset();
   });
 
+  it("keeps a scoped Moves operator out of Source regardless of shared membership flags", async () => {
+    setupRows({
+      person_client_memberships: {
+        access_level: "program_member",
+        financial_visibility: true,
+        can_approve_gates: true,
+      },
+    });
+    const { loadUserSourceAccessPolicy } = await import("../source-access-policy");
+    const policy = await loadUserSourceAccessPolicy(
+      {
+        clientId: "client-1",
+        userId: "00000000-0000-4000-8000-000000000001",
+        role: "client_viewer",
+        syntheticE2eOperator: true,
+      },
+      { activeClientKey: "meridian" },
+    );
+    expect(policy.accessLevel).toBe("no_source_access");
+    expect(policy.sourceEventIdsAllowed).toEqual([]);
+    expect(policy.canViewFinancialData).toBe(false);
+    expect(policy.canApproveSourceStages).toBe(false);
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
   it("treats client_admin as all source events inside one active client only without implicit financial visibility", async () => {
     setupRows({
       person_client_memberships: {

@@ -309,7 +309,8 @@ export async function loadUserProgramAccessPolicy(
   opts: { programId?: string | null } = {},
 ): Promise<UserProgramAccessPolicy> {
   const agentClientKey = agentLoginClientKeyForEmail(ctx.email);
-  if (agentClientKey && ctx.clientKey === agentClientKey) {
+  if (ctx.syntheticE2eOperator !== true &&
+      agentClientKey && ctx.clientKey === agentClientKey) {
     // Dedicated automation users are provisioned per tenant for signed-in
     // post-deploy proof. They must act as client-pinned Moves admins for their
     // own tenant only, while still denying restricted financial output.
@@ -327,7 +328,7 @@ export async function loadUserProgramAccessPolicy(
     });
   }
 
-  if (isCanonicalClientAdminEmail(ctx.email)) {
+  if (ctx.syntheticE2eOperator !== true && isCanonicalClientAdminEmail(ctx.email)) {
     // Mirror Source's client-admin fallback for demo/test Clerk accounts that
     // are pinned by canonical email. This must apply even after
     // requireTenancy() JIT-provisions a real persons UUID; otherwise a

@@ -2,6 +2,7 @@ import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { auth, currentUser as clerkCurrentUser } from "@clerk/nextjs/server";
 import { resolveSessionRole } from "@/lib/auth/access-routing";
 import { getCurrentPerson } from "@/lib/auth/maestro";
+import { isSyntheticE2eOperatorProfile } from "@/lib/auth/synthetic-e2e-operator";
 import {
   PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
   readPrivateBrowserProofSessionValue,
@@ -32,6 +33,8 @@ export interface CurrentUser {
   primaryRole: UserRole;
   accessibleClients: AccessibleClient[];
   defaultClientId: string | null;
+  syntheticE2eOperator?: boolean;
+  syntheticE2eApprovalRef?: string | null;
 }
 
 const PLACEHOLDER_PERSON_NAMES = new Set(["user", "unknown", "unknown user"]);
@@ -71,6 +74,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
         primaryRole: "client_viewer",
         accessibleClients: [],
         defaultClientId: proofSession.clientId,
+        syntheticE2eOperator: false,
+        syntheticE2eApprovalRef: null,
       };
     }
   } catch {
@@ -87,6 +92,16 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
           role?: string;
           clientId?: string;
           tenantRoles?: unknown;
+          accountType?: string;
+          automated?: boolean;
+          approvalRef?: string;
+          defaultClientId?: string;
+          clientLocked?: boolean;
+          moduleAccess?: unknown;
+          programScope?: string;
+          programCapabilities?: unknown;
+          allowedClientKeys?: unknown;
+          visibleClientKeys?: unknown;
         };
         email_addresses?: Array<{ emailAddress: string }>;
         emailAddresses?: Array<{ emailAddress: string }>;
@@ -98,6 +113,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     | undefined;
 
   const personIdFromClaims = claims?.publicMetadata?.person_id ?? null;
+  const syntheticE2eOperator = isSyntheticE2eOperatorProfile(claims?.publicMetadata);
+  // A malformed or stale dedicated profile must not fall through to the
+  // generic email/role-based access path.
+  if (claims?.publicMetadata?.accountType === "synthetic_e2e_operator" &&
+      !syntheticE2eOperator) return null;
   const claimEmail =
     claims?.emailAddress ??
     claims?.email ??
@@ -165,9 +185,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     // has no matching row. The tenancy resolvers still treat them as
     // authenticated and scope their client via Clerk metadata.
     const role: UserRole =
-      legacyRole === "maestro" ||
+      !syntheticE2eOperator && (legacyRole === "maestro" ||
       legacyRole === "admin" ||
-      legacyRole === "investor"
+      legacyRole === "investor")
         ? "maestro"
         : "client_viewer";
     return {
@@ -180,6 +200,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       primaryRole: role,
       accessibleClients: [],
       defaultClientId: null,
+      syntheticE2eOperator,
+      syntheticE2eApprovalRef: syntheticE2eOperator ? claims?.publicMetadata?.approvalRef ?? null : null,
     };
   }
 
@@ -191,7 +213,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     .eq("id", personId)
     .maybeSingle();
 
-  const primaryRole: UserRole = ((person as { primary_role?: UserRole } | null)
+  const primaryRole: UserRole = syntheticE2eOperator ? "client_viewer" : ((person as { primary_role?: UserRole } | null)
     ?.primary_role ??
     (legacyRole === "maestro" ||
     legacyRole === "admin" ||
@@ -251,6 +273,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     primaryRole,
     accessibleClients,
     defaultClientId,
+    syntheticE2eOperator,
+    syntheticE2eApprovalRef: syntheticE2eOperator ? claims?.publicMetadata?.approvalRef ?? null : null,
   };
 }
 

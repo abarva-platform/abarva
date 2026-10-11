@@ -274,6 +274,8 @@ export async function originateProgram(
   if (error) throw error;
 
   const programId = (data as { id: string }).id;
+  const { assignSyntheticE2eOperatorToCreatedMove } = await import("@/lib/auth/synthetic-e2e-operator-participant");
+  await assignSyntheticE2eOperatorToCreatedMove(ctx, programId);
   await writeProgramAuditLogBestEffort(ctx, {
     programId,
     engagementId: programId,
