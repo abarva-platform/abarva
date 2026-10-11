@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Moves step pages waited for several independent server reads in sequence before showing the heading, next action, and step bar. The route now starts those reads together and shares the register result between the page and its charter bridge. Gate document sign-off comes from a server read so the gate's next action is final on first render. Other step pages leave gate document reads to the secondary cabinet panel. The signed-in walk records server read durations, document response time, client mount, and later API reads for each view.
+Moves step pages waited for several independent server reads in sequence before showing the heading, next action, and step bar. The route now starts those reads together and shares the register result between the page and its charter bridge. Earlier-phase gate checks also start together when resolving the effective phase. Gate document sign-off comes from a server read so the gate's next action is final on first render. Other step pages leave gate document reads to the secondary cabinet panel. The signed-in walk records server read durations, document response time, client mount, and later API reads for each view.
 
 ## Layer Impact
 
@@ -29,13 +29,14 @@ Moves step pages waited for several independent server reads in sequence before 
 ## Changes Included
 
 - The phase route begins independent gate, step-record, evidence, artifact, and register reads together and records server timings on flagged step views.
+- Effective phase resolution evaluates independent earlier-phase gates concurrently and still returns to the earliest blocked or unreadable gate.
 - The charter bridge accepts a previously read register result and makes the final rows available to the page, preserving an explicit unavailable state after a failed read.
 - The P2 step page uses the server register projection when present. The gate page uses the server sign-off projection and shows an explicit unavailable state if document or sign-off reads fail.
 - Independent client panels share an in-flight cabinet request, with failures delivered to every reader. The walk stores per-view timing details and measures settled head after the heading, next action, and step bar are present.
 
 ## QA / Validation
 
-- PASS: focused route, routing, bridge, host, and shared evidence behavior suites, 437 tests.
+- PASS: focused route, routing, bridge, host, shared evidence, and effective phase behavior suites; the added effective phase test proves concurrent gate starts.
 - PASS: TypeScript typecheck.
 - PASS: focused ESLint and Playwright test discovery.
 - PASS: route reachability, library orphan, export reachability, test coverage census, tenancy fence census, and manual check.

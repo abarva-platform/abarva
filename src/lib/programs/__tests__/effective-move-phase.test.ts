@@ -132,6 +132,24 @@ describe("resolveEffectiveMovePhase", () => {
     ]);
   });
 
+  it("starts independent prior-gate reads together", async () => {
+    const started: number[] = [];
+    const release: Array<() => void> = [];
+    const d = deps([], {
+      evaluateGate: ((_ctx: TenancyCtx, _moveId: string, from: number) => {
+        started.push(from);
+        return new Promise((resolve) => {
+          release.push(() => resolve({ failedChecks: [] }));
+        });
+      }) as unknown as EffectiveMovePhaseDeps["evaluateGate"],
+    });
+    const resolving = resolveEffectiveMovePhase(ctx, move({}), d);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(started).toEqual([1, 2]);
+    release.forEach((finish) => finish());
+    expect((await resolving).effectivePhase).toBe(3);
+  });
+
   it("falls back to the phase whose exit gate has an open hard blocker", async () => {
     const result = await resolveEffectiveMovePhase(ctx, move({}), deps([2]));
     expect(result.storedPhase).toBe(3);
