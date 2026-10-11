@@ -10,20 +10,14 @@
 //    `scatterDatum()` below reads either shape so the handler cannot silently
 //    receive `undefined` — the exact regression the design's
 //    `onClick:(pt)=>this.progDrawer(pt.id)` would have produced.
-//  · `tick` still accepts a render function ((props) => ReactNode), so the
-//    design's two-line axis tick ports directly.
 //  · `<LabelList>` nested inside `<Scatter>` still renders, so the bubble
 //    numerals stay inside their circles.
-//  · A transparent first segment on a shared `stackId` still floats the second
-//    segment, so the waterfall keeps its floating bars.
 //
 // Recharts cannot resolve CSS custom properties inside SVG paint attributes, so
 // every chart colour here is a literal hex that matches the canon token it
 // stands for. Keep the two in sync.
 
-import type { ReactNode } from "react";
 import { Tooltip } from "recharts";
-import type { XAxisTickContentProps } from "recharts";
 
 /** Canon token values, duplicated as literals for SVG paint. */
 export const HEX = {
@@ -53,35 +47,6 @@ export function scatterDatum<T>(arg: unknown): T | null {
     return withPayload.payload as T;
   }
   return arg as T;
-}
-
-/**
- * The design's two-line axis tick: a `<text>` whose label splits on `|` into
- * stacked `<tspan>`s. Used by the waterfall so "No finance|sign-off" wraps
- * without an ellipsis.
- */
-export function twoLineTick(props: XAxisTickContentProps): ReactNode {
-  const { x, y, payload } = props;
-  // v3 types x/y as `number | string`; the renderer always passes numbers.
-  const px = typeof x === "number" ? x : Number(x) || 0;
-  const py = typeof y === "number" ? y : Number(y) || 0;
-  const parts = String(payload?.value ?? "").split("|");
-  return (
-    <text
-      x={px}
-      y={py + 11}
-      textAnchor="middle"
-      fontFamily="var(--abarva-mono)"
-      fontSize={9.5}
-      fill={HEX.gray500}
-    >
-      {parts.map((part, i) => (
-        <tspan key={i} x={px} dy={i === 0 ? 0 : 11}>
-          {part}
-        </tspan>
-      ))}
-    </text>
-  );
 }
 
 /** The design's shared tooltip styling. */
