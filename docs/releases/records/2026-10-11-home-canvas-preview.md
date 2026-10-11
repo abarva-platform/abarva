@@ -1,4 +1,4 @@
-# Home Canvas Preview
+# Home Canvas Cutover
 
 ## Release ID
 
@@ -6,42 +6,43 @@
 
 ## Status
 
-`candidate` - local implementation; not merged or deployed.
+`candidate` - default presentation cutover authorized; merge, deployment and signed-in proof pending.
 
 ## Release Lane
 
-`experimental` - authenticated, opt-in route. No default Home cutover.
+`global-control-lane` - authenticated Home presentation and navigation.
 
-Includes `global-control-lane` corrections to the shared current-state flow display contract and Home field preservation. If this candidate is later published, existing consumers receive the corrected flow zone order, landing checks and display-density enforcement; Home readers retain recorded segment notes and string-list capabilities.
+Includes corrections to the shared current-state flow display contract and Home field preservation. Existing consumers receive the corrected flow zone order, landing checks and display-density enforcement; Home readers retain recorded segment notes and string-list capabilities.
 
 ## Plain-English Summary
 
-Adds a separate Home canvas with individual chapter, evidence and reading views. The existing Home remains the default. The preview reads the same governed bundle and retains the existing shared advisor design, transport and record-version checks.
+Makes the reviewed Home canvas the default at `/home`, with individual chapter, evidence and reading views. The scrolling presentation is no longer mounted by a product or review route. The canvas reads the same governed bundle and retains the existing shared advisor design, transport and record-version checks. `/home/canvas` redirects to the canonical route, retaining query parameters; valid old chapter/map/family bookmarks migrate to canonical view URLs.
 
 ## Layer Impact
 
-`experimental` lane; Layer 4, Products: presentation and navigation only. No intake, source adapter, canonical schema, ingestion, narrative generation or stored-data changes. Existing deterministic table and finding rules are reused. Architecture remains behind the shared admission resolver.
+`global-control-lane`; Layer 4, Products: presentation and navigation, with existing reader field preservation. No intake, source adapter, canonical schema, ingestion, narrative generation or stored-data changes. Existing deterministic table and finding rules are reused. Architecture remains behind the shared admission resolver. Local-only candidate intake remains outside the product runtime.
 
 The shared flow contract now consumes the governed taxonomy's zone order instead of an obsolete parallel vocabulary. Warehouse/mart role and landing checks use the same vocabulary. Flow admission aggregates traceable members to its existing audience/format budget and refuses a slice that still exceeds it. Convergence requirements are unchanged.
 
 ## Client Applicability
 
-- All clients: no default change.
+- All clients: shared Home presentation changes for the existing enrolled synthetic allowlist; other module layouts are unchanged.
 - Specific clients: only the existing synthetic Home preview allowlist, using its existing registry validation and tenant resolution.
 - Internal only: no new administrative capability.
 - Public/demo only: no new unauthenticated product route.
-- Feature flag: separate `/home/canvas` route; existing `/home` remains unchanged.
+- Feature flag: none. Canonical `/home` uses the canvas; the gated operator review retains its existing authorization and explicit diagnostics controls.
 
 ## Changes Included
 
-- Authenticated `/home/canvas`, with URL-backed views and browser history.
+- Authenticated `/home`, with URL-backed views and browser history. Preview-only labels and the old-Home link are removed.
 - Eight chapter overviews, selectable deterministic exhibits, complete published reading and evidence inspection.
 - Architecture, data flow, context/module overview, fact browsing and all supplied evidence-family views.
-- Preview-only compact modes in the existing record/fact browsers; all rows accessible through pagination.
+- Opt-in compact modes in the existing record/fact browsers; all rows accessible through pagination.
 - Existing shared Home advisor, logo and dock reused without modifying their design.
 - Exact record-source labels, visible fallback, older interpretation quarantine and version-bound existing walkthrough PDF link.
-- Viewport-bounded chrome applies only to the new route.
-- Generated route manual includes the optional preview route.
+- Viewport-bounded chrome applies to canonical Home and its gated review route, not other modules.
+- Route surface controls require the canvas and refuse a return to the scrolling root. Shared legacy evidence helpers remain available to exports and tests, not as a second reachable Home.
+- Generated route manual remains current.
 - Theme-led leadership presentation with exact selected excerpts, minority-theme ordering and explicit response/synthetic basis. Earlier excerpts are not substituted for unverified current interviews.
 - Operating segments use only declared segment keys for function links. System-owner groupings remain distinct from segment or P&L attribution; detail not supplied in a bundle is not asserted absent from the enterprise.
 - Operating detail renders recorded descriptions, accountable roles, governance, regulation and function capabilities. An absent detail set produces one coverage notice, not a repeated empty form. Functions are paged in compact groups, with exact source inspection.
@@ -52,7 +53,7 @@ The shared flow contract now consumes the governed taxonomy's zone order instead
 ## QA / Validation
 
 - Focused model/component tests cover query routing, source selection, absent versus zero, row counts, fallback labels, advisor/export version binding, stale-narrative quarantine and complete pagination.
-- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome, shared visual, ECL projection-reader and enterprise-context regressions: 63 suites / 833 tests passed, plus two SVG snapshots.
+- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome, shared visual, ECL projection-reader and enterprise-context regressions: 63 suites / 837 tests passed, plus two SVG snapshots. Four route/cutover/boundary suites add 15 passing tests, including query-preserving redirects and no mounted retired root.
 - Full repository TypeScript check passed using Node 24 with an 8 GB heap.
 - ESLint: no errors; pre-existing record-browser memo and flow unused-type warnings remain.
 - Release controls: all 11 gates passed; generated route manual is current.
@@ -65,7 +66,7 @@ The shared flow contract now consumes the governed taxonomy's zone order instead
 
 ## Rollout Plan
 
-Review the local preview and PR first. Any later merge uses the protected-main PR path. Only the repo-owned ACA main deploy workflow may publish this route. Publishing the opt-in route does not flip the default. Default cutover and legacy retirement require a separate decision after signed-in runtime and content-parity proof.
+The reviewed design has explicit operator authorization for default cutover and retirement. Validate the current PR head, squash merge through the protected-main PR path, then publish only through the repo-owned ACA main deploy workflow. Prove the runtime digest invariant and signed-in canonical navigation, source label, source binding, map behavior and second-tenant identity. This UI authorization does not approve candidate intake acceptance or publication.
 
 ## Deployment Authority
 
@@ -75,11 +76,11 @@ Review the local preview and PR first. Any later merge uses the protected-main P
 - ACA runtime invariant: required if subsequently deployed.
 - Worker image invariant: unchanged; verify through the approved release workflow.
 - Feature/env flag update path: none.
-- Live signed-in proof required: preview allowlist, every page/panel, record-source coherence, advisor context and existing PDF binding before cutover.
+- Live signed-in proof required: enrolled allowlist, canonical page/panel navigation, record-source coherence, advisor presence and existing PDF binding after deployment.
 
 ## Rollback Plan
 
-The default remains the existing `/home`, which is also linked from the preview. If the optional route is later published and must be removed, revert this presentation release through a PR and the approved workflow. No data rollback is required.
+Revert the cutover/presentation release through a PR and the approved main ACA workflow. No runtime legacy switch or alternate scrolling Home remains reachable. Git history preserves the former presentation; shared reader data is unchanged and no data rollback is required.
 
 ## Audit Evidence
 
@@ -93,7 +94,7 @@ The default remains the existing `/home`, which is also linked from the preview.
 - Missing families and unsupported architecture remain explicit gaps, not fabricated visuals.
 - Business revenue composition renders only complete source-linked structured percentages or an exact declared split in an aligned reviewed packet; no inferred segment dollars.
 - Detailed organization/program/risk/metric/interview coverage in a compiled manifest does not establish that those record families are supplied to the rendered bundle. Current source/readback proof is still required.
-- Richer operating intake may exist locally without accepted serving rows. The optional product route does not import that raw intake. Source acceptance, financial-basis reconciliation, declared-link validation and coherent publication remain a separately governed data-plane gate.
+- Richer operating intake may exist locally without accepted serving rows. The product route does not import that raw intake. Source acceptance, financial-basis reconciliation, declared-link validation and coherent publication remain a separately governed data-plane gate.
 - An existing published operating narrative may remain off-purpose; it is retained with an explicit note in Full reading. Correcting published narrative requires the governed regeneration gate and is not included.
 - The existing walkthrough export is version-bound but does not adopt the new canvas layout in this release.
-- No default Home flip or legacy sunset.
+- Retirement removes the old presentation from mounted routes, not shared deterministic evidence or export helpers. Existing stored-record fallback remains visibly labelled.

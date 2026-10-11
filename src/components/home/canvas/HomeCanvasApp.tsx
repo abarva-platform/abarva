@@ -23,6 +23,7 @@ import {
   CHAPTER_CONTRACTS,
   canvasHref,
   canvasViews,
+  legacyCanvasView,
   resolveCanvasLocation,
   type CanvasView,
   type CanvasPanel,
@@ -101,12 +102,20 @@ export function HomeCanvasApp({
           : view === "data-flow"
             ? "What the record establishes about movement, landing and consumption."
             : "The recorded facts and signals behind the enterprise interpretation.";
-  const oldParams = new URLSearchParams();
-  oldParams.set("tenant", tenantKey);
-  if (requestedProvider) oldParams.set("provider", requestedProvider);
-  const exportParams = new URLSearchParams(oldParams);
+  const exportParams = new URLSearchParams();
+  exportParams.set("tenant", tenantKey);
+  if (requestedProvider) exportParams.set("provider", requestedProvider);
   exportParams.set("context", recordToken);
   exportParams.set("format", "pdf");
+  useEffect(() => {
+    if (params.has("view")) return;
+    const legacyView = legacyCanvasView(window.location.hash, bundle);
+    if (!legacyView) return;
+    const next = new URLSearchParams(params.toString());
+    next.set("tenant", tenantKey);
+    if (requestedProvider) next.set("provider", requestedProvider);
+    router.replace(canvasHref(next, legacyView), { scroll: false });
+  }, [bundle, params, requestedProvider, router, tenantKey]);
   useEffect(() => {
     viewport.current?.scrollTo?.({ top: 0 });
   }, [view, panel, query]);
@@ -235,13 +244,11 @@ export function HomeCanvasApp({
           </div>
           <div className={styles.topline}>
             <span>
-              <span className={styles.badge}>Design preview</span>
               <button className={styles.textButton} onClick={recordInspection}>
                 {homeRecordSourceLabel(recordSource)}
               </button>
             </span>
             <div className={styles.actions}>
-              <a href={`/home?${oldParams}`}>Current Home</a>
               <a
                 href={`/api/home/walkthrough-export?${exportParams}`}
                 title="Download the existing full Home walkthrough PDF"

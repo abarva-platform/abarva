@@ -58,6 +58,8 @@ aVa training implication: product surfaces do not own facts. Home does not own a
 
 ## Evidence Classes
 
+Home uses the canonical canvas at `/home`: one URL-backed enterprise, context or evidence view at a time, with separate overview, evidence and full-reading panels. `/home/canvas` is a query-preserving redirect, not a second presentation. The gated operator review uses the same canvas and retains its authorization and explicit diagnostics controls. Record-source labels, reviewed fallback, advisor context and walkthrough-export version binding remain governed by the same reader. Presentation cutover does not accept or publish candidate intake; fuller source context still requires its separate data-plane gate.
+
 | Evidence class | What it means | aVa can do | aVa cannot do |
 | --- | --- | --- | --- |
 | Product contract | Code-defined routes, flags, registries, specs, phase packs, answer contracts. | Explain what the product is designed to do. | Claim a tenant has live data or proof. |

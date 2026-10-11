@@ -94,7 +94,16 @@ export function canvasHref(
   next.set("panel", panel);
   next.delete("q");
   if (query) next.set("q", query);
-  return `/home/canvas?${next.toString()}`;
+  return `/home?${next.toString()}`;
+}
+
+export function legacyCanvasView(hash: string, bundle: HomeReviewBundle) {
+  try {
+    const requested = decodeURIComponent(hash.replace(/^#/, "")).trim();
+    return canvasViews(bundle).find((view) => view === requested) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function narrativeIsCurrent(source: HomeRecordRenderSource): boolean {

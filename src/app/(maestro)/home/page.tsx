@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 
 import { AppShell } from "@/components/shell/AppShell";
-import { HomePreviewAppRoot } from "@/components/home/preview/HomePreviewAppRoot";
+import { HomeCanvasApp } from "@/components/home/canvas/HomeCanvasApp";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   getHomeReviewBundle,
@@ -96,11 +96,12 @@ export default async function HomePage({
       }}
       hasTenantKey
     >
-      <HomePreviewAppRoot
+      <HomeCanvasApp
         bundle={bundle}
         recordSource={recordSource}
         recordToken={homeRecordSourceToken(tenantKey, recordSource)}
         tenantKey={tenantKey}
+        tenantName={tenantName}
         requestedProvider={provider}
       />
     </AppShell>

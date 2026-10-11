@@ -8,10 +8,11 @@ import { HomeCanvasApp } from "../HomeCanvasApp";
 
 let mockParams = new URLSearchParams();
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
 const mockAva = jest.fn();
 jest.mock("next/navigation", () => ({
   useSearchParams: () => mockParams,
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
 }));
 jest.mock("next/link", () => ({
   __esModule: true,
@@ -103,6 +104,8 @@ function app(record = bundle(), recordSource = source) {
 beforeEach(() => {
   mockParams = new URLSearchParams();
   mockPush.mockClear();
+  mockReplace.mockClear();
+  window.history.replaceState(null, "", "/home");
   mockAva.mockClear();
   HTMLDialogElement.prototype.showModal = function () {
     this.open = true;
@@ -112,7 +115,7 @@ beforeEach(() => {
   };
 });
 
-describe("native Home preview", () => {
+describe("native Home canvas", () => {
   it("passes the exact record and active focus to the unchanged shared aVa", () => {
     mockParams.set("view", "technology_data");
     render(app());
@@ -149,7 +152,7 @@ describe("native Home preview", () => {
     for (const link of screen
       .getByRole("navigation", { name: "Home explorer" })
       .querySelectorAll("a")) {
-      expect(link.getAttribute("href")).toMatch(/^\/home\/canvas\?/);
+      expect(link.getAttribute("href")).toMatch(/^\/home\?/);
       expect(link.getAttribute("href")).not.toContain("#");
     }
     expect(screen.getByRole("link", { name: "Evidence" })).toHaveAttribute(
@@ -168,10 +171,24 @@ describe("native Home preview", () => {
       "title",
       "Download the existing full Home walkthrough PDF",
     );
-    expect(screen.getByRole("link", { name: "Current Home" })).toHaveAttribute(
-      "href",
-      "/home?tenant=meridian-health&provider=ecl",
+    expect(
+      screen.queryByRole("link", { name: "Current Home" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Design preview")).not.toBeInTheDocument();
+  });
+  it("replaces a legacy bookmark with a tenant-bound canonical URL", () => {
+    window.history.replaceState(null, "", "/home#our_business");
+    render(app());
+    expect(mockReplace).toHaveBeenCalledWith(
+      "/home?tenant=meridian-health&provider=ecl&view=our_business&panel=overview",
+      { scroll: false },
     );
+  });
+  it("does not let an old hash override an explicitly selected view", () => {
+    window.history.replaceState(null, "", "/home#our_business");
+    mockParams.set("view", "technology_data");
+    render(app());
+    expect(mockReplace).not.toHaveBeenCalled();
   });
   it("renders one selected evidence table and makes the others selectable", () => {
     mockParams = new URLSearchParams("view=technology_data&panel=evidence");

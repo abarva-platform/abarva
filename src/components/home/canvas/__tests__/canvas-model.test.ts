@@ -10,6 +10,7 @@ import {
   canvasHref,
   canvasMetrics,
   canvasViews,
+  legacyCanvasView,
   declaredRevenueSplit,
   formatCanvasNumber,
   narrativeIsCurrent,
@@ -37,7 +38,7 @@ const unverified: HomeRecordRenderSource = {
   canonicalSnapshotHash: "served-version",
 };
 
-describe("opt-in Home canvas record contract", () => {
+describe("canonical Home canvas record contract", () => {
   it("offers every chapter, evidence family and context view", () => {
     const record = bundle();
     const views = canvasViews(record);
@@ -58,7 +59,7 @@ describe("opt-in Home canvas record contract", () => {
       "evidence",
     );
     const url = new URL(href, "https://example.invalid");
-    expect(url.pathname).toBe("/home/canvas");
+    expect(url.pathname).toBe("/home");
     expect(url.searchParams.get("tenant")).toBe("bound-tenant");
     expect(url.searchParams.get("provider")).toBe("ecl");
     expect(url.searchParams.get("view")).toBe("technology_data");
@@ -84,6 +85,22 @@ describe("opt-in Home canvas record contract", () => {
         bundle(),
       ),
     ).toEqual({ view: "executive_brief", panel: "overview" });
+  });
+  it("migrates valid old bookmarks but refuses malformed and unavailable hashes", () => {
+    const record = bundle();
+    for (const view of canvasViews(record)) {
+      expect(legacyCanvasView(`#${encodeURIComponent(view)}`, record)).toBe(
+        view,
+      );
+    }
+    for (const hash of [
+      "#%broken",
+      "#tech:missing",
+      "#javascript:alert(1)",
+      "#",
+    ]) {
+      expect(legacyCanvasView(hash, record)).toBeNull();
+    }
   });
   it("adds newly supplied canonical families without a presentation allowlist", () => {
     const record = bundle();
