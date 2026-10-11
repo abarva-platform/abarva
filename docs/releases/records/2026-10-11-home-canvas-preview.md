@@ -12,7 +12,7 @@
 
 `experimental` - authenticated, opt-in route. No default Home cutover.
 
-Includes a `global-control-lane` correction to the shared current-state flow display contract. If this candidate is later published, existing consumers of that resolver also receive the corrected zone order, landing checks and display-density enforcement.
+Includes `global-control-lane` corrections to the shared current-state flow display contract and Home field preservation. If this candidate is later published, existing consumers receive the corrected flow zone order, landing checks and display-density enforcement; Home readers retain recorded segment notes and string-list capabilities.
 
 ## Plain-English Summary
 
@@ -44,13 +44,15 @@ The shared flow contract now consumes the governed taxonomy's zone order instead
 - Generated route manual includes the optional preview route.
 - Theme-led leadership presentation with exact selected excerpts, minority-theme ordering and explicit response/synthetic basis. Earlier excerpts are not substituted for unverified current interviews.
 - Operating segments use only declared segment keys for function links. System-owner groupings remain distinct from segment or P&L attribution; detail not supplied in a bundle is not asserted absent from the enterprise.
+- Operating detail renders recorded descriptions, accountable roles, governance, regulation and function capabilities. An absent detail set produces one coverage notice, not a repeated empty form. Functions are paged in compact groups, with exact source inspection.
+- The existing Home reader preserves segment notes and canonical string-list capabilities. Empty family registration alone is not counted as a supplied segment mapping.
 - Additional subject-aligned compiled context is inspectable in each chapter without generating a new narrative.
 - Admitted flow diagrams offer exact movement records; legitimately refused diagrams retain an inspectable movement view without inventing platform hops.
 
 ## QA / Validation
 
 - Focused model/component tests cover query routing, source selection, absent versus zero, row counts, fallback labels, advisor/export version binding, stale-narrative quarantine and complete pagination.
-- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome and shared visual regressions: 61 suites / 785 tests passed, plus two SVG snapshots.
+- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome, shared visual, ECL projection-reader and enterprise-context regressions: 63 suites / 833 tests passed, plus two SVG snapshots.
 - Full repository TypeScript check passed using Node 24 with an 8 GB heap.
 - ESLint: no errors; pre-existing record-browser memo and flow unused-type warnings remain.
 - Release controls: all 11 gates passed; generated route manual is current.
@@ -59,6 +61,7 @@ The shared flow contract now consumes the governed taxonomy's zone order instead
 - Positive and negative flow tests prove warehouse/mart landing, consumption, convergence, zone-order consistency and audience-density enforcement. The one-to-one refusal test now supplies its own explicit opaque distribution instead of relying on a reviewed fixture whose topology changed.
 - Local Next.js server retains Clerk authentication. Its automated sign-in guard prevents signed-in runtime proof in this environment. The fixture UI preview is not a production or live-data proof.
 - Existing PDF endpoint is reused; neither PDF redesign nor a new advisor quality claim is included.
+- Follow-up operating-context review: 15 local browser cases across three viewport widths check all segment fields, complete declared function traversal, candidate source/version visibility and the reviewed-record gap. Candidate source details are a separate local-only adapter dry run, not substituted into the reviewed bundle or runtime route.
 
 ## Rollout Plan
 
@@ -90,6 +93,7 @@ The default remains the existing `/home`, which is also linked from the preview.
 - Missing families and unsupported architecture remain explicit gaps, not fabricated visuals.
 - Business revenue composition renders only complete source-linked structured percentages or an exact declared split in an aligned reviewed packet; no inferred segment dollars.
 - Detailed organization/program/risk/metric/interview coverage in a compiled manifest does not establish that those record families are supplied to the rendered bundle. Current source/readback proof is still required.
+- Richer operating intake may exist locally without accepted serving rows. The optional product route does not import that raw intake. Source acceptance, financial-basis reconciliation, declared-link validation and coherent publication remain a separately governed data-plane gate.
 - An existing published operating narrative may remain off-purpose; it is retained with an explicit note in Full reading. Correcting published narrative requires the governed regeneration gate and is not included.
 - The existing walkthrough export is version-bound but does not adopt the new canvas layout in this release.
 - No default Home flip or legacy sunset.

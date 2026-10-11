@@ -6,7 +6,6 @@ import type {
   HomeReviewBundle,
 } from "@/lib/home/preview/types";
 import { cxoText } from "../v4/cxo-language";
-import { formatCanvasMoney } from "./canvas-model";
 import { leadershipContext, operatingContext } from "./context-coverage";
 import type { CanvasInspection } from "./ChapterCanvas";
 import styles from "./HomeCanvas.module.css";
@@ -240,7 +239,23 @@ export function OperatingCanvas({
 }) {
   const context = operatingContext(bundle, source);
   const [selected, setSelected] = useState(context.segments[0]?.key ?? "");
+  const [functionPage, setFunctionPage] = useState(0);
   const segment = context.segments.find((item) => item.key === selected);
+  const pageCount = Math.max(
+    1,
+    Math.ceil((segment?.functions.length ?? 0) / 3),
+  );
+  const activePage = Math.min(functionPage, pageCount - 1);
+  const visibleFunctions =
+    segment?.functions.slice(activePage * 3, activePage * 3 + 3) ?? [];
+  const segmentFacts = segment
+    ? [
+        ["Recorded accountable role", segment.owner],
+        ["Governance forum", segment.governance],
+        ["Regulatory context", segment.regulation],
+      ].filter(([, value]) => value)
+    : [];
+  const linkedFunctions = context.segments.flatMap((item) => item.functions);
   return (
     <div
       className={styles.overview}
@@ -267,19 +282,41 @@ export function OperatingCanvas({
         </div>
         <div className={styles.metric}>
           <strong>
-            {context.accountabilityAvailable
-              ? context.accountability.length
-              : "Not supplied"}
+            {context.hasDeclaredMapping
+              ? context.segmentsWithDetail
+              : context.accountabilityAvailable
+                ? context.accountability.length
+                : "Not supplied"}
           </strong>
-          <span>Functions named by systems</span>
-          <small>System accountability, not the org chart</small>
+          <span>
+            {context.hasDeclaredMapping
+              ? "Segments with operating detail"
+              : "Functions named by systems"}
+          </span>
+          <small>
+            {context.hasDeclaredMapping
+              ? "Roles, governance or functions recorded"
+              : "System accountability, not the org chart"}
+          </small>
         </div>
         <div className={styles.metric}>
           <strong>
-            {context.signalsAvailable ? context.signals.length : "Not supplied"}
+            {context.hasDeclaredMapping
+              ? linkedFunctions.filter((fn) => fn.capabilities).length
+              : context.signalsAvailable
+                ? context.signals.length
+                : "Not supplied"}
           </strong>
-          <span>Workforce & process signals</span>
-          <small>Aligned compiled context</small>
+          <span>
+            {context.hasDeclaredMapping
+              ? "Functions with capabilities"
+              : "Workforce & process signals"}
+          </span>
+          <small>
+            {context.hasDeclaredMapping
+              ? "What the functions do, as recorded"
+              : "Aligned compiled context"}
+          </small>
         </div>
       </div>
       <div className={styles.split}>
@@ -290,7 +327,10 @@ export function OperatingCanvas({
             <select
               aria-label="Operating segment"
               value={selected}
-              onChange={(event) => setSelected(event.target.value)}
+              onChange={(event) => {
+                setSelected(event.target.value);
+                setFunctionPage(0);
+              }}
             >
               {context.segments.map((item) => (
                 <option key={item.key} value={item.key}>
@@ -302,40 +342,29 @@ export function OperatingCanvas({
           {segment ? (
             <>
               <h3>{segment.name}</h3>
-              <dl className={styles.segmentFacts}>
-                <dt>P&L accountability</dt>
-                <dd>{segment.owner ?? "Not supplied in this bundle"}</dd>
-                <dt>Declared revenue</dt>
-                <dd>
-                  {segment.revenue === null
-                    ? "Not supplied in this bundle"
-                    : formatCanvasMoney(segment.revenue)}
-                </dd>
-                <dt>Governance forum</dt>
-                <dd>{segment.governance || "Not supplied in this bundle"}</dd>
-                <dt>Regulatory context</dt>
-                <dd>{segment.regulation || "Not supplied in this bundle"}</dd>
-              </dl>
-              {segment.functions.length ? (
-                <>
-                  <h3>Functions with a declared segment link</h3>
-                  <ul className={`${styles.list} ${styles.contextList}`}>
-                    {segment.functions.map((fn) => (
-                      <li key={fn.name}>
-                        <span>
-                          <strong>{fn.name}</strong>
-                          <small>
-                            {fn.owner ?? "Executive owner not supplied"}
-                            {fn.applications !== null
-                              ? ` - ${fn.applications} applications, ${fn.programs} programs, ${fn.risks} risks`
-                              : ""}
-                          </small>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
+              {segment.description && (
+                <p className={styles.segmentDescription}>
+                  {segment.description}
+                </p>
+              )}
+              {segmentFacts.length > 0 && (
+                <dl className={styles.segmentFacts}>
+                  {segmentFacts.map(([label, value]) => (
+                    <div className={styles.segmentFact} key={label!}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {segmentFacts.length < 3 && (
+                <p className={styles.basis}>
+                  {segmentFacts.length === 0
+                    ? "Only the segment name is supplied in this record. Its accountable role, governance and regulatory detail are not supplied."
+                    : "Some accountability or governance detail is not supplied in this record."}
+                </p>
+              )}
+              {!segment.functions.length && (
                 <div className={styles.notice}>
                   This bundle names the segment but supplies no
                   function-to-segment links for it. Functions below are not
@@ -370,95 +399,169 @@ export function OperatingCanvas({
           )}
         </section>
         <section className={styles.section}>
-          <h2>Recorded system accountability</h2>
-          <p className={styles.basis}>
-            Roles named on application records. These are not inferred segment
-            or P&L owners.
-          </p>
-          <ul className={`${styles.list} ${styles.contextList}`}>
-            {context.accountability.slice(0, 4).map((group) => (
-              <li key={group.name}>
-                <span>
-                  <strong>{group.name}</strong>
-                  <small>{group.count} application records</small>
-                  <small>
-                    Business:{" "}
-                    {[...group.businessOwners].join("; ") || "Not supplied"}
-                  </small>
-                  <small>
-                    Technology:{" "}
-                    {[...group.technologyOwners].join("; ") || "Not supplied"}
-                  </small>
-                </span>
-              </li>
-            ))}
-          </ul>
-          {context.accountability.length > 4 && (
-            <button
-              className={styles.textButton}
-              style={{ marginTop: 12 }}
-              onClick={() =>
-                inspect({
-                  title: "System accountability by recorded function",
-                  text: context.accountability
-                    .map(
-                      (group) =>
-                        `${group.name}: ${group.count} applications\nBusiness owners: ${[...group.businessOwners].join("; ") || "Not supplied"}\nTechnology owners: ${[...group.technologyOwners].join("; ") || "Not supplied"}`,
-                    )
-                    .join("\n\n"),
-                  basis:
-                    "Grouped on the application register's businessFunction field; roles retained exactly as recorded. Not segment attribution or an organization hierarchy.",
-                  sourceRefs: context.accountability.flatMap(
-                    (group) => group.sourceRefs,
-                  ),
-                })
-              }
-            >
-              All {context.accountability.length} recorded functions
-            </button>
-          )}
-          <h3 style={{ marginTop: 24 }}>How work gets done</h3>
-          <ul className={`${styles.list} ${styles.contextList}`}>
-            {context.signals.slice(0, 3).map((signal) => (
-              <li key={signal.id}>
-                <span>
-                  {signal.statement}
+          {segment && segment.functions.length > 0 && (
+            <>
+              <h2>What this segment does</h2>
+              <p className={styles.basis}>
+                Business functions linked by a declared segment key. Accountable
+                roles are retained as recorded.
+              </p>
+              <ul
+                className={`${styles.list} ${styles.contextList}`}
+                data-segment-functions
+              >
+                {visibleFunctions.map((fn) => (
+                  <li key={fn.name}>
+                    <span>
+                      <strong>{fn.name}</strong>
+                      <small>
+                        {fn.owner || "Accountable role not supplied"}
+                      </small>
+                      {fn.capabilities ? (
+                        <p className={styles.functionCapabilities}>
+                          {fn.capabilities}
+                        </p>
+                      ) : (
+                        <small>Business capabilities not supplied</small>
+                      )}
+                      <button
+                        className={styles.textButton}
+                        onClick={() =>
+                          inspect({
+                            title: fn.name,
+                            text: `Accountable role: ${fn.owner || "Not supplied"}\nCapabilities: ${fn.capabilities || "Not supplied"}\nParent function: ${fn.parent || "Not supplied"}\nFTE: ${fn.fte ?? "Not supplied"}\nDeclared annual budget: ${fn.budget ?? "Not supplied"}`,
+                            sourceRefs: fn.sourceRefs,
+                            basis:
+                              "Function record with a declared segment key. Budget and FTE are recorded inputs, not a performance measure. No name-inferred membership.",
+                          })
+                        }
+                      >
+                        Function evidence
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {pageCount > 1 && (
+                <div className={styles.pager}>
+                  <span>
+                    Functions {activePage * 3 + 1}-
+                    {Math.min((activePage + 1) * 3, segment.functions.length)}{" "}
+                    of {segment.functions.length}
+                  </span>
                   <button
-                    className={styles.textButton}
-                    style={{ display: "block", marginTop: 7 }}
-                    onClick={() =>
-                      inspect({
-                        title: "Workforce / process context",
-                        text: signal.statement,
-                        evidenceIds: [signal.id],
-                      })
-                    }
+                    aria-label="Previous function page"
+                    disabled={activePage === 0}
+                    onClick={() => setFunctionPage(activePage - 1)}
                   >
-                    Source
+                    &lt;
                   </button>
-                </span>
-              </li>
-            ))}
-          </ul>
-          {context.signals.length > 3 && (
-            <button
-              className={styles.textButton}
-              style={{ marginTop: 12 }}
-              onClick={() =>
-                inspect({
-                  title: "Workforce and operating-process context",
-                  text: context.signals
-                    .map((signal) => signal.statement)
-                    .join("\n\n"),
-                  evidenceIds: context.signals.map((signal) => signal.id),
-                  basis:
-                    "Compiled signals from the aligned record. Not allocated to operating segments without declared links.",
-                })
-              }
-            >
-              All {context.signals.length} workforce & process signals
-            </button>
+                  <button
+                    aria-label="Next function page"
+                    disabled={activePage === pageCount - 1}
+                    onClick={() => setFunctionPage(activePage + 1)}
+                  >
+                    &gt;
+                  </button>
+                </div>
+              )}
+            </>
           )}
+          <details
+            open={!segment?.functions.length}
+            className={styles.operatingSecondary}
+          >
+            <summary>System accountability & operating signals</summary>
+            <h2>Recorded system accountability</h2>
+            <p className={styles.basis}>
+              Roles named on application records. These are not inferred segment
+              or P&L owners.
+            </p>
+            <ul className={`${styles.list} ${styles.contextList}`}>
+              {context.accountability.slice(0, 4).map((group) => (
+                <li key={group.name}>
+                  <span>
+                    <strong>{group.name}</strong>
+                    <small>{group.count} application records</small>
+                    <small>
+                      Business:{" "}
+                      {[...group.businessOwners].join("; ") || "Not supplied"}
+                    </small>
+                    <small>
+                      Technology:{" "}
+                      {[...group.technologyOwners].join("; ") || "Not supplied"}
+                    </small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {context.accountability.length > 4 && (
+              <button
+                className={styles.textButton}
+                style={{ marginTop: 12 }}
+                onClick={() =>
+                  inspect({
+                    title: "System accountability by recorded function",
+                    text: context.accountability
+                      .map(
+                        (group) =>
+                          `${group.name}: ${group.count} applications\nBusiness owners: ${[...group.businessOwners].join("; ") || "Not supplied"}\nTechnology owners: ${[...group.technologyOwners].join("; ") || "Not supplied"}`,
+                      )
+                      .join("\n\n"),
+                    basis:
+                      "Grouped on the application register's businessFunction field; roles retained exactly as recorded. Not segment attribution or an organization hierarchy.",
+                    sourceRefs: context.accountability.flatMap(
+                      (group) => group.sourceRefs,
+                    ),
+                  })
+                }
+              >
+                All {context.accountability.length} recorded functions
+              </button>
+            )}
+            <h3 style={{ marginTop: 24 }}>How work gets done</h3>
+            <ul className={`${styles.list} ${styles.contextList}`}>
+              {context.signals.slice(0, 3).map((signal) => (
+                <li key={signal.id}>
+                  <span>
+                    {signal.statement}
+                    <button
+                      className={styles.textButton}
+                      style={{ display: "block", marginTop: 7 }}
+                      onClick={() =>
+                        inspect({
+                          title: "Workforce / process context",
+                          text: signal.statement,
+                          evidenceIds: [signal.id],
+                        })
+                      }
+                    >
+                      Source
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {context.signals.length > 3 && (
+              <button
+                className={styles.textButton}
+                style={{ marginTop: 12 }}
+                onClick={() =>
+                  inspect({
+                    title: "Workforce and operating-process context",
+                    text: context.signals
+                      .map((signal) => signal.statement)
+                      .join("\n\n"),
+                    evidenceIds: context.signals.map((signal) => signal.id),
+                    basis:
+                      "Compiled signals from the aligned record. Not allocated to operating segments without declared links.",
+                  })
+                }
+              >
+                All {context.signals.length} workforce & process signals
+              </button>
+            )}
+          </details>
         </section>
       </div>
     </div>

@@ -182,6 +182,7 @@ describe("canvas context coverage", () => {
         revenueUsd: 0,
         governanceCouncil: "Council",
         regulatoryRegime: "Recorded regime",
+        segmentNotes: "Deliver acute care at owned facilities.",
       },
     ]);
     family(record, "business_function", [
@@ -189,6 +190,9 @@ describe("canvas context coverage", () => {
         functionName: "Known function",
         businessSegmentKey: "segment-a",
         executiveOwner: "Declared owner",
+        businessCapabilities: "Care delivery; clinical documentation",
+        annualBudgetUsd: 0,
+        fteCount: 12,
       },
       {
         functionName: "Operating A",
@@ -203,11 +207,28 @@ describe("canvas context coverage", () => {
       revenue: 0,
       governance: "Council",
       regulation: "Recorded regime",
+      description: "Deliver acute care at owned facilities.",
     });
     expect(context.segments[0].functions.map((item) => item.name)).toEqual([
       "Known function",
     ]);
     expect(context.signals).toEqual([]);
+    expect(context.segments[0].functions[0]).toMatchObject({
+      capabilities: "Care delivery; clinical documentation",
+      budget: 0,
+      fte: 12,
+      sourceRefs: ["row-0"],
+    });
+    expect(context.unlinkedFunctions).toBe(2);
+    expect(context.segmentsWithDetail).toBe(1);
+  });
+  it("does not call two empty families a declared segment mapping", () => {
+    const record = bundle();
+    family(record, "business_segment", [{ segmentKey: "a", segmentName: "A" }]);
+    family(record, "business_function", [
+      { functionName: "A", businessSegment: "A" },
+    ]);
+    expect(operatingContext(record, unverified).hasDeclaredMapping).toBe(false);
   });
   it("does not invent a segment structure when the current bundle omits it", () => {
     expect(operatingContext(bundle(), unverified).segments).toEqual([]);

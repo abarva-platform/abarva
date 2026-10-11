@@ -138,6 +138,103 @@ describe("context-rich canvas views", () => {
       10,
     );
   });
+  it("renders operating detail and function capabilities for each declared segment, with evidence", () => {
+    const record = bundle(),
+      inspect = jest.fn();
+    const segments = ["Care", "Clinics", "Plan", "Enterprise"].map(
+      (name, index) => ({
+        segmentKey: `segment-${index}`,
+        segmentName: name,
+        pnlOwnerRole: `Accountable role ${index}`,
+        governanceCouncil: `Governance forum ${index}`,
+        regulatoryRegime: `Regime ${index}`,
+        segmentNotes: `Delivery context for ${name}`,
+      }),
+    );
+    const functions = segments.map((segment, index) => ({
+      functionName: `Function ${index}`,
+      businessSegmentKey: segment.segmentKey,
+      executiveOwner: `Function owner ${index}`,
+      businessCapabilities: `Capability ${index}`,
+    }));
+    functions.push(
+      ...[1, 2, 3].map((index) => ({
+        functionName: `Additional function ${index}`,
+        businessSegmentKey: segments[0].segmentKey,
+        executiveOwner: `Additional owner ${index}`,
+        businessCapabilities: `Additional capability ${index}`,
+      })),
+    );
+    record.technologyEstate!.recordTypes = [
+      {
+        objectType: "business_segment",
+        label: "Segments",
+        rows: segments,
+        columns: [],
+        primaryDimension: "segmentName",
+        dimensionCounts: [],
+        rowSourceRefs: segments.map((_, i) => [`segment-ref-${i}`]),
+      },
+      {
+        objectType: "business_function",
+        label: "Functions",
+        rows: functions,
+        columns: [],
+        primaryDimension: "functionName",
+        dimensionCounts: [],
+        rowSourceRefs: functions.map((_, i) => [`function-ref-${i}`]),
+      },
+    ];
+    const { container } = render(
+      <OperatingCanvas bundle={record} source={source} inspect={inspect} />,
+    );
+    segments.forEach((segment, index) => {
+      fireEvent.change(screen.getByLabelText("Operating segment"), {
+        target: { value: segment.segmentKey },
+      });
+      expect(screen.getByText(segment.segmentNotes)).toBeInTheDocument();
+      expect(screen.getByText(segment.pnlOwnerRole)).toBeInTheDocument();
+      expect(screen.getByText(segment.governanceCouncil)).toBeInTheDocument();
+      expect(screen.getByText(segment.regulatoryRegime)).toBeInTheDocument();
+      expect(screen.getByText(`Capability ${index}`)).toBeInTheDocument();
+      expect(
+        container.querySelectorAll("[data-segment-functions] li"),
+      ).toHaveLength(index === 0 ? 3 : 1);
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Function evidence" })[0],
+      );
+      expect(inspect).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          sourceRefs: [`function-ref-${index}`],
+          text: expect.stringContaining(`Capability ${index}`),
+        }),
+      );
+    });
+    expect(
+      screen.queryByText("Not supplied in this bundle"),
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Operating segment"), {
+      target: { value: segments[0].segmentKey },
+    });
+    expect(screen.getByText("Functions 1-3 of 4")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next function page" }));
+    expect(screen.getByText("Additional capability 3")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Next function page" }),
+    ).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Previous function page" }),
+    );
+    expect(screen.getByText("Capability 0")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next function page" }));
+    fireEvent.change(screen.getByLabelText("Operating segment"), {
+      target: { value: segments[1].segmentKey },
+    });
+    fireEvent.change(screen.getByLabelText("Operating segment"), {
+      target: { value: segments[0].segmentKey },
+    });
+    expect(screen.getByText("Functions 1-3 of 4")).toBeInTheDocument();
+  });
   it("keeps inspectable pair records when the independent architecture gate refuses", () => {
     const record = bundle(),
       inspect = jest.fn();

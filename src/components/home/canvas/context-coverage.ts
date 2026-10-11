@@ -191,6 +191,33 @@ export function leadershipContext(
   };
 }
 
+interface OperatingFunction {
+  name: string;
+  owner: string | null;
+  capabilities: string;
+  budget: number | null;
+  fte: number | null;
+  parent: string;
+  applications: number | null;
+  programs: number | null;
+  risks: number | null;
+  sourceRefs: string[];
+}
+
+interface OperatingSegment {
+  key: string;
+  name: string;
+  owner: string | null;
+  revenue: number | null;
+  share: number | null;
+  governance: string;
+  regulation: string;
+  description: string;
+  sourceRefs: string[];
+  evidenceIds: string[];
+  functions: OperatingFunction[];
+}
+
 export function operatingContext(
   bundle: HomeReviewBundle,
   source: HomeRecordRenderSource,
@@ -204,7 +231,20 @@ export function operatingContext(
   const functionRows = families.find(
     (family) => family.objectType === "business_function",
   );
-  const segments = context
+  const functionDetail = (row: Record<string, unknown> | undefined) => ({
+    capabilities: text(row?.businessCapabilities),
+    budget:
+      typeof row?.annualBudgetUsd === "number" &&
+      Number.isFinite(row.annualBudgetUsd)
+        ? row.annualBudgetUsd
+        : null,
+    fte:
+      typeof row?.fteCount === "number" && Number.isFinite(row.fteCount)
+        ? row.fteCount
+        : null,
+    parent: text(row?.parentFunction),
+  });
+  const segments: OperatingSegment[] = context
     ? context.segmentSpine.segments.map((segment) => {
         const fact = context.segmentFacts[segment.segmentKey];
         const row = segmentRows?.rows.find(
@@ -218,6 +258,7 @@ export function operatingContext(
           share: fact?.revenueSharePct ?? null,
           governance: text(row?.governanceCouncil),
           regulation: text(row?.regulatoryRegime),
+          description: text(row?.segmentNotes),
           sourceRefs: fact?.sourceRefs ?? [],
           evidenceIds: [] as string[],
           functions: context.functions
@@ -229,6 +270,13 @@ export function operatingContext(
               programs: fn.programCount,
               risks: fn.riskCount,
               sourceRefs: fn.sourceRefs,
+              ...functionDetail(
+                functionRows?.rows.find(
+                  (candidate) =>
+                    candidate.functionId === fn.functionId &&
+                    candidate.businessSegmentKey === segment.segmentKey,
+                ),
+              ),
             })),
         };
       })
@@ -244,6 +292,7 @@ export function operatingContext(
               : null,
           governance: text(row.governanceCouncil),
           regulation: text(row.regulatoryRegime),
+          description: text(row.segmentNotes),
           sourceRefs: segmentRows.rowSourceRefs?.[i] ?? [],
           evidenceIds: [] as string[],
           functions: (functionRows?.rows ?? [])
@@ -263,6 +312,7 @@ export function operatingContext(
               programs: null,
               risks: null,
               sourceRefs,
+              ...functionDetail(fn),
             })),
         }))
       : business.segments.map((name) => ({
@@ -273,6 +323,7 @@ export function operatingContext(
           share: null,
           governance: "",
           regulation: "",
+          description: "",
           functions: [],
           sourceRefs: [] as string[],
           evidenceIds: narrativeIsCurrent(source)
@@ -322,7 +373,24 @@ export function operatingContext(
         typeof item.kind === "string" &&
         ["workforce", "operational"].includes(item.kind),
     ),
-    hasDeclaredMapping: Boolean(context || (segmentRows && functionRows)),
+    hasDeclaredMapping: segments.some(
+      (segment) => segment.functions.length > 0,
+    ),
+    segmentsWithDetail: segments.filter(
+      (segment) =>
+        segment.owner ||
+        segment.governance ||
+        segment.regulation ||
+        segment.description ||
+        segment.functions.length,
+    ).length,
+    unlinkedFunctions: (functionRows?.rows ?? []).filter(
+      (row) =>
+        !segments.some(
+          (segment) =>
+            segment.key && segment.key === text(row.businessSegmentKey),
+        ),
+    ).length,
     accountabilityAvailable: Boolean(applications),
     signalsAvailable: narrativeIsCurrent(source),
   };

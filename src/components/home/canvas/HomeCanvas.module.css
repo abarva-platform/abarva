@@ -845,11 +845,34 @@
   margin: 5px 0 8px;
 }
 .segmentFacts {
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   font-size: 12px;
   line-height: 1.5;
   margin: 15px 0 20px;
+}
+.segmentFact {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+.segmentDescription {
+  font-size: 16px !important;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+.section .functionCapabilities {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+.operatingSecondary {
+  margin-top: 24px;
+}
+.operatingSecondary > summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+}
+.operatingSecondary[open] > summary {
+  margin-bottom: 20px;
 }
 .segmentFacts dt,
 .segmentFacts dd {
