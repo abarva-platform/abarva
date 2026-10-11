@@ -152,6 +152,25 @@ function assertScript(script) {
   }
 }
 
+function assertTowerStageJobBinding(options) {
+  if (!["tower:registered-intake:stage-job", "tower:registered-intake:stage-reattest-job"].includes(options.script)) return;
+  const entries = options.env.map((value) => splitKeyValue(value, "--env"));
+  const overrides = new Map(entries);
+  for (const key of ["TOWER_RELOAD_IMAGE_DIGEST", "TOWER_RELOAD_JOB_NAME",
+    "TOWER_RELOAD_TIMEOUT_SECONDS", "TOWER_RELOAD_EXECUTION_LANE"]) {
+    if (entries.filter(([name]) => name === key).length !== 1) {
+      throw new Error(`Tower stage requires exactly one ${key} override`);
+    }
+  }
+  const imageDigest = options.image.match(/@((?:sha256:)[0-9a-f]{64})$/)?.[1];
+  if (!imageDigest || overrides.get("TOWER_RELOAD_IMAGE_DIGEST") !== imageDigest ||
+      overrides.get("TOWER_RELOAD_JOB_NAME") !== options.job ||
+      overrides.get("TOWER_RELOAD_TIMEOUT_SECONDS") !== String(options.timeout) ||
+      overrides.get("TOWER_RELOAD_EXECUTION_LANE") !== "aca_operator_job") {
+    throw new Error("Tower stage job identity, image digest, timeout, and execution lane must match the ACA wrapper request");
+  }
+}
+
 function runAz(args, options = {}) {
   const result = spawnSync("az", args, {
     encoding: "utf8",
@@ -1133,6 +1152,7 @@ async function main() {
   assertDigestPinned(options.image);
   assertDigestPinned(options.idleImage);
   assertScript(options.script);
+  assertTowerStageJobBinding(options);
   if (!Number.isFinite(options.pollSeconds) || options.pollSeconds <= 0) {
     throw new Error("--poll-seconds must be a positive number");
   }

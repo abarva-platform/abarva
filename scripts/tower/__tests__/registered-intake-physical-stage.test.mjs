@@ -1,0 +1,102 @@
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import test from "node:test";
+
+import { buildRegisteredIntakeCandidate } from "../build-registered-intake-reload-candidate.mjs";
+import { buildPhysicalPlan, validatePhysicalPlan, viewFingerprints } from "../stage-registered-intake-partial.mjs";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const registry = JSON.parse(fs.readFileSync(path.join(ROOT, "datasets/tenant-inputs/tenant-input-registry.json"), "utf8"));
+const tenantKey = registry.activeTenants.find((tenant) => tenant.packets?.some((packet) => packet.classification === "synthetic-demo"))?.tenantKey;
+
+test("physical plan preserves source identity and unknown amounts", () => {
+  assert.ok(tenantKey);
+  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey });
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  const gate = validatePhysicalPlan(report, plan, viewCounts);
+  assert.equal(gate.status, "pass");
+  assert.equal(plan.sourceFiles.length, 17);
+  assert.equal(plan.sourceRecords.length, 299);
+  assert.equal(plan.objects.length, 237);
+  assert.equal(plan.measures.length, 281);
+  assert.equal(plan.sourceRecords.filter((row) => row.record_type === "13_evidence_sources").length, 0);
+  assert.equal(plan.sourceFiles.filter((row) => row.file_name.startsWith("extracts/")).length, 0);
+  assert.ok(plan.commandRows.every((row) => row.funded_amount_usd === null && row.claimable_value_usd === null));
+  assert.ok(plan.valueRows.every((row) => row.claimable_value_usd === null && row.blocked_value_usd === null));
+  assert.ok(plan.evidenceRows.every((row) => row.priority_score === null));
+  assert.equal(plan.objects.filter((row) => row.object_type === "metric" && row.object_key === "modeled_annual_it_spend_usd").length, 1);
+  assert.equal(plan.objects.find((row) => row.object_key === "modeled_annual_it_spend_usd").attributes_json.source_refs.length, 27);
+  assert.equal(plan.objects.filter((row) => row.object_type === "ai_use_case").length, 36);
+  assert.ok(plan.valueRows.filter((row) => row.page_key === "cost_lens").every((row) => row.measure_id));
+  assert.equal(plan.projectionMeasureRefs.length, 207);
+  assert.equal(plan.measures.filter((row) => row.metric_key === "outcome_source_value").length, 134);
+  assert.equal(plan.projectionManifests.length, 9);
+  assert.ok(Object.values(viewCounts).every((count) => count > 0));
+  assert.ok(Object.values(viewFingerprints(plan)).every((digest) => /^[a-f0-9]{64}$/.test(digest)));
+  const evidence = plan.evidenceRows.find((row) => row.page_key === "evidence");
+  assert.equal(evidence.source_refs_json[0].scope, "register_coverage_only");
+  assert.equal(evidence.source_refs_json[0].source_row, null);
+});
+
+test("write mode refuses the unapproved exact version before opening a database", () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-stage-refusal-"));
+  try {
+    const result = spawnSync(process.execPath, [
+      "--import", "tsx", path.join(ROOT, "scripts/tower/stage-registered-intake-partial.mjs"),
+      "--tenant-key", tenantKey, "--out-dir", outDir, "--write", "--job-run-id", "test-refusal",
+    ], { cwd: ROOT, encoding: "utf8", env: { ...process.env, DATABASE_URL: "" } });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Refusing stage\/proof: manifest carries no load_approval/);
+    assert.equal(fs.existsSync(path.join(outDir, "stage-receipt.json")), false);
+    const preflight = JSON.parse(fs.readFileSync(path.join(outDir, "stage-preflight.json"), "utf8"));
+    assert.equal(preflight.stage_status, "not_written");
+    assert.equal(preflight.load_approval_status, "missing_or_mismatched");
+    const candidate = fs.readFileSync(path.join(outDir, "candidate.json"));
+    assert.equal(preflight.candidate_sha256, crypto.createHash("sha256").update(candidate).digest("hex"));
+  } finally {
+    fs.rmSync(outDir, { recursive: true, force: true });
+  }
+});
+
+test("read-only proof re-attestation also requires exact load approval", () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-reattest-refusal-"));
+  try {
+    const result = spawnSync(process.execPath, [
+      "--import", "tsx", path.join(ROOT, "scripts/tower/stage-registered-intake-partial.mjs"),
+      "--tenant-key", tenantKey, "--out-dir", outDir, "--reattest",
+      "--job-run-id", "test-reattest", "--stage-job-run-id", "test-stage",
+    ], { cwd: ROOT, encoding: "utf8", env: { ...process.env, DATABASE_URL: "" } });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Refusing stage\/proof: manifest carries no load_approval/);
+    assert.equal(fs.existsSync(path.join(outDir, "stage-receipt.json")), false);
+  } finally {
+    fs.rmSync(outDir, { recursive: true, force: true });
+  }
+});
+
+test("ACA wrapper independently binds the stage image digest", () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-stage-aca-plan-"));
+  const digest = `sha256:${"a".repeat(64)}`;
+  const wrapper = path.join(ROOT, "scripts/ops/submit-aca-operator-job.mjs");
+  const base = [wrapper, "--image", `example.azurecr.io/web@${digest}`,
+    "--script", "tower:registered-intake:stage-job", "--plan-only", "--out-dir", outDir,
+    "--env", "TOWER_RELOAD_JOB_NAME=job-abarva-private-operator-eus",
+    "--env", "TOWER_RELOAD_TIMEOUT_SECONDS=7200",
+    "--env", "TOWER_RELOAD_EXECUTION_LANE=aca_operator_job"];
+  try {
+    const mismatch = spawnSync(process.execPath, [...base,
+      "--env", `TOWER_RELOAD_IMAGE_DIGEST=sha256:${"b".repeat(64)}`], { cwd: ROOT, encoding: "utf8" });
+    assert.notEqual(mismatch.status, 0);
+    assert.match(mismatch.stderr, /must match the ACA wrapper request/);
+    const matching = spawnSync(process.execPath, [...base, "--env", `TOWER_RELOAD_IMAGE_DIGEST=${digest}`],
+      { cwd: ROOT, encoding: "utf8" });
+    assert.equal(matching.status, 0, matching.stderr);
+  } finally {
+    fs.rmSync(outDir, { recursive: true, force: true });
+  }
+});
