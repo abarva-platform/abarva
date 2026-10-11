@@ -19,7 +19,7 @@ import {
   within,
 } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
-import { RomEstimateStep, type RomEstimateStepProps } from "../RomEstimateStep";
+import { RomEstimateStep, parseProposedPodMembers, type RomEstimateStepProps } from "../RomEstimateStep";
 import type { StepAvaAction } from "../RootCausesStep";
 import {
   approveMapping,
@@ -601,6 +601,11 @@ describe("RomEstimateStep", () => {
     const pod=row(container,"POD");
     fireEvent.click(within(pod).getByRole("button",{name:"Set the pod…"}));
     fireEvent.change(within(pod).getByLabelText("Pod source"),{target:{value:"members"}});
+    expect(within(pod).getByLabelText("Proposed members, one per line: role code | role name | level code | FTE | source role")).toBeTruthy();
+    expect(pod.textContent).not.toContain("location (optional)");
+    const withTerms="ROL-037 | Data Engineer | LVL-08 | 6 | Data Engineer | LOC-INDIA-T1 | SI-T2";
+    expect(parseProposedPodMembers(withTerms)).toBeNull();
+    expect(parseProposedPodMembers(withTerms,true)).toEqual([expect.objectContaining({locationCode:"LOC-INDIA-T1",providerClassCode:"SI-T2"})]);
     fireEvent.change(within(pod).getByLabelText(/Proposed members, one per line/),{
       target:{value:"ROL-024 | Data Product Manager | LVL-06 | 1 | Data Product Mgr\nROL-037 | Data Engineer | LVL-08 | 6 | Data Engineer"},
     });
@@ -612,6 +617,19 @@ describe("RomEstimateStep", () => {
       members:[{roleCode:"ROL-024",fte:1,proposedMapping:{from:"Data Product Mgr"}},
         {roleCode:"ROL-037",fte:6,proposedMapping:{from:"Data Engineer"}}]});
     expect(row(container,"POD").textContent).toContain("Proposed role mapping, unapproved");
+    fireEvent.click(within(row(container,"POD")).getByRole("button",{name:"Change template…"}));
+    expect((within(row(container,"POD")).getByLabelText(/Proposed members, one per line/) as HTMLTextAreaElement).value).toBe(
+      "ROL-024 | Data Product Manager | LVL-06 | 1 | Data Product Mgr\nROL-037 | Data Engineer | LVL-08 | 6 | Data Engineer");
+    cleanup();
+    const flagged=render(<Harness initial={serializeRomEstimate({...fixture(),pod:null})} deliveryOptionsEnabled />);
+    const flaggedPod=row(flagged.container,"POD");
+    fireEvent.click(within(flaggedPod).getByRole("button",{name:"Set the pod…"}));
+    fireEvent.change(within(flaggedPod).getByLabelText("Pod source"),{target:{value:"members"}});
+    fireEvent.change(within(flaggedPod).getByLabelText("Proposed members, one per line: role code | role name | level code | FTE | source role | location (optional) | provider (optional)"),{target:{value:withTerms}});
+    fireEvent.change(within(flaggedPod).getByLabelText("Delivery location code"),{target:{value:"LOC-DALLAS"}});
+    fireEvent.change(within(flaggedPod).getByLabelText("Rate basis"),{target:{value:"bill_rate"}});
+    fireEvent.click(within(flaggedPod).getByRole("button",{name:"Save"}));
+    expect(last().pod?.members).toEqual([expect.objectContaining({locationCode:"LOC-INDIA-T1",providerClassCode:"SI-T2"})]);
   });
 
   it("settles sourced factors, and asks for them when one is missing", async () => {

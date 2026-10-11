@@ -54,7 +54,7 @@ export function validateOperatorMetadata(metadata: Record<string, unknown>): voi
   if (metadata.role !== "client" || metadata.clientLocked !== true ||
       metadata.clientId !== OPERATOR_CLIENT || metadata.defaultClientId !== OPERATOR_CLIENT ||
       metadata.accountType !== OPERATOR_ACCOUNT_TYPE || metadata.automated !== true ||
-      metadata.programScope !== "assigned_programs_only") {
+      metadata.programScope !== "assigned_programs_only" || metadata.person_id !== undefined) {
     throw new Error("dedicated_operator_scope_mismatch");
   }
   if (JSON.stringify(metadata.moduleAccess) !== JSON.stringify(["programs"])) {

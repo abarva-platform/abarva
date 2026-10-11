@@ -39,18 +39,19 @@ test.describe("dedicated synthetic denials walk", () => {
     const steps = JSON.parse(fs.readFileSync(path.join(PACK, "walk-notes.json"), "utf8")).steps as Array<{ stepId: string; phase: number; title: string; uploads: string[]; pasteBlock: string; manualFields: Record<string, string>; humanClicks: string[] }>;
     expect(steps).toHaveLength(29);
     const manifest = JSON.parse(fs.readFileSync(path.join(PACK, "reconciliation-proof.json"), "utf8"));
-    const report: Record<string, unknown> = { runId, startedAt: new Date().toISOString(), status: "preparing", operator: null, moveId: null, steps: [], artifacts: [], findings: [], gates: [], acceptance: false };
+    const report: Record<string, unknown> = { runId, startedAt: new Date().toISOString(), status: "preparing", operator: null, moveId: null, steps: [], artifacts: [], findings: [], actionLog: [], acceptance: false };
     const persist = () => {
       fs.writeFileSync(path.join(out, "e2e-report.json"), JSON.stringify(report, null, 2), { mode: 0o600 });
       const completedSteps = report.steps as Array<{ stepId: string; title: string; clicks: number; elapsedSeconds: number; followability: Review["followability"] }>;
       const rows = completedSteps.map((step) => `<tr><th>${escape(step.stepId)}</th><td>${escape(step.title)}</td><td>${step.followability.instructionClarity}/5</td><td>${step.followability.controlDiscoverability}/5</td><td>${step.followability.inputDesignFit}/5</td><td>${step.clicks}</td><td>${Math.round(step.elapsedSeconds)}s</td></tr>`).join("");
       const screenshots = fs.readdirSync(out).filter((file) => /\.png$/.test(file)).map((file) => `<details><summary>${escape(file)}</summary><img loading="lazy" src="${encodeURIComponent(file)}" alt="${escape(file)}"></details>`).join("");
-      fs.writeFileSync(path.join(out, "e2e-report.html"), `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthetic automated Moves walk</title><style>body{font:16px system-ui;max-width:1100px;margin:40px auto;padding:0 16px}pre{white-space:pre-wrap;overflow-wrap:anywhere}img{max-width:100%}table{border-collapse:collapse}td,th{padding:8px;border:1px solid #ccc;text-align:left}details{margin:12px 0}</style><h1>Synthetic automated Moves walk</h1><p>Run ${escape(runId)}. Status: ${escape(String(report.status))}. Acceptance: ${report.acceptance === true ? "passed" : "not established"}.</p><p>Operator: ${escape(JSON.stringify(report.operator))}. New Move: ${escape(String(report.moveId ?? "not created"))}. Steps reviewed: ${completedSteps.length}/29.</p><h2>Step reviews</h2><table><thead><tr><th>Step</th><th>Title</th><th>Instructions</th><th>Controls</th><th>Inputs</th><th>Actions</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table><h2>Screenshots</h2>${screenshots}<h2>Evidence and findings</h2><pre>${escape(JSON.stringify(report, null, 2))}</pre></html>`, { mode: 0o600 });
+      fs.writeFileSync(path.join(out, "e2e-report.html"), `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthetic automated Moves walk</title><style>body{font:16px system-ui;max-width:1100px;margin:40px auto;padding:0 16px}pre{white-space:pre-wrap;overflow-wrap:anywhere}img{max-width:100%}table{border-collapse:collapse}td,th{padding:8px;border:1px solid #ccc;text-align:left}details{margin:12px 0}</style><h1>Synthetic automated Moves walk</h1><p>Run ${escape(runId)}. Status: ${escape(String(report.status))}. Acceptance: ${report.acceptance === true ? "passed" : "not established"}.</p><p>Operator: ${escape(JSON.stringify(report.operator))}. New Move: ${escape(String(report.moveId ?? "not created"))}. Steps reviewed: ${completedSteps.length}/29.</p><h2>Step reviews</h2><table><thead><tr><th>Step</th><th>Title</th><th>Instructions</th><th>Controls</th><th>Inputs</th><th>Clicks</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table><h2>Screenshots</h2>${screenshots}<h2>Evidence and findings</h2><pre>${escape(JSON.stringify(report, null, 2))}</pre></html>`, { mode: 0o600 });
     };
     persist();
     let operator: DedicatedOperator;
     let moveId: string | null = null;
-    let clicked = 0;
+    let clicks = 0;
+    let actionsPerformed = 0;
     const artifacts: Array<{ filename: string; sha256: string; status: string }> = [];
     const uploadHashes = new Map<string, string>();
     // The shipped reconciliation proof declares the eight exact file bytes.
@@ -146,8 +147,9 @@ test.describe("dedicated synthetic denials walk", () => {
         else if (await link.count() === 1) await link.click();
         else throw new Error("visible_control_ambiguous_or_missing");
       }
-      clicked += 1;
-      (report.gates as unknown[]).push({ stepId: (JSON.parse(fs.readFileSync(path.join(out, "pending-review.json"), "utf8")) as {stepId: string}).stepId,
+      actionsPerformed += 1;
+      if (action.kind === "click" || action.kind === "download") clicks += 1;
+      (report.actionLog as unknown[]).push({ stepId: (JSON.parse(fs.readFileSync(path.join(out, "pending-review.json"), "utf8")) as {stepId: string}).stepId,
         kind: action.kind, label: action.label, actorId: operator.userId, moveId, afterUrl: page.url(), at: new Date().toISOString() });
       report.artifacts = artifacts; persist();
     };
@@ -173,7 +175,7 @@ test.describe("dedicated synthetic denials walk", () => {
       }
       if (!moveId) throw new Error("origination_not_completed");
       for (const step of steps) {
-        const started = Date.now(); const clicksBefore = clicked;
+        const started = Date.now(); const clicksBefore = clicks; const actionsBefore = actionsPerformed;
         const stepPath = stepPageHref(moveId, step.phase, step.stepId);
         // The forward journey uses actual navigation controls. Direct URLs
         // below are separate persisted-page readbacks after the reviewed step.
@@ -209,7 +211,7 @@ test.describe("dedicated synthetic denials walk", () => {
           await page.screenshot({ path: path.join(out, `${step.stepId}-${variant.key}.png`), fullPage: true });
         }
         (report.steps as unknown[]).push({ stepId: step.stepId, title: step.title, followability: final.followability, drafts: final.draftReview,
-          clicks: clicked - clicksBefore, elapsedSeconds: (Date.now() - started) / 1000, ux: scoreWalkUx(uxInput), completed: true });
+          clicks: clicks - clicksBefore, actionsPerformed: actionsPerformed - actionsBefore, elapsedSeconds: (Date.now() - started) / 1000, ux: scoreWalkUx(uxInput), completed: true });
         report.artifacts = artifacts; persist();
       }
       report.status = "29_steps_walked_final_artifact_and_tower_readback_pending";
@@ -217,7 +219,7 @@ test.describe("dedicated synthetic denials walk", () => {
       // read-only walk and artifact visual reviews must supply that proof.
     } catch (error) {
       report.status = "blocked";
-      (report.findings as unknown[]).push({ rank: 1, kind: "refusal", sentence: error instanceof Error ? error.message : "Run refused without an error sentence.", pageUrl: page.url(), clicked });
+      (report.findings as unknown[]).push({ rank: 1, kind: "refusal", sentence: error instanceof Error ? error.message : "Run refused without an error sentence.", pageUrl: page.url(), clicks, actionsPerformed });
       if (page.url().startsWith(BASE) && !page.url().includes(FORBIDDEN_MOVE)) await page.screenshot({ path: path.join(out, "refusal.png"), fullPage: true }).catch(() => {});
       throw error;
     } finally {

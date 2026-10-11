@@ -241,13 +241,13 @@ async function refusalDetail(res: Response, what: string): Promise<string> {
 }
 
 /** A proposed member list stays visibly unapproved until the owner reviews each mapping. */
-export function parseProposedPodMembers(value:string):RomPodMember[] | null {
+export function parseProposedPodMembers(value:string, includeDeliveryTerms=false):RomPodMember[] | null {
   const lines=value.trim().split(/\r?\n/).map((line)=>line.trim()).filter(Boolean);
   if (!lines.length) return null;
   const members:RomPodMember[]=[];
   for (const line of lines) {
     const parts=line.split("|").map((part)=>part.trim());
-    if ((parts.length!==5 && parts.length!==7) || !/^ROL-[A-Z0-9-]+$/.test(parts[0]) || !parts[1] ||
+    if ((parts.length!==5 && !(includeDeliveryTerms && parts.length===7)) || !/^ROL-[A-Z0-9-]+$/.test(parts[0]) || !parts[1] ||
         !/^LVL-[A-Z0-9-]+$/.test(parts[2]) || !/^\d+(?:\.\d+)?$/.test(parts[3]) ||
         Number(parts[3])<=0 || !parts[4]) return null;
     members.push({roleCode:parts[0],roleLabel:parts[1],levelCode:parts[2],
@@ -1072,7 +1072,9 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             <input className={cx("cell-input")} value={form.templateCode}
               onChange={(e)=>setForm({...form,templateCode:e.target.value})} />
           </label> : <label>
-            Proposed members, one per line: role code | role name | level code | FTE | source role | location (optional) | provider (optional)
+            {props.deliveryOptionsEnabled
+              ? "Proposed members, one per line: role code | role name | level code | FTE | source role | location (optional) | provider (optional)"
+              : "Proposed members, one per line: role code | role name | level code | FTE | source role"}
             <textarea className={cx("cell-input")} rows={5} value={form.membersText}
               onChange={(e)=>setForm({...form,membersText:e.target.value})} />
           </label>}
@@ -1124,9 +1126,11 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
               !form.rateBasis
             }
             onClick={() => {
-              const members=form.mode==="members"?parseProposedPodMembers(form.membersText):null;
+              const members=form.mode==="members"?parseProposedPodMembers(form.membersText,props.deliveryOptionsEnabled):null;
               if (form.mode==="members" && !members) {
-                setRefusal("Each proposed member needs role code | role name | level code | positive FTE | source role, with optional location and provider columns.");
+                setRefusal(props.deliveryOptionsEnabled
+                  ? "Each proposed member needs role code | role name | level code | positive FTE | source role, with optional location and provider columns."
+                  : "Each proposed member needs role code | role name | level code | positive FTE | source role.");
                 return;
               }
               if (commit(setPod(record,{
@@ -1154,7 +1158,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
       kind: "pod",
       mode:pod?.members?"members":"template",
       templateCode: pod?.templateCode ?? "",
-      membersText:pod?.members?.map((m)=>`${m.roleCode} | ${m.roleLabel} | ${m.levelCode} | ${m.fte} | ${m.proposedMapping?.from??m.roleLabel} | ${m.locationCode??""} | ${m.providerClassCode??""}`).join("\n")??"",
+      membersText:pod?.members?.map((m)=>`${m.roleCode} | ${m.roleLabel} | ${m.levelCode} | ${m.fte} | ${m.proposedMapping?.from??m.roleLabel}${props.deliveryOptionsEnabled?` | ${m.locationCode??""} | ${m.providerClassCode??""}`:""}`).join("\n")??"",
       locationCode: pod?.locationCode ?? "",
       providerClassCode: pod?.providerClassCode ?? "",
       rateBasis: pod?.rateBasis ?? "",

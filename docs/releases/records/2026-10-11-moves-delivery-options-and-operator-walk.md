@@ -59,7 +59,7 @@ Release lane: `experimental`.
   They cover stale previews, missing selection reasons, equal effort hours,
   persisted member terms, selected approval, changes to either option and
   changes to register values and repriced comparison figures, plus the visible
-  selection controls and flag-off absence. Six guard mutations were killed; the original source
+  selection controls, flag-off absence and the unchanged five-column member form. Seven guard mutations were killed; the original source
   hash was restored after each mutation.
 - Node 24 TypeScript check passed. Release check: all 11 gates passed.
   Generated manual and the genuine coverage census are current. Targeted lint
