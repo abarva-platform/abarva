@@ -160,10 +160,24 @@ function runAz(args, options = {}) {
   });
   const stdout = result.stdout || "";
   const stderr = result.stderr || "";
-  if (result.status !== 0) {
-    throw new Error(`az ${redactArgs(args).join(" ")} failed (${result.status})\n${stderr || stdout}`);
+  if (result.error || result.status !== 0) {
+    throw formatAzFailure(args, result);
   }
   return { stdout, stderr };
+}
+
+export function formatAzFailure(args, result) {
+  const command = `az ${redactArgs(args).join(" ")}`;
+  // On ENOBUFS, stdout can contain a large execution-history payload. The
+  // process error explains the failure without echoing that payload to logs.
+  if (result.error) {
+    return new Error(`${command} failed (${result.error.code || "process error"}): ${result.error.message}`);
+  }
+  const diagnostic = String(result.stderr || result.stdout || "");
+  const limit = 4096;
+  const excerpt = diagnostic.slice(0, limit);
+  const suffix = diagnostic.length > limit ? `\n[diagnostic truncated after ${limit} characters]` : "";
+  return new Error(`${command} failed (${result.status})\n${excerpt}${suffix}`);
 }
 
 function isProvisioningOperationInProgress(error) {
@@ -380,13 +394,45 @@ function executionStatus(executionJson) {
   );
 }
 
+const TERMINAL_STATUSES = ["Succeeded", "Failed", "Canceled", "Cancelled", "Stopped"];
+
 export function terminalStatus(status) {
   // "Stopped" was missing here and caused a real false-positive in
   // verifyIdle()'s first live run: a two-day-old, genuinely-inactive
   // execution (confirmed via `az containerapp job execution show` — same
   // status, same startTime, no resource consumption) was misclassified as
   // "non-terminal" and blocked an otherwise-clean preflight run.
-  return ["Succeeded", "Failed", "Canceled", "Cancelled", "Stopped"].includes(status);
+  return TERMINAL_STATUSES.includes(status);
+}
+
+// Azure's execution history can contain large embedded payloads. Ask the CLI
+// to emit only unfinished execution identities before spawnSync buffers it.
+// Keep this filter in step with terminalStatus() so an unrecognized status
+// remains visible and blocks idle verification.
+export function buildActiveExecutionListArgs(options) {
+  const activeFilter = TERMINAL_STATUSES
+    .map((status) => `properties.status!='${status}'`)
+    .join(" && ");
+  return [
+    "containerapp",
+    "job",
+    "execution",
+    "list",
+    "--name",
+    options.job,
+    "--resource-group",
+    options.resourceGroup,
+    "--query",
+    `[?${activeFilter}].{name:name,status:properties.status}`,
+    "--output",
+    "json",
+  ];
+}
+
+export function otherActiveExecutions(executions, ownExecutionName) {
+  return executions.filter((execution) =>
+    execution.name !== ownExecutionName && !terminalStatus(execution.status),
+  );
 }
 
 function sleep(ms) {
@@ -842,27 +888,14 @@ function verifyIdle(options, outDir, baseline, ownExecutionName) {
     }
   }
 
-  const executionList = runAz([
-    "containerapp",
-    "job",
-    "execution",
-    "list",
-    "--name",
-    options.job,
-    "--resource-group",
-    options.resourceGroup,
-    "--output",
-    "json",
-  ]);
+  const executionList = runAz(buildActiveExecutionListArgs(options));
   fs.writeFileSync(path.join(outDir, "99d-execution-list.json"), executionList.stdout);
   const executions = JSON.parse(executionList.stdout);
-  const nonTerminal = executions.filter((execution) => {
-    if (execution.name === ownExecutionName) return false; // this run's own execution — checked via `status` separately.
-    return !terminalStatus(execution.properties?.status);
-  });
+  // This run's own terminal status is checked separately before cleanup.
+  const nonTerminal = otherActiveExecutions(executions, ownExecutionName);
   if (nonTerminal.length > 0) {
     problems.push(
-      `non-terminal execution(s) left running or queued: ${nonTerminal.map((e) => `${e.name} (${e.properties?.status})`).join(", ")}`,
+      `non-terminal execution(s) left running or queued: ${nonTerminal.map((e) => `${e.name} (${e.status})`).join(", ")}`,
     );
   }
 
