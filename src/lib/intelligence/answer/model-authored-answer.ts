@@ -184,12 +184,17 @@ export function measureExecutiveAnswer(prose: string) {
     .split(/\n\s*\n/)
     .filter(Boolean);
   const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
-  const openingWords = words(paragraphs[0] ?? "");
+  const opening = paragraphs
+    .map((paragraph) =>
+      paragraph.replace(/^ {0,3}#{1,6}[\t ]+[^\n]*(?:\n|$)/gm, "").trim(),
+    )
+    .find(Boolean) ?? "";
+  const openingWords = words(opening);
   return {
     openingWords,
     proseWords: words(prose),
     paragraphs: paragraphs.length,
-    openingWithinTarget: openingWords <= 40,
+    openingWithinTarget: openingWords > 0 && openingWords <= 40,
   };
 }
 

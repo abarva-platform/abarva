@@ -29,21 +29,27 @@ jest.mock("@/components/shell/AppShell", () => ({
   ),
 }));
 
-jest.mock("@/components/home/preview/HomePreviewAppRoot", () => ({
-  HomePreviewAppRoot: ({
+jest.mock("@/components/home/canvas/HomeCanvasApp", () => ({
+  HomeCanvasApp: ({
     bundle,
     recordSource,
     tenantKey,
+    tenantName,
+    recordToken,
   }: {
     bundle: HomeReviewBundle & { marker?: string };
     recordSource?: { kind: string };
     tenantKey: string;
+    tenantName: string;
+    recordToken: string;
   }) => (
     <div
       data-testid="home-root"
       data-bundle-marker={bundle.marker ?? ""}
       data-record-source={recordSource?.kind}
       data-tenant-key={tenantKey}
+      data-tenant-name={tenantName}
+      data-record-token={recordToken}
     />
   ),
 }));
