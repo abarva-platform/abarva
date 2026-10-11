@@ -1,7 +1,7 @@
 name: Moves demo case numbers proposal dry run
 
-# Review lane only. There is no apply dispatch until a shared governed P4
-# capture writer and a separate named-person load approval both exist.
+# Review lane only. There is no apply dispatch without a separate named-person
+# load approval bound to the exact source hash and Move.
 on:
   workflow_dispatch:
     inputs:

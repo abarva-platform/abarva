@@ -2,8 +2,8 @@
 
 /**
  * Governed proposal job for the synthetic demo Move. The shipped runtime has
- * no shared phase-capture domain writer, so apply refuses before any data
- * read or write. Dry-run may authenticate and inspect the exact Move and
+ * a shared phase-capture domain writer. Apply still requires an exact named
+ * load approval absent from this proposal. Dry-run may inspect the Move and
  * register through the private ACA operator job. Local preview is offline.
  */
 import { spawnSync } from "node:child_process";
@@ -14,6 +14,7 @@ import { resolveLoadApproval } from "../../src/lib/governance/dataset-manifest";
 import { isDeclaredSyntheticDemoTenant, type TenantInputDeclarations } from "../../src/lib/tenant/declared-synthetic-tenant";
 import { readValueModel } from "../../src/lib/programs/value-model-capture";
 import { phaseCaptureModuleKey } from "../../src/lib/programs/phase-capture-contract";
+import { readValuePlanCaptureRevision, writeGovernedValuePlan } from "../../src/lib/programs/phase-capture-writer";
 import type { AssumptionRecord, NewAssumptionInput, TransitionRequest } from "../../src/lib/programs/assumption-register/model";
 import type { RegisterActor, RegisterWriteResult } from "../../src/lib/programs/assumption-register/store";
 import type { TenancyCtx } from "../../src/lib/programs/types.db";
@@ -112,9 +113,9 @@ export function loadManifests(): unknown[] {
     .map((file) => JSON.parse(text(path.join(MANIFEST_DIR,file))));
 }
 
-/** A review-only runtime cannot acquire an apply capability by a dispatch flag. */
+/** A missing capture writer is an unconditional refusal before register writes. */
 export function assertApplyCapability(writer: CaseJobDeps["writeValuePlan"]): asserts writer is NonNullable<CaseJobDeps["writeValuePlan"]> {
-  if (!writer) throw new Error("apply_refused:no_shared_governed_phase_capture_writer_for_p4_while_move_at_p3");
+  if (!writer) throw new Error("apply_refused:shared_governed_phase_capture_writer_required");
 }
 
 /** Expected IDs are a precondition, never inferred as authoritative offline. */
@@ -152,8 +153,9 @@ export interface CaseJobDeps {
   list(ctx:TenancyCtx,moveId:string):Promise<AssumptionRecord[]>;
   create(ctx:TenancyCtx,moveId:string,input:NewAssumptionInput,actor:RegisterActor):Promise<RegisterWriteResult>;
   transition(ctx:TenancyCtx,moveId:string,id:string,revision:number,request:TransitionRequest,actor:RegisterActor):Promise<RegisterWriteResult>;
-  /** Must call the same governed domain writer as signed-in phase capture. No runtime implementation exists yet. */
-  writeValuePlan?: (ctx:TenancyCtx,moveId:string,value:string) => Promise<void>;
+  /** Calls the same governed domain writer as signed-in phase capture. */
+  writeValuePlan?: (ctx:TenancyCtx,moveId:string,value:string,expectedRevision:string) => Promise<void>;
+  readCaptureRevision(ctx:TenancyCtx,moveId:string):Promise<{revision:string;value:string}>;
   readValuePlan(ctx:TenancyCtx,moveId:string):Promise<string|null>;
   openProofStore():Promise<ProofStore>;
 }
@@ -184,7 +186,8 @@ export async function runJob(args: CaseJobArgs, deps: CaseJobDeps):Promise<Recor
   const existing=await deps.list(ctx,move.moveId);
   const plan=planSeedWrites(seed.rows,existing);
   assertRegisterIds(seed,existing,plan);
-  const currentValuePlan=await deps.readValuePlan(ctx,move.moveId);
+  const capturePreflight=await deps.readCaptureRevision(ctx,move.moveId);
+  const currentValuePlan=capturePreflight.value;
   const proposedValuePlan=JSON.stringify(seed.value_plan);
   if (currentValuePlan && currentValuePlan !== proposedValuePlan) throw new Error("value_plan_existing_drift");
   const proof:Record<string,unknown>={event:"moves_demo_case_numbers_seed_proof",mode:args.mode,jobName:"job-abarva-private-operator-eus",
@@ -196,7 +199,8 @@ export async function runJob(args: CaseJobArgs, deps: CaseJobDeps):Promise<Recor
     rows:seed.rows.map((row,index)=>({seedKey:row.seed_key,expectedRegisterId:row.expected_register_id,
       value:row.working_value,unit:row.unit,ownerRole:row.owner_role,action:plan[index].action,writes:plan[index].writes})),
     valuePlan:{levers:readValueModel(proposedValuePlan).kind === "model" ? (seed.value_plan as {case:{levers:unknown[]}}).case.levers : [],
-      action:currentValuePlan?"present":"create"},
+      action:currentValuePlan?"present":"create",captureRevision:capturePreflight.revision,
+      costBasis:"pending_current_approved_p3_rom",p3RomReferenceLinkage:"human_selection_and_approval_required"},
     plannedRegisterWrites:plan.reduce((sum,item)=>sum+item.writes,0),
     actualWrites:0,liveReadback:"not_run",blobProofLocation:"not_written",qualityGate:"dry_run_only"};
   if (args.mode === "dry_run") return proof;
@@ -222,7 +226,7 @@ export async function runJob(args: CaseJobArgs, deps: CaseJobDeps):Promise<Recor
       writes++;
     }
   }
-  if (!currentValuePlan) await writer(ctx,move.moveId,proposedValuePlan);
+  if (!currentValuePlan) await writer(ctx,move.moveId,proposedValuePlan,capturePreflight.revision);
   const readback=await deps.list(ctx,move.moveId);
   assertRegisterIds(seed,readback,planSeedWrites(seed.rows,readback));
   for (const row of seed.rows) {
@@ -244,13 +248,10 @@ async function main():Promise<void> {
   if (process.argv.includes("--seed-hash")) {
     const sourceHash=sourceSetHash();
     console.log(JSON.stringify({datasetId:DATASET_ID,moveId:EXPECTED_MOVE,sourceSetHash:sourceHash,
-      idempotencyKey:idempotencyKey(sourceHash),applyCapability:"blocked_no_shared_capture_writer"},null,2));
+      idempotencyKey:idempotencyKey(sourceHash),applyCapability:"blocked_until_exact_named_load_approval"},null,2));
     return;
   }
   const args=parseArgs();
-  // Apply is refused before any DB import. This is intentionally kept at the
-  // runtime boundary until a shared governed capture writer is available.
-  if (args.mode === "apply") assertApplyCapability(undefined);
   const store=await import("../../src/lib/programs/assumption-register/store");
   const {getAzureReadFluentClient}=await import("../../src/lib/data-plane/postgresCompat");
   const db=getAzureReadFluentClient();
@@ -266,6 +267,8 @@ async function main():Promise<void> {
         currentPhase:typeof move.current_phase==="number"?move.current_phase:null};
     },
     list:store.listAssumptions,create:store.createAssumption,transition:store.transitionAssumption,
+    readCaptureRevision:readValuePlanCaptureRevision,
+    writeValuePlan:(ctx,moveId,value,expectedRevision)=>writeGovernedValuePlan({ctx,moveId,value,expectedRevision}),
     async readValuePlan(ctx,moveId) {
       const {data,error}=await db.from("program_modules").select("state_jsonb").eq("engagement_id",moveId)
         .eq("module_key",phaseCaptureModuleKey(4,"value_plan")).maybeSingle();
@@ -287,7 +290,7 @@ async function main():Promise<void> {
   writeFileSync(path.join(args.outDir,"validation.json"),`${JSON.stringify({scopeAndIds:"passed",liveReadback:summary.liveReadback},null,2)}\n`);
   writeFileSync(path.join(args.outDir,"quality-gate.json"),`${JSON.stringify({mode:args.mode,
     passed:args.mode==="dry_run"?summary.actualWrites===0:summary.liveReadback==="passed",
-    applyBlocked:args.mode==="dry_run",reason:args.mode==="dry_run"?"no_shared_governed_phase_capture_writer":null},null,2)}\n`);
+    applyBlocked:args.mode==="dry_run",reason:args.mode==="dry_run"?"exact_named_load_approval_absent":null},null,2)}\n`);
   const parent=path.dirname(args.outDir);
   const base=path.basename(args.outDir);
   const tarPath=path.join(parent,`${base}.tgz`);

@@ -17,8 +17,8 @@
 //
 // Then the saved P4 `value_plan` (a structured value model) is evaluated with
 // its register inputs (`register-inputs.ts`) against its cost basis
-// (`cost-basis.ts`: an approved ROM snapshot when a loader exists — none is
-// wired yet — else the reviewed P4 estimate for `?delivery=internal|vendor`,
+// (`cost-basis.ts`: the current approved P3 ROM snapshot for a ROM-linked case,
+// else the reviewed P4 estimate for `?delivery=internal|vendor`,
 // else blocked). An input that does not resolve blocks with a sentence naming
 // the row and its status, never a number.
 //
@@ -37,6 +37,9 @@ import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
 import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
 import { listAssumptions } from "@/lib/programs/assumption-register/store";
+import { GET as readRegisterRoute } from "@/app/api/v1/programs/[programId]/assumptions/route";
+import { GET as readCaptureRoute } from "@/app/api/v1/programs/[programId]/phase-capture/route";
+import { readApprovedRomSnapshot } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
 import { seesRegisterFigures } from "@/lib/programs/assumption-register/register-route-access";
 import {
   VALUE_MODEL_SECTION_KEY,
@@ -127,6 +130,26 @@ export async function GET(
     const costBasis = await loadCostBasis({
       estimateCapture: captureValue(modules, ESTIMATE_SECTION_KEY),
       deliveryModel: delivery,
+      requireRomSnapshot: model.cost.kind === "rom",
+      ...(model.cost.kind === "rom" ? { loadApprovedRomSnapshot: async () => {
+        const approval = await readApprovedRomSnapshot(programId, async (input) => {
+          const path = String(input);
+          const params = { params: Promise.resolve({ programId }) };
+          const request = new NextRequest(`http://internal.invalid${path}`);
+          return path.endsWith("/assumptions")
+            ? readRegisterRoute(request, params)
+            : readCaptureRoute(request, params);
+        });
+        if (approval.status !== "approved") return null;
+        const snapshot = approval.snapshot;
+        if (model.cost.kind !== "rom" ||
+            (model.cost.snapshotId !== "pending-current-approved-p3-rom" &&
+              model.cost.snapshotId !== snapshot.id)) return null;
+        return { snapshotId: snapshot.id, currency: "USD",
+          lowCents: snapshot.result.combined.lowCents,
+          baseCents: snapshot.result.combined.planCents,
+          highCents: snapshot.result.combined.highCents };
+      }} : {}),
     });
     const result = evaluateValueCase(withCostBasis(model, costBasis), {
       resolver: registerInputs.resolver,

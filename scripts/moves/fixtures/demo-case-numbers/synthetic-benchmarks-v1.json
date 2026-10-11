@@ -23,5 +23,17 @@
     "analyst_attribution": 0.5,
     "analyst_probability": 0.7,
     "discount_rate": 0.1
+  },
+  "rate_reference": {
+    "classification": "synthetic-local-preview-only",
+    "currency": "USD",
+    "basis": "bill_rate",
+    "senior_loaded_usd_per_hour": 125,
+    "engineer_loaded_usd_per_hour": 100,
+    "bill_to_loaded_multiplier": 2,
+    "provider_tier_multiplier": 1,
+    "location_rate_multiplier": 1,
+    "pod_senior_fte": 5,
+    "pod_engineer_fte": 5
   }
 }

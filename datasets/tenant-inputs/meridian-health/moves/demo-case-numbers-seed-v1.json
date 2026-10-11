@@ -486,16 +486,12 @@
         "registerId": "V12"
       },
       "cost": {
-        "kind": "estimate",
-        "baseCents": 500000000
+        "kind": "rom",
+        "snapshotId": "pending-current-approved-p3-rom"
       }
     }
   },
   "value_plan_bindings": {
-    "cost.baseCents": {
-      "registerId": "V1",
-      "scale": 100
-    },
     "levers.L1.timing.startMonth": {
       "registerId": "V3",
       "scale": 1
@@ -509,26 +505,26 @@
     "useCases": [
       {
         "code": "UC-1",
-        "name": "Certified measures",
+        "name": "Certified measures and governed consumption",
         "counts": {
-          "data_source_count": 4,
-          "source_table_count": 18,
-          "standard_data_entity_count": 6,
-          "dashboard_view_count": 4,
-          "design_row_count": 40,
-          "validation_row_count": 60
+          "data_source_count": 20,
+          "source_table_count": 80,
+          "standard_data_entity_count": 55,
+          "dashboard_view_count": 25,
+          "design_row_count": 200,
+          "validation_row_count": 255
         }
       },
       {
         "code": "UC-2",
-        "name": "Lineage and serving",
+        "name": "Workbook certification and retirement",
         "counts": {
-          "data_source_count": 6,
-          "source_table_count": 30,
-          "standard_data_entity_count": 3,
-          "dashboard_view_count": 2,
-          "design_row_count": 20,
-          "validation_row_count": 35
+          "data_source_count": 18,
+          "source_table_count": 80,
+          "standard_data_entity_count": 45,
+          "dashboard_view_count": 30,
+          "design_row_count": 150,
+          "validation_row_count": 220
         }
       }
     ],
@@ -555,7 +551,7 @@
     "releases": [
       {
         "code": "R1",
-        "name": "Certified foundation",
+        "name": "Certified measures release",
         "designStatus": "not_designed",
         "useCaseCodes": [
           "UC-1"
@@ -563,30 +559,46 @@
       },
       {
         "code": "R2",
-        "name": "Controlled serving",
+        "name": "Workbook certification and retirement release",
         "designStatus": "not_designed",
         "useCaseCodes": [
           "UC-2"
         ]
       }
     ],
-    "foundation": null,
+    "foundation": {
+      "code": "FND",
+      "name": "Shared governed data foundation",
+      "counts": {
+        "data_source_count": 8,
+        "source_table_count": 65,
+        "standard_data_entity_count": 20,
+        "dashboard_view_count": 8,
+        "design_row_count": 100,
+        "validation_row_count": 130
+      },
+      "designStatus": "not_designed",
+      "sharedByReleaseCodes": [
+        "R1",
+        "R2"
+      ]
+    },
     "pod": {
       "members": [
         {
           "roleCode": "ROL-T01",
           "levelCode": "LVL-T1",
-          "fte": 1
+          "fte": 5
         },
         {
           "roleCode": "ROL-T02",
           "levelCode": "LVL-T2",
-          "fte": 1
+          "fte": 5
         }
       ],
       "locationCode": "LOC-TEST",
       "providerClassCode": "SI-T1",
-      "rateBasis": "loaded_cost"
+      "rateBasis": "bill_rate"
     },
     "friction": {
       "registerId": "DL11"
@@ -597,5 +609,23 @@
     "hoursPerFteWeek": {
       "registerId": "DL13"
     }
+  },
+  "program_schedule": {
+    "horizon_weeks": 52,
+    "sequence": [
+      "FND",
+      "R1",
+      "R2"
+    ],
+    "delivery_mode": "one 10-FTE pod, sequenced blocks; no overlap credit",
+    "release_1_target_week": 30,
+    "release_2_target_week": 52,
+    "benefit_start_month": 8,
+    "basis": "synthetic planning schedule, not an approved delivery commitment"
+  },
+  "budget_ceiling_check": {
+    "register_id": "V1",
+    "scale_to_cents": 100,
+    "role": "ceiling_only_not_value_case_cost"
   }
 }

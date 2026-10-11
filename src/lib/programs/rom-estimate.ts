@@ -1,4 +1,5 @@
 import type { PodRateBasis } from "@/lib/pricing/effort-engine/pod-pricer";
+import { formatConsultantCents } from "@/lib/programs/value-engine/format-money";
 import type { RangePolicyInputs } from "@/lib/pricing/effort-engine/types";
 import {
   ROM_DRIVERS,
@@ -1583,12 +1584,9 @@ export function reopenRomApproval(record: RomEstimate): RomEstimate {
 
 // ── Display (formatting only; no estimate arithmetic) ───────────────────────
 
-/** "$156k", or "$950" under a thousand dollars. */
+/** Shared consultant-facing cents formatter; pricing stays at engine precision. */
 export function formatRomMoney(cents: number): string {
-  const dollars = cents / 100;
-  return Math.abs(dollars) >= 1000
-    ? `$${Math.round(dollars / 1000).toLocaleString("en-US")}k`
-    : `$${Math.round(dollars).toLocaleString("en-US")}`;
+  return formatConsultantCents(cents);
 }
 
 export function formatRomHours(hours: number): string {

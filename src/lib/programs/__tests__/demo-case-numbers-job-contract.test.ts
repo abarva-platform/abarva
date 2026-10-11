@@ -3,7 +3,7 @@ import type { AssumptionRecord } from "@/lib/programs/assumption-register/model"
 import type { PlannedWrite } from "../../../../scripts/moves/seed-demo-assumption-register-job";
 import {
   assertApplyCapability, assertRegisterIds, checkedSeed, idempotencyKey,
-  sourceSetHash,
+  sourceSetHash, runJob, type CaseJobArgs, type CaseJobDeps,
 } from "../../../../scripts/moves/seed-demo-case-numbers-job";
 
 const prior = JSON.parse(readFileSync("datasets/tenant-inputs/meridian-health/moves/demo-assumption-register-seed.json","utf8"));
@@ -29,8 +29,18 @@ describe("case-number seed job contract, offline", () => {
 
   it("refuses apply without a shared governed capture writer before any mutation", () => {
     expect(() => assertApplyCapability(undefined)).toThrow(
-      "apply_refused:no_shared_governed_phase_capture_writer_for_p4_while_move_at_p3",
+      "apply_refused:shared_governed_phase_capture_writer_required",
     );
+  });
+
+  it("refuses absent named load approval before any live read or write", async () => {
+    const readMoveRegistryRow = jest.fn();
+    const args = {mode:"apply",tenantKey:"meridian-health",sourceSetHash:sourceSetHash(),
+      idempotencyKey:idempotencyKey(sourceSetHash()),approvalReference:"unbound",
+      confirmation:"APPLY_DEMO_CASE_NUMBERS_SEED"} as CaseJobArgs;
+    await expect(runJob(args,{readMoveRegistryRow} as unknown as CaseJobDeps))
+      .rejects.toThrow("apply_refused:exact_named_load_approval_required");
+    expect(readMoveRegistryRow).not.toHaveBeenCalled();
   });
 
   it("accepts the expected register allocation in a synthetic fixture", () => {

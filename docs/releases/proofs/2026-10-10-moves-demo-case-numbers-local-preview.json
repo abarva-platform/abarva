@@ -2,10 +2,10 @@
   "status": "local_synthetic_simulation_only",
   "datasetId": "moves_demo_case_numbers_seed_v1",
   "moveId": "1557f032-5a5c-4475-abe5-b1a841576649",
-  "seedSha256": "3dfcc831c0e11e8747d9d0a6bb6b81a9cd37ac33660e344d4bdba1552507c366",
-  "benchmarkSha256": "06dad811a50ca5b4d06f3a183bc75da2443abe46448eb840aac8dabf39c39e4a",
+  "seedSha256": "4c3e361c4cb7d17a0712a2953a67f22520b5b0f0c6674826dbdc3136c2349f7a",
+  "benchmarkSha256": "21100f25c738ea25d25b637413e57e6472c5dac90d7219de797d286dbf762457",
   "existingSeedSha256": "19401a9627284bbfb7054f7e43faa25e9b400e3cda6f2a9297f9dfd0cafd2a33",
-  "sourceSetSha256": "7318ba9baaba6d6df4db6cdef5c83364946d2e4d484ea280250381444a05a04a",
+  "sourceSetSha256": "10ab70b25618442328dce02beb8765f5ea8a6f67a1a0a92e3f1bffed9cf371fa",
   "approval": "absent; no load authorized",
   "liveRegisterReadback": "not_run",
   "captureWrite": "not_run",
@@ -172,6 +172,17 @@
     "A3": "adoption.workbook_retirement"
   },
   "registerIdCaveat": "Expected IDs are conditional on exact live register state; apply must refuse drift.",
+  "costBasis": {
+    "kind": "approved_p3_rom_required_for_live",
+    "liveSnapshot": "pending",
+    "previewSnapshot": "local-synthetic-preview-unapproved",
+    "lowDollars": 3307500,
+    "planDollars": 4410000,
+    "highDollars": 6615000,
+    "budgetCeilingDollars": 5000000,
+    "planShareOfCeiling": 0.882,
+    "withinBudgetCeiling": true
+  },
   "levers": [
     {
       "id": "L1",
@@ -663,33 +674,56 @@
     }
   ],
   "rom": {
-    "rateBasis": "synthetic local rate fixture only",
+    "rateBasis": "synthetic local bill-rate fixture only; 5 FTE at $250/h and 5 FTE at $200/h",
+    "podFte": 10,
+    "productiveHoursPerWeek": 272,
+    "schedule": {
+      "horizon_weeks": 52,
+      "sequence": [
+        "FND",
+        "R1",
+        "R2"
+      ],
+      "delivery_mode": "one 10-FTE pod, sequenced blocks; no overlap credit",
+      "release_1_target_week": 30,
+      "release_2_target_week": 52,
+      "benefit_start_month": 8,
+      "basis": "synthetic planning schedule, not an approved delivery commitment"
+    },
+    "foundation": {
+      "code": "FND",
+      "hours": 2501.6,
+      "weeks": 10,
+      "lowDollars": 675000,
+      "planDollars": 900000,
+      "highDollars": 1350000
+    },
     "releases": [
       {
         "code": "R1",
-        "name": "Certified foundation",
-        "hours": 934.56,
-        "weeks": 18,
-        "lowDollars": 45900,
-        "planDollars": 61200,
-        "highDollars": 91800
+        "name": "Certified measures release",
+        "hours": 5439.8,
+        "weeks": 20,
+        "lowDollars": 1350000,
+        "planDollars": 1800000,
+        "highDollars": 2700000
       },
       {
         "code": "R2",
-        "name": "Controlled serving",
-        "hours": 847.24,
-        "weeks": 16,
-        "lowDollars": 40800,
-        "planDollars": 54400,
-        "highDollars": 81600
+        "name": "Workbook certification and retirement release",
+        "hours": 4906.44,
+        "weeks": 19,
+        "lowDollars": 1282500,
+        "planDollars": 1710000,
+        "highDollars": 2565000
       }
     ],
     "total": {
-      "hours": 1781.8,
-      "weeks": 34,
-      "lowDollars": 86700,
-      "planDollars": 115600,
-      "highDollars": 173400
+      "hours": 12847.84,
+      "weeks": 49,
+      "lowDollars": 3307500,
+      "planDollars": 4410000,
+      "highDollars": 6615000
     }
   },
   "value": {
@@ -707,9 +741,9 @@
       2545920,
       2545920
     ],
-    "npvDollars": -314869.25,
-    "paybackMonth": 34,
-    "roi": 0.124448,
+    "npvDollars": 275130.75,
+    "paybackMonth": 31,
+    "roi": 0.2748843537414966,
     "analystCapacityAnnualCents": 0,
     "analystCapacityHours": 1484
   }

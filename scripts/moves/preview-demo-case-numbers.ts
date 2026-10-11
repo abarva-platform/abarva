@@ -4,6 +4,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { evaluateValueCase } from "../../src/lib/programs/value-engine";
+import { resolveCostBasis, withCostBasis } from "../../src/lib/programs/value-engine/cost-basis";
 import { readValueModel } from "../../src/lib/programs/value-model-capture";
 import { registerInputRefs } from "../../src/lib/programs/value-engine/register-inputs";
 import { computeRom, type RomReferenceLoaders, type RomStructure } from "../../src/lib/pricing/moves-workflow/rom-service";
@@ -75,17 +76,11 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
   if (refs.some(({registerId}) => !byId.has(registerId))) throw new Error("missing_register_ref");
   for (const [path, binding] of Object.entries(seed.value_plan_bindings) as Array<[string, {registerId: string; scale: number}]>) {
     const expected = byId.get(binding.registerId);
-    const actual = path === "cost.baseCents" ? model.model.case.cost.kind === "estimate" ? model.model.case.cost.baseCents : null :
-      model.model.case.levers.find((lever) => lever.id === path.split(".")[1])?.timing.startMonth;
+    const actual = model.model.case.levers.find((lever) => lever.id === path.split(".")[1])?.timing.startMonth;
     if (!expected || actual !== expected.value * binding.scale) throw new Error(`value_plan_binding_mismatch:${path}`);
   }
-  const value = evaluateValueCase(model.model.case, { resolver: (ref) => {
-    if (ref.kind !== "register") return null;
-    const row = byId.get(ref.registerId);
-    return row ? {value: row.value, source: `register:${ref.registerId}`, status: row.status, confidence: row.confidence} : null;
-  }});
-  if (value.status !== "evaluated" || !value.economics || value.levers[1]?.status !== "zero_no_release_path" ||
-      value.levers[1]?.annualCents?.base !== 0) throw new Error("value_preview_not_evaluated_or_capacity_not_zero");
+  if (model.model.case.cost.kind !== "rom" || model.model.case.cost.snapshotId !== "pending-current-approved-p3-rom")
+    throw new Error("value_case_must_await_approved_rom");
   const romFixture = seed.rom_preview;
   for (const driver of ROM_DRIVERS) {
     if (!romFixture.unitHours[driver] || !byId.has(romFixture.unitHours[driver].registerId)) throw new Error(`rom_driver_missing:${driver}`);
@@ -105,21 +100,55 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
     friction: resolveFactor("friction"), productiveShare: resolveFactor("productiveShare"),
     hoursPerFteWeek: resolveFactor("hoursPerFteWeek"),
   };
+  const rates = benchmark.rate_reference;
+  if (rates?.classification !== "synthetic-local-preview-only" || rates.currency !== "USD" ||
+      rates.basis !== "bill_rate" || structure.pod.rateBasis !== rates.basis ||
+      structure.pod.members?.[0]?.fte !== rates.pod_senior_fte ||
+      structure.pod.members?.[1]?.fte !== rates.pod_engineer_fte ||
+      [rates.senior_loaded_usd_per_hour,rates.engineer_loaded_usd_per_hour,
+       rates.bill_to_loaded_multiplier,rates.provider_tier_multiplier,
+       rates.location_rate_multiplier].some((number) => typeof number !== "number" || number <= 0))
+    throw new Error("synthetic_rate_or_pod_fixture_invalid");
   const band = (role: string, level: string, loaded: number) => ({
     rate_band_code: `${role}-${level}`, role_code: role, level_code: level,
     currency: "USD", rate_basis: "onshore_si_t1_benchmark", loaded_rate: loaded,
-    scarcity_adj_rate: loaded * 1.2, indicative_bill_rate: loaded * 2,
+    scarcity_adj_rate: loaded * 1.2, indicative_bill_rate: loaded * rates.bill_to_loaded_multiplier,
     confidence: "synthetic", approval_status: "synthetic",
   });
   const loaders: RomReferenceLoaders = {
-    loadRateReference: () => ({rateBands: [band("ROL-T01", "LVL-T1", 100), band("ROL-T02", "LVL-T2", 70)],
-      locations: [{location_code:"LOC-TEST",shore_category:"onshore",salary_multiplier:0.5,rate_multiplier:1}],
-      providerClasses: [{provider_class_code:"SI-T1",tier_multiplier:1.25}]}),
+    loadRateReference: () => ({rateBands: [band("ROL-T01", "LVL-T1", rates.senior_loaded_usd_per_hour), band("ROL-T02", "LVL-T2", rates.engineer_loaded_usd_per_hour)],
+      locations: [{location_code:"LOC-TEST",shore_category:"onshore",salary_multiplier:0.5,rate_multiplier:rates.location_rate_multiplier}],
+      providerClasses: [{provider_class_code:"SI-T1",tier_multiplier:rates.provider_tier_multiplier}]}),
     loadPodLibrary: () => ({podTemplates:[],podTemplateRoles:[]}),
     loadRangePolicies: () => [],
   };
   const rom = computeRom(structure, loaders);
   if (!rom.ok) throw new Error(`rom_refused:${rom.code}:${rom.message}`);
+  if (!rom.foundation || rom.total.weeks > seed.program_schedule.horizon_weeks ||
+      rom.total.weeks < 40 || rom.foundation.priced.weeks +
+      rom.releases.reduce((weeks, release) => weeks + release.own.weeks, 0) !== rom.total.weeks)
+    throw new Error("rom_schedule_or_foundation_incoherent");
+  if (seed.program_schedule.release_1_target_week !== rom.foundation.priced.weeks + rom.releases[0].own.weeks ||
+      seed.program_schedule.release_2_target_week < rom.total.weeks ||
+      seed.program_schedule.benefit_start_month !== 8 ||
+      seed.program_schedule.release_1_target_week > 30)
+    throw new Error("rom_release_timing_incoherent");
+  const ceiling = byId.get(seed.budget_ceiling_check.register_id);
+  if (!ceiling || seed.budget_ceiling_check.role !== "ceiling_only_not_value_case_cost") throw new Error("budget_ceiling_missing");
+  const budgetCents = ceiling.value * seed.budget_ceiling_check.scale_to_cents;
+  if (!Number.isSafeInteger(budgetCents) || budgetCents <= 0 ||
+      rom.total.planCents / budgetCents < 0.7 || rom.total.planCents / budgetCents > 0.95)
+    throw new Error("synthetic_program_rom_outside_budget_planning_band");
+  const costBasis = resolveCostBasis({estimateCapture:"",romSnapshot:{snapshotId:"local-synthetic-preview-unapproved",
+    currency:"USD",lowCents:rom.total.lowCents,baseCents:rom.total.planCents,highCents:rom.total.highCents}});
+  if (costBasis.status !== "resolved" || costBasis.basis !== "rom_snapshot") throw new Error("rom_cost_basis_unresolved");
+  const value = evaluateValueCase(withCostBasis(model.model.case,costBasis), { resolver: (ref) => {
+    if (ref.kind !== "register") return null;
+    const row = byId.get(ref.registerId);
+    return row ? {value: row.value, source: `register:${ref.registerId}`, status: row.status, confidence: row.confidence} : null;
+  }});
+  if (value.status !== "evaluated" || !value.economics || value.levers[1]?.status !== "zero_no_release_path" ||
+      value.levers[1]?.annualCents?.base !== 0) throw new Error("value_preview_not_evaluated_or_capacity_not_zero");
   const cents = (number: number) => number / 100;
   const economics = value.economics;
   return {
@@ -130,11 +159,20 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
     proposedRows: seed.rows.map((row: {seed_key: string;expected_register_id: string;working_value: number;unit: string;owner_role: string;confidence: number;confirm: unknown}) =>
       ({key:row.seed_key, expectedRegisterId:row.expected_register_id, value:row.working_value, unit:row.unit, ownerRole:row.owner_role, confidence:row.confidence, confirmedSyntheticBenchmark:Boolean(row.confirm)})),
     existingRefs: seed.existing_register_refs, registerIdCaveat: "Expected IDs are conditional on exact live register state; apply must refuse drift.",
+    costBasis:{kind:"approved_p3_rom_required_for_live",liveSnapshot:"pending",previewSnapshot:"local-synthetic-preview-unapproved",
+      lowDollars:rom.total.lowCents/100,planDollars:rom.total.planCents/100,highDollars:rom.total.highCents/100,
+      budgetCeilingDollars:budgetCents/100,planShareOfCeiling:rom.total.planCents/budgetCents,
+      withinBudgetCeiling:rom.total.planCents<=budgetCents},
     levers: model.model.case.levers.map((lever) => ({id:lever.id,name:lever.name,conversion:lever.conversion,
       registerRefs:refs.filter((ref) => ref.key.startsWith(`${lever.id}.`)),
       timingRegisterRef:seed.value_plan_bindings[`levers.${lever.id}.timing.startMonth`],
       result:value.levers.find((result) => result.leverId === lever.id)})),
-    rom: {rateBasis:"synthetic local rate fixture only", releases:rom.releases.map((release) =>
+    rom: {rateBasis:`synthetic local bill-rate fixture only; ${rates.pod_senior_fte} FTE at $${rates.senior_loaded_usd_per_hour*rates.bill_to_loaded_multiplier}/h and ${rates.pod_engineer_fte} FTE at $${rates.engineer_loaded_usd_per_hour*rates.bill_to_loaded_multiplier}/h`,
+      podFte:rates.pod_senior_fte+rates.pod_engineer_fte,
+      productiveHoursPerWeek:(rates.pod_senior_fte+rates.pod_engineer_fte)*benchmark.rom_factors.hours_per_fte_week*benchmark.rom_factors.productive_share, schedule:seed.program_schedule,
+      foundation:{code:rom.foundation.priced.code,hours:rom.foundation.priced.hours,weeks:rom.foundation.priced.weeks,
+        lowDollars:cents(rom.foundation.priced.range.lowCents),planDollars:cents(rom.foundation.priced.range.planCents),
+        highDollars:cents(rom.foundation.priced.range.highCents)},releases:rom.releases.map((release) =>
       ({code:release.code,name:release.name,hours:release.own.hours,weeks:release.own.weeks,
         lowDollars:cents(release.own.range.lowCents),planDollars:cents(release.own.range.planCents),highDollars:cents(release.own.range.highCents)})),
       total:{hours:rom.total.hours,weeks:rom.total.weeks,lowDollars:cents(rom.total.lowCents),

@@ -17,8 +17,13 @@ value plan includes a platform spend-reduction scenario and a report-writer
 capacity scenario. The capacity scenario has no role or contract release path,
 so the existing value engine counts zero monetary benefit for it.
 
-The committed local preview prices two invented ROM releases with synthetic
-rates and evaluates a three-year value case. It is a deterministic simulation,
+The committed local preview prices a shared foundation once plus certified
+measures and workbook-certification/retirement releases across a 49-week,
+10-FTE synthetic plan. The $4.41M plan ROM is 88.2% of the existing $5M
+budget ceiling; low and high are $3.3075M and $6.615M. The three-year
+value case uses these ROM outputs as its only cost basis, producing a
+$275,130.75 plan NPV, month-31 payback, and 27.4884% three-year ROI.
+It is a deterministic simulation,
 not a readback of the current Move, a Finance-approved forecast, a signed-in
 product result, or a claim that the deck is ready.
 
@@ -29,10 +34,12 @@ product result, or a claim that the deck is ready.
   a review input, never client-attested source data.
 - Layer 2: no adapter change.
 - Layer 3: proposed Move-scoped register rows and `value_plan` capture. The
-  existing register store is the planned mutation path for rows. The shared
-  governed P4 capture writer required by the job does not exist yet, so apply
-  is explicitly blocked before a data-plane read or write.
-- Layer 4: no product or presentation code change.
+  existing register store is the planned mutation path for rows. The P4
+  capture persistence is extracted for signed-in and operator use, with a
+  tenant/Move/phase/revision preflight and capture audit. No load occurs here.
+- Layer 4: ROM-linked value cases now read the current approved P3 snapshot
+  and block while it is absent or stale. Consultant screen and reference-deck
+  figures use one presentation formatter; engine and workbook cents remain exact.
 
 ## Client Applicability
 
@@ -58,8 +65,8 @@ surface changes. No live client data or client-specific claim is included.
 - Offline proof: `docs/releases/proofs/2026-10-10-moves-demo-case-numbers-local-preview.json`.
 - Job and workflow: the job validates the source-set hash, Move, tenant,
   manifest and idempotency key; dry-run reads and reports the register without
-  writing. Apply refuses at its runtime boundary because the shared governed
-  P4 capture writer is unavailable. The workflow exposes only dry-run.
+  writing. Apply remains unavailable under the manifest's absent named load
+  approval. The workflow exposes only dry-run.
 
 ## Exact Input and ID Boundaries
 
@@ -69,14 +76,20 @@ idempotency key binds that hash to the exact Move ID. The new rows expect
 `DL5`–`DL13` and `V5`–`V12`; reused rows expect `V1`, `V3`, `V4`, `A2` and
 `A3`. IDs are conditional until a governed live read. The job refuses a
 different allocation or changed existing row rather than retargeting an input.
+For this candidate, the source-set SHA-256 is
+`10ab70b25618442328dce02beb8765f5ea8a6f67a1a0a92e3f1bffed9cf371fa`;
+the idempotency key is
+`moves-demo-case-numbers-seed-v1:104be3a9c92c023b3b21b375929c3dd75decc23f77e262d89c10bb4cc01a40d0`.
 The current committed `A3` stores 50% retirement of 620 workbooks, described
 as about 310, not the absolute number 310. No new workbook count is invented.
 
 Every lever numeric reference that the value-model schema permits is a
-register ref. The current schema carries timing and cost as scalar fields;
-the proposal binds start month to existing `V3` and the one-time cost to
-existing `V1` with explicit equality checks in the offline preview. Those
-checks must also run against authenticated readback before a future apply.
+register ref. The current schema carries timing as scalar fields; the
+proposal binds start month to existing `V3`. Cost is a typed pending P3 ROM
+reference that blocks live value results until the current approved snapshot
+is available. Existing `V1` is used only as a ceiling check, never as value
+case cost. Those checks must also run against authenticated readback before
+a future apply.
 ROM factors are scalar capture fields in the current ROM schema; their source
 strings cite `DL11`–`DL13`, and a future writer must verify equality.
 
@@ -84,8 +97,8 @@ strings cite `DL11`–`DL13`, and a future writer must verify equality.
 
 - Pass: local deterministic value and ROM engines; exact values, inputs,
   hashes and formula output are in the committed preview proof.
-- Pass: ten focused offline tests, including changed-input, ID-allocation and
-  capacity-rule mutations; 41 existing register-seed tests also pass.
+- Pass: focused offline tests, including changed-input, ID-allocation,
+  capacity-rule and ROM cost-basis mutations.
 - Pass: typecheck, scoped lint, `audit:lib-orphans`, route and export
   reachability, test coverage census (+2 covered test files), tenancy census,
   manual check, and all context/corpus validation modes.
@@ -98,12 +111,22 @@ strings cite `DL11`–`DL13`, and a future writer must verify equality.
 ## Rollout Plan
 
 Owner reviews the exact rows and source-set hash first. A separate commit may
-add a named-person `load_approval` for that exact Move and hash. Before any
-apply, a shared governed capture writer must be added and verified for a P4
-`value_plan` when the Move is at P3, with revision fencing and no phase
-advancement. Only the designated operator may later dispatch a governed ACA
-job under that approval. Successful job readback, quality gate and signed-in
-P3/P4/deck proof are separate later states.
+add a named-person `load_approval` for that exact Move and hash. A designated
+operator must perform the live register-ID and P4 revision preflight in a
+governed read-only ACA job before any later apply. Only that operator may later
+dispatch the governed apply job under an exact approval. The P3 ROM unit-hour
+register references still require a human to select the new DL rows, inspect
+the computed workbook, and explicitly approve the snapshot. Successful job
+readback, quality gate and signed-in P3/P4/deck proof are separate states.
+
+The P3 owner steps are explicit: open “Estimate the work bottom-up”; select
+`DL5`–`DL10` for the six unit-hour references; record the `DL11`–`DL13`
+friction, productive-share and capacity factors with those citations; enter
+the shared foundation plus both release count blocks and the 10-FTE pod;
+accept the release grouping; inspect the computed low/plan/high workbook;
+then use the human approval control. Adding register rows alone performs none
+of these clicks and issues no approved ROM snapshot. P4 and the investment
+deck remain blocked until that approval is current.
 
 ## Deployment Authority
 
@@ -134,14 +157,13 @@ There is no live proof bundle for this candidate.
 
 ## Known Gaps
 
-The shared governed P4 capture writer is absent. The current signed-in route
-writes `program_modules` directly inside the web request, so an ACA job cannot
-reuse it without an extraction. The smallest shared path is a domain writer
-called by both route and job that checks tenancy, Move identity, phase scope,
-capture revision and exact `value_plan` model, then writes only that section
-with audit/readback. The current route has no explicit current-phase check,
-but this job must not rely on that omission as permission to write future
-phase data. This PR leaves apply fail-closed.
+The writer and live preflight are code paths only; neither was exercised
+against the data plane. The job verifies the Move's tenant, current phase,
+existing register rows and exact expected IDs, plus the P4 capture revision,
+before writing. A concurrent edit or changed ID refuses the write. Because
+the manifest has no `load_approval` and the workflow has no apply input,
+this PR leaves apply fail-closed. The job cannot approve a P3 ROM or advance
+the phase.
 
 Current live register IDs, P3 ROM record contents, approved rate basis and P4
 capture state were not read. Accordingly, the local ROM cost is a synthetic

@@ -8,16 +8,19 @@ describe("synthetic demo case numbers, offline", () => {
   it("prices both ROM releases and computes the value case with zero monetary analyst capacity", () => {
     const proof = previewCaseNumbers() as {
       proposedRows: Array<{expectedRegisterId: string}>;
-      rom: {releases: unknown[]; total: {planDollars: number}};
+      rom: {foundation: {weeks:number}; releases: Array<{weeks:number}>; total: {planDollars: number;weeks:number}};
+      costBasis: {planShareOfCeiling:number;budgetCeilingDollars:number;kind:string};
       value: {status: string; byYearPaidDollars: number[]; npvDollars: number;
         paybackMonth: number; roi: number; analystCapacityAnnualCents: number; analystCapacityHours: number};
     };
     expect(proof.proposedRows).toHaveLength(17);
     expect(new Set(proof.proposedRows.map((row) => row.expectedRegisterId)).size).toBe(17);
     expect(proof.rom.releases).toHaveLength(2);
-    expect(proof.rom.total.planDollars).toBe(115600);
+    expect(proof.rom.foundation.weeks + proof.rom.releases.reduce((n,r)=>n+r.weeks,0)).toBe(49);
+    expect(proof.rom.total).toMatchObject({planDollars:4410000,weeks:49});
+    expect(proof.costBasis).toMatchObject({kind:"approved_p3_rom_required_for_live",budgetCeilingDollars:5000000,planShareOfCeiling:0.882});
     expect(proof.value).toMatchObject({status:"evaluated", byYearPaidDollars:[530400,2545920,2545920],
-      npvDollars:-314869.25, paybackMonth:34, roi:0.124448,
+      npvDollars:275130.75, paybackMonth:31, roi:0.2748843537414966,
       analystCapacityAnnualCents:0, analystCapacityHours:1484});
   });
 
@@ -51,5 +54,12 @@ describe("synthetic demo case numbers, offline", () => {
     const changed = JSON.parse(benchmarkText());
     changed.unit_hours.source_table_count = 9;
     expect(() => previewCaseNumbers({benchmarkText:JSON.stringify(changed)})).toThrow("benchmark_drift:source_table_count");
+  });
+
+  it("refuses a rate fixture that pushes the full program outside the planning band", () => {
+    const changed = JSON.parse(benchmarkText());
+    changed.rate_reference.bill_to_loaded_multiplier = 3;
+    expect(() => previewCaseNumbers({benchmarkText:JSON.stringify(changed)}))
+      .toThrow("synthetic_program_rom_outside_budget_planning_band");
   });
 });
