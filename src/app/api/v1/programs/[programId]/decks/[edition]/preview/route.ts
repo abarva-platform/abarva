@@ -91,6 +91,17 @@ export async function GET(
     const verdict = judgeRenderedDeck(inspected, { referenceDeck: spec, fallbackWordSlides: wordsResult.fallbackSlides });
     const score = verdict.fidelityScore ?? 0;
     const titleFigureCount = spec.slides.filter((slide) => slide.narrativeFigures?.some((figure) => slide.actionTitle.includes(figure.display))).length;
+    const hardRenderFindings = verdict.findings.filter((finding) => [
+      "canvas", "slide_count", "off_canvas", "empty_canvas",
+      "reference_source", "reference_edition", "reference_editability",
+    ].includes(finding.kind));
+    if (hardRenderFindings.length) {
+      return Response.json({
+        error: "deck_render_refusal",
+        detail: "The rendered deck failed a physical, source, edition or editability check.",
+        findings: hardRenderFindings.map((finding) => ({ kind: finding.kind, ...("slide" in finding ? { slide: finding.slide } : {}) })),
+      }, { status: 422, headers: previewHeaders(score, wordsResult, requestId, titleFigureCount) });
+    }
     if (format === "pptx") {
       return new Response(Uint8Array.from(pptx), {
         headers: {

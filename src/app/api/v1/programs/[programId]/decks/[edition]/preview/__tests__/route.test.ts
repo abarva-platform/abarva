@@ -62,7 +62,7 @@ beforeEach(() => {
   mockBuild.mockReturnValue({ edition: "validation", slides: [], figureLedger: [] });
   mockRender.mockResolvedValue(Buffer.from("PK synthetic preview"));
   mockInspect.mockResolvedValue({ slideCount: 1 });
-  mockJudge.mockReturnValue({ fidelityScore: 85 });
+  mockJudge.mockReturnValue({ fidelityScore: 85, findings: [] });
 });
 
 describe("read-only reference deck preview", () => {
@@ -112,6 +112,14 @@ describe("read-only reference deck preview", () => {
     const result = await GET(request("json"), params());
     expect(result.status).toBe(400);
     expect(mockAssemble).not.toHaveBeenCalled();
+  });
+
+  it("refuses a physical deck failure before returning a file", async () => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 80, findings: [{ kind: "off_canvas", slide: 1, shapes: 1, worstOverflowIn: 0.2, message: "synthetic overflow" }] });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("Content-Type")).toContain("application/json");
+    expect(await result.json()).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "off_canvas", slide: 1 }] });
   });
 
   it("serves an in-memory PDF under the same preview contract", async () => {

@@ -23,7 +23,9 @@ response and signed-in walk identify the reason, and the fidelity score deducts
 points for fallback slides. The old `draft words unavailable` marker cannot be
 rendered. The value-case reader distinguishes an authoritative absent P4 model
 from a genuine read failure. Repeated program/use-case names are removed from
-the footer.
+the footer. A physical, source, edition, or editability failure in the rendered
+deck now refuses the file with a 422 response; a missing approved ROM remains
+a scored and visible gap.
 
 ## Layer Impact
 
@@ -57,21 +59,24 @@ supply an approved model-ready bundle with retrieval and cite-render proof.
 - Treat only the value route's named absent-model refusal as an empty value
   case. Keep authentication, network and invalid-model reads as failures.
 - Display the program and use case once each in the footer.
+- Refuse previews when rendered-deck inspection finds a canvas, slide-count,
+  overflow, empty-slide, source, edition, or editability failure.
 
 ## QA / Validation
 
-- **Pass** — Seven focused suites, 42 cases cover the slot guard, literal
+- **Pass** — Seven focused suites, 52 cases cover the slot guard, literal
   figure rejection, empty versus failed reads, figure lineage, edition rules,
-  fallbacks, footer text, PDF rendering, workbook parity and AI key-lane
+  fallbacks, physical render refusal, footer text, PDF rendering, workbook parity and AI key-lane
   classification.
-- **Pass** — Three one-at-a-time mutations were killed by the tests: bypassing
+- **Pass** — Four one-at-a-time mutations were killed by the tests: bypassing
   the literal digit guard, breaking slot substitution, and treating the named
-  empty value case as a failed read. Original files were restored and retested.
+  empty value case as a failed read, and bypassing physical render refusal.
+  Original files were restored and retested.
 - **Pass** — Synthetic fallback PPTX and PDF files opened at 11 and 22 pages.
   Visual inspection found the figure title and source line readable and the
   missing-ROM title fit on the canvas after wording was tightened.
 - **Pass** — TypeScript, changed-file ESLint, library orphan audit, route and
-  export reachability, test coverage census (2,826 to 2,828 covered test
+  export reachability, test coverage census (2,827 to 2,829 covered test
   files), tenancy-fence census, manual check, AI surface control catalog, and
   all 11 release gates.
 - **Pending** — Current-head CI and a deployed signed-in walk of both editions.
