@@ -76,8 +76,29 @@ it("preserves qualitative matrix categories without inventing numeric priority s
     prose: invalid,
     artifacts: [],
     followups: [],
+    sourceIds: [],
     protocolIssues: ["Unrendered chart block; original content retained."],
   });
+});
+
+it("decodes source metadata into readable provenance without inserting source codes into prose", () => {
+  const raw = `Validate first.\n\n${fence("sources", ["S2"])}\n\n${fence("followups", ["Which gate?", "What economics?", "Who owns it?"])}`;
+  const answer = modelAuthoredAnswerPacket(raw, "What matters?", "test", [
+    { id: "unused", type: "TENANT", name: "Other evidence", detail: "Unused" },
+    {
+      id: "operating-plan",
+      type: "TENANT",
+      name: "Reviewed operating plan",
+      detail: "Decision evidence",
+    },
+  ]);
+  expect(answer.prose).toBe("Validate first.\n\n\n\n");
+  expect(answer.prose).not.toContain("S2");
+  expect(answer.citations.map((c) => c.label)).toEqual([
+    "Reviewed operating plan",
+  ]);
+  expect(answer.modelAuthored?.rawText).toBe(raw);
+  expect(isIntactModelAuthoredPacket(answer)).toBe(true);
 });
 
 it("decodes only authored exhibits and retains prose whitespace and original payload", () => {

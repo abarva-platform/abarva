@@ -94,18 +94,23 @@ const graphSchema = z
     );
   }, "Invalid graph endpoints");
 const followupSchema = z.array(z.string().min(1)).length(3);
+const sourceIdsSchema = z.array(z.string().regex(/^S[1-9]\d*$/)).min(1);
 
 /** Decode explicit transport blocks only. Invalid blocks stay verbatim in prose. */
 export function decodeModelAuthoredAnswer(rawText: string) {
   const artifacts: AvaArtifact[] = [];
   const followups: string[] = [];
+  const sourceIds: string[] = [];
   const protocolIssues: string[] = [];
   const prose = rawText.replace(
-    /^```(table|chart|graph|followups)[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
+    /^```(table|chart|graph|sources|followups)[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
     (block, kind: string, payload: string) => {
       try {
         const value: unknown = JSON.parse(payload);
-        if (kind === "followups") {
+        if (kind === "sources") {
+          if (sourceIds.length) throw new Error("Duplicate sources block");
+          sourceIds.push(...sourceIdsSchema.parse(value));
+        } else if (kind === "followups") {
           if (followups.length) throw new Error("Duplicate follow-up block");
           followups.push(...followupSchema.parse(value));
         } else {
@@ -129,7 +134,7 @@ export function decodeModelAuthoredAnswer(rawText: string) {
       }
     },
   );
-  return { prose, artifacts, followups, protocolIssues };
+  return { prose, artifacts, followups, sourceIds, protocolIssues };
 }
 
 export function modelAuthoredAnswerPacket(
@@ -139,9 +144,10 @@ export function modelAuthoredAnswerPacket(
   sources: AskSource[],
 ): AvaAnswerPacket {
   const decoded = decodeModelAuthoredAnswer(rawText);
-  const referenced = new Set(
-    decoded.artifacts.flatMap((a) => a.citationIds ?? []),
-  );
+  const referenced = new Set([
+    ...decoded.sourceIds,
+    ...decoded.artifacts.flatMap((a) => a.citationIds ?? []),
+  ]);
   for (const [i] of sources.entries()) {
     if (decoded.prose.includes(`[S${i + 1}]`)) referenced.add(`S${i + 1}`);
   }
