@@ -2369,20 +2369,19 @@ async function upsertOptimizationSpine(
        input_contract, output_contract, payload
      )
      VALUES (
-       $1, $2, 'source.contract_depth_package.opportunity.v1', '1.0.0',
-       'Package opportunity amount is accepted only as candidate value; finance_confirmation_state remains not_confirmed.',
+       $1, $2, 'source.contract_depth_package.opportunity.v1', '2.0.0',
+       'Authored proposal only; an executable sizing rule and reconciled numeric inputs must be recorded before value is calculated.',
        $3::jsonb, $4::jsonb, '{}'::jsonb
      )
      ON CONFLICT (tenant_key, dataset_version, rule_id, rule_version)
-     DO UPDATE SET formula = EXCLUDED.formula`,
+     DO UPDATE SET formula = EXCLUDED.formula,
+                   input_contract = EXCLUDED.input_contract,
+                   output_contract = EXCLUDED.output_contract`,
     [
       args.tenantKey,
       args.datasetVersion,
-      JSON.stringify([
-        "optimization_opportunities.evidence_rows",
-        "amount_usd",
-      ]),
-      JSON.stringify(["candidate_amount_usd"]),
+      JSON.stringify(["optimization_opportunities.evidence_rows"]),
+      JSON.stringify(["evidence_row_count"]),
     ],
   );
 
@@ -2439,13 +2438,17 @@ async function upsertOptimizationSpine(
         `Unsupported canonical optimization opportunity value_type for ${opportunityId}: ${opportunityType || "<empty>"}`,
       );
     }
-    const amount = numberValue(opportunity, "annual_value_usd");
-    const amountState =
+    const sourceAmount = numberValue(opportunity, "annual_value_usd");
+    const sourceAmountState =
       stringValue(opportunity, "amount_state") ||
-      (amount === null ? "not_sized" : "exact");
-    const stage =
+      (sourceAmount === null ? "not_sized" : "exact");
+    const sourceStage =
       stringValue(opportunity, "stage") ||
-      (amount === null ? "signal" : "quantified");
+      (sourceAmount === null ? "signal" : "quantified");
+    // This adapter maps evidence references, not executable sizing inputs.
+    const amount = null;
+    const amountState = "not_sized";
+    const stage = "signal";
     const calculationRunId = `contract-depth:${opportunityId}:calculation`;
     const caseId = `contract-depth:${stringValue(opportunity, "contract_id")}:case`;
     const requirementId = `contract-depth:${opportunityId}:finance-review`;
@@ -2464,8 +2467,8 @@ async function upsertOptimizationSpine(
        VALUES (
          $1, $2, $3, $4, $5, $6, $7, $8, $9,
          'package_evidenced', $10, $11, $12,
-         'Finance confirmation and owner approval are required before realized value can be claimed.',
-         $13, 'standalone_candidate', 'requires_review', $14, $15::jsonb
+         'Executable sizing method and reconciled numeric inputs are not recorded; finance review follows sizing.',
+         $13, 'standalone_candidate', 'requires_sizing', $14, $15::jsonb
        )`,
       [
         args.tenantKey,
@@ -2486,6 +2489,8 @@ async function upsertOptimizationSpine(
           ...opportunity,
           amount_low_usd: stringValue(opportunity, "amount_low_usd"),
           amount_high_usd: stringValue(opportunity, "amount_high_usd"),
+          source_amount_state: sourceAmountState,
+          source_stage: sourceStage,
           amount_state: amountState,
           stage,
           buyer_ask: stringValue(opportunity, "buyer_ask"),
@@ -2556,7 +2561,7 @@ async function upsertOptimizationSpine(
        )
        VALUES (
          $1, $2, $3, $4, 'source.contract_depth_package.opportunity.v1',
-         '1.0.0', 'completed', $5, now(), $6::jsonb
+         '2.0.0', 'blocked', $5, NULL, $6::jsonb
        )`,
       [
         args.tenantKey,
@@ -2564,7 +2569,10 @@ async function upsertOptimizationSpine(
         calculationRunId,
         opportunityId,
         sha256(JSON.stringify(opportunity)),
-        JSON.stringify({ evidence_row_count: evidenceRows.length }),
+        JSON.stringify({
+          evidence_row_count: evidenceRows.length,
+          blocked_reason: "missing_executable_sizing_rule",
+        }),
       ],
     );
 
@@ -2598,8 +2606,8 @@ async function upsertOptimizationSpine(
          )
          VALUES (
            $1, $2, $3, $4, 'source.contract_depth_adapter_row', $5,
-           NULL, $5, 'row', 'included',
-           'Package opportunity cites this evidence row.', '{}'::jsonb
+           NULL, $5, 'row', 'pending_review',
+           'Evidence reference only; numeric formula input is not mapped.', '{}'::jsonb
          )`,
         [
           args.tenantKey,
@@ -2617,13 +2625,11 @@ async function upsertOptimizationSpine(
          amount_usd, quantity, unit, payload
        )
        VALUES
-         ($1, $2, $3, 'candidate_amount_usd', $4, NULL, 'USD', '{}'::jsonb),
-         ($1, $2, $3, 'evidence_row_count', NULL, $5, 'row', '{}'::jsonb)`,
+         ($1, $2, $3, 'evidence_row_count', NULL, $4, 'row', '{}'::jsonb)`,
       [
         args.tenantKey,
         args.datasetVersion,
         calculationRunId,
-        amount,
         evidenceRows.length,
       ],
     );
@@ -2634,9 +2640,9 @@ async function upsertOptimizationSpine(
          amount_usd, valuation_state, basis, source_run_id, effective_date, payload
        )
        VALUES (
-         $1, $2, $3, 'potential', $4, 'candidate_quantified',
-         'Package opportunity amount is evidence-backed but not finance-confirmed.',
-         $5, CURRENT_DATE, $6::jsonb
+         $1, $2, $3, 'potential', $4, 'not_sized',
+         'Authored proposal only; executable sizing inputs and rule are not recorded.',
+         $5, NULL, $6::jsonb
        )`,
       [
         args.tenantKey,
@@ -2654,8 +2660,8 @@ async function upsertOptimizationSpine(
          requirement_text, grain, minimum_period_months, owner_role, payload
        )
        VALUES (
-         $1, $2, $3, 'finance_confirmation',
-         'Finance confirmation is required before this candidate amount becomes realized value.',
+         $1, $2, $3, 'sizing_method',
+         'Record an executable formula and reconciled numeric inputs before finance reviews a candidate amount.',
          'contract_opportunity', 1, $4, '{}'::jsonb
        )`,
       [
@@ -2673,7 +2679,7 @@ async function upsertOptimizationSpine(
        )
        VALUES (
          $1, $2, $3, $4, 'workflow_required',
-         'Candidate opportunity is quantified, but finance confirmation remains not_confirmed.',
+         'Executable sizing method and reconciled numeric inputs are not recorded; finance review follows sizing.',
          $5, '{}'::jsonb
        )`,
       [
@@ -2692,7 +2698,7 @@ async function upsertOptimizationSpine(
        )
        VALUES (
          $1, $2, $3, $4, $5,
-         'Confirm finance owner acceptance before claiming realized savings.',
+         'Provide the executable sizing rule and numeric source inputs for review.',
          $6, 'open', '{}'::jsonb
        )`,
       [
@@ -2899,6 +2905,11 @@ async function layer3Readback(
        (SELECT count(*)::text FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[])) AS calculation_input,
        (SELECT count(*)::text FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[])) AS calculation_output,
        (SELECT count(*)::text FROM source.opportunity_valuation WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_valuation,
+       (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[]) AND amount_usd IS NULL AND amount_state = 'not_sized' AND stage = 'signal' AND approval_state = 'requires_sizing') AS unsized_opportunity,
+       (SELECT count(*)::text FROM source.calculation_run WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[]) AND run_state = 'blocked' AND completed_at IS NULL) AS blocked_calculation_run,
+       (SELECT count(*)::text FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[]) AND value_numeric IS NULL AND inclusion_state = 'pending_review') AS unmapped_calculation_input,
+       (SELECT count(*)::text FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[]) AND amount_usd IS NOT NULL) AS priced_calculation_output,
+       (SELECT count(*)::text FROM source.opportunity_valuation WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[]) AND amount_usd IS NULL AND valuation_state = 'not_sized' AND effective_date IS NULL) AS unsized_valuation,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS canonical_fact_assertion,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND fact_key = 'document.page_text_char_count' AND contract_id = ANY($3::text[])) AS page_text_fact_assertion,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[]) AND (fact_key LIKE 'change_order%' OR fact_key IN ('annual_change_order_spend', 'recurring_change_order_spend', 'recurring_avoidable_pct'))) AS change_order_fact_assertion,
@@ -3045,8 +3056,13 @@ function expectedLayer3(
     opportunity_claim: ownedOpportunities.length * 2,
     calculation_run: ownedOpportunities.length,
     calculation_input: opportunityEvidenceRows,
-    calculation_output: ownedOpportunities.length * 2,
+    calculation_output: ownedOpportunities.length,
     opportunity_valuation: ownedOpportunities.length,
+    unsized_opportunity: ownedOpportunities.length,
+    blocked_calculation_run: ownedOpportunities.length,
+    unmapped_calculation_input: opportunityEvidenceRows,
+    priced_calculation_output: 0,
+    unsized_valuation: ownedOpportunities.length,
     canonical_fact_assertion:
       contractContextFactCount +
       usageFactCount +

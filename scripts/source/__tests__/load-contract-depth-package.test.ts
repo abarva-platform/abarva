@@ -3,9 +3,156 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import Papa from "papaparse";
+import { createHash } from "node:crypto";
+import vm from "node:vm";
+import ts from "typescript";
 import { performanceMeasureFromSource } from "../../../src/lib/source/contract-intelligence/performance-units";
 
+function optimizationWriter() {
+  const file = path.resolve(__dirname, "../load-contract-depth-package.ts");
+  const source = fs.readFileSync(file, "utf8");
+  const parsed = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+  // Execute the real writer and helpers without the CLI entry point or DB imports.
+  const functions = parsed.statements
+    .filter(ts.isFunctionDeclaration)
+    .map((statement) => statement.getText(parsed))
+    .join("\n");
+  const compiled = ts.transpileModule(functions, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  return vm.runInNewContext(
+    `${compiled}\n({ upsertOptimizationSpine, expectedLayer3, layer3Readback })`,
+    { createHash, SOURCE_SYSTEM: "source_contract_depth_package_loader" },
+  );
+}
+
+async function recordedOptimizationWrites() {
+  const query = jest.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+  const sourceFiles = {
+    contracts: [{ contract_id: "contract-test", business_owner: "Buyer" }],
+    monthlySpend: [],
+    optimizationOpportunities: [{
+      opportunity_id: "opportunity-test",
+      contract_id: "contract-test",
+      vendor_ref: "vendor-test",
+      opportunity_type: "avoided_cost",
+      annual_value_usd: "12345",
+      amount_low_usd: "10000",
+      amount_high_usd: "15000",
+      amount_state: "range",
+      stage: "quantified",
+      title: "Authored proposal",
+      recommended_action: "Review the cited usage with its owner.",
+      buyer_ask: "Reduce unused entitlements.",
+      evidence_rows: "usage-row-1;usage-row-2",
+      evidence_family: "usage_entitlement",
+    }],
+  };
+  await optimizationWriter().upsertOptimizationSpine(
+    { query },
+    { tenantKey: "tenant-test", datasetVersion: "version-test", loadRunId: "run-test" },
+    sourceFiles,
+  );
+  const insert = (table: string) => {
+    const calls = query.mock.calls.filter(([sql]) => sql.includes(`INSERT INTO source.${table} (`));
+    expect(calls.length).toBeGreaterThan(0);
+    return calls.map(([sql, values]) => ({ sql: sql.replace(/\s+/g, " "), values }));
+  };
+  return { insert };
+}
+
 describe("Source contract depth package loader", () => {
+  it("does not promote an authored opportunity amount into canonical sizing", async () => {
+    const { insert } = await recordedOptimizationWrites();
+    const opportunity = insert("optimization_opportunity")[0];
+    expect(opportunity.values.slice(6, 9)).toEqual(["signal", null, "not_sized"]);
+    expect(opportunity.sql).toContain("'requires_sizing'");
+    const payload = JSON.parse(opportunity.values[14]);
+    expect(payload).toMatchObject({
+      annual_value_usd: "12345",
+      amount_low_usd: "10000",
+      amount_high_usd: "15000",
+      buyer_ask: "Reduce unused entitlements.",
+      recommended_action: "Review the cited usage with its owner.",
+      source_amount_state: "range",
+      source_stage: "quantified",
+      amount_state: "not_sized",
+      stage: "signal",
+    });
+  });
+
+  it("records a blocked calculation and emits only its evidence-count output", async () => {
+    const { insert } = await recordedOptimizationWrites();
+    const run = insert("calculation_run")[0];
+    expect(run.sql).toContain("'blocked'");
+    expect(run.sql).toContain("NULL");
+    expect(JSON.parse(run.values[5])).toMatchObject({
+      evidence_row_count: 2,
+      blocked_reason: "missing_executable_sizing_rule",
+    });
+    const outputs = insert("calculation_output");
+    expect(outputs).toHaveLength(1);
+    expect(outputs[0].sql).toContain("'evidence_row_count', NULL");
+    expect(outputs[0].sql).not.toContain("'candidate_amount_usd'");
+    expect(outputs[0].values[3]).toBe(2);
+    const rule = insert("calculation_rule")[0];
+    expect(JSON.parse(rule.values[3])).toEqual(["evidence_row_count"]);
+  });
+
+  it("keeps cited rows available without treating them as numeric formula inputs", async () => {
+    const { insert } = await recordedOptimizationWrites();
+    const inputs = insert("calculation_input");
+    expect(inputs).toHaveLength(2);
+    for (const input of inputs) {
+      expect(input.sql).toContain("NULL");
+      expect(input.sql).toContain("'pending_review'");
+      expect(input.sql).toContain("numeric formula input is not mapped");
+      expect(input.sql).not.toContain("'included'");
+    }
+    expect(insert("opportunity_evidence")).toHaveLength(2);
+  });
+
+  it("requires sizing before valuation or finance confirmation", async () => {
+    const { insert } = await recordedOptimizationWrites();
+    const valuation = insert("opportunity_valuation")[0];
+    expect(valuation.values[3]).toBeNull();
+    expect(valuation.sql).toContain("'not_sized'");
+    expect(valuation.sql).not.toContain("CURRENT_DATE");
+    expect(insert("evidence_requirement")[0].sql).toContain("'sizing_method'");
+    expect(insert("opportunity_requirement_status")[0].sql).not.toContain("opportunity is quantified");
+    expect(insert("evidence_request")[0].sql).toContain("executable sizing rule");
+  });
+
+  it("reconciles blocked and unsized states, not just the number of imported rows", async () => {
+    const sourceFiles = {
+      contracts: [{ contract_id: "contract-test" }],
+      optimizationOpportunities: [{ contract_id: "contract-test", opportunity_id: "opportunity-test", evidence_rows: "row-1;row-2" }],
+      changeOrders: [], saasUsage: [], contractPageText: [], resourceModel: [],
+      pricingBridge: [], invoiceLineDetail: [], batchJobVolumetrics: [],
+      qbrScorecards: [], contractClauses: [], applicationScope: [],
+      monthlySpend: [], slaPerformance: [],
+    };
+    const ownership = { canonical_contract_ids: ["contract-test"], evidence_only_contract_ids: [] };
+    const writer = optimizationWriter();
+    const expected = writer.expectedLayer3(sourceFiles, [], ownership);
+    expect(expected).toMatchObject({
+      calculation_output: 1,
+      unsized_opportunity: 1,
+      blocked_calculation_run: 1,
+      unmapped_calculation_input: 2,
+      priced_calculation_output: 0,
+      unsized_valuation: 1,
+    });
+    const query = jest.fn().mockResolvedValue({ rows: [{}] });
+    await writer.layer3Readback({ query }, { tenantKey: "tenant-test", datasetVersion: "version-test", loadRunId: "run-test" }, sourceFiles, ownership);
+    const sql = query.mock.calls[0][0].replace(/\s+/g, " ");
+    expect(sql).toContain("amount_state = 'not_sized' AND stage = 'signal' AND approval_state = 'requires_sizing'");
+    expect(sql).toContain("run_state = 'blocked' AND completed_at IS NULL");
+    expect(sql).toContain("value_numeric IS NULL AND inclusion_state = 'pending_review'");
+    expect(sql).toContain("amount_usd IS NOT NULL) AS priced_calculation_output");
+    expect(sql).toContain("valuation_state = 'not_sized' AND effective_date IS NULL");
+  });
+
   it("keeps time and backlog measures out of the percentage scale", () => {
     expect(performanceMeasureFromSource("critical_incident_response_minutes", "35", "30")).toEqual({
       unit: "minutes",
@@ -246,7 +393,7 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("opportunity_evidence: opportunityEvidenceRows");
     expect(loader).toContain("opportunity_claim");
     expect(loader).toContain(
-      "calculation_output: ownedOpportunities.length * 2",
+      "calculation_output: ownedOpportunities.length,",
     );
   });
 
