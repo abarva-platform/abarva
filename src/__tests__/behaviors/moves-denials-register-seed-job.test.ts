@@ -21,7 +21,8 @@ function liveScope(): LiveScope {
       currentPhase: 3, createdAt: "2026-10-11T12:00:00.000Z",
       updatedAt: "2026-10-11T18:00:00.000Z", deletedAt: null },
     clientTenantKey: "meridian-health", clientSlug: "meridian",
-    person: { id: PERSON, graphNodeId: `clerk:${CLERK}`, primaryRole: "client_viewer" },
+    person: { id: PERSON, email: "e2e-operator@abarva.ai",
+      graphNodeId: `clerk:${CLERK}`, primaryRole: "client_viewer" },
     memberships: [{ clientId: CLIENT, accessLevel: "program_member", canAdminUsers: false }],
     participants: [{ userId: PERSON, accessLevel: "program_member", canApproveGates: true }],
     originationActorIds: [PERSON], identityApprovalRefs: [APPROVAL_REF],
@@ -128,6 +129,9 @@ it("refuses a stale revision, another tenant, or the old protected Move", async 
   scope.person!.graphNodeId = "clerk:user_other";
   await expect(runDenialsSeedJob(run, deps(scope))).rejects.toThrow("denials_operator_scope_invalid");
   scope.person!.graphNodeId = `clerk:${CLERK}`;
+  scope.person!.email = "other@example.test";
+  await expect(runDenialsSeedJob(run, deps(scope))).rejects.toThrow("denials_operator_scope_invalid");
+  scope.person!.email = "e2e-operator@abarva.ai";
   await expect(runDenialsSeedJob({ ...run, sourceHash: "0".repeat(64) }, deps(scope)))
     .rejects.toThrow("denials_source_set_hash_mismatch");
   scope.move!.id = OLD_PROTECTED_MOVE_ID;

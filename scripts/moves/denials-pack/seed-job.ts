@@ -44,7 +44,8 @@ export interface LiveScope {
   } | null;
   clientTenantKey: string | null;
   clientSlug: string | null;
-  person: { id: string; graphNodeId: string | null; primaryRole: string | null } | null;
+  person: { id: string; email: string | null;
+    graphNodeId: string | null; primaryRole: string | null } | null;
   memberships: Array<{ clientId: string; accessLevel: string; canAdminUsers: boolean }>;
   participants: Array<{ userId: string; accessLevel: string; canApproveGates: boolean }>;
   originationActorIds: string[];
@@ -173,6 +174,7 @@ export function assertFreshMoveScope(live: LiveScope, args: Pick<JobArgs,
     declaredTenantKeys.some((key) => canonicalTenantKey(key) !== "meridian-health"))
     throw new Error("denials_fresh_p3_move_scope_invalid");
   if (!live.person || live.person.id !== args.operatorPersonId ||
+    live.person.email?.toLowerCase() !== "e2e-operator@abarva.ai" ||
     live.person.graphNodeId !== `clerk:${args.operatorClerkId}` ||
     live.person.primaryRole !== "client_viewer" ||
     live.memberships.length !== 1 || live.memberships[0].clientId !== move.clientId ||

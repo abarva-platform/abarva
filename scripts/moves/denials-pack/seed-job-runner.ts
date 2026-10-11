@@ -95,7 +95,7 @@ async function readLiveScope(moveId: string, operatorPersonId: string): Promise<
     "id,client_id,name,current_phase,created_at,updated_at,deleted_at", "id", moveId);
   const client = move?.client_id
     ? await readOne("clients", "id,tenant_key,slug", "id", String(move.client_id)) : null;
-  const person = await readOne("persons", "id,graph_node_id,primary_role", "id", operatorPersonId);
+  const person = await readOne("persons", "id,email,graph_node_id,primary_role", "id", operatorPersonId);
   const memberships = await readMany("person_client_memberships",
     "client_id,access_level,can_admin_users", "person_id", operatorPersonId);
   const participants = (await readMany("engagement_participants",
@@ -122,6 +122,7 @@ async function readLiveScope(moveId: string, operatorPersonId: string): Promise<
     clientTenantKey: client?.tenant_key == null ? null : String(client.tenant_key),
     clientSlug: client?.slug == null ? null : String(client.slug),
     person: person ? { id: String(person.id),
+      email: person.email == null ? null : String(person.email),
       graphNodeId: person.graph_node_id == null ? null : String(person.graph_node_id),
       primaryRole: person.primary_role == null ? null : String(person.primary_role) } : null,
     memberships: memberships.map((row) => ({ clientId: String(row.client_id),

@@ -31,7 +31,7 @@ Add a private ACA operator job for one synthetic, newly created Move. Its read-o
 ## Changes Included
 
 - Read-only preflight, dry run and apply modes on the private ACA operator job.
-- Exact source-set hash, authenticated fresh-Move provenance, operator identity, live register revisions, deterministic ID allocation and idempotency checks.
+- Exact source-set hash, authenticated fresh-Move provenance, dedicated account email and Clerk-to-person identity, live register revisions, deterministic ID allocation and idempotency checks.
 - One serializable transaction for the 22 register writes and their creation events, with post-commit readback and private proof output.
 - No automatic write retry and no old-Move fallback.
 
