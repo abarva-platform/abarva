@@ -16,6 +16,10 @@ import {
   resolvePhaseStepPageLanding,
 } from "@/lib/programs/phase-step-page-routing";
 import { STEP_PAGE_VIEWS } from "@/lib/programs/step-page-views";
+import {
+  detectPhaseCatchUp,
+  phaseStatusWithCatchUp,
+} from "@/lib/programs/phase-catch-up";
 import type { AssumptionView } from "@/lib/programs/assumption-register/register-request";
 import {
   citableP2RegisterIds,
@@ -56,7 +60,10 @@ import {
 } from "@/lib/programs/design-traceability";
 import { readSolutionPatternFromCharter } from "@/lib/programs/solution-pattern";
 import { solutionPatternOptionsFor } from "@/lib/programs/solution-pattern-catalog";
-import { StepPageTabs } from "@/components/strategic-moves/step-page/MovesStepPage";
+import {
+  PhaseCatchUpContext,
+  StepPageTabs,
+} from "@/components/strategic-moves/step-page/MovesStepPage";
 import {
   phaseStepRecordSections,
   resolveChangeProfile,
@@ -394,6 +401,9 @@ interface MovesPhaseStandaloneClientProps {
    */
   stepPagesV3Enabled?: boolean;
   phaseStepPagesEnabled?: boolean;
+  catchUpEnabled?: boolean;
+  p2RootCausesForCatchUp?: string;
+  p2GateRecordConfirmed?: boolean;
   legacyCaptureRequested?: boolean;
   initialLegacySectionKey?: string | null;
   /**
@@ -1067,6 +1077,9 @@ function samePhaseBuildArtifactIds(
 export function MovesPhaseStandaloneClient({
   stepPagesV3Enabled = false,
   phaseStepPagesEnabled: requestedPhaseStepPagesEnabled,
+  catchUpEnabled = false,
+  p2RootCausesForCatchUp = "",
+  p2GateRecordConfirmed = false,
   legacyCaptureRequested = false,
   initialLegacySectionKey = null,
   romEngineEnabled = false,
@@ -3808,6 +3821,32 @@ export function MovesPhaseStandaloneClient({
   // A capture answer is not a gate approval. The final step stays open until
   // the governed transition has actually been recorded.
   if (gateStepId) recordStepDone[gateStepId] = gateApproved;
+  const p2CatchUp = catchUpEnabled
+    ? detectPhaseCatchUp({
+        moveId: move.id,
+        phase: 2,
+        currentPhase,
+        terminalComplete,
+        gatePassed: phaseTallies.some(
+          (row) => row.phase === 2 && row.state === "done",
+        ),
+        gateRecordConfirmed: p2GateRecordConfirmed,
+        rootCauses:
+          phase.phase === 2
+            ? (displayPhaseCaptureValues.gaps_root_causes ?? "")
+            : p2RootCausesForCatchUp,
+      })
+    : null;
+  const phaseStatus = (number: number, done: boolean) =>
+    phaseStatusWithCatchUp(number, done, p2CatchUp);
+  const withPhaseCatchUp = (page: ReactNode) =>
+    (phase.phase === 2 || phase.phase === 3) && p2CatchUp ? (
+      <PhaseCatchUpContext.Provider value={p2CatchUp}>
+        {page}
+      </PhaseCatchUpContext.Provider>
+    ) : (
+      page
+    );
   // P3 Step 4 mounts only with the ROM flag; without it the step is not a
   // page, so P3 keeps its capture flow rather than redirecting to nothing.
   const implementedStepViews = [
@@ -3874,7 +3913,7 @@ export function MovesPhaseStandaloneClient({
         return {
           code: p.code,
           name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
-          status: tally?.state === "done" ? "Done" : "Not started",
+          status: phaseStatus(p.phase, tally?.state === "done"),
           current: p.phase === phaseNumber,
           href:
             tally && tally.state !== "upcoming"
@@ -3913,7 +3952,7 @@ export function MovesPhaseStandaloneClient({
     },
   ) =>
     renderAvaDock({
-      content: page,
+      content: withPhaseCatchUp(page),
       openingBriefing: dock.briefing,
       notesFill: dock.notesPanel,
       leadingActions: dock.actions.map((action) => ({
@@ -4009,7 +4048,10 @@ export function MovesPhaseStandaloneClient({
             : `/strategic-moves/${move.id}/phase/${phase.phase}`,
         ),
       frame: (page, briefing) =>
-        renderAvaDock({ content: page, openingBriefing: briefing }),
+        renderAvaDock({
+          content: withPhaseCatchUp(page),
+          openingBriefing: briefing,
+        }),
     };
   };
 
@@ -4132,6 +4174,7 @@ export function MovesPhaseStandaloneClient({
         clientDisplayName={move.tenant.name}
         tabs={chrome.tabs}
         phases={chrome.phases}
+        catchUp={p2CatchUp}
         steps={chrome.steps}
         stepIndex={chrome.stepIndex}
         value={displayPhaseCaptureValues.design_traceability ?? ""}
@@ -4313,7 +4356,7 @@ export function MovesPhaseStandaloneClient({
           return {
             code: p.code,
             name: PHASE_LABELS_SHORT[p.phase] ?? p.navLabel,
-            status: tally?.state === "done" ? "Done" : "Not started",
+            status: phaseStatus(p.phase, tally?.state === "done"),
             current: p.phase === phase.phase,
             href:
               tally && tally.state !== "upcoming"
@@ -4335,6 +4378,8 @@ export function MovesPhaseStandaloneClient({
                 ),
         }))}
         stepIndex={stepIndex}
+        catchUp={p2CatchUp}
+        compactCauseRead={catchUpEnabled}
         value={displayPhaseCaptureValues.gaps_root_causes ?? ""}
         onChange={(value) =>
           setVisiblePhaseCaptureValue("gaps_root_causes", value)

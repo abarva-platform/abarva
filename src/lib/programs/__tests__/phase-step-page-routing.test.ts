@@ -5,6 +5,7 @@ import {
   phaseStepPageHref,
   resolveBarePhaseStepPageLanding,
   resolvePhaseStepPageLanding,
+  shouldDeferBarePhaseLanding,
 } from "@/lib/programs/phase-step-page-routing";
 import {
   STEP_PAGE_VIEWS,
@@ -31,6 +32,27 @@ const base = {
 };
 
 describe("phase step-page sunset routing", () => {
+  it("defers only flagged bare landings that need saved completion or P2 catch-up", () => {
+    const input = {
+      catchUpEnabled: true,
+      requestedPhase: 3,
+      currentPhase: 3,
+      earlyTarget: "/first",
+    };
+    expect(shouldDeferBarePhaseLanding(input)).toBe(true);
+    expect(shouldDeferBarePhaseLanding({ ...input, requestedPhase: 2 })).toBe(
+      true,
+    );
+    expect(shouldDeferBarePhaseLanding({ ...input, requestedPhase: 1 })).toBe(
+      false,
+    );
+    expect(
+      shouldDeferBarePhaseLanding({ ...input, catchUpEnabled: false }),
+    ).toBe(false);
+    expect(shouldDeferBarePhaseLanding({ ...input, earlyTarget: null })).toBe(
+      false,
+    );
+  });
   it("matches the host's dedicated mounts, every gate, and every slot in both directions", () => {
     const host = readFileSync(
       join(
@@ -185,7 +207,9 @@ describe("phase step-page sunset routing", () => {
       { focus: "gate" },
       { blockedPhase: "1" },
     ]) {
-      expect(resolveBarePhaseStepPageLanding({ ...input, searchParams })).toBeNull();
+      expect(
+        resolveBarePhaseStepPageLanding({ ...input, searchParams }),
+      ).toBeNull();
     }
     expect(
       resolveBarePhaseStepPageLanding({ ...input, currentPhase: 0, phase: 1 }),

@@ -224,6 +224,37 @@ describe("DesignTraceabilityStep", () => {
     ).toBe("/p2");
   });
 
+  it("replaces the generic P2 blocker with the exact catch-up action", () => {
+    const { container } = render(
+      <Harness
+        p2RootCauses=""
+        catchUp={{
+          phase: 2,
+          provenance: "advanced-past",
+          gateRecordConfirmed: true,
+          items: [
+            {
+              phase: 2,
+              stepId: "P2.3",
+              id: "RC-1",
+              label: "Settle RC-1 · add its evidence",
+              href: "/p2?step=root-causes",
+            },
+          ],
+        }}
+      />,
+    );
+    expect(status(container).textContent).toContain(
+      "Discover has 1 item to confirm",
+    );
+    expect(status(container).textContent).not.toContain("Waiting on P2");
+    expect(
+      within(status(container))
+        .getByRole("link", { name: "Settle RC-1 · add its evidence →" })
+        .getAttribute("href"),
+    ).toBe("/p2?step=root-causes");
+  });
+
   it("fills open causes from notes as drafts, and accepts nothing", () => {
     const { container } = render(<Harness />);
     act(() => dockNow().actions[0].onClick());

@@ -1,6 +1,15 @@
 import { notFound, redirect } from "next/navigation";
 import { requireProductModule } from "@/lib/auth/server-module-access";
-import { getModuleState, getStrategicMoveById } from "@/lib/programs/queries";
+import {
+  getModuleState,
+  getPhaseSnapshots,
+  getStrategicMoveById,
+} from "@/lib/programs/queries";
+import { snapshotsApprovePhase } from "@/lib/programs/approved-gate-phases";
+import {
+  detectPhaseCatchUp,
+  firstCatchUpHref,
+} from "@/lib/programs/phase-catch-up";
 import { readSyntheticReferenceDraft } from "@/lib/programs/phase-capture-reference-drafts";
 import {
   getPhaseCaptureSections,
@@ -85,6 +94,7 @@ import {
 import {
   phaseStepPageFlagEnabled,
   resolveBarePhaseStepPageLanding,
+  shouldDeferBarePhaseLanding,
 } from "@/lib/programs/phase-step-page-routing";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
@@ -458,6 +468,12 @@ export default async function StrategicMovePhaseWorkspacePage({
       "moves_step_pages_p4p5_v1",
     ),
   });
+  const catchUpEnabled =
+    phaseStepPagesEnabled &&
+    isFeatureEnabled(
+      { clientKey: ctx.clientKey, clientId: ctx.clientId },
+      "moves_step_pages_catch_up_v1",
+    );
   // P3 Step 4's bottom-up estimate prices through the ROM preview route, which
   // this flag gates; the step page needs it as well as the step-page flag.
   const romEngineEnabled = isFeatureEnabled(
@@ -544,11 +560,9 @@ export default async function StrategicMovePhaseWorkspacePage({
       "moves_capture_handoff_recap_v1",
     );
 
-  // A bare phase address has no step state to preserve. Resolve it on the
-  // server before the secondary evidence and artifact reads, so it never
-  // paints a client-side "Opening…" interstitial. The first page is a safe
-  // landing even if the persisted step completion is still being reconciled;
-  // explicit step, legacy, intelligence and gate links retain their targets.
+  // A bare phase address has no step state to preserve. The catch-up lane
+  // waits for the saved records below, so a current phase lands on its actual
+  // first open step; other lanes retain the existing early redirect.
   const earlyStepTarget = resolveBarePhaseStepPageLanding({
     moveId,
     phase: parsedPhase,
@@ -559,7 +573,13 @@ export default async function StrategicMovePhaseWorkspacePage({
     enabled: phaseStepPagesEnabled,
     searchParams: resolvedSearchParams,
   });
-  if (earlyStepTarget) redirect(earlyStepTarget);
+  const deferCatchUpLanding = shouldDeferBarePhaseLanding({
+    catchUpEnabled,
+    requestedPhase: parsedPhase,
+    currentPhase: effectiveMove.currentPhase ?? 0,
+    earlyTarget: earlyStepTarget,
+  });
+  if (earlyStepTarget && !deferCatchUpLanding) redirect(earlyStepTarget);
   const move = {
     ...effectiveMove,
     gateCriteria: await gateCriteriaForViewedPhase(
@@ -958,6 +978,29 @@ export default async function StrategicMovePhaseWorkspacePage({
     const value = moduleRow?.state?.value;
     return typeof value === "string" ? value : "";
   };
+  const p2GateSnapshots =
+    catchUpEnabled && (effectiveMove.currentPhase ?? 0) > 2
+      ? await getPhaseSnapshots(ctx, move.id, 2).catch(() => null)
+      : null;
+  const p2GateRecordConfirmed = snapshotsApprovePhase(p2GateSnapshots, 2);
+  const p2CatchUp =
+    catchUpEnabled && !captureModulesUnavailable
+      ? detectPhaseCatchUp({
+          moveId: move.id,
+          phase: 2,
+          currentPhase: effectiveMove.currentPhase ?? 0,
+          terminalComplete: effectiveMove.terminalComplete,
+          gatePassed: getMovePhaseTallies(effectiveMove).some(
+            (row) => row.phase === 2 && row.state === "done",
+          ),
+          gateRecordConfirmed: p2GateRecordConfirmed,
+          rootCauses: captureValue(2, "gaps_root_causes"),
+        })
+      : null;
+  if (deferCatchUpLanding && parsedPhase === 2) {
+    const first = firstCatchUpHref(p2CatchUp ? [p2CatchUp] : []);
+    if (first) redirect(first);
+  }
   const initialBusinessChangeAssessment = captureValue(
     1,
     "business_change_assessment",
@@ -1197,6 +1240,9 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
         phaseStepPagesEnabled={phaseStepPagesEnabled}
+        catchUpEnabled={catchUpEnabled && !captureModulesUnavailable}
+        p2RootCausesForCatchUp={captureValue(2, "gaps_root_causes")}
+        p2GateRecordConfirmed={p2GateRecordConfirmed}
         legacyCaptureRequested={resolvedSearchParams.legacy === "1"}
         initialLegacySectionKey={
           typeof resolvedSearchParams.section === "string"
