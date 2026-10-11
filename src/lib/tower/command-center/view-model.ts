@@ -351,6 +351,11 @@ function toProgramView(
 ): TowerProgramView {
   const derived = deriveProgramValues(row);
   const usageSupported = row.knownSupportedValue ?? derived.usageSupportedUsd;
+  // The legacy promised × adoption calculation is an estimate. Only a
+  // field-level sourced dollar amount may be presented as measured value.
+  const usageSupportedValueMeasured =
+    row.knownSupportedValue !== null &&
+    row.knownSupportedValue !== undefined;
   const blocked = row.amountBlocked ?? derived.blockedUsd;
   const maturity = row.proofMaturityScore ?? derived.evidenceMaturity;
   return {
@@ -371,6 +376,7 @@ function toProgramView(
     promisedUsd: num(row.promisedValueUsd),
     promisedBenefitLoaded: row.promisedValueUsd !== null,
     usageSupportedUsd: usageSupported,
+    usageSupportedValueMeasured,
     financeValidatedUsd: num(row.financeValidatedValueUsd),
     claimableUsd: derived.claimableUsd,
     blockedUsd: blocked,
@@ -896,7 +902,7 @@ function buildConversionBridge(
   const outcomeForecastUsd = sumNullable(
     trajectory.map((point) => point.riskAdjustedForecastUsd),
   );
-  const usageValue = summary.promisedBenefitLoaded
+  const usageValue = summary.usageSupportedValueMeasured
     ? summary.usageSupportedUsd
     : null;
 
@@ -1454,9 +1460,18 @@ export function buildTowerCommandCenterView(
     }));
 
   const usageSupportedTotal = programs.reduce(
-    (sum, p) => sum + p.usageSupportedUsd,
+    (sum, p) => sum + (p.usageSupportedValueMeasured ? p.usageSupportedUsd : 0),
     0,
   );
+  const measuredUsageClaimCount = programs.filter(
+    (program) => program.usageSupportedValueMeasured,
+  ).length;
+  const usageSupportedValueCoverage =
+    measuredUsageClaimCount === 0
+      ? "none"
+      : measuredUsageClaimCount < num(command.valueClaimCount)
+        ? "partial"
+        : "complete";
   const claimable = num(command.realizedValueYtdAllowed);
   const promisedBenefitUsd = command.promisedValueFy26 ?? null;
   const promised = num(promisedBenefitUsd);
@@ -1529,6 +1544,8 @@ export function buildTowerCommandCenterView(
     promisedBenefitLoaded: promisedBenefitUsd !== null,
     promisedUsd: promised,
     usageSupportedUsd: usageSupportedTotal,
+    usageSupportedValueMeasured: measuredUsageClaimCount > 0,
+    usageSupportedValueCoverage,
     financeValidatedUsd: num(command.partialFinanceValidatedValueYtd),
     claimableUsd: command.claimableValue ?? claimable,
     blockedUsd: Math.max(
@@ -1596,14 +1613,14 @@ export function buildTowerCommandCenterView(
       key: stage.stageKey,
       label: stage.stageLabel,
       sequence: stage.sequence,
-      valueUsd: num(stage.valueNumeric),
+      valueUsd: stage.valueNumeric,
       claimStatus: stage.claimStatus,
       caveat: stage.caveat,
       sourceFile: trimOrNull(stage.sourceFile),
       claimCount: stage.claimCount ?? 0,
       knownValueClaimCount: stage.knownValueClaimCount ?? 0,
       unknownValueClaimCount: stage.unknownValueClaimCount ?? 0,
-      knownValueAmount: stage.knownValueAmount ?? num(stage.valueNumeric),
+      knownValueAmount: stage.knownValueAmount ?? stage.valueNumeric,
       blockedClaimCount: stage.blockedClaimCount ?? 0,
       blockedKnownValueAmount: stage.blockedKnownValueAmount ?? 0,
       primaryBlocker: trimOrNull(stage.primaryBlocker),

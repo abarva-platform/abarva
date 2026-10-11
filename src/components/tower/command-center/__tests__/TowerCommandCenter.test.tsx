@@ -116,15 +116,29 @@ describe("TowerCommandCenter", () => {
     expect(tab(TAB.verdict)).toHaveAttribute("aria-selected", "true");
   });
 
+  it("labels declared synthetic records as an illustrative scenario", () => {
+    const first = view.allInitiatives[0]!;
+    renderCustomView({
+      ...view,
+      allInitiatives: [
+        { ...first, sourceQualityState: "synthetic_review_ready" },
+        ...view.allInitiatives.slice(1),
+      ],
+    });
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "sample scenario, not verified client results",
+    );
+  });
+
   it("opens on the designed Verdict panel", () => {
     renderPage();
     expect(screen.getByText("Total IT budget")).toBeInTheDocument();
-    expect(screen.getByText("Board claimable YTD")).toBeInTheDocument();
+    expect(screen.getByText("Cleared value in loaded months")).toBeInTheDocument();
     expect(
       screen.getByText("The three rules behind every number on this page"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Annual assertion on Finance-validated cases"),
+      screen.getByText("Yearly benefit estimates on Finance-validated cases"),
     ).toBeInTheDocument();
   });
 
@@ -136,7 +150,7 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Finance attestation gap"),
     ).toBeInTheDocument();
-    expect(document.body).toHaveTextContent("Board-claimable not loaded");
+    expect(document.body).toHaveTextContent("Value cleared for reporting is not loaded");
   });
 
   it("does not substitute promised benefit when approved investment is not loaded", () => {
@@ -186,9 +200,9 @@ describe("TowerCommandCenter", () => {
     expect(screen.queryByText(/969 claims/)).not.toBeInTheDocument();
     expect(screen.queryByText(/1,619 open tasks/)).not.toBeInTheDocument();
     expect(
-      screen.getByText("Close usage-to-value gaps on 230 claims"),
+      screen.getByText("Match each benefit claim to the proof it needs"),
     ).toBeInTheDocument();
-    expect(container).toHaveTextContent("Approved IT project portfolio");
+    expect(container).toHaveTextContent("Approved project funding");
     expect(container).toHaveTextContent(/open evidence actions/);
   });
 
@@ -249,7 +263,7 @@ describe("TowerCommandCenter", () => {
       screen.getByText("Portfolio amounts by measure"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Investment, planning value and YTD validation have different bases"),
+      screen.getByText("Approved funding, yearly plans and loaded-month results are different measures"),
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Seven gates · in order"),
@@ -280,9 +294,9 @@ describe("TowerCommandCenter", () => {
     ).toHaveAttribute("aria-selected", "true");
     fireEvent.click(screen.getByRole("tab", { name: /Cost lens/ }));
     expect(
-      screen.getByText("Attributed spend by category"),
+      screen.getByText("Approved AI funding by recorded type"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Cost findings · evidenced")).toBeInTheDocument();
+    expect(screen.getByText("Funding and evidence gaps")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Risk lens/ }));
     expect(
       screen.getByText(/value evidence gaps by amount at stake/),
@@ -341,10 +355,10 @@ describe("TowerCommandCenter", () => {
 
     goTo(TAB.decisions, /Decisions for this review/);
     expect(
-      screen.getByRole("heading", { name: /No value claims loaded/ }),
+      screen.getByRole("heading", { name: /No review decisions loaded/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Usage evidence mapped").parentElement,
+      screen.getByText("Claims with usage evidence").parentElement,
     ).toHaveTextContent("Not loaded");
     expect(document.body.textContent).not.toContain("0 of 0");
     expect(document.body.textContent).not.toContain("$0 board-claimable");

@@ -83,6 +83,8 @@ describe("Source cloud to Tower bridge", () => {
     expect(script).toContain("source_cloud_evidence_gate");
     expect(script).toContain("source_contract_depth_candidate_value_usd");
     expect(script).toContain("source_contract_depth_evidence_gate");
+    expect(script).toContain("usage_supported_value_usd: null");
+    expect(script).not.toContain("usage_supported_value_usd: Number(row.annual_value_exposed");
     expect(script).toContain('const sourceLabel = isContractDepth ? "Source contract-depth" : "Source cloud"');
     expect(script).toContain("`${sourceLabel} opportunity is evidence-backed");
     expect(script).not.toContain('detail:\n        "Source cloud opportunity is evidence-backed');

@@ -67,11 +67,11 @@ export interface TowerMartValueFunnelStage {
   sequence: number;
   stageKey: string;
   stageLabel: string;
-  valueNumeric: number;
+  valueNumeric: number | null;
   claimCount?: number;
   knownValueClaimCount?: number;
   unknownValueClaimCount?: number;
-  knownValueAmount?: number;
+  knownValueAmount?: number | null;
   blockedClaimCount?: number;
   blockedKnownValueAmount?: number;
   primaryBlocker?: string | null;

@@ -224,7 +224,7 @@ const RULES: ReadonlyArray<{ title: string; body: string }> = [
   },
   {
     title: "AI status comes from classification, not a label",
-    body: "A tool being AI-branded does not put its spend in this portfolio. The classification field does.",
+    body: "A tool's name alone does not make its funding part of the AI total. It must be recorded as AI funding.",
   },
 ];
 
@@ -249,6 +249,9 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   const validatedCases = cases.filter(
     (i) => i.financeStatus === "finance_validated_actual",
   );
+  const validatedCasesWithPositiveAmount = validatedCases.filter(
+    (i) => i.financeValidatedUsd > 0,
+  ).length;
   const assertedOnValidated =
     cases.length === 0
       ? null
@@ -299,8 +302,8 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         {hasAssertion
-          ? `${bigMoney(s.promisedUsd)} annual benefit asserted; ${hasClaims ? `${bigMoney(s.claimableUsd)} claimable` : "board-claimable value not loaded"} year to date.`
-          : "Annual benefit assertion is not loaded; its value remains unknown."}
+          ? `Business cases project ${bigMoney(s.promisedUsd)} a year. ${hasClaims ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "The cleared amount is not loaded."}`
+          : "No yearly benefit estimate is loaded, so its value remains unknown."}
       </h2>
 
       <div
@@ -313,27 +316,27 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         <MetricCard
           label="Total IT budget"
           value={s.budgetUsd === null ? "Not loaded" : "Reconciliation needed"}
-          caption="Tower projection has no active-intake lineage status; amount withheld until reconciled"
+          caption={s.budgetUsd === null ? "No budget amount is loaded here" : "Amount hidden until it matches the current source files"}
         />
         <MetricCard
-          label="AI-related investment"
+          label="Approved AI project funding"
           // One metric, declared. This read `aiAttributedInitiativeSpendUsd || aiTaggedUsd`,
           // carried over from the panel it replaces — but those are different measures, and the
           // `||` fires on a legitimate 0, hiding "no AI spend attributed" behind a tagged total.
           value={bigMoney(s.aiAttributedInitiativeSpendUsd)}
-          caption="Tower projection · annual · classification; intake lineage not certified here"
+          caption="Part of approved project funding, not money spent; source files still need checking"
         />
         <MetricCard
-          label="Asserted annual value"
+          label="Projected yearly benefit"
           value={hasAssertion ? bigMoney(s.promisedUsd) : "Not loaded"}
-          caption="Tower projection · sponsor assertions · annual; source reconciliation pending"
+          caption="Business-case estimates, not proven savings; source files still need checking"
           accent="var(--canon-amber)"
           valueColor="var(--canon-amber)"
         />
         <MetricCard
-          label="Board claimable YTD"
+          label="Cleared value in loaded months"
           value={hasClaims ? bigMoney(s.claimableUsd) : "Not loaded"}
-          caption="Tower projection · Finance YTD; sum by month only; source reconciliation pending"
+          caption="Passed the reporting gate in the months loaded here; source files still need checking"
           accent="var(--canon-teal)"
           valueColor="var(--canon-teal-dark)"
         />
@@ -342,7 +345,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 520px" }}>
           <h3 style={{ margin: "0 0 22px", fontSize: 15, fontWeight: 600 }}>
-            Annual assertion on Finance-validated cases
+            Yearly benefit estimates on Finance-validated cases
           </h3>
           {hasAssertion ? (
             <HBar
@@ -357,9 +360,14 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
           )}
           <p style={NOTE}>
             {hasAssertion
-              ? "The bars show annual assertions, including the portion attached to Finance-validated cases. Board-claimable value is year to date and cannot be divided by the annual assertion to form a conversion rate."
-              : "No annual benefit assertion is loaded, so Tower cannot calculate an assertion-to-proof share."}
+              ? "Both bars show yearly benefit estimates. The cleared amount above covers the loaded months, so it cannot be divided by either yearly estimate to show a success rate."
+              : "No yearly benefit estimate is loaded, so there is no estimate to compare with Finance review."}
           </p>
+          {validatedCases.length > 0 ? (
+            <p style={{ ...NOTE, marginTop: 12, paddingTop: 12 }}>
+              {validatedCases.length} cases are marked Finance validated, but only {validatedCasesWithPositiveAmount} show a positive Finance-validated amount here. The bars above still show yearly estimates, not those validated dollars.
+            </p>
+          ) : null}
         </div>
 
         <div style={{ ...PANEL, flex: "1 1 340px" }}>

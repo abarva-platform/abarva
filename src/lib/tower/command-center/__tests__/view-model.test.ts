@@ -337,10 +337,15 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.summary.blockedUsd).toBe(35.5 * M);
   });
 
-  it("sums usage-supported value across programs rather than reading a mart column", () => {
+  it("keeps adoption-based dollar estimates out of the measured usage headline", () => {
     const view = buildTowerCommandCenterView(mart(), { tenantName: "Demo" })!;
-    // 6.8M × 0.44 = 2.992M — adoption-credited only, with no finance floor.
-    expect(view.summary.usageSupportedUsd).toBeCloseTo(2.992 * M, 0);
+    // The legacy program estimate is 6.8M × 44%, but no usage-supported
+    // dollar source was recorded, so it cannot be called measured value.
+    expect(view.programs[0]?.usageSupportedUsd).toBeCloseTo(2.992 * M, 0);
+    expect(view.programs[0]?.usageSupportedValueMeasured).toBe(false);
+    expect(view.summary.usageSupportedUsd).toBe(0);
+    expect(view.summary.usageSupportedValueCoverage).toBe("none");
+    expect(view.conversionBridge.find((stage) => stage.key === "adoption")?.valueUsd).toBeNull();
   });
 
   it("prefers the caller-supplied tenant name over the mart label", () => {

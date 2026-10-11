@@ -316,6 +316,8 @@ describe("mechanical Tower Command Center panels", () => {
 
     expect(document.body.textContent).toMatch(/distribution is only partially loaded/);
     expect(document.body.textContent).not.toMatch(/leads value type/);
+    expect(document.body.textContent).toMatch(/Approved AI funding by benefit type/);
+    expect(document.body.textContent).not.toMatch(/By AI spend category/);
   });
 
   it("does not treat missing control blockers as tool clearance", () => {

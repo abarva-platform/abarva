@@ -188,6 +188,35 @@ describe("answerCurrentTowerQuestion", () => {
     expect(result.modelOutput.visualContract?.recommendedVisual).toBeDefined();
   });
 
+  it("calls an unsupported usage dollar stage not measured in the value answer", async () => {
+    mockReadTowerCommandCenter.mockResolvedValue(
+      towerView({
+        valueFunnel: [{
+          funnelKey: "usage-stage",
+          sequence: 2,
+          stageKey: "usage_supported",
+          stageLabel: "Usage supported",
+          valueNumeric: null,
+          denominatorStageKey: "promised",
+          conversionRatio: null,
+          claimStatus: "gated",
+          caveat: "No independently measured usage-supported amount is recorded.",
+          sourceFile: null,
+          sourceRow: null,
+        }],
+      }) as Awaited<ReturnType<typeof readTowerCommandCenter>>,
+    );
+
+    const result = await answerCurrentTowerQuestion({
+      tenantId: "client-id",
+      tenantKey: "selected-client",
+      tenantName: "Selected Client",
+      question: "What value is claimable?",
+    });
+
+    expect(result.modelOutput.tables?.[0]?.rows[0]?.[1]).toBe("Not measured");
+  });
+
   it("uses page context to answer from the Tools tab even when the question is generic", async () => {
     const result = await answerCurrentTowerQuestion({
       tenantId: "client-id",

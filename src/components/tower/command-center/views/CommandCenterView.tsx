@@ -13,6 +13,7 @@ import type {
 } from "@/lib/tower/command-center/types";
 import styles from "../TowerCommandCenter.module.css";
 import { cx } from "../primitives";
+import { isBusinessCase, isToolRollout } from "./portfolio-kind";
 
 interface ExecutiveMetric {
   label: string;
@@ -40,6 +41,12 @@ function formatLoadedUsdM(value: number | null | undefined): string {
     : formatUsdM(value);
 }
 
+function usageValueLabel(summary: TowerCommandCenterView["summary"]): string {
+  if (summary.usageSupportedValueCoverage === "none") return "Not measured";
+  const value = formatUsdM(summary.usageSupportedUsd);
+  return summary.usageSupportedValueCoverage === "partial" ? `${value} (partial)` : value;
+}
+
 function valueClaimCount(view: TowerCommandCenterView): number {
   return view.summary.valueClaimCount;
 }
@@ -51,6 +58,19 @@ function openClaimCount(view: TowerCommandCenterView): number {
 
 function aiToolRolloutCount(view: TowerCommandCenterView): number {
   return Math.max(0, view.allInitiatives.length - view.programs.length);
+}
+
+function aiCaseFunding(view: TowerCommandCenterView): number | null {
+  const cases = view.allInitiatives.filter(isBusinessCase);
+  if (cases.length === 0 || cases.some((item) => !item.aiSpendLoaded)) return null;
+  return cases.reduce((total, item) => total + item.aiSpendUsd, 0);
+}
+
+function toolCostGap(view: TowerCommandCenterView): string {
+  const tools = view.allInitiatives.filter(isToolRollout);
+  const missing = tools.filter((item) => !item.aiSpendLoaded).length;
+  if (missing === 0) return "";
+  return ` Costs for ${formatCount(missing)} of ${formatCount(tools.length)} tool rollouts are not loaded.`;
 }
 
 function commandFreshnessLine(view: TowerCommandCenterView): string {
@@ -80,40 +100,40 @@ function executiveHeadline(view: TowerCommandCenterView): string {
   const s = view.summary;
   const claims = valueClaimCount(view);
   if (claims <= 0) {
-    return `Tower projection: ${formatLoadedUsdM(
+    return `Tower view: ${formatLoadedUsdM(
       s.approvedInvestmentUsd,
-    )} approved. Board-claimable not loaded. No value claims loaded.`;
+    )} in approved project funding. Value cleared for reporting is not loaded. No benefit claims are loaded.`;
   }
 
-  return `Tower projection: ${formatLoadedUsdM(s.approvedInvestmentUsd)} approved. ${formatUsdM(
+  return `Tower view: ${formatLoadedUsdM(s.approvedInvestmentUsd)} in approved project funding. ${formatUsdM(
     s.claimableUsd,
-  )} board-claimable YTD. ${formatCount(openClaimCount(view))} of ${formatCount(
+  )} cleared for reporting in the loaded months. ${formatCount(openClaimCount(view))} of ${formatCount(
     claims,
-  )} claims still need proof.`;
+  )} benefit claims still need proof.`;
 }
 
 function executiveSummary(view: TowerCommandCenterView): string {
   const s = view.summary;
   const claims = valueClaimCount(view);
+  const caseFunding = aiCaseFunding(view);
+  const fundingSentence = caseFunding === null
+    ? "The approved AI case funding amount is not fully loaded."
+    : `This includes ${formatUsdM(caseFunding)} in approved funding for AI business cases.`;
   if (claims <= 0) {
     return `${view.summary.tenantName} has ${formatLoadedUsdM(
       s.approvedInvestmentUsd,
-    )} in the reviewed project portfolio, including ${formatUsdM(
-      s.aiAttributedInitiativeSpendUsd,
-    )} tied to AI initiatives and tool rollouts. No value claims are loaded yet, so Tower cannot prove or disprove business-case value.`;
+    )} in the reviewed project portfolio. ${fundingSentence}${toolCostGap(view)} No benefit claims are loaded yet, so Tower cannot assess their value.`;
   }
 
   return `${view.summary.tenantName} has ${formatLoadedUsdM(
     s.approvedInvestmentUsd,
-  )} in the reviewed project portfolio, including ${formatUsdM(
-    s.aiAttributedInitiativeSpendUsd,
-  )} tied to AI initiatives and tool rollouts. Business cases project ${formatUsdM(
+  )} in the reviewed project portfolio. ${fundingSentence}${toolCostGap(view)} Business cases project ${formatUsdM(
     s.promisedUsd,
-  )} of annual value; ${formatUsdM(
+  )} in yearly benefit; ${formatUsdM(
     s.claimableUsd,
-  )} is board-claimable year to date, and ${formatCount(
+  )} cleared the reporting gate in the loaded months, and ${formatCount(
     Math.max(0, claims - s.claimableClaimCount),
-  )} claims still need usage, outcome, or Finance proof.`;
+  )} benefit claims have not cleared that gate. Each claim type needs its own evidence review.`;
 }
 
 function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
@@ -124,27 +144,27 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   ).length;
   return [
     {
-      label: "Approved IT project portfolio",
+      label: "Approved project funding",
       value: formatLoadedUsdM(s.approvedInvestmentUsd),
       // The count of subjects, not the board-scope count and not however many rows loaded.
       // The view model already resolves absence; a second fallback here silently swapped in a
       // different metric whenever the first was zero.
-      note: `${formatCount(s.totalProgramSubjectCount)} projects · approved capital only`,
+      note: `${formatCount(s.totalProgramSubjectCount)} projects · approved budgets, not actual spending`,
       tone: "teal",
     },
     {
-      label: "Asserted benefit",
+      label: "Projected yearly benefit",
       badge:
         claims <= 0 ? "NOT LOADED" : s.claimableUsd > 0 ? "PARTIAL" : "UNPROVEN",
       value: claims <= 0 ? "Not loaded" : formatUsdM(s.promisedUsd),
       note:
         claims <= 0
           ? "No value claims loaded; no asserted benefit population."
-          : `${formatCount(claims)} claims · planning values, not outcomes`,
+          : `${formatCount(claims)} claims · business-case estimates, not proven savings`,
       tone: claims <= 0 ? "gray" : "amber",
     },
     {
-      label: "Board-claimable",
+      label: "Cleared in loaded months",
       badge: claims <= 0 ? "NOT LOADED" : s.claimableUsd > 0 ? "OPEN" : "BLOCKED",
       value: claims <= 0 ? "Not loaded" : formatUsdM(s.claimableUsd),
       note:
@@ -161,33 +181,23 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
       value: `${formatCount(s.aiInitiativeCount)}`,
       note: `${formatCount(view.programs.length)} AI business cases + ${formatCount(
         aiToolRolloutCount(view),
-      )} tool rollouts · ${formatUsdM(
-        s.aiAttributedInitiativeSpendUsd,
-      )} attributed`,
+      )} tool rollouts · ${aiCaseFunding(view) === null ? "AI case funding incomplete" : `${formatUsdM(aiCaseFunding(view) as number)} approved AI case funding`}`,
       tone: emitting > 0 ? "teal" : "red",
     },
     {
-      label: "Usage evidence mapped",
+      label: "Claims with usage evidence",
       badge:
         claims <= 0
           ? "NOT LOADED"
-          : s.usageSupportedClaimCount === claims
-            ? "COMPLETE"
-            : "PARTIAL",
+          : s.usageSupportedClaimCount > 0 ? "RECORDED" : "NONE RECORDED",
       value:
         claims <= 0
           ? "Not loaded"
-          : `${formatCount(s.usageSupportedClaimCount)} of ${formatCount(
-              claims,
-            )}`,
+          : formatCount(s.usageSupportedClaimCount),
       note:
         claims <= 0
-          ? "No value claims loaded; usage support cannot be assessed."
-          : s.usageSupportedClaimCount === claims
-          ? "Every value claim has usage-to-value support"
-          : `${formatCount(
-              Math.max(0, claims - s.usageSupportedClaimCount),
-            )} claims still need usage-to-value mapping`,
+          ? "No value claims loaded; usage evidence cannot be assessed."
+          : "Usage proof applies where adoption drives the benefit; sourcing and foundation claims need different proof.",
       tone: claims <= 0 ? "gray" : s.usageSupportedClaimCount > 0 ? "amber" : "red",
     },
   ];
@@ -198,28 +208,17 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const claims = valueClaimCount(view);
   if (claims <= 0) return [];
 
-  const claimsMissingUsage = Math.max(0, claims - s.usageSupportedClaimCount);
   const claimsMissingActual = Math.max(0, claims - s.outcomeMeasuredClaimCount);
   const claimsMissingFinance = Math.max(0, claims - s.financeAttestedClaimCount);
 
   return [
     {
       order: "1",
-      kicker: "Map · do this first",
-      title:
-        claimsMissingUsage > 0
-          ? `Close usage-to-value gaps on ${formatCount(claimsMissingUsage)} claims`
-          : "Keep usage mapped as actuals refresh",
-      detail:
-        claimsMissingUsage > 0
-          ? `${formatCount(s.usageSupportedClaimCount)} of ${formatCount(
-              claims,
-            )} claims have usage support. The remaining claims need tool, workflow, or adoption evidence before the value can advance.`
-          : "Usage-to-value support is loaded for the current claim set. Keep it current as monthly actuals are refreshed.",
-      metricLabel: "Usage-supported claims",
-      metricValue: `${formatCount(s.usageSupportedClaimCount)}/${formatCount(
-        claims,
-      )}`,
+      kicker: "Check · do this first",
+      title: "Match each benefit claim to the proof it needs",
+      detail: `Usage evidence is recorded for ${formatCount(s.usageSupportedClaimCount)} claims. Check adoption for cases where use drives the benefit; sourcing opportunities need financial evidence, and foundations need a link to downstream results.`,
+      metricLabel: "Claims with usage evidence",
+      metricValue: formatCount(s.usageSupportedClaimCount),
       due: "Next review",
       tone: "red",
       reviewTarget: "ai",
@@ -227,12 +226,10 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
     {
       order: "2",
       kicker: "Measure · then this",
-      title: `Backfill measured outcome on the ${formatCount(
-        claimsMissingActual,
-      )} claims that carry no actual`,
+      title: "Review claims without a measured outcome",
       detail:
-        "Measured outcomes create something a validator can sign. Until then, planning value remains planning value.",
-      metricLabel: "Claims short",
+        `${formatCount(claimsMissingActual)} claims have no measured outcome recorded. Decide which need a direct result and which need a documented link to another result. A plan is not an earned benefit.`,
+      metricLabel: "No outcome recorded",
       metricValue: formatCount(claimsMissingActual),
       due: "Next month",
       tone: "amber",
@@ -241,10 +238,10 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
     {
       order: "3",
       kicker: "Assign · only then",
-      title: `Finance-attest the ${formatCount(claimsMissingFinance)} claims still outside the board number`,
-      detail: `${formatCount(s.financeAttestedClaimCount)} of ${formatCount(claims)} claims carry Finance attestation. ${formatUsdM(s.claimableUsd)} is board-claimable year to date; usage support alone does not establish a measured financial outcome.`,
-      metricLabel: "Finance-attested claims",
-      metricValue: `${formatCount(s.financeAttestedClaimCount)}/${formatCount(claims)}`,
+      title: "Review which financial claims need Finance sign-off",
+      detail: `${formatCount(claimsMissingFinance)} claims have no Finance attestation recorded. Check which claim types require it before adding anything to a board figure. ${formatUsdM(s.claimableUsd)} has cleared the reporting gate in the loaded months.`,
+      metricLabel: "Finance sign-offs recorded",
+      metricValue: formatCount(s.financeAttestedClaimCount),
       due: "Following review",
       tone: "gray",
       reviewTarget: "actions",
@@ -270,18 +267,20 @@ function ValueEvidenceGroups({ view }: { view: TowerCommandCenterView }) {
   const groups = [
     {
       heading: "Planning and adoption evidence",
-      note: "The annual assertion is a plan. Usage-linked claim value shows adoption support, not a measured financial outcome; its reporting period is not recorded here.",
+      note: s.usageSupportedValueCoverage === "partial"
+        ? "The yearly benefit is an estimate. The usage-linked amount covers measured rows only; other claims have no measured amount. Finance has not confirmed this as a saving."
+        : "The yearly benefit is an estimate. A usage-linked dollar amount appears only when separately measured; it does not mean Finance has confirmed a saving.",
       rows: [
-        ["Asserted annual benefit", formatUsdM(s.promisedUsd)],
-        ["Usage-linked claim value", formatUsdM(s.usageSupportedUsd)],
+        ["Projected yearly benefit", formatUsdM(s.promisedUsd)],
+        ["Usage-linked claim value", usageValueLabel(s)],
       ],
     },
     {
-      heading: "Finance review · year to date",
-      note: "Finance-validated value can still be blocked. Board-claimable is the amount that has cleared the claim gate.",
+      heading: "Finance review · loaded months",
+      note: "Finance may validate a claim that is still blocked from board reporting. Only the cleared amount has passed every required gate.",
       rows: [
-        ["Finance validated YTD", formatUsdM(s.financeValidatedUsd)],
-        ["Board claimable YTD", formatUsdM(s.claimableUsd)],
+        ["Finance validated", formatUsdM(s.financeValidatedUsd)],
+        ["Cleared for reporting", formatUsdM(s.claimableUsd)],
       ],
     },
   ];
@@ -444,7 +443,7 @@ export function CommandCenterView({
           </div>
           <div className={styles.valueChartLegend}>
             {claims > 0
-              ? `Annual asserted benefit and usage-linked claim value are planning measures. Finance-validated and board-claimable amounts are year to date. These bars are separate states, not an additive waterfall or a conversion rate.`
+              ? `The yearly benefit is a plan. Finance-reviewed and cleared amounts cover the loaded months. These amounts describe different stages; do not add them together or use them to calculate a success rate.`
               : "No value claims are loaded, so Tower cannot assess the value evidence states yet."}
           </div>
         </div>
@@ -467,7 +466,7 @@ export function CommandCenterView({
           <strong>{claims > 0 ? `${formatCount(missingFinanceClaims)} of ${formatCount(claims)}` : "Not loaded"}</strong>
           <p>
             {claims > 0
-              ? `claims remain outside Finance attestation. ${formatUsdM(s.claimableUsd)} is board-claimable year to date; there is no defensible portfolio ceiling in this projection.`
+              ? `claims have no Finance sign-off recorded. Check which claim types need one before adding them to a board figure. ${formatUsdM(s.claimableUsd)} has cleared the reporting gate in the loaded months.`
               : "No Finance-attestation population is loaded because no value claims are loaded."}
           </p>
         </article>

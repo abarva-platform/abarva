@@ -370,6 +370,86 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.command.refreshTimestamp).toBeNull();
   });
 
+  it("does not call Finance-reviewed dollars usage-supported without separate usage evidence", async () => {
+    const caseDisplay = {
+      title: "Revenue-cycle automation",
+      finance_reviewed_value_usd: "500000",
+    };
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary" })],
+      tower_value_proof: [
+        servingRow({
+          row_key: "case-1",
+          page_key: "value_proof",
+          usage_supported_value_usd: "500000",
+          display_payload_json: caseDisplay,
+        }),
+      ],
+      tower_decision_lanes: [
+        servingRow({
+          row_key: "case-1",
+          usage_supported_value_usd: "500000",
+          usage_strength_score: 70,
+          display_payload_json: caseDisplay,
+        }),
+      ],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Demo" });
+
+    expect(mart?.command.usageSupportedClaimCount).toBe(0);
+    expect(mart?.valueFunnel.find((stage) => stage.stageKey === "usage_supported")?.valueNumeric).toBeNull();
+    expect(mart?.programLanes[0]?.knownSupportedValue).toBeNull();
+    expect(mart?.programLanes[0]?.adoptionRatePct).toBeNull();
+    expect(view?.summary.usageSupportedValueMeasured).toBe(false);
+    expect(view?.summary.usageSupportedValueCoverage).toBe("none");
+    expect(view?.programs[0]?.usageSupportedValueMeasured).toBe(false);
+    expect(view?.conversionBridge.find((stage) => stage.key === "adoption")?.valueUsd).toBeNull();
+  });
+
+  it("keeps a separately evidenced usage-supported amount", async () => {
+    const usageRefs = [{
+      source_family: "Usage ledger",
+      source_record_id: "usage-1",
+      source_field: "usage_supported_value_usd",
+    }];
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary" })],
+      tower_value_proof: [{
+        ...servingRow({ row_key: "case-1", page_key: "value_proof" }),
+        source_refs_json: usageRefs,
+      }, servingRow({
+        row_key: "case-2",
+        claim_id: "claim-2",
+        page_key: "value_proof",
+        usage_supported_value_usd: "750000",
+      })],
+      tower_decision_lanes: [{
+        ...servingRow({ row_key: "case-1" }),
+        source_refs_json: usageRefs,
+      }, servingRow({
+        row_key: "case-2",
+        claim_id: "claim-2",
+        usage_supported_value_usd: "750000",
+      })],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Demo" });
+
+    expect(mart?.command.usageSupportedClaimCount).toBe(1);
+    expect(mart?.programLanes[0]?.knownSupportedValue).toBe(500000);
+    expect(view?.summary.usageSupportedValueMeasured).toBe(true);
+    expect(view?.summary.usageSupportedValueCoverage).toBe("partial");
+    expect(view?.summary.usageSupportedUsd).toBe(500000);
+    expect(view?.programs.find((program) => program.id === "claim-2")?.usageSupportedValueMeasured).toBe(false);
+  });
+
   it("honors display payload metrics and keeps adoption lens rows as tools", async () => {
     mockServingRows({
       tower_command_center: [

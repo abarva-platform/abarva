@@ -89,6 +89,9 @@ export interface TowerCommandSummary {
   promisedBenefitLoaded: boolean;
   promisedUsd: number;
   usageSupportedUsd: number;
+  /** At least one usage-supported dollar value has a field-level source reference. */
+  usageSupportedValueMeasured: boolean;
+  usageSupportedValueCoverage: "none" | "partial" | "complete";
   financeValidatedUsd: number;
   claimableUsd: number;
   blockedUsd: number;
@@ -159,14 +162,14 @@ export interface TowerFunnelStage {
   key: string;
   label: string;
   sequence: number;
-  valueUsd: number;
+  valueUsd: number | null;
   claimStatus: string;
   caveat: string;
   sourceFile: string | null;
   claimCount: number;
   knownValueClaimCount: number;
   unknownValueClaimCount: number;
-  knownValueAmount: number;
+  knownValueAmount: number | null;
   blockedClaimCount: number;
   blockedKnownValueAmount: number;
   primaryBlocker: string | null;
@@ -222,6 +225,7 @@ export interface TowerProgramView {
   promisedUsd: number;
   promisedBenefitLoaded: boolean;
   usageSupportedUsd: number;
+  usageSupportedValueMeasured: boolean;
   financeValidatedUsd: number;
   claimableUsd: number;
   blockedUsd: number;

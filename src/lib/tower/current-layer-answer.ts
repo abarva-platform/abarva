@@ -558,7 +558,9 @@ function answerFromIntent(
       ["Stage", "Value", "Conversion", "Caveat"],
       view.valueFunnel.slice(0, 6).map((stage) => [
         stage.stageLabel,
-        money(stage.valueNumeric),
+        stage.stageKey === "usage_supported" && stage.valueNumeric === null
+          ? "Not measured"
+          : money(stage.valueNumeric),
         stage.conversionRatio === null ? "n/a" : `${Math.round(stage.conversionRatio * 100)}%`,
         compactText(stage.caveat),
       ]),

@@ -713,7 +713,8 @@ function projectionEntryPayload(args, row, pageKey, refs, gate) {
     blocked_value_usd: Number(row.annual_value_exposed ?? 0),
     claimable_value_usd: 0,
     finance_validated_value_usd: 0,
-    usage_supported_value_usd: Number(row.annual_value_exposed ?? 0),
+    // Annual opportunity exposure is a potential benefit, not measured usage.
+    usage_supported_value_usd: null,
     owner_role: row.accountable_role,
     handoff_module: "Source",
     source_ref_count: refs.length,
@@ -833,7 +834,7 @@ async function upsertCommandRow(client, context, args, pageKey, opportunity) {
       gate.nextGate,
       JSON.stringify(gate.evidenceNeeded),
       Number(opportunity.annual_value_exposed ?? 0),
-      Number(opportunity.annual_value_exposed ?? 0),
+      null,
       Number(opportunity.annual_value_exposed ?? 0),
       Math.round(Number(opportunity.confidence ?? 0) * 100),
       gate.status === "blocked" ? 85 : 55,

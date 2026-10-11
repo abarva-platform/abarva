@@ -85,9 +85,13 @@ export function ProgramDrawer({
         ],
         [
           "Usage-supported",
-          p.usageSupportedUsd,
-          p.usageSupportedUsd > 0 ? "teal" : "red",
-          "backed by real adoption / usage evidence",
+          p.usageSupportedValueMeasured ? p.usageSupportedUsd : null,
+          p.usageSupportedValueMeasured && p.usageSupportedUsd > 0
+            ? "teal"
+            : "",
+          p.usageSupportedValueMeasured
+            ? "backed by recorded adoption / usage evidence"
+            : "no independent usage value measurement recorded",
         ],
         [
           "Finance-validated",
@@ -184,7 +188,11 @@ export function ProgramDrawer({
               key={label}
               label={label}
               sub={definition}
-              value={formatUsdM(value)}
+              value={
+                label === "Usage-supported" && !p.usageSupportedValueMeasured
+                  ? "Not measured"
+                  : formatUsdM(value)
+              }
               valueColor={chainColor(tint)}
             />
           ))}
@@ -236,12 +244,12 @@ export function ProgramDrawer({
                   className={styles.uv}
                   style={{ color: "var(--canon-gray-500)" }}
                 >
-                  Thin
+                  Not measured
                 </span>
               </div>
               <p className={styles.us}>
-                No usage-linked measurement is in place for this program yet.
-                That absence is the reason value is not claimable.
+                No independent usage measurement is recorded for this program.
+                Tower cannot call its value usage-supported until that proof is linked.
               </p>
             </div>
           )}

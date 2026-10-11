@@ -339,6 +339,9 @@ export function TowerCommandCenter({
     funnel: blockedValue > 0,
     evidence: (view?.gaps.length ?? 0) > 0,
   };
+  const includesIllustrativeRecords = view?.allInitiatives.some((item) =>
+    /synthetic|illustrative|demo/i.test(item.sourceQualityState ?? ""),
+  ) ?? false;
 
   const body = (() => {
     if (!view) {
@@ -485,6 +488,11 @@ export function TowerCommandCenter({
 
         <div className={styles.bodyregion}>
           <div className={styles.wrap}>
+            {includesIllustrativeRecords ? (
+              <p role="note" style={{ margin: "0 0 14px", padding: "10px 14px", background: "var(--canon-amber-light, #fff4df)", color: "var(--canon-gray-900)", fontSize: 13, lineHeight: 1.5 }}>
+                Illustrative demo records are included. These amounts show a sample scenario, not verified client results.
+              </p>
+            ) : null}
             <div
               id="tcc-panel"
               role="tabpanel"

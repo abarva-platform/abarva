@@ -102,26 +102,27 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
         {noRows
           ? "No foundation rows are loaded in the AI portfolio."
           : missingSpendRows > 0
-            ? `${formatCount(rows.length)} classified enablers are shown; ${formatCount(missingSpendRows)} ${hasHave(missingSpendRows)} no investment amount loaded.`
+            ? `${formatCount(rows.length)} foundation cases are shown; ${formatCount(missingSpendRows)} ${hasHave(missingSpendRows)} no approved AI funding amount loaded.`
           : missingValueRows > 0
             ? `${formatCount(rows.length)} foundation rows support AI delivery; ${formatCount(missingValueRows)} ${hasHave(missingValueRows)} no sponsor-stated value loaded.`
             : allLoadedValuesAreZero
-            ? `${formatUsdM(spendUsd)} of foundation investment carries no sponsor-stated value.`
-              : `${formatUsdM(spendUsd)} of foundation investment carries ${formatUsdM(promisedUsd)} sponsor-stated value.`}
+            ? `${formatUsdM(spendUsd)} in approved foundation funding has no projected direct benefit on these records.`
+              : `${formatUsdM(spendUsd)} in approved foundation funding is linked to ${formatUsdM(promisedUsd)} in projected yearly benefit.`}
       </h2>
 
       <p style={{ margin: "-10px 0 0", maxWidth: 980, fontSize: 15, lineHeight: 1.55, color: "var(--canon-gray-700)" }}>
-        These rows have an explicit platform, governance or foundation spend category. Which cases
-        each enabler supports is not loaded here; a relationship is needed before allocating
-        investment or benefit to downstream cases.
+        These records are labeled as platform, governance or foundation work. Their approved
+        funding is already included in the AI funding total; do not add it again. The cases
+        they support are not linked here, so their funding or benefits cannot be assigned to
+        a particular downstream case.
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 }}>
         {[
           ["Foundation rows", noRows ? "Not loaded" : formatCount(rows.length)],
-          ["Recorded investment", noRows || missingSpendRows > 0 ? "Partial" : formatUsdM(spendUsd)],
-          ["AI spend share", share === null ? "Not loaded" : formatPct(share)],
-          ["Sponsor-stated value", loadedValueRows.length === 0 ? "Not loaded" : formatUsdM(promisedUsd)],
+          ["Approved foundation funding", noRows || missingSpendRows > 0 ? "Partial" : formatUsdM(spendUsd)],
+          ["Share of approved AI funding", share === null ? "Not loaded" : formatPct(share)],
+          ["Projected direct benefit", loadedValueRows.length === 0 ? "Not loaded" : formatUsdM(promisedUsd)],
         ].map(([label, value]) => (
           <div key={label} style={{ ...PANEL, padding: "20px 22px" }}>
             <div style={{ fontSize: 13, color: "var(--canon-gray-500)" }}>{label}</div>
@@ -155,7 +156,7 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
         >
           <span>Foundation</span>
           <span>Type</span>
-          <span style={{ textAlign: "right" }}>Investment</span>
+          <span style={{ textAlign: "right" }}>Approved AI funding</span>
           <span style={{ textAlign: "right" }}>Cost to build</span>
           <span>Control blocker</span>
         </div>

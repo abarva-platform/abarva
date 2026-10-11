@@ -163,6 +163,25 @@ function payloadNullableNumber(
 }
 
 /**
+ * A recorded dollar value cannot become "usage supported" just because another
+ * review stage recorded money. Its source reference must identify this exact
+ * field. Adoption on its own can feed the separately declared estimate formula
+ * in derive.ts, but it cannot validate an arbitrary persisted dollar amount.
+ */
+function hasUsageValueSource(row: TowerServingRow): boolean {
+  return sourceRefs(row).some((ref) =>
+    ["usage_supported_value_usd", "measured_usage_value_usd"].includes(
+      nullableText(ref.source_field)?.toLowerCase() ?? "",
+    ),
+  );
+}
+
+function recordedUsageSupportedValue(row: TowerServingRow): number | null {
+  const amount = payloadNullableNumber(row, "usage_supported_value_usd");
+  return amount !== null && hasUsageValueSource(row) ? amount : null;
+}
+
+/**
  * Reads only what Layer 4 asserted, ignoring the projection row's own columns.
  *
  * `payload_json` is `to_jsonb(p)` over the projection table, so it carries every column whether or
@@ -441,7 +460,14 @@ function buildFunnel(
 ): TowerMartValueFunnelStage[] {
   const promised =
     sumRows(rows, "promised_value_usd") + sumRows(rows, "baseline_value");
-  const usageSupported = sumRows(rows, "usage_supported_value_usd");
+  const measuredUsageRows = rows.map(recordedUsageSupportedValue);
+  const usageSupportedTotal = measuredUsageRows.reduce<number>(
+    (sum, amount) => sum + (amount ?? 0),
+    0,
+  );
+  const usageSupported = measuredUsageRows.some((amount) => amount !== null)
+    ? usageSupportedTotal
+    : null;
   const financeValidated = sumRows(rows, "finance_validated_value_usd");
   const claimable = sumRows(rows, "claimable_value_usd");
   const blocked = sumRows(rows, "blocked_value_usd");
@@ -453,7 +479,7 @@ function buildFunnel(
     sequence: number,
     stageKey: string,
     stageLabel: string,
-    valueNumeric: number,
+    valueNumeric: number | null,
     caveat: string,
   ): TowerMartValueFunnelStage => ({
     funnelKey: `tower:ecl:funnel:${stageKey}`,
@@ -470,7 +496,8 @@ function buildFunnel(
     primaryBlocker: gatedCount > 0 ? "Evidence gates remain open" : null,
     primaryOwnerRole: gatedCount > 0 ? "Tower evidence owner" : null,
     denominatorStageKey: sequence === 1 ? null : "promised",
-    conversionRatio: promised > 0 ? valueNumeric / promised : null,
+    conversionRatio:
+      promised > 0 && valueNumeric !== null ? valueNumeric / promised : null,
     claimStatus: gatedCount > 0 ? "gated" : "claimable",
     caveat,
     sourceFile: sources,
@@ -490,7 +517,9 @@ function buildFunnel(
       "usage_supported",
       "Usage supported",
       usageSupported,
-      "Usage support is shown only where the ECL row carries a recorded value.",
+      usageSupported !== null
+        ? "Usage-supported value has a field-level source reference."
+        : "No independently measured usage-supported amount is recorded.",
     ),
     stage(
       3,
@@ -549,10 +578,7 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       payloadNullableNumber(row, "funded_amount_usd") !== null,
     promisedValueUsd: payloadNullableNumber(row, "promised_value_usd"),
     financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
-    knownSupportedValue: payloadNullableNumber(
-      row,
-      "usage_supported_value_usd",
-    ),
+    knownSupportedValue: recordedUsageSupportedValue(row),
     proofMaturityScore: payloadNullableNumber(row, "proof_maturity_score"),
     riskPressureScore: payloadNullableNumber(row, "risk_pressure_score"),
     usageStrengthScore: payloadNullableNumber(row, "usage_strength_score"),
@@ -562,7 +588,13 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
     nextGate,
     usageMetric: nullableText(display.usage_metric),
     usageActual: nullableNum(display.usage_actual as Numeric),
-    adoptionRatePct: payloadNullableNumber(row, "usage_strength_score"),
+    // A proof-strength score is not an adoption percentage. In the earlier
+    // projection it was derived from Finance review, not observed usage.
+    adoptionRatePct: displayNullableNumberFrom(row, [
+      "adoption_rate_pct",
+      "adoption_rate_percent",
+      "adoption_actual_pct",
+    ]),
     valueClaimStatus: gateStatus,
     towerClaimAllowed: gateStatus === "claimable" ? "allowed" : "blocked",
     requiredGates: jsonArray(payload(row).evidence_needed_json).map((ask) => ({
@@ -1307,7 +1339,7 @@ export async function readTowerCommandCenter(args: {
             (row) => payloadNumber(row, "claimable_value_usd") > 0,
           ).length,
           usageSupportedClaimCount: claimRows.filter(
-            (row) => payloadNumber(row, "usage_supported_value_usd") > 0,
+            (row) => (recordedUsageSupportedValue(row) ?? 0) > 0,
           ).length,
           fundedNoBaselineClaimCount: claimRows.filter(
             (row) =>
