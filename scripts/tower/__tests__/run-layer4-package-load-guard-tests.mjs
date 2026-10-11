@@ -13,12 +13,20 @@ const loader = path.resolve(
 );
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tower-load-guard-"));
 
-function runMutation(manifest, mode) {
+function runMutation(manifest, mode, projectYear = "", projectAmount = 100) {
   const packageDir = fs.mkdtempSync(path.join(temporaryRoot, "package-"));
   const outDir = path.join(packageDir, "out");
   fs.writeFileSync(
     path.join(packageDir, "package_manifest.json"),
     `${JSON.stringify(manifest)}\n`,
+  );
+  fs.writeFileSync(
+    path.join(packageDir, "20_it_budget_by_domain.csv"),
+    "fiscal_year,domain_key,tower_reviewed_project_budget_usd\nFY26,apps,100\n",
+  );
+  fs.writeFileSync(
+    path.join(packageDir, "21_it_project_portfolio.csv"),
+    `domain_key,project_budget_fiscal_year,approved_budget_usd\napps,${projectYear},${projectAmount}\n`,
   );
   const result = spawnSync(
     process.execPath,
@@ -38,10 +46,18 @@ try {
     }
   }
 
-  const { result } = runMutation({ no_runtime_load: false }, "--write");
-  assert.notEqual(result.status, 0);
-  assert.doesNotMatch(result.stderr, /no_runtime_load=false/);
-  console.log("Layer 4 package load guard: 5 checks passed");
+  const missingPeriod = runMutation({ no_runtime_load: false }, "--write");
+  assert.match(missingPeriod.result.stderr, /project_budget_fiscal_year/);
+  assert.equal(fs.existsSync(missingPeriod.outDir), false);
+
+  const mismatchedAmount = runMutation({ no_runtime_load: false }, "--write", "FY26", 90);
+  assert.match(mismatchedAmount.result.stderr, /funding differ in domain\(s\): apps/);
+  assert.equal(fs.existsSync(mismatchedAmount.outDir), false);
+
+  const reconciled = runMutation({ no_runtime_load: false }, "--write", "FY26", 100);
+  assert.notEqual(reconciled.result.status, 0);
+  assert.doesNotMatch(reconciled.result.stderr, /Refusing runtime load/);
+  console.log("Layer 4 package load guard: 7 checks passed");
 } finally {
   fs.rmSync(temporaryRoot, { recursive: true, force: true });
 }

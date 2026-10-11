@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Tower projection loader now reads the package's load restriction before it prepares a database write or purge. A package can be used for an offline review even when it is marked as unavailable for runtime loading. Its package manifest must explicitly permit loading before either mutating action can proceed.
+The Tower projection loader now reads the package's load restriction before it prepares a database write or purge. A package can be used for an offline review even when it is marked as unavailable for runtime loading. Its package manifest must explicitly permit loading before either mutating action can proceed. Before a write, project amounts must also declare the budget year and match the budget's project funding in each domain.
 
 ## Layer Impact
 
@@ -18,7 +18,7 @@ Release lane: `internal-admin`.
 
 - Layer 1, client intake: no source data changes. The package manifest remains the source of the load restriction.
 - Layer 3, canonical model: no data changes. The loader does not write canonical records.
-- Layer 4, products: the operator script refuses a write or purge when `no_runtime_load` is true or missing.
+- Layer 4, products: the operator script refuses a write or purge when `no_runtime_load` is true or missing. It also refuses a write when the project funding period is unspecified or comparable domain totals disagree.
 
 ## Client Applicability
 
@@ -35,7 +35,7 @@ Release lane: `internal-admin`.
 
 ## QA / Validation
 
-- `node scripts/tower/__tests__/run-layer4-package-load-guard-tests.mjs` — pass, five behavior checks.
+- `node scripts/tower/__tests__/run-layer4-package-load-guard-tests.mjs` — pass, seven behavior checks.
 - `node scripts/tower/__tests__/run-layer4-purge-mode-tests.mjs` — pass, seven checks.
 - Offline Layer 4 dry run — pass; no database write or readback.
 - `npm run release:check` — pass, all 11 gates.
