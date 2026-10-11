@@ -520,7 +520,7 @@ describe("mechanical Tower Command Center panels", () => {
     expect(screen.getByText("Control / gate")).toBeInTheDocument();
     expect(screen.queryByText("Risk")).not.toBeInTheDocument();
     expect(document.body.textContent).toContain("No case-level benefit claim loaded");
-    expect(document.body.textContent).toContain("Not loaded");
+    expect(document.body.textContent).toContain("Amount basis not verified");
     expect(document.body.textContent).not.toContain("$9M finance-validated");
   });
 
@@ -649,7 +649,7 @@ describe("mechanical Tower Command Center panels", () => {
     expect(text).toContain("Value claims not loaded");
     expect(text).toContain("Usage support not loaded");
     expect(text).toContain("No action campaigns are loaded for this review.");
-    expect(text).toContain("No evidence-owner queue rows are loaded for this review.");
+    expect(text).toContain("No evidence-owner queue rows are loaded. An empty queue does not mean every claim has proof.");
     expect(text).not.toContain("0 of 0");
     expect(text).not.toContain("Usage telemetry connection");
     expect(text).not.toContain("Vendor leverage review");

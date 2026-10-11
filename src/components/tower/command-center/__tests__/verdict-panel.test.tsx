@@ -70,8 +70,8 @@ describe("Verdict panel", () => {
 
   it("renders an absent budget as a gap, never as zero", () => {
     render(<VerdictPanel view={viewWith({ totalItBudgetFy26: null })} />);
-    const budget = screen.getByText("Total IT budget").parentElement;
-    expect(budget?.textContent).toContain("Not loaded");
+    const budget = screen.getByText("Approved FY26 IT budget").parentElement;
+    expect(budget?.textContent).toContain("Not verified");
     expect(budget?.textContent).not.toContain("$0");
   });
 
@@ -79,7 +79,7 @@ describe("Verdict panel", () => {
     render(<VerdictPanel view={viewWith()} />);
     expect(
       screen.getByRole("heading", { level: 2 }).textContent,
-    ).toMatch(/The loaded claims project \$35\.5M a year\. The cleared amount is not loaded\./);
+    ).toMatch(/The loaded claims project \$35\.5M a year\. No benefit amount is cleared for reporting\./);
   });
 
   it("treats an absent annual assertion as unknown", () => {

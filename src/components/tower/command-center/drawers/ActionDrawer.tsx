@@ -23,9 +23,10 @@ const LANE_TONE = {
   fix: "amber",
   freeze: "red",
   stop: "red",
+  unclassified: "gray",
 } as const;
 
-const EYEBROW_TONE = { teal: "eTeal", amber: "eAmber", red: "eRed" } as const;
+const EYEBROW_TONE = { teal: "eTeal", amber: "eAmber", red: "eRed", gray: "eGray" } as const;
 
 function dueRead(due: string | null): {
   label: string;
@@ -109,7 +110,7 @@ export function ActionDrawer({
       open={open}
       onClose={onClose}
       eyebrowTone={EYEBROW_TONE[tone]}
-      eyebrow={action ? `Action · ${action.ownerRole} · ${action.lane}` : ""}
+      eyebrow={action ? `Action · ${action.ownerRole} · ${action.lane === "unclassified" ? "Evidence task" : action.lane}` : ""}
       title={action?.title ?? ""}
       footer={
         routed ? (

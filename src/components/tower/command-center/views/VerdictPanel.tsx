@@ -233,7 +233,6 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   const s = view.summary;
   const caseFunding = approvedAiCaseFunding(view.allInitiatives);
 
-  const hasClaims = s.valueClaimCount > 0;
   const hasAssertion = s.promisedBenefitLoaded;
   const asserted = M(s.promisedUsd);
 
@@ -304,7 +303,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         {hasAssertion
-          ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${hasClaims ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "The cleared amount is not loaded."}`
+          ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === false ? "A cleared amount is not verified for the loaded months." : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
           : "No yearly benefit estimate is loaded, so its value remains unknown."}
       </h2>
 
@@ -316,14 +315,14 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         <MetricCard
-          label="Total IT budget"
-          value={s.budgetUsd === null ? "Not loaded" : "Reconciliation needed"}
-          caption={s.budgetUsd === null ? "No budget amount is loaded here" : "Amount hidden until it matches the current source files"}
+          label="Approved FY26 IT budget"
+          value={s.budgetUsd === null ? "Not verified" : bigMoney(s.budgetUsd)}
+          caption={s.budgetUsd === null ? "A source-approved FY26 budget is not recorded" : "Approved FY26 amount; modeled annual spend is separate"}
         />
         <MetricCard
-          label="Approved AI project funding"
-          value={caseFunding === null ? "Not loaded" : bigMoney(caseFunding)}
-          caption="Funding for classified AI business cases only; tool costs are separate"
+          label="Approved FY26 AI project funding"
+          value={caseFunding === null ? "Not verified" : bigMoney(caseFunding)}
+          caption="Requires a source-approved FY26 amount for every case; tool costs are separate"
         />
         <MetricCard
           label="Projected yearly benefit"
@@ -334,8 +333,8 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         />
         <MetricCard
           label="Cleared value in loaded months"
-          value={hasClaims ? bigMoney(s.claimableUsd) : "Not loaded"}
-          caption="Passed the reporting gate in the months loaded here; source files still need checking"
+          value={s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? bigMoney(s.claimableUsd) : "No amount cleared"}
+          caption="Requires Finance validation and approved evidence for the loaded period"
           accent="var(--canon-teal)"
           valueColor="var(--canon-teal-dark)"
         />
