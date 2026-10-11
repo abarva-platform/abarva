@@ -292,6 +292,8 @@ export function storeRefusalResponse(
       });
     case "id_allocation_conflict":
       return respond({ code: "id_allocation_conflict" });
+    case "expected_register_id_drift":
+      return respond({ code: "id_allocation_conflict" });
     case "invalid_transition":
       return respond({
         code: "invalid_transition",

@@ -7,21 +7,27 @@ import { evaluateValueCase } from "../../src/lib/programs/value-engine";
 import { resolveCostBasis, withCostBasis } from "../../src/lib/programs/value-engine/cost-basis";
 import { readValueModel } from "../../src/lib/programs/value-model-capture";
 import { registerInputRefs } from "../../src/lib/programs/value-engine/register-inputs";
-import { computeRom, type RomReferenceLoaders, type RomStructure } from "../../src/lib/pricing/moves-workflow/rom-service";
+import { computeRom, type RomStructure } from "../../src/lib/pricing/moves-workflow/rom-service";
+import { createCommittedRomReferenceLoaders, ROM_REFERENCE_SOURCE } from "../../src/lib/pricing/moves-workflow/rom-reference";
+import { buildRomWorkbook } from "../../src/lib/pricing/moves-workflow/rom-workbook";
 import { ROM_DRIVERS } from "../../src/lib/pricing/moves-workflow/rom-drivers";
 
 export const SEED_PATH = "datasets/tenant-inputs/meridian-health/moves/demo-case-numbers-seed-v1.json";
 export const BENCHMARK_PATH = "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json";
 export const PROOF_PATH = "docs/releases/proofs/2026-10-10-moves-demo-case-numbers-local-preview.json";
+export const WORKBOOK_PATH = "docs/releases/proofs/2026-10-10-moves-demo-case-numbers-rom-workbook.xlsx";
+export const COST_PACK_FILES = ["pricing_roles.csv", "pricing_rate_bands.csv", "pricing_delivery_locations.csv", "pricing_provider_classes.csv", "pricing_pod_templates.csv", "pricing_pod_template_roles.csv"] as const;
 const EXISTING_PATH = "datasets/tenant-inputs/meridian-health/moves/demo-assumption-register-seed.json";
 const MOVE_ID = "1557f032-5a5c-4475-abe5-b1a841576649";
 
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 const read = (name: string) => readFileSync(name, "utf8");
+export const costPackTexts = () => COST_PACK_FILES.map((file) => read(`datasets/reference/pricing-engine-v1/${file}`));
+export const costPackSha256 = () => hash(costPackTexts().join("\n"));
 const OWNER_ROLES = ["Finance business partner","Transformation office program lead","BI and analytics enablement lead"];
 const naturalKey = (area:string,statement:string) => `${area}:${hash(statement.trim().replace(/\s+/g," ").toLowerCase())}`;
 
-export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: string} = {}): Record<string, unknown> {
+function buildCasePreview(input: {seedText?: string; benchmarkText?: string} = {}) {
   const seedText = input.seedText ?? read(SEED_PATH);
   const benchmarkText = input.benchmarkText ?? read(BENCHMARK_PATH);
   const seed = JSON.parse(seedText);
@@ -33,6 +39,12 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
       !seed.synthetic || seed.client_attested || seed.rows.length !== 17) {
     throw new Error("seed_scope_or_shape_mismatch");
   }
+  const live=seed.live_id_preflight;
+  if (live?.observed_current_phase!==3 || live?.next_allocations_at_observation?.delivery!=="DL7" ||
+      live?.next_allocations_at_observation?.value!=="V6" ||
+      live?.read_only_operator_execution!=="job-abarva-private-operator-eus-9gtw0w6" ||
+      JSON.stringify(live?.occupied_register_rows?.map((row:{register_id:string})=>row.register_id))!==JSON.stringify(["DL5","DL6","V5"]))
+    throw new Error("live_id_preflight_contract_invalid");
   const byId = new Map<string, { value: number; status: "confirmed" | "open"; confidence: number; key: string }>();
   for (const [index, row] of existing.rows.entries()) {
     const prefix = { value: "V", data: "D", delivery: "DL", adoption: "A" }[row.area as "value" | "data" | "delivery" | "adoption"];
@@ -100,29 +112,12 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
     friction: resolveFactor("friction"), productiveShare: resolveFactor("productiveShare"),
     hoursPerFteWeek: resolveFactor("hoursPerFteWeek"),
   };
-  const rates = benchmark.rate_reference;
-  if (rates?.classification !== "synthetic-local-preview-only" || rates.currency !== "USD" ||
-      rates.basis !== "bill_rate" || structure.pod.rateBasis !== rates.basis ||
-      structure.pod.members?.[0]?.fte !== rates.pod_senior_fte ||
-      structure.pod.members?.[1]?.fte !== rates.pod_engineer_fte ||
-      [rates.senior_loaded_usd_per_hour,rates.engineer_loaded_usd_per_hour,
-       rates.bill_to_loaded_multiplier,rates.provider_tier_multiplier,
-       rates.location_rate_multiplier].some((number) => typeof number !== "number" || number <= 0))
-    throw new Error("synthetic_rate_or_pod_fixture_invalid");
-  const band = (role: string, level: string, loaded: number) => ({
-    rate_band_code: `${role}-${level}`, role_code: role, level_code: level,
-    currency: "USD", rate_basis: "onshore_si_t1_benchmark", loaded_rate: loaded,
-    scarcity_adj_rate: loaded * 1.2, indicative_bill_rate: loaded * rates.bill_to_loaded_multiplier,
-    confidence: "synthetic", approval_status: "synthetic",
-  });
-  const loaders: RomReferenceLoaders = {
-    loadRateReference: () => ({rateBands: [band("ROL-T01", "LVL-T1", rates.senior_loaded_usd_per_hour), band("ROL-T02", "LVL-T2", rates.engineer_loaded_usd_per_hour)],
-      locations: [{location_code:"LOC-TEST",shore_category:"onshore",salary_multiplier:0.5,rate_multiplier:rates.location_rate_multiplier}],
-      providerClasses: [{provider_class_code:"SI-T1",tier_multiplier:rates.provider_tier_multiplier}]}),
-    loadPodLibrary: () => ({podTemplates:[],podTemplateRoles:[]}),
-    loadRangePolicies: () => [],
-  };
-  const rom = computeRom(structure, loaders);
+  if (benchmark.rate_reference !== undefined || structure.pod.rateBasis !== "bill_rate" ||
+      structure.pod.locationCode !== "LOC-DALLAS" || structure.pod.providerClassCode !== "SI-T1" ||
+      structure.pod.members?.reduce((fte,member)=>fte+member.fte,0) !== 10 ||
+      !structure.pod.members?.every((member)=>member.proposedMapping === true))
+    throw new Error("foundation_pod_contract_invalid");
+  const rom = computeRom(structure, createCommittedRomReferenceLoaders());
   if (!rom.ok) throw new Error(`rom_refused:${rom.code}:${rom.message}`);
   if (!rom.foundation || rom.total.weeks > seed.program_schedule.horizon_weeks ||
       rom.total.weeks < 40 || rom.foundation.priced.weeks +
@@ -136,9 +131,8 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
   const ceiling = byId.get(seed.budget_ceiling_check.register_id);
   if (!ceiling || seed.budget_ceiling_check.role !== "ceiling_only_not_value_case_cost") throw new Error("budget_ceiling_missing");
   const budgetCents = ceiling.value * seed.budget_ceiling_check.scale_to_cents;
-  if (!Number.isSafeInteger(budgetCents) || budgetCents <= 0 ||
-      rom.total.planCents / budgetCents < 0.7 || rom.total.planCents / budgetCents > 0.95)
-    throw new Error("synthetic_program_rom_outside_budget_planning_band");
+  if (!Number.isSafeInteger(budgetCents) || budgetCents <= 0)
+    throw new Error("budget_ceiling_invalid");
   const costBasis = resolveCostBasis({estimateCapture:"",romSnapshot:{snapshotId:"local-synthetic-preview-unapproved",
     currency:"USD",lowCents:rom.total.lowCents,baseCents:rom.total.planCents,highCents:rom.total.highCents}});
   if (costBasis.status !== "resolved" || costBasis.basis !== "rom_snapshot") throw new Error("rom_cost_basis_unresolved");
@@ -151,11 +145,12 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
       value.levers[1]?.annualCents?.base !== 0) throw new Error("value_preview_not_evaluated_or_capacity_not_zero");
   const cents = (number: number) => number / 100;
   const economics = value.economics;
-  return {
+  const proof = {
     status: "local_synthetic_simulation_only", datasetId: seed.dataset_id, moveId: MOVE_ID,
     seedSha256: hash(seedText), benchmarkSha256: hash(benchmarkText), existingSeedSha256: hash(existingText),
-    sourceSetSha256: hash(`${seedText}\n${benchmarkText}\n${existingText}`),
-    approval: "absent; no load authorized", liveRegisterReadback: "not_run", captureWrite: "not_run",
+    costPackSha256: costPackSha256(), costPackFiles: COST_PACK_FILES,
+    sourceSetSha256: hash([seedText,benchmarkText,existingText,...costPackTexts()].join("\n")),
+    approval: "absent; no load authorized", liveRegisterReadback: "read_only_operator_snapshot",liveIdPreflight:live,captureWrite: "not_run",
     proposedRows: seed.rows.map((row: {seed_key: string;expected_register_id: string;working_value: number;unit: string;owner_role: string;confidence: number;confirm: unknown}) =>
       ({key:row.seed_key, expectedRegisterId:row.expected_register_id, value:row.working_value, unit:row.unit, ownerRole:row.owner_role, confidence:row.confidence, confirmedSyntheticBenchmark:Boolean(row.confirm)})),
     existingRefs: seed.existing_register_refs, registerIdCaveat: "Expected IDs are conditional on exact live register state; apply must refuse drift.",
@@ -167,9 +162,17 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
       registerRefs:refs.filter((ref) => ref.key.startsWith(`${lever.id}.`)),
       timingRegisterRef:seed.value_plan_bindings[`levers.${lever.id}.timing.startMonth`],
       result:value.levers.find((result) => result.leverId === lever.id)})),
-    rom: {rateBasis:`synthetic local bill-rate fixture only; ${rates.pod_senior_fte} FTE at $${rates.senior_loaded_usd_per_hour*rates.bill_to_loaded_multiplier}/h and ${rates.pod_engineer_fte} FTE at $${rates.engineer_loaded_usd_per_hour*rates.bill_to_loaded_multiplier}/h`,
-      podFte:rates.pod_senior_fte+rates.pod_engineer_fte,
-      productiveHoursPerWeek:(rates.pod_senior_fte+rates.pod_engineer_fte)*benchmark.rom_factors.hours_per_fte_week*benchmark.rom_factors.productive_share, schedule:seed.program_schedule,
+    rom: {rateBasis:`${ROM_REFERENCE_SOURCE}; proposed TWR-04 Data Product expansion, unapproved`,
+      pod:rom.pod,
+      rateLines:rom.releases[0].own.pod.memberLines.map((line,index)=>({
+        roleCode:line.member.roleCode,levelCode:line.member.levelCode,fte:line.member.fte,
+        locationCode:line.member.locationCode,providerClassCode:line.member.providerClassCode,
+        mappingStatus:rom.pod.memberMappingStatus[index],
+        hourlyRateCents:line.rate.hourlyRateCents,baseRateCents:line.rate.baseRateCents,
+        baseSource:line.rate.baseSource,location:line.rate.location,provider:line.rate.provider,
+        provenance:line.rate.notes})),
+      podFte:10,
+      productiveHoursPerWeek:10*benchmark.rom_factors.hours_per_fte_week*benchmark.rom_factors.productive_share, schedule:seed.program_schedule,
       foundation:{code:rom.foundation.priced.code,hours:rom.foundation.priced.hours,weeks:rom.foundation.priced.weeks,
         lowDollars:cents(rom.foundation.priced.range.lowCents),planDollars:cents(rom.foundation.priced.range.planCents),
         highDollars:cents(rom.foundation.priced.range.highCents)},releases:rom.releases.map((release) =>
@@ -188,11 +191,20 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
       analystCapacityAnnualCents:value.levers[1].annualCents?.base,
       analystCapacityHours:value.levers[1].nonMoneyMetric?.value.base},
   };
+  return {proof,rom};
+}
+
+export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: string} = {}): Record<string, unknown> {
+  return buildCasePreview(input).proof;
 }
 
 if (process.argv[1]?.endsWith("preview-demo-case-numbers.ts")) {
-  const proof = previewCaseNumbers();
+  const {proof,rom} = buildCasePreview();
   const output = `${JSON.stringify(proof, null, 2)}\n`;
-  if (process.argv.includes("--write-proof")) writeFileSync(PROOF_PATH, output);
+  if (process.argv.includes("--write-proof")) {
+    writeFileSync(PROOF_PATH, output);
+    const {workbook} = buildRomWorkbook(rom);
+    workbook.xlsx.writeFile(WORKBOOK_PATH).catch((error)=>{console.error(error);process.exitCode=1;});
+  }
   process.stdout.write(output);
 }

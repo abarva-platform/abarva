@@ -24,7 +24,7 @@ import {
   newAssumptionInput, operatorActor, planSeedWrites, resolveDemoTenant,
   type MoveRegistryRow, type PlannedWrite, type SeedRow,
 } from "./seed-demo-assumption-register-job";
-import { BENCHMARK_PATH, previewCaseNumbers, SEED_PATH } from "./preview-demo-case-numbers";
+import { BENCHMARK_PATH, costPackTexts, previewCaseNumbers, SEED_PATH } from "./preview-demo-case-numbers";
 
 export const DATASET_ID = "moves_demo_case_numbers_seed_v1";
 export const RELEASE_RECORD = "docs/releases/records/2026-10-10-moves-demo-case-numbers-seed.md";
@@ -38,7 +38,7 @@ const sha = (value: string) => createHash("sha256").update(value).digest("hex");
 const text = (file: string) => readFileSync(file, "utf8");
 
 export function sourceSetHash(): string {
-  return sha(`${text(SEED_PATH)}\n${text(BENCHMARK_PATH)}\n${text(EXISTING_SEED_PATH)}`);
+  return sha([text(SEED_PATH),text(BENCHMARK_PATH),text(EXISTING_SEED_PATH),...costPackTexts()].join("\n"));
 }
 
 export function idempotencyKey(sourceHash: string): string {
@@ -54,6 +54,9 @@ interface CaseSeed {
   move: {move_id: string; declared_by: {manifest_dataset_id: string;field: "load_approval.move_id"};expected_archetype:string};
   rows: CaseRow[];
   existing_register_refs: Record<string,string>;
+  live_id_preflight: {read_only_operator_execution:string;observed_at_utc:string;observed_current_phase:number;
+    occupied_register_rows:Array<{area:"delivery"|"value";register_id:string;status:string;statement_sha256:string}>;
+    next_allocations_at_observation:{delivery:string;value:string}};
   value_plan: unknown;
 }
 
@@ -75,6 +78,7 @@ export interface CaseJobArgs {
   runId: string;
   buildVersion: string;
   imageDigest: string;
+  databaseUrl: string;
   operator: string;
   approvalReference: string | null;
   confirmation: string | null;
@@ -99,7 +103,7 @@ export function parseArgs(env: Record<string,string|undefined> = process.env): C
   if (!hostname.endsWith(".postgres.database.azure.com") && !/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) throw new Error("non_azure_database_refused");
   return {mode, tenantKey:tenant.canonicalKey, sourceSetHash,
     idempotencyKey:required("MOVES_CASE_SEED_IDEMPOTENCY_KEY"),
-    runId:required("MOVES_CASE_SEED_RUN_ID"),buildVersion,imageDigest,
+    runId:required("MOVES_CASE_SEED_RUN_ID"),buildVersion,imageDigest,databaseUrl,
     operator:required("MOVES_CASE_SEED_OPERATOR"),
     approvalReference:env.MOVES_CASE_SEED_APPROVAL_REFERENCE?.trim() || null,
     confirmation:env.MOVES_CASE_SEED_CONFIRMATION?.trim() || null,
@@ -114,8 +118,9 @@ export function loadManifests(): unknown[] {
 }
 
 /** A missing capture writer is an unconditional refusal before register writes. */
-export function assertApplyCapability(writer: CaseJobDeps["writeValuePlan"]): asserts writer is NonNullable<CaseJobDeps["writeValuePlan"]> {
-  if (!writer) throw new Error("apply_refused:shared_governed_phase_capture_writer_required");
+export function assertApplyCapability(deps: CaseJobDeps): void {
+  if (!deps.writeValuePlan) throw new Error("apply_refused:shared_governed_phase_capture_writer_required");
+  if (!deps.withTransaction) throw new Error("apply_refused:atomic_write_transaction_required");
 }
 
 /** Expected IDs are a precondition, never inferred as authoritative offline. */
@@ -126,6 +131,11 @@ export function assertRegisterIds(seed: CaseSeed, existing: readonly AssumptionR
     const actual = source && existing.find((row) => naturalKey(row.area,row.statement) === naturalKey(source.area,source.statement));
     if (!actual || actual.registerId !== id || actual.workingValue !== source.working_value ||
         actual.status !== (source.confirm ? "confirmed" : "open")) throw new Error(`existing_register_ref_drift:${id}`);
+  }
+  for (const occupied of seed.live_id_preflight.occupied_register_rows) {
+    const matches=existing.filter((row)=>row.registerId===occupied.register_id && row.area===occupied.area);
+    if (matches.length!==1 || matches[0].status!==occupied.status)
+      throw new Error(`occupied_register_ref_drift:${occupied.register_id}`);
   }
   const seq: Record<string,number> = {value:0,delivery:0};
   for (const row of existing) if (row.area in seq) seq[row.area] = Math.max(seq[row.area],row.seq);
@@ -151,13 +161,37 @@ export function assertRegisterIds(seed: CaseSeed, existing: readonly AssumptionR
 export interface CaseJobDeps {
   readMoveRegistryRow(moveId:string):Promise<MoveRegistryRow|null>;
   list(ctx:TenancyCtx,moveId:string):Promise<AssumptionRecord[]>;
-  create(ctx:TenancyCtx,moveId:string,input:NewAssumptionInput,actor:RegisterActor):Promise<RegisterWriteResult>;
+  create(ctx:TenancyCtx,moveId:string,input:NewAssumptionInput,actor:RegisterActor,options?:{expectedRegisterId:string}):Promise<RegisterWriteResult>;
   transition(ctx:TenancyCtx,moveId:string,id:string,revision:number,request:TransitionRequest,actor:RegisterActor):Promise<RegisterWriteResult>;
   /** Calls the same governed domain writer as signed-in phase capture. */
   writeValuePlan?: (ctx:TenancyCtx,moveId:string,value:string,expectedRevision:string) => Promise<void>;
   readCaptureRevision(ctx:TenancyCtx,moveId:string):Promise<{revision:string;value:string}>;
   readValuePlan(ctx:TenancyCtx,moveId:string):Promise<string|null>;
   openProofStore():Promise<ProofStore>;
+  /** Locks the Move and related rows, then commits or rolls back every governed write together. */
+  withTransaction?<T>(moveId:string,work:()=>Promise<T>):Promise<T>;
+}
+
+/** Rechecks the exact ID map and P4 revision under the same lock as every write. */
+export async function withExactCaseTransaction<T>(input:{
+  seed:CaseSeed;deps:CaseJobDeps;move:ReturnType<typeof authenticateDemoMove>;
+  tenant:ReturnType<typeof resolveDemoTenant>;ctx:TenancyCtx;
+  capturePreflight:{revision:string;value:string};
+},work:(locked:{existing:AssumptionRecord[];plan:PlannedWrite[];capture:{revision:string;value:string}})=>Promise<T>):Promise<T> {
+  const {seed,deps,move,tenant,ctx,capturePreflight}=input;
+  assertApplyCapability(deps);
+  return deps.withTransaction!(move.moveId,async()=>{
+    const lockedMove=authenticateDemoMove(await deps.readMoveRegistryRow(EXPECTED_MOVE),seed,tenant);
+    if (lockedMove.clientId!==move.clientId || lockedMove.appClientKey!==move.appClientKey)
+      throw new Error("move_scope_drift_inside_transaction");
+    const existing=await deps.list(ctx,move.moveId);
+    const plan=planSeedWrites(seed.rows,existing);
+    assertRegisterIds(seed,existing,plan);
+    const capture=await deps.readCaptureRevision(ctx,move.moveId);
+    if (capture.revision!==capturePreflight.revision || capture.value!==capturePreflight.value)
+      throw new Error("value_plan_revision_drift_inside_transaction");
+    return work({existing,plan,capture});
+  });
 }
 
 export async function runJob(args: CaseJobArgs, deps: CaseJobDeps):Promise<Record<string,unknown>> {
@@ -175,7 +209,7 @@ export async function runJob(args: CaseJobArgs, deps: CaseJobDeps):Promise<Recor
   if (args.mode === "apply") {
     if (!decision.approved || decision.approval.release_record !== RELEASE_RECORD ||
         !args.approvalReference || args.confirmation !== APPLY_CONFIRMATION) throw new Error("apply_refused:exact_named_load_approval_required");
-    assertApplyCapability(deps.writeValuePlan);
+    assertApplyCapability(deps);
     if (!args.storageAccount || !args.storageIdentityClientId) throw new Error("apply_refused:blob_proof_target_required");
   }
   const tenant=resolveDemoTenant(args.tenantKey);
@@ -205,28 +239,28 @@ export async function runJob(args: CaseJobArgs, deps: CaseJobDeps):Promise<Recor
     actualWrites:0,liveReadback:"not_run",blobProofLocation:"not_written",qualityGate:"dry_run_only"};
   if (args.mode === "dry_run") return proof;
   const writer=deps.writeValuePlan!;
-  const blob=await deps.openProofStore();
-  let writes=0;
-  for (const [index,item] of plan.entries()) {
+  const writes=await withExactCaseTransaction({seed,deps,move,tenant,ctx,capturePreflight},async({existing:lockedExisting,plan:lockedPlan,capture:lockedCapture})=>{
+  let atomicWrites=0;
+  for (const [index,item] of lockedPlan.entries()) {
     const row=seed.rows[index];
     if (item.action === "create") {
-      const created=await deps.create(ctx,move.moveId,newAssumptionInput(row),actor);
+      const created=await deps.create(ctx,move.moveId,newAssumptionInput(row),actor,{expectedRegisterId:row.expected_register_id});
       if (!created.ok) throw new Error(`register_refused:${created.refusal.code}`);
       if (created.record.registerId !== row.expected_register_id) throw new Error(`allocated_register_id_drift:${row.seed_key}`);
-      writes++;
+      atomicWrites++;
       if (row.confirm) {
         const confirmed=await deps.transition(ctx,move.moveId,created.record.id,created.record.revision,confirmRequest(row),actor);
         if (!confirmed.ok) throw new Error(`register_confirm_refused:${confirmed.refusal.code}`);
-        writes++;
+        atomicWrites++;
       }
     } else if (item.action === "confirm_existing") {
-      const current=existing.find((record)=>naturalKey(record.area,record.statement)===item.naturalKey)!;
+      const current=lockedExisting.find((record)=>naturalKey(record.area,record.statement)===item.naturalKey)!;
       const confirmed=await deps.transition(ctx,move.moveId,current.id,current.revision,confirmRequest(row),actor);
       if (!confirmed.ok) throw new Error(`register_confirm_refused:${confirmed.refusal.code}`);
-      writes++;
+      atomicWrites++;
     }
   }
-  if (!currentValuePlan) await writer(ctx,move.moveId,proposedValuePlan,capturePreflight.revision);
+  if (!currentValuePlan) await writer(ctx,move.moveId,proposedValuePlan,lockedCapture.revision);
   const readback=await deps.list(ctx,move.moveId);
   assertRegisterIds(seed,readback,planSeedWrites(seed.rows,readback));
   for (const row of seed.rows) {
@@ -234,9 +268,22 @@ export async function runJob(args: CaseJobArgs, deps: CaseJobDeps):Promise<Recor
     if (!actual || actual.status!=="confirmed" || actual.answerValue!==row.confirm?.answer_value || actual.answerSource!==row.confirm?.answer_source) throw new Error(`readback_failed:${row.seed_key}`);
   }
   if (await deps.readValuePlan(ctx,move.moveId)!==proposedValuePlan) throw new Error("value_plan_readback_failed");
-  proof.actualWrites=writes+(currentValuePlan?0:1);
+  return atomicWrites+(currentValuePlan?0:1);
+  });
+  // A fresh connection confirms committed state; the transactional readback above
+  // is only a pre-commit quality gate.
+  const committedRows=await deps.list(ctx,move.moveId);
+  assertRegisterIds(seed,committedRows,planSeedWrites(seed.rows,committedRows));
+  for (const row of seed.rows) {
+    const actual=committedRows.find((record)=>record.registerId===row.expected_register_id);
+    if (!actual || actual.status!=="confirmed" || actual.answerValue!==row.confirm?.answer_value || actual.answerSource!==row.confirm?.answer_source)
+      throw new Error(`postcommit_readback_failed:${row.seed_key}`);
+  }
+  if (await deps.readValuePlan(ctx,move.moveId)!==proposedValuePlan) throw new Error("postcommit_value_plan_readback_failed");
+  proof.actualWrites=writes;
   proof.liveReadback="passed";
   proof.qualityGate="passed";
+  const blob=await deps.openProofStore();
   const uri=`${PROOF_PREFIX}/${args.runId}/proof.json`;
   const stored=await blob.writeOnce(uri,Buffer.from(`${JSON.stringify(proof,null,2)}\n`));
   if (!stored.created) throw new Error("proof_blob_already_exists");
@@ -253,10 +300,10 @@ async function main():Promise<void> {
   }
   const args=parseArgs();
   const store=await import("../../src/lib/programs/assumption-register/store");
-  const {getAzureReadFluentClient}=await import("../../src/lib/data-plane/postgresCompat");
-  const db=getAzureReadFluentClient();
+  const {getAzureWriteFluentClient,withAzureWriteTransaction,writeTransactionOutcome}=await import("../../src/lib/data-plane/postgresCompat");
   const deps:CaseJobDeps={
     async readMoveRegistryRow(moveId) {
+      const db=getAzureWriteFluentClient();
       const {data:move,error}=await db.from("engagements").select("id, client_id, charter, deleted_at, current_phase").eq("id",moveId).maybeSingle();
       if (error) throw error;
       if (!move) return null;
@@ -270,6 +317,7 @@ async function main():Promise<void> {
     readCaptureRevision:readValuePlanCaptureRevision,
     writeValuePlan:(ctx,moveId,value,expectedRevision)=>writeGovernedValuePlan({ctx,moveId,value,expectedRevision}),
     async readValuePlan(ctx,moveId) {
+      const db=getAzureWriteFluentClient();
       const {data,error}=await db.from("program_modules").select("state_jsonb").eq("engagement_id",moveId)
         .eq("module_key",phaseCaptureModuleKey(4,"value_plan")).maybeSingle();
       if (error) throw error;
@@ -281,16 +329,53 @@ async function main():Promise<void> {
       return blobProofStore(args.storageAccount!,args.storageIdentityClientId!,
         {statementTimeoutMs:60000,lockTimeoutMs:15000,proofStoreTimeoutMs:30000});
     },
+    withTransaction(moveId,work) {
+      return withAzureWriteTransaction(args.databaseUrl,async(query)=>{
+        const locked=await query("SELECT id FROM engagements WHERE id = $1 FOR UPDATE",[moveId]);
+        if (locked.rowCount!==1) throw new Error("move_lock_missing");
+        await query("SELECT id FROM move_assumptions WHERE program_id = $1 FOR UPDATE",[moveId]);
+        await query("SELECT id FROM program_modules WHERE engagement_id = $1 AND phase_number IN (3,4) FOR UPDATE",[moveId]);
+        return work();
+      });
+    },
   };
-  const summary=await runJob(args,deps);
+  let summary:Record<string,unknown>;
+  let status:"succeeded"|"failed"="succeeded";
+  try {
+    summary=await runJob(args,deps);
+  } catch(error) {
+    status="failed";
+    process.exitCode=1;
+    const observed:Record<string,unknown>={readback:"unavailable"};
+    try {
+      const seed=checkedSeed();
+      const move=authenticateDemoMove(await deps.readMoveRegistryRow(EXPECTED_MOVE),seed,resolveDemoTenant(args.tenantKey));
+      const ctx:TenancyCtx={clientId:move.clientId,clientKey:move.appClientKey,userId:operatorActor(args.operator).userId};
+      const rows=await deps.list(ctx,move.moveId);
+      observed.readback="completed";
+      observed.registerRows=rows.map((row)=>({registerId:row.registerId,area:row.area,status:row.status,
+        seedKey:seed.rows.find((item)=>naturalKey(item.area,item.statement)===naturalKey(row.area,row.statement))?.seed_key??null}));
+      observed.expectedIds=seed.rows.map((row)=>({seedKey:row.seed_key,expectedRegisterId:row.expected_register_id,
+        actualRegisterId:rows.find((item)=>naturalKey(item.area,item.statement)===naturalKey(row.area,row.statement))?.registerId??null}));
+      observed.valuePlanMatchesSeed=(await deps.readValuePlan(ctx,move.moveId))===JSON.stringify(seed.value_plan);
+    } catch(readError) {
+      observed.readbackError=readError instanceof Error?readError.message:String(readError);
+    }
+    summary={event:"moves_demo_case_numbers_seed_failure",mode:args.mode,runId:args.runId,
+      datasetId:DATASET_ID,sourceSetHash:args.sourceSetHash,idempotencyKey:args.idempotencyKey,
+      transactionOutcome:writeTransactionOutcome(error),
+      error:error instanceof Error?error.message:String(error),observed,
+      actualWrites:"unknown; inspect observed state",liveReadback:observed.readback,qualityGate:"failed",
+      rows:[],valuePlan:null};
+  }
   mkdirSync(args.outDir,{recursive:true});
-  const manifest={schemaVersion:1,status:"succeeded",committed:args.mode==="apply",...summary};
+  const manifest={schemaVersion:1,status,committed:status==="succeeded"?args.mode==="apply":"unknown; see transactionOutcome and observed state",...summary};
   writeFileSync(path.join(args.outDir,"proof-manifest.json"),`${JSON.stringify(manifest,null,2)}\n`);
   writeFileSync(path.join(args.outDir,"plan.json"),`${JSON.stringify({rows:summary.rows,valuePlan:summary.valuePlan},null,2)}\n`);
-  writeFileSync(path.join(args.outDir,"validation.json"),`${JSON.stringify({scopeAndIds:"passed",liveReadback:summary.liveReadback},null,2)}\n`);
+  writeFileSync(path.join(args.outDir,"validation.json"),`${JSON.stringify({scopeAndIds:status==="succeeded"?"passed":"failed",liveReadback:summary.liveReadback,observed:summary.observed??null},null,2)}\n`);
   writeFileSync(path.join(args.outDir,"quality-gate.json"),`${JSON.stringify({mode:args.mode,
-    passed:args.mode==="dry_run"?summary.actualWrites===0:summary.liveReadback==="passed",
-    applyBlocked:args.mode==="dry_run",reason:args.mode==="dry_run"?"exact_named_load_approval_absent":null},null,2)}\n`);
+    passed:status==="succeeded"&&(args.mode==="dry_run"?summary.actualWrites===0:summary.liveReadback==="passed"),
+    applyBlocked:args.mode==="dry_run",reason:status==="failed"?summary.error:args.mode==="dry_run"?"exact_named_load_approval_absent":null},null,2)}\n`);
   const parent=path.dirname(args.outDir);
   const base=path.basename(args.outDir);
   const tarPath=path.join(parent,`${base}.tgz`);

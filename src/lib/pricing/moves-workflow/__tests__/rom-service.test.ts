@@ -729,12 +729,14 @@ describe("computeRom — pods from the committed cost foundation", () => {
     ]);
     expect(rom.pod.memberMappingStatus).toEqual(["confirmed", "confirmed"]);
     for (const line of rom.releases[0].own.pod.memberLines) {
-      expect(line.rate.baseSource).toBe(
+      expect(line.rate.baseSource).toContain(
         `rate_band:${line.member.roleCode}-LVL-07:loaded_rate`,
       );
-      expect(line.rate.location.source).toBe(
+      expect(line.rate.baseSource).toContain("Role Rate Card row");
+      expect(line.rate.location.source).toContain(
         "location:LOC-CHICAGO:salary_multiplier",
       );
+      expect(line.rate.location.source).toContain("Geography row");
     }
     expect(rom.releases[1].own.range.policyCode).toBe("RANGE-TIGHT");
   });

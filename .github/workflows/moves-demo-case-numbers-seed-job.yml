@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       source_set_sha256:
-        description: "Exact SHA-256 of seed, benchmark, and reused register seed bytes"
+        description: "Exact SHA-256 of seed, benchmark, reused register seed, and cost foundation bytes"
         required: true
         type: string
       idempotency_key:
@@ -45,7 +45,7 @@ jobs:
           [[ "$SOURCE_SET_SHA256" =~ ^[a-f0-9]{64}$ ]] || { echo 'Invalid source-set hash' >&2; exit 1; }
           expected="$(node -e 'const c=require("node:crypto"); const m="1557f032-5a5c-4475-abe5-b1a841576649"; const s=process.env.SOURCE_SET_SHA256; process.stdout.write("moves-demo-case-numbers-seed-v1:"+c.createHash("sha256").update(m+"|"+s).digest("hex"))')"
           [[ "$IDEMPOTENCY_KEY" == "$expected" ]] || { echo 'Idempotency key mismatch' >&2; exit 1; }
-          actual="$(node -e 'const c=require("node:crypto"),f=require("node:fs"); const p=["datasets/tenant-inputs/meridian-health/moves/demo-case-numbers-seed-v1.json","scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json","datasets/tenant-inputs/meridian-health/moves/demo-assumption-register-seed.json"]; process.stdout.write(c.createHash("sha256").update(p.map(x=>f.readFileSync(x,"utf8")).join("\n")).digest("hex"))')"
+          actual="$(node -e 'const c=require("node:crypto"),f=require("node:fs"); const d="datasets/reference/pricing-engine-v1/"; const p=["datasets/tenant-inputs/meridian-health/moves/demo-case-numbers-seed-v1.json","scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json","datasets/tenant-inputs/meridian-health/moves/demo-assumption-register-seed.json",... ["pricing_roles.csv","pricing_rate_bands.csv","pricing_delivery_locations.csv","pricing_provider_classes.csv","pricing_pod_templates.csv","pricing_pod_template_roles.csv"].map(x=>d+x)]; process.stdout.write(c.createHash("sha256").update(p.map(x=>f.readFileSync(x,"utf8")).join("\n")).digest("hex"))')"
           [[ "$actual" == "$SOURCE_SET_SHA256" ]] || { echo 'Committed source-set hash differs from dispatch' >&2; exit 1; }
           jq -e '.load_approval == null and .serving_approval == null' docs/governance/dataset-manifests/moves-demo-case-numbers-seed-v1.json >/dev/null || { echo 'Review lane expects no approval' >&2; exit 1; }
       - uses: azure/login@v3

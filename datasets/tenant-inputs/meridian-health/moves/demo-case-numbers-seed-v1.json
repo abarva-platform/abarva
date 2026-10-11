@@ -20,7 +20,7 @@
   "rows": [
     {
       "seed_key": "delivery.data_source_count",
-      "expected_register_id": "DL5",
+      "expected_register_id": "DL7",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for data source count: 36 hours per unit.",
       "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
@@ -41,7 +41,7 @@
     },
     {
       "seed_key": "delivery.source_table_count",
-      "expected_register_id": "DL6",
+      "expected_register_id": "DL8",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for source table count: 8 hours per unit.",
       "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
@@ -62,7 +62,7 @@
     },
     {
       "seed_key": "delivery.standard_data_entity_count",
-      "expected_register_id": "DL7",
+      "expected_register_id": "DL9",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for standard data entity count: 28 hours per unit.",
       "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
@@ -83,7 +83,7 @@
     },
     {
       "seed_key": "delivery.dashboard_view_count",
-      "expected_register_id": "DL8",
+      "expected_register_id": "DL10",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for dashboard view count: 24 hours per unit.",
       "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
@@ -104,7 +104,7 @@
     },
     {
       "seed_key": "delivery.design_row_count",
-      "expected_register_id": "DL9",
+      "expected_register_id": "DL11",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for design row count: 3 hours per unit.",
       "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
@@ -125,7 +125,7 @@
     },
     {
       "seed_key": "delivery.validation_row_count",
-      "expected_register_id": "DL10",
+      "expected_register_id": "DL12",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for validation row count: 2 hours per unit.",
       "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
@@ -146,7 +146,7 @@
     },
     {
       "seed_key": "delivery.friction",
-      "expected_register_id": "DL11",
+      "expected_register_id": "DL13",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for friction: 1.18 multiplier.",
       "why_it_matters": "Sourced ROM factor; its capture value must match this register row.",
@@ -167,7 +167,7 @@
     },
     {
       "seed_key": "delivery.productive_share",
-      "expected_register_id": "DL12",
+      "expected_register_id": "DL14",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for productive share: 0.68 share.",
       "why_it_matters": "Sourced ROM factor; its capture value must match this register row.",
@@ -188,7 +188,7 @@
     },
     {
       "seed_key": "delivery.hours_per_fte_week",
-      "expected_register_id": "DL13",
+      "expected_register_id": "DL15",
       "area": "delivery",
       "statement": "Synthetic demo benchmark for hours per fte week: 40 hours per FTE-week.",
       "why_it_matters": "Sourced ROM factor; its capture value must match this register row.",
@@ -209,7 +209,7 @@
     },
     {
       "seed_key": "value.zero_baseline",
-      "expected_register_id": "V5",
+      "expected_register_id": "V6",
       "area": "value",
       "statement": "Synthetic demo benchmark for zero baseline: 0 baseline zero.",
       "why_it_matters": "Explicit zero starting point for percent reduction or released hours.",
@@ -230,7 +230,7 @@
     },
     {
       "seed_key": "value.platform_spend_reduction_share",
-      "expected_register_id": "V6",
+      "expected_register_id": "V7",
       "area": "value",
       "statement": "Synthetic demo benchmark for platform spend reduction share: 0.12 share of annual spend.",
       "why_it_matters": "Synthetic bought-less scenario, not a contracted reduction.",
@@ -251,7 +251,7 @@
     },
     {
       "seed_key": "value.platform_attribution",
-      "expected_register_id": "V7",
+      "expected_register_id": "V8",
       "area": "value",
       "statement": "Synthetic demo benchmark for platform attribution: 0.6 share.",
       "why_it_matters": "Only the portion attributable to this Move may count.",
@@ -272,7 +272,7 @@
     },
     {
       "seed_key": "value.platform_probability",
-      "expected_register_id": "V8",
+      "expected_register_id": "V9",
       "area": "value",
       "statement": "Synthetic demo benchmark for platform probability: 0.8 probability.",
       "why_it_matters": "Probability-adjusted planning forecast.",
@@ -293,7 +293,7 @@
     },
     {
       "seed_key": "value.saved_hours_per_report_writer_year",
-      "expected_register_id": "V9",
+      "expected_register_id": "V10",
       "area": "value",
       "statement": "Synthetic demo benchmark for saved hours per report writer year: 80 hours per writer-year.",
       "why_it_matters": "Synthetic annual capacity released per report writer.",
@@ -314,7 +314,7 @@
     },
     {
       "seed_key": "value.analyst_attribution",
-      "expected_register_id": "V10",
+      "expected_register_id": "V11",
       "area": "value",
       "statement": "Synthetic demo benchmark for analyst attribution: 0.5 share.",
       "why_it_matters": "Attributed analyst capacity, with no monetary release.",
@@ -335,7 +335,7 @@
     },
     {
       "seed_key": "value.analyst_probability",
-      "expected_register_id": "V11",
+      "expected_register_id": "V12",
       "area": "value",
       "statement": "Synthetic demo benchmark for analyst probability: 0.7 probability.",
       "why_it_matters": "Probability-adjusted capacity estimate.",
@@ -356,7 +356,7 @@
     },
     {
       "seed_key": "value.discount_rate",
-      "expected_register_id": "V12",
+      "expected_register_id": "V13",
       "area": "value",
       "statement": "Synthetic demo benchmark for discount rate: 0.1 annual share.",
       "why_it_matters": "Synthetic discount rate for the three-year model.",
@@ -398,11 +398,11 @@
             "direction": "increase",
             "baseline": {
               "kind": "register",
-              "registerId": "V5"
+              "registerId": "V6"
             },
             "target": {
               "kind": "register",
-              "registerId": "V6"
+              "registerId": "V7"
             }
           },
           "terms": [
@@ -421,11 +421,11 @@
           ],
           "attribution": {
             "kind": "register",
-            "registerId": "V7"
+            "registerId": "V8"
           },
           "probability": {
             "kind": "register",
-            "registerId": "V8"
+            "registerId": "V9"
           },
           "timing": {
             "startMonth": 8,
@@ -443,11 +443,11 @@
             "direction": "increase",
             "baseline": {
               "kind": "register",
-              "registerId": "V5"
+              "registerId": "V6"
             },
             "target": {
               "kind": "register",
-              "registerId": "V9"
+              "registerId": "V10"
             }
           },
           "terms": [
@@ -466,11 +466,11 @@
           ],
           "attribution": {
             "kind": "register",
-            "registerId": "V10"
+            "registerId": "V11"
           },
           "probability": {
             "kind": "register",
-            "registerId": "V11"
+            "registerId": "V12"
           },
           "timing": {
             "startMonth": 8,
@@ -483,7 +483,7 @@
       "horizonYears": 3,
       "discountRate": {
         "kind": "register",
-        "registerId": "V12"
+        "registerId": "V13"
       },
       "cost": {
         "kind": "rom",
@@ -530,22 +530,22 @@
     ],
     "unitHours": {
       "data_source_count": {
-        "registerId": "DL5"
-      },
-      "source_table_count": {
-        "registerId": "DL6"
-      },
-      "standard_data_entity_count": {
         "registerId": "DL7"
       },
-      "dashboard_view_count": {
+      "source_table_count": {
         "registerId": "DL8"
       },
-      "design_row_count": {
+      "standard_data_entity_count": {
         "registerId": "DL9"
       },
-      "validation_row_count": {
+      "dashboard_view_count": {
         "registerId": "DL10"
+      },
+      "design_row_count": {
+        "registerId": "DL11"
+      },
+      "validation_row_count": {
+        "registerId": "DL12"
       }
     },
     "releases": [
@@ -567,7 +567,7 @@
       }
     ],
     "foundation": {
-      "code": "FND",
+      "code": "FOUNDATION",
       "name": "Shared governed data foundation",
       "counts": {
         "data_source_count": 8,
@@ -579,45 +579,58 @@
       },
       "designStatus": "not_designed",
       "sharedByReleaseCodes": [
-        "R1",
-        "R2"
+        "R1"
       ]
     },
     "pod": {
       "members": [
         {
-          "roleCode": "ROL-T01",
-          "levelCode": "LVL-T1",
-          "fte": 5
+          "roleCode": "ROL-024",
+          "levelCode": "LVL-06",
+          "fte": 1,
+          "proposedMapping": true
         },
         {
-          "roleCode": "ROL-T02",
-          "levelCode": "LVL-T2",
-          "fte": 5
+          "roleCode": "ROL-023",
+          "levelCode": "LVL-07",
+          "fte": 1,
+          "proposedMapping": true
+        },
+        {
+          "roleCode": "ROL-037",
+          "levelCode": "LVL-08",
+          "fte": 6,
+          "proposedMapping": true
+        },
+        {
+          "roleCode": "ROL-041",
+          "levelCode": "LVL-08",
+          "fte": 2,
+          "proposedMapping": true
         }
       ],
-      "locationCode": "LOC-TEST",
+      "locationCode": "LOC-DALLAS",
       "providerClassCode": "SI-T1",
       "rateBasis": "bill_rate"
     },
     "friction": {
-      "registerId": "DL11"
+      "registerId": "DL13"
     },
     "productiveShare": {
-      "registerId": "DL12"
+      "registerId": "DL14"
     },
     "hoursPerFteWeek": {
-      "registerId": "DL13"
+      "registerId": "DL15"
     }
   },
   "program_schedule": {
     "horizon_weeks": 52,
     "sequence": [
-      "FND",
+      "FOUNDATION",
       "R1",
       "R2"
     ],
-    "delivery_mode": "one 10-FTE pod, sequenced blocks; no overlap credit",
+    "delivery_mode": "proposed unapproved 10-FTE TWR-04 Data Product pod expansion, LOC-DALLAS, SI-T1; sequenced blocks; no overlap credit",
     "release_1_target_week": 30,
     "release_2_target_week": 52,
     "benefit_start_month": 8,
@@ -627,5 +640,35 @@
     "register_id": "V1",
     "scale_to_cents": 100,
     "role": "ceiling_only_not_value_case_cost"
+  },
+  "live_id_preflight": {
+    "read_only_operator_execution": "job-abarva-private-operator-eus-9gtw0w6",
+    "observed_at_utc": "2026-10-11T02:38:27.8408815Z",
+    "observed_current_phase": 3,
+    "occupied_register_rows": [
+      {
+        "area": "delivery",
+        "register_id": "DL5",
+        "status": "open",
+        "statement_sha256": "8c8e8c35dae74796ef37eb051ea5313a9b18131e5f080f294f6bf13f6f055af2"
+      },
+      {
+        "area": "delivery",
+        "register_id": "DL6",
+        "status": "open",
+        "statement_sha256": "b37a12a483dfb15d65235bf187183cb0e2b860271a862eac158c3cb88564a690"
+      },
+      {
+        "area": "value",
+        "register_id": "V5",
+        "status": "open",
+        "statement_sha256": "ecccca8d59980d1dcac53ab56f19089357b8432f70683d0f024876c126cd75b7"
+      }
+    ],
+    "next_allocations_at_observation": {
+      "delivery": "DL7",
+      "value": "V6"
+    },
+    "caveat": "Snapshot only; apply must recheck the exact occupied rows, next IDs, tenant, Move, and capture revision under one transaction."
   }
 }

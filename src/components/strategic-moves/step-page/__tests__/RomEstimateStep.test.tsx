@@ -583,6 +583,24 @@ describe("RomEstimateStep", () => {
     await waitFor(() => expect(previewCalls().length).toBeGreaterThan(0));
   });
 
+  it("saves an explicit proposed tower pod as unapproved member mappings", async () => {
+    const {container}=render(<Harness initial={serializeRomEstimate({...fixture(),pod:null})}/>);
+    const pod=row(container,"POD");
+    fireEvent.click(within(pod).getByRole("button",{name:"Set the pod…"}));
+    fireEvent.change(within(pod).getByLabelText("Pod source"),{target:{value:"members"}});
+    fireEvent.change(within(pod).getByLabelText(/Proposed members, one per line/),{
+      target:{value:"ROL-024 | Data Product Manager | LVL-06 | 1 | Data Product Mgr\nROL-037 | Data Engineer | LVL-08 | 6 | Data Engineer"},
+    });
+    fireEvent.change(within(pod).getByLabelText("Delivery location code"),{target:{value:"LOC-DALLAS"}});
+    fireEvent.change(within(pod).getByLabelText("Provider class code (optional)"),{target:{value:"SI-T1"}});
+    fireEvent.change(within(pod).getByLabelText("Rate basis"),{target:{value:"bill_rate"}});
+    fireEvent.click(within(pod).getByRole("button",{name:"Save"}));
+    expect(last().pod).toMatchObject({locationCode:"LOC-DALLAS",providerClassCode:"SI-T1",rateBasis:"bill_rate",
+      members:[{roleCode:"ROL-024",fte:1,proposedMapping:{from:"Data Product Mgr"}},
+        {roleCode:"ROL-037",fte:6,proposedMapping:{from:"Data Engineer"}}]});
+    expect(row(container,"POD").textContent).toContain("Proposed role mapping, unapproved");
+  });
+
   it("settles sourced factors, and asks for them when one is missing", async () => {
     const { container } = render(<Harness />);
     expect(row(container, "FAC").closest("details")).not.toBeNull();
@@ -660,10 +678,10 @@ describe("RomEstimateStep", () => {
       (tr) => tr.textContent,
     );
     expect(rows).toEqual([
-      "R1 · Pilot · certified measures410 h5 wks$60k$80k$120k",
-      "R2 · Scale · lineage and access520 h6 wks$72k$96k$144k",
-      "Shared foundation · counted once, in R1300 h4 wks$48k$64k$96k",
-      "Combined · foundation counted once1,230 h15 wks$180k$240k$360k",
+      "R1 · Pilot · certified measures410 h5 wks$60.0K$80.0K$0.12M",
+      "R2 · Scale · lineage and access520 h6 wks$72.0K$96.0K$0.14M",
+      "Shared foundation · counted once, in R1300 h4 wks$48.0K$64.0K$96.0K",
+      "Combined · foundation counted once1,230 h15 wks$0.18M$0.24M$0.36M",
     ]);
     expect(est.querySelector("tr.total")?.textContent).toContain("Combined");
     const approve = within(est).getByRole("button", {
@@ -815,7 +833,7 @@ describe("RomEstimateStep", () => {
     );
     const est = row(container, "EST");
     expect(est.querySelector("tr.total")?.textContent).toBe(
-      "Combined · foundation counted once1,230 h15 wks$180k$240k$360k",
+      "Combined · foundation counted once1,230 h15 wks$0.18M$0.24M$0.36M",
     );
     expect(est.textContent).not.toContain(
       "The ROM preview failed unexpectedly.",

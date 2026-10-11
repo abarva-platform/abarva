@@ -90,6 +90,7 @@ export function createCommittedRomReferenceLoaders(
         indicative_bill_rate: optionalNumber(r.indicative_bill_rate),
         confidence: r.confidence || null,
         approval_status: r.approval_status || null,
+        source: r.source || null,
       })),
       locations: readCsv(dir, "pricing_delivery_locations.csv").map((r) => ({
         location_code: r.location_code,
@@ -102,6 +103,8 @@ export function createCommittedRomReferenceLoaders(
           r.rate_multiplier,
           `location ${r.location_code} rate_multiplier`,
         ),
+        source_artifact: r.source_artifact || null,
+        source_row: optionalNumber(r.source_row),
       })),
       providerClasses: readCsv(dir, "pricing_provider_classes.csv").map(
         (r) => ({
@@ -110,6 +113,8 @@ export function createCommittedRomReferenceLoaders(
             r.tier_multiplier,
             `provider class ${r.provider_class_code} tier_multiplier`,
           ),
+          source_artifact: r.source_artifact || null,
+          source_row: optionalNumber(r.source_row),
         }),
       ),
     }),

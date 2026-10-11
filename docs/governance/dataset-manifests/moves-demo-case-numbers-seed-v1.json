@@ -6,7 +6,7 @@
   "source_layer": "move",
   "classification": "confidential",
   "owner": "AbarVa Moves product team",
-  "source_basis": "A committed synthetic benchmark fixture and the existing Move-scoped assumptions register seed. All new numeric inputs are invented for a product demonstration and are neither client-attested nor Finance-approved.",
+  "source_basis": "A committed synthetic benchmark fixture, the existing Move-scoped assumptions register seed, and the versioned pricing-engine-v1 cost foundation. Delivery counts, unit hours, and value inputs are synthetic demonstration assumptions; role, level, location, provider, and rate figures resolve from the cost foundation with row provenance. The proposed pod mapping and global starter rates are unapproved. None is client-attested or Finance-approved.",
   "ingestion_method": "operator_aca_job",
   "retrieval_plan": "move_scoped_prompt_context",
   "retrieval_proof_required": true,

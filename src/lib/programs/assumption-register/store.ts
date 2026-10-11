@@ -63,6 +63,7 @@ export type StoreRefusal =
   | { code: "unknown_assumption" }
   | { code: "stale_revision"; currentRevision: number | null }
   | { code: "id_allocation_conflict" }
+  | { code: "expected_register_id_drift"; expectedRegisterId: string; nextRegisterId: string | null }
   | { code: "unknown_supersede_target" };
 
 type GuardedPlan =
@@ -259,6 +260,7 @@ export async function createAssumption(
   programId: string,
   input: NewAssumptionInput,
   actor: RegisterActor,
+  options: { expectedRegisterId?: string } = {},
 ): Promise<RegisterWriteResult> {
   const validation = validateNewAssumption(input, actor);
   if (!validation.ok) return validation;
@@ -272,8 +274,13 @@ export async function createAssumption(
   }
 
   const db = getAzureWriteFluentClient();
-  for (let attempt = 0; attempt < MAX_ID_ALLOCATION_ATTEMPTS; attempt += 1) {
+  const expectedRegisterId = options.expectedRegisterId;
+  for (let attempt = 0; attempt < (expectedRegisterId ? 1 : MAX_ID_ALLOCATION_ATTEMPTS); attempt += 1) {
     const seq = (await highestSeq(tenantKeys, programId, input.area)) + 1;
+    const nextRegisterId = formatRegisterId(input.area, seq);
+    if (expectedRegisterId && nextRegisterId !== expectedRegisterId) {
+      return { ok: false, refusal: { code: "expected_register_id_drift", expectedRegisterId, nextRegisterId } };
+    }
     const { data, error } = await db
       .from(ASSUMPTIONS_TABLE)
       .insert({
@@ -281,7 +288,7 @@ export async function createAssumption(
         program_id: programId,
         area: input.area,
         seq,
-        register_id: formatRegisterId(input.area, seq),
+        register_id: nextRegisterId,
         statement: input.statement.trim(),
         why_it_matters: input.whyItMatters ?? null,
         working_figure: input.workingFigure ?? null,
@@ -305,10 +312,16 @@ export async function createAssumption(
       .select(ASSUMPTION_COLUMNS)
       .single();
     if (error) {
-      if (isUniqueViolation(error)) continue;
+      if (isUniqueViolation(error)) {
+        if (expectedRegisterId) return { ok: false, refusal: { code: "expected_register_id_drift", expectedRegisterId, nextRegisterId: null } };
+        continue;
+      }
       throw error;
     }
     const record = recordOrThrow(data);
+    if (expectedRegisterId && record.registerId !== expectedRegisterId) {
+      throw new Error("stored_register_id_differs_from_exact_allocation");
+    }
     await appendEvent(record, {
       type: "created",
       from: null,

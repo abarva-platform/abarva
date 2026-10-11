@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { PoolConfig } from 'pg';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { resolveDatabaseUrlCandidatesForScope } from './tenantConnectionResolver';
 
 type JsonRecord = Record<string, unknown>;
@@ -28,6 +29,7 @@ interface QueryResult<T = any[]> {
 const pools = new Map<string, import('pg').Pool>();
 let activeConnectionString: string | null = null;
 let client: PostgresCompatClient | null = null;
+const writeTransactionContext = new AsyncLocalStorage<PostgresCompatClient>();
 
 export function resolveDatabaseUrlCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
   return resolveDatabaseUrlCandidatesForScope(env);
@@ -192,8 +194,11 @@ function parseSelect(selectText: string | undefined): string {
 
 function errorResult(error: unknown): QueryResult {
   const message = error instanceof Error ? error.message : String(error);
-  return { data: null, error: { message }, count: null };
+  const code = (error as { code?: unknown } | null)?.code;
+  return { data: null, error: { message, ...(typeof code === 'string' ? { code } : {}) }, count: null };
 }
+
+type QueryExecutor = (sql: string, params: unknown[]) => Promise<import('pg').QueryResult<any>>;
 
 function normalizeValue(raw: string): unknown {
   if (raw === 'null') return null;
@@ -237,7 +242,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
   private conflictColumns: string[] = [];
   private ignoreDuplicates = false;
 
-  constructor(private readonly table: string) {}
+  constructor(private readonly table: string, private readonly query: QueryExecutor = queryWithFallback) {}
 
   select(columns = '*', options: { count?: 'exact'; head?: boolean } = {}): this {
     this.selectText = columns;
@@ -370,7 +375,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
     const params: unknown[] = [];
     const where = this.buildWhere(params);
     if (this.countMode === 'exact' && this.headOnly) {
-      const { rows } = await queryWithFallback<{ n: number }>(
+      const { rows } = await this.query(
         `SELECT count(*)::int AS n FROM ${quoteIdent(this.table)}${where}`,
         params,
       );
@@ -381,7 +386,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
       this.buildOrder(),
       this.buildLimit(params),
     ].filter(Boolean).join(' ');
-    const { rows } = await queryWithFallback(sql, params);
+    const { rows } = await this.query(sql, params);
     const count = this.countMode === 'exact' ? rows.length : null;
     return this.formatRows(rows as T[], count);
   }
@@ -397,7 +402,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
     }).join(', ')})`);
     const returning = this.shouldReturnRows ? ` RETURNING ${parseSelect(this.selectText)}` : '';
     const sql = `INSERT INTO ${quoteIdent(this.table)} (${columns.map(quoteIdent).join(', ')}) VALUES ${valuesSql.join(', ')}${returning}`;
-    const { rows: returnedRows, rowCount } = await queryWithFallback(sql, params);
+    const { rows: returnedRows, rowCount } = await this.query(sql, params);
     return this.shouldReturnRows ? this.formatRows(returnedRows as T[], rowCount ?? null) : { data: null, error: null, count: rowCount ?? null };
   }
 
@@ -408,7 +413,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
     const setSql = columns.map((column, index) => `${quoteIdent(column)} = $${index + 1}`).join(', ');
     const where = this.buildWhere(params);
     const returning = this.shouldReturnRows ? ` RETURNING ${parseSelect(this.selectText)}` : '';
-    const { rows, rowCount } = await queryWithFallback(
+    const { rows, rowCount } = await this.query(
       `UPDATE ${quoteIdent(this.table)} SET ${setSql}${where}${returning}`,
       params,
     );
@@ -419,7 +424,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
     const params: unknown[] = [];
     const where = this.buildWhere(params);
     const returning = this.shouldReturnRows ? ` RETURNING ${parseSelect(this.selectText)}` : '';
-    const { rows, rowCount } = await queryWithFallback(
+    const { rows, rowCount } = await this.query(
       `DELETE FROM ${quoteIdent(this.table)}${where}${returning}`,
       params,
     );
@@ -444,7 +449,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
       ? `DO UPDATE SET ${updateColumns.map((column) => `${quoteIdent(column)} = EXCLUDED.${quoteIdent(column)}`).join(', ')}`
       : 'DO NOTHING';
     const returning = this.shouldReturnRows ? ` RETURNING ${parseSelect(this.selectText)}` : '';
-    const { rows: returnedRows, rowCount } = await queryWithFallback(
+    const { rows: returnedRows, rowCount } = await this.query(
       `INSERT INTO ${quoteIdent(this.table)} (${columns.map(quoteIdent).join(', ')}) VALUES ${valuesSql.join(', ')}
        ON CONFLICT (${conflictSql}) ${updateSql}${returning}`,
       params,
@@ -542,9 +547,9 @@ export interface PostgresCompatClient {
   };
 }
 
-function createPostgresCompatClient(): PostgresCompatClient {
+function createPostgresCompatClient(query: QueryExecutor = queryWithFallback): PostgresCompatClient {
   const compat: PostgresCompatClient = {
-    from: <T = any[]>(table: string) => new PostgresCompatQuery<T>(table),
+    from: <T = any[]>(table: string) => new PostgresCompatQuery<T>(table, query),
     schema: () => compat,
     storage: {
       from: (bucket: string) => ({
@@ -576,5 +581,47 @@ export function getAzureReadFluentClient(): PostgresCompatClient {
 }
 
 export function getAzureWriteFluentClient(): PostgresCompatClient {
-  return getAzureReadFluentClient();
+  return writeTransactionContext.getStore() ?? getAzureReadFluentClient();
+}
+
+/** Keep all governed fluent writes on one SERIALIZABLE Postgres connection. */
+export async function withAzureWriteTransaction<T>(
+  connectionString: string,
+  work: (query: QueryExecutor) => Promise<T>,
+): Promise<T> {
+  if (writeTransactionContext.getStore()) throw new Error('nested_write_transaction_refused');
+  const pool = await getPool(connectionString);
+  const connection = await pool.connect();
+  let begun = false;
+  let commitAttempted = false;
+  try {
+    await connection.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+    begun = true;
+    await connection.query("SET LOCAL statement_timeout = '60s'");
+    await connection.query("SET LOCAL lock_timeout = '15s'");
+    const query: QueryExecutor = (sql, params) => connection.query(sql, params);
+    const result = await writeTransactionContext.run(createPostgresCompatClient(query), () => work(query));
+    commitAttempted = true;
+    const committed = await connection.query('COMMIT');
+    if (committed.command !== 'COMMIT') throw new Error('write_transaction_not_committed');
+    begun = false;
+    return result;
+  } catch (error) {
+    let rollbackSucceeded = false;
+    if (begun) {
+      try { await connection.query('ROLLBACK'); rollbackSucceeded = true; }
+      catch { /* The caller must report the resulting unknown outcome. */ }
+    }
+    const failure = error instanceof Error ? error : new Error(String(error));
+    Object.assign(failure, { transactionOutcome: commitAttempted || (begun && !rollbackSucceeded)
+      ? 'unknown' : begun ? 'rolled_back' : 'not_started' });
+    throw failure;
+  } finally {
+    connection.release();
+  }
+}
+
+export function writeTransactionOutcome(error: unknown): 'rolled_back' | 'unknown' | 'not_started' | 'not_entered' {
+  const outcome = (error as {transactionOutcome?:unknown})?.transactionOutcome;
+  return outcome === 'rolled_back' || outcome === 'unknown' || outcome === 'not_started' ? outcome : 'not_entered';
 }
