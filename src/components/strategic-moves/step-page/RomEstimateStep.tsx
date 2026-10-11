@@ -867,6 +867,18 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
     ) : (
       <span className={cx("no")}>Not priced</span>
     );
+  const planningRates = memberLines.some((line) =>
+    line.rate.notes?.some((note) => note.includes("global_starter_unapproved")));
+  const rateSources = (index: number) => {
+    const rate = memberLines[index]?.rate;
+    if (!rate?.baseSource) return null;
+    return <details className={cx("item-note")}>
+      <summary>Rate sources</summary>
+      <div>{rate.baseSource}</div>
+      <div>{rate.location.source}</div>
+      <div>{rate.provider.source}</div>
+    </details>;
+  };
   const podMembers = pod
     ? pod.members
       ? pod.members
@@ -961,7 +973,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             <td>{m.levelLabel}</td>
             <td>{location}</td>
             <td>{provider}</td>
-            <td className={cx("num")}>{rateText(i)}</td>
+            <td className={cx("num")}>{rateText(i)}{rateSources(i)}</td>
             <td className={cx("num")}>{formatAllocation(m.fte)}</td>
           </tr>
         ))}
@@ -986,6 +998,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
               </dt>
               <dd>
                 {rateText(i)} · {formatAllocation(m.fte)}
+                {rateSources(i)}
               </dd>
             </div>
           </dl>
@@ -1122,6 +1135,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
       <>
         {pod ? (
           <>
+            {planningRates ? <p className={cx("proposal")}>Planning rates, not approved. Review every rate source before approving the estimate.</p> : null}
             {podTable}
             {podCards}
           </>

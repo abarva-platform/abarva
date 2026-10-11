@@ -16,6 +16,7 @@ export const SEED_PATH = "datasets/tenant-inputs/meridian-health/moves/demo-case
 export const BENCHMARK_PATH = "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json";
 export const PROOF_PATH = "docs/releases/proofs/2026-10-10-moves-demo-case-numbers-local-preview.json";
 export const WORKBOOK_PATH = "docs/releases/proofs/2026-10-10-moves-demo-case-numbers-rom-workbook.xlsx";
+export const OPTION_B_WORKBOOK_PATH = "docs/releases/proofs/2026-10-10-moves-demo-case-numbers-rom-option-b-workbook.xlsx";
 export const COST_PACK_FILES = ["pricing_roles.csv", "pricing_rate_bands.csv", "pricing_delivery_locations.csv", "pricing_provider_classes.csv", "pricing_pod_templates.csv", "pricing_pod_template_roles.csv"] as const;
 const EXISTING_PATH = "datasets/tenant-inputs/meridian-health/moves/demo-assumption-register-seed.json";
 const MOVE_ID = "1557f032-5a5c-4475-abe5-b1a841576649";
@@ -27,7 +28,7 @@ export const costPackSha256 = () => hash(costPackTexts().join("\n"));
 const OWNER_ROLES = ["Finance business partner","Transformation office program lead","BI and analytics enablement lead"];
 const naturalKey = (area:string,statement:string) => `${area}:${hash(statement.trim().replace(/\s+/g," ").toLowerCase())}`;
 
-function buildCasePreview(input: {seedText?: string; benchmarkText?: string} = {}) {
+export function buildCasePreview(input: {seedText?: string; benchmarkText?: string} = {}) {
   const seedText = input.seedText ?? read(SEED_PATH);
   const benchmarkText = input.benchmarkText ?? read(BENCHMARK_PATH);
   const seed = JSON.parse(seedText);
@@ -117,8 +118,20 @@ function buildCasePreview(input: {seedText?: string; benchmarkText?: string} = {
       structure.pod.members?.reduce((fte,member)=>fte+member.fte,0) !== 10 ||
       !structure.pod.members?.every((member)=>member.proposedMapping === true))
     throw new Error("foundation_pod_contract_invalid");
-  const rom = computeRom(structure, createCommittedRomReferenceLoaders());
+  const loaders = createCommittedRomReferenceLoaders();
+  const rom = computeRom(structure, loaders);
   if (!rom.ok) throw new Error(`rom_refused:${rom.code}:${rom.message}`);
+  const optionB = computeRom({ ...structure, pod: {
+    ...structure.pod,
+    members: structure.pod.members!.map((member) =>
+      member.roleCode === "ROL-024" || member.roleCode === "ROL-023"
+        ? { ...member, locationCode: "LOC-DALLAS", providerClassCode: "SI-T1" }
+        : { ...member, locationCode: "LOC-INDIA-TIER-1", providerClassCode: "SI-T2" }),
+  } }, loaders);
+  if (!optionB.ok) throw new Error(`option_b_rom_refused:${optionB.code}:${optionB.message}`);
+  if (optionB.total.hours !== rom.total.hours || optionB.total.weeks !== rom.total.weeks ||
+      optionB.pod.members.reduce((fte, member) => fte + member.fte, 0) !== 10)
+    throw new Error("delivery_options_scope_or_capacity_drift");
   if (!rom.foundation || rom.total.weeks > seed.program_schedule.horizon_weeks ||
       rom.total.weeks < 40 || rom.foundation.priced.weeks +
       rom.releases.reduce((weeks, release) => weeks + release.own.weeks, 0) !== rom.total.weeks)
@@ -144,6 +157,24 @@ function buildCasePreview(input: {seedText?: string; benchmarkText?: string} = {
   if (value.status !== "evaluated" || !value.economics || value.levers[1]?.status !== "zero_no_release_path" ||
       value.levers[1]?.annualCents?.base !== 0) throw new Error("value_preview_not_evaluated_or_capacity_not_zero");
   const cents = (number: number) => number / 100;
+  const optionRateLines = (priced: typeof rom) => priced.releases[0].own.pod.memberLines.map((line,index)=>({
+    roleCode:line.member.roleCode,levelCode:line.member.levelCode,fte:line.member.fte,
+    locationCode:line.member.locationCode,providerClassCode:line.member.providerClassCode,
+    mappingStatus:priced.pod.memberMappingStatus[index],
+    hourlyRateCents:line.rate.hourlyRateCents,baseRateCents:line.rate.baseRateCents,
+    baseSource:line.rate.baseSource,location:line.rate.location,provider:line.rate.provider,
+    provenance:line.rate.notes,rateStatus:"planning rates, not approved",
+  }));
+  const optionSummary = (priced: typeof rom) => ({
+    hours:priced.total.hours,weeks:priced.total.weeks,
+    lowDollars:cents(priced.total.lowCents),planDollars:cents(priced.total.planCents),
+    highDollars:cents(priced.total.highCents),
+    blocks:[...(priced.foundation?[priced.foundation.priced]:[]),...priced.releases.map((release)=>release.own)]
+      .map((block)=>({code:block.code,hours:block.hours,weeks:block.weeks,
+        lowDollars:cents(block.range.lowCents),planDollars:cents(block.range.planCents),
+        highDollars:cents(block.range.highCents)})),
+    rateLines:optionRateLines(priced),
+  });
   const economics = value.economics;
   const proof = {
     status: "local_synthetic_simulation_only", datasetId: seed.dataset_id, moveId: MOVE_ID,
@@ -158,11 +189,14 @@ function buildCasePreview(input: {seedText?: string; benchmarkText?: string} = {
       lowDollars:rom.total.lowCents/100,planDollars:rom.total.planCents/100,highDollars:rom.total.highCents/100,
       budgetCeilingDollars:budgetCents/100,planShareOfCeiling:rom.total.planCents/budgetCents,
       withinBudgetCeiling:rom.total.planCents<=budgetCents},
+    deliveryOptions:{status:"comparison_only; neither selected nor approved",rateStatus:"planning rates, not approved",
+      optionA:{label:"Dallas SI-T1 proposed pod",...optionSummary(rom)},
+      optionB:{label:"Dallas SI-T1 leads with India Tier 1 SI-T2 engineering and BI",...optionSummary(optionB)}},
     levers: model.model.case.levers.map((lever) => ({id:lever.id,name:lever.name,conversion:lever.conversion,
       registerRefs:refs.filter((ref) => ref.key.startsWith(`${lever.id}.`)),
       timingRegisterRef:seed.value_plan_bindings[`levers.${lever.id}.timing.startMonth`],
       result:value.levers.find((result) => result.leverId === lever.id)})),
-    rom: {rateBasis:`${ROM_REFERENCE_SOURCE}; proposed TWR-04 Data Product expansion, unapproved`,
+    rom: {rateBasis:`${ROM_REFERENCE_SOURCE}; proposed TWR-04 Data Product expansion, unapproved; planning rates, not approved`,
       pod:rom.pod,
       rateLines:rom.releases[0].own.pod.memberLines.map((line,index)=>({
         roleCode:line.member.roleCode,levelCode:line.member.levelCode,fte:line.member.fte,
@@ -191,7 +225,7 @@ function buildCasePreview(input: {seedText?: string; benchmarkText?: string} = {
       analystCapacityAnnualCents:value.levers[1].annualCents?.base,
       analystCapacityHours:value.levers[1].nonMoneyMetric?.value.base},
   };
-  return {proof,rom};
+  return {proof,rom,optionB};
 }
 
 export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: string} = {}): Record<string, unknown> {
@@ -199,12 +233,14 @@ export function previewCaseNumbers(input: {seedText?: string; benchmarkText?: st
 }
 
 if (process.argv[1]?.endsWith("preview-demo-case-numbers.ts")) {
-  const {proof,rom} = buildCasePreview();
+  const {proof,rom,optionB} = buildCasePreview();
   const output = `${JSON.stringify(proof, null, 2)}\n`;
   if (process.argv.includes("--write-proof")) {
     writeFileSync(PROOF_PATH, output);
     const {workbook} = buildRomWorkbook(rom);
     workbook.xlsx.writeFile(WORKBOOK_PATH).catch((error)=>{console.error(error);process.exitCode=1;});
+    const {workbook:optionBWorkbook} = buildRomWorkbook(optionB);
+    optionBWorkbook.xlsx.writeFile(OPTION_B_WORKBOOK_PATH).catch((error)=>{console.error(error);process.exitCode=1;});
   }
   process.stdout.write(output);
 }

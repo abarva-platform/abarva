@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate-for-owner-review`; no load approval or data-plane execution.
+`tooling-only merge candidate`; the bound Move is fallback only. Do not load
+this seed onto it. No load approval or data-plane write exists.
 
 ## Plain-English Summary
 
@@ -26,8 +27,14 @@ are also unapproved. The $5.8910348M plan ROM is 117.8% of the existing $5M
 budget ceiling; low and high are $4.4182761M and $8.8365522M. The three-year
 value case uses these ROM outputs as its only cost basis, producing a
 negative $1,205,904.05 plan NPV, no modeled payback, and negative 4.5628%
-three-year ROI. No input was tuned to fit the ceiling.
-It is a deterministic simulation,
+three-year ROI. A second, blended delivery preview keeps the same 12,847.84
+adjusted hours, 49 weeks and 10 FTE, with Dallas SI-T1 lead roles and India
+Tier 1 SI-T2 engineering and BI roles. Its low/plan/high are
+$2.0104161M/$2.6805548M/$4.0208322M. The provider class in option A is
+`SI-T1` (global system integrator), not the separate `CONS-T1` premium
+strategy/advisory class. Neither option is selected or approved; all global
+starter bands are labelled “planning rates, not approved”. No input was tuned
+to fit the ceiling. This is a deterministic simulation,
 not a readback of the current Move, a Finance-approved forecast, a signed-in
 product result, or a claim that the deck is ready.
 
@@ -57,7 +64,8 @@ product result, or a claim that the deck is ready.
   authenticated client record, canonical tenant registry and application
   tenant key. No live client receives this candidate.
 - Internal only: the proposal and read-only operator dry-run path.
-- Public/demo only: synthetic planning inputs after a future approved load.
+- Public/demo only: this fallback planning preview remains unserved. A new
+  scenario needs a separately bound seed and named approval before any load.
 - Feature flag: no flag changes in this PR.
 
 No other Move, tenant, dataset, historic approval or phase state changes.
@@ -74,6 +82,8 @@ No live client data or client-specific claim is included.
 - Offline proof: `docs/releases/proofs/2026-10-10-moves-demo-case-numbers-local-preview.json`.
 - Read-only live ID proof: `docs/releases/proofs/2026-10-10-moves-demo-case-numbers-live-id-preflight.json`.
 - Exact-formula workbook: `docs/releases/proofs/2026-10-10-moves-demo-case-numbers-rom-workbook.xlsx`.
+- Blended option workbook:
+  `docs/releases/proofs/2026-10-10-moves-demo-case-numbers-rom-option-b-workbook.xlsx`.
 - Job and workflow: the job validates the source-set hash, Move, tenant,
   manifest and idempotency key; dry-run reads and reports the register without
   writing. Apply remains unavailable under the manifest's absent named load
@@ -121,6 +131,9 @@ strings cite `DL13`–`DL15`, and a future writer must verify equality.
   reachability, the 2,830-file test coverage census, tenancy census,
   manual check, and all context/corpus validation modes.
 - Pass: dataset manifest validation.
+- Pass: both delivery options resolve from the committed cost foundation with
+  role, level, location and provider-class provenance. The blended option
+  preserves counts, adjusted hours, productive capacity and duration.
 - Pass: authorized read-only main-branch ACA operator dry run and a scoped
   register census on the current digest-pinned image. The former verified the
   prior seeded rows; the latter enumerated live value and delivery IDs,
@@ -131,47 +144,30 @@ strings cite `DL13`–`DL15`, and a future writer must verify equality.
 
 ## Rollout Plan
 
-Owner reviews the exact rows and source-set hash first. A separate commit may
-add a named-person `load_approval` for that exact Move and hash. A designated
-operator must perform the live register-ID and P4 revision preflight in a
-governed read-only ACA job before any later apply. Only that operator may later
-dispatch the governed apply job under an exact approval. The P3 ROM unit-hour
-register references still require a human to select the new DL rows, inspect
-the computed workbook, and explicitly approve the snapshot. Successful job
-readback, quality gate and signed-in P3/P4/deck proof are separate states.
+Merge the governed job, shared capture writer, read-only ID proof and ROM
+comparison tooling under the current-head CI and coverage-collision rules.
+Keep this fallback seed's `load_approval` null and the workflow dry-run only.
+Do not dispatch or apply it. Its earlier P3 count and ID walk instructions are
+superseded and must not be pasted into a new Move.
 
-The P3 owner steps are explicit. Open “Estimate the work bottom-up”; add the
-shared foundation and use cases with the page codes `FOUNDATION`, `UC-1`, and `UC-2`.
-In “Fill this step from your notes”, paste these three separate lines, choose
-“Fill with aVa”, and confirm each drafted count block:
+After the owner creates the unrelated synthetic scenario's Move in P0, a
+separate reviewed rebind must authenticate its exact Move and tenant, take its
+counts/unit hours/value levers from that scenario's declared pack, obtain a
+new scoped live ID and capture-revision preflight, and recalculate its source
+hash, manifest and idempotency key. A separate named owner seed approval must
+precede any governed apply. Only after a successful load and readback does the
+owner choose a delivery option and approve the current P3 estimate. The value
+case reads only that approved option. P3/P4/deck signed-in proof follows.
 
-```text
-FOUNDATION: 8 data sources, 65 source tables, 20 standard data entities, 8 dashboard views, 100 design rows, 130 validation rows.
-UC-1 Certified measures and governed consumption: 20 data sources, 80 source tables, 55 standard data entities, 25 dashboard views, 200 design rows, 255 validation rows.
-UC-2 Workbook certification and retirement: 18 data sources, 80 source tables, 45 standard data entities, 30 dashboard views, 150 design rows, 220 validation rows.
-```
-
-Link the six Unit hours rows to `DL7` data sources, `DL8` source tables,
-`DL9` standard data entities, `DL10` dashboard views, `DL11` design rows,
-and `DL12` validation rows. Source the friction, productive share, and
-hours/FTE-week factors from `DL13`, `DL14`, and `DL15` respectively.
-For the pod, use “Proposed role mapping, unapproved” with these member lines,
-location `LOC-DALLAS`, provider class `SI-T1`, and `bill_rate`:
-
-```text
-ROL-024 | Data Product Manager | LVL-06 | 1 | Data Product Mgr
-ROL-023 | Data Architect | LVL-07 | 1 | Data Architect
-ROL-037 | Data Engineer | LVL-08 | 6 | Data Engineer
-ROL-041 | BI Developer | LVL-08 | 2 | BI Dev
-```
-
-Review and approve each proposed role mapping. Group `UC-1` into `R1` and
-`UC-2` into `R2`; mark `R1` as carrying `FOUNDATION` and cost it once; accept
-the grouping.
-Inspect the full-precision workbook, then click “Approve the estimate”.
-Adding register rows alone performs none of these clicks and issues no approved
-ROM snapshot. P4 and the investment deck remain blocked until that approval
-is current.
+The current P3 record and page support one pod and one approved ROM snapshot;
+they do not yet persist two option structures or a chosen option. The smallest
+two-option UI change is to store two sourced pod specifications plus an owner
+selection, price both in the preview, render their rate sources and ranges side
+by side, and bind approval and the downstream snapshot only to the selected
+option. It also needs capture/approval tests and a separate deck delivery-slide
+handoff. Estimated implementation effort: two to three focused engineer days,
+subject to the new Move's exact record contract. The offline comparison in
+this candidate does not represent an owner choice.
 
 ## Deployment Authority
 
@@ -187,10 +183,10 @@ is current.
 
 ## Rollback Plan
 
-There is no rollout in this PR. Revert this proposal to remove the candidate
-files. If a future separately approved apply occurs, rollback must be a
-Move-scoped governed correction that preserves append-only register history;
-do not delete prior rows or reset phase state.
+The tooling merge has no data rollout. Revert this PR to remove the tooling
+candidate. A later, separately approved seed would need a Move-scoped
+governed correction that preserves append-only register history; do not delete
+prior rows or reset phase state.
 
 ## Audit Evidence
 
@@ -218,8 +214,8 @@ the manifest has no `load_approval` and the workflow has no apply input,
 this PR leaves apply fail-closed. The job cannot approve a P3 ROM or advance
 the phase.
 
-Current live register IDs were read at the stated time; they can change before
-apply. The P3 ROM record was absent at preflight. The local ROM cost is an
+The fallback Move's register IDs were read at the stated time; they must not
+be reused for the new scenario. The P3 ROM record was absent at preflight. The local ROM cost is an
 unapproved planning estimate from the
 versioned foundation, not a live P3 snapshot. Existing `V4` and `A2` are
 open in the committed seed; the local value engine reports them as needing

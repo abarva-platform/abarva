@@ -222,6 +222,298 @@
     "planShareOfCeiling": 1.17820696,
     "withinBudgetCeiling": false
   },
+  "deliveryOptions": {
+    "status": "comparison_only; neither selected nor approved",
+    "rateStatus": "planning rates, not approved",
+    "optionA": {
+      "label": "Dallas SI-T1 proposed pod",
+      "hours": 12847.84,
+      "weeks": 49,
+      "lowDollars": 4418276.1,
+      "planDollars": 5891034.8,
+      "highDollars": 8836552.2,
+      "blocks": [
+        {
+          "code": "FOUNDATION",
+          "hours": 2501.6,
+          "weeks": 10,
+          "lowDollars": 901689,
+          "planDollars": 1202252,
+          "highDollars": 1803378
+        },
+        {
+          "code": "R1",
+          "hours": 5439.8,
+          "weeks": 20,
+          "lowDollars": 1803378,
+          "planDollars": 2404504,
+          "highDollars": 3606756
+        },
+        {
+          "code": "R2",
+          "hours": 4906.44,
+          "weeks": 19,
+          "lowDollars": 1713209.1,
+          "planDollars": 2284278.8,
+          "highDollars": 3426418.2
+        }
+      ],
+      "rateLines": [
+        {
+          "roleCode": "ROL-024",
+          "levelCode": "LVL-06",
+          "fte": 1,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 40625,
+          "baseRateCents": 40625,
+          "baseSource": "rate_band:ROL-024-LVL-06:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0069 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-023",
+          "levelCode": "LVL-07",
+          "fte": 1,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 34938,
+          "baseRateCents": 34938,
+          "baseSource": "rate_band:ROL-023-LVL-07:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0066 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-037",
+          "levelCode": "LVL-08",
+          "fte": 6,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 29250,
+          "baseRateCents": 29250,
+          "baseSource": "rate_band:ROL-037-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0105 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-041",
+          "levelCode": "LVL-08",
+          "fte": 2,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 24750,
+          "baseRateCents": 24750,
+          "baseSource": "rate_band:ROL-041-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0116 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        }
+      ]
+    },
+    "optionB": {
+      "label": "Dallas SI-T1 leads with India Tier 1 SI-T2 engineering and BI",
+      "hours": 12847.84,
+      "weeks": 49,
+      "lowDollars": 2010416.1,
+      "planDollars": 2680554.8,
+      "highDollars": 4020832.2,
+      "blocks": [
+        {
+          "code": "FOUNDATION",
+          "hours": 2501.6,
+          "weeks": 10,
+          "lowDollars": 410289,
+          "planDollars": 547052,
+          "highDollars": 820578
+        },
+        {
+          "code": "R1",
+          "hours": 5439.8,
+          "weeks": 20,
+          "lowDollars": 820578,
+          "planDollars": 1094104,
+          "highDollars": 1641156
+        },
+        {
+          "code": "R2",
+          "hours": 4906.44,
+          "weeks": 19,
+          "lowDollars": 779549.1,
+          "planDollars": 1039398.8,
+          "highDollars": 1559098.2
+        }
+      ],
+      "rateLines": [
+        {
+          "roleCode": "ROL-024",
+          "levelCode": "LVL-06",
+          "fte": 1,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 40625,
+          "baseRateCents": 40625,
+          "baseSource": "rate_band:ROL-024-LVL-06:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0069 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-023",
+          "levelCode": "LVL-07",
+          "fte": 1,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 34938,
+          "baseRateCents": 34938,
+          "baseSource": "rate_band:ROL-023-LVL-07:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0066 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-037",
+          "levelCode": "LVL-08",
+          "fte": 6,
+          "locationCode": "LOC-INDIA-TIER-1",
+          "providerClassCode": "SI-T2",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 7956,
+          "baseRateCents": 29250,
+          "baseSource": "rate_band:ROL-037-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0105 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-INDIA-TIER-1:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 16]",
+            "value": 0.4,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T2/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 29]",
+            "value": 0.68,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-041",
+          "levelCode": "LVL-08",
+          "fte": 2,
+          "locationCode": "LOC-INDIA-TIER-1",
+          "providerClassCode": "SI-T2",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 6732,
+          "baseRateCents": 24750,
+          "baseSource": "rate_band:ROL-041-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0116 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-INDIA-TIER-1:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 16]",
+            "value": 0.4,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T2/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 29]",
+            "value": 0.68,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        }
+      ]
+    }
+  },
   "levers": [
     {
       "id": "L1",
@@ -713,7 +1005,7 @@
     }
   ],
   "rom": {
-    "rateBasis": "committed reference pack datasets/reference/pricing-engine-v1; proposed TWR-04 Data Product expansion, unapproved",
+    "rateBasis": "committed reference pack datasets/reference/pricing-engine-v1; proposed TWR-04 Data Product expansion, unapproved; planning rates, not approved",
     "pod": {
       "podCode": "ROM-EXPLICIT-POD",
       "source": "ROM structure (caller-specified members)",

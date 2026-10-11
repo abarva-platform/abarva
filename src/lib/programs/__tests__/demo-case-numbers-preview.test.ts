@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
-import { previewCaseNumbers, SEED_PATH, BENCHMARK_PATH } from "../../../../scripts/moves/preview-demo-case-numbers";
-import { addFoundation, addUseCase, emptyRomEstimate } from "@/lib/programs/rom-estimate";
-import { proposeRomCountsFromNotes } from "@/lib/programs/rom-estimate-notes";
+import { buildCasePreview, previewCaseNumbers, SEED_PATH, BENCHMARK_PATH } from "../../../../scripts/moves/preview-demo-case-numbers";
+import { buildRomWorkbook } from "@/lib/pricing/moves-workflow/rom-workbook";
 
 const seedText = () => readFileSync(SEED_PATH, "utf8");
 const benchmarkText = () => readFileSync(BENCHMARK_PATH, "utf8");
@@ -15,6 +14,10 @@ describe("synthetic demo case numbers, offline", () => {
       costBasis: {planShareOfCeiling:number;budgetCeilingDollars:number;kind:string};
       value: {status: string; byYearPaidDollars: number[]; npvDollars: number;
         paybackMonth: number|null; roi: number; analystCapacityAnnualCents: number; analystCapacityHours: number};
+      deliveryOptions: {rateStatus:string;status:string;optionA:{hours:number;weeks:number;planDollars:number};
+        optionB:{hours:number;weeks:number;lowDollars:number;planDollars:number;highDollars:number;
+          rateLines:Array<{roleCode:string;locationCode:string;providerClassCode:string;hourlyRateCents:number;
+            baseSource:string;location:{source:string};provider:{source:string};rateStatus:string}>}};
     };
     expect(proof.proposedRows).toHaveLength(17);
     expect(new Set(proof.proposedRows.map((row) => row.expectedRegisterId)).size).toBe(17);
@@ -26,6 +29,21 @@ describe("synthetic demo case numbers, offline", () => {
     expect(proof.rom.rateLines.every((line)=>line.locationCode==="LOC-DALLAS" &&
       line.mappingStatus==="proposed_unapproved" && line.baseSource.includes("Role Rate Card row") &&
       line.location.source.includes("Geography row 10") && line.provider.source.includes("Assumptions row 28"))).toBe(true);
+    expect(proof.deliveryOptions.status).toContain("neither selected nor approved");
+    expect(proof.deliveryOptions.rateStatus).toBe("planning rates, not approved");
+    expect(proof.deliveryOptions.optionB).toMatchObject({hours:12847.84,weeks:49,
+      lowDollars:2010416.1,planDollars:2680554.8,highDollars:4020832.2});
+    expect(proof.deliveryOptions.optionA.hours).toBe(proof.deliveryOptions.optionB.hours);
+    expect(proof.deliveryOptions.optionA.weeks).toBe(proof.deliveryOptions.optionB.weeks);
+    expect(proof.deliveryOptions.optionB.rateLines.map((line)=>[line.roleCode,line.locationCode,line.providerClassCode,line.hourlyRateCents])).toEqual([
+      ["ROL-024","LOC-DALLAS","SI-T1",40625],
+      ["ROL-023","LOC-DALLAS","SI-T1",34938],
+      ["ROL-037","LOC-INDIA-TIER-1","SI-T2",7956],
+      ["ROL-041","LOC-INDIA-TIER-1","SI-T2",6732],
+    ]);
+    expect(proof.deliveryOptions.optionB.rateLines.every((line)=>line.rateStatus==="planning rates, not approved" &&
+      line.baseSource.includes("Role Rate Card row") && line.location.source.includes("Geography row") &&
+      line.provider.source.includes("Assumptions row"))).toBe(true);
     expect(proof.value).toMatchObject({status:"evaluated", byYearPaidDollars:[530400,2545920,2545920],
       npvDollars:-1205904.05, paybackMonth:null, roi:-0.045627773239431554,
       analystCapacityAnnualCents:0, analystCapacityHours:1484});
@@ -70,22 +88,15 @@ describe("synthetic demo case numbers, offline", () => {
       .toThrow("foundation_pod_contract_invalid");
   });
 
-  it("the owner walk-sheet lines fill the exact page codes and all six counts per block", () => {
-    const record=emptyRomEstimate();
-    const first=addUseCase(record,"Certified measures and governed consumption");
-    if (!first.ok) throw new Error(first.reason);
-    const second=addUseCase(first.value,"Workbook certification and retirement");
-    if (!second.ok) throw new Error(second.reason);
-    const foundation=addFoundation(second.value);
-    if (!foundation.ok) throw new Error(foundation.reason);
-    const release=readFileSync("docs/releases/records/2026-10-10-moves-demo-case-numbers-seed.md","utf8");
-    const notes=release.match(/```text\n(FOUNDATION:[\s\S]*?)\n```/)?.[1];
-    expect(notes).toBeDefined();
-    const proposals=proposeRomCountsFromNotes(notes!,foundation.value);
-    expect(proposals.map((item)=>item.code)).toEqual(["FOUNDATION","UC-1","UC-2"]);
-    const planned=JSON.parse(seedText()).rom_preview;
-    expect(proposals.map((item)=>item.counts)).toEqual([
-      planned.foundation.counts,...planned.useCases.map((item:{counts:unknown})=>item.counts),
-    ]);
+  it("keeps the unapproved rate warning and exact option totals in both workbooks", () => {
+    const {rom,optionB}=buildCasePreview();
+    for (const [priced, expectedCents] of [[rom,589103480],[optionB,268055480]] as const) {
+      const {workbook,layout}=buildRomWorkbook(priced);
+      expect(workbook.getWorksheet("Assumptions")?.getCell("B10").value).toBe("planning rates, not approved");
+      expect(workbook.getWorksheet("Pod & Rates")?.getCell("R4").value).toContain("planning rates, not approved");
+      expect((workbook.getWorksheet("Releases")?.getCell(layout.total.planCents).value as {result:number}).result)
+        .toBe(expectedCents);
+    }
   });
+
 });

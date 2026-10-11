@@ -228,8 +228,13 @@ function settledRecord(): RomEstimate {
 
 /** A result shaped like the ROM service's for a posted structure. Its figures are fixtures. */
 function fakeRom(structure: unknown): RomResult {
-  const lines = [24500, 9500, 8500].map((cents) => ({
-    rate: { hourlyRateCents: cents },
+  const lines = [24500, 9500, 8500].map((cents, index) => ({
+    rate: { hourlyRateCents: cents, ...(index === 2 ? {
+      baseSource: "rate_band:ROL-AE-LVL-08 [Role Rate Card row RC-TEST]",
+      location: { source: "location:LOC-NEAR [Geography row 1]" },
+      provider: { source: "provider_class:SI-T2 [Assumptions row 2]" },
+      notes: ["band approval global_starter_unapproved"],
+    } : {}) },
   }));
   const block = (
     code: string,
@@ -539,6 +544,10 @@ describe("RomEstimateStep", () => {
     expect(pod.textContent).toContain(
       "Members named by the team · rates from the cost foundation · loaded cost",
     );
+    expect(pod.textContent).toContain("Planning rates, not approved");
+    expect(pod.textContent).toContain("Role Rate Card row RC-TEST");
+    expect(pod.textContent).toContain("Geography row 1");
+    expect(pod.textContent).toContain("Assumptions row 2");
     fireEvent.click(
       within(pod).getAllByRole("button", {
         name: "Approve mapping BI developer → Analytics engineer",
