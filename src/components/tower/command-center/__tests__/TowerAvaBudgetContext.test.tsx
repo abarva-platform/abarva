@@ -52,3 +52,32 @@ it("omits the unverified budget projection from assistant measures", () => {
     /no reconciled active-intake lineage status/,
   );
 });
+
+it("keeps annual tool cost out of the assistant's approved funding measure", () => {
+  const built = buildTowerCommandCenterView(designFixtureMart(), {
+    tenantName: "Example tenant",
+  })!;
+  const view = {
+    ...built,
+    allInitiatives: [
+      { ...built.allInitiatives[0]!, sourceFile: "22_ai_business_cases.csv", aiSpendUsd: 100, aiSpendLoaded: true, aiAmountBasis: "approved_funding" as const },
+      { ...built.allInitiatives[1]!, sourceFile: "23_ai_tool_rollout.csv", aiSpendUsd: 200, aiSpendLoaded: true, aiAmountBasis: "annualized_tool_cost" as const },
+    ],
+  };
+
+  render(
+    <TowerCommandCenterAvaShell
+      view={view}
+      tenantName="Example tenant"
+      clientId="example"
+    />,
+  );
+
+  const context = JSON.parse(screen.getByTestId("tower-ava-context").textContent ?? "{}");
+  expect(context.towerMeasures).toEqual(expect.arrayContaining([
+    expect.objectContaining({ measureKey: "approved_ai_business_case_funding_usd", value: 100 }),
+  ]));
+  expect(context.towerMeasures).not.toEqual(expect.arrayContaining([
+    expect.objectContaining({ measureKey: "ai_tagged_spend_fy26_non_additive" }),
+  ]));
+});

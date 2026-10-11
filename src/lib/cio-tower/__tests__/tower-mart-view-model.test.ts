@@ -59,15 +59,17 @@ describe("loadTowerMartCommandView", () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
 
-    await expect(
-      loadTowerMartCommandView({ tenantKeyCandidates: ["meridian"] }),
-    ).resolves.toMatchObject({
+    const mart = await loadTowerMartCommandView({ tenantKeyCandidates: ["meridian"] });
+    expect(mart).toMatchObject({
       aiPortfolioCounts: {
         total: 255,
         candidate: 243,
         active: 12,
       },
     });
+    expect(mart?.headline).toContain("active intake reconciliation");
+    expect(mart?.headline).not.toContain("AI-tagged spend");
+    expect(mart?.headline).not.toMatch(/\$\d/);
 
     const aiPortfolioQuery = queryMock.mock.calls
       .map(([sql]) => String(sql))

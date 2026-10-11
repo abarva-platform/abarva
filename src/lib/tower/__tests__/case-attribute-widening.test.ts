@@ -191,9 +191,9 @@ describe("an unrecorded number is not zero", () => {
 
   it("does not print $0 for spend that was never recorded", () => {
     // A tool rollout carries no cost at all. `$0` is a claim about price; this is a gap.
-    expect(contract).toMatch(
-      /item\.aiSpendLoaded\s*\?\s*formatUsdM\(item\.aiSpendUsd\)\s*:\s*"Not loaded"/,
-    );
+    expect(contract).toContain('if (item.aiAmountBasis === "approved_funding")');
+    expect(contract).toContain('if (item.aiAmountBasis === "annualized_tool_cost")');
+    expect(contract).toContain('return "Amount basis not verified"');
   });
 
   it("derives the spend flag from what Layer 4 asserted, not from the row's columns", () => {
@@ -202,8 +202,9 @@ describe("an unrecorded number is not zero", () => {
     // funded and render "$0". `display_payload_json` carries only what the loader wrote: a case
     // payload has `approved_funding_usd`, a rollout payload has no cost key at all.
     expect(READER).toContain("const aiSpendLoaded =");
-    expect(READER).toMatch(/aiSpendLoaded =\s*\n?\s*displayNullableNumberFrom\(row, \[/);
-    expect(READER).not.toContain("approvedFundingRaw !== null || monthlyCostRaw !== null");
+    expect(READER).toContain('const approvedFundingRaw = displayNullableNumberFrom(row, [');
+    expect(READER).toContain('const monthlyCostRaw = displayNullableNumberFrom(row, ["monthly_cost_usd"])');
+    expect(READER).toContain('const aiSpendLoaded = aiAmountBasis !== "unknown"');
   });
 
   it("keeps the display-only reader from falling back to the row body", () => {
@@ -224,7 +225,8 @@ describe("the owner queue counts cases, not rollouts", () => {
     // finance status. Under a column headed CASES it added a row contributing only the count,
     // and hasOpenProof returned true for every one because a rollout never carries a benefit
     // claim — turning 42 cases into 55 and the queue into 47.
-    expect(panel).toContain("if (item.financeStatus === null) continue;");
+    expect(panel).toContain("if (!isBusinessCase(item)) continue;");
+    expect(panel).not.toContain("if (item.financeStatus === null) continue;");
   });
 
   it("takes its denominator from the same population as its rows", () => {

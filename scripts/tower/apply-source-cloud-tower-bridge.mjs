@@ -349,12 +349,6 @@ function periodEnd(row) {
   return value(row, "period_end") || (value(row, "month") ? monthEnd(value(row, "month")) : null);
 }
 
-function fiscalQuarter(dateText) {
-  const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(dateText ?? "");
-  if (!match) return null;
-  return `${match[1]}-Q${Math.floor((Number(match[2]) - 1) / 3) + 1}`;
-}
-
 function sourceRefs(args, opportunity) {
   const config = sourceBridgeConfig(args);
   return value(opportunity, "evidence_rows")
@@ -702,7 +696,9 @@ function projectionEntryPayload(args, row, pageKey, refs, gate) {
     deterministic_basis: row.deterministic_basis,
     recommended_action: row.recommended_action,
     annual_value_exposed: Number(row.annual_value_exposed ?? 0),
-    addressable_spend: Number(row.addressable_spend ?? 0),
+    addressable_spend: row.addressable_spend == null ? null : Number(row.addressable_spend),
+    actual_annual_spend: row.actual_annual_spend == null ? null : Number(row.actual_annual_spend),
+    decision_due_date: row.decision_due_date ?? null,
     confidence: Number(row.confidence ?? 0),
     readiness_state: row.readiness_state,
     evidence_state: row.evidence_state,
@@ -713,7 +709,8 @@ function projectionEntryPayload(args, row, pageKey, refs, gate) {
     blocked_value_usd: Number(row.annual_value_exposed ?? 0),
     claimable_value_usd: 0,
     finance_validated_value_usd: 0,
-    usage_supported_value_usd: Number(row.annual_value_exposed ?? 0),
+    // Annual opportunity exposure is a potential benefit, not measured usage.
+    usage_supported_value_usd: null,
     owner_role: row.accountable_role,
     handoff_module: "Source",
     source_ref_count: refs.length,
@@ -833,7 +830,7 @@ async function upsertCommandRow(client, context, args, pageKey, opportunity) {
       gate.nextGate,
       JSON.stringify(gate.evidenceNeeded),
       Number(opportunity.annual_value_exposed ?? 0),
-      Number(opportunity.annual_value_exposed ?? 0),
+      null,
       Number(opportunity.annual_value_exposed ?? 0),
       Math.round(Number(opportunity.confidence ?? 0) * 100),
       gate.status === "blocked" ? 85 : 55,
@@ -862,15 +859,9 @@ async function upsertValueRow(client, context, args, pageKey, opportunity) {
     vendor_name: opportunity.vendor_name,
   });
   const gate = gateForOpportunity(args, opportunity);
-  const periodEndValue = opportunity.decision_due_date ?? "2026-12-31";
   const payload = {
     ...projectionEntryPayload(args, opportunity, pageKey, refs, gate),
-    period_start: "2026-01-01",
-    period_end: periodEndValue,
-    fiscal_quarter: fiscalQuarter(periodEndValue) ?? "2026-Q4",
     scenario: "candidate",
-    business_case_value_usd: Number(opportunity.annual_value_exposed ?? 0),
-    risk_adjusted_forecast_usd: Number(opportunity.annual_value_exposed ?? 0) * Number(opportunity.confidence ?? 0),
     economic_classification: opportunity.opportunity_type,
     board_scope_state: "not_board_claimable",
     material_scope_state: Number(opportunity.annual_value_exposed ?? 0) > 0 ? "candidate_value" : "control_blocker",
@@ -930,9 +921,9 @@ async function upsertValueRow(client, context, args, pageKey, opportunity) {
       gate.detail,
       gate.nextGate,
       JSON.stringify(gate.evidenceNeeded),
-      Number(opportunity.addressable_spend ?? 0),
-      Number(opportunity.actual_annual_spend ?? 0),
-      Number(opportunity.annual_value_exposed ?? 0),
+      null,
+      null,
+      null,
       Number(opportunity.annual_value_exposed ?? 0),
       Number(opportunity.annual_value_exposed ?? 0) > 0 ? "estimated" : "known",
       gate.status === "blocked" ? "warning" : "passed",

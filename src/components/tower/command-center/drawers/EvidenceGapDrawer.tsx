@@ -76,18 +76,22 @@ export function EvidenceGapDrawer({
               tone={gap.blocking ? "vRed" : undefined}
             />
             <DrawerStat
-              label="Promised exposed"
+              label="Projected yearly benefit affected"
               value={formatUsdM(gap.promisedValueExposedUsd)}
               small
               tone={gap.promisedValueExposedUsd > 0 ? "vRed" : undefined}
             />
             <DrawerStat
-              label="Validated held"
+              label="Finance-reviewed amount held in loaded months"
               value={formatUsdM(gap.validatedValueHeldUsd)}
               small
               tone={gap.validatedValueHeldUsd > 0 ? "vAmber" : undefined}
             />
           </div>
+
+          <p className={styles.recBox}>
+            These can describe stages of the same claim, and another evidence gap may show the same dollars. Do not add them together.
+          </p>
 
           <DrawerSection>Why it matters</DrawerSection>
           <p className={styles.recBox}>{gap.why}</p>
