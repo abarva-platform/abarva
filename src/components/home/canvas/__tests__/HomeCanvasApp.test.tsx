@@ -2,7 +2,12 @@
 import "@testing-library/jest-dom";
 import fs from "node:fs";
 import path from "node:path";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  HOME_PREVIEW_TENANT_KEYS,
+  getHomeReviewBundle,
+} from "@/lib/home/preview/golden-snapshot";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 import { HomeCanvasApp } from "../HomeCanvasApp";
 
@@ -293,4 +298,83 @@ describe("native Home canvas", () => {
       screen.queryByRole("navigation", { name: "Chapter views" }),
     ).not.toBeInTheDocument();
   });
+  it.each(HOME_PREVIEW_TENANT_KEYS)(
+    "binds identity, advisor and export to one record: %s",
+    (tenantKey) => {
+      const record = getHomeReviewBundle(tenantKey)!;
+      const tenantName = canonicalClientDisplayName({ key: tenantKey })!;
+      render(
+        <HomeCanvasApp
+          bundle={record}
+          tenantKey={tenantKey}
+          tenantName={tenantName}
+          recordSource={{
+            kind: "reviewed_snapshot",
+            canonicalSnapshotHash: record.provenance.canonical_snapshot_hash,
+          }}
+          recordToken={`binding:${tenantKey}`}
+        />,
+      );
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        tenantName,
+      );
+      expect(mockAva).toHaveBeenLastCalledWith(
+        expect.objectContaining({ tenantKey }),
+      );
+      const exportUrl = new URL(
+        screen
+          .getByRole("link", { name: "Download PDF" })
+          .getAttribute("href")!,
+        "https://example.invalid",
+      );
+      expect(exportUrl.searchParams.get("tenant")).toBe(tenantKey);
+      expect(exportUrl.searchParams.get("context")).toBe(
+        `binding:${tenantKey}`,
+      );
+      expect(document.querySelector("[data-home-canvas]")).toHaveAttribute(
+        "data-record-version",
+        record.provenance.canonical_snapshot_hash,
+      );
+      for (const otherKey of HOME_PREVIEW_TENANT_KEYS.filter(
+        (key) => key !== tenantKey,
+      )) {
+        expect(document.querySelector("aside")?.textContent).not.toContain(
+          canonicalClientDisplayName({ key: otherKey }),
+        );
+      }
+    },
+  );
+  it.each(HOME_PREVIEW_TENANT_KEYS)(
+    "keeps raw evidence keys off chapter overviews and full reading: %s",
+    (tenantKey) => {
+      const record = getHomeReviewBundle(tenantKey)!;
+      let checked = 0;
+      for (const chapter of record.chapters) {
+        for (const panel of ["overview", "reading"]) {
+          mockParams = new URLSearchParams({ view: chapter.chapterId, panel });
+          render(
+            <HomeCanvasApp
+              bundle={record}
+              tenantKey={tenantKey}
+              tenantName="Reference enterprise"
+              recordSource={{
+                kind: "reviewed_snapshot",
+                canonicalSnapshotHash:
+                  record.provenance.canonical_snapshot_hash,
+              }}
+              recordToken="scoped-test"
+            />,
+          );
+          expect(document.querySelector("main")?.textContent).not.toMatch(
+            /\b(?:sig|ctx)_[a-z0-9_]+/i,
+          );
+          expect(document.querySelector("[data-home-canvas]")).not.toBeNull();
+          cleanup();
+          checked += 1;
+        }
+      }
+      expect(checked).toBe(record.chapters.length * 2);
+      expect(checked).toBeGreaterThan(0);
+    },
+  );
 });

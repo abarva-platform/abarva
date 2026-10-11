@@ -88,23 +88,6 @@ export function rankFindings(findings: Finding[]): Finding[] {
     .map((entry) => entry.finding);
 }
 
-/**
- * The leading figure in a claim, so it can be set at the weight it deserves.
- *
- * A claim's number is the thing a reader takes away, and rendering it at sentence size makes the
- * most important quantity on the page look like the word next to it. Returns null where the claim
- * does not open on a figure, in which case the claim reads as an ordinary sentence.
- */
-export function splitLeadingFigure(
-  claim: string,
-): { figure: string; rest: string } | null {
-  const match = /^(\$?[\d][\d,.]*(?:[MBk%]|\s*of\s*\d[\d,]*)?)\s+(.+)$/.exec(
-    claim,
-  );
-  if (!match) return null;
-  return { figure: match[1], rest: match[2] };
-}
-
 export interface Finding {
   kind: FindingKind;
   /**

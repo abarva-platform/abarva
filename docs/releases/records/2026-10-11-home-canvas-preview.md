@@ -41,7 +41,7 @@ The shared flow contract now consumes the governed taxonomy's zone order instead
 - Existing shared Home advisor, logo and dock reused without modifying their design.
 - Exact record-source labels, visible fallback, older interpretation quarantine and version-bound existing walkthrough PDF link.
 - Viewport-bounded chrome applies to canonical Home and its gated review route, not other modules.
-- Route surface controls require the canvas and refuse a return to the scrolling root. Shared legacy evidence helpers remain available to exports and tests, not as a second reachable Home.
+- Route surface controls require the canvas and refuse a return to the scrolling root. Retired rendering components, dead exports, their presentation-only tests and obsolete proof scripts are removed; shared deterministic evidence and export helpers remain.
 - Generated route manual remains current.
 - Theme-led leadership presentation with exact selected excerpts, minority-theme ordering and explicit response/synthetic basis. Earlier excerpts are not substituted for unverified current interviews.
 - Operating segments use only declared segment keys for function links. System-owner groupings remain distinct from segment or P&L attribution; detail not supplied in a bundle is not asserted absent from the enterprise.
@@ -53,7 +53,8 @@ The shared flow contract now consumes the governed taxonomy's zone order instead
 ## QA / Validation
 
 - Focused model/component tests cover query routing, source selection, absent versus zero, row counts, fallback labels, advisor/export version binding, stale-narrative quarantine and complete pagination.
-- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome, shared visual, ECL projection-reader and enterprise-context regressions: 63 suites / 837 tests passed, plus two SVG snapshots. Five route/cutover/boundary suites add 22 passing tests, including query-preserving redirects and no mounted retired root. The copy hygiene sweep now renders the canonical canvas for every available view/panel and governed snapshot, rather than testing the retired presentation. All five route suites are explicitly invoked by the existing PR unit workflow; its census is refreshed.
+- Canvas, shared Home evidence, fact-browser, advisor record-parity, shared visual, ECL projection-reader, enterprise-context and export regressions: 43 suites / 569 tests passed, plus two SVG snapshots. Retired presentation-only suites are removed with their renderers; tenant identity and raw evidence-key disclosure checks now exercise the canvas. Five route/cutover/boundary suites add 22 passing tests, including query-preserving redirects and no mounted retired root. The copy hygiene sweep renders the canonical canvas for every available view/panel and governed snapshot. All five route suites are explicitly invoked by the existing PR unit workflow; its census is refreshed.
+- Route reachability passes with no new baseline exemptions. The baseline shrinks by two retired components and six retired exports. Dependency, library-orphan, AI surface-control and QA inventory audits pass.
 - Full repository TypeScript check passed using Node 24 with an 8 GB heap.
 - ESLint: no errors; pre-existing record-browser memo and flow unused-type warnings remain.
 - Release controls: all 11 gates passed; generated route manual is current.
@@ -97,4 +98,4 @@ Revert the cutover/presentation release through a PR and the approved main ACA w
 - Richer operating intake may exist locally without accepted serving rows. The product route does not import that raw intake. Source acceptance, financial-basis reconciliation, declared-link validation and coherent publication remain a separately governed data-plane gate.
 - An existing published operating narrative may remain off-purpose; it is retained with an explicit note in Full reading. Correcting published narrative requires the governed regeneration gate and is not included.
 - The existing walkthrough export is version-bound but does not adopt the new canvas layout in this release.
-- Retirement removes the old presentation from mounted routes, not shared deterministic evidence or export helpers. Existing stored-record fallback remains visibly labelled.
+- Retirement deletes the old rendering implementation, not shared deterministic evidence or export helpers. Existing stored-record fallback remains visibly labelled.

@@ -17,8 +17,6 @@ describe("Home Layer 4 boundary contract", () => {
       "src/components/home/canvas/context-coverage.ts",
       "src/components/home/canvas/ArchitectureCanvas.tsx",
       "src/components/home/canvas/FlowRecordCanvas.tsx",
-      "src/components/home/v4/ArchitecturePage.tsx",
-      "src/components/home/v4/DataFlowPage.tsx",
       "src/components/home/v4/RecordBrowser.tsx",
     ];
 

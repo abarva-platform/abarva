@@ -42,16 +42,5 @@ export const eyebrow = (color: string = V4.slate) =>
     color,
   }) as const;
 
-/** Band headings share one scale; only the colour distinguishes their meaning. */
-export const bandHeading = (color: string = V4.ink) =>
-  ({
-    fontFamily: SERIF,
-    fontSize: "clamp(22px,1.9vw,28px)",
-    fontWeight: 500,
-    letterSpacing: "-0.024em",
-    margin: 0,
-    color,
-  }) as const;
-
 /** Horizontal page padding for full-bleed bands. The design uses 56px consistently. */
 export const PAGE_X = 56;
