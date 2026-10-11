@@ -101,5 +101,7 @@ describe("reference-deck words", () => {
         expect(JSON.stringify(entry)).not.toContain("draft words unavailable");
       }
     }
+    const investment = unavailableEditionWords("investment", [...REFERENCE_ARCHETYPES]);
+    expect(investment.filter((entry) => /\{[^{}]+\}/.test(entry.title)).length).toBeGreaterThanOrEqual(11);
   });
 });
