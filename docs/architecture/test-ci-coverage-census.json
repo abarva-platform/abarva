@@ -18,10 +18,10 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 3007,
-    "coveredTestFiles": 2843,
-    "pullRequestCoveredTestFiles": 2843,
-    "uncoveredTestFiles": 164,
+    "testFiles": 3011,
+    "coveredTestFiles": 2846,
+    "pullRequestCoveredTestFiles": 2846,
+    "uncoveredTestFiles": 165,
     "directoriesWithTests": 524,
     "directoriesFullyCovered": 454,
     "directoriesPartiallyCovered": 27,
@@ -29,15 +29,15 @@
     "directoriesWithUnrunTestFiles": 70,
     "directoriesWithUntriagedUnrunTestFiles": 59,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 112,
+    "untriagedUnrunTestFiles": 113,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
-    "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 59,
-    "rankedDirectories": 0,
-    "rankedUntriagedUnrunTestFiles": 0,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 53,
+    "highGovernedRiskDirectories": 1,
+    "unclassifiedRiskDirectories": 58,
+    "rankedDirectories": 1,
+    "rankedUntriagedUnrunTestFiles": 20,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 52,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -227,10 +227,10 @@
     },
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 24,
+      "testFiles": 25,
       "coveredTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 19,
+      "untriagedUnrunTestFiles": 20,
       "via": [
         "command"
       ]
@@ -446,11 +446,785 @@
       ]
     }
   ],
-  "governedRiskFiles": [],
-  "governedRiskRanking": [],
+  "governedRiskFiles": [
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/answer-length-depth.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "triageVerdict": {
+        "verdict": "wired",
+        "record": "docs/architecture/t495-answer-length-depth-triage.json",
+        "recordedAt": "2026-09-28T08:22:16.000Z",
+        "ownerItem": "T-495"
+      },
+      "drawable": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-497"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/c412-ask-answer-mode-wiring.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "triageVerdict": null,
+      "drawable": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/cio-backoffice-retirement.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/client-grounding-packet.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/companion-canvas.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/decision-table-gate.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/ecl-consultant-proof-answer.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/executive-context.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": null,
+      "drawable": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/followups.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/industry-outlook-classification.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/moves-phase-name-sync.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/no-fabrication.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/portfolio-prioritization-mode.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/retired-fact-gate.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/sentinel-intel-360-eval.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/session-memory-contract-history.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/source-contract360-synthesis-context.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "triageVerdict": {
+        "verdict": "wired",
+        "record": "docs/architecture/t495-source-contract360-synthesis-context-triage.json",
+        "recordedAt": "2026-09-28T07:43:33.000Z",
+        "ownerItem": "T-495"
+      },
+      "drawable": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "triageVerdict": {
+        "verdict": "wired",
+        "record": "docs/architecture/t495-strategy-to-moves-contract-triage.json",
+        "recordedAt": "2026-09-27T23:57:34.000Z",
+        "ownerItem": "T-495"
+      },
+      "drawable": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/surface-context-domains.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/tenant-fence-answer.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/tenant-identity-pin.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "triageVerdict": {
+        "verdict": "update_with_reason_recorded",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-497"
+      },
+      "drawable": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/tenant-key-resolution.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/tenant-safety-policy.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": {
+        "verdict": "wire_into_ci",
+        "record": "docs/architecture/t492-stale-suite-triage.json",
+        "recordedAt": "2026-09-27T08:50:59.457Z",
+        "ownerItem": "T-494"
+      },
+      "drawable": false,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    }
+  ],
+  "governedRiskRanking": [
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testFiles": 25,
+      "unrunTestFiles": 20,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 20,
+      "verdictHeldUntriagedUnrunTestFiles": 19,
+      "drawableUnrunTestFiles": 1,
+      "drawableTestPaths": [
+        "src/lib/intelligence/ask/__tests__/executive-context.test.ts"
+      ],
+      "admittedBy": "governed_risk_signal",
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    }
+  ],
   "triageVerdicts": {
     "heldUntriagedUnrunTestFiles": 112,
-    "drawableUntriagedUnrunTestFiles": 0,
+    "drawableUntriagedUnrunTestFiles": 1,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 36,
       "real": 1,
@@ -2081,24 +2855,32 @@
         ],
         "productSourceCount": 18
       }
-    },
+    }
+  ],
+  "governedRiskEvidence": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 24,
-      "unrunTestFiles": 19,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 19,
+      "testFiles": 25,
+      "unrunTestFiles": 20,
       "governedRisk": {
         "score": 10,
         "band": "high",
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 27
+        "productSourceCount": 29,
+        "tenantScopedReadSourceCount": 6,
+        "tenantScopedReadSources": [
+          "src/lib/intelligence/ask/tenant-fence-answer.ts",
+          "src/lib/intelligence/ask/tenant-identity-pin.ts",
+          "src/lib/intelligence/ask/tenant-key-resolution.ts",
+          "src/lib/intelligence/ask/tenant-safety-policy.ts",
+          "src/lib/intelligence/ask/tenant-stream-guard.ts"
+        ],
+        "rank": 1
       }
     }
   ],
-  "governedRiskEvidence": [],
   "uncoveredDirectories": [
     {
       "directory": "src/lib/integrations/ai-egress/__tests__",

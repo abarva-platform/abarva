@@ -43,7 +43,7 @@ describe("AdvisoryIntelligencePage", () => {
     const prompts = buildStarterPrompts(viewModel);
     expect(prompts.length).toBeGreaterThan(0);
     for (const prompt of prompts) {
-      expect(screen.getByText(prompt)).toBeTruthy();
+      expect(screen.getByTestId(`agent-dock-suggestion-${prompt}`)).toBeTruthy();
     }
   });
 });
