@@ -326,7 +326,9 @@ export function ContractStoryBriefing({
   const committed = laneCount(coverage, "committed_spend_usd");
   const actual = laneCount(coverage, "actual_spend_usd");
   const workflow = vm.optWorkflow;
-  const candidate = vm.commercialPosture?.items.find((item) => item.label === "Top lever");
+  const candidate = vm.opportunityView?.opportunities.length
+    ? vm.commercialPosture?.items.find((item) => item.label === "Top lever")
+    : null;
   const decisionOwner = vm.commercialPosture?.items.find((item) => item.label === "Decision owner");
   const evidenceSummary = story?.supporting_evidence_summary
     ?.split(";")

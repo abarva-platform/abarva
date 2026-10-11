@@ -36,11 +36,12 @@ The playbook replaces the existing source-record panel rather than adding anothe
 ## QA / Validation
 
 - Red-first: new crosswalk imports failed before implementation.
-- Focused baseline: three suites / 59 tests passed on the final crosswalk and action posture.
-- Broader workspace and contract-intelligence regression: 44 suites / 420 tests passed, including mounted workspace composition assertions.
+- Focused baseline: three suites / 60 tests passed on the final crosswalk and action posture.
+- Broader workspace and contract-intelligence regression: 44 suites / 421 tests passed, including mounted workspace composition assertions.
 - TypeScript `tsc --noEmit --incremental false`: passed on Node 24 with an 8 GB heap. The initial default-heap attempt exhausted memory; it was not a passing check.
 - ESLint on changed TypeScript files: zero errors; one existing unused-parameter warning in the shared shell.
-- Mutation checks: allowing conflicting declarations, guessing an unknown type, deleting the guidance disclosure, losing Story's declared-type wiring, labelling an action count as source evidence, remounting the duplicate Story summary, and hiding the recorded candidate each caused assertion failures. All mutations were restored and the baseline passed again.
+- Mutation checks: allowing conflicting declarations, guessing an unknown type, deleting the guidance disclosure, losing Story's declared-type wiring, labelling an action count as source evidence, remounting the duplicate Story summary, hiding the recorded candidate, and presenting the empty-set placeholder as a recorded candidate each caused assertion failures. All mutations were restored and the baseline passed again.
+- Empty-set render control: no candidate is claimed when the opportunity set is empty; the readiness action and owner remain visible.
 - Local browser QA: actual Story components with labelled QA fixtures, at 1440 and 390 px; managed services, cloud, renewal and unmapped states. Collapsed and expanded layouts had no horizontal overflow or page errors. Native details controls opened by mouse and collapsed by keyboard.
 - Rendered the standalone Contract 360 design reference for visual comparison. The QA harness is not the authenticated application shell and uses fallback fonts; no signed-in acceptance is claimed.
 - Existing CI commands enumerate the changed suites in `.github/workflows/unit-suites.yml`.

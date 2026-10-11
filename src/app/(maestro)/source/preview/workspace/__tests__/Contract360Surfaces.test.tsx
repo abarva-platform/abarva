@@ -124,6 +124,7 @@ describe("contract playbook briefing", () => {
     const vm = {
       ...vmWith(null),
       optWorkflow: { primaryAction: "Collect missing evidence", primaryActionDetail: "Review the pricing terms." },
+      opportunityView: { opportunities: [{ id: "opportunity-test" }] },
       commercialPosture: { items: [
         { label: "Top lever", value: "Classify recurring change orders", detail: "Review named orders with the supplier." },
         { label: "Decision owner", value: "Contract Operations" },
@@ -133,6 +134,23 @@ describe("contract playbook briefing", () => {
     expect(screen.getByText("Collect missing evidence")).toBeTruthy();
     expect(screen.getByText("Recorded candidate")).toBeTruthy();
     expect(screen.getAllByText("Classify recurring change orders")).toHaveLength(1);
+    expect(screen.getByText("Decision owner: Contract Operations")).toBeTruthy();
+  });
+
+  it("does not present the no-lever placeholder as a recorded candidate", () => {
+    const vm = {
+      ...vmWith(null),
+      optWorkflow: { primaryAction: "Collect missing evidence", primaryActionDetail: "Review the pricing terms." },
+      opportunityView: { opportunities: [] },
+      commercialPosture: { items: [
+        { label: "Top lever", value: "No lever loaded", detail: "Load governed opportunity rows before naming a vendor ask." },
+        { label: "Decision owner", value: "Contract Operations" },
+      ] },
+    } as unknown as SourceWorkspaceVM;
+    render(<ContractStoryBriefing contract={contract} coverage={null} scopeRows={[]} vm={vm} />);
+    expect(screen.queryByText("Recorded candidate")).toBeNull();
+    expect(screen.queryByText("No lever loaded")).toBeNull();
+    expect(screen.getByText("Collect missing evidence")).toBeTruthy();
     expect(screen.getByText("Decision owner: Contract Operations")).toBeTruthy();
   });
 });
