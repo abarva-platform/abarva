@@ -55,7 +55,9 @@ export function plainProgram(p: TowerProgramView): string {
     return "This case records $0 in projected direct benefit. It may help other cases, but that link is not recorded here, so no downstream benefit is assigned to it.";
   }
   const claim =
-    p.claimableUsd > 0
+    p.claimableAmountLoaded === false
+      ? "A cleared amount is not verified"
+      : p.claimableUsd > 0
       ? `${formatUsdM(p.claimableUsd)} has cleared reporting in the loaded months`
       : "none has cleared reporting in the loaded months";
   const because = p.blocker
@@ -173,13 +175,13 @@ export function ProgramDrawer({
             />
             <DrawerStat
               label="Finance-validated"
-              value={p.financeValidatedUsd > 0 ? formatUsdM(p.financeValidatedUsd) : p.financeStatus === "validated" ? "Amount not shown" : "Not loaded"}
+              value={p.financeValidatedAmountLoaded === false ? "Not verified" : p.financeValidatedAmountLoaded === true || p.financeValidatedUsd > 0 ? formatUsdM(p.financeValidatedUsd) : p.financeStatus === "validated" ? "Amount not shown" : "Not loaded"}
               small
               tone={p.financeValidatedUsd > 0 ? "vTeal" : undefined}
             />
             <DrawerStat
               label="Cleared in loaded months"
-              value={p.claimableUsd > 0 ? formatUsdM(p.claimableUsd) : "No amount cleared"}
+              value={p.claimableAmountLoaded === false ? "Not verified" : p.claimableUsd > 0 ? formatUsdM(p.claimableUsd) : "Recorded $0"}
               small
               tone={p.claimableUsd > 0 ? "vTeal" : "vRed"}
             />

@@ -25,10 +25,15 @@ function fixtureView() {
 
 describe("Tower financial story boundaries", () => {
   it("separates annual assertions from year-to-date claims and flags unreconciled budget", () => {
-    const html = renderToStaticMarkup(<VerdictPanel view={fixtureView()} />);
+    const view = fixtureView();
+    const html = renderToStaticMarkup(<VerdictPanel view={{
+      ...view,
+      summary: { ...view.summary, claimableAmountLoaded: true, claimableClaimCount: 1, claimableUsd: 1_000_000 },
+    }} />);
     expect(html).toContain("The loaded claims project");
     expect(html).toContain("cleared the reporting gate in the loaded months");
-    expect(html).toContain("Amount hidden until it matches the current source files");
+    expect(html).toContain("Approved FY26 AI project funding");
+    expect(html).toContain("Not verified");
     expect(html).not.toContain("of asserted value is claimable");
     expect(html).not.toContain("Foundation rows carry no direct value");
   });
@@ -131,7 +136,27 @@ describe("Tower financial story boundaries", () => {
         onGoToActions={() => undefined}
       />,
     );
-    expect(html).toContain("Value cleared for reporting is not loaded");
+    expect(html).toContain("No value records are loaded, so cleared value is unknown");
     expect(html).not.toContain("$0 has cleared reporting");
+  });
+
+  it("shows an unverified cleared amount differently from a recorded zero", () => {
+    const view = fixtureView();
+    const unknown = renderToStaticMarkup(
+      <VerdictPanel view={{
+        ...view,
+        summary: { ...view.summary, claimableUsd: 0, claimableClaimCount: 0, claimableAmountLoaded: false },
+      }} />,
+    );
+    const recordedZero = renderToStaticMarkup(
+      <VerdictPanel view={{
+        ...view,
+        summary: { ...view.summary, claimableUsd: 0, claimableClaimCount: 0, claimableAmountLoaded: true },
+      }} />,
+    );
+    expect(unknown).toContain("A cleared amount is not verified");
+    expect(unknown).toContain("Not verified");
+    expect(recordedZero).toContain("has cleared the reporting gate");
+    expect(recordedZero).not.toContain("A cleared amount is not verified");
   });
 });

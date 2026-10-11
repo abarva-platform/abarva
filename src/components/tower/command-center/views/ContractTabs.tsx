@@ -138,7 +138,7 @@ function contractSummaryLine(view: TowerCommandCenterView) {
       {s.approvedInvestmentUsd === null
         ? "Approved FY26 project funding is not verified"
         : `${formatUsdM(s.approvedInvestmentUsd)} in approved FY26 project funding`} ·{" "}
-      <strong>{s.claimableClaimCount > 0 ? `${formatUsdM(s.claimableUsd)} cleared for reporting in loaded months` : "No benefit amount cleared for reporting"}</strong> ·{" "}
+      <strong>{s.claimableAmountLoaded === false ? "Cleared amount not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${formatUsdM(s.claimableUsd)} cleared for reporting in loaded months` : "No benefit amount cleared for reporting"}</strong> ·{" "}
       {claimCount > 0
         ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} claims not cleared for reporting`
         : "Value claims not loaded"}
@@ -245,8 +245,8 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
       title: "Finance review · loaded months",
       note: "Finance review and permission to report are separate steps. Only the cleared amount can be presented as an achieved benefit.",
       rows: [
-        ["Finance validated", s.financeAttestedClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "No amount recorded"],
-        ["Cleared for reporting", s.claimableClaimCount > 0 ? formatUsdM(s.claimableUsd) : "No amount cleared"],
+        ["Finance validated", s.financeValidatedAmountLoaded === false ? "Not verified" : s.financeValidatedAmountLoaded === true || s.financeAttestedClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "No amount recorded"],
+        ["Cleared for reporting", s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? formatUsdM(s.claimableUsd) : "No amount cleared"],
       ],
     },
   ];
@@ -744,7 +744,7 @@ function costFindings(view: TowerCommandCenterView): CostFinding[] {
   const actions = [...view.actions].sort((a, b) => a.sequence - b.sequence);
   const rows: CostFinding[] = actions.slice(0, 4).map((action, index) => ({
     id: `A${action.sequence || index + 1}`,
-    badge: action.lane,
+    badge: action.lane === "unclassified" ? "Evidence task" : action.lane,
     amountUsd: action.amountExposedUsd,
     amountLabel: action.moduleHandoff?.toLowerCase() === "source" ? "Potential annual saving" : "Projected yearly benefit affected",
     amountText: formatOptionalUsdM(action.amountExposedUsd),

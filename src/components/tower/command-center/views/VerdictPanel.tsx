@@ -303,7 +303,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         {hasAssertion
-          ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
+          ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === false ? "A cleared amount is not verified for the loaded months." : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
           : "No yearly benefit estimate is loaded, so its value remains unknown."}
       </h2>
 
@@ -333,7 +333,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         />
         <MetricCard
           label="Cleared value in loaded months"
-          value={s.claimableClaimCount > 0 ? bigMoney(s.claimableUsd) : "No amount cleared"}
+          value={s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? bigMoney(s.claimableUsd) : "No amount cleared"}
           caption="Requires Finance validation and approved evidence for the loaded period"
           accent="var(--canon-teal)"
           valueColor="var(--canon-teal-dark)"

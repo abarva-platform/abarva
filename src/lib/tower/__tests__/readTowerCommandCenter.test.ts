@@ -914,4 +914,129 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.command.claimableValue).toBe(1500000);
     expect(mart?.command.claimableClaimCount).toBe(1);
   });
+
+  it("accepts an expressly approved FY26 budget and leaves absent decisions unclassified", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow({
+        row_key: "executive_summary",
+        page_key: "command_center",
+        display_payload_json: {
+          approved_fy_budget_usd: "100000000",
+          fiscal_year: "FY26",
+          budget_approval_status: "approved",
+        },
+      })],
+      tower_decision_lanes: [servingRow({
+        row_key: "planning-program",
+        claim_gate_status: "blocked",
+        display_payload_json: { title: "Planning program", decision_lane: null },
+      })],
+      tower_recommended_actions: [servingRow({
+        row_key: "evidence-task",
+        page_key: "recommended_actions",
+        display_payload_json: { title: "Reconcile evidence", decision_lane: null },
+      })],
+    });
+
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
+    expect(mart?.command.totalItBudgetFy26).toBe(100000000);
+    expect(mart?.programLanes[0]?.decisionLane).toBe("unclassified");
+    expect(view?.programs[0]?.lane).toBe("unclassified");
+    expect(view?.actions[0]?.lane).toBe("unclassified");
+  });
+
+  it("requires a valid date period and an explicit claim amount before reporting value", async () => {
+    const claim = (amount: string | null, start: string, end: string) => servingRow({
+      row_key: "claim-1",
+      page_key: "value_proof",
+      claim_gate_status: "claimable",
+      display_payload_json: {
+        evidence_approval_status: "approved",
+        finance_validation_status: "finance_validated",
+        finance_validated_value_usd: "2000000",
+        claimable_value_usd: amount,
+        claimable_value_period_start: start,
+        claimable_value_period_end: end,
+      },
+    });
+    for (const [amount, start, end, expected, loaded] of [
+      [null, "2026-01-01", "2026-06-30", 0, false],
+      ["1500000", "2026-02-30", "2026-06-30", 0, false],
+      ["1500000", "2026-01-01", "2026-06-31", 0, false],
+      ["1500000", "2026-07-01", "2026-06-30", 0, false],
+      ["-1", "2026-01-01", "2026-06-30", 0, false],
+      ["0", "2026-01-01", "2026-06-30", 0, true],
+      ["1500000", "2026-01-01", "2026-06-30", 1500000, true],
+    ] as const) {
+      mockServingRows({
+        tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
+        tower_value_proof: [claim(amount, start, end)],
+        tower_decision_lanes: [claim(amount, start, end)],
+      });
+      const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+      const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
+      expect(mart?.command.claimableValue).toBe(expected);
+      expect(mart?.programLanes[0]?.reportableClaimableValueUsd).toBe(loaded ? expected : null);
+      expect(view?.programs[0]?.claimableUsd).toBe(expected);
+      expect(view?.programs[0]?.claimableAmountLoaded).toBe(loaded);
+    }
+  });
+
+  it("keeps unknown Finance and AI spend distinct from recorded zero", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
+      tower_decision_lanes: [servingRow({
+        row_key: "unknown-finance",
+        display_payload_json: {
+          title: "Unknown Finance amount",
+          evidence_approval_status: "approved",
+          finance_validation_status: "finance_validated",
+          finance_validated_value_usd: null,
+        },
+      })],
+      tower_ai_portfolio: [servingRow({
+        row_key: "unknown-ai",
+        page_key: "ai_portfolio",
+        display_payload_json: { item_kind: "tool_rollout", monthly_cost_usd: null },
+      })],
+    });
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
+    expect(mart?.programLanes[0]?.financeValidatedAmountLoaded).toBe(false);
+    expect(view?.programs[0]?.financeValidatedAmountLoaded).toBe(false);
+    expect(mart?.aiPortfolio[0]?.aiSpendLoaded).toBe(false);
+    expect(view?.allInitiatives[0]?.aiAmountBasis).toBe("unknown");
+    expect(view?.allInitiatives[0]?.financeValidatedAmountLoaded).toBe(false);
+
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
+      tower_decision_lanes: [servingRow({
+        row_key: "known-zero-finance",
+        display_payload_json: {
+          title: "Known zero Finance amount",
+          evidence_approval_status: "approved",
+          finance_validation_status: "finance_validated",
+          finance_validated_value_usd: "0",
+        },
+      })],
+      tower_ai_portfolio: [servingRow({
+        row_key: "known-zero-ai",
+        page_key: "ai_portfolio",
+        display_payload_json: {
+          item_kind: "tool_rollout",
+          monthly_cost_usd: "0",
+          evidence_approval_status: "approved",
+          finance_validation_status: "finance_validated",
+          finance_validated_value_usd: "0",
+        },
+      })],
+    });
+    const zeroMart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    const zeroView = buildTowerCommandCenterView(zeroMart, { tenantName: "Example" });
+    expect(zeroMart?.programLanes[0]?.financeValidatedAmountLoaded).toBe(true);
+    expect(zeroMart?.aiPortfolio[0]?.aiSpendLoaded).toBe(true);
+    expect(zeroMart?.aiPortfolio[0]?.aiTaggedSpendUsd).toBe(0);
+    expect(zeroView?.allInitiatives[0]?.financeValidatedAmountLoaded).toBe(true);
+  });
 });

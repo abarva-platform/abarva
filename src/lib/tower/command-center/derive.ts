@@ -162,7 +162,8 @@ export function proofSequenceExplanation(row: {
 /**
  * **Claimable value.**
  *
- *   claimable = towerClaimAllowed === 'allowed' ? financeValidated : 0
+ *   Current serving rows carry an explicit approved, period-valid claim amount.
+ *   Older mart rows retain their existing gate-based calculation.
  *
  * The mart's `tower_claim_allowed` is the governed claim gate — `allowed`,
  * `partial` or `blocked`. Only `allowed` may be booked. `partial` means Finance
@@ -173,7 +174,11 @@ export function proofSequenceExplanation(row: {
 export function claimableUsd(row: {
   towerClaimAllowed: string;
   financeValidatedValueUsd: number;
+  reportableClaimableValueUsd?: number | null;
 }): number {
+  if (row.reportableClaimableValueUsd !== undefined) {
+    return Math.max(0, safeNum(row.reportableClaimableValueUsd));
+  }
   const allowed = String(row.towerClaimAllowed ?? "")
     .trim()
     .toLowerCase();
@@ -337,6 +342,7 @@ export function laneFor(row: {
   promisedValueUsd: number | null;
   approvedFundingUsd: number;
 }): TowerLaneKey {
+  if (row.decisionLane === "unclassified") return "unclassified";
   const promised = safeNum(row.promisedValueUsd);
   if (promised <= 0 && safeNum(row.approvedFundingUsd) > 0) return "watch";
   return row.decisionLane;

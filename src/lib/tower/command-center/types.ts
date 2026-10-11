@@ -13,9 +13,9 @@ import type { TowerAiAmountBasis } from "../current-layer-view-model";
 // design's `$M` rendering is a formatting concern and lives in `format.ts`;
 // no layer below the components divides by 1e6.
 
-/** The four decision lanes the mart already carries, plus the mart-absent
- *  "watch" bucket the design renders for run-and-sustain programs. */
-export type TowerLaneKey = "fund" | "fix" | "freeze" | "stop" | "watch";
+/** Recorded decisions, the presentation-only watch bucket, and an explicit
+ *  state for programs whose investment decision has not been recorded. */
+export type TowerLaneKey = "fund" | "fix" | "freeze" | "stop" | "watch" | "unclassified";
 
 /** Usage-evidence strength. Derived — see `derive.ts`. */
 export type TowerUsageStatus = "strong" | "weak" | "none";
@@ -95,7 +95,9 @@ export interface TowerCommandSummary {
   usageSupportedValueMeasured: boolean;
   usageSupportedValueCoverage: "none" | "partial" | "complete";
   financeValidatedUsd: number;
+  financeValidatedAmountLoaded?: boolean;
   claimableUsd: number;
+  claimableAmountLoaded?: boolean;
   blockedUsd: number;
   /** False when blocked dollars cannot be compared on one reporting period. */
   blockedValueComparable: boolean;
@@ -233,7 +235,9 @@ export interface TowerProgramView {
   usageSupportedUsd: number;
   usageSupportedValueMeasured: boolean;
   financeValidatedUsd: number;
+  financeValidatedAmountLoaded?: boolean;
   claimableUsd: number;
+  claimableAmountLoaded?: boolean;
   blockedUsd: number;
   /** False when the annual plan and loaded-month actuals are the only inputs. */
   blockedValueComparable: boolean;
@@ -376,6 +380,7 @@ export interface TowerAiView {
   promisedUsd: number;
   promisedBenefitLoaded: boolean;
   financeValidatedUsd: number;
+  financeValidatedAmountLoaded?: boolean;
   /** Recommended posture — mart-derived, never invented. */
   posture: string;
   usageHeadline: string | null;

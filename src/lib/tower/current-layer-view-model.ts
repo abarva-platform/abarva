@@ -22,7 +22,11 @@ export interface TowerMartCommandCenter {
   aiTaggedSpendFy26NonAdditive: number | null;
   promisedValueFy26: number | null;
   partialFinanceValidatedValueYtd: number;
+  /** At least one approved Finance row carried an explicit amount. */
+  financeValidatedAmountLoaded?: boolean;
   realizedValueYtdAllowed: number;
+  /** At least one claim carried an explicit amount and a valid reporting period. */
+  claimableAmountLoaded?: boolean;
   valueClaimCount?: number;
   knownValueClaimCount?: number;
   claimableValue?: number;
@@ -131,7 +135,7 @@ export interface TowerMartProgramLane {
   /** The business domain, from the loader's `domain_name`. Not the sponsor. */
   domainName?: string | null;
   financeOwnerRole: string | null;
-  decisionLane: "fund" | "fix" | "freeze" | "stop";
+  decisionLane: "fund" | "fix" | "freeze" | "stop" | "unclassified";
   decisionRationale: string;
   approvedFundingUsd: number;
   fundedAmount?: number;
@@ -142,6 +146,10 @@ export interface TowerMartProgramLane {
   aiSpendLoaded?: boolean;
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
+  /** True only when an approved Finance record carries an explicit amount. */
+  financeValidatedAmountLoaded?: boolean;
+  /** Explicit claimable amount with approved evidence and a valid reporting period. */
+  reportableClaimableValueUsd?: number | null;
   knownSupportedValue?: number | null;
   proofMaturityScore?: number | null;
   riskPressureScore?: number | null;
@@ -208,7 +216,7 @@ export interface TowerMartAiPortfolioItem {
   aiSpendType: string | null;
   aiSpendCategory: string | null;
   fundingStatus: string | null;
-  decisionLane: "fund" | "fix" | "freeze" | "stop";
+  decisionLane: "fund" | "fix" | "freeze" | "stop" | "unclassified";
   approvedFundingUsd: number;
   aiTaggedSpendUsd: number;
   /** Distinguishes an approved allocation from a yearly tool-cost estimate. */
@@ -235,6 +243,8 @@ export interface TowerMartAiPortfolioItem {
   evidenceItems?: TowerMartEvidenceItem[];
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
+  /** True only when an approved Finance record carries an explicit amount. */
+  financeValidatedAmountLoaded?: boolean;
   usageMetric: string | null;
   rolloutGoal?: string | null;
   rolloutStage?: string | null;

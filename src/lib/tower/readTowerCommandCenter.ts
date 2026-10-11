@@ -99,7 +99,7 @@ function decisionLane(value: string | null | undefined): TowerDecisionLane {
   ) {
     return normalized;
   }
-  return "fix";
+  return "unclassified";
 }
 
 function asRecord(value: unknown): JsonRecord {
@@ -210,7 +210,7 @@ function approvedFy26Budget(
   const displayed = displayPayload(row);
   const fiscalYear = nullableText(displayed.budget_fiscal_year ?? displayed.fiscal_year);
   const approval = nullableText(displayed.budget_approval_status);
-  if (!fiscalYear || !["FY2026", "2026"].includes(fiscalYear.toUpperCase())) return null;
+  if (!fiscalYear || !["FY26", "FY2026", "2026"].includes(fiscalYear.toUpperCase())) return null;
   if (approval?.toLowerCase() !== "approved") return null;
   return nullableNum(displayed[amountKey] as Numeric);
 }
@@ -233,14 +233,27 @@ function approvedFinanceEvidence(row: TowerServingRow): boolean {
   );
 }
 
+function recordedFinanceValidatedValue(row: TowerServingRow): number | null {
+  return approvedFinanceEvidence(row)
+    ? displayNullableNumberFrom(row, ["finance_validated_value_usd"])
+    : null;
+}
+
+function isIsoDate(value: string | null): value is string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 function reportableClaimAmount(row: TowerServingRow): number | null {
   if (!approvedFinanceEvidence(row)) return null;
   if (payloadText(row, "claim_gate_status") !== "claimable") return null;
   const displayed = displayPayload(row);
   const periodStart = nullableText(displayed.claimable_value_period_start);
   const periodEnd = nullableText(displayed.claimable_value_period_end);
-  if (!periodStart || !periodEnd || periodEnd < periodStart) return null;
-  return displayNullableNumberFrom(row, ["claimable_value_usd"]);
+  if (!isIsoDate(periodStart) || !isIsoDate(periodEnd) || periodEnd < periodStart) return null;
+  const amount = displayNullableNumberFrom(row, ["claimable_value_usd"]);
+  return amount !== null && amount >= 0 ? amount : null;
 }
 
 function payloadNullableNumberFrom(
@@ -654,11 +667,7 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
     // work by where it happens, an owner groups it by who answers for it.
     domainName: nullableText(display.domain_name),
     financeOwnerRole: nullableText(display.finance_owner_role),
-    decisionLane: decisionLane(
-      gateStatus === "blocked"
-        ? "fix"
-        : (display.decision_lane as string | null),
-    ),
+    decisionLane: decisionLane(display.decision_lane as string | null),
     decisionRationale:
       payloadText(row, "claim_gate_reason_detail", row.summary) ??
       "ECL serving row requires evidence review before the claim can advance.",
@@ -673,9 +682,9 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       row.page_key === "ai_portfolio" &&
       payloadNullableNumber(row, "funded_amount_usd") !== null,
     promisedValueUsd: reconciledAnnualBenefit(row),
-    financeValidatedValueUsd: approvedFinanceEvidence(row)
-      ? displayNullableNumberFrom(row, ["finance_validated_value_usd"]) ?? 0
-      : 0,
+    financeValidatedValueUsd: recordedFinanceValidatedValue(row) ?? 0,
+    financeValidatedAmountLoaded: recordedFinanceValidatedValue(row) !== null,
+    reportableClaimableValueUsd: reportableClaimAmount(row),
     knownSupportedValue: recordedUsageSupportedValue(row),
     proofMaturityScore: payloadNullableNumber(row, "proof_maturity_score"),
     riskPressureScore: payloadNullableNumber(row, "risk_pressure_score"),
@@ -695,7 +704,7 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       "adoption_actual_pct",
     ]),
     valueClaimStatus: gateStatus,
-    towerClaimAllowed: gateStatus === "claimable" ? "allowed" : "blocked",
+    towerClaimAllowed: reportableClaimAmount(row) !== null ? "allowed" : "blocked",
     requiredGates: jsonArray(payload(row).evidence_needed_json).map((ask) => ({
       ask,
       status: gateStatus,
@@ -878,9 +887,8 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     financeApprovalEvents: financeApprovalEvents(row),
     evidenceItems: evidenceItems(row),
     promisedValueUsd,
-    financeValidatedValueUsd: approvedFinanceEvidence(row)
-      ? displayNullableNumberFrom(row, ["finance_validated_value_usd"]) ?? 0
-      : 0,
+    financeValidatedValueUsd: recordedFinanceValidatedValue(row) ?? 0,
+    financeValidatedAmountLoaded: recordedFinanceValidatedValue(row) !== null,
     usageMetric,
     rolloutGoal: payloadTextFrom(row, ["rollout_goal"]),
     rolloutStage: payloadTextFrom(row, ["rollout_stage", "funding_status"]),
@@ -951,7 +959,7 @@ function mapAction(row: TowerServingRow, index: number): TowerMartCxoAction {
   return {
     actionKey: row.row_key,
     sequence: index + 1,
-    actionLane: "fix",
+    actionLane: decisionLane(payloadTextFrom(row, ["decision_lane"])),
     title: payloadText(row, "title", row.title) ?? row.row_key,
     actionBody:
       payloadText(row, "claim_gate_reason_detail", row.summary) ??
@@ -1388,7 +1396,9 @@ export async function readTowerCommandCenter(args: {
             aiPortfolio.reduce((sum, row) => sum + row.aiTaggedSpendUsd, 0),
           promisedValueFy26: executivePromised,
           partialFinanceValidatedValueYtd: financeValidated,
+          financeValidatedAmountLoaded: valueRowsForTotals.some((row) => recordedFinanceValidatedValue(row) !== null),
           realizedValueYtdAllowed: claimable,
+          claimableAmountLoaded: valueRowsForTotals.some((row) => reportableClaimAmount(row) !== null),
           claimableValue: claimable,
           financeValidatedBlockedValue: Math.max(
             0,

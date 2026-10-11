@@ -12,6 +12,8 @@
 
 Tower now shows when a budget, benefit, or evidence amount cannot be verified. A project cost no longer becomes an approved annual budget merely because it is present in a reviewed project row. An empty evidence queue is explained as missing information rather than a clean bill of health.
 
+The serving reader also accepts an explicitly approved `FY26` fiscal label, checks that claim periods are real calendar dates, and uses the recorded claim amount for each program. Missing amounts stay distinct from recorded zero. Programs and evidence tasks with no recorded investment decision appear as needing a decision.
+
 ## Layer Impact
 
 - **Release lane: `global-control-lane`.** This is shared Tower read and presentation behavior for every client.
@@ -33,7 +35,7 @@ Tower now shows when a budget, benefit, or evidence amount cannot be verified. A
 
 ## QA / Validation
 
-- Focused Tower reader, view, and drill-down tests passed (181 tests).
+- Focused Tower reader, view, and drill-down tests passed (181 tests for the original candidate; 135 focused tests after the follow-up gates).
 - TypeScript type check passed.
 - Focused ESLint passed.
 - Release policy check passed.

@@ -78,6 +78,8 @@ function valueLabel(item: TowerAiView): string {
 }
 
 function financeActualLabel(item: TowerAiView): string {
+  if (item.financeValidatedAmountLoaded === false) return "Not verified";
+  if (item.financeValidatedAmountLoaded === true) return formatUsdM(item.financeValidatedUsd);
   if (item.financeValidatedUsd > 0) return formatUsdM(item.financeValidatedUsd);
   const hasValidationRecord =
     /validat/i.test(item.financeStatus ?? "") ||

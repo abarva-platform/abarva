@@ -68,6 +68,8 @@ function isToolRollout(a: TowerAiView): boolean {
 }
 
 function financeAmount(a: TowerAiView): string {
+  if (a.financeValidatedAmountLoaded === false) return "Not verified";
+  if (a.financeValidatedAmountLoaded === true) return formatUsdM(a.financeValidatedUsd);
   const hasValidationRecord =
     /validat/i.test(a.financeStatus ?? "") ||
     a.financeApprovalEvents.some((event) =>
@@ -77,7 +79,7 @@ function financeAmount(a: TowerAiView): string {
       /validat/i.test(month.validationState ?? ""),
     );
   if (a.financeValidatedUsd === 0 && !hasValidationRecord) {
-    return "Not established in this record (projection displays $0)";
+    return "Amount not shown";
   }
   return formatUsdM(a.financeValidatedUsd);
 }

@@ -384,7 +384,9 @@ function toProgramView(
     usageSupportedUsd: usageSupported,
     usageSupportedValueMeasured,
     financeValidatedUsd: num(row.financeValidatedValueUsd),
+    financeValidatedAmountLoaded: row.financeValidatedAmountLoaded,
     claimableUsd: derived.claimableUsd,
+    claimableAmountLoaded: row.reportableClaimableValueUsd !== undefined && row.reportableClaimableValueUsd !== null,
     blockedUsd: blocked ?? 0,
     blockedValueComparable: blocked !== null,
     fundedAmountUsd: num(row.fundedAmount ?? row.approvedFundingUsd),
@@ -473,6 +475,7 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     promisedUsd: num(item.promisedValueUsd),
     promisedBenefitLoaded: item.promisedValueUsd !== null,
     financeValidatedUsd: num(item.financeValidatedValueUsd),
+    financeValidatedAmountLoaded: item.financeValidatedAmountLoaded,
     posture: postureFor(item),
     rolloutGoal: item.rolloutGoal ?? null,
     rolloutStage: item.rolloutStage ?? null,
@@ -805,6 +808,7 @@ const LANE_DECISION_VERB: Record<TowerLaneKey, string> = {
   freeze: "Unfreeze or stop",
   stop: "Stop or remediate",
   watch: "Keep watching or act on",
+  unclassified: "Review decision for",
 };
 
 function toEvidenceFactView(
@@ -1372,7 +1376,7 @@ function buildEvidenceMaturityView(
 
 // ── actions ────────────────────────────────────────────────────────────────
 
-const ACTION_LANES = new Set(["fund", "fix", "freeze", "stop"]);
+const ACTION_LANES = new Set(["fund", "fix", "freeze", "stop", "unclassified"]);
 
 function toActionView(
   action: TowerMartCxoAction,
@@ -1385,7 +1389,7 @@ function toActionView(
     id: action.actionKey,
     sequence: typeof action.sequence === "number" ? action.sequence : index + 1,
     ownerRole: trimOrNull(action.ownerHint) ?? "Unassigned",
-    lane: (ACTION_LANES.has(lane) ? lane : "fix") as TowerActionView["lane"],
+    lane: (ACTION_LANES.has(lane) ? lane : "unclassified") as TowerActionView["lane"],
     title: action.title,
     // The mart carries one narrative body per action. The design splits it into
     // "decision required" / "why now" / "evidence needed". We show the governed
@@ -1554,7 +1558,9 @@ export function buildTowerCommandCenterView(
     usageSupportedValueMeasured: measuredUsageClaimCount > 0,
     usageSupportedValueCoverage,
     financeValidatedUsd: num(command.partialFinanceValidatedValueYtd),
+    financeValidatedAmountLoaded: command.financeValidatedAmountLoaded,
     claimableUsd: command.claimableValue ?? claimable,
+    claimableAmountLoaded: command.claimableAmountLoaded,
     blockedUsd:
       command.blockedValueComparable === true &&
       command.comparableBlockedValue !== null &&
@@ -1703,4 +1709,5 @@ export const TOWER_LANE_META: ReadonlyArray<{
   { id: "fix", name: "Fix", sub: "Value real but blocked on evidence" },
   { id: "freeze", name: "Freeze", sub: "Funding ahead of proof — hold" },
   { id: "stop", name: "Stop", sub: "No verified value — terminate" },
+  { id: "unclassified", name: "Needs decision", sub: "No investment decision is recorded" },
 ];
