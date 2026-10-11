@@ -220,7 +220,7 @@ describe("mechanical Tower Command Center panels", () => {
 
     const text = document.body.textContent ?? "";
     expect(text).toContain("Not loaded");
-    expect(text).toContain("source and counting basis are verified");
+    expect(text).toContain("verified from the source files");
     // "cases", not "initiatives": the queue counts business cases, and a tool rollout carries a
     // business owner without being one.
     expect(text).toContain("1 of 1 cases have no sponsor loaded");
@@ -280,7 +280,8 @@ describe("mechanical Tower Command Center panels", () => {
     );
 
     expect(screen.getByText("Cost reduction")).toBeInTheDocument();
-    expect(screen.getByText("Clinical / Epic")).toBeInTheDocument();
+    expect(screen.getByText("Approved AI funding")).toBeInTheDocument();
+    expect(screen.queryByText("Clinical / Epic")).not.toBeInTheDocument();
     expect(screen.getByText("Usage-to-value support")).toHaveAttribute(
       "title",
       expect.stringContaining("mapped to the value claim"),
@@ -440,6 +441,34 @@ describe("mechanical Tower Command Center panels", () => {
     expect(document.body.textContent).not.toContain("carries no sponsor-stated value.");
   });
 
+  it("keeps yearly tool cost out of approved foundation funding", () => {
+    render(
+      <FoundationsPanel
+        view={viewWith({
+          allInitiatives: [
+            initiative({
+              id: "FOUND-FUNDED",
+              category: "Platform foundation",
+              aiAmountBasis: "approved_funding",
+              aiSpendUsd: 5 * M,
+            }),
+            initiative({
+              id: "TOOL-COST",
+              sourceFile: "23_ai_tool_rollout.csv",
+              category: "Platform foundation",
+              aiAmountBasis: "annualized_tool_cost",
+              aiSpendUsd: 10 * M,
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText("$5M in approved foundation funding is linked to $18M in projected yearly benefit.")).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("$15M");
+    expect(screen.getByText("100%")).toBeInTheDocument();
+  });
+
   it("does not invent an owner proof queue when loaded items are already validated", () => {
     render(
       <QueueOwnerPanel
@@ -583,7 +612,7 @@ describe("mechanical Tower Command Center panels", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Cost lens/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Funding and cost/i }));
 
     const text = document.body.textContent ?? "";
     expect(text).toContain("No cost findings are loaded for this portfolio.");

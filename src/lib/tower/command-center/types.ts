@@ -1,3 +1,5 @@
+import type { TowerAiAmountBasis } from "../current-layer-view-model";
+
 // Tower Command Center v2 — the shape the design consumes.
 //
 // This is the *presentation* contract for
@@ -63,8 +65,8 @@ export interface TowerPortfolioCountReconciliation {
 /**
  * Posture-tile / week-read aggregates. One per tenant.
  *
- * `usageSupportedUsd`, `claimableUsd` and `blockedUsd` are derived (§2.8 of the
- * handoff prompt); everything else is a mart column read straight through.
+ * Usage support and claimable value are derived. Blocked dollars require a
+ * period-matched source amount and a separate comparable flag.
  */
 export interface TowerCommandSummary {
   tenantKey: string;
@@ -95,6 +97,8 @@ export interface TowerCommandSummary {
   financeValidatedUsd: number;
   claimableUsd: number;
   blockedUsd: number;
+  /** False when blocked dollars cannot be compared on one reporting period. */
+  blockedValueComparable: boolean;
   valueClaimCount: number;
   knownValueClaimCount: number;
   financeValidatedBlockedUsd: number;
@@ -171,7 +175,7 @@ export interface TowerFunnelStage {
   unknownValueClaimCount: number;
   knownValueAmount: number | null;
   blockedClaimCount: number;
-  blockedKnownValueAmount: number;
+  blockedKnownValueAmount: number | null;
   primaryBlocker: string | null;
   primaryOwnerRole: string | null;
 }
@@ -229,6 +233,8 @@ export interface TowerProgramView {
   financeValidatedUsd: number;
   claimableUsd: number;
   blockedUsd: number;
+  /** False when the annual plan and loaded-month actuals are the only inputs. */
+  blockedValueComparable: boolean;
   fundedAmountUsd: number;
   knownSupportedValueUsd: number;
   proofMaturityScore: number;
@@ -343,6 +349,8 @@ export interface TowerAiView {
   riskScore: number;
   /** Bubble size. */
   aiSpendUsd: number;
+  /** What the item amount represents. */
+  aiAmountBasis: TowerAiAmountBasis;
   /** False when no spend was recorded — a tool rollout carries none. $0 is a different claim. */
   aiSpendLoaded: boolean;
   /** Initiative-detail fields for the drill-down. Null where the source recorded nothing. */
@@ -562,7 +570,7 @@ export interface TowerActionView {
   why: string;
   evidence: string;
   due: string | null;
-  amountExposedUsd: number;
+  amountExposedUsd: number | null;
   evidenceRequirement: string | null;
   expectedSourceSystem: string | null;
   evidencePackageId: string | null;

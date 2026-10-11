@@ -70,13 +70,13 @@ function groupBy(
     };
     map.set(name, {
       name,
-      investmentUsd: item.aiSpendLoaded
+      investmentUsd: item.aiAmountBasis === "approved_funding"
         ? (current.investmentUsd ?? 0) + item.aiSpendUsd
         : current.investmentUsd,
       valueUsd: item.promisedBenefitLoaded
         ? (current.valueUsd ?? 0) + item.promisedUsd
         : current.valueUsd,
-      missingInvestmentCount: current.missingInvestmentCount + (item.aiSpendLoaded ? 0 : 1),
+      missingInvestmentCount: current.missingInvestmentCount + (item.aiAmountBasis === "approved_funding" ? 0 : 1),
       missingValueCount: current.missingValueCount + (item.promisedBenefitLoaded ? 0 : 1),
     });
   }
@@ -149,7 +149,7 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
   const byType = groupBy(caseView, (item) => item.businessValueType);
   const missingTypes = cases.filter((item) => !item.businessValueType).length;
   const topType = byType.find((row) => row.name !== "Not loaded" && row.investmentUsd !== null);
-  const missingFunding = cases.filter((item) => !item.aiSpendLoaded).length;
+  const missingFunding = cases.filter((item) => item.aiAmountBasis !== "approved_funding").length;
   const missingBenefits = cases.filter((item) => !item.promisedBenefitLoaded).length;
 
   return (

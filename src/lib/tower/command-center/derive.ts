@@ -2,7 +2,7 @@
 //
 // The design at docs/design/tower/command-center-2026-07-23/ renders five
 // numbers per program that the governed Tower read model does not persist:
-// usage-supported value, claimable value, blocked value, evidence maturity
+// usage-supported value, claimable value, evidence maturity
 // (0–100) and proof level (0–3).
 //
 // They are derived here — in ONE place, deterministically, with the arithmetic
@@ -10,6 +10,8 @@
 // unit-tested against the mart's own inputs. Per AGENTS.md, Tower read models
 // own every value: nothing in this file consults a model, and every output is a
 // pure function of mart columns.
+// Blocked dollars are unavailable until a comparable, period-matched source
+// amount is supplied.
 //
 // Per the handoff prompt §2.8: do NOT add mart columns for these in this
 // change. If a derivation later needs to be persisted, that is its own
@@ -180,21 +182,18 @@ export function claimableUsd(row: {
 }
 
 /**
- * **Blocked value.**
- *
- *   blocked = promised − claimable
- *
- * Every promised dollar that cannot be booked today is blocked, whatever the
- * reason. This is the figure the "Top 5 blockers by dollar impact" table sorts
- * on, so it must stay a simple, explainable subtraction.
+ * A blocked-dollar total requires a period-matched source amount. An annual
+ * planning benefit cannot be reduced by Finance value from loaded months.
+ * Legacy rows do not carry that comparison proof, so no derived blocked-dollar
+ * amount is available. The annual plan and Finance-held amount remain separate.
  */
 export function blockedUsd(row: {
   promisedValueUsd: number | null;
   towerClaimAllowed: string;
   financeValidatedValueUsd: number;
-}): number {
-  const promised = Math.max(0, safeNum(row.promisedValueUsd));
-  return Math.max(0, promised - claimableUsd(row));
+}): null {
+  void row;
+  return null;
 }
 
 /**
@@ -353,7 +352,7 @@ export function laneFor(row: {
 export interface DerivedProgramValues {
   usageSupportedUsd: number;
   claimableUsd: number;
-  blockedUsd: number;
+  blockedUsd: number | null;
   evidenceMaturity: number;
   proofLevel: number;
   proofSequenceStatus: TowerProofSequenceStatus;

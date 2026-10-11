@@ -332,9 +332,11 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.actions[0]?.handoffEntityId).toBe("MOVE-001");
   });
 
-  it("derives blocked value as promised minus claimable", () => {
+  it("leaves blocked dollars unavailable when the periods differ", () => {
     const view = buildTowerCommandCenterView(mart(), { tenantName: "Demo" })!;
-    expect(view.summary.blockedUsd).toBe(35.5 * M);
+    expect(view.summary.blockedValueComparable).toBe(false);
+    expect(view.summary.blockedUsd).toBe(0);
+    expect(view.programs[0]?.blockedValueComparable).toBe(false);
   });
 
   it("keeps adoption-based dollar estimates out of the measured usage headline", () => {

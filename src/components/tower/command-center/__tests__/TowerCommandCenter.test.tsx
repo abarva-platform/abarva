@@ -138,7 +138,7 @@ describe("TowerCommandCenter", () => {
       screen.getByText("The three rules behind every number on this page"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Yearly benefit estimates on Finance-validated cases"),
+      screen.getByText("Yearly benefit estimates on cases checked by Finance"),
     ).toBeInTheDocument();
   });
 
@@ -148,7 +148,7 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("Value by evidence state")).toBeInTheDocument();
     expect(screen.getByText("Outcome evidence gap")).toBeInTheDocument();
     expect(
-      screen.getByText("Finance attestation gap"),
+      screen.getByText("Finance review gap"),
     ).toBeInTheDocument();
     expect(document.body).toHaveTextContent("Value cleared for reporting is not loaded");
   });
@@ -171,7 +171,7 @@ describe("TowerCommandCenter", () => {
     // The claim population is stated on the decision rail, which is where it now lives.
     goTo(TAB.decisions, /Decisions for this review/);
     expect(screen.queryByText(/969 claims/)).not.toBeInTheDocument();
-    expect(screen.getAllByText(/230 claims/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/230 value records/).length).toBeGreaterThan(0);
   });
 
   it("keeps approved investment, benefit, and claim populations distinct", () => {
@@ -196,7 +196,7 @@ describe("TowerCommandCenter", () => {
 
     // The populations must stay distinct on the rail: 230 value claims, never the 969-row queue.
     goTo(TAB.decisions, /Decisions for this review/);
-    expect(screen.getAllByText(/230 claims/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/230 value records/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/969 claims/)).not.toBeInTheDocument();
     expect(screen.queryByText(/1,619 open tasks/)).not.toBeInTheDocument();
     expect(
@@ -222,7 +222,7 @@ describe("TowerCommandCenter", () => {
     mockedSearchParams = new URLSearchParams("tab=executive&proof=stale");
     renderPage();
 
-    goTo(TAB.initiatives, /Value proof/);
+    goTo(TAB.initiatives, /Results and proof/);
 
     expect(tab(TAB.initiatives)).toHaveAttribute("aria-selected", "true");
     expect(replace).toHaveBeenCalledWith(
@@ -231,7 +231,7 @@ describe("TowerCommandCenter", () => {
     );
   });
 
-  it("opens AI Bets on Value proof by default", () => {
+  it("opens AI Bets on Results and proof by default", () => {
     renderPage();
     fireEvent.click(tab(TAB.initiatives));
 
@@ -239,7 +239,7 @@ describe("TowerCommandCenter", () => {
       "/tower/command?tab=initiatives&view=proof",
       { scroll: false },
     );
-    expect(screen.getByRole("tab", { name: /Value proof/ })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: /Results and proof/ })).toHaveAttribute(
       "aria-selected",
       "true",
     );
@@ -257,8 +257,8 @@ describe("TowerCommandCenter", () => {
 
   it("renders the Value Proof tab-specific contract layout", () => {
     renderPage();
-    goTo(TAB.initiatives, /Value proof/);
-    expect(screen.getAllByText("Value proof").length).toBeGreaterThan(0);
+    goTo(TAB.initiatives, /Results and proof/);
+    expect(screen.getAllByText("Results and proof").length).toBeGreaterThan(0);
     expect(
       screen.getByText("Portfolio amounts by measure"),
     ).toBeInTheDocument();
@@ -268,9 +268,9 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.queryByText("Seven gates · in order"),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Loaded quarterly trajectory")).toBeInTheDocument();
-    expect(screen.getByText("Claim ledger")).toBeInTheDocument();
-    expect(screen.getByText("Value case lanes")).toBeInTheDocument();
+    expect(screen.getByText("Quarterly plan and recorded results")).toBeInTheDocument();
+    expect(screen.getByText("Evidence recorded for each value claim")).toBeInTheDocument();
+    expect(screen.getByText("Cases awaiting a decision")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(
       screen.queryByRole("tab", { name: "Stacked" }),
@@ -282,7 +282,7 @@ describe("TowerCommandCenter", () => {
 
   it("renders the AI Portfolio tab-specific contract layout", () => {
     renderPage();
-    goTo(TAB.tools, /AI portfolio/);
+    goTo(TAB.tools, /All tools and cases/);
     expect(
       screen.getByText("AI initiatives and tool rollouts"),
     ).toBeInTheDocument();
@@ -292,14 +292,14 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByRole("tab", { name: /All initiatives\/tools/ }),
     ).toHaveAttribute("aria-selected", "true");
-    fireEvent.click(screen.getByRole("tab", { name: /Cost lens/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Funding and cost/ }));
     expect(
       screen.getByText("Approved AI funding by recorded type"),
     ).toBeInTheDocument();
     expect(screen.getByText("Funding and evidence gaps")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Risk lens/ }));
     expect(
-      screen.getByText(/value evidence gaps by amount at stake/),
+      screen.getByText(/evidence gaps by priority/),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/ }));
     expect(
@@ -381,7 +381,7 @@ describe("TowerCommandCenter", () => {
 
   it("renders the Evidence & Actions tab-specific contract layout", () => {
     const { container } = renderPage();
-    goTo(TAB.decisions, /Evidence queue/);
+    goTo(TAB.decisions, /What proof is missing/);
     expect(
       screen.getByText("Distinct review populations"),
     ).toBeInTheDocument();
@@ -413,7 +413,7 @@ describe("TowerCommandCenter", () => {
         },
       ],
     });
-    goTo(TAB.decisions, /Evidence queue/);
+    goTo(TAB.decisions, /What proof is missing/);
 
     expect(screen.getByText("Capture actuals")).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("measured_outcome");
@@ -451,6 +451,7 @@ describe("TowerCommandCenter", () => {
           id: "TOOL-DETAIL",
           name: "Power BI Copilot",
           sourceFile: "23_ai_tool_rollout.csv",
+          aiAmountBasis: "annualized_tool_cost",
           usageHeadline: "Usage evidence exists",
           usageBars: [
             { label: "Adoption", valueText: "30%", pct: 30, tone: "amber" },
@@ -477,7 +478,7 @@ describe("TowerCommandCenter", () => {
     const drawer = screen.getByRole("dialog");
     expect(within(drawer).getByText(/AI tool rollout/)).toBeInTheDocument();
     expect(within(drawer).getByText("Tool rollout detail")).toBeInTheDocument();
-    expect(within(drawer).getByText("Tool spend")).toBeInTheDocument();
+    expect(within(drawer).getByText("Yearly tool cost")).toBeInTheDocument();
     expect(
       within(drawer).getByText("self-service analytics assistance"),
     ).toBeInTheDocument();
@@ -513,13 +514,13 @@ describe("TowerCommandCenter", () => {
         },
       ],
     });
-    goTo(TAB.decisions, /Evidence queue/);
+    goTo(TAB.decisions, /What proof is missing/);
 
     expect(screen.getByText("Source contract actions")).toBeInTheDocument();
     expect(
       screen.getByText("Archive dormant source licenses before true-up"),
     ).toBeInTheDocument();
-    expect(screen.getByText("$99M")).toBeInTheDocument();
+    expect(screen.getByText("$99M / year potential")).toBeInTheDocument();
 
     clickFirstButtonContaining(
       "Archive dormant source licenses before true-up",
@@ -536,7 +537,7 @@ describe("TowerCommandCenter", () => {
 
   it("opens the program drawer from Value Proof decision lanes", () => {
     renderPage();
-    goTo(TAB.initiatives, /Value proof/);
+    goTo(TAB.initiatives, /Results and proof/);
     const firstProgram = [...view.programs].sort(
       (a, b) => b.blockedUsd - a.blockedUsd,
     )[0]!;
@@ -544,12 +545,12 @@ describe("TowerCommandCenter", () => {
 
     const drawer = screen.getByRole("dialog");
     expect(within(drawer).getByText(firstProgram.name)).toBeInTheDocument();
-    expect(within(drawer).getByText("Value proof chain")).toBeInTheDocument();
+    expect(within(drawer).getByText("Steps to report a benefit")).toBeInTheDocument();
   });
 
   it("opens the AI initiative drawer from the portfolio table", () => {
     renderPage();
-    goTo(TAB.tools, /AI portfolio/);
+    goTo(TAB.tools, /All tools and cases/);
     const firstAi = [...view.allInitiatives].sort(
       (a, b) => b.aiSpendUsd - a.aiSpendUsd || a.name.localeCompare(b.name),
     )[0]!;
@@ -562,7 +563,7 @@ describe("TowerCommandCenter", () => {
 
   it("opens the evidence gap drawer from the owner queue", () => {
     renderPage();
-    goTo(TAB.decisions, /Evidence queue/);
+    goTo(TAB.decisions, /What proof is missing/);
     const firstGap = [...view.gaps].sort(
       (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
     )[0]!;
@@ -575,7 +576,7 @@ describe("TowerCommandCenter", () => {
 
   it("opens the action drawer from an action campaign and keeps routing disabled", () => {
     renderPage();
-    goTo(TAB.decisions, /Evidence queue/);
+    goTo(TAB.decisions, /What proof is missing/);
     const firstAction = [...view.actions].sort(
       (a, b) => a.sequence - b.sequence,
     )[0]!;

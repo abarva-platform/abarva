@@ -514,7 +514,7 @@ function buildRows(options) {
     usage_supported_value_usd: "null",
     finance_validated_value_usd: "null",
     claimable_value_usd: sqlNum(data.summary.board_claimable_ytd_usd),
-    blocked_value_usd: sqlNum(num(data.summary.projected_annual_value_low_usd) - num(data.summary.board_claimable_ytd_usd)),
+    blocked_value_usd: "null",
     proof_maturity_score: "null",
     risk_pressure_score: "null",
     usage_strength_score: "null",
@@ -672,7 +672,7 @@ function buildRows(options) {
       usage_supported_value_usd: "null",
       finance_validated_value_usd: sqlNum(actual.financeValidated),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       proof_maturity_score: sqlNum(row.readiness_score),
       risk_pressure_score: sqlNum(100 - num(row.readiness_score)),
       usage_strength_score: "null",
@@ -728,7 +728,7 @@ function buildRows(options) {
       current_value: actual.financeValidated > 0 ? sqlNum(actual.financeValidated) : "null",
       target_value: sqlNum(row.projected_annual_value_high_usd),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       value_state: sqlText(num(row.projected_annual_value_low_usd) > 0 ? "estimated" : "known"),
       quality_state: sqlText("passed"),
       source_refs_json: sqlJson(refs),
@@ -773,7 +773,7 @@ function buildRows(options) {
       current_value: "null",
       target_value: sqlNum(row.projected_annual_value_low_usd),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       value_state: sqlText("known"),
       quality_state: sqlText("passed"),
       source_refs_json: sqlJson(refs),
@@ -841,7 +841,7 @@ function buildRows(options) {
         finance_status: queueRow.finance_status,
         proof_needed: queueRow.proof_needed,
         next_action: queueRow.next_action,
-        blocked_value_usd: Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable),
+        blocked_value_usd: null,
         owner_role: project?.sponsor_role ?? "program_sponsor",
         layer4_build_version: options.buildVersion,
       };
@@ -881,7 +881,7 @@ function buildRows(options) {
     const actionPayload = {
       ...queueRow,
       page_key: "recommended_actions",
-      blocked_value_usd: Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable),
+      blocked_value_usd: null,
       owner_role: project?.sponsor_role ?? "program_sponsor",
       handoff_module: "Tower",
       title: queueRow.next_action,
@@ -911,7 +911,7 @@ function buildRows(options) {
       usage_supported_value_usd: "null",
       finance_validated_value_usd: "null",
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       proof_maturity_score: sqlNum(useCase.readiness_score),
       risk_pressure_score: sqlNum(100 - num(useCase.readiness_score)),
       usage_strength_score: "null",
@@ -1331,9 +1331,6 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
     const useCase = casesById.get(row.business_case_id);
     if (!useCase) continue;
     const refs = [sourceRef(options, useCase, { business_case_id: row.business_case_id })];
-    const actual = {
-      boardClaimable: sumBy(observationsByCase.get(row.business_case_id) ?? [], "board_claimable_value_usd"),
-    };
     const project = projectsById.get(useCase.project_id);
     const sliceId = addCubeSlice(
       ctx,
@@ -1347,7 +1344,7 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
         owner_role: project?.sponsor_role ?? "program_sponsor",
       },
       {
-        blocked_value_usd: Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable),
+        blocked_value_usd: null,
         projected_annual_value_low_usd: num(row.projected_annual_value_low_usd),
       },
       ["use_case_promised_annual_value_low_usd"],

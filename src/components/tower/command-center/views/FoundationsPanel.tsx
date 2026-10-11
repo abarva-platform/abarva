@@ -18,6 +18,7 @@ import {
   formatPct,
   formatUsdM,
 } from "@/lib/tower/command-center/format";
+import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 
 type FoundationRow = {
   readonly item: TowerAiView;
@@ -41,13 +42,9 @@ function isFoundation(item: TowerAiView): boolean {
   return /\b(foundation|platform|governance)\b/i.test(item.category ?? "");
 }
 
-function totalAiSpend(view: TowerCommandCenterView): number {
-  return view.allInitiatives.reduce((sum, item) => sum + item.aiSpendUsd, 0);
-}
-
 function foundationRows(view: TowerCommandCenterView): readonly FoundationRow[] {
   return view.allInitiatives
-    .filter(isFoundation)
+    .filter((item) => isBusinessCase(item) && isFoundation(item))
     .map((item) => ({
       item,
       valueLabel: item.promisedBenefitLoaded ? formatUsdM(item.promisedUsd) : "Not loaded",
@@ -76,13 +73,14 @@ function hasHave(count: number): string {
 
 export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
   const rows = foundationRows(view);
-  const spendUsd = rows.reduce((sum, row) => sum + row.item.aiSpendUsd, 0);
-  const missingSpendRows = rows.filter((row) => !row.item.aiSpendLoaded).length;
+  const spendUsd = rows.reduce((sum, row) => sum + (row.item.aiAmountBasis === "approved_funding" ? row.item.aiSpendUsd : 0), 0);
+  const missingSpendRows = rows.filter((row) => row.item.aiAmountBasis !== "approved_funding").length;
   const loadedValueRows = rows.filter((row) => row.item.promisedBenefitLoaded);
   const promisedUsd = loadedValueRows.reduce((sum, row) => sum + row.item.promisedUsd, 0);
   const missingValueRows = rows.length - loadedValueRows.length;
-  const share = missingSpendRows === 0 && view.allInitiatives.every((item) => item.aiSpendLoaded) && totalAiSpend(view) > 0
-    ? Math.round((spendUsd / totalAiSpend(view)) * 100)
+  const allCaseFunding = approvedAiCaseFunding(view.allInitiatives);
+  const share = missingSpendRows === 0 && allCaseFunding !== null && allCaseFunding > 0
+    ? Math.round((spendUsd / allCaseFunding) * 100)
     : null;
   const allLoadedValuesAreZero = loadedValueRows.length > 0 && missingValueRows === 0 && promisedUsd === 0;
   const noRows = rows.length === 0;
@@ -112,7 +110,7 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
 
       <p style={{ margin: "-10px 0 0", maxWidth: 980, fontSize: 15, lineHeight: 1.55, color: "var(--canon-gray-700)" }}>
         These records are labeled as platform, governance or foundation work. Their approved
-        funding is already included in the AI funding total; do not add it again. The cases
+        funding is part of the AI case funding total; do not add it again. The cases
         they support are not linked here, so their funding or benefits cannot be assigned to
         a particular downstream case.
       </p>
@@ -184,7 +182,7 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
               </span>
               <span style={{ color: "var(--canon-gray-500)" }}>{item.category ?? item.kind}</span>
               <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
-                {item.aiSpendLoaded ? formatUsdM(item.aiSpendUsd) : "Not loaded"}
+                {item.aiAmountBasis === "approved_funding" ? formatUsdM(item.aiSpendUsd) : "Not verified"}
               </span>
               <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
                 {costRange(item)}

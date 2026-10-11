@@ -531,9 +531,11 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.command.promisedValueFy26).toBe(677763373);
     expect(mart?.command.claimableValue).toBe(13136248);
     expect(mart?.command.partialFinanceValidatedValueYtd).toBe(900000);
-    expect(mart?.command.financeValidationRatio).toBeCloseTo(
-      900000 / 2500000,
-    );
+    expect(mart?.command.financeValidationRatio).toBeNull();
+    expect(mart?.command.blockedValueComparable).toBe(false);
+    expect(mart?.command.comparableBlockedValue).toBeNull();
+    expect(mart?.programLanes[0]?.amountBlocked).toBeNull();
+    expect(mart?.programLanes[0]?.blockedAmountComparable).toBe(false);
     expect(mart?.aiPortfolio).toHaveLength(2);
     expect(mart?.aiPortfolio.map((row) => row.aiPortfolioKey)).toContain(
       "TOOL-MER-001",
@@ -553,11 +555,17 @@ describe("readTowerCommandCenter", () => {
     expect(aiCase?.aiSpendCategory).toBe("Operations automation");
     expect(aiCase?.approvedFundingUsd).toBe(10400000);
     expect(aiCase?.aiTaggedSpendUsd).toBe(10400000);
+    expect(aiCase?.aiAmountBasis).toBe("approved_funding");
     expect(aiCase?.promisedValueUsd).toBe(51180318);
     expect(aiCase?.financeValidatedValueUsd).toBe(1200000);
     expect(aiCase?.usageMetric).toBeNull();
     expect(aiCase?.usageActual).toBeNull();
     expect(aiCase?.adoptionRatePct).toBeNull();
+    const tool = mart?.aiPortfolio.find(
+      (row) => row.aiPortfolioKey === "TOOL-MER-001",
+    );
+    expect(tool?.aiAmountBasis).toBe("unknown");
+    expect(tool?.aiSpendLoaded).toBe(false);
   });
 
   it("maps ECL serving rows with recorded periods into value trajectory points", async () => {
@@ -644,5 +652,220 @@ describe("readTowerCommandCenter", () => {
     });
 
     expect(mart?.valueTrajectory).toEqual([]);
+  });
+
+  it.each([
+    "source_cloud_value_gate",
+    "source_contract_depth_value_gate",
+  ])("keeps legacy %s spend out of benefit and outcome measures", async (rowType) => {
+    const opportunity = {
+      ...servingRow({
+        row_key: "candidate-opportunity",
+        page_key: "value_proof",
+        promised_value_usd: undefined,
+        baseline_value: "12000000",
+        current_value: "9000000",
+        target_value: "3000000",
+        blocked_value_usd: "3000000",
+        period_start: "2026-01-01",
+        period_end: "2026-12-31",
+        fiscal_quarter: "2026-Q4",
+        display_payload_json: {
+          bridge_source: "source_cloud_consumption_layer4",
+          annual_value_exposed: "3000000",
+          addressable_spend: "12000000",
+          actual_annual_spend: "9000000",
+        },
+      }),
+      row_type: rowType,
+    };
+    mockServingRows({
+      tower_command_center: [
+        servingRow({
+          row_key: "executive_summary",
+          page_key: "command_center",
+          promised_value_usd: undefined,
+          display_payload_json: {},
+        }),
+      ],
+      tower_value_proof: [opportunity],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+
+    expect(mart?.command.promisedValueFy26).toBeNull();
+    expect(mart?.command.knownValueAmountUsd).toBe(0);
+    expect(mart?.command.promisedValueExposure).toBeNull();
+    expect(mart?.command.valueClaimCount).toBe(1);
+    expect(mart?.command.knownValueClaimCount).toBe(0);
+    expect(mart?.command.unknownValueClaimCount).toBe(1);
+    expect(mart?.command.baselineLinkedClaimCount).toBe(0);
+    expect(mart?.command.targetLinkedClaimCount).toBe(0);
+    expect(mart?.command.actualLinkedClaimCount).toBe(0);
+    expect(mart?.command.outcomeMeasuredClaimCount).toBe(0);
+    expect(mart?.valueFunnel[0]?.valueNumeric).toBeNull();
+    expect(mart?.valueFunnel[0]?.knownValueClaimCount).toBe(0);
+    expect(mart?.valueFunnel[0]?.unknownValueClaimCount).toBe(1);
+    expect(mart?.valueTrajectory).toEqual([]);
+    expect(mart?.command.sourceFiles).toContain("SP08_Vendor_Contract");
+  });
+
+  it("uses an annual source amount for actions and leaves absent amounts unloaded", async () => {
+    mockServingRows({
+      tower_command_center: [
+        servingRow({ row_key: "executive_summary", page_key: "command_center" }),
+      ],
+      tower_recommended_actions: [
+        servingRow({
+          row_key: "annual-action",
+          page_key: "recommended_actions",
+          blocked_value_usd: "9000000",
+          projected_annual_value_low_usd: "2500000",
+        }),
+        servingRow({
+          row_key: "unloaded-action",
+          page_key: "recommended_actions",
+          blocked_value_usd: "9000000",
+          projected_annual_value_low_usd: undefined,
+        }),
+      ],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+
+    expect(mart?.cxoActions.map((action) => action.amountExposed)).toEqual([
+      2500000,
+      null,
+    ]);
+  });
+
+  it("accepts blocked dollars only with matching source periods", async () => {
+    mockServingRows({
+      tower_command_center: [
+        servingRow({ row_key: "executive_summary", page_key: "command_center" }),
+      ],
+      tower_decision_lanes: [
+        servingRow({
+          row_key: "matched",
+          blocked_value_usd: "300000",
+          blocked_value_basis: "same_period_claim_gap",
+          blocked_value_period_start: "2026-01-01",
+          blocked_value_period_end: "2026-03-31",
+          claimable_value_period_start: "2026-01-01",
+          claimable_value_period_end: "2026-03-31",
+        }),
+        servingRow({
+          row_key: "mismatched",
+          blocked_value_usd: "700000",
+          blocked_value_basis: "same_period_claim_gap",
+          blocked_value_period_start: "2026-01-01",
+          blocked_value_period_end: "2026-12-31",
+          claimable_value_period_start: "2026-01-01",
+          claimable_value_period_end: "2026-03-31",
+        }),
+      ],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+    expect(mart?.programLanes[0]?.amountBlocked).toBe(300000);
+    expect(mart?.programLanes[0]?.blockedAmountComparable).toBe(true);
+    expect(mart?.programLanes[1]?.amountBlocked).toBeNull();
+    expect(mart?.programLanes[1]?.blockedAmountComparable).toBe(false);
+  });
+
+  it("does not turn annualized tool cost into approved program funding", async () => {
+    const toolRow = servingRow({
+      row_key: "tool-rollout",
+      page_key: "ai_portfolio",
+      funded_amount_usd: undefined,
+      monthly_cost_usd: "10000",
+      display_payload_json: {
+        item_kind: "tool_rollout",
+        monthly_cost_usd: "10000",
+      },
+    });
+    mockServingRows({
+      tower_command_center: [
+        servingRow({
+          row_key: "executive_summary",
+          page_key: "command_center",
+          funded_amount_usd: undefined,
+          display_payload_json: {},
+        }),
+      ],
+      tower_ai_portfolio: [toolRow],
+    });
+
+    const withoutDecision = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+    expect(withoutDecision?.command.approvedProgramBudgetFy26).toBeNull();
+    expect(withoutDecision?.aiPortfolio[0]).toMatchObject({
+      approvedFundingUsd: 0,
+      aiTaggedSpendUsd: 120000,
+      aiAmountBasis: "annualized_tool_cost",
+      aiSpendLoaded: true,
+    });
+    const view = buildTowerCommandCenterView(withoutDecision, {
+      tenantName: "Example",
+    });
+    expect(view?.allInitiatives[0]?.aiAmountBasis).toBe(
+      "annualized_tool_cost",
+    );
+
+    mockServingRows({
+      tower_command_center: [
+        servingRow({
+          row_key: "executive_summary",
+          page_key: "command_center",
+          funded_amount_usd: undefined,
+          display_payload_json: {},
+        }),
+      ],
+      tower_decision_lanes: [
+        servingRow({ page_key: "decision_lanes", funded_amount_usd: "50000" }),
+      ],
+      tower_ai_portfolio: [toolRow],
+    });
+
+    const withDecision = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+    expect(withDecision?.command.approvedProgramBudgetFy26).toBe(50000);
+    expect(withDecision?.aiPortfolioCounts?.funded).toBe(0);
+
+    mockServingRows({
+      tower_command_center: [
+        servingRow({
+          row_key: "executive_summary",
+          page_key: "command_center",
+          promised_value_usd: undefined,
+          display_payload_json: {},
+        }),
+      ],
+      tower_ai_portfolio: [
+        servingRow({
+          row_key: "unpriced-tool",
+          page_key: "ai_portfolio",
+          funded_amount_usd: undefined,
+          monthly_cost_usd: "10000",
+          display_payload_json: { item_kind: "tool_rollout" },
+        }),
+      ],
+    });
+    const withoutRecordedCost = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+    expect(withoutRecordedCost?.aiPortfolio[0]).toMatchObject({
+      aiTaggedSpendUsd: 0,
+      aiAmountBasis: "unknown",
+      aiSpendLoaded: false,
+    });
   });
 });

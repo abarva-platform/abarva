@@ -96,4 +96,23 @@ describe("Source cloud to Tower bridge", () => {
     expect(script).not.toContain("c.renewal_notice_date");
     expect(script).not.toContain("projection_entry_source_record_ref");
   });
+
+  it("writes candidate exposure separately from benefit and outcome columns", () => {
+    const script = fs.readFileSync(scriptPath, "utf8");
+    const valueRow = script.slice(
+      script.indexOf("async function upsertValueRow("),
+      script.indexOf("async function upsertEvidenceRow("),
+    );
+
+    expect(valueRow).toContain("annual_value_exposed");
+    expect(valueRow).toContain("JSON.stringify(refs)");
+    expect(valueRow).toContain("JSON.stringify(payload)");
+    expect(valueRow).toMatch(
+      /JSON\.stringify\(gate\.evidenceNeeded\),\s+null,\s+null,\s+null,\s+Number\(opportunity\.annual_value_exposed/,
+    );
+    expect(valueRow).not.toContain("business_case_value_usd:");
+    expect(valueRow).not.toContain("risk_adjusted_forecast_usd:");
+    expect(valueRow).not.toContain("period_start:");
+    expect(script).toContain("actual_annual_spend: row.actual_annual_spend == null ? null");
+  });
 });

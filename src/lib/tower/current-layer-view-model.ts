@@ -28,6 +28,9 @@ export interface TowerMartCommandCenter {
   claimableValue?: number;
   financeValidatedBlockedValue?: number;
   promisedValueExposure?: number | null;
+  /** True only when a blocked amount and cleared amount cover the same period. */
+  blockedValueComparable?: boolean;
+  comparableBlockedValue?: number | null;
   totalProgramSubjectCount?: number;
   activeProgramSubjectCount?: number;
   materialProgramCount?: number;
@@ -73,7 +76,7 @@ export interface TowerMartValueFunnelStage {
   unknownValueClaimCount?: number;
   knownValueAmount?: number | null;
   blockedClaimCount?: number;
-  blockedKnownValueAmount?: number;
+  blockedKnownValueAmount?: number | null;
   primaryBlocker?: string | null;
   primaryOwnerRole?: string | null;
   denominatorStageKey: string | null;
@@ -144,6 +147,7 @@ export interface TowerMartProgramLane {
   lineageTrustState?: string | null;
   decisionReasonCode?: string | null;
   amountBlocked?: number | null;
+  blockedAmountComparable?: boolean;
   nextGate?: string | null;
   usageMetric: string | null;
   usageActual: number | null;
@@ -188,6 +192,11 @@ export interface TowerMartValueObservationMonth {
   validationState: string | null;
 }
 
+export type TowerAiAmountBasis =
+  | "approved_funding"
+  | "annualized_tool_cost"
+  | "unknown";
+
 export interface TowerMartAiPortfolioItem {
   aiPortfolioKey: string;
   itemName: string;
@@ -200,6 +209,8 @@ export interface TowerMartAiPortfolioItem {
   decisionLane: "fund" | "fix" | "freeze" | "stop";
   approvedFundingUsd: number;
   aiTaggedSpendUsd: number;
+  /** Distinguishes an approved allocation from a yearly tool-cost estimate. */
+  aiAmountBasis?: TowerAiAmountBasis;
   /** Whether any spend was recorded. The value above is coerced to 0 when nothing was. */
   aiSpendLoaded?: boolean;
   /** Initiative-detail fields, each carried from its own canonical column. */
@@ -278,7 +289,7 @@ export interface TowerMartCxoAction {
   claimId?: string | null;
   proofStage?: string | null;
   blockedDecision?: string | null;
-  amountExposed?: number;
+  amountExposed?: number | null;
   evidenceRequirement?: string | null;
   expectedSourceSystem?: string | null;
   evidencePackageId?: string | null;

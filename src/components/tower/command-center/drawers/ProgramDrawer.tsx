@@ -46,20 +46,20 @@ const PLAIN_TONE = {
 export function plainProgram(p: TowerProgramView): string {
   if (!p.promisedBenefitLoaded) {
     const gate = p.nextGate ? ` The next unlock is ${p.nextGate}.` : "";
-    return `${formatUsdM(p.fundedUsd)} is approved investment. Explicit source-backed benefit is not loaded, so Tower does not convert this program into a board value claim yet.${gate}`;
+    return `${formatUsdM(p.fundedUsd)} is approved funding. A projected direct benefit is not loaded, so Tower cannot count one here.${gate}`;
   }
   if (p.promisedUsd <= 0) {
-    return "No explicit source-backed benefit is loaded here. It matters for investment posture and proof follow-up, not the economic benefit total.";
+    return "This case records $0 in projected direct benefit. It may help other cases, but that link is not recorded here, so no downstream benefit is assigned to it.";
   }
   const claim =
     p.claimableUsd > 0
-      ? `${formatUsdM(p.claimableUsd)} of it is claimable today`
-      : "none of it is claimable yet";
+      ? `${formatUsdM(p.claimableUsd)} has cleared reporting in the loaded months`
+      : "none has cleared reporting in the loaded months";
   const because = p.blocker
     ? ` — because ${p.blocker.charAt(0).toLowerCase()}${p.blocker.slice(1).replace(/\.$/, "")}`
     : "";
   const gate = p.nextGate ? ` The next unlock is ${p.nextGate}.` : "";
-  return `Of ${formatUsdM(p.promisedUsd)} in explicit source-backed benefit, ${claim}${because}. It sits in the ${LANE_WORD[p.lane]} lane.${gate}`;
+  return `This case projects ${formatUsdM(p.promisedUsd)} in yearly benefit. ${claim.charAt(0).toUpperCase()}${claim.slice(1)}${because}. Its decision status is ${LANE_WORD[p.lane]}.${gate}`;
 }
 
 export function ProgramDrawer({
@@ -78,13 +78,13 @@ export function ProgramDrawer({
   const chain = p
     ? ([
         [
-          "Explicit source-backed benefit",
+          "Projected yearly benefit",
           p.promisedBenefitLoaded ? p.promisedUsd : null,
           "",
-          "source-backed business-case benefit",
+          "the benefit estimated for this case, not an earned result",
         ],
         [
-          "Usage-supported",
+          "Value measured from use",
           p.usageSupportedValueMeasured ? p.usageSupportedUsd : null,
           p.usageSupportedValueMeasured && p.usageSupportedUsd > 0
             ? "teal"
@@ -94,22 +94,24 @@ export function ProgramDrawer({
             : "no independent usage value measurement recorded",
         ],
         [
-          "Finance-validated",
+          "Checked by Finance",
           p.financeValidatedUsd,
           p.financeValidatedUsd > 0 ? "teal" : "red",
           "Finance has signed the measurement method",
         ],
         [
-          "Claimable",
+          "Cleared for reporting",
           p.claimableUsd,
           p.claimableUsd > 0 ? "teal" : "red",
-          "cleared by the Tower claim gate",
+          "approved for reporting in the months loaded here",
         ],
         [
-          "Blocked",
-          p.promisedBenefitLoaded ? p.blockedUsd : null,
+          "Amount still under review",
+          p.blockedValueComparable ? p.blockedUsd : null,
           "red",
-          "benefit that cannot be claimed yet",
+          p.blockedValueComparable
+            ? "a comparable amount remains under review"
+            : "a yearly estimate cannot be subtracted from loaded-month results",
         ],
       ] as const)
     : [];
@@ -157,9 +159,9 @@ export function ProgramDrawer({
           </div>
 
           <div className={styles.drGrid}>
-            <DrawerStat label="Funded" value={formatUsdM(p.fundedUsd)} />
+            <DrawerStat label="Approved funding" value={formatUsdM(p.fundedUsd)} />
             <DrawerStat
-              label="Explicit source-backed benefit"
+              label="Projected direct benefit"
               value={
                 p.promisedBenefitLoaded
                   ? formatUsdM(p.promisedUsd)
@@ -168,20 +170,22 @@ export function ProgramDrawer({
             />
             <DrawerStat
               label="Finance-validated"
-              value={formatUsdM(p.financeValidatedUsd)}
+              value={p.financeValidatedUsd > 0 ? formatUsdM(p.financeValidatedUsd) : p.financeStatus === "validated" ? "Amount not shown" : "Not loaded"}
               small
               tone={p.financeValidatedUsd > 0 ? "vTeal" : undefined}
             />
             <DrawerStat
-              label="Claimable"
+              label="Cleared in loaded months"
               value={formatUsdM(p.claimableUsd)}
               small
               tone={p.claimableUsd > 0 ? "vTeal" : "vRed"}
             />
           </div>
 
-          <DrawerSection note="— where explicit source-backed benefit moves on the way to claimable">
-            Value proof chain
+          <DrawerSection note={p.blockedValueComparable
+            ? "— how a projected benefit moves toward an amount that can be reported"
+            : "— the yearly plan and loaded-month results cover different periods; do not subtract them"}>
+            Steps to report a benefit
           </DrawerSection>
           {chain.map(([label, value, tint, definition]) => (
             <DrawerRow
@@ -189,8 +193,10 @@ export function ProgramDrawer({
               label={label}
               sub={definition}
               value={
-                label === "Usage-supported" && !p.usageSupportedValueMeasured
+                label === "Value measured from use" && !p.usageSupportedValueMeasured
                   ? "Not measured"
+                  : label === "Amount still under review" && !p.blockedValueComparable
+                    ? "Not comparable"
                   : formatUsdM(value)
               }
               valueColor={chainColor(tint)}

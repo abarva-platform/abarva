@@ -356,7 +356,12 @@ function toProgramView(
   const usageSupportedValueMeasured =
     row.knownSupportedValue !== null &&
     row.knownSupportedValue !== undefined;
-  const blocked = row.amountBlocked ?? derived.blockedUsd;
+  const blocked =
+    row.blockedAmountComparable === true &&
+    typeof row.amountBlocked === "number" &&
+    Number.isFinite(row.amountBlocked)
+      ? Math.max(0, row.amountBlocked)
+      : derived.blockedUsd;
   const maturity = row.proofMaturityScore ?? derived.evidenceMaturity;
   return {
     id: trimOrNull(row.programCode) ?? row.laneKey ?? `P${index + 1}`,
@@ -379,7 +384,8 @@ function toProgramView(
     usageSupportedValueMeasured,
     financeValidatedUsd: num(row.financeValidatedValueUsd),
     claimableUsd: derived.claimableUsd,
-    blockedUsd: blocked,
+    blockedUsd: blocked ?? 0,
+    blockedValueComparable: blocked !== null,
     fundedAmountUsd: num(row.fundedAmount ?? row.approvedFundingUsd),
     knownSupportedValueUsd: usageSupported,
     proofMaturityScore: maturity,
@@ -399,7 +405,7 @@ function toProgramView(
     proofSequenceStatus: derived.proofSequenceStatus,
     proofSequenceExplanation: derived.proofSequenceExplanation,
     semanticSource: "derived_compatibility",
-    valueAtStakeUsd: Math.max(derived.valueAtStakeUsd, blocked),
+    valueAtStakeUsd: derived.valueAtStakeUsd,
 
     nextGate: trimOrNull(row.nextGate) ?? nextGateFor(row),
     blocker: trimOrNull(row.decisionRationale),
@@ -441,6 +447,7 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     controlBlockerReviewed: item.controlBlockerReviewed ?? false,
     sponsorRole: item.sponsorRole ?? null,
     aiSpendUsd: num(item.aiTaggedSpendUsd),
+    aiAmountBasis: item.aiAmountBasis ?? "unknown",
     // `aiTaggedSpendUsd` is typed `number`, so `!== null` was always true and this discarded
     // whatever the reader derived. The flag has to come from the reader, which is the only place
     // that can still see whether the source recorded a cost at all.
@@ -579,10 +586,7 @@ function toPipelineGapView(
 ): TowerEvidenceGapView {
   const linked = programByKey.get(gap.martRecordKey) ?? null;
   const field = humanize(gap.requiredField) ?? gap.requiredField;
-  const promisedValueExposedUsd = Math.max(
-    0,
-    num(linked?.promisedUsd) - num(linked?.claimableUsd),
-  );
+  const promisedValueExposedUsd = Math.max(0, num(linked?.promisedUsd));
   const validatedValueHeldUsd = Math.max(
     0,
     num(linked?.financeValidatedUsd) - num(linked?.claimableUsd),
@@ -603,10 +607,12 @@ function toPipelineGapView(
     priority: gapPriority(gap),
     blocking: gap.blocking,
     sourceTemplate: trimOrNull(gap.sourceTemplate),
-    valueAtStakeUsd: linked?.blockedUsd ?? null,
+    valueAtStakeUsd: linked?.promisedBenefitLoaded
+      ? linked.promisedUsd
+      : null,
     promisedValueExposedUsd,
     validatedValueHeldUsd,
-    claimableValueBlockedUsd: Math.max(0, num(linked?.blockedUsd)),
+    claimableValueBlockedUsd: validatedValueHeldUsd,
     sourceProgramId: linked?.id ?? null,
     sourceEvidenceRefs: [gap.sourceTemplate, gap.sourceRecordId].filter(
       Boolean,
@@ -674,12 +680,12 @@ export function deriveBusinessEvidenceGaps(
     if (p.promisedUsd <= 0) continue;
 
     const laneDecision = `${LANE_DECISION_VERB[p.lane]} ${p.name}`;
-    const promisedValueExposedUsd = Math.max(0, p.promisedUsd - p.claimableUsd);
+    const promisedValueExposedUsd = Math.max(0, p.promisedUsd);
     const validatedValueHeldUsd = Math.max(
       0,
       p.financeValidatedUsd - p.claimableUsd,
     );
-    const claimableValueBlockedUsd = Math.max(0, p.blockedUsd);
+    const claimableValueBlockedUsd = validatedValueHeldUsd;
     const sourceEvidenceRefs = [p.sourceFile].filter(Boolean) as string[];
     const programGaps: TowerEvidenceGapView[] = [];
 
@@ -754,8 +760,8 @@ export function deriveBusinessEvidenceGaps(
         linkedProgram: p.name,
         missing: `Claim-gate clearance for ${p.name}`,
         why:
-          `Finance has validated ${formatUsdM(p.financeValidatedUsd)}, but the Tower claim gate ` +
-          `has not cleared, so ${formatUsdM(p.blockedUsd)} stays unclaimable.`,
+          `Finance has validated ${formatUsdM(p.financeValidatedUsd)} in loaded months, but the Tower claim gate ` +
+          `has not cleared, so ${formatUsdM(validatedValueHeldUsd)} remains held. The projected annual benefit is a separate planning amount.`,
         blockedDecision: laneDecision,
         owner: p.financeOwnerRole ?? p.ownerRole,
         priority: "medium",
@@ -1390,7 +1396,7 @@ function toActionView(
       ? `Routes to ${action.moduleHandoff}.`
       : "No evidence package is recorded for this action in the mart.",
     due: trimOrNull(action.dueWindow) ?? trimOrNull(action.dueDate),
-    amountExposedUsd: action.amountExposed ?? 0,
+    amountExposedUsd: action.amountExposed ?? null,
     evidenceRequirement: trimOrNull(action.evidenceRequirement),
     expectedSourceSystem: trimOrNull(action.expectedSourceSystem),
     evidencePackageId: trimOrNull(action.evidencePackageId),
@@ -1548,11 +1554,16 @@ export function buildTowerCommandCenterView(
     usageSupportedValueCoverage,
     financeValidatedUsd: num(command.partialFinanceValidatedValueYtd),
     claimableUsd: command.claimableValue ?? claimable,
-    blockedUsd: Math.max(
-      0,
-      (command.promisedValueExposure ?? promised) -
-        (command.claimableValue ?? claimable),
-    ),
+    blockedUsd:
+      command.blockedValueComparable === true &&
+      command.comparableBlockedValue !== null &&
+      command.comparableBlockedValue !== undefined
+        ? Math.max(0, command.comparableBlockedValue)
+        : 0,
+    blockedValueComparable:
+      command.blockedValueComparable === true &&
+      command.comparableBlockedValue !== null &&
+      command.comparableBlockedValue !== undefined,
     valueClaimCount: num(command.valueClaimCount),
     knownValueClaimCount: num(command.knownValueClaimCount),
     financeValidatedBlockedUsd:
@@ -1622,7 +1633,7 @@ export function buildTowerCommandCenterView(
       unknownValueClaimCount: stage.unknownValueClaimCount ?? 0,
       knownValueAmount: stage.knownValueAmount ?? stage.valueNumeric,
       blockedClaimCount: stage.blockedClaimCount ?? 0,
-      blockedKnownValueAmount: stage.blockedKnownValueAmount ?? 0,
+      blockedKnownValueAmount: stage.blockedKnownValueAmount ?? null,
       primaryBlocker: trimOrNull(stage.primaryBlocker),
       primaryOwnerRole: trimOrNull(stage.primaryOwnerRole),
     }));

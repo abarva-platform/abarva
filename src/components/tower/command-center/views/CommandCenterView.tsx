@@ -13,7 +13,8 @@ import type {
 } from "@/lib/tower/command-center/types";
 import styles from "../TowerCommandCenter.module.css";
 import { cx } from "../primitives";
-import { isBusinessCase, isToolRollout } from "./portfolio-kind";
+import { approvedAiCaseFunding, isToolRollout } from "./portfolio-kind";
+import { byEvidencePriority, evidenceGapAmount } from "./evidence-gap-amount";
 
 interface ExecutiveMetric {
   label: string;
@@ -60,12 +61,6 @@ function aiToolRolloutCount(view: TowerCommandCenterView): number {
   return Math.max(0, view.allInitiatives.length - view.programs.length);
 }
 
-function aiCaseFunding(view: TowerCommandCenterView): number | null {
-  const cases = view.allInitiatives.filter(isBusinessCase);
-  if (cases.length === 0 || cases.some((item) => !item.aiSpendLoaded)) return null;
-  return cases.reduce((total, item) => total + item.aiSpendUsd, 0);
-}
-
 function toolCostGap(view: TowerCommandCenterView): string {
   const tools = view.allInitiatives.filter(isToolRollout);
   const missing = tools.filter((item) => !item.aiSpendLoaded).length;
@@ -102,43 +97,44 @@ function executiveHeadline(view: TowerCommandCenterView): string {
   if (claims <= 0) {
     return `Tower view: ${formatLoadedUsdM(
       s.approvedInvestmentUsd,
-    )} in approved project funding. Value cleared for reporting is not loaded. No benefit claims are loaded.`;
+    )} in approved project funding. Value cleared for reporting is not loaded. No value records are loaded.`;
   }
 
   return `Tower view: ${formatLoadedUsdM(s.approvedInvestmentUsd)} in approved project funding. ${formatUsdM(
     s.claimableUsd,
   )} cleared for reporting in the loaded months. ${formatCount(openClaimCount(view))} of ${formatCount(
     claims,
-  )} benefit claims still need proof.`;
+  )} value records do not show an amount cleared for reporting.`;
 }
 
 function executiveSummary(view: TowerCommandCenterView): string {
   const s = view.summary;
   const claims = valueClaimCount(view);
-  const caseFunding = aiCaseFunding(view);
+  const caseFunding = approvedAiCaseFunding(view.allInitiatives);
   const fundingSentence = caseFunding === null
     ? "The approved AI case funding amount is not fully loaded."
     : `This includes ${formatUsdM(caseFunding)} in approved funding for AI business cases.`;
   if (claims <= 0) {
     return `${view.summary.tenantName} has ${formatLoadedUsdM(
       s.approvedInvestmentUsd,
-    )} in the reviewed project portfolio. ${fundingSentence}${toolCostGap(view)} No benefit claims are loaded yet, so Tower cannot assess their value.`;
+    )} in the reviewed project portfolio. ${fundingSentence}${toolCostGap(view)} No value records are loaded yet, so Tower cannot assess their value.`;
   }
 
   return `${view.summary.tenantName} has ${formatLoadedUsdM(
     s.approvedInvestmentUsd,
-  )} in the reviewed project portfolio. ${fundingSentence}${toolCostGap(view)} Business cases project ${formatUsdM(
+  )} in the reviewed project portfolio. ${fundingSentence}${toolCostGap(view)} The loaded claims project ${formatUsdM(
     s.promisedUsd,
   )} in yearly benefit; ${formatUsdM(
     s.claimableUsd,
   )} cleared the reporting gate in the loaded months, and ${formatCount(
     Math.max(0, claims - s.claimableClaimCount),
-  )} benefit claims have not cleared that gate. Each claim type needs its own evidence review.`;
+  )} value records do not show an amount cleared for reporting. Each type needs its own evidence review.`;
 }
 
 function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   const s = view.summary;
   const claims = valueClaimCount(view);
+  const caseFunding = approvedAiCaseFunding(view.allInitiatives);
   const emitting = view.ai.filter(
     (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
   ).length;
@@ -159,8 +155,8 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
       value: claims <= 0 ? "Not loaded" : formatUsdM(s.promisedUsd),
       note:
         claims <= 0
-          ? "No value claims loaded; no asserted benefit population."
-          : `${formatCount(claims)} claims · business-case estimates, not proven savings`,
+          ? "No value records are loaded, so there is no yearly estimate to show."
+          : "A planning estimate, not proven savings; the claim list can contain different kinds of opportunities",
       tone: claims <= 0 ? "gray" : "amber",
     },
     {
@@ -169,10 +165,10 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
       value: claims <= 0 ? "Not loaded" : formatUsdM(s.claimableUsd),
       note:
         claims <= 0
-          ? "No value claims loaded for Finance attestation."
+          ? "No value records are loaded for Finance review."
           : `${formatCount(s.financeAttestedClaimCount)} of ${formatCount(
               claims,
-            )} claims attested by Finance`,
+            )} value records have Finance sign-off`,
       tone: claims <= 0 ? "gray" : s.claimableUsd > 0 ? "teal" : "red",
     },
     {
@@ -181,7 +177,7 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
       value: `${formatCount(s.aiInitiativeCount)}`,
       note: `${formatCount(view.programs.length)} AI business cases + ${formatCount(
         aiToolRolloutCount(view),
-      )} tool rollouts · ${aiCaseFunding(view) === null ? "AI case funding incomplete" : `${formatUsdM(aiCaseFunding(view) as number)} approved AI case funding`}`,
+      )} tool rollouts · ${caseFunding === null ? "AI case funding incomplete" : `${formatUsdM(caseFunding)} approved AI case funding`}`,
       tone: emitting > 0 ? "teal" : "red",
     },
     {
@@ -239,7 +235,7 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       order: "3",
       kicker: "Assign · only then",
       title: "Review which financial claims need Finance sign-off",
-      detail: `${formatCount(claimsMissingFinance)} claims have no Finance attestation recorded. Check which claim types require it before adding anything to a board figure. ${formatUsdM(s.claimableUsd)} has cleared the reporting gate in the loaded months.`,
+      detail: `${formatCount(claimsMissingFinance)} value records have no Finance sign-off recorded. Check which types require it before reporting a dollar benefit. ${formatUsdM(s.claimableUsd)} has cleared reporting in the loaded months.`,
       metricLabel: "Finance sign-offs recorded",
       metricValue: formatCount(s.financeAttestedClaimCount),
       due: "Following review",
@@ -255,7 +251,7 @@ function evidenceFooterCount(view: TowerCommandCenterView): number {
 
 function evidenceQueue(gaps: readonly TowerEvidenceGapView[]) {
   return [...gaps]
-    .sort((a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0))
+    .sort(byEvidencePriority)
     .slice(0, 5);
 }
 
@@ -455,19 +451,19 @@ export function CommandCenterView({
           <strong>{claims > 0 ? `${formatCount(missingActualClaims)} of ${formatCount(claims)}` : "Not loaded"}</strong>
           <p>
             {claims > 0
-              ? "claims have no outcome-measured flag in the governed Tower read. Their monetary amount cannot be inferred from usage support."
-              : "No asserted-benefit population is loaded yet. Tower cannot mark value as proven or unproven without claims."}
+              ? "value records have no measured result. A tool being used does not by itself prove a dollar benefit."
+              : "No value records are loaded yet, so Tower cannot tell which results have been proven."}
           </p>
         </article>
         <article className={styles.findingTeal}>
           <div className={styles.findingKicker}>
-            Finance attestation gap
+            Finance review gap
           </div>
           <strong>{claims > 0 ? `${formatCount(missingFinanceClaims)} of ${formatCount(claims)}` : "Not loaded"}</strong>
           <p>
             {claims > 0
               ? `claims have no Finance sign-off recorded. Check which claim types need one before adding them to a board figure. ${formatUsdM(s.claimableUsd)} has cleared the reporting gate in the loaded months.`
-              : "No Finance-attestation population is loaded because no value claims are loaded."}
+              : "No value records are loaded for Finance review."}
           </p>
         </article>
       </section>
@@ -500,11 +496,8 @@ export function CommandCenterView({
               onClick={() => onOpenGap(gap.id)}
             >
               <span>{gap.missing}</span>
-              <strong>
-                {gap.valueAtStakeUsd === null
-                  ? "Unknown"
-                  : formatUsdM(gap.valueAtStakeUsd)}
-              </strong>
+              <strong>{evidenceGapAmount(gap).value}</strong>
+              <small>{evidenceGapAmount(gap).label}</small>
               <small>{gap.owner ?? "No owner"}</small>
             </button>
           ))}
@@ -512,8 +505,7 @@ export function CommandCenterView({
       ) : null}
 
       <footer className={styles.executiveFoot}>
-        {view.summary.tenantName} · adoption, finance validation and claimable
-        value are separate gates
+        {view.summary.tenantName} · tool use, Finance review, and permission to report a benefit are separate steps
       </footer>
     </div>
   );
