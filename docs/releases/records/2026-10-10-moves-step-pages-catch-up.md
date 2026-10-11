@@ -36,8 +36,8 @@ The confirmation list is read-only. It does not settle a cause, attach evidence,
 
 ## QA / Validation
 
-- Focused suites: 5 passed, 55 tests passed, including detector, page, routing, and blocked-state cases.
-- Mutation checks: 5 behavior-changing mutants applied one at a time and restored; all killed.
+- Focused suites: 5 passed, 56 tests passed, including detector, page, routing, and blocked-state cases.
+- Mutation checks: 6 behavior-changing mutants applied one at a time and restored; all killed.
 - `npm run typecheck`: pass, zero errors.
 - ESLint on changed TypeScript/TSX files: pass.
 - `npm run audit:lib-orphans`: pass, no new orphans.

@@ -94,6 +94,7 @@ import {
 import {
   phaseStepPageFlagEnabled,
   resolveBarePhaseStepPageLanding,
+  shouldDeferBarePhaseLanding,
 } from "@/lib/programs/phase-step-page-routing";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
@@ -559,11 +560,9 @@ export default async function StrategicMovePhaseWorkspacePage({
       "moves_capture_handoff_recap_v1",
     );
 
-  // A bare phase address has no step state to preserve. Resolve it on the
-  // server before the secondary evidence and artifact reads, so it never
-  // paints a client-side "Opening…" interstitial. The first page is a safe
-  // landing even if the persisted step completion is still being reconciled;
-  // explicit step, legacy, intelligence and gate links retain their targets.
+  // A bare phase address has no step state to preserve. The catch-up lane
+  // waits for the saved records below, so a current phase lands on its actual
+  // first open step; other lanes retain the existing early redirect.
   const earlyStepTarget = resolveBarePhaseStepPageLanding({
     moveId,
     phase: parsedPhase,
@@ -574,9 +573,12 @@ export default async function StrategicMovePhaseWorkspacePage({
     enabled: phaseStepPagesEnabled,
     searchParams: resolvedSearchParams,
   });
-  const deferCatchUpLanding = Boolean(
-    catchUpEnabled && parsedPhase === 2 && earlyStepTarget,
-  );
+  const deferCatchUpLanding = shouldDeferBarePhaseLanding({
+    catchUpEnabled,
+    requestedPhase: parsedPhase,
+    currentPhase: effectiveMove.currentPhase ?? 0,
+    earlyTarget: earlyStepTarget,
+  });
   if (earlyStepTarget && !deferCatchUpLanding) redirect(earlyStepTarget);
   const move = {
     ...effectiveMove,
@@ -995,8 +997,9 @@ export default async function StrategicMovePhaseWorkspacePage({
           rootCauses: captureValue(2, "gaps_root_causes"),
         })
       : null;
-  if (deferCatchUpLanding && earlyStepTarget) {
-    redirect(firstCatchUpHref(p2CatchUp ? [p2CatchUp] : []) ?? earlyStepTarget);
+  if (deferCatchUpLanding && parsedPhase === 2) {
+    const first = firstCatchUpHref(p2CatchUp ? [p2CatchUp] : []);
+    if (first) redirect(first);
   }
   const initialBusinessChangeAssessment = captureValue(
     1,
