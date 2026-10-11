@@ -149,8 +149,10 @@ const WORDS_OUTPUT_CONFIG = { format: { type: "json_schema" as const, schema: {
 } } };
 const PARSE_RECOVERY_CHUNK_SIZE = 6;
 const INITIAL_BATCH_THRESHOLD = 12;
-const MODEL_CALL_TIMEOUT_MS = 25_000;
-const MODEL_CALL_OPTIONS = { timeout: MODEL_CALL_TIMEOUT_MS, maxRetries: 0 };
+const INITIAL_BATCH_SIZE = 11;
+const INITIAL_CALL_OPTIONS = { timeout: 60_000, maxRetries: 0 };
+const RECOVERY_CALL_OPTIONS = { timeout: 25_000, maxRetries: 0 };
+const REPAIR_CALL_OPTIONS = { timeout: 20_000, maxRetries: 0 };
 
 export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable, archetype?: ReferenceArchetype): string | null {
   const prose = `${entry.title} ${entry.answer} ${entry.notes}`;
@@ -205,9 +207,9 @@ export async function draftEditionWords(input: {
     const model = policyForTier("tier2_working_draft").model;
     const batched = input.archetypes.length > INITIAL_BATCH_THRESHOLD;
     const initialChunks = batched
-      ? Array.from({ length: Math.ceil(promptSlides.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) => {
-        const start = chunk * PARSE_RECOVERY_CHUNK_SIZE;
-        return { start, slides: promptSlides.slice(start, start + PARSE_RECOVERY_CHUNK_SIZE) };
+      ? Array.from({ length: Math.ceil(promptSlides.length / INITIAL_BATCH_SIZE) }, (_, chunk) => {
+        const start = chunk * INITIAL_BATCH_SIZE;
+        return { start, slides: promptSlides.slice(start, start + INITIAL_BATCH_SIZE) };
       })
       : [{ start: 0, slides: promptSlides }];
     const initialResults = await Promise.allSettled(initialChunks.map(async ({ start, slides }) => {
@@ -221,10 +223,10 @@ export async function draftEditionWords(input: {
       });
       if (!preflight.ok) return { start, slides, denied: true, parsed: null };
       const response = await preflight.client.messages.create({
-        model, max_tokens: batched ? 2400 : 6000, temperature: 0, system,
+        model, max_tokens: batched ? 4500 : 6000, temperature: 0, system,
         output_config: WORDS_OUTPUT_CONFIG,
         messages: [{ role: "user", content: batchUser }],
-      }, MODEL_CALL_OPTIONS);
+      }, INITIAL_CALL_OPTIONS);
       const raw = response.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
       const parsed = parseWords(raw, slides.length);
       if (!parsed) {
@@ -242,6 +244,20 @@ export async function draftEditionWords(input: {
       return { start, slides, denied: false, parsed };
     }));
     if (initialResults.every((result) => result.status === "rejected")) return failure("model_error");
+    const modelFailedSlides = new Set<number>();
+    initialResults.forEach((result, index) => {
+      if (result.status !== "rejected") return;
+      const batch = initialChunks[index]!;
+      batch.slides.forEach((_, slideIndex) => modelFailedSlides.add(batch.start + slideIndex + 1));
+      const error = result.reason;
+      console.warn("[reference-deck-words-call]", {
+        requestId: input.requestId ?? null, edition: input.edition, stage: "initial",
+        slideStart: batch.start + 1, slideCount: batch.slides.length,
+        errorName: error instanceof Error ? error.name : "unknown",
+        status: typeof error === "object" && error !== null && "status" in error
+          && typeof error.status === "number" ? error.status : null,
+      });
+    });
     const initial = initialResults.map((result, index) => result.status === "fulfilled" ? result.value
       : { ...initialChunks[index]!, denied: false, parsed: null });
     if (!batched && initial[0]?.denied) return failure("preflight_denied");
@@ -250,7 +266,11 @@ export async function draftEditionWords(input: {
     const candidates: Array<EditionWords | null> = input.archetypes.map(() => null);
     initial.forEach(({ start, parsed }) => parsed?.forEach((entry, index) => { candidates[start + index] = entry; }));
     if (candidates.some((entry) => entry === null)) {
-      const chunks = batched ? initial.filter((batch) => !batch.parsed && !batch.denied).map(({ start, slides }) => ({ start, slides }))
+      const chunks = batched ? initial.filter((batch) => !batch.parsed && !batch.denied).flatMap(({ start, slides }) =>
+        Array.from({ length: Math.ceil(slides.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) => ({
+          start: start + chunk * PARSE_RECOVERY_CHUNK_SIZE,
+          slides: slides.slice(chunk * PARSE_RECOVERY_CHUNK_SIZE, (chunk + 1) * PARSE_RECOVERY_CHUNK_SIZE),
+        })))
         : Array.from({ length: Math.ceil(input.archetypes.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) => {
         const start = chunk * PARSE_RECOVERY_CHUNK_SIZE;
         return { start, slides: promptSlides.slice(start, start + PARSE_RECOVERY_CHUNK_SIZE) };
@@ -270,7 +290,7 @@ export async function draftEditionWords(input: {
           model, max_tokens: 2400, temperature: 0, system: recoverySystem,
           output_config: WORDS_OUTPUT_CONFIG,
           messages: [{ role: "user", content: recoveryUser }],
-        }, MODEL_CALL_OPTIONS);
+        }, RECOVERY_CALL_OPTIONS);
         const recoveryRaw = recoveryResponse.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
         return parseWords(recoveryRaw, slides.length);
       }));
@@ -325,7 +345,7 @@ export async function draftEditionWords(input: {
             model, max_tokens: 2400, temperature: 0, system: repairSystem,
             output_config: WORDS_OUTPUT_CONFIG,
             messages: [{ role: "user", content: repairUser }],
-          }, MODEL_CALL_OPTIONS);
+          }, REPAIR_CALL_OPTIONS);
           const repairRaw = repairResponse.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
           return parseWords(repairRaw, chunk.length);
         }
@@ -353,7 +373,8 @@ export async function draftEditionWords(input: {
     const firstParseFailure = parseFailedSlides[0];
     const firstSlide = fallbackSlides[0];
     const reason = deniedSlides.has(firstSlide) ? "preflight_denied"
-      : firstParseFailure === firstSlide ? "parse_failed" : "slide_rejected";
+      : modelFailedSlides.has(firstSlide) ? "model_error"
+        : firstParseFailure === firstSlide ? "parse_failed" : "slide_rejected";
     return fallbackSlides.length
       ? { status: "unavailable", reason,
         ...(reason === "slide_rejected" ? { rule: firstRule } : {}), slide: firstSlide, words, fallbackSlides }
