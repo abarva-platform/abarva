@@ -254,7 +254,7 @@ describe("C-412 · answer-mode wiring inside the Ask module", () => {
     expect(result.eventTypes).toContain("done");
     expect(result.eventTypes).not.toContain("error");
     expect(result.modelInputs).toHaveLength(1);
-    expect(result.modelInputs[0].system).toContain("25-40 words");
+    expect(result.modelInputs[0].system).toContain("20-30 words");
     expect(result.modelInputs[0].system).toContain("Never invent facts");
     expect(result.modelInputs[0].system).not.toContain("valueScore");
     expect(result.modelInputs[0].system).not.toContain("UNIVERSAL aVa ANSWER");

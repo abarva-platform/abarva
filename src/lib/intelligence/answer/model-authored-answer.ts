@@ -24,7 +24,7 @@ const tableSchema = z
     (t) => t.rows.every((r) => t.columns.every((c) => c.key in r)),
     "Missing table cell",
   );
-const chartSchema = z
+const numericChartSchema = z
   .object({
     ...common,
     kind: z.enum(["bar", "horizontal-bar", "line"]),
@@ -43,6 +43,28 @@ const chartSchema = z
       ),
     "Invalid chart axis values",
   );
+const matrixChartSchema = z
+  .object({
+    ...common,
+    kind: z.literal("quadrant-matrix"),
+    xKey: z.string().min(1),
+    yKey: z.string().min(1),
+    subtitle: z.string().min(1),
+    sourceNote: z.string().optional(),
+    data: z.array(z.record(z.string(), cell)).min(2).max(8),
+  })
+  .strict()
+  .refine(
+    (c) =>
+      c.data.every(
+        (r) =>
+          typeof r.label === "string" &&
+          ["low", "high"].includes(String(r[c.xKey])) &&
+          ["low", "high"].includes(String(r[c.yKey])),
+      ),
+    "Matrix needs authored labels and qualitative low/high categories",
+  );
+const chartSchema = z.union([numericChartSchema, matrixChartSchema]);
 const graphSchema = z
   .object({
     ...common,
@@ -184,17 +206,18 @@ export function measureExecutiveAnswer(prose: string) {
     .split(/\n\s*\n/)
     .filter(Boolean);
   const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
-  const opening = paragraphs
-    .map((paragraph) =>
-      paragraph.replace(/^ {0,3}#{1,6}[\t ]+[^\n]*(?:\n|$)/gm, "").trim(),
-    )
-    .find(Boolean) ?? "";
+  const opening =
+    paragraphs
+      .map((paragraph) =>
+        paragraph.replace(/^ {0,3}#{1,6}[\t ]+[^\n]*(?:\n|$)/gm, "").trim(),
+      )
+      .find(Boolean) ?? "";
   const openingWords = words(opening);
   return {
     openingWords,
     proseWords: words(prose),
     paragraphs: paragraphs.length,
-    openingWithinTarget: openingWords > 0 && openingWords <= 40,
+    openingWithinTarget: openingWords > 0 && openingWords <= 35,
   };
 }
 

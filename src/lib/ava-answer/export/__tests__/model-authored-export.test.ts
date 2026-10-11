@@ -59,3 +59,39 @@ it("rejects altered prose and oversized content instead of silently changing the
   oversized.turns[1].body = "x".repeat(100_001);
   expect(validateSession(oversized).error?.status).toBe(413);
 });
+
+it("exports categorical matrix labels and caveats without transforming advisory categories into scores", () => {
+  const session = sessionFixture();
+  const chart = {
+    id: "bets",
+    kind: "quadrant-matrix",
+    title: "Tradeoffs",
+    subtitle: "Advisory judgment; validate",
+    xKey: "Effort",
+    yKey: "Potential",
+    data: [
+      {
+        label: "Assist",
+        Effort: "low",
+        Potential: "high",
+        reason: "Needs economics",
+      },
+      {
+        label: "Platform",
+        Effort: "high",
+        Potential: "high",
+        reason: "Needs dependency proof",
+      },
+    ],
+  };
+  const raw = `Validate first.\n\n\`\`\`chart\n${JSON.stringify(chart)}\n\`\`\``;
+  const answer = modelAuthoredAnswerPacket(raw, "Compare", "fixture", []);
+  session.turns[1] = { id: "a1", role: "agent", reviewStatus: "complete", body: answer.prose!, answer };
+  const validated = validateSession(session);
+  expect(validated.error).toBeUndefined();
+  const html = renderModelAuthoredSessionHtml(validated.session!);
+  expect(html).toContain('class="matrix"');
+  expect(html).toContain("Effort: low · Potential: high");
+  expect(html).toContain("Needs dependency proof");
+  expect(validated.session!.turns[1].answer!.modelAuthored!.rawText).toBe(raw);
+});
