@@ -590,6 +590,7 @@ describe("ROM workbook", () => {
         "Productive share",
         "Hours per FTE-week",
         "AI productivity credit",
+        "Rate approval status",
         "Release R1 range low",
         "Release R2 range high",
         "Foundation F range low",
@@ -599,6 +600,7 @@ describe("ROM workbook", () => {
       ]),
     );
     expect(asm.getCell("D2").value).toBe("test: invented friction");
+    expect(asm.getCell("B10").value).toBe("See each rate source and approval status");
     const r2Low = labels.indexOf("Release R2 range low") + 1;
     expect(asm.getCell(`D${r2Low}`).value).toBe(
       "pricing_range_policies:T-TIGHT (score 0 of 10)",

@@ -1,0 +1,27 @@
+{
+  "classification": "synthetic-demo-only",
+  "basis": "Invented delivery planning benchmarks for a governed product demonstration; no client or Finance attestation",
+  "unit_hours": {
+    "data_source_count": 36,
+    "source_table_count": 8,
+    "standard_data_entity_count": 28,
+    "dashboard_view_count": 24,
+    "design_row_count": 3,
+    "validation_row_count": 2
+  },
+  "rom_factors": {
+    "friction": 1.18,
+    "productive_share": 0.68,
+    "hours_per_fte_week": 40
+  },
+  "value_inputs": {
+    "zero_baseline": 0,
+    "platform_spend_reduction_share": 0.12,
+    "platform_attribution": 0.6,
+    "platform_probability": 0.8,
+    "saved_hours_per_report_writer_year": 80,
+    "analyst_attribution": 0.5,
+    "analyst_probability": 0.7,
+    "discount_rate": 0.1
+  }
+}

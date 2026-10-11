@@ -138,6 +138,9 @@ export interface RomExplicitMember {
   roleCode: string;
   levelCode: string;
   fte: number;
+  /** Optional member-level delivery terms for a blended pod. */
+  locationCode?: string;
+  providerClassCode?: string | null;
   /** Set when the role code was proposed rather than confirmed. Shown as "proposed mapping, unapproved". */
   proposedMapping?: boolean;
 }
@@ -683,6 +686,8 @@ export function validateRomStructure(
         !isRecord(m) ||
         !isNonBlank(m.roleCode) ||
         !isNonBlank(m.levelCode) ||
+        (m.locationCode !== undefined && !isNonBlank(m.locationCode)) ||
+        (m.providerClassCode !== undefined && m.providerClassCode !== null && !isNonBlank(m.providerClassCode)) ||
         !isFiniteNumber(m.fte) ||
         m.fte < 0
       ) {
@@ -842,8 +847,8 @@ function resolvePod(
     members: explicit.map((m) => ({
       roleCode: m.roleCode,
       levelCode: m.levelCode,
-      locationCode: spec.locationCode,
-      providerClassCode,
+      locationCode: m.locationCode ?? spec.locationCode,
+      providerClassCode: m.providerClassCode === undefined ? providerClassCode : m.providerClassCode,
       fte: m.fte,
     })),
     memberMappingStatus: explicit.map((m) =>

@@ -28,6 +28,7 @@ const mockGetProgramById = jest.fn();
 const mockGetModuleState = jest.fn();
 const mockLoadPolicy = jest.fn();
 const mockListAssumptions = jest.fn();
+const mockReadApprovedRomSnapshot = jest.fn();
 const mockRouteFamilies: string[] = [];
 
 jest.mock("@/app/api/v1/programs/_auth", () => {
@@ -68,6 +69,9 @@ jest.mock("@/lib/auth/program-access-policy", () => ({
 jest.mock("@/lib/programs/assumption-register/store", () => ({
   ...jest.requireActual("@/lib/programs/assumption-register/store"),
   listAssumptions: (...args: unknown[]) => mockListAssumptions(...args),
+}));
+jest.mock("@/lib/pricing/moves-workflow/approved-rom-snapshot", () => ({
+  readApprovedRomSnapshot: (...args: unknown[]) => mockReadApprovedRomSnapshot(...args),
 }));
 
 import { NextRequest } from "next/server";
@@ -307,6 +311,30 @@ beforeEach(() => {
   mockGetModuleState.mockResolvedValue(modules({}));
   mockLoadPolicy.mockResolvedValue(policy());
   mockListAssumptions.mockResolvedValue(goldenRows());
+  mockReadApprovedRomSnapshot.mockResolvedValue({status:"missing"});
+});
+
+describe("ROM-linked cost basis", () => {
+  const romPlan = () => valuePlan({...goldenCase(),cost:{kind:"rom",snapshotId:"pending-current-approved-p3-rom"}});
+
+  it("blocks when the P3 approval is missing even though a reviewed P4 estimate exists", async () => {
+    mockGetModuleState.mockResolvedValue(modules({valuePlan:romPlan()}));
+    const {body} = await get();
+    expect(body.costBasis).toMatchObject({status:"blocked",reason:"rom_snapshot_not_approved"});
+    expect(body.case.economics).toBeNull();
+    expect(mockReadApprovedRomSnapshot).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses only the approved P3 low, plan and high snapshot", async () => {
+    mockGetModuleState.mockResolvedValue(modules({valuePlan:romPlan()}));
+    mockReadApprovedRomSnapshot.mockResolvedValue({status:"approved",snapshot:{id:"v2",result:{
+      combined:{lowCents:20_000_000,planCents:30_000_000,highCents:40_000_000},
+    }}});
+    const {body} = await get();
+    expect(body.costBasis).toMatchObject({status:"resolved",basis:"rom_snapshot",source:"rom:v2",
+      cents:{low:20_000_000,base:30_000_000,high:40_000_000}});
+    expect(body.case.economics.costCents.base).toBe(30_000_000);
+  });
 });
 
 function expectRefusal(

@@ -157,16 +157,21 @@ export function loadRealPodRateReference(): {
       indicative_bill_rate: num(r.indicative_bill_rate),
       confidence: r.confidence || null,
       approval_status: r.approval_status || null,
+      source: r.source || null,
     })),
     locations: readCsv("pricing_delivery_locations.csv").map((r) => ({
       location_code: r.location_code,
       shore_category: r.shore_category,
       salary_multiplier: Number.parseFloat(r.salary_multiplier),
       rate_multiplier: Number.parseFloat(r.rate_multiplier),
+      source_artifact: r.source_artifact || null,
+      source_row: num(r.source_row),
     })),
     providerClasses: readCsv("pricing_provider_classes.csv").map((r) => ({
       provider_class_code: r.provider_class_code,
       tier_multiplier: Number.parseFloat(r.tier_multiplier),
+      source_artifact: r.source_artifact || null,
+      source_row: num(r.source_row),
     })),
   };
 }

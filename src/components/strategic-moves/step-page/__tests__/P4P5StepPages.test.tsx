@@ -230,7 +230,7 @@ describe("P4 and P5 step pages", () => {
     );
     expect(screen.getByText(/APPROVED P3 estimate/)).toBeInTheDocument();
     expect(
-      screen.getByText(/low \$840K · plan \$1.2M · high \$1.5M/),
+      screen.getByText(/low \$0.84M · plan \$1.23M · high \$1.50M/),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Download ROM workbook/ }),
@@ -464,8 +464,8 @@ describe("P4 and P5 step pages", () => {
     await waitFor(() =>
       expect(screen.getByText(/\$0: no release path/)).toBeInTheDocument(),
     );
-    expect(screen.getByText(/plan \$1.2M/)).toBeInTheDocument();
-    expect(screen.getByText(/NPV \$840K/)).toBeInTheDocument();
+    expect(screen.getByText(/plan \$1.23M/)).toBeInTheDocument();
+    expect(screen.getByText(/NPV \$0.84M/)).toBeInTheDocument();
     expect(screen.getByText(/driver delta 5 hours/)).toBeInTheDocument();
     expect(screen.getAllByText(/register:V3/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimate").length).toBeGreaterThan(0);

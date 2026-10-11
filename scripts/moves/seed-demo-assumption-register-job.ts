@@ -449,6 +449,7 @@ export interface MoveRegistryRow {
   charter: unknown;
   clientTenantKey: string | null;
   clientSlug: string | null;
+  currentPhase?: number | null;
 }
 
 export interface AuthenticatedMove {
@@ -460,7 +461,7 @@ export interface AuthenticatedMove {
 
 /** The Move id the committed manifest the seed points at declares. */
 export function assertMoveDeclaration(
-  seed: SeedDefinition,
+  seed: Pick<SeedDefinition, "move">,
   manifests: unknown[],
 ): void {
   const declaring = manifests.filter(
@@ -479,7 +480,7 @@ export function assertMoveDeclaration(
 
 export function authenticateDemoMove(
   row: MoveRegistryRow | null,
-  seed: SeedDefinition,
+  seed: Pick<SeedDefinition, "move">,
   tenant: { canonicalKey: string; appClientKey: string },
 ): AuthenticatedMove {
   if (!row || row.id !== seed.move.move_id || row.deletedAt !== null) {
