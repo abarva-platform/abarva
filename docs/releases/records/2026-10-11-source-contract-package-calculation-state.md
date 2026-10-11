@@ -36,6 +36,8 @@ Contract-depth imports must not turn an authored proposal amount into a complete
 - The existing CI-wired loader suite passes: 30 tests, including the real writer executed against a recording client without a database connection.
 - Four mutations were killed: restored authored canonical amount, completed calculation, included nonnumeric input, and a fabricated valuation effective date.
 - TypeScript and scoped ESLint passed; final release-check results are recorded with the PR.
+- All 11 release gates passed. Independent code review found no actionable findings in this diff.
+- A rich offline fixture plan passed; a legacy mixed fixture remains refused by its required-depth quality gate.
 - No live database repair, financial certification, or signed-in acceptance is claimed.
 
 ## Rollout Plan
@@ -65,4 +67,6 @@ PR diff, red-first writer assertions, mutation results, focused test/typecheck/l
 
 - No numeric sizing formula is added. Proposal payload amounts remain authored, not certified financial outputs.
 - Historical stored amounts, performance units, baseline readiness, and cross-surface evidence counting remain separate reconciliation work.
+- A separate read adapter still represents a missing calculated output as zero and omits blocked-run state; this code release does not certify that representation.
+- The legacy mixed package lacks required managed-service depth and must not be replayed without resolving its quality failures.
 - The shared private operator inventory depends on release of the migration lane's job reservation.
