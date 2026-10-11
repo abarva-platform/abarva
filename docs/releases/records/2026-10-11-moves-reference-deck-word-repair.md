@@ -15,8 +15,10 @@ syntax for governed figure slots. The server normalizes only known,
 edition-allowed slot wrappers and validates the result before substitution.
 The mandatory validation-cover disclosure is fixed edition text. When a
 non-cover slide breaks a wording rule, the audited Anthropic route makes one
-targeted retry. Any repair that still fails keeps the existing reason-coded,
-scored fallback. Neither pass can create a figure or bypass source lineage.
+targeted retry in bounded batches. An invalid whole-deck model response is
+retried in shorter, separately audited batches. Any batch or repair that still
+fails keeps a reason-coded, scored fallback for only the affected slides.
+Neither path can create a figure or bypass source lineage.
 
 ## Layer Impact
 
@@ -38,18 +40,21 @@ scored fallback. Neither pass can create a figure or bypass source lineage.
   Unknown tokens, literal figures and edition-disallowed slots remain refused.
 - Use fixed wording for the mandatory validation-cover disclosure.
 - Retry rejected non-cover slides once through a separately audited egress
-  preflight, then re-run the same slide guard. Retain fallbacks and their
-  reason codes when a retry is denied, malformed, or still invalid.
+  preflight in bounded batches, then re-run the same slide guard.
+- Retry a whole-response parse failure in shorter audited batches. Log only
+  safe response-shape diagnostics, never model prose. Retain fallbacks and
+  their reason codes when a batch is denied, malformed, or still invalid.
 
 ## QA / Validation
 
-- **Pass** — Nine focused word-guard tests cover prompt syntax, safe token
-  normalization, fixed cover wording, audited retry and failed-repair fallback.
-- **Pass** — Three one-at-a-time mutations were killed: bypassing known-slot
-  normalization, fixed cover wording, and the targeted retry. Original code
-  was restored and retested.
+- **Pass** — Twelve focused word-guard tests cover prompt syntax, safe token
+  normalization, fixed cover wording, audited repair, whole-response parse
+  recovery, short batching and partial-batch fallbacks.
+- **Pass** — Five one-at-a-time mutations were killed: bypassing known-slot
+  normalization, fixed cover wording, targeted retry, parse recovery, and
+  the short-batch bound. Original code was restored and retested.
 - **Pass** — TypeScript and changed-file ESLint.
-- **Pass** — Seven focused deck/egress suites, 56 tests; library orphan audit,
+- **Pass** — Seven focused deck/route suites, 52 tests; library orphan audit,
   route/export reachability, unchanged test-coverage census, and all 11
   release gates.
 - **Pending** — Current-head CI and the deployed signed-in walk of both deck
@@ -78,7 +83,10 @@ demo reference-deck flag through the normal release lane.
 
 The pull request, local tests and mutation results, current-head CI, and the
 later signed-in walk artifact. The preceding synthetic demo walk identified
-reason-coded lexical and slot-format rejections; it does not prove this repair.
+reason-coded lexical, slot-format and whole-response parse rejections; it
+does not prove this repair. The previous response body was not retained, so
+that parse failure's exact shape or truncation cause remains unknown; the
+new response-shape log will distinguish those causes on a later run.
 
 ## Known Gaps
 

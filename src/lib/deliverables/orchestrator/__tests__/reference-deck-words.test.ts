@@ -130,12 +130,70 @@ describe("reference-deck words", () => {
     expect(create).toHaveBeenCalledTimes(2);
   });
 
+  it("bounds a many-slide repair into audited short batches", async () => {
+    const valid = { ...safeWords.words[0]!, title: "The annual case counts {value.annual.plan} on its current basis" };
+    const invalid = { ...valid, answer: "The model invented $12,000." };
+    const create = jest.fn()
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: Array(7).fill(invalid) }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: Array(6).fill(valid) }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [valid] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(7).fill("one_page") });
+    expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
+    expect(create).toHaveBeenCalledTimes(3);
+    expect(mockPreflight.mock.calls.slice(1).map((call) => call[0].metadata.slideCount)).toEqual([6, 1]);
+  });
+
+  it("recovers a whole-deck parse failure through smaller audited batches", async () => {
+    const valid = { ...safeWords.words[0]!, title: "The annual case counts {value.annual.plan} on its current basis" };
+    const create = jest.fn()
+      .mockResolvedValueOnce({ stop_reason: "max_tokens", content: [{ type: "text", text: '{"words":[' }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: Array(6).fill(valid) }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [valid] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(7).fill("one_page") });
+      expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
+      expect(create).toHaveBeenCalledTimes(3);
+      expect(mockPreflight.mock.calls.slice(1).map((call) => call[0])).toEqual([
+        expect.objectContaining({ workflow: "moves:reference-deck:preview:words:parse-recovery", metadata: expect.objectContaining({ slideStart: 1, slideCount: 6, persist: false }) }),
+        expect.objectContaining({ workflow: "moves:reference-deck:preview:words:parse-recovery", metadata: expect.objectContaining({ slideStart: 7, slideCount: 1, persist: false }) }),
+      ]);
+      expect(warn).toHaveBeenCalledWith("[reference-deck-words-parse]", {
+        edition: "investment", expectedSlides: 7, receivedSlides: null, stopReason: "max_tokens", textLength: 10,
+      });
+      expect(JSON.stringify(create.mock.calls.slice(1).map((call) => call[0]))).not.toContain("$12,000");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("retains only the failed parse batch as a scored fallback", async () => {
+    const valid = { ...safeWords.words[0]!, title: "The annual case counts {value.annual.plan} on its current basis" };
+    const create = jest.fn()
+      .mockResolvedValueOnce({ content: [{ type: "text", text: '{"words":[]}' }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: Array(6).fill(valid) }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: '{"words":[]}' }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(7).fill("one_page") });
+      expect(result).toMatchObject({ status: "unavailable", reason: "parse_failed", slide: 7, fallbackSlides: [7] });
+      expect(result.words.slice(0, 6)).toEqual(Array(6).fill(valid));
+      expect(result.words[6]).toEqual(unavailableEditionWords("investment", ["one_page"])[0]);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it("keeps reason-coded fallbacks for egress denial, parse failure and rejected slide", async () => {
     mockPreflight.mockResolvedValueOnce({ ok: false });
     const denied = await draftEditionWords(input);
     expect(denied).toMatchObject({ status: "unavailable", reason: "preflight_denied", fallbackSlides: [1] });
     expect(JSON.stringify(denied)).not.toContain("draft words unavailable");
     const create = jest.fn().mockResolvedValueOnce({ content: [{ type: "text", text: '{"words":[]}' }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: '{"words":[]}' }] })
       .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [{ ...safeWords.words[0], answer: "Review the solution plan." }] }) }] });
     mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
     expect((await draftEditionWords(input))).toMatchObject({ status: "unavailable", reason: "parse_failed" });
