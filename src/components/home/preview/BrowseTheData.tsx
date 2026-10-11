@@ -47,8 +47,10 @@ const COLUMNS = [
 
 export function BrowseTheData({
   signalPacket,
+  presentation = "dossier",
 }: {
   signalPacket: EnterpriseSignalPacket;
+  presentation?: "dossier" | "canvas";
 }) {
   const [query, setQuery] = useState("");
   const [sliceField, setSliceField] = useState<DimensionField>("domain");
@@ -56,6 +58,8 @@ export function BrowseTheData({
   const [diceField, setDiceField] = useState<DimensionField | "none">("kind");
   const [diceValue, setDiceValue] = useState("all");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [recordPage, setRecordPage] = useState(0);
+  const compact = presentation === "canvas";
 
   const rows: IndexedRow[] = useMemo(
     () => [
@@ -111,9 +115,11 @@ export function BrowseTheData({
     });
   }, [activeDice, activeSlice, diceValue, query, rows, sliceValue]);
 
-  const selected =
-    filtered.find((row) => row.key === selectedKey) ?? filtered[0] ?? rows[0];
-  const visibleRows = filtered.slice(0, 120);
+  const pageSize = compact ? 20 : 120;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = compact ? Math.min(recordPage, totalPages - 1) : 0;
+  const visibleRows = filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+  const selected = filtered.find((row) => row.key === selectedKey) ?? visibleRows[0] ?? (compact ? undefined : rows[0]);
   const signalCount = rows.filter((row) => row.origin === "signal").length;
   const contextCount = rows.length - signalCount;
   const evidenceBacked = rows.filter(
@@ -135,13 +141,14 @@ export function BrowseTheData({
         : "Source-file rollup not supplied in this packet";
 
   function clearFilters() {
+    setRecordPage(0);
     setQuery("");
     setSliceValue("all");
     setDiceValue("all");
   }
 
   return (
-    <section style={{ padding: `46px ${PAGE_X}px 72px` }}>
+    <section data-browser-presentation={presentation} style={{ padding: compact ? 0 : `46px ${PAGE_X}px 72px` }}>
       <style>{`
         @media (max-width: 1180px) {
           [data-browser-layout] { grid-template-columns: 1fr !important; }
@@ -156,7 +163,7 @@ export function BrowseTheData({
         }
       `}</style>
 
-      <header style={{ maxWidth: 1040 }}>
+      {!compact && <header style={{ maxWidth: 1040 }}>
         <span style={eyebrow(V4.blue)}>Browse the record</span>
         <h1 style={titleStyle}>
           Slice the governed facts behind the Home narrative
@@ -167,9 +174,9 @@ export function BrowseTheData({
           denominator and the selected row keeps its evidence references
           visible.
         </p>
-      </header>
+      </header>}
 
-      <section data-browser-metrics style={metricGridStyle}>
+      {!compact && <section data-browser-metrics style={metricGridStyle}>
         <Metric value={rows.length.toLocaleString()} label="facts in packet" />
         <Metric
           value={signalCount.toLocaleString()}
@@ -182,10 +189,10 @@ export function BrowseTheData({
           tone={evidenceBacked ? V4.green : V4.amber}
         />
         <Metric value={valuedFacts.toLocaleString()} label="quantified facts" />
-      </section>
+      </section>}
 
-      <section data-browser-command style={commandStripStyle}>
-        <div>
+      <section data-browser-command style={compact ? { display: "grid", gap: 12, marginBottom: 18 } : commandStripStyle}>
+        {!compact && <div>
           <span style={eyebrow(V4.green)}>Slice / dice viewer</span>
           <h2 style={commandTitleStyle}>Pick a lens before reading rows.</h2>
           <p style={commandTextStyle}>
@@ -193,7 +200,7 @@ export function BrowseTheData({
             the packet. Workbook source-family rollups are shown only when the
             producer supplies them.
           </p>
-        </div>
+        </div>}
         <div data-browser-controls style={controlsGridStyle}>
           <DimensionSelect
             label="Slice by"
@@ -201,6 +208,7 @@ export function BrowseTheData({
             options={dimensions}
             onChange={(next) => {
               if (next === "none") return;
+              setRecordPage(0);
               setSliceField(next);
               setSliceValue("all");
               if (diceField === next) {
@@ -213,7 +221,7 @@ export function BrowseTheData({
             label="Slice value"
             value={sliceValue}
             values={activeSlice?.values ?? []}
-            onChange={setSliceValue}
+            onChange={(value) => { setRecordPage(0); setSliceValue(value); }}
           />
           <DimensionSelect
             includeNone
@@ -221,6 +229,7 @@ export function BrowseTheData({
             value={diceField}
             options={diceOptions}
             onChange={(next) => {
+              setRecordPage(0);
               setDiceField(next);
               setDiceValue("all");
             }}
@@ -230,10 +239,10 @@ export function BrowseTheData({
             label="Dice value"
             value={diceValue}
             values={activeDice?.values ?? []}
-            onChange={setDiceValue}
+            onChange={(value) => { setRecordPage(0); setDiceValue(value); }}
           />
         </div>
-        {activeSlice ? (
+        {activeSlice && !compact ? (
           <DistributionStrip
             activeValue={sliceValue}
             title={activeSlice.label}
@@ -241,7 +250,7 @@ export function BrowseTheData({
             onSelect={setSliceValue}
           />
         ) : null}
-        {sourceSummaries.length > 0 ? (
+        {sourceSummaries.length > 0 && !compact ? (
           <SourceFamilyStrip sourceSummaries={sourceSummaries} />
         ) : null}
       </section>
@@ -263,7 +272,7 @@ export function BrowseTheData({
                 style={searchStyle}
                 type="search"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => { setRecordPage(0); setQuery(event.target.value); }}
               />
               {query || sliceValue !== "all" || diceValue !== "all" ? (
                 <button
@@ -338,8 +347,13 @@ export function BrowseTheData({
           <p style={footnoteStyle}>
             Showing {visibleRows.length.toLocaleString()} of{" "}
             {filtered.length.toLocaleString()} matched rows
-            {filtered.length > visibleRows.length ? " - first page only" : ""}.
+            {filtered.length > visibleRows.length ? compact ? ` - page ${currentPage + 1} of ${totalPages}` : " - first page only" : ""}.
           </p>
+          {compact && totalPages > 1 && <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, alignItems: "center", marginTop: 10, fontFamily: SANS, fontSize: 12 }}>
+            <button type="button" aria-label="Previous fact page" title="Previous fact page" disabled={currentPage === 0} onClick={() => { setSelectedKey(null); setRecordPage(currentPage - 1); }} style={{ padding: "5px 10px" }}>&lt;</button>
+            <span>{currentPage + 1} / {totalPages}</span>
+            <button type="button" aria-label="Next fact page" title="Next fact page" disabled={currentPage + 1 >= totalPages} onClick={() => { setSelectedKey(null); setRecordPage(currentPage + 1); }} style={{ padding: "5px 10px" }}>&gt;</button>
+          </div>}
         </section>
 
         <aside data-browser-detail style={detailPaneStyle}>

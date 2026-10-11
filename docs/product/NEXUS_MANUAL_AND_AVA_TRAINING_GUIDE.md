@@ -83,7 +83,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 
 | Audience | Route count | aVa posture |
 | --- | --- | --- |
-| client | 99 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
+| client | 100 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
 | admin | 70 | Explain setup/governance controls; avoid tenant data claims unless scoped evidence is supplied. |
 | public | 40 | Describe public/product material; never imply authenticated capability proof. |
 | internal | 8 | Treat as preview/demo/operator-only unless release evidence says otherwise. |
@@ -92,7 +92,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | --- | --- |
 | Admin | 68 |
 | Engagements | 8 |
-| Home | 7 |
+| Home | 8 |
 | Intelligence | 1 |
 | Learn | 9 |
 | Moves | 16 |
@@ -199,6 +199,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | /engineering/traces | admin | Shared | src/app/(maestro)/engineering/traces/page.tsx |
 | /evidence-ledger | client | Shared | src/app/(maestro)/evidence-ledger/page.tsx |
 | /home | client | Home | src/app/(maestro)/home/page.tsx |
+| /home/canvas | client | Home | src/app/(maestro)/home/canvas/page.tsx |
 | /home/knowledge | client | Home | src/app/(maestro)/home/knowledge/page.tsx |
 | /home/learn | client | Home | src/app/(maestro)/home/learn/page.tsx |
 | /home/learn/[section] | client | Home | src/app/(maestro)/home/learn/[section]/page.tsx |

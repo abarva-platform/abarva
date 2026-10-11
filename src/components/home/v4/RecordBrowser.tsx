@@ -553,6 +553,7 @@ export function RecordBrowser({
   recordType,
   initialQuery,
   initialMatch,
+  presentation = "dossier",
 }: {
   recordType: TechRecordType;
   /**
@@ -566,6 +567,7 @@ export function RecordBrowser({
   initialQuery?: string;
   /** A match the browser opens already applied. Stated in the same banner, by its label. */
   initialMatch?: RecordRowMatch;
+  presentation?: "dossier" | "canvas";
 }) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [match, setMatch] = useState<RecordRowMatch | null>(
@@ -576,6 +578,8 @@ export function RecordBrowser({
   const [diceField, setDiceField] = useState("none");
   const [diceValue, setDiceValue] = useState("all");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [recordPage, setRecordPage] = useState(0);
+  const compact = presentation === "canvas";
 
   const rows = useMemo(
     () => (recordType.rows ?? []) as RecordRow[],
@@ -652,15 +656,18 @@ export function RecordBrowser({
     sliceValue,
   ]);
 
-  const shown = filtered.slice(0, 120);
+  const pageSize = compact ? 20 : 120;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = compact ? Math.min(recordPage, totalPages - 1) : 0;
+  const shown = filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
   const filteredRows = useMemo(
     () => filtered.map(({ row }) => row),
     [filtered],
   );
   const selected =
     filtered.find((r) => r.key === selectedKey) ??
-    filtered[0] ??
-    indexedRows[0];
+    shown[0] ??
+    (compact ? undefined : indexedRows[0]);
   const metrics = useMemo(
     () => buildMetrics(rows, recordType.objectType, primaryDimension),
     [rows, recordType.objectType, primaryDimension],
@@ -674,6 +681,7 @@ export function RecordBrowser({
     Number(Boolean(match));
 
   function clearFilters() {
+    setRecordPage(0);
     setQuery("");
     setMatch(null);
     setSliceValue("all");
@@ -681,7 +689,7 @@ export function RecordBrowser({
   }
 
   return (
-    <div style={{ padding: `46px ${PAGE_X}px 66px` }}>
+    <div data-record-presentation={presentation} style={{ padding: compact ? 0 : `46px ${PAGE_X}px 66px` }}>
       <style>{`
         @media (max-width: 1260px) {
           [data-record-layout] { grid-template-columns: 1fr !important; }
@@ -699,7 +707,7 @@ export function RecordBrowser({
         }
       `}</style>
 
-      <header style={{ maxWidth: 1120 }}>
+      {!compact && <header style={{ maxWidth: 1120 }}>
         <span style={eyebrow(V4.blue)}>
           Record browser · {recordType.label}
         </span>
@@ -713,9 +721,9 @@ export function RecordBrowser({
             <span>clustered by {labelFor(primaryDimension)}</span>
           ) : null}
         </div>
-      </header>
+      </header>}
 
-      <section data-record-metrics style={metricGridStyle}>
+      {!compact && <section data-record-metrics style={metricGridStyle}>
         {metrics.map((metric) => (
           <div key={metric.label} style={metricStyle}>
             <span style={{ ...metricValueStyle, color: metric.tone ?? V4.ink }}>
@@ -724,10 +732,10 @@ export function RecordBrowser({
             <span style={metricLabelStyle}>{metric.label}</span>
           </div>
         ))}
-      </section>
+      </section>}
 
-      <section data-cube-frame style={cubeFrameStyle}>
-        <div style={{ minWidth: 0 }}>
+      <section data-cube-frame style={compact ? { display: "grid", gap: 12, marginBottom: 14 } : cubeFrameStyle}>
+        {!compact && <div style={{ minWidth: 0 }}>
           <span style={eyebrow(V4.green)}>Slice / dice viewer</span>
           <h2 style={cubeTitleStyle}>
             Explore this record as a governed cube.
@@ -737,13 +745,14 @@ export function RecordBrowser({
             rows. The table below remains the full source record for the current
             slice.
           </p>
-        </div>
+        </div>}
         <div data-cube-controls style={cubeControlsStyle}>
           <DimensionSelect
             label="Slice by"
             value={activeSliceField}
             options={dimensions}
             onChange={(next) => {
+              setRecordPage(0);
               setSliceField(next);
               setSliceValue("all");
               if (next === diceField) {
@@ -756,7 +765,7 @@ export function RecordBrowser({
             label="Slice value"
             value={sliceValue}
             counts={activeSlice?.counts ?? []}
-            onChange={setSliceValue}
+            onChange={(value) => { setRecordPage(0); setSliceValue(value); }}
           />
           <DimensionSelect
             label="Dice by"
@@ -764,6 +773,7 @@ export function RecordBrowser({
             options={diceDimensions}
             includeNone
             onChange={(next) => {
+              setRecordPage(0);
               setDiceField(next);
               setDiceValue("all");
             }}
@@ -773,10 +783,10 @@ export function RecordBrowser({
             value={diceValue}
             counts={activeDice?.counts ?? []}
             disabled={activeDiceField === "none"}
-            onChange={setDiceValue}
+            onChange={(value) => { setRecordPage(0); setDiceValue(value); }}
           />
         </div>
-        {activeSlice ? (
+        {activeSlice && !compact ? (
           <DistributionStrip
             title={activeSlice.title}
             counts={activeSlice.counts}
@@ -786,16 +796,16 @@ export function RecordBrowser({
         ) : null}
       </section>
 
-      <RelationshipLens
+      {!compact && <RelationshipLens
         objectType={recordType.objectType}
         rows={filteredRows}
-      />
+      />}
 
       <div data-record-controls style={controlsStyle}>
         <input
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => { setRecordPage(0); setQuery(event.target.value); }}
           placeholder={`Search ${recordType.label.toLowerCase()}`}
           aria-label={`Search ${recordType.label}`}
           style={searchStyle}
@@ -1008,8 +1018,13 @@ export function RecordBrowser({
           <p style={footnoteStyle}>
             Showing {shown.length.toLocaleString()} of{" "}
             {filtered.length.toLocaleString()} matched records
-            {filtered.length > shown.length ? " · first page only" : ""}.
+            {filtered.length > shown.length ? compact ? ` · page ${currentPage + 1} of ${totalPages}` : " · first page only" : ""}.
           </p>
+          {compact && totalPages > 1 && <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, alignItems: "center", marginTop: 10, fontFamily: SANS, fontSize: 12 }}>
+            <button type="button" title="Previous record page" aria-label="Previous record page" disabled={currentPage === 0} onClick={() => { setSelectedKey(null); setRecordPage(currentPage - 1); }} style={{ padding: "5px 10px" }}>&lt;</button>
+            <span>{currentPage + 1} / {totalPages}</span>
+            <button type="button" title="Next record page" aria-label="Next record page" disabled={currentPage + 1 >= totalPages} onClick={() => { setSelectedKey(null); setRecordPage(currentPage + 1); }} style={{ padding: "5px 10px" }}>&gt;</button>
+          </div>}
         </section>
 
         <aside data-detail-pane style={detailPaneStyle}>
@@ -1491,18 +1506,20 @@ function SliceSummary({
   );
 }
 
-function RelationshipLens({
+export function RelationshipLens({
   objectType,
   rows,
+  emptyMessage,
 }: {
   objectType: TechObjectType;
   rows: RecordRow[];
+  emptyMessage?: string;
 }) {
   const pairs = relationshipPairsFor(objectType, rows);
   const [selectedPair, setSelectedPair] = useState(pairs[0]?.key ?? "");
   const activePair =
     pairs.find((pair) => pair.key === selectedPair) ?? pairs[0];
-  if (!activePair) return null;
+  if (!activePair) return emptyMessage ? <p style={{ fontFamily: SANS, fontSize: 13, color: V4.slate }}>{emptyMessage}</p> : null;
   const matrix = buildRelationshipMatrix(
     rows,
     activePair.left,

@@ -36,9 +36,15 @@ export function MaestroChrome({ children }: { children: React.ReactNode }) {
   // navigation between shell-native routes instead of unmounting and
   // re-mounting with a blank/loading flash on every click.
   if (isShellNativePath(pathname)) {
+    const canvasPreview = pathname === "/home/canvas";
     return (
       <div
-        style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: canvasPreview ? 0 : "100vh",
+          ...(canvasPreview ? { height: "100dvh", overflow: "hidden" } : {}),
+        }}
       >
         <NexusTopNav />
         <div

@@ -101,4 +101,18 @@ describe("MaestroChrome canonical shell", () => {
       within(primaryNav).getAllByRole("link", { name: "Home" })[0],
     ).not.toHaveAttribute("aria-current");
   });
+
+  it("bounds the viewport only for the opt-in Home canvas", () => {
+    const { container } = renderChrome("/home/canvas");
+    expect(container.firstElementChild).toHaveStyle({
+      height: "100dvh",
+      overflow: "hidden",
+    });
+  });
+
+  it("preserves the existing Home document layout", () => {
+    const { container } = renderChrome("/home");
+    expect(container.firstElementChild).toHaveStyle({ minHeight: "100vh" });
+    expect(container.firstElementChild).not.toHaveStyle({ overflow: "hidden" });
+  });
 });
