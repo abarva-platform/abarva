@@ -37,7 +37,8 @@ The signed-in read-only walk now recognizes that the same long work page can scr
 - Test coverage census: no new Jest file; `coveredTestFiles` remains 2,827.
 - Tenancy fence and manual generated files: current with no new change.
 - Release gates: pass, all 11 gates.
-- Signed-in read-only walk after the repo-owned deploy: pending.
+- Automatic signed-in walk on the preceding deploy: [run 38107769408](https://github.com/abarva-platform/abarva/actions/runs/38107769408) reached 20 of 29 pages; 19 passed and Root causes failed the old phone assertion because its full-height root had equal client and scroll heights. Nine later pages were not reachable. This failure is the test condition corrected here.
+- Signed-in read-only walk after this test correction deploy: pending.
 - The preceding deployed UI was observed read-only: at 1440×900 the pane scrolled, and at 390×900 the document scrolled; both brought the row and action into view.
 
 ## Rollout Plan
@@ -60,4 +61,4 @@ Revert this test-only change through a release PR if the walk reports a false re
 ## Known Gaps
 
 - The broader walk remains limited to phases currently reachable on the demo Move.
-- The preceding overall measured UX score was 87/100; the 90-point target remains open due to performance and dark contrast.
+- The latest automatic walk measured 88/100 overall; the 90-point target remains open due to performance and dark contrast.
