@@ -50,6 +50,28 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
 }
 
 describe("live-input reference edition", () => {
+  it("checks a governed notes-only figure in notes without demanding it on the canvas", async () => {
+    const drafted = words(VALIDATION_SEQUENCE.length);
+    drafted[2]!.notes = "The point: {value.annual.base} is the governed annual basis. How to read: inspect its source line.";
+    const spec = buildReferenceEdition(fixture("validation"), drafted);
+    const contents = spec.slides[2]!;
+    const figure = contents.narrativeFigures?.[0];
+    expect(figure).toBeDefined();
+    expect(contents.visibleNarrativeFigures).toEqual([]);
+    expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+    const inspected = await inspectDeck(await renderReferenceDeck(spec));
+    expect(inspected.slides[2]?.textRuns.join(" ")).not.toContain(figure!.display);
+    expect(inspected.slides[2]?.notesText).toContain(figure!.display);
+    const verdict = judgeRenderedDeck(inspected, { referenceDeck: spec });
+    expect(verdict.findings).not.toContainEqual(expect.objectContaining({ kind: "reference_source", slide: 3 }));
+    const damagedSlides = [...inspected.slides];
+    damagedSlides[2] = { ...damagedSlides[2]!, notesText: damagedSlides[2]!.notesText!.replaceAll(figure!.display, "") };
+    const damaged = judgeRenderedDeck({ ...inspected, slides: damagedSlides }, { referenceDeck: spec });
+    expect(damaged.findings).toContainEqual(expect.objectContaining({
+      kind: "reference_source", slide: 3, detailCode: "notes_figure_missing",
+    }));
+  }, 60_000);
+
   it.each(["validation", "investment"] as const)("builds %s from bound synthetic governed reads", async (edition) => {
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
     const spec = buildReferenceEdition(fixture(edition), words(sequence.length));

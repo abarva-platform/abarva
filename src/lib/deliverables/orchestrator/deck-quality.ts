@@ -15,7 +15,7 @@ import "server-only";
 // The second governs.
 
 import type { InspectedDeck, InspectedSlide } from "./deck-inspection";
-import { figuresOnSlide, referenceArchetypeGaps, referenceSourceLine, type ReferenceDeckSpec } from "./reference-deck-model";
+import { figuresOnSlide, visibleFiguresOnSlide, referenceArchetypeGaps, referenceSourceLine, type ReferenceDeckSpec } from "./reference-deck-model";
 
 /**
  * Slide role. A cover or divider is legitimately thin and must SAY so — it is
@@ -112,9 +112,16 @@ function judgeReferenceSlide(
   // metric marker, so that map keeps only the last tile; inspect every text
   // run in the physical file when checking bound figures.
   const bodyText = slide.textRuns.join(" ");
-  for (const value of figureValues) {
+  const visibleFigures = visibleFiguresOnSlide(expected);
+  const visibleKeys = new Set(visibleFigures.map((figure) => `${figure.sourceId}\u0000${figure.workbookCell}\u0000${figure.display}`));
+  for (const value of visibleFigures.map((figure) => figure.display)) {
     if (!bodyText.includes(value))
       add("reference_source", `slide ${slide.index}: bound figure is absent from the rendered slide.`, "bound_figure_missing");
+  }
+  for (const figure of figuresOnSlide(expected)) {
+    if (visibleKeys.has(`${figure.sourceId}\u0000${figure.workbookCell}\u0000${figure.display}`)) continue;
+    if (!slide.notesText?.includes(figure.display))
+      add("reference_source", `slide ${slide.index}: notes-only figure is absent from rendered notes.`, "notes_figure_missing");
   }
   for (const block of expected.blocks) {
     if (block.kind !== "table" || slide.tableCount > 0) continue;

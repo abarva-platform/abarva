@@ -314,9 +314,10 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     const blocks = blocksFor(archetype);
     const authored = words[index]!;
     const narrativeFigures = new Map<string, ReferenceFigure>();
+    const visibleNarrativeFigures = new Map<string, ReferenceFigure>();
     const narrativeSourceIds = new Set<string>();
     const narrativeSourceLabels = new Set<string>();
-    const resolveSlots = (prose: string): string => prose.replace(/\{([^{}]+)\}/g, (_, key: string) => {
+    const resolveSlots = (prose: string, visible: boolean): string => prose.replace(/\{([^{}]+)\}/g, (_, key: string) => {
       const slot = slots[key];
       if (!slot || !slot.editions.includes(inputs.edition))
         throw new Error("reference_deck_lineage_refusal: unknown_or_disallowed_slot");
@@ -328,11 +329,12 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       }
       const figure = bind(slot.sourceId, slot.sourceLabel, slot.display);
       narrativeFigures.set(`${figure.sourceId}\u0000${figure.display}`, figure);
+      if (visible) visibleNarrativeFigures.set(`${figure.sourceId}\u0000${figure.display}`, figure);
       return slot.display;
     });
-    const actionTitle = resolveSlots(authored.title);
-    const answer = resolveSlots(authored.answer);
-    const speakerNotes = resolveSlots(authored.notes);
+    const actionTitle = resolveSlots(authored.title, true);
+    const answer = resolveSlots(authored.answer, true);
+    const speakerNotes = resolveSlots(authored.notes, false);
     const extra = archetype === "plain_english_table" ? [sourceCapture(1, "sponsor_commitment"), sourceCapture(2, "current_state_findings"), sourceCapture(1, "success_criteria")]
       : archetype === "big_number_context" ? [sourceCapture(1, "scope_boundary"), sourceCapture(2, "current_state_findings")]
         : archetype === "flow_today" ? [sourceCapture(2, "process_handoffs"), sourceCapture(2, "current_state_findings")]
@@ -347,6 +349,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       speakerNotes,
       blocks,
       narrativeFigures: [...narrativeFigures.values()],
+      visibleNarrativeFigures: [...visibleNarrativeFigures.values()],
       narrativeSourceLabels: [...narrativeSourceLabels],
       sourceIds: sourceIdsFor(blocks, [...extra, ...narrativeSourceIds]),
     };
