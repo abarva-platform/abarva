@@ -4,7 +4,10 @@
  * Trade Secret Register (docs/ip/trade-secret-register.md). Do not distribute externally
  * or expose outside the tenant boundary. Access requires NDA + IP assignment (T075).
  */
-import { EXECUTIVE_BRIEF_CONTRACT } from "./executive-brief-contract";
+import {
+  EXECUTIVE_BRIEF_CONTRACT,
+  EXECUTIVE_BRIEF_REMINDER,
+} from "./executive-brief-contract";
 import { prepareExecutiveContext } from "./executive-context";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import type { AskSource, AskIntent } from "./types";
@@ -707,7 +710,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = modelAuthored
-    ? `SOURCES PROVIDED (cite the bracketed source IDs):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}`
+    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${EXECUTIVE_BRIEF_REMINDER}`
     : answerOnly
       ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\n${universalAnswerVisualContract}`
       : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
@@ -738,7 +741,14 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
   );
 
   try {
-    const model = chooseModel(args.intent, args.query);
+    const model = modelAuthored && isExplicitConciseAsk(args.query)
+      ? "claude-sonnet-4-6"
+      : chooseModel(args.intent, args.query);
+    const primaryTokenBudget = modelAuthored
+      ? 8192
+      : answerOnly
+        ? 5000
+        : chooseSynthesisTokenBudget(args.query);
     // Pre-generation source pre-screen (defense-in-depth) — answer-only path
     // ONLY, so the flag-off path stays byte-identical. If retrieval is
     // contaminated with another tenant's identity, refuse BEFORE any tokens
@@ -786,15 +796,21 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
     emitTiming(
       latencyTrace.mark("claude.primary.start", {
         model,
-        maxTokens: chooseSynthesisTokenBudget(args.query),
+        maxTokens: primaryTokenBudget,
       }),
     );
     const stream = await client.messages.create({
       model,
-      max_tokens: answerOnly ? 5000 : chooseSynthesisTokenBudget(args.query),
+      max_tokens: primaryTokenBudget,
       system: systemWithContinuity,
       messages: [{ role: "user", content: prompt }],
       stream: true,
+      ...(modelAuthored
+        ? {
+            thinking: { type: "adaptive" as const, display: "omitted" as const },
+            output_config: { effort: "high" as const },
+          }
+        : {}),
     });
 
     // ANSWER-ONLY TRUE STREAMING PATH.

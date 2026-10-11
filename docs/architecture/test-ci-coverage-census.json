@@ -18,10 +18,10 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2993,
+    "testFiles": 2994,
     "coveredTestFiles": 2828,
     "pullRequestCoveredTestFiles": 2828,
-    "uncoveredTestFiles": 165,
+    "uncoveredTestFiles": 166,
     "directoriesWithTests": 525,
     "directoriesFullyCovered": 455,
     "directoriesPartiallyCovered": 27,
@@ -29,14 +29,14 @@
     "directoriesWithUnrunTestFiles": 70,
     "directoriesWithUntriagedUnrunTestFiles": 59,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 113,
+    "untriagedUnrunTestFiles": 114,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 1,
     "unclassifiedRiskDirectories": 58,
     "rankedDirectories": 1,
-    "rankedUntriagedUnrunTestFiles": 20,
+    "rankedUntriagedUnrunTestFiles": 21,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 52,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
@@ -227,10 +227,10 @@
     },
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 25,
+      "testFiles": 26,
       "coveredTestFiles": 5,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 21,
       "via": [
         "command"
       ]
@@ -689,6 +689,31 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testPath": "src/lib/intelligence/ask/__tests__/executive-context.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": null,
+      "drawable": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 29,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/executive-reasoning.test.ts",
       "enumerated": true,
       "collected": false,
       "run": false,
@@ -1201,14 +1226,15 @@
   "governedRiskRanking": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 25,
-      "unrunTestFiles": 20,
+      "testFiles": 26,
+      "unrunTestFiles": 21,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 21,
       "verdictHeldUntriagedUnrunTestFiles": 19,
-      "drawableUnrunTestFiles": 1,
+      "drawableUnrunTestFiles": 2,
       "drawableTestPaths": [
-        "src/lib/intelligence/ask/__tests__/executive-context.test.ts"
+        "src/lib/intelligence/ask/__tests__/executive-context.test.ts",
+        "src/lib/intelligence/ask/__tests__/executive-reasoning.test.ts"
       ],
       "admittedBy": "governed_risk_signal",
       "governedRisk": {
@@ -1224,7 +1250,7 @@
   ],
   "triageVerdicts": {
     "heldUntriagedUnrunTestFiles": 112,
-    "drawableUntriagedUnrunTestFiles": 1,
+    "drawableUntriagedUnrunTestFiles": 2,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 36,
       "real": 1,
@@ -2860,8 +2886,8 @@
   "governedRiskEvidence": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 25,
-      "unrunTestFiles": 20,
+      "testFiles": 26,
+      "unrunTestFiles": 21,
       "governedRisk": {
         "score": 10,
         "band": "high",
