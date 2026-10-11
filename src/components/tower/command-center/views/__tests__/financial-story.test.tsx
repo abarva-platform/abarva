@@ -119,4 +119,19 @@ describe("Tower financial story boundaries", () => {
       evidenceGapAmount({ ...amount, gapStage: "claim_gate" }).value,
     );
   });
+
+  it("does not turn missing claims into a cleared zero", () => {
+    const view = fixtureView();
+    const html = renderToStaticMarkup(
+      <CommandCenterView
+        view={{ ...view, summary: { ...view.summary, valueClaimCount: 0, claimableUsd: 0 } }}
+        onOpenGap={() => undefined}
+        onGoToFunnel={() => undefined}
+        onGoToAi={() => undefined}
+        onGoToActions={() => undefined}
+      />,
+    );
+    expect(html).toContain("Value cleared for reporting is not loaded");
+    expect(html).not.toContain("$0 has cleared reporting");
+  });
 });

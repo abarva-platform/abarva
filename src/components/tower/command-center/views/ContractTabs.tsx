@@ -472,7 +472,7 @@ export function ValueProofContractView({
           <div className={styles.trajectoryStats}>
             <div>
               <span>Projected yearly benefit</span>
-              <strong>{formatUsdM(s.promisedUsd)}</strong>
+              <strong>{s.promisedBenefitLoaded ? formatUsdM(s.promisedUsd) : "Not loaded"}</strong>
             </div>
             <div>
               <span>Recorded financial result in loaded quarters</span>

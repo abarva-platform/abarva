@@ -235,7 +235,7 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       order: "3",
       kicker: "Assign · only then",
       title: "Review which financial claims need Finance sign-off",
-      detail: `${formatCount(claimsMissingFinance)} value records have no Finance sign-off recorded. Check which types require it before reporting a dollar benefit. ${formatUsdM(s.claimableUsd)} has cleared reporting in the loaded months.`,
+      detail: `${formatCount(claimsMissingFinance)} value records have no Finance sign-off recorded. Check which types require it before reporting a dollar benefit. ${s.valueClaimCount > 0 ? `${formatUsdM(s.claimableUsd)} has cleared reporting in the loaded months.` : "No cleared amount is loaded."}`,
       metricLabel: "Finance sign-offs recorded",
       metricValue: formatCount(s.financeAttestedClaimCount),
       due: "Following review",
