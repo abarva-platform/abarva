@@ -23,7 +23,7 @@ import type { AvaChatSessionExport } from "./session-types";
 import {
   chartPlot,
   graphPlot,
-  matrixQuadrants,
+  matrixPlot,
 } from "@/lib/intelligence/answer/model-exhibit-layout";
 import { measureExecutiveAnswer } from "@/lib/intelligence/answer/model-authored-answer";
 
@@ -93,7 +93,14 @@ function proseBlocks(body: string) {
 
 function exhibitBlock(a: AvaArtifact) {
   return (
-    <View key={a.id} style={styles.card} wrap={a.artifact === "table"}>
+    <View
+      key={a.id}
+      style={styles.card}
+      wrap={
+        a.artifact === "table" ||
+        (a.artifact === "chart" && a.kind === "quadrant-matrix")
+      }
+    >
       {a.title && (
         <Text style={styles.heading} minPresenceAhead={128}>
           {a.title}
@@ -122,48 +129,157 @@ function exhibitBlock(a: AvaArtifact) {
       ) : a.artifact === "chart" ? (
         (() => {
           if (a.kind === "quadrant-matrix") {
-            const quadrants = matrixQuadrants(a);
+            const p = matrixPlot(a);
             return (
               <>
                 {a.subtitle && <Text style={styles.meta}>{a.subtitle}</Text>}
-                {[0, 2].map((offset) => (
-                  <View key={offset} style={{ flexDirection: "row" }}>
-                    {quadrants.slice(offset, offset + 2).map((q) => (
-                      <View
-                        key={`${q.x}-${q.y}`}
-                        style={{
-                          flex: 1,
-                          borderWidth: 1,
-                          borderColor: "#a7cdb2",
-                          backgroundColor: "#f0f7f2",
-                          padding: 8,
-                          minHeight: 75,
-                        }}
-                      >
-                        <Text style={[styles.meta, styles.bold]}>
-                          {a.xKey}: {q.x} · {a.yKey}: {q.y}
-                        </Text>
-                        {q.rows.map((row, i) => (
-                          <View key={i} style={{ marginBottom: 6 }}>
-                            <Text style={[styles.cell, styles.bold]}>
-                              {String(row.label)}
+                <Svg
+                  viewBox={`0 0 ${p.width} ${p.height}`}
+                  width="100%"
+                  height={Math.min(320, p.height * 0.61)}
+                >
+                  {p.quadrants.map((q, i) => (
+                    <G key={i}>
+                      <Rect
+                        x={q.x}
+                        y={q.y}
+                        width={p.cellWidth}
+                        height={p.rowHeight}
+                        fill={q.fill}
+                      />
+                      {q.items.map((item) => (
+                        <G key={item.index}>
+                          <Circle
+                            cx={item.x + 10}
+                            cy={item.y + 1}
+                            r={11}
+                            fill="#214f4b"
+                          />
+                          <Text
+                            x={item.x + 10}
+                            y={item.y + 5}
+                            textAnchor="middle"
+                            fill="white"
+                            style={{ fontSize: 12, fontWeight: 700 }}
+                          >
+                            {String(item.index)}
+                          </Text>
+                          {item.lines.map((line, j) => (
+                            <Text
+                              key={j}
+                              x={item.x + 30}
+                              y={item.y + 6 + j * 19}
+                              fill="#16343d"
+                              style={{ fontSize: 15, fontWeight: 700 }}
+                            >
+                              {line}
                             </Text>
-                            {Object.entries(row)
-                              .filter(
-                                ([key]) =>
-                                  !["label", a.xKey!, a.yKey!].includes(key),
-                              )
-                              .map(([key, value]) => (
-                                <Text key={key} style={styles.cell}>
-                                  {key}: {String(value ?? "")}
-                                </Text>
-                              ))}
-                          </View>
-                        ))}
-                      </View>
-                    ))}
-                  </View>
-                ))}
+                          ))}
+                        </G>
+                      ))}
+                    </G>
+                  ))}
+                  <Rect
+                    x={p.left}
+                    y={p.top}
+                    width={p.cellWidth * 2}
+                    height={p.rowHeight * 2}
+                    fill="none"
+                    stroke="#b6c5cb"
+                  />
+                  <Line
+                    x1={p.left + p.cellWidth}
+                    x2={p.left + p.cellWidth}
+                    y1={p.top}
+                    y2={p.top + p.rowHeight * 2}
+                    stroke="#b6c5cb"
+                    strokeDasharray="5 5"
+                  />
+                  <Line
+                    x1={p.left}
+                    x2={p.left + p.cellWidth * 2}
+                    y1={p.top + p.rowHeight}
+                    y2={p.top + p.rowHeight}
+                    stroke="#b6c5cb"
+                    strokeDasharray="5 5"
+                  />
+                  <G fill="#425b66" style={{ fontSize: 13 }}>
+                    <Text
+                      x={p.left - 12}
+                      y={p.top + p.rowHeight / 2}
+                      textAnchor="end"
+                    >
+                      High
+                    </Text>
+                    <Text
+                      x={p.left - 12}
+                      y={p.top + p.rowHeight * 1.5}
+                      textAnchor="end"
+                    >
+                      Low
+                    </Text>
+                    <Text
+                      x={p.left + p.cellWidth / 2}
+                      y={p.height - 43}
+                      textAnchor="middle"
+                    >
+                      Low
+                    </Text>
+                    <Text
+                      x={p.left + p.cellWidth * 1.5}
+                      y={p.height - 43}
+                      textAnchor="middle"
+                    >
+                      High
+                    </Text>
+                  </G>
+                  <G fill="#16343d" style={{ fontSize: 15, fontWeight: 700 }}>
+                    <Text
+                      x={p.left + p.cellWidth}
+                      y={p.height - 16}
+                      textAnchor="middle"
+                    >
+                      {a.xKey}
+                    </Text>
+                    <G
+                      transform={`translate(22 ${p.top + p.rowHeight}) rotate(-90)`}
+                    >
+                      <Text textAnchor="middle">{a.yKey}</Text>
+                    </G>
+                  </G>
+                </Svg>
+                <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                  {p.entries.map((entry) => (
+                    <View
+                      key={entry.index}
+                      wrap={false}
+                      style={{
+                        width: "50%",
+                        paddingRight: 10,
+                        marginBottom: 9,
+                      }}
+                    >
+                      <Text style={{ fontSize: 8, fontWeight: 700 }}>
+                        {entry.index}. {entry.label}
+                      </Text>
+                      {entry.details.map((d) => (
+                        <Text
+                          key={d.key}
+                          style={{
+                            fontSize: 8,
+                            lineHeight: 1.4,
+                            color: "#425b66",
+                          }}
+                        >
+                          {["reason", "rationale"].includes(d.key.toLowerCase())
+                            ? ""
+                            : `${d.key}: `}
+                          {d.value}
+                        </Text>
+                      ))}
+                    </View>
+                  ))}
+                </View>
                 {a.sourceNote && (
                   <Text style={styles.meta}>{a.sourceNote}</Text>
                 )}
