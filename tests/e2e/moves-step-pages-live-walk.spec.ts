@@ -212,7 +212,12 @@ async function checkStepWorkspaceNavigation(
     page.getByRole("heading", { name: "Phase Intelligence" }),
   ).toBeVisible();
   await page.getByRole("tab", { name: "Steps" }).click();
-  await expect(page.locator("#step-panel-title")).toBeVisible();
+  await expect(page).toHaveURL(/\/phase\/2\?step=/, {
+    timeout: VISIBLE_TIMEOUT_MS,
+  });
+  await expect(page.locator("#step-panel-title")).toBeVisible({
+    timeout: VISIBLE_TIMEOUT_MS,
+  });
   expect(new URL(page.url()).pathname).toBe(routeFor(moveId, 2));
   await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
 
@@ -234,7 +239,12 @@ async function checkStepWorkspaceNavigation(
   ).toBeVisible();
   await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
   await page.getByRole("tab", { name: "Steps" }).click();
-  await expect(page.locator("#step-panel-title")).toBeVisible();
+  await expect(page).toHaveURL(/\/phase\/2\?step=/, {
+    timeout: VISIBLE_TIMEOUT_MS,
+  });
+  await expect(page.locator("#step-panel-title")).toBeVisible({
+    timeout: VISIBLE_TIMEOUT_MS,
+  });
   expect(new URL(page.url()).pathname).toBe(routeFor(moveId, 2));
   await page.goto(routeFor(moveId, 2, "?step=root-causes"), {
     waitUntil: "domcontentloaded",
@@ -315,8 +325,11 @@ async function measureUxVariants(
   }
 }
 
-async function checkRootCauseWorkReachability(page: Page): Promise<void> {
-  for (const width of [1440, 390] as const) {
+async function checkRootCauseWorkReachability(
+  page: Page,
+  checkGlobalNav = false,
+): Promise<void> {
+  for (const width of [1906, 1440, 390] as const) {
     await page.setViewportSize({ width, height: 900 });
     const root = page.locator('[class*="MovesStepPage-module"][class$="__root"]');
     const row = page.getByText("RANK 01 · RC-1");
@@ -358,10 +371,12 @@ async function checkRootCauseWorkReachability(page: Page): Promise<void> {
       (await root.evaluate((element) => element.scrollTop)) +
       (await page.evaluate(() => window.scrollY));
     expect(scrollDistance, `${width}px: ordinary wheel scrolling must move the work`).toBeGreaterThan(0);
-    const topNav = page.getByTestId("nexus-top-nav");
-    await expect(topNav).toBeVisible();
-    const navTop = await topNav.evaluate((element) => element.getBoundingClientRect().top);
-    expect(navTop, `${width}px: global navigation must stay at the top while scrolling`).toBeGreaterThanOrEqual(-1);
+    if (checkGlobalNav) {
+      const topNav = page.getByTestId("nexus-top-nav");
+      await expect(topNav).toBeVisible();
+      const navTop = await topNav.evaluate((element) => element.getBoundingClientRect().top);
+      expect(navTop, `${width}px: global navigation must stay at the top while scrolling`).toBeGreaterThanOrEqual(-1);
+    }
   }
   await page.setViewportSize({ width: 1440, height: 900 });
 }
@@ -692,7 +707,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
               uxInput,
             );
             if (phase === 2 && view === "root-causes") {
-              await checkRootCauseWorkReachability(page);
+              await checkRootCauseWorkReachability(page, true);
               await checkStepWorkspaceNavigation(page, MOVE_ID!);
             }
             const body = await page.locator("body").innerText();
