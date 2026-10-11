@@ -35,7 +35,7 @@ Small labels in the Moves phase bar now use readable theme colors directly. The 
 - Focused Chromium checks: pass, 2 tests. The contrast case covers desktop and phone widths in light and dark modes; the scroll case confirms that long content remains reachable.
 - Mutation check: restoring the prior opacity values made the contrast case fail; the corrected CSS passed after restoration.
 - Temporary Jest rendering of the real step component: pass, 1 test. The temporary file was removed after reviewing 1440px and 390px light/dark renders against the phase bar design.
-- Typecheck, changed-file ESLint, library orphan audit, route/export reachability, test coverage census, tenancy fence census, and manual check: pass. No new test file or census delta; `coveredTestFiles` remains 2,830.
+- Typecheck, changed-file ESLint, library orphan audit, route/export reachability, test coverage census, tenancy fence census, and manual check: pass. No new test file or census delta from the merged base; `coveredTestFiles` is 2,833.
 - Release gates: pass, all 11 gates.
 - The preceding automatic signed-in walk passed 20 of 20 reachable pages with nine later pages not reachable, and measured 89/100 overall UX. The dark contrast deduction remains the gap this change addresses; the next deployed walk must establish its actual score.
 
