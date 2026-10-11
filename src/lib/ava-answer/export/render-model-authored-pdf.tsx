@@ -77,7 +77,7 @@ function proseBlocks(body: string) {
 function exhibitBlock(a: AvaArtifact) {
   return (
     <View key={a.id} style={styles.card} wrap={a.artifact === "table"}>
-      {a.title && <Text style={styles.heading}>{a.title}</Text>}
+      {a.title && <Text style={styles.heading} minPresenceAhead={128}>{a.title}</Text>}
       {a.artifact === "table" ? (
         <>
           <View style={styles.row} wrap={false}>
