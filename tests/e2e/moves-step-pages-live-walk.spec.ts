@@ -247,6 +247,45 @@ async function measureUxVariants(
   }
 }
 
+async function checkRootCauseWorkReachability(page: Page): Promise<void> {
+  for (const width of [1440, 390] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    const root = page.locator('[class*="MovesStepPage-module"][class$="__root"]');
+    const row = page.getByText("RANK 01 · RC-1");
+    const action = page.getByRole("button", { name: "Confirm this order" });
+    await expect(root).toHaveCount(1);
+    await expect(row).toHaveCount(1);
+    await expect(action).toHaveCount(1);
+    expect(await root.evaluate((element) => element.scrollHeight)).toBeGreaterThan(
+      await root.evaluate((element) => element.clientHeight),
+    );
+    await root.hover();
+    await page.mouse.wheel(0, -4000);
+    await expect.poll(() => root.evaluate((element) => element.scrollTop)).toBe(0);
+    for (const target of [row, action]) {
+      let reached = false;
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        reached = await target.evaluate((element) => {
+          const root = element.closest('[class*="MovesStepPage-module"][class$="__root"]');
+          if (!root) return false;
+          const targetRect = element.getBoundingClientRect();
+          const rootRect = root.getBoundingClientRect();
+          return (
+            targetRect.top >= Math.max(0, rootRect.top) &&
+            targetRect.bottom <= Math.min(window.innerHeight, rootRect.bottom)
+          );
+        });
+        if (reached) break;
+        await root.hover();
+        await page.mouse.wheel(0, 400);
+      }
+      expect(reached, `${width}px: ${await target.textContent()} must be reachable by wheel`).toBe(true);
+    }
+    expect(await root.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+}
+
 async function inspectPage(
   page: Page,
   destination: string,
@@ -289,6 +328,43 @@ async function inspectPage(
     landed: landedAt(page),
   };
 }
+
+test("keeps long step content reachable inside the clipped workspace", async ({
+  page,
+}) => {
+  const css = fs.readFileSync(
+    path.resolve(
+      process.cwd(),
+      "src/components/strategic-moves/step-page/MovesStepPage.module.css",
+    ),
+    "utf8",
+  );
+  for (const width of [390, 1440]) {
+    for (const colorScheme of ["light", "dark"] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ colorScheme });
+      await page.setContent(
+        '<div style="display:flex;height:571px;overflow:hidden"><div class="root" style="flex:1"><div class="shell"><main><h1>Long step</h1><div style="height:900px"></div><footer data-testid="step-end">End of step</footer></main></div></div></div>',
+      );
+      await page.addStyleTag({ content: css });
+      const root = page.locator(".root");
+      expect(
+        await root.evaluate((element) => element.scrollHeight),
+      ).toBeGreaterThan(await root.evaluate((element) => element.clientHeight));
+      await root.hover();
+      await page.mouse.wheel(0, 1200);
+      await expect
+        .poll(() => root.evaluate((element) => element.scrollTop))
+        .toBeGreaterThan(0);
+      await expect(page.getByTestId("step-end")).toBeInViewport();
+      expect(
+        await root.evaluate(
+          (element) => element.scrollWidth > element.clientWidth + 1,
+        ),
+      ).toBe(false);
+    }
+  }
+});
 
 test("walks every deployed Moves step page without writing", async ({ page }, testInfo) => {
   test.setTimeout(32 * 60_000);
@@ -462,6 +538,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
               screenshots,
               uxInput,
             );
+            if (phase === 2 && view === "root-causes") {
+              await checkRootCauseWorkReachability(page);
+            }
             const body = await page.locator("body").innerText();
             const badRead = unreviewedReadText(body, phase, view);
             if (badRead) throw new Error(`Unreviewed read gap: ${badRead}`);
