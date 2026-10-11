@@ -41,7 +41,7 @@ up front, in a manifest, and checked in CI.
 | `pii_phi_handling`            | Required for sensitive classifications.                                     |
 | `approved_by` / `approved_at` | Human sign-off for declaring the dataset. It does not approve loading it.   |
 | `load_approval`               | Optional until a load is approved. A named person's approval for ONE exact version: `approved_by`, `approved_at`, `assessment_id`, `source_set_hash`, `release_record`. |
-| `serving_approval`            | Optional until that loaded version is approved for a product surface. The same fields plus `surface` (`home`). Requires a `load_approval` for the same version. |
+| `serving_approval`            | Optional until that loaded version is approved for a product surface. The same fields plus `surface` (`home` or `tower`). Requires a `load_approval` for the same version. |
 
 ## Hard rules enforced by CI
 

@@ -74,7 +74,7 @@ export const LoadApprovalSchema = z
 export type LoadApproval = z.infer<typeof LoadApprovalSchema>;
 
 /** Product surfaces a loaded dataset version can be approved for serving on. */
-export const SERVING_SURFACES = ["home"] as const;
+export const SERVING_SURFACES = ["home", "tower"] as const;
 
 /**
  * Approval to serve ONE exact, already-loaded version on a product surface.
