@@ -1053,6 +1053,8 @@ export async function submitOriginationBrief(
   }
 
   const programId = (inserted as { id: string }).id;
+  const { assignSyntheticE2eOperatorToCreatedMove } = await import("@/lib/auth/synthetic-e2e-operator-participant");
+  await assignSyntheticE2eOperatorToCreatedMove(tenancy, programId);
   const programName = (inserted as { name: string }).name;
   try {
     await persistP0PhaseCaptureFromSource(tenancy, programId, {

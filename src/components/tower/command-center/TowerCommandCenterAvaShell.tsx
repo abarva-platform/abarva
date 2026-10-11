@@ -14,6 +14,7 @@ import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import type { CioTowerPageContext } from "@/lib/tower/current-layer-answer-contract";
 
 import { TowerCommandCenter } from "./TowerCommandCenter";
+import { approvedAiCaseFunding } from "./views/portfolio-kind";
 
 interface CioTowerChatResponse {
   response?: string;
@@ -412,6 +413,7 @@ export function TowerCommandCenterAvaShell({
       onAvaContextChange={setPageContext}
     />
   );
+  const caseFunding = view ? approvedAiCaseFunding(view.allInitiatives) : null;
 
   return (
     <AtlasChatPanel
@@ -449,19 +451,19 @@ export function TowerCommandCenterAvaShell({
         },
         towerMeasures: view
           ? [
-              {
-                measureKey: "ai_tagged_spend_fy26_non_additive",
-                label: "AI-tagged spend",
-                value: view.summary.aiTaggedUsd,
-              },
+              ...(caseFunding === null ? [] : [{
+                measureKey: "approved_ai_business_case_funding_usd",
+                label: "Approved AI business-case funding, not actual spend",
+                value: caseFunding,
+              }]),
               {
                 measureKey: "promised_value_fy26",
-                label: "Promised value",
+                label: "Projected yearly benefit, not proven savings",
                 value: view.summary.promisedUsd,
               },
               {
                 measureKey: "realized_value_ytd_allowed",
-                label: "Claimable value",
+                label: "Value cleared for reporting in loaded months",
                 value: view.summary.claimableUsd,
               },
             ]

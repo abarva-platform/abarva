@@ -23,7 +23,7 @@ import {
 
 const KIND_LABEL: Record<TowerAiView["kind"], string> = {
   funded: "Funded program",
-  embedded: "Embedded platform spend",
+  embedded: "Embedded platform work",
   candidate: "Candidate idea",
   governance: "Governance",
   platform: "Platform",
@@ -158,10 +158,10 @@ export function plainAi(a: TowerAiView): string {
     return "This is an AI tool rollout. Read it through adoption against target, active usage, linked business cases and the controls that govern use.";
   }
   const definition: Record<TowerAiView["kind"], string> = {
-    funded: "a real, funded program with its own budget and approvals",
+    funded: "an approved program with recorded funding",
     embedded:
-      "value delivered inside a platform you already pay for — not new AI spend",
-    candidate: "a candidate idea, not approved spend",
+      "AI work attributed to an existing platform; any extra cost needs separate evidence",
+    candidate: "a candidate idea whose funding status needs checking",
     governance:
       "a control that unblocks other AI, not a value generator on its own",
     platform: "shared platform consumption spread across many teams",
@@ -213,8 +213,8 @@ export function AiInitiativeDrawer({
         <>
           <div className={styles.drGrid}>
             <DrawerStat
-              label={isToolRollout(a) ? "Tool spend" : "AI spend"}
-              value={a.aiSpendLoaded ? formatUsdM(a.aiSpendUsd) : "Not loaded"}
+              label={a.aiAmountBasis === "approved_funding" ? "Approved AI funding" : a.aiAmountBasis === "annualized_tool_cost" ? "Yearly tool cost" : "Amount basis"}
+              value={a.aiAmountBasis === "unknown" ? "Not verified" : formatUsdM(a.aiSpendUsd)}
             />
             <DrawerStat label="Recommended posture" value={a.posture} small />
             <DrawerStat
@@ -392,9 +392,9 @@ export function AiInitiativeDrawer({
           */}
               <DrawerSection>Money</DrawerSection>
               <DrawerRow
-                label="Approved budget"
+                label={a.aiAmountBasis === "approved_funding" ? "Approved AI funding" : a.aiAmountBasis === "annualized_tool_cost" ? "Yearly tool cost" : "Amount basis"}
                 value={
-                  a.aiSpendLoaded ? formatUsdM(a.aiSpendUsd) : "Not loaded"
+                  a.aiAmountBasis === "unknown" ? "Not verified" : formatUsdM(a.aiSpendUsd)
                 }
               />
               <DrawerRow

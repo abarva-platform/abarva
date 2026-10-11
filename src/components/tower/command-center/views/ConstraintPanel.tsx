@@ -39,7 +39,7 @@ export function ConstraintPanel({ view }: { view: TowerCommandCenterView }) {
         {recordedCount} of {caseCount} business cases have a recorded gating constraint.
       </h2>
       <div style={PANEL}>
-        <h3 style={{ margin: "0 0 18px", fontSize: 15, fontWeight: 600 }}>Recorded constraints</h3>
+        <h3 style={{ margin: "0 0 18px", fontSize: 15, fontWeight: 600 }}>What is holding them back</h3>
         {rows.length === 0 ? (
           <p style={{ margin: 0 }}>No case carries a gating constraint in this read. This is a gap in the projection, not a portfolio without blockers.</p>
         ) : (

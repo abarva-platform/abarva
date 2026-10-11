@@ -77,7 +77,7 @@ describe("auth and tenancy suite CI ownership", () => {
     );
 
     expect(census.counts.indeterminateInvocations).toBe(0);
-    expect(row).toMatchObject({ testFiles: 20, coveredTestFiles: 14 });
+    expect(row).toMatchObject({ testFiles: 22, coveredTestFiles: 16 });
     expect(
       census.uncoveredDirectories.some(
         (candidate) => candidate.directory === "src/lib/auth/__tests__",

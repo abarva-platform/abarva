@@ -236,34 +236,34 @@ describe("claimableUsd", () => {
 });
 
 describe("blockedUsd", () => {
-  it("is every promised dollar that cannot be booked today", () => {
+  it("does not subtract a yearly plan from loaded-month Finance value", () => {
     expect(
       blockedUsd({
         promisedValueUsd: 35.5 * M,
         towerClaimAllowed: "partial",
         financeValidatedValueUsd: 3.8 * M,
       }),
-    ).toBe(35.5 * M);
+    ).toBeNull();
   });
 
-  it("nets out the claimable portion when the gate has cleared", () => {
+  it("does not imply a comparable remainder even when a gate clears", () => {
     expect(
       blockedUsd({
         promisedValueUsd: 10 * M,
         towerClaimAllowed: "allowed",
         financeValidatedValueUsd: 4 * M,
       }),
-    ).toBe(6 * M);
+    ).toBeNull();
   });
 
-  it("never goes negative", () => {
+  it("does not turn an unknown comparison into zero", () => {
     expect(
       blockedUsd({
         promisedValueUsd: 2 * M,
         towerClaimAllowed: "allowed",
         financeValidatedValueUsd: 9 * M,
       }),
-    ).toBe(0);
+    ).toBeNull();
   });
 });
 
@@ -442,7 +442,7 @@ describe("deriveProgramValues", () => {
     expect(d.usageSupportedUsd).toBeCloseTo(10.664 * M, 0);
     expect(financeValidatedValueUsd).toBeGreaterThanOrEqual(d.claimableUsd);
     expect(d.claimableUsd).toBe(0);
-    expect(d.blockedUsd).toBe(12.4 * M);
+    expect(d.blockedUsd).toBeNull();
     expect(d.proofLevel).toBe(2);
     expect(d.usageStatus).toBe("strong");
     expect(d.valueAtStakeUsd).toBe(12.4 * M);

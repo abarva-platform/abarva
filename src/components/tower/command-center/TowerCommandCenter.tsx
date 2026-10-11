@@ -95,25 +95,25 @@ type SubTab = { readonly id: string; readonly label: string };
 const SUB_TABS: Readonly<Record<TowerTab, readonly SubTab[]>> = {
   verdict: [],
   budget: [
-    { id: "shape", label: "Budget shape" },
-    { id: "domain", label: "Reviewed programs by domain" },
+    { id: "shape", label: "Funding breakdown" },
+    { id: "domain", label: "Projects by business area" },
   ],
   initiatives: [
-    { id: "constraint", label: "Recorded constraints" },
+    { id: "constraint", label: "What is holding them back" },
     { id: "table", label: "Business cases" },
-    { id: "distribution", label: "Distribution" },
-    { id: "proof", label: "Value proof" },
+    { id: "distribution", label: "Funding and benefits" },
+    { id: "proof", label: "Results and proof" },
   ],
   tools: [
     { id: "rollouts", label: "Rollouts" },
-    { id: "vendor", label: "Vendor exposure" },
-    { id: "portfolio", label: "AI portfolio" },
+    { id: "vendor", label: "Tool vendors" },
+    { id: "portfolio", label: "All tools and cases" },
   ],
   decisions: [
     // CommandCenterView carries the decision rail and the value-loss waterfall. The design puts
     // decisions under their own tab rather than on the verdict, so this is where it lives now.
     { id: "review", label: "Decisions for this review" },
-    { id: "queue", label: "Evidence queue" },
+    { id: "queue", label: "What proof is missing" },
     { id: "owner", label: "By owner" },
   ],
   foundations: [],
@@ -336,9 +336,12 @@ export function TowerCommandCenter({
 
   const blockedValue = view ? view.summary.blockedUsd : 0;
   const attention = {
-    funnel: blockedValue > 0,
+    funnel: Boolean(view?.summary.blockedValueComparable && blockedValue > 0),
     evidence: (view?.gaps.length ?? 0) > 0,
   };
+  const includesIllustrativeRecords = view?.allInitiatives.some((item) =>
+    /synthetic|illustrative|demo/i.test(item.sourceQualityState ?? ""),
+  ) ?? false;
 
   const body = (() => {
     if (!view) {
@@ -485,6 +488,11 @@ export function TowerCommandCenter({
 
         <div className={styles.bodyregion}>
           <div className={styles.wrap}>
+            {includesIllustrativeRecords ? (
+              <p role="note" style={{ margin: "0 0 14px", padding: "10px 14px", background: "var(--canon-amber-light, #fff4df)", color: "var(--canon-gray-900)", fontSize: 13, lineHeight: 1.5 }}>
+                Illustrative demo records are included. These amounts show a sample scenario, not verified client results.
+              </p>
+            ) : null}
             <div
               id="tcc-panel"
               role="tabpanel"
