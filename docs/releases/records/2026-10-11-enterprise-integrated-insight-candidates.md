@@ -42,8 +42,8 @@ is separately scoped and does not change any product's serving state.
 
 ## QA / Validation
 
-- PASS: 43 deterministic rule, source-boundary and approval tests.
-- PASS: 51-test combined rule and disposable Postgres run, including real migration,
+- PASS: 44 deterministic rule, source-boundary and approval tests.
+- PASS: 52-test combined rule and disposable Postgres run, including real migration,
   persistence, independent readback, idempotency, composite FKs and RLS.
 - PASS: six Jest foundation tests, TypeScript, lint and dataset manifest validation;
   declaration remains visibly unapproved.

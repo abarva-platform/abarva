@@ -10,7 +10,7 @@ export const INSIGHT_RULES = [
   { key: "program-forecast-budget", version: 1, basis: "Recorded forecast_usd exceeds approved_budget_usd for the same program, USD unit and exact dated period; no realized-value inference." },
   { key: "ai-target-actual-gap", version: 1, basis: "A dated AI-use-case target has no eligible actual of the same metric, unit and period in this assessment; absence is not proof of failure." },
   { key: "risk-critical-dependency", version: 1, basis: "High/critical risk APPLIES_TO a critical application and that application HOSTED_ON or DEPENDS_ON a platform; only declared edge direction is traversed." },
-  { key: "compatible-benchmark", version: 1, basis: "Confirmed non-synthetic external reference, cited HTTPS source and matching definition, industry, cohort, geography and period basis; compare an actual to the recorded range, never calculate percentile." },
+  { key: "compatible-benchmark", version: 1, basis: "Confirmed non-synthetic external reference, cited HTTPS source and matching definition, industry, cohort, geography, dated period and period basis; compare an actual to the recorded range, never calculate percentile." },
 ] as const;
 
 const compare = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -206,6 +206,7 @@ export function buildIntegratedInsightPlan(raw: InsightInput): InsightPlan {
           !/^https:\/\//.test(text(attrs.source_uri)) || !date(expires) || expires < input.asOf ||
           !contractKeys.every((key) => text(contract[key]))) continue;
         for (const measure of measures.filter((row) => row.scenario === "actual" && dated(row) && row.period_end! <= input.asOf &&
+          row.period_start === attrs.period_start && row.period_end === attrs.period_end &&
           row.metric_key === attrs.metric_key && row.unit === attrs.unit)) {
           const measureContract = measure.attributes_json.comparison_contract as Record<string, unknown> | undefined;
           if (!measureContract || !contractKeys.every((key) => text(contract[key]) === text(measureContract[key])) ||
@@ -216,7 +217,7 @@ export function buildIntegratedInsightPlan(raw: InsightInput): InsightPlan {
           benchmarkPairs++;
           if (measure.value_number! < low || measure.value_number! > high) add("compatible-benchmark",
             `${byId.get(measure.subject_object_id)!.display_name}: measure is outside the cited comparator range`,
-            `Recorded ${measure.metric_key}: ${measure.value_number} ${measure.unit}; cited comparator range: ${low} to ${high} ${measure.unit}. This is a range comparison, not a percentile or performance judgment.`,
+            `Recorded ${measure.metric_key}: ${measure.value_number} ${measure.unit} for ${measure.period_start} to ${measure.period_end}; cited same-period comparator range: ${low} to ${high} ${measure.unit}. This is a range comparison, not a percentile or performance judgment.`,
             [byId.get(measure.subject_object_id)!, benchmark], [], [measure],
             [`External reference: ${text(attrs.source_uri)}; comparator valid through ${expires}.`], "benchmark_comparison");
         }

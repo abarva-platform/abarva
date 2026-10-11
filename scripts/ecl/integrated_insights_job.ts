@@ -84,7 +84,11 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
     const store = await runtime.store(env);
     const proofPath = `${tenant}/enterprise-insights/${datasetId}/${plan.loadVersionHash}/runs/${run.runId}/proof.json`;
     const inputPath = `${tenant}/enterprise-insights/${datasetId}/${plan.loadVersionHash}/runs/${run.runId}/input.json`;
-    await store.writeOnce(inputPath, proofBytes(input as unknown as Record<string, unknown>));
+    const inputBytes = proofBytes(input as unknown as Record<string, unknown>);
+    const inputReceipt = await store.writeOnce(inputPath, inputBytes);
+    if (!inputReceipt.created && !(await store.read(inputReceipt.uri)).equals(inputBytes)) {
+      throw new Error("Existing immutable input snapshot differs; use a fresh run ID");
+    }
     const record = jobRecord(run, { tenantScope: tenant, inputSourceVersion: plan.loadVersionHash,
       idempotencyKey: plan.releaseId, status: "succeeded", proofUri: store.uriFor(proofPath), limits });
     if (mode === "apply") {

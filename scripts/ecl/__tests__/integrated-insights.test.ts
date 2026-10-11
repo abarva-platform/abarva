@@ -30,7 +30,8 @@ export function input(): InsightInput {
       object("Case A", "ai_use_case"), object("Risk A", "risk", { severity: "high" }),
       object("App A", "application", { criticality: "critical" }), object("Platform A", "infrastructure"),
       object("Benchmark A", "external_benchmark", { metric_key: "comparable_cost", unit: "USD", range_low: 10,
-        range_high: 20, comparison_contract: { ...comparison }, source_uri: "https://example.org/reference", valid_until: "2026-12-31" })],
+        range_high: 20, comparison_contract: { ...comparison }, period_start: "2026-01-01", period_end: "2026-09-30",
+        source_uri: "https://example.org/reference", valid_until: "2026-12-31" })],
     relationships: [edge("risk applies", "Risk A", "APPLIES_TO", "App A"),
       edge("hosted on", "App A", "HOSTED_ON", "Platform A")],
     measures: [measure("budget", "Program A", "approved_budget_usd", 100, "planned", { budget_approval_status: "approved" }),
@@ -163,6 +164,12 @@ test("unreviewed, expired, uncited and malformed benchmarks abstain", () => {
     if (mutation === "citation") benchmark.attributes_json.source_uri = "";
     if (mutation === "range") benchmark.attributes_json.range_high = 1;
     assert.equal(finding(data, "compatible-benchmark").length, 0);
+  }
+});
+test("benchmark references with a different or unspecified dated period abstain", () => {
+  for (const period of ["2025-09-30", undefined]) {
+    const data = input(); data.objects.find((row) => row.object_type === "external_benchmark")!.attributes_json.period_end = period;
+    assert.equal(finding(data, "compatible-benchmark").length,0);
   }
 });
 test("Cube links preserve matching measure lineage without supplying invented values", () => {
