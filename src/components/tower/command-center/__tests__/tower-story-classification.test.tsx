@@ -48,7 +48,7 @@ describe("Tower story denominators", () => {
     expect(buildToolVendorRows(viewWith([cases, tool]))).toHaveLength(1);
   });
 
-  it("distinguishes a recorded Finance zero from an absent Finance amount", () => {
+  it("does not turn a Finance validation status into a zero dollar amount", () => {
     const validatedZero = item({
       id: "VALIDATED",
       name: "Validated zero",
@@ -67,8 +67,8 @@ describe("Tower story denominators", () => {
     });
     render(<InitiativesTablePanel view={viewWith([validatedZero, unvalidated])} />);
     const financeCell = (name: string) =>
-      screen.getByText(name).closest('[title="Double-click to open case details"]')?.children[6];
-    expect(financeCell("Validated zero")?.textContent).toBe("$0");
+      screen.getByText(name).closest('[title="Double-click to open case details"]')?.children[5];
+    expect(financeCell("Validated zero")?.textContent).toBe("Amount not shown");
     expect(financeCell("Unvalidated case")?.textContent).toBe("Not loaded");
   });
 
@@ -91,7 +91,7 @@ describe("Tower story denominators", () => {
       ...view,
       summary: { ...view.summary, budgetUsd: 987_654_321, runUsd: 123_456_789 },
     }} />);
-    expect(document.body.textContent).toContain("Source status not verified");
+    expect(document.body.textContent).toContain("Needs a source check");
     expect(document.body.textContent).not.toContain("$987.7M");
     expect(document.body.textContent).not.toContain("$123.5M");
   });

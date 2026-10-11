@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import type { TowerActionView } from "@/lib/tower/command-center/types";
+import { formatUsdM } from "@/lib/tower/command-center/format";
 
 import { Dot, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
@@ -191,6 +192,11 @@ export function ActionDrawer({
                 small
               />
               <DrawerStat label="Owner" value={action.ownerRole} small />
+              <DrawerStat
+                label={action.moduleHandoff?.toLowerCase() === "source" ? "Potential annual saving" : "Projected yearly benefit affected"}
+                value={action.amountExposedUsd === null ? "Not loaded" : formatUsdM(action.amountExposedUsd)}
+                small
+              />
               {action.handoffEntityId ? (
                 <DrawerStat
                   label="Linked object"
@@ -201,6 +207,11 @@ export function ActionDrawer({
             </div>
 
             <DrawerSection>Why now</DrawerSection>
+            {action.moduleHandoff?.toLowerCase() === "source" ? (
+              <p className={cx(styles.recBox, styles.muted)}>
+                This is a possible yearly saving, not money already saved. Finance confirmation is still required.
+              </p>
+            ) : null}
             <p className={cx(styles.recBox, styles.muted)}>{action.why}</p>
 
             {due.gate ? (

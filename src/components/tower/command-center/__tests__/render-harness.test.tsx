@@ -116,15 +116,15 @@ describe("Command Center render harness", () => {
     dump("01-executive-view");
 
     fireEvent.click(screen.getByRole("tab", { name: /AI bets/ }));
-    fireEvent.click(screen.getByRole("tab", { name: /Value proof/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Results and proof/ }));
     dump("02-value-proof");
 
     fireEvent.click(screen.getByRole("tab", { name: /Tools/ }));
-    fireEvent.click(screen.getByRole("tab", { name: /AI portfolio/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /All tools and cases/ }));
     dump("03-ai-portfolio");
 
     fireEvent.click(screen.getByRole("tab", { name: /What must happen next/ }));
-    fireEvent.click(screen.getByRole("tab", { name: /Evidence queue/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /What proof is missing/ }));
     dump("04-evidence-actions");
 
     expect(true).toBe(true);
@@ -132,13 +132,13 @@ describe("Command Center render harness", () => {
 
   it("writes every drawer", () => {
     fireEvent.click(screen.getByRole("tab", { name: /AI bets/ }));
-    fireEvent.click(screen.getByRole("tab", { name: /Value proof/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Results and proof/ }));
     fireEvent.click(screen.getByText("Risk & Compliance AI"));
     dump("07-drawer-program");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
     fireEvent.click(screen.getByRole("tab", { name: /Tools/ }));
-    fireEvent.click(screen.getByRole("tab", { name: /AI portfolio/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /All tools and cases/ }));
     const firstAi = [...view.allInitiatives].sort(
       (a, b) => b.aiSpendUsd - a.aiSpendUsd || a.name.localeCompare(b.name),
     )[0]!;
@@ -151,7 +151,7 @@ describe("Command Center render harness", () => {
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
     fireEvent.click(screen.getByRole("tab", { name: /What must happen next/ }));
-    fireEvent.click(screen.getByRole("tab", { name: /Evidence queue/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /What proof is missing/ }));
     const firstGap = [...view.gaps].sort(
       (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
     )[0]!;

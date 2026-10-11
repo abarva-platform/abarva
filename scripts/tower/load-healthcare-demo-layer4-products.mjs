@@ -305,6 +305,87 @@ function loadPackage(options) {
   };
 }
 
+function assertPackageCanMutate(options) {
+  if (!options.write && !options.purgeOnly) return;
+  const manifestPath = path.join(options.packageDir, "package_manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  if (manifest.no_runtime_load !== false) {
+    throw new Error(
+      "Refusing runtime mutation: package_manifest.json must explicitly set no_runtime_load=false",
+    );
+  }
+  if (!options.write) return;
+
+  const budgets = readCsv(
+    path.join(options.packageDir, "20_it_budget_by_domain.csv"),
+  );
+  const projects = readCsv(
+    path.join(options.packageDir, "21_it_project_portfolio.csv"),
+  );
+  const fiscalYears = new Set(budgets.map((row) => row.fiscal_year).filter(Boolean));
+  if (
+    !budgets.length ||
+    !projects.length ||
+    fiscalYears.size !== 1 ||
+    budgets.some((row) => !row.fiscal_year || !row.domain_key) ||
+    projects.some((row) => !row.domain_key)
+  ) {
+    throw new Error(
+      "Refusing runtime load: budget and project source rows need one fiscal year",
+    );
+  }
+  const [fiscalYear] = fiscalYears;
+  if (
+    budgets.some(
+      (row) =>
+        row.tower_reviewed_project_budget_usd === "" ||
+        !Number.isFinite(Number(row.tower_reviewed_project_budget_usd)),
+    ) ||
+    projects.some(
+      (row) =>
+        row.approved_budget_usd === "" ||
+        !Number.isFinite(Number(row.approved_budget_usd)),
+    )
+  ) {
+    throw new Error("Refusing runtime load: budget and project amounts must be numeric");
+  }
+  if (projects.some((row) => row.project_budget_fiscal_year !== fiscalYear)) {
+    throw new Error(
+      "Refusing runtime load: each project approved amount needs an explicit matching project_budget_fiscal_year",
+    );
+  }
+  const reviewedByDomain = new Map();
+  const projectsByDomain = new Map();
+  for (const row of budgets) {
+    reviewedByDomain.set(
+      row.domain_key,
+      (reviewedByDomain.get(row.domain_key) ?? 0) + num(row.tower_reviewed_project_budget_usd),
+    );
+  }
+  for (const row of projects) {
+    projectsByDomain.set(
+      row.domain_key,
+      (projectsByDomain.get(row.domain_key) ?? 0) + num(row.approved_budget_usd),
+    );
+  }
+  const domains = new Set([
+    ...reviewedByDomain.keys(),
+    ...projectsByDomain.keys(),
+  ]);
+  const mismatches = [...domains].filter(
+    (domain) =>
+      Math.abs(
+        (reviewedByDomain.get(domain) ?? 0) -
+          (projectsByDomain.get(domain) ?? 0),
+      ) > 0.01,
+  );
+  if (mismatches.length) {
+    throw new Error(
+      `Refusing runtime load: FY budget and project funding differ in domain(s): ${mismatches.join(", ")}`,
+    );
+  }
+}
+
 function sumBy(rows, key) {
   return rows.reduce((sum, row) => sum + num(row[key]), 0);
 }
@@ -514,7 +595,7 @@ function buildRows(options) {
     usage_supported_value_usd: "null",
     finance_validated_value_usd: "null",
     claimable_value_usd: sqlNum(data.summary.board_claimable_ytd_usd),
-    blocked_value_usd: sqlNum(num(data.summary.projected_annual_value_low_usd) - num(data.summary.board_claimable_ytd_usd)),
+    blocked_value_usd: "null",
     proof_maturity_score: "null",
     risk_pressure_score: "null",
     usage_strength_score: "null",
@@ -667,13 +748,15 @@ function buildRows(options) {
       evidence_needed_json: sqlJson(gate.evidence),
       funded_amount_usd: sqlNum(project?.approved_budget_usd),
       promised_value_usd: sqlNum(row.projected_annual_value_low_usd),
-      usage_supported_value_usd: sqlNum(actual.financeReviewed),
+      // Finance review is a separate stage; no usage-supported dollar measure
+      // was supplied for this case.
+      usage_supported_value_usd: "null",
       finance_validated_value_usd: sqlNum(actual.financeValidated),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       proof_maturity_score: sqlNum(row.readiness_score),
       risk_pressure_score: sqlNum(100 - num(row.readiness_score)),
-      usage_strength_score: sqlNum(actual.financeReviewed > 0 ? 70 : 20),
+      usage_strength_score: "null",
       owner_role: sqlText(project?.sponsor_role ?? "program_sponsor"),
       handoff_module: sqlText("Tower"),
       value_state: sqlText(num(row.projected_annual_value_low_usd) > 0 ? "estimated" : "known"),
@@ -690,7 +773,7 @@ function buildRows(options) {
       page_key: "value_proof",
       metric_key: "use_case_promised_annual_value_low_usd",
       promised_value_usd: null,
-      usage_supported_value_usd: actual.financeReviewed,
+      usage_supported_value_usd: null,
       current_value: actual.financeValidated > 0 ? actual.financeValidated : null,
       business_case_benefit_usd: num(row.projected_annual_value_low_usd),
       realized_p_and_l_usd: null,
@@ -726,7 +809,7 @@ function buildRows(options) {
       current_value: actual.financeValidated > 0 ? sqlNum(actual.financeValidated) : "null",
       target_value: sqlNum(row.projected_annual_value_high_usd),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       value_state: sqlText(num(row.projected_annual_value_low_usd) > 0 ? "estimated" : "known"),
       quality_state: sqlText("passed"),
       source_refs_json: sqlJson(refs),
@@ -771,7 +854,7 @@ function buildRows(options) {
       current_value: "null",
       target_value: sqlNum(row.projected_annual_value_low_usd),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       value_state: sqlText("known"),
       quality_state: sqlText("passed"),
       source_refs_json: sqlJson(refs),
@@ -839,7 +922,7 @@ function buildRows(options) {
         finance_status: queueRow.finance_status,
         proof_needed: queueRow.proof_needed,
         next_action: queueRow.next_action,
-        blocked_value_usd: Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable),
+        blocked_value_usd: null,
         owner_role: project?.sponsor_role ?? "program_sponsor",
         layer4_build_version: options.buildVersion,
       };
@@ -879,7 +962,7 @@ function buildRows(options) {
     const actionPayload = {
       ...queueRow,
       page_key: "recommended_actions",
-      blocked_value_usd: Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable),
+      blocked_value_usd: null,
       owner_role: project?.sponsor_role ?? "program_sponsor",
       handoff_module: "Tower",
       title: queueRow.next_action,
@@ -909,7 +992,7 @@ function buildRows(options) {
       usage_supported_value_usd: "null",
       finance_validated_value_usd: "null",
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       proof_maturity_score: sqlNum(useCase.readiness_score),
       risk_pressure_score: sqlNum(100 - num(useCase.readiness_score)),
       usage_strength_score: "null",
@@ -1329,9 +1412,6 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
     const useCase = casesById.get(row.business_case_id);
     if (!useCase) continue;
     const refs = [sourceRef(options, useCase, { business_case_id: row.business_case_id })];
-    const actual = {
-      boardClaimable: sumBy(observationsByCase.get(row.business_case_id) ?? [], "board_claimable_value_usd"),
-    };
     const project = projectsById.get(useCase.project_id);
     const sliceId = addCubeSlice(
       ctx,
@@ -1345,7 +1425,7 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
         owner_role: project?.sponsor_role ?? "program_sponsor",
       },
       {
-        blocked_value_usd: Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable),
+        blocked_value_usd: null,
         projected_annual_value_low_usd: num(row.projected_annual_value_low_usd),
       },
       ["use_case_promised_annual_value_low_usd"],
@@ -1969,6 +2049,7 @@ function emitProofBundle(outDir) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  assertPackageCanMutate(options);
   fs.mkdirSync(options.outDir, { recursive: true });
   const rows = buildRows(options);
   const loadSqlPath = path.join(options.outDir, "tower_layer4_product_cube_load.sql");

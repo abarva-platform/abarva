@@ -104,7 +104,8 @@ export async function requireAdminAuth(): Promise<AdminAuthCtx> {
       ...ctx.tenancy,
       userId: ctx.userId,
     });
-    isAdmin = policy.canAdminUsers === true || policy.canApproveGates === true;
+    isAdmin = ctx.tenancy.syntheticE2eOperator !== true &&
+      (policy.canAdminUsers === true || policy.canApproveGates === true);
   } catch {
     isAdmin = false;
   }
@@ -123,6 +124,8 @@ export async function requireAdminAuth(): Promise<AdminAuthCtx> {
  */
 export async function requireAdminDecide(): Promise<AdminAuthCtx> {
   const ctx = await resolveAdminAuthCtx();
+  if (ctx.tenancy.syntheticE2eOperator === true)
+    throw new AdminAuthError(403, 'forbidden_admin_required');
   const policy = await loadUserProgramAccessPolicy(ctx.tenancy);
   if (policy.canAdminUsers !== true && policy.canApproveGates !== true) {
     throw new AdminAuthError(403, 'forbidden_admin_required');

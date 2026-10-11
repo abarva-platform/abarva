@@ -350,6 +350,22 @@ export async function loadUserSourceAccessPolicy(
   ctx: TenancyCtx,
   opts: { activeClientKey: string; sourceEventId?: string | null },
 ): Promise<UserSourceAccessPolicy> {
+  if (ctx.syntheticE2eOperator === true) {
+    return buildPolicy({
+      ctx,
+      activeClientKey: opts.activeClientKey,
+      accessLevel: "no_source_access",
+      sourceEventIdsAllowed: [],
+      canViewFinancialData: false,
+      canAdminUsers: false,
+      canCreateSourceEvents: false,
+      canApproveSourceStages: false,
+      canApproveAward: false,
+      canUploadSourceArtifacts: false,
+      canGenerateSourcingArtifacts: false,
+      canPublishSourcingArtifacts: false,
+    });
+  }
   if (isCanonicalClientAdminEmail(ctx.email)) {
     // Security boundary: canonical admin/test accounts get unlimited Source
     // scope ONLY when acting as their inferred home client. Apply this even

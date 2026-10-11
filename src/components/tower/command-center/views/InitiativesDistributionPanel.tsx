@@ -3,8 +3,8 @@
 /**
  * Initiatives -> distribution.
  *
- * Groups spend and sponsor-stated value by fields the view model actually carries. If value type or
- * domain is absent, the row is named as not loaded rather than folded into a confident finding.
+ * Groups approved AI funding and projected benefit by the case value type. The loaded AI spend
+ * category repeats that same source field, so showing it as another breakdown would be misleading.
  */
 
 import {
@@ -26,8 +26,9 @@ import { isBusinessCase } from "./portfolio-kind";
 
 type GroupRow = {
   readonly name: string;
-  readonly investmentUsd: number;
+  readonly investmentUsd: number | null;
   readonly valueUsd: number | null;
+  readonly missingInvestmentCount: number;
   readonly missingValueCount: number;
 };
 
@@ -64,23 +65,28 @@ function groupBy(
       name,
       investmentUsd: 0,
       valueUsd: 0,
+      missingInvestmentCount: 0,
       missingValueCount: 0,
     };
     map.set(name, {
       name,
-      investmentUsd: current.investmentUsd + item.aiSpendUsd,
+      investmentUsd: item.aiAmountBasis === "approved_funding"
+        ? (current.investmentUsd ?? 0) + item.aiSpendUsd
+        : current.investmentUsd,
       valueUsd: item.promisedBenefitLoaded
         ? (current.valueUsd ?? 0) + item.promisedUsd
         : current.valueUsd,
+      missingInvestmentCount: current.missingInvestmentCount + (item.aiAmountBasis === "approved_funding" ? 0 : 1),
       missingValueCount: current.missingValueCount + (item.promisedBenefitLoaded ? 0 : 1),
     });
   }
   return [...map.values()]
     .map((row) => ({
       ...row,
+      investmentUsd: row.missingInvestmentCount > 0 && row.investmentUsd === 0 ? null : row.investmentUsd,
       valueUsd: row.missingValueCount > 0 && row.valueUsd === 0 ? null : row.valueUsd,
     }))
-    .sort((a, b) => b.investmentUsd - a.investmentUsd);
+    .sort((a, b) => (b.investmentUsd ?? -1) - (a.investmentUsd ?? -1));
 }
 
 function HBar({
@@ -93,11 +99,11 @@ function HBar({
   fill: string;
 }) {
   const data = rows
-    .filter((row) => metric === "investmentUsd" || row.valueUsd !== null)
+    .filter((row) => row[metric] !== null)
     .map((row) => ({
       name: row.name,
       value: toM((row[metric] ?? 0) as number),
-      label: formatUsdM((row[metric] ?? 0) as number),
+      label: `${formatUsdM((row[metric] ?? 0) as number)}${(metric === "investmentUsd" ? row.missingInvestmentCount : row.missingValueCount) > 0 ? " partial" : ""}`,
       fill,
     }));
 
@@ -141,11 +147,10 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
   const cases = view.allInitiatives.filter(isBusinessCase);
   const caseView = { ...view, allInitiatives: cases };
   const byType = groupBy(caseView, (item) => item.businessValueType);
-  const byCategory = groupBy(caseView, (item) => item.category);
   const missingTypes = cases.filter((item) => !item.businessValueType).length;
-  const missingCategories = cases.filter((item) => !item.category).length;
-  const topType = byType.find((row) => row.name !== "Not loaded");
-  const topCategory = byCategory.find((row) => row.name !== "Not loaded");
+  const topType = byType.find((row) => row.name !== "Not loaded" && row.investmentUsd !== null);
+  const missingFunding = cases.filter((item) => item.aiAmountBasis !== "approved_funding").length;
+  const missingBenefits = cases.filter((item) => !item.promisedBenefitLoaded).length;
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -159,34 +164,30 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
           letterSpacing: "-0.02em",
         }}
       >
-        {topType && topCategory
-          ? `${topType.name} leads value type; ${topCategory.name} leads AI spend category.`
+        {topType
+          ? `${topType.name} has the most approved AI funding in these business cases.`
           : "Initiative distribution is only partially loaded."}
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 440px" }}>
           <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600 }}>
-            By value type — investment
+            Approved AI funding by benefit type
           </h3>
           <HBar rows={byType} metric="investmentUsd" fill="#0f6e56" />
         </div>
         <div style={{ ...PANEL, flex: "1 1 440px" }}>
           <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600 }}>
-            By value type — sponsor-stated value
+            Projected yearly benefit by benefit type
           </h3>
           <HBar rows={byType} metric="valueUsd" fill="#ba7517" />
         </div>
       </div>
-      <div style={PANEL}>
-        <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600 }}>
-          By AI spend category — investment
-        </h3>
-        <HBar rows={byCategory} metric="investmentUsd" fill="#b4b2a9" />
-      </div>
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--canon-gray-500)" }}>
-        {missingTypes} cases have no value type and {missingCategories} have no AI spend category.
-        Business domain is not loaded on these case rows; a domain distribution needs a canonical
-        case-to-domain relationship before it can be shown.
+        {missingTypes} cases have no benefit type; {missingFunding} have no funding amount;
+        {missingBenefits} have no projected benefit amount. Bars marked partial omit unknown
+        amounts rather than treating them as zero. The loaded funding category repeats this
+        same grouping, so there is no second category chart. A reliable business-area
+        breakdown needs each case linked to its business area.
       </p>
     </section>
   );

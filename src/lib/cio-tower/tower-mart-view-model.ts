@@ -330,10 +330,6 @@ export function towerMartMoney(value: number): string {
   return formatCioTowerMoney(value);
 }
 
-function towerMartNullableMoney(value: number | null): string {
-  return value === null ? "not loaded" : towerMartMoney(value);
-}
-
 export async function loadTowerMartCommandView(args: {
   tenantKeyCandidates: readonly (string | null | undefined)[];
 }): Promise<TowerMartCommandViewModel | null> {
@@ -504,7 +500,7 @@ export async function loadTowerMartCommandView(args: {
 
     return {
       generatedFrom: "cio_tower_mart",
-      headline: `${mappedCommand.tenantName} Tower mart shows ${towerMartNullableMoney(mappedCommand.totalItBudgetFy26)} FY26 technology budget, ${towerMartNullableMoney(mappedCommand.aiTaggedSpendFy26NonAdditive)} AI-tagged spend, and ${towerMartMoney(mappedCommand.partialFinanceValidatedValueYtd)} partial finance-validated value. Claimable value remains blocked at ${towerMartMoney(mappedCommand.realizedValueYtdAllowed)}.`,
+      headline: `${mappedCommand.tenantName} Tower mart separates funding, value claims, Finance review, and claimable outcomes. Budget figures need active intake reconciliation, and the combined AI amount needs a consistent basis before either can be quoted.`,
       command: mappedCommand,
       aiPortfolioCounts: (() => {
         const [row] = aiPortfolioCountRows;

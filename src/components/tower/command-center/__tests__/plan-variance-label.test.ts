@@ -8,7 +8,7 @@ const SOURCE = fs.readFileSync(
 
 describe("trajectory period and value boundaries", () => {
   it("labels the number of loaded quarters instead of promising an eight-quarter trend", () => {
-    expect(SOURCE).toMatch(/Loaded quarterly trajectory/);
+    expect(SOURCE).toMatch(/Quarterly plan and recorded results/);
     expect(SOURCE).toMatch(/view\.valueTrajectory\.length/);
     expect(SOURCE).not.toMatch(/Eight-quarter trajectory/);
   });
@@ -16,7 +16,7 @@ describe("trajectory period and value boundaries", () => {
   it("does not subtract a YTD claimable amount from an annual plan", () => {
     expect(SOURCE).not.toMatch(/promisedUsd\s*-\s*claimableUsd/);
     expect(SOURCE).not.toMatch(/<span>Not yet proven<\/span>/);
-    expect(SOURCE).toMatch(/Outcome-measured claims/);
+    expect(SOURCE).toMatch(/Value records with measured results/);
   });
 
   it("does not substitute finance run-rate or cash for recorded P&L", () => {

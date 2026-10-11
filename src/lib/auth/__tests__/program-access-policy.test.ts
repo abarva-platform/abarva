@@ -58,6 +58,33 @@ describe("program access policy", () => {
     fromMock.mockReset();
   });
 
+  it("does not turn a scoped operator into a tenant admin through an agent email", async () => {
+    setupRows({
+      person_client_memberships: {
+        role: "client_viewer",
+        access_level: "program_member",
+        financial_visibility: true,
+        can_create_programs: true,
+        can_approve_gates: true,
+      },
+      engagement_participants: [],
+    });
+    const { loadUserProgramAccessPolicy } = await import("../program-access-policy");
+    const policy = await loadUserProgramAccessPolicy({
+      clientId: "client-1",
+      clientKey: "meridian",
+      userId: "00000000-0000-4000-8000-000000000001",
+      clerkUserId: "user_scoped",
+      role: "client_viewer",
+      email: "meridian-agent@abarva.example.com",
+      syntheticE2eOperator: true,
+    });
+    expect(policy.accessLevel).toBe("program_member");
+    expect(policy.programIdsAllowed).toEqual([]);
+    expect(policy.canAdminUsers).toBe(false);
+    expect(policy.canCreatePrograms).toBe(true);
+  });
+
   it("restricts a program-assigned user to explicit engagement ids", async () => {
     setupRows({
       person_client_memberships: {
