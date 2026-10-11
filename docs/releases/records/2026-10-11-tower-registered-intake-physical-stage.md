@@ -40,13 +40,15 @@ Release lane: `client-data-lane`.
 - `scripts/tower/probe-unknown-amount-schema.mjs` records the before fingerprint and verifies unchanged existing numeric rows after migration.
 - `package.json` adds dry-stage and ACA-job entry points.
 - `scripts/ops/submit-aca-operator-job.mjs` adds a narrow Tower stage and re-attestation request binding.
+- The named-file CI control now judges and runs the newly added, live agent-answer exhibit suite so a merged branch keeps exact coverage of that partially wired test directory. Its coverage census is refreshed from the same workflow wiring.
 
 ## QA / Validation
 
 - Local dry stage generated 17 source-file metadata entries, 299 selected source records, 237 canonical objects, 281 canonical measures, and nonempty rows for all nine views. Its quality gate passed and refused a write because exact load approval was absent.
 - The physical gate checks unique IDs, source hashes, cited rows, null unknown amounts, and exclusion of unapproved evidence content and user-level detail.
 - Focused wrapper plan-only test passes with matching digest/job/timeout and rejects a mismatched digest without contacting Azure.
-- Local checks: four physical Tower tests, five same-job schema proof tests, 22 shared operator-wrapper tests, focused ESLint and Node syntax checks on changed scripts, the dataset-manifest validator, and all 11 release gates passed. The whole-repo TypeScript check was not run because this branch changes no TypeScript files.
+- Local checks: four physical Tower tests, five same-job schema proof tests, 22 shared operator-wrapper tests, focused ESLint and Node syntax checks on changed scripts, the dataset-manifest validator, and all 11 release gates passed. After merging the current main branch, the whole-repo TypeScript check passed.
+- The updated named-file control, new exhibit suite, scanner refusal, and census checks passed together: 154 tests across eight suites. The full behavior floor is rerun on the PR head by CI.
 - After the merged image is available, run `tower:migrate:unknown-amounts:dry-job` through `ops:aca-job` with the digest-pinned image, `db-migrate` container, and private `DATABASE_URL` secret reference. Its read-only baseline and ledger precheck produce an extracted proof receipt; do not continue if the focused migration is already recorded or if the target database is ambiguous.
 - In a separately authorized execution, run `tower:migrate:unknown-amounts:apply-job` with `TOWER_UNKNOWN_AMOUNTS_APPLY_CONFIRM=APPLY`. The same ephemeral job captures the baseline, checks the existing ledger, runs only `20261011173000_tower_value_chain_unknown_amounts.sql`, compares after readback, and checks the recorded migration hash. A failed check exits nonzero and emits a failed receipt. The wrapper requires the extracted proof receipt to pass, records the migration audit seal, and verifies idle restoration. Retain its local evidence directory in the private release record; the schema job itself does not claim a Blob upload.
 

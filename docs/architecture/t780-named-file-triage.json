@@ -1,7 +1,8 @@
 {
   "item": "T-780",
-  "title": "Wire the four reachable agent-answer and context-broker suites by named file; keep the two unreachable renders out",
+  "title": "Wire the five reachable agent-answer and context-broker suites by named file; keep the two unreachable renders out",
   "recordedAt": "2026-09-30T09:35:15Z",
+  "amendedAt": "2026-10-11T22:38:28Z",
   "base": "bfc0d3b3b3229442aaf38b504d4973add3cb5808",
   "supersedes": "docs/architecture/t779-stale-suite-triage.json",
   "verdictVocabulary": [
@@ -16,9 +17,9 @@
       "src/components/agent-answer/__tests__",
       "src/components/context-broker/__tests__"
     ],
-    "testFiles": 6,
-    "judgedWhole": "Every test file in both directories is a row. Once four of six run, both directories are PARTIAL and leave the dark-directory ratchet's set, so that ratchet can no longer see a seventh file added beside them. The control pins the on-disk file set of each directory to this record in its place.",
-    "everyFileWasExecuted": "Each file was run on its own with `npx jest --runTestsByPath <file> --no-coverage --ci` on the base: 6 of 6 green."
+    "testFiles": 7,
+    "judgedWhole": "Every test file in both directories is a row. Five of seven run through named-file CI while two unreachable renders remain held. Both directories are PARTIAL and leave the dark-directory ratchet's set, so the control pins the on-disk file set of each directory to this record in its place.",
+    "everyFileWasExecuted": "The original six files were run individually on the recorded base: 6 of 6 green. The newly added ModelAuthoredExhibits suite passed on the updated base: 5 of 5 tests."
   },
   "wiring": {
     "workflow": ".github/workflows/unit-suites.yml",
@@ -26,11 +27,12 @@
     "namedFiles": [
       "src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx",
       "src/components/agent-answer/__tests__/AvaAskMark.assets.test.ts",
+      "src/components/agent-answer/__tests__/ModelAuthoredExhibits.test.tsx",
       "src/components/context-broker/__tests__/ContextAssembledPanel.test.tsx",
       "src/components/context-broker/__tests__/ModeToggle.test.tsx"
     ],
-    "suitesWired": 4,
-    "casesWired": 65,
+    "suitesWired": 5,
+    "casesWired": 70,
     "whyByFile": "Naming either directory would also select AvaAsk.test.tsx or FourModeDemoSurface.test.tsx, which render components no route reaches (T-775)."
   },
   "ratchet": {
@@ -91,6 +93,20 @@
       "ownerItem": "T-775",
       "unreachableSubject": "src/components/agent-answer/AvaAsk.tsx",
       "rationale": "Held, unchanged from T-779."
+    },
+    {
+      "path": "src/components/agent-answer/__tests__/ModelAuthoredExhibits.test.tsx",
+      "directory": "src/components/agent-answer/__tests__",
+      "run": true,
+      "green": true,
+      "totalTests": 5,
+      "readsRepositoryFileText": false,
+      "sourceTextScanner": false,
+      "textIsTheSubject": false,
+      "verdict": "wire_into_ci",
+      "wiredInThisItem": true,
+      "subject": "src/components/agent-answer/ModelAuthoredExhibits.tsx",
+      "rationale": "Green 5 of 5 on the updated base. Tests rendered source labels, chart values, and qualitative caveats. The component is imported by live agent and intelligence surfaces."
     },
     {
       "path": "src/components/context-broker/__tests__/ContextAssembledPanel.test.tsx",
