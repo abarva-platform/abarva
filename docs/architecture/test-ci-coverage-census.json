@@ -18,26 +18,26 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2999,
-    "coveredTestFiles": 2835,
-    "pullRequestCoveredTestFiles": 2835,
-    "uncoveredTestFiles": 164,
-    "directoriesWithTests": 523,
-    "directoriesFullyCovered": 453,
-    "directoriesPartiallyCovered": 27,
+    "testFiles": 3010,
+    "coveredTestFiles": 2848,
+    "pullRequestCoveredTestFiles": 2848,
+    "uncoveredTestFiles": 162,
+    "directoriesWithTests": 525,
+    "directoriesFullyCovered": 456,
+    "directoriesPartiallyCovered": 26,
     "directoriesUncovered": 43,
-    "directoriesWithUnrunTestFiles": 70,
-    "directoriesWithUntriagedUnrunTestFiles": 59,
+    "directoriesWithUnrunTestFiles": 69,
+    "directoriesWithUntriagedUnrunTestFiles": 58,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 112,
+    "untriagedUnrunTestFiles": 110,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 0,
-    "unclassifiedRiskDirectories": 59,
+    "unclassifiedRiskDirectories": 58,
     "rankedDirectories": 0,
     "rankedUntriagedUnrunTestFiles": 0,
-    "unclassifiedRiskDirectoriesWithResolvedProductSources": 53,
+    "unclassifiedRiskDirectoriesWithResolvedProductSources": 52,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
   "quarantineLists": [
@@ -346,16 +346,6 @@
       ]
     },
     {
-      "directory": "src/app/(maestro)/home/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "via": [
-        "command"
-      ]
-    },
-    {
       "directory": "src/lib/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 2,
@@ -449,10 +439,10 @@
   "governedRiskFiles": [],
   "governedRiskRanking": [],
   "triageVerdicts": {
-    "heldUntriagedUnrunTestFiles": 112,
+    "heldUntriagedUnrunTestFiles": 110,
     "drawableUntriagedUnrunTestFiles": 0,
     "heldByVerdict": {
-      "already_verdicted_elsewhere": 36,
+      "already_verdicted_elsewhere": 34,
       "real": 1,
       "repair": 11,
       "rewrite_as_behavior": 9,
@@ -621,20 +611,6 @@
         "record": "docs/architecture/t758-zero-product-source-triage.json",
         "recordedAt": "2026-09-24T12:48:05.000Z",
         "ownerItem": "26"
-      },
-      {
-        "testPath": "src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts",
-        "verdict": "already_verdicted_elsewhere",
-        "record": "docs/architecture/t771-stale-suite-triage.json",
-        "recordedAt": "2026-09-27T19:10:49.000Z",
-        "ownerItem": "T-481"
-      },
-      {
-        "testPath": "src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts",
-        "verdict": "already_verdicted_elsewhere",
-        "record": "docs/architecture/t771-stale-suite-triage.json",
-        "recordedAt": "2026-09-27T19:10:49.000Z",
-        "ownerItem": "T-481"
       },
       {
         "testPath": "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.tsx",
@@ -1954,21 +1930,6 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/home/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "productSourceCount": 5
       }
     },
     {

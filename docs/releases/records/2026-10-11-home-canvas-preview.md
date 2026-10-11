@@ -53,7 +53,7 @@ The shared flow contract now consumes the governed taxonomy's zone order instead
 ## QA / Validation
 
 - Focused model/component tests cover query routing, source selection, absent versus zero, row counts, fallback labels, advisor/export version binding, stale-narrative quarantine and complete pagination.
-- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome, shared visual, ECL projection-reader and enterprise-context regressions: 63 suites / 837 tests passed, plus two SVG snapshots. Four route/cutover/boundary suites add 15 passing tests, including query-preserving redirects and no mounted retired root.
+- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome, shared visual, ECL projection-reader and enterprise-context regressions: 63 suites / 837 tests passed, plus two SVG snapshots. Five route/cutover/boundary suites add 22 passing tests, including query-preserving redirects and no mounted retired root. The copy hygiene sweep now renders the canonical canvas for every available view/panel and governed snapshot, rather than testing the retired presentation. All five route suites are explicitly invoked by the existing PR unit workflow; its census is refreshed.
 - Full repository TypeScript check passed using Node 24 with an 8 GB heap.
 - ESLint: no errors; pre-existing record-browser memo and flow unused-type warnings remain.
 - Release controls: all 11 gates passed; generated route manual is current.
