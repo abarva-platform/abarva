@@ -55,7 +55,7 @@ describe("reference-deck words", () => {
     }));
     expect(create).toHaveBeenCalledWith(expect.objectContaining({
       output_config: expect.objectContaining({ format: expect.objectContaining({ type: "json_schema" }) }),
-    }), { timeout: 60_000, maxRetries: 0 });
+    }), { timeout: 65_000, maxRetries: 0 });
     expect(JSON.stringify(create.mock.calls[0][0])).not.toContain("$12,000");
     expect(JSON.stringify(create.mock.calls[0][0])).not.toContain("synthetic-user");
     expect(JSON.stringify(create.mock.calls[0][0])).toContain('\\"token\\":\\"{value.annual.base}\\"');
@@ -156,10 +156,10 @@ describe("reference-deck words", () => {
     const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(22).fill("one_page") });
     expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
     expect(result.words).toHaveLength(22);
-    expect(create).toHaveBeenCalledTimes(2);
-    expect(create.mock.calls.map((call) => call[0].max_tokens)).toEqual([4500, 4500]);
-    expect(create.mock.calls.every((call) => call[1].timeout === 60_000 && call[1].maxRetries === 0)).toBe(true);
-    expect(mockPreflight.mock.calls.map((call) => call[0].metadata.slideCount)).toEqual([11, 11]);
+    expect(create).toHaveBeenCalledTimes(3);
+    expect(create.mock.calls.map((call) => call[0].max_tokens)).toEqual([4500, 4500, 4500]);
+    expect(create.mock.calls.every((call) => call[1].timeout === 65_000 && call[1].maxRetries === 0)).toBe(true);
+    expect(mockPreflight.mock.calls.map((call) => call[0].metadata.slideCount)).toEqual([8, 8, 6]);
     expect(mockPreflight.mock.calls.every((call) => call[0].workflow === "moves:reference-deck:preview:words:batch")).toBe(true);
   });
 
@@ -173,14 +173,14 @@ describe("reference-deck words", () => {
     mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
     const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(22).fill("one_page") });
     expect(result).toMatchObject({ status: "ok", fallbackSlides: [] });
-    expect(create).toHaveBeenCalledTimes(4);
-    expect(mockPreflight.mock.calls[2][0]).toMatchObject({
-      workflow: "moves:reference-deck:preview:words:parse-recovery",
-      metadata: { edition: "investment", slideStart: 12, slideCount: 6, persist: false, parseRecovery: true },
-    });
+    expect(create).toHaveBeenCalledTimes(5);
     expect(mockPreflight.mock.calls[3][0]).toMatchObject({
       workflow: "moves:reference-deck:preview:words:parse-recovery",
-      metadata: { edition: "investment", slideStart: 18, slideCount: 5, persist: false, parseRecovery: true },
+      metadata: { edition: "investment", slideStart: 9, slideCount: 6, persist: false, parseRecovery: true },
+    });
+    expect(mockPreflight.mock.calls[4][0]).toMatchObject({
+      workflow: "moves:reference-deck:preview:words:parse-recovery",
+      metadata: { edition: "investment", slideStart: 15, slideCount: 2, persist: false, parseRecovery: true },
     });
   });
 
@@ -194,9 +194,9 @@ describe("reference-deck words", () => {
     mockPreflight.mockResolvedValueOnce({ ok: false });
     const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(22).fill("one_page") });
     expect(result).toMatchObject({ status: "unavailable", reason: "preflight_denied", slide: 1,
-      fallbackSlides: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] });
-    expect(result.words.slice(11)).toEqual(Array(11).fill(valid));
-    expect(create).toHaveBeenCalledTimes(1);
+      fallbackSlides: [1, 2, 3, 4, 5, 6, 7, 8] });
+    expect(result.words.slice(8)).toEqual(Array(14).fill(valid));
+    expect(create).toHaveBeenCalledTimes(2);
   });
 
   it("recovers a whole-deck parse failure through smaller audited batches", async () => {
