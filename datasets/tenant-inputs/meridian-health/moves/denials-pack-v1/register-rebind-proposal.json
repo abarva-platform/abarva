@@ -1,0 +1,463 @@
+{
+  "version": 1,
+  "datasetId": "meridian-denials-pack-v1",
+  "notice": "Synthetic — not real data — AbarVa demo",
+  "status": "preparation_only",
+  "moveId": null,
+  "authenticatedClientKey": null,
+  "registerIds": null,
+  "sourceSetHash": null,
+  "loadApproval": null,
+  "operatorJob": "Reuse Brief M's governed seed job after its reviewed contract supports these exact rows",
+  "registerRows": [
+    {
+      "key": "unit_source",
+      "category": "delivery",
+      "value": 36,
+      "unit": "hours per component",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented unit-hour benchmark for owner review; not a rate",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "unit_table",
+      "category": "delivery",
+      "value": 8,
+      "unit": "hours per component",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented unit-hour benchmark for owner review; not a rate",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "unit_entity",
+      "category": "delivery",
+      "value": 28,
+      "unit": "hours per component",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented unit-hour benchmark for owner review; not a rate",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "unit_view",
+      "category": "delivery",
+      "value": 24,
+      "unit": "hours per component",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented unit-hour benchmark for owner review; not a rate",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "unit_design",
+      "category": "delivery",
+      "value": 3,
+      "unit": "hours per component",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented unit-hour benchmark for owner review; not a rate",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "unit_validation",
+      "category": "delivery",
+      "value": 2,
+      "unit": "hours per component",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented unit-hour benchmark for owner review; not a rate",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "friction",
+      "value": 1.18,
+      "unit": "multiplier",
+      "category": "delivery",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented delivery planning hypothesis",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "productive_share",
+      "value": 0.68,
+      "unit": "share",
+      "category": "delivery",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented delivery planning hypothesis",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "weekly_hours",
+      "value": 40,
+      "unit": "hours per FTE-week",
+      "category": "delivery",
+      "sourceFile": "04-source-system-inventory.xlsx",
+      "sourceBasis": "Invented delivery planning hypothesis",
+      "ownerRole": "Delivery architecture lead",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "writeoff_baseline",
+      "value": 48785087.5,
+      "unit": "USD per trailing year",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "prevented_share",
+      "value": 0.18,
+      "unit": "share",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "zero",
+      "value": 0,
+      "unit": "share",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "margin",
+      "value": 1,
+      "unit": "share",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "attribution",
+      "value": 0.65,
+      "unit": "share",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "probability",
+      "value": 0.75,
+      "unit": "share",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "rework_hours",
+      "value": 0.85,
+      "unit": "hours per denial",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "rework_target",
+      "value": 0.663,
+      "unit": "hours per denial",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "denial_volume",
+      "value": 97942,
+      "unit": "denials per trailing year",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "days_ar",
+      "value": 58,
+      "unit": "days",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "days_ar_target",
+      "value": 50,
+      "unit": "days",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "discount",
+      "value": 0.09,
+      "unit": "annual rate",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    },
+    {
+      "key": "budget_ceiling",
+      "value": 2200000,
+      "unit": "USD ceiling",
+      "category": "value",
+      "sourceFile": "06-finance-baseline.xlsx",
+      "sourceBasis": "Synthetic finance baseline or explicitly proposed synthetic hypothesis",
+      "ownerRole": "Finance business partner",
+      "status": "proposed",
+      "confidence": 3,
+      "registerId": null,
+      "approvedBy": null
+    }
+  ],
+  "cost": {
+    "kind": "rom",
+    "snapshotId": "UNBOUND_OWNER_APPROVED_CURRENT_P3_ROM"
+  },
+  "ratePolicy": {
+    "engine": "pricing-engine-v1",
+    "podId": null,
+    "requiredProvenance": [
+      "foundation version",
+      "role",
+      "level",
+      "location",
+      "provider class",
+      "rate key"
+    ],
+    "rates": []
+  },
+  "levers": [
+    {
+      "id": "L1",
+      "name": "Incremental collected allowed revenue retained by denial prevention",
+      "conversion": "revenue",
+      "driver": {
+        "name": "Prevented write-off share",
+        "unit": "share",
+        "direction": "increase",
+        "baseline": {
+          "kind": "register",
+          "registerId": "UNBOUND_zero"
+        },
+        "target": {
+          "kind": "register",
+          "registerId": "UNBOUND_prevented_share"
+        }
+      },
+      "terms": [
+        {
+          "role": "driver_delta"
+        },
+        {
+          "role": "base",
+          "label": "Trailing-year denied-claim write-offs",
+          "ref": {
+            "kind": "register",
+            "registerId": "UNBOUND_writeoff_baseline"
+          }
+        },
+        {
+          "role": "margin",
+          "label": "Net allowed receipts basis; no gross-charge conversion",
+          "ref": {
+            "kind": "register",
+            "registerId": "UNBOUND_margin"
+          }
+        }
+      ],
+      "attribution": {
+        "kind": "register",
+        "registerId": "UNBOUND_attribution"
+      },
+      "probability": {
+        "kind": "register",
+        "registerId": "UNBOUND_probability"
+      },
+      "timing": {
+        "startMonth": 8,
+        "rampMonths": 6,
+        "paymentLagMonths": 2
+      }
+    },
+    {
+      "id": "L2",
+      "name": "Administrative rework capacity",
+      "conversion": "non_cash",
+      "driver": {
+        "name": "Rework per initial denial",
+        "unit": "hours",
+        "direction": "decrease",
+        "baseline": {
+          "kind": "register",
+          "registerId": "UNBOUND_rework_hours"
+        },
+        "target": {
+          "kind": "register",
+          "registerId": "UNBOUND_rework_target"
+        }
+      },
+      "terms": [
+        {
+          "role": "driver_delta"
+        },
+        {
+          "role": "base",
+          "label": "Initial denials in trailing year",
+          "ref": {
+            "kind": "register",
+            "registerId": "UNBOUND_denial_volume"
+          }
+        }
+      ],
+      "attribution": {
+        "kind": "register",
+        "registerId": "UNBOUND_attribution"
+      },
+      "probability": {
+        "kind": "register",
+        "registerId": "UNBOUND_probability"
+      },
+      "timing": {
+        "startMonth": 8,
+        "rampMonths": 6,
+        "paymentLagMonths": 0
+      },
+      "releasePath": null
+    },
+    {
+      "id": "L3",
+      "name": "Collection timing observation",
+      "conversion": "non_cash",
+      "driver": {
+        "name": "Days in accounts receivable",
+        "unit": "days",
+        "direction": "decrease",
+        "baseline": {
+          "kind": "register",
+          "registerId": "UNBOUND_days_ar"
+        },
+        "target": {
+          "kind": "register",
+          "registerId": "UNBOUND_days_ar_target"
+        }
+      },
+      "terms": [
+        {
+          "role": "driver_delta"
+        }
+      ],
+      "attribution": {
+        "kind": "register",
+        "registerId": "UNBOUND_attribution"
+      },
+      "probability": {
+        "kind": "register",
+        "registerId": "UNBOUND_probability"
+      },
+      "timing": {
+        "startMonth": 8,
+        "rampMonths": 6,
+        "paymentLagMonths": 0
+      },
+      "releasePath": null
+    }
+  ],
+  "horizonYears": 3,
+  "discountRate": {
+    "kind": "register",
+    "registerId": "UNBOUND_discount"
+  },
+  "knownGaps": [
+    "The existing value engine accepts integer-month cash lags; an eight-day DSO improvement cannot be credited as an invented one-month shift or annual working-capital revenue. Keep the conservative two-month L1 lag and show days-AR as a non-cash metric until an independently reviewed timing extension exists.",
+    "No new Move, exact register allocation, named load approval or owner-approved ROM exists. Placeholder refs are preparation identifiers, not valid citations. Resolve them in a separately reviewed M rebind before generation or apply.",
+    "This proposal has more rows than the earlier M seed. Same-job reuse requires an exact schema/scope review; it is not an authorization to widen a load."
+  ]
+}
