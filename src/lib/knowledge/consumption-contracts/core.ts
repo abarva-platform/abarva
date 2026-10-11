@@ -32,6 +32,8 @@ export const PROJECTION_NAMES = [
   "consumption.strategic_interpretation_v1",
   "consumption.domain_summary_v1",
   "consumption.application_inventory_v1",
+  "consumption.technology_estate_v1",
+  "consumption.data_product_inventory_v1",
   "consumption.vendor_contract_inventory_v1",
   "consumption.metric_observation_v1",
   "consumption.relationship_node_v1",
