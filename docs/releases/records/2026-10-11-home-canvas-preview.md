@@ -50,7 +50,7 @@ The shared flow contract now consumes the governed taxonomy's zone order instead
 ## QA / Validation
 
 - Focused model/component tests cover query routing, source selection, absent versus zero, row counts, fallback labels, advisor/export version binding, stale-narrative quarantine and complete pagination.
-- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome and shared visual regressions: 61 suites / 784 tests passed, plus two SVG snapshots.
+- Canvas, existing Home v4, fact-browser, advisor record-parity, chrome and shared visual regressions: 61 suites / 785 tests passed, plus two SVG snapshots.
 - Full repository TypeScript check passed using Node 24 with an 8 GB heap.
 - ESLint: no errors; pre-existing record-browser memo and flow unused-type warnings remain.
 - Release controls: all 11 gates passed; generated route manual is current.

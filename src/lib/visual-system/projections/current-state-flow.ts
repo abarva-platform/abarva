@@ -301,7 +301,7 @@ export function buildCurrentStateFlow(options: CurrentStateFlowOptions): Current
       id: idOf(key),
       label: key,
       semanticRole:
-        lane === "middleware" || lane === "data_integration"
+        isMovementPlatform(agg.semanticType)
           ? "integration"
           : lane === "enterprise_warehouse" || lane === "data_marts"
             ? "data_store"
@@ -358,16 +358,12 @@ export function buildCurrentStateFlow(options: CurrentStateFlowOptions): Current
     });
   }
 
+  const roleForLane = new Map(nodes.map((node) => [node.layer, node.semanticRole]));
   for (const [lane, t] of tails) {
     nodes.push({
       id: `tail-${lane}`,
       label: `${t.count} more`,
-      semanticRole:
-        lane === "enterprise_warehouse" || lane === "data_marts"
-          ? "data_store"
-          : lane === "analytics_bi"
-            ? "analytics"
-            : "application",
+      semanticRole: roleForLane.get(lane) ?? "application",
       layer: lane,
       evidenceBasis: "ABARVA_DERIVED",
       evidenceIds: [`${integrations.objectType}.endpoint`],

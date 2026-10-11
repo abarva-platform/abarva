@@ -99,6 +99,21 @@ describe("current-state flow admission follows governed zone names", () => {
       ),
     ).toBe(true);
   });
+  it("retains the integration role for governed movement platforms", () => {
+    const rows = movements();
+    rows[0].sourceSystem = "Rhapsody Integration Engine";
+    const result = resolve(rows);
+    expect(result.status).toBe("ready");
+    if (result.status !== "ready") throw new Error("Expected admitted flow");
+    expect(
+      result.view.nodes.find(
+        (node) => node.label === "Rhapsody Integration Engine",
+      ),
+    ).toMatchObject({
+      layer: "healthcare_interoperability",
+      semanticRole: "integration",
+    });
+  });
   it("continues to refuse consumption without a recorded landing", () => {
     const result = resolve(
       movements().map((row) => ({
