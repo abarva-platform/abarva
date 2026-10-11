@@ -492,8 +492,8 @@ describe("C-523 · the governance seam, measured per module", () => {
 
   it("records the route-level verdict, which is NOT evidence about the packet", () => {
     // This is the trap the acceptance's "assert at the destination" guards
-    // against, and it is real here rather than hypothetical: one of the two
-    // routes reaches the seam module through unrelated code, so a route-level
+    // against. Both routes now reach the seam through other paths; Intelligence
+    // added its governed executive context bundle. A route-level
     // audit would answer "yes, governed" for a packet that never touches it.
     const agentRoute = [
       ...(reachableFrom(
@@ -509,7 +509,7 @@ describe("C-523 · the governance seam, measured per module", () => {
     ].map((file) => path.relative(process.cwd(), file).split(path.sep).join("/"));
 
     expect(agentRoute).toContain(GOVERNANCE_SEAM_MODULE);
-    expect(askRoute).not.toContain(GOVERNANCE_SEAM_MODULE);
+    expect(askRoute).toContain(GOVERNANCE_SEAM_MODULE);
   });
 });
 

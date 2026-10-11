@@ -897,6 +897,8 @@
     "ops:probe-tower-serving-shape": "node scripts/ops/probe-tower-serving-shape.mjs",
     "ops:probe-tower-active-keys": "node scripts/ops/probe-tower-active-keys.mjs",
     "ops:probe-tower-serving-views": "node scripts/ops/probe-tower-serving-views.mjs",
+    "ops:probe-tower-serving-preflight": "node scripts/ops/probe-tower-serving-preflight.mjs",
+    "test:tower-serving-preflight": "node scripts/ops/__tests__/run-tower-serving-preflight-tests.mjs",
     "ops:probe-tower-rls": "node scripts/ops/probe-tower-rls.mjs",
     "ops:probe-tower-rls-enforcement": "node scripts/ops/probe-tower-rls-enforcement.mjs",
     "ops:probe-ecl-substrate-inventory": "node scripts/ops/probe-ecl-substrate-inventory.mjs",
