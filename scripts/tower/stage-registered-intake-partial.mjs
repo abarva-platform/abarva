@@ -237,7 +237,9 @@ function addCanonicalRows(plan, report) {
         unregistered_evidence_ids: claim.unregistered_evidence_ids,
         program_budget_linked: claim.program_budget_linked,
         finance_feed_conflict: claim.finance_feed_conflict,
-        claim_status_feed_conflict: claim.claim_status_feed_conflict });
+        finance_feed_missing: claim.finance_feed_missing,
+        claim_status_feed_conflict: claim.claim_status_feed_conflict,
+        claim_status_feed_missing: claim.claim_status_feed_missing });
     addMeasure(plan, report, id, "usage_feed_active_users", claim.usage_active_users, "users", ref,
       "known", { enabled_users: claim.usage_denominator,
         licensed_users: claim.usage_licensed_users,
@@ -298,7 +300,7 @@ function physicalPreviewRows(report) {
   });
   result.evidence = [{
     row_key: "evidence_approval_gap", title: "Evidence approval and reference gap",
-    plain_language: `${report.evidence_rows_not_approved} source entries have not been approved for loading. ${report.unregistered_claim_evidence_ids.length} claim evidence IDs do not appear in the register. No evidence content is presented as proof.`,
+    plain_language: `${report.evidence_rows_not_approved} source entries have not been approved for loading. ${report.unregistered_claim_evidence_ids.length} claim evidence IDs do not appear in the register and ${report.claim_evidence_missing_rows} claim feed rows have no evidence ID. No evidence content is presented as proof.`,
     value: null, value_state: "unknown", source_refs: [{
       source_file: "13_evidence_sources.csv",
       source_sha256: report.source_manifest["13_evidence_sources.csv"].sha256,
@@ -310,6 +312,7 @@ function physicalPreviewRows(report) {
       }))],
     approval_gap_count: report.evidence_rows_not_approved,
     unregistered_claim_evidence_id_count: report.unregistered_claim_evidence_ids.length,
+    claim_evidence_missing_row_count: report.claim_evidence_missing_rows,
   }];
   return result;
 }
@@ -563,6 +566,7 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
   }
   const objectIds = new Set(plan.objects.map((row) => row.id));
   const sourceIds = new Set(plan.sourceRecords.map((row) => row.id));
+  const sourceRecordsById = new Map(plan.sourceRecords.map((row) => [row.id, row]));
   const measureIds = new Set(plan.measures.map((row) => row.id));
   const sourceFiles = new Map(plan.sourceFiles.map((row) => [row.file_name, row.file_hash]));
   if (objectIds.size !== plan.objects.length || sourceIds.size !== plan.sourceRecords.length ||
@@ -594,6 +598,16 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
         measure.attributes_json.do_not_add_to_contract_spend !== true) ||
       spendCategories.reduce((sum, measure) => sum + Number(measure.value_number), 0) !== Number(spendAggregate?.value_number)) {
     errors.push("spend categories do not reconcile to the single aggregate without double counting");
+  }
+  for (const measure of spendCategories) {
+    const source = sourceRecordsById.get(measure.source_record_id);
+    const recordedAmount = source?.payload_json?.annual_spend_usd;
+    if (!source || fileById.get(source.source_file_id) !== "08_spend_value.csv" ||
+        typeof recordedAmount !== "string" || recordedAmount.trim() === "" ||
+        !Number.isFinite(Number(recordedAmount)) || Number(recordedAmount) !== Number(measure.value_number) ||
+        source.payload_json.spend_category !== measure.attributes_json.category_label) {
+      errors.push(`spend category measure differs from its source row: ${measure.id}`);
+    }
   }
   for (const row of rowsForPage(plan, "cost_lens")) {
     const measure = measuresById.get(row.measure_id);

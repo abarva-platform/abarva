@@ -71,6 +71,21 @@ test("physical gate refuses category drift that would misstate the spend breakdo
   assert.ok(gate.errors.some((error) => error.includes("spend categories do not reconcile")));
 });
 
+test("physical gate checks every category against its original source amount", () => {
+  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey });
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  const [first, second] = plan.valueRows.filter((row) => row.page_key === "cost_lens" &&
+    row.row_key.startsWith("spend:"));
+  const measures = new Map(plan.measures.map((measure) => [measure.id, measure]));
+  first.display_payload_json.value += 1000;
+  second.display_payload_json.value -= 1000;
+  measures.get(first.measure_id).value_number += 1000;
+  measures.get(second.measure_id).value_number -= 1000;
+  const gate = validatePhysicalPlan(report, plan, viewCounts);
+  assert.equal(gate.status, "fail");
+  assert.equal(gate.errors.filter((error) => error.includes("differs from its source row")).length, 2);
+});
+
 test("write mode refuses the unapproved exact version before opening a database", () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-stage-refusal-"));
   try {

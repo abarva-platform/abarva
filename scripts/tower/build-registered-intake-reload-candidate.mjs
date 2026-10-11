@@ -85,11 +85,9 @@ function reportedRateBasis(row, denominatorField) {
     ? `active_over_${denominatorField}` : "not_reconciled";
 }
 
-export function isDeclaredProgramLink(aiProgramId, programIds, relationships) {
+export function isDeclaredProgramLink(aiProgramId, programIds) {
   const id = aiProgramId?.trim();
-  return Boolean(id) && (programIds.has(id) || relationships.some((row) =>
-    (row.from_object_id === id && programIds.has(row.to_object_id)) ||
-    (row.to_object_id === id && programIds.has(row.from_object_id))));
+  return Boolean(id) && programIds.has(id);
 }
 
 export function assessRawUsageValidation(rawRows, usage) {
@@ -218,14 +216,13 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   const programIds = new Set(programs.map((row) => row.program_id).filter(Boolean));
   const claimProgramIds = [...new Set(benefits.map((row) => row.ai_program_id).filter(Boolean))].sort();
   const unlinkedClaimProgramIds = claimProgramIds.filter((id) =>
-    !isDeclaredProgramLink(id, programIds, relationships));
+    !isDeclaredProgramLink(id, programIds));
   const missingClaimProgramIds = benefits.filter((row) => !row.ai_program_id?.trim()).length;
   const linked = benefitIds.every((id) => usageIndex.result.has(id) && kpiIndex.result.has(id));
   const extraIds = [usageIndex, kpiIndex].flatMap((index) => [...index.result.keys()].filter((id) => !benefitIndex.result.has(id)));
-  // Distinct identifier systems are left unlinked until the intake declares a crosswalk.
-  const declaredCrosswalk = relationships.some((row) =>
-    (caseIndex.result.has(row.from_object_id) && benefitIndex.result.has(row.to_object_id)) ||
-    (caseIndex.result.has(row.to_object_id) && benefitIndex.result.has(row.from_object_id)));
+  // Generic relationship edges cannot establish identity equivalence or funding linkage.
+  const declaredCrosswalk = caseIds.length === benefitIds.length &&
+    caseIds.every((id) => benefitIndex.result.has(id));
   const conflicts = benefitIds.flatMap((id) => {
     const b = benefitIndex.result.get(id), u = usageIndex.result.get(id);
     if (!b || !u) return [];
@@ -241,16 +238,24 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       amount(index.result.get(id)?.finance_validated_value_usd));
     return values.every((value) => value !== null) && new Set(values).size > 1;
   });
+  const financeValueMissingIds = benefitIds.filter((id) =>
+    [benefitIndex, usageIndex, kpiIndex].some((index) =>
+      amount(index.result.get(id)?.finance_validated_value_usd) === null));
   const claimStatusConflicts = benefitIds.filter((id) => {
     const statuses = [benefitIndex, usageIndex, kpiIndex].map((index) =>
       index.result.get(id)?.value_claim_status?.trim()).filter(Boolean);
     return statuses.length === 3 && new Set(statuses).size > 1;
   });
+  const claimStatusMissingIds = benefitIds.filter((id) =>
+    [benefitIndex, usageIndex, kpiIndex].some((index) =>
+      !index.result.get(id)?.value_claim_status?.trim()));
   const rejectedEvidence = evidence.filter((row) => String(row.approved_for_loading).trim().toLowerCase() !== "true");
   const registeredEvidenceIds = new Set(evidence.map((row) => row.evidence_id?.trim()).filter(Boolean));
   const claimEvidenceIds = [...new Set([...benefits, ...usage, ...kpis]
     .map((row) => row.evidence_id?.trim()).filter(Boolean))].sort();
   const unregisteredClaimEvidenceIds = claimEvidenceIds.filter((id) => !registeredEvidenceIds.has(id));
+  const claimEvidenceMissingRows = [...benefits, ...usage, ...kpis]
+    .filter((row) => !row.evidence_id?.trim()).length;
   const rawUsageFile = path.join(inputRoot, "extracts/ms365-copilot-usage-user-detail.csv");
   const rawUsageFilePresent = fs.existsSync(rawUsageFile);
   let rawUsageValidation = {
@@ -313,9 +318,11 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         unregistered_evidence_ids: [...new Set([b, u, k].filter(Boolean)
           .map((row) => row.evidence_id).filter((evidenceId) =>
             !evidenceId || !registeredEvidenceIds.has(evidenceId)))].sort(),
-        program_budget_linked: isDeclaredProgramLink(b.ai_program_id, programIds, relationships),
+        program_budget_linked: isDeclaredProgramLink(b.ai_program_id, programIds),
         finance_feed_conflict: financeValueConflicts.includes(id),
+        finance_feed_missing: financeValueMissingIds.includes(id),
         claim_status_feed_conflict: claimStatusConflicts.includes(id),
+        claim_status_feed_missing: claimStatusMissingIds.includes(id),
         benefit_feed_usage_rate_basis: reportedRateBasis(b, "enabled_users"),
         usage_feed_usage_rate_basis: reportedRateBasis(u, "licensed_users"),
         usage_feed_reported_rate_pct: amount(u?.usage_rate_pct),
@@ -468,14 +475,14 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   const coverageGaps = [
     coverage("declared_case_claim_crosswalk", declaredCrosswalk, "Use-case IDs and benefit IDs differ; an explicit relationship is required before combining records."),
     coverage("source_evidence_approved", rejectedEvidence.length === 0, `${rejectedEvidence.length} of ${evidence.length} evidence-register rows are not approved for loading.`),
-    coverage("claim_evidence_ids_registered", unregisteredClaimEvidenceIds.length === 0,
-      `${unregisteredClaimEvidenceIds.length} distinct claim evidence IDs are missing from the evidence register; claim records cannot cite them as proof.`),
+    coverage("claim_evidence_ids_registered", unregisteredClaimEvidenceIds.length === 0 && claimEvidenceMissingRows === 0,
+      `${unregisteredClaimEvidenceIds.length} distinct claim evidence IDs are missing from the evidence register; ${claimEvidenceMissingRows} claim feed rows have no evidence ID. Claim records cannot cite these as proof.`),
     coverage("claim_program_ids_linked_to_pmo", unlinkedClaimProgramIds.length === 0 && missingClaimProgramIds === 0,
       `${unlinkedClaimProgramIds.length} distinct AI claim program IDs have no declared link to PMO program IDs; ${missingClaimProgramIds} benefit rows have no program ID. Benefit funding cannot be tied to PMO budgets.`),
-    coverage("finance_values_reconciled_across_feeds", financeValueConflicts.length === 0,
-      `${financeValueConflicts.length} claim IDs carry different Finance-value amounts across benefit, usage and outcome feeds; none may be treated as verified value.`),
-    coverage("claim_status_reconciled_across_feeds", claimStatusConflicts.length === 0,
-      `${claimStatusConflicts.length} claim IDs carry different claim statuses across benefit, usage and outcome feeds.`),
+    coverage("finance_values_reconciled_across_feeds", financeValueConflicts.length === 0 && financeValueMissingIds.length === 0,
+      `${financeValueConflicts.length} claim IDs carry different Finance-value amounts and ${financeValueMissingIds.length} lack a value in at least one feed; none may be treated as verified value.`),
+    coverage("claim_status_reconciled_across_feeds", claimStatusConflicts.length === 0 && claimStatusMissingIds.length === 0,
+      `${claimStatusConflicts.length} claim IDs carry different claim statuses and ${claimStatusMissingIds.length} lack a status in at least one feed.`),
     coverage("usage_rate_denominator_consistent", benefitIds.every((id) => {
       const b = benefitIndex.result.get(id), u = usageIndex.result.get(id);
       const benefitBasis = reportedRateBasis(b, "enabled_users");
@@ -510,10 +517,13 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     source_manifest: sourceManifest,
     source_conflicts: conflicts,
     unregistered_claim_evidence_ids: unregisteredClaimEvidenceIds,
+    claim_evidence_missing_rows: claimEvidenceMissingRows,
     unlinked_claim_program_ids: unlinkedClaimProgramIds,
     missing_claim_program_id_rows: missingClaimProgramIds,
     finance_value_conflict_ids: financeValueConflicts,
+    finance_value_missing_ids: financeValueMissingIds,
     claim_status_conflict_ids: claimStatusConflicts,
+    claim_status_missing_ids: claimStatusMissingIds,
     raw_usage_validation: rawUsageValidation,
     evidence_rows_not_approved: rejectedEvidence.length,
     gates,

@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { assessRawUsageValidation, buildRegisteredIntakeCandidate, isDeclaredProgramLink } from "../build-registered-intake-reload-candidate.mjs";
+import { assessRawUsageValidation, buildRegisteredIntakeCandidate, csvRows, isDeclaredProgramLink } from "../build-registered-intake-reload-candidate.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const registry = JSON.parse(
@@ -64,10 +66,47 @@ test("registry identity rejects an inactive tenant", () => {
 
 test("a blank program ID cannot inherit a PMO budget link", () => {
   const programs = new Set(["PRG-001"]);
-  assert.equal(isDeclaredProgramLink("", programs, []), false);
-  assert.equal(isDeclaredProgramLink(" ", programs, []), false);
-  assert.equal(isDeclaredProgramLink("PRG-001", programs, []), true);
-  assert.equal(isDeclaredProgramLink("AIPGM-001", programs, [{ from_object_id: "AIPGM-001", to_object_id: "PRG-001" }]), true);
+  assert.equal(isDeclaredProgramLink("", programs), false);
+  assert.equal(isDeclaredProgramLink(" ", programs), false);
+  assert.equal(isDeclaredProgramLink("PRG-001", programs), true);
+  assert.equal(isDeclaredProgramLink("AIPGM-001", programs), false);
+});
+
+test("blank Finance, status, and evidence fields remain coverage gaps", () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "tower-blank-claim-fields-"));
+  try {
+    const registryDir = path.join(temp, "datasets/tenant-inputs");
+    fs.mkdirSync(registryDir, { recursive: true });
+    fs.copyFileSync(path.join(ROOT, "datasets/tenant-inputs/tenant-input-registry.json"),
+      path.join(registryDir, "tenant-input-registry.json"));
+    const sourceRoot = path.join(ROOT, registry.activeTenants.find((entry) => entry.tenantKey === tenantKey).canonicalInputRoot);
+    const testRoot = path.join(temp, registry.activeTenants.find((entry) => entry.tenantKey === tenantKey).canonicalInputRoot);
+    fs.mkdirSync(testRoot, { recursive: true });
+    for (const file of fs.readdirSync(sourceRoot).filter((name) => name.endsWith(".csv"))) {
+      fs.symlinkSync(path.join(sourceRoot, file), path.join(testRoot, file));
+    }
+    for (const file of ["SA08_AI_Benefits_Realization_Usage_Ledger.csv", "SA09_AI_Tool_Usage_Feed.csv",
+      "SA11_AI_KPI_Operational_Outcome_Feed.csv"]) {
+      const original = fs.readFileSync(path.join(sourceRoot, file), "utf8");
+      const header = Object.keys(csvRows(original)[0]);
+      const rows = csvRows(original).map((row) => ({ ...row,
+        finance_validated_value_usd: "", value_claim_status: "", evidence_id: "" }));
+      const quote = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+      fs.unlinkSync(path.join(testRoot, file));
+      fs.writeFileSync(path.join(testRoot, file), [header.map(quote).join(","),
+        ...rows.map((row) => header.map((field) => quote(row[field])).join(","))].join("\n") + "\n");
+    }
+    const report = buildRegisteredIntakeCandidate({ repoRoot: temp, tenantKey });
+    for (const id of ["claim_evidence_ids_registered", "finance_values_reconciled_across_feeds",
+      "claim_status_reconciled_across_feeds"]) {
+      assert.equal(report.coverage_gaps.find((gap) => gap.id === id)?.status, "gap", id);
+    }
+    assert.equal(report.claim_evidence_missing_rows, 54);
+    assert.equal(report.finance_value_missing_ids.length, 18);
+    assert.equal(report.claim_status_missing_ids.length, 18);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
 });
 
 test("matching raw identity fields do not prove aggregate usage counts", () => {
