@@ -2,7 +2,7 @@ import "server-only";
 
 import { policyForTier } from "@/lib/ai/document-generation-policy";
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress/anthropic-direct";
-import type { ReferenceArchetype, ReferenceEdition } from "./reference-deck-model";
+import { answerIsCountDump, clientCopyIssue, type ReferenceArchetype, type ReferenceEdition } from "./reference-deck-model";
 import { promptSlotDefinitions, type ReferenceSlotTable } from "./reference-deck-slots";
 
 export interface EditionWords {
@@ -31,28 +31,28 @@ const DESIGN_LENS: Record<UseCasePromptType, string> = {
 };
 
 const SHARED_TITLES: Record<ReferenceArchetype, string> = {
-  cover: "The evidence defines the next decision for this case",
+  cover: "The case is ready for a focused discussion",
   one_page: "The annual counted value is {value.annual.base} on its current basis",
   contents: "The review follows the evidence from context to decision",
   divider: "The next decision rests on evidence that can be checked",
   big_number_context: "Credited value is {value.three_year.credited} over three years",
-  plain_english_table: "The active assumption count ({register.count.active}) needs review",
+  plain_english_table: "The current position needs your team's confirmation",
   flow_today: "The current handoffs still need an agreed decision owner",
   one_step_value: "The annual counted step is {value.annual.base} on its current basis",
   three_year_value: "Credited value is {value.three_year.credited} over three years",
-  assumptions: "The active assumption count ({register.count.active}) needs confirmation",
-  sources: "The approved public-source count ({sources.count.approved}) defines the evidence set",
+  assumptions: "The working assumptions decide what can be claimed",
+  sources: "Published evidence shows what can be checked",
   value_ledger: "Credited value is {value.three_year.credited} when earned",
-  users_decisions: "The accepted-owner count ({owners.count.accepted}) shapes the operating decision",
-  target_state: "The target architecture connects governed sources to decisions",
+  users_decisions: "Decision rights need owners the team can name",
+  target_state: "The proposed design connects evidence to decisions",
   channels: "Each channel needs a named input, owner and control",
   releases: "The delivery estimate is {rom.total.plan} across releases",
   shared_foundation: "The shared delivery estimate is {rom.total.plan} for this case",
-  client_needs: "The active assumption count ({register.count.active}) informs the needs review",
-  ai_options: "Any AI option depends on governed context and human review",
-  next_steps: "The active assumption count ({register.count.active}) sets the next review",
+  client_needs: "The team needs access and a clear measure",
+  ai_options: "Any AI option depends on approved evidence and human review",
+  next_steps: "The next decision depends on the open assumptions",
   rom_hours: "The delivery estimate is {rom.total.plan} across the work",
-  team: "The accepted-owner count ({owners.count.accepted}) shapes the team decision",
+  team: "The right owners must agree before delivery begins",
 };
 
 const INVESTMENT_TITLES: Partial<Record<ReferenceArchetype, string>> = {
@@ -68,39 +68,30 @@ const INVESTMENT_TITLES: Partial<Record<ReferenceArchetype, string>> = {
 const INVESTMENT_TITLE_SLOTS: Partial<Record<ReferenceArchetype, string>> = {
   one_page: "value.annual.plan",
   big_number_context: "value.three_year.credited",
-  plain_english_table: "register.count.active",
   one_step_value: "value.annual.plan",
   three_year_value: "value.three_year.credited",
-  assumptions: "register.count.active",
   value_ledger: "value.three_year.credited",
-  users_decisions: "owners.count.accepted",
   releases: "rom.total.plan",
   shared_foundation: "rom.total.plan",
-  client_needs: "register.count.active",
-  next_steps: "register.count.active",
   rom_hours: "rom.total.plan",
-  team: "owners.count.accepted",
-  sources: "sources.count.approved",
 };
 
 const FALLBACK_ANSWERS: Partial<Record<ReferenceArchetype, string>> = {
-  one_page: "Check the counted basis and the visible input gaps before using the case.",
-  big_number_context: "The exhibit separates the counted figure from the evidence needed to confirm it.",
-  one_step_value: "Use the governed figure and its source before judging the measured step.",
-  three_year_value: "Read each year on the stated counting basis, then review the total.",
-  assumptions: "Confirm the open rows and their owner roles before relying on the case.",
-  rom_hours: "Use only an approved estimate and its source-linked unit hours.",
-  sources: "The source list shows approved citations and any missing evidence.",
+  one_page: "The case can advance when its value basis and open questions are agreed.",
+  big_number_context: "The value has a stated basis; the team should test the assumptions behind it.",
+  one_step_value: "The annual value matters only if the counted step is agreed.",
+  three_year_value: "The timing of value changes what the case can support.",
+  assumptions: "The team should resolve the assumptions that could change the decision.",
+  rom_hours: "Delivery figures depend on an approved estimate and its working hours.",
+  sources: "The published evidence shows which claims can be checked.",
 };
 
 function fallback(archetype: ReferenceArchetype, edition: ReferenceEdition): EditionWords {
-  const title = archetype === "cover" && edition === "validation"
-    ? "Validate the need; no solution, plan or cost."
-    : edition === "investment" ? INVESTMENT_TITLES[archetype] ?? SHARED_TITLES[archetype] : SHARED_TITLES[archetype];
+  const title = edition === "investment" ? INVESTMENT_TITLES[archetype] ?? SHARED_TITLES[archetype] : SHARED_TITLES[archetype];
   return {
     title,
-    answer: FALLBACK_ANSWERS[archetype] ?? "Review the editable exhibit and its stated source gaps.",
-    notes: `The point: ${title}. How to read: inspect the governed exhibit and its source line.`,
+    answer: FALLBACK_ANSWERS[archetype] ?? "The team should use this evidence to decide what to confirm next.",
+    notes: `The point: ${title}. How to read: inspect the exhibit and its source line.`,
   };
 }
 
@@ -171,6 +162,8 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
   if (LITERAL_FIGURE.test(literal)) return "literal_figure";
   if (!entry.notes.startsWith("The point:") || !entry.notes.includes("How to read:")) return "notes_format";
   if (entry.title.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(entry.title)) return "title_format";
+  if (clientCopyIssue(`${entry.title} ${entry.answer}`)) return "internal_client_word";
+  if (answerIsCountDump(entry.answer)) return "count_dump_answer";
   const editionText = archetype === "cover" ? `${entry.answer} ${entry.notes}` : literal;
   if (edition === "validation" && VALIDATION_FORBIDDEN.test(editionText)) return "edition_language";
   return null;
@@ -196,10 +189,10 @@ export async function draftEditionWords(input: {
   const allSlides = input.archetypes.map((_, index) => index + 1);
   const failure = (reason: WordsUnavailableReason): DraftEditionWordsResult =>
     ({ status: "unavailable", reason, words: unavailable, fallbackSlides: allSlides });
-  const system = "Write clear slide language for an editable business-case deck as a JSON object with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Write a full-sentence action title for each slide. Keep each entry concise: one sentence in the title, one sentence in the answer, and two short sentences in notes. Copy every requiredTitleSlot exactly into that slide's title. Figure slots use the supplied token string with one opening and one closing brace, for example {value.annual.base} when that token is supplied; never use double braces, square-bracket wrappers, a bare slot name, or a value. You may use only supplied, edition-allowed slot tokens to express figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Describe a specific Move fact only if it appears in an approved model-ready context bundle; none is supplied in this request. Do not claim an input is ready from its slot name: unavailable slots become visible gaps after generation. Notes begin 'The point:' and contain 'How to read:'. The server supplies the mandatory validation-cover disclosure, so its draft title, answer and notes must not repeat that disclosure. In every validation answer and notes, and on non-cover validation titles, avoid the words cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
+  const system = "Write client-ready slide language as JSON with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Give each slide a full-sentence action title. Keep the title and answer to one sentence each; use two short sentences in notes. The answer must interpret what the evidence means and the next decision, never list counts. Do not put internal workflow words such as slot, readback, capture, register, governed, Move, flag, preview or ROM in the title or answer; consultant guidance belongs only in notes. Copy every requiredTitleSlot exactly into its title. Figure slots use one pair of braces, for example {value.annual.base}; never use double braces, a bare slot name, or a value. Use only supplied, edition-allowed slot tokens for figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Specific case facts require an approved model-ready context bundle, which this request does not supply. An unavailable input remains a visible gap after generation. Notes begin 'The point:' and contain 'How to read:'. The server sets the cover title and promise from the use-case name and edition; do not put an edition rule on the cover. In validation answers, notes and non-cover titles, avoid cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
   const profile = { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType] ?? DESIGN_LENS.unclassified, phaseStage: input.phaseStage, available: input.available };
-  const promptSlides = input.archetypes.map((archetype) => ({ archetype, ...(input.edition === "validation" && archetype === "cover"
-      ? { mandatoryCoverDisclosureProvidedByServer: true } : {}), ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[archetype]
+  const promptSlides = input.archetypes.map((archetype) => ({ archetype, ...(archetype === "cover"
+      ? { coverTitleAndPromiseProvidedByServer: true } : {}), ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[archetype]
       ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[archetype]}}` } : {}) }));
   const slotDefinitions = promptSlotDefinitions(input.slots, input.edition);
   const user = JSON.stringify({ profile, slides: promptSlides, slots: slotDefinitions });
@@ -304,15 +297,15 @@ export async function draftEditionWords(input: {
     const parseFailedSlides = candidates.flatMap((entry, index) => entry ? [] : [index + 1]);
     const words = candidates.map((entry, index) => entry
       ? normalizeKnownSlotTokens(entry, input.edition, input.slots) : unavailable[index]!);
-    // The validation-cover disclosure is a fixed edition requirement, not model prose.
+    // The cover title and promise come from the governed Move and edition, not model prose.
     input.archetypes.forEach((archetype, index) => {
-      if (input.edition === "validation" && archetype === "cover") {
+      if (archetype === "cover") {
         words[index] = unavailable[index]!;
         const failedAt = parseFailedSlides.indexOf(index + 1);
         if (failedAt >= 0) parseFailedSlides.splice(failedAt, 1);
       }
     });
-    const ruleAt = (index: number) => input.edition === "validation" && input.archetypes[index] === "cover"
+    const ruleAt = (index: number) => input.archetypes[index] === "cover"
       ? null : parseFailedSlides.includes(index + 1)
         ? null : modelWordRule(words[index]!, input.edition, input.slots, input.archetypes[index]);
     const rejected = words.flatMap((_, index) => {

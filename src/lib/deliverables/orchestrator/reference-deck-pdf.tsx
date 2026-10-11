@@ -1,7 +1,7 @@
 import "server-only";
 
-import { Document, Page, Text, View, type DocumentProps } from "@react-pdf/renderer";
-import type { ReactElement } from "react";
+import { Document, Page, Path, Svg, Text, View, type DocumentProps } from "@react-pdf/renderer";
+import { Fragment, type ReactElement } from "react";
 import { referenceSourceLine, type ReferenceBlock, type ReferenceCell, type ReferenceDeckSpec } from "./reference-deck-model";
 
 const ink = "#17202B";
@@ -37,14 +37,32 @@ function PdfBlock({ block }: { block: ReferenceBlock }) {
       ))}
     </View>
   );
-  if (block.kind === "flow") return (
-    <View style={{ marginTop: 18 }}>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        {block.nodes.map((node, index) => <View key={index} style={{ flex: 1, backgroundColor: "#EFEEEA", padding: 16, minHeight: 62 }}><Text style={{ fontSize: 12, color: ink }}>{node}</Text></View>)}
-      </View>
+  if (block.kind === "flow") {
+    const columns = Math.ceil(block.nodes.length / 2);
+    const twoRows = block.nodes.length > 4;
+    const top = twoRows ? block.nodes.slice(0, columns).map((node, index) => ({ node, index }))
+      : block.nodes.map((node, index) => ({ node, index }));
+    const bottom = twoRows ? block.nodes.slice(columns).map((node, offset) => ({ node, index: columns + offset })).reverse() : [];
+    const row = (items: { node: string; index: number }[], reverse = false) => <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
+      {reverse && items.length < columns && <View style={{ flex: columns - items.length }} />}
+      {items.map(({ node, index }, position) => <Fragment key={index}>
+        <View style={{ flex: 1, backgroundColor: "#EFEEEA", padding: 12, minHeight: 70 }}>
+          {twoRows && <Text style={{ fontSize: 8, color: accent }}>{String(index + 1).padStart(2, "0")}</Text>}
+          <Text style={{ fontSize: 11, color: ink, marginTop: 5 }}>{node}</Text>
+        </View>
+        {position < items.length - 1 && <Svg width={22} height={14} viewBox="0 0 22 14">
+          <Path d={reverse ? "M20 7 H4 M9 2 L4 7 L9 12" : "M2 7 H18 M13 2 L18 7 L13 12"} stroke={accent} strokeWidth={1.5} fill="none" />
+        </Svg>}
+      </Fragment>)}
+    </View>;
+    return <View style={{ marginTop: 14 }}>
+      {row(top)}
+      {twoRows && <><Svg width={20} height={26} viewBox="0 0 20 26" style={{ alignSelf: "flex-end", marginRight: 95 }}>
+        <Path d="M10 2 V20 M5 15 L10 20 L15 15" stroke={accent} strokeWidth={1.5} fill="none" />
+      </Svg>{row(bottom, true)}</>}
       {block.annotation && <Text style={{ marginTop: 10, fontSize: 10, color: muted }}>{block.annotation}</Text>}
-    </View>
-  );
+    </View>;
+  }
   if (block.kind === "architecture") return (
     <View style={{ flexDirection: "row", gap: 6, marginTop: 16 }}>
       {block.layers.map((layer, index) => <View key={index} style={{ flex: 1, backgroundColor: "#EFEEEA", minHeight: 128, padding: 8 }}>
@@ -71,7 +89,7 @@ function PdfBlock({ block }: { block: ReferenceBlock }) {
   if (block.kind === "gap") return <View style={{ marginTop: 18, minHeight: 255, backgroundColor: "#EFEEEA", borderLeftWidth: 6, borderLeftColor: accent, padding: 25 }}>
     <Text style={{ fontSize: 22, fontFamily: "Times-Roman", color: ink }}>{block.title}</Text>
     <Text style={{ fontSize: 14, color: ink, marginTop: 22 }}>{block.detail}</Text>
-    <Text style={{ fontSize: 11, color: accent, marginTop: 68 }}>NEXT READ  {block.nextAction}</Text>
+    <Text style={{ fontSize: 11, color: accent, marginTop: 68 }}>TO CONFIRM  {block.nextAction}</Text>
   </View>;
   return <View style={{ marginTop: 13 }}>{block.lines.map((line, index) => <Text key={index} style={{ fontSize: 13, color: ink, marginBottom: 9 }}>{line}</Text>)}</View>;
 }
@@ -82,13 +100,22 @@ export function buildReferenceDeckPdf(spec: ReferenceDeckSpec): ReactElement<Doc
     {spec.slides.map((slide, index) => {
       const dark = slide.archetype === "cover" || slide.archetype === "divider";
       return <Page key={index} size={[960, 540]} style={{ backgroundColor: dark ? ink : paper, padding: 45 }}>
-        <Text style={{ fontSize: 9, color: dark ? "#FFFFFF" : muted }}>{spec.useCase.toUpperCase()}  ·  {slide.section ?? spec.edition.toUpperCase()}</Text>
-        <Text style={{ fontSize: dark ? 34 : 24, color: dark ? "#FFFFFF" : ink, marginTop: dark ? 75 : 26, fontFamily: "Times-Roman" }}>{slide.actionTitle}</Text>
-        {slide.archetype !== "cover" && slide.archetype !== "divider" && <View style={{ marginTop: 14, padding: 8, backgroundColor: ink }}><Text style={{ fontSize: 10, color: "#FFFFFF" }}>{slide.answerLabel}: {slide.answer}</Text></View>}
-        {slide.blocks.map((block, blockIndex) => <PdfBlock key={blockIndex} block={block} />)}
-        <Text style={{ position: "absolute", bottom: 29, left: 45, right: 45, fontSize: 8, color: dark ? "#FFFFFF" : muted }}>
-          {slide.sourceIds?.length ? referenceSourceLine(slide) : `${spec.program} · Discussion draft`}  ·  {index + 1}
-        </Text>
+        {slide.archetype === "cover" ? <>
+          <Text style={{ fontSize: 11, color: "#FFFFFF" }}>VALUE PROPOSITION  /  {spec.edition.toUpperCase()} EDITION</Text>
+          <Text style={{ fontSize: 38, color: "#FFFFFF", marginTop: 75, fontFamily: "Times-Roman" }}>{spec.useCase}</Text>
+          <Text style={{ fontSize: 19, color: "#FFFFFF", marginTop: 35 }}>{slide.answer}</Text>
+          <Text style={{ fontSize: 12, color: "#FFFFFF", marginTop: 48 }}>Sponsor: {spec.sponsorRole}</Text>
+          <Text style={{ position: "absolute", bottom: 54, left: 45, right: 45, fontSize: 9, color: "#FFFFFF" }}>Discussion draft · {spec.monthYear}</Text>
+          <Text style={{ position: "absolute", bottom: 31, left: 45, right: 45, fontSize: 9, color: "#FFFFFF" }}>Prepared by AbarVa · {spec.edition} edition</Text>
+        </> : <>
+          <Text style={{ fontSize: 9, color: dark ? "#FFFFFF" : muted }}>{spec.useCase.toUpperCase()}  ·  {slide.section ?? spec.edition.toUpperCase()}</Text>
+          <Text style={{ fontSize: dark ? 34 : 24, color: dark ? "#FFFFFF" : ink, marginTop: dark ? 75 : 26, fontFamily: "Times-Roman" }}>{slide.actionTitle}</Text>
+          {slide.archetype !== "divider" && <View style={{ marginTop: 14, padding: 8, backgroundColor: ink }}><Text style={{ fontSize: 10, color: "#FFFFFF" }}>{slide.answerLabel}: {slide.answer}</Text></View>}
+          {slide.blocks.map((block, blockIndex) => <PdfBlock key={blockIndex} block={block} />)}
+          <Text style={{ position: "absolute", bottom: 29, left: 45, right: 45, fontSize: 8, color: dark ? "#FFFFFF" : muted }}>
+            {slide.sourceIds?.length ? referenceSourceLine(slide) : `${spec.program} · Discussion draft`}  ·  {index + 1}
+          </Text>
+        </>}
       </Page>;
     })}
   </Document>;

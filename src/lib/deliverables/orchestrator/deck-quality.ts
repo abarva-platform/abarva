@@ -15,7 +15,7 @@ import "server-only";
 // The second governs.
 
 import type { InspectedDeck, InspectedSlide } from "./deck-inspection";
-import { figuresOnSlide, visibleFiguresOnSlide, referenceArchetypeGaps, referenceSourceLine, type ReferenceDeckSpec } from "./reference-deck-model";
+import { answerIsCountDump, clientCopyIssue, coverUsesEditionRule, figuresOnSlide, visibleFiguresOnSlide, referenceArchetypeGaps, referenceSourceLine, type ReferenceDeckSpec } from "./reference-deck-model";
 
 /**
  * Slide role. A cover or divider is legitimately thin and must SAY so — it is
@@ -46,7 +46,7 @@ export type DeckFinding =
   | { kind: "empty_table"; slide: number; message: string }
   | { kind: "slide_count"; message: string }
   | { kind: "canvas"; message: string }
-  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "fallback_words"; slide: number; message: string; detailCode?: string };
+  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "reference_client_copy" | "reference_gap" | "reference_count_dump" | "reference_flow_label" | "fallback_words"; slide: number; message: string; detailCode?: string };
 
 export interface DeckVerdict {
   ok: boolean;
@@ -82,12 +82,26 @@ function judgeReferenceSlide(
   if (!expected) return;
   const names = slide.objectNames ?? [];
   const named = slide.namedText ?? {};
-  const add = (kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability", message: string, detailCode?: string) =>
+  const add = (kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "reference_client_copy" | "reference_gap" | "reference_count_dump" | "reference_flow_label", message: string, detailCode?: string) =>
     findings.push({ kind, slide: slide.index, message, ...(detailCode ? { detailCode } : {}) });
   if (slide.pictureCount > names.filter((name) => name.startsWith("ref:logo:picture")).length)
     add("reference_editability", `slide ${slide.index}: raster picture outside the logo is not editable.`);
   if (!slide.notesText?.includes("The point:"))
     add("reference_structure", `slide ${slide.index}: business-case speaker notes omit The point.`);
+  const visibleText = slide.textRuns.join(" ");
+  const internalTerm = clientCopyIssue(visibleText);
+  if (internalTerm)
+    add("reference_client_copy", `slide ${slide.index}: client text contains ${internalTerm}.`, "internal_term");
+  if (coverUsesEditionRule(visibleText))
+    add("reference_client_copy", `slide ${slide.index}: the edition rule appears in client-facing text.`, "edition_rule_visible");
+  if (expected.archetype === "cover") {
+    if ((named["ref:cover:title"] ?? "") !== spec.useCase)
+      add("reference_client_copy", `slide ${slide.index}: the cover must name the use case.`, "cover_use_case");
+  }
+  if (expected.blocks.some((block) => block.kind === "gap"))
+    add("reference_gap", `slide ${slide.index}: an exhibit awaits confirmed input.`, "empty_exhibit");
+  if ((visibleText.match(/Gap —[^.;]+/g) ?? []).length > 1)
+    add("reference_gap", `slide ${slide.index}: an empty-state message repeats in the exhibit.`, "repeated_empty_state");
   if (expected.archetype === "cover" || expected.archetype === "divider") return;
   for (const gap of referenceArchetypeGaps(expected, spec.edition))
     add("reference_structure", `slide ${slide.index}: ${expected.archetype} ${gap}.`);
@@ -100,6 +114,20 @@ function judgeReferenceSlide(
     add("reference_structure", `slide ${slide.index}: action title is missing or reads as a topic label.`);
   if (!names.includes("ref:answer:bar") || !(named["ref:answer:text"] ?? "").trim())
     add("reference_structure", `slide ${slide.index}: answer bar is missing.`);
+  if (answerIsCountDump(named["ref:answer:text"] ?? ""))
+    add("reference_count_dump", `slide ${slide.index}: the answer bar lists a count without interpretation.`, "count_dump");
+  for (const block of expected.blocks) {
+    if (block.kind !== "flow") continue;
+    block.nodes.forEach((label, nodeIndex) => {
+      if (named[`ref:body:flow-label:${nodeIndex}`] !== label)
+        add("reference_flow_label", `slide ${slide.index}: a flow label changed during rendering.`, "flow_label_mismatch");
+      if (!label.endsWith("…") || !block.fullNodes) return;
+      const prefix = label.slice(0, -1);
+      const full = block.fullNodes[nodeIndex] ?? "";
+      if (!full.startsWith(prefix) || !/^\s/.test(full.slice(prefix.length)))
+        add("reference_flow_label", `slide ${slide.index}: a flow label ends inside a word.`, "midword_cut");
+    });
+  }
   const figureValues = figuresOnSlide(expected).map((figure) => figure.display);
   const sourceLine = named["ref:source-line"] ?? "";
   if (figureValues.length && sourceLine !== referenceSourceLine(expected))

@@ -134,6 +134,17 @@ describe("read-only reference deck preview", () => {
     expect(JSON.stringify(body)).not.toContain("synthetic private source value");
   });
 
+  it("refuses internal client-facing copy before returning a file", async () => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 95, findings: [{
+      kind: "reference_client_copy", slide: 2, detailCode: "internal_term", message: "private rendered wording",
+    }] });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(422);
+    const body = await result.json();
+    expect(body).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "reference_client_copy", slide: 2, detailCode: "internal_term" }] });
+    expect(JSON.stringify(body)).not.toContain("private rendered wording");
+  });
+
   it("serves an in-memory PDF under the same preview contract", async () => {
     mockWords.mockResolvedValueOnce({ words: [{ title: "The governed read identifies the next decision.", answer: "Review the exhibit.", notes: "The point: review. How to read: source line." }], status: "unavailable", reason: "preflight_denied", fallbackSlides: [1] });
     const result = await GET(request("pdf"), params());

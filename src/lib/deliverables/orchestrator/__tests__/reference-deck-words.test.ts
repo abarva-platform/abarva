@@ -275,6 +275,7 @@ describe("reference-deck words", () => {
       }
     }
     const investment = unavailableEditionWords("investment", [...REFERENCE_ARCHETYPES]);
-    expect(investment.filter((entry) => /\{[^{}]+\}/.test(entry.title)).length).toBeGreaterThanOrEqual(11);
+    expect(investment.filter((entry) => /\{[^{}]+\}/.test(entry.title)).length).toBeGreaterThanOrEqual(8);
+    expect(investment.find((entry) => entry.title.includes("assumption count"))).toBeUndefined();
   });
 });

@@ -8,6 +8,7 @@ import {
   type ReferenceArchetype, type ReferenceBlock, type ReferenceCell,
   type ReferenceDeckSpec, type ReferenceFigure, type ReferenceSection,
   type ReferenceSlide, validateReferenceDeck,
+  clientCopyIssue,
 } from "./reference-deck-model";
 
 export const VALIDATION_SEQUENCE: ReferenceArchetype[] = [
@@ -23,15 +24,40 @@ export const INVESTMENT_SEQUENCE: ReferenceArchetype[] = [
   "ai_options", "next_steps", "rom_hours", "team", "sources",
 ];
 
-const GAP = "Gap — governed input unavailable";
+const GAP = "Gap — input unavailable";
 const text = (value: unknown, fallback = GAP): string =>
   typeof value === "string" && value.trim() ? value.trim() : fallback;
 const obj = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown> : null;
 const safeCaptured = (value: unknown): string => {
-  const line = text(value).replace(/\s+/g, " ").slice(0, 170);
-  return factTokens(line).length ? "Gap — captured figure needs a governed source" : line;
+  const line = text(value).replace(/\s+/g, " ");
+  if (factTokens(line).length || clientCopyIssue(line)) return GAP;
+  if (line.length <= 170) return line;
+  const prefix = line.slice(0, 170);
+  const boundary = prefix.lastIndexOf(" ");
+  return `${prefix.slice(0, boundary > 0 ? boundary : 170).trimEnd()}…`;
+};
+const hasGap = (value: ReferenceCell): boolean => typeof value === "string" && value.startsWith("Gap —");
+const clientCell = (value: ReferenceCell): ReferenceCell => hasGap(value) ? "To confirm" : value;
+const gapPanel = (title: string): ReferenceBlock => ({
+  kind: "gap", title, detail: "The evidence for this exhibit is still being confirmed with your team.",
+  nextAction: "Confirm the source and owner before relying on this exhibit.",
+});
+const shortLabel = (value: string, max = 24): string => {
+  const clean = value.trim().replace(/\s+/g, " ");
+  if (clean.length <= max) return clean;
+  const prefix = clean.slice(0, max);
+  const boundary = prefix.lastIndexOf(" ");
+  return boundary > 0 ? `${prefix.slice(0, boundary).trimEnd()}…` : clean.split(" ")[0]!;
+};
+const flowFromHandoffs = (value: string): { labels: string[]; full: string[] } | null => {
+  const source = value.split(/[.!?]/, 1)[0]?.trim() ?? "";
+  const parts = source.split(/\s*(?:→|->|=>|;|,|\n)\s*/).map((part) =>
+    part.replace(/^(?:and\s+|then\s+|\d+[.)]\s*)/i, "").trim()).filter(Boolean);
+  if (parts.length < 3 || parts.length > 8 || parts.some((part) => clientCopyIssue(part) || factTokens(part).length)) return null;
+  const maxLabel = parts.length > 6 ? 40 : parts.length > 4 ? 58 : 48;
+  return { labels: parts.map((part) => shortLabel(part, maxLabel)), full: parts };
 };
 const money = formatConsultantCents;
 const percent = formatConsultantPercent;
@@ -47,7 +73,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
   const safeRead = (value: unknown): string => {
     const result = safeCaptured(value);
     return inputs.edition === "validation" && /\b(cost|rom|roi|investment|solution|plan|roadmap|release)\b/i.test(result)
-      ? "Gap — captured wording is out of edition scope" : result;
+      ? GAP : result;
   };
   const bind = (sourceId: string, label: string, display: string): ReferenceFigure => {
     const key = `${sourceId}\u0000${display}`;
@@ -68,7 +94,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
   }
   const capture = (phase: 1 | 2 | 3, key: string): string =>
     inputs.capture[phase].status === "ready" ? safeRead(inputs.capture[phase].value[key])
-      : `Gap — ${inputs.capture[phase].detail}`;
+      : GAP;
   const sourceCapture = (phase: 1 | 2 | 3, key: string) => {
     const id = `evidence:P${phase}:${key}`;
     sources[id] = `Signed-in P${phase} capture: ${key.replace(/_/g, " ")}`;
@@ -151,71 +177,103 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       sources[id] = `${citation.title} — ${citation.url}`;
       return [id, safeRead(citation.title)] as ReferenceCell[];
     }) : [];
-  const citationsRows = sourceRows.length ? sourceRows : [[GAP, inputs.citations.status === "gap" ? inputs.citations.detail : "No approved public sources"]];
   const rom = inputs.rom.status === "ready" ? inputs.rom.value : null;
   const romCombined = rom ? bind(`rom:${rom.id}:combined_plan`, `Approved ROM ${rom.id}`, money(rom.result.combined.planCents)) : null;
   const adoption = inputs.capture[3].status === "ready"
     ? parseOperatingAdoption(inputs.capture[3].value.operating_adoption) : null;
   const acceptedOwners = adoption?.ownersAcceptedAt ? adoption.rows.filter((row) => row.owner) : [];
-  const flowNodes = inputs.move.archetype === "workflow_automation"
-    ? ["Intake", "Handoff", "Owner review", "Decision"]
-    : inputs.move.archetype === "platform_modernization"
-      ? ["Source systems", "Canonical model", "Governed measure", "Decision"]
-      : inputs.move.archetype === "operational_optimization"
-        ? ["Baseline", "Measured change", "Value review", "Decision"]
-        : ["Captured source", "Named owner", "Governed measure", "Decision"];
+  const actualFlow = inputs.capture[2].status === "ready"
+    && !(inputs.edition === "validation" && /\b(cost|rom|roi|investment|solution|plan|roadmap|release)\b/i.test(inputs.capture[2].value.process_handoffs ?? ""))
+    ? flowFromHandoffs(inputs.capture[2].value.process_handoffs ?? "") : null;
+
+  const clientBlocks = (archetype: ReferenceArchetype, blocks: ReferenceBlock[]): ReferenceBlock[] => {
+    const mapped = blocks.map((block): ReferenceBlock => {
+    if (block.kind === "table") {
+      const gapCount = block.rows.flat().filter(hasGap).length;
+      const hasFigure = block.rows.flat().some((value) => typeof value !== "string");
+      const answerColumn = block.columns.findIndex((column) => /^(?:current position|current answer)$/i.test(column));
+      const allAnswersMissing = answerColumn >= 0 && block.rows.every((row) => hasGap(row[answerColumn]!));
+      const oneStepMissing = archetype === "one_step_value" && gapCount > 0 && !hasFigure;
+      const subject: Partial<Record<ReferenceArchetype, string>> = {
+        big_number_context: "context", plain_english_table: "current position",
+        one_step_value: "annual value", three_year_value: "three-year value",
+        value_ledger: "value comparison", client_needs: "team needs",
+        channels: "working channels", next_steps: "decisions",
+      };
+      if (!hasFigure && (gapCount >= block.rows.length * block.columns.length / 2 || allAnswersMissing || oneStepMissing))
+        return gapPanel(`The ${subject[archetype] ?? "supporting"} evidence still needs confirmation`);
+      return { ...block, rows: block.rows.map((row) => row.map(clientCell)) };
+    }
+    if (block.kind === "metrics") {
+      if (block.items.every((item) => hasGap(item.value)))
+        return gapPanel("The figures for this exhibit still need confirmation");
+      return { ...block, items: block.items.map((item) => ({ ...item, value: clientCell(item.value) })) };
+    }
+    if (block.kind === "architecture") return { ...block, layers: block.layers.map((layer) => ({
+      ...layer, items: layer.items.map((item) => hasGap(item) ? "To confirm" : item),
+    })) };
+    if (block.kind === "text") return { ...block, lines: block.lines.map((line) => line.replace(/Gap —[^\n]*/g, "To confirm")) };
+    return block;
+    });
+    const gaps = mapped.filter((block) => block.kind === "gap");
+    const otherEvidence = mapped.some((block) => block.kind !== "gap" && block.kind !== "text");
+    if (gaps.length > 1 && !otherEvidence) return [gaps[0]!];
+    return mapped;
+  };
 
   const blocksFor = (archetype: ReferenceArchetype): ReferenceBlock[] => {
     switch (archetype) {
       case "cover": return [];
       case "one_page": return [
         metrics(inputs.edition === "validation" ? [
-          { label: "Annual value", value: valueCell(annual), meaning: "Value-engine basis" },
+          { label: "Annual value", value: valueCell(annual), meaning: "Current basis" },
           { label: "Credited value", value: valueCell(threeTotal), meaning: "Earned basis" },
-          { label: "Working assumptions", value: assumptions.length ? "Register rows open for review" : GAP, meaning: "Review status" },
+          { label: "Working assumptions", value: assumptions.length ? "To confirm" : GAP, meaning: "Review status" },
         ] : [
-          { label: "Annual value", value: valueCell(annual), meaning: "Value-engine basis" },
+          { label: "Annual value", value: valueCell(annual), meaning: "Current basis" },
           { label: "Credited value", value: valueCell(threeTotal), meaning: "Earned basis" },
-          { label: "Approved ROM", value: valueCell(romCombined), meaning: "Delivery basis" },
-          { label: "Three-year ROI", value: valueCell(roi("creditedEarned")), meaning: "Value-engine base" },
+          { label: "Delivery estimate", value: valueCell(romCombined), meaning: "Approved basis" },
+          { label: "Three-year return", value: valueCell(roi("creditedEarned")), meaning: "Calculated base" },
         ]),
         { kind: "text", lines: [
           `Problem: ${safeRead(inputs.move.problemStatement)}`,
           `Outcome: ${safeRead(inputs.move.targetOutcome)}`,
-          "Decision: confirm the governed gaps and named owners.",
+          "Decision: confirm the evidence and named owners.",
         ] },
       ];
-      case "contents": return [table(["Section", "What the reader can inspect"], [
-        ["Context", "Move and capture readback"], ["What", "Current flow and owners"],
-        ["Why", "Value-engine figures"], [inputs.edition === "validation" ? "Confirm" : "Validate", "Assumptions and sources"],
-        ["How", inputs.edition === "validation" ? "Next decision" : "Delivery and ROM"],
+      case "contents": return [table(["Section", "The answer in this section", "Slides"], [
+        ["01  Context", !hasGap(safeRead(inputs.move.problemStatement)) ? `The problem is ${shortLabel(safeRead(inputs.move.problemStatement), 69)}.` : "The need remains to confirm.", "2–5"],
+        ["02  What", actualFlow ? `The work runs from ${shortLabel(actualFlow.full[0]!, 27)} to ${shortLabel(actualFlow.full.at(-1)!, 27)}.` : "The current handoffs remain to confirm.", "6–7"],
+        ["03  Why", annual ? "Counted value has a stated basis for review." : "The value basis remains to confirm.", inputs.edition === "validation" ? "8–9" : "8–9, 11"],
+        [inputs.edition === "validation" ? "04  Confirm" : "04  Validate", assumptions.length ? "Working assumptions could change the case." : "The assumptions remain to confirm.", inputs.edition === "validation" ? "10" : "10, 22"],
+        ["05  How", inputs.edition === "validation" ? "Published evidence shows what can be checked." : rom ? "Delivery choices follow the approved estimate." : "The delivery basis remains to confirm.", inputs.edition === "validation" ? "11" : "12–21"],
       ])];
-      case "divider": return [{ kind: "text", lines: ["Read the governed exhibits and visible gaps."] }];
+      case "divider": return [{ kind: "text", lines: ["The next decision rests on evidence your team can check."] }];
       case "big_number_context": return [
         metrics([
-          { label: "Annual counted value", value: valueCell(annual), meaning: "Value-engine base" },
+          { label: "Annual counted value", value: valueCell(annual), meaning: "Current basis" },
           { label: "Credited earned", value: valueCell(threeTotal), meaning: "Three-year base" },
-          { label: "Open assumption", value: firstAssumption[0]!, meaning: "Named register row" },
+          { label: "Open assumption", value: firstAssumption[0]!, meaning: "Working basis" },
         ]),
-        { kind: "text", lines: [`Move need: ${safeRead(inputs.move.problemStatement)}`] },
-        table(["What the figure rests on", "Readback", "Owner or source"], [
-          ["Scope", capture(1, "scope_boundary"), "P1 capture"],
-          ["Current state", capture(2, "current_state_findings"), "P2 capture"],
+        { kind: "text", lines: [`Need: ${safeRead(inputs.move.problemStatement)}`] },
+        table(["What the figure rests on", "Current position", "Owner or source"], [
+          ["Scope", capture(1, "scope_boundary"), "Sponsor workshop"],
+          ["Current state", capture(2, "current_state_findings"), "Discovery workshop"],
         ]),
       ];
       case "plain_english_table": return [table(["Question", "Current answer", "Owner", "Basis"], [
-        ["Why now", capture(1, "sponsor_commitment"), "Sponsor", "P1 capture"],
-        ["What changes", capture(2, "current_state_findings"), "Move team", "P2 capture"],
-        ["What to prove", capture(1, "success_criteria"), "Measure owner", "P1 capture"],
+        ["Why now", capture(1, "sponsor_commitment"), "Sponsor", "Sponsor workshop"],
+        ["What changes", capture(2, "current_state_findings"), "Delivery team", "Discovery workshop"],
+        ["What to prove", capture(1, "success_criteria"), "Measure owner", "Sponsor workshop"],
       ])];
-      case "flow_today": return [
-        { kind: "flow", nodes: flowNodes, annotation: capture(2, "process_handoffs") },
-        table(["Evidence", "Readback"], [["P2 findings", capture(2, "current_state_findings")]]),
-      ];
+      case "flow_today": return actualFlow ? [
+        { kind: "flow", nodes: actualFlow.labels, fullNodes: actualFlow.full },
+        table(["Evidence", "Current position"], [["Discovery findings", capture(2, "current_state_findings")]]),
+      ] : [gapPanel("The current handoffs still need to be mapped")];
       case "one_step_value": {
         const blocks: ReferenceBlock[] = [table(["Step", "Driver", "Working value", "Basis"], [
-          ["Counted value", "Value engine", valueCell(annual), "Earned or paid is explicit"],
-          ["Validation", "Assumptions register", firstAssumption[2]!, firstAssumption[0]!],
+          ["Counted value", "Calculated case", valueCell(annual), "Earned or paid is explicit"],
+          ["Validation", "Working assumptions", firstAssumption[2]!, firstAssumption[0]!],
         ])];
         if (annual) blocks.push({ kind: "bars", items: [{ label: "Annual base", value: annual, magnitude: Math.max(0, Number(annualCash?.base) || 0) }] });
         return blocks;
@@ -226,8 +284,8 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
           .map((key) => [key === "creditedEarned" ? "Credited · earned" : key === "creditedPaid" ? "Credited · paid" : key === "programEarned" ? "Program · earned" : "Program · paid",
             valueCell(yearFigure(key, 0)), valueCell(yearFigure(key, 1)), valueCell(yearFigure(key, 2)), valueCell(dollars(`${key}_total`, basis(key)?.totalCents)),
             ...(inputs.edition === "investment" ? [valueCell(roi(key))] : [])]);
-        if (inputs.edition === "validation") rows.push(["Counting basis", "Credited", "Earned", "No cash claim", "Confirm"]);
-        else rows.push(["Case cost basis", "Not phased", "Not phased", "Not phased", valueCell(caseCost), "Value-engine cost"]);
+        if (inputs.edition === "validation") rows.push(["Counting basis", "Credited", "Earned", "To confirm", "To confirm"]);
+        else rows.push(["Case cost basis", "Not phased", "Not phased", "Not phased", valueCell(caseCost), "Calculated cost"]);
         const blocks: ReferenceBlock[] = [table(inputs.edition === "investment"
           ? ["Basis", "Year one", "Year two", "Year three", "Total", "ROI"]
           : ["Basis", "Year one", "Year two", "Year three", "Total"], rows)];
@@ -236,54 +294,66 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         if (bars.length) blocks.push({ kind: "bars", items: bars });
         return blocks;
       }
-      case "assumptions": return [table(["ID", "Assumption", "Working figure", "Owner", "Status"], assumptionRows.length ? assumptionRows : [[GAP, GAP, GAP, GAP, GAP]], [0])];
+      case "assumptions": return assumptionRows.length
+        ? [table(["ID", "Assumption", "Working figure", "Owner", "Status"], assumptionRows, [0])]
+        : [gapPanel("Working assumptions still need to be agreed")];
       case "value_ledger": return [table(["Basis", "Earned", "Paid", "Counted", "Source", "Review"], [
-        ["Credited", valueCell(dollars("credited_earned_total", credited?.totalCents)), valueCell(dollars("credited_paid_total", creditedPaid?.totalCents)), "Value-engine case", "Engine", "Check timing"],
-        ["Program", valueCell(dollars("program_earned_total", programEarned?.totalCents)), valueCell(dollars("program_paid_total", programPaid?.totalCents)), "Value-engine case", "Engine", "Check attribution"],
+        ["Credited", valueCell(dollars("credited_earned_total", credited?.totalCents)), valueCell(dollars("credited_paid_total", creditedPaid?.totalCents)), "Calculated case", "Case model", "Check timing"],
+        ["Program", valueCell(dollars("program_earned_total", programEarned?.totalCents)), valueCell(dollars("program_paid_total", programPaid?.totalCents)), "Calculated case", "Case model", "Check attribution"],
       ])];
-      case "users_decisions": return [table(["Decision", "Named owner", "Right", "Source", "Status"],
+      case "users_decisions": return acceptedOwners.length ? [table(["Decision", "Named owner", "Right", "Source", "Status"],
         acceptedOwners.length ? acceptedOwners.slice(0, 4).map((row) => [
           safeRead(row.name), safeRead(row.owner?.name),
           Object.keys(row.rights).filter((right) => row.rights[right as keyof typeof row.rights]?.value).join(", ") || GAP,
-          "P3 owner readback", "Accepted",
-        ]) : [["Gap — P3 owners not accepted", GAP, GAP, "P3 owner readback", "Review"]])];
-      case "target_state": return [{ kind: "architecture", layers: [
+          "Owner review", "Accepted",
+        ]) : [])] : [gapPanel("Decision owners still need to be confirmed")];
+      case "target_state": return inputs.capture[3].status !== "ready"
+        || ["architecture_integration", "controls_governance", "solution_approach"].every((key) => hasGap(capture(3, key)))
+        ? [gapPanel("The proposed design still needs your team's input")]
+        : [{ kind: "architecture", layers: [
         { name: "Sources", items: [capture(2, "current_state_findings")] },
         { name: "Intake", items: [capture(3, "architecture_integration")] },
-        { name: "Canonical", items: ["Governed object IDs"] },
-        { name: "Measures", items: ["Value-engine basis"] },
+        { name: "Common view", items: ["Shared records"] },
+        { name: "Measures", items: ["Calculated case"] },
         { name: "Review", items: [capture(3, "controls_governance")] },
         { name: "Use", items: [capture(3, "solution_approach")] },
-      ], governance: "Tenant scope · lineage · approval" }];
-      case "channels": return [table(["Channel", "Input", "Owner", "Control", "Readiness"], [
-        ["Operational", capture(3, "workflow_delta"), capture(3, "operating_model"), "P3 controls", "Review"],
+      ], governance: "Access · traceability · approval" }];
+      case "channels": return inputs.capture[3].status !== "ready"
+        || ["workflow_delta", "operating_model"].every((key) => hasGap(capture(3, key)))
+        ? [gapPanel("The working channels still need to be agreed")]
+        : [table(["Channel", "Input", "Owner", "Control", "Readiness"], [
+        ["Operational", capture(3, "workflow_delta"), capture(3, "operating_model"), "Owner controls", "Review"],
         ["Evidence", capture(2, "data_quality_governance"), "Data owner", "Source approval", "Review"],
       ])];
-      case "releases": return [{ kind: "timeline", quarters: ["Foundation", "First release", "Later release"], rows: [
+      case "releases": return !rom || !rom.result.releases.length ? [gapPanel("The delivery sequence needs an approved estimate")]
+        : [{ kind: "timeline", quarters: ["Foundation", "First release", "Later release"], rows: [
         { label: "Shared foundation", from: 0, to: 0 },
         ...((rom?.result.releases ?? []).slice(0, 2).map((release, index) => ({ label: safeRead(release.code), from: index + 1, to: index + 1 }))),
       ], today: 0, commit: 2 }];
       case "shared_foundation": return [metrics([
-        { label: "Shared ROM basis", value: valueCell(romCombined), meaning: "Approved snapshot" },
-        { label: "Governed source", value: inputs.citations.status === "ready" && inputs.citations.value.length ? "Approved citation feed" : GAP, meaning: "Public sources" },
+        { label: "Shared delivery basis", value: valueCell(romCombined), meaning: "Approved estimate" },
+        { label: "Published source", value: inputs.citations.status === "ready" && inputs.citations.value.length ? "Available" : GAP, meaning: "External evidence" },
       ])];
-      case "client_needs": return [table(["Need", "Input", "Decision"], [
+      case "client_needs": return hasGap(capture(3, "controls_governance")) && hasGap(capture(1, "success_criteria"))
+        ? [gapPanel("The team needs access and a clear measure")]
+        : [table(["Need", "Input", "Decision"], [
         ["Access", capture(3, "controls_governance"), "Confirm owner"],
         ["Measurement", capture(1, "success_criteria"), "Confirm basis"],
       ])];
-      case "ai_options": return [{ kind: "text", lines: [
+      case "ai_options": return hasGap(capture(3, "solution_approach"))
+        ? [gapPanel("Any AI option needs a reviewed working approach")]
+        : [{ kind: "text", lines: [
         `Candidate: ${capture(3, "solution_approach")}`,
-        "Value: support review of governed evidence.",
+        "Value: support review of approved evidence.",
         "Prerequisite: approved source access and human oversight.",
       ] }];
       case "next_steps": return [table(["Action", "Owner", "Evidence needed"], [
-        ["Confirm captured need", "Sponsor", capture(1, "scope_boundary")],
+        ["Confirm the need", "Sponsor", capture(1, "scope_boundary")],
         ["Resolve open assumptions", firstAssumption[3]!, firstAssumption[0]!],
-        ["Review delivery basis", "Move team", rom ? "Approved ROM snapshot" : "Gap — approved ROM unavailable"],
+        ["Review delivery basis", "Delivery team", rom ? "Approved estimate" : GAP],
       ])];
       case "rom_hours": {
-        if (!rom) return [{ kind: "gap", title: "Approved ROM detail is unavailable", detail: inputs.rom.status === "gap" ? inputs.rom.detail : GAP,
-          nextAction: "Review the ROM approval and its source-linked unit hours before using delivery figures." }];
+        if (!rom) return [gapPanel("The delivery estimate is still to confirm")];
         const unitRows = rom ? Object.entries(rom.workbookStructure.unitHours).slice(0, 3)
           .flatMap(([driver, unit]) => {
             if (!unit) return [];
@@ -291,15 +361,17 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
             const bound = bind(ref, unit.source, `${unit.value} h`);
             return [[safeRead(driver), "Unit-hour driver", bound, unit.confidence, GAP, GAP, GAP, ref] as ReferenceCell[]];
           }) : [];
-        return [table(["Driver", "Basis", "Unit hours", "Confidence", "Low", "Plan", "High", "Source"],
-          unitRows.length ? unitRows : [[GAP, GAP, GAP, GAP, GAP, GAP, GAP, GAP]])];
+        return unitRows.length ? [table(["Driver", "Basis", "Unit hours", "Confidence", "Low", "Plan", "High", "Source"], unitRows)]
+          : [gapPanel("The delivery hours still need an approved basis")];
       }
       case "team": return [table(["Role", "Decision", "Source", "State"], [
-        ["Sponsor", "Confirm need", "P1 capture", capture(1, "sponsor_commitment")],
-        ...(acceptedOwners.length ? acceptedOwners.slice(0, 2).map((row) => [safeRead(row.owner?.name), "Own change", "P3 owner readback", "Accepted"] as ReferenceCell[])
-          : [["Gap — P3 owner", "Own change", "P3 owner readback", "Review"]]),
+        ["Sponsor", "Confirm need", "Sponsor workshop", capture(1, "sponsor_commitment")],
+        ...(acceptedOwners.length ? acceptedOwners.slice(0, 2).map((row) => [safeRead(row.owner?.name), "Own change", "Owner review", "Accepted"] as ReferenceCell[])
+          : [["To confirm", "Own change", "Owner review", "To confirm"]]),
       ])];
-      case "sources": return [table(["Citation", "Approved source"], citationsRows.length >= 3 ? citationsRows : [...citationsRows, ...Array.from({ length: 3 - citationsRows.length }, () => ["Gap — no further approved source", "Source review needed"])])];
+      case "sources": return sourceRows.length
+        ? [table(["Citation", "Published source"], sourceRows)]
+        : [gapPanel("Published evidence still needs to be confirmed")];
     }
   };
 
@@ -307,11 +379,12 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     if (["one_page", "contents", "big_number_context"].includes(kind)) return "CONTEXT";
     if (["plain_english_table", "flow_today"].includes(kind)) return "WHAT";
     if (["one_step_value", "three_year_value", "value_ledger"].includes(kind)) return "WHY";
-    if (["assumptions", "sources"].includes(kind)) return inputs.edition === "validation" ? "CONFIRM" : "VALIDATE";
+    if (kind === "assumptions") return inputs.edition === "validation" ? "CONFIRM" : "VALIDATE";
+    if (kind === "sources") return inputs.edition === "validation" ? "HOW" : "VALIDATE";
     return "HOW";
   };
   const slides: ReferenceSlide[] = sequence.map((archetype, index) => {
-    const blocks = blocksFor(archetype);
+    const blocks = clientBlocks(archetype, blocksFor(archetype));
     const authored = words[index]!;
     const narrativeFigures = new Map<string, ReferenceFigure>();
     const visibleNarrativeFigures = new Map<string, ReferenceFigure>();
@@ -332,9 +405,21 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       if (visible) visibleNarrativeFigures.set(`${figure.sourceId}\u0000${figure.display}`, figure);
       return slot.display;
     });
-    const actionTitle = resolveSlots(authored.title, true);
-    const answer = resolveSlots(authored.answer, true);
-    const speakerNotes = resolveSlots(authored.notes, false);
+    const actionTitle = archetype === "cover" ? inputs.move.name : resolveSlots(authored.title, true);
+    const answer = archetype === "cover"
+      ? inputs.edition === "validation"
+        ? "First version of the value proposition, for your team to validate"
+        : "The problem, the value over three years, the solution and the plan"
+      : resolveSlots(authored.answer, true);
+    const noteParts = [resolveSlots(authored.notes, false)];
+    if (archetype === "cover" && inputs.edition === "validation")
+      noteParts.push("Edition guidance: this discussion validates the need and excludes the solution, plan and cost.");
+    if (archetype === "flow_today" && actualFlow)
+      noteParts.push(`Full handoffs: ${actualFlow.full.join(" → ")}.`);
+    if (["one_page", "big_number_context", "one_step_value", "three_year_value", "value_ledger"].includes(archetype)
+      && inputs.valueCase.status !== "ready")
+      noteParts.push(`Consultant follow-up: ${inputs.valueCase.detail}`);
+    const speakerNotes = noteParts.join(" ");
     const extra = archetype === "plain_english_table" ? [sourceCapture(1, "sponsor_commitment"), sourceCapture(2, "current_state_findings"), sourceCapture(1, "success_criteria")]
       : archetype === "big_number_context" ? [sourceCapture(1, "scope_boundary"), sourceCapture(2, "current_state_findings")]
         : archetype === "flow_today" ? [sourceCapture(2, "process_handoffs"), sourceCapture(2, "current_state_findings")]
@@ -354,15 +439,12 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       sourceIds: sourceIdsFor(blocks, [...extra, ...narrativeSourceIds]),
     };
   });
-  if (inputs.edition === "validation") {
-    slides[0]!.actionTitle = "Validate the need; no solution, plan or cost.";
-  }
   const spec: ReferenceDeckSpec = {
     edition: inputs.edition,
-    client: "Synthetic demo tenant",
+    client: "Discussion draft",
     program: inputs.move.name,
     useCase: inputs.move.name,
-    sponsorRole: "Move sponsor",
+    sponsorRole: "Executive sponsor",
     monthYear: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }),
     sourcesCheckedTo: inputs.citations.status === "ready" && inputs.citations.value.length
       ? inputs.citations.value.map((item) => item.retrievedAt).sort().at(-1) ?? "not checked"

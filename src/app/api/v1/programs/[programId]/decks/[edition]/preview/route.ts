@@ -93,7 +93,7 @@ export async function GET(
     const titleFigureCount = spec.slides.filter((slide) => slide.narrativeFigures?.some((figure) => slide.actionTitle.includes(figure.display))).length;
     const hardRenderFindings = verdict.findings.filter((finding) => [
       "canvas", "slide_count", "off_canvas", "empty_canvas",
-      "reference_source", "reference_edition", "reference_editability",
+      "reference_source", "reference_edition", "reference_editability", "reference_client_copy",
     ].includes(finding.kind));
     if (hardRenderFindings.length) {
       return Response.json({
