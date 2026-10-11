@@ -9,6 +9,7 @@ import {
 } from "../Contract360Surfaces";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import type { SourceWorkspaceVM } from "../buildViewModel";
+import { ContractPlaybookBriefing } from "../ContractPlaybookBriefing";
 import {
   ContractOptimizeContent,
   contractValueTypeSummary,
@@ -52,6 +53,89 @@ const vmWith = (headline: string | null) =>
     },
     optWorkflow: null,
   }) as unknown as SourceWorkspaceVM;
+
+describe("contract playbook briefing", () => {
+  it("renders the real catalog, conditional asks, and calculation inputs without claiming an assessment", () => {
+    render(
+      <ContractPlaybookBriefing contractArchetype="legacy_analytics_managed_services" />,
+    );
+    expect(screen.getByText("Managed services")).toBeTruthy();
+    expect(screen.getByText(/6 playbook levers/)).toBeTruthy();
+    expect(
+      screen.getByText(/not a completed contract assessment/),
+    ).toBeTruthy();
+    expect(screen.getByText("Enhancement / change-order leakage")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Convert the recurring change-order categories into a fixed service catalog or capped unit-rate structure.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Share of change-order spend that is recurring/avoidable",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText(/no point estimate/)).toBeTruthy();
+    expect(
+      screen.queryByText(/triggered|checked and clear|industry benchmark/i),
+    ).toBeNull();
+  });
+
+  it("names a missing mapping instead of displaying a generic playbook", () => {
+    render(<ContractPlaybookBriefing contractArchetype="unknown_type" />);
+    expect(screen.getByText("Playbook mapping needed")).toBeTruthy();
+    expect(screen.queryByText("Conditional vendor ask")).toBeNull();
+  });
+
+  it("keeps the playbook closed when two contract-type records disagree", () => {
+    render(
+      <ContractPlaybookBriefing
+        contractArchetype="cloud_consumption"
+        coverageArchetype="consumption_commit"
+      />,
+    );
+    expect(screen.getByText("Resolve the contract type")).toBeTruthy();
+    expect(screen.queryByText("Commitment coverage")).toBeNull();
+  });
+
+  it("mounts the playbook on Story and keeps detail closed until requested", () => {
+    const { container } = render(
+      <ContractStoryBriefing
+        contract={{ ...contract, contract_archetype: "consumption_commit" }}
+        coverage={null}
+        scopeRows={[]}
+        vm={vmWith(null)}
+      />,
+    );
+    expect(
+      screen.getByRole("region", { name: "Contract playbook" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Cloud consumption")).toBeTruthy();
+    expect(screen.getByText("Source records")).toBeTruthy();
+    expect(
+      container.querySelectorAll(".sw-c3-playbook details[open]"),
+    ).toHaveLength(0);
+    expect(
+      container.querySelectorAll(".sw-c3-playbook .sw-c3-card"),
+    ).toHaveLength(0);
+  });
+
+  it("keeps the recorded candidate and owner beside the readiness action", () => {
+    const vm = {
+      ...vmWith(null),
+      optWorkflow: { primaryAction: "Collect missing evidence", primaryActionDetail: "Review the pricing terms." },
+      commercialPosture: { items: [
+        { label: "Top lever", value: "Classify recurring change orders", detail: "Review named orders with the supplier." },
+        { label: "Decision owner", value: "Contract Operations" },
+      ] },
+    } as unknown as SourceWorkspaceVM;
+    render(<ContractStoryBriefing contract={contract} coverage={null} scopeRows={[]} vm={vm} />);
+    expect(screen.getByText("Collect missing evidence")).toBeTruthy();
+    expect(screen.getByText("Recorded candidate")).toBeTruthy();
+    expect(screen.getAllByText("Classify recurring change orders")).toHaveLength(1);
+    expect(screen.getByText("Decision owner: Contract Operations")).toBeTruthy();
+  });
+});
 
 describe("ContractBriefingHeader", () => {
   it("keeps long-form governed prose out of the page heading", () => {
@@ -157,11 +241,13 @@ describe("ContractStoryBriefing", () => {
     const vm = {
       ...vmWith(null),
       detail: {
-        contractTabIntelligence: [{
-          tab_key: "Story",
-          supporting_evidence_summary:
-            "12 spend rows; SLA history not loaded; Contract clauses available",
-        }],
+        contractTabIntelligence: [
+          {
+            tab_key: "Story",
+            supporting_evidence_summary:
+              "12 spend rows; SLA history not loaded; Contract clauses available",
+          },
+        ],
       },
       contractEducation: {
         archetypeLabel: "Cloud consumption commitment",
@@ -178,7 +264,9 @@ describe("ContractStoryBriefing", () => {
       />,
     );
 
-    expect(screen.getByText(/12 spend rows; Contract clauses available/)).toBeTruthy();
+    expect(
+      screen.getByText(/12 spend rows; Contract clauses available/),
+    ).toBeTruthy();
     expect(screen.queryByText(/SLA history not loaded/)).toBeNull();
     expect(screen.getByText("Not required")).toBeTruthy();
   });
@@ -222,7 +310,9 @@ describe("ContractCaseThreadStrip", () => {
     expect(screen.getByText("Evidence Review")).toBeTruthy();
     expect(screen.getByText("Latest of 2 cases")).toBeTruthy();
     expect(screen.getByText("Category Management")).toBeTruthy();
-    expect(screen.getByText("Attach the reviewed pricing schedule.")).toBeTruthy();
+    expect(
+      screen.getByText("Attach the reviewed pricing schedule."),
+    ).toBeTruthy();
   });
 
   it("hands the selected contract to the dedicated journey, not to the Contract 360 tab", () => {
@@ -292,9 +382,12 @@ describe("Contract 360 Optimize presentation", () => {
       c: { id: "TEST-001" },
       detail: { cloudCommitmentPeerCoverage: [] },
       opportunityView: {
-        opportunities: [{ id: "SIGNAL-1", label: "Scope review", stageRaw: "signal" }],
+        opportunities: [
+          { id: "SIGNAL-1", label: "Scope review", stageRaw: "signal" },
+        ],
         recommendation: "Collect the missing service-scope evidence.",
-        recommendationDetail: "Confirm the run catalog before a buyer ask is written.",
+        recommendationDetail:
+          "Confirm the run catalog before a buyer ask is written.",
         caseThread: { state: "Evidence Review" },
         potential: {
           recoverable: "Not sized",
@@ -309,12 +402,20 @@ describe("Contract 360 Optimize presentation", () => {
 
     expect(screen.getByText("Next action")).toBeTruthy();
     expect(screen.getByText("Evidence Review")).toBeTruthy();
-    expect(screen.getByText("Collect the missing service-scope evidence.")).toBeTruthy();
-    expect(screen.getByText("Confirm the run catalog before a buyer ask is written.")).toBeTruthy();
+    expect(
+      screen.getByText("Collect the missing service-scope evidence."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Confirm the run catalog before a buyer ask is written.",
+      ),
+    ).toBeTruthy();
     expect(screen.queryByRole("tab", { name: "Levers" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Sequence" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
-    expect(screen.queryByText("No negotiation text is loaded for this contract.")).toBeNull();
+    expect(
+      screen.queryByText("No negotiation text is loaded for this contract."),
+    ).toBeNull();
   });
 
   it("retains recorded value even when negotiation text is absent", () => {
@@ -322,7 +423,9 @@ describe("Contract 360 Optimize presentation", () => {
       c: { id: "TEST-002" },
       detail: { cloudCommitmentPeerCoverage: [] },
       opportunityView: {
-        opportunities: [{ id: "SIGNAL-2", label: "Invoice review", stageRaw: "signal" }],
+        opportunities: [
+          { id: "SIGNAL-2", label: "Invoice review", stageRaw: "signal" },
+        ],
         recommendation: "Reconcile the invoices before a vendor ask.",
         potential: {
           recoverable: "$37K",
@@ -337,8 +440,12 @@ describe("Contract 360 Optimize presentation", () => {
 
     expect(screen.getByText("$37K")).toBeTruthy();
     expect(screen.getByText("$151K")).toBeTruthy();
-    expect(screen.getByText("Reconcile the invoices before a vendor ask.")).toBeTruthy();
-    expect(screen.getByText("No structured negotiation table is available yet.")).toBeTruthy();
+    expect(
+      screen.getByText("Reconcile the invoices before a vendor ask."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("No structured negotiation table is available yet."),
+    ).toBeTruthy();
   });
 
   it("does not promote unsized placeholders to established value", () => {
@@ -352,7 +459,11 @@ describe("Contract 360 Optimize presentation", () => {
     });
 
     expect(summary.established).toEqual([]);
-    expect(summary.unpriced).toEqual(["recoverable", "avoidable", "negotiable"]);
+    expect(summary.unpriced).toEqual([
+      "recoverable",
+      "avoidable",
+      "negotiable",
+    ]);
     expect(summary.confirmed).toBeNull();
   });
 
@@ -361,7 +472,13 @@ describe("Contract 360 Optimize presentation", () => {
       c: { id: "TEST-001" },
       detail: { cloudCommitmentPeerCoverage: [] },
       opportunityView: {
-        opportunities: [{ id: "DISCOUNT-1", label: "Discount band review", stageRaw: "signal" }],
+        opportunities: [
+          {
+            id: "DISCOUNT-1",
+            label: "Discount band review",
+            stageRaw: "signal",
+          },
+        ],
         recommendation: "Collect the accepted price schedule.",
         potential: {
           recoverable: "Not sized",
@@ -374,7 +491,9 @@ describe("Contract 360 Optimize presentation", () => {
 
     render(<ContractOptimizeContent vm={vm} />);
 
-    expect(screen.getByText("Collect the accepted price schedule.")).toBeTruthy();
+    expect(
+      screen.getByText("Collect the accepted price schedule."),
+    ).toBeTruthy();
     expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
     expect(screen.queryByText(/No loaded discount percentage/)).toBeNull();
   });
@@ -384,24 +503,33 @@ describe("Contract 360 Optimize presentation", () => {
       c: { id: "TEST-001" },
       detail: { cloudCommitmentPeerCoverage: [] },
       opportunityView: {
-        opportunities: [{
-          id: "ASK-1",
-          label: "Scope review",
-          shortLabel: "Re-base scope",
-          buyerAsk: "Move recurring change orders into the base service catalog.",
-          owner: "Sourcing",
-          stageRaw: "signal",
-          amountUsd: null,
-        }],
+        opportunities: [
+          {
+            id: "ASK-1",
+            label: "Scope review",
+            shortLabel: "Re-base scope",
+            buyerAsk:
+              "Move recurring change orders into the base service catalog.",
+            owner: "Sourcing",
+            stageRaw: "signal",
+            amountUsd: null,
+          },
+        ],
       },
     } as unknown as SourceWorkspaceVM;
 
     render(<ContractOptimizeContent vm={vm} />);
 
-    expect(screen.getByText("Move recurring change orders into the base service catalog.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Move recurring change orders into the base service catalog.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Sequence" })).toBeTruthy();
     expect(screen.queryByRole("tab", { name: "Comparator" })).toBeNull();
-    expect(screen.queryByText("No negotiation text is loaded for this contract.")).toBeNull();
+    expect(
+      screen.queryByText("No negotiation text is loaded for this contract."),
+    ).toBeNull();
   });
 });
 
@@ -412,9 +540,13 @@ describe("contract tab visibility", () => {
     selected.setAttribute("aria-selected", "true");
     list.append(selected);
     Object.defineProperty(list, "clientWidth", { value: 200 });
-    Object.defineProperty(list, "scrollWidth", { value: 600, configurable: true });
+    Object.defineProperty(list, "scrollWidth", {
+      value: 600,
+      configurable: true,
+    });
     list.getBoundingClientRect = () => ({ left: 10, right: 210 }) as DOMRect;
-    selected.getBoundingClientRect = () => ({ left: 300, right: 380 }) as DOMRect;
+    selected.getBoundingClientRect = () =>
+      ({ left: 300, right: 380 }) as DOMRect;
 
     keepSelectedContractTabVisible(list);
 
@@ -427,10 +559,14 @@ describe("contract tab visibility", () => {
     selected.setAttribute("aria-selected", "true");
     list.append(selected);
     Object.defineProperty(list, "clientWidth", { value: 200 });
-    Object.defineProperty(list, "scrollWidth", { value: 600, configurable: true });
+    Object.defineProperty(list, "scrollWidth", {
+      value: 600,
+      configurable: true,
+    });
     list.scrollLeft = 200;
     list.getBoundingClientRect = () => ({ left: 10, right: 210 }) as DOMRect;
-    selected.getBoundingClientRect = () => ({ left: -50, right: 20 }) as DOMRect;
+    selected.getBoundingClientRect = () =>
+      ({ left: -50, right: 20 }) as DOMRect;
 
     keepSelectedContractTabVisible(list);
     expect(list.scrollLeft).toBe(140);

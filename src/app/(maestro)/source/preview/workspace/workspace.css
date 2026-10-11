@@ -3704,6 +3704,61 @@
   white-space: nowrap;
 }
 
+/* --- playbook ------------------------------------------------------------ */
+
+.sw-c3-playbook h3 {
+  margin: 8px 0;
+}
+.sw-c3-story-candidate {
+  margin-top: 18px;
+}
+
+.sw-c3-card-dark .sw-c3-story-candidate .sw-c3-note,
+.sw-c3-card-dark .sw-c3-story-owner {
+  color: var(--sw-c3-cream);
+}
+.sw-c3-playbook-details {
+  border-top: 1px solid var(--sw-c3-hairline);
+  margin-top: 16px;
+  padding-top: 12px;
+}
+.sw-c3-playbook summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sw-c3-ink);
+  overflow-wrap: anywhere;
+}
+.sw-c3-playbook-rule {
+  border-bottom: 1px solid var(--sw-c3-hairline);
+  padding: 12px 0;
+}
+.sw-c3-playbook-rule dl {
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.sw-c3-playbook-rule dt {
+  font-weight: 600;
+  margin-top: 12px;
+}
+.sw-c3-playbook-rule dd {
+  margin: 4px 0 0;
+  color: var(--sw-c3-body);
+}
+.sw-c3-playbook-rule ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.sw-c3-playbook-rule li + li {
+  margin-top: 6px;
+}
+.sw-c3-playbook summary:focus-visible {
+  outline: 2px solid var(--sw-c3-green);
+  outline-offset: 4px;
+}
+
 /* --- scope --------------------------------------------------------------- */
 
 .sw-c3-scope-hosting {
