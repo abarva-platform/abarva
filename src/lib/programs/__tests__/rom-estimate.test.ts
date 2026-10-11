@@ -1325,7 +1325,7 @@ describe("edits", () => {
 
 describe("display formatting", () => {
   it("formats money, weeks, allocation and factors without computing an estimate", () => {
-    expect(formatRomMoney(15_600_000)).toBe("$156k");
+    expect(formatRomMoney(15_600_000)).toBe("$0.16M");
     expect(formatRomMoney(95_000)).toBe("$950");
     expect(formatRomWeeks(1)).toBe("1 wk");
     expect(formatRomWeeks(9)).toBe("9 wks");
@@ -1493,10 +1493,10 @@ describe("the capture-text dispatcher", () => {
       "Approved estimate: snapshot v1, approved by me on 2026-10-16. ESTIMATE, low / plan / high:",
     );
     expect(text).toContain(
-      "   Combined, foundation counted once: 1,230 h, 15 wks, $180k / $240k / $360k",
+      "   Combined, foundation counted once: 1,230 h, 15 wks, $0.18M / $0.24M / $0.36M",
     );
     expect(text).toContain(
-      "   Shared foundation (counted once, in R1): 300 h, 4 wks, $48k / $64k / $96k",
+      "   Shared foundation (counted once, in R1): 300 h, 4 wks, $48.0K / $64.0K / $96.0K",
     );
     const stale = captureValueText(
       "rom_estimate",

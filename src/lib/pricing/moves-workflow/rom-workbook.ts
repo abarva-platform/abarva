@@ -211,14 +211,18 @@ export function buildRomWorkbook(rom: RomResult): {
   ]);
   asm.addRow([
     "Delivery location",
-    text(rom.pod.locationCode),
+    text(new Set(rom.pod.members.map((member) => member.locationCode)).size > 1
+      ? "Mixed by member — see Pod & Rates"
+      : rom.pod.locationCode),
     "",
     "cost foundation: pricing_delivery_locations",
     "",
   ]);
   asm.addRow([
     "Provider class",
-    text(rom.pod.providerClassCode ?? "(rate band benchmark)"),
+    text(new Set(rom.pod.members.map((member) => member.providerClassCode ?? "")).size > 1
+      ? "Mixed by member — see Pod & Rates"
+      : rom.pod.providerClassCode ?? "(rate band benchmark)"),
     "",
     "cost foundation: pricing_provider_classes",
     "",
@@ -229,6 +233,15 @@ export function buildRomWorkbook(rom: RomResult): {
     "none applied",
     "",
     "ROM policy: no credit unless explicitly requested",
+    "",
+  ]);
+  asm.addRow([
+    "Rate approval status",
+    (rom.foundation?.priced.pod.memberLines ?? rom.releases[0]?.own.pod.memberLines ?? [])
+      .some((line) => line.rate.notes.some((note) => note.includes("global_starter_unapproved")))
+      ? "planning rates, not approved" : "See each rate source and approval status",
+    "",
+    "Review every role band and delivery mapping before estimate approval",
     "",
   ]);
 
@@ -359,7 +372,8 @@ export function buildRomWorkbook(rom: RomResult): {
       rate.basis,
       MAPPING_LABEL[rom.pod.memberMappingStatus[i]],
       text(rate.trace),
-      text(rate.notes.join("; ")),
+      text([...rate.notes, ...(rate.notes.some((note) => note.includes("global_starter_unapproved"))
+        ? ["planning rates, not approved"] : [])].join("; ")),
     ]).number;
     // rate terms: base (rate), location (factor), provider (factor), result.
     const refs = [`G${row}`, `I${row}`, `K${row}`];
@@ -782,6 +796,19 @@ export function buildRomWorkbook(rom: RomResult): {
       col.width = 18;
     });
   }
+  for (const [column, width] of [
+    [1, 6], [2, 17], [3, 12], [4, 23], [5, 17], [6, 8],
+    [8, 52], [10, 44], [12, 44], [16, 27], [17, 62], [18, 58],
+  ] as const) podWs.getColumn(column).width = width;
+  for (const row of podWs.getRows(1, podWs.rowCount) ?? []) {
+    row.height = row.number === 1 ? 32 : 96;
+    for (const column of [8, 10, 12, 16, 17, 18]) {
+      row.getCell(column).alignment = { vertical: "top", wrapText: true };
+    }
+  }
+  asm.getColumn(1).width = 46;
+  asm.getColumn(2).width = 40;
+  asm.getColumn(4).width = 68;
 
   return {
     workbook: wb,

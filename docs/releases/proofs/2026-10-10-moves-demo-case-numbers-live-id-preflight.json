@@ -1,0 +1,107 @@
+{
+  "event": "moves_demo_case_numbers_live_id_preflight",
+  "read_only": true,
+  "source": "private ACA operator job on current digest-pinned image",
+  "main_workflow_run": "https://github.com/abarva-platform/abarva/actions/runs/38105210814",
+  "direct_operator_executions": [
+    "job-abarva-private-operator-eus-pyoyzft",
+    "job-abarva-private-operator-eus-9gtw0w6"
+  ],
+  "execution_status": "Succeeded",
+  "image_digest": "sha256:5ad59973844248c537a7412341aeb963aa8be96369497287958b8f72f187c3cb",
+  "query_transaction": "BEGIN TRANSACTION READ ONLY; SELECT; ROLLBACK",
+  "observed_at_utc": "2026-10-11T02:38:27.8408815Z",
+  "move_id": "1557f032-5a5c-4475-abe5-b1a841576649",
+  "current_phase": 3,
+  "register_ids": [
+    {
+      "area": "delivery",
+      "id": "DL1",
+      "status": "open"
+    },
+    {
+      "area": "delivery",
+      "id": "DL2",
+      "status": "confirmed"
+    },
+    {
+      "area": "delivery",
+      "id": "DL3",
+      "status": "open"
+    },
+    {
+      "area": "delivery",
+      "id": "DL4",
+      "status": "confirmed"
+    },
+    {
+      "area": "delivery",
+      "id": "DL5",
+      "status": "open"
+    },
+    {
+      "area": "delivery",
+      "id": "DL6",
+      "status": "open"
+    },
+    {
+      "area": "value",
+      "id": "V1",
+      "status": "open"
+    },
+    {
+      "area": "value",
+      "id": "V2",
+      "status": "open"
+    },
+    {
+      "area": "value",
+      "id": "V3",
+      "status": "open"
+    },
+    {
+      "area": "value",
+      "id": "V4",
+      "status": "open"
+    },
+    {
+      "area": "value",
+      "id": "V5",
+      "status": "open"
+    }
+  ],
+  "occupied_outside_prior_seed": [
+    {
+      "area": "delivery",
+      "id": "DL5",
+      "status": "open",
+      "statement_sha256": "8c8e8c35dae74796ef37eb051ea5313a9b18131e5f080f294f6bf13f6f055af2"
+    },
+    {
+      "area": "delivery",
+      "id": "DL6",
+      "status": "open",
+      "statement_sha256": "b37a12a483dfb15d65235bf187183cb0e2b860271a862eac158c3cb88564a690"
+    },
+    {
+      "area": "value",
+      "id": "V5",
+      "status": "open",
+      "statement_sha256": "ecccca8d59980d1dcac53ab56f19089357b8432f70683d0f024876c126cd75b7"
+    }
+  ],
+  "occupied_rows_match_proposal": false,
+  "next_ids_at_observation": {
+    "value": "V6",
+    "delivery": "DL7"
+  },
+  "p3": {
+    "recordPresent": false,
+    "useCaseCodes": [],
+    "foundationCode": null
+  },
+  "p4_value_plan_present": false,
+  "operator_idle_restored": true,
+  "candidate_load_approval": "absent",
+  "caveat": "Point-in-time readback; the governed apply rechecks the exact ID allocation and P4 revision in one serializable transaction."
+}

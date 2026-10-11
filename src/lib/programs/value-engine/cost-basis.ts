@@ -3,9 +3,8 @@
  *
  * The investment a value case is measured against, resolved in this order:
  *
- *   1. an APPROVED ROM pricing snapshot, when a loader is provided. The ROM
- *      snapshot path is a separate change, so this is an injected interface
- *      only; nothing here imports pricing.
+ *   1. an APPROVED ROM pricing snapshot, when a loader is provided. A
+ *      ROM-linked case requires it and never falls back to the P4 estimate.
  *   2. otherwise the reviewed P4 estimate model (`estimates_capacity`,
  *      `evaluateEstimateModel`): its total for the delivery model the case is
  *      funded on, low/base/high, in whole cents. "Reviewed" is the estimate's
@@ -45,7 +44,7 @@ export const UNRESOLVED_COST_BASIS_SNAPSHOT_ID = "cost-basis:unresolved";
 
 export const COST_BASIS_CURRENCY = "USD";
 
-/** What the (not yet merged) ROM snapshot path must hand over. */
+/** What the approved ROM snapshot path hands over. */
 export interface ApprovedRomSnapshot {
   snapshotId: string;
   currency: string;
@@ -60,6 +59,7 @@ export type ApprovedRomSnapshotLoader =
 
 export type CostBasisBlockReason =
   | "rom_snapshot_unreadable"
+  | "rom_snapshot_not_approved"
   | "cost_currency_unsupported"
   | "estimate_absent"
   | "estimate_unreadable"
@@ -93,6 +93,8 @@ export type CostBasis =
 const BLOCK_DETAIL: Readonly<Record<CostBasisBlockReason, string>> = {
   rom_snapshot_unreadable:
     "The approved ROM snapshot's totals could not be read as whole, ordered, non-negative cents, so the case has no cost to measure against.",
+  rom_snapshot_not_approved:
+    "The case requires a current approved P3 ROM snapshot. A pending or stale ROM cannot supply its investment cost.",
   cost_currency_unsupported:
     "The cost is priced in a currency other than US dollars; the value engine works in US dollars and assumes no conversion rate.",
   estimate_absent:
@@ -141,6 +143,8 @@ const toCents = (dollars: number): Cents => Math.round(dollars * 100);
 export interface CostBasisInput {
   /** The approved ROM snapshot, or null/absent when there is none (or no loader). */
   romSnapshot?: ApprovedRomSnapshot | null;
+  /** A ROM-linked case must never fall back to a P4 estimate. */
+  requireRomSnapshot?: boolean;
   /** The raw P4 `estimates_capacity` capture value ("" when never written). */
   estimateCapture: string;
   /** The delivery model the case is funded on. */
@@ -168,6 +172,10 @@ export function resolveCostBasis(input: CostBasisInput): CostBasis {
       cents: { low: rom.lowCents, base: rom.baseCents, high: rom.highCents },
       planningBenchmark,
     };
+  }
+
+  if (input.requireRomSnapshot) {
+    return blocked("rom_snapshot_not_approved", planningBenchmark);
   }
 
   if (input.estimateCapture.trim() === "") {

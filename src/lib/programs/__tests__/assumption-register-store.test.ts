@@ -535,6 +535,23 @@ describe("creating rows", () => {
     ]);
   });
 
+  it("refuses an exact allocation that has drifted before inserting", async () => {
+    seedRow({ seq: 4, register_id: "V4", tenant_key: CANONICAL_KEY });
+    const result = await createAssumption(ctx, MOVE_ID, NEW_VALUE, PERSON, {expectedRegisterId:"V6"});
+    expect(result).toEqual({ok:false,refusal:{code:"expected_register_id_drift",expectedRegisterId:"V6",nextRegisterId:"V5"}});
+    expect(mockCalls.filter((call)=>call.table==="move_assumptions"&&call.op==="insert")).toHaveLength(0);
+  });
+
+  it("never retries an exact allocation after another writer takes its ID", async () => {
+    mockHooks.beforeInsert = (table, values) => {
+      if (table==="move_assumptions") seedRow({seq:values.seq,register_id:values.register_id,statement:"Concurrent row"});
+    };
+    const result = await createAssumption(ctx, MOVE_ID, NEW_VALUE, PERSON, {expectedRegisterId:"V1"});
+    expect(result).toEqual({ok:false,refusal:{code:"expected_register_id_drift",expectedRegisterId:"V1",nextRegisterId:null}});
+    expect(mockCalls.filter((call)=>call.table==="move_assumptions"&&call.op==="insert")).toHaveLength(1);
+    expect(mockTables.move_assumptions.map((row)=>row.statement)).toEqual(["Concurrent row"]);
+  });
+
   it("gives up after a bounded number of lost races, naming why", async () => {
     mockHooks.beforeInsert = (table, values) => {
       if (table === "move_assumptions") {
