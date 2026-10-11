@@ -103,3 +103,24 @@ it("exports categorical matrix labels and caveats without transforming advisory 
   expect(html).toContain("Needs dependency proof");
   expect(validated.session!.turns[1].answer!.modelAuthored!.rawText).toBe(raw);
 });
+
+it("formats source metadata without altering the source record or Claude prose", () => {
+  const fixture = sessionFixture();
+  const answer = fixture.turns[1].answer!;
+  answer.citations = [
+    {
+      id: "S1",
+      label: "H123: Recorded evidence review",
+      sourceClass: "tenant-fact",
+    },
+  ];
+  const table = answer.artifacts.find((a) => a.artifact === "table");
+  if (table?.artifact === "table")
+    table.columns[0].label = "H123: Authored title";
+  const original = JSON.stringify(answer);
+  const html = renderModelAuthoredSessionHtml(fixture);
+  expect(html).toContain("Recorded evidence review");
+  expect(html).not.toContain("H123: Recorded evidence review");
+  expect(html).toContain("<th>H123: Authored title</th>");
+  expect(JSON.stringify(answer)).toBe(original);
+});
