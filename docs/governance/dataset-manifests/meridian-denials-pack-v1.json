@@ -1,0 +1,20 @@
+{
+  "dataset_id": "meridian-denials-pack-v1",
+  "title": "Synthetic claims denial prevention discovery pack",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "Demo fixture maintainer",
+  "source_basis": "Entirely invented synthetic demonstration records; no real client source",
+  "ingestion_method": "api_upload",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Aggregated invented claim cohorts only; no patient, clinician, claim or account identifiers from any real source.",
+  "expected_object_count": 8,
+  "approved_by": "Codex preparation under owner brief; declaration only",
+  "approved_at": "2026-10-10",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Synthetic — not real data — AbarVa demo. Internal is the supported disclosure classification; synthetic describes origin. Canonical identity is declared in tenant-input-registry.json. Prepared files are not loaded, indexed, retrieved or agent_ready. The owner creates a fresh Move and uploads through its authenticated step pages. Upload review and any seed rebind require separate human actions; this declaration authorizes neither. No changes to active tenant intake, historical Move, runtime or model context."
+}

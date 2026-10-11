@@ -256,12 +256,17 @@ async function checkRootCauseWorkReachability(page: Page): Promise<void> {
     await expect(root).toHaveCount(1);
     await expect(row).toHaveCount(1);
     await expect(action).toHaveCount(1);
-    expect(await root.evaluate((element) => element.scrollHeight)).toBeGreaterThan(
-      await root.evaluate((element) => element.clientHeight),
-    );
-    await root.hover();
+    const canScroll =
+      (await root.evaluate((element) => element.scrollHeight > element.clientHeight + 1)) ||
+      (await page.evaluate(
+        () => document.scrollingElement!.scrollHeight > window.innerHeight + 1,
+      ));
+    expect(canScroll, `${width}px: the work page needs a scroll path`).toBe(true);
+    await page.mouse.move(width / 2, 450);
     await page.mouse.wheel(0, -4000);
-    await expect.poll(() => root.evaluate((element) => element.scrollTop)).toBe(0);
+    await expect
+      .poll(async () => [await root.evaluate((element) => element.scrollTop), await page.evaluate(() => window.scrollY)])
+      .toEqual([0, 0]);
     for (const target of [row, action]) {
       let reached = false;
       for (let attempt = 0; attempt < 12; attempt += 1) {
@@ -276,12 +281,15 @@ async function checkRootCauseWorkReachability(page: Page): Promise<void> {
           );
         });
         if (reached) break;
-        await root.hover();
         await page.mouse.wheel(0, 400);
       }
       expect(reached, `${width}px: ${await target.textContent()} must be reachable by wheel`).toBe(true);
+      await expect(target).toBeInViewport();
     }
-    expect(await root.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    const scrollDistance =
+      (await root.evaluate((element) => element.scrollTop)) +
+      (await page.evaluate(() => window.scrollY));
+    expect(scrollDistance, `${width}px: ordinary wheel scrolling must move the work`).toBeGreaterThan(0);
   }
   await page.setViewportSize({ width: 1440, height: 900 });
 }
@@ -328,6 +336,30 @@ async function inspectPage(
     landed: landedAt(page),
   };
 }
+
+test("walks long work through pane and document scrolling", async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body { margin: 0; }
+      .workspace { height: 900px; overflow: hidden; }
+      .MovesStepPage-module__fixture__root { height: 100%; overflow-y: auto; }
+      @media (max-width: 600px) {
+        .workspace { height: auto; overflow: visible; }
+        .MovesStepPage-module__fixture__root { height: auto; overflow-y: visible; }
+      }
+    </style>
+    <div class="workspace">
+      <div class="MovesStepPage-module__fixture__root">
+        <div style="height: 1100px"></div>
+        <div>RANK 01 · RC-1</div>
+        <div style="height: 160px"></div>
+        <button>Confirm this order</button>
+        <div style="height: 300px"></div>
+      </div>
+    </div>
+  `);
+  await checkRootCauseWorkReachability(page);
+});
 
 test("keeps long step content reachable inside the clipped workspace", async ({
   page,
