@@ -52,6 +52,9 @@ describe("anthropic key lanes", () => {
       expect(laneForWorkloadOrDefault("moves_public_research")).toBe(
         "offline-generation",
       );
+      expect(laneForWorkloadOrDefault("moves_reference_deck")).toBe(
+        "offline-generation",
+      );
     });
 
     it("routes graders and pressure tests to qa-evaluation", () => {

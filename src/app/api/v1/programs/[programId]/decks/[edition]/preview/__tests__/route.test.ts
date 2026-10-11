@@ -26,6 +26,9 @@ jest.mock("@/lib/deliverables/orchestrator/reference-deck-edition", () => ({
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-words", () => ({
   draftEditionWords: (...args: unknown[]) => mockWords(...args),
 }));
+jest.mock("@/lib/deliverables/orchestrator/reference-deck-slots", () => ({
+  buildReferenceSlotTable: () => ({}),
+}));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-model", () => ({
   validateReferenceDeck: jest.fn(() => []),
 }));
@@ -54,8 +57,8 @@ beforeEach(() => {
   mockRequireTenancy.mockResolvedValue({ clientKey: "meridian", clientId: "synthetic-client", userId: "synthetic-user" });
   mockTenancyResponse.mockImplementation(() => Response.json({ error: "unauthorized" }, { status: 401 }));
   mockFlag.mockReturnValue(true);
-  mockAssemble.mockResolvedValue({ move: { archetype: "workflow_automation", currentPhase: 3 }, valueCase: { status: "gap" }, register: { status: "gap" }, rom: { status: "gap" }, citations: { status: "gap" }, capture: { 3: { status: "gap" } } });
-  mockWords.mockResolvedValue([{ title: "The governed read identifies the next decision.", answer: "Review the exhibit.", notes: "The point: review. How to read: source line." }]);
+  mockAssemble.mockResolvedValue({ move: { archetype: "workflow_automation", currentPhase: 3 }, valueCase: { status: "empty" }, register: { status: "gap" }, rom: { status: "gap" }, citations: { status: "gap" }, capture: { 3: { status: "gap" } } });
+  mockWords.mockResolvedValue({ words: [{ title: "The governed read identifies the next decision.", answer: "Review the exhibit.", notes: "The point: review. How to read: source line." }], status: "ok", fallbackSlides: [] });
   mockBuild.mockReturnValue({ edition: "validation", slides: [], figureLedger: [] });
   mockRender.mockResolvedValue(Buffer.from("PK synthetic preview"));
   mockInspect.mockResolvedValue({ slideCount: 1 });
@@ -91,6 +94,10 @@ describe("read-only reference deck preview", () => {
     expect(result.status).toBe(200);
     expect(result.headers.get("X-AbarVa-Preview")).toBe("not-persisted");
     expect(result.headers.get("X-AbarVa-Deck-Fidelity-Score")).toBe("85");
+    expect(result.headers.get("X-AbarVa-Deck-Title-Figure-Count")).toBe("0");
+    expect(result.headers.get("X-AbarVa-Deck-Words-Status")).toBe("ok");
+    expect(result.headers.get("X-AbarVa-Deck-Fallback-Count")).toBe("0");
+    expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
     expect(result.headers.get("Cache-Control")).toContain("no-store");
     expect(mockAssemble).toHaveBeenCalledWith("synthetic-move", "validation");
     expect(mockWords).toHaveBeenCalledWith(expect.objectContaining({
@@ -108,10 +115,14 @@ describe("read-only reference deck preview", () => {
   });
 
   it("serves an in-memory PDF under the same preview contract", async () => {
+    mockWords.mockResolvedValueOnce({ words: [{ title: "The governed read identifies the next decision.", answer: "Review the exhibit.", notes: "The point: review. How to read: source line." }], status: "unavailable", reason: "preflight_denied", fallbackSlides: [1] });
     const result = await GET(request("pdf"), params());
     expect(result.status).toBe(200);
     expect(result.headers.get("Content-Type")).toBe("application/pdf");
     expect(result.headers.get("X-AbarVa-Preview")).toBe("not-persisted");
+    expect(result.headers.get("X-AbarVa-Deck-Words-Status")).toBe("unavailable");
+    expect(result.headers.get("X-AbarVa-Deck-Words-Reason")).toBe("preflight_denied");
+    expect(result.headers.get("X-AbarVa-Deck-Fallback-Count")).toBe("1");
     expect(Buffer.from(await result.arrayBuffer()).toString()).toBe("%PDF synthetic preview");
   });
 });

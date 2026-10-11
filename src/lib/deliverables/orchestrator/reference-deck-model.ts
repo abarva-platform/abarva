@@ -42,6 +42,10 @@ export interface ReferenceSlide {
   /** Must begin with The point: and also explain the exhibit or method. */
   speakerNotes?: string;
   blocks: ReferenceBlock[];
+  /** Governed figures substituted into titles, answer bars or notes. */
+  narrativeFigures?: ReferenceFigure[];
+  /** Human-readable governed sources for substituted narrative slots. */
+  narrativeSourceLabels?: string[];
   /** Exact governed source keys used in this slide, including narrative claims. */
   sourceIds?: string[];
 }
@@ -70,15 +74,23 @@ export function referenceSourceLine(slide: ReferenceSlide): string {
   const rom = ids.filter((id) => id.startsWith("rom:"));
   const assumptions = ids.filter((id) => id.startsWith("[A:"));
   const publicSources = ids.filter((id) => id.startsWith("[S:"));
-  const capture = ids.filter((id) => id.startsWith("evidence:"));
+  const capture = ids.filter((id) => /^evidence:P[1-5]:/.test(id));
+  const registerMetrics = ids.filter((id) => id.startsWith("evidence:register_"));
+  const publicMetrics = ids.filter((id) => id.startsWith("evidence:approved_public_"));
+  const missing = ids.filter((id) => id.startsWith("gap:"));
   if (engine.length) groups.push("Move value engine (case and three-year bases)");
   if (rom.length) groups.push("Approved ROM snapshot");
   if (assumptions.length) groups.push(`Assumptions register ${assumptions.join(", ")}`);
   if (publicSources.length) groups.push(`Approved public sources ${publicSources.join(", ")}`);
   if (capture.length) groups.push("Signed-in phase capture");
-  const known = new Set([...engine, ...rom, ...assumptions, ...publicSources, ...capture]);
+  if (registerMetrics.length) groups.push("Signed-in assumptions register");
+  if (publicMetrics.length) groups.push("Approved public-source feed");
+  if (missing.length) groups.push(`Governed input gaps ${missing.map((id) => id.slice(4).replaceAll("_", " ")).join(", ")}`);
+  const known = new Set([...engine, ...rom, ...assumptions, ...publicSources, ...capture, ...registerMetrics, ...publicMetrics, ...missing]);
   groups.push(...ids.filter((id) => !known.has(id)));
-  return `Sources: ${groups.join(" · ")}. Exact figure IDs and cells: companion workbook.`;
+  const narrative = slide.narrativeSourceLabels?.length
+    ? ` · Narrative figure sources: ${slide.narrativeSourceLabels.join(", ")}` : "";
+  return `Sources: ${groups.join(" · ")}${narrative}. Exact figure IDs and cells: companion workbook.`;
 }
 
 const REQUIRED_BLOCK: Partial<Record<ReferenceArchetype, ReferenceBlock["kind"]>> = {
@@ -148,7 +160,7 @@ export interface ReferenceDeckFinding {
 }
 
 export function figuresOnSlide(slide: ReferenceSlide): ReferenceFigure[] {
-  const figures: ReferenceFigure[] = [];
+  const figures: ReferenceFigure[] = [...(slide.narrativeFigures ?? [])];
   const take = (cell: ReferenceCell) => {
     if (typeof cell !== "string") figures.push(cell);
   };
@@ -193,7 +205,7 @@ export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFin
       add(n, "notes", "Business-case slide needs The point and a reading method.");
     if (content && (slide.actionTitle.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(slide.actionTitle)))
       add(n, "action_title", "Action title should be one full sentence, not a topic label.");
-    if (spec.edition === "validation" && (VALIDATION_EXCLUDED.has(slide.archetype) || (index > 0 && VALIDATION_FORBIDDEN.test([slide.actionTitle, slide.answer, ...slide.blocks.flatMap((block) => block.kind === "text" ? block.lines : [])].join(" ")))))
+    if (spec.edition === "validation" && (VALIDATION_EXCLUDED.has(slide.archetype) || (index > 0 && VALIDATION_FORBIDDEN.test([slide.actionTitle, slide.answer, slide.speakerNotes, ...slide.blocks.flatMap((block) => block.kind === "text" ? block.lines : [])].join(" ")))))
       add(n, "edition_violation", "Validation edition cannot contain cost, plan or solution material.", true);
     const sourceIds = new Set(slide.sourceIds ?? []);
     for (const figure of figures) {
