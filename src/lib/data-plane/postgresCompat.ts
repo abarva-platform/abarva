@@ -584,14 +584,18 @@ export function getAzureWriteFluentClient(): PostgresCompatClient {
   return writeTransactionContext.getStore() ?? getAzureReadFluentClient();
 }
 
+type WriteTransactionConnection = Pick<import('pg').PoolClient, 'query' | 'release'>;
+
 /** Keep all governed fluent writes on one SERIALIZABLE Postgres connection. */
 export async function withAzureWriteTransaction<T>(
   connectionString: string,
   work: (query: QueryExecutor) => Promise<T>,
+  options: { connect?: () => Promise<WriteTransactionConnection> } = {},
 ): Promise<T> {
   if (writeTransactionContext.getStore()) throw new Error('nested_write_transaction_refused');
-  const pool = await getPool(connectionString);
-  const connection = await pool.connect();
+  const connection = options.connect
+    ? await options.connect()
+    : await (await getPool(connectionString)).connect();
   let begun = false;
   let commitAttempted = false;
   try {

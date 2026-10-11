@@ -113,8 +113,12 @@ strings cite `DL13`–`DL15`, and a future writer must verify equality.
   hashes and formula output are in the committed preview proof.
 - Pass: focused offline tests, including changed-input, ID-allocation,
   capture-revision, capacity-rule, ROM cost-basis and notes-fill mutations.
+- Pass: mocked-Postgres tests exercise the actual scoped write transaction:
+  direct queries and fluent writes use one connection, a late readback failure
+  rolls back prior writes, successful work commits once, and uncertain
+  commit or rollback outcomes are reported as unknown.
 - Pass: typecheck, scoped lint, `audit:lib-orphans`, route and export
-  reachability, the unchanged 2,829-file test coverage census, tenancy census,
+  reachability, the 2,830-file test coverage census, tenancy census,
   manual check, and all context/corpus validation modes.
 - Pass: dataset manifest validation.
 - Pass: authorized read-only main-branch ACA operator dry run and a scoped
