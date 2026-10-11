@@ -1,0 +1,863 @@
+{
+  "version": 1,
+  "notice": "Synthetic — not real data — AbarVa demo",
+  "moveId": null,
+  "status": "prepared_not_walked",
+  "parserRevision": "origin/main at authoring; test against actual parser implementations",
+  "steps": [
+    {
+      "stepId": "P0.1",
+      "title": "Signal & problem",
+      "phase": 0,
+      "parser": "capture-text-step-notes",
+      "pasteBlock": "Business trigger: The synthetic finance review identifies rising initial denials and delayed remittance feedback. Begin a denial-prevention discovery before funding a solution.\nProblem statement: Eligibility, authorization, coding and documentation exceptions are discovered after submission. Manual spreadsheet queues hide causes and recovery ownership across the invented payer and facility cohorts.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "business_trigger",
+          "label": "Business trigger"
+        },
+        {
+          "key": "problem_statement",
+          "label": "Problem statement"
+        }
+      ],
+      "uploads": [
+        "01-use-case-brief.docx"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P0.2",
+      "title": "Scope boundary",
+      "phase": 0,
+      "parser": "capture-text-step-notes",
+      "pasteBlock": "In scope: Revenue cycle submission, patient access, authorization, administrative coding checks and cash application across the invented hospitals and physician group.\nOut of scope: Clinical treatment recommendations, real patient records, payer contract renegotiation, replacement of the EHR and autonomous claim submission are excluded.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "affected_function_process",
+          "label": "In scope"
+        },
+        {
+          "key": "scope_out",
+          "label": "Out of scope"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P0.3",
+      "title": "Value hypothesis",
+      "phase": 0,
+      "parser": "capture-text-step-notes",
+      "pasteBlock": "Initial value hypothesis: Prevent avoidable write-offs through pre-submission checks and collect retained allowed revenue. Rework capacity stays non-cash until a role or contract release is evidenced. Faster collection changes timing, not a second revenue benefit.\nIntended outcomes / success criteria: Test a lower initial denial rate without delaying clean claims, fewer preventable write-offs, less manual rework and earlier cash collection. Targets remain proposals for the register and baseline review.\nDiscovery questions / hypotheses to test: Can coverage and authorization be joined as of service date? Which reviewed reasons are preventable? Does a matched comparator show incremental collected cash? Who resolves exceptions and confirms the baseline?",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "initial_value_hypothesis",
+          "label": "Initial value hypothesis"
+        },
+        {
+          "key": "outcomes_success",
+          "label": "Intended outcomes / success criteria"
+        },
+        {
+          "key": "discovery_questions",
+          "label": "Discovery questions / hypotheses to test"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P0.4",
+      "title": "Owner & evidence",
+      "phase": 0,
+      "parser": "capture-text-step-notes",
+      "pasteBlock": "Outcome owner and stakeholder view: Revenue cycle director owns the outcome; patient access, authorization, coding and documentation leads own source corrections; finance business partner validates collected cash; data platform owner controls governed access. Actual workspace participants must be assigned by the owner.\nKnown evidence: The invented use-case brief, cohort baseline, reason taxonomy, source inventory, role interviews, finance baseline, current workflow and payer excerpts form the synthetic discovery pack.\nMissing evidence / open questions: No real client data, independent Finance attestation, approved production access, priced estimate or realized benefit exists. The new Move and its evidence reference identifiers do not exist yet.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "stakeholder_owner_view",
+          "label": "Outcome owner and stakeholder view"
+        },
+        {
+          "key": "known_evidence",
+          "label": "Known evidence"
+        },
+        {
+          "key": "missing_evidence_open_questions",
+          "label": "Missing evidence / open questions"
+        }
+      ],
+      "uploads": [
+        "05-interview-notes.md",
+        "07-current-workflow.pdf"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "05-interview-notes.md",
+        "07-current-workflow.pdf"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P0.5",
+      "title": "Approve origination",
+      "phase": 0,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {
+        "recommendation_to_advance": "Proceed only as a labelled synthetic discovery after the owner reviews source coverage. Preserve all unresolved assumptions for Charter."
+      },
+      "fields": [
+        {
+          "key": "recommendation_to_advance",
+          "label": "Recommendation to advance"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Read every current hard check and resolve the exact linked blocker.",
+        "Build only an unsigned document for this fresh Move; review the result and sign off personally in Files & Evidence if acceptable.",
+        "Read the gate rationale and personally approve only if the recorded synthetic scope is correct. Copy any refusal verbatim; do not bypass it."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P1.1",
+      "title": "Sponsor & scope",
+      "phase": 1,
+      "parser": "capture-text-step-notes",
+      "pasteBlock": "Sponsor contact and progress updates: Revenue cycle director is the proposed sponsor role. The owner must select an actual Move participant and separately record the participant's chosen update preference; this note grants no approval or email consent.\nScope boundary: Assess pre-submission administrative checks, reviewed denial reasons, correction queues and recovery tracing across the invented facilities. Exclude clinical decision support, live PHI and autonomous payer submissions.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "sponsor_commitment",
+          "label": "Sponsor contact and progress updates"
+        },
+        {
+          "key": "scope_boundary",
+          "label": "Scope boundary"
+        }
+      ],
+      "uploads": [
+        "01-use-case-brief.docx"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
+        "Assign an actual sponsor participant. A role written in a note is not a participant assignment; no fictional persona gives approval."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P1.2",
+      "title": "Stakeholders & decision rights",
+      "phase": 1,
+      "parser": "capture-text-step-notes",
+      "pasteBlock": "Stakeholder map: Patient access owns eligibility; authorization team owns authorizations; coding manager owns administrative edits; documentation operations lead owns attachment completeness; cash application manager owns collection reconciliation; finance business partner validates value; data platform owner controls lineage and access.\nDecision rights: Revenue cycle director decides discovery scope; source owners validate their fields; data platform owner approves access; finance business partner certifies monetary baselines; authorized workspace users make each recorded gate decision.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "stakeholder_map",
+          "label": "Stakeholder map"
+        },
+        {
+          "key": "decision_rights",
+          "label": "Decision rights"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P1.3",
+      "title": "Success measures",
+      "phase": 1,
+      "parser": "capture-text-step-notes",
+      "pasteBlock": "Success criteria: Reduce initial denials and preventable write-offs against reviewed synthetic cohorts, preserve clean-claim throughput and account for incremental collected cash separately from capacity. Quantified targets require confirmed register rows before acceptance.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "success_criteria",
+          "label": "Success criteria"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P1.4",
+      "title": "Evidence plan & change",
+      "phase": 1,
+      "parser": "capture-text-step-notes",
+      "pasteBlock": "Evidence plan: Review the eight synthetic source files, reconcile submission denominators and mature final dispositions, validate taxonomy ownership, test joins and exception handling, and have the owner acknowledge every missing required family.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "evidence_plan",
+          "label": "Evidence plan"
+        }
+      ],
+      "uploads": [
+        "04-source-system-inventory.xlsx",
+        "05-interview-notes.md"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
+        "Complete Business change & adoption owner in its reused structured editor: queue/workflow and accountability changes are material hypotheses; choose the actual validator and evidence basis. Notes fill deliberately skips this structured field."
+      ],
+      "sourceFiles": [
+        "04-source-system-inventory.xlsx",
+        "05-interview-notes.md"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P1.5",
+      "title": "Charter & gate",
+      "phase": 1,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {},
+      "fields": [],
+      "uploads": [],
+      "humanClicks": [
+        "Read every current hard check and resolve the exact linked blocker.",
+        "Build only an unsigned document for this fresh Move; review the result and sign off personally in Files & Evidence if acceptable.",
+        "Read the gate rationale and personally approve only if the recorded synthetic scope is correct. Copy any refusal verbatim; do not bypass it."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P2.1",
+      "title": "Evidence plan",
+      "phase": 2,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {
+        "discovery_notes": "Review the source coverage and acknowledge missing families without treating a title as approved evidence."
+      },
+      "fields": [],
+      "uploads": [
+        "01-use-case-brief.docx",
+        "02-denials-baseline.xlsx",
+        "03-denial-reason-taxonomy.xlsx",
+        "04-source-system-inventory.xlsx",
+        "05-interview-notes.md",
+        "06-finance-baseline.xlsx",
+        "07-current-workflow.pdf",
+        "08-payer-policy-excerpts.pdf"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Use the structured controls or read-only panel; this page has no notes-fill parser."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx",
+        "02-denials-baseline.xlsx",
+        "03-denial-reason-taxonomy.xlsx",
+        "04-source-system-inventory.xlsx",
+        "05-interview-notes.md",
+        "06-finance-baseline.xlsx",
+        "07-current-workflow.pdf",
+        "08-payer-policy-excerpts.pdf"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P2.2",
+      "title": "Baseline",
+      "phase": 2,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {
+        "current_state_findings": "Eligibility and authorization checks do not share a versioned pre-submission decision record. Remittance feedback arrives after submission; manual workqueues duplicate correction effort. The inventory and interview notes describe this synthetic workflow only.",
+        "baseline_metrics": "Enter the supplied trailing-year control figures in the baseline facts editor. Copy the actual approved evidence citations shown on this new Move; do not use an assumed [E:n]."
+      },
+      "fields": [
+        {
+          "key": "current_state_findings",
+          "label": "Current-state findings"
+        }
+      ],
+      "uploads": [
+        "02-denials-baseline.xlsx",
+        "06-finance-baseline.xlsx"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Use the structured controls or read-only panel; this page has no notes-fill parser."
+      ],
+      "sourceFiles": [
+        "02-denials-baseline.xlsx",
+        "06-finance-baseline.xlsx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P2.3",
+      "title": "Root causes",
+      "phase": 2,
+      "parser": "root-cause-notes",
+      "pasteBlock": "Coverage and authorization versions are missing from the pre-submission decision record.\nInconsistent denial reason mapping leaves manual correction queues without a shared accountable routing rule.\nRecovery receipts lack a reconciled link to the original denied claim and its final disposition.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "gaps_root_causes",
+          "label": "Gaps / root causes"
+        },
+        {
+          "key": "process_handoffs",
+          "label": "Process handoffs"
+        },
+        {
+          "key": "data_quality_governance",
+          "label": "Data quality / governance"
+        }
+      ],
+      "uploads": [
+        "03-denial-reason-taxonomy.xlsx",
+        "05-interview-notes.md",
+        "07-current-workflow.pdf",
+        "08-payer-policy-excerpts.pdf"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
+        "Review the causes against actual uploaded references, link approved evidence, name each short label, accept or explicitly own unresolved causes, then personally confirm the ranking. No ranking is pre-approved."
+      ],
+      "sourceFiles": [
+        "03-denial-reason-taxonomy.xlsx",
+        "05-interview-notes.md",
+        "07-current-workflow.pdf",
+        "08-payer-policy-excerpts.pdf"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P2.4",
+      "title": "Validate hypotheses",
+      "phase": 2,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {
+        "solution_route_validation": "Review the route against the material queue and accountability changes described in the interviews. Confirm or correct it in the structured route form; no preselected outcome is claimed."
+      },
+      "fields": [],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use the structured controls or read-only panel; this page has no notes-fill parser."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P2.5",
+      "title": "Gate readiness",
+      "phase": 2,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {
+        "evidence_confidence": "The invented cohort arithmetic reconciles. Causal preventability, adoption, future access, pricing and incremental collections remain unproven hypotheses. Human demo review acknowledges synthetic origin; it does not create real client attestation.",
+        "recommendation": "Proceed conditionally within the synthetic scope after the authorized owner checks current gate requirements and records the decision. Unresolved access, commercial pricing and measurement conditions stay visible."
+      },
+      "fields": [
+        {
+          "key": "evidence_confidence",
+          "label": "Evidence confidence"
+        },
+        {
+          "key": "recommendation",
+          "label": "Recommendation"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Read every current hard check and resolve the exact linked blocker.",
+        "Build only an unsigned document for this fresh Move; review the result and sign off personally in Files & Evidence if acceptable.",
+        "Read the gate rationale and personally approve only if the recorded synthetic scope is correct. Copy any refusal verbatim; do not bypass it."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P3.1",
+      "title": "Root cause → design",
+      "phase": 3,
+      "parser": "design-traceability-notes",
+      "pasteBlock": "Coverage and authorization versions belong in a service-date decision record with an administrative risk check before submission.\nDenial reason mapping and manual correction queues need a reviewed taxonomy, an accountable routing rule and a source-team exception queue.\nRecovery receipts need a reconciled original denied claim link and a versioned final disposition ledger for cash application.",
+      "manualFields": {},
+      "fields": [],
+      "uploads": [
+        "04-source-system-inventory.xlsx"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "04-source-system-inventory.xlsx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P3.2",
+      "title": "Architecture options",
+      "phase": 3,
+      "parser": "architecture-choice-notes",
+      "pasteBlock": "Governed batch prevention and recovery uses the versioned decision ledger and reviewed routing while retaining existing source systems. Coverage history needs a service-date coverage and authorization version join. Reason routing needs a reviewed taxonomy and manual exception queue. Recovery trace needs receipt-to-original-claim reconciliation.",
+      "manualFields": {
+        "optionLabel": "Governed batch prevention and recovery",
+        "solution_approach": "Proposed governed batch prevention and recovery with human-reviewed exceptions.",
+        "controls_governance": "Join only original claims with service-date coverage and authorization versions. Review primary-reason mapping and timezone corrections; deduplicate resubmissions; retain source batch IDs, disposition lineage and role-based access.",
+        "architecture_integration": "Declared flow: source extracts to restricted landing; landing to identity and quality review; reviewed records to canonical claim and disposition ledger; ledger to risk and routing slice; slice to human queue; receipt ledger to cash reconciliation. No implied connections."
+      },
+      "fields": [
+        {
+          "key": "solution_approach",
+          "label": "Solution approach & options"
+        },
+        {
+          "key": "controls_governance",
+          "label": "Controls & AI governance"
+        },
+        {
+          "key": "architecture_integration",
+          "label": "Architecture & integration"
+        },
+        {
+          "key": "recommendation",
+          "label": "Recommended approach"
+        }
+      ],
+      "uploads": [
+        "01-use-case-brief.docx"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
+        "Use the option set actually served by the product. If the named proposed batch option is unavailable, prepare and review it through the existing option input path before choosing it; stop and report a refusal rather than claiming notes created an option. Mark coverage, explain Partly/Doesn't, confirm rationale and personally accept coverage."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P3.3",
+      "title": "Operating & adoption",
+      "phase": 3,
+      "parser": "operating-adoption-notes",
+      "pasteBlock": "Operating model: Source-team leads certify their administrative exception rules; the data platform owner approves access and releases the reviewed data slice; finance business partner certifies the cash baseline. The owner selects actual Move participants for each role.\nProcess design: Review the pre-submission risk queue daily, return exceptions to the source team, record the disposition and reconcile subsequent receipts to the original claim. Keep human override and rollback paths.\nWorkflow: Source-team corrections move ahead of submission rather than remaining in a remittance-only rework queue.\nAdoption boundary: Clinical treatment and payer adjudication remain unchanged.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "operating_model",
+          "label": "Operating model & work split"
+        },
+        {
+          "key": "process_design",
+          "label": "Process / workflow design"
+        }
+      ],
+      "uploads": [
+        "05-interview-notes.md"
+      ],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use Add session output / Upload evidence; select the correct evidence family, review extraction and personally approve only accurate synthetic content. Reuse an already-approved upload rather than duplicating it.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
+        "Choose real Move participants corresponding to the proposed roles, mark decision rights and name the baseline owner. Role-only notes do not auto-fill participant identity. Accept the owner grid yourself."
+      ],
+      "sourceFiles": [
+        "05-interview-notes.md"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P3.4",
+      "title": "Delivery & estimate",
+      "phase": 3,
+      "parser": "rom-estimate-notes",
+      "pasteBlock": "Shared foundation needs 6 sources, 28 tables, 9 entities, 0 views, 12 design rows and 24 validation rows.\nUC-1 submission risk review needs 0 sources, 0 tables, 3 entities, 4 views, 10 design rows and 20 validation rows.\nUC-2 correction routing and recovery needs 0 sources, 0 tables, 4 entities, 5 views, 12 design rows and 24 validation rows.",
+      "manualFields": {},
+      "fields": [],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
+        "Add the Shared foundation row before pasting counts; its notes parser fills an existing foundation, while UC-1 and UC-2 may be proposed as new use cases.",
+        "Review the exact denials-Move seed rows, authenticated scope, register allocation and source-set hash; approve the seed by name before the designated operator applies it. Tooling merge alone is not load approval, and the fallback Move is not the seed target.",
+        "Confirm counts, counting foundation once; resolve unit-hour DL references only after the approved M rebind. Group UC-1 into R1 and UC-2 into R2 with foundation once.",
+        "Compare foundation-priced delivery options A and B with the same scope, counts and unit hours: top-tier onshore team versus a foundation-supported blended team. Inspect hours, low/plan/high, role, level, location, provider class and each rate source. Unapproved bands must say planning rates, not approved. Never tune rates or invent a cheaper location.",
+        "Choose the delivery option personally and verify the option actually recorded by the product before Approve the estimate. If two-option page support is pending, inspect the reviewed preview and report that gap; do not imply an unrecorded choice was approved. Never substitute a local or unapproved snapshot."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P3.5",
+      "title": "Gate readiness",
+      "phase": 3,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {
+        "evidence_confidence": "The invented cohort arithmetic reconciles. Causal preventability, adoption, future access, pricing and incremental collections remain unproven hypotheses. Human demo review acknowledges synthetic origin; it does not create real client attestation."
+      },
+      "fields": [
+        {
+          "key": "evidence_confidence",
+          "label": "Evidence confidence"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Read every current hard check and resolve the exact linked blocker.",
+        "Build only an unsigned document for this fresh Move; review the result and sign off personally in Files & Evidence if acceptable.",
+        "Read the gate rationale and personally approve only if the recorded synthetic scope is correct. Copy any refusal verbatim; do not bypass it."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P4.1",
+      "title": "Workstreams & milestones",
+      "phase": 4,
+      "parser": "capture-notes-proposal",
+      "pasteBlock": "Roadmap sequence: foundation access and identity precede eligibility and authorization risk checks; reviewed correction routing precedes recovery reconciliation. Workstream dependencies, owner roles and planned milestones must be entered and reviewed in the milestone editor.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "roadmap_sequencing",
+          "label": "Roadmap sequence"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
+        "Enter actual planned milestones in the milestone editor; sequence prose alone does not clear the milestone gate."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P4.2",
+      "title": "Estimate & capacity",
+      "phase": 4,
+      "parser": "read-only",
+      "pasteBlock": "",
+      "manualFields": {},
+      "fields": [],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Use the structured controls or read-only panel; this page has no notes-fill parser."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P4.3",
+      "title": "Value plan & funding",
+      "phase": 4,
+      "parser": "capture-notes-proposal",
+      "pasteBlock": "Funding governance: Request funding only against the current owner-approved ROM and value-engine readback. The register budget is a ceiling, never a second investment basis. Finance business partner owns collection validation and monthly funding review.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "funding_governance",
+          "label": "Funding governance"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones.",
+        "Read the governed value-engine levers after the M rebind. Only the personally selected and approved delivery option is the ROM cost basis; the budget remains a ceiling. The deck compares both options and identifies the approved one. Review blocked inputs, preserve zero-cash rework without a release, and keep days-AR timing limitations visible."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P4.4",
+      "title": "Tower metrics & handoff plan",
+      "phase": 4,
+      "parser": "capture-notes-proposal",
+      "pasteBlock": "Tower handoff plan: finance business partner owns incremental collected cash; revenue cycle director owns denial-rate and throughput metrics; data platform owner owns source lineage. Transfer reviewed baselines, comparator definitions, timing assumptions and unresolved conditions to Tower.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "handoff_plan",
+          "label": "Tower handoff plan"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P4.5",
+      "title": "Risks, readiness & gate",
+      "phase": 4,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {
+        "risks_dependencies": "Access approval, reviewed policy interpretation, a current approved ROM, collection comparator and receipt lineage are unresolved dependencies. Funding and rollout remain conditional; no execution or realized value is asserted.",
+        "recommendation": "Proceed conditionally within the synthetic scope after the authorized owner checks current gate requirements and records the decision. Unresolved access, commercial pricing and measurement conditions stay visible."
+      },
+      "fields": [
+        {
+          "key": "risks_dependencies",
+          "label": "Risks & dependencies"
+        },
+        {
+          "key": "recommendation",
+          "label": "Recommendation to fund"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Read every current hard check and resolve the exact linked blocker.",
+        "Build only an unsigned document for this fresh Move; review the result and sign off personally in Files & Evidence if acceptable.",
+        "Read the gate rationale and personally approve only if the recorded synthetic scope is correct. Copy any refusal verbatim; do not bypass it."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P5.1",
+      "title": "Handoff owners & readiness",
+      "phase": 5,
+      "parser": "capture-notes-proposal",
+      "pasteBlock": "Mobilization plan: revenue cycle director is receiving outcome owner; integration lead is delivery owner; finance business partner is measurement owner; patient access and coding leads receive correction responsibilities. The owner assigns actual authorized participants before acceptance.\n\nLaunch readiness: require approved roadmap and estimate, reviewed value assumptions, purpose-bound access, named receiving roles, rollback criteria and acknowledged dependencies. Handoff prepares external execution; it does not claim work has begun.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "mobilization_plan",
+          "label": "Mobilization plan"
+        },
+        {
+          "key": "launch_readiness",
+          "label": "Launch readiness"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P5.2",
+      "title": "Tower measurement",
+      "phase": 5,
+      "parser": "capture-notes-proposal",
+      "pasteBlock": "Value proof rules: reconcile original submitted claims and mature denials by the same cohort; credit only incremental collected allowed revenue against a matched comparator; exclude contractual adjustments and existing recoveries. Rework hours count as capacity at zero cash without a documented release. Days in receivables affects timing without adding annual revenue again.\n\nGovernance cadence: source owners review weekly exception completeness; finance business partner reconciles collections monthly; revenue cycle director chairs the monthly outcome review; unresolved access or comparator defects escalate to the receiving owner before any realized-value claim.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "value_proof_rules",
+          "label": "Value proof rules"
+        },
+        {
+          "key": "governance_cadence",
+          "label": "Governance cadence"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P5.3",
+      "title": "First 90 days & open items",
+      "phase": 5,
+      "parser": "capture-notes-proposal",
+      "pasteBlock": "First 90 days: plan access and lineage acceptance, then a shadow administrative-risk review, then a controlled correction-routing pilot and a mature-cohort collection reconciliation. Each future checkpoint needs a named role, dependency and stop criterion before handoff.\n\nRisks and open items: policy interpretation needs source-owner review; payer response lag can mask benefit; coverage joins can be incomplete; pricing is unapproved until the cost foundation and pod are selected. No real clinical evidence or live execution is represented.",
+      "manualFields": {},
+      "fields": [
+        {
+          "key": "first_90_days",
+          "label": "First 90 days"
+        },
+        {
+          "key": "risks_open_items",
+          "label": "Risks and open items"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Open this step on the new Move; verify tenant and phase.",
+        "Paste the block into this step's notes panel; inspect each proposed draft, then personally accept the appropriate ones."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    },
+    {
+      "stepId": "P5.4",
+      "title": "Handoff package & acceptance",
+      "phase": 5,
+      "parser": "human-only",
+      "pasteBlock": "",
+      "manualFields": {
+        "recommendation": "Proceed conditionally within the synthetic scope after the authorized owner checks current gate requirements and records the decision. Unresolved access, commercial pricing and measurement conditions stay visible."
+      },
+      "fields": [
+        {
+          "key": "recommendation",
+          "label": "Handoff recommendation"
+        }
+      ],
+      "uploads": [],
+      "humanClicks": [
+        "Read every current hard check and resolve the exact linked blocker.",
+        "Build only an unsigned document for this fresh Move; review the result and sign off personally in Files & Evidence if acceptable.",
+        "Read the gate rationale and personally approve only if the recorded synthetic scope is correct. Copy any refusal verbatim; do not bypass it.",
+        "Accept the handoff package and value measurement contract personally. Verify the terminal phase record and Tower handoff surface. Handoff does not claim execution has started."
+      ],
+      "sourceFiles": [
+        "01-use-case-brief.docx"
+      ],
+      "approvalRecorded": false
+    }
+  ],
+  "proposedCauses": [
+    {
+      "id": "RC-1",
+      "short": "coverage history",
+      "cause": "Coverage and authorization versions are missing from the pre-submission decision record"
+    },
+    {
+      "id": "RC-2",
+      "short": "reason routing",
+      "cause": "Inconsistent denial reason mapping leaves manual correction queues without a shared accountable routing rule"
+    },
+    {
+      "id": "RC-3",
+      "short": "recovery trace",
+      "cause": "Recovery receipts lack a reconciled link to the original denied claim and its final disposition"
+    }
+  ],
+  "proposedDesignElements": [
+    "Coverage and authorization versions belong in a service-date decision record with an administrative risk check before submission.",
+    "Denial reason mapping and manual correction queues need a reviewed taxonomy, an accountable routing rule and a source-team exception queue.",
+    "Recovery receipts need a reconciled original denied claim link and a versioned final disposition ledger for cash application."
+  ],
+  "baselineControls": {
+    "claims": 618000,
+    "denials": 97942,
+    "denialRate": 0.1584822006472492,
+    "grossCharges": 3453384000,
+    "allowedAmount": 1231056000,
+    "deniedAllowed": 195140350,
+    "recoveries": 126841227.5,
+    "writeOffs": 48785087.5,
+    "adjustments": 19514035,
+    "reworkHours": 83250.7,
+    "preventableDenials": 68287
+  },
+  "bindBeforePaste": [
+    "Actual approved evidence references for baseline facts",
+    "Actual authorized Move participants",
+    "Exact register IDs after reviewed scoped preflight",
+    "Owner-approved ROM snapshot"
+  ],
+  "rebindFile": "register-rebind-proposal.json"
+}

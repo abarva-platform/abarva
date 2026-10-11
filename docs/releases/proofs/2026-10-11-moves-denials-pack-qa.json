@@ -1,0 +1,110 @@
+{
+  "status": "offline_fixture_validation_only",
+  "sourceSetHash": "fb9cbca96ac8699c6811f77df1f636c2a2cdb9972014420dc8e1e521c1dddd36",
+  "reconciliation": true,
+  "actualSourceFiles": 8,
+  "artifactQa": {
+    "docxPages": 3,
+    "pdfPages": 3,
+    "workbookSheets": 8,
+    "allRenderedAndInspected": true,
+    "formulaErrors": 0,
+    "changedInputRecalculates": true
+  },
+  "focusedTests": 46,
+  "mutations": [
+    {
+      "mutation": "notice",
+      "killed": true
+    },
+    {
+      "mutation": "finance",
+      "killed": true
+    },
+    {
+      "mutation": "disposition",
+      "killed": true
+    },
+    {
+      "mutation": "denominator",
+      "killed": true
+    },
+    {
+      "mutation": "delivery_option_approval",
+      "killed": true
+    }
+  ],
+  "repositoryGates": {
+    "typecheck": "passed",
+    "scopedLint": "passed",
+    "contextCorpusAllCommands": "passed",
+    "libOrphans": "no new",
+    "routeAndExportReachability": "passed",
+    "tenancyCensus": "unchanged",
+    "releaseCheck": "11 of 11 passed"
+  },
+  "coverageCensus": {
+    "base": 2827,
+    "candidate": 2828,
+    "newSweptSuites": 1,
+    "uncovered": 164
+  },
+  "moveId": null,
+  "loadApproval": null,
+  "mergeSha": null,
+  "deploySha": null,
+  "signedInProof": null,
+  "offlineProductUploadParser": {
+    "01-use-case-brief.docx": {
+      "method": "docx-mammoth",
+      "chars": 6824,
+      "syntheticNotice": true,
+      "warnings": []
+    },
+    "02-denials-baseline.xlsx": {
+      "method": "xlsx-exceljs",
+      "chars": 50624,
+      "syntheticNotice": true,
+      "warnings": [
+        "Worksheet \"Claim cohorts\" truncated to first 200 non-empty rows.",
+        "Worksheet \"Denial cohorts\" truncated to first 200 non-empty rows."
+      ]
+    },
+    "03-denial-reason-taxonomy.xlsx": {
+      "method": "xlsx-exceljs",
+      "chars": 1427,
+      "syntheticNotice": true,
+      "warnings": []
+    },
+    "04-source-system-inventory.xlsx": {
+      "method": "xlsx-exceljs",
+      "chars": 3169,
+      "syntheticNotice": true,
+      "warnings": []
+    },
+    "05-interview-notes.md": {
+      "method": "markdown-text",
+      "chars": 5070,
+      "syntheticNotice": true,
+      "warnings": []
+    },
+    "06-finance-baseline.xlsx": {
+      "method": "xlsx-exceljs",
+      "chars": 4057,
+      "syntheticNotice": true,
+      "warnings": []
+    },
+    "07-current-workflow.pdf": {
+      "method": "pdf-parse",
+      "chars": 1360,
+      "syntheticNotice": true,
+      "warnings": []
+    },
+    "08-payer-policy-excerpts.pdf": {
+      "method": "pdf-parse",
+      "chars": 3914,
+      "syntheticNotice": true,
+      "warnings": []
+    }
+  }
+}
