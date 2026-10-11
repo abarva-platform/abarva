@@ -305,6 +305,87 @@ function loadPackage(options) {
   };
 }
 
+function assertPackageCanMutate(options) {
+  if (!options.write && !options.purgeOnly) return;
+  const manifestPath = path.join(options.packageDir, "package_manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  if (manifest.no_runtime_load !== false) {
+    throw new Error(
+      "Refusing runtime mutation: package_manifest.json must explicitly set no_runtime_load=false",
+    );
+  }
+  if (!options.write) return;
+
+  const budgets = readCsv(
+    path.join(options.packageDir, "20_it_budget_by_domain.csv"),
+  );
+  const projects = readCsv(
+    path.join(options.packageDir, "21_it_project_portfolio.csv"),
+  );
+  const fiscalYears = new Set(budgets.map((row) => row.fiscal_year).filter(Boolean));
+  if (
+    !budgets.length ||
+    !projects.length ||
+    fiscalYears.size !== 1 ||
+    budgets.some((row) => !row.fiscal_year || !row.domain_key) ||
+    projects.some((row) => !row.domain_key)
+  ) {
+    throw new Error(
+      "Refusing runtime load: budget and project source rows need one fiscal year",
+    );
+  }
+  const [fiscalYear] = fiscalYears;
+  if (
+    budgets.some(
+      (row) =>
+        row.tower_reviewed_project_budget_usd === "" ||
+        !Number.isFinite(Number(row.tower_reviewed_project_budget_usd)),
+    ) ||
+    projects.some(
+      (row) =>
+        row.approved_budget_usd === "" ||
+        !Number.isFinite(Number(row.approved_budget_usd)),
+    )
+  ) {
+    throw new Error("Refusing runtime load: budget and project amounts must be numeric");
+  }
+  if (projects.some((row) => row.project_budget_fiscal_year !== fiscalYear)) {
+    throw new Error(
+      "Refusing runtime load: each project approved amount needs an explicit matching project_budget_fiscal_year",
+    );
+  }
+  const reviewedByDomain = new Map();
+  const projectsByDomain = new Map();
+  for (const row of budgets) {
+    reviewedByDomain.set(
+      row.domain_key,
+      (reviewedByDomain.get(row.domain_key) ?? 0) + num(row.tower_reviewed_project_budget_usd),
+    );
+  }
+  for (const row of projects) {
+    projectsByDomain.set(
+      row.domain_key,
+      (projectsByDomain.get(row.domain_key) ?? 0) + num(row.approved_budget_usd),
+    );
+  }
+  const domains = new Set([
+    ...reviewedByDomain.keys(),
+    ...projectsByDomain.keys(),
+  ]);
+  const mismatches = [...domains].filter(
+    (domain) =>
+      Math.abs(
+        (reviewedByDomain.get(domain) ?? 0) -
+          (projectsByDomain.get(domain) ?? 0),
+      ) > 0.01,
+  );
+  if (mismatches.length) {
+    throw new Error(
+      `Refusing runtime load: FY budget and project funding differ in domain(s): ${mismatches.join(", ")}`,
+    );
+  }
+}
+
 function sumBy(rows, key) {
   return rows.reduce((sum, row) => sum + num(row[key]), 0);
 }
@@ -1968,6 +2049,7 @@ function emitProofBundle(outDir) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  assertPackageCanMutate(options);
   fs.mkdirSync(options.outDir, { recursive: true });
   const rows = buildRows(options);
   const loadSqlPath = path.join(options.outDir, "tower_layer4_product_cube_load.sql");
