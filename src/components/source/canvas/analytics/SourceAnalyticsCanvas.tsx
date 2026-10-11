@@ -2573,7 +2573,7 @@ function FocusedWorkPanel({
 
       <div
         data-testid="source-shell-active-workflow-pane"
-        style={{ minWidth: 0, paddingBottom: 88 }}
+        style={{ minWidth: 0, paddingBottom: view.stage.approvalRecorded ? 0 : 88 }}
       >
         {allReady || viewedStageApproved ? (
           <StageReadyPanel

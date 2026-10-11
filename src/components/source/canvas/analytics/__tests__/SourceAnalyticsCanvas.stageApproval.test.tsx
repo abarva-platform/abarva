@@ -2366,6 +2366,8 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(commercialSummary).not.toHaveTextContent("Open the approval gate");
     expect(screen.getByTestId("source-commercial-nav-readiness")).toHaveTextContent("block");
     expect(screen.queryByTestId("source-shell-progress-dock")).not.toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-active-workflow-pane"))
+      .toHaveStyle({ paddingBottom: "0px" });
     expect(
       within(screen.getByTestId("source-vendor-response-forward-gate"))
         .getByRole("button", { name: "Continue to Evaluation" }),

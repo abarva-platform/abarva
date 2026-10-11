@@ -18,7 +18,7 @@ A previously approved stage is now shown as a prior decision, not as proof that 
 
 ## Layer Impact
 
-Layer 4: Source presentation. Existing stage evidence, artifact review, approval ledger, and response gate results are projected consistently. No canonical records, approval decisions, stage transitions, schemas, ingestion paths, authentication, RLS, or tenant boundaries change.
+`global-control-lane`, Layer 4: Source presentation. Existing stage evidence, artifact review, approval ledger, and response gate results are projected consistently. No canonical records, approval decisions, stage transitions, schemas, ingestion paths, authentication, RLS, or tenant boundaries change.
 
 ## Client Applicability
 
@@ -44,7 +44,7 @@ Layer 4: Source presentation. Existing stage evidence, artifact review, approval
 ## QA / Validation
 
 - Red first: rendered assertions reproduced the contradictory historical panel and plural defect before implementation; a separate red assertion reproduced the commercial summary's misleading next action.
-- All 62 Source canvas suites passed: 376 tests. Typecheck, focused ESLint, staged secret scan, and whitespace checks passed. Release gates and CI are required before merge.
+- All 62 Source canvas suites passed: 376 tests. Typecheck, focused ESLint, staged secret scan, whitespace, census, and all 11 release gates passed. Applicable CI is required before merge.
 - Mutation checks killed removal of response-gate status, omission of required-evidence gaps, restoration of the approved-stage fixed dock, removal of pluralization, and disregard of current evidence in commercial readiness.
 - Current signed-in baseline captured privately. Post-deploy signed-in replay is required; baseline screenshots do not certify this candidate.
 
