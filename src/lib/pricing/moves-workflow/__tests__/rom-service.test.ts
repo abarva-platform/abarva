@@ -729,12 +729,14 @@ describe("computeRom — pods from the committed cost foundation", () => {
     ]);
     expect(rom.pod.memberMappingStatus).toEqual(["confirmed", "confirmed"]);
     for (const line of rom.releases[0].own.pod.memberLines) {
-      expect(line.rate.baseSource).toBe(
+      expect(line.rate.baseSource).toContain(
         `rate_band:${line.member.roleCode}-LVL-07:loaded_rate`,
       );
-      expect(line.rate.location.source).toBe(
+      expect(line.rate.baseSource).toContain("Role Rate Card row");
+      expect(line.rate.location.source).toContain(
         "location:LOC-CHICAGO:salary_multiplier",
       );
+      expect(line.rate.location.source).toContain("Geography row");
     }
     expect(rom.releases[1].own.range.policyCode).toBe("RANGE-TIGHT");
   });
@@ -812,6 +814,46 @@ describe("computeRom — pods from the committed cost foundation", () => {
 });
 
 describe("role-mapping status", () => {
+  it("prices member-level location and provider terms without changing scope or capacity", () => {
+    const base = testLoaders();
+    const reference = base.loadRateReference();
+    const loaders = testLoaders({
+      loadRateReference: () => ({
+        ...reference,
+        locations: [
+          ...reference.locations,
+          { location_code: "LOC-CHEAP", shore_category: "offshore", salary_multiplier: 0.3, rate_multiplier: 0.4 },
+        ],
+        providerClasses: [
+          ...reference.providerClasses,
+          { provider_class_code: "SI-T2", tier_multiplier: 0.85 },
+        ],
+      }),
+    });
+    const sameScope = golden();
+    sameScope.pod.rateBasis = "bill_rate";
+    sameScope.pod.providerClassCode = "SI-T1";
+    const blended = mutate((s) => {
+      s.pod.rateBasis = "bill_rate";
+      s.pod.providerClassCode = "SI-T1";
+      s.pod.members = s.pod.members!.map((member, index) => index === 1
+        ? { ...member, locationCode: "LOC-CHEAP", providerClassCode: "SI-T2" }
+        : member);
+    });
+    const a = computeRom(sameScope, loaders);
+    const b = computeRom(blended, loaders);
+    if (!a.ok || !b.ok) throw new Error("expected both ROM options to price");
+    expect(b.total.hours).toBe(a.total.hours);
+    expect(b.total.weeks).toBe(a.total.weeks);
+    expect(b.total.planCents).toBeLessThan(a.total.planCents);
+    expect(b.pod.members.map((m) => [m.locationCode, m.providerClassCode])).toEqual([
+      ["LOC-TEST", "SI-T1"], ["LOC-CHEAP", "SI-T2"],
+    ]);
+    const lowerRate = b.releases[0].own.pod.memberLines[1].rate;
+    expect(lowerRate.location.source).toContain("LOC-CHEAP");
+    expect(lowerRate.provider.source).toContain("SI-T2/SI-T1");
+  });
+
   it("flags an explicit member the caller marks as a proposed mapping", () => {
     const s = mutate((x) => {
       x.pod.members = [

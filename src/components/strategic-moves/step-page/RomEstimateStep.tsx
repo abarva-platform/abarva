@@ -46,6 +46,7 @@ import {
   type RomEdit,
   type RomEstimate,
   type RomRegisterRow,
+  type RomPodMember,
   type RomRowId,
   type RomUnitHoursState,
 } from "@/lib/programs/rom-estimate";
@@ -164,7 +165,9 @@ type OpenForm =
   | { kind: "unit-ref"; driver: RomDriver; registerId: string }
   | {
       kind: "pod";
+      mode: "template" | "members";
       templateCode: string;
+      membersText: string;
       locationCode: string;
       providerClassCode: string;
       rateBasis: PodRateBasis | "";
@@ -231,6 +234,22 @@ async function refusalDetail(res: Response, what: string): Promise<string> {
   return typeof body?.detail === "string" && body.detail.trim()
     ? body.detail
     : `${what} answered HTTP ${res.status} with no explanation.`;
+}
+
+/** A proposed member list stays visibly unapproved until the owner reviews each mapping. */
+export function parseProposedPodMembers(value:string):RomPodMember[] | null {
+  const lines=value.trim().split(/\r?\n/).map((line)=>line.trim()).filter(Boolean);
+  if (!lines.length) return null;
+  const members:RomPodMember[]=[];
+  for (const line of lines) {
+    const parts=line.split("|").map((part)=>part.trim());
+    if (parts.length!==5 || !/^ROL-[A-Z0-9-]+$/.test(parts[0]) || !parts[1] ||
+        !/^LVL-[A-Z0-9-]+$/.test(parts[2]) || !/^\d+(?:\.\d+)?$/.test(parts[3]) ||
+        Number(parts[3])<=0 || !parts[4]) return null;
+    members.push({roleCode:parts[0],roleLabel:parts[1],levelCode:parts[2],
+      levelLabel:parts[2],fte:Number(parts[3]),proposedMapping:{from:parts[4]}});
+  }
+  return members;
 }
 
 export function RomEstimateStep(props: RomEstimateStepProps) {
@@ -848,6 +867,18 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
     ) : (
       <span className={cx("no")}>Not priced</span>
     );
+  const planningRates = memberLines.some((line) =>
+    line.rate.notes?.some((note) => note.includes("global_starter_unapproved")));
+  const rateSources = (index: number) => {
+    const rate = memberLines[index]?.rate;
+    if (!rate?.baseSource) return null;
+    return <details className={cx("item-note")}>
+      <summary>Rate sources</summary>
+      <div>{rate.baseSource}</div>
+      <div>{rate.location.source}</div>
+      <div>{rate.provider.source}</div>
+    </details>;
+  };
   const podMembers = pod
     ? pod.members
       ? pod.members
@@ -942,7 +973,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             <td>{m.levelLabel}</td>
             <td>{location}</td>
             <td>{provider}</td>
-            <td className={cx("num")}>{rateText(i)}</td>
+            <td className={cx("num")}>{rateText(i)}{rateSources(i)}</td>
             <td className={cx("num")}>{formatAllocation(m.fte)}</td>
           </tr>
         ))}
@@ -967,6 +998,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
               </dt>
               <dd>
                 {rateText(i)} · {formatAllocation(m.fte)}
+                {rateSources(i)}
               </dd>
             </div>
           </dl>
@@ -978,21 +1010,24 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
   const podForm =
     form?.kind === "pod" ? (
       <div className={cx("warn-inline")}>
-        <span>
-          Name a pod template from the pod library and where it delivers. Rates
-          come only from the cost foundation.
-        </span>
+        <span>Choose a pod template or enter a proposed role mapping. Rates come only from the cost foundation.</span>
         <div className={cx("form-grid")}>
-          <label>
-            Pod template code
-            <input
-              className={cx("cell-input")}
-              value={form.templateCode}
-              onChange={(e) =>
-                setForm({ ...form, templateCode: e.target.value })
-              }
-            />
+          <label>Pod source
+            <select className={cx("cell-input")} value={form.mode}
+              onChange={(e)=>setForm({...form,mode:e.target.value as "template"|"members"})}>
+              <option value="template">Pod library template</option>
+              <option value="members">Proposed role mapping, unapproved</option>
+            </select>
           </label>
+          {form.mode==="template" ? <label>
+            Pod template code
+            <input className={cx("cell-input")} value={form.templateCode}
+              onChange={(e)=>setForm({...form,templateCode:e.target.value})} />
+          </label> : <label>
+            Proposed members, one per line: role code | role name | level code | FTE | source role
+            <textarea className={cx("cell-input")} rows={5} value={form.membersText}
+              onChange={(e)=>setForm({...form,membersText:e.target.value})} />
+          </label>}
           <label>
             Delivery location code
             <input
@@ -1036,20 +1071,23 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             type="button"
             className={cx("btn-ink")}
             disabled={
-              !form.templateCode.trim() ||
+              (form.mode==="template"?!form.templateCode.trim():!form.membersText.trim()) ||
               !form.locationCode.trim() ||
               !form.rateBasis
             }
-            onClick={() =>
-              commit(
-                setPod(record, {
-                  templateCode: form.templateCode.trim(),
-                  locationCode: form.locationCode.trim(),
-                  providerClassCode: form.providerClassCode.trim() || null,
-                  rateBasis: form.rateBasis as PodRateBasis,
-                }),
-              ) && setForm(null)
-            }
+            onClick={() => {
+              const members=form.mode==="members"?parseProposedPodMembers(form.membersText):null;
+              if (form.mode==="members" && !members) {
+                setRefusal("Each proposed member needs role code | role name | level code | positive FTE | source role.");
+                return;
+              }
+              if (commit(setPod(record,{
+                ...(form.mode==="template"?{templateCode:form.templateCode.trim()}:{members:members!}),
+                locationCode:form.locationCode.trim(),
+                providerClassCode:form.providerClassCode.trim()||null,
+                rateBasis:form.rateBasis as PodRateBasis,
+              }))) setForm(null);
+            }}
           >
             Save
           </button>
@@ -1066,7 +1104,9 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
   const openPodForm = () =>
     setForm({
       kind: "pod",
+      mode:pod?.members?"members":"template",
       templateCode: pod?.templateCode ?? "",
+      membersText:pod?.members?.map((m)=>`${m.roleCode} | ${m.roleLabel} | ${m.levelCode} | ${m.fte} | ${m.proposedMapping?.from??m.roleLabel}`).join("\n")??"",
       locationCode: pod?.locationCode ?? "",
       providerClassCode: pod?.providerClassCode ?? "",
       rateBasis: pod?.rateBasis ?? "",
@@ -1095,6 +1135,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
       <>
         {pod ? (
           <>
+            {planningRates ? <p className={cx("proposal")}>Planning rates, not approved. Review every rate source before approving the estimate.</p> : null}
             {podTable}
             {podCards}
           </>

@@ -1,0 +1,674 @@
+{
+  "schema_version": 1,
+  "dataset_id": "moves_demo_case_numbers_seed_v1",
+  "title": "Synthetic ROM and value inputs for a governed demo Move",
+  "synthetic": true,
+  "client_attested": false,
+  "tenant": {
+    "canonical_tenant_key": "meridian-health",
+    "app_client_key": "meridian"
+  },
+  "move": {
+    "move_id": "1557f032-5a5c-4475-abe5-b1a841576649",
+    "declared_by": {
+      "manifest_dataset_id": "moves_gdf_discovery_aca_smoke_20261006",
+      "field": "load_approval.move_id"
+    },
+    "expected_archetype": "governed_data_foundation"
+  },
+  "origin": "team",
+  "rows": [
+    {
+      "seed_key": "delivery.data_source_count",
+      "expected_register_id": "DL7",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for data source count: 36 hours per unit.",
+      "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
+      "working_figure": "36 hours per unit",
+      "working_value": 36,
+      "unit": "hours per unit",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 36 hours per unit; not client or Finance attestation.",
+        "answer_figure": "36 hours per unit",
+        "answer_value": 36,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "delivery.source_table_count",
+      "expected_register_id": "DL8",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for source table count: 8 hours per unit.",
+      "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
+      "working_figure": "8 hours per unit",
+      "working_value": 8,
+      "unit": "hours per unit",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 8 hours per unit; not client or Finance attestation.",
+        "answer_figure": "8 hours per unit",
+        "answer_value": 8,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "delivery.standard_data_entity_count",
+      "expected_register_id": "DL9",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for standard data entity count: 28 hours per unit.",
+      "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
+      "working_figure": "28 hours per unit",
+      "working_value": 28,
+      "unit": "hours per unit",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 28 hours per unit; not client or Finance attestation.",
+        "answer_figure": "28 hours per unit",
+        "answer_value": 28,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "delivery.dashboard_view_count",
+      "expected_register_id": "DL10",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for dashboard view count: 24 hours per unit.",
+      "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
+      "working_figure": "24 hours per unit",
+      "working_value": 24,
+      "unit": "hours per unit",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 24 hours per unit; not client or Finance attestation.",
+        "answer_figure": "24 hours per unit",
+        "answer_value": 24,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "delivery.design_row_count",
+      "expected_register_id": "DL11",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for design row count: 3 hours per unit.",
+      "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
+      "working_figure": "3 hours per unit",
+      "working_value": 3,
+      "unit": "hours per unit",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 3 hours per unit; not client or Finance attestation.",
+        "answer_figure": "3 hours per unit",
+        "answer_value": 3,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "delivery.validation_row_count",
+      "expected_register_id": "DL12",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for validation row count: 2 hours per unit.",
+      "why_it_matters": "Unit hours are required for the corresponding ROM component driver.",
+      "working_figure": "2 hours per unit",
+      "working_value": 2,
+      "unit": "hours per unit",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 2 hours per unit; not client or Finance attestation.",
+        "answer_figure": "2 hours per unit",
+        "answer_value": 2,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "delivery.friction",
+      "expected_register_id": "DL13",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for friction: 1.18 multiplier.",
+      "why_it_matters": "Sourced ROM factor; its capture value must match this register row.",
+      "working_figure": "1.18 multiplier",
+      "working_value": 1.18,
+      "unit": "multiplier",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 1.18 multiplier; not client or Finance attestation.",
+        "answer_figure": "1.18 multiplier",
+        "answer_value": 1.18,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "delivery.productive_share",
+      "expected_register_id": "DL14",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for productive share: 0.68 share.",
+      "why_it_matters": "Sourced ROM factor; its capture value must match this register row.",
+      "working_figure": "0.68 share",
+      "working_value": 0.68,
+      "unit": "share",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 0.68 share; not client or Finance attestation.",
+        "answer_figure": "0.68 share",
+        "answer_value": 0.68,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "delivery.hours_per_fte_week",
+      "expected_register_id": "DL15",
+      "area": "delivery",
+      "statement": "Synthetic demo benchmark for hours per fte week: 40 hours per FTE-week.",
+      "why_it_matters": "Sourced ROM factor; its capture value must match this register row.",
+      "working_figure": "40 hours per FTE-week",
+      "working_value": 40,
+      "unit": "hours per FTE-week",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Transformation office program lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 40 hours per FTE-week; not client or Finance attestation.",
+        "answer_figure": "40 hours per FTE-week",
+        "answer_value": 40,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "value.zero_baseline",
+      "expected_register_id": "V6",
+      "area": "value",
+      "statement": "Synthetic demo benchmark for zero baseline: 0 baseline zero.",
+      "why_it_matters": "Explicit zero starting point for percent reduction or released hours.",
+      "working_figure": "0 baseline zero",
+      "working_value": 0,
+      "unit": "baseline zero",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Finance business partner",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 0 baseline zero; not client or Finance attestation.",
+        "answer_figure": "0 baseline zero",
+        "answer_value": 0,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "value.platform_spend_reduction_share",
+      "expected_register_id": "V7",
+      "area": "value",
+      "statement": "Synthetic demo benchmark for platform spend reduction share: 0.12 share of annual spend.",
+      "why_it_matters": "Synthetic bought-less scenario, not a contracted reduction.",
+      "working_figure": "0.12 share of annual spend",
+      "working_value": 0.12,
+      "unit": "share of annual spend",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Finance business partner",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 0.12 share of annual spend; not client or Finance attestation.",
+        "answer_figure": "0.12 share of annual spend",
+        "answer_value": 0.12,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "value.platform_attribution",
+      "expected_register_id": "V8",
+      "area": "value",
+      "statement": "Synthetic demo benchmark for platform attribution: 0.6 share.",
+      "why_it_matters": "Only the portion attributable to this Move may count.",
+      "working_figure": "0.6 share",
+      "working_value": 0.6,
+      "unit": "share",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Finance business partner",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 0.6 share; not client or Finance attestation.",
+        "answer_figure": "0.6 share",
+        "answer_value": 0.6,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "value.platform_probability",
+      "expected_register_id": "V9",
+      "area": "value",
+      "statement": "Synthetic demo benchmark for platform probability: 0.8 probability.",
+      "why_it_matters": "Probability-adjusted planning forecast.",
+      "working_figure": "0.8 probability",
+      "working_value": 0.8,
+      "unit": "probability",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Finance business partner",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 0.8 probability; not client or Finance attestation.",
+        "answer_figure": "0.8 probability",
+        "answer_value": 0.8,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "value.saved_hours_per_report_writer_year",
+      "expected_register_id": "V10",
+      "area": "value",
+      "statement": "Synthetic demo benchmark for saved hours per report writer year: 80 hours per writer-year.",
+      "why_it_matters": "Synthetic annual capacity released per report writer.",
+      "working_figure": "80 hours per writer-year",
+      "working_value": 80,
+      "unit": "hours per writer-year",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 80 hours per writer-year; not client or Finance attestation.",
+        "answer_figure": "80 hours per writer-year",
+        "answer_value": 80,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "value.analyst_attribution",
+      "expected_register_id": "V11",
+      "area": "value",
+      "statement": "Synthetic demo benchmark for analyst attribution: 0.5 share.",
+      "why_it_matters": "Attributed analyst capacity, with no monetary release.",
+      "working_figure": "0.5 share",
+      "working_value": 0.5,
+      "unit": "share",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 0.5 share; not client or Finance attestation.",
+        "answer_figure": "0.5 share",
+        "answer_value": 0.5,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "value.analyst_probability",
+      "expected_register_id": "V12",
+      "area": "value",
+      "statement": "Synthetic demo benchmark for analyst probability: 0.7 probability.",
+      "why_it_matters": "Probability-adjusted capacity estimate.",
+      "working_figure": "0.7 probability",
+      "working_value": 0.7,
+      "unit": "probability",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 0.7 probability; not client or Finance attestation.",
+        "answer_figure": "0.7 probability",
+        "answer_value": 0.7,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    },
+    {
+      "seed_key": "value.discount_rate",
+      "expected_register_id": "V13",
+      "area": "value",
+      "statement": "Synthetic demo benchmark for discount rate: 0.1 annual share.",
+      "why_it_matters": "Synthetic discount rate for the three-year model.",
+      "working_figure": "0.1 annual share",
+      "working_value": 0.1,
+      "unit": "annual share",
+      "source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+      "source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json",
+      "owner_role": "Finance business partner",
+      "confidence": 3,
+      "confirm": {
+        "answer": "Confirmed synthetic benchmark for governed demo: 0.1 annual share; not client or Finance attestation.",
+        "answer_figure": "0.1 annual share",
+        "answer_value": 0.1,
+        "answer_source": "AbarVa delivery benchmark (synthetic, demo) [scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json]",
+        "answer_source_ref": "scripts/moves/fixtures/demo-case-numbers/synthetic-benchmarks-v1.json"
+      }
+    }
+  ],
+  "existing_register_refs": {
+    "V1": "value.program_budget",
+    "V3": "value.benefit_start",
+    "V4": "value.platform_spend_baseline",
+    "A2": "adoption.report_writers_on_certified_measures",
+    "A3": "adoption.workbook_retirement"
+  },
+  "value_plan": {
+    "kind": "value_model",
+    "version": 1,
+    "case": {
+      "levers": [
+        {
+          "id": "L1",
+          "name": "Duplicate analytics platform spend retired",
+          "conversion": "cost_reduction",
+          "driver": {
+            "name": "share of duplicate platform spend no longer bought",
+            "unit": "share",
+            "direction": "increase",
+            "baseline": {
+              "kind": "register",
+              "registerId": "V6"
+            },
+            "target": {
+              "kind": "register",
+              "registerId": "V7"
+            }
+          },
+          "terms": [
+            {
+              "role": "base",
+              "label": "annual platform spend ($)",
+              "ref": {
+                "kind": "register",
+                "registerId": "V4"
+              }
+            },
+            {
+              "role": "driver_delta",
+              "label": "share no longer bought"
+            }
+          ],
+          "attribution": {
+            "kind": "register",
+            "registerId": "V8"
+          },
+          "probability": {
+            "kind": "register",
+            "registerId": "V9"
+          },
+          "timing": {
+            "startMonth": 8,
+            "rampMonths": 6,
+            "paymentLagMonths": 0
+          }
+        },
+        {
+          "id": "L2",
+          "name": "Report writer capacity released",
+          "conversion": "non_cash",
+          "driver": {
+            "name": "hours saved per report writer in a year",
+            "unit": "hours per writer-year",
+            "direction": "increase",
+            "baseline": {
+              "kind": "register",
+              "registerId": "V6"
+            },
+            "target": {
+              "kind": "register",
+              "registerId": "V10"
+            }
+          },
+          "terms": [
+            {
+              "role": "driver_delta",
+              "label": "hours per writer-year"
+            },
+            {
+              "role": "base",
+              "label": "report writers",
+              "ref": {
+                "kind": "register",
+                "registerId": "A2"
+              }
+            }
+          ],
+          "attribution": {
+            "kind": "register",
+            "registerId": "V11"
+          },
+          "probability": {
+            "kind": "register",
+            "registerId": "V12"
+          },
+          "timing": {
+            "startMonth": 8,
+            "rampMonths": 6,
+            "paymentLagMonths": 0
+          },
+          "metricUnit": "hours per year"
+        }
+      ],
+      "horizonYears": 3,
+      "discountRate": {
+        "kind": "register",
+        "registerId": "V13"
+      },
+      "cost": {
+        "kind": "rom",
+        "snapshotId": "pending-current-approved-p3-rom"
+      }
+    }
+  },
+  "value_plan_bindings": {
+    "levers.L1.timing.startMonth": {
+      "registerId": "V3",
+      "scale": 1
+    },
+    "levers.L2.timing.startMonth": {
+      "registerId": "V3",
+      "scale": 1
+    }
+  },
+  "rom_preview": {
+    "useCases": [
+      {
+        "code": "UC-1",
+        "name": "Certified measures and governed consumption",
+        "counts": {
+          "data_source_count": 20,
+          "source_table_count": 80,
+          "standard_data_entity_count": 55,
+          "dashboard_view_count": 25,
+          "design_row_count": 200,
+          "validation_row_count": 255
+        }
+      },
+      {
+        "code": "UC-2",
+        "name": "Workbook certification and retirement",
+        "counts": {
+          "data_source_count": 18,
+          "source_table_count": 80,
+          "standard_data_entity_count": 45,
+          "dashboard_view_count": 30,
+          "design_row_count": 150,
+          "validation_row_count": 220
+        }
+      }
+    ],
+    "unitHours": {
+      "data_source_count": {
+        "registerId": "DL7"
+      },
+      "source_table_count": {
+        "registerId": "DL8"
+      },
+      "standard_data_entity_count": {
+        "registerId": "DL9"
+      },
+      "dashboard_view_count": {
+        "registerId": "DL10"
+      },
+      "design_row_count": {
+        "registerId": "DL11"
+      },
+      "validation_row_count": {
+        "registerId": "DL12"
+      }
+    },
+    "releases": [
+      {
+        "code": "R1",
+        "name": "Certified measures release",
+        "designStatus": "not_designed",
+        "useCaseCodes": [
+          "UC-1"
+        ]
+      },
+      {
+        "code": "R2",
+        "name": "Workbook certification and retirement release",
+        "designStatus": "not_designed",
+        "useCaseCodes": [
+          "UC-2"
+        ]
+      }
+    ],
+    "foundation": {
+      "code": "FOUNDATION",
+      "name": "Shared governed data foundation",
+      "counts": {
+        "data_source_count": 8,
+        "source_table_count": 65,
+        "standard_data_entity_count": 20,
+        "dashboard_view_count": 8,
+        "design_row_count": 100,
+        "validation_row_count": 130
+      },
+      "designStatus": "not_designed",
+      "sharedByReleaseCodes": [
+        "R1"
+      ]
+    },
+    "pod": {
+      "members": [
+        {
+          "roleCode": "ROL-024",
+          "levelCode": "LVL-06",
+          "fte": 1,
+          "proposedMapping": true
+        },
+        {
+          "roleCode": "ROL-023",
+          "levelCode": "LVL-07",
+          "fte": 1,
+          "proposedMapping": true
+        },
+        {
+          "roleCode": "ROL-037",
+          "levelCode": "LVL-08",
+          "fte": 6,
+          "proposedMapping": true
+        },
+        {
+          "roleCode": "ROL-041",
+          "levelCode": "LVL-08",
+          "fte": 2,
+          "proposedMapping": true
+        }
+      ],
+      "locationCode": "LOC-DALLAS",
+      "providerClassCode": "SI-T1",
+      "rateBasis": "bill_rate"
+    },
+    "friction": {
+      "registerId": "DL13"
+    },
+    "productiveShare": {
+      "registerId": "DL14"
+    },
+    "hoursPerFteWeek": {
+      "registerId": "DL15"
+    }
+  },
+  "program_schedule": {
+    "horizon_weeks": 52,
+    "sequence": [
+      "FOUNDATION",
+      "R1",
+      "R2"
+    ],
+    "delivery_mode": "proposed unapproved 10-FTE TWR-04 Data Product pod expansion, LOC-DALLAS, SI-T1; sequenced blocks; no overlap credit",
+    "release_1_target_week": 30,
+    "release_2_target_week": 52,
+    "benefit_start_month": 8,
+    "basis": "synthetic planning schedule, not an approved delivery commitment"
+  },
+  "budget_ceiling_check": {
+    "register_id": "V1",
+    "scale_to_cents": 100,
+    "role": "ceiling_only_not_value_case_cost"
+  },
+  "live_id_preflight": {
+    "read_only_operator_execution": "job-abarva-private-operator-eus-9gtw0w6",
+    "observed_at_utc": "2026-10-11T02:38:27.8408815Z",
+    "observed_current_phase": 3,
+    "occupied_register_rows": [
+      {
+        "area": "delivery",
+        "register_id": "DL5",
+        "status": "open",
+        "statement_sha256": "8c8e8c35dae74796ef37eb051ea5313a9b18131e5f080f294f6bf13f6f055af2"
+      },
+      {
+        "area": "delivery",
+        "register_id": "DL6",
+        "status": "open",
+        "statement_sha256": "b37a12a483dfb15d65235bf187183cb0e2b860271a862eac158c3cb88564a690"
+      },
+      {
+        "area": "value",
+        "register_id": "V5",
+        "status": "open",
+        "statement_sha256": "ecccca8d59980d1dcac53ab56f19089357b8432f70683d0f024876c126cd75b7"
+      }
+    ],
+    "next_allocations_at_observation": {
+      "delivery": "DL7",
+      "value": "V6"
+    },
+    "caveat": "Snapshot only; apply must recheck the exact occupied rows, next IDs, tenant, Move, and capture revision under one transaction."
+  }
+}

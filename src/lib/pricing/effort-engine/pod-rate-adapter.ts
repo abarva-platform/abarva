@@ -70,15 +70,15 @@ export type PodRateBand = Pick<
   | "indicative_bill_rate"
   | "confidence"
   | "approval_status"
->;
+> & { source?: string | null };
 export type PodLocation = Pick<
   PricingDeliveryLocationRow,
   "location_code" | "shore_category" | "salary_multiplier" | "rate_multiplier"
->;
+> & { source_artifact?: string | null; source_row?: number | null };
 export type PodProviderClass = Pick<
   PricingProviderClassRow,
   "provider_class_code" | "tier_multiplier"
->;
+> & { source_artifact?: string | null; source_row?: number | null };
 
 export interface PodRateReference {
   basis: PodRateBasis;
@@ -292,7 +292,7 @@ export function createReferencePodRateResolver(
 
     const locationColumn = LOCATION_COLUMN_BY_BASIS[basis];
     const locationMultiplier: PodRateMultiplier = {
-      source: `location:${member.locationCode}:${locationColumn}`,
+      source: `location:${member.locationCode}:${locationColumn}${location.source_artifact && location.source_row !== null && location.source_row !== undefined ? ` [${location.source_artifact} row ${location.source_row}]` : ""}`,
       value: location[locationColumn],
       notAppliedReason: null,
     };
@@ -310,7 +310,7 @@ export function createReferencePodRateResolver(
       }
       const effectiveClass = memberClass ?? benchmarkClass;
       providerMultiplier = {
-        source: `provider_class:${effectiveClass.provider_class_code}/${benchmarkClass.provider_class_code}`,
+        source: `provider_class:${effectiveClass.provider_class_code}/${benchmarkClass.provider_class_code}${effectiveClass.source_artifact && effectiveClass.source_row !== null && effectiveClass.source_row !== undefined ? ` [${effectiveClass.source_artifact} row ${effectiveClass.source_row}]` : ""}`,
         value: round4(
           effectiveClass.tier_multiplier / benchmarkClass.tier_multiplier,
         ),
@@ -329,7 +329,7 @@ export function createReferencePodRateResolver(
       member,
       basis,
       band.currency,
-      `rate_band:${bandCode}:${column}`,
+      `rate_band:${bandCode}:${column}${band.source ? ` [${band.source}]` : ""}`,
       `band ${bandCode} ${column}`,
       baseRateCents,
       locationMultiplier,

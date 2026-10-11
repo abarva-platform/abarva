@@ -1196,6 +1196,12 @@ jobs:
           src/lib/data-plane/__tests__/test-boundary.test.ts
           --no-coverage --ci
 
+      - name: Run the scoped Postgres write transaction contract
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/data-plane/__tests__/postgresCompat.write-transaction.test.ts
+          --no-coverage --ci
+
       # Last, because it asks what the steps above left behind: did any suite
       # write to committed client input data? One did. A parallel run executed
       # a data build and rewrote seven tracked files across four tenants; six

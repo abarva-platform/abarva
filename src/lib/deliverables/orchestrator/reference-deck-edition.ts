@@ -1,4 +1,5 @@
 import { factTokens } from "./numeric-lineage-tokens";
+import { formatConsultantCents, formatConsultantPercent } from "@/lib/programs/value-engine/format-money";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
 import type { EditionInputs } from "./reference-deck-inputs";
 import type { EditionWords } from "./reference-deck-words";
@@ -32,8 +33,8 @@ const safeCaptured = (value: unknown): string => {
   const line = text(value).replace(/\s+/g, " ").slice(0, 170);
   return factTokens(line).length ? "Gap — captured figure needs a governed source" : line;
 };
-const money = (cents: number): string => `$${Math.round(cents / 100).toLocaleString("en-US")}`;
-const percent = (ratio: number): string => `${(ratio * 100).toFixed(1)}%`;
+const money = formatConsultantCents;
+const percent = formatConsultantPercent;
 const cell = (row: number): string => `Deck Figures!B${row}`;
 
 /** All figure bindings are assembled here; Claude has no route to mint one. */

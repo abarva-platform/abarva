@@ -1,0 +1,1230 @@
+{
+  "status": "local_synthetic_simulation_only",
+  "datasetId": "moves_demo_case_numbers_seed_v1",
+  "moveId": "1557f032-5a5c-4475-abe5-b1a841576649",
+  "seedSha256": "40870b6f02a2a1e610d9605cfe5c292ccd9bd41d7f04255ef29451b1c8a8dc7d",
+  "benchmarkSha256": "06dad811a50ca5b4d06f3a183bc75da2443abe46448eb840aac8dabf39c39e4a",
+  "existingSeedSha256": "19401a9627284bbfb7054f7e43faa25e9b400e3cda6f2a9297f9dfd0cafd2a33",
+  "costPackSha256": "e74ecc7e4a70a9b7e5d8633866164d5094f0f3effc4540c8feab30afba845f9b",
+  "costPackFiles": [
+    "pricing_roles.csv",
+    "pricing_rate_bands.csv",
+    "pricing_delivery_locations.csv",
+    "pricing_provider_classes.csv",
+    "pricing_pod_templates.csv",
+    "pricing_pod_template_roles.csv"
+  ],
+  "sourceSetSha256": "58278187096baeffc23751cf97837579fa807daff7a29e0d3da3a4a11e68d654",
+  "approval": "absent; no load authorized",
+  "liveRegisterReadback": "read_only_operator_snapshot",
+  "liveIdPreflight": {
+    "read_only_operator_execution": "job-abarva-private-operator-eus-9gtw0w6",
+    "observed_at_utc": "2026-10-11T02:38:27.8408815Z",
+    "observed_current_phase": 3,
+    "occupied_register_rows": [
+      {
+        "area": "delivery",
+        "register_id": "DL5",
+        "status": "open",
+        "statement_sha256": "8c8e8c35dae74796ef37eb051ea5313a9b18131e5f080f294f6bf13f6f055af2"
+      },
+      {
+        "area": "delivery",
+        "register_id": "DL6",
+        "status": "open",
+        "statement_sha256": "b37a12a483dfb15d65235bf187183cb0e2b860271a862eac158c3cb88564a690"
+      },
+      {
+        "area": "value",
+        "register_id": "V5",
+        "status": "open",
+        "statement_sha256": "ecccca8d59980d1dcac53ab56f19089357b8432f70683d0f024876c126cd75b7"
+      }
+    ],
+    "next_allocations_at_observation": {
+      "delivery": "DL7",
+      "value": "V6"
+    },
+    "caveat": "Snapshot only; apply must recheck the exact occupied rows, next IDs, tenant, Move, and capture revision under one transaction."
+  },
+  "captureWrite": "not_run",
+  "proposedRows": [
+    {
+      "key": "delivery.data_source_count",
+      "expectedRegisterId": "DL7",
+      "value": 36,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.source_table_count",
+      "expectedRegisterId": "DL8",
+      "value": 8,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.standard_data_entity_count",
+      "expectedRegisterId": "DL9",
+      "value": 28,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.dashboard_view_count",
+      "expectedRegisterId": "DL10",
+      "value": 24,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.design_row_count",
+      "expectedRegisterId": "DL11",
+      "value": 3,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.validation_row_count",
+      "expectedRegisterId": "DL12",
+      "value": 2,
+      "unit": "hours per unit",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.friction",
+      "expectedRegisterId": "DL13",
+      "value": 1.18,
+      "unit": "multiplier",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.productive_share",
+      "expectedRegisterId": "DL14",
+      "value": 0.68,
+      "unit": "share",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "delivery.hours_per_fte_week",
+      "expectedRegisterId": "DL15",
+      "value": 40,
+      "unit": "hours per FTE-week",
+      "ownerRole": "Transformation office program lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.zero_baseline",
+      "expectedRegisterId": "V6",
+      "value": 0,
+      "unit": "baseline zero",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.platform_spend_reduction_share",
+      "expectedRegisterId": "V7",
+      "value": 0.12,
+      "unit": "share of annual spend",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.platform_attribution",
+      "expectedRegisterId": "V8",
+      "value": 0.6,
+      "unit": "share",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.platform_probability",
+      "expectedRegisterId": "V9",
+      "value": 0.8,
+      "unit": "probability",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.saved_hours_per_report_writer_year",
+      "expectedRegisterId": "V10",
+      "value": 80,
+      "unit": "hours per writer-year",
+      "ownerRole": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.analyst_attribution",
+      "expectedRegisterId": "V11",
+      "value": 0.5,
+      "unit": "share",
+      "ownerRole": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.analyst_probability",
+      "expectedRegisterId": "V12",
+      "value": 0.7,
+      "unit": "probability",
+      "ownerRole": "BI and analytics enablement lead",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    },
+    {
+      "key": "value.discount_rate",
+      "expectedRegisterId": "V13",
+      "value": 0.1,
+      "unit": "annual share",
+      "ownerRole": "Finance business partner",
+      "confidence": 3,
+      "confirmedSyntheticBenchmark": true
+    }
+  ],
+  "existingRefs": {
+    "V1": "value.program_budget",
+    "V3": "value.benefit_start",
+    "V4": "value.platform_spend_baseline",
+    "A2": "adoption.report_writers_on_certified_measures",
+    "A3": "adoption.workbook_retirement"
+  },
+  "registerIdCaveat": "Expected IDs are conditional on exact live register state; apply must refuse drift.",
+  "costBasis": {
+    "kind": "approved_p3_rom_required_for_live",
+    "liveSnapshot": "pending",
+    "previewSnapshot": "local-synthetic-preview-unapproved",
+    "lowDollars": 4418276.1,
+    "planDollars": 5891034.8,
+    "highDollars": 8836552.2,
+    "budgetCeilingDollars": 5000000,
+    "planShareOfCeiling": 1.17820696,
+    "withinBudgetCeiling": false
+  },
+  "deliveryOptions": {
+    "status": "comparison_only; neither selected nor approved",
+    "rateStatus": "planning rates, not approved",
+    "optionA": {
+      "label": "Dallas SI-T1 proposed pod",
+      "hours": 12847.84,
+      "weeks": 49,
+      "lowDollars": 4418276.1,
+      "planDollars": 5891034.8,
+      "highDollars": 8836552.2,
+      "blocks": [
+        {
+          "code": "FOUNDATION",
+          "hours": 2501.6,
+          "weeks": 10,
+          "lowDollars": 901689,
+          "planDollars": 1202252,
+          "highDollars": 1803378
+        },
+        {
+          "code": "R1",
+          "hours": 5439.8,
+          "weeks": 20,
+          "lowDollars": 1803378,
+          "planDollars": 2404504,
+          "highDollars": 3606756
+        },
+        {
+          "code": "R2",
+          "hours": 4906.44,
+          "weeks": 19,
+          "lowDollars": 1713209.1,
+          "planDollars": 2284278.8,
+          "highDollars": 3426418.2
+        }
+      ],
+      "rateLines": [
+        {
+          "roleCode": "ROL-024",
+          "levelCode": "LVL-06",
+          "fte": 1,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 40625,
+          "baseRateCents": 40625,
+          "baseSource": "rate_band:ROL-024-LVL-06:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0069 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-023",
+          "levelCode": "LVL-07",
+          "fte": 1,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 34938,
+          "baseRateCents": 34938,
+          "baseSource": "rate_band:ROL-023-LVL-07:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0066 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-037",
+          "levelCode": "LVL-08",
+          "fte": 6,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 29250,
+          "baseRateCents": 29250,
+          "baseSource": "rate_band:ROL-037-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0105 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-041",
+          "levelCode": "LVL-08",
+          "fte": 2,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 24750,
+          "baseRateCents": 24750,
+          "baseSource": "rate_band:ROL-041-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0116 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        }
+      ]
+    },
+    "optionB": {
+      "label": "Dallas SI-T1 leads with India Tier 1 SI-T2 engineering and BI",
+      "hours": 12847.84,
+      "weeks": 49,
+      "lowDollars": 2010416.1,
+      "planDollars": 2680554.8,
+      "highDollars": 4020832.2,
+      "blocks": [
+        {
+          "code": "FOUNDATION",
+          "hours": 2501.6,
+          "weeks": 10,
+          "lowDollars": 410289,
+          "planDollars": 547052,
+          "highDollars": 820578
+        },
+        {
+          "code": "R1",
+          "hours": 5439.8,
+          "weeks": 20,
+          "lowDollars": 820578,
+          "planDollars": 1094104,
+          "highDollars": 1641156
+        },
+        {
+          "code": "R2",
+          "hours": 4906.44,
+          "weeks": 19,
+          "lowDollars": 779549.1,
+          "planDollars": 1039398.8,
+          "highDollars": 1559098.2
+        }
+      ],
+      "rateLines": [
+        {
+          "roleCode": "ROL-024",
+          "levelCode": "LVL-06",
+          "fte": 1,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 40625,
+          "baseRateCents": 40625,
+          "baseSource": "rate_band:ROL-024-LVL-06:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0069 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-023",
+          "levelCode": "LVL-07",
+          "fte": 1,
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 34938,
+          "baseRateCents": 34938,
+          "baseSource": "rate_band:ROL-023-LVL-07:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0066 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+            "value": 1,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-037",
+          "levelCode": "LVL-08",
+          "fte": 6,
+          "locationCode": "LOC-INDIA-TIER-1",
+          "providerClassCode": "SI-T2",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 7956,
+          "baseRateCents": 29250,
+          "baseSource": "rate_band:ROL-037-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0105 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-INDIA-TIER-1:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 16]",
+            "value": 0.4,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T2/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 29]",
+            "value": 0.68,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        },
+        {
+          "roleCode": "ROL-041",
+          "levelCode": "LVL-08",
+          "fte": 2,
+          "locationCode": "LOC-INDIA-TIER-1",
+          "providerClassCode": "SI-T2",
+          "mappingStatus": "proposed_unapproved",
+          "hourlyRateCents": 6732,
+          "baseRateCents": 24750,
+          "baseSource": "rate_band:ROL-041-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0116 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+          "location": {
+            "source": "location:LOC-INDIA-TIER-1:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 16]",
+            "value": 0.4,
+            "notAppliedReason": null
+          },
+          "provider": {
+            "source": "provider_class:SI-T2/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 29]",
+            "value": 0.68,
+            "notAppliedReason": null
+          },
+          "provenance": [
+            "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+            "band confidence medium, approval global_starter_unapproved",
+            "location scarcity_multiplier not applied in this increment"
+          ],
+          "rateStatus": "planning rates, not approved"
+        }
+      ]
+    }
+  },
+  "levers": [
+    {
+      "id": "L1",
+      "name": "Duplicate analytics platform spend retired",
+      "conversion": "cost_reduction",
+      "registerRefs": [
+        {
+          "key": "L1.driver.baseline",
+          "registerId": "V6"
+        },
+        {
+          "key": "L1.driver.target",
+          "registerId": "V7"
+        },
+        {
+          "key": "L1.term[0]",
+          "registerId": "V4"
+        },
+        {
+          "key": "L1.attribution",
+          "registerId": "V8"
+        },
+        {
+          "key": "L1.probability",
+          "registerId": "V9"
+        }
+      ],
+      "timingRegisterRef": {
+        "registerId": "V3",
+        "scale": 1
+      },
+      "result": {
+        "leverId": "L1",
+        "name": "Duplicate analytics platform spend retired",
+        "conversion": "cost_reduction",
+        "status": "counted",
+        "inCash": true,
+        "annualCents": {
+          "low": 80554500,
+          "base": 254592000,
+          "high": 621562500
+        },
+        "terms": {
+          "low": [
+            {
+              "label": "annual platform spend ($)",
+              "value": 33150000,
+              "source": "register:V4",
+              "cellRole": "base"
+            },
+            {
+              "label": "share no longer bought",
+              "value": 0.09,
+              "source": "register:V6 → register:V7",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "attribution",
+              "value": 0.44999999999999996,
+              "source": "register:V8",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.6000000000000001,
+              "source": "register:V9",
+              "cellRole": "probability"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L1 annual value (cents)",
+              "value": 80554500,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ],
+          "base": [
+            {
+              "label": "annual platform spend ($)",
+              "value": 44200000,
+              "source": "register:V4",
+              "cellRole": "base"
+            },
+            {
+              "label": "share no longer bought",
+              "value": 0.12,
+              "source": "register:V6 → register:V7",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "attribution",
+              "value": 0.6,
+              "source": "register:V8",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.8,
+              "source": "register:V9",
+              "cellRole": "probability"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L1 annual value (cents)",
+              "value": 254592000,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ],
+          "high": [
+            {
+              "label": "annual platform spend ($)",
+              "value": 55250000,
+              "source": "register:V4",
+              "cellRole": "base"
+            },
+            {
+              "label": "share no longer bought",
+              "value": 0.15,
+              "source": "register:V6 → register:V7",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "attribution",
+              "value": 0.75,
+              "source": "register:V8",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 1,
+              "source": "register:V9",
+              "cellRole": "probability"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L1 annual value (cents)",
+              "value": 621562500,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ]
+        },
+        "driverDelta": {
+          "low": 0.09,
+          "base": 0.12,
+          "high": 0.15
+        },
+        "nonMoneyMetric": null,
+        "countedInsteadBy": null,
+        "monthlyCashCents": {
+          "low": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1118813,
+            2237625,
+            3356438,
+            4475250,
+            5594063,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875,
+            6712875
+          ],
+          "base": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3536000,
+            7072000,
+            10608000,
+            14144000,
+            17680000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000,
+            21216000
+          ],
+          "high": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8632813,
+            17265625,
+            25898438,
+            34531250,
+            43164063,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875,
+            51796875
+          ]
+        },
+        "mustValidate": [
+          "L1.term[0]"
+        ],
+        "inputIssues": [],
+        "ruleViolations": []
+      }
+    },
+    {
+      "id": "L2",
+      "name": "Report writer capacity released",
+      "conversion": "non_cash",
+      "registerRefs": [
+        {
+          "key": "L2.driver.baseline",
+          "registerId": "V6"
+        },
+        {
+          "key": "L2.driver.target",
+          "registerId": "V10"
+        },
+        {
+          "key": "L2.term[1]",
+          "registerId": "A2"
+        },
+        {
+          "key": "L2.attribution",
+          "registerId": "V11"
+        },
+        {
+          "key": "L2.probability",
+          "registerId": "V12"
+        }
+      ],
+      "timingRegisterRef": {
+        "registerId": "V3",
+        "scale": 1
+      },
+      "result": {
+        "leverId": "L2",
+        "name": "Report writer capacity released",
+        "conversion": "non_cash",
+        "status": "zero_no_release_path",
+        "inCash": false,
+        "annualCents": {
+          "low": 0,
+          "base": 0,
+          "high": 0
+        },
+        "terms": {
+          "low": [
+            {
+              "label": "hours per writer-year",
+              "value": 60,
+              "source": "register:V6 → register:V10",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "report writers",
+              "value": 26.5,
+              "source": "register:A2",
+              "cellRole": "base"
+            },
+            {
+              "label": "attribution",
+              "value": 0.375,
+              "source": "register:V11",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.5249999999999999,
+              "source": "register:V12",
+              "cellRole": "probability"
+            },
+            {
+              "label": "no role or contract release path recorded — counts $0",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "release_gate"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L2 annual value (cents)",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ],
+          "base": [
+            {
+              "label": "hours per writer-year",
+              "value": 80,
+              "source": "register:V6 → register:V10",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "report writers",
+              "value": 53,
+              "source": "register:A2",
+              "cellRole": "base"
+            },
+            {
+              "label": "attribution",
+              "value": 0.5,
+              "source": "register:V11",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.7,
+              "source": "register:V12",
+              "cellRole": "probability"
+            },
+            {
+              "label": "no role or contract release path recorded — counts $0",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "release_gate"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L2 annual value (cents)",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ],
+          "high": [
+            {
+              "label": "hours per writer-year",
+              "value": 100,
+              "source": "register:V6 → register:V10",
+              "cellRole": "driver_delta"
+            },
+            {
+              "label": "report writers",
+              "value": 79.5,
+              "source": "register:A2",
+              "cellRole": "base"
+            },
+            {
+              "label": "attribution",
+              "value": 0.625,
+              "source": "register:V11",
+              "cellRole": "attribution"
+            },
+            {
+              "label": "probability",
+              "value": 0.875,
+              "source": "register:V12",
+              "cellRole": "probability"
+            },
+            {
+              "label": "no role or contract release path recorded — counts $0",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "release_gate"
+            },
+            {
+              "label": "dollars → cents",
+              "value": 100,
+              "source": "engine",
+              "cellRole": "unit_conversion"
+            },
+            {
+              "label": "L2 annual value (cents)",
+              "value": 0,
+              "source": "engine",
+              "cellRole": "result"
+            }
+          ]
+        },
+        "driverDelta": {
+          "low": 60,
+          "base": 80,
+          "high": 100
+        },
+        "nonMoneyMetric": {
+          "unit": "hours per year",
+          "value": {
+            "low": 313.0312,
+            "base": 1484,
+            "high": 4347.6563
+          }
+        },
+        "countedInsteadBy": null,
+        "monthlyCashCents": {
+          "low": [],
+          "base": [],
+          "high": []
+        },
+        "mustValidate": [
+          "L2.term[1]"
+        ],
+        "inputIssues": [],
+        "ruleViolations": []
+      }
+    }
+  ],
+  "rom": {
+    "rateBasis": "committed reference pack datasets/reference/pricing-engine-v1; proposed TWR-04 Data Product expansion, unapproved; planning rates, not approved",
+    "pod": {
+      "podCode": "ROM-EXPLICIT-POD",
+      "source": "ROM structure (caller-specified members)",
+      "locationCode": "LOC-DALLAS",
+      "providerClassCode": "SI-T1",
+      "rateBasis": "bill_rate",
+      "members": [
+        {
+          "roleCode": "ROL-024",
+          "levelCode": "LVL-06",
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "fte": 1
+        },
+        {
+          "roleCode": "ROL-023",
+          "levelCode": "LVL-07",
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "fte": 1
+        },
+        {
+          "roleCode": "ROL-037",
+          "levelCode": "LVL-08",
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "fte": 6
+        },
+        {
+          "roleCode": "ROL-041",
+          "levelCode": "LVL-08",
+          "locationCode": "LOC-DALLAS",
+          "providerClassCode": "SI-T1",
+          "fte": 2
+        }
+      ],
+      "memberMappingStatus": [
+        "proposed_unapproved",
+        "proposed_unapproved",
+        "proposed_unapproved",
+        "proposed_unapproved"
+      ]
+    },
+    "rateLines": [
+      {
+        "roleCode": "ROL-024",
+        "levelCode": "LVL-06",
+        "fte": 1,
+        "locationCode": "LOC-DALLAS",
+        "providerClassCode": "SI-T1",
+        "mappingStatus": "proposed_unapproved",
+        "hourlyRateCents": 40625,
+        "baseRateCents": 40625,
+        "baseSource": "rate_band:ROL-024-LVL-06:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0069 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+        "location": {
+          "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+          "value": 1,
+          "notAppliedReason": null
+        },
+        "provider": {
+          "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+          "value": 1,
+          "notAppliedReason": null
+        },
+        "provenance": [
+          "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+          "band confidence medium, approval global_starter_unapproved",
+          "location scarcity_multiplier not applied in this increment"
+        ]
+      },
+      {
+        "roleCode": "ROL-023",
+        "levelCode": "LVL-07",
+        "fte": 1,
+        "locationCode": "LOC-DALLAS",
+        "providerClassCode": "SI-T1",
+        "mappingStatus": "proposed_unapproved",
+        "hourlyRateCents": 34938,
+        "baseRateCents": 34938,
+        "baseSource": "rate_band:ROL-023-LVL-07:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0066 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+        "location": {
+          "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+          "value": 1,
+          "notAppliedReason": null
+        },
+        "provider": {
+          "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+          "value": 1,
+          "notAppliedReason": null
+        },
+        "provenance": [
+          "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+          "band confidence medium, approval global_starter_unapproved",
+          "location scarcity_multiplier not applied in this increment"
+        ]
+      },
+      {
+        "roleCode": "ROL-037",
+        "levelCode": "LVL-08",
+        "fte": 6,
+        "locationCode": "LOC-DALLAS",
+        "providerClassCode": "SI-T1",
+        "mappingStatus": "proposed_unapproved",
+        "hourlyRateCents": 29250,
+        "baseRateCents": 29250,
+        "baseSource": "rate_band:ROL-037-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0105 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+        "location": {
+          "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+          "value": 1,
+          "notAppliedReason": null
+        },
+        "provider": {
+          "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+          "value": 1,
+          "notAppliedReason": null
+        },
+        "provenance": [
+          "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+          "band confidence medium, approval global_starter_unapproved",
+          "location scarcity_multiplier not applied in this increment"
+        ]
+      },
+      {
+        "roleCode": "ROL-041",
+        "levelCode": "LVL-08",
+        "fte": 2,
+        "locationCode": "LOC-DALLAS",
+        "providerClassCode": "SI-T1",
+        "mappingStatus": "proposed_unapproved",
+        "hourlyRateCents": 24750,
+        "baseRateCents": 24750,
+        "baseSource": "rate_band:ROL-041-LVL-08:indicative_bill_rate [Workforce_Taxonomy_Master.xlsx:Role Rate Card row RC-0116 (Internal Cost Model + Assumptions formula engine, recomputed — see script header)]",
+        "location": {
+          "source": "location:LOC-DALLAS:rate_multiplier [Workforce_Taxonomy_Master.xlsx:Geography row 10]",
+          "value": 1,
+          "notAppliedReason": null
+        },
+        "provider": {
+          "source": "provider_class:SI-T1/SI-T1 [Workforce_Taxonomy_Master.xlsx:Assumptions row 28]",
+          "value": 1,
+          "notAppliedReason": null
+        },
+        "provenance": [
+          "band rate_basis onshore_si_t1_benchmark (benchmark SI-T1, onshore)",
+          "band confidence medium, approval global_starter_unapproved",
+          "location scarcity_multiplier not applied in this increment"
+        ]
+      }
+    ],
+    "podFte": 10,
+    "productiveHoursPerWeek": 272,
+    "schedule": {
+      "horizon_weeks": 52,
+      "sequence": [
+        "FOUNDATION",
+        "R1",
+        "R2"
+      ],
+      "delivery_mode": "proposed unapproved 10-FTE TWR-04 Data Product pod expansion, LOC-DALLAS, SI-T1; sequenced blocks; no overlap credit",
+      "release_1_target_week": 30,
+      "release_2_target_week": 52,
+      "benefit_start_month": 8,
+      "basis": "synthetic planning schedule, not an approved delivery commitment"
+    },
+    "foundation": {
+      "code": "FOUNDATION",
+      "hours": 2501.6,
+      "weeks": 10,
+      "lowDollars": 901689,
+      "planDollars": 1202252,
+      "highDollars": 1803378
+    },
+    "releases": [
+      {
+        "code": "R1",
+        "name": "Certified measures release",
+        "hours": 5439.8,
+        "weeks": 20,
+        "lowDollars": 1803378,
+        "planDollars": 2404504,
+        "highDollars": 3606756
+      },
+      {
+        "code": "R2",
+        "name": "Workbook certification and retirement release",
+        "hours": 4906.44,
+        "weeks": 19,
+        "lowDollars": 1713209.1,
+        "planDollars": 2284278.8,
+        "highDollars": 3426418.2
+      }
+    ],
+    "total": {
+      "hours": 12847.84,
+      "weeks": 49,
+      "lowDollars": 4418276.1,
+      "planDollars": 5891034.8,
+      "highDollars": 8836552.2
+    }
+  },
+  "value": {
+    "status": "evaluated",
+    "engineReadyForApproval": true,
+    "approvalEligible": false,
+    "validationState": "provisional_open_register_inputs",
+    "mustValidate": [
+      "L1.term[0]",
+      "L2.term[1]"
+    ],
+    "annualCashDollars": 2545920,
+    "byYearPaidDollars": [
+      530400,
+      2545920,
+      2545920
+    ],
+    "npvDollars": -1205904.05,
+    "paybackMonth": null,
+    "roi": -0.045627773239431554,
+    "analystCapacityAnnualCents": 0,
+    "analystCapacityHours": 1484
+  }
+}

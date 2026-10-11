@@ -40,6 +40,7 @@ import {
   tenancyErrorResponse,
 } from "@/app/api/v1/programs/_auth";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { persistPhaseCaptureModules } from "@/lib/programs/phase-capture-writer";
 import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import {
@@ -630,147 +631,13 @@ export async function POST(
       }
     }
 
-    const sb = getAzureWriteFluentClient();
-    const nowIso = new Date().toISOString();
-    const moduleKeys = evaluation.sections.map((section) =>
-      phaseCaptureModuleKey(phase, section.key),
-    );
-    const { data: existingRows, error: existingError } = await sb
-      .from("program_modules")
-      .select("id, module_key, status, state_jsonb")
-      .eq("engagement_id", programId)
-      .in("module_key", moduleKeys);
-    if (existingError) throw existingError;
-    const existingByKey = new Map(
-      (
-        (existingRows as Array<{
-          id: string;
-          module_key: string;
-          status: string;
-          state_jsonb: Record<string, unknown> | null;
-        }> | null) ?? []
-      ).map((row) => [row.module_key, row]),
-    );
-
     const changedKeys = new Set(changedSections.map((c) => c.key));
     const hasBasisEdits = basisKeys.size > 0;
-    for (const [order, section] of evaluation.sections.entries()) {
-      const existing = existingByKey.get(phaseCaptureModuleKey(phase, section.key));
-      const basisChanged = basisKeys.has(section.key);
-      // Untouched sections are skipped entirely unless this call is also
-      // marking the phase complete, which legitimately changes their status.
-      if (!changedKeys.has(section.key) && !basisChanged && !markComplete) continue;
-      const moduleKey = phaseCaptureModuleKey(phase, section.key);
-      const status =
-        markComplete && section.complete
-          ? "completed"
-          : section.complete
-            ? "in_progress"
-            : "not_started";
-      const state: Record<string, unknown> = {
-        ...(existing?.state_jsonb ?? {}),
-        capture_section_key: section.key,
-        label: section.label,
-        description: section.description,
-        value: section.value,
-        completed_from_phase_capture_path: markComplete && section.complete,
-        updated_at: nowIso,
-      };
-      if (phase === 1 && isP1CharterEvidenceFamily(section.evidenceFamily)) {
-        if (nextBasisRecords[section.key]) {
-          state.p1_charter_basis = nextBasisRecords[section.key];
-        } else {
-          delete state.p1_charter_basis;
-        }
-      }
-      if (existing) {
-        const update: Record<string, unknown> = {
-          module_name: section.label,
-          phase_number: phase,
-          module_order: order,
-          status,
-          state_jsonb: state,
-          ...(status === "completed" ? { completed_at: nowIso } : {}),
-          ...(status === "in_progress" ? { started_at: nowIso } : {}),
-        };
-        const { error } = await sb
-          .from("program_modules")
-          .update(update)
-          .eq("id", existing.id)
-          .eq("engagement_id", programId);
-        if (error) throw error;
-      } else {
-        const { error } = await sb.from("program_modules").insert({
-          engagement_id: programId,
-          module_key: moduleKey,
-          module_name: section.label,
-          phase_number: phase,
-          module_order: order,
-          status,
-          state_jsonb: state,
-          started_at: nowIso,
-          completed_at: status === "completed" ? nowIso : null,
-        });
-        if (error) throw error;
-      }
-    }
-
-    // The phase-0 charter mirror is the most dangerous write in this route:
-    // `engagements.charter` is the authoritative origination record and the
-    // rehydration source of last resort. Only mirror when a capture value
-    // actually changed — a no-edit save must never touch it.
-    for (const [index, record] of phaseStepRecordSections(phase).entries()) {
-      const moduleKey = phaseCaptureModuleKey(phase, record.key);
-      const existing = existingByKey.get(moduleKey);
-      const value = storedValues[record.key] ?? "";
-      // A saved record completes with the phase, exactly as an answer does:
-      // the next phase inherits only completed modules, so a record left
-      // `in_progress` would never reach P4's carried capture. An unsaved
-      // record is never created just because the phase completed.
-      if (!changedKeys.has(record.key) && !(markComplete && value)) continue;
-      const state: Record<string, unknown> = {
-        ...(existing?.state_jsonb ?? {}),
-        capture_section_key: record.key,
-        label: record.label,
-        description: record.description,
-        value,
-        step_record: true,
-        updated_at: nowIso,
-      };
-      const status = !value
-        ? "not_started"
-        : markComplete
-          ? "completed"
-          : "in_progress";
-      if (existing) {
-        const { error } = await sb
-          .from("program_modules")
-          .update({
-            module_name: record.label,
-            phase_number: phase,
-            module_order: 100 + index,
-            status,
-            state_jsonb: state,
-            ...(status === "completed" ? { completed_at: nowIso } : {}),
-          })
-          .eq("id", existing.id)
-          .eq("engagement_id", programId);
-        if (error) throw error;
-      } else {
-        const { error } = await sb.from("program_modules").insert({
-          engagement_id: programId,
-          module_key: moduleKey,
-          module_name: record.label,
-          phase_number: phase,
-          module_order: 100 + index,
-          status,
-          state_jsonb: state,
-          started_at: nowIso,
-          completed_at: status === "completed" ? nowIso : null,
-        });
-        if (error) throw error;
-      }
-    }
+    const { nowIso, moduleKeys } = await persistPhaseCaptureModules({
+      programId, phase, evaluation, storedValues, changedKeys, basisKeys,
+      nextBasisRecords, markComplete,
+    });
+    const sb = getAzureWriteFluentClient();
 
     if (phase === 0 && hasEdits) {
       const knownEvidence =
