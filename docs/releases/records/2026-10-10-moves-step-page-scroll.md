@@ -32,6 +32,7 @@ Long Moves step pages now scroll inside the fixed-height workspace pane. The pag
 
 - Focused Chromium browser regression at 390 and 1440 in light and dark: pass.
 - Mutation check: removing the scroll rule made the browser regression fail; the rule was restored and the test passed again.
+- The signed-in walk now checks that the Root causes row and its end-of-step action can be reached by wheel scrolling at 1440px and 390px; deployed result pending.
 - Typecheck and changed-file ESLint: pass.
 - Library orphan audit and route/export reachability: pass with no new findings.
 - Test coverage census: pass, `coveredTestFiles` remains 2,827 because the browser case was added to an existing suite.
