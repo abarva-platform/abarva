@@ -332,15 +332,22 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.actions[0]?.handoffEntityId).toBe("MOVE-001");
   });
 
-  it("derives blocked value as promised minus claimable", () => {
+  it("leaves blocked dollars unavailable when the periods differ", () => {
     const view = buildTowerCommandCenterView(mart(), { tenantName: "Demo" })!;
-    expect(view.summary.blockedUsd).toBe(35.5 * M);
+    expect(view.summary.blockedValueComparable).toBe(false);
+    expect(view.summary.blockedUsd).toBe(0);
+    expect(view.programs[0]?.blockedValueComparable).toBe(false);
   });
 
-  it("sums usage-supported value across programs rather than reading a mart column", () => {
+  it("keeps adoption-based dollar estimates out of the measured usage headline", () => {
     const view = buildTowerCommandCenterView(mart(), { tenantName: "Demo" })!;
-    // 6.8M × 0.44 = 2.992M — adoption-credited only, with no finance floor.
-    expect(view.summary.usageSupportedUsd).toBeCloseTo(2.992 * M, 0);
+    // The legacy program estimate is 6.8M × 44%, but no usage-supported
+    // dollar source was recorded, so it cannot be called measured value.
+    expect(view.programs[0]?.usageSupportedUsd).toBeCloseTo(2.992 * M, 0);
+    expect(view.programs[0]?.usageSupportedValueMeasured).toBe(false);
+    expect(view.summary.usageSupportedUsd).toBe(0);
+    expect(view.summary.usageSupportedValueCoverage).toBe("none");
+    expect(view.conversionBridge.find((stage) => stage.key === "adoption")?.valueUsd).toBeNull();
   });
 
   it("prefers the caller-supplied tenant name over the mart label", () => {

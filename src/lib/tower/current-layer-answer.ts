@@ -60,13 +60,13 @@ function intentFor(question: string): CurrentTowerIntent {
   ) {
     return "top_investments";
   }
-  if (/\b(distribution|breakdown|slice|segment|by domain|by value type|reduce cost|foundation)\b/.test(normalized)) {
+  if (/\b(distribution|breakdown|slice|segment|by domain|by value type|reduce cost)\b/.test(normalized)) {
     return "distribution";
   }
   if (/\b(blocker|blocks|constraint|control|sox|workflow telemetry|dlp|clinical safety|gate)\b/.test(normalized)) {
     return "constraints";
   }
-  if (/\b(foundation|platform|governance|enabler|cross[-\s]?functional)\b/.test(normalized)) {
+  if (/\b(foundations?|platform|governance|enabler|cross[-\s]?functional)\b/.test(normalized)) {
     return "foundations";
   }
   if (/\b(tool|tools|copilot|codex|claude|servicenow|workday|adoption|seat|rollout|licensed user)\b/.test(normalized)) {
@@ -159,16 +159,31 @@ function roi(promisedUsd: number | null | undefined, investmentLoaded: boolean, 
   return (promisedUsd as number) / investmentUsd;
 }
 
-function itemSpendLoaded(item: TowerCurrentAiItem): boolean {
-  return item.aiSpendLoaded === true;
+function approvedFundingUsd(item: TowerCurrentAiItem): number | null {
+  return item.aiSpendLoaded === true && item.aiAmountBasis === "approved_funding"
+    ? item.approvedFundingUsd
+    : null;
 }
 
-function itemSpendUsd(item: TowerCurrentAiItem): number {
-  return item.aiTaggedSpendUsd;
+function annualizedToolCostUsd(item: TowerCurrentAiItem): number | null {
+  return item.aiSpendLoaded === true && item.aiAmountBasis === "annualized_tool_cost"
+    ? item.aiTaggedSpendUsd
+    : null;
+}
+
+function groupedMoney(amount: number, loadedCount: number, unknownBasisCount: number): string {
+  if (loadedCount === 0) return "Not loaded";
+  if (unknownBasisCount === 0) return money(amount);
+  const suffix = unknownBasisCount === 1 ? "row" : "rows";
+  return `${money(amount)} (partial; ${unknownBasisCount} ${suffix} without amount basis)`;
 }
 
 function isToolRollout(item: TowerCurrentAiItem): boolean {
-  return item.sourceFile === "23_ai_tool_rollout.csv" || item.adoptionTargetPct !== null || item.linkedBusinessCaseCount !== null;
+  return hasToolRolloutSource(item) || item.adoptionTargetPct !== null || item.linkedBusinessCaseCount !== null;
+}
+
+function hasToolRolloutSource(item: TowerCurrentAiItem): boolean {
+  return item.sourceFile === "23_ai_tool_rollout.csv";
 }
 
 function isFoundation(item: TowerCurrentAiItem): boolean {
@@ -178,19 +193,23 @@ function isFoundation(item: TowerCurrentAiItem): boolean {
 
 function topInvestmentRows(view: TowerCurrentView): string[][] {
   return [...view.aiPortfolio]
-    .filter((item) => itemSpendLoaded(item) || loadedNumber(item.promisedValueUsd))
-    .sort((a, b) => (itemSpendLoaded(b) ? itemSpendUsd(b) : -1) - (itemSpendLoaded(a) ? itemSpendUsd(a) : -1))
+    .filter((item) => approvedFundingUsd(item) !== null || loadedNumber(item.promisedValueUsd))
+    .sort((a, b) => (approvedFundingUsd(b) ?? -1) - (approvedFundingUsd(a) ?? -1))
     .slice(0, 10)
-    .map((item) => [
-      item.itemName,
-      text(item.businessValueType ?? item.itemKind),
-      text(item.aiSpendCategory),
-      itemSpendLoaded(item) ? money(itemSpendUsd(item)) : "Not loaded",
-      loadedNumber(item.promisedValueUsd) ? money(item.promisedValueUsd) : "Not loaded",
-      multiple(roi(item.promisedValueUsd, itemSpendLoaded(item), itemSpendUsd(item))),
-      text(item.gatingConstraint ?? item.controlBlocker),
-      text(item.financeStatus),
-    ]);
+    .map((item) => {
+      const funding = approvedFundingUsd(item);
+      return [
+        item.itemName,
+        text(item.businessValueType ?? item.itemKind),
+        text(item.aiSpendCategory),
+        money(funding),
+        money(annualizedToolCostUsd(item)),
+        loadedNumber(item.promisedValueUsd) ? money(item.promisedValueUsd) : "Not loaded",
+        multiple(roi(item.promisedValueUsd, funding !== null, funding ?? 0)),
+        text(item.gatingConstraint ?? item.controlBlocker),
+        text(item.financeStatus),
+      ];
+    });
 }
 
 function toolRows(view: TowerCurrentView): string[][] {
@@ -235,38 +254,89 @@ function distributionRows(
   view: TowerCurrentView,
   groupBy: (item: TowerCurrentAiItem) => string | null | undefined,
 ): string[][] {
-  const groups = new Map<string, { count: number; spend: number; spendLoaded: number; value: number; missingValue: number }>();
+  const groups = new Map<string, {
+    count: number;
+    funding: number;
+    fundingLoaded: number;
+    toolCost: number;
+    toolCostLoaded: number;
+    unknownBasisCount: number;
+    value: number;
+    missingValue: number;
+  }>();
   for (const item of view.aiPortfolio) {
     const key = groupBy(item) ?? "Not loaded";
-    const current = groups.get(key) ?? { count: 0, spend: 0, spendLoaded: 0, value: 0, missingValue: 0 };
+    const current = groups.get(key) ?? {
+      count: 0,
+      funding: 0,
+      fundingLoaded: 0,
+      toolCost: 0,
+      toolCostLoaded: 0,
+      unknownBasisCount: 0,
+      value: 0,
+      missingValue: 0,
+    };
+    const funding = approvedFundingUsd(item);
+    const toolCost = annualizedToolCostUsd(item);
     groups.set(key, {
       count: current.count + 1,
-      spend: current.spend + (itemSpendLoaded(item) ? itemSpendUsd(item) : 0),
-      spendLoaded: current.spendLoaded + (itemSpendLoaded(item) ? 1 : 0),
+      funding: current.funding + (funding ?? 0),
+      fundingLoaded: current.fundingLoaded + (funding !== null ? 1 : 0),
+      toolCost: current.toolCost + (toolCost ?? 0),
+      toolCostLoaded: current.toolCostLoaded + (toolCost !== null ? 1 : 0),
+      unknownBasisCount: current.unknownBasisCount +
+        (funding === null && toolCost === null ? 1 : 0),
       value: current.value + (loadedNumber(item.promisedValueUsd) ? (item.promisedValueUsd as number) : 0),
       missingValue: current.missingValue + (loadedNumber(item.promisedValueUsd) ? 0 : 1),
     });
   }
   return [...groups.entries()]
-    .sort((a, b) => b[1].spend - a[1].spend)
+    .sort((a, b) => b[1].funding - a[1].funding)
     .map(([name, row]) => [
       name,
       String(row.count),
-      row.spendLoaded === 0 ? "Not loaded" : money(row.spend),
+      groupedMoney(row.funding, row.fundingLoaded, row.unknownBasisCount),
+      groupedMoney(row.toolCost, row.toolCostLoaded, row.unknownBasisCount),
       row.missingValue === row.count ? "Not loaded" : money(row.value),
       row.missingValue === 0 ? "Complete" : `${row.missingValue} missing value`,
     ]);
 }
 
 function constraintRows(view: TowerCurrentView): string[][] {
-  const groups = new Map<string, { count: number; spend: number; spendLoaded: number; value: number; valueLoaded: number; examples: string[] }>();
+  const groups = new Map<string, {
+    count: number;
+    funding: number;
+    fundingLoaded: number;
+    toolCost: number;
+    toolCostLoaded: number;
+    unknownBasisCount: number;
+    value: number;
+    valueLoaded: number;
+    examples: string[];
+  }>();
   for (const item of view.aiPortfolio) {
     const blocker = item.gatingConstraint ?? item.controlBlocker ?? "Not loaded";
-    const current = groups.get(blocker) ?? { count: 0, spend: 0, spendLoaded: 0, value: 0, valueLoaded: 0, examples: [] };
+    const current = groups.get(blocker) ?? {
+      count: 0,
+      funding: 0,
+      fundingLoaded: 0,
+      toolCost: 0,
+      toolCostLoaded: 0,
+      unknownBasisCount: 0,
+      value: 0,
+      valueLoaded: 0,
+      examples: [],
+    };
+    const funding = approvedFundingUsd(item);
+    const toolCost = annualizedToolCostUsd(item);
     groups.set(blocker, {
       count: current.count + 1,
-      spend: current.spend + (itemSpendLoaded(item) ? itemSpendUsd(item) : 0),
-      spendLoaded: current.spendLoaded + (itemSpendLoaded(item) ? 1 : 0),
+      funding: current.funding + (funding ?? 0),
+      fundingLoaded: current.fundingLoaded + (funding !== null ? 1 : 0),
+      toolCost: current.toolCost + (toolCost ?? 0),
+      toolCostLoaded: current.toolCostLoaded + (toolCost !== null ? 1 : 0),
+      unknownBasisCount: current.unknownBasisCount +
+        (funding === null && toolCost === null ? 1 : 0),
       value: current.value + (loadedNumber(item.promisedValueUsd) ? (item.promisedValueUsd as number) : 0),
       valueLoaded: current.valueLoaded + (loadedNumber(item.promisedValueUsd) ? 1 : 0),
       examples: current.examples.length >= 2 ? current.examples : [...current.examples, item.itemName],
@@ -278,7 +348,8 @@ function constraintRows(view: TowerCurrentView): string[][] {
     .map(([name, row]) => [
       name,
       String(row.count),
-      row.spendLoaded === 0 ? "Not loaded" : money(row.spend),
+      groupedMoney(row.funding, row.fundingLoaded, row.unknownBasisCount),
+      groupedMoney(row.toolCost, row.toolCostLoaded, row.unknownBasisCount),
       row.valueLoaded === 0 ? "Not loaded" : money(row.value),
       row.examples.join("; "),
     ]);
@@ -286,13 +357,13 @@ function constraintRows(view: TowerCurrentView): string[][] {
 
 function foundationRows(view: TowerCurrentView): string[][] {
   return view.aiPortfolio
-    .filter(isFoundation)
-    .sort((a, b) => itemSpendUsd(b) - itemSpendUsd(a))
+    .filter((item) => isFoundation(item) && !hasToolRolloutSource(item))
+    .sort((a, b) => (approvedFundingUsd(b) ?? -1) - (approvedFundingUsd(a) ?? -1))
     .slice(0, 12)
     .map((item) => [
       item.itemName,
       text(item.aiSpendCategory ?? item.itemKind),
-      itemSpendLoaded(item) ? money(itemSpendUsd(item)) : "Not loaded",
+      money(approvedFundingUsd(item)),
       item.costToBuildLowUsd === null && item.costToBuildHighUsd === null
         ? "Not loaded"
         : `${item.costToBuildLowUsd === null || item.costToBuildLowUsd === undefined ? "?" : money(item.costToBuildLowUsd)}-${item.costToBuildHighUsd === null || item.costToBuildHighUsd === undefined ? "?" : money(item.costToBuildHighUsd)}`,
@@ -323,9 +394,10 @@ function selectedEntityTables(
         ["Type", text(ai.businessValueType ?? ai.itemKind)],
         ["Domain", text(ai.aiSpendCategory)],
         ["Vendor", text(ai.vendorName)],
-        ["Investment", itemSpendLoaded(ai) ? money(itemSpendUsd(ai)) : "Not loaded"],
-        ["Sponsor-stated value", loadedNumber(ai.promisedValueUsd) ? money(ai.promisedValueUsd) : "Not loaded"],
-        ["Sponsor ROI", multiple(roi(ai.promisedValueUsd, itemSpendLoaded(ai), itemSpendUsd(ai)))],
+        ["Approved funding", money(approvedFundingUsd(ai))],
+        ["Yearly tool cost", money(annualizedToolCostUsd(ai))],
+        ["Sponsor's yearly value estimate", loadedNumber(ai.promisedValueUsd) ? money(ai.promisedValueUsd) : "Not loaded"],
+        ["Projected yearly benefit per $1 of approved funding", multiple(roi(ai.promisedValueUsd, approvedFundingUsd(ai) !== null, approvedFundingUsd(ai) ?? 0))],
         ["Gating constraint", text(ai.gatingConstraint)],
         ["Control blocker", text(ai.controlBlocker)],
         ["Finance status", text(ai.financeStatus)],
@@ -359,10 +431,10 @@ function selectedEntityTables(
       table("tower_selected_program_detail", `Selected case: ${program.programName}`, ["Field", "Value"], [
         ["Owner", text(program.ownerRole)],
         ["Domain", text(program.domainName)],
-        ["Investment", money(program.fundedAmount ?? program.approvedFundingUsd)],
+        ["Funding recorded in Tower", money(program.fundedAmount ?? program.approvedFundingUsd)],
         ["Promised value", loadedNumber(program.promisedValueUsd) ? money(program.promisedValueUsd) : "Not loaded"],
         ["Usage supported", money(program.knownSupportedValue)],
-        ["Finance approved", money(program.financeValidatedValueUsd)],
+        ["Value checked by Finance", money(program.financeValidatedValueUsd)],
         ["Next gate", text(program.nextGate)],
         ["Blocker", text(program.decisionRationale)],
       ]),
@@ -403,7 +475,7 @@ function selectedEntityTables(
       ["Decision", text(action.blockedDecision ?? action.actionLane)],
       ["Why", text(action.actionBody)],
       ["Evidence required", text(action.evidenceRequirement)],
-      ["Value affected", money(action.amountExposed)],
+      ["Value affected", "Not verified until the amount and reporting period are reconciled"],
       ["Due", text(action.dueWindow ?? action.dueDate)],
       ["Handoff", text(action.moduleHandoff ?? action.handoffModule)],
     ]),
@@ -426,14 +498,15 @@ function answerFromIntent(
   }
 
   const command = view.command;
+  const reportingPeriod = command.asOfPeriod
+    ? `in loaded months as of ${command.asOfPeriod}`
+    : "in loaded months (date not loaded)";
   const pageLead = args.pageContext?.activeTabLabel
     ? `I am using the ${args.pageContext.activeTabLabel}${args.pageContext.activeViewLabel ? ` / ${args.pageContext.activeViewLabel}` : ""} context. `
     : "";
   const metricCards = [
-    { label: "Technology budget", value: money(command.totalItBudgetFy26) },
-    { label: "AI-tagged spend", value: money(command.aiTaggedSpendFy26NonAdditive) },
     { label: "Value claims", value: count(command.valueClaimCount) },
-    { label: "Claimable value", value: money(command.realizedValueYtdAllowed) },
+    { label: "Value cleared for reporting", value: money(command.realizedValueYtdAllowed) },
   ];
 
   if (intent === "selected") {
@@ -451,12 +524,12 @@ function answerFromIntent(
   if (intent === "top_investments") {
     const investments = table(
       "tower_top_ai_investments",
-      "Top AI Investments And Sponsor ROI",
-      ["Initiative", "Value type", "Domain", "Investment", "Sponsor-stated value", "Sponsor ROI", "Constraint", "Finance status"],
+      "AI Cases By Approved Funding And Projected Yearly Benefit",
+      ["Initiative", "Value type", "Domain", "Approved funding", "Yearly tool cost", "Sponsor's yearly value estimate", "Projected yearly benefit per $1 of approved funding", "Constraint", "Finance review"],
       topInvestmentRows(view),
     );
     return {
-      answer: `${pageLead}The useful CXO view is investment next to sponsor-stated value and proof state. Sponsor ROI here means promised value divided by loaded investment; it is not realized value and it is not finance-attested unless the finance status says so.`,
+      answer: `${pageLead}These cases are ranked by recorded approved funding. Yearly tool cost is shown separately. The projected yearly benefit per $1 of approved funding divides the sponsor's yearly value estimate by approved funding. It does not show value already delivered or checked by Finance.`,
       tables: [investments],
       metricCards,
       gaps: view.requiredFieldGaps.slice(0, 5).map((gap) => gap.remediationAction),
@@ -491,7 +564,7 @@ function answerFromIntent(
       gaps: [
         "Tool productivity baseline by role or workflow.",
         "Monthly usage-to-value mapping for linked business cases.",
-        "Finance-approved calculation method before claiming savings.",
+        "Calculation method checked by Finance before reporting savings.",
       ],
     };
   }
@@ -500,17 +573,17 @@ function answerFromIntent(
     const byValueType = table(
       "tower_distribution_by_value_type",
       "AI Initiatives By Value Type",
-      ["Value type", "Rows", "Investment", "Sponsor-stated value", "Value completeness"],
+      ["Value type", "Rows", "Approved funding", "Yearly tool cost", "Sponsor's yearly value estimate", "Value completeness"],
       distributionRows(view, (item) => item.businessValueType),
     );
     const byDomain = table(
       "tower_distribution_by_domain",
       "AI Initiatives By Domain",
-      ["Domain", "Rows", "Investment", "Sponsor-stated value", "Value completeness"],
+      ["Domain", "Rows", "Approved funding", "Yearly tool cost", "Sponsor's yearly value estimate", "Value completeness"],
       distributionRows(view, (item) => item.aiSpendCategory),
     );
     return {
-      answer: `${pageLead}The portfolio is tagged by value type and domain where those fields are loaded. Rows with missing tags stay visible as Not loaded instead of being forced into a category.`,
+      answer: `${pageLead}The portfolio is grouped by loaded value type and domain. Approved funding and yearly tool cost remain separate. Missing tags and amounts stay visible as Not loaded.`,
       tables: [byValueType, byDomain],
       metricCards,
       gaps: view.requiredFieldGaps.slice(0, 5).map((gap) => gap.remediationAction),
@@ -521,11 +594,11 @@ function answerFromIntent(
     const constraints = table(
       "tower_constraints",
       "Constraints Blocking AI Value",
-      ["Constraint", "Rows", "Investment", "Sponsor-stated value", "Examples"],
+      ["Constraint", "Rows", "Approved funding", "Yearly tool cost", "Sponsor's yearly value estimate", "Examples"],
       constraintRows(view),
     );
     return {
-      answer: `${pageLead}Constraints explain why adoption has not become claimable value. A control blocker such as SOX evidence, DLP policy, workflow telemetry, or clinical safety review means a named proof/control condition must clear before leadership can treat the row as validated.`,
+      answer: `${pageLead}Constraints explain why adoption has not become value cleared for reporting. A control blocker requires a named owner to provide evidence before the affected value can be reported.`,
       tables: [constraints],
       metricCards,
       gaps: view.requiredFieldGaps
@@ -538,7 +611,7 @@ function answerFromIntent(
     const foundations = table(
       "tower_foundations",
       "Foundation Enablers For AI Delivery",
-      ["Foundation", "Type", "Investment", "Cost to build", "Sponsor-stated value", "Control blocker"],
+      ["Foundation", "Type", "Approved funding", "Cost to build", "Sponsor's yearly value estimate", "Control blocker"],
       foundationRows(view),
     );
     return {
@@ -556,15 +629,28 @@ function answerFromIntent(
       "tower_value_funnel",
       "Current Tower Value Funnel",
       ["Stage", "Value", "Conversion", "Caveat"],
-      view.valueFunnel.slice(0, 6).map((stage) => [
-        stage.stageLabel,
-        money(stage.valueNumeric),
-        stage.conversionRatio === null ? "n/a" : `${Math.round(stage.conversionRatio * 100)}%`,
-        compactText(stage.caveat),
-      ]),
+      view.valueFunnel.slice(0, 6).map((stage) => {
+        const blockedAmount = stage.stageKey === "blocked" || stage.stageKey === "blocked_value";
+        return [
+          stage.stageKey === "claimable" || stage.stageKey === "board_claimable"
+            ? "Cleared for reporting"
+            : stage.stageLabel,
+          blockedAmount
+            ? "Not comparable"
+            : stage.stageKey === "usage_supported" && stage.valueNumeric === null
+              ? "Not measured"
+              : money(stage.valueNumeric),
+          blockedAmount || stage.conversionRatio === null
+            ? "n/a"
+            : `${Math.round(stage.conversionRatio * 100)}%`,
+          blockedAmount
+            ? "Check the amount basis and reporting period before quoting this gap."
+            : compactText(stage.caveat),
+        ];
+      }),
     );
     return {
-      answer: `${pageLead}${args.tenantName} has ${count(command.valueClaimCount)} governed Tower value claims in the current layer. Claimable value remains ${money(command.realizedValueYtdAllowed)} because Tower requires linked baseline, target, actual, and attestation evidence before a claim can move into the claimable state.`,
+      answer: `${pageLead}${args.tenantName} has ${count(command.valueClaimCount)} Tower value claims in the current read model. Value cleared for reporting ${reportingPeriod} is ${money(command.realizedValueYtdAllowed)}. A claim needs a starting measure, a target, an actual result, and owner and Finance review before it can be reported.`,
       tables: [funnel],
       metricCards,
       gaps: view.requiredFieldGaps.slice(0, 5).map((gap) => gap.remediationAction),
@@ -575,21 +661,22 @@ function answerFromIntent(
     const ai = table(
       "tower_ai_portfolio",
       "AI Usage And Value Evidence",
-      ["Tool / agent", "Usage", "Spend", "Gate"],
+      ["Tool / agent", "Usage", "Approved funding", "Yearly tool cost", "Gate"],
       view.aiPortfolio.slice(0, 5).map((item) => [
         item.itemName,
         item.usageActual === null ? "Not loaded" : `${item.usageActual} ${item.usageMetric ?? ""}`.trim(),
-        itemSpendLoaded(item) ? money(itemSpendUsd(item)) : "Not loaded",
+        money(approvedFundingUsd(item)),
+        money(annualizedToolCostUsd(item)),
         item.valueClaimStatus,
       ]),
     );
     return {
-      answer: `${pageLead}${args.tenantName} can show AI adoption and estimated use cost from the current Tower layer, but productivity improvement is not established until before/after engineering, service, HR, or finance outcome metrics are linked and attested. Tower should treat Copilot, Claude Code, and workflow-agent rows as usage evidence first, not value proof.`,
+      answer: `${pageLead}${args.tenantName} has AI usage records and item amounts where their basis is loaded. Approved funding and yearly tool cost are separate. Productivity improvement requires before and after outcome measures and Finance review.`,
       tables: [ai],
       metricCards,
       gaps: [
         "Before/after productivity or service outcome baseline.",
-        "Finance-attested calculated value.",
+        "Calculated value checked by Finance.",
         "Business owner attestation for the claimed outcome.",
       ],
     };
@@ -640,18 +727,22 @@ function answerFromIntent(
     "Budget And Portfolio Posture",
     ["Measure", "Value", "Interpretation"],
     [
-      ["Technology budget", money(command.totalItBudgetFy26), "Current Tower budget envelope"],
-      ["Run budget", money(command.runBudgetFy26), "Run / keep-the-lights-on posture"],
-      ["Change budget", money(command.changeBudgetFy26), "Transformation and investment envelope"],
-      ["AI-tagged spend", money(command.aiTaggedSpendFy26NonAdditive), "Non-additive AI lens"],
-      ["Claimable value", money(command.realizedValueYtdAllowed), "Only value that passed Tower's claim gate"],
+      ["Technology budget", "Not verified", "Active intake reconciliation is not available in this answer"],
+      ["Run budget", "Not verified", "Requires the same source reconciliation"],
+      ["Change budget", "Not verified", "Requires the same source reconciliation"],
+      ["Combined AI amount", "Not comparable", "Approved funding and yearly tool cost have different bases"],
+      ["Value cleared for reporting", money(command.realizedValueYtdAllowed), reportingPeriod],
     ],
   );
   return {
-    answer: `${pageLead}${args.tenantName}'s Tower current state is ${money(command.totalItBudgetFy26)} of technology budget with ${money(command.aiTaggedSpendFy26NonAdditive)} AI-tagged spend. The important point is not the spend alone: Tower currently separates funded activity, usage evidence, finance validation, and claimable value so leadership does not mistake adoption for outcome proof.`,
+    answer: `${pageLead}Tower has budget fields, but this answer cannot verify their active intake reconciliation, so it cannot quote the budget. The combined AI amount also lacks one consistent basis: approved funding and yearly tool cost must be reviewed separately. Value cleared for reporting ${reportingPeriod} is ${money(command.realizedValueYtdAllowed)}.`,
     tables: [budget],
     metricCards,
-    gaps: view.requiredFieldGaps.slice(0, 5).map((gap) => gap.remediationAction),
+    gaps: [
+      "Reconcile budget fields to active intake before quoting them.",
+      "Classify each AI amount as approved funding or yearly tool cost before reporting totals.",
+      ...view.requiredFieldGaps.slice(0, 5).map((gap) => gap.remediationAction),
+    ],
   };
 }
 
@@ -671,14 +762,14 @@ function nextActionForIntent(
         ? "Review the selected item's loaded owner, evidence, and gate with the accountable decision maker before changing its status."
         : "Review the claim states and proof gaps with Finance before reallocating funding.";
     case "top_investments":
-      return "Have Finance validate each proposed return and its investment basis before ranking cases for funding.";
+      return "Have Finance review each yearly benefit estimate and its funding basis before ranking cases.";
     case "tools":
     case "ai":
       return "For rollouts without linked outcome proof, collect a before-and-after workflow baseline and obtain Finance approval before claiming savings.";
     case "distribution":
       return "Validate value-type and domain tags with initiative owners before using this breakdown to redirect funding.";
     case "constraints":
-      return "Ask the control owner to document clearance evidence before treating affected value as claimable.";
+      return "Ask the control owner to document clearance evidence before reporting the affected value.";
     case "foundations":
       return "Link each foundation to the business cases it enables before attributing any benefit.";
     case "value":

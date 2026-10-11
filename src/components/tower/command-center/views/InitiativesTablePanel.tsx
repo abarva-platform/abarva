@@ -20,7 +20,7 @@ import styles from "../TowerCommandCenter.module.css";
 import { isBusinessCase, unclassifiedPortfolioCount } from "./portfolio-kind";
 
 type FilterKey = "all" | TowerAiKind;
-type SortKey = "name" | "valueType" | "domain" | "constraint" | "investment" | "value" | "claimable";
+type SortKey = "name" | "valueType" | "constraint" | "investment" | "value" | "claimable";
 
 const KIND_LABEL: Record<TowerAiKind, string> = {
   funded: "Funded",
@@ -42,7 +42,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const HEADER: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(240px,2.2fr) minmax(128px,0.95fr) minmax(128px,1fr) minmax(150px,1.1fr) 98px 116px 112px 92px",
+  gridTemplateColumns: "minmax(240px,2.2fr) minmax(128px,0.95fr) minmax(150px,1.1fr) 128px 116px 112px 92px",
   gap: 12,
   padding: "10px 22px",
   borderBottom: "1px solid var(--canon-border-strong)",
@@ -87,15 +87,14 @@ function financeActualLabel(item: TowerAiView): string {
     item.valueObservationMonths.some((month) =>
       /validat/i.test(month.validationState ?? ""),
     );
-  return hasValidationRecord ? formatUsdM(0) : "Not loaded";
+  return hasValidationRecord ? "Amount not shown" : "Not loaded";
 }
 
 function sortValue(item: TowerAiView, key: SortKey): number | string {
   if (key === "name") return item.name;
   if (key === "valueType") return item.businessValueType ?? "";
-  if (key === "domain") return item.category ?? "";
   if (key === "constraint") return item.gatingConstraint ?? "";
-  if (key === "investment") return item.aiSpendUsd;
+  if (key === "investment") return item.aiAmountBasis === "approved_funding" ? item.aiSpendUsd : -1;
   if (key === "value") return item.promisedBenefitLoaded ? item.promisedUsd : -1;
   return item.financeValidatedUsd || -1;
 }
@@ -138,7 +137,7 @@ export function InitiativesTablePanel({
     else {
       setSort(next);
       setDesc(
-        next !== "name" && next !== "domain" && next !== "valueType" && next !== "constraint",
+        next !== "name" && next !== "valueType" && next !== "constraint",
       );
     }
   }
@@ -181,11 +180,10 @@ export function InitiativesTablePanel({
           {[
             ["name", "Initiative"],
             ["valueType", "Value type"],
-            ["domain", "AI spend category"],
             ["constraint", "Constraint"],
-            ["investment", "Invested"],
-            ["value", "Sponsor-stated"],
-            ["claimable", "Finance validated"],
+            ["investment", "Approved AI funding"],
+            ["value", "Projected yearly benefit"],
+            ["claimable", "Finance validated in loaded months"],
             ["detail", "Detail"],
           ].map(([key, label], i) => (
             <button
@@ -230,7 +228,6 @@ export function InitiativesTablePanel({
               </span>
             </span>
             <span style={{ color: "var(--canon-gray-700)", minWidth: 0 }}>{humanize(item.businessValueType)}</span>
-            <span style={{ color: "var(--canon-gray-500)", minWidth: 0 }}>{item.category ?? "Not loaded"}</span>
             <span
               className={styles.fieldWithHelp}
               style={{ color: item.gatingConstraint ? "var(--canon-gray-700)" : "var(--canon-gray-500)", minWidth: 0 }}
@@ -242,7 +239,7 @@ export function InitiativesTablePanel({
                 aria-label={`Constraint help: ${gatingConstraintExplanation(item.gatingConstraint)}`}
               />
             </span>
-            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{formatUsdM(item.aiSpendUsd)}</span>
+            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{item.aiAmountBasis === "approved_funding" ? formatUsdM(item.aiSpendUsd) : "Not verified"}</span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{valueLabel(item)}</span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
               {financeActualLabel(item)}

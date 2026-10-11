@@ -35,6 +35,8 @@ import {
 import styles from "../TowerCommandCenter.module.css";
 import { ChartTooltip, HEX, toM, withSliver } from "../charts/chart-kit";
 import { cx } from "../primitives";
+import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
+import { byEvidencePriority, evidenceGapAmount } from "./evidence-gap-amount";
 
 type Tone = "teal" | "amber" | "red" | "gray";
 type AiLens = "cost" | "risk" | "adoption" | "table";
@@ -42,6 +44,8 @@ type CostFinding = {
   id: string;
   badge: string;
   amountUsd: number | null;
+  amountLabel: string;
+  amountText: string;
   title: string;
   body: string;
   actionId: string | null;
@@ -54,6 +58,7 @@ type CampaignRow = {
   tasks: number;
   unit: string;
   valueUsd: number | null;
+  valueLabel: string;
   due: string;
   tone: Tone;
   action: TowerActionView | null;
@@ -79,6 +84,12 @@ function formatOptionalUsdM(value: number | null | undefined): string {
   return typeof value === "number" && Number.isFinite(value)
     ? formatUsdM(value)
     : "Not loaded";
+}
+
+function usageValueLabel(summary: TowerCommandCenterView["summary"]): string {
+  if (summary.usageSupportedValueCoverage === "none") return "Not measured";
+  const value = formatUsdM(summary.usageSupportedUsd);
+  return summary.usageSupportedValueCoverage === "partial" ? `${value} (partial)` : value;
 }
 
 function humanizeLabel(value: string | null | undefined): string {
@@ -124,10 +135,10 @@ function contractSummaryLine(view: TowerCommandCenterView) {
   const claimCount = valueClaimCount(view);
   return (
     <>
-      {formatLoadedUsdM(s.approvedInvestmentUsd)} approved investment in Tower projection ·{" "}
-      <strong>{claimCount > 0 ? formatUsdM(s.claimableUsd) : "Not loaded"} board-claimable YTD</strong> ·{" "}
+      {formatLoadedUsdM(s.approvedInvestmentUsd)} in approved project funding ·{" "}
+      <strong>{claimCount > 0 ? formatUsdM(s.claimableUsd) : "Not loaded"} cleared for reporting in loaded months</strong> ·{" "}
       {claimCount > 0
-        ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} claims still need proof`
+        ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} claims not cleared for reporting`
         : "Value claims not loaded"}
     </>
   );
@@ -148,8 +159,7 @@ function ContractMasthead({ view }: { view: TowerCommandCenterView }) {
         <span>
           {valueClaimCount(view) > 0 ? (
             <>
-              <b>{formatCount(s.usageSupportedClaimCount)}</b>/
-              {formatCount(valueClaimCount(view))} usage-supported
+              <b>{formatCount(s.usageSupportedClaimCount)}</b> claims with usage evidence
             </>
           ) : (
             "Usage support not loaded"
@@ -200,36 +210,41 @@ function topPrograms(
   return [...view.programs]
     .sort(
       (a, b) =>
-        b.blockedUsd - a.blockedUsd || b.valueAtStakeUsd - a.valueAtStakeUsd,
+        (b.promisedBenefitLoaded ? b.promisedUsd : -1) -
+          (a.promisedBenefitLoaded ? a.promisedUsd : -1) ||
+        a.name.localeCompare(b.name),
     )
     .slice(0, count);
 }
 
 function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
   const s = view.summary;
+  const caseFunding = approvedAiCaseFunding(view.allInitiatives);
   const groups = [
     {
-      title: "Investment",
-      note: "Reviewed project capital and AI-attributed spend are investment measures, not benefit outcomes.",
+      title: "Approved funding",
+      note: "AI funding is part of the project total. Neither amount shows money already spent or benefits earned.",
       rows: [
-        ["Reviewed investment", formatLoadedUsdM(s.approvedInvestmentUsd)],
-        ["AI spend tracked", formatUsdM(s.aiAttributedInitiativeSpendUsd)],
+        ["Approved project funding", formatLoadedUsdM(s.approvedInvestmentUsd)],
+        ["Approved AI case funding within it", caseFunding === null ? "Not loaded" : formatUsdM(caseFunding)],
       ],
     },
     {
       title: "Benefit and adoption",
-      note: "The assertion is annual. Usage-linked claim value has no reporting period in this summary and is not a measured outcome.",
+      note: s.usageSupportedValueCoverage === "partial"
+        ? "The yearly estimate is a plan. The usage-linked amount covers measured rows only; other claims have no measured dollar amount."
+        : "The yearly estimate is a plan. A usage-linked dollar amount is shown only when it has an independent measurement.",
       rows: [
-        ["Promised annual value", s.promisedBenefitLoaded ? formatUsdM(s.promisedUsd) : "Not loaded"],
-        ["Usage-linked claim value", s.valueClaimCount > 0 ? formatUsdM(s.usageSupportedUsd) : "Not loaded"],
+        ["Projected yearly benefit", s.promisedBenefitLoaded ? formatUsdM(s.promisedUsd) : "Not loaded"],
+        ["Usage-linked claim value", s.valueClaimCount > 0 ? usageValueLabel(s) : "Not loaded"],
       ],
     },
     {
-      title: "Finance review · YTD",
-      note: "Validated value may still be blocked; only the claimable amount has cleared the board gate.",
+      title: "Finance review · loaded months",
+      note: "Finance review and permission to report are separate steps. Only the cleared amount can be presented as an achieved benefit.",
       rows: [
-        ["Finance validated YTD", s.valueClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "Not loaded"],
-        ["Board-claimable YTD", s.valueClaimCount > 0 ? formatUsdM(s.claimableUsd) : "Not loaded"],
+        ["Finance validated", s.valueClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "Not loaded"],
+        ["Cleared for reporting", s.valueClaimCount > 0 ? formatUsdM(s.claimableUsd) : "Not loaded"],
       ],
     },
   ];
@@ -358,7 +373,7 @@ function claimLedgerRows(view: TowerCommandCenterView) {
       tone: s.outcomeMeasuredClaimCount ? ("amber" as Tone) : ("red" as Tone),
     },
     {
-      label: "Usage supported",
+      label: "Usage evidence recorded",
       count: s.usageSupportedClaimCount,
       pct: (s.usageSupportedClaimCount / total) * 100,
       tone: s.usageSupportedClaimCount ? ("amber" as Tone) : ("red" as Tone),
@@ -429,42 +444,42 @@ export function ValueProofContractView({
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
       <SectionTitle
-        title="Value proof"
-        subtitle={`${valueClaimCount(view)} claims · proof funnel`}
+        title="Results and proof"
+        subtitle={`${valueClaimCount(view)} claims · evidence on record; requirements differ by claim type`}
       />
 
       <section className={styles.valueProofGrid}>
         <article className={styles.contractCard}>
           {cardTitle(
             "Portfolio amounts by measure",
-            "Investment, planning value and YTD validation have different bases",
+            "Approved funding, yearly plans and loaded-month results are different measures",
           )}
           <div className={styles.gateChart}>
             <ValueGateChart view={view} />
           </div>
           <p className={styles.contractCallout}>
-            Usage-linked claim value is evidence of adoption, not a measured
-            financial outcome. Investment and annual plans do not form a
-            conversion rate with year-to-date Finance amounts.
+            A case can have usage evidence without a measured dollar benefit.
+            Approved funding and yearly plans cannot be divided by the value
+            cleared in the loaded months to show a success rate.
           </p>
         </article>
 
         <article className={styles.contractCard}>
           {cardTitle(
-            "Loaded quarterly trajectory",
+            "Quarterly plan and recorded results",
             `${formatCount(view.valueTrajectory.length)} quarter${view.valueTrajectory.length === 1 ? "" : "s"} loaded · ${s.sourceFiles[0] ?? s.sourceStandard}`,
           )}
           <div className={styles.trajectoryStats}>
             <div>
-              <span>Asserted annual plan</span>
-              <strong>{formatUsdM(s.promisedUsd)}</strong>
+              <span>Projected yearly benefit</span>
+              <strong>{s.promisedBenefitLoaded ? formatUsdM(s.promisedUsd) : "Not loaded"}</strong>
             </div>
             <div>
-              <span>Recorded P&amp;L in loaded quarters</span>
+              <span>Recorded financial result in loaded quarters</span>
               <strong>{formatLoadedUsdM(recordedPAndL)}</strong>
             </div>
             <div>
-              <span>Outcome-measured claims</span>
+              <span>Value records with measured results</span>
               <strong>{formatCount(s.outcomeMeasuredClaimCount)} / {formatCount(s.valueClaimCount)}</strong>
             </div>
           </div>
@@ -479,17 +494,22 @@ export function ValueProofContractView({
           )}
           <p className={styles.contractCallout}>
             {recordedPAndL === null
-              ? "No P&L actual is recorded in the loaded quarters. Gray bars show only the loaded planning path."
-              : "Red line shows recorded P&L only for the loaded quarters; gray bars show their planning path. This is not a complete eight-quarter trend unless eight quarters are present."}
+              ? "No actual financial result is recorded in the loaded quarters. Gray bars show only the plan."
+              : "The red line shows actual financial results for the loaded quarters; gray bars show the plan. This is a complete eight-quarter view only when all eight quarters are loaded."}
           </p>
         </article>
 
         <article className={cx(styles.contractCard, styles.claimCard)}>
           {cardTitle(
-            "Claim ledger",
+            "Evidence recorded for each value claim",
             `What each of the ${formatCount(valueClaimCount(view))} has on the record`,
           )}
           <ClaimLedgerChart view={view} />
+          <p className={styles.contractCallout}>
+            These counts show what is recorded across all claims. An AI benefit,
+            a sourcing opportunity, and a foundation investment need different
+            proof; a missing usage record is not automatically a gap for every claim.
+          </p>
         </article>
 
         {/*
@@ -503,7 +523,7 @@ export function ValueProofContractView({
         */}
         <article className={styles.contractCard}>
           {cardTitle(
-            "Value case lanes",
+            "Cases awaiting a decision",
             `Top ${formatCount(programs.length)} of ${formatCount(view.programs.length)}`,
           )}
           <div className={styles.decisionLaneTableWrap}>
@@ -512,8 +532,8 @@ export function ValueProofContractView({
                 <tr>
                   <th>#</th>
                   <th>Case</th>
-                  <th>At stake</th>
-                  <th>Readiness</th>
+                  <th>Projected yearly benefit</th>
+                  <th>Proof progress</th>
                 </tr>
               </thead>
               <tbody>
@@ -530,7 +550,7 @@ export function ValueProofContractView({
                       <span>{program.ownerRole ?? "Unassigned owner"}</span>
                     </td>
                     <td>
-                      {formatUsdM(program.blockedUsd)}
+                      {program.promisedBenefitLoaded ? formatUsdM(program.promisedUsd) : "Not loaded"}
                     </td>
                     <td>{formatPct(program.proofMaturityScore)}</td>
                   </tr>
@@ -538,12 +558,15 @@ export function ValueProofContractView({
               </tbody>
             </table>
           </div>
+          <p className={styles.contractCallout}>
+            These are case-level plans, not benefits already earned. They are part of the
+            projected yearly total above, so do not add them to it again.
+          </p>
         </article>
       </section>
 
       <footer className={styles.contractFoot}>
-        {s.tenantName} · adoption, finance validation and claimable value are
-        separate gates
+        {s.tenantName} · tool use, Finance review, and permission to report a benefit are separate steps
       </footer>
     </div>
   );
@@ -554,50 +577,31 @@ function spendRows(view: TowerCommandCenterView) {
     string,
     { label: string; valueUsd: number; kind: TowerAiKind; count: number }
   >();
-  for (const row of view.spendLens) {
-    const key = row.category || AI_KIND_LABEL[row.kind];
+  // A tool's annualized license cost is not approved project funding.
+  const casesWithFunding = view.allInitiatives.filter(
+    (item) => isBusinessCase(item) && item.aiAmountBasis === "approved_funding",
+  );
+  for (const item of casesWithFunding) {
+    const key = item.category || "Type not recorded";
     const current = byKey.get(key) ?? {
       label: key,
       valueUsd: 0,
-      kind: row.kind,
+      kind: item.kind,
       count: 0,
     };
-    current.valueUsd += row.valueUsd;
+    current.valueUsd += item.aiSpendUsd;
     current.count += 1;
     byKey.set(key, current);
   }
-  if (byKey.size === 0) {
-    for (const item of view.allInitiatives) {
-      const key = item.category || item.vendor || AI_KIND_LABEL[item.kind];
-      const current = byKey.get(key) ?? {
-        label: key,
-        valueUsd: 0,
-        kind: item.kind,
-        count: 0,
-      };
-      current.valueUsd += item.aiSpendUsd;
-      current.count += 1;
-      byKey.set(key, current);
-    }
-  }
-  const rows = [...byKey.values()]
-    .sort((a, b) => b.valueUsd - a.valueUsd)
-    .slice(0, 5);
-  const remainder = Math.max(
-    0,
-    view.allInitiatives.length - rows.reduce((sum, row) => sum + row.count, 0),
-  );
-  const restUsd = Math.max(
-    0,
-    view.summary.aiAttributedInitiativeSpendUsd -
-      rows.reduce((sum, row) => sum + row.valueUsd, 0),
-  );
-  if (remainder > 0 || restUsd > 0) {
+  const sorted = [...byKey.values()].sort((a, b) => b.valueUsd - a.valueUsd);
+  const rows = sorted.slice(0, 5);
+  const remaining = sorted.slice(5);
+  if (remaining.length > 0) {
     rows.push({
-      label: `${formatCount(remainder || view.allInitiatives.length)} assets`,
-      valueUsd: restUsd,
+      label: `${formatCount(remaining.reduce((sum, row) => sum + row.count, 0))} more cases`,
+      valueUsd: remaining.reduce((sum, row) => sum + row.valueUsd, 0),
       kind: "embedded",
-      count: remainder,
+      count: remaining.reduce((sum, row) => sum + row.count, 0),
     });
   }
   return rows;
@@ -605,6 +609,9 @@ function spendRows(view: TowerCommandCenterView) {
 
 function AiSpendChart({ view }: { view: TowerCommandCenterView }) {
   const rows = spendRows(view);
+  if (rows.length === 0) {
+    return <div className={styles.emptyPanel}>Approved AI case funding is not loaded.</div>;
+  }
   const axisMax = Math.max(...rows.map((row) => toM(row.valueUsd)), 1);
   const data = rows.map((row, index) => ({
     ...row,
@@ -666,9 +673,15 @@ function AiSpendChart({ view }: { view: TowerCommandCenterView }) {
 }
 
 function topAiRows(view: TowerCommandCenterView): TowerAiView[] {
-  return [...view.allInitiatives]
+  return view.allInitiatives.filter((item) => isBusinessCase(item) && item.aiAmountBasis === "approved_funding")
     .sort((a, b) => b.aiSpendUsd - a.aiSpendUsd || a.name.localeCompare(b.name))
     .slice(0, 6);
+}
+
+function aiAmountLabel(item: TowerAiView): string {
+  if (item.aiAmountBasis === "approved_funding") return `${formatUsdM(item.aiSpendUsd)} approved funding`;
+  if (item.aiAmountBasis === "annualized_tool_cost") return `${formatUsdM(item.aiSpendUsd)} yearly tool cost`;
+  return "Amount basis not verified";
 }
 
 function aiBenefitLabel(item: TowerAiView): string {
@@ -725,16 +738,14 @@ function controlOrGateCell(item: TowerAiView): {
 }
 
 function costFindings(view: TowerCommandCenterView): CostFinding[] {
-  const gaps = [...view.gaps].sort(
-    (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
-  );
-  const actions = [...view.actions].sort(
-    (a, b) => b.amountExposedUsd - a.amountExposedUsd,
-  );
+  const gaps = [...view.gaps].sort(byEvidencePriority);
+  const actions = [...view.actions].sort((a, b) => a.sequence - b.sequence);
   const rows: CostFinding[] = actions.slice(0, 4).map((action, index) => ({
     id: `A${action.sequence || index + 1}`,
     badge: action.lane,
     amountUsd: action.amountExposedUsd,
+    amountLabel: action.moduleHandoff?.toLowerCase() === "source" ? "Potential annual saving" : "Projected yearly benefit affected",
+    amountText: formatOptionalUsdM(action.amountExposedUsd),
     title: action.title,
     body: action.why,
     actionId: action.id,
@@ -747,6 +758,8 @@ function costFindings(view: TowerCommandCenterView): CostFinding[] {
       id: `G${rows.length + 1}`,
       badge: gap.priority,
       amountUsd: gap.valueAtStakeUsd,
+      amountLabel: evidenceGapAmount(gap).label,
+      amountText: evidenceGapAmount(gap).value,
       title: gap.blockedDecision || gap.missing,
       body: gap.why,
       actionId: null,
@@ -758,9 +771,11 @@ function costFindings(view: TowerCommandCenterView): CostFinding[] {
     rows.push({
       id: `G${rows.length + 1}`,
       badge: "attribute",
-      amountUsd: view.summary.aiUnallocatedSpendUsd,
-      title: "Unattributed AI spend",
-      body: "The loaded portfolio names AI spend that is not yet attached to a governed initiative or tool row.",
+      amountUsd: null,
+      amountLabel: "Amount",
+      amountText: "Not loaded",
+      title: "AI amount needs a source check",
+      body: "The summary and the asset rows do not reconcile on the same basis. Check which amounts are approved funding and which are yearly tool costs before showing a difference.",
       actionId: null,
       gapId: null,
     });
@@ -771,7 +786,7 @@ function costFindings(view: TowerCommandCenterView): CostFinding[] {
 
 function riskRows(view: TowerCommandCenterView): TowerEvidenceGapView[] {
   return [...view.gaps]
-    .sort((a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0))
+    .sort(byEvidencePriority)
     .slice(0, 20);
 }
 
@@ -797,10 +812,7 @@ function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
 
 function allAiRows(view: TowerCommandCenterView): TowerAiView[] {
   return [...view.allInitiatives].sort(
-    (a, b) =>
-      b.aiSpendUsd - a.aiSpendUsd ||
-      (aiUsageScore(b) ?? -1) - (aiUsageScore(a) ?? -1) ||
-      a.name.localeCompare(b.name),
+    (a, b) => a.name.localeCompare(b.name),
   );
 }
 
@@ -816,6 +828,7 @@ export function AiPortfolioContractView({
   onOpenGap: (id: string) => void;
 }) {
   const s = view.summary;
+  const caseFunding = approvedAiCaseFunding(view.allInitiatives);
   const aiRows = topAiRows(view);
   const costLensFindings = costFindings(view);
   const adoptionLensRows = adoptionRows(view);
@@ -828,7 +841,7 @@ export function AiPortfolioContractView({
     },
     {
       key: "cost" as const,
-      label: "Cost lens",
+      label: "Funding and cost",
       detail: `${formatCount(costLensFindings.length)} findings`,
     },
     {
@@ -848,7 +861,7 @@ export function AiPortfolioContractView({
       <div className={styles.contractModeRow}>
         <SectionTitle
           title="AI initiatives and tool rollouts"
-          subtitle={`${formatCount(s.aiInitiativeCount)} assets · ${formatUsdM(s.aiAttributedInitiativeSpendUsd)} attributed`}
+          subtitle={`${formatCount(s.aiInitiativeCount)} assets · ${caseFunding === null ? "AI case funding incomplete" : `${formatUsdM(caseFunding)} approved AI case funding`}`}
         />
         <div
           className={styles.contractSegments}
@@ -874,13 +887,18 @@ export function AiPortfolioContractView({
         <section className={styles.aiPortfolioGrid}>
           <div className={styles.aiPortfolioLeft}>
             <div className={styles.contractMiniKicker}>
-              Attributed spend by category
+              Approved AI funding by recorded type
             </div>
             <article className={styles.contractCard}>
               <div className={styles.aiSpendChart}>
                 <AiSpendChart view={view} />
               </div>
             </article>
+            <p className={styles.contractCallout}>
+              This chart shows approved funding for classified AI business cases only. Missing
+              case amounts are excluded. Tool costs, when loaded, are yearly costs shown
+              separately in rollout details and the full table.
+            </p>
             <div className={styles.aiSpendList}>
               {aiRows.map((item) => (
                 <button
@@ -893,7 +911,7 @@ export function AiPortfolioContractView({
                     <i>{item.category ?? AI_KIND_LABEL[item.displayBucket]}</i>
                   </span>
                   <span>
-                    <strong>{formatUsdM(item.aiSpendUsd)}</strong>
+                    <strong>{aiAmountLabel(item)}</strong>
                     <i>{aiBenefitLabel(item)}</i>
                   </span>
                 </button>
@@ -903,7 +921,7 @@ export function AiPortfolioContractView({
 
           <div className={styles.aiPortfolioRight}>
             <div className={styles.contractMiniKicker}>
-              Cost findings · evidenced
+              Funding and evidence gaps
             </div>
             <div className={styles.findingStack}>
               {costLensFindings.length > 0 ? (
@@ -920,7 +938,8 @@ export function AiPortfolioContractView({
                     <div className={styles.findingTop}>
                       <span>{finding.id}</span>
                       <b>{finding.badge}</b>
-                      <strong>{formatOptionalUsdM(finding.amountUsd)}</strong>
+                      <strong>{finding.amountText}</strong>
+                      <small>{finding.amountLabel}</small>
                     </div>
                     <h3>{finding.title}</h3>
                     <p>{finding.body}</p>
@@ -938,7 +957,7 @@ export function AiPortfolioContractView({
 
       {lens === "risk" ? (
         <article className={cx(styles.contractCard, styles.contractFullCard)}>
-          {cardTitle("Risk lens", `Top ${formatCount(riskRows(view).length)} of ${formatCount(view.gaps.length)} value evidence gaps by amount at stake`)}
+          {cardTitle("Risk lens", `Top ${formatCount(riskRows(view).length)} of ${formatCount(view.gaps.length)} evidence gaps by priority`)}
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>
               <thead>
@@ -946,7 +965,7 @@ export function AiPortfolioContractView({
                   <th>#</th>
                   <th>Gap</th>
                   <th>Owner</th>
-                  <th>At stake</th>
+                  <th>Amount linked to gap</th>
                   <th>Priority</th>
                 </tr>
               </thead>
@@ -962,9 +981,8 @@ export function AiPortfolioContractView({
                     </td>
                     <td>{gap.owner ?? "Unassigned"}</td>
                     <td>
-                      {gap.valueAtStakeUsd === null
-                        ? "Unknown"
-                        : formatUsdM(gap.valueAtStakeUsd)}
+                      {evidenceGapAmount(gap).value}
+                      <small>{evidenceGapAmount(gap).label}</small>
                     </td>
                     <td>{gap.priority}</td>
                   </tr>
@@ -1033,7 +1051,7 @@ export function AiPortfolioContractView({
                   <th>Initiative / tool</th>
                   <th>Vendor</th>
                   <th>Value type</th>
-                  <th>Spend</th>
+                  <th>Funding or yearly tool cost</th>
                   <th>Benefit</th>
                   <th>Readiness</th>
                   <th>Control / gate</th>
@@ -1059,11 +1077,7 @@ export function AiPortfolioContractView({
                             AI_KIND_LABEL[item.displayBucket],
                         )}
                       </td>
-                      <td>
-                        {item.aiSpendLoaded
-                          ? formatUsdM(item.aiSpendUsd)
-                          : "Not loaded"}
-                      </td>
+                      <td>{aiAmountLabel(item)}</td>
                       <td>{aiBenefitLabel(item)}</td>
                       <td>
                         {item.readinessScoreLoaded
@@ -1085,8 +1099,7 @@ export function AiPortfolioContractView({
       ) : null}
 
       <footer className={styles.contractFoot}>
-        {s.tenantName} · adoption, finance validation and claimable value are
-        separate gates
+        {s.tenantName} · tool use, Finance review, and permission to report a benefit are separate steps
       </footer>
     </div>
   );
@@ -1094,9 +1107,7 @@ export function AiPortfolioContractView({
 
 function campaignRows(view: TowerCommandCenterView): CampaignRow[] {
   const actions = [...view.actions].sort((a, b) => a.sequence - b.sequence);
-  const gaps = [...view.gaps].sort(
-    (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
-  );
+  const gaps = [...view.gaps].sort(byEvidencePriority);
   const rows: CampaignRow[] = actions.map((action) => ({
     seq: String(action.sequence),
     title: action.title.replace(/^FIX PROOF:\s*/i, ""),
@@ -1104,6 +1115,7 @@ function campaignRows(view: TowerCommandCenterView): CampaignRow[] {
     tasks: 1,
     unit: "Task",
     valueUsd: action.amountExposedUsd,
+    valueLabel: action.moduleHandoff?.toLowerCase() === "source" ? "Potential annual saving" : "Projected yearly benefit affected",
     due: nextStepLabel(action.due),
     tone:
       action.lane === "fix" || action.lane === "stop"
@@ -1123,6 +1135,7 @@ function campaignRows(view: TowerCommandCenterView): CampaignRow[] {
       tasks: 1,
       unit: "Gap",
       valueUsd: gap.valueAtStakeUsd,
+      valueLabel: evidenceGapAmount(gap).label,
       due: "Not loaded",
       tone:
         gap.priority === "high"
@@ -1150,7 +1163,7 @@ function openCampaign(
 
 function evidenceQueue(view: TowerCommandCenterView): TowerEvidenceGapView[] {
   return [...view.gaps]
-    .sort((a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0))
+    .sort(byEvidencePriority)
     .slice(0, 5);
 }
 
@@ -1159,7 +1172,7 @@ function sourceContractActions(view: TowerCommandCenterView) {
     .filter((action) => action.moduleHandoff?.toLowerCase() === "source")
     .sort(
       (a, b) =>
-        b.amountExposedUsd - a.amountExposedUsd || a.title.localeCompare(b.title),
+        (b.amountExposedUsd ?? -1) - (a.amountExposedUsd ?? -1) || a.title.localeCompare(b.title),
     )
     .slice(0, 5);
 }
@@ -1221,6 +1234,11 @@ export function EvidenceActionsContractView({
         </article>
       </section>
 
+      <p className={styles.contractCallout}>
+        The same case may appear in several tasks or evidence gaps. Each dollar amount
+        shows the value affected by that item; do not add those amounts together.
+      </p>
+
       <section>
         <SectionTitle
           title="Action campaigns"
@@ -1230,7 +1248,7 @@ export function EvidenceActionsContractView({
           {campaigns.length > 0 ? (
             campaigns.map((row) => (
               <button
-                key={`${row.seq}-${row.title}`}
+                key={row.action ? `action:${row.action.id}` : `gap:${row.gap?.id ?? row.title}`}
                 type="button"
                 className={cx(
                   styles.campaignRow,
@@ -1250,8 +1268,8 @@ export function EvidenceActionsContractView({
                   <strong>{formatCount(row.tasks)}</strong>
                 </span>
                 <span className={styles.campaignMetric}>
-                  <i>Value affected</i>
-                  <strong>{formatOptionalUsdM(row.valueUsd)}</strong>
+                  <i>{row.valueLabel}</i>
+                  <strong>{row.gap ? evidenceGapAmount(row.gap).value : formatOptionalUsdM(row.valueUsd)}</strong>
                 </span>
                 <span className={styles.campaignMetric}>
                   <i>Next step</i>
@@ -1271,8 +1289,12 @@ export function EvidenceActionsContractView({
         <section>
           <SectionTitle
             title="Source contract actions"
-            subtitle={`${formatCount(sourceActions.length)} shown · finance confirmation remains required`}
+            subtitle={`${formatCount(sourceActions.length)} shown · potential savings need Finance confirmation`}
           />
+          <p className={styles.contractCallout}>
+            These are possible savings, not money already saved. They are not included
+            in the cleared value above.
+          </p>
           <div className={styles.ownerQueue}>
             {sourceActions.map((action) => (
               <button
@@ -1284,7 +1306,7 @@ export function EvidenceActionsContractView({
                   <strong>{action.title.replace(/^FIX PROOF:\s*/i, "")}</strong>
                   <i>{action.why}</i>
                 </span>
-                <b>{formatUsdM(action.amountExposedUsd)}</b>
+                <b>{action.amountExposedUsd === null ? "Amount not loaded" : `${formatUsdM(action.amountExposedUsd)} / year potential`}</b>
               </button>
             ))}
           </div>
@@ -1314,9 +1336,8 @@ export function EvidenceActionsContractView({
                     <i>{gap.owner ?? "Unassigned"}</i>
                   </span>
                   <b>
-                    {gap.valueAtStakeUsd === null
-                      ? "Unknown"
-                      : formatUsdM(gap.valueAtStakeUsd)}
+                    {evidenceGapAmount(gap).value}
+                    <small>{evidenceGapAmount(gap).label}</small>
                   </b>
                 </button>
               ))
@@ -1352,8 +1373,7 @@ export function EvidenceActionsContractView({
       </section>
 
       <footer className={styles.contractFoot}>
-        {s.tenantName} · adoption, finance validation and claimable value are
-        separate gates
+        {s.tenantName} · tool use, Finance review, and permission to report a benefit are separate steps
       </footer>
     </div>
   );
