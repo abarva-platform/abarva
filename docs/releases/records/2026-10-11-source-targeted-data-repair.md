@@ -28,7 +28,7 @@ This is a targeted repair, not a package reload or financial certification.
 
 - Release lane: `client-data-lane`.
 - All clients: no bulk or automatic change.
-- Specific clients: only the synthetic scope in private approval record
+- Specific clients: only the synthetic scope in private audit record
   `SOURCE-DATA-REPAIR-20261011`.
 - Internal only: operator execution and private proof artifacts.
 - Public/demo only: not a public data publication.
@@ -55,6 +55,9 @@ This is a targeted repair, not a package reload or financial certification.
 - Business-column changes were limited to the hashed plans. The reviewed
   automatic timestamp trigger remained enabled. Historical dates, source
   payloads and numeric measurements were preserved.
+- Measurement corrections changed only `unit` as a business column.
+  `actual_value` and `contracted_target` were not changed; their legacy formatted
+  text remains a separate, unfinished correction rather than a completed repair.
 - Private Blob archives hold before-images, validated precommit snapshots and
   final sealed proofs. Both successful applications left the operator idle and
   its template unchanged.
@@ -69,6 +72,10 @@ This is a targeted repair, not a package reload or financial certification.
   opportunity view states that no value has been sized; its workbench shows
   pending inputs and no claimed amount. These are bounded observed behaviors,
   not certification of the rest of either page.
+- The follow-up signed-in review rechecked the contract summary, performance,
+  evidence and repaired opportunity workbench. The preserved quantified-value
+  requirement explanation still conflicts with the unsized state; it remains
+  an open issue rather than a clean-page acceptance claim.
 
 ## Rollout Plan
 
@@ -76,6 +83,13 @@ Run the existing private ACA operator Job with a digest-pinned approved image an
 start-time overrides. Bind the direct user instruction to the exact plan and
 before-image hashes. Fail on any new scope or drift. Preserve the idle template
 and reject overlapping operator or migration executions.
+
+Execution evidence and authorization evidence are separate. The direct proceed
+instruction was recorded, but this record does not assert a separate
+pre-execution sign-off on the exact monetary-state plan. The private audit
+addendum records the chronology and user-reported retrospective acceptance;
+neither is backdated as a prior financial-plan approval. Future financial
+corrections must present the exact plan and wait for its explicit sign-off.
 
 This rollout is complete for the two reviewed scopes. Do not rerun the repairs
 blindly: saved execution identity and whole before-image predicates refuse a
@@ -103,6 +117,9 @@ triggers, overwrite concurrent changes or fabricate approvals.
 Private record `SOURCE-DATA-REPAIR-20261011` holds the direct instruction, input
 hashes, whole before-images, planned column diffs, code hash, job identity, image
 digest, private Blob locations, validation, after-readback and idle proof.
+Its audit addendum distinguishes the failed zero-commit attempt from the
+successful retry, unit-only completion from unfinished text-column cleanup, and
+the proceed instruction from the missing prior exact financial-plan sign-off.
 Public records intentionally omit tenant identities and source contents.
 
 ## Known Gaps
