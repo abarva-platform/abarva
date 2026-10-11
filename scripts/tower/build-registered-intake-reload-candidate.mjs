@@ -85,6 +85,38 @@ function reportedRateBasis(row, denominatorField) {
     ? `active_over_${denominatorField}` : "not_reconciled";
 }
 
+export function isDeclaredProgramLink(aiProgramId, programIds, relationships) {
+  const id = aiProgramId?.trim();
+  return Boolean(id) && (programIds.has(id) || relationships.some((row) =>
+    (row.from_object_id === id && programIds.has(row.to_object_id)) ||
+    (row.to_object_id === id && programIds.has(row.from_object_id))));
+}
+
+export function assessRawUsageValidation(rawRows, usage) {
+  const usageIds = new Set(usage.map((row) => row.ai_use_case_id));
+  const declaredUseCaseJoin = rawRows.length > 0 && rawRows.every((row) =>
+    row.ai_use_case_id && usageIds.has(row.ai_use_case_id));
+  const declaredSourceSystemJoin = rawRows.length > 0 && rawRows.every((row) =>
+    row.source_system && usage.some((item) => item.ai_use_case_id === row.ai_use_case_id &&
+      item.source_system === row.source_system));
+  const compatiblePeriod = rawRows.length > 0 && rawRows.every((row) =>
+    row.usage_period_start && row.usage_period_end && usage.some((item) =>
+      item.ai_use_case_id === row.ai_use_case_id && item.usage_period_start === row.usage_period_start &&
+      item.usage_period_end === row.usage_period_end));
+  const structurallyLinkable = declaredUseCaseJoin && declaredSourceSystemJoin && compatiblePeriod;
+  return {
+    detail_available: true, detail_row_count: rawRows.length,
+    declared_use_case_join: declaredUseCaseJoin,
+    declared_source_system_join: declaredSourceSystemJoin,
+    compatible_period: compatiblePeriod,
+    structurally_linkable: structurallyLinkable,
+    aggregate_user_count_reconciled: false,
+    validates_claim_usage: false,
+    detail_report_periods: [...new Set(rawRows.map((row) => row.reportPeriod).filter(Boolean))].sort(),
+    detail_refresh_dates: [...new Set(rawRows.map((row) => row.reportRefreshDate).filter(Boolean))].sort(),
+  };
+}
+
 function modeledSegmentTotal(rows) {
   const byOwner = new Map();
   for (const row of rows) {
@@ -185,10 +217,9 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   const benefitIds = [...benefitIndex.result.keys()].sort();
   const programIds = new Set(programs.map((row) => row.program_id).filter(Boolean));
   const claimProgramIds = [...new Set(benefits.map((row) => row.ai_program_id).filter(Boolean))].sort();
-  const unlinkedClaimProgramIds = claimProgramIds.filter((id) => !programIds.has(id) &&
-    !relationships.some((row) =>
-      (row.from_object_id === id && programIds.has(row.to_object_id)) ||
-      (row.to_object_id === id && programIds.has(row.from_object_id))));
+  const unlinkedClaimProgramIds = claimProgramIds.filter((id) =>
+    !isDeclaredProgramLink(id, programIds, relationships));
+  const missingClaimProgramIds = benefits.filter((row) => !row.ai_program_id?.trim()).length;
   const linked = benefitIds.every((id) => usageIndex.result.has(id) && kpiIndex.result.has(id));
   const extraIds = [usageIndex, kpiIndex].flatMap((index) => [...index.result.keys()].filter((id) => !benefitIndex.result.has(id)));
   // Distinct identifier systems are left unlinked until the intake declares a crosswalk.
@@ -225,29 +256,13 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   let rawUsageValidation = {
     detail_available: false, detail_row_count: 0, declared_use_case_join: false,
     declared_source_system_join: false, compatible_period: false,
+    structurally_linkable: false, aggregate_user_count_reconciled: false,
     validates_claim_usage: false, detail_report_periods: [], detail_refresh_dates: [],
   };
   if (rawUsageFilePresent) {
     const rawBytes = fs.readFileSync(rawUsageFile);
     const rawRows = csvRows(rawBytes.toString("utf8"));
-    const declaredUseCaseJoin = rawRows.length > 0 && rawRows.every((row) =>
-      row.ai_use_case_id && usageIndex.result.has(row.ai_use_case_id));
-    const declaredSourceSystemJoin = rawRows.length > 0 && rawRows.every((row) =>
-      row.source_system && usage.some((item) => item.ai_use_case_id === row.ai_use_case_id &&
-        item.source_system === row.source_system));
-    const compatiblePeriod = rawRows.length > 0 && rawRows.every((row) =>
-      row.usage_period_start && row.usage_period_end && usage.some((item) =>
-        item.ai_use_case_id === row.ai_use_case_id && item.usage_period_start === row.usage_period_start &&
-        item.usage_period_end === row.usage_period_end));
-    rawUsageValidation = {
-      detail_available: true, detail_row_count: rawRows.length,
-      declared_use_case_join: declaredUseCaseJoin,
-      declared_source_system_join: declaredSourceSystemJoin,
-      compatible_period: compatiblePeriod,
-      validates_claim_usage: declaredUseCaseJoin && declaredSourceSystemJoin && compatiblePeriod,
-      detail_report_periods: [...new Set(rawRows.map((row) => row.reportPeriod).filter(Boolean))].sort(),
-      detail_refresh_dates: [...new Set(rawRows.map((row) => row.reportRefreshDate).filter(Boolean))].sort(),
-    };
+    rawUsageValidation = assessRawUsageValidation(rawRows, usage);
     sourceManifest["extracts/ms365-copilot-usage-user-detail.csv"] = {
       sha256: sha256(rawBytes),
       row_count: rawRows.length,
@@ -298,7 +313,7 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         unregistered_evidence_ids: [...new Set([b, u, k].filter(Boolean)
           .map((row) => row.evidence_id).filter((evidenceId) =>
             !evidenceId || !registeredEvidenceIds.has(evidenceId)))].sort(),
-        program_budget_linked: !unlinkedClaimProgramIds.includes(b.ai_program_id),
+        program_budget_linked: isDeclaredProgramLink(b.ai_program_id, programIds, relationships),
         finance_feed_conflict: financeValueConflicts.includes(id),
         claim_status_feed_conflict: claimStatusConflicts.includes(id),
         benefit_feed_usage_rate_basis: reportedRateBasis(b, "enabled_users"),
@@ -455,8 +470,8 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     coverage("source_evidence_approved", rejectedEvidence.length === 0, `${rejectedEvidence.length} of ${evidence.length} evidence-register rows are not approved for loading.`),
     coverage("claim_evidence_ids_registered", unregisteredClaimEvidenceIds.length === 0,
       `${unregisteredClaimEvidenceIds.length} distinct claim evidence IDs are missing from the evidence register; claim records cannot cite them as proof.`),
-    coverage("claim_program_ids_linked_to_pmo", unlinkedClaimProgramIds.length === 0,
-      `${unlinkedClaimProgramIds.length} distinct AI claim program IDs have no declared link to the PMO program IDs; benefit funding cannot be tied to PMO budgets.`),
+    coverage("claim_program_ids_linked_to_pmo", unlinkedClaimProgramIds.length === 0 && missingClaimProgramIds === 0,
+      `${unlinkedClaimProgramIds.length} distinct AI claim program IDs have no declared link to PMO program IDs; ${missingClaimProgramIds} benefit rows have no program ID. Benefit funding cannot be tied to PMO budgets.`),
     coverage("finance_values_reconciled_across_feeds", financeValueConflicts.length === 0,
       `${financeValueConflicts.length} claim IDs carry different Finance-value amounts across benefit, usage and outcome feeds; none may be treated as verified value.`),
     coverage("claim_status_reconciled_across_feeds", claimStatusConflicts.length === 0,
@@ -476,7 +491,7 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     coverage("program_funding_period_approved", programs.every((row) => row.fiscal_year && row.approval_status === "approved"), "Program budgets need an approved fiscal period before they can be called funded."),
     coverage("foundation_itsm_extract", canonical.foundations.itsm_extract_available, "ITSM workflow extract is absent; show this as a Foundations gap."),
     coverage("raw_tool_usage_validates_claim_feed", rawUsageValidation.validates_claim_usage,
-      `User-detail extract is ${rawUsageValidation.detail_available ? "present" : "absent"}; declared use-case join: ${rawUsageValidation.declared_use_case_join}; source-system join: ${rawUsageValidation.declared_source_system_join}; matching period: ${rawUsageValidation.compatible_period}. A file hash alone cannot validate the claim usage feed.`),
+      `User-detail extract is ${rawUsageValidation.detail_available ? "present" : "absent"}; declared use-case join: ${rawUsageValidation.declared_use_case_join}; source-system join: ${rawUsageValidation.declared_source_system_join}; matching period: ${rawUsageValidation.compatible_period}; aggregate user-count reconciliation: ${rawUsageValidation.aggregate_user_count_reconciled}. A file hash or structural join cannot validate the claim usage feed.`),
   ];
   const fingerprint = sha256(JSON.stringify(sourceManifest));
   const report = {
@@ -496,6 +511,7 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     source_conflicts: conflicts,
     unregistered_claim_evidence_ids: unregisteredClaimEvidenceIds,
     unlinked_claim_program_ids: unlinkedClaimProgramIds,
+    missing_claim_program_id_rows: missingClaimProgramIds,
     finance_value_conflict_ids: financeValueConflicts,
     claim_status_conflict_ids: claimStatusConflicts,
     raw_usage_validation: rawUsageValidation,

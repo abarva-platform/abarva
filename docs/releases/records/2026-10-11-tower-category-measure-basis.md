@@ -39,9 +39,9 @@ Release lane: `client-data-lane`.
 
 ## QA / Validation
 
-- `node --test scripts/tower/__tests__/registered-intake-physical-stage.test.mjs scripts/tower/__tests__/registered-intake-reload-candidate.test.mjs`: seven passed.
+- `node --test scripts/tower/__tests__/registered-intake-physical-stage.test.mjs scripts/tower/__tests__/registered-intake-reload-candidate.test.mjs`: nine passed, including blank program IDs and structurally matching raw detail with unreconciled user counts.
 - Dry stage: 17 source-file metadata rows, 299 selected source records, 237 canonical objects, 308 measures, and 352 rows across nine Tower views. Stage quality gate passed with `materialized: false`; the exact load approval remains missing.
-- The source-set hash is unchanged at `11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40`. The generated candidate SHA is now `b1c23382864fa1c1142fbcd746ec89ade705c9b13a6ed93f00170fa2e4bd89d3`; earlier dry candidate SHAs and the 325-row physical preview are superseded. Any later approval and private stage must bind to the new candidate bytes and 352-row plan.
+- The source-set hash is unchanged at `11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40`. The generated candidate SHA is now `c4ce556e478bc9a417f67fe10175bd62db0ed5b0f5f7124563f3145bc94529d8`; earlier dry candidate SHAs and the 325-row physical preview are superseded. Any later approval and private stage must bind to the new candidate bytes and 352-row plan.
 - `git diff --check`, focused ESLint, Node syntax checks, manifest validation, and all 11 release gates passed locally. CI must rerun on the final PR head.
 
 ## Rollout Plan

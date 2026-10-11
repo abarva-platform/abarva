@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { buildRegisteredIntakeCandidate } from "../build-registered-intake-reload-candidate.mjs";
+import { assessRawUsageValidation, buildRegisteredIntakeCandidate, isDeclaredProgramLink } from "../build-registered-intake-reload-candidate.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const registry = JSON.parse(
@@ -60,4 +60,26 @@ test("registry identity rejects an inactive tenant", () => {
   const retired = registry.retiredTenants[0]?.tenantKey;
   assert.ok(retired);
   assert.throws(() => buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey: retired }), /not active/);
+});
+
+test("a blank program ID cannot inherit a PMO budget link", () => {
+  const programs = new Set(["PRG-001"]);
+  assert.equal(isDeclaredProgramLink("", programs, []), false);
+  assert.equal(isDeclaredProgramLink(" ", programs, []), false);
+  assert.equal(isDeclaredProgramLink("PRG-001", programs, []), true);
+  assert.equal(isDeclaredProgramLink("AIPGM-001", programs, [{ from_object_id: "AIPGM-001", to_object_id: "PRG-001" }]), true);
+});
+
+test("matching raw identity fields do not prove aggregate usage counts", () => {
+  const detail = [{ ai_use_case_id: "AIUC-001", source_system: "tool_export",
+    usage_period_start: "2026-01-01", usage_period_end: "2026-06-30",
+    userPrincipalName: "synthetic@example.invalid" }];
+  const usage = [{ ai_use_case_id: "AIUC-001", source_system: "tool_export",
+    usage_period_start: "2026-01-01", usage_period_end: "2026-06-30",
+    active_users: "999", enabled_users: "999" }];
+  const result = assessRawUsageValidation(detail, usage);
+  assert.equal(result.structurally_linkable, true);
+  assert.equal(result.aggregate_user_count_reconciled, false);
+  assert.equal(result.validates_claim_usage, false);
+  assert.ok(!JSON.stringify(result).includes("synthetic@example.invalid"));
 });
