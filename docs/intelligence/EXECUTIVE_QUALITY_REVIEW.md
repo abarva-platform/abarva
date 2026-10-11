@@ -2,7 +2,7 @@
 
 Open **Intelligence → 10-question quality review**. Review or edit the ten questions, choose **Run 10 questions**, then **Export review PDF**. The run uses the signed-in company's evidence and a fresh conversation session for each question. Requests run sequentially. **Stop review** cancels the active request and leaves completed answers available for export.
 
-The suite covers the four starter questions plus economics, capabilities, confirmed dependencies, risks, build/buy/partner decisions, and a 90-day plan. The PDF contains a summary, each question and answer, authored tables/charts/graphs, cited source labels, follow-up questions, and an appendix with the complete original model responses. Failed and cancelled requests are identified explicitly. A partial review never appears as ten successful answers.
+The suite covers the four starter questions plus economics, capabilities, confirmed dependencies, risks, build/buy/partner decisions, and a 90-day plan. The PDF contains a summary, each question and answer, authored tables/charts/graphs, cited source labels, follow-up questions, and an optional appendix with the complete original model responses. The default PDF focuses on answers and visuals; select **Include original response appendix** when the raw audit record is needed. Failed and cancelled requests are identified explicitly. A partial review never appears as ten successful answers.
 
 ## What to assess
 
@@ -21,7 +21,7 @@ Opening and prose word counts are observations for human review, not quality sco
 
 Claude authors the prose, recommendations, numeric values, labels, exhibits and follow-up questions. The application decodes explicit transport blocks and renders their content. It does not shorten answers, rewrite prose, invent numeric priority scores, compute financial metrics, attach retrieved source tables, or produce charts from an unrelated table.
 
-Malformed exhibit blocks remain visible in the original answer and PDF appendix, with a separate rendering observation. Export rejects oversized or structurally inconsistent payloads rather than silently truncating them. Source aliases are assigned before generation so references are readable and internal identifiers are not used as citation labels.
+Malformed exhibit blocks remain visible in the original answer and PDF appendix, with a separate rendering observation. Export rejects oversized or structurally inconsistent payloads rather than silently truncating them. Source aliases are assigned before generation and decoded from explicit source metadata. New answers keep these aliases out of visible prose; the Sources section displays readable source names. Original model output is retained unchanged even when the optional appendix is omitted.
 
 The executive path passes source and conversation context through `buildValidatedAgentContextBundle`; blocked objects do not reach Claude. Legacy adapters retain their conservative readiness floor, and the prompt requires provisional treatment until readiness and evidence are verified. Ungated supplemental dossiers and fact summaries do not enter this path.
 

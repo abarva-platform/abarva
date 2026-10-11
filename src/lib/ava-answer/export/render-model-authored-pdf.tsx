@@ -14,6 +14,7 @@ import {
   Polygon,
   StyleSheet,
   Font,
+  Link,
   type DocumentProps,
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
@@ -303,11 +304,6 @@ function exhibitBlock(a: AvaArtifact) {
           );
         })()
       )}
-      {a.citationIds?.length ? (
-        <Text style={styles.meta}>
-          {a.citationIds.map((id) => `[${id}]`).join(" ")}
-        </Text>
-      ) : null}
     </View>
   );
 }
@@ -338,7 +334,6 @@ export function buildModelAuthoredSessionPdf(
           {session.title ?? "Executive answer review"}
         </Text>
         <Text style={styles.meta}>
-          {session.tenantKey} |{" "}
           {session.qualityReview?.startedAt ?? new Date().toISOString()}
         </Text>
         <Text style={styles.prose}>
@@ -346,8 +341,10 @@ export function buildModelAuthoredSessionPdf(
             ? `${session.qualityReview.completedQuestions} of ${session.qualityReview.plannedQuestions} questions completed.`
             : `${responses.length} responses.`}{" "}
           Each answer is reproduced with its authored exhibits. Length checks
-          are observations, not quality scores. The appendix retains the
-          original model response including exhibit protocols.
+          are observations, not quality scores.
+          {session.qualityReview?.includeOriginalResponses
+            ? " The appendix retains the original model response including exhibit protocols."
+            : ""}
         </Text>
         <Text style={styles.heading}>Review checklist</Text>
         <Text style={styles.prose}>
@@ -404,11 +401,10 @@ export function buildModelAuthoredSessionPdf(
           )}
           {t.answer?.citations.length ? (
             <View wrap={false}>
-              <Text style={styles.heading}>Sources cited by Claude</Text>
+              <Text style={styles.heading}>Sources</Text>
               {t.answer.citations.map((c) => (
                 <Text key={c.id} style={styles.meta}>
-                  [{c.id}] {c.label}
-                  {c.url ? ` — ${c.url}` : ""}
+                  {c.url ? <Link src={c.url}>{c.label}</Link> : c.label}
                 </Text>
               ))}
             </View>
@@ -426,23 +422,24 @@ export function buildModelAuthoredSessionPdf(
           {footer}
         </Page>
       ))}
-      {responses
-        .filter((t) => t.answer?.modelAuthored)
-        .map((t) => (
-          <Page key={`raw-${t.id}`} size="LETTER" style={styles.page}>
-            <Text style={styles.eyebrow}>
-              APPENDIX · ORIGINAL MODEL RESPONSE · {t.id}
-            </Text>
-            <Text style={styles.meta}>
-              Transport payload retained for inspection. This is the complete
-              original response, including exhibit and follow-up blocks.
-            </Text>
-            <Text style={styles.raw} hyphenationCallback={(word) => [word]}>
-              {t.answer!.modelAuthored!.rawText}
-            </Text>
-            {footer}
-          </Page>
-        ))}
+      {session.qualityReview?.includeOriginalResponses &&
+        responses
+          .filter((t) => t.answer?.modelAuthored)
+          .map((t) => (
+            <Page key={`raw-${t.id}`} size="LETTER" style={styles.page}>
+              <Text style={styles.eyebrow}>
+                APPENDIX · ORIGINAL MODEL RESPONSE · {t.id}
+              </Text>
+              <Text style={styles.meta}>
+                Transport payload retained for inspection. This is the complete
+                original response, including exhibit and follow-up blocks.
+              </Text>
+              <Text style={styles.raw} hyphenationCallback={(word) => [word]}>
+                {t.answer!.modelAuthored!.rawText}
+              </Text>
+              {footer}
+            </Page>
+          ))}
     </Document>
   );
 }

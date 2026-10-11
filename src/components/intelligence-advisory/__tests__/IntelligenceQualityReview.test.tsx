@@ -96,6 +96,7 @@ it("runs ten isolated questions and exports their exact responses in one session
   expect(exported.format).toBe("pdf");
   expect(exported.session.turns).toHaveLength(20);
   expect(exported.session.qualityReview.completedQuestions).toBe(10);
+  expect(exported.session.qualityReview.includeOriginalResponses).toBe(false);
   expect(
     exported.session.turns
       .filter((t: { role: string }) => t.role === "agent")
@@ -104,6 +105,12 @@ it("runs ten isolated questions and exports their exact responses in one session
           t.body === raw && t.answer.modelAuthored.rawText === raw,
       ),
   ).toBe(true);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Include original response appendix" }));
+  fireEvent.click(screen.getByRole("button", { name: "Export review PDF" }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(12));
+  const auditExport = JSON.parse(fetchMock.mock.calls[11][1].body as string);
+  expect(auditExport.session.qualityReview.includeOriginalResponses).toBe(true);
+  expect(auditExport.session.turns).toEqual(exported.session.turns);
 });
 
 it("keeps failed requests explicit and continues the remaining questions", async () => {

@@ -26,6 +26,19 @@ const packet = (chart: unknown) =>
     "test",
     [],
   );
+
+it("shows readable source names without rendering transport code badges", () => {
+  const raw = 'Decision.\n\n```sources\n["S2"]\n```';
+  const answer = modelAuthoredAnswerPacket(raw, "Decide", "test", [
+    { id: "unused", type: "TENANT", name: "Unused", detail: "" },
+    { id: "plan", type: "TENANT", name: "Reviewed operating plan", detail: "Decision evidence" },
+  ]);
+  const { container } = render(<ModelAuthoredExhibits answer={answer} />);
+  expect(screen.getByText("Sources")).toBeTruthy();
+  expect(screen.getByText("Reviewed operating plan")).toBeTruthy();
+  expect(container.textContent).not.toContain("S2");
+  expect(answer.modelAuthored?.rawText).toBe(raw);
+});
 it.each(["bar", "horizontal-bar", "line"])(
   "sends every authored %s value to Recharts unchanged",
   (kind) => {

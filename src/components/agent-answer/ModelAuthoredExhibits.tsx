@@ -114,28 +114,20 @@ export function ModelAuthoredExhibits({ answer }: { answer: AvaAnswerPacket }) {
               );
             })()
           )}
-          {a.citationIds?.length ? (
-            <p className="mt-2 text-xs text-stone-500">
-              {a.citationIds.map((id) => `[${id}]`).join(" ")}
-            </p>
-          ) : null}
         </section>
       ))}
       {answer.citations.length > 0 && (
         <details className="text-sm">
-          <summary>Sources cited by Claude</summary>
+          <summary>Sources</summary>
           <ul>
             {answer.citations.map((c) => (
               <li key={c.id}>
-                [{c.id}] {c.label}
-                {c.url && (
-                  <>
-                    {" "}
-                    —{" "}
-                    <a href={c.url} target="_blank" rel="noreferrer">
-                      Source
-                    </a>
-                  </>
+                {c.url ? (
+                  <a href={c.url} target="_blank" rel="noreferrer">
+                    {c.label}
+                  </a>
+                ) : (
+                  c.label
                 )}
               </li>
             ))}
