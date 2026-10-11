@@ -176,6 +176,74 @@ function landedAt(page: Page): string {
   return `${url.pathname}${url.search}`;
 }
 
+async function checkStepWorkspaceNavigation(
+  page: Page,
+  moveId: string,
+): Promise<void> {
+  const workspace = page.getByRole("navigation", { name: "Workspace" });
+  const filesHref = routeFor(moveId, 2, "?workspace=files");
+  const recordHref = routeFor(moveId, 2, "?workspace=intelligence");
+  await expect(workspace.getByRole("link", { name: "Files" })).toHaveAttribute(
+    "href",
+    filesHref,
+  );
+  await expect(workspace.getByRole("link", { name: "Record" })).toHaveAttribute(
+    "href",
+    recordHref,
+  );
+
+  await workspace.getByRole("link", { name: "Files" }).click();
+  await expect(page).toHaveURL(new RegExp(`${filesHref.replace("?", "\\?")}$`));
+  await expect(
+    page.getByRole("heading", { name: "Files & Evidence" }),
+  ).toBeVisible();
+  await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
+  const storedDownload = page
+    .locator('a[href^="/api/v1/programs/"][href*="/artifacts/"][href$="/download"]')
+    .first();
+  await expect(storedDownload).toBeVisible();
+  expect(await storedDownload.getAttribute("href")).toContain(moveId);
+  const downloaded = page.waitForEvent("download");
+  await storedDownload.click();
+  expect(await (await downloaded).failure()).toBeNull();
+
+  await page.getByRole("tab", { name: "Intelligence" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Phase Intelligence" }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Steps" }).click();
+  await expect(page.locator("#step-panel-title")).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe(routeFor(moveId, 2));
+  await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
+
+  await page.goto(routeFor(moveId, 2, "?step=root-causes"), {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(
+    page.getByRole("heading", { name: "Rank what’s causing the gap" }),
+  ).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Workspace" })
+    .getByRole("link", { name: "Record" })
+    .click();
+  await expect(page).toHaveURL(
+    new RegExp(`${recordHref.replace("?", "\\?")}$`),
+  );
+  await expect(
+    page.getByRole("heading", { name: "Phase Intelligence" }),
+  ).toBeVisible();
+  await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
+  await page.getByRole("tab", { name: "Steps" }).click();
+  await expect(page.locator("#step-panel-title")).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe(routeFor(moveId, 2));
+  await page.goto(routeFor(moveId, 2, "?step=root-causes"), {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(
+    page.getByRole("heading", { name: "Rank what’s causing the gap" }),
+  ).toBeVisible();
+}
+
 async function measureUxVariants(
   page: Page,
   testInfo: TestInfo,
@@ -290,6 +358,10 @@ async function checkRootCauseWorkReachability(page: Page): Promise<void> {
       (await root.evaluate((element) => element.scrollTop)) +
       (await page.evaluate(() => window.scrollY));
     expect(scrollDistance, `${width}px: ordinary wheel scrolling must move the work`).toBeGreaterThan(0);
+    const topNav = page.getByTestId("nexus-top-nav");
+    await expect(topNav).toBeVisible();
+    const navTop = await topNav.evaluate((element) => element.getBoundingClientRect().top);
+    expect(navTop, `${width}px: global navigation must stay at the top while scrolling`).toBeGreaterThanOrEqual(-1);
   }
   await page.setViewportSize({ width: 1440, height: 900 });
 }
@@ -605,6 +677,8 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             await expect(steps.nth(position).locator('[aria-current="step"]')).toBeVisible();
             expect(new URL(page.url()).searchParams.get("step")).toBe(view);
             await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
+            await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
+            await expect(page.getByTestId("nexus-primary-nav")).toBeVisible();
           },
           blockedWrites,
           async () => {
@@ -619,6 +693,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             );
             if (phase === 2 && view === "root-causes") {
               await checkRootCauseWorkReachability(page);
+              await checkStepWorkspaceNavigation(page, MOVE_ID!);
             }
             const body = await page.locator("body").innerText();
             const badRead = unreviewedReadText(body, phase, view);
