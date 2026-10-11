@@ -545,9 +545,7 @@ export function MovesStepPage(props: MovesStepPageProps) {
               gate passed. {catchUp.items.length} item
               {catchUp.items.length === 1 ? "" : "s"} need
               {catchUp.items.length === 1 ? "s" : ""} a quick confirmation.{" "}
-              {catchUp.gateRecordConfirmed
-                ? "The earlier completion path is not recorded here."
-                : "The approval record and earlier completion path need record confirmation."}
+              Earlier step-page completion details are not recorded here.
             </p>
             <ul>
               {catchUp.items.map((item) => (

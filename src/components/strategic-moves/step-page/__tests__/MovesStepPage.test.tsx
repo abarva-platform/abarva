@@ -138,7 +138,7 @@ describe("MovesStepPage", () => {
     expect(
       container.querySelector('[aria-label="Items to confirm"]')?.textContent,
     ).toContain(
-      "approval record and earlier completion path need record confirmation",
+      "Earlier step-page completion details are not recorded here.",
     );
   });
   it("shows the passed phase's confirmation count and direct action in the canonical chrome", () => {
