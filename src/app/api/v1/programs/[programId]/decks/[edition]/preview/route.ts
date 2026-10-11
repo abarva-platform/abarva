@@ -65,7 +65,7 @@ export async function GET(
         : inputs.move.currentPhase === 3 ? "design_review" : "delivery_review";
     const slots = buildReferenceSlotTable(inputs);
     const wordsResult = await draftEditionWords({
-      tenantId: ctx.clientKey, userId: ctx.userId, edition, archetypes: sequence,
+      tenantId: ctx.clientKey, userId: ctx.userId, requestId, edition, archetypes: sequence,
       slots,
       useCaseType: (inputs.move.archetype ?? "unclassified") as UseCasePromptType,
       phaseStage,
@@ -99,7 +99,11 @@ export async function GET(
       return Response.json({
         error: "deck_render_refusal",
         detail: "The rendered deck failed a physical, source, edition or editability check.",
-        findings: hardRenderFindings.map((finding) => ({ kind: finding.kind, ...("slide" in finding ? { slide: finding.slide } : {}) })),
+        findings: hardRenderFindings.map((finding) => ({
+          kind: finding.kind,
+          ...("slide" in finding ? { slide: finding.slide } : {}),
+          ...("detailCode" in finding && finding.detailCode ? { detailCode: finding.detailCode } : {}),
+        })),
       }, { status: 422, headers: previewHeaders(score, wordsResult, requestId, titleFigureCount) });
     }
     if (format === "pptx") {

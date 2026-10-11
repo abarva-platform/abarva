@@ -101,6 +101,7 @@ describe("read-only reference deck preview", () => {
     expect(result.headers.get("Cache-Control")).toContain("no-store");
     expect(mockAssemble).toHaveBeenCalledWith("synthetic-move", "validation");
     expect(mockWords).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: expect.any(String),
       useCaseType: "workflow_automation",
       phaseStage: "design_review",
       available: expect.objectContaining({ rom: false, valueCase: false }),
@@ -120,6 +121,17 @@ describe("read-only reference deck preview", () => {
     expect(result.status).toBe(422);
     expect(result.headers.get("Content-Type")).toContain("application/json");
     expect(await result.json()).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "off_canvas", slide: 1 }] });
+  });
+
+  it("reports a source refusal subtype without revealing the source value", async () => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 80, findings: [{
+      kind: "reference_source", slide: 9, detailCode: "notes_source_missing", message: "synthetic private source value",
+    }] });
+    const result = await GET(request("pdf"), params());
+    expect(result.status).toBe(422);
+    const body = await result.json();
+    expect(body).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "reference_source", slide: 9, detailCode: "notes_source_missing" }] });
+    expect(JSON.stringify(body)).not.toContain("synthetic private source value");
   });
 
   it("serves an in-memory PDF under the same preview contract", async () => {

@@ -765,13 +765,41 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
     activeClient: process.env.E2E_MOVES_CLIENT_KEY,
     email: process.env.E2E_MOVES_OPERATOR_EMAIL,
   });
-  const proof: Array<{ edition: string; format: string; status: number; score: number | null; titleFigureCount: number | null; wordsStatus: string | null; wordsReason: string | null; wordsRule: string | null; wordsSlide: number | null; fallbackCount: number | null; requestId: string | null; bytes: number; file: string; figureHash: string }> = [];
+  const proof: Array<{ edition: string; format: string; status: number; score: number | null; titleFigureCount: number | null; wordsStatus: string | null; wordsReason: string | null; wordsRule: string | null; wordsSlide: number | null; fallbackCount: number | null; requestId: string | null; bytes: number; file: string | null; figureHash: string | null; errorCode?: string; findingCodes?: string[] }> = [];
+  const failures: string[] = [];
   for (const edition of ["validation", "investment"] as const) {
     let editionHash: string | null = null;
     for (const format of ["pptx", "pdf"] as const) {
       const response = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/preview?format=${format}`, { timeout: 120_000 });
       if (response.status() !== 200) {
-        throw new Error(`${edition} ${format}: HTTP ${response.status()} ${await response.text().catch(() => "")}`);
+        const body = await response.json().catch(() => null) as { error?: unknown; findings?: unknown } | null;
+        const errorCode = typeof body?.error === "string" ? body.error : "unreadable_error";
+        const findingCodes = Array.isArray(body?.findings)
+          ? body.findings.flatMap((finding: unknown) => {
+            if (finding === null || typeof finding !== "object") return [];
+            const row = finding as { kind?: unknown; detailCode?: unknown; slide?: unknown };
+            if (typeof row.kind !== "string") return [];
+            return [`${row.kind}${typeof row.detailCode === "string" ? `:${row.detailCode}` : ""}${typeof row.slide === "number" ? `@slide${row.slide}` : ""}`];
+          }) : [];
+        const rawScore = response.headers()["x-abarva-deck-fidelity-score"];
+        const score = rawScore && Number.isFinite(Number(rawScore)) ? Number(rawScore) : null;
+        const rawTitleFigures = response.headers()["x-abarva-deck-title-figure-count"];
+        const titleFigureCount = rawTitleFigures && Number.isInteger(Number(rawTitleFigures)) ? Number(rawTitleFigures) : null;
+        const rawWordsSlide = response.headers()["x-abarva-deck-words-slide"];
+        const wordsSlide = rawWordsSlide && Number.isInteger(Number(rawWordsSlide)) ? Number(rawWordsSlide) : null;
+        const rawFallbackCount = response.headers()["x-abarva-deck-fallback-count"];
+        const fallbackCount = rawFallbackCount && Number.isInteger(Number(rawFallbackCount)) ? Number(rawFallbackCount) : null;
+        const requestId = response.headers()["x-abarva-deck-request-id"] ?? null;
+        const diagnostic = { edition, format, status: response.status(), errorCode, findingCodes, score, titleFigureCount, wordsSlide, fallbackCount, requestId };
+        const file = testInfo.outputPath(`${edition}.${format}.error.json`);
+        fs.writeFileSync(file, `${JSON.stringify(diagnostic, null, 2)}\n`);
+        await testInfo.attach(`${edition}.${format}.error.json`, { path: file, contentType: "application/json" });
+        proof.push({ ...diagnostic, wordsStatus: response.headers()["x-abarva-deck-words-status"] ?? null,
+          wordsReason: response.headers()["x-abarva-deck-words-reason"] ?? null,
+          wordsRule: response.headers()["x-abarva-deck-words-rule"] ?? null,
+          bytes: 0, file: path.basename(file), figureHash: null });
+        failures.push(`${edition} ${format}: HTTP ${response.status()} ${errorCode} ${findingCodes.join(", ")}`);
+        continue;
       }
       expect(response.headers()["x-abarva-preview"]).toBe("not-persisted");
       expect(response.headers()["cache-control"]).toContain("no-store");
@@ -814,19 +842,30 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
     }
     const workbookResponse = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/workbook`, { timeout: 120_000 });
     if (workbookResponse.status() !== 200) {
-      throw new Error(`${edition} workbook: HTTP ${workbookResponse.status()} ${await workbookResponse.text().catch(() => "")}`);
+      const status = workbookResponse.status();
+      const file = testInfo.outputPath(`${edition}.xlsx.error.json`);
+      const diagnostic = { edition, format: "xlsx", status, errorCode: "workbook_fetch_failed" };
+      fs.writeFileSync(file, `${JSON.stringify(diagnostic, null, 2)}\n`);
+      await testInfo.attach(`${edition}.xlsx.error.json`, { path: file, contentType: "application/json" });
+      proof.push({ ...diagnostic, score: null, titleFigureCount: null, wordsStatus: null, wordsReason: null,
+        wordsRule: null, wordsSlide: null, fallbackCount: null, requestId: null, bytes: 0, file: path.basename(file), figureHash: null });
+      failures.push(`${edition} workbook: HTTP ${status}`);
+      continue;
     }
     expect(workbookResponse.headers()["x-abarva-preview"]).toBe("not-persisted");
-    expect(workbookResponse.headers()["x-abarva-deck-figure-hash"]).toBe(editionHash);
+    const workbookHash = workbookResponse.headers()["x-abarva-deck-figure-hash"] ?? null;
+    if (editionHash) expect(workbookHash).toBe(editionHash);
+    expect(workbookHash).toMatch(/^[0-9a-f]{64}$/);
     const workbookBytes = await workbookResponse.body();
     const workbookZip = await JSZip.loadAsync(workbookBytes);
     expect(await workbookZip.file("xl/workbook.xml")?.async("string")).toContain("Deck Figures");
     const workbookFile = testInfo.outputPath(`${edition}.xlsx`);
     fs.writeFileSync(workbookFile, workbookBytes);
     await testInfo.attach(`${edition}.xlsx`, { path: workbookFile, contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    proof.push({ edition, format: "xlsx", status: workbookResponse.status(), score: null, titleFigureCount: null, wordsStatus: null, wordsReason: null, wordsRule: null, wordsSlide: null, fallbackCount: null, requestId: null, bytes: workbookBytes.length, file: path.basename(workbookFile), figureHash: editionHash! });
+    proof.push({ edition, format: "xlsx", status: workbookResponse.status(), score: null, titleFigureCount: null, wordsStatus: null, wordsReason: null, wordsRule: null, wordsSlide: null, fallbackCount: null, requestId: null, bytes: workbookBytes.length, file: path.basename(workbookFile), figureHash: workbookHash });
   }
   const proofFile = testInfo.outputPath("deck-fidelity.json");
   fs.writeFileSync(proofFile, `${JSON.stringify({ moveId: MOVE_ID, deployedSha: DEPLOYED_SHA, previews: proof }, null, 2)}\n`);
   await testInfo.attach("deck-fidelity.json", { path: proofFile, contentType: "application/json" });
+  expect(failures, "Every failed deck fetch remains visible in deck-fidelity.json").toEqual([]);
 });

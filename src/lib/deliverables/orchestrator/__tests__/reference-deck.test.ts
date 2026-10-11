@@ -128,16 +128,20 @@ describe("reference deck components", () => {
     const cases = [
       { change: { objectNames: target.objectNames!.filter((n) => n !== "ref:chip:VALIDATE:filled") }, kind: "reference_structure" },
       { change: { objectNames: target.objectNames!.filter((n) => n !== "ref:answer:bar") }, kind: "reference_structure" },
-      { change: { objectNames: target.objectNames!.filter((n) => n !== "ref:source-line"), namedText: { ...target.namedText, "ref:source-line": "" } }, kind: "reference_source" },
+      { change: { objectNames: target.objectNames!.filter((n) => n !== "ref:source-line"), namedText: { ...target.namedText, "ref:source-line": "" } }, kind: "reference_source", detailCode: "source_line_mismatch" },
       { change: { notesText: "" }, kind: "reference_structure" },
       { change: { pictureCount: 1 }, kind: "reference_editability" },
-      { change: { textRuns: target.textRuns.filter((run) => !run.includes("$1,000")) }, kind: "reference_source" },
+      { change: { textRuns: target.textRuns.filter((run) => !run.includes("$1,000")) }, kind: "reference_source", detailCode: "bound_figure_missing" },
     ] as const;
-    for (const { change, kind } of cases) {
+    for (const item of cases) {
+      const { change, kind } = item;
       const slides = [...rendered.slides];
       slides[5] = { ...target, ...change };
       const verdict = judgeRenderedDeck({ ...rendered, slides }, { referenceDeck: draft });
       expect(verdict.findings.some((finding) => finding.kind === kind && "slide" in finding && finding.slide === 6)).toBe(true);
+      if ("detailCode" in item) {
+        expect(verdict.findings).toContainEqual(expect.objectContaining({ kind, slide: 6, detailCode: item.detailCode }));
+      }
     }
   }, 60_000);
 });
