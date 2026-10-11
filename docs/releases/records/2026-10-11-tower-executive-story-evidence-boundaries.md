@@ -31,6 +31,7 @@ Tower's executive walkthrough now separates annual plans from year-to-date Finan
 
 - Tower command-center tabs, charts, evidence copy, tool and case presentation, action and initiative drawers, and assistant starter prompt.
 - Focused regression tests for period and evidence semantics, population counts, and detail behavior.
+- AI surface control catalog metadata names the new budget-context test and states the controls it does not prove.
 - This release record.
 - No migration, loader, or data mutation.
 
@@ -43,6 +44,7 @@ Tower's executive walkthrough now separates annual plans from year-to-date Finan
 - `git diff --check` passed.
 - Node 24: `npm run release:check` passed all 11 gates.
 - Node 24: `npm run audit:route-reachability` passed with no new unreachable components or exports.
+- Node 24: `npm run audit:ai-surface-controls` passed; the new context test does not claim answered-turn control coverage.
 - `node scripts/tower/fact-lineage-report.mjs` quote mode completed against active intake in the clean release worktree. The in-scope budget has one active source; this report does not establish a reconciled live read-model figure. Generated report files were restored after inspection.
 - Signed-in post-deploy proof remains pending; local rendering tests do not establish live behavior.
 
