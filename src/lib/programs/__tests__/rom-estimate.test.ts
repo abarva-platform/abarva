@@ -1579,6 +1579,10 @@ describe("saved delivery option selection", () => {
 
   it("requires both current engine previews and an attributed selection reason", () => {
     const { record, register, previews } = options();
+    const next = romEstimateNextAction({ record, register, depth: "full" });
+    expect(next.approvable).toBe(false);
+    expect(next.nextAction.sentence).toBe("Compare both delivery prices and choose an option with a reason.");
+    expect(romRowStates(record, register).find((row) => row.id === "POD")?.state).toBe("decision");
     expect(selectRomDeliveryOption(record, register, "B", "", "operator", AT, previews).ok).toBe(false);
     expect(selectRomDeliveryOption(record, register, "B", "Delivery evidence", "operator", AT, { A: previews.A }).ok).toBe(false);
     const stale = fakeRom({ ...record, friction: { value: 1.4, source: "Other inputs" } }, register);

@@ -59,7 +59,7 @@ Release lane: `experimental`.
   They cover stale previews, missing selection reasons, equal effort hours,
   persisted member terms, selected approval, changes to either option and
   changes to register values and repriced comparison figures, plus the visible
-  selection controls. Three guard mutations were killed; the original source
+  selection controls and flag-off absence. Six guard mutations were killed; the original source
   hash was restored after each mutation.
 - Node 24 TypeScript check passed. Release check: all 11 gates passed.
   Generated manual and the genuine coverage census are current. Targeted lint
@@ -70,13 +70,19 @@ Release lane: `experimental`.
   Forward phase and step navigation uses visible controls; URL visits are
   separately recorded as persisted-page readbacks. Downloaded documents need
   an actual byte-bound review before sign-off.
+- Visual check passed for a temporary render of the real P3 component at
+  1440 and 390 pixels in light and dark, with no horizontal overflow. The
+  temporary test was deleted. The comparison is an added section in the pod
+  row, using the existing cards and control styles; there is no A/B mock.
+  A pending choice keeps that row visible and supplies the next action.
 
 ## Rollout Plan
 
 Squash merge only after current-head CI and a fresh every-open-Moves-PR coverage
 collision scan, including drafts. The repo-owned main ACA workflow builds and
 deploys the merged SHA. Verify runtime invariant and then the dedicated
-operator's signed-in product behavior. Bind any seed apply to a separately
+operator's signed-in product behavior. Last Moves merge deadline is
+2026-10-13 03:00 UTC; deployment freeze is 2026-10-13 11:00 UTC. Bind any seed apply to a separately
 validated fresh Move and exact approved rows. Never apply a fallback seed.
 
 ## Deployment Authority

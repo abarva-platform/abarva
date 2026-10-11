@@ -439,6 +439,7 @@ describe("RomEstimateStep", () => {
       "Step 4 of 5 · 6 still open",
     );
     await estimateReady(container);
+    expect(container.querySelector('section[aria-label="Delivery option comparison"]')).toBeNull();
   });
 
   it("shows confirmed counts read-only and session-note counts as editable drafts with their citation", async () => {
@@ -1241,8 +1242,9 @@ it("shows both current previews and persists a reasoned choice before estimate a
     }
     return { status: 200, body: { ok: true, writes: false, rom } };
   } });
-  const { getByRole, getByLabelText } = render(<Harness initial={serializeRomEstimate(initial)} deliveryOptionsEnabled />);
+  const { container, getByRole, getByLabelText } = render(<Harness initial={serializeRomEstimate(initial)} deliveryOptionsEnabled />);
   await waitFor(() => expect(isDisabled(getByRole("button", { name: "Choose option B" }))).toBe(true));
+  expect(next(container).textContent).toContain("Compare both delivery prices and choose an option with a reason.");
   fireEvent.change(getByLabelText("Why this delivery option"), { target: { value: "Reviewed delivery capacity and rate provenance support B." } });
   await waitFor(() => expect(isDisabled(getByRole("button", { name: "Choose option B" }))).toBe(false));
   fireEvent.click(getByRole("button", { name: "Choose option B" }));

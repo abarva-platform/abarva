@@ -1026,12 +1026,17 @@ export function romRowStates(
   });
 
   const mappings = unapprovedMappings(record).length;
+  const selectionPending = !isRomDeliverySelectionCurrent(record, register);
   rows.push({
     id: "POD",
     rank: 3,
     subject: record.pod ? "Delivery pod" : "Set the delivery pod",
-    state: categories.pod ? "settled" : "decision",
-    clause: record.pod
+    state: categories.pod && !selectionPending ? "settled" : "decision",
+    clause: categories.pod && selectionPending
+      ? record.deliveryOptions?.length === 2
+        ? "compare both delivery prices and choose an option with a reason"
+        : "save and price both delivery options before choosing one"
+      : record.pod
       ? `approve ${plural(mappings, "pod role mapping")}`
       : "set the delivery pod",
   });
@@ -1107,7 +1112,8 @@ export function romEstimateNextAction(input: {
     categories.releases &&
     categories.factors;
   const approvalCurrent = isRomApprovalCurrent(record, register);
-  if (inputsDone) {
+  const selectionCurrent = isRomDeliverySelectionCurrent(record, register);
+  if (inputsDone && selectionCurrent) {
     rows.push({
       id: "EST",
       rank: 6,
@@ -1141,6 +1147,7 @@ export function romEstimateNextAction(input: {
         "confirmed",
     ).length +
     (record.pod ? unapprovedMappings(record).length : 1) +
+    (selectionCurrent ? 0 : 1) +
     (categories.factors ? 0 : 1) +
     (categories.releases ? 0 : 1) +
     (approvalCurrent ? 0 : 1);
@@ -1148,7 +1155,7 @@ export function romEstimateNextAction(input: {
     nextAction: { ...resolved, settled: 0, total: open },
     countLabel: `${romConfirmedInputCount(categories)} of 4 inputs confirmed`,
     categories,
-    approvable: inputsDone && !input.estimateRefused,
+    approvable: inputsDone && selectionCurrent && !input.estimateRefused,
     approvalCurrent,
   };
 }
