@@ -398,6 +398,53 @@ test("keeps long step content reachable inside the clipped workspace", async ({
   }
 });
 
+test("keeps phase bar labels readable in both themes", async ({ page }) => {
+  const css = fs.readFileSync(
+    path.resolve(
+      process.cwd(),
+      "src/components/strategic-moves/step-page/MovesStepPage.module.css",
+    ),
+    "utf8",
+  );
+  for (const width of [390, 1440]) {
+    for (const colorScheme of ["light", "dark"] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ colorScheme });
+      await page.setContent(`
+        <main class="root">
+          <nav class="phase-bar" aria-label="Phases">
+            <ol>
+              <li><a class="phase-tab" href="#previous"><span class="code">P1</span><span class="name">Charter</span><span class="count">Done</span></a></li>
+              <li><span class="phase-tab" aria-current="page"><span class="code">P2</span><span class="name">Discover</span><span class="count">1 to confirm</span></span></li>
+              <li><a class="phase-tab" href="#next"><span class="code">P3</span><span class="name">Design</span><span class="count">Not started</span></a></li>
+            </ol>
+          </nav>
+        </main>
+      `);
+      await page.addStyleTag({ content: css });
+      await expect
+        .poll(() =>
+          page.locator('[aria-current="page"]').evaluate((element) =>
+            getComputedStyle(element).backgroundColor,
+          ),
+        )
+        .toBe(colorScheme === "light" ? "rgb(44, 44, 42)" : "rgb(241, 239, 232)");
+      expect(
+        await page.locator(".phase-bar .code, .phase-bar .count").evaluateAll((elements) =>
+          elements.every((element) => getComputedStyle(element).opacity === "1"),
+        ),
+        `${width}px ${colorScheme} phase labels use opaque theme colors`,
+      ).toBe(true);
+      const axe = await new AxeBuilder({ page }).withTags(["wcag2aa"]).analyze();
+      const violations = axe.violations as Array<{ id: string }>;
+      expect(
+        violations.filter((violation) => violation.id === "color-contrast"),
+        `${width}px ${colorScheme} phase bar contrast`,
+      ).toEqual([]);
+    }
+  }
+});
+
 test("walks every deployed Moves step page without writing", async ({ page }, testInfo) => {
   test.setTimeout(32 * 60_000);
   const missing = [
