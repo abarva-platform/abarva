@@ -114,6 +114,7 @@ export type FeatureFlagKey =
   | "moves_capture_phase_rollup_v1"
   | "moves_charter_standing_after_discover_v1"
   | "moves_step_pages_v3"
+  | "moves_step_pages_catch_up_v1"
   | "moves_step_pages_p0p1_v1"
   | "moves_step_pages_p4p5_v1"
   | "moves_public_source_research"
@@ -424,6 +425,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_step_pages_v3",
     summary:
       "2026-10-09: Renders Moves phase steps as the finalized step page template (five regions: step head, one next-action sentence with its count, a collapsed context line, grouped work rows, footer), one page per step declared in the phase workflow registry, with depth from the Move's change profile. First step: P3 Gate readiness, where gate checks, gate-document sign-off and the governed gate submission happen on one page through the existing build, sign-off and phase-gate-approval paths. Same capture keys, saves, documents and gate rules; only where and how the consultant acts changes. Requires moves_capture_v2. Enabled for the synthetic demo tenant for signed-in review; off for everyone else.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_step_pages_catch_up_v1",
+    summary:
+      "Shows read-only confirmation gaps for passed Moves phases when a later step depends on an unsettled step-page record. Links to the existing step controls and preserves the recorded gate and phase state. Enabled for the synthetic demo tenant; off elsewhere.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },

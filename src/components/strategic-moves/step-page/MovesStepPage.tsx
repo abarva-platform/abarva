@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import type { StepDepth } from "@/lib/programs/phase-workflow-registry";
+import type { PhaseCatchUp } from "@/lib/programs/phase-catch-up";
 import {
   groupStepRows,
   type StepNextAction,
@@ -289,6 +296,9 @@ export interface StepPagePhase {
   href?: string;
 }
 
+/** Lets the phase host show one confirmation banner on the affected step pages. */
+export const PhaseCatchUpContext = createContext<PhaseCatchUp | null>(null);
+
 export interface StepPageStep {
   title: string;
   depth: StepDepth;
@@ -315,6 +325,8 @@ export interface MovesStepPageProps {
   title: string;
   intro: string;
   nextAction: StepNextAction;
+  catchUp?: PhaseCatchUp | null;
+  blockedItems?: PhaseCatchUp["items"];
   /** Optional link closing a blocked sentence: "Open P2 Discover →". */
   blockedLink?: { label: string; href: string };
   /** An action closing the blocked sentence, e.g. "Try again" (v1.6). */
@@ -419,6 +431,8 @@ export function useStepPageTheme() {
 }
 
 export function MovesStepPage(props: MovesStepPageProps) {
+  const inheritedCatchUp = useContext(PhaseCatchUpContext);
+  const catchUp = props.catchUp ?? inheritedCatchUp;
   const { theme, effective, toggle } = useStepPageTheme();
   const { nextAction, stepIndex, steps } = props;
   const state = nextAction.state;
@@ -484,7 +498,7 @@ export function MovesStepPage(props: MovesStepPageProps) {
                 <>
                   <span className={cx("code")}>
                     {phase.code}
-                    {phase.status === "Done" ? (
+                    {phase.status.startsWith("Done") ? (
                       <span
                         className={cx("tick")}
                         role="img"
@@ -496,7 +510,7 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   </span>
                   <span className={cx("name")}>{phase.name}</span>
                   <span className={cx("count")}>
-                    {phase.current
+                    {phase.current && !phase.status.includes("to confirm")
                       ? `Step ${stepIndex + 1} of ${steps.length}`
                       : phase.status}
                   </span>
@@ -521,6 +535,29 @@ export function MovesStepPage(props: MovesStepPageProps) {
             })}
           </ol>
         </nav>
+
+        {catchUp?.items.length ? (
+          <aside className={cx("catch-up")} aria-label="Items to confirm">
+            <p>
+              {catchUp.phase === Number(props.phaseCode.slice(1))
+                ? "This phase’s"
+                : `${props.phases.find((phase) => phase.code === `P${catchUp.phase}`)?.name ?? `P${catchUp.phase}`}’s`}{" "}
+              gate passed. {catchUp.items.length} item
+              {catchUp.items.length === 1 ? "" : "s"} need
+              {catchUp.items.length === 1 ? "s" : ""} a quick confirmation.{" "}
+              {catchUp.gateRecordConfirmed
+                ? "The earlier completion path is not recorded here."
+                : "The approval record and earlier completion path need record confirmation."}
+            </p>
+            <ul>
+              {catchUp.items.map((item) => (
+                <li key={item.id}>
+                  <a href={item.href}>{item.label} →</a>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        ) : null}
 
         <nav className={cx("step-bar")} aria-label={`${props.phaseName} steps`}>
           <ol style={{ ["--steps" as string]: steps.length }}>
@@ -611,7 +648,9 @@ export function MovesStepPage(props: MovesStepPageProps) {
                 )}
                 <p className={cx("next-do")}>
                   {state === "blocked" &&
-                  (props.blockedLink || props.blockedAction)
+                  (props.blockedLink ||
+                    props.blockedAction ||
+                    props.blockedItems?.length)
                     ? nextAction.sentence.replace(/\.$/, ";")
                     : nextAction.sentence}
                   {state === "blocked" && props.blockedLink ? (
@@ -621,6 +660,15 @@ export function MovesStepPage(props: MovesStepPageProps) {
                         {props.blockedLink.label}
                       </a>
                     </>
+                  ) : null}
+                  {state === "blocked" && props.blockedItems?.length ? (
+                    <span className={cx("blocked-items")}>
+                      {props.blockedItems.map((item) => (
+                        <a key={item.id} href={item.href}>
+                          {item.label} →
+                        </a>
+                      ))}
+                    </span>
                   ) : null}
                   {state === "blocked" && props.blockedAction ? (
                     <>

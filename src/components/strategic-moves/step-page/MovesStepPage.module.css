@@ -529,6 +529,37 @@
   flex-shrink: 0;
 }
 
+.catch-up {
+  background: var(--mv-surface);
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius-lg);
+  padding: 10px 16px;
+  color: var(--mv-ink);
+  font-size: 14px;
+}
+.catch-up p {
+  margin: 0;
+}
+.catch-up ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.catch-up a,
+.blocked-items a {
+  color: var(--mv-accent);
+  font-weight: 600;
+}
+.blocked-items {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-left: 0.35em;
+}
+
 /* ───────── StepBar (canonical; N steps; depth suffix only when not Full) ───────── */
 .step-bar ol {
   list-style: none;

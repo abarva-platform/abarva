@@ -26,6 +26,7 @@ import {
   type RootCauseEdit,
 } from "@/lib/programs/root-cause-step";
 import { proposeRootCausesFromNotes } from "@/lib/programs/root-cause-notes";
+import type { PhaseCatchUp } from "@/lib/programs/phase-catch-up";
 import { useStepEvidence } from "./StepEvidence";
 import {
   MovesStepPage,
@@ -78,6 +79,8 @@ export interface RootCausesStepProps {
   steps: readonly StepPageStep[];
   stepIndex: number;
   tabs?: ReactNode;
+  catchUp?: PhaseCatchUp | null;
+  compactCauseRead?: boolean;
   /** The saved `gaps_root_causes` answer. */
   value: string;
   /** Persist a new answer through the host's capture autosave. */
@@ -120,6 +123,13 @@ function shortDate(iso: string): string {
         day: "numeric",
         timeZone: "UTC",
       });
+}
+
+/** Keep generated paragraphs out of the read view until requested. */
+function causeReadName(cause: RootCauseEntry): string {
+  if (cause.short?.trim()) return cause.short.trim();
+  const first = cause.cause.trim().split(/(?<=[.!?])\s/)[0] ?? "";
+  return first.length > 96 ? `${first.slice(0, 93).trimEnd()}…` : first;
 }
 
 export function RootCausesStep(props: RootCausesStepProps) {
@@ -590,12 +600,22 @@ export function RootCausesStep(props: RootCausesStepProps) {
         </>
       );
     }
+    const readName = props.compactCauseRead ? causeReadName(c) : c.cause;
+    const fullText =
+      props.compactCauseRead && !editing && readName !== c.cause ? (
+        <details className={cx("disc", "cause-full-text")}>
+          <summary>
+            <span className={cx("disc-toggle")}>Show full text</span>
+          </summary>
+          <p>{c.cause}</p>
+        </details>
+      ) : null;
     return {
       id: c.id,
       rank: index,
       eyebrow: `Rank ${String(index + 1).padStart(2, "0")} · ${c.id}`,
-      subject: c.cause,
-      shortName: c.cause,
+      subject: readName,
+      shortName: readName,
       state: "ranked",
       facts: fact
         ? [
@@ -606,7 +626,12 @@ export function RootCausesStep(props: RootCausesStepProps) {
             },
           ]
         : [{ kind: "team", text: "Not linked to a baseline number yet" }],
-      middle,
+      middle: (
+        <>
+          {middle}
+          {fullText}
+        </>
+      ),
       actions,
     };
   };
@@ -858,6 +883,7 @@ export function RootCausesStep(props: RootCausesStepProps) {
       syntheticNote={props.syntheticNote}
       tabs={props.tabs}
       phases={props.phases}
+      catchUp={props.catchUp}
       phaseCode="P2"
       phaseName="Discover"
       steps={props.steps}

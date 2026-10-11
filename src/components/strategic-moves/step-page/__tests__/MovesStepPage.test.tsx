@@ -10,6 +10,7 @@
 import { cleanup, render, within } from "@testing-library/react";
 import {
   MovesStepPage,
+  PhaseCatchUpContext,
   StepPageTabs,
   type MovesStepPageProps,
   type StepPageRow,
@@ -107,10 +108,94 @@ const groupTitles = (container: HTMLElement) =>
   Array.from(container.querySelectorAll("h2")).map((h) => h.textContent);
 
 describe("MovesStepPage", () => {
+  it("inherits the phase banner from the host, and has no banner with the flag off", () => {
+    const base = props(ROWS);
+    expect(
+      render(<MovesStepPage {...base} />).container.querySelector(
+        '[aria-label="Items to confirm"]',
+      ),
+    ).toBeNull();
+    const { container } = render(
+      <PhaseCatchUpContext.Provider
+        value={{
+          phase: 2,
+          provenance: "advanced-past",
+          gateRecordConfirmed: false,
+          items: [
+            {
+              phase: 2,
+              stepId: "P2.3",
+              id: "RC-1",
+              label: "Settle RC-1",
+              href: "/root-causes",
+            },
+          ],
+        }}
+      >
+        <MovesStepPage {...base} />
+      </PhaseCatchUpContext.Provider>,
+    );
+    expect(
+      container.querySelector('[aria-label="Items to confirm"]')?.textContent,
+    ).toContain(
+      "approval record and earlier completion path need record confirmation",
+    );
+  });
+  it("shows the passed phase's confirmation count and direct action in the canonical chrome", () => {
+    const catchUp = {
+      phase: 2,
+      provenance: "advanced-past" as const,
+      gateRecordConfirmed: true,
+      items: [
+        {
+          phase: 2,
+          stepId: "P2.3",
+          id: "RC-1",
+          label: "Settle RC-1 · add its evidence",
+          href: "/root-causes",
+        },
+      ],
+    };
+    const { container } = render(
+      <MovesStepPage
+        {...props(
+          ROWS,
+          {},
+          {
+            phases: [
+              { code: "P2", name: "Discover", status: "Done · 1 to confirm" },
+              { code: "P3", name: "Design", status: "", current: true },
+            ],
+            catchUp,
+          },
+        )}
+      />,
+    );
+    expect(
+      within(
+        container.querySelector('[aria-label="Phases"]') as HTMLElement,
+      ).getByText("Done · 1 to confirm"),
+    ).toBeTruthy();
+    expect(
+      within(
+        container.querySelector(
+          '[aria-label="Items to confirm"]',
+        ) as HTMLElement,
+      )
+        .getByRole("link", { name: "Settle RC-1 · add its evidence →" })
+        .getAttribute("href"),
+    ).toBe("/root-causes");
+    expect(container.textContent).not.toContain("completed before step pages");
+  });
+
   it("keeps the context action outside the disclosure summary", () => {
     const { container } = render(
       <MovesStepPage
-        {...props(ROWS, {}, { contextAction: <a href="/evidence">Open evidence</a> })}
+        {...props(
+          ROWS,
+          {},
+          { contextAction: <a href="/evidence">Open evidence</a> },
+        )}
       />,
     );
     const context = container.querySelector("[data-step-context]");
