@@ -21,6 +21,7 @@ import { EventRetirementControl } from "@/components/source/approval/EventRetire
 import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
 import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
+import { buildVendorResponseForwardGateChecks } from "@/components/source/canvas/responses/VendorResponseForwardGate";
 import { VendorBafoInstructionPackPanel } from "@/components/source/canvas/responses/VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "@/components/source/canvas/responses/VendorChallengeLeveragePanel";
 import { EvaluationBafoReadinessPanel } from "@/components/source/canvas/responses/EvaluationBafoReadinessPanel";
@@ -1606,11 +1607,26 @@ function SourceWorkspace({
     );
   if (workspace === "guidebook") return <GuidebookWorkspace view={view} />;
 
+  const responseForwardChecksOpen = view.stage.key === "responses"
+    ? buildVendorResponseForwardGateChecks(
+      vendorResponseReadiness ?? undefined,
+      vendorResponseProfiles,
+      vendorChallengeIntelligence,
+      vendorBafoInstructionPack,
+      vendorEvaluationDecisionView,
+      vendorResponseParseReports,
+    ).filter((check) => check.state !== "complete").length
+    : null;
+  const requiredEvidenceOpen = buildStageEvidenceRequirementRows(view, evidenceStates ?? [])
+    .filter((row) => row.requirement.level === "required" && !row.ready).length;
+
   return (
     <section data-testid="source-shell-v2-steps">
       <StageHeader view={view} evidenceStates={evidenceStates ?? []} />
       <CommercialActiveCanvasStrip
         view={view}
+        requiredEvidenceOpen={requiredEvidenceOpen}
+        responseForwardChecksOpen={responseForwardChecksOpen}
         onWorkspaceChange={onWorkspaceChange}
       />
       {["pricing", "executive_decision", "selection", "transition"].includes(
@@ -1628,6 +1644,7 @@ function SourceWorkspace({
         view={view}
         evidenceStates={evidenceStates ?? []}
         awardSowHandoffReadiness={awardSowHandoffReadiness}
+        responseForwardChecksOpen={responseForwardChecksOpen}
         onWorkspaceChange={onWorkspaceChange}
       />
       {view.stage.key === "transition" && awardSowHandoffReadiness ? (
@@ -2262,11 +2279,13 @@ function FocusedWorkPanel({
   view,
   evidenceStates,
   awardSowHandoffReadiness,
+  responseForwardChecksOpen,
   onWorkspaceChange,
 }: {
   view: SourceEventShellView;
   evidenceStates: readonly SourceEventEvidence[];
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
+  responseForwardChecksOpen: number | null;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const router = useRouter();
@@ -2563,6 +2582,7 @@ function FocusedWorkPanel({
             requiredEvidenceOpen={requiredEvidenceOpen}
             firstMissingEvidence={firstMissingEvidence}
             awardSowHandoffReadiness={awardSowHandoffReadiness}
+            responseForwardChecksOpen={responseForwardChecksOpen}
             onOpenApprovalPage={openApprovalPage}
             onOpenFiles={() => onWorkspaceChange("files")}
           />
@@ -2834,6 +2854,7 @@ function StageReadyPanel({
   requiredEvidenceOpen,
   firstMissingEvidence,
   awardSowHandoffReadiness,
+  responseForwardChecksOpen,
   onOpenApprovalPage,
   onOpenFiles,
 }: {
@@ -2842,12 +2863,29 @@ function StageReadyPanel({
   requiredEvidenceOpen: number;
   firstMissingEvidence: StageEvidenceRequirementRow | null;
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
+  responseForwardChecksOpen: number | null;
   onOpenApprovalPage: () => void;
   onOpenFiles: () => void;
 }) {
   const approvalRecorded = view.stage.approvalRecorded;
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
   const hasReadinessGaps = hasArtifactGaps || requiredEvidenceOpen > 0;
+  const responseForwardBlocked = (responseForwardChecksOpen ?? 0) > 0;
+  const priorApproval = view.approvals.ledger.find(
+    (row) => row.stageKey === view.stage.key && row.state === "approved",
+  );
+  const priorApprovalDate = priorApproval?.approvedAtIso
+    ? new Date(priorApproval.approvedAtIso)
+    : null;
+  const priorApprovalDateLabel =
+    priorApprovalDate && !Number.isNaN(priorApprovalDate.getTime())
+      ? priorApprovalDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          timeZone: "UTC",
+        })
+      : null;
   const gapSummary = [
     requiredEvidenceOpen > 0
       ? `${requiredEvidenceOpen} required evidence item${requiredEvidenceOpen === 1 ? "" : "s"}`
@@ -2855,7 +2893,9 @@ function StageReadyPanel({
     hasArtifactGaps
       ? `${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
       : null,
-  ].filter(Boolean).join(" and ");
+  ]
+    .filter(Boolean)
+    .join(" and ");
   const stage08HandoffBlocked =
     awardSowHandoffReadiness !== null &&
     awardSowHandoffReadiness !== undefined &&
@@ -2873,7 +2913,7 @@ function StageReadyPanel({
   const fileStatus = approvalRecorded
     ? hasArtifactGaps
       ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
-      : "No blockers"
+      : "No file review gaps"
     : hasArtifactGaps
       ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
       : requiredEvidenceOpen > 0
@@ -2892,9 +2932,12 @@ function StageReadyPanel({
       <div>
         <div
           style={{
-            color: hasReadinessGaps || stage08HandoffBlocked
-              ? ANALYTICS.AMBER_TEXT
-              : ANALYTICS.GREEN_TEXT,
+            color:
+              hasReadinessGaps ||
+              stage08HandoffBlocked ||
+              responseForwardBlocked
+                ? ANALYTICS.AMBER_TEXT
+                : ANALYTICS.GREEN_TEXT,
             fontFamily: ANALYTICS.MONO,
             fontSize: 10,
             fontWeight: 800,
@@ -2904,16 +2947,14 @@ function StageReadyPanel({
           }}
         >
           {approvalRecorded
-            ? stage08HandoffBlocked
-              ? "Stage approval recorded"
-              : "Stage approved"
+            ? "Prior stage decision"
             : hasReadinessGaps
               ? "Inputs ready - evidence review open"
               : "Stage ready"}
         </div>
         <h2 style={{ fontSize: 20, lineHeight: 1.25, margin: 0 }}>
           {approvalRecorded
-            ? `${view.stage.label} approval is recorded.`
+            ? `${view.stage.label} was approved earlier.`
             : hasReadinessGaps
               ? `Required inputs are complete, but ${gapSummary} remain.`
               : `All required evidence is ready for ${view.stage.label}.`}
@@ -2928,17 +2969,31 @@ function StageReadyPanel({
           }}
         >
           {approvalRecorded
-            ? stage08HandoffBlocked
-              ? "The stage approval remains recorded. Stage 08 handoff remains blocked until the contract-formation evidence gaps are resolved; this does not reopen or replace the approval."
-              : hasArtifactGaps
-              ? view.stage.approvalTraceState === "historical"
-                ? "The event advanced before stage-level approval tracking captured a complete decision record. Current artifact gaps are follow-up remediation under today's controls; no duplicate approval is required."
-                : "The stage decision is complete. Current artifact-review gaps remain visible for remediation; no duplicate approval is required."
-              : "The stage decision is complete and no further approval is required. Open the approval record to review its rationale and audit trail."
+            ? responseForwardBlocked
+              ? `Evaluation remains blocked: ${responseForwardChecksOpen} forward gate check${responseForwardChecksOpen === 1 ? " is" : "s are"} open. The earlier decision does not satisfy the current response evidence checks.`
+              : stage08HandoffBlocked
+                ? "The stage approval remains recorded. Stage 08 handoff remains blocked until the contract-formation evidence gaps are resolved; this does not reopen or replace the approval."
+                : hasReadinessGaps
+                  ? `Current review remains open: ${gapSummary}. These are follow-up evidence gaps, not a new approval decision.`
+                  : "No current evidence or artifact-review gaps are recorded. Open the prior approval record to review its rationale and audit trail."
             : hasReadinessGaps
               ? `${requiredEvidenceOpen > 0 ? `Required evidence remains open: ${requiredEvidenceOpen}. ` : ""}Review Files and accept client-final artifacts. The approval action appears only after the required evidence and artifact checks are complete.`
               : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
+        {approvalRecorded ? (
+          <p
+            style={{
+              color: ANALYTICS.INK_2,
+              fontSize: 12,
+              lineHeight: 1.5,
+              margin: "8px 0 0",
+            }}
+          >
+            {view.stage.approvalTraceState === "historical"
+              ? "The event advanced before stage-level approval tracking captured a complete decision record. Approver or date details are incomplete; see the approval record."
+              : `Prior approval: ${priorApproval?.approverName ?? "approver not recorded"}${priorApprovalDateLabel ? ` on ${priorApprovalDateLabel}` : "; date not recorded"}.`}
+          </p>
+        ) : null}
       </div>
       {stageOperatingStatus ? (
         <StageOperatingStatusPanel status={stageOperatingStatus} embedded />
@@ -2968,16 +3023,22 @@ function StageReadyPanel({
           label="Next"
           value={
             approvalRecorded
-              ? stage08HandoffBlocked
-                ? "Resolve Stage 08 handoff blockers"
-                : hasArtifactGaps
-                ? "Remediate current review gaps"
-                : "No further approval required"
+              ? responseForwardBlocked
+                ? "Resolve current response gate checks"
+                : stage08HandoffBlocked
+                  ? "Resolve Stage 08 handoff blockers"
+                  : hasReadinessGaps
+                    ? "Remediate current evidence gaps"
+                    : "Review prior approval record"
               : hasReadinessGaps
                 ? "Review required evidence in Files"
                 : "Open approval gate"
           }
-          tone={hasReadinessGaps || stage08HandoffBlocked ? "warn" : "good"}
+          tone={
+            hasReadinessGaps || stage08HandoffBlocked || responseForwardBlocked
+              ? "warn"
+              : "good"
+          }
         />
       </div>
       {hasReadinessGaps && !approvalRecorded ? (
@@ -3022,46 +3083,58 @@ function StageReadyPanel({
         </div>
       ) : null}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        {approvalRecorded || hasReadinessGaps ? <button
-          type="button"
-          data-testid={
-            approvalRecorded
-              ? "source-stage-ready-view-approval"
-              : hasReadinessGaps
-                ? "source-stage-ready-primary-files"
-                : "source-stage-ready-open-approval"
-          }
-          onClick={primaryAction}
-          style={{
-            ...BUTTON_STYLE,
-            background: approvalRecorded ? ANALYTICS.INK : "#e8ebee",
-            color: approvalRecorded ? "#fff" : ANALYTICS.INK_2,
-            display: "inline-flex",
-            justifyContent: "center",
-            padding: "12px 16px",
-            width: "fit-content",
-          }}
-        >
-          {primaryActionLabel}
-        </button> : null}
+        {approvalRecorded || hasReadinessGaps ? (
+          <button
+            type="button"
+            data-testid={
+              approvalRecorded
+                ? "source-stage-ready-view-approval"
+                : hasReadinessGaps
+                  ? "source-stage-ready-primary-files"
+                  : "source-stage-ready-open-approval"
+            }
+            onClick={primaryAction}
+            style={{
+              ...BUTTON_STYLE,
+              background: approvalRecorded ? ANALYTICS.INK : "#e8ebee",
+              color: approvalRecorded ? "#fff" : ANALYTICS.INK_2,
+              display: "inline-flex",
+              justifyContent: "center",
+              padding: "12px 16px",
+              width: "fit-content",
+            }}
+          >
+            {primaryActionLabel}
+          </button>
+        ) : null}
       </div>
-      <ProgressActionDock
-        action={!approvalRecorded && !hasReadinessGaps ? {
-          label: `${view.stage.approvalCtaLabel} →`,
-          onClick: onOpenApprovalPage,
-          testId: "source-stage-ready-open-approval",
-        } : null}
-        blockedAction={!approvalRecorded && firstMissingEvidence ? {
-          label: evidenceBlockerActionLabel(firstMissingEvidence),
-          onClick: onOpenFiles,
-        } : null}
-        status={approvalRecorded ? "Approval recorded" : "Approval locked"}
-        detail={approvalRecorded
-          ? "The decision is already recorded."
-          : firstMissingEvidence
-            ? evidenceBlockerSummary(firstMissingEvidence)
-            : `${gapSummary} remain. Review evidence before approval.`}
-      />
+      {!approvalRecorded ? (
+        <ProgressActionDock
+          action={
+            !approvalRecorded && !hasReadinessGaps
+              ? {
+                  label: `${view.stage.approvalCtaLabel} →`,
+                  onClick: onOpenApprovalPage,
+                  testId: "source-stage-ready-open-approval",
+                }
+              : null
+          }
+          blockedAction={
+            !approvalRecorded && firstMissingEvidence
+              ? {
+                  label: evidenceBlockerActionLabel(firstMissingEvidence),
+                  onClick: onOpenFiles,
+                }
+              : null
+          }
+          status="Approval locked"
+          detail={
+            firstMissingEvidence
+              ? evidenceBlockerSummary(firstMissingEvidence)
+              : `${gapSummary} remain. Review evidence before approval.`
+          }
+        />
+      ) : null}
       <Link
         href={view.stage.approvalHref}
         style={{

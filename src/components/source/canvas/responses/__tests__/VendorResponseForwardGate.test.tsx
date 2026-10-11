@@ -96,6 +96,87 @@ function makeReadiness(): SourceVendorResponseCompleteness {
 }
 
 describe("VendorResponseForwardGate", () => {
+  it("pluralizes the open checklist count on an empty response set", () => {
+    const html = renderToStaticMarkup(createElement(VendorResponseForwardGate));
+    expect(html).toContain("6 gate checks still open");
+    expect(html).not.toContain("6 gate check still open");
+  });
+
+  it("uses singular for one open check and hides the warning when all checks pass", () => {
+    const originalProfiles = buildVendorResponseMveProfiles({
+      id: "skyh-test-event",
+      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+      name: "Managed services sourcing event",
+      accountName: "Demo account",
+    });
+    if (!originalProfiles)
+      throw new Error("Expected profiles for test fixture.");
+    const profileSet = {
+      ...originalProfiles,
+      profiles: originalProfiles.profiles.map((profile) => ({
+        ...profile,
+        readyForEvaluation: "yes" as const,
+      })),
+    };
+    const challengeIntelligence = buildVendorChallengeIntelligence(profileSet);
+    const originalPack = buildVendorBafoInstructionPack(challengeIntelligence);
+    if (!originalPack) throw new Error("Expected BAFO pack for test fixture.");
+    const bafoInstructionPack = { ...originalPack, scoringHoldbacks: [] };
+    const originalDecision = buildVendorEvaluationDecisionView(
+      profileSet,
+      challengeIntelligence,
+      bafoInstructionPack,
+    );
+    if (!originalDecision)
+      throw new Error("Expected decision view for test fixture.");
+    const evaluationDecisionView = {
+      ...originalDecision,
+      scorecardRows: originalDecision.scorecardRows.map((row) => ({
+        ...row,
+        scores: row.scores.map((score) => ({
+          ...score,
+          scoreEligibility: "scoreable" as const,
+        })),
+      })),
+    };
+    const parseReports = buildVendorResponseParseReportsFromProfiles(
+      profileSet,
+    ).map((report) => ({
+      ...report,
+      status: "parsed" as const,
+      citationCount: 1,
+      missingInputs: [],
+      scoreReadiness: "ready_to_score" as const,
+    }));
+    const readiness = {
+      ...makeReadiness(),
+      records: [makeReadiness().records[0]],
+    };
+    const props = {
+      readiness,
+      profileSet,
+      challengeIntelligence,
+      bafoInstructionPack,
+      parseReports,
+    };
+    const oneOpen = renderToStaticMarkup(
+      createElement(VendorResponseForwardGate, props),
+    );
+    expect(oneOpen).toContain("1 gate check still open");
+    expect(oneOpen).not.toContain("1 gate checks still open");
+    expect(oneOpen).toContain('aria-disabled="true"');
+
+    const complete = renderToStaticMarkup(
+      createElement(VendorResponseForwardGate, {
+        ...props,
+        evaluationDecisionView,
+      }),
+    );
+    expect(complete).toContain("All gate checks complete.");
+    expect(complete).not.toContain("still open");
+    expect(complete).toContain('aria-disabled="false"');
+  });
+
   it("keeps Continue disabled until package, evidence, intelligence, and holdbacks are ready", () => {
     const profileSet = buildVendorResponseMveProfiles({
       id: "skyh-test-event",
