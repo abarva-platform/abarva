@@ -1266,7 +1266,9 @@ export default async function StrategicMovePhaseWorkspacePage({
         initialWorkspaceView={
           resolvedSearchParams.workspace === "intelligence"
             ? "intelligence"
-            : "phase"
+            : resolvedSearchParams.workspace === "files"
+              ? "files"
+              : "phase"
         }
         captureP0Enabled={captureP0Enabled}
         charterBasisEnabled={charterBasisEnabled}

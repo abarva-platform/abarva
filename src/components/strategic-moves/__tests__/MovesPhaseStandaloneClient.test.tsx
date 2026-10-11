@@ -5881,7 +5881,47 @@ describe("MovesPhaseStandaloneClient", () => {
           screen.getByRole("navigation", { name: "Discover steps" }),
         ).getAllByRole("listitem"),
       ).toHaveLength(5);
+      const workspace = screen.getByRole("navigation", { name: "Workspace" });
+      expect(
+        within(workspace).getByRole("link", { name: "Files" }),
+      ).toHaveAttribute(
+        "href",
+        `/strategic-moves/${p2Move().id}/phase/2?workspace=files`,
+      );
+      expect(
+        within(workspace).getByRole("link", { name: "Record" }),
+      ).toHaveAttribute(
+        "href",
+        `/strategic-moves/${p2Move().id}/phase/2?workspace=intelligence`,
+      );
     });
+
+    it.each([
+      ["files", "Files & Evidence"],
+      ["intelligence", "Phase Intelligence"],
+    ] as const)(
+      "opens the %s workspace without redirecting to a step",
+      (view, title) => {
+        mockRouterReplace.mockClear();
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            captureV2Enabled
+            stepPagesV3Enabled
+            initialWorkspaceView={view}
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={p2Move()}
+            phaseNum={2}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        expect(
+          screen.getByRole("heading", { name: title }),
+        ).toBeInTheDocument();
+        expect(mockRouterReplace).not.toHaveBeenCalled();
+      },
+    );
 
     it("renders only for P2: another phase asked for root causes keeps its own view", () => {
       render(

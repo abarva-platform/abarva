@@ -418,7 +418,7 @@ interface MovesPhaseStandaloneClientProps {
    * readiness) or `root-causes` (P2 Step 3).
    */
   initialStepView?: StepPageView | null;
-  initialWorkspaceView?: "phase" | "intelligence";
+  initialWorkspaceView?: "phase" | "files" | "intelligence";
   /**
    * P2's saved root causes and baseline, for P3 Step 1 (whose rows are P2's
    * settled causes). Read server-side; absent outside P3 or with the flag off.
@@ -3903,7 +3903,7 @@ export function MovesPhaseStandaloneClient({
               workflow[stepIndex]?.sectionKeys ?? [],
               implementedStepViews,
             ),
-            files: `/strategic-moves/${encodeURIComponent(move.id)}/evidence`,
+            files: `${phaseHref(phaseNumber)}?workspace=files`,
             record: `${phaseHref(phaseNumber)}?workspace=intelligence`,
           }}
         />
@@ -4346,8 +4346,8 @@ export function MovesPhaseStandaloneClient({
             current="steps"
             hrefs={{
               steps: `${phaseHref(phase.phase)}?step=root-causes`,
-              files: phaseHref(phase.phase),
-              record: phaseHref(phase.phase),
+              files: `${phaseHref(phase.phase)}?workspace=files`,
+              record: `${phaseHref(phase.phase)}?workspace=intelligence`,
             }}
           />
         }
