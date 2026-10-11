@@ -95,6 +95,18 @@ it("leaves unrelated source tables out and reports excess length without shorten
   });
 });
 
+it("measures the first prose paragraph after headings without changing the answer", () => {
+  const paragraph = Array(55).fill("word").join(" ");
+  for (const separator of ["\n", "\n\n"]) {
+    const raw = `## Economic decision${separator}${paragraph}\n\nNext action.`;
+    const packet = modelAuthoredAnswerPacket(raw, "What decision?", "test", []);
+    expect(packet.directAnswer).toBe(raw);
+    expect(measureExecutiveAnswer(packet.directAnswer).openingWords).toBe(55);
+    expect(measureExecutiveAnswer(packet.directAnswer).openingWithinTarget).toBe(false);
+  }
+  expect(measureExecutiveAnswer("## Heading only").openingWithinTarget).toBe(false);
+});
+
 it("keeps a duplicate follow-up block visible rather than hiding additional authored questions", () => {
   const first = fence("followups", ["First?", "Second?", "Third?"]);
   const extra = fence("followups", ["Fourth?", "Fifth?", "Sixth?"]);

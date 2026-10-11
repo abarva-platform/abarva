@@ -13,7 +13,7 @@ The suite covers the four starter questions plus economics, capabilities, confir
 - Do exhibits answer the question and use supported values or confirmed relationships?
 - Is the next action clear, with an owner where known and a validation gate?
 
-Opening and prose word counts are observations for human review, not quality scores. The prompt requests a 25–40 word opening and 90–160 words of ordinary analytical prose. A longer answer remains intact so it can be assessed. Explicit deep dives may be longer.
+Opening and prose word counts are observations for human review, not quality scores. The prompt requires a 25–40 word opening and at most 120 prose words, reduced to 90 when an exhibit, ranking, plan or comparison carries the detail. The opening measurement skips leading Markdown headings without changing the response. A longer answer remains intact so it can be assessed. Explicit deep dives may be longer.
 
 ## Output ownership
 
