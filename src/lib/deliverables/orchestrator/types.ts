@@ -541,6 +541,8 @@ export interface RenderableDeliverable {
    * prefer this over inferring slides from document sections.
    */
   deckSlides?: RenderableDeckSlide[];
+  /** Governed native Move deck, composed outside model-authored slide prose. */
+  referenceDeck?: import("./reference-deck-model").ReferenceDeckSpec;
   tables: RenderableTable[];
   exhibits: RenderableExhibit[];
   sourceRegister: SourceRegisterEntry[];

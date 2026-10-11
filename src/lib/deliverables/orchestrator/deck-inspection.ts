@@ -36,6 +36,11 @@ export interface InspectedSlide {
   tableCount: number;
   pictureCount: number;
   chartCount: number;
+  /** Object names and visible text read from the actual slide XML. */
+  objectNames?: string[];
+  namedText?: Record<string, string>;
+  /** Notes tied to this slide through its relationship file. */
+  notesText?: string;
   offCanvas: InspectedShape[];
 }
 
@@ -76,6 +81,30 @@ export async function inspectDeck(buffer: Buffer): Promise<InspectedDeck> {
   const slides: InspectedSlide[] = [];
   for (const [i, name] of names.entries()) {
     const xml = await zip.file(name)!.async('string');
+
+    const namedText: Record<string, string> = {};
+    const objectNames: string[] = [];
+    for (const shape of xml.matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)) {
+      const objectName = /<p:cNvPr[^>]*\bname="([^"]*)"/.exec(shape[0])?.[1];
+      if (!objectName) continue;
+      const decodedName = decodeXml(objectName);
+      objectNames.push(decodedName);
+      namedText[decodedName] = [...shape[0].matchAll(T_TAG)]
+        .map((match) => decodeXml(match[1] ?? '').trim())
+        .filter(Boolean).join(' ');
+    }
+    for (const objectName of xml.matchAll(/<p:cNvPr[^>]*\bname="([^"]*)"/g)) {
+      const decodedName = decodeXml(objectName[1] ?? '');
+      if (!objectNames.includes(decodedName)) objectNames.push(decodedName);
+    }
+    const slideStem = /slide(\d+)\.xml$/.exec(name)?.[1];
+    const relName = slideStem ? `ppt/slides/_rels/slide${slideStem}.xml.rels` : '';
+    const relXml = relName && zip.file(relName) ? await zip.file(relName)!.async('string') : '';
+    const notesTarget = /<Relationship\b(?=[^>]*\bType="[^"]*\/notesSlide")(?=[^>]*\bTarget="([^"]+)")[^>]*\/>/.exec(relXml)?.[1];
+    const notesName = notesTarget ? `ppt/notesSlides/${notesTarget.split('/').pop()}` : '';
+    const notesXml = notesName && zip.file(notesName) ? await zip.file(notesName)!.async('string') : '';
+    const notesText = [...notesXml.matchAll(T_TAG)]
+      .map((match) => decodeXml(match[1] ?? '').trim()).filter(Boolean).join(' ');
 
     const textRuns: string[] = [];
     for (const m of xml.matchAll(T_TAG)) {
@@ -118,6 +147,9 @@ export async function inspectDeck(buffer: Buffer): Promise<InspectedDeck> {
       tableCount: (xml.match(/<a:tbl>/g) ?? []).length,
       pictureCount: (xml.match(/<p:pic>/g) ?? []).length,
       chartCount: (xml.match(/<c:chart[\s/>]/g) ?? []).length,
+      objectNames,
+      namedText,
+      notesText,
       offCanvas,
     });
   }

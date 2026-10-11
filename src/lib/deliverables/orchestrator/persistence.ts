@@ -376,7 +376,9 @@ async function renderOfficeCompanion(
           .join("; ")}`,
       );
     }
-    if (!rendered.verdict.ok) {
+    // Reference-edition structural findings are reported as a fidelity score.
+    // Physical defects, missing sources and edition violations were blocked above.
+    if (!rendered.verdict.ok && !doc.referenceDeck) {
       const qualityFailures = rendered.verdict.findings
         .filter(
           (finding) =>

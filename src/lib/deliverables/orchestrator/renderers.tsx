@@ -89,6 +89,7 @@ import {
 import { inspectDeck } from "./deck-inspection";
 import { judgeRenderedDeck } from "./deck-quality";
 import { judgeSheetQuality } from "./sheet-quality";
+import { renderReferenceDeck } from "./reference-deck-renderer";
 import {
   MAX_SLIDE_BULLETS,
   normaliseSlideText,
@@ -3310,6 +3311,7 @@ export async function renderDeliverablePptx(
   doc: RenderableDeliverable,
   architectureModel?: ArchitectureModel,
 ): Promise<Buffer> {
+  if (doc.referenceDeck) return renderReferenceDeck(doc.referenceDeck);
   const { default: PptxGenJS } = await import("pptxgenjs");
   const pptx = new PptxGenJS();
   // LAYOUT_WIDE is 13.333in x 7.5in. LAYOUT_16x9 is 10.0in x 5.625in — the same

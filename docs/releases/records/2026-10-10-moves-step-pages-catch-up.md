@@ -42,7 +42,7 @@ The confirmation list is read-only. It does not settle a cause, attach evidence,
 - ESLint on changed TypeScript/TSX files: pass.
 - `npm run audit:lib-orphans`: pass, no new orphans.
 - Route and export reachability: pass, no new findings.
-- Test CI coverage census: `coveredTestFiles` 2,822 to 2,823, exactly one new test file.
+- Test CI coverage census: `coveredTestFiles` 2,826 to 2,827 after the concurrent main merge, exactly one new test file.
 - Tenancy fence census: unchanged, no new API route; write and check pass.
 - Nexus manual: generated and check pass.
 - Visual check: real component rendered with the module CSS at 390 and 1440, light and dark. No horizontal overflow; blocked action begins at 604px on mobile.

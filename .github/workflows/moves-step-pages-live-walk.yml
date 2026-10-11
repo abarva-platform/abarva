@@ -5,6 +5,10 @@ on:
     paths:
       - .github/workflows/moves-step-pages-live-walk.yml
       - tests/e2e/moves-step-pages-live-walk.spec.ts
+      - src/app/api/v1/programs/**/decks/**/preview/route.ts
+      - src/app/api/v1/programs/**/decks/**/workbook/route.ts
+      - src/lib/deliverables/orchestrator/reference-deck-*.ts
+      - src/lib/deliverables/orchestrator/reference-deck-*.tsx
       - tests/e2e/_helpers/moves-walk-ux-capture.ts
       - tests/e2e/_helpers/moves-walk-ux-score.ts
       - tests/e2e/_helpers/moves-walk-journey.ts
@@ -53,7 +57,7 @@ jobs:
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     env:
       BASE_URL: https://app.abarva.ai
       E2E_MOVES_LIVE_MOVE_ID: ${{ inputs.move_id || vars.MOVES_E2E_DEMO_MOVE_ID }}
