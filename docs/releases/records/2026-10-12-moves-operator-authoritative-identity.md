@@ -47,11 +47,12 @@ Recognize the declared automated account from its authenticated server profile w
 - Fail, historical: initial full behavior coverage was 85.91% lines/statements; all 2,228 tests passed. After isolating unrelated fixture dependencies it was 89.20%, then 89.21%. Untouched main at `061c036865c42165e03b4c534f097c1cee5d1afe` passed at 90.00%; no baseline exception applied.
 - Fail, historical: the first complete run after separating behavior and integration fixtures reached 90.01%, but one named-suite CI registration check failed. Registration was corrected by moving the named integration contracts into the required catalog job, which retains its full Programs directory sweep.
 - Pass: stable-source complete behavior gate against reconciled main `65c5764107fec53f0c703bee33123844222af35b`: 214 suites and 2,253 tests; lines/statements 90.01%, functions 71.96%, branches 72.79%. Thresholds and exclusions are unchanged.
+- Fail, historical: the first published catalog run found a new typed-policy `error.message` passthrough in the no-driver-message guard. The call now uses the authored unavailable sentence and fixed public code. The assertion is unchanged; all 246 Programs suites and 3,860 tests pass after the correction.
 - Pass: PostgreSQL parser precision reproduced without a connection; tuple-revision fixtures avoid JavaScript timestamp precision loss and retain drift refusal.
 - Pass: 14 semantic mutations killed, with sources restored. Wrong actor, person fallback, missing authority, person count/revision, client scope, existing assignment, CAS failure, absent audit, query error, tenant predicate and duplicate participant are covered.
 - Pass: five genuine new test files are reached by CI: three behavior suites in the required floor sweep, plus native SQL and complete origination contracts explicitly named in the required catalog. Final clean-tree census is 2,846 covered files versus 2,841 on actual main. The transient generated probe is absent from the persistent delta. Tenancy census and manual regenerated with no diff and checked.
 - Pass: all 11 release-control checks on the final candidate record.
-- Fail, pending: exact-head published CI is not yet complete at this candidate stage. It must be complete before release.
+- Fail, pending: final actual-main complete coverage and exact-head published CI are not yet complete at this candidate stage. They must be complete before release.
 - Visual: no layout or component change; actual signed-in failure/recovery and performance proof belong to the executing owner after deployment.
 
 ## Rollout Plan

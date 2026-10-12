@@ -753,7 +753,11 @@ export async function submitOriginationBrief(
 
   const accessPolicy = await loadUserProgramAccessPolicy(tenancy).catch((error) => {
     if (error instanceof ProgramAccessPolicyUnavailableError) {
-      throw new OriginationSubmitError(error.code, error.message, 503);
+      throw new OriginationSubmitError(
+        "program_access_policy_unavailable",
+        "Programs access could not be read. No permission decision was made.",
+        503,
+      );
     }
     return null;
   });
