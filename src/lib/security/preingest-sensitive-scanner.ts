@@ -198,6 +198,8 @@ function luhnPasses(raw: string): boolean {
 }
 
 function countLikelyCardNumbers(text: string): number {
-  const candidates = text.match(/\b(?:\d[ -]*?){13,19}\b/g) ?? [];
+  // Fractional digits are quantities; a complete card before a dot still counts.
+  const candidates =
+    text.match(/(?<!\d\.)\b(?:\d[ -]*?){13,19}\b/g) ?? [];
   return candidates.filter(luhnPasses).length;
 }
