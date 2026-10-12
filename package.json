@@ -856,6 +856,7 @@
     "ecl:integrated-insights:inventory-job": "tsx scripts/ecl/integrated_insights_job.ts --inventory",
     "ecl:integrated-insights:plan-job": "tsx scripts/ecl/integrated_insights_job.ts --plan",
     "ecl:integrated-insights:apply-job": "tsx scripts/ecl/integrated_insights_job.ts --apply",
+    "ecl:integrated-insights:readback-job": "tsx scripts/ecl/integrated_insights_job.ts --readback",
     "ecl:integrated-insights:admit-home-job": "NODE_OPTIONS=--conditions=react-server tsx scripts/ecl/home_insight_admission_job.ts",
     "ecl:integrated-insights:refresh-job": "NODE_OPTIONS=--conditions=react-server tsx scripts/ecl/integrated_insight_refresh_job.ts",
     "ecl:integrated-insights:admission-migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20261012120000_home_integrated_insight_admission.sql",
