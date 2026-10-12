@@ -30,7 +30,15 @@ if (!homePageSource.includes('<HomeCanvasApp')) {
   failures.push('/home must mount HomeCanvasApp directly.');
 }
 
-if (!homePageSource.includes('getHomeEclProjectionBundleOrReviewedSnapshotWithSource')) {
+const recordResolverSource = readFile('src/lib/home/preview/resolve-home-record.ts');
+if (
+  !homePageSource.includes('@/lib/home/preview/resolve-home-record') ||
+  !homePageSource.includes('await resolveHomeRecord(tenantKey, provider)') ||
+  !recordResolverSource.includes('getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)') ||
+  !recordResolverSource.includes('getHomeReviewBundle(tenantKey)') ||
+  !recordResolverSource.includes('kind: "reviewed_snapshot"') ||
+  !recordResolverSource.includes('homeRecordSourceToken(tenantKey, recordSource)')
+) {
   failures.push('/home must retain the governed reader and visible reviewed fallback.');
 }
 

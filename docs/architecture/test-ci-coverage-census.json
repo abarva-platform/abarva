@@ -18,10 +18,10 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 3002,
-    "coveredTestFiles": 2836,
-    "pullRequestCoveredTestFiles": 2836,
-    "uncoveredTestFiles": 166,
+    "testFiles": 3007,
+    "coveredTestFiles": 2842,
+    "pullRequestCoveredTestFiles": 2842,
+    "uncoveredTestFiles": 165,
     "directoriesWithTests": 526,
     "directoriesFullyCovered": 456,
     "directoriesPartiallyCovered": 27,
@@ -29,14 +29,14 @@
     "directoriesWithUnrunTestFiles": 70,
     "directoriesWithUntriagedUnrunTestFiles": 59,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 114,
+    "untriagedUnrunTestFiles": 113,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 1,
     "unclassifiedRiskDirectories": 58,
     "rankedDirectories": 1,
-    "rankedUntriagedUnrunTestFiles": 21,
+    "rankedUntriagedUnrunTestFiles": 20,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 52,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
@@ -227,10 +227,20 @@
     },
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 26,
-      "coveredTestFiles": 5,
+      "testFiles": 27,
+      "coveredTestFiles": 7,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 21,
+      "untriagedUnrunTestFiles": 20,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/intelligence/__tests__",
+      "testFiles": 25,
+      "coveredTestFiles": 20,
+      "declaredQuarantineTestFiles": 5,
+      "untriagedUnrunTestFiles": 0,
       "via": [
         "command"
       ]
@@ -240,16 +250,6 @@
       "testFiles": 23,
       "coveredTestFiles": 8,
       "declaredQuarantineTestFiles": 15,
-      "untriagedUnrunTestFiles": 0,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/lib/intelligence/__tests__",
-      "testFiles": 23,
-      "coveredTestFiles": 18,
-      "declaredQuarantineTestFiles": 5,
       "untriagedUnrunTestFiles": 0,
       "via": [
         "command"
@@ -475,7 +475,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -505,7 +505,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -532,7 +532,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -562,7 +562,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -592,7 +592,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -622,7 +622,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -652,7 +652,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -682,7 +682,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -690,24 +690,26 @@
       "directory": "src/lib/intelligence/ask/__tests__",
       "testPath": "src/lib/intelligence/ask/__tests__/executive-context.test.ts",
       "enumerated": true,
-      "collected": false,
-      "run": false,
+      "collected": true,
+      "run": "unknown",
       "green": "unknown",
-      "covered": false,
-      "pullRequestCovered": false,
+      "covered": true,
+      "pullRequestCovered": true,
       "declaredQuarantine": false,
       "declaredQuarantineShape": null,
-      "untriaged": true,
+      "untriaged": false,
       "triageVerdict": null,
-      "drawable": true,
-      "via": [],
+      "drawable": false,
+      "via": [
+        "command"
+      ],
       "governedRisk": {
         "score": 10,
         "band": "high",
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -732,7 +734,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -762,7 +764,34 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/home-record-isolation.test.ts",
+      "enumerated": true,
+      "collected": true,
+      "run": "unknown",
+      "green": "unknown",
+      "covered": true,
+      "pullRequestCovered": true,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": false,
+      "triageVerdict": null,
+      "drawable": false,
+      "via": [
+        "command"
+      ],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -792,7 +821,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -822,7 +851,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -852,7 +881,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -882,7 +911,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -912,7 +941,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -942,7 +971,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -972,7 +1001,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -1002,7 +1031,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -1034,7 +1063,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -1066,7 +1095,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -1096,7 +1125,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -1126,7 +1155,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -1158,7 +1187,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -1188,7 +1217,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     },
@@ -1218,7 +1247,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     }
@@ -1226,14 +1255,13 @@
   "governedRiskRanking": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 26,
-      "unrunTestFiles": 21,
+      "testFiles": 27,
+      "unrunTestFiles": 20,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 21,
+      "untriagedUnrunTestFiles": 20,
       "verdictHeldUntriagedUnrunTestFiles": 19,
-      "drawableUnrunTestFiles": 2,
+      "drawableUnrunTestFiles": 1,
       "drawableTestPaths": [
-        "src/lib/intelligence/ask/__tests__/executive-context.test.ts",
         "src/lib/intelligence/ask/__tests__/executive-reasoning.test.ts"
       ],
       "admittedBy": "governed_risk_signal",
@@ -1243,14 +1271,14 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
+        "productSourceCount": 36,
         "rank": 1
       }
     }
   ],
   "triageVerdicts": {
     "heldUntriagedUnrunTestFiles": 112,
-    "drawableUntriagedUnrunTestFiles": 2,
+    "drawableUntriagedUnrunTestFiles": 1,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 36,
       "real": 1,
@@ -2886,16 +2914,16 @@
   "governedRiskEvidence": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 26,
-      "unrunTestFiles": 21,
+      "testFiles": 27,
+      "unrunTestFiles": 20,
       "governedRisk": {
         "score": 10,
         "band": "high",
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 29,
-        "tenantScopedReadSourceCount": 6,
+        "productSourceCount": 36,
+        "tenantScopedReadSourceCount": 8,
         "tenantScopedReadSources": [
           "src/lib/intelligence/ask/tenant-fence-answer.ts",
           "src/lib/intelligence/ask/tenant-identity-pin.ts",

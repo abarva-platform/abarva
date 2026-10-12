@@ -207,10 +207,18 @@ export type TowerAiAmountBasis =
   | "annualized_tool_cost"
   | "unknown";
 
+export type TowerAiPopulationKind =
+  | "ai_case"
+  | "tool_rollout"
+  | "usage_observation"
+  | "unknown";
+
 export interface TowerMartAiPortfolioItem {
   aiPortfolioKey: string;
   itemName: string;
   itemKind: string;
+  /** Declared serving page and canonical object relationship, not a source filename. */
+  populationKind?: TowerAiPopulationKind;
   vendorName: string | null;
   systemName: string | null;
   aiSpendType: string | null;
@@ -258,6 +266,8 @@ export interface TowerMartAiPortfolioItem {
   /** Cases this rollout supports, asserted by the source row — not inferred from a shared vendor. */
   linkedBusinessCaseCount: number | null;
   valueScore: number;
+  /** False when the source has no valid 0-100 value score. */
+  valueScoreLoaded?: boolean;
   /** Declared 0-100 score. Null when the source did not record one — never substituted. */
   readinessScore: number | null;
   /** Written upstream as (100 - readinessScore); carries no independent signal. */

@@ -7,7 +7,8 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { blobPathFromUri, configFromEnv, operatorEnv, preflightProofLog, promotionErrorState, stageInputs, validateReviewedProof,
+import { blobPathFromUri, configFromEnv, operatorEnv, preflightProofLog, servingReadbackProofLog,
+  promotionErrorState, stageInputs, validateReviewedProof,
   validateServingPage, servingRowsForPage } from "../run-registered-candidate-aca-job.mjs";
 
 const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
@@ -39,6 +40,7 @@ function env(overrides = {}) {
 test("job configuration requires exact digest, release, approval, and private proof scope", () => {
   assert.equal(configFromEnv("preflight", env()).mode, "preflight");
   assert.equal(configFromEnv("promote", env()).approvalRef, releaseRecord);
+  assert.equal(configFromEnv("verify", env()).reviewedSha, sha("reviewed"));
   assert.throws(() => configFromEnv("promote", env({ TOWER_PROMOTION_APPROVAL_REF: "other" })), /Serving approval reference/);
   assert.throws(() => configFromEnv("preflight", env({ ABARVA_OPERATOR_IMAGE_DIGEST: `sha256:${"c".repeat(64)}` })), /identity or release binding/);
   assert.throws(() => configFromEnv("preflight", env({ TOWER_PROMOTION_INPUT_SHA256: "bad" })), /input SHA-256/);
@@ -146,8 +148,25 @@ test("serving value view includes only checked value and cost populations", () =
     physical_view_fingerprints: { cost_lens: sha(JSON.stringify([{ row_key: cost.row_key, source_hash: cost.source_hash }])) } };
   assert.deepEqual(servingRowsForPage("value_proof", [cost, value], config, receipt, reviewed), [value]);
   assert.throws(() => servingRowsForPage("value_proof", [value, { ...cost, source_hash: sha("other") }],
-    config, receipt, reviewed), /cost population differs/);
+    config, receipt, reviewed), /cost_lens population differs/);
   assert.throws(() => servingRowsForPage("value_proof", [value, { ...cost, page_key: "risk_lens" }],
+    config, receipt, reviewed), /unexpected generation or page/);
+});
+
+test("command center serving view includes all three checked command populations", () => {
+  const config = { assessment };
+  const receipt = { projection_version: 4 };
+  const command = { assessment_id: assessment, projection_version: 4, page_key: "command_center",
+    row_key: "summary", source_hash: sha("summary") };
+  const lane = { ...command, page_key: "decision_lanes", row_key: "lane", source_hash: sha("lane") };
+  const action = { ...command, page_key: "recommended_actions", row_key: "action", source_hash: sha("action") };
+  const fingerprint = (row) => sha(JSON.stringify([{ row_key: row.row_key, source_hash: row.source_hash }]));
+  const reviewed = { physical_view_counts: { decision_lanes: 1, recommended_actions: 1 },
+    physical_view_fingerprints: { decision_lanes: fingerprint(lane), recommended_actions: fingerprint(action) } };
+  assert.deepEqual(servingRowsForPage("command_center", [action, command, lane], config, receipt, reviewed), [command]);
+  assert.throws(() => servingRowsForPage("command_center", [command, lane, { ...action, source_hash: sha("wrong") }],
+    config, receipt, reviewed), /recommended_actions population differs/);
+  assert.throws(() => servingRowsForPage("command_center", [command, { ...lane, assessment_id: "old" }, action],
     config, receipt, reviewed), /unexpected generation or page/);
 });
 
@@ -174,6 +193,16 @@ test("preflight job log carries the exact persisted proof and SHA", () => {
   assert.match(log, new RegExp(output.sha256));
 });
 
+test("read-only verify log carries the exact persisted serving readback and SHA", () => {
+  const bytes = Buffer.from('{"status":"pass","view_counts":{"command_center":1}}\n');
+  const output = { uri: stageUri, sha256: sha(bytes) };
+  const log = servingReadbackProofLog(bytes, output);
+  const saved = log.split("__TOWER_SERVING_READBACK_JSON_BEGIN__\n")[1]
+    .split("__TOWER_SERVING_READBACK_JSON_END__\n")[0];
+  assert.ok(Buffer.from(saved).equals(bytes));
+  assert.match(log, new RegExp(output.sha256));
+});
+
 test("ACA wrapper binds promotion job metadata before planning either script", (t) => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), "tower-promotion-plan-"));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
@@ -188,7 +217,8 @@ test("ACA wrapper binds promotion job metadata before planning either script", (
     [path.join(repo, "scripts/ops/submit-aca-operator-job.mjs"), "--plan-only", "--image", image,
       "--script", script, "--job", "operator-job", "--timeout", "1800", "--out-dir", out,
       ...binding, ...overrides], { cwd: repo, encoding: "utf8" });
-  for (const script of ["tower:registered-intake:preflight-job", "tower:registered-intake:promote-job"]) {
+  for (const script of ["tower:registered-intake:preflight-job", "tower:registered-intake:promote-job",
+    "tower:registered-intake:verify-job"]) {
     assert.equal(plan(script).status, 0);
     const saved = JSON.parse(fs.readFileSync(path.join(out, "plan.json"), "utf8"));
     assert.ok(saved.commands.start.includes(script));
