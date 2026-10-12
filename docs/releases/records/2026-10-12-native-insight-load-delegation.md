@@ -39,9 +39,15 @@ scope is unchanged. No serving approval or source-state mutation is included.
 
 ## QA / Validation
 
-Focused delegation/load tests, existing candidate and job regression tests, Node 24 typecheck,
-changed-file ESLint, governance validation, coverage census and release checks must pass before
-merge. Current-head CI and native readback are separate proof layers.
+- Focused native load, shared delegated approval and legacy manifest tests: 104 passed.
+- Required named-suite wiring guard: 8 passed.
+- Disposable Postgres 18 candidate/admission/operator pipeline: 66 passed, including 54 deterministic
+  rule and transport regressions. No production database used.
+- Node 24 full typecheck (8 GiB), changed-file ESLint, context/corpus governance, coverage census and
+  release checks (11/11) passed locally.
+- Locally retained exact certified private bytes validate against the independently computed native
+  binding. This does not prove private Blob upload or a production load.
+- Current-head CI, exact deployed-image parity and native production readback remain separate gates.
 
 ## Rollout Plan
 

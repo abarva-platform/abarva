@@ -9,7 +9,7 @@ import { buildIntegratedInsightPlan, insightHash, insightUuid } from "../../../s
 import { candidateGovernance, persistInsightCandidates } from "../../../src/lib/ecl/insights/store";
 import type { InsightInput, InsightMeasure, InsightObject, InsightRelationship } from "../../../src/lib/ecl/insights/types";
 import { blobProofStore, boundedStore, jobLimits, type JobDatabase } from "../synthetic_enterprise_home_job";
-import { emitInsightProofBundle } from "../integrated_insights_job";
+import { emitInsightProofBundle, runInsightJob } from "../integrated_insights_job";
 import { extractProofBundle } from "../../ops/submit-aca-operator-job.mjs";
 
 const tenantKey = CANONICAL_TENANT_KEYS[0];
@@ -125,6 +125,22 @@ test("the deadline wrapper preserves the private reader byte limit", async () =>
   }, jobLimits({}));
   await store.read("test-private-proof", 1_000_000);
   assert.deepEqual(reads, [["test-private-proof", 1_000_000]]);
+});
+
+test("an unrecognized declared build version refuses before opening data or proofs", async () => {
+  let opened = 0;
+  await assert.rejects(runInsightJob({
+    ECL_INSIGHT_TENANT_KEY: tenantKey, ECL_INSIGHT_RUN_ID: "test-wrong-build",
+    ECL_INSIGHT_OPERATOR_IDENTITY: "test", ECL_INSIGHT_BUILD_VERSION: "wrong-version",
+    ECL_INSIGHT_RELEASE_RECORD: "docs/releases/records/test-insight-load.md",
+    ABARVA_OPERATOR_IMAGE: `test/web@sha256:${"a".repeat(64)}`,
+    ABARVA_OPERATOR_BRANCH_COMMIT: "b".repeat(40),
+  }, "plan", {
+    recordExists: () => true, manifests: async () => [],
+    connect: async () => { opened += 1; throw new Error("Must not connect"); },
+    store: async () => { opened += 1; throw new Error("Must not open private proofs"); },
+  }), /Unsupported insight job build version/);
+  assert.equal(opened, 0);
 });
 
 test("five supported rule classes fire with stable evidence and candidate-only governance", () => {
