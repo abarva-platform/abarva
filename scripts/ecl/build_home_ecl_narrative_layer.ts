@@ -3197,7 +3197,21 @@ async function main() {
       await db.query("rollback");
       const outFile = path.join(options.outDir, `${options.tenantKey}-home-narrative-readiness.json`);
       fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
-      console.log(JSON.stringify({ checkpoint: "home_narrative_readiness", ...result, out_file: outFile }));
+      console.log(JSON.stringify({
+        checkpoint: "home_narrative_readiness",
+        tenantKey: result.tenantKey,
+        assessmentId: result.assessmentId,
+        projectionVersion: result.projectionVersion,
+        writeApplied: false,
+        modelInvoked: false,
+        source_projection_rows: result.source_projection_rows,
+        readiness_issue_rows: result.projection_readiness_issues.length,
+        verified_source_linked_entries: result.verified_source_linked_entries,
+        signal_count: result.signal_count,
+        governed_evidence_ready: result.governed_evidence_ready,
+        refusal: result.refusal,
+        out_file: outFile,
+      }));
       emitHomeNarrativeProofBundle(outFile, result, options);
       return;
     }
