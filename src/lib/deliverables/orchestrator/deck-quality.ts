@@ -16,7 +16,7 @@ import "server-only";
 
 import type { InspectedDeck, InspectedSlide } from "./deck-inspection";
 import { referenceCellTextHeight } from "./reference-deck-layout";
-import { answerIsCountDump, clientCopyIssue, coverUsesEditionRule, figuresOnSlide, visibleFiguresOnSlide, referenceArchetypeGaps, referenceSourceLine, type ReferenceDeckSpec } from "./reference-deck-model";
+import { answerIsCountDump, clientCopyIssue, coverUsesEditionRule, figuresOnSlide, visibleFiguresOnSlide, referenceArchetypeGaps, referenceNarrativeIssue, referenceSourceLine, type ReferenceDeckSpec } from "./reference-deck-model";
 
 /**
  * Slide role. A cover or divider is legitimately thin and must SAY so — it is
@@ -95,6 +95,9 @@ function judgeReferenceSlide(
     add("reference_client_copy", `slide ${slide.index}: client text contains ${internalTerm}.`, "internal_term");
   if (coverUsesEditionRule(visibleText))
     add("reference_client_copy", `slide ${slide.index}: the edition rule appears in client-facing text.`, "edition_rule_visible");
+  const actionName = `ref:action:${expected.archetype}:${expected.section ?? ""}`;
+  const unsupported = referenceNarrativeIssue(`${named[actionName] ?? expected.actionTitle}. ${named["ref:answer:text"] ?? ""}`, expected.narrativeEvidence);
+  if (unsupported) add("reference_client_copy", `slide ${slide.index}: rendered interpretation violates its evidence basis.`, unsupported);
   if (expected.archetype === "cover") {
     if ((named["ref:cover:title"] ?? "") !== spec.useCase)
       add("reference_client_copy", `slide ${slide.index}: the cover must name the use case.`, "cover_use_case");
@@ -109,6 +112,11 @@ function judgeReferenceSlide(
       add("reference_layout", `slide ${slide.index}: table text is below the readable type floor.`, "table_type_size");
     else if (cell.heightIn + 0.01 < referenceCellTextHeight(cell.text, cell.widthIn, cell.fontSize))
       add("reference_layout", `slide ${slide.index}: a table text box cannot hold its wrapped content.`, "table_text_overflow");
+  }
+  for (const label of slide.architectureText ?? []) {
+    if (!Number.isFinite(label.fontSize) || label.fontSize < 12
+      || label.heightIn + 0.01 < referenceCellTextHeight(label.text, label.widthIn, label.fontSize))
+      add("reference_layout", `slide ${slide.index}: architecture label cannot fit at readable type.`, "architecture_text_fit");
   }
   for (const gap of referenceArchetypeGaps(expected, spec.edition))
     add("reference_structure", `slide ${slide.index}: ${expected.archetype} ${gap}.`);
@@ -131,6 +139,14 @@ function judgeReferenceSlide(
     });
   }
   for (const block of expected.blocks) {
+    if (block.kind === "architecture") {
+      block.layers.forEach((layer, index) => {
+        if (named[`ref:body:architecture-label:${index}`] !== layer.items.join(" "))
+          add("reference_structure", `slide ${slide.index}: an architecture label changed during rendering.`, "architecture_label_mismatch");
+        if (layer.fullItems?.some((item) => !slide.notesText?.includes(item)))
+          add("reference_source", `slide ${slide.index}: notes omit full architecture source detail.`, "architecture_notes_missing");
+      });
+    }
     if (block.kind !== "flow") continue;
     block.nodes.forEach((label, nodeIndex) => {
       if (named[`ref:body:flow-label:${nodeIndex}`] !== label)

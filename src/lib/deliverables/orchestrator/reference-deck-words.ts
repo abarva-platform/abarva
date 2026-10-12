@@ -2,8 +2,8 @@ import "server-only";
 
 import { policyForTier } from "@/lib/ai/document-generation-policy";
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress/anthropic-direct";
-import { answerIsCountDump, clientCopyIssue, type ReferenceArchetype, type ReferenceEdition } from "./reference-deck-model";
-import { promptSlotDefinitions, type ReferenceSlotTable } from "./reference-deck-slots";
+import { answerIsCountDump, clientCopyIssue, referenceNarrativeIssue, type ReferenceArchetype, type ReferenceEdition } from "./reference-deck-model";
+import { buildReferenceNarrativeEvidence, promptSlotDefinitions, type ReferenceSlotTable } from "./reference-deck-slots";
 
 export interface EditionWords {
   title: string;
@@ -78,12 +78,12 @@ const INVESTMENT_TITLE_SLOTS: Partial<Record<ReferenceArchetype, string>> = {
 
 const FALLBACK_ANSWERS: Partial<Record<ReferenceArchetype, string>> = {
   one_page: "The case can advance when its value basis and open questions are agreed.",
-  big_number_context: "The value has a stated basis; the team should test the assumptions behind it.",
+  big_number_context: "Confirm the value basis before drawing a conclusion.",
   one_step_value: "The annual value matters only if the counted step is agreed.",
   three_year_value: "The timing of value changes what the case can support.",
   assumptions: "The team should resolve the assumptions that could change the decision.",
-  rom_hours: "Delivery figures depend on an approved estimate and its working hours.",
-  sources: "The published evidence shows which claims can be checked.",
+  rom_hours: "Confirm the delivery basis and working hours before using the estimate.",
+  sources: "Confirm the public sources before using them to support the case.",
 };
 
 function fallback(archetype: ReferenceArchetype, edition: ReferenceEdition): EditionWords {
@@ -167,7 +167,30 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
   if (answerIsCountDump(entry.answer)) return "count_dump_answer";
   const editionText = archetype === "cover" ? `${entry.answer} ${entry.notes}` : literal;
   if (edition === "validation" && VALIDATION_FORBIDDEN.test(editionText)) return "edition_language";
+  const evidence = buildReferenceNarrativeEvidence(slots, archetype ?? "contents", edition);
+  // Validate bindings before substitution; numeric displays stay server-side.
+  if (evidence.activeCount) evidence.activeCount = "{register.count.active}";
+  if (evidence.openCount) evidence.openCount = "{register.count.open}";
+  const narrativeIssue = referenceNarrativeIssue(`${entry.title}. ${entry.answer}`, evidence);
+  if (narrativeIssue) return narrativeIssue;
   return null;
+}
+
+const TITLE_REQUIREMENTS = { minimumWords: 5, maximumSentences: 1 } as const;
+const RULE_REQUIREMENTS: Record<string, string> = {
+  title_format: "Write a title with at least five words and only one sentence. Do not return a short section label.",
+  active_count_as_open: "The active assumption count includes open, confirmed and corrected items. Only the open-count token may describe open items.",
+  unavailable_value_claim: "No counted value is available for this exhibit. State the evidence still needed; do not refer to an existing figure or total.",
+  unavailable_estimate_claim: "No approved estimate is available. State the approval still needed; do not refer to an existing estimate figure.",
+  unavailable_baseline_claim: "No source-verified measured baseline is available. Describe confirmation as a prerequisite, not an accomplished fact.",
+  unaccepted_owner_claim: "Decision owners have not been accepted. Describe agreement as a prerequisite; do not say decisions are already mapped or assigned.",
+  unavailable_public_source_claim: "Approved public citations are unavailable or empty. Do not assert that every claim is already supported by approved public evidence.",
+  public_source_scope: "The public-citation collection does not establish the source coverage of every case fact or internal working figure. Qualify the public scope; do not infer that all internal evidence is either approved by, or absent from, this collection.",
+};
+
+function promptEvidence(slots: ReferenceSlotTable, archetype: ReferenceArchetype, edition: ReferenceEdition) {
+  return Object.fromEntries(Object.entries(buildReferenceNarrativeEvidence(slots, archetype, edition))
+    .filter(([, value]) => typeof value === "boolean"));
 }
 
 /**
@@ -190,9 +213,11 @@ export async function draftEditionWords(input: {
   const allSlides = input.archetypes.map((_, index) => index + 1);
   const failure = (reason: WordsUnavailableReason): DraftEditionWordsResult =>
     ({ status: "unavailable", reason, words: unavailable, fallbackSlides: allSlides });
-  const system = "Write client-ready slide language as JSON with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Give each slide a full-sentence action title. Keep the title and answer to one sentence each; use two short sentences in notes. The answer must interpret what the evidence means and the next decision, never list counts. Never prefix client text with a layout or archetype name such as big number context, plain English table, flow today or one step value. Do not put internal workflow words such as slot, readback, capture, register, governed, Move, flag, preview or ROM in the title or answer; consultant guidance belongs only in notes. Copy every requiredTitleSlot exactly into its title. Figure slots use one pair of braces, for example {value.annual.base}; never use double braces, a bare slot name, or a value. Use only supplied, edition-allowed slot tokens for figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Specific case facts require an approved model-ready context bundle, which this request does not supply. An unavailable input remains a visible gap after generation. Notes begin 'The point:' and contain 'How to read:'. The server sets the cover title and promise from the use-case name and edition; do not put an edition rule on the cover. In validation answers, notes and non-cover titles, avoid cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
+  const system = "Write client-ready slide language as JSON with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Every non-cover title, including a section divider, has at least five words and exactly one sentence. Keep the title and answer to one sentence each; use two short sentences in notes. The answer must interpret what the evidence means and the next decision, never list counts. Never prefix client text with a layout or archetype name such as big number context, plain English table, flow today or one step value. Do not put internal workflow words such as slot, readback, capture, register, governed, Move, flag, preview or ROM in the title or answer; consultant guidance belongs only in notes. Copy every requiredTitleSlot exactly into its title. Figure slots use one pair of braces, for example {value.annual.base}; never use double braces, a bare slot name, or a value. Use only supplied, edition-allowed slot tokens for figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Specific case facts require an approved model-ready context bundle, which this request does not supply. Use each slide evidence flag literally: false means the input is not confirmed. An unavailable input remains a visible gap after generation; do not write this figure, an approved estimate, mapped decision owners or verified citations as completed facts when that basis is absent. Active assumptions include open, confirmed and corrected items; only register.count.open describes open items. Notes begin 'The point:' and contain 'How to read:'. The server sets the cover title and promise from the use-case name and edition; do not put an edition rule on the cover. In validation answers, notes and non-cover titles, avoid cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
   const profile = { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType] ?? DESIGN_LENS.unclassified, phaseStage: input.phaseStage, available: input.available };
-  const promptSlides = input.archetypes.map((archetype) => ({ archetype, ...(archetype === "cover"
+  const promptSlides = input.archetypes.map((archetype) => ({ archetype,
+    titleRequirements: TITLE_REQUIREMENTS, evidence: promptEvidence(input.slots, archetype, input.edition),
+    ...(archetype === "cover"
       ? { coverTitleAndPromiseProvidedByServer: true } : {}), ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[archetype]
       ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[archetype]}}` } : {}) }));
   const slotDefinitions = promptSlotDefinitions(input.slots, input.edition);
@@ -324,6 +349,8 @@ export async function draftEditionWords(input: {
           profile,
           rejectedSlides: chunk.map(({ index, rule, ...detail }) => ({
             archetype: input.archetypes[index], rejectedRule: rule,
+            ruleRequirements: RULE_REQUIREMENTS[rule], titleRequirements: TITLE_REQUIREMENTS,
+            evidence: promptEvidence(input.slots, input.archetypes[index]!, input.edition),
             ...detail,
             ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]
               ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]}}` } : {}),

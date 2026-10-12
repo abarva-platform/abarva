@@ -27,7 +27,7 @@ export type ReferenceBlock =
   | { kind: "table"; columns: string[]; rows: ReferenceCell[][]; decisiveRows?: number[] }
   | { kind: "metrics"; items: { label: string; value: ReferenceCell; meaning: string }[] }
   | { kind: "flow"; nodes: string[]; fullNodes?: string[]; annotation?: string }
-  | { kind: "architecture"; layers: { name: string; items: string[] }[]; governance: string }
+  | { kind: "architecture"; layers: { name: string; items: string[]; fullItems?: string[] }[]; governance: string }
   | { kind: "bars"; items: { label: string; value: ReferenceFigure; magnitude: number }[] }
   | { kind: "timeline"; quarters: string[]; rows: { label: string; from: number; to: number; cost?: ReferenceFigure }[]; today: number; commit: number }
   | { kind: "gap"; title: string; detail: string; nextAction: string; compact?: boolean }
@@ -50,6 +50,18 @@ export interface ReferenceSlide {
   narrativeSourceLabels?: string[];
   /** Exact governed source keys used in this slide, including narrative claims. */
   sourceIds?: string[];
+  /** Server-derived availability and counting basis, never model-authored. */
+  narrativeEvidence?: ReferenceNarrativeEvidence;
+}
+
+export interface ReferenceNarrativeEvidence {
+  valueAvailable?: boolean;
+  estimateAvailable?: boolean;
+  baselineAvailable?: boolean;
+  acceptedOwnersAvailable?: boolean;
+  publicSourcesAvailable?: boolean;
+  activeCount?: string;
+  openCount?: string;
 }
 
 export interface ReferenceDeckSpec {
@@ -98,12 +110,54 @@ const CLIENT_INTERNAL_TERMS: Array<[string, RegExp]> = [
   ["Move", /\bMove\b/i], ["flag", /\bflags?\b/i],
   ["preview", /\bpreviews?\b/i], ["snapshot ID", /\bsnapshot\s+id\b/i],
   ["ROM", /\bROM\b/i], ["value engine", /\bvalue[ -]engine\b/i],
+  ["role setup instruction", /\b(?:role alias only|no real person|external email|synthetic role contact)\b/i],
+  ["edition instruction", /\b(?:this|the)\s+edition\s+(?:requires|allows|forbids|uses)\b/i],
+  ["source feed configuration", /\bpublic source access\b.*\b(?:this|the|current)\s+configuration\b/i],
   ["layout label", /\b(?:cover|divider|one page|big number context|plain english table|flow today|one step value)\s*:/i],
 ];
 
 export function clientCopyIssue(value: string): string | null {
   const prose = value.replace(/\s+/g, " ");
   return CLIENT_INTERNAL_TERMS.find(([, pattern]) => pattern.test(prose))?.[0] ?? null;
+}
+
+/** Refuse a completed-evidence claim when its governed basis is missing. */
+export function referenceNarrativeIssue(prose: string, evidence?: ReferenceNarrativeEvidence): string | null {
+  if (!evidence) return null;
+  const sentences = prose.replace(/\s+/g, " ").split(/[.!?]\s+/);
+  const unavailable = /\b(?:unavailable|missing|not yet|to confirm|still needs?|needs? confirmation|awaits? confirmation)\b/i;
+  const escaped = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const sentence of sentences) {
+    if (evidence.activeCount && evidence.activeCount !== evidence.openCount) {
+      const quantity = `(?<![\\w])${escaped(evidence.activeCount)}(?![\\w])`;
+      if (new RegExp(`${quantity}\\s+(?:[A-Za-z-]+\\s+){0,4}(?:open|outstanding|unreviewed|unconfirmed)\\b`, "i").test(sentence)
+        || new RegExp(`\\b(?:open|outstanding|unreviewed|unconfirmed)\\s+(?:[A-Za-z-]+\\s+){0,4}${quantity}`, "i").test(sentence))
+        return "active_count_as_open";
+    }
+    if (evidence.publicSourcesAvailable === false && /\bno\s+source\b|\ball\s+(?:figures|references|sources)\s+(?:remain|are)\s+provisional\b/i.test(sentence))
+      return "public_source_scope";
+    if (unavailable.test(sentence)) continue;
+    if (/^(?:Confirm|Review|Agree|Establish|Identify|Assess|Check|Validate|Resolve|Discuss|Obtain)\b/i.test(sentence.trim())
+      && !/\b(?:this|that)\s+(?:figure|estimate|amount|total)\b/i.test(sentence)) continue;
+    if (evidence.valueAvailable === false && /\b(?:this|that|the)\s+(?:(?:measured|approved|current|annual|credited|working|counted|confirmed|three-year|current-state)\s+){0,3}(?:figure|value|amount|total)\b/i.test(sentence))
+      return "unavailable_value_claim";
+    if (evidence.estimateAvailable === false && /\b(?:this|that)\s+(?:figure|estimate|amount)\b|\b(?:the|an?)\s+(?:approved|current|plan-basis)\s+(?:delivery\s+)?estimate\b/i.test(sentence))
+      return "unavailable_estimate_claim";
+    if (evidence.baselineAvailable === false && /\b(?:measured|verified|confirmed|source-verified)\s+(?:current-state\s+)?baseline\b|\bbaseline\s+(?:has been|is|was)\s+(?:measured|verified|confirmed)\b/i.test(sentence))
+      return "unavailable_baseline_claim";
+    if (evidence.acceptedOwnersAvailable === false
+      && /\b(?:has|have|is|are|was|were|already)\s+(?:been\s+)?(?:mapped|assigned|accepted|agreed|confirmed)\b/i.test(sentence)
+      && /\b(?:owners?|users?|decision|authority|accountability)\b/i.test(sentence))
+      return "unaccepted_owner_claim";
+    if (evidence.publicSourcesAvailable === false
+      && (/\b(?:every|all|each)\b.*\b(?:claim|assertion|figure|evidence)\b.*\b(?:traces?|supported|underpinned|approved|citations?)\b/i.test(sentence)
+        || /\b(?:approved|confirmed)\s+(?:public\s+|published\s+)?(?:sources?|citations?)\b.*\b(?:support|underpin|prove)\b/i.test(sentence)))
+      return "unavailable_public_source_claim";
+    if (evidence.publicSourcesAvailable !== undefined
+      && /\b(?:every|all|each)\b.*\b(?:factual claim|case fact|figure)\b.*\b(?:traces?|supported|underpinned)\b.*\b(?:public|published|citations?)\b/i.test(sentence))
+      return "public_source_scope";
+  }
+  return null;
 }
 
 export function coverUsesEditionRule(title: string): boolean {
@@ -279,6 +333,8 @@ export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFin
       }
     });
     const clientText = [slide.actionTitle, slide.answer ?? "", ...blockProse, referenceSourceLine(slide)].join(" ");
+    const narrativeIssue = referenceNarrativeIssue(`${slide.actionTitle}. ${slide.answer ?? ""}`, slide.narrativeEvidence);
+    if (narrativeIssue) add(n, "unsupported_narrative", `Client-facing interpretation violates its evidence basis: ${narrativeIssue}.`, true);
     const internalTerm = clientCopyIssue(clientText);
     if (internalTerm) add(n, "client_copy_term", `Client-facing text contains internal term: ${internalTerm}.`, true);
     if (coverUsesEditionRule(clientText))

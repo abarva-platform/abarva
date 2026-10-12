@@ -72,6 +72,32 @@ function spec(edition: ReferenceDeckSpec["edition"]): ReferenceDeckSpec {
 }
 
 describe("reference deck components", () => {
+  it("checks architecture label type, geometry, content and source notes in the physical file", async () => {
+    const draft = spec("investment");
+    const architecture = draft.slides[12]!.blocks[0]!;
+    if (architecture.kind !== "architecture") throw new Error("synthetic architecture absent");
+    architecture.layers[1]!.fullItems = ["The full source detail is retained for independent review against the original governed record."];
+    draft.slides[12]!.speakerNotes += ` Source detail: ${architecture.layers[1]!.fullItems[0]}`;
+    const rendered = await inspectDeck(await renderReferenceDeck(draft));
+    const target = rendered.slides[12]!;
+    expect(target.architectureText).toHaveLength(6);
+    expect(judgeRenderedDeck(rendered, { referenceDeck: draft }).findings.filter((finding) => finding.kind === "reference_layout")).toEqual([]);
+    target.architectureText![0]!.fontSize = 8;
+    expect(judgeRenderedDeck(rendered, { referenceDeck: draft }).findings).toContainEqual(expect.objectContaining({ detailCode: "architecture_text_fit" }));
+    target.architectureText![0]!.fontSize = 12; target.architectureText![0]!.heightIn = 0.01;
+    expect(judgeRenderedDeck(rendered, { referenceDeck: draft }).findings).toContainEqual(expect.objectContaining({ detailCode: "architecture_text_fit" }));
+    target.architectureText![0]!.heightIn = 0.71; target.namedText!["ref:body:architecture-label:0"] = "Different content";
+    expect(judgeRenderedDeck(rendered, { referenceDeck: draft }).findings).toContainEqual(expect.objectContaining({ detailCode: "architecture_label_mismatch" }));
+    target.notesText = NOTES;
+    expect(judgeRenderedDeck(rendered, { referenceDeck: draft }).findings).toContainEqual(expect.objectContaining({ detailCode: "architecture_notes_missing" }));
+  });
+
+  it("rejects a rendered owner assertion when accepted owner evidence is missing", async () => {
+    const draft = spec("investment"); draft.slides[11]!.narrativeEvidence = { acceptedOwnersAvailable: false };
+    const rendered = await inspectDeck(await renderReferenceDeck(draft));
+    rendered.slides[11]!.namedText!["ref:answer:text"] = "Each decision has been mapped to the user who holds authority for it.";
+    expect(judgeRenderedDeck(rendered, { referenceDeck: draft }).findings).toContainEqual(expect.objectContaining({ kind: "reference_client_copy", detailCode: "unaccepted_owner_claim" }));
+  });
   it("refuses a table that cannot fit without deleting rows or reducing readable type", async () => {
     const draft = spec("investment");
     draft.slides[9]!.blocks = [{ kind: "table", columns: ["Evidence", "Review"], rows: Array.from({ length: 12 }, () =>

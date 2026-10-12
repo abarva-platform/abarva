@@ -773,6 +773,7 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       payloadText(row, "claim_gate_reason_detail", row.summary) ??
       "ECL serving row requires evidence review before the claim can advance.",
     approvedFundingUsd: approvedFunding ?? 0,
+    planningBudgetUsd: payloadNullableNumberFrom(row, ["planning_budget_usd"]),
     fundedAmount: payloadNumber(row, "funded_amount_usd"),
     fundingAmountLoaded: approvedFunding !== null,
     aiTaggedSpendUsd:
@@ -908,6 +909,12 @@ function valueObservationMonths(
     .filter((entry): entry is TowerMartValueObservationMonth => entry !== null);
 }
 
+function isActiveSourceCaseStatus(status: string | null | undefined): boolean {
+  if (!status) return false;
+  const normalized = status.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  return ["active", "live", "in_use", "production", "production_enterprise_wide"].includes(normalized);
+}
+
 function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const refs = sourceRefs(row);
   const declaredPage = nullableText(displayPayload(row).page_key);
@@ -958,6 +965,7 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const usageMetric =
     payloadTextFrom(row, ["usage_metric", "success_metric"]) ??
     (activeUsersRaw !== null ? "active users" : null);
+  const usageRecorded = activeUsersRaw !== null || adoptionRatePct !== null;
   const rolloutTargetUsersRaw = payloadNullableNumberFrom(row, [
     "rollout_target_users",
   ]);
@@ -1051,10 +1059,13 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     operationalOwnerRole: payloadTextFrom(row, ["operational_owner_role"]),
     expectedValueArchetype: payloadTextFrom(row, ["expected_value_archetype"]),
     duplicateRisk: null,
-    valueClaimStatus: "usage_supported",
+    valueClaimStatus: usageRecorded ? "usage_recorded" : "usage_not_recorded",
     towerClaimAllowed: "blocked",
-    caveat:
-      "AI usage is source-recorded; value remains blocked until outcome and finance evidence are linked.",
+    caveat: usageRecorded
+      ? populationKind === "usage_observation"
+        ? "Usage is recorded in a separate source feed. It is not linked to an intake AI case and does not establish a dollar benefit."
+        : "Usage is recorded for this row. Value remains blocked until outcome and Finance evidence are linked."
+      : "No usage measure is recorded for this row. Value remains blocked until usage, outcome, and Finance evidence are linked.",
     sourceFile: firstSourceLabel(refs),
     sourceRow: nullableText(refs[0]?.source_record_id),
     sourceSystem: payloadTextFrom(row, ["source_system"]),
@@ -1626,15 +1637,18 @@ export async function readTowerCommandCenter(args: {
         aiPortfolioCounts: {
           total: aiPortfolio.length,
           candidate: aiCandidates.length,
-          active: aiAssets.length - aiCandidates.length,
+          active: aiAssets.filter((row) =>
+            row.populationKind === "ai_case" &&
+            isActiveSourceCaseStatus(row.sourceCaseStatus),
+          ).length,
           funded: aiAssets.filter(
             (row) =>
               row.aiAmountBasis === "approved_funding" &&
               row.approvedFundingUsd > 0,
           )
             .length,
-          embeddedOrUsage: aiAssets.filter(
-            (row) => ["embedded_platform", "usage_benefit"].includes(row.itemKind),
+          embeddedOrUsage: aiPortfolio.filter(
+            (row) => row.usageActual !== null || row.adoptionRatePct !== null,
           ).length,
           attributedSpendUsd: aiAssets.reduce(
             (sum, row) => sum + row.aiTaggedSpendUsd,
