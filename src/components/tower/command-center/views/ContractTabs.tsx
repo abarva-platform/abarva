@@ -1258,7 +1258,7 @@ function reconciliationRows(view: TowerCommandCenterView) {
     ["AI portfolio assets", ai],
     ["Benefit claims", claims],
     ["AI risk lens evidence gaps", view.gaps.length],
-    ["Pipeline field gaps (ops)", view.pipelineGaps.length],
+    ["Records needing source details or proof", view.pipelineGaps.length],
     ["Source recommendations", recommendations],
   ] as const;
 }
@@ -1273,9 +1273,7 @@ export function EvidenceActionsContractView({
   onOpenGap: (id: string) => void;
 }) {
   const s = view.summary;
-  // The review-queue count, and only that. This fell back to `gaps.length + pipelineGaps.length`
-  // — the size of two unrelated collections — whenever the queue count was zero, so a label
-  // reading "N in the economic review queue" could be counting something else entirely.
+  // This is the loaded review-row count, not a count of unique claims or missing dollar values.
   const economicRows = s.economicReviewQueueCount;
   const campaigns = campaignRows(view);
   const sourceActions = sourceContractActions(view);
@@ -1285,8 +1283,8 @@ export function EvidenceActionsContractView({
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
       <SectionTitle
-        title="Distinct review populations"
-        subtitle="Assets, benefit claims, evidence gaps, pipeline gaps and recommendations have different counting bases"
+        title="Different counts in this review"
+        subtitle="These groups can overlap. Each count describes its own set of loaded records."
       />
 
       <section className={styles.populationGrid}>
@@ -1302,8 +1300,8 @@ export function EvidenceActionsContractView({
         </article>
         <article>
           <strong>{formatCount(economicRows)}</strong>
-          <span>Unreviewed economic rows</span>
-          <p>Rows with no known value yet. A backlog, not a workload.</p>
+          <span>Rows flagged for review</span>
+          <p>Loaded records marked gated or blocked before a claim can be reported. A case can appear in more than one record, and its dollar value may already be present.</p>
         </article>
       </section>
 
@@ -1428,12 +1426,12 @@ export function EvidenceActionsContractView({
 
         <article className={styles.contractCard}>
           {cardTitle(
-            "Projection population counts",
-            "Separate, overlapping populations; do not add these rows",
+            "Counts from loaded records",
+            "These groups can overlap; do not add their counts",
           )}
           <div className={styles.reconcileTables}>
             <div>
-              <h3>Rows by population</h3>
+              <h3>What each count covers</h3>
               {rowsByPage.map(([label, count]) => (
                 <p key={label}>
                   <span>{label}</span>
@@ -1443,8 +1441,8 @@ export function EvidenceActionsContractView({
             </div>
           </div>
           <p className={styles.contractCallout}>
-            The AI risk lens lists business evidence gaps only. Pipeline field
-            gaps are an operations backlog and do not appear in that lens.
+            The AI risk lens lists business evidence gaps. These source follow-ups
+            name a field or reporting gate to check, and do not appear in that lens.
           </p>
         </article>
       </section>

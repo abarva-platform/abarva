@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -55,36 +55,36 @@ P1–P4 gate pages expose the existing transition workbook download, parse and a
 - PASS: 28 actual component/CSS variants covering text capture, notes, recorded approval, retained-input correction and the actual transition workbook controls pass at 390 and 1440 in both themes, with no contrast violations or horizontal overflow. Temporary render probes were removed. This is local component proof; the full signed-in shell remains to be validated.
 - HISTORICAL PASS: the real blocked component/CSS at 390 and 1440 in both themes has no contrast violations or horizontal overflow. The temporary render probe was removed; three existing local CSS browser checks also pass.
 - PASS: all 11 final local release gates on the reconciled source. Node 24.15.0 is the validation runtime.
-- PENDING: exact new-head remote CI and the immediate fresh all-open fetched guard.
+- PASS: complete exact final-head CI on `84bad5ce` (38 successes and six expected skips), followed by a stable fetched guard covering 116 open PRs including 19 drafts and an immediate pre-squash recheck.
 - PASS: an independent immutable `ebeca9a36f492952ca1c25846f3ad5fdb7ed573b` source export regenerates 2856 and matches every candidate count field. This includes the genuine upstream clause-text and Tower source-story suites. Main's carried 2855 predates the latter suite; regeneration includes it. Zero new N test files and genuine delta zero against regenerated actual main; no count is edited by hand.
-- FAIL: preceding deployed acceptance on `5afb6c4e`, as shown below. No follow-up deployed timing exists yet.
+- FAIL: actual deployed acceptance on `847782ee`: one slow Validate view and two lower non-speed dimensions, as recorded below. The earlier `5afb6c4e` failure remains historical before evidence.
 
 ## Before / After Timing
 
-Observed settled-head milliseconds from independently downloaded stable walks; every follow-up after value is pending.
+Observed settled-head milliseconds from independently downloaded stable walks. Every immediately preceding bd1e view settled before the N9452 merge; the after sample is bound to its actual deployed image.
 
-| View | Serving 691a1b43 before N9442 | Serving 5afb6c4e before this repair | Follow-up after |
-| --- | ---: | ---: | --- |
-| p0-signal | 2133 ms | 1694 ms | Pending |
-| p0-scope | 1433 ms | 861 ms | Pending |
-| p0-value | 1351 ms | 1009 ms | Pending |
-| p0-owner-evidence | 1413 ms | 982 ms | Pending |
-| p0-approve | 1506 ms | 945 ms | Pending |
-| p1-sponsor-scope | 2123 ms | 1411 ms | Pending |
-| p1-stakeholders | 1970 ms | 860 ms | Pending |
-| p1-success | 1331 ms | 1179 ms | Pending |
-| p1-evidence-change | 1658 ms | 915 ms | Pending |
-| p1-charter-gate | 1527 ms | 939 ms | Pending |
-| p2-evidence-plan | 2847 ms | 1292 ms | Pending |
-| p2-baseline | 1391 ms | 837 ms | Pending |
-| root-causes | 1380 ms | 996 ms | Pending |
-| p2-validate | 3565 ms | 2693 ms | Pending |
-| p2-gate | 4342 ms | 3416 ms | Pending |
-| root-cause-design | 2300 ms | 1545 ms | Pending |
-| architecture-options | 1781 ms | 1030 ms | Pending |
-| operating-adoption | 1478 ms | 960 ms | Pending |
-| rom-estimate | 1502 ms | 1322 ms | Pending |
-| gate | 1466 ms | 1107 ms | Pending |
+| View | Serving 691a1b43 before N9442 | Serving 5afb6c4e before this repair | Serving bd1e1595 immediately before | Serving 847782ee after |
+| --- | ---: | ---: | ---: | ---: |
+| p0-signal | 2133 ms | 1694 ms | 1465 ms | 1590 ms |
+| p0-scope | 1433 ms | 861 ms | 1532 ms | 929 ms |
+| p0-value | 1351 ms | 1009 ms | 2083 ms | 994 ms |
+| p0-owner-evidence | 1413 ms | 982 ms | 1618 ms | 1154 ms |
+| p0-approve | 1506 ms | 945 ms | 1569 ms | 936 ms |
+| p1-sponsor-scope | 2123 ms | 1411 ms | 1299 ms | 1348 ms |
+| p1-stakeholders | 1970 ms | 860 ms | 2978 ms | 1011 ms |
+| p1-success | 1331 ms | 1179 ms | 2064 ms | 835 ms |
+| p1-evidence-change | 1658 ms | 915 ms | 1156 ms | 795 ms |
+| p1-charter-gate | 1527 ms | 939 ms | 1874 ms | 957 ms |
+| p2-evidence-plan | 2847 ms | 1292 ms | 2017 ms | 1256 ms |
+| p2-baseline | 1391 ms | 837 ms | 1251 ms | 903 ms |
+| root-causes | 1380 ms | 996 ms | 1633 ms | 945 ms |
+| p2-validate | 3565 ms | 2693 ms | 1136 ms | 2572 ms |
+| p2-gate | 4342 ms | 3416 ms | 1343 ms | 2391 ms |
+| root-cause-design | 2300 ms | 1545 ms | 1978 ms | 1122 ms |
+| architecture-options | 1781 ms | 1030 ms | 1283 ms | 1416 ms |
+| operating-adoption | 1478 ms | 960 ms | 1634 ms | 1235 ms |
+| rom-estimate | 1502 ms | 1322 ms | 1649 ms | 1290 ms |
+| gate | 1466 ms | 1107 ms | 4391 ms | 1217 ms |
 
 The five largest measured server contributors, excluding the aggregate route timer, were P2 Gate's Move projection (1438 ms), P2 Validate's Move projection (1060 ms), P2 Gate tenancy (976 ms), P2 Gate criteria (798 ms), and P2 Validate tenancy (775 ms). These overlap and must not be added. Discovery readiness began only after the Move projection; it added 398 ms on Validate and 367 ms on Gate. The measurements motivate this scheduling repair; local tests cannot promise runtime latency.
 
@@ -115,23 +115,26 @@ Revert through a squash PR and the repo-owned main deployment, preserving the ap
 - Its stable after walk: https://github.com/abarva-platform/abarva/actions/runs/38235262135, embedded serving `5afb6c4e5fbc6f95f604568ce0c8b8ceb0e7ef5d`.
 - Independent web/100%-traffic/required-worker invariant: 10:39:40 UTC, revision `ca-abarva-web-lab-eastus--m5afb6c4e`, digest `sha256:f6fb6f6aef1285080b79bf2ae53bfc68d9992b77759f1f173ced78b4fbae09e0`.
 - Earlier stable before: https://github.com/abarva-platform/abarva/actions/runs/38230025967, serving `691a1b43`.
-- Follow-up source PR, exact-head CI, deployment and after proof remain pending.
+- Current PR: [#9452](https://github.com/abarva-platform/abarva/pull/9452), squash `847782ee6e36cc7ff48c23e0cca8fd91170c0d0b` at 19:22:44 UTC from exact `84bad5ce`.
+- Automatic deploy: [38297255559](https://github.com/abarva-platform/abarva/actions/runs/38297255559), completed 19:33:18 UTC.
+- Valid after walk: [38298423936](https://github.com/abarva-platform/abarva/actions/runs/38298423936), embedded serving `847782ee` at 19:39:05.649 UTC.
+- Independent before/after runtime invariants at 19:34:25.844 and 19:42:38.722 UTC: revision `ca-abarva-web-lab-eastus--m847782ee`, web/sole100%-traffic/required-workers digest `sha256:423054aab8ca426f0170fc69b81a9c23f0c4a3766558736b4706743f11232fef`.
 
 ## Known Gaps
 
-- The preceding speed/template acceptance failed; this candidate has no deployed after sample.
+- Current deployed acceptance FAILED: Validate2572ms exceeds2500; P0 approval honesty15→0 and Gate accessibility20→15 are below baseline38171682273.
 - Full 29-view proof depends on the separate authorized writer's fresh journey. This task does not mutate that Move, its intake or protected evidence.
 - Native intake reload and independent deck/artifact acceptance remain separate.
-- The current before sample has two slow views and one non-speed regression; averages do not clear either failure.
+- The after sample reaches20/29 and passes19, UX98 with19 full-speed views. Its mean does not clear any per-view failure.
 
 
 ## Additional Before Evidence
 
-Walk [38248657090](https://github.com/abarva-platform/abarva/actions/runs/38248657090) embeds serving `025fbcfe` and passes twenty reachable views: UX 99, eighteen full-speed views, Validate 2873 ms and Gate 3254 ms. Evidence Plan's template dimension is 16 against the baseline's 20. This is before data for this candidate. The overall workflow failed its independent deck check; it does not establish fresh journey, full-29 or deck acceptance. No current candidate after timing exists.
+Walk [38248657090](https://github.com/abarva-platform/abarva/actions/runs/38248657090) embeds serving `025fbcfe` and passes twenty reachable views: UX 99, eighteen full-speed views, Validate 2873 ms and Gate 3254 ms. Evidence Plan's template dimension is 16 against the baseline's 20. This is before data for this candidate. The overall workflow failed its independent deck check; it does not establish fresh journey, full-29 or deck acceptance. The current after sample is recorded in the table above.
 
 ## Current Release Limits
 
-- Final new-head CI, fresh all-open fetched guard and deployed acceptance remain pending.
+- The published release passed exact-head CI and the fresh guard, then deployed. Speed/non-speed/full-29 acceptance remains failed or pending.
 - The original approver must review and execute any displayed correction through the product, followed by independent native audit and preserved-binding verification. Local transaction tests do not establish runtime correction or downstream gate clearance.
 - Full 29-view acceptance depends on the authorized journey owner reaching P5; existing twenty-view samples cannot prove it.
 - Independent workbook review, participant assignment, original request lifecycle and signed artifact binding remain distinct governed actions and evidence.
@@ -146,3 +149,9 @@ Exact head `f9db933fef7879af8aad4b8071d9b34ec557f30f` failed the AI surface cata
 [Source #9465](https://github.com/abarva-platform/abarva/pull/9465) landed as `32f67d27ea6f16af43f8407153e1d7e413caca42` at 17:43:42 UTC. Its exact source head `0713d7426f18258fec805634ebb93f0567de339c` had 40 successful checks and five expected skips. This branch merged actual landed main without rebasing, took and regenerated the applicable manual/coverage/tenancy artifacts, and reran the affected Source/deck tests and required local gates. That upstream CI and guard do not clear this release: the new N head requires complete CI and its own immediate fresh all-open fetched guard. Every contender remains visible.
 
 Later main `85f07696` added a shared package command and independent candidate readback receipts. Main `ebeca9a3` then added Tower presentation coverage, including one real covered suite. Both actual advances were merged without rebasing, their generated artifacts were regenerated, and affected tests plus required gates were checked. The owned N implementation is unchanged; previous visual and mutation proof remains bound to those same code bytes. Remote checks on `406faf08` and `78b31f31` do not validate the replacement head.
+
+## Actual N9452 After Evidence
+
+Walk38298423936 is a valid stable N9452 after sample, with matching runtime invariants before and after. It reaches20/29, passes19/fails1, UX98 and19 full-speed. Validate2572ms fails the2500ms limit. P0 approval reports exactly “Unreviewed read gap: UNAVAILABLE”; its observed sentence is “Wait for the stored origination approval to be read.” Honesty is0 versus baseline15. Gate accessibility is15 versus20 because of scrollable-region-focusable. Evidence Plan template is repaired to20. Nine later views still state “Move is at P3”.
+
+The separate deck assertion also fails: formats returnHTTP200, validation fidelity80 and investment PPTX45/PDF40, with PDF words unavailable. Those results remain separate from step acceptance. The minimum connection candidate documented in `2026-10-12-moves-capture-transaction-connection.md` does not clear any of these acceptance gaps.

@@ -1,7 +1,16 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { withAzureWriteTransaction } from "@/lib/data-plane/postgresCompat";
-import { resolveTenantDatabaseConnection } from "@/lib/data-plane/tenantConnectionResolver";
+import {
+  resolveDatabaseUrlCandidates,
+  withAzureWriteTransaction,
+} from "@/lib/data-plane/postgresCompat";
+import {
+  resolveTenantDatabaseConnection,
+  tenantConnectionScopeFromEnv,
+  tenantDatabaseEnvNamesForScope,
+} from "@/lib/data-plane/tenantConnectionResolver";
+import { canonicalTenantKey } from "@/lib/tenant-keys";
+import { isDeclaredSyntheticDemoTenant } from "@/lib/tenant/synthetic-tenant-declaration";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import {
@@ -28,6 +37,30 @@ function refuse(code: string, detail: string, status = 409): never {
   throw new P0CaptureCorrectionRefusal(code, detail, status);
 }
 const sha = (value: string) => createHash("sha256").update(value).digest("hex");
+
+/** Private planes require their scoped URL; declared demo data uses its existing transport. */
+export function resolveP0ReviewedCaptureConnection(
+  ctx: TenancyCtx,
+  env: NodeJS.ProcessEnv = process.env,
+): string | undefined {
+  const key = canonicalTenantKey(ctx.clientKey ?? "");
+  const scoped =
+    resolveTenantDatabaseConnection({ ...ctx, clientKey: key }, env, {
+      allowSharedFallback: false,
+    }).candidates[0] ??
+    (key !== ctx.clientKey
+      ? resolveTenantDatabaseConnection(ctx, env, {
+          allowSharedFallback: false,
+        }).candidates[0]
+      : undefined);
+  if (scoped) return scoped;
+  if (
+    !isDeclaredSyntheticDemoTenant(key) ||
+    tenantDatabaseEnvNamesForScope(tenantConnectionScopeFromEnv(env)).length > 0
+  )
+    return undefined;
+  return resolveDatabaseUrlCandidates(env)[0];
+}
 
 /** Normal capture command: one scoped transaction restores retained source and audit. */
 export async function restoreP0ReviewedCapture(
@@ -69,7 +102,7 @@ export async function restoreP0ReviewedCapture(
       "Review the retained source and record a correction rationale before continuing.",
       400,
     );
-  const connection = resolveTenantDatabaseConnection(ctx).candidates[0];
+  const connection = resolveP0ReviewedCaptureConnection(ctx);
   if (!connection)
     refuse(
       "correction_unavailable",

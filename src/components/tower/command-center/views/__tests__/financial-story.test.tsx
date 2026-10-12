@@ -80,9 +80,55 @@ describe("Tower financial story boundaries", () => {
       />,
     );
     expect(html).toContain("AI risk lens evidence gaps");
-    expect(html).toContain("Pipeline field gaps (ops)");
-    expect(html).toContain("Separate, overlapping populations");
+    expect(html).toContain("Records needing source details or proof");
+    expect(html).toContain("These groups can overlap; do not add their counts");
     expect(html).not.toContain("rows, both ways");
+  });
+
+  it("names three overlapping count bases without adding them or calling review rows missing values", () => {
+    const view = fixtureView();
+    const firstSourceFollowUp = view.pipelineGaps[0];
+    if (!firstSourceFollowUp) throw new Error("Fixture needs a source follow-up");
+    const withCounts = {
+      ...view,
+      unknownSlots: ["detail one", "detail two"],
+      pipelineGaps: [
+        firstSourceFollowUp,
+        { ...firstSourceFollowUp, id: "follow-up-two" },
+        { ...firstSourceFollowUp, id: "follow-up-three" },
+      ],
+      summary: {
+        ...view.summary,
+        economicReviewQueueCount: 7,
+        unknownValueClaimCount: 0,
+      },
+    };
+    const overview = renderToStaticMarkup(
+      <CommandCenterView
+        view={withCounts}
+        onOpenGap={() => undefined}
+        onGoToFunnel={() => undefined}
+        onGoToAi={() => undefined}
+        onGoToActions={() => undefined}
+      />,
+    );
+    expect(overview).toContain("2 Tower details not available");
+    expect(overview).toContain("3 records need source details or proof");
+    expect(overview).not.toContain("5 Tower projection gaps");
+
+    const proof = renderToStaticMarkup(
+      <EvidenceActionsContractView
+        view={withCounts}
+        onOpenAction={() => undefined}
+        onOpenGap={() => undefined}
+      />,
+    );
+    expect(proof).toContain("<strong>7</strong><span>Rows flagged for review</span>");
+    expect(proof).toContain("<span>Records needing source details or proof</span><strong>3</strong>");
+    expect(proof).toContain("marked gated or blocked before a claim can be reported");
+    expect(proof).toContain("its dollar value may already be present");
+    expect(proof).not.toContain("Unreviewed economic rows");
+    expect(proof).not.toContain("Rows with no known value yet");
   });
 
   it("renders absent claim amounts as unknown rather than zero", () => {
