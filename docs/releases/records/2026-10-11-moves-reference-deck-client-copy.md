@@ -77,9 +77,9 @@ rendered pages and extracted text.
 - Library orphan, route reachability, and export reachability checks: **pass**;
   no new findings against their baselines.
 - Test coverage census: **pass**; the reconciled tree has 2832 covered files.
-  Removing only the new PDF inspection suite for a private check gives 2831,
-  so this candidate adds exactly one covered file. Regeneration also includes
-  one already-merged file missing from main's prior committed census of 2830.
+  The reconciled main census has 2831, so this candidate adds exactly one
+  covered file: the new PDF inspection suite. The operator-walk dependency
+  is merged; generated artifacts were taken from main and regenerated.
   Tenancy fence census: **pass**; the existing route remains
   tenant-fenced.
 - Manual regenerated and consistency check: **pass**; no flag or manual text changed.

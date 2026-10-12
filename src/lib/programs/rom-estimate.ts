@@ -95,6 +95,9 @@ export interface RomPodMember {
   levelCode: string;
   levelLabel: string;
   fte: number;
+  /** Optional member terms, resolved only through the cost foundation. */
+  locationCode?: string;
+  providerClassCode?: string;
   /** A role code proposed from another role name; unapproved until a person approves it. */
   proposedMapping?: { from: string; approvedBy?: string; approvedAt?: string };
   /** The level the rate foundation could price, and why it differs. Informational. */
@@ -152,6 +155,7 @@ export interface RomSnapshot {
   approvedBy: string;
   approvedAt: string;
   inputsFingerprint: string;
+  selectedDeliveryOptionCode?: "A" | "B";
   unitHours: Partial<Record<RomDriver, { value: number; source: string }>>;
   releases: RomBlockFigures[];
   foundation: (RomBlockFigures & { releaseCode: string }) | null;
@@ -172,6 +176,25 @@ export interface RomEstimate {
   approval: RomSnapshot | null;
   /** How many snapshots were ever approved; the next one is this + 1. */
   snapshotsIssued: number;
+  deliveryOptions?: RomDeliveryOption[];
+  deliverySelection?: RomDeliverySelection | null;
+}
+
+export interface RomDeliveryOption {
+  code: "A" | "B";
+  name: string;
+  pod: RomPod;
+}
+
+export interface RomDeliverySelection {
+  code: "A" | "B";
+  reason: string;
+  selectedBy: string;
+  selectedAt: string;
+  scopeFingerprint: string;
+  /** Actual engine previews; never supplied hourly rates or tuned costs. */
+  comparison: Array<{ code: "A" | "B"; structureFingerprint: string; podFingerprint: string;
+    figures: Omit<RomBlockFigures, "code" | "name"> }>;
 }
 
 export function emptyRomEstimate(): RomEstimate {
@@ -294,6 +317,8 @@ function parseMember(v: unknown): RomPodMember | null {
     levelCode,
     levelLabel: text(v.levelLabel) ?? levelCode,
     fte: v.fte,
+    ...(text(v.locationCode) ? { locationCode: text(v.locationCode) } : {}),
+    ...(text(v.providerClassCode) ? { providerClassCode: text(v.providerClassCode) } : {}),
     ...(mapping && text(mapping.from)
       ? {
           proposedMapping: {
@@ -450,6 +475,8 @@ function parseSnapshot(v: unknown): RomSnapshot | null {
     approvedBy,
     approvedAt,
     inputsFingerprint: fingerprint,
+    ...(v.selectedDeliveryOptionCode === "A" || v.selectedDeliveryOptionCode === "B"
+      ? { selectedDeliveryOptionCode: v.selectedDeliveryOptionCode } : {}),
     unitHours,
     releases: v.releases
       .map(parseFigures)
@@ -531,11 +558,45 @@ export function parseRomEstimate(
       finite(o.snapshotsIssued) && o.snapshotsIssued >= 0
         ? o.snapshotsIssued
         : 0,
+    ...(o.deliveryOptions !== undefined
+      ? { deliveryOptions: parseDeliveryOptions(o.deliveryOptions),
+          deliverySelection: parseDeliverySelection(o.deliverySelection) } : {}),
   };
 }
 
 export function serializeRomEstimate(value: RomEstimate): string {
   return JSON.stringify(value);
+}
+
+function parseDeliveryOptions(v: unknown): RomDeliveryOption[] {
+  if (!Array.isArray(v) || v.length > 2) return [];
+  const options: RomDeliveryOption[] = [];
+  for (const raw of v) {
+    if (!isObj(raw) || (raw.code !== "A" && raw.code !== "B") ||
+      !text(raw.name) || options.some((o) => o.code === raw.code)) return [];
+    const pod = parsePod(raw.pod);
+    if (!pod) return [];
+    options.push({ code: raw.code, name: text(raw.name)!, pod });
+  }
+  return options;
+}
+
+function parseDeliverySelection(v: unknown): RomDeliverySelection | null {
+  if (!isObj(v) || (v.code !== "A" && v.code !== "B") ||
+    !text(v.reason) || !text(v.selectedBy) || !text(v.selectedAt) ||
+    !text(v.scopeFingerprint) || !Array.isArray(v.comparison) || v.comparison.length !== 2) return null;
+  const comparison: RomDeliverySelection["comparison"] = [];
+  for (const raw of v.comparison) {
+    if (!isObj(raw) || (raw.code !== "A" && raw.code !== "B") ||
+      !text(raw.structureFingerprint) || !text(raw.podFingerprint) || comparison.some((o) => o.code === raw.code) || !isObj(raw.figures)) return null;
+    const figures = parseFigures({ ...raw.figures, code: raw.code, name: raw.code });
+    if (!figures) return null;
+    const { hours, weeks, lowCents, planCents, highCents } = figures;
+    comparison.push({ code: raw.code, structureFingerprint: text(raw.structureFingerprint)!, podFingerprint: text(raw.podFingerprint)!,
+      figures: { hours, weeks, lowCents, planCents, highCents } });
+  }
+  return { code: v.code, reason: text(v.reason)!, selectedBy: text(v.selectedBy)!,
+    selectedAt: text(v.selectedAt)!, scopeFingerprint: text(v.scopeFingerprint)!, comparison };
 }
 
 // ── The inputs fingerprint ──────────────────────────────────────────────────
@@ -560,13 +621,44 @@ export function romInputsFingerprint(record: RomEstimate): string {
   const inputs: Partial<RomEstimate> = { ...record };
   delete inputs.approval;
   delete inputs.snapshotsIssued;
-  const body = canonical(inputs);
+  return stableFingerprint(inputs);
+}
+
+function stableFingerprint(value: unknown): string {
+  const body = canonical(value);
   let hash = 0x811c9dc5;
   for (let i = 0; i < body.length; i += 1) {
     hash ^= body.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return `fnv1a:${hash.toString(16).padStart(8, "0")}:${body.length}`;
+}
+
+function deliveryScopeFingerprint(record: RomEstimate): string {
+  const shared = { ...record };
+  // Options change delivery terms only. Scope, counts, unit references,
+  // confirmations, factors and release grouping are shared by both.
+  shared.pod = null;
+  delete shared.deliveryOptions;
+  delete shared.deliverySelection;
+  return romInputsFingerprint(shared);
+}
+
+export function isRomDeliverySelectionCurrent(record: RomEstimate, register?: readonly RomRegisterRow[] | null): boolean {
+  if (record.deliveryOptions === undefined) return true;
+  const selected = record.deliverySelection;
+  if (!selected || record.deliveryOptions.length !== 2 ||
+    selected.scopeFingerprint !== deliveryScopeFingerprint(record)) return false;
+  const option = record.deliveryOptions.find((o) => o.code === selected.code);
+  if (!option || canonical(option.pod) !== canonical(record.pod)) return false;
+  return record.deliveryOptions.every((o) => {
+    const compared = selected.comparison.find((c) => c.code === o.code);
+    if (!compared || compared.podFingerprint !== stableFingerprint(o.pod)) return false;
+    if (!register) return true;
+    const build = buildRomStructure({ ...record, pod: o.pod }, register);
+    return build.ok && !build.workingFigureDrivers.length &&
+      compared.structureFingerprint === stableFingerprint(build.structure);
+  });
 }
 
 // ── The register, as unit hours read it ─────────────────────────────────────
@@ -829,6 +921,8 @@ export function isRomApprovalCurrent(
 ): boolean {
   const approval = record.approval;
   if (!approval) return false;
+  if (!isRomDeliverySelectionCurrent(record, register) ||
+    (record.deliveryOptions !== undefined && approval.selectedDeliveryOptionCode !== record.deliverySelection?.code)) return false;
   if (approval.inputsFingerprint !== romInputsFingerprint(record)) return false;
   if (!register) return true;
   return countedDrivers(record).every((d) => {
@@ -932,12 +1026,17 @@ export function romRowStates(
   });
 
   const mappings = unapprovedMappings(record).length;
+  const selectionPending = !isRomDeliverySelectionCurrent(record, register);
   rows.push({
     id: "POD",
     rank: 3,
     subject: record.pod ? "Delivery pod" : "Set the delivery pod",
-    state: categories.pod ? "settled" : "decision",
-    clause: record.pod
+    state: categories.pod && !selectionPending ? "settled" : "decision",
+    clause: categories.pod && selectionPending
+      ? record.deliveryOptions?.length === 2
+        ? "compare both delivery prices and choose an option with a reason"
+        : "save and price both delivery options before choosing one"
+      : record.pod
       ? `approve ${plural(mappings, "pod role mapping")}`
       : "set the delivery pod",
   });
@@ -1013,7 +1112,8 @@ export function romEstimateNextAction(input: {
     categories.releases &&
     categories.factors;
   const approvalCurrent = isRomApprovalCurrent(record, register);
-  if (inputsDone) {
+  const selectionCurrent = isRomDeliverySelectionCurrent(record, register);
+  if (inputsDone && selectionCurrent) {
     rows.push({
       id: "EST",
       rank: 6,
@@ -1047,6 +1147,7 @@ export function romEstimateNextAction(input: {
         "confirmed",
     ).length +
     (record.pod ? unapprovedMappings(record).length : 1) +
+    (selectionCurrent ? 0 : 1) +
     (categories.factors ? 0 : 1) +
     (categories.releases ? 0 : 1) +
     (approvalCurrent ? 0 : 1);
@@ -1054,7 +1155,7 @@ export function romEstimateNextAction(input: {
     nextAction: { ...resolved, settled: 0, total: open },
     countLabel: `${romConfirmedInputCount(categories)} of 4 inputs confirmed`,
     categories,
-    approvable: inputsDone && !input.estimateRefused,
+    approvable: inputsDone && selectionCurrent && !input.estimateRefused,
     approvalCurrent,
   };
 }
@@ -1163,6 +1264,8 @@ export function buildRomStructure(
               roleCode: m.roleCode,
               levelCode: m.levelCode,
               fte: m.fte,
+              ...(m.locationCode ? { locationCode: m.locationCode } : {}),
+              ...(m.providerClassCode ? { providerClassCode: m.providerClassCode } : {}),
               ...(m.proposedMapping && !m.proposedMapping.approvedAt
                 ? { proposedMapping: true }
                 : {}),
@@ -1374,6 +1477,49 @@ export function setPod(record: RomEstimate, pod: RomPod): RomEdit {
   return okEdit({ ...record, pod });
 }
 
+export function saveRomDeliveryOption(record: RomEstimate, code: "A" | "B", name: string): RomEdit {
+  const pod = parsePod(record.pod);
+  if (!pod || !name.trim() || name.trim().length > 90) {
+    return { ok: false, reason: "Set the pod and give the delivery option a name first." };
+  }
+  const deliveryOptions = [
+    ...(record.deliveryOptions ?? []).filter((o) => o.code !== code),
+    { code, name: name.trim(), pod },
+  ].sort((a, b) => a.code.localeCompare(b.code));
+  return okEdit({ ...record, deliveryOptions, deliverySelection: null });
+}
+
+export function selectRomDeliveryOption(record: RomEstimate, register: readonly RomRegisterRow[] | null,
+  code: "A" | "B", reason: string, by: string, at: string,
+  previews: Readonly<Partial<Record<"A" | "B", RomResult>>>): RomEdit {
+  if (!reason.trim() || !by.trim() || !at.trim()) {
+    return { ok: false, reason: "Record who selected the option and why before approving the estimate." };
+  }
+  if (record.deliveryOptions?.length !== 2) {
+    return { ok: false, reason: "Save and price both delivery options before choosing one." };
+  }
+  const comparison: RomDeliverySelection["comparison"] = [];
+  for (const option of record.deliveryOptions) {
+    const preview = previews[option.code];
+    const build = buildRomStructure({ ...record, pod: option.pod }, register);
+    if (!preview || !build.ok || build.workingFigureDrivers.length ||
+      canonical(build.structure) !== canonical(preview.structure)) {
+      return { ok: false, reason: "Both options need current cost-foundation previews from the same confirmed inputs." };
+    }
+    comparison.push({ code: option.code, structureFingerprint: stableFingerprint(build.structure), podFingerprint: stableFingerprint(option.pod),
+      figures: romResultFigures(preview).combined });
+  }
+  if (comparison[0].figures.hours !== comparison[1].figures.hours) {
+    return { ok: false, reason: "The delivery options must keep the same scope and effort hours." };
+  }
+  const selected = record.deliveryOptions.find((o) => o.code === code);
+  if (!selected) return { ok: false, reason: "That delivery option is not saved." };
+  return okEdit({ ...record, pod: selected.pod, deliverySelection: {
+    code, reason: reason.trim(), selectedBy: by, selectedAt: at,
+    scopeFingerprint: deliveryScopeFingerprint(record), comparison,
+  } });
+}
+
 export function approveMapping(
   record: RomEstimate,
   roleCode: string,
@@ -1542,6 +1688,9 @@ export function approveRomEstimate(
   by: string,
   at: string,
 ): RomEdit {
+  if (!isRomDeliverySelectionCurrent(record, register)) {
+    return { ok: false, reason: "Price both saved delivery options and record a current selection with its reason before approving." };
+  }
   const c = romCategories(record, register);
   if (!(c.counts && c.unitHours && c.pod && c.releases && c.factors)) {
     return {
@@ -1563,6 +1712,12 @@ export function approveRomEstimate(
         "The inputs changed after this estimate was computed. Wait for it to update, then approve.",
     };
   }
+  if (record.deliverySelection) {
+    const selected = record.deliverySelection.comparison.find((option) => option.code === record.deliverySelection?.code);
+    if (!selected || canonical(selected.figures) !== canonical(romResultFigures(rom).combined)) {
+      return { ok: false, reason: "The selected option's priced figures changed after comparison. Review both current prices and choose again before approving." };
+    }
+  }
   const version = record.snapshotsIssued + 1;
   return okEdit({
     ...record,
@@ -1572,6 +1727,7 @@ export function approveRomEstimate(
       approvedBy: by,
       approvedAt: at,
       inputsFingerprint: romInputsFingerprint(record),
+      ...(record.deliverySelection ? { selectedDeliveryOptionCode: record.deliverySelection.code } : {}),
       unitHours: build.unitHoursUsed,
       ...romResultFigures(rom),
     },

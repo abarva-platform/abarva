@@ -20,6 +20,7 @@ import {
   formatRomHours,
   formatRomMoney,
   formatRomWeeks,
+  isRomDeliverySelectionCurrent,
   parseRomEstimate,
   provisionalSentence,
   releaseGroupingProblem,
@@ -40,6 +41,8 @@ import {
   setCount,
   setFactors,
   setPod,
+  saveRomDeliveryOption,
+  selectRomDeliveryOption,
   setUnitHoursRef,
   type RomCountBlock,
   type RomDriver,
@@ -120,6 +123,7 @@ const TIER_FIELDS = [
 export interface RomEstimateStepProps {
   moveId: string;
   canReviewEvidence: boolean;
+  deliveryOptionsEnabled?: boolean;
   onEvidenceChanged?: () => void;
   moveName: string;
   clientDisplayName: string;
@@ -237,17 +241,19 @@ async function refusalDetail(res: Response, what: string): Promise<string> {
 }
 
 /** A proposed member list stays visibly unapproved until the owner reviews each mapping. */
-export function parseProposedPodMembers(value:string):RomPodMember[] | null {
+export function parseProposedPodMembers(value:string, includeDeliveryTerms=false):RomPodMember[] | null {
   const lines=value.trim().split(/\r?\n/).map((line)=>line.trim()).filter(Boolean);
   if (!lines.length) return null;
   const members:RomPodMember[]=[];
   for (const line of lines) {
     const parts=line.split("|").map((part)=>part.trim());
-    if (parts.length!==5 || !/^ROL-[A-Z0-9-]+$/.test(parts[0]) || !parts[1] ||
+    if ((parts.length!==5 && !(includeDeliveryTerms && parts.length===7)) || !/^ROL-[A-Z0-9-]+$/.test(parts[0]) || !parts[1] ||
         !/^LVL-[A-Z0-9-]+$/.test(parts[2]) || !/^\d+(?:\.\d+)?$/.test(parts[3]) ||
         Number(parts[3])<=0 || !parts[4]) return null;
     members.push({roleCode:parts[0],roleLabel:parts[1],levelCode:parts[2],
-      levelLabel:parts[2],fte:Number(parts[3]),proposedMapping:{from:parts[4]}});
+      levelLabel:parts[2],fte:Number(parts[3]),proposedMapping:{from:parts[4]},
+      ...(parts[5] ? {locationCode:parts[5]} : {}),
+      ...(parts[6] ? {providerClassCode:parts[6]} : {})});
   }
   return members;
 }
@@ -262,6 +268,9 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
   const [fillReply, setFillReply] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [optionName, setOptionName] = useState("");
+  const [selectionReason, setSelectionReason] = useState("");
+  const [optionPreviews, setOptionPreviews] = useState<{ key: string; values: Partial<Record<"A" | "B", PreviewRead>> } | null>(null);
   const evidence = useStepEvidence({
     uploadLabel: "Add session output",
     moveId: props.moveId,
@@ -404,6 +413,45 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
   const shown =
     current ?? (build.ok && preview?.status === "ok" ? preview : null);
   const rom = shown?.status === "ok" ? shown.rom : null;
+
+  const optionBodies = (props.deliveryOptionsEnabled && !hiddenMoney ? record.deliveryOptions ?? [] : [])
+    .map((option) => {
+      const candidate = buildRomStructure({ ...record, pod: option.pod }, register);
+      return { code: option.code, body: candidate.ok ? JSON.stringify(candidate.structure) : "" };
+    });
+  const optionsKey = JSON.stringify(optionBodies);
+  useEffect(() => {
+    const bodies = JSON.parse(optionsKey) as typeof optionBodies;
+    if (!bodies.length) return;
+    let live = true;
+    const controller = new AbortController();
+    void (async () => {
+      const values: Partial<Record<"A" | "B", PreviewRead>> = {};
+      await Promise.all(bodies.map(async ({ code, body }) => {
+        if (!body) {
+          values[code] = { key: body, status: "refused", detail: "Complete the shared estimate inputs to price this option." };
+          return;
+        }
+        try {
+          const response = await fetch(`/api/v1/programs/${props.moveId}/rom/preview`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body, signal: controller.signal,
+          });
+          if (!response.ok) {
+            values[code] = { key: body, status: "refused", detail: await refusalDetail(response, `Option ${code}`) };
+            return;
+          }
+          const result = await response.json() as { rom?: RomResult };
+          values[code] = result.rom?.ok ? { key: body, status: "ok", rom: result.rom }
+            : { key: body, status: "error", detail: "The estimate service answered without an estimate." };
+        } catch {
+          values[code] = { key: body, status: "error", detail: "The estimate service could not be reached." };
+        }
+      }));
+      if (live) setOptionPreviews({ key: optionsKey, values });
+    })();
+    return () => { live = false; controller.abort(); };
+  }, [props.moveId, optionsKey]);
+  const compared = optionPreviews?.key === optionsKey ? optionPreviews.values : {};
 
   const commit = (edit: RomEdit) => {
     if (!edit.ok) {
@@ -971,8 +1019,8 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
               {flags(m)}
             </th>
             <td>{m.levelLabel}</td>
-            <td>{location}</td>
-            <td>{provider}</td>
+            <td>{(m as RomPodMember).locationCode ?? location}</td>
+            <td>{(m as RomPodMember).providerClassCode ?? provider}</td>
             <td className={cx("num")}>{rateText(i)}{rateSources(i)}</td>
             <td className={cx("num")}>{formatAllocation(m.fte)}</td>
           </tr>
@@ -989,7 +1037,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             <div>
               <dt>Level · location · provider</dt>
               <dd>
-                {m.levelLabel} · {location} · {provider}
+                {m.levelLabel} · {(m as RomPodMember).locationCode ?? location} · {(m as RomPodMember).providerClassCode ?? provider}
               </dd>
             </div>
             <div>
@@ -1024,7 +1072,9 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             <input className={cx("cell-input")} value={form.templateCode}
               onChange={(e)=>setForm({...form,templateCode:e.target.value})} />
           </label> : <label>
-            Proposed members, one per line: role code | role name | level code | FTE | source role
+            {props.deliveryOptionsEnabled
+              ? "Proposed members, one per line: role code | role name | level code | FTE | source role | location (optional) | provider (optional)"
+              : "Proposed members, one per line: role code | role name | level code | FTE | source role"}
             <textarea className={cx("cell-input")} rows={5} value={form.membersText}
               onChange={(e)=>setForm({...form,membersText:e.target.value})} />
           </label>}
@@ -1076,9 +1126,11 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
               !form.rateBasis
             }
             onClick={() => {
-              const members=form.mode==="members"?parseProposedPodMembers(form.membersText):null;
+              const members=form.mode==="members"?parseProposedPodMembers(form.membersText,props.deliveryOptionsEnabled):null;
               if (form.mode==="members" && !members) {
-                setRefusal("Each proposed member needs role code | role name | level code | positive FTE | source role.");
+                setRefusal(props.deliveryOptionsEnabled
+                  ? "Each proposed member needs role code | role name | level code | positive FTE | source role, with optional location and provider columns."
+                  : "Each proposed member needs role code | role name | level code | positive FTE | source role.");
                 return;
               }
               if (commit(setPod(record,{
@@ -1106,7 +1158,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
       kind: "pod",
       mode:pod?.members?"members":"template",
       templateCode: pod?.templateCode ?? "",
-      membersText:pod?.members?.map((m)=>`${m.roleCode} | ${m.roleLabel} | ${m.levelCode} | ${m.fte} | ${m.proposedMapping?.from??m.roleLabel}`).join("\n")??"",
+      membersText:pod?.members?.map((m)=>`${m.roleCode} | ${m.roleLabel} | ${m.levelCode} | ${m.fte} | ${m.proposedMapping?.from??m.roleLabel}${props.deliveryOptionsEnabled?` | ${m.locationCode??""} | ${m.providerClassCode??""}`:""}`).join("\n")??"",
       locationCode: pod?.locationCode ?? "",
       providerClassCode: pod?.providerClassCode ?? "",
       rateBasis: pod?.rateBasis ?? "",
@@ -1146,6 +1198,52 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
           </p>
         )}
         {podForm}
+        {props.deliveryOptionsEnabled && !hiddenMoney ? <section aria-label="Delivery option comparison">
+          <h3>Compare delivery options</h3>
+          <p>Both options use these same counts, unit hours, delivery factors and releases. Rates come from the cost foundation. The selected option supplies the approved estimate for P4.</p>
+          <label>Delivery option name
+            <input className={cx("cell-input")} value={optionName} maxLength={90}
+              onChange={(e) => setOptionName(e.target.value)} />
+          </label>
+          <div className={cx("item-actions")}>
+            {(["A", "B"] as const).map((code) => <button type="button" key={code}
+              disabled={!pod || !optionName.trim()} className={cx("link-btn")}
+              onClick={() => commit(saveRomDeliveryOption(record, code, optionName))}>
+              Save current pod as option {code}
+            </button>)}
+          </div>
+          {(record.deliveryOptions ?? []).map((option) => {
+            const preview = compared[option.code];
+            const figures = preview?.status === "ok" ? romResultFigures(preview.rom).combined : null;
+            const lines = preview?.status === "ok" ? preview.rom.foundation?.priced.pod.memberLines ?? preview.rom.releases[0]?.own.pod.memberLines ?? [] : [];
+            return <div className={cx("card")} key={option.code}>
+              <h4>Option {option.code}: {option.name}</h4>
+              {figures ? <p>{formatRomHours(figures.hours)} · {formatRomWeeks(figures.weeks)} · low {formatRomMoney(figures.lowCents)} · plan {formatRomMoney(figures.planCents)} · high {formatRomMoney(figures.highCents)}</p>
+                : <p>{preview && preview.status !== "ok" ? preview.detail : "Pricing from the cost foundation…"}</p>}
+              <details><summary>Option {option.code} rate sources</summary>
+                <p>Planning rates, not approved. Review the source and delivery terms for each role.</p>
+                <ul>{lines.map((line, index) => <li key={index}>
+                  {line.member.roleCode} · {line.member.levelCode} · {line.member.locationCode} · {line.member.providerClassCode ?? "Rate source’s own class"} · {formatRomMoney(line.rate.hourlyRateCents)}/h
+                  <div>{line.rate.baseSource} · {line.rate.location.source} · {line.rate.provider.source}</div>
+                </li>)}</ul>
+              </details>
+              <button type="button" className={cx("link-btn")} onClick={() => commit(setPod(record, option.pod))}>Review option {option.code} pod</button>
+              <button type="button" className={cx("btn-ink")}
+                disabled={!selectionReason.trim() || compared.A?.status !== "ok" || compared.B?.status !== "ok"}
+                onClick={() => commit(selectRomDeliveryOption(record, register, option.code, selectionReason,
+                  props.decidedBy, props.today, {
+                    A: compared.A?.status === "ok" ? compared.A.rom : undefined,
+                    B: compared.B?.status === "ok" ? compared.B.rom : undefined,
+                  }))}>Choose option {option.code}</button>
+            </div>;
+          })}
+          <label>Why this delivery option
+            <textarea className={cx("cell-input")} value={selectionReason} onChange={(e) => setSelectionReason(e.target.value)} />
+          </label>
+          {record.deliverySelection ? <p>
+            {isRomDeliverySelectionCurrent(record, register) ? `Selected option ${record.deliverySelection.code}` : "Selection needs review after the inputs changed"}: {record.deliverySelection.reason} · {record.deliverySelection.selectedBy}, {record.deliverySelection.selectedAt}
+          </p> : record.deliveryOptions?.length ? <p>Choose an option and record the reason before approving the estimate.</p> : null}
+        </section> : null}
       </>
     ),
     actions:
@@ -1750,7 +1848,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
     !approvalCurrent &&
     build.ok &&
     build.workingFigureDrivers.length === 0 &&
-    current?.status === "ok";
+    current?.status === "ok" && isRomDeliverySelectionCurrent(record, register);
   const approve = () => {
     if (current?.status !== "ok") return;
     commit(
