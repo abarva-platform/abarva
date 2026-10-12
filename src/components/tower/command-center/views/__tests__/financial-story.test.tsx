@@ -159,4 +159,65 @@ describe("Tower financial story boundaries", () => {
     expect(recordedZero).toContain("$0.0M is cleared for reporting across loaded benefit claims");
     expect(recordedZero).not.toContain("A cleared value amount is not verified");
   });
+
+  it("does not turn Finance status counts into verified zero-dollar totals", () => {
+    const view = fixtureView();
+    const summary = {
+      ...view.summary,
+      financeAttestedClaimCount: 2,
+      financeValidatedUsd: 0,
+      financeValidatedAmountLoaded: undefined,
+      claimableClaimCount: 1,
+      claimableUsd: 0,
+      claimableAmountLoaded: undefined,
+    };
+    const verdict = renderToStaticMarkup(<VerdictPanel view={{ ...view, summary }} />);
+    const contract = renderToStaticMarkup(<CommandCenterView
+      view={{ ...view, summary }}
+      onOpenGap={() => undefined}
+      onGoToFunnel={() => undefined}
+      onGoToAi={() => undefined}
+      onGoToActions={() => undefined}
+    />);
+    const proof = renderToStaticMarkup(<ValueProofContractView
+      view={{ ...view, summary }}
+      onOpenProgram={() => undefined}
+    />);
+
+    expect(verdict).toContain("A cleared value amount is not verified for the loaded months");
+    expect(verdict).not.toContain("$0.0M is cleared for reporting");
+    expect(contract).toContain("A cleared amount is not verified for the loaded months");
+    expect(contract).toMatch(/Finance validated<\/span><strong[^>]*>Not verified<\/strong>/);
+    expect(contract).not.toContain("$0.0M cleared for reporting in loaded months");
+    expect(proof).toContain("Cleared amount not verified");
+    expect(proof).not.toContain("$0.0M cleared for reporting in loaded months");
+  });
+
+  it("withholds the Finance-case estimate when case status or yearly estimates are missing", () => {
+    const view = fixtureView();
+    const cases = view.allInitiatives
+      .filter((item) => item.populationKind === "ai_case")
+      .map((item) => ({ ...item, financeStatus: null, promisedBenefitLoaded: false, promisedUsd: 0 }));
+    const html = renderToStaticMarkup(<VerdictPanel view={{
+      ...view,
+      allInitiatives: cases,
+      summary: { ...view.summary, promisedBenefitLoaded: true, promisedUsd: 12_000_000 },
+    }} />);
+
+    expect(cases.length).toBeGreaterThan(0);
+    expect(html).toContain("No complete yearly estimate is loaded for Finance-validated AI cases, so that comparison is withheld");
+    expect(html).not.toContain("Estimate on Finance-reviewed cases");
+    expect(html).not.toContain("$0.0M</text>");
+  });
+
+  it("shows zero claim coverage as an empty bar", () => {
+    const view = fixtureView();
+    const html = renderToStaticMarkup(<ValueProofContractView
+      view={{ ...view, summary: { ...view.summary, valueClaimCount: 2, baselineLinkedClaimCount: 0 } }}
+      onOpenProgram={() => undefined}
+    />);
+
+    expect(html).toMatch(/Baseline linked<\/span><div[^>]*><i[^>]*style="width:0%"/);
+    expect(html).not.toMatch(/Baseline linked<\/span><div[^>]*><i[^>]*style="width:2%"/);
+  });
 });

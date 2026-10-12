@@ -96,7 +96,7 @@ const SUB_TABS: Readonly<Record<TowerTab, readonly SubTab[]>> = {
   verdict: [],
   budget: [
     { id: "shape", label: "Funding breakdown" },
-    { id: "domain", label: "Projects by business area" },
+    { id: "domain", label: "Work areas affected" },
   ],
   initiatives: [
     { id: "constraint", label: "What is holding them back" },

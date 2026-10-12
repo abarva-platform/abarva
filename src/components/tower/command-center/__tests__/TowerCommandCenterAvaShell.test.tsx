@@ -8,7 +8,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/design-fixture";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
-import { TowerCommandCenterAvaShell } from "../TowerCommandCenterAvaShell";
+import { TowerCommandCenterAvaShell, surfaceSuggestions } from "../TowerCommandCenterAvaShell";
 
 const replace = jest.fn();
 
@@ -39,6 +39,27 @@ describe("TowerCommandCenterAvaShell", () => {
     replace.mockClear();
     jest.restoreAllMocks();
     window.localStorage.clear();
+  });
+
+  it("does not suggest a below-target adoption claim from a count-only bar", () => {
+    const row = view.allInitiatives[0];
+    expect(row).toBeDefined();
+    const countOnly = {
+      ...view,
+      allInitiatives: [{
+        ...row,
+        populationKind: "tool_rollout" as const,
+        usageBars: [{ label: "Adoption", valueText: "70", pct: 100, tone: "teal" as const }],
+        adoptionActualPct: null,
+        adoptionTargetPct: 80,
+      }],
+    };
+
+    expect(surfaceSuggestions(countOnly, "tools", null)[0]).toBe("Which rollouts have a recorded adoption rate and target?");
+    expect(surfaceSuggestions({
+      ...countOnly,
+      allInitiatives: [{ ...countOnly.allInitiatives[0], adoptionActualPct: 30 }],
+    }, "tools", null)[0]).toBe("Which of the 1 rollouts below target should move first?");
   });
 
   it("wraps the Command Center in the same collapsed Tower aVa launcher", async () => {

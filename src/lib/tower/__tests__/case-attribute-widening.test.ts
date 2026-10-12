@@ -789,9 +789,9 @@ describe("aVa suggests what the visible surface can answer", () => {
   });
 
   it("counts a rollout as below target only when both readings exist", () => {
-    // adoption < null is not false in a useful way; a rollout with no target cannot be short of
-    // one, and counting it would inflate the number the prompt states.
+    // A usage-count bar is not an adoption reading. Both the recorded rate and target are needed.
+    expect(shell).toContain("recordedAdoptionRate(item)");
     expect(shell).toContain("item.adoptionTargetPct !== null");
-    expect(shell).toContain("adoption !== undefined");
+    expect(shell).toContain("adoption !== null");
   });
 });
