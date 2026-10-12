@@ -26,6 +26,7 @@ import { formatValueCents } from "@/lib/programs/value-engine/format-money";
 import { MovesStepPage, SourceLine, type StepPageRow } from "./MovesStepPage";
 import { useStepEvidence } from "./StepEvidence";
 import type { PhaseStepPageMap, StepPageHostProps } from "./phase-step-pages";
+import { useP4ValueReadback, type P4ValueReadback } from "./useP4ValueReadback";
 import styles from "./MovesStepPage.module.css";
 
 const cx = (...names: string[]) =>
@@ -515,78 +516,12 @@ function EstimateBasis({
   );
 }
 
-function useValueCaseReadback(moveId: string, modelText: string) {
-  const [body, setBody] = useState<Record<string, unknown> | null>(null);
-  const [status, setStatus] = useState("Reading the value case…");
-  const [retryKey, setRetryKey] = useState(0);
-  useEffect(() => {
-    let live = true;
-    setBody(null);
-    setStatus("Reading the value case…");
-    fetch(`/api/v1/programs/${encodeURIComponent(moveId)}/value-case`, {
-      credentials: "include",
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        const value = (await response.json()) as Record<string, unknown>;
-        if (!response.ok || value.ok !== true) {
-          throw new Error(
-            typeof value.detail === "string"
-              ? value.detail
-              : "Value case unavailable. No engine result is being shown.",
-          );
-        }
-        if (
-          value.programId !== moveId ||
-          !value.case ||
-          typeof value.case !== "object" ||
-          !["evaluated", "blocked"].includes(String(value.status)) ||
-          (value.case as Record<string, unknown>).status !== value.status ||
-          typeof value.figuresRedacted !== "boolean"
-        ) {
-          throw new Error(
-            "The value-case readback could not be verified. Try again.",
-          );
-        }
-        return value;
-      })
-      .then((value) => {
-        if (live) {
-          setBody(value);
-          setStatus("");
-        }
-      })
-      .catch((error: unknown) => {
-        if (live) {
-          setStatus(
-            error instanceof Error
-              ? error.message
-              : "Value case unavailable. No engine result is being shown.",
-          );
-        }
-      });
-    return () => {
-      live = false;
-    };
-  }, [moveId, modelText, retryKey]);
-  const result = body?.case as Record<string, unknown> | undefined;
-  const cost = body?.costBasis as Record<string, unknown> | undefined;
-  const ready =
-    body?.status === "evaluated" &&
-    body.readyForApproval === true &&
-    body.figuresRedacted === false &&
-    cost?.status === "resolved" &&
-    Array.isArray(result?.mustValidate) &&
-    result.mustValidate.length === 0;
-  return { body, status, ready, retry: () => setRetryKey((key) => key + 1) };
-}
-
 function ValueCaseReadback({
   model,
   read,
 }: {
   model: ValueModelCapture | null;
-  read: ReturnType<typeof useValueCaseReadback>;
+  read: P4ValueReadback;
 }) {
   const { body, status } = read;
   const result =
@@ -654,7 +589,7 @@ function ValueCaseReadback({
         {status ||
           `Engine status: ${String(result?.status ?? "not evaluated")}.`}
       </p>
-      {!body && status !== "Reading the value case…" && (
+      {read.canRetry && (
         <button type="button" className={cx("btn-ink")} onClick={read.retry}>
           Try again
         </button>
@@ -1116,11 +1051,54 @@ function P4EstimatePage({ host }: { host: StepPageHostProps }) {
 function P4ValuePage({ host }: { host: StepPageHostProps }) {
   const raw = host.values.value_plan ?? "";
   const value = useMemo(() => readValueModel(raw), [raw]);
-  const readback = useValueCaseReadback(host.move.id, raw);
+  const localReadback = useP4ValueReadback({
+    moveId: host.move.id,
+    modelText: raw,
+    enabled: !host.p4ValueReadback,
+    captureSaved: host.captureSaved?.value_plan !== false,
+    captureError: host.captureSaveErrors?.value_plan,
+  });
+  const readback = host.p4ValueReadback ?? localReadback;
   return (
     <CaptureStepPage
       host={host}
       view="p4-value"
+      blockedBy={
+        host.values.funding_governance?.trim() &&
+        host.captureSaved?.funding_governance === false
+          ? host.captureSaveErrors?.funding_governance ||
+            "The funding route is still saving. Wait for its saved readback."
+          : null
+      }
+      blockedWork={
+        <div className={cx("empty-note", "field")}>
+          <span className={cx("item-name")}>Funding route awaiting save</span>
+          <p className={cx("proposal")}>{host.values.funding_governance}</p>
+          {host.captureSaveErrors?.funding_governance && (
+            <div className={cx("item-actions")}>
+              <button
+                type="button"
+                className={cx("btn-ink")}
+                onClick={() =>
+                  host.setValue(
+                    "funding_governance",
+                    host.values.funding_governance ?? "",
+                  )
+                }
+              >
+                Try saving funding route again
+              </button>
+              <button
+                type="button"
+                className={cx("link-btn")}
+                onClick={() => window.location.reload()}
+              >
+                Reload saved capture
+              </button>
+            </div>
+          )}
+        </div>
+      }
       title="Set the value plan and funding path"
       intro="Confirm the value conversion rules and funding route before the business case gate."
       fields={[

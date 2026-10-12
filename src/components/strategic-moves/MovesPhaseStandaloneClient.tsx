@@ -40,6 +40,8 @@ import {
   parseOperatingAdoption,
 } from "@/lib/programs/operating-adoption";
 import { RomEstimateStep } from "@/components/strategic-moves/step-page/RomEstimateStep";
+import { useP4ValueReadback } from "@/components/strategic-moves/step-page/useP4ValueReadback";
+import { readValueModel } from "@/lib/programs/value-model-capture";
 import {
   isRomEstimateDone,
   parseRomEstimate,
@@ -3390,6 +3392,14 @@ export function MovesPhaseStandaloneClient({
       }).complete,
     ]),
   );
+  const p4ValueReadback = useP4ValueReadback({
+    moveId: move.id,
+    modelText: phaseCaptureValues.value_plan ?? "",
+    enabled:
+      phase.phase === 4 && phaseStepPagesEnabled && !legacyCaptureRequested,
+    captureSaved: Boolean(captureSavedBySection.value_plan),
+    captureError: phaseCaptureSaveErrors.value_plan,
+  });
 
   // The charter-level rollup on the hand-off screen. Counts only — the gate
   // (`src/lib/programs/p1-charter-evidence.ts`) reads the persisted basis and
@@ -3806,6 +3816,13 @@ export function MovesPhaseStandaloneClient({
       topLevelEvidenceCheckAvailable &&
       p0EvidencePacket?.status === "covered";
   }
+  if (phase.phase === 4 && phaseStepPagesEnabled && !legacyCaptureRequested) {
+    recordStepDone["P4.3"] =
+      Boolean(captureSavedBySection.value_plan) &&
+      Boolean(captureSavedBySection.funding_governance) &&
+      readValueModel(phaseCaptureValues.value_plan ?? "").kind === "model" &&
+      p4ValueReadback.ready;
+  }
   // A capture answer is not a gate approval. The final step stays open until
   // the governed transition has actually been recorded.
   if (gateStepId) recordStepDone[gateStepId] = gateApproved;
@@ -4099,6 +4116,8 @@ export function MovesPhaseStandaloneClient({
       chrome: stepPageChrome(phase.phase, stepId),
       stepDone: recordStepDone,
       captureSaved: captureSavedBySection,
+      captureSaveErrors: phaseCaptureSaveErrors,
+      p4ValueReadback,
       sectionReady: Object.fromEntries(
         phaseCaptureSections.map((section) => [
           section.key,

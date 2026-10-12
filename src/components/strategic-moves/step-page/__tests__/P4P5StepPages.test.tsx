@@ -1,7 +1,13 @@
 /** @jest-environment jsdom */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import {
   previewMatchesApproval,
@@ -576,6 +582,208 @@ describe("P4 and P5 step pages", () => {
       .fn()
       .mockResolvedValue({ ok: true, json: async () => body });
   }
+
+  it("waits for the value capture save before reading and invalidates figures on edit", async () => {
+    mockBody(realBody());
+    const props = host(4, {
+      value_plan: valuePlan,
+      funding_governance: "Finance review",
+    });
+    props.captureSaved = { value_plan: false, funding_governance: true };
+    const { rerender } = render(page(P4_STEP_PAGES, "p4-value", props));
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(screen.getByText(/value plan is still saving/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    rerender(
+      page(P4_STEP_PAGES, "p4-value", {
+        ...props,
+        captureSaved: { value_plan: true, funding_governance: true },
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled(),
+    );
+    rerender(
+      page(P4_STEP_PAGES, "p4-value", {
+        ...props,
+        values: {
+          ...props.values,
+          value_plan: valuePlan.replace("Reduced spend", "Reviewed spend"),
+        },
+      }),
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("NPV")).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it.each(["model", "Move"])(
+    "ignores a late read for the previous %s",
+    async (changed) => {
+      let completeOld: (value: unknown) => void = () => {
+        throw new Error("Missing request");
+      };
+      global.fetch = jest
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              completeOld = resolve;
+            }),
+        )
+        .mockResolvedValueOnce({
+          ok: false,
+          json: async () => ({ detail: "The current calculation is blocked." }),
+        });
+      const props = host(4, {
+        value_plan: valuePlan,
+        funding_governance: "Finance review",
+      });
+      const { rerender } = render(page(P4_STEP_PAGES, "p4-value", props));
+      rerender(
+        page(P4_STEP_PAGES, "p4-value", {
+          ...props,
+          ...(changed === "Move"
+            ? { move: { ...props.move, id: "move-2" } }
+            : {
+                values: {
+                  ...props.values,
+                  value_plan: valuePlan.replace(
+                    "Reduced spend",
+                    "Reviewed spend",
+                  ),
+                },
+              }),
+        }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByText("The current calculation is blocked."),
+        ).toBeInTheDocument(),
+      );
+      await act(async () => {
+        completeOld({ ok: true, json: async () => realBody() });
+      });
+      expect(
+        screen.getByText("The current calculation is blocked."),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("NPV")).toBeNull();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    },
+  );
+
+  it("hides the previous evaluated model while the saved replacement is being read", async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => realBody() })
+      .mockImplementationOnce(() => new Promise(() => {}));
+    const props = host(4, {
+      value_plan: valuePlan,
+      funding_governance: "Finance review",
+    });
+    const { rerender } = render(page(P4_STEP_PAGES, "p4-value", props));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled(),
+    );
+    rerender(
+      page(P4_STEP_PAGES, "p4-value", {
+        ...props,
+        values: {
+          ...props.values,
+          value_plan: valuePlan.replace("Reduced spend", "Reviewed spend"),
+        },
+      }),
+    );
+    expect(screen.getByText("Reading the value case…")).toBeInTheDocument();
+    expect(screen.queryByText("NPV")).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it("uses the host's shared readback without issuing a second value read", () => {
+    mockBody(realBody());
+    const props = host(4, {
+      value_plan: valuePlan,
+      funding_governance: "Finance review",
+    });
+    props.p4ValueReadback = {
+      body: realBody(),
+      status: "",
+      ready: true,
+      canRetry: false,
+      retry: jest.fn(),
+    };
+    render(page(P4_STEP_PAGES, "p4-value", props));
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(screen.getByText(/plan 200%/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("keeps Continue blocked until the current funding route is saved", async () => {
+    mockBody(realBody());
+    const props = host(4, {
+      value_plan: valuePlan,
+      funding_governance: "Finance review",
+    });
+    props.captureSaved = { value_plan: true, funding_governance: false };
+    const { rerender } = render(page(P4_STEP_PAGES, "p4-value", props));
+    expect(
+      screen.getByRole("status", { name: "What to do next" }),
+    ).toHaveTextContent("funding route is still saving");
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    rerender(
+      page(P4_STEP_PAGES, "p4-value", {
+        ...props,
+        captureSaved: { value_plan: true, funding_governance: true },
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled(),
+    );
+    expect(screen.getByText("NPV")).toBeInTheDocument();
+  });
+
+  it.each(["value_plan", "funding_governance"])(
+    "shows the exact %s save refusal without reading unsaved value",
+    (key) => {
+      mockBody(realBody());
+      const props = host(4, {
+        value_plan: valuePlan,
+        funding_governance: "Finance review",
+      });
+      props.captureSaved = {
+        value_plan: true,
+        funding_governance: true,
+        [key]: false,
+      };
+      props.captureSaveErrors = {
+        [key]: "The saved capture has changed. Reload before saving this edit.",
+      };
+      render(page(P4_STEP_PAGES, "p4-value", props));
+      expect(
+        screen.getByText(
+          "The saved capture has changed. Reload before saving this edit.",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+      if (key === "value_plan") expect(global.fetch).not.toHaveBeenCalled();
+      else {
+        expect(screen.getByText("Finance review")).toBeInTheDocument();
+        fireEvent.click(
+          screen.getByRole("button", {
+            name: "Try saving funding route again",
+          }),
+        );
+        expect(props.setValue).toHaveBeenCalledWith(
+          "funding_governance",
+          "Finance review",
+        );
+        expect(
+          screen.getByRole("button", { name: "Reload saved capture" }),
+        ).toBeInTheDocument();
+      }
+    },
+  );
 
   it("reads the actual API case projection and labels ROM cost, cash ROI and timing", async () => {
     mockBody(realBody());

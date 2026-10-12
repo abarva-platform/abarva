@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The P4 value page read a response field that the value-case API does not return, so a valid evaluated case could appear unevaluated. It now reads the API's `case` projection, preserves the exact refusal sentence and offers a read-only retry. It labels the investment cost source, displays the engine's three-year credited cash ROI, carries collection-timing qualifications, and keeps the value row open when the readback is blocked, restricted or still requires input validation. It no longer silently requests internal delivery as a fallback cost choice.
+The P4 value page read a response field that the value-case API does not return, so a valid evaluated case could appear unevaluated. It now reads the API's `case` projection, preserves the exact refusal sentence and offers a read-only retry. It labels the investment cost source, displays the engine's three-year credited cash ROI, carries collection-timing qualifications, and keeps the value row open when the readback is blocked, restricted or still requires input validation. It no longer silently requests internal delivery as a fallback cost choice. The page and step bar share one calculation readback, requested only after the current value model has been saved. Editing the model immediately removes the prior figures and holds readiness; the funding route must also finish saving before Continue becomes available.
 
 ## Layer Impact
 
@@ -29,7 +29,9 @@ The P4 value page read a response field that the value-case API does not return,
 ## Changes Included
 
 - P4 page reads the actual API contract and verifies the returned Move identity and evaluation state.
-- Read failures and named refusals hold readiness; a retry performs another read.
+- Read failures and named refusals hold readiness; a retry performs another read. Capture-save refusals retain their exact sentence.
+- A shared host readback binds completion to the current saved value model. Late responses for a previous model or Move cannot settle the page or step bar; the flag-off and legacy paths add no value read.
+- The funding route stays blocked while its current edit is saving or its save has failed, with its current answer visible and explicit retry/reload controls after failure.
 - Blocked or restricted results show no economics, even if a malformed response carries them.
 - Open counted inputs remain visible for validation before funding.
 - Cash ROI, ROM/estimate source, zero-cash capacity and timing limitations use the engine and reviewed captured model.
@@ -37,11 +39,11 @@ The P4 value page read a response field that the value-case API does not return,
 
 ## QA / Validation
 
-- Pass: six focused suites, 175 tests, including the P4/P5 page, approved-ROM reader, live-formula ROM workbook, value cost basis, value engine and value API route.
-- Pass: thirteen mutation checks killed; the source was restored after each mutation run. Checks cover the API field, implicit delivery choice, named refusal, Move binding, retry, open inputs, blocked/restricted figures, ROI basis, ceiling wording, timing qualification and zero-cash rule.
+- Pass: seven focused suites, 536 tests, including the complete capture-host suite, P4/P5 page, approved-ROM reader, live-formula ROM workbook, value cost basis, value engine and value API route.
+- Pass: thirteen original readback mutation checks and twelve additional save/readiness mutation checks killed; source restored after each run. Checks cover the API field, delivery choice, refusal, Move binding, retry, open inputs, blocked/restricted figures, ROI basis, ceiling wording, timing qualification, zero-cash rule, saving, stale responses, shared readiness and flag-off behavior.
 - Pass: Node 24 `npm run typecheck`, zero diagnostics.
 - Pass: targeted ESLint, library orphan audit, route/export reachability, coverage and tenancy write/check, manual check, and all 11 release gates. Coverage stays at 2,829 files: this change adds cases to an existing swept suite and adds no test file.
-- Pass: actual component renders at 1440 and 390 in light/dark, compared with template v1.10; no horizontal overflow. The temporary render test was deleted. These local fixtures exclude the signed-in host and agent dock.
+- Pass: eight actual component renders covering saved and funding-blocked states at 1440 and 390 in light/dark, compared with template v1.10; no horizontal overflow. The temporary render test was deleted. These local fixtures exclude the signed-in host and agent dock.
 - Not run: exact-head GitHub CI, merge, ACA runtime invariant or fresh signed-in P4 acceptance. Local fixtures are not runtime proof.
 
 ## Rollout Plan
@@ -73,4 +75,4 @@ Revert this presentation-only patch through a PR and the repository-owned main w
 - Fresh synthetic Move and generated P4 artifacts are still pending with the sole execution owner; no P4 acceptance is claimed.
 - Structured milestone dependencies and owner roles are a separate discovered page gap.
 - Measurement-plan content and gate-decision persistence require independent artifact/readback review; nonempty prose and a passing gate alone do not prove output acceptance.
-- The step bar retains the capture host's readiness source; this readback cannot establish approval or funding authority.
+- Evaluated and saved readiness does not establish approval or funding authority; those decisions require their own recorded proof.
