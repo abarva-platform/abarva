@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   validateCandidate, validateReceipt, validatePhysicalPage, validateFactLineage,
-  verifyProofBundleContents, physicalSubstrate, physicalMeasures,
+  verifyProofBundleContents, physicalSubstrate, physicalMeasures, proofValue,
 } from "../operate-registered-intake-candidate.mjs";
 
 const sha = (value) => crypto.createHash("sha256").update(value).digest("hex");
@@ -80,6 +80,32 @@ test("stage receipt is bound to candidate identity and supplies all nine physica
   assert.ok(validateReceipt({ ...receipt, view_counts: { ...receipt.view_counts, evidence: 0 } }, candidate, bytes).includes("stage_view_counts_missing"));
   assert.ok(validateReceipt({ ...receipt, view_fingerprints: { ...receipt.view_fingerprints, evidence: "bad" } }, candidate, bytes).includes("stage_view_fingerprints_missing"));
   assert.ok(validateReceipt({ ...receipt, source_record_count: null }, candidate, bytes).includes("stage_source_counts_missing"));
+});
+
+test("promotion preflight preserves the resolved approval record and refuses a missing record", () => {
+  const candidateBytes = Buffer.from(JSON.stringify({ input_fingerprint_sha256: sha("source") }));
+  const receiptBytes = Buffer.from("{}");
+  const inspection = {
+    tenant_key: "fixture", candidate_assessment_id: "assessment-1", candidate_projection_version: 5,
+    prior_active: { assessment_id: "assessment-0", projection_version: 4 },
+    prior_view_fingerprints: {}, physical_view_counts: {}, physical_view_fingerprints: {},
+    physical_substrate: {}, physical_measure_links: {}, fact_lineage: {}, private_blob_proof: {}, gaps: [],
+  };
+  const approval = {
+    approved: true, release_record: "docs/releases/records/serving.md",
+    approval: {
+      approved_by: "Integrated manager", delegated_by: "Anand Sundaram",
+      decision_id: "exact-delegated-decision", release_record: "docs/releases/records/serving.md",
+    },
+  };
+  const ready = proofValue(candidateBytes, receiptBytes, inspection, [], approval);
+  assert.equal(ready.status, "ready");
+  assert.deepEqual(ready.serving_approval, approval.approval);
+  assert.equal(proofValue(candidateBytes, receiptBytes, inspection, [],
+    { ...approval, approval: null }).status, "blocked");
+  assert.ok(proofValue(candidateBytes, receiptBytes, inspection, [],
+    { ...approval, approval: { ...approval.approval, release_record: "different" } })
+    .gaps.includes("serving_approval:approval_record_missing_or_mismatched"));
 });
 
 test("private proof bundle must contain exact candidate, receipt, and passing validation", async (t) => {
