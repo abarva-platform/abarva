@@ -38,7 +38,7 @@ coverage. Existing clause-provenance schema work is not replaced or incorporated
 
 ## QA / Validation
 
-- 13 focused governance/insight suites: 195 tests passed.
+- 13 focused governance/insight suites: 196 tests passed.
 - Native load/projection/identity gates: 35 tests passed.
 - Disposable Postgres 18 Home selection: two-tenant fence passed.
 - Node 24 full typecheck (8 GiB), changed-file ESLint, full context/corpus validation and release

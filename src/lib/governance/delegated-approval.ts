@@ -201,7 +201,9 @@ export async function verifyDelegationProofBytes(
     throw new Error("Delegation proof byte hash mismatch");
   }
   const authority = AuthoritySchema.parse(
-    JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(authorityBytes)),
+    JSON.parse(
+      new TextDecoder("utf-8", { fatal: true }).decode(authorityBytes),
+    ),
   );
   const decision = DelegatedDecisionSchema.parse(
     JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(decisionBytes)),
@@ -324,8 +326,11 @@ export function validateDelegatedApproval(
       return ["Delegated approval differs from its verified decision"];
   }
   // Retained history may be inspected as-of; a new execution always uses the runtime clock.
-  const now = Date.parse(context?.purpose === "historical_read" && context.now
-    ? context.now : new Date().toISOString());
+  const now = Date.parse(
+    context?.purpose === "historical_read" && context.now
+      ? context.now
+      : new Date().toISOString(),
+  );
   const decided = Date.parse(approval.decided_at);
   const validFrom = Date.parse(evidence.authority.valid_from);
   if (

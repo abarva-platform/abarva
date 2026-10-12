@@ -463,6 +463,7 @@ export interface ServingBinding extends LoadBinding {
   surface: (typeof SERVING_SURFACES)[number];
   /** Load observations and serving observations are separate exact operations. */
   load_extra_bindings?: DelegatedDecisionScope["extra_bindings"];
+  load_release_record?: string;
 }
 
 export type ServingApprovalDecision =
@@ -486,6 +487,7 @@ export function resolveServingApproval(
     {
       ...binding,
       extra_bindings: binding.load_extra_bindings ?? {},
+      release_record: binding.load_release_record ?? binding.release_record,
     },
     evidence,
   );

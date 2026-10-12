@@ -26,6 +26,7 @@ function fixture(
     expired?: boolean;
     revoked?: boolean;
     untrusted?: boolean;
+    dual?: boolean;
   } = {},
 ) {
   const actor = {
@@ -106,6 +107,27 @@ function fixture(
       sha256: digest(decisionBytes),
     },
   };
+  const loadDecision = {
+    ...decision,
+    decision_id: "test-load-decision",
+    scope: {
+      ...scope,
+      operation: "load" as const,
+      surface: undefined,
+      release_record: "docs/releases/records/test-load-approval.md",
+      extra_bindings: { candidate_sha256: "c".repeat(64) },
+    },
+  };
+  const loadBytes = new TextEncoder().encode(JSON.stringify(loadDecision));
+  const loadDeclaration: DelegatedApproval = {
+    ...declaration,
+    decision_id: loadDecision.decision_id,
+    scope: loadDecision.scope,
+    decision_proof: {
+      uri: "https://testproof.blob.core.windows.net/private/proofs/load.json",
+      sha256: digest(loadBytes),
+    },
+  };
   jest.resetModules();
   jest.doMock("../delegation-authority-roots.json", () => ({
     roots: [
@@ -135,13 +157,39 @@ function fixture(
           },
         ],
   }));
+  if (options.dual)
+    jest.doMock("../delegation-trusted-decisions.json", () => ({
+      decisions: [
+        {
+          authority_id: "test-authority",
+          decision_id: "test-decision",
+          decision_sha256: digest(decisionBytes),
+          status: "active",
+        },
+        {
+          authority_id: "test-authority",
+          decision_id: "test-load-decision",
+          decision_sha256: digest(loadBytes),
+          status: "active",
+        },
+      ],
+    }));
   const api = jest.requireActual<typeof import("../delegated-approval")>(
     "../delegated-approval",
   );
   const manifests = jest.requireActual<typeof import("../dataset-manifest")>(
     "../dataset-manifest",
   );
-  return { api, manifests, declaration, authorityBytes, decisionBytes, scope };
+  return {
+    api,
+    manifests,
+    declaration,
+    authorityBytes,
+    decisionBytes,
+    scope,
+    loadDeclaration,
+    loadBytes,
+  };
 }
 
 beforeAll(() => {
@@ -161,6 +209,82 @@ afterEach(() => {
 });
 
 describe("explicit delegated approvals", () => {
+  test("separate delegated load and serving operations retain distinct run records and observations", async () => {
+    const f = fixture({ dual: true });
+    const manifest = {
+      dataset_id: f.scope.dataset_id,
+      title: "Test integrated dataset",
+      client_key: tenant,
+      source_layer: "signal",
+      classification: "internal",
+      owner: "Test steward",
+      source_basis: "Test canonical records",
+      ingestion_method: "operator_aca_job",
+      retrieval_plan: "postgres_fts",
+      retrieval_proof_required: true,
+      expected_object_count: f.scope.object_count,
+      approved_by: "Alex Example",
+      approved_at: "2026-10-12",
+      load_approval: {
+        approved_by: f.loadDeclaration.actor.identity,
+        approved_at: "2026-10-12",
+        assessment_id: f.scope.assessment_id,
+        source_set_hash: f.scope.source_set_hash,
+        release_record: f.loadDeclaration.scope.release_record,
+        delegated_decision: f.loadDeclaration,
+      },
+      serving_approval: {
+        approved_by: f.declaration.actor.identity,
+        approved_at: "2026-10-12",
+        assessment_id: f.scope.assessment_id,
+        source_set_hash: f.scope.source_set_hash,
+        release_record: f.scope.release_record,
+        surface: "tower",
+        delegated_decision: f.declaration,
+      },
+    };
+    const binding: import("../dataset-manifest").ServingBinding = {
+      dataset_id: f.scope.dataset_id,
+      tenant_key: tenant,
+      assessment_id: f.scope.assessment_id,
+      source_set_hash: f.scope.source_set_hash,
+      object_count: f.scope.object_count,
+      ingestion_method: "operator_aca_job",
+      surface: "tower",
+      release_record: f.scope.release_record,
+      extra_bindings: f.scope.extra_bindings,
+      load_release_record: f.loadDeclaration.scope.release_record,
+      load_extra_bindings: f.loadDeclaration.scope.extra_bindings,
+    };
+    const servingReceipt = await f.api.verifyDelegationProofBytes(
+      f.declaration,
+      f.authorityBytes,
+      f.decisionBytes,
+    );
+    const loadReceipt = await f.api.verifyDelegationProofBytes(
+      f.loadDeclaration,
+      f.authorityBytes,
+      f.loadBytes,
+    );
+    const context = { evidence: [loadReceipt, servingReceipt] };
+    expect(
+      f.manifests.resolveServingApproval([manifest], binding, context).approved,
+    ).toBe(true);
+    expect(
+      f.manifests.resolveServingApproval(
+        [manifest],
+        { ...binding, load_release_record: undefined },
+        context,
+      ).approved,
+    ).toBe(false);
+    expect(
+      f.manifests.resolveServingApproval(
+        [manifest],
+        { ...binding, load_extra_bindings: {} },
+        context,
+      ).approved,
+    ).toBe(false);
+  });
   test("independent human or Finance attestation cannot be asserted by a delegate", () => {
     const f = fixture();
     expect(

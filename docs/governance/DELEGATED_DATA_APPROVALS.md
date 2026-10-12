@@ -36,7 +36,8 @@ and Move-registry authorization.
    receipt, source and selector observations, never from the approval's own declaration.
    Delegated execution also requires `binding.release_record` from the native run, independently
    of the approval declaration.
-4. For serving with a delegated load, pass load observations separately in `load_extra_bindings`.
+4. For serving with a delegated load, pass load observations separately in `load_extra_bindings`
+   and its independently supplied native record in `load_release_record` when it differs.
    Serving observations cannot silently substitute for load observations.
 5. Satisfy the decision's execution conditions through the native operator's existing preflight,
    guarded compare-and-set, independent readback and product proof. Conditional authorization
