@@ -592,6 +592,10 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_rom_engine_v1",
   );
+  const deliveryOptionsEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_delivery_options_v1",
+  );
   // P0 Originate was left on the legacy canvas when the 3-step capture shipped
   // for phases 1-5. This flag extends the same flow to P0; it is deliberately
   // separate from `moves_capture_v2` so a tenant already on the redesigned
@@ -1470,6 +1474,7 @@ export default async function StrategicMovePhaseWorkspacePage({
             : null
         }
         romEngineEnabled={romEngineEnabled}
+        deliveryOptionsEnabled={deliveryOptionsEnabled}
         priorPhaseCapture={
           stepPagesV3Enabled && parsedPhase === 3
             ? {
