@@ -221,7 +221,7 @@ function StepCard({ step, index }: { step: TraceStep; index: number }) {
                 : 'var(--canon-red, #a32d2d)',
             }}
           >
-            {linked ? 'Linked' : 'Not yet linked'}
+            {linked ? 'Linked' : step.linkState === 'read_unavailable' ? 'State unavailable' : 'Not yet linked'}
             {step.gapRef ? ` · ${step.gapRef}` : ''}
           </span>
         </div>

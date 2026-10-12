@@ -21,6 +21,7 @@ import type { StrategicMove } from "./types.ui";
 import type { OutcomeLedgerRow } from "@/lib/tower/outcome-ledger/types";
 import type { ControlEvalMatrix } from "@/lib/programs/controls/control-eval-matrix";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
+import { p5TowerHandoffHref } from "./p5-measurement-plan";
 import {
   buildSr117ControlDeliverable,
   isSr117RegulatedTenant,
@@ -62,7 +63,7 @@ export type TraceModule = (typeof TRACE_MODULES)[number];
  * - `not_yet_linked` — the loop hand-off is not yet wired; the step is
  *                      shown honestly as a gap, not fabricated.
  */
-export type TraceLinkState = "linked" | "not_yet_linked";
+export type TraceLinkState = "linked" | "not_yet_linked" | "read_unavailable";
 
 /** One row in the joined evidence trail. */
 export interface TraceStep {
@@ -149,6 +150,7 @@ export interface CrossModuleTraceInput {
    * `subjectKind === 'move' && subjectRef === move.id`.
    */
   readonly outcomeEntries: readonly OutcomeLedgerRow[];
+  readonly towerHandoffRead?: { state: "published" | "not_yet_linked" | "read_unavailable"; detail: string; rowId?: string };
   /**
    * The Move's Slice 2.5 control & eval matrix, when the route has shaped
    * it. Supplied for regulated tenants so the Move step can surface the
@@ -307,6 +309,15 @@ function sourceStep(input: CrossModuleTraceInput): TraceStep {
 }
 
 function towerStep(input: CrossModuleTraceInput): TraceStep {
+  if (input.towerHandoffRead) {
+    const read = input.towerHandoffRead;
+    return { module: "tower", moduleLabel: MODULE_LABELS.tower,
+      artifactKind: "Tower planned outcome handoff", linkState: read.state === "published" ? "linked" : read.state,
+      title: read.state === "published" ? "Current planned handoff read back" : read.state === "read_unavailable" ? "Tower handoff state unavailable" : "No planned handoff published for this Move",
+      detail: read.detail, joinId: read.rowId ?? null,
+      href: read.state === "published" ? p5TowerHandoffHref(input.move.id) : null,
+      gapRef: null, regulatoryDeliverable: null };
+  }
   // The Source -> Tower / Tower -> Outcome hand-off (GAP-4 / GAP-5):
   // an outcome-ledger entry for the Move. ID-join: ledger entry whose
   // subjectKind is 'move' and subjectRef is the Move id.

@@ -1463,6 +1463,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
         phaseStepPagesEnabled={phaseStepPagesEnabled}
+        p5TowerHandoffEnabled={isFeatureEnabled(ctx, "moves_p5_tower_handoff_v1")}
         catchUpEnabled={catchUpEnabled && !captureModulesUnavailable}
         p2RootCausesForCatchUp={captureValue(2, "gaps_root_causes")}
         p2GateRecordConfirmed={p2GateRecordConfirmed}

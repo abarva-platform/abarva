@@ -228,7 +228,7 @@ describe("known capture gaps", () => {
 
 describe("step-page records", () => {
   it("are declared by the step that owns them and are never capture questions", () => {
-    for (const phase of [2, 3]) {
+    for (const phase of [2, 3, 5]) {
       const questions = new Set(keysOf(phase, null));
       for (const record of phaseStepRecordSections(phase)) {
         expect(questions.has(record.key)).toBe(false);
@@ -238,6 +238,12 @@ describe("step-page records", () => {
         expect(owner?.recordKeys).toContain(record.key);
       }
     }
+  });
+
+  it("declares the P5 measurement plan beside its questions in P5.2", () => {
+    expect(phaseStepRecordSections(5).map(record => [record.key, record.stepId])).toEqual([["p5_measurement_handoff", "P5.2"]]);
+    expect(resolvePhaseWorkflow(5, null).find(step => step.id === "P5.2")?.recordKeys).toEqual(["p5_measurement_handoff"]);
+    expect(keysOf(5, null)).not.toContain("p5_measurement_handoff");
   });
 
   it("gives P3 Step 1 its traceability record, Step 2 its choice, Step 3 its owners and Step 4 its estimate", () => {

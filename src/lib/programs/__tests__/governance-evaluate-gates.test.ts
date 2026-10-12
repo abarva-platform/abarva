@@ -2,6 +2,8 @@ const getProgramByIdMock = jest.fn();
 const fromMock = jest.fn();
 const listApprovedPhaseEvidenceMock = jest.fn();
 const loadApprovedMoveEvidenceSnapshotMock = jest.fn();
+const mockP5HandoffRead = jest.fn();
+jest.mock("@/lib/programs/p5-tower-handoff", () => ({ readP5Handoff: (...args: unknown[]) => mockP5HandoffRead(...args) }));
 
 let deliverablesFixture: Array<{
   id: string;
@@ -3028,6 +3030,27 @@ describe("evaluateGate", () => {
         }),
       ]),
     );
+  });
+
+  it.each(["published", "not_yet_linked", "failed", "changed_contract"])("flagged P5 requires current independent publication: %s", async state => {
+    getProgramByIdMock.mockResolvedValue({ id: "program-1", currentPhase: 5, archetype: "agent_assist" });
+    deliverablesFixture = [
+      { id: "handoff", deliverable_type_key: "handoff_package", status: "signed_off" },
+      { id: "contract", deliverable_type_key: "value_measurement_contract", status: "signed_off" },
+    ];
+    if (state === "failed" || state === "changed_contract") mockP5HandoffRead.mockRejectedValue(new Error(state === "failed" ? "Ledger state unavailable" : "Signed contract changed"));
+    else mockP5HandoffRead.mockResolvedValue({ view: { publication: { state } } });
+    const result = await evaluateGate({ clientId: "client-1", clientKey: "meridian", userId: "authorized-operator" }, "program-1", 5, 6);
+    expect(mockP5HandoffRead).toHaveBeenCalledWith(expect.objectContaining({ clientKey: "meridian" }), "program-1", true);
+    expect(result.failedChecks.some(check => check.check === "p5_tower_publication_current")).toBe(state !== "published");
+  });
+
+  it("publication preflight skips only its own publication check and preserves existing document gates", async () => {
+    getProgramByIdMock.mockResolvedValue({ id: "program-1", currentPhase: 5 });
+    deliverablesFixture = [];
+    const result = await evaluateGate({ clientId: "client-1", clientKey: "meridian", userId: "authorized-operator" }, "program-1", 5, 6, { skipP5Publication: true });
+    expect(result.failedChecks).toEqual(expect.arrayContaining([expect.objectContaining({ check: "value_measurement_contract_signed_off", severity: "hard" })]));
+    expect(mockP5HandoffRead).not.toHaveBeenCalled();
   });
 
   it("passes the P5 to Tower handoff when package, value contract, and launch cadence are signed off", async () => {

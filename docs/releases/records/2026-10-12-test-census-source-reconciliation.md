@@ -28,8 +28,8 @@ Regenerate the test coverage inventory from the integrated source tree. An alrea
 
 ## Changes Included
 
-- Genuine regeneration of `docs/architecture/test-ci-coverage-census.json` from current integrated source.
-- The actual inventory changes from 3,011 to 3,012 test files and from 2,846 to 2,847 covered files. No test file, CI invocation, quarantine or threshold is added or changed by this PR.
+- Genuine regeneration of `docs/architecture/test-ci-coverage-census.json` from current integrated source. After the real predecessor landed, this PR has no remaining census diff and retains the source-audit control record only.
+- The earlier audit established 3,012 test files and 2,847 covered files rather than the stale committed 3,011 / 2,846. The genuine predecessor added one test and landed actual 3,013 / 2,848. Regeneration on `691a1b4337c3916038495ad3a6e491a46ab4dd40` matches those current totals. No test file, CI invocation, quarantine or threshold is added or changed by this PR.
 - The previously committed `src/components/tower/command-center/views/__tests__/story-copy-boundaries.test.tsx` is covered by its existing component-directory sweep.
 - Controlled current-source audit of the prior authentication repair: all 21 prior candidate files have identical committed blobs on the audited main source. The regenerated census difference is recorded separately.
 
@@ -48,7 +48,7 @@ Regenerate the test coverage inventory from the integrated source tree. An alrea
 
 ## Rollout Plan
 
-Publish the generated artifact and release record through a controlled PR with complete current-head CI and an immediate fetched-ref census collision check. No runtime or data rollout is introduced by this documentation-only correction. Any shared runtime release remains owned by the repository main deployment workflow. Runtime acceptance of the earlier authentication repair remains separate from this source audit.
+Publish the remaining source-audit release record through a controlled PR with complete current-head CI and an immediate actual-scope fetched-ref census check. The real predecessor already corrected the generated artifact; this PR no longer changes it. No runtime or data rollout is introduced by this documentation-only correction. Any shared runtime release remains owned by the repository main deployment workflow. Runtime acceptance of the earlier authentication repair remains separate from this source audit.
 
 ## Deployment Authority
 
@@ -69,4 +69,4 @@ The exact audited source revision, complete local gate logs, genuine generation 
 
 ## Known Gaps
 
-Exact new-head CI and the final release guard are required before merge. No live account reconciliation, Move creation, seed load, ROM approval, financial acceptance or browser acceptance is claimed by this source correction. The supplementary full-auth sweep retains ten failures in five pre-existing quarantined suites; all ten reproduce on the unchanged pre-repair main source, with no new failing cases. The existing quarantine is unchanged.
+Exact new-head CI and the final actual-scope release guard are required before merge. The pre-predecessor candidate passed all 35 workflows and all 19 required contexts; that earlier-head credit is historical after the actual-main merge. No live account reconciliation, Move creation, seed load, ROM approval, financial acceptance or browser acceptance is claimed by this source correction. The supplementary full-auth sweep retains ten failures in five pre-existing quarantined suites; all ten reproduce on the unchanged pre-repair main source, with no new failing cases. The existing quarantine is unchanged.
