@@ -214,6 +214,23 @@ jobs:
             --out-dir audit-artifacts/db-migration-lab/preflight \
             | tee audit-artifacts/db-migration-lab/preflight.log
 
+      # The broad lane must reconcile its historical ledger BEFORE any SQL
+      # mutation. Its status mode remains investigative and reports gaps below.
+      - name: Block broad apply on schema and ledger drift
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
+            --script db:schema:reconcile \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/reconcile-gate \
+            | tee audit-artifacts/db-migration-lab/reconcile-gate.log
+
       - name: Apply pending migrations (advisory-locked, drift-checked)
         id: apply
         if: inputs.mode == 'apply'
@@ -316,7 +333,8 @@ jobs:
       #            exactly what cannot be trusted.
       - name: Schema vs ledger reconciliation
         id: reconcile
-        continue-on-error: ${{ github.event.inputs.mode != 'apply' }}
+        if: inputs.mode == 'status'
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail

@@ -1,0 +1,301 @@
+name: Tower exact schema — lab
+
+# This lane is confined to two SHA-bound Tower migrations. It never invokes
+# db:migrate:ci, which applies every pending migration in the shared database.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Explicit status (read-only) or apply (exact two Tower files)"
+        required: true
+        type: choice
+        options:
+          - status
+          - apply
+      confirm:
+        description: "For apply, type APPLY_TOWER_ONLY exactly"
+        required: false
+        type: string
+        default: ""
+
+concurrency:
+  group: db-migration-lab
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ACR_NAME: ${{ vars.AZURE_ACR_NAME || 'acrabarvalab001' }}
+  IMAGE_REPOSITORY: ${{ vars.AZURE_WEB_IMAGE_REPOSITORY || 'abarva/web' }}
+  CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+  RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+  AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+  AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+  AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
+  TOWER_PROOF_ACCOUNT: stabarvaprivatedplab001
+  TOWER_PROOF_CONTAINER: ecl-synthetic-intake
+
+jobs:
+  tower-schema:
+    name: Exact Tower schema status or apply
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Assert main HEAD and explicit mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == "refs/heads/main" ]] || { echo "Select main only" >&2; exit 1; }
+          git fetch origin main
+          [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] || {
+            echo "Workflow dispatch is not current main HEAD" >&2; exit 1;
+          }
+          echo "::notice title=Tower schema mode::${{ inputs.mode }}"
+          if [[ "${{ inputs.mode }}" == "apply" ]]; then
+            [[ "${{ inputs.confirm }}" == "APPLY_TOWER_ONLY" ]] || {
+              echo "Exact Tower apply confirmation is required" >&2; exit 1;
+            }
+          fi
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Verify Azure identity configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$AZURE_DEPLOY_CLIENT_ID" && -n "$AZURE_DEPLOY_TENANT_ID" && -n "$AZURE_DEPLOY_SUBSCRIPTION_ID" ]] || {
+            echo "Azure OIDC configuration is incomplete" >&2; exit 1;
+          }
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Bind current main to sole 100 percent runtime digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-artifacts/tower-only-schema
+          mkdir -p audit-artifacts/tower-only-schema/public-proof
+          tag="main-${GITHUB_SHA:0:8}"
+          digest="$(az acr manifest show-metadata --registry "$ACR_NAME" \
+            --name "${IMAGE_REPOSITORY}:${tag}" --query digest --output tsv)"
+          [[ "$digest" == sha256:* ]] || { echo "Current main image digest is unavailable" >&2; exit 1; }
+          image="${ACR_NAME}.azurecr.io/${IMAGE_REPOSITORY}@${digest}"
+          az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" \
+            --output json > audit-artifacts/tower-only-schema/containerapp.json
+          az containerapp ingress traffic show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" \
+            --output json > audit-artifacts/tower-only-schema/traffic.json
+          revision="$(jq -r '[.[]? | select((.weight // 0) == 100)] | if length == 1 then .[0].revisionName else "" end' \
+            audit-artifacts/tower-only-schema/traffic.json)"
+          nonzero="$(jq -r '[.[]? | select((.weight // 0) > 0)] | length' audit-artifacts/tower-only-schema/traffic.json)"
+          [[ -n "$revision" && "$nonzero" == 1 ]] || { echo "No sole 100 percent revision" >&2; exit 1; }
+          az containerapp revision show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" \
+            --revision "$revision" --output json > audit-artifacts/tower-only-schema/revision.json
+          template_image="$(jq -r '.properties.template.containers[0].image // ""' audit-artifacts/tower-only-schema/containerapp.json)"
+          revision_image="$(jq -r '.properties.template.containers[0].image // ""' audit-artifacts/tower-only-schema/revision.json)"
+          ready_revision="$(jq -r '.properties.latestReadyRevisionName // ""' audit-artifacts/tower-only-schema/containerapp.json)"
+          [[ "$template_image" == "$image" && "$revision_image" == "$image" && "$ready_revision" == "$revision" ]] || {
+            echo "Current main, template and 100 percent runtime digest differ" >&2; exit 1;
+          }
+          for worker in job-abarva-deliv-worker job-abarva-deliv-worker-event; do
+            az containerapp job show --name "$worker" --resource-group "$RESOURCE_GROUP" \
+              --output json > "audit-artifacts/tower-only-schema/${worker}.json"
+            worker_image="$(jq -r '.properties.template.containers[0].image // ""' \
+              "audit-artifacts/tower-only-schema/${worker}.json")"
+            [[ "$worker_image" == "$image" ]] || {
+              echo "Worker $worker differs from current main digest" >&2; exit 1;
+            }
+          done
+          jq -n --arg sha "$GITHUB_SHA" --arg image "$image" --arg revision "$revision" \
+            '{main_sha:$sha,image:$image,revision:$revision}' > audit-artifacts/tower-only-schema/public-proof/runtime-binding.json
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Assert private operator is idle
+        shell: bash
+        run: |
+          set -euo pipefail
+          az containerapp job show --name job-abarva-private-operator-eus --resource-group "$RESOURCE_GROUP" \
+            --output json > audit-artifacts/tower-only-schema/operator-before.json
+          az containerapp job execution list --name job-abarva-private-operator-eus --resource-group "$RESOURCE_GROUP" \
+            --output json > audit-artifacts/tower-only-schema/operator-executions-before.json
+          nonterminal="$(jq '[.[] | select((.properties.status // "") as $s |
+            ($s != "Succeeded" and $s != "Failed" and $s != "Cancelled"))] | length' \
+            audit-artifacts/tower-only-schema/operator-executions-before.json)"
+          [[ "$nonterminal" == 0 ]] || { echo "Private operator has a nonterminal execution" >&2; exit 1; }
+          idle="$(jq -r '[.properties.template.containers[]? | select(.name == "db-migrate") |
+            (.command // [])[0]] | first // ""' audit-artifacts/tower-only-schema/operator-before.json)"
+          [[ "$idle" == "/bin/true" ]] || { echo "Private operator template is not idle" >&2; exit 1; }
+
+      - name: Resolve private proof managed identity
+        id: proof-identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity_name=id-abarva-scale-runtime-lab-eastus
+          identity_json="$(az identity show --name "$identity_name" --resource-group "$RESOURCE_GROUP" --output json)"
+          identity_id="$(jq -r '.id' <<< "$identity_json")"
+          principal_id="$(jq -r '.principalId' <<< "$identity_json")"
+          client_id="$(jq -r '.clientId' <<< "$identity_json")"
+          jq -e --arg id "$identity_id" \
+            '[(.identity.userAssignedIdentities // {} | keys[]) | ascii_downcase] | index($id | ascii_downcase) != null' \
+            audit-artifacts/tower-only-schema/operator-before.json >/dev/null || {
+              echo "Proof identity is not attached to the private operator" >&2; exit 1;
+            }
+          account_id="$(az storage account show --name "$TOWER_PROOF_ACCOUNT" \
+            --resource-group rg-abarva-private-dataplane-lab-eastus --query id --output tsv)"
+          az role assignment list --scope "$account_id" --include-inherited --output json \
+            > /tmp/tower-only-private-blob-roles.json
+          jq -e --arg principal "$principal_id" \
+            '[.[] | select(.principalId == $principal and .roleDefinitionName == "Storage Blob Data Contributor")] | length == 1' \
+            /tmp/tower-only-private-blob-roles.json >/dev/null || {
+              echo "Proof identity lacks private Blob write/read role" >&2; exit 1;
+            }
+          rm -f /tmp/tower-only-private-blob-roles.json
+          echo "client_id=$client_id" >> "$GITHUB_OUTPUT"
+
+      - name: Read-only exact Tower preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
+            --script tower:schema:status-job \
+            --container db-migrate \
+            --env AZURE_CLIENT_ID="${{ steps.proof-identity.outputs.client_id }}" \
+            --env TOWER_RELOAD_PROOF_BLOB_ACCOUNT="$TOWER_PROOF_ACCOUNT" \
+            --env TOWER_RELOAD_PROOF_BLOB_CONTAINER="$TOWER_PROOF_CONTAINER" \
+            --env TOWER_SCHEMA_RUN_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --env TOWER_SCHEMA_MAIN_SHA="$GITHUB_SHA" \
+            --env TOWER_SCHEMA_IMAGE="${{ steps.image.outputs.image }}" \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/tower-only-schema/preflight \
+            | tee audit-artifacts/tower-only-schema/preflight.log
+          state=any
+          if [[ "${{ inputs.mode }}" == "apply" ]]; then
+            state=ready
+          fi
+          node scripts/tower/verify-tower-schema-proof.mjs \
+            audit-artifacts/tower-only-schema/preflight/04-logs.txt status "$state" \
+            | tee audit-artifacts/tower-only-schema/public-proof/preflight-receipt.txt
+          jq -e '.idleVerified == true' audit-artifacts/tower-only-schema/preflight/99c-idle-verification.json
+          jq '{idleVerified,problems}' audit-artifacts/tower-only-schema/preflight/99c-idle-verification.json \
+            > audit-artifacts/tower-only-schema/public-proof/preflight-idle.json
+
+      - name: Recheck runtime and operator immediately before apply
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --output json \
+            > audit-artifacts/tower-only-schema/containerapp-before-apply.json
+          az containerapp ingress traffic show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --output json \
+            > audit-artifacts/tower-only-schema/traffic-before-apply.json
+          revision="$(jq -r '[.[]? | select((.weight // 0) == 100)] | if length == 1 then .[0].revisionName else "" end' \
+            audit-artifacts/tower-only-schema/traffic-before-apply.json)"
+          [[ -n "$revision" && "$(jq -r '.properties.latestReadyRevisionName' \
+            audit-artifacts/tower-only-schema/containerapp-before-apply.json)" == "$revision" ]] || exit 1
+          az containerapp revision show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" \
+            --revision "$revision" --output json > audit-artifacts/tower-only-schema/revision-before-apply.json
+          [[ "$(jq -r '.properties.template.containers[0].image' \
+            audit-artifacts/tower-only-schema/containerapp-before-apply.json)" == "${{ steps.image.outputs.image }}" &&
+             "$(jq -r '.properties.template.containers[0].image' \
+            audit-artifacts/tower-only-schema/revision-before-apply.json)" == "${{ steps.image.outputs.image }}" ]] || {
+            echo "Live digest changed after preflight" >&2; exit 1;
+          }
+          az containerapp job execution list --name job-abarva-private-operator-eus --resource-group "$RESOURCE_GROUP" \
+            --output json > audit-artifacts/tower-only-schema/operator-executions-before-apply.json
+          nonterminal="$(jq '[.[] | select((.properties.status // "") as $s |
+            ($s != "Succeeded" and $s != "Failed" and $s != "Cancelled"))] | length' \
+            audit-artifacts/tower-only-schema/operator-executions-before-apply.json)"
+          [[ "$nonterminal" == 0 ]] || { echo "Private operator is busy" >&2; exit 1; }
+
+      - name: Apply exactly two Tower migrations
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
+            --script tower:schema:apply-job \
+            --container db-migrate \
+            --env TOWER_SCHEMA_APPLY_CONFIRM=APPLY_TOWER_ONLY \
+            --env AZURE_CLIENT_ID="${{ steps.proof-identity.outputs.client_id }}" \
+            --env TOWER_RELOAD_PROOF_BLOB_ACCOUNT="$TOWER_PROOF_ACCOUNT" \
+            --env TOWER_RELOAD_PROOF_BLOB_CONTAINER="$TOWER_PROOF_CONTAINER" \
+            --env TOWER_SCHEMA_RUN_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --env TOWER_SCHEMA_MAIN_SHA="$GITHUB_SHA" \
+            --env TOWER_SCHEMA_IMAGE="${{ steps.image.outputs.image }}" \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/tower-only-schema/apply \
+            | tee audit-artifacts/tower-only-schema/apply.log
+          node scripts/tower/verify-tower-schema-proof.mjs \
+            audit-artifacts/tower-only-schema/apply/04-logs.txt apply applied \
+            | tee audit-artifacts/tower-only-schema/public-proof/apply-receipt.txt
+          jq -e '.idleVerified == true' audit-artifacts/tower-only-schema/apply/99c-idle-verification.json
+          jq '{idleVerified,problems}' audit-artifacts/tower-only-schema/apply/99c-idle-verification.json \
+            > audit-artifacts/tower-only-schema/public-proof/apply-idle.json
+
+      - name: Independent read-only ledger and Tower schema readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
+            --script tower:schema:verify-job \
+            --container db-migrate \
+            --env AZURE_CLIENT_ID="${{ steps.proof-identity.outputs.client_id }}" \
+            --env TOWER_RELOAD_PROOF_BLOB_ACCOUNT="$TOWER_PROOF_ACCOUNT" \
+            --env TOWER_RELOAD_PROOF_BLOB_CONTAINER="$TOWER_PROOF_CONTAINER" \
+            --env TOWER_SCHEMA_RUN_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --env TOWER_SCHEMA_MAIN_SHA="$GITHUB_SHA" \
+            --env TOWER_SCHEMA_IMAGE="${{ steps.image.outputs.image }}" \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/tower-only-schema/readback \
+            | tee audit-artifacts/tower-only-schema/readback.log
+          node scripts/tower/verify-tower-schema-proof.mjs \
+            audit-artifacts/tower-only-schema/readback/04-logs.txt verify applied \
+            | tee audit-artifacts/tower-only-schema/public-proof/readback-receipt.txt
+          jq -e '.idleVerified == true' audit-artifacts/tower-only-schema/readback/99c-idle-verification.json
+          jq '{idleVerified,problems}' audit-artifacts/tower-only-schema/readback/99c-idle-verification.json \
+            > audit-artifacts/tower-only-schema/public-proof/readback-idle.json
+
+      - name: Summarize evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## Tower-only schema run"
+            echo "Mode: ${{ inputs.mode }}"
+            echo "Main SHA: $GITHUB_SHA"
+            echo "Source and Home migrations were outside this exact apply list."
+            echo "The public artifact holds redacted receipts and idle status. Full schema readback is in private Blob."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload private operator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tower-only-schema-${{ github.run_id }}
+          path: audit-artifacts/tower-only-schema/public-proof/
+          if-no-files-found: warn
