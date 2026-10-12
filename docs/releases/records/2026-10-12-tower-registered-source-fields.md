@@ -19,7 +19,7 @@ Release lane: `client-data-lane`.
 - Layer 1: no files or source-set membership change.
 - Layer 2: the candidate adapter retains selected fields from the program and AI use-case tabs. It joins program-to-function relationships only by declared program ID and relationship type.
 - Layer 3: typed program and AI use-case objects retain these source fields. Program metadata holds source-linked affected-function information; this candidate does not materialize canonical function objects or relationship edges. Primary funding domain and unsupported money remain unknown.
-- Layer 4: an inactive version 5 Tower projection carries the same fields and source-linked affected-function information in program and AI-case rows. The existing active projection remains selected.
+- Layer 4: an inactive version 5 Tower projection carries the same fields and source-linked affected-function information in program and AI-case rows. The existing program and AI-case drawers can show this context in plain words after that version is separately approved to serve. The existing active projection remains selected.
 
 ## Client Applicability
 
@@ -35,12 +35,13 @@ Release lane: `client-data-lane`.
 - Uses a new assessment ID derived from the unchanged source hash and the new rule version, so prior load and serving approvals cannot select the changed projection.
 - Preserves program sponsor, technology owner, source status, source phase, and declared affected-function relationships. An affected function does not become a primary funding domain.
 - Preserves AI-case business function, business segment key, source status, sponsor role, operational owner role, and expected value archetype. A case without a declared tool has no tool identity in the new projection.
+- Passes these fields through the Tower read model into existing detail drawers. The program drawer labels affected functions as work areas, distinct from funding categories. The AI-case drawer labels the expected kind of benefit as an unverified plan, separate from Finance status.
 - Requires a new dataset manifest with named declaration review and a separate exact load approval before any physical write. No such approval is recorded in this release.
 
 ## QA / Validation
 
 - Focused candidate and physical-stage tests: 16 passed, including source-row parity, altered relationship refusal, invented tool refusal, and refusal to reuse the prior approval.
-- Tower serving-reader tests: 23 passed, including the separation of affected function from funding domain and preservation of source roles. Focused ESLint, TypeScript typecheck, `git diff --check`, and all 11 release gates passed.
+- Tower serving-reader and detail-drawer tests: 28 passed, including the separation of affected function from funding domain, preservation of source roles through the view model, and plain-language display. Focused ESLint, TypeScript typecheck, `git diff --check`, and all 11 release gates passed.
 - Dry stage: physical quality gate passed; `materialized: false`; approval status `missing_or_mismatched`.
 - New assessment `tower-registry-candidate-a70df3b56bffc9be`, source-set hash `11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40`, candidate SHA-256 `bc04b5bbd56115272c41973bafea26bf5e76834467f76f934fc48272d9889c14`.
 - Dry stage produced 17 source-file metadata rows, 327 selected source records, 237 canonical objects, 308 measures, and 352 rows across nine Tower views. The added 28 source records are program-to-function relationships already in the approved source-file set.

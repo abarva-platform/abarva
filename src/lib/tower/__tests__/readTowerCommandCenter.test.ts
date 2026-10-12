@@ -1014,6 +1014,14 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.aiPortfolio[0]?.operationalOwnerRole).toBe("Operations owner");
     expect(mart?.aiPortfolio[0]?.expectedValueArchetype).toBe("time_savings");
     expect(mart?.aiPortfolio[0]?.financeStatus).toBeNull();
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example tenant" });
+    expect(view?.programs[0]?.affectedFunctions).toEqual([
+      { functionId: "FUNC-1", functionName: "Affected function" },
+    ]);
+    expect(view?.programs[0]?.sourceProgramStatus).toBe("active");
+    expect(view?.allInitiatives[0]?.businessFunction).toBe("Business function");
+    expect(view?.allInitiatives[0]?.operationalOwnerRole).toBe("Operations owner");
+    expect(view?.allInitiatives[0]?.financeStatus).toBeNull();
   });
 
   it("requires a valid date period and an explicit claim amount before reporting value", async () => {
