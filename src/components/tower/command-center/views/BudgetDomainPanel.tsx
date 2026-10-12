@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Reviewed programs -> domain table.
+ * Loaded program rows -> function table.
  *
- * Counts Tower-reviewed programs by their loaded function label. Funding figures stay withheld
- * until the projection exposes their reconciliation state.
+ * Counts programs by their loaded function label. The projection does not provide verified
+ * approved funding by function, so this table does not add source planning amounts.
  */
 
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
@@ -50,7 +50,7 @@ export function buildBudgetDomainRows(
 ): readonly DomainRow[] {
   const rows = new Map<string, DomainRow>();
   for (const program of view.programs) {
-    const domain = program.functionLabel ?? "Domain not loaded";
+    const domain = program.functionLabel ?? "Function not loaded";
     const current = rows.get(domain) ?? {
       domain,
       reviewedCount: 0,
@@ -66,17 +66,17 @@ export function buildBudgetDomainRows(
 export function BudgetDomainPanel({ view }: { view: TowerCommandCenterView }) {
   const rows = buildBudgetDomainRows(view);
   const reviewedCount = rows.reduce((sum, row) => sum + row.reviewedCount, 0);
-  const missingDomainCount = rows.find((row) => row.domain === "Domain not loaded")?.reviewedCount ?? 0;
+  const missingDomainCount = rows.find((row) => row.domain === "Function not loaded")?.reviewedCount ?? 0;
 
   if (rows.length === 0) {
     return (
       <section style={{ ...PANEL, padding: "24px 26px" }}>
         <h3 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600 }}>
-          Reviewed program funding by domain
+          Program rows by loaded function
         </h3>
         <p style={{ margin: 0, fontSize: 15, color: "var(--canon-gray-700)" }}>
-          No reviewed program rows are loaded. Domain funding and the full IT budget split are
-          unknown in this view.
+          No program rows are loaded. Approved funding by function and the full IT budget split
+          are not verified in this view.
         </p>
       </section>
     );
@@ -95,15 +95,15 @@ export function BudgetDomainPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         {missingDomainCount === reviewedCount
-          ? `${formatCount(reviewedCount)} reviewed program rows have no domain classification loaded.`
+          ? `${formatCount(reviewedCount)} program rows have no function label loaded.`
           : missingDomainCount > 0
-            ? `${formatCount(missingDomainCount)} of ${formatCount(reviewedCount)} reviewed program rows have no domain classification loaded.`
-            : `${formatCount(reviewedCount)} reviewed programs are grouped by their loaded domain.`}
+            ? `${formatCount(missingDomainCount)} of ${formatCount(reviewedCount)} program rows have no function label loaded.`
+            : `${formatCount(reviewedCount)} program rows are grouped by their loaded function.`}
       </h2>
       <div style={PANEL}>
         <div style={HEAD}>
-          <span>Program domain</span>
-          <span style={{ textAlign: "right" }}>Funding</span>
+          <span>Loaded function</span>
+          <span style={{ textAlign: "right" }}>Approved funding</span>
           <span style={{ textAlign: "right" }}>Programs</span>
         </div>
         {rows.map((row) => {
@@ -111,7 +111,7 @@ export function BudgetDomainPanel({ view }: { view: TowerCommandCenterView }) {
             <div key={row.domain} style={ROW}>
               <span>{row.domain}</span>
               <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
-                Source status pending
+                Not verified here
               </span>
               <span
                 style={{
@@ -128,10 +128,10 @@ export function BudgetDomainPanel({ view }: { view: TowerCommandCenterView }) {
       </div>
       <p style={{ margin: 0, fontSize: 15, color: "var(--canon-gray-500)" }}>
         {missingDomainCount === reviewedCount
-          ? "No program domain labels are loaded. The counts remain grouped under Domain not loaded. "
-          : "Loaded program domain labels and counts are shown. "}Funding amounts are withheld until
-        source reconciliation is exposed on this view. A domain-level run/change/transform split
-        is not loaded.
+          ? "No program function labels are loaded. The counts remain grouped under Function not loaded. "
+          : "Loaded function labels and program counts are shown. "}The source may list planned
+        budgets. This table does not count them as approved funding. Approved funding by function
+        and the full IT budget split are not verified here.
       </p>
     </section>
   );

@@ -58,6 +58,55 @@ function readThroughLoader(
 }
 
 describe("contract depth source row normalization", () => {
+  it("keeps service identities distinct from role and tower labels through the actual loader", () => {
+    const root = path.resolve(
+      __dirname,
+      "../../../datasets/source/contract-depth/demo-subscription-contract-evidence-20261012",
+    );
+    const fixture = fs.mkdtempSync(
+      path.join(os.tmpdir(), "source-service-identity-"),
+    );
+    fs.cpSync(root, fixture, { recursive: true });
+    try {
+      for (const [file, label] of [
+        ["cmdb_application_scope.csv", "scope_status"],
+        ["sla_performance.csv", "service_tower"],
+      ]) {
+        const target = path.join(fixture, "source-files", file);
+        const rows = Papa.parse<Record<string, string>>(
+          fs.readFileSync(target, "utf8"),
+          { header: true, skipEmptyLines: true },
+        ).data;
+        fs.writeFileSync(
+          target,
+          Papa.unparse([
+            {
+              ...rows[0],
+              source_row_id: "service-declared-row",
+              service_id: "SVC-declared-fixture",
+              [label]: "Context label",
+            },
+            {
+              ...rows[0],
+              source_row_id: "service-absent-row",
+              service_id: "",
+              [label]: "Context label",
+            },
+          ]),
+        );
+      }
+      const input = readThroughLoader(fixture);
+      for (const rows of [input.applicationScope, input.slaPerformance]) {
+        expect(rows[0].service_id).toBe("SVC-declared-fixture");
+        expect(rows[1].service_id).toBe("");
+        expect(rows[0].service_id).not.toBe("Context label");
+      }
+      expect(input.applicationScope[0].scope_role).toBe("Context label");
+      expect(input.slaPerformance[0].service_tower).toBe("Context label");
+    } finally {
+      fs.rmSync(fixture, { recursive: true, force: true });
+    }
+  });
   it("preserves declared clause and opportunity provenance through the actual loader and projection", () => {
     const root = path.resolve(
       __dirname,

@@ -103,8 +103,15 @@ describe("Tower story copy at missing-source boundaries", () => {
   it("withdraws domain and foundation conclusions when their classifications are absent", () => {
     const view = sourceShapedView();
     const domain = renderToStaticMarkup(<BudgetDomainPanel view={view} />);
-    expect(domain).toContain("38 reviewed program rows have no domain classification loaded");
-    expect(domain).toContain("No program domain labels are loaded");
+    expect(domain).toContain("38 program rows have no function label loaded");
+    expect(domain).toContain("No program function labels are loaded");
+    expect(domain).toContain("This table does not count them as approved funding");
+    expect(domain).toContain("Approved funding by function and the full IT budget split are not verified here");
+    expect(domain).not.toContain("Reviewed program funding by domain");
+    const emptyDomain = renderToStaticMarkup(<BudgetDomainPanel view={{ ...view, programs: [] }} />);
+    expect(emptyDomain).toContain("Program rows by loaded function");
+    expect(emptyDomain).toContain("Approved funding by function and the full IT budget split are not verified in this view");
+    expect(emptyDomain).not.toContain("Reviewed program funding by domain");
     const foundations = renderToStaticMarkup(<FoundationsPanel view={view} />);
     expect(foundations).toContain("No foundation rows are loaded");
     expect(foundations).toMatch(/Approved foundation funding<\/div><div[^>]*>Not loaded/);

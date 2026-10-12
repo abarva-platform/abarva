@@ -1425,7 +1425,7 @@ async function upsertContractScope(
         stringValue(row, "contract_id"),
         stringValue(row, "application_ref"),
         stringValue(row, "application_name"),
-        stringValue(row, "scope_role"),
+        stringValue(row, "service_id") || null,
         stringValue(row, "relationship_method"),
         numberValue(row, "relationship_confidence") ?? 0,
         stringValue(row, "criticality"),
@@ -1506,6 +1506,7 @@ async function upsertPerformance(
   performanceRows: readonly CsvRecord[],
 ): Promise<void> {
   for (const row of performanceRows) {
+    const serviceId = stringValue(row, "service_id") || null;
     const creditOwed = numberValue(row, "credit_owed_usd") ?? 0;
     const creditClaimed = boolValue(row, "credit_claimed") ? creditOwed : 0;
     const measure = performanceMeasureFromSource(
@@ -1529,7 +1530,8 @@ async function upsertPerformance(
          $21, $18, $19, $20::jsonb
        )
        ON CONFLICT (tenant_key, observation_id)
-       DO UPDATE SET contracted_target = EXCLUDED.contracted_target,
+       DO UPDATE SET service_id = EXCLUDED.service_id,
+                     contracted_target = EXCLUDED.contracted_target,
                      actual_value = EXCLUDED.actual_value,
                      value_num = EXCLUDED.value_num,
                      unit = EXCLUDED.unit,
@@ -1548,7 +1550,7 @@ async function upsertPerformance(
         args.tenantKey,
         stringValue(row, "source_row_id"),
         stringValue(row, "contract_id"),
-        stringValue(row, "service_tower"),
+        serviceId,
         stringValue(row, "metric_name"),
         stringValue(row, "period_start"),
         stringValue(row, "period_end"),
@@ -1585,7 +1587,8 @@ async function upsertPerformance(
            CURRENT_DATE, $17, $16, $13, $14, $15::jsonb
          )
          ON CONFLICT (tenant_key, service_credit_id)
-         DO UPDATE SET credit_earned = EXCLUDED.credit_earned,
+         DO UPDATE SET service_id = EXCLUDED.service_id,
+                       credit_earned = EXCLUDED.credit_earned,
                        credit_claimed = EXCLUDED.credit_claimed,
                        credit_recovered = EXCLUDED.credit_recovered,
                        confidence = EXCLUDED.confidence,
@@ -1598,7 +1601,7 @@ async function upsertPerformance(
           args.tenantKey,
           `service_credit:${stringValue(row, "source_row_id")}`,
           stringValue(row, "contract_id"),
-          stringValue(row, "service_tower"),
+          serviceId,
           stringValue(row, "period_start"),
           stringValue(row, "period_end"),
           stringValue(row, "metric_name"),
