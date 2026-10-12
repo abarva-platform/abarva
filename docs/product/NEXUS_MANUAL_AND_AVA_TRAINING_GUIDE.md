@@ -85,7 +85,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 
 | Audience | Route count | aVa posture |
 | --- | --- | --- |
-| client | 100 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
+| client | 101 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
 | admin | 70 | Explain setup/governance controls; avoid tenant data claims unless scoped evidence is supplied. |
 | public | 40 | Describe public/product material; never imply authenticated capability proof. |
 | internal | 8 | Treat as preview/demo/operator-only unless release evidence says otherwise. |
@@ -97,7 +97,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | Home | 8 |
 | Intelligence | 1 |
 | Learn | 9 |
-| Moves | 16 |
+| Moves | 17 |
 | Platform | 5 |
 | Shared | 55 |
 | Source | 37 |
@@ -306,6 +306,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | /strategic-moves/[moveId] | client | Moves | src/app/(maestro)/strategic-moves/[moveId]/page.tsx |
 | /strategic-moves/[moveId]/evidence | client | Moves | src/app/(maestro)/strategic-moves/[moveId]/evidence/page.tsx |
 | /strategic-moves/[moveId]/phase/[phaseNum] | client | Moves | src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx |
+| /strategic-moves/[moveId]/tower-handoff | client | Moves | src/app/(maestro)/strategic-moves/[moveId]/tower-handoff/page.tsx |
 | /strategic-moves/[moveId]/trace | client | Moves | src/app/(maestro)/strategic-moves/[moveId]/trace/page.tsx |
 | /strategic-moves/[moveId]/workspace | client | Moves | src/app/(maestro)/strategic-moves/[moveId]/workspace/page.tsx |
 | /strategic-moves/expert-kernel/dossier | client | Moves | src/app/(maestro)/strategic-moves/expert-kernel/dossier/page.tsx |

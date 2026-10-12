@@ -12,7 +12,7 @@
 
 P5.2 can save receiving participants and measurement definitions for every current P4 lever, then accept a planned Tower handoff against the current signed measurement contract. The product derives planned cash from the deterministic P4 case. It records projected-only rows in the existing outcome ledger and confirms them through an independent read after commit. A changed contract, plan, input basis or receiving participant refuses acceptance. Repeat acceptance of the same basis retains the original rows, actor and time.
 
-P5 completion requires current publication readback when the new flag is enabled. Tower can read the exact Move through `?moveId=`, and the decision trace distinguishes unavailable state from an absent publication. A baseline projection also clears its prior Move identity while another Move loads or fails.
+P5 completion requires current publication readback when the new flag is enabled. The acceptance and decision-trace links open a scoped Programs page at `/strategic-moves/[moveId]/tower-handoff`, which reads only the already-authorized exact-Move ledger projection. Tower also exposes the same planned readback through `?moveId=` under its existing module permission. The decision trace distinguishes unavailable state from an absent publication, and the baseline projection withholds prior Move rows while another Move loads or fails.
 
 ## Layer Impact
 
@@ -35,15 +35,19 @@ P5 completion requires current publication readback when the new flag is enabled
 - `p5_measurement_handoff`: receiving participant ID and role, source reference, cohort/comparator, method, cadence, first review trigger, exclusions and open conditions per P4 lever. Both text readers emit only the team's saved words.
 - `GET/POST /api/v1/programs/[programId]/tower-handoff`: authenticated tenant and exact-Move access; financial visibility for review; gate and publication permission for acceptance; existing P4/P5 hard checks; current signed document ID/version/content hash, saved-plan hash and P4 input basis; receiving participants revalidated against current permissions.
 - Deterministic physical UUIDs, real commit timestamps, original actor provenance and repeat idempotence. The write and basis reads share a transaction; post-commit readback uses the independent reader.
+- The adapter uses the existing physical `value_category` and `measurement_unit` columns. Readback verifies the projected amount, unknown baseline and realized amounts, source references, document claims, ownership and governed metadata against the current basis. Published rows also recheck current P4/P5 hard prerequisites.
+- The scoped browser page requires Programs module access, authenticated tenancy, exact-Move access, assigned-Move grants and financial visibility. It reads only the existing handoff API projection; general Tower permissions and user metadata are unchanged.
 - Dataset declaration `moves_p5_outcome_handoff_v1`. Each row carries a policy-validated `GovernedObject` with `committed_not_indexed` readiness, no applicable agents and no indexing, retrieval, citation or agent-ready claim.
 - Product labels describe a planned handoff. Execution, baseline confirmation and realized-value verification remain future governed work.
 
 ## QA / Validation
 
 - PASS: baseline identity regressions fail before the fix and pass afterward; removing the identity key kills both regressions.
-- PASS: original baseline validation, 642 local tests. This is local proof only.
-- PASS: first 31 publication route/model/persistence tests, including stale document/input refusals, tenant/actor/participant authority, idempotence and independent readback.
-- PENDING: final combined tests, publication mutations, component visual inspection, typecheck, lint, orphan/reachability checks, coverage and tenancy censuses, generated manuals, all context/corpus validators and release check.
+- PASS: 936 tests across 18 affected suites after main reconciliation, including publication, physical-schema-bound persistence, scoped page authorization, P5 host/readers, current approval readback and opt-in transaction behavior. This is local proof only.
+- PASS: 40 of 41 deliberate mutations are killed. Removing one redundant passive state clear survives because the render-time Move guard independently withholds old figures; removing that guard is killed by a before-effect observation test.
+- PASS: real component renders at 1440 and 390 pixels, light and dark, with saved control selections and no horizontal overflow. Local synthetic fixtures do not establish runtime acceptance.
+- PASS: changed-file lint, no new library orphans, route and export reachability, regenerated coverage and tenancy censuses, generated manual/check and all six context/corpus validators. The coverage census increases from 2831 to 2832 for exactly one new persistent test file.
+- PASS: Node 24 typecheck, including tests, and release check.
 - PENDING: controlled PR, exact-head CI, fetched-ref collision scan, merge, repo-owned deployment and signed-in acceptance.
 
 ## Rollout Plan
