@@ -164,6 +164,7 @@ it("answers from the same served Home bundle source that renders the page", asyn
     expect.objectContaining({
       tenantKey: "meridian-health",
       activeChapterId: "technology_data",
+      recordSource: liveRecordSource(),
     }),
   );
   const answerInput = mockedAnswerHomeAvaQuestion.mock.calls[0][0];
@@ -222,6 +223,7 @@ it("keeps the reviewed fallback visible to the API caller", async () => {
     kind: "reviewed_snapshot_fallback",
     canonicalSnapshotHash: "reviewed:snapshot:hash",
   });
+  expect(mockedAnswerHomeAvaQuestion.mock.calls[0][0].recordSource).toEqual(json.recordSource);
 });
 
 it("uses the reviewed bundle when the page selected the legacy provider", async () => {

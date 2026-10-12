@@ -132,6 +132,7 @@ COPY --from=build --chown=node:node /app/docs/architecture/sql-drafts ./docs/arc
 COPY --from=build --chown=node:node /app/docs/governance/dataset-manifests ./docs/governance/dataset-manifests
 COPY --from=build --chown=node:node /app/docs/governance/data-repairs ./docs/governance/data-repairs
 COPY --from=build --chown=node:node /app/runtime-approved-release-records ./docs/releases/records
+COPY --from=build --chown=node:node /app/docs/releases/records/2026-10-12-delegated-approval-proof-staging.md ./docs/releases/records/2026-10-12-delegated-approval-proof-staging.md
 COPY --from=build --chown=node:node /app/docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md ./docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md
 COPY --from=build --chown=node:node /app/docs/releases/records/2026-10-12-home-integrated-insight-admission.md ./docs/releases/records/2026-10-12-home-integrated-insight-admission.md
 COPY --from=build --chown=node:node /app/docs/source/skyharbor-v4 ./docs/source/skyharbor-v4

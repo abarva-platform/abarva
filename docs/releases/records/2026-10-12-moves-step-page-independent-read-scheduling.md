@@ -48,15 +48,15 @@ P1–P4 gate pages expose the existing transition workbook download, parse and a
 ## QA / Validation
 
 - PASS: eight reproduced assertions failed before the repair and pass afterward.
-- PASS: 1762 focused and affected tests in 61 unique suites on the prepared source, including the current predecessor; the route scheduling case executes the real server page with all data and authority dependencies mocked. No database was touched.
+- PASS: 1823 focused and affected tests in 66 unique suites on the prepared source, including the current predecessor; the route scheduling case executes the real server page with all data and authority dependencies mocked. No database was touched.
 - HISTORICAL PASS: ten scheduling mutations detected individually: policy sharing, canonical reader wiring, early page readiness, parallel approved/backlog reads, each failed-read path, unreadable Move refusal, early participant names, shared latest snapshot and the blocked empty state. Every source was restored.
 - PASS: final current-source typecheck and changed-code lint. 71 mutations were detected individually (68 source behaviors and three actual CSS behaviors); every source was restored.
-- PASS: final regenerated manual/coverage/tenancy checks, library/route/export reachability and all six corpus validators after reconciling actual main `c3bdb59b`.
+- PASS: final regenerated manual/coverage/tenancy checks, library/route/export reachability and all six corpus validators after reconciling actual main `9c76c564`.
 - PASS: 28 actual component/CSS variants covering text capture, notes, recorded approval, retained-input correction and the actual transition workbook controls pass at 390 and 1440 in both themes, with no contrast violations or horizontal overflow. Temporary render probes were removed. This is local component proof; the full signed-in shell remains to be validated.
 - HISTORICAL PASS: the real blocked component/CSS at 390 and 1440 in both themes has no contrast violations or horizontal overflow. The temporary render probe was removed; three existing local CSS browser checks also pass.
 - PASS: all 11 final local release gates on the reconciled source. Node 24.15.0 is the validation runtime.
 - PENDING: exact new-head remote CI and the immediate fresh all-open fetched guard.
-- PASS: an independent immutable `c3bdb59b2792e5d49d0db6e01628a17eee40acd5` source export regenerates 2854 and matches every candidate count field. Zero new N test files and genuine delta zero; no count is edited by hand.
+- PASS: an independent immutable `9c76c56420c65b4fd94aeeba7e6e99ab69881d7c` source export regenerates 2854 and matches every candidate count field. Zero new N test files and genuine delta zero; no count is edited by hand.
 - FAIL: preceding deployed acceptance on `5afb6c4e`, as shown below. No follow-up deployed timing exists yet.
 
 ## Before / After Timing
@@ -135,3 +135,8 @@ Walk [38248657090](https://github.com/abarva-platform/abarva/actions/runs/382486
 - The original approver must review and execute any displayed correction through the product, followed by independent native audit and preserved-binding verification. Local transaction tests do not establish runtime correction or downstream gate clearance.
 - Full 29-view acceptance depends on the authorized journey owner reaching P5; existing twenty-view samples cannot prove it.
 - Independent workbook review, participant assignment, original request lifecycle and signed artifact binding remain distinct governed actions and evidence.
+
+
+## CI Reader Reconciliation
+
+Exact head `f9db933fef7879af8aad4b8071d9b34ec557f30f` failed the AI surface catalog in [run 38273719001](https://github.com/abarva-platform/abarva/actions/runs/38273719001): an existing contrast-test regex did not recognize the grouped dark token selector. The reader now uses the existing CSS parser's selector list. Every WCAG AA and real-render assertion remains enforced. Reverting grouped-selector handling fails the test; changing the palette to insufficient contrast also fails it. Both probes were restored. The affected existing step-page suites are included in the final 66-suite local run. This repair requires complete checks on a new exact head; no workflow was rerun and the earlier failure is retained.
