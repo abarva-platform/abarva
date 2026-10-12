@@ -1287,6 +1287,7 @@ export function StrategicMoveOriginateClient({
                 sponsorProgressEmails={sponsorProgressEmails}
                 stageGroups={activeStageGroups}
                 setActiveP0Step={setActiveP0Step}
+                extendedIntakeFieldsEnabled={extendedIntakeFieldsEnabled}
                 setBrief={setBrief}
                 setCanvasTab={setCanvasTab}
                 setDraftFields={setDraftFields}
@@ -1480,6 +1481,7 @@ function P0OriginationRail({
 
 function P0OriginationContractCanvas({
   activeP0Def,
+  extendedIntakeFieldsEnabled,
   activeP0Step,
   brief,
   canPromote,
@@ -1511,6 +1513,7 @@ function P0OriginationContractCanvas({
   cancelFlow,
 }: {
   activeP0Def: ScaffoldDef | null;
+  extendedIntakeFieldsEnabled: boolean;
   activeP0Step: P0StepId;
   brief: BriefState;
   canPromote: boolean;
@@ -1778,6 +1781,7 @@ function P0OriginationContractCanvas({
                   {activeP0Def.fieldType === "select" ? (
                     <select
                       id={`orig-canvas-brief-section-${activeP0Def.step}-input`}
+                      aria-label={extendedIntakeFieldsEnabled ? activeP0Def.label : undefined}
                       className={styles.p0AnswerInput}
                       value={activeDraft}
                       onChange={(e) =>
@@ -1797,6 +1801,7 @@ function P0OriginationContractCanvas({
                   ) : (
                     <textarea
                       id={`orig-canvas-brief-section-${activeP0Def.step}-input`}
+                      aria-label={extendedIntakeFieldsEnabled ? activeP0Def.label : undefined}
                       className={styles.p0AnswerInput}
                       value={activeDraft}
                       placeholder={activeP0Def.placeholder}

@@ -677,6 +677,42 @@ describe("StrategicMoveOriginateClient", () => {
   });
 
   describe("P0 HTML contract shell", () => {
+    it("names all 17 extended intake answer controls from their visible prompts", () => {
+      render(
+        <StrategicMoveOriginateClient
+          tenantName="Tenant A"
+          extendedIntakeFieldsEnabled
+          businessSegmentOptions={["Operations"]}
+        />,
+      );
+      const labels = [
+        "Business problem or opportunity", "Transformation pattern (archetype)",
+        "Sponsor contact and update preference", "In scope", "Out of scope",
+        "Value hypothesis", "Intended outcomes and success criteria",
+        "Discovery questions and hypotheses to test", "Evidence families to collect",
+        "Foundation readiness, constraints, and dependencies", "Business segment",
+        "Front / Middle / Back Office", "Care type", "Value hypothesis — quantified",
+        "Value hypothesis — qualitative", "Stakeholders", "Complexity tier",
+      ];
+      labels.forEach((label) => {
+        fireEvent.click(screen.getByRole("button", { name: label }));
+        const control = screen.getByLabelText(label);
+        expect(control).toHaveAccessibleName(label);
+        expect(["TEXTAREA", "SELECT"]).toContain(control.tagName);
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Business segment" }));
+      fireEvent.change(screen.getByLabelText("Business segment"), {
+        target: { value: "Operations" },
+      });
+      expect(screen.getByLabelText("Business segment")).toHaveValue("Operations");
+    });
+
+    it("retains the existing base answer markup when extended intake is off", () => {
+      const { container } = render(<StrategicMoveOriginateClient tenantName="Tenant A" />);
+      expect(container.querySelector("#orig-canvas-brief-section-1-input"))
+        .not.toHaveAttribute("aria-label");
+    });
+
     it("renders the universal Moves shell structure for origination", () => {
       const { container } = render(
         <StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />,
