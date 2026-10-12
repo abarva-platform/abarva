@@ -155,6 +155,51 @@ test(
   "actual contract writers preserve provenance in disposable Postgres",
   { skip: !connectionString },
   async (t) => {
+    for (const [method, table] of [
+      ["upsertContractScope", "contract_scope"],
+      ["upsertPerformance", "contract_performance_observation"],
+    ]) {
+      for (const serviceId of [undefined, "", "SVC-declared-fixture"]) {
+        await t.test(
+          `${method} preserves only declared service identity ${serviceId ?? "absent"}`,
+          async () => {
+            const input = {
+              ...row,
+              scope_role: "included",
+              service_tower: "Managed service label",
+              credit_owed_usd: "1",
+              service_id: serviceId,
+            };
+            const result = await persist(method, input);
+            assert.equal(result[table][0].service_id, serviceId || null);
+            if (method === "upsertPerformance")
+              assert.equal(
+                result.contract_service_credit[0].service_id,
+                serviceId || null,
+              );
+          },
+        );
+      }
+      await t.test(
+        `${method} changes declared service identity on repeat import`,
+        async () => {
+          const input = {
+            ...row,
+            scope_role: "included",
+            service_tower: "Managed service label",
+            credit_owed_usd: "1",
+          };
+          const result = await persist(
+            method,
+            { ...input, service_id: "SVC-declared-fixture" },
+            { ...input, service_id: "" },
+          );
+          assert.equal(result[table][0].service_id, null);
+          if (method === "upsertPerformance")
+            assert.equal(result.contract_service_credit[0].service_id, null);
+        },
+      );
+    }
     await t.test(
       "genuine clause declarations survive actual normalization and canonical persistence",
       async () => {
