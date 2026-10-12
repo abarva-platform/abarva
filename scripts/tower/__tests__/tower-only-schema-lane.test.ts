@@ -6,6 +6,7 @@ import { test } from "node:test";
 import {
   classifyLedger,
   parseMode,
+  PRIOR_PAGE_KEYS,
   priorServingSelection,
   stripFrozenFoundationTransaction,
   verifyTargetFiles,
@@ -49,6 +50,15 @@ test("prior serving identity comes from the governed delegated scope", () => {
   assert.deepEqual(priorServingSelection(manifest), {
     assessment_id: "tower-registry-candidate-a70df3b56bffc9be", projection_version: 5,
   });
+});
+
+test("prior physical page keys match the registered Tower stage contract", () => {
+  const stage = readFileSync(path.join(ROOT, "scripts/tower/stage-registered-intake-partial.mjs"), "utf8");
+  const pageTable = stage.match(/const PAGE_TABLE = \{([\s\S]*?)\};/)?.[1];
+  assert(pageTable, "Tower stage PAGE_TABLE is absent");
+  const physicalKeys = [...pageTable.matchAll(/^\s*([a-z_]+): "tower_[a-z_]+",?$/gm)]
+    .map((match) => match[1]).filter((key) => key !== "foundations").sort();
+  assert.deepEqual([...PRIOR_PAGE_KEYS], physicalKeys);
 });
 
 test("workflow guards broad apply before mutation and confines narrow apply", () => {

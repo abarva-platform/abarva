@@ -31,6 +31,10 @@ const MIGRATION_ADVISORY_LOCK_KEY = "881200441733199010";
 const PROOF_MARKER = "TOWER_ONLY_SCHEMA_PROOF";
 const CANDIDATE_ASSESSMENT = "tower-registry-candidate-7de0ab623209418a";
 const CANDIDATE_SOURCE_HASH = "dd8a1389fa694eb58e835ec55ff71a1ae4132f607fe6635d9b343f98bf885048";
+export const PRIOR_PAGE_KEYS = [
+  "adoption_lens", "ai_portfolio", "command_center", "cost_lens", "decision_lanes",
+  "evidence", "recommended_actions", "risk_lens", "value_proof",
+] as const;
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -212,10 +216,8 @@ async function pageFingerprint(client: Client, tenantKey: string, selection: Sel
     pages.push(...result.rows.map((row) => ({ page_key: row.page_key, count: Number(row.count), fingerprint: row.fingerprint })));
   }
   pages.sort((a, b) => a.page_key.localeCompare(b.page_key));
-  assert(JSON.stringify(pages.map((row) => row.page_key)) === JSON.stringify([
-    "adoption_lens", "ai_portfolio", "command_center", "cost_lens", "decision_lanes",
-    "evidence_queue", "next_actions", "risk_register", "value_proof",
-  ]), "Prior active Tower page set differs from the nine approved pages");
+  assert(JSON.stringify(pages.map((row) => row.page_key)) === JSON.stringify(PRIOR_PAGE_KEYS),
+    "Prior active Tower page set differs from the nine approved pages");
   return pages;
 }
 
