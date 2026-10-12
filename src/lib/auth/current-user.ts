@@ -3,11 +3,13 @@ import { auth, currentUser as clerkCurrentUser } from "@clerk/nextjs/server";
 import { resolveSessionRole } from "@/lib/auth/access-routing";
 import { getCurrentPerson } from "@/lib/auth/maestro";
 import { isSyntheticE2eOperatorProfile } from "@/lib/auth/synthetic-e2e-operator";
+import type { SyntheticE2eOperatorAuthority } from "@/lib/auth/synthetic-e2e-operator";
 import {
   PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
   readPrivateBrowserProofSessionValue,
 } from "@/lib/auth/private-browser-proof-session";
 import { cookies } from "next/headers";
+import { createHash } from "node:crypto";
 
 export type UserRole = "maestro" | "client_viewer" | "observer";
 
@@ -35,6 +37,13 @@ export interface CurrentUser {
   defaultClientId: string | null;
   syntheticE2eOperator?: boolean;
   syntheticE2eApprovalRef?: string | null;
+  syntheticE2eAuthority?: SyntheticE2eOperatorAuthority;
+}
+
+export class CurrentUserAuthorityError extends Error {
+  constructor(public readonly code: "profile_unavailable" | "synthetic_profile_refused") {
+    super(code);
+  }
 }
 
 const PLACEHOLDER_PERSON_NAMES = new Set(["user", "unknown", "unknown user"]);
@@ -112,12 +121,22 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       }
     | undefined;
 
-  const personIdFromClaims = claims?.publicMetadata?.person_id ?? null;
-  const syntheticE2eOperator = isSyntheticE2eOperatorProfile(claims?.publicMetadata);
-  // A malformed or stale dedicated profile must not fall through to the
-  // generic email/role-based access path.
-  if (claims?.publicMetadata?.accountType === "synthetic_e2e_operator" &&
-      !syntheticE2eOperator) return null;
+  let authoritativeClerkUser: Awaited<ReturnType<typeof clerkCurrentUser>>;
+  try {
+    authoritativeClerkUser = await clerkCurrentUser();
+  } catch {
+    throw new CurrentUserAuthorityError("profile_unavailable");
+  }
+  if (!authoritativeClerkUser) throw new CurrentUserAuthorityError("profile_unavailable");
+  const serverMetadata = authoritativeClerkUser.publicMetadata as NonNullable<typeof claims>["publicMetadata"];
+  const dedicatedDeclared = serverMetadata?.accountType === "synthetic_e2e_operator" ||
+    claims?.publicMetadata?.accountType === "synthetic_e2e_operator";
+  const syntheticE2eOperator = dedicatedDeclared && isSyntheticE2eOperatorProfile(serverMetadata);
+  if (dedicatedDeclared && (!syntheticE2eOperator || authoritativeClerkUser.id !== userId)) {
+    throw new CurrentUserAuthorityError("synthetic_profile_refused");
+  }
+  const identityMetadata = syntheticE2eOperator ? serverMetadata : claims?.publicMetadata;
+  const personIdFromClaims = identityMetadata?.person_id ?? null;
   const claimEmail =
     claims?.emailAddress ??
     claims?.email ??
@@ -128,22 +147,16 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     .filter(Boolean)
     .join(" ")
     .trim();
-  let authoritativeClerkUser: Awaited<ReturnType<typeof clerkCurrentUser>> =
-    null;
-  if (!claimEmail || !claimName) {
-    try {
-      authoritativeClerkUser = await clerkCurrentUser();
-    } catch {
-      authoritativeClerkUser = null;
-    }
-  }
   // Clerk session JWTs do not always include an email claim. For demo
   // /clerk_test accounts in particular, the JWT payload often only carries
   // the `sub` (Clerk user id) and publicMetadata. When that happens, the
   // email-based tenant inference in tenant-access.ts cannot fire and
   // signed-in users hit a 403 even on their own tenant. Fall through to
   // Clerk's authoritative user record to recover the email.
-  let fallbackEmail = claimEmail;
+  let fallbackEmail = syntheticE2eOperator
+    ? authoritativeClerkUser.primaryEmailAddress?.emailAddress ?? null
+    : claimEmail;
+  if (syntheticE2eOperator && !fallbackEmail) throw new CurrentUserAuthorityError("synthetic_profile_refused");
   if (!fallbackEmail) {
     fallbackEmail =
       authoritativeClerkUser?.primaryEmailAddress?.emailAddress ??
@@ -151,15 +164,14 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       null;
   }
   const legacyRole = resolveSessionRole(
-    claims?.publicMetadata?.role ?? null,
+    identityMetadata?.role ?? null,
     fallbackEmail,
   );
-  const metadataClientKey = claims?.publicMetadata?.clientId ?? null;
-  let tenantRoles = normalizeTenantRoles(claims?.publicMetadata?.tenantRoles);
+  const metadataClientKey = identityMetadata?.clientId ?? null;
+  let tenantRoles = normalizeTenantRoles(identityMetadata?.tenantRoles);
   if (Object.keys(tenantRoles).length === 0) {
     try {
-      const clerkUser = authoritativeClerkUser ?? (await clerkCurrentUser());
-      authoritativeClerkUser = clerkUser;
+      const clerkUser = authoritativeClerkUser;
       tenantRoles = normalizeTenantRoles(
         clerkUser?.publicMetadata?.tenantRoles,
       );
@@ -168,14 +180,19 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     }
   }
   const fallbackName =
-    claimName ||
+    (syntheticE2eOperator ? authoritativeClerkUser.fullName : claimName) ||
     authoritativeClerkUser?.fullName ||
     [authoritativeClerkUser?.firstName, authoritativeClerkUser?.lastName]
       .filter(Boolean)
       .join(" ") ||
     claims?.emailAddress ||
     "User";
-  const resolvedPerson = personIdFromClaims ? null : await getCurrentPerson();
+  const syntheticE2eAuthority: SyntheticE2eOperatorAuthority | undefined = syntheticE2eOperator ? {
+    source: "authenticated_clerk_profile", clerkUserId: userId,
+    email: fallbackEmail!.trim().toLowerCase(), approvalRef: serverMetadata!.approvalRef!,
+    profileSha256: createHash("sha256").update(JSON.stringify(serverMetadata)).digest("hex"),
+  } : undefined;
+  const resolvedPerson = personIdFromClaims || syntheticE2eOperator ? null : await getCurrentPerson();
   const personId = personIdFromClaims ?? resolvedPerson?.id ?? null;
 
   if (!personId) {
@@ -201,7 +218,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       accessibleClients: [],
       defaultClientId: null,
       syntheticE2eOperator,
-      syntheticE2eApprovalRef: syntheticE2eOperator ? claims?.publicMetadata?.approvalRef ?? null : null,
+      syntheticE2eApprovalRef: syntheticE2eOperator ? serverMetadata?.approvalRef ?? null : null,
+      syntheticE2eAuthority,
     };
   }
 
@@ -267,6 +285,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       usablePersonName(resolvedPerson?.name) ??
       fallbackName,
     email:
+      (syntheticE2eOperator ? fallbackEmail : null) ??
       (person as { email?: string | null } | null)?.email ??
       resolvedPerson?.email ??
       fallbackEmail,
@@ -274,7 +293,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     accessibleClients,
     defaultClientId,
     syntheticE2eOperator,
-    syntheticE2eApprovalRef: syntheticE2eOperator ? claims?.publicMetadata?.approvalRef ?? null : null,
+    syntheticE2eApprovalRef: syntheticE2eOperator ? serverMetadata?.approvalRef ?? null : null,
+    syntheticE2eAuthority,
   };
 }
 

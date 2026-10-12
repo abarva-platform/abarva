@@ -1580,6 +1580,7 @@ export function buildTowerCommandCenterView(
       command.comparableBlockedValue !== null &&
       command.comparableBlockedValue !== undefined,
     valueClaimCount: num(command.valueClaimCount),
+    valueProofOutcomeRecordCount: num(command.valueProofOutcomeRecordCount),
     knownValueClaimCount: num(command.knownValueClaimCount),
     financeValidatedBlockedUsd:
       command.financeValidatedBlockedValue ??

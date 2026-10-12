@@ -681,9 +681,9 @@ describe("mechanical Tower Command Center panels", () => {
     );
 
     const text = document.body.textContent ?? "";
-    expect(text).toContain("Value claims not loaded");
+    expect(text).toContain("Benefit claims not loaded");
     expect(text).toContain("Usage support not loaded");
-    expect(text).toContain("No action campaigns are loaded for this review.");
+    expect(text).toContain("No source recommendations or evidence-gap follow-ups are loaded for this review.");
     expect(text).toContain("No evidence-owner queue rows are loaded. An empty queue does not mean every claim has proof.");
     expect(text).not.toContain("0 of 0");
     expect(text).not.toContain("Usage telemetry connection");

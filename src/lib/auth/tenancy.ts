@@ -2,7 +2,7 @@ import {
   getActiveClientRow,
   TenantLookupUnavailableError,
 } from "@/lib/active-client";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { getCurrentUser, CurrentUserAuthorityError } from "@/lib/auth/current-user";
 import { getCurrentPerson } from "@/lib/auth/maestro";
 import { ensureOperatorPersonProvisioned } from "@/lib/auth/operator-persona-provisioning";
 import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
@@ -34,7 +34,12 @@ export async function requireTenancy(
   // Auth helpers (Clerk) can throw on missing/invalid session rather than returning null.
   const [person, user] = await Promise.all([
     getCurrentPerson().catch(() => null),
-    getCurrentUser().catch(() => null),
+    getCurrentUser().catch((error) => {
+      if (error instanceof CurrentUserAuthorityError) {
+        throw new TenancyError(error.code === "profile_unavailable" ? "tenant_lookup_unavailable" : "forbidden");
+      }
+      return null;
+    }),
   ]);
   const userId =
     (isUuidLike(person?.id) ? person?.id : null) ??
@@ -104,6 +109,7 @@ export async function requireTenancy(
       clientName: (client as { name?: string | null }).name ?? null,
       syntheticE2eOperator: user.syntheticE2eOperator === true,
       syntheticE2eApprovalRef: user.syntheticE2eApprovalRef ?? null,
+      syntheticE2eAuthority: user.syntheticE2eAuthority,
     });
     if (user.syntheticE2eOperator &&
       (!provisioned || !isUuidLike(provisioned.personId)))

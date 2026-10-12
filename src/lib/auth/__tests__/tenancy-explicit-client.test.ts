@@ -2,7 +2,12 @@ jest.mock("@/lib/active-client", () => ({
   getActiveClientRow: jest.fn(),
   TenantLookupUnavailableError: class TenantLookupUnavailableError extends Error {},
 }));
-jest.mock("@/lib/auth/current-user", () => ({ getCurrentUser: jest.fn() }));
+jest.mock("@/lib/auth/current-user", () => ({
+  getCurrentUser: jest.fn(),
+  CurrentUserAuthorityError: class CurrentUserAuthorityError extends Error {
+    constructor(public readonly code: string) { super(code); }
+  },
+}));
 jest.mock("@/lib/auth/maestro", () => ({ getCurrentPerson: jest.fn() }));
 jest.mock("@/lib/auth/operator-persona-provisioning", () => ({
   ensureOperatorPersonProvisioned: jest.fn(),
@@ -14,7 +19,7 @@ jest.mock("@/lib/tenant/resolveTenant", () => ({
 }));
 
 import { getActiveClientRow } from "@/lib/active-client";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { getCurrentUser, CurrentUserAuthorityError } from "@/lib/auth/current-user";
 import { getCurrentPerson } from "@/lib/auth/maestro";
 import { ensureOperatorPersonProvisioned } from "@/lib/auth/operator-persona-provisioning";
 import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
@@ -100,6 +105,17 @@ describe("requireTenancy with an explicit client", () => {
     await expect(requireTenancy({ requestedClientKey: "meridian" })).rejects.toMatchObject({
       code: "unauthenticated",
     });
+    expect(resolveClientRow).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["synthetic_profile_refused", "forbidden"],
+    ["profile_unavailable", "tenant_lookup_unavailable"],
+  ] as const)("does not let a person-row fallback bypass %s", async (code, expected) => {
+    (getCurrentPerson as jest.Mock).mockResolvedValue({ id: user.personId, role: "client_viewer" });
+    (getCurrentUser as jest.Mock).mockRejectedValue(new CurrentUserAuthorityError(code));
+    await expect(requireTenancy({ requestedClientKey: "meridian" })).rejects.toMatchObject({ code: expected });
+    expect(ensureOperatorPersonProvisioned).not.toHaveBeenCalled();
     expect(resolveClientRow).not.toHaveBeenCalled();
   });
 

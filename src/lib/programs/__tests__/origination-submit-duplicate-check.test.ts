@@ -89,6 +89,10 @@ jest.mock("@/app/api/v1/programs/_auth", () => ({
 }));
 
 jest.mock("@/lib/auth/program-access-policy", () => ({
+  ProgramAccessPolicyUnavailableError: class ProgramAccessPolicyUnavailableError extends Error {
+    readonly code = "program_access_policy_unavailable";
+    constructor() { super("Programs access could not be read. No permission decision was made."); }
+  },
   loadUserProgramAccessPolicy: (...args: unknown[]) =>
     loadAccessPolicyMock(...args),
 }));
@@ -111,6 +115,7 @@ jest.mock("../pattern-authority", () => ({
 
 import { submitOriginationBrief } from "../origination-submit";
 import { originationSubmitFailureSentence } from "../origination-submit-failure-text";
+import { ProgramAccessPolicyUnavailableError } from "@/lib/auth/program-access-policy";
 
 /** The driver text an operator needs and a product user must never read. */
 const RAW = 'permission denied for table "engagements" at 10.2.0.4:5432';
@@ -194,6 +199,19 @@ afterEach(() => {
 });
 
 describe("P0 submit · the re-submit check reads its own error", () => {
+  it("refuses an unavailable creation policy before any tenant or Move write", async () => {
+    loadAccessPolicyMock.mockRejectedValue(new ProgramAccessPolicyUnavailableError("membership"));
+    const outcome = await submitOutcome();
+    expect(outcome).toMatchObject({ code: "program_access_policy_unavailable", status: 503 });
+    expect(getActiveClientRowMock).not.toHaveBeenCalled();
+    expect(engagementInsertIssued()).toBe(false);
+  });
+
+  it("retains the ordinary forbidden result when create permission is false", async () => {
+    loadAccessPolicyMock.mockResolvedValue({ canCreatePrograms: false });
+    expect(await submitOutcome()).toMatchObject({ code: "forbidden", status: 403 });
+    expect(engagementInsertIssued()).toBe(false);
+  });
   it("refuses rather than creating a second Move when the check cannot be read", async () => {
     selectResults.engagements = { data: null, error: { message: RAW } };
 

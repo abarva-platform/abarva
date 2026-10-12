@@ -244,6 +244,17 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   // Case population comes from declared page and canonical object identity. Finance status may
   // still be absent; a missing status is its own unknown bucket, never a submitted/not-submitted inference.
   const cases = view.allInitiatives.filter(isBusinessCase);
+  const casesMissingFinanceStatus = cases.filter((item) => item.financeStatus === null).length;
+  const clearedValueStory = s.claimableAmountLoaded === false
+    ? "A cleared value amount is not verified for the loaded months."
+    : s.claimableAmountLoaded === true || s.claimableClaimCount > 0
+      ? `${bigMoney(s.claimableUsd)} is cleared for reporting across loaded benefit claims.`
+      : "No benefit amount is cleared for reporting.";
+  const verdictStory = casesMissingFinanceStatus > 0
+    ? `Review Finance status for ${casesMissingFinanceStatus} of ${cases.length} AI use cases before reporting case benefits; their status is not loaded. ${caseFunding === null ? "Approved AI case funding is not verified." : `${bigMoney(caseFunding)} in approved AI case funding is recorded.`} ${hasAssertion ? `The loaded benefit claims project ${bigMoney(s.promisedUsd)} a year; their relationship to the AI cases is not reconciled here.` : "No yearly benefit estimate is loaded."} ${clearedValueStory}`
+    : hasAssertion
+      ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === false ? "A cleared amount is not verified for the loaded months." : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
+      : "No yearly benefit estimate is loaded, so its value remains unknown.";
   const validatedCases = cases.filter(
     (i) => i.financeStatus === "finance_validated_actual",
   );
@@ -298,9 +309,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
           color: "var(--abarva-ink-black)",
         }}
       >
-        {hasAssertion
-          ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === false ? "A cleared amount is not verified for the loaded months." : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
-          : "No yearly benefit estimate is loaded, so its value remains unknown."}
+        {verdictStory}
       </h2>
 
       <div
@@ -339,7 +348,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 520px" }}>
           <h3 style={{ margin: "0 0 22px", fontSize: 15, fontWeight: 600 }}>
-            Yearly benefit estimates on cases checked by Finance
+            Yearly estimates in benefit claims and Finance-reviewed AI cases
           </h3>
           {hasAssertion ? (
             <HBar
@@ -350,11 +359,11 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
               axisFmt={money}
             />
           ) : (
-            <p>No value claims are loaded for this comparison.</p>
+            <p>No yearly case-benefit amounts are loaded for this comparison. Separate outcome-measure records may still be present in Tower.</p>
           )}
           <p style={NOTE}>
             {hasAssertion
-              ? "Both bars show yearly benefit estimates. The cleared amount above covers the loaded months, so it cannot be divided by either yearly estimate to show a success rate."
+              ? "The first bar covers loaded benefit claims; the second covers AI cases with a Finance validation status. Their crosswalk is not established here. The cleared amount covers loaded months, so it cannot be divided by either yearly estimate to show a success rate."
               : "No yearly benefit estimate is loaded, so there is no estimate to compare with Finance review."}
           </p>
           {validatedCases.length > 0 ? (
@@ -379,7 +388,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
           <p style={{ ...NOTE, margin: "14px 0 0" }}>
             {cases.length === 0
               ? "No classified AI use cases are loaded for this pipeline."
-              : `${cases.filter((item) => item.financeStatus === null).length} of ${cases.length} AI use case${cases.length === 1 ? "" : "s"} ${cases.length === 1 ? "has" : "have"} no Finance status loaded.`}{" "}
+              : `${casesMissingFinanceStatus} of ${cases.length} AI use case${cases.length === 1 ? "" : "s"} ${cases.length === 1 ? "has" : "have"} no Finance status loaded.`}{" "}
             Validation and value are not the same gate: a case can be Finance
             validated and still assert no direct benefit. An enabler with no
             loaded value remains unknown.

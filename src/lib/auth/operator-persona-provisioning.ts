@@ -27,6 +27,8 @@ import { createPerson } from "@/lib/db/person";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import { canonicalTenantKey } from "@/lib/tenant-keys";
 import { isSyntheticE2eOperatorTenant } from "@/lib/auth/synthetic-e2e-operator";
+import type { SyntheticE2eOperatorAuthority } from "@/lib/auth/synthetic-e2e-operator";
+import { hasSyntheticOperatorAuthority, reconcileUnboundSyntheticOperator, type UnboundOperatorPerson } from "./synthetic-e2e-operator-reconciliation";
 
 export interface ProvisionInput {
   clerkUserId: string;
@@ -39,6 +41,7 @@ export interface ProvisionInput {
   clientName?: string | null;
   syntheticE2eOperator?: boolean;
   syntheticE2eApprovalRef?: string | null;
+  syntheticE2eAuthority?: SyntheticE2eOperatorAuthority;
 }
 
 export interface ProvisionResult {
@@ -92,7 +95,7 @@ export async function ensureOperatorPersonProvisioned(
     const dedicated = input.syntheticE2eOperator === true;
     if (dedicated && (!isSyntheticE2eOperatorTenant(input.clientKey) ||
       deriveIsAdmin(input, canonicalKey) ||
-      !input.syntheticE2eApprovalRef?.trim())) return null;
+      !input.syntheticE2eApprovalRef?.trim() || !hasSyntheticOperatorAuthority(input))) return null;
 
     const isAdmin = deriveIsAdmin(input, canonicalKey);
     const primaryRole: ProvisionResult["role"] = isAdmin
@@ -107,15 +110,18 @@ export async function ensureOperatorPersonProvisioned(
     // 1) persons — dedupe by email (idempotent).
     const { data: existing, error: personReadError } = await sb
       .from("persons")
-      .select("id, name, primary_role, graph_node_id")
+      .select("id, name, email, role, primary_role, graph_node_id, updated_at, xmin")
       .eq("email", email)
       .maybeSingle();
     if (dedicated && personReadError) return null;
 
     const clerkPersonLink = `clerk:${input.clerkUserId}`;
-    if (dedicated && existing?.id &&
-      (existing.primary_role !== "client_viewer" || existing.graph_node_id !== clerkPersonLink))
-      return null;
+    if (dedicated && existing?.id) {
+      if (existing.primary_role !== "client_viewer") return null;
+      if (existing.graph_node_id !== clerkPersonLink) {
+        return await reconcileUnboundSyntheticOperator(input, existing as UnboundOperatorPerson);
+      }
+    }
 
     let personId: string;
     if (existing?.id) {
@@ -167,6 +173,9 @@ export async function ensureOperatorPersonProvisioned(
         role: "client_viewer", access_level: "program_member",
         financial_visibility: true, can_admin_users: false,
         can_create_programs: true, can_approve_gates: true,
+        can_create_source_events: false, can_approve_source_stages: false, can_approve_award: false,
+        can_upload_source_artifacts: false, can_generate_sourcing_artifacts: false,
+        can_publish_sourcing_artifacts: false,
       };
       const write = membership?.id
         ? await sb.from("person_client_memberships").update(fields).eq("id", membership.id)
@@ -206,6 +215,8 @@ export async function ensureOperatorPersonProvisioned(
           clerkUserId: input.clerkUserId,
           clerkPersonLink,
           approvalRef: input.syntheticE2eApprovalRef,
+          authoritySource: input.syntheticE2eAuthority!.source,
+          profileSha256: input.syntheticE2eAuthority!.profileSha256,
           programScope: "assigned_programs_only",
           accessLevel,
         },
