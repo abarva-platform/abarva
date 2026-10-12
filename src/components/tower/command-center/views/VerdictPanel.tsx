@@ -34,7 +34,6 @@ import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 const AMBER = "#ba7517";
 const AMBER_LIGHT = "#e8c98f";
 const TEAL = "#0f6e56";
-const GREY = "#b4b2a9";
 
 const MONO = {
   fontFamily: "var(--abarva-mono)",
@@ -261,19 +260,20 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   const validatedCasesWithPositiveAmount = validatedCases.filter(
     (i) => i.financeValidatedUsd > 0,
   ).length;
+  const validatedCasesWithEstimate = validatedCases.filter((i) => i.promisedBenefitLoaded);
   const assertedOnValidated =
-    cases.length === 0
+    validatedCases.length === 0 || validatedCasesWithEstimate.length !== validatedCases.length
       ? null
       : M(validatedCases.reduce((sum, i) => sum + i.promisedUsd, 0));
 
   const gate: readonly BarDatum[] = [
     { name: "Yearly estimate", value: asserted, label: money(asserted), fill: AMBER },
-    {
+    ...(assertedOnValidated === null ? [] : [{
       name: "Estimate on Finance-reviewed cases",
-      value: assertedOnValidated ?? 0,
-      label: assertedOnValidated === null ? "Not recorded" : money(assertedOnValidated),
-      fill: assertedOnValidated === null ? GREY : AMBER_LIGHT,
-    },
+      value: assertedOnValidated,
+      label: money(assertedOnValidated),
+      fill: AMBER_LIGHT,
+    }]),
   ];
 
   // Keep the case denominator even when Finance status was not loaded.
@@ -351,19 +351,24 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
             Yearly estimates in benefit claims and Finance-reviewed AI cases
           </h3>
           {hasAssertion ? (
-            <HBar
-              data={gate}
-              axisLabel="Projected yearly benefit"
-              height={190}
-              labelWidth={168}
-              axisFmt={money}
-            />
+            <>
+              <HBar
+                data={gate}
+                axisLabel="Projected yearly benefit"
+                height={190}
+                labelWidth={168}
+                axisFmt={money}
+              />
+              {assertedOnValidated === null ? (
+                <p>No complete yearly estimate is loaded for Finance-validated AI cases, so that comparison is withheld.</p>
+              ) : null}
+            </>
           ) : (
             <p>No yearly case-benefit amounts are loaded for this comparison. Separate outcome-measure records may still be present in Tower.</p>
           )}
           <p style={NOTE}>
             {hasAssertion
-              ? "The first bar covers loaded benefit claims; the second covers AI cases with a Finance validation status. Their crosswalk is not established here. The cleared amount covers loaded months, so it cannot be divided by either yearly estimate to show a success rate."
+              ? `The first bar covers loaded benefit claims. ${assertedOnValidated === null ? "The Finance-validated case comparison is not available." : "The second bar covers AI cases with a Finance validation status."} Their crosswalk is not established here. The cleared amount covers loaded months, so it cannot be divided by yearly estimates to show a success rate.`
               : "No yearly benefit estimate is loaded, so there is no estimate to compare with Finance review."}
           </p>
           {validatedCases.length > 0 ? (

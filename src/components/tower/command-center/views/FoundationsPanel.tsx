@@ -119,7 +119,7 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
           ["Foundation rows", noRows ? "Not loaded" : formatCount(rows.length)],
           ["Approved foundation funding", noRows ? "Not loaded" : missingSpendRows > 0 ? "Partial" : formatUsdM(spendUsd)],
           ["Share of approved AI funding", share === null ? "Not loaded" : formatPct(share)],
-          ["Projected direct benefit", loadedValueRows.length === 0 ? "Not loaded" : formatUsdM(promisedUsd)],
+          ["Projected direct benefit", loadedValueRows.length === 0 ? "Not loaded" : missingValueRows > 0 ? "Partial — total withheld" : formatUsdM(promisedUsd)],
         ].map(([label, value]) => (
           <div key={label} style={{ ...PANEL, padding: "20px 22px" }}>
             <div style={{ fontSize: 13, color: "var(--canon-gray-500)" }}>{label}</div>
@@ -137,6 +137,12 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
           </div>
         ))}
       </div>
+
+      {!noRows && missingValueRows > 0 ? (
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--canon-gray-700)" }}>
+          A projected direct benefit is recorded for {formatCount(loadedValueRows.length)} of {formatCount(rows.length)} foundation rows. Missing values are unknown, so Tower does not show a total.
+        </p>
+      ) : null}
 
       <div style={PANEL}>
         <div

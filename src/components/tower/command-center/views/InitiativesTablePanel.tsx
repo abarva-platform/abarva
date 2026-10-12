@@ -24,7 +24,7 @@ type FilterKey = "all" | TowerAiKind;
 type SortKey = "name" | "valueType" | "constraint" | "investment" | "value" | "claimable";
 
 const KIND_LABEL: Record<TowerAiKind, string> = {
-  funded: "Funded",
+  funded: "Funding group",
   embedded: "Embedded",
   candidate: "Candidate",
   governance: "Governance",
@@ -180,7 +180,7 @@ export function InitiativesTablePanel({
       </div>
 
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: "var(--canon-gray-700)" }}>
-        Expected benefit kind describes what the source says a case aims to improve. It does not show an approved amount, a measured result, or a benefit cleared by Finance.
+        Expected benefit kind describes what the source says a case aims to improve. It does not show an approved amount, a measured result, or a benefit cleared by Finance. The funding group is Tower&apos;s display grouping from intake labels; it is not proof of approved funding.
       </p>
 
       <div style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}>

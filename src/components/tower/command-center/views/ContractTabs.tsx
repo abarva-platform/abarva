@@ -37,6 +37,7 @@ import { ChartTooltip, HEX, toM, withSliver } from "../charts/chart-kit";
 import { cx } from "../primitives";
 import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 import { byEvidencePriority, evidenceGapAmount } from "./evidence-gap-amount";
+import { expectedBenefitKindLabel } from "./expected-benefit-kind";
 
 type Tone = "teal" | "amber" | "red" | "gray";
 type AiLens = "cost" | "risk" | "adoption" | "table";
@@ -72,7 +73,7 @@ type CampaignRow = {
 };
 
 const AI_KIND_LABEL: Record<TowerAiKind, string> = {
-  funded: "funded",
+  funded: "funding group",
   embedded: "embedded",
   candidate: "candidate",
   governance: "governance",
@@ -430,7 +431,7 @@ function ClaimLedgerChart({ view }: { view: TowerCommandCenterView }) {
           <div className={styles.claimTrack}>
             <i
               className={toneClass("claimBar", row.tone)}
-              style={{ width: `${Math.min(100, Math.max(2, row.pct))}%` }}
+              style={{ width: `${Math.min(100, Math.max(0, row.pct))}%` }}
             />
           </div>
           <strong>{formatCount(row.count)}</strong>
@@ -717,12 +718,11 @@ function aiUsageLabel(item: TowerAiView): string {
   return "Usage metric not loaded";
 }
 
-function aiUsageScore(item: TowerAiView): number | null {
-  const scoredBars = item.usageBars
-    .map((bar) => bar.pct)
-    .filter((pct) => Number.isFinite(pct));
-  if (scoredBars.length > 0) return Math.max(...scoredBars);
-  return null;
+function adoptionRate(item: TowerAiView): number | null {
+  const rate = item.usageBars.find((bar) => bar.label === "Adoption")?.pct;
+  return typeof rate === "number" && Number.isFinite(rate) && rate >= 0 && rate <= 100
+    ? rate
+    : null;
 }
 
 function controlOrGateCell(item: TowerAiView): {
@@ -818,7 +818,7 @@ function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
     )
     .sort(
       (a, b) =>
-        (aiUsageScore(b) ?? -1) - (aiUsageScore(a) ?? -1) ||
+        (adoptionRate(b) ?? -1) - (adoptionRate(a) ?? -1) ||
         b.aiSpendUsd - a.aiSpendUsd ||
         a.name.localeCompare(b.name),
     )
@@ -1085,9 +1085,9 @@ export function AiPortfolioContractView({
                     </td>
                     <td>{aiUsageLabel(item)}</td>
                     <td>
-                      {aiUsageScore(item) === null
-                        ? "Unknown"
-                        : formatPct(aiUsageScore(item) ?? 0)}
+                      {adoptionRate(item) === null
+                        ? "Adoption rate not loaded"
+                        : formatPct(adoptionRate(item))}
                     </td>
                     <td>{aiBenefitLabel(item)}</td>
                   </tr>
@@ -1121,7 +1121,7 @@ export function AiPortfolioContractView({
                   <th>#</th>
                   <th>Initiative / tool</th>
                   <th>Vendor</th>
-                  <th>Value type</th>
+                  <th>Expected benefit kind (plan)</th>
                   <th>Funding or yearly tool cost</th>
                   <th>Benefit</th>
                   <th>Readiness</th>
@@ -1142,11 +1142,20 @@ export function AiPortfolioContractView({
                       </td>
                       <td>{item.vendor ?? "Not loaded"}</td>
                       <td>
-                        {humanizeLabel(
-                          item.businessValueType ??
-                            item.category ??
-                            AI_KIND_LABEL[item.displayBucket],
-                        )}
+                        {isBusinessCase(item)
+                          ? expectedBenefitKindLabel(item.expectedValueArchetype) ?? "Not recorded in intake"
+                          : "Not a business case"}
+                        <small style={{ display: "block" }}>
+                          Source category: {item.category ? humanizeLabel(item.category) : "Not recorded"}
+                        </small>
+                        <small style={{ display: "block" }}>
+                          Tower group: {AI_KIND_LABEL[item.displayBucket]}
+                        </small>
+                        {item.businessValueType ? (
+                          <small style={{ display: "block" }}>
+                            Recorded value category: {humanizeLabel(item.businessValueType)}
+                          </small>
+                        ) : null}
                       </td>
                       <td>{aiAmountLabel(item)}</td>
                       <td>{aiBenefitLabel(item)}</td>

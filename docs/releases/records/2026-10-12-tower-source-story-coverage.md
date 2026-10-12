@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower now explains which work areas are linked to loaded programs and which programs still need a link. It shows an AI case's expected kind of benefit as a source description of the plan. These descriptions remain separate from approved funding, measured outcomes, and Finance-cleared value.
+Tower now explains which work areas are linked to loaded programs and which programs still need a link. It shows an AI case's expected kind of benefit as a source description of the plan. Usage counts no longer appear as adoption rates, and incomplete estimates and benefit totals stay visibly incomplete. These descriptions remain separate from approved funding, measured outcomes, and Finance-cleared value.
 
 ## Layer Impact
 
@@ -32,12 +32,17 @@ Release lane: `global-control-lane`.
 - Replace the program funding-domain grouping with a count of programs linked to each declared affected work area. Show programs without a link and state how programs linked to multiple areas are counted.
 - Use "loaded program rows" where the interface previously said "reviewed program rows" without a review record.
 - Show the source's expected benefit kind in the AI case table and distribution. Keep any separately classified value type visible and leave funding, yearly estimates, measured results, and Finance clearance under their own labels.
+- Show the source's expected benefit kind separately from its spend category in the full AI portfolio table. Identify Tower's funding display group as a grouping from intake labels, separate from recorded category and Finance approval.
+- In the adoption lens, show a percentage only when an adoption percentage is explicitly loaded; a usage count cannot become a 100% adoption claim.
+- In the vendor chart, include only metrics explicitly named as active users and explain that counts added across tools are not unique people.
+- Withhold the Finance-case comparison and foundation benefit total when their inputs are missing. Draw zero claim coverage with an empty bar and describe missing budget split fields as missing.
 - Keep source codes and source references in existing detail and proof paths; no intake or serving data is rewritten.
 
 ## QA / Validation
 
-- PASS: all 16 Tower command-center suites (109 tests), including focused rendering and count tests for missing work-area links, duplicate and multiple links, source expected-kind categories, and separate financial states.
-- PASS: TypeScript, changed-file lint, all 11 release gates, and `git diff --check` on the candidate branch.
+- PASS: 16 Tower command-center test suites, 116 tests, including missing work-area links, source expected-kind categories, count-only usage, partial financial states, and zero claim coverage.
+- PASS: TypeScript no-emit check, changed-file ESLint, and all 11 release gates.
+- PASS: `git diff --check` on the amended PR head.
 - NOT RUN: signed-in Tower review; it is required after main deployment to confirm the selected assessment's rendered tabs and drawers.
 
 ## Rollout Plan

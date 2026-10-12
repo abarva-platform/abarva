@@ -25,8 +25,9 @@ export function BudgetShapePanel({ view }: { view: TowerCommandCenterView }) {
             {hasProjectedBudget ? "Needs a source check" : "Not loaded"}
           </p>
           <p style={{ margin: "16px 0 0", lineHeight: 1.6 }}>
-            Budget fields are present, but they have not been matched to the current source files.
-            The split stays hidden until the totals and what they include are confirmed.
+            {hasProjectedBudget
+              ? "Budget fields are present, but they have not been matched to the current source files. The split stays hidden until the totals and what they include are confirmed."
+              : "No budget split is loaded. Tower needs a source-approved total and matching running-cost and new-work amounts before it can show this split."}
           </p>
         </div>
         <div style={PANEL}>
