@@ -655,10 +655,11 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       approved_fy_budget_known: false, claimable_value_known: false } };
 }
 
-async function insert(client, table, rows) {
+export async function insertRows(client, table, rows) {
   for (const row of rows) {
     const columns = Object.keys(row);
-    const values = columns.map((column) => row[column]);
+    const values = columns.map((column) => column.endsWith("_json") && row[column] !== null &&
+      typeof row[column] === "object" ? JSON.stringify(row[column]) : row[column]);
     const placeholders = columns.map((_, index) => `$${index + 1}`);
     await client.query(`insert into ${table} (${columns.map((column) => `"${column}"`).join(",")}) values (${placeholders.join(",")})`, values);
   }
@@ -727,7 +728,7 @@ async function writePlan(report, plan) {
       ["ecl_projection.tower_value_chain", plan.valueRows],
       ["ecl_projection.tower_evidence_queue", plan.evidenceRows],
       ["ecl_projection.tower_ai_portfolio", plan.aiRows],
-    ]) await insert(client, table, rows);
+    ]) await insertRows(client, table, rows);
     const readback = { view_counts: {}, view_fingerprints: {},
       active_before: { assessment_id: declared.rows[0].assessment_id,
         projection_version: Number(declared.rows[0].projection_version) } };

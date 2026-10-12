@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -8,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { buildRegisteredIntakeCandidate } from "../build-registered-intake-reload-candidate.mjs";
-import { buildPhysicalPlan, validatePhysicalPlan, viewFingerprints } from "../stage-registered-intake-partial.mjs";
+import { buildPhysicalPlan, insertRows, validatePhysicalPlan, viewFingerprints } from "../stage-registered-intake-partial.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const registry = JSON.parse(fs.readFileSync(path.join(ROOT, "datasets/tenant-inputs/tenant-input-registry.json"), "utf8"));
@@ -86,7 +85,24 @@ test("physical gate checks every category against its original source amount", (
   assert.equal(gate.errors.filter((error) => error.includes("differs from its source row")).length, 2);
 });
 
-test("write mode refuses the unapproved exact version before opening a database", () => {
+test("stage binds JSON arrays as JSONB values for the admission constraint and source lineage", async () => {
+  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey });
+  const { plan } = buildPhysicalPlan(report);
+  const calls = [];
+  const client = { query: async (sql, values) => { calls.push({ sql, values }); } };
+  await insertRows(client, "ecl_projection.projection_manifest", [plan.projectionManifests[0]]);
+  await insertRows(client, "ecl_projection.tower_command_center", [plan.commandRows[0]]);
+  const bound = (call, column) => {
+    const columns = [...call.sql.matchAll(/"([a-z_]+)"/g)].map((match) => match[1]);
+    return call.values[columns.indexOf(column)];
+  };
+  assert.equal(bound(calls[0], "admission_gate_results_json"), "[]");
+  assert.equal(bound(calls[1], "evidence_needed_json"), "[]");
+  assert.deepEqual(JSON.parse(bound(calls[1], "source_refs_json")), plan.commandRows[0].source_refs_json);
+  assert.deepEqual(JSON.parse(bound(calls[1], "display_payload_json")), plan.commandRows[0].display_payload_json);
+});
+
+test("write preflight recognizes exact approval and requires private job identity", () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-stage-refusal-"));
   try {
     const result = spawnSync(process.execPath, [
@@ -94,19 +110,18 @@ test("write mode refuses the unapproved exact version before opening a database"
       "--tenant-key", tenantKey, "--out-dir", outDir, "--write", "--job-run-id", "test-refusal",
     ], { cwd: ROOT, encoding: "utf8", env: { ...process.env, DATABASE_URL: "" } });
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Refusing stage\/proof: manifest carries no load_approval/);
+    assert.match(result.stderr, /ACA job identity, build\/input version/);
     assert.equal(fs.existsSync(path.join(outDir, "stage-receipt.json")), false);
     const preflight = JSON.parse(fs.readFileSync(path.join(outDir, "stage-preflight.json"), "utf8"));
     assert.equal(preflight.stage_status, "not_written");
-    assert.equal(preflight.load_approval_status, "missing_or_mismatched");
-    const candidate = fs.readFileSync(path.join(outDir, "candidate.json"));
-    assert.equal(preflight.candidate_sha256, crypto.createHash("sha256").update(candidate).digest("hex"));
+    assert.equal(preflight.load_approval_status, "approved");
+    assert.equal(preflight.physical_quality_gate_status, "pass");
   } finally {
     fs.rmSync(outDir, { recursive: true, force: true });
   }
 });
 
-test("read-only proof re-attestation also requires exact load approval", () => {
+test("read-only proof preflight recognizes exact approval and requires private job identity", () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-reattest-refusal-"));
   try {
     const result = spawnSync(process.execPath, [
@@ -115,8 +130,10 @@ test("read-only proof re-attestation also requires exact load approval", () => {
       "--job-run-id", "test-reattest", "--stage-job-run-id", "test-stage",
     ], { cwd: ROOT, encoding: "utf8", env: { ...process.env, DATABASE_URL: "" } });
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Refusing stage\/proof: manifest carries no load_approval/);
+    assert.match(result.stderr, /ACA job identity, build\/input version/);
     assert.equal(fs.existsSync(path.join(outDir, "stage-receipt.json")), false);
+    const preflight = JSON.parse(fs.readFileSync(path.join(outDir, "stage-preflight.json"), "utf8"));
+    assert.equal(preflight.load_approval_status, "approved");
   } finally {
     fs.rmSync(outDir, { recursive: true, force: true });
   }
