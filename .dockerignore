@@ -84,6 +84,8 @@ docs/governance/*
 !docs/releases/
 docs/releases/*
 !docs/releases/records/
+docs/releases/records/*
+!docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md
 !docs/releases/records/**
 !docs/source/
 docs/source/*

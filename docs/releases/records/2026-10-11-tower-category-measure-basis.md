@@ -45,6 +45,7 @@ Release lane: `client-data-lane`.
 - After the exact approval entry was supplied, a fresh dry stage again passed with the same source-set hash, candidate SHA, counts, and 352-row plan. Its preflight reports `load_approval_status: approved`, `physical_quality_gate_status: pass`, and `stage_status: not_written`.
 - The source-set hash is unchanged at `11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40`. The generated candidate SHA is `0428caec53f4a3a2366acf117ba42ec9a82e0cac94ab917fb6ce87a027e9821c`; earlier dry candidate SHAs and the 325-row physical preview are superseded. The private stage must bind to these candidate bytes and the 352-row plan.
 - `git diff --check`, focused ESLint, Node syntax checks, manifest validation, and all 11 release gates passed locally. CI must rerun on the final PR head.
+- After integrating the current main branch, the operator-image release-binding test passed (51 of 51 checks), and the packaging script copied the four release records currently referenced by approved manifests.
 
 ## Rollout Plan
 
