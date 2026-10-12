@@ -1,0 +1,26 @@
+{
+  "dataset_id": "tower-registered-intake-source-fields-20261012",
+  "title": "Registered intake Tower source fields",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "Active tenant-input registry packet and source-row hashes declared by the source-fields candidate; synthetic planning data",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": false,
+  "pii_phi_handling": "The detailed user-level export is hashed for audit and excluded from staged source records and projection payloads. Source content remains synthetic; no patient or provider records are included.",
+  "expected_object_count": 237,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-10-12",
+  "load_approval": {
+    "approved_by": "Anand Sundaram",
+    "approved_at": "2026-10-12",
+    "assessment_id": "tower-registry-candidate-a70df3b56bffc9be",
+    "source_set_hash": "11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40",
+    "release_record": "docs/releases/records/2026-10-12-tower-registered-source-fields.md"
+  },
+  "serving_approval": null,
+  "notes": "The named declaration and exact load approval authorize only a private physical stage of this candidate. They do not review individual rows, approve Finance values, authorize Tower serving, or assert signed-in product proof."
+}
