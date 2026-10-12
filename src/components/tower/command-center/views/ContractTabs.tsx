@@ -146,7 +146,7 @@ function contractSummaryLine(view: TowerCommandCenterView) {
       {s.approvedInvestmentUsd === null
         ? "Approved FY26 project funding is not verified"
         : `${formatUsdM(s.approvedInvestmentUsd)} in approved FY26 project funding`} ·{" "}
-      <strong>{s.claimableAmountLoaded === false ? "Cleared amount not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${formatUsdM(s.claimableUsd)} cleared for reporting in loaded months` : "No benefit amount cleared for reporting"}</strong> ·{" "}
+      <strong>{s.claimableAmountLoaded === true ? `${formatUsdM(s.claimableUsd)} cleared for reporting in loaded months` : "Cleared amount not verified"}</strong> ·{" "}
       {claimCount > 0
         ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} benefit claims do not show a cleared amount`
         : "Benefit claims not loaded"}
@@ -256,8 +256,8 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
       title: "Finance review · loaded months",
       note: "Finance review and permission to report are separate steps. Only the cleared amount can be presented as an achieved benefit.",
       rows: [
-        ["Finance validated", s.financeValidatedAmountLoaded === false ? "Not verified" : s.financeValidatedAmountLoaded === true || s.financeAttestedClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "No amount recorded"],
-        ["Cleared for reporting", s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? formatUsdM(s.claimableUsd) : "No amount cleared"],
+        ["Finance validated", s.financeValidatedAmountLoaded === true ? formatUsdM(s.financeValidatedUsd) : "Not verified"],
+        ["Cleared for reporting", s.claimableAmountLoaded === true ? formatUsdM(s.claimableUsd) : "Not verified"],
       ],
     },
   ];

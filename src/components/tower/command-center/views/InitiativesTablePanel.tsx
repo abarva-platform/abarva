@@ -80,9 +80,7 @@ function valueLabel(item: TowerAiView): string {
 }
 
 function financeActualLabel(item: TowerAiView): string {
-  if (item.financeValidatedAmountLoaded === false) return "Not verified";
   if (item.financeValidatedAmountLoaded === true) return formatUsdM(item.financeValidatedUsd);
-  if (item.financeValidatedUsd > 0) return formatUsdM(item.financeValidatedUsd);
   const hasValidationRecord =
     /validat/i.test(item.financeStatus ?? "") ||
     item.financeApprovalEvents.some((event) =>
@@ -91,7 +89,7 @@ function financeActualLabel(item: TowerAiView): string {
     item.valueObservationMonths.some((month) =>
       /validat/i.test(month.validationState ?? ""),
     );
-  return hasValidationRecord ? "Amount not shown" : "Not loaded";
+  return hasValidationRecord ? "Amount not verified" : "Not loaded";
 }
 
 function sortValue(item: TowerAiView, key: SortKey): number | string {
@@ -100,7 +98,7 @@ function sortValue(item: TowerAiView, key: SortKey): number | string {
   if (key === "constraint") return item.gatingConstraint ?? "";
   if (key === "investment") return item.aiAmountBasis === "approved_funding" ? item.aiSpendUsd : -1;
   if (key === "value") return item.promisedBenefitLoaded ? item.promisedUsd : -1;
-  return item.financeValidatedUsd || -1;
+  return item.financeValidatedAmountLoaded === true ? item.financeValidatedUsd : -1;
 }
 
 export function InitiativesTablePanel({
@@ -232,7 +230,7 @@ export function InitiativesTablePanel({
                 {item.name}
               </button>
               <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--canon-gray-500)" }}>
-                {item.id} · {statusLabel(item)}
+                {item.id} · Source Finance status: {statusLabel(item)}
               </span>
             </span>
             <span style={{ color: "var(--canon-gray-700)", minWidth: 0, display: "grid", gap: 4 }}>
@@ -256,7 +254,7 @@ export function InitiativesTablePanel({
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{item.aiAmountBasis === "approved_funding" ? formatUsdM(item.aiSpendUsd) : "Not verified"}</span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{valueLabel(item)}</span>
-            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
+            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: item.financeValidatedAmountLoaded === true && item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
               {financeActualLabel(item)}
             </span>
             <span style={{ textAlign: "right" }}>

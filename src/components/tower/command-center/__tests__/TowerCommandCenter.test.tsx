@@ -150,7 +150,7 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Finance review gap"),
     ).toBeInTheDocument();
-    expect(document.body).toHaveTextContent("No amount cleared");
+    expect(document.body).toHaveTextContent("No benefit claims are loaded, so cleared value is unknown");
   });
 
   it("does not substitute promised benefit when approved investment is not loaded", () => {

@@ -122,7 +122,7 @@ describe("Tower story denominators", () => {
     render(<InitiativesTablePanel view={viewWith([validatedZero, unvalidated])} />);
     const financeCell = (name: string) =>
       screen.getByText(name).closest('[title="Double-click to open case details"]')?.children[5];
-    expect(financeCell("Validated zero")?.textContent).toBe("Amount not shown");
+    expect(financeCell("Validated zero")?.textContent).toBe("Amount not verified");
     expect(financeCell("Unvalidated case")?.textContent).toBe("Not loaded");
   });
 

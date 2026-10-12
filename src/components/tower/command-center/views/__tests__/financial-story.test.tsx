@@ -160,6 +160,39 @@ describe("Tower financial story boundaries", () => {
     expect(recordedZero).not.toContain("A cleared value amount is not verified");
   });
 
+  it("does not turn Finance status counts into verified zero-dollar totals", () => {
+    const view = fixtureView();
+    const summary = {
+      ...view.summary,
+      financeAttestedClaimCount: 2,
+      financeValidatedUsd: 0,
+      financeValidatedAmountLoaded: undefined,
+      claimableClaimCount: 1,
+      claimableUsd: 0,
+      claimableAmountLoaded: undefined,
+    };
+    const verdict = renderToStaticMarkup(<VerdictPanel view={{ ...view, summary }} />);
+    const contract = renderToStaticMarkup(<CommandCenterView
+      view={{ ...view, summary }}
+      onOpenGap={() => undefined}
+      onGoToFunnel={() => undefined}
+      onGoToAi={() => undefined}
+      onGoToActions={() => undefined}
+    />);
+    const proof = renderToStaticMarkup(<ValueProofContractView
+      view={{ ...view, summary }}
+      onOpenProgram={() => undefined}
+    />);
+
+    expect(verdict).toContain("A cleared value amount is not verified for the loaded months");
+    expect(verdict).not.toContain("$0.0M is cleared for reporting");
+    expect(contract).toContain("A cleared amount is not verified for the loaded months");
+    expect(contract).toMatch(/Finance validated<\/span><strong[^>]*>Not verified<\/strong>/);
+    expect(contract).not.toContain("$0.0M cleared for reporting in loaded months");
+    expect(proof).toContain("Cleared amount not verified");
+    expect(proof).not.toContain("$0.0M cleared for reporting in loaded months");
+  });
+
   it("withholds the Finance-case estimate when case status or yearly estimates are missing", () => {
     const view = fixtureView();
     const cases = view.allInitiatives

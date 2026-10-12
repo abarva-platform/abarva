@@ -36,12 +36,13 @@ Release lane: `global-control-lane`.
 - In the adoption lens, Tools table, and Tower question suggestions, show and compare a percentage only when the source-backed adoption percentage is explicitly loaded; a usage count or a count labeled "Adoption" cannot become a 100% adoption claim. Label generic tool usage with its recorded metric rather than calling every count users.
 - In the vendor chart, include only metrics explicitly named as active users. Explain that counts added across tools are not unique people and that rollout denominators cover usage-linked tool rows only.
 - Withhold the Finance-case comparison and foundation benefit total when their inputs are missing. Draw zero claim coverage with an empty bar and describe missing budget split fields as missing.
+- Require an explicit source-backed loaded amount before calling Finance-validated or reporting-cleared dollars verified in Tower cards, case rows, or assistant context. Counts and source status remain visible without turning absent amounts into zero-dollar claims.
 - Keep source codes and source references in existing detail and proof paths; no intake or serving data is rewritten.
 
 ## QA / Validation
 
-- PASS: 16 Tower command-center test suites, 118 tests, including missing work-area links, source expected-kind categories, count-only usage across the Adoption lens, Tools table, and suggested questions, partial financial states, and zero claim coverage.
-- PASS: Tower test ratchet after updating the source-inspection assertion; 1,873 of 1,881 tests passed with the same six failing suites in the committed baseline and no new failure.
+- PASS: 16 Tower command-center test suites, 121 tests, including missing work-area links, source expected-kind categories, count-only usage across the Adoption lens, Tools table, and suggested questions, partial financial states, absent Finance amount flags, and zero claim coverage.
+- PASS: Tower test ratchet after updating the source-inspection assertion; 1,876 of 1,884 tests passed with the same six failing suites in the committed baseline and no new failure.
 - PASS: TypeScript no-emit check, changed-file ESLint, and all 11 release gates.
 - PASS: `git diff --check` on the amended PR head.
 - NOT RUN: signed-in Tower review; it is required after main deployment to confirm the selected assessment's rendered tabs and drawers.

@@ -79,7 +79,7 @@ describe("Verdict panel", () => {
     render(<VerdictPanel view={viewWith()} />);
     expect(
       screen.getByRole("heading", { level: 2 }).textContent,
-    ).toMatch(/The loaded benefit claims project \$35\.5M a year; their relationship to the AI cases is not reconciled here\. No benefit amount is cleared for reporting\./);
+    ).toMatch(/The loaded benefit claims project \$35\.5M a year; their relationship to the AI cases is not reconciled here\. A cleared value amount is not verified for the loaded months\./);
   });
 
   it("treats an absent annual assertion as unknown", () => {

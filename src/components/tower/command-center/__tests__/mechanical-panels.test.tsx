@@ -854,4 +854,21 @@ describe("mechanical Tower Command Center panels", () => {
     expect(document.body.textContent).toContain("Amount basis not verified");
     expect(screen.queryByRole("columnheader", { name: "Value type" })).not.toBeInTheDocument();
   });
+
+  it("shows Finance status separately from a missing validated amount", () => {
+    render(<InitiativesTablePanel view={viewWith({
+      allInitiatives: [initiative({
+        id: "CASE-STATUS-ONLY",
+        name: "Status-only case",
+        financeStatus: "finance_validated_actual",
+        financeValidatedUsd: 0,
+        financeValidatedAmountLoaded: undefined,
+        financeApprovalEvents: [],
+      })],
+    })} />);
+
+    expect(document.body.textContent).toContain("Source Finance status: Validated actual");
+    expect(document.body.textContent).toContain("Amount not verified");
+    expect(document.body.textContent).not.toContain("$0M");
+  });
 });

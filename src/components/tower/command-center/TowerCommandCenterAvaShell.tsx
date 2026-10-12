@@ -476,17 +476,17 @@ export function TowerCommandCenterAvaShell({
                 label: "Projected yearly benefit, not proven savings",
                 value: view.summary.promisedUsd,
               }] : []),
-              ...(view.summary.claimableAmountLoaded === false ? [] : [{
+              ...(view.summary.claimableAmountLoaded === true ? [{
                 measureKey: "realized_value_ytd_allowed",
                 label: "Value cleared for reporting in loaded months",
                 value: view.summary.claimableUsd,
-              }]),
+              }] : []),
             ]
           : [],
         towerKnownGaps: view
           ? [
               "Total IT budget is omitted from assistant measures because the Tower projection amount has no reconciled active-intake lineage status. Treat it as unverified until that status is available.",
-              ...(view.summary.claimableAmountLoaded === false ? ["Cleared value is not verified because no approved claim amount with a valid reporting period is loaded."] : []),
+              ...(view.summary.claimableAmountLoaded === true ? [] : ["Cleared value is not verified because no approved claim amount with a valid reporting period is loaded."]),
               ...view.gaps.map((gap) => gap.missing).slice(0, 12),
             ]
           : [],

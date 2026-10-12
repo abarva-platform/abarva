@@ -244,15 +244,13 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   // still be absent; a missing status is its own unknown bucket, never a submitted/not-submitted inference.
   const cases = view.allInitiatives.filter(isBusinessCase);
   const casesMissingFinanceStatus = cases.filter((item) => item.financeStatus === null).length;
-  const clearedValueStory = s.claimableAmountLoaded === false
-    ? "A cleared value amount is not verified for the loaded months."
-    : s.claimableAmountLoaded === true || s.claimableClaimCount > 0
-      ? `${bigMoney(s.claimableUsd)} is cleared for reporting across loaded benefit claims.`
-      : "No benefit amount is cleared for reporting.";
+  const clearedValueStory = s.claimableAmountLoaded === true
+    ? `${bigMoney(s.claimableUsd)} is cleared for reporting across loaded benefit claims.`
+    : "A cleared value amount is not verified for the loaded months.";
   const verdictStory = casesMissingFinanceStatus > 0
     ? `Review Finance status for ${casesMissingFinanceStatus} of ${cases.length} AI use cases before reporting case benefits; their status is not loaded. ${caseFunding === null ? "Approved AI case funding is not verified." : `${bigMoney(caseFunding)} in approved AI case funding is recorded.`} ${hasAssertion ? `The loaded benefit claims project ${bigMoney(s.promisedUsd)} a year; their relationship to the AI cases is not reconciled here.` : "No yearly benefit estimate is loaded."} ${clearedValueStory}`
     : hasAssertion
-      ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === false ? "A cleared amount is not verified for the loaded months." : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
+      ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === true ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "A cleared amount is not verified for the loaded months."}`
       : "No yearly benefit estimate is loaded, so its value remains unknown.";
   const validatedCases = cases.filter(
     (i) => i.financeStatus === "finance_validated_actual",
@@ -338,7 +336,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         />
         <MetricCard
           label="Cleared value in loaded months"
-          value={s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? bigMoney(s.claimableUsd) : "No amount cleared"}
+          value={s.claimableAmountLoaded === true ? bigMoney(s.claimableUsd) : "Not verified"}
           caption="Requires Finance validation and approved evidence for the loaded period"
           accent="var(--canon-teal)"
           valueColor="var(--canon-teal-dark)"
