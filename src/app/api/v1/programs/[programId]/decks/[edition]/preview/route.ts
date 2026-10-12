@@ -95,6 +95,7 @@ export async function GET(
     const hardRenderFindings = verdict.findings.filter((finding) => [
       "canvas", "slide_count", "off_canvas", "empty_canvas",
       "reference_source", "reference_edition", "reference_editability", "reference_client_copy",
+      "reference_layout",
     ].includes(finding.kind));
     if (hardRenderFindings.length) {
       return Response.json({

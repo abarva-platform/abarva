@@ -33,7 +33,7 @@ P1–P4 gate pages expose the existing transition workbook download, parse and a
 - Specific clients: only workspaces already enrolled in the existing step-page flags receive these request options.
 - Internal only: no.
 - Public/demo only: no.
-- Feature flags: existing `moves_capture_v2`, `moves_step_pages_v3`, `moves_step_pages_p0p1_v1`, and `moves_step_pages_p4p5_v1`; enrollment is unchanged.
+- Feature flags: existing `moves_capture_v2`, `moves_step_pages_v3`, `moves_step_pages_p0p1_v1`, `moves_step_pages_p4p5_v1`, and `moves_extended_intake_fields_v1`; enrollment is unchanged.
 
 ## Changes Included
 
@@ -48,15 +48,15 @@ P1–P4 gate pages expose the existing transition workbook download, parse and a
 ## QA / Validation
 
 - PASS: eight reproduced assertions failed before the repair and pass afterward.
-- PASS: 1946 focused and affected tests in 67 suites on the prepared source, including the current predecessor; the route scheduling case executes the real server page with all data and authority dependencies mocked. No database was touched.
+- PASS: 1762 focused and affected tests in 61 unique suites on the prepared source, including the current predecessor; the route scheduling case executes the real server page with all data and authority dependencies mocked. No database was touched.
 - HISTORICAL PASS: ten scheduling mutations detected individually: policy sharing, canonical reader wiring, early page readiness, parallel approved/backlog reads, each failed-read path, unreadable Move refusal, early participant names, shared latest snapshot and the blocked empty state. Every source was restored.
-- PENDING: final current-source typecheck, lint and mutation summary after main reconciliation.
-- PENDING: final regenerated manual/coverage/tenancy checks, library/route/export reachability and all six corpus validators after main reconciliation.
+- PASS: final current-source typecheck and changed-code lint. 71 mutations were detected individually (68 source behaviors and three actual CSS behaviors); every source was restored.
+- PASS: final regenerated manual/coverage/tenancy checks, library/route/export reachability and all six corpus validators after reconciling actual main `c3bdb59b`.
 - PASS: 28 actual component/CSS variants covering text capture, notes, recorded approval, retained-input correction and the actual transition workbook controls pass at 390 and 1440 in both themes, with no contrast violations or horizontal overflow. Temporary render probes were removed. This is local component proof; the full signed-in shell remains to be validated.
 - HISTORICAL PASS: the real blocked component/CSS at 390 and 1440 in both themes has no contrast violations or horizontal overflow. The temporary render probe was removed; three existing local CSS browser checks also pass.
-- PENDING: all 11 final local release gates on the reconciled source. Node 24.15.0 is the validation runtime.
+- PASS: all 11 final local release gates on the reconciled source. Node 24.15.0 is the validation runtime.
 - PENDING: exact new-head remote CI and the immediate fresh all-open fetched guard.
-- HISTORICAL PASS: an independent immutable `53da0b271595f3897994f952923da6aa7a6e3769` source export regenerates 2848 and matches every earlier candidate count field. Final current-main reconciliation is pending. Zero new N test files and genuine delta zero; no count is edited by hand.
+- PASS: an independent immutable `c3bdb59b2792e5d49d0db6e01628a17eee40acd5` source export regenerates 2854 and matches every candidate count field. Zero new N test files and genuine delta zero; no count is edited by hand.
 - FAIL: preceding deployed acceptance on `5afb6c4e`, as shown below. No follow-up deployed timing exists yet.
 
 ## Before / After Timing

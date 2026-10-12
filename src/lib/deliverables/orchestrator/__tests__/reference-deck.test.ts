@@ -10,6 +10,7 @@ import {
   type ReferenceSlide,
 } from "../reference-deck-model";
 import { renderReferenceDeck } from "../reference-deck-renderer";
+import JSZip from "jszip";
 
 const FIGURE: ReferenceFigure = {
   display: "$1,000",
@@ -71,6 +72,38 @@ function spec(edition: ReferenceDeckSpec["edition"]): ReferenceDeckSpec {
 }
 
 describe("reference deck components", () => {
+  it("refuses a table that cannot fit without deleting rows or reducing readable type", async () => {
+    const draft = spec("investment");
+    draft.slides[9]!.blocks = [{ kind: "table", columns: ["Evidence", "Review"], rows: Array.from({ length: 12 }, () =>
+      ["The analyst checks the complete supporting documentation before routing the evidence to its accountable owner for review and resolution.", "Owner review required"]) }];
+    await expect(renderReferenceDeck(draft)).rejects.toThrow("reference_deck_body_overflow: slide 10");
+  });
+
+  it("preserves long editable table text at readable size and detects clipped or tiny rendered boxes", async () => {
+    const draft = spec("investment");
+    const statement = "The operations owner checks supporting documentation and the timing basis before deciding how the reviewed exception should be resolved and monitored.";
+    draft.slides[9]!.blocks = [{ kind: "table", columns: ["ID", "Assumption", "Working figure", "Owner", "Status"], decisiveRows: [0],
+      rows: [["[A:V1]", statement, FIGURE, "Operations improvement lead", "Open"],
+        ["Review", "Check timing", "To confirm", "Operations lead", "Open"]] }];
+    const bytes = await renderReferenceDeck(draft);
+    const rendered = await inspectDeck(bytes);
+    const cells = rendered.slides[9]!.tableText!;
+    expect(cells.find((cell) => cell.text === statement)).toMatchObject({ fontSize: 11, heightIn: expect.any(Number) });
+    expect(cells.find((cell) => cell.text === statement)!.heightIn).toBeGreaterThan(0.5);
+    expect(judgeRenderedDeck(rendered, { referenceDeck: draft }).findings.filter((finding) => finding.kind === "reference_layout")).toEqual([]);
+    const zip = await JSZip.loadAsync(bytes);
+    const original = await zip.file("ppt/slides/slide10.xml")!.async("string");
+    const damage = async (replacement: (shape: string) => string) => {
+      zip.file("ppt/slides/slide10.xml", original.replace(/<p:sp>[\s\S]*?<\/p:sp>/g, (shape) =>
+        shape.includes('name="ref:body:table-text:1:1"') ? replacement(shape) : shape));
+      return judgeRenderedDeck(await inspectDeck(await zip.generateAsync({ type: "nodebuffer" })), { referenceDeck: draft });
+    };
+    expect((await damage((shape) => shape.replace(/cy="\d+"/, 'cy="91440"'))).findings)
+      .toContainEqual(expect.objectContaining({ kind: "reference_layout", slide: 10, detailCode: "table_text_overflow" }));
+    expect((await damage((shape) => shape.replaceAll('sz="1100"', 'sz="600"'))).findings)
+      .toContainEqual(expect.objectContaining({ kind: "reference_layout", slide: 10, detailCode: "table_type_size" }));
+  });
+
   it("renders every archetype as editable shapes and text with business-case notes", async () => {
     const draft = spec("investment");
     expect(validateReferenceDeck(draft).filter((f) => f.blocking)).toEqual([]);

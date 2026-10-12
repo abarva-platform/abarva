@@ -1,3 +1,5 @@
+import { getProgramDeliverables } from "../queries";
+
 const getProgramByIdMock = jest.fn();
 const getModuleStateMock = jest.fn();
 const getPhaseSnapshotsMock = jest.fn();
@@ -450,7 +452,7 @@ describe("evaluateGate", () => {
       ).toHaveLength(1);
     }
     expect(
-      jest.mocked(require("../queries").getProgramDeliverables),
+      jest.mocked(getProgramDeliverables),
     ).toHaveBeenCalledTimes(1);
     expect(mockGetOriginationRequestState).toHaveBeenCalledTimes(1);
     expect(

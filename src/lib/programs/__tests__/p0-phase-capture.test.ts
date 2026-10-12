@@ -11,8 +11,8 @@ import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 
 const mockCorrectionTransaction = jest.fn();
 const mockCorrectionPolicy = jest.fn();
-const mockCorrectionConnection = jest.fn((_ctx?: unknown) => ({
-  candidates: ["mock-tenant-connection"] as string[],
+const mockCorrectionConnection = jest.fn((ctx?: unknown) => ({
+  candidates: ctx ? ["mock-tenant-connection"] : [],
 }));
 jest.mock("@/lib/auth/program-access-policy", () => ({
   loadUserProgramAccessPolicy: (...args: unknown[]) =>

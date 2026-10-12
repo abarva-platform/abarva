@@ -198,7 +198,7 @@ export type ProofStore = {
   /** The URI a path in the proof container has. */
   uriFor: (blobPath: string) => string;
   /** The bytes at a URI of this store. It throws when the blob cannot be opened. */
-  read: (uri: string) => Promise<Buffer>;
+  read: (uri: string, maxBytes?: number) => Promise<Buffer>;
   /**
    * Writes a blob that does not exist yet. An existing blob is left exactly as
    * it is and reported as not created; it is never overwritten.
@@ -281,8 +281,8 @@ export async function withDeadline<T>(
 export function boundedStore(store: ProofStore, limits: JobLimits): ProofStore {
   return {
     uriFor: store.uriFor,
-    read: (uri) =>
-      withDeadline(store.read(uri), limits.proofStoreTimeoutMs, "Proof read"),
+    read: (uri, maxBytes) =>
+      withDeadline(store.read(uri, maxBytes), limits.proofStoreTimeoutMs, "Proof read"),
     writeOnce: (blobPath, bytes) =>
       withDeadline(
         store.writeOnce(blobPath, bytes),
@@ -314,16 +314,27 @@ export async function blobProofStore(
   const abortSignal = () => AbortSignal.timeout(limits.proofStoreTimeoutMs);
   return {
     uriFor: (blobPath) => container.getBlockBlobClient(blobPath).url,
-    read: async (uri) => {
+    read: async (uri, maxBytes) => {
       const url = new URL(uri);
       if (!`${url.origin}${url.pathname}`.startsWith(base) || url.search) {
         throw new Error("not a blob of this store's proof container");
       }
-      return container
-        .getBlockBlobClient(
-          decodeURIComponent(url.pathname.slice(PROOF_CONTAINER.length + 2)),
-        )
-        .downloadToBuffer(0, undefined, { abortSignal: abortSignal() });
+      const blob = container.getBlockBlobClient(
+        decodeURIComponent(url.pathname.slice(PROOF_CONTAINER.length + 2)),
+      );
+      if (maxBytes !== undefined) {
+        if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0)
+          throw new Error("Invalid private proof byte limit");
+        const properties = await blob.getProperties({ abortSignal: abortSignal() });
+        const length = properties.contentLength;
+        if (length === undefined || !Number.isSafeInteger(length) || length > maxBytes || length <= 0)
+          throw new Error("Private proof exceeds its byte limit or has no content");
+        if (!properties.etag) throw new Error("Private proof has no version binding");
+        return blob.downloadToBuffer(0, length, {
+          abortSignal: abortSignal(), conditions: { ifMatch: properties.etag },
+        });
+      }
+      return blob.downloadToBuffer(0, undefined, { abortSignal: abortSignal() });
     },
     writeOnce: async (blobPath, bytes) => {
       const blob = container.getBlockBlobClient(blobPath);

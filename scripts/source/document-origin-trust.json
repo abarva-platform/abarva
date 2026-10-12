@@ -1,0 +1,8 @@
+{
+  "contract_version": "source-document-origin-trust/v1",
+  "status": "active",
+  "authority_id": "integrated-manager-anand-20261012",
+  "authority_sha256": "e4fefd276e57c09d8742084005793b37ace90dc9167e17a46e2ae5f3076b5136",
+  "decision_id": "delegated-source-origin-20261012-001",
+  "decision_sha256": "550966ea02bef3cfaa3fe5fb68eef1c096bcbcca6b4460604c6257e128ef9537"
+}

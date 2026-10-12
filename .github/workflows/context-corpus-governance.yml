@@ -12,8 +12,16 @@ on:
       - main
     paths:
       - src/lib/governance/**
+      - src/lib/ecl/insights/**
+      - scripts/ecl/integrated_insights_job.ts
+      - scripts/ecl/synthetic_enterprise_home_job.ts
+      - scripts/ecl/__tests__/integrated-insights.test.ts
+      - src/__tests__/behaviors/delegated-approval.test.ts
+      - src/__tests__/behaviors/integrated-insight-load-approval.test.ts
       - src/scripts/governance/**
       - src/config/tenants/CANONICAL_TENANTS.ts
+      - src/lib/tenant/synthetic-tenant-declaration.ts
+      - datasets/tenant-inputs/tenant-input-registry.json
       - docs/governance/policy-exceptions.json
       - docs/governance/dataset-manifests/**
       - .github/workflows/context-corpus-governance.yml
@@ -47,3 +55,11 @@ jobs:
 
       - name: Policy exception tests
         run: npx jest src/lib/governance/__tests__/policy-exceptions.test.ts
+
+      - name: Legacy approval tests
+        run: npx jest --runInBand src/lib/governance/__tests__/dataset-manifest.test.ts
+
+      - name: Native candidate load regressions
+        env:
+          NODE_OPTIONS: --conditions=react-server
+        run: npm run test:ecl-integrated-insights

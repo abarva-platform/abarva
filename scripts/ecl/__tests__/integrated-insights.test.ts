@@ -8,8 +8,8 @@ import { evaluateGovernedObject } from "../../../src/lib/governance/context-corp
 import { buildIntegratedInsightPlan, insightHash, insightUuid } from "../../../src/lib/ecl/insights/engine";
 import { candidateGovernance, persistInsightCandidates } from "../../../src/lib/ecl/insights/store";
 import type { InsightInput, InsightMeasure, InsightObject, InsightRelationship } from "../../../src/lib/ecl/insights/types";
-import type { JobDatabase } from "../synthetic_enterprise_home_job";
-import { emitInsightProofBundle } from "../integrated_insights_job";
+import { blobProofStore, boundedStore, jobLimits, type JobDatabase } from "../synthetic_enterprise_home_job";
+import { emitInsightProofBundle, runInsightJob } from "../integrated_insights_job";
 import { extractProofBundle } from "../../ops/submit-aca-operator-job.mjs";
 
 const tenantKey = CANONICAL_TENANT_KEYS[0];
@@ -81,6 +81,66 @@ test("full candidate proof survives compressed operator export without raw input
     assert.equal(receipt.extracted, true);
     assert.deepEqual(JSON.parse(readFileSync(path.join(directory, "proof/proof.json"), "utf8")), proof);
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test("bounded private proof transport preflights size and pins the downloaded version", async (context) => {
+  const { BlobServiceClient } = await import("@azure/storage-blob");
+  let properties: { contentLength?: number; etag?: string } = { contentLength: 2, etag: '"fixture-version"' };
+  const downloads: unknown[][] = [];
+  let propertyReads = 0;
+  const blob = {
+    getProperties: async () => { propertyReads += 1; return properties; },
+    downloadToBuffer: async (...args: unknown[]) => { downloads.push(args); return Buffer.from("{}"); },
+  };
+  context.mock.method(BlobServiceClient.prototype, "getContainerClient", () => ({
+    getBlockBlobClient: () => blob,
+  }) as unknown as ReturnType<InstanceType<typeof BlobServiceClient>["getContainerClient"]>);
+  const store = await blobProofStore("testproof", "test-managed-identity", jobLimits({}));
+  const uri = "https://testproof.blob.core.windows.net/ecl-synthetic-intake/operator-proof/decision.json";
+  assert.equal((await store.read(uri, 1_000_000)).toString(), "{}");
+  assert.equal(downloads[0][0], 0);
+  assert.equal(downloads[0][1], 2);
+  assert.deepEqual((downloads[0][2] as { conditions: unknown }).conditions, { ifMatch: '"fixture-version"' });
+  for (const contentLength of [undefined, 0, 1_000_001, 1.5]) {
+    properties = { contentLength, etag: '"fixture-version"' };
+    await assert.rejects(store.read(uri, 1_000_000), /byte limit|no content/);
+  }
+  properties = { contentLength: 2 };
+  await assert.rejects(store.read(uri, 1_000_000), /no version binding/);
+  const priorReads = propertyReads;
+  for (const limit of [0, -1, 1.5, Number.NaN]) {
+    await assert.rejects(store.read(uri, limit), /Invalid private proof byte limit/);
+  }
+  assert.equal(propertyReads, priorReads);
+  assert.equal(downloads.length, 1);
+  await store.read(uri);
+  assert.equal(downloads[1][1], undefined);
+});
+
+test("the deadline wrapper preserves the private reader byte limit", async () => {
+  const reads: unknown[][] = [];
+  const store = boundedStore({ uriFor: (path) => path,
+    read: async (...args) => { reads.push(args); return Buffer.from("{}"); },
+    writeOnce: async (path) => ({ uri: path, created: true }),
+  }, jobLimits({}));
+  await store.read("test-private-proof", 1_000_000);
+  assert.deepEqual(reads, [["test-private-proof", 1_000_000]]);
+});
+
+test("an unrecognized declared build version refuses before opening data or proofs", async () => {
+  let opened = 0;
+  await assert.rejects(runInsightJob({
+    ECL_INSIGHT_TENANT_KEY: tenantKey, ECL_INSIGHT_RUN_ID: "test-wrong-build",
+    ECL_INSIGHT_OPERATOR_IDENTITY: "test", ECL_INSIGHT_BUILD_VERSION: "wrong-version",
+    ECL_INSIGHT_RELEASE_RECORD: "docs/releases/records/test-insight-load.md",
+    ABARVA_OPERATOR_IMAGE: `test/web@sha256:${"a".repeat(64)}`,
+    ABARVA_OPERATOR_BRANCH_COMMIT: "b".repeat(40),
+  }, "plan", {
+    recordExists: () => true, manifests: async () => [],
+    connect: async () => { opened += 1; throw new Error("Must not connect"); },
+    store: async () => { opened += 1; throw new Error("Must not open private proofs"); },
+  }), /Unsupported insight job build version/);
+  assert.equal(opened, 0);
 });
 
 test("five supported rule classes fire with stable evidence and candidate-only governance", () => {

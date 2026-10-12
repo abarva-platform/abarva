@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { renderToString } from "react-dom/server";
 import type { StepPageHostProps } from "../phase-step-pages";
 import { P0_STEP_PAGES } from "../p0-step-pages";
 import { P1_STEP_PAGES } from "../p1-step-pages";
@@ -118,7 +119,6 @@ describe("P0 and P1 text capture step pages", () => {
   });
 
   it("keeps the theme control disabled in server markup until its client handler is mounted", () => {
-    const { renderToString } = require("react-dom/server");
     const html = renderToString(<>{P0_STEP_PAGES["p0-signal"]?.(host(0))}</>);
     expect(html).toMatch(
       /<button[^>]*disabled=""[^>]*>Dark<!-- --> mode<\/button>/,

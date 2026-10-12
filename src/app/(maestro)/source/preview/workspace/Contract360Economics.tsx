@@ -29,6 +29,8 @@ interface SpendTotals {
   readonly billingMonths: number;
   readonly invoiceMonths: number;
   readonly paidMonths: number;
+  readonly actualMonths: number;
+  readonly committedMonths: number;
 }
 
 function totalsFrom(rows: SpendRows): SpendTotals {
@@ -36,7 +38,10 @@ function totalsFrom(rows: SpendRows): SpendTotals {
   let actual = 0;
   let invoiced = 0;
   let paid = 0;
-  const billingCoverage = new Map<string, { invoice: boolean; paid: boolean }>();
+  const billingCoverage = new Map<
+    string,
+    { invoice: boolean; paid: boolean; actual: boolean; committed: boolean }
+  >();
   for (const row of rows) {
     committed += numberFromDb(row.committed_amount) ?? 0;
     actual += numberFromDb(row.actual_spend) ?? 0;
@@ -45,9 +50,18 @@ function totalsFrom(rows: SpendRows): SpendTotals {
     invoiced += invoice ?? 0;
     paid += payment ?? 0;
     const month = row.month || row.period_start.slice(0, 7);
-    const coverage = billingCoverage.get(month) ?? { invoice: true, paid: true };
+    const coverage = billingCoverage.get(month) ?? {
+      invoice: true,
+      paid: true,
+      actual: true,
+      committed: true,
+    };
     coverage.invoice = coverage.invoice && invoice !== null;
     coverage.paid = coverage.paid && payment !== null;
+    coverage.actual =
+      coverage.actual && numberFromDb(row.actual_spend) !== null;
+    coverage.committed =
+      coverage.committed && numberFromDb(row.committed_amount) !== null;
     billingCoverage.set(month, coverage);
   }
   const coverage = [...billingCoverage.values()];
@@ -56,10 +70,12 @@ function totalsFrom(rows: SpendRows): SpendTotals {
     actual,
     invoiced,
     paid,
-    months: rows.length,
+    months: coverage.length,
     billingMonths: coverage.length,
     invoiceMonths: coverage.filter((month) => month.invoice).length,
     paidMonths: coverage.filter((month) => month.paid).length,
+    actualMonths: coverage.filter((month) => month.actual).length,
+    committedMonths: coverage.filter((month) => month.committed).length,
   };
 }
 
@@ -98,7 +114,9 @@ export function ContractEconomicsBriefing({
 
   const rows = byPeriod(spendMonths);
   const totals = totalsFrom(rows);
-  const hasCommitment = totals.committed > 0;
+  const actualComplete = totals.actualMonths === totals.billingMonths;
+  const hasCommitment =
+    totals.committed > 0 && totals.committedMonths === totals.billingMonths;
   const billingComplete =
     totals.invoiceMonths === totals.billingMonths &&
     totals.paidMonths === totals.billingMonths;
@@ -107,26 +125,28 @@ export function ContractEconomicsBriefing({
    * reports it. Recomputing the same ratio locally is how this tab came to
    * show two different figures for it in the first place.
    */
-  const utilization = utilizationAgainstCommitment(
-    totals.actual,
-    totals.committed,
-  );
+  const utilization =
+    actualComplete && hasCommitment
+      ? utilizationAgainstCommitment(totals.actual, totals.committed)
+      : null;
   const inFlight = billingComplete ? totals.invoiced - totals.paid : null;
 
   return (
     <div className="sw-c3-stack">
       <section className="sw-c3-card sw-c3-econ-lede">
         <p className="sw-c3-display">
-          {hasCommitment && utilization != null
-            ? utilization < 50
-              ? `The rate is not the problem. ${utilization}% of the commitment is being drawn on.`
-              : `${utilization}% of the commitment is being drawn on across ${totals.months} months.`
-            : "Spend is loaded, but no commitment is recorded to measure it against."}
+          {!actualComplete
+            ? "Spend coverage is incomplete for the loaded periods."
+            : hasCommitment && utilization != null
+              ? `Recorded spend is ${utilization}% of the monetary commitment across ${totals.months} month${totals.months === 1 ? "" : "s"}.`
+              : "Spend is loaded; a complete monetary commitment is not established."}
         </p>
         <p className="sw-c3-note">
           {`${totals.months} spend month${totals.months === 1 ? "" : "s"}`}
           {hasCommitment ? ` · ${money(totals.committed)} committed` : ""}
-          {` · ${money(totals.actual)} consumed`}
+          {actualComplete
+            ? ` · ${money(totals.actual)} recorded spend`
+            : " · spend incomplete"}
         </p>
       </section>
 
@@ -134,7 +154,7 @@ export function ContractEconomicsBriefing({
         <section className="sw-c3-card sw-c3-econ-chart">
           <div className="sw-c3-rail-head">
             <span className="sw-c3-display sw-c3-display-sm">
-              Committed capacity against observed usage
+              Commitment against recorded spend
             </span>
             <span className="sw-c3-chart-legend">
               {hasCommitment ? (
@@ -151,7 +171,7 @@ export function ContractEconomicsBriefing({
               ) : null}
               <span className="sw-c3-legend-key">
                 <i style={{ background: "var(--sw-c3-green)" }} />
-                Consumed
+                Recorded spend
               </span>
             </span>
           </div>
@@ -159,11 +179,13 @@ export function ContractEconomicsBriefing({
             rows={rows}
             totals={totals}
             billingComplete={billingComplete}
+            actualComplete={actualComplete}
+            hasCommitment={hasCommitment}
           />
           <p className="sw-c3-prose">
             {hasCommitment
-              ? "The empty space is the commercial argument: what was committed, and what was drawn against it, month by month, with no period extrapolated."
-              : "Consumption is charted on its own. Without a recorded commitment Source will not draw a pace line to compare it against."}
+              ? "Recorded spend and monetary commitment share the same reporting periods. No period is extrapolated."
+              : "A commitment comparison needs a complete recorded monetary baseline."}
           </p>
         </section>
 
@@ -183,20 +205,26 @@ export function ContractEconomicsBriefing({
             </thead>
             <tbody>
               <tr>
-                <th scope="row">Committed capacity</th>
-                <td>{hasCommitment ? money(totals.committed) : "Not loaded"}</td>
+                <th scope="row">Monetary commitment</th>
+                <td>
+                  {hasCommitment ? money(totals.committed) : "Not loaded"}
+                </td>
                 <td>Reference pace</td>
               </tr>
               <tr>
-                <th scope="row">Consumed</th>
-                <td>{money(totals.actual)}</td>
+                <th scope="row">Recorded spend</th>
+                <td>{actualComplete ? money(totals.actual) : "Incomplete"}</td>
                 <td>
-                  {utilization != null ? `${utilization}% of commitment` : "No denominator"}
+                  {utilization != null
+                    ? `${utilization}% of commitment`
+                    : "Comparison unavailable"}
                 </td>
               </tr>
               <tr>
                 <th scope="row">Invoiced</th>
-                <td>{billingComplete ? money(totals.invoiced) : "Incomplete"}</td>
+                <td>
+                  {billingComplete ? money(totals.invoiced) : "Incomplete"}
+                </td>
                 <td>
                   {billingComplete ? "Billing recorded" : "Coverage incomplete"}
                 </td>
@@ -208,14 +236,18 @@ export function ContractEconomicsBriefing({
                   {inFlight === null
                     ? "Not reconciled"
                     : Math.abs(inFlight) < 1
-                      ? "Reconciled"
+                      ? "Amounts agree"
                       : `${money(inFlight)} in flight`}
                 </td>
               </tr>
               <tr>
-                <th scope="row">Unconsumed commitment</th>
-                <td>{hasCommitment ? money(totals.committed - totals.actual) : "Not sized"}</td>
-                <td>{hasCommitment ? "Commercial gap" : "No commitment basis"}</td>
+                <th scope="row">Commitment less recorded spend</th>
+                <td>
+                  {hasCommitment && actualComplete
+                    ? money(totals.committed - totals.actual)
+                    : "Not established"}
+                </td>
+                <td>Monetary difference, not unused capacity</td>
               </tr>
             </tbody>
           </table>
@@ -230,8 +262,9 @@ export function ContractEconomicsBriefing({
                 : `${money(Math.abs(inFlight))} sits between invoiced and paid across ${totals.billingMonths} recorded month${totals.billingMonths === 1 ? "" : "s"}. That is a timing difference until an exception is raised against it.`}
           </p>
           <p className="sw-c3-note">
-            Invoice exceptions are not a loaded lane on this contract, so none is
-            asserted either way.
+            Capacity utilization needs measured quantities and units. Monetary
+            spend and matching billing totals do not establish it or prove
+            invoice-level reconciliation.
           </p>
         </section>
       </div>
@@ -250,10 +283,14 @@ function ConsumptionPaceChart({
   rows,
   totals,
   billingComplete,
+  actualComplete,
+  hasCommitment,
 }: {
   rows: SpendRows;
   totals: SpendTotals;
   billingComplete: boolean;
+  actualComplete: boolean;
+  hasCommitment: boolean;
 }) {
   const W = 700;
   const H = 200;
@@ -295,7 +332,7 @@ function ConsumptionPaceChart({
           preserveAspectRatio="none"
           viewBox={`0 0 ${W} ${H}`}
           role="img"
-          aria-label="Cumulative consumption against commitment pace"
+          aria-label="Cumulative recorded spend against monetary commitment"
         >
           <line
             x1="0"
@@ -313,7 +350,7 @@ function ConsumptionPaceChart({
             stroke="rgba(10,10,11,.06)"
             strokeWidth="1"
           />
-          {totals.committed > 0 ? (
+          {hasCommitment ? (
             <polyline
               points={line((p) => p.committed)}
               fill="none"
@@ -330,12 +367,15 @@ function ConsumptionPaceChart({
               strokeWidth="2"
             />
           ) : null}
-          <polyline
-            points={line((p) => p.actual)}
-            fill="none"
-            stroke="var(--sw-c3-green)"
-            strokeWidth="2"
-          />
+          {actualComplete ? (
+            <polyline
+              data-measure="actual-spend"
+              points={line((p) => p.actual)}
+              fill="none"
+              stroke="var(--sw-c3-green)"
+              strokeWidth="2"
+            />
+          ) : null}
         </svg>
       </div>
       <div className="sw-c3-chart-axis">
@@ -394,15 +434,16 @@ export function ContractConsumptionMix({
 
   const top = mix.slice(0, 2).reduce((sum, row) => sum + row.share, 0);
   const performanceRequired =
-    vm.contractEducation?.facetRequirements.Performance?.state !== "not_required";
+    vm.contractEducation?.facetRequirements.Performance?.state !==
+    "not_required";
 
   return (
     <div className="sw-c3-stack">
       <section className="sw-c3-card sw-c3-perf-lede">
         <p className="sw-c3-display">
           {mix.length === 1
-            ? "One workload draws the whole commitment."
-            : `${Math.round(top)}% of consumption sits in ${Math.min(2, mix.length)} of ${mix.length} workloads.`}
+            ? "One workload accounts for the recorded spend."
+            : `${Math.round(top)}% of recorded spend sits in ${Math.min(2, mix.length)} of ${mix.length} workloads.`}
         </p>
         <p className="sw-c3-note">
           {`Summed from ${spendMonths.length} loaded spend month${spendMonths.length === 1 ? "" : "s"}`}
@@ -413,7 +454,7 @@ export function ContractConsumptionMix({
       </section>
 
       <section className="sw-c3-card">
-        <div className="sw-c3-eyebrow">Where the consumption goes</div>
+        <div className="sw-c3-eyebrow">Where recorded spend goes</div>
         <div className="sw-c3-mix">
           {mix.map((row) => (
             <div className="sw-c3-mix-row" key={row.name}>
@@ -475,16 +516,19 @@ export function ContractPerformanceCards({
   vm: SourceWorkspaceVM;
 }) {
   const totals = totalsFrom(spendMonths);
-  const utilization = utilizationAgainstCommitment(
-    totals.actual,
-    totals.committed,
-  );
+  const complete =
+    totals.actualMonths === totals.months &&
+    totals.committedMonths === totals.months;
+  const utilization = complete
+    ? utilizationAgainstCommitment(totals.actual, totals.committed)
+    : null;
   const performanceRequired =
     vm.contractEducation?.facetRequirements.Performance?.state !==
     "not_required";
 
   const meters = tagMeters(tagQuality);
-  const latest = tagQuality.length > 0 ? tagQuality[tagQuality.length - 1] : null;
+  const latest =
+    tagQuality.length > 0 ? tagQuality[tagQuality.length - 1] : null;
   const untagged = latest ? numberFromDb(latest.untagged_spend_usd) : null;
 
   // With no tag rows and no not-required state there is nothing this row can
@@ -495,7 +539,7 @@ export function ContractPerformanceCards({
     <section className="sw-c3-card">
       <p className="sw-c3-display sw-c3-display-sm">
         {meters.length > 0 && !performanceRequired
-          ? "Delivery is not the problem. Attribution is."
+          ? "Recorded spend and attribution."
           : meters.length > 0
             ? "What the evidence says about delivery and attribution."
             : "Service levels are not a lane on this contract type."}
@@ -516,20 +560,19 @@ export function ContractPerformanceCards({
       <div className="sw-c3-perf-cards">
         <div className="sw-c3-perf-card">
           <div className="sw-c3-perf-card-title">
-            Consumption against commitment pace
+            Recorded spend against monetary commitment
           </div>
           {utilization != null ? (
             <>
-              <p className="sw-c3-perf-card-figure">
-                {utilization}%
-              </p>
+              <p className="sw-c3-perf-card-figure">{utilization}%</p>
               <div className="sw-c3-perf-card-note">
-                {`Drawn on across ${spendMonths.length} loaded month${spendMonths.length === 1 ? "" : "s"}`}
+                {`Across ${totals.months} recorded month${totals.months === 1 ? "" : "s"}; not measured usage`}
               </div>
             </>
           ) : (
             <div className="sw-c3-perf-card-note">
-              No committed amount is recorded, so pace cannot be computed.
+              Complete spend and monetary commitment are needed for this
+              comparison.
             </div>
           )}
         </div>

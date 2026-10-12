@@ -7,10 +7,11 @@ import { CANONICAL_TENANT_KEYS } from "../../src/config/tenants/CANONICAL_TENANT
 import { resolveLoadApproval } from "../../src/lib/governance/dataset-manifest";
 import { buildIntegratedInsightPlan } from "../../src/lib/ecl/insights/engine";
 import { readInsightInput } from "../../src/lib/ecl/insights/read-input";
+import { INSIGHT_LOAD_BUILD_VERSION, insightLoadBinding, readInsightLoadEvidence } from "../../src/lib/ecl/insights/load-approval";
 import { persistInsightCandidates, verifyInsightCandidates } from "../../src/lib/ecl/insights/store";
 import { readDatasetManifests } from "./load_synthetic_enterprise_v1";
 import {
-  applySqlLimits, blobProofStore, commitTransaction, connectDatabase,
+  applySqlLimits, blobProofStore, boundedStore, commitTransaction, connectDatabase,
   jobLimits, jobRecord, jobRun, proofBytes,
   type JobClient, type ProofStore,
 } from "./synthetic_enterprise_home_job";
@@ -56,6 +57,7 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
     ECL_SYNTHETIC_IMAGE_DIGEST: env.ABARVA_OPERATOR_IMAGE,
   }, "enterprise-integrated-insights");
   if (!runtime.recordExists(run.releaseRecord)) throw new Error("Release record is absent from this image");
+  if (run.buildVersion !== INSIGHT_LOAD_BUILD_VERSION) throw new Error("Unsupported insight job build version");
   if (!env.DATABASE_URL) throw new Error("DATABASE_URL is required");
   const limits = jobLimits(env);
   const db = await runtime.connect(env.DATABASE_URL);
@@ -93,11 +95,11 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
     const input = await readInsightInput(db, tenant, assessment, env.ECL_INSIGHT_AS_OF ?? "");
     const plan = buildIntegratedInsightPlan(input);
     const manifests = await runtime.manifests();
-    const approval = resolveLoadApproval(manifests, { dataset_id: datasetId, tenant_key: tenant,
-      assessment_id: assessment, source_set_hash: plan.loadVersionHash,
-      object_count: plan.findings.length, ingestion_method: "operator_aca_job" });
+    const store = boundedStore(await runtime.store(env), limits);
+    const approvalEvidence = await readInsightLoadEvidence(manifests, datasetId, store);
+    const approval = resolveLoadApproval(manifests,
+      insightLoadBinding(plan, datasetId, run.releaseRecord), approvalEvidence);
     let receipt: { findings: number; idempotentReplay: boolean } | null = null;
-    const store = await runtime.store(env);
     const proofPath = `${tenant}/enterprise-insights/${datasetId}/${plan.loadVersionHash}/runs/${run.runId}/proof.json`;
     const inputPath = `${tenant}/enterprise-insights/${datasetId}/${plan.loadVersionHash}/runs/${run.runId}/input.json`;
     const inputBytes = proofBytes(input as unknown as Record<string, unknown>);
@@ -111,7 +113,8 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
       if (env.ECL_INSIGHT_EXPECTED_VERSION_HASH !== plan.loadVersionHash) throw new Error("Exact planned input/rule/result version hash required; changed candidates need a new approval");
       console.log(JSON.stringify({ checkpoint: "approval_check", load_version_hash: plan.loadVersionHash }));
       receipt = await persistInsightCandidates(db, plan, { datasetId, manifests,
-        recordExists: runtime.recordExists, runId: run.runId, releaseRecord: run.releaseRecord, jobRecord: record });
+        recordExists: runtime.recordExists, runId: run.runId, releaseRecord: run.releaseRecord, jobRecord: record,
+        approvalEvidence });
       await commitTransaction(db, "Insight candidate load", "no new candidates persisted");
       transaction = false; committed = true;
       const verifier = await runtime.connect(env.DATABASE_URL);

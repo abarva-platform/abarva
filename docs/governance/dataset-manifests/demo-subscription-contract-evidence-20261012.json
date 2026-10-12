@@ -1,0 +1,18 @@
+{
+  "dataset_id": "demo-subscription-contract-evidence-20261012",
+  "title": "Declared Synthetic Subscription Contract Evidence",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "confidential",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic_modelled_contract_evidence",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free and PII-free reference scenario. No real documents, transactions, signatures, approvals or supplier communications.",
+  "expected_object_count": 71,
+  "approved_by": "AbarVa Source engineering",
+  "approved_at": "2026-10-12",
+  "notes": "Declaration only; not load approval. Uses a declared canonical contract/source-record binding, fixed reporting cutoff, explicit engineering archetype and versioned synthetic assumptions. Terms remain not_reviewed, candidate opportunity amounts remain unsized, and diagnostic ratios are not savings. Exact delegated load candidate, before-image proof, load quality gates and cite-render proof are required separately. No real ERP, ITSM or document-repository connection is asserted."
+}
