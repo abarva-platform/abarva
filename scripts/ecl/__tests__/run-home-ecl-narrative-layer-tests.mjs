@@ -11,6 +11,7 @@ const workflowPath = ".github/workflows/ecl-home-narrative-boundary.yml";
 const behaviourTestPaths = [
   "scripts/ecl/__tests__/home-narrative-readiness.test.ts",
   "scripts/ecl/__tests__/home-narrative-admission-boundary.test.ts",
+  "scripts/ecl/__tests__/home-narrative-projection-version.test.ts",
 ];
 
 function assert(condition, message) {
@@ -308,11 +309,23 @@ function runBehaviourTests(testPath) {
   const passed = run.status === 0 && count("tests") > 0 && count("pass") === count("tests");
   return { passed, summary: `${count("pass")} of ${count("tests")}`, output: passed ? "" : `\n${run.stdout}${run.stderr}` };
 }
-const [readinessTest, boundaryTest] = behaviourTestPaths.map(runBehaviourTests);
+const [readinessTest, boundaryTest, projectionVersionTest] = behaviourTestPaths.map(runBehaviourTests);
 assert(readinessTest.passed, `narrative readiness planted cases pass: ${readinessTest.summary}${readinessTest.output}`);
 assert(
   boundaryTest.passed,
   `narrative builder keeps unadmitted rows, signals, and source context out of the packet: ${boundaryTest.summary}${boundaryTest.output}`,
+);
+assert(
+  projectionVersionTest.passed,
+  `narrative projection version and exact-scope cases pass: ${projectionVersionTest.summary}${projectionVersionTest.output}`,
+);
+assert(
+  !script.includes("const PROJECTION_VERSION =") && !readback.includes("const PROJECTION_VERSION =") &&
+    script.includes("assertNarrativePlanVersion(plan.projectionVersion, options.projectionVersion)") &&
+    script.includes("projectionVersion: options.projectionVersion") &&
+    readback.includes("projection_version: options.projectionVersion") &&
+    readback.includes("[options.tenantKey, options.assessmentId, options.projectionVersion, CHAPTER_IDS]"),
+  "narrative plans, writes and independent readback share the explicit projection version",
 );
 assert(
   script.includes("Home ECL narrative refused: no governed usable evidence reached the executive packet") &&
