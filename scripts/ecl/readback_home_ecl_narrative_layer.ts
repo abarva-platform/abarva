@@ -10,11 +10,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Client } from "pg";
+import { narrativeProjectionVersion, type NarrativeProjectionVersion } from "./home-narrative-projection-version";
 
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-readback";
-const PROJECTION_VERSION = 1;
 
 const CHAPTER_IDS = [
   "executive_brief",
@@ -30,6 +30,7 @@ const CHAPTER_IDS = [
 interface CliOptions {
   tenantKey: string;
   assessmentId: string;
+  projectionVersion: NarrativeProjectionVersion;
   outDir: string;
 }
 
@@ -61,6 +62,7 @@ function parseCli(): CliOptions {
   return {
     tenantKey: cliValue("--tenant") ?? process.env.ECL_DENSE_TENANT_KEY ?? DEFAULT_TENANT_KEY,
     assessmentId: cliValue("--assessment") ?? process.env.ECL_DENSE_ASSESSMENT_ID ?? DEFAULT_ASSESSMENT_ID,
+    projectionVersion: narrativeProjectionVersion(cliValue("--projection-version") ?? process.env.HOME_ECL_NARRATIVE_PROJECTION_VERSION),
     outDir: cliValue("--out-dir") ?? DEFAULT_OUT_DIR,
   };
 }
@@ -274,7 +276,7 @@ async function main() {
               and h.basis_summary like '%home_knowledge_pack%'
           )::text as legacy_basis_rows
       `,
-      [options.tenantKey, options.assessmentId, PROJECTION_VERSION, CHAPTER_IDS],
+      [options.tenantKey, options.assessmentId, options.projectionVersion, CHAPTER_IDS],
     );
 
     const readback = Object.fromEntries(
@@ -287,7 +289,7 @@ async function main() {
       issues,
       tenant_key: options.tenantKey,
       assessment_id: options.assessmentId,
-      projection_version: PROJECTION_VERSION,
+      projection_version: options.projectionVersion,
       expected_chapter_count: CHAPTER_IDS.length,
       readback,
       data_mutation: false,
