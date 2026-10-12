@@ -32,7 +32,8 @@ const identifier = (s) => {
 };
 const targetsAllowed = ["source.contract", "source.contract_scope"];
 const withoutAuditTimestamp = (row) => {
-  const { updated_at: _audit, ...rest } = row;
+  const rest = { ...row };
+  delete rest.updated_at;
   return rest;
 };
 

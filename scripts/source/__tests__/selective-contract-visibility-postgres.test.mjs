@@ -407,7 +407,8 @@ test("existing-row visibility transaction and conditional restore", async (t) =>
         );
         const after = await snapshot();
         const strip = (row) => {
-          const { updated_at: _audit, ...rest } = row;
+          const rest = { ...row };
+          delete rest.updated_at;
           return rest;
         };
         assert.deepEqual(after.contract.map(strip), before.contract.map(strip));

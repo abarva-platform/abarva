@@ -234,7 +234,7 @@ export function buildSelectiveVisibilityPlan(
         ? ["load_run_id"]
         : ["load_run_id", "updated_at"],
     beforeSha256: visibilityHash(target.before),
-    after: { ...target.before, load_run_id: options.newLoadRunId },
+    after: { ...target.before, load_run_id: options.newLoadRunId } as Row,
   }));
   const selectorBaseline = { base, overlays };
   return {
