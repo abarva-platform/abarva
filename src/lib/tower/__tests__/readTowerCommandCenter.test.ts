@@ -965,6 +965,65 @@ describe("readTowerCommandCenter", () => {
     expect(view?.actions[0]?.lane).toBe("unclassified");
   });
 
+  it("reads declared candidate roles and affected functions without making them funding domains", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
+      tower_decision_lanes: [servingRow({
+        row_key: "program-1",
+        owner_role: null,
+        display_payload_json: {
+          title: "Program",
+          business_sponsor_role: "Program sponsor",
+          technology_owner_role: "Technology owner",
+          source_program_status: "active",
+          source_program_phase: "execution",
+          affected_functions: [{ function_id: "FUNC-1", function_name: "Affected function" }],
+          domain_name: null,
+        },
+      })],
+      tower_ai_portfolio: [servingRow({
+        row_key: "case-1",
+        page_key: "ai_portfolio",
+        use_case_object_id: "case-object-1",
+        tool_object_id: null,
+        tool_name: "",
+        display_payload_json: {
+          title: "AI case",
+          business_function: "Business function",
+          business_segment_key: "segment-1",
+          source_case_status: "pilot",
+          business_sponsor_role: "Case sponsor",
+          operational_owner_role: "Operations owner",
+          expected_value_archetype: "time_savings",
+        },
+      })],
+    });
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    expect(mart?.programLanes[0]?.ownerRole).toBe("Program sponsor");
+    expect(mart?.programLanes[0]?.domainName).toBeNull();
+    expect(mart?.programLanes[0]?.affectedFunctions).toEqual([
+      { functionId: "FUNC-1", functionName: "Affected function" },
+    ]);
+    expect(mart?.programLanes[0]?.sourceProgramStatus).toBe("active");
+    expect(mart?.programLanes[0]?.sourceProgramPhase).toBe("execution");
+    expect(mart?.programLanes[0]?.technologyOwnerRole).toBe("Technology owner");
+    expect(mart?.aiPortfolio[0]?.businessFunction).toBe("Business function");
+    expect(mart?.aiPortfolio[0]?.businessSegmentKey).toBe("segment-1");
+    expect(mart?.aiPortfolio[0]?.sourceCaseStatus).toBe("pilot");
+    expect(mart?.aiPortfolio[0]?.sponsorRole).toBe("Case sponsor");
+    expect(mart?.aiPortfolio[0]?.operationalOwnerRole).toBe("Operations owner");
+    expect(mart?.aiPortfolio[0]?.expectedValueArchetype).toBe("time_savings");
+    expect(mart?.aiPortfolio[0]?.financeStatus).toBeNull();
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example tenant" });
+    expect(view?.programs[0]?.affectedFunctions).toEqual([
+      { functionId: "FUNC-1", functionName: "Affected function" },
+    ]);
+    expect(view?.programs[0]?.sourceProgramStatus).toBe("active");
+    expect(view?.allInitiatives[0]?.businessFunction).toBe("Business function");
+    expect(view?.allInitiatives[0]?.operationalOwnerRole).toBe("Operations owner");
+    expect(view?.allInitiatives[0]?.financeStatus).toBeNull();
+  });
+
   it("requires a valid date period and an explicit claim amount before reporting value", async () => {
     const claim = (amount: string | null, start: string, end: string) => servingRow({
       row_key: "claim-1",
