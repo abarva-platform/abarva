@@ -285,6 +285,8 @@ describe("readTowerCommandCenter", () => {
         servingRow({
           row_key: "ai-1",
           page_key: "ai_portfolio",
+          use_case_object_id: "use-case-1",
+          display_payload_json: { page_key: "ai_portfolio", title: "Case one" },
           use_case_name: "Claims denial triage",
           tool_name: "Azure OpenAI",
           licensed_users: "100",
@@ -312,6 +314,10 @@ describe("readTowerCommandCenter", () => {
         servingRow({
           row_key: "adoption-1",
           page_key: "adoption_lens",
+          use_case_object_id: "use-case-1",
+          tool_object_id: null,
+          display_payload_json: { page_key: "adoption_lens", title: "Usage observation" },
+          tool_name: "Case one",
         }),
       ],
     });
@@ -324,6 +330,19 @@ describe("readTowerCommandCenter", () => {
     });
 
     expect(mart?.generatedFrom).toBe("ecl_serving");
+    expect(mart?.aiPortfolio.map((row) => row.populationKind)).toEqual(["ai_case", "usage_observation"]);
+    expect(mart?.aiPortfolio[0]?.vendorName).toBeNull();
+    expect(mart?.aiPortfolio[0]?.systemName).toBeNull();
+    expect(mart?.aiPortfolio[1]?.systemName).toBeNull();
+    expect(view?.allInitiatives[0]?.vendor).toBeNull();
+    expect(view?.usageObservations[0]?.system).toBeNull();
+    expect(mart?.aiPortfolio[0]?.valueScoreLoaded).toBe(false);
+    expect(view?.summary.aiInitiativeCount).toBe(1);
+    expect(view?.allInitiatives[0]?.valueScoreLoaded).toBe(false);
+    expect(view?.allInitiatives[0]?.posture).toBe("Needs evidence");
+    expect(view?.usageObservations).toHaveLength(1);
+    expect(view?.allInitiatives).toHaveLength(1);
+    expect(view?.portfolioCounts.excludedItemCount).toBe(0);
     expect(mart?.command.sourceStandard).toContain(
       "Governed Tower read from finance, program, contract, and control evidence",
     );
@@ -946,6 +965,65 @@ describe("readTowerCommandCenter", () => {
     expect(view?.actions[0]?.lane).toBe("unclassified");
   });
 
+  it("reads declared candidate roles and affected functions without making them funding domains", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
+      tower_decision_lanes: [servingRow({
+        row_key: "program-1",
+        owner_role: null,
+        display_payload_json: {
+          title: "Program",
+          business_sponsor_role: "Program sponsor",
+          technology_owner_role: "Technology owner",
+          source_program_status: "active",
+          source_program_phase: "execution",
+          affected_functions: [{ function_id: "FUNC-1", function_name: "Affected function" }],
+          domain_name: null,
+        },
+      })],
+      tower_ai_portfolio: [servingRow({
+        row_key: "case-1",
+        page_key: "ai_portfolio",
+        use_case_object_id: "case-object-1",
+        tool_object_id: null,
+        tool_name: "",
+        display_payload_json: {
+          title: "AI case",
+          business_function: "Business function",
+          business_segment_key: "segment-1",
+          source_case_status: "pilot",
+          business_sponsor_role: "Case sponsor",
+          operational_owner_role: "Operations owner",
+          expected_value_archetype: "time_savings",
+        },
+      })],
+    });
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    expect(mart?.programLanes[0]?.ownerRole).toBe("Program sponsor");
+    expect(mart?.programLanes[0]?.domainName).toBeNull();
+    expect(mart?.programLanes[0]?.affectedFunctions).toEqual([
+      { functionId: "FUNC-1", functionName: "Affected function" },
+    ]);
+    expect(mart?.programLanes[0]?.sourceProgramStatus).toBe("active");
+    expect(mart?.programLanes[0]?.sourceProgramPhase).toBe("execution");
+    expect(mart?.programLanes[0]?.technologyOwnerRole).toBe("Technology owner");
+    expect(mart?.aiPortfolio[0]?.businessFunction).toBe("Business function");
+    expect(mart?.aiPortfolio[0]?.businessSegmentKey).toBe("segment-1");
+    expect(mart?.aiPortfolio[0]?.sourceCaseStatus).toBe("pilot");
+    expect(mart?.aiPortfolio[0]?.sponsorRole).toBe("Case sponsor");
+    expect(mart?.aiPortfolio[0]?.operationalOwnerRole).toBe("Operations owner");
+    expect(mart?.aiPortfolio[0]?.expectedValueArchetype).toBe("time_savings");
+    expect(mart?.aiPortfolio[0]?.financeStatus).toBeNull();
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example tenant" });
+    expect(view?.programs[0]?.affectedFunctions).toEqual([
+      { functionId: "FUNC-1", functionName: "Affected function" },
+    ]);
+    expect(view?.programs[0]?.sourceProgramStatus).toBe("active");
+    expect(view?.allInitiatives[0]?.businessFunction).toBe("Business function");
+    expect(view?.allInitiatives[0]?.operationalOwnerRole).toBe("Operations owner");
+    expect(view?.allInitiatives[0]?.financeStatus).toBeNull();
+  });
+
   it("requires a valid date period and an explicit claim amount before reporting value", async () => {
     const claim = (amount: string | null, start: string, end: string) => servingRow({
       row_key: "claim-1",
@@ -1046,7 +1124,13 @@ describe("readTowerCommandCenter", () => {
       ...servingRow({
         row_key: key,
         page_key: "cost_lens",
-        display_payload_json: { title, value, canonical_measure_id: `measure:${key}`, ...extras },
+        display_payload_json: {
+          title, value, canonical_measure_id: `measure:${key}`,
+          benefit_reconciliation_status: "reconciled", benefit_period: "annual",
+          promised_value_usd: "99000000",
+          period_start: "2026-01-01", period_end: "2026-03-31", fiscal_quarter: "2026-Q1",
+          ...extras,
+        },
         measure_id: `measure:${key}`,
         measure_value_number: value,
       }),
@@ -1076,13 +1160,43 @@ describe("readTowerCommandCenter", () => {
         additive_to_it_spend: false,
       }),
     ];
+    const benefit = {
+      ...servingRow({
+        row_key: "benefit-1", page_key: "value_proof", claim_id: "benefit-1",
+        display_payload_json: {
+          title: "Benefit one", benefit_reconciliation_status: "reconciled",
+          benefit_period: "annual", promised_value_usd: "2000000",
+        },
+      }),
+      row_type: "value_claim_gap", projection_version: 4,
+    };
+    const outcomeMeasure = {
+      ...servingRow({
+        row_key: "metric:outcome-1", page_key: "value_proof", claim_id: "metric:outcome-1",
+        display_payload_json: {
+          title: "Outcome measure one", benefit_reconciliation_status: "reconciled",
+          benefit_period: "annual", promised_value_usd: "4000000",
+          period_start: "2026-01-01", period_end: "2026-03-31", fiscal_quarter: "2026-Q1",
+        },
+      }),
+      row_type: "value_claim_gap", projection_version: 4,
+    };
     mockServingRows({
       tower_command_center: [{ ...servingRow({ row_key: "executive_summary", page_key: "command_center" }), projection_version: 4 }],
+      tower_value_proof: [benefit, outcomeMeasure, ...rows],
       tower_cost_lens: [...rows, { ...rows[0], projection_version: 3, source_refs_json: [] }],
     });
     const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
     const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
     expect(view?.costLens?.modeledAnnualSpendUsd).toBe(10_000_000);
+    expect(mart?.command.valueClaimCount).toBe(1);
+    expect(mart?.command.valueProofOutcomeRecordCount).toBe(1);
+    expect(mart?.command.knownValueAmountUsd).toBe(2_000_000);
+    expect(mart?.valueFunnel[0]?.claimCount).toBe(1);
+    expect(mart?.valueFunnel[0]?.valueNumeric).toBe(2_000_000);
+    expect(mart?.valueTrajectory).toEqual([]);
+    expect(view?.summary.valueClaimCount).toBe(1);
+    expect(view?.summary.valueProofOutcomeRecordCount).toBe(1);
     expect(view?.costLens?.categories).toHaveLength(2);
     expect(view?.costLens?.contractExposure[0]?.amountUsd).toBe(9_000_000);
     expect(view?.costLens?.categories[0]?.sourceRow).toBe(2);

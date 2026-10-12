@@ -11,6 +11,8 @@
 // calling back into queries.ts or return a stable default.
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { P5_TOWER_HANDOFF_FLAG } from "./p5-measurement-plan";
 import type {
   ActivityEntry,
   ArchetypeKey,
@@ -44,6 +46,7 @@ import type {
 import {
   getMilestones,
   getModuleState,
+  getPhaseSnapshots,
   getRisks,
   getWorkItems,
 } from "./queries";
@@ -56,6 +59,7 @@ import { canonicalProgramClientName } from "./client-name";
 type TransformerOptions = {
   supabase?: unknown;
   evaluateGateCriteria?: boolean;
+  loadPhaseSnapshots?: typeof getPhaseSnapshots;
 };
 
 function displayText(value: unknown, fallback = "—"): string {
@@ -175,7 +179,9 @@ export async function buildGateCriteria(
     evaluateGate?: typeof evaluateGate;
   } = {},
 ): Promise<StrategicMove["gateCriteria"]> {
-  const criteria = gateCriteriaForPhase(currentPhase);
+  const criteria = gateCriteriaForPhase(currentPhase, {
+    p5Publication: isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG),
+  });
   // Terminal phase (or unknown phase) — no outgoing gate to evaluate.
   if (!criteria) return [];
 
@@ -1590,19 +1596,30 @@ export async function buildStrategicMove(
         limit: 1,
       })
       .catch(() => []),
-    azureRead
-      .select<{
-        created_at: string;
-        phase_number: number;
-        approval_status: string;
-      }>({
-        table: "phase_snapshots",
-        columns: ["created_at", "phase_number", "approval_status"],
-        where: { engagement_id: move.id },
-        orderBy: { column: "created_at", direction: "desc" },
-        limit: 8,
-      })
-      .catch(() => []),
+    opts.loadPhaseSnapshots
+      ? opts
+          .loadPhaseSnapshots(ctx, move.id)
+          .then((rows) =>
+            rows.slice(0, 8).map((row) => ({
+              created_at: row.createdAt,
+              phase_number: row.phaseNumber,
+              approval_status: row.approvalStatus,
+            })),
+          )
+          .catch(() => [])
+      : azureRead
+          .select<{
+            created_at: string;
+            phase_number: number;
+            approval_status: string;
+          }>({
+            table: "phase_snapshots",
+            columns: ["created_at", "phase_number", "approval_status"],
+            where: { engagement_id: move.id },
+            orderBy: { column: "created_at", direction: "desc" },
+            limit: 8,
+          })
+          .catch(() => []),
     fetchLinkedEvidence(move.id).catch(() => []),
     fetchMoveDeliverables(move.id).catch(() => []),
     getMoveStatus(ctx, move).catch(() => ({

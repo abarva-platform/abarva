@@ -1,6 +1,7 @@
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { phaseCaptureModuleKey, evaluatePhaseCapture, getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import { phaseStepRecordSections } from "@/lib/programs/phase-workflow-registry";
+import { P5_MEASUREMENT_PLAN_KEY } from "@/lib/programs/p5-measurement-plan";
 import { isP1CharterEvidenceFamily } from "@/lib/programs/p1-charter-evidence";
 import { computeCaptureRevision, findPlaceholderValues } from "@/lib/programs/phase-capture-integrity";
 import { readValueModel } from "@/lib/programs/value-model-capture";
@@ -9,6 +10,7 @@ import type { TenancyCtx } from "@/lib/programs/types.db";
 
 /** The same module-state persistence path is used by signed-in capture and the governed ACA job. */
 export async function persistPhaseCaptureModules(input: {
+  p5HandoffEnabled?: boolean;
   programId: string;
   phase: number;
   evaluation: ReturnType<typeof evaluatePhaseCapture>;
@@ -24,7 +26,8 @@ export async function persistPhaseCaptureModules(input: {
     const moduleKeys = evaluation.sections.map((section) =>
       phaseCaptureModuleKey(phase, section.key),
     );
-    const stateKeys = [...moduleKeys, ...phaseStepRecordSections(phase).map((record) => phaseCaptureModuleKey(phase, record.key))];
+    const records = phaseStepRecordSections(phase).filter(record => record.key !== P5_MEASUREMENT_PLAN_KEY || input.p5HandoffEnabled === true);
+    const stateKeys = [...moduleKeys, ...records.map((record) => phaseCaptureModuleKey(phase, record.key))];
     const { data: existingRows, error: existingError } = await sb
       .from("program_modules")
       .select("id, module_key, status, state_jsonb")
@@ -107,7 +110,7 @@ export async function persistPhaseCaptureModules(input: {
     // `engagements.charter` is the authoritative origination record and the
     // rehydration source of last resort. Only mirror when a capture value
     // actually changed — a no-edit save must never touch it.
-    for (const [index, record] of phaseStepRecordSections(phase).entries()) {
+    for (const [index, record] of records.entries()) {
       const moduleKey = phaseCaptureModuleKey(phase, record.key);
       const existing = existingByKey.get(moduleKey);
       const value = storedValues[record.key] ?? "";

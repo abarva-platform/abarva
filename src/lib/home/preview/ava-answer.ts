@@ -36,7 +36,7 @@ type AvaAnswerBundleSlice = Pick<
 > &
   Partial<Pick<HomeReviewBundle, "thesis" | "contextVersion" | "provenance">>;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v1";
+const PROMPT_VERSION = "home-preview-ava-answer-v3";
 const CLAUDE_MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 1600;
 const TIMEOUT_MS = 45_000;
@@ -712,6 +712,7 @@ const SYSTEM_PROMPT = `You are aVa, AbarVa's enterprise advisor for this tenant'
 
 The enterprise context spine is always available. Treat the active chapter as the user's current focus, not as a boundary. When the question touches one domain, consider whether another domain materially changes the answer: technology may depend on strategy, ownership, contracts, risk, programs, data, value, or leadership testimony. Do not force cross-domain connections when they are not relevant.
 If the question is broad but relevant cited claims are available, answer directionally with explicit limits instead of returning no_data. Use compact consulting structure: short answer, 3-5 bullets, confidence/evidence, caveat. Avoid long paragraphs.
+Put the main points in key_points: 3-5 short strings, at most 30 words each. Aim for 15-25 words: one priority and one reason, not a compound paragraph. Respect an explicitly requested number of bullets. Keep direct_answer to one short sentence. Do not repeat key_points in prose; leave prose empty when key_points cover the answer. Put citation tags ONLY in cited_claim_tags, never inline in key_points, direct_answer, prose or caveats. Preserve uncertainty and evidence limits when shortening; do not strengthen association into causation.
 
 Context-use boundaries:
 - enterprise_context_spine and record_summaries are orientation and routing context unless they point to cited claim tags.
@@ -722,7 +723,7 @@ Rules, no exceptions:
 1. Never state a number, date, name, or fact that is not verbatim present in the context. If the question isn't covered, say so plainly and set status to "no_data" (nothing relevant) or "partial" (some but incomplete) -- never guess, estimate, or reason from outside general knowledge.
 2. Every tagged chapter claim you rely on must be cited by its exact tag in cited_claim_tags. Only cite tags that appear in the context.
 3. You may request at most one chart or table, and only by naming a dataset_ref taken EXACTLY from plottable_datasets -- you never invent, adjust, estimate, or fabricate the underlying numbers, you only choose whether a precomputed dataset helps answer the question. If none fits, set visual.type to "none".
-4. Speak in plain business language a newly appointed CXO would use. Do not mention internal pipeline terms (dataset names, schema versions, "context payload", "governed", tag syntax, ECL, projection, agent-ready state, hashes, source rows) in direct_answer or prose.
+4. Speak in plain business language a newly appointed CXO would use. Do not mention internal pipeline terms (dataset names, schema versions, "context payload", "governed", tag syntax, ECL, projection, agent-ready state, hashes, source rows) in direct_answer, key_points, prose or caveats.
 5. Output strict JSON only -- no markdown code fences, no commentary before or after the JSON.
 
 Schema:
@@ -730,6 +731,7 @@ Schema:
   "status": "answered" | "partial" | "no_data",
   "direct_answer": string,
   "prose": string,
+  "key_points": string[],
   "cited_claim_tags": string[],
   "visual": { "type": "chart" | "table" | "none", "dataset_ref": string | null, "chart_kind": "bar" | "horizontal-bar" | null },
   "caveats": string[]
@@ -739,6 +741,7 @@ interface ModelResponseShape {
   status?: string;
   direct_answer?: string;
   prose?: string;
+  key_points?: unknown;
   cited_claim_tags?: string[];
   visual?: {
     type?: string;
@@ -784,6 +787,8 @@ const ALLOWED_STATUS = new Set(["answered", "partial", "no_data"]);
 const ALLOWED_CHART_KIND = new Set(["bar", "horizontal-bar"]);
 const MAX_DIRECT_ANSWER_WORDS = 55;
 const MAX_PROSE_PARAGRAPH_WORDS = 70;
+const MAX_KEY_POINT_WORDS = 30;
+const INLINE_CLAIM_TAG = `(?:${Object.values(CHAPTER_ABBREV).join("|")})-[KTW]\\d+`;
 const INTERNAL_RECOVERY_CAVEAT_RE =
   /\b(advisor model|advisor engine|unparseable|could not be exported|exported safely|packag(?:e|ed|ing)|JSON|parser|parse)\b/i;
 const DEFAULT_RECOVERY_CAVEAT =
@@ -835,8 +840,13 @@ export async function answerHomeAvaQuestion(args: {
       tenantKey: args.tenantKey,
       question,
     });
-    if (currentAnswer && (!isHomeGraphExhibitRequest(question) ||
-      currentAnswer.artifacts.some((artifact) => artifact.artifact === "graph"))) {
+    if (
+      currentAnswer &&
+      (!isHomeGraphExhibitRequest(question) ||
+        currentAnswer.artifacts.some(
+          (artifact) => artifact.artifact === "graph",
+        ))
+    ) {
       return currentAnswer;
     }
     if (isHomeGraphExhibitRequest(question)) {
@@ -885,6 +895,13 @@ export async function answerHomeAvaQuestion(args: {
     });
   }
 
+  const countAnswer = answerVisibleRecordCounts(
+    args.bundle,
+    args.tenantKey,
+    question,
+  );
+  if (countAnswer) return countAnswer;
+
   const userMessage = `Tenant: ${context.tenantDisplayName}\nQuestion: ${question}\n\nContext (JSON):\n${context.promptContextJson}`;
 
   const requestPayload = {
@@ -894,6 +911,7 @@ export async function answerHomeAvaQuestion(args: {
     messages: [{ role: "user" as const, content: userMessage }],
   };
 
+  const startedAt = Date.now();
   try {
     const { client } = await getAuditedAnthropicClient({
       tenantId: args.tenantKey,
@@ -915,7 +933,7 @@ export async function answerHomeAvaQuestion(args: {
       TIMEOUT_MS,
     );
     const rawText = extractMessageText(message).trim();
-    const parsed = parseJsonLoose<ModelResponseShape>(
+    let parsed = parseJsonLoose<ModelResponseShape>(
       rawText,
       "home-preview-ava-answer",
     );
@@ -939,6 +957,109 @@ export async function answerHomeAvaQuestion(args: {
         "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
         [],
       );
+    }
+
+    if (needsCompactAnswerRepair(parsed, question, context)) {
+      const repairMessage = `${userMessage}\n\nPresentation correction: use key_points, one complete sentence per point, 15-25 words and never more than 30. Respect the requested bullet count. All claim tags belong only in cited_claim_tags. Preserve qualifications; do not invent a causal connection. Return the complete JSON schema.`;
+      const remainingMs = TIMEOUT_MS - (Date.now() - startedAt);
+      if (remainingMs > 3_000) {
+        try {
+          const { client: repairClient } = await getAuditedAnthropicClient({
+            tenantId: args.tenantKey,
+            userId: args.userId ?? undefined,
+            workflow: "home-preview-ava-answer",
+            model: CLAUDE_MODEL,
+            dataClass: "confidential",
+            prompt: `${SYSTEM_PROMPT}\n\n${repairMessage}`,
+            metadata: {
+              promptVersion: PROMPT_VERSION,
+              surface: "home",
+              activeChapterId: args.activeChapterId ?? null,
+              contextScope: "enterprise_spine_plus_focus",
+              presentationRepair: true,
+            },
+          });
+          const repairTimeout = TIMEOUT_MS - (Date.now() - startedAt);
+          if (repairTimeout > 0) {
+            const repairedMessage = await withTimeout(
+              repairClient.messages.create({
+                ...requestPayload,
+                messages: [{ role: "user", content: repairMessage }],
+              }),
+              repairTimeout,
+            );
+            const repaired = parseJsonLoose<ModelResponseShape>(
+              extractMessageText(repairedMessage),
+              "home-preview-ava-compact-repair",
+            );
+            if (
+              repaired &&
+              repaired.status !== "no_data" &&
+              Array.isArray(repaired.cited_claim_tags) &&
+              repaired.cited_claim_tags.some((tag) =>
+                context.citationIndex.has(tag),
+              ) &&
+              !needsCompactAnswerRepair(repaired, question, context)
+            ) {
+              parsed = {
+                ...repaired,
+                status:
+                  parsed.status === "partial" ? "partial" : repaired.status,
+                cited_claim_tags: Array.from(
+                  new Set([
+                    ...(Array.isArray(parsed.cited_claim_tags)
+                      ? parsed.cited_claim_tags
+                      : []),
+                    ...repaired.cited_claim_tags,
+                  ]),
+                ),
+                caveats: Array.from(
+                  new Set([
+                    ...(Array.isArray(parsed.caveats) ? parsed.caveats : []),
+                    ...(Array.isArray(repaired.caveats)
+                      ? repaired.caveats
+                      : []),
+                  ]),
+                ),
+              };
+            }
+          }
+        } catch {
+          // Keep the original admitted citations when a presentation repair fails.
+        }
+      }
+      if (needsCompactAnswerRepair(parsed, question, context)) {
+        const packet = packageModelResponse(
+          parsed,
+          context,
+          args.tenantKey,
+          question,
+        );
+        if (packet.citations.length === 0) return packet;
+        return {
+          ...packet,
+          status: "partial",
+          directAnswer:
+            "I couldn't safely produce a concise summary. Open Evidence basis for the supporting claims.",
+          prose: undefined,
+          artifacts: [],
+          gaps: [
+            {
+              id: "home-ava-compact-gap",
+              label: "Concise summary unavailable",
+              detail:
+                "Supporting claims are retained without cutting away their qualifications.",
+              severity: "medium",
+              citationIds: packet.citations.map((citation) => citation.id),
+            },
+          ],
+          quality: {
+            ...packet.quality,
+            confidence: "low",
+            answerCompleteness: "partial",
+          },
+        };
+      }
     }
 
     return packageModelResponse(parsed, context, args.tenantKey, question);
@@ -965,6 +1086,200 @@ export async function answerHomeAvaQuestion(args: {
   }
 }
 
+function requestedKeyPointLimit(question: string): number {
+  return /\b(?:three|3)\s+(?:(?:concise|crisp|short)\s+)*bullets?\b/i.test(
+    question,
+  )
+    ? 3
+    : 5;
+}
+
+function visibleKeyPoints(
+  parsed: ModelResponseShape,
+  question: string,
+): string[] {
+  return Array.isArray(parsed.key_points)
+    ? parsed.key_points
+        .filter(
+          (point): point is string =>
+            typeof point === "string" && point.trim().length > 0,
+        )
+        .slice(0, requestedKeyPointLimit(question))
+        .map((point) =>
+          stripInlineClaimTags(point)
+            .replace(/^[-*]\s+/, "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        )
+        .filter(Boolean)
+    : [];
+}
+
+function needsCompactAnswerRepair(
+  parsed: ModelResponseShape,
+  question: string,
+  context: GroundingContext,
+): boolean {
+  if (parsed.status === "no_data") return false;
+  const points = visibleKeyPoints(parsed, question);
+  return (
+    (requestedKeyPointLimit(question) === 3 && points.length !== 3) ||
+    points.some(
+      (point) =>
+        wordCount(
+          sanitizeAvaVisibleText(point, context, MAX_PROSE_PARAGRAPH_WORDS),
+        ) > MAX_KEY_POINT_WORDS,
+    )
+  );
+}
+
+function stripInlineClaimTags(text: string): string {
+  return text
+    .replace(
+      new RegExp(
+        `[\\[(]\\s*${INLINE_CLAIM_TAG}(?:\\s*[,;]\\s*${INLINE_CLAIM_TAG})*\\s*[\\])]`,
+        "g",
+      ),
+      "",
+    )
+    .replace(new RegExp(`\\b${INLINE_CLAIM_TAG}\\b`, "g"), "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([,.;:!?])/g, "$1")
+    .trim();
+}
+
+function answerVisibleRecordCounts(
+  bundle: AvaAnswerBundleSlice,
+  tenantKey: string,
+  question: string,
+): AvaAnswerPacket | null {
+  if (
+    !/\b(how many|counts?|number of)\b/i.test(question) ||
+    /\b(unique|distinct|spend|cost|value|exposure|renewals?)\b/i.test(question)
+  )
+    return null;
+  const families: Array<{
+    type: TechObjectType;
+    label: string;
+    test: RegExp;
+  }> = [
+    {
+      type: "vendor_contract",
+      label: "Vendor Contracts",
+      test: /\b(?:vendor\s+)?contracts?\b/i,
+    },
+    {
+      type: "data_asset_or_integration",
+      label: "Data Assets & Integrations",
+      test: /\bdata assets?(?:\s*(?:&|and)\s*integrations?)?\b/i,
+    },
+    {
+      type: "application_system",
+      label: "Applications & Systems",
+      test: /\bapplications?(?:\s*(?:&|and)\s*systems?)?\b/i,
+    },
+    {
+      type: "infrastructure_platform",
+      label: "Infrastructure & Platforms",
+      test: /\b(?:(?:infrastructure\s*(?:&|and)\s*)?platforms?|infrastructure)\b/i,
+    },
+  ];
+  const requested = families.filter((family) => family.test.test(question));
+  if (requested.length === 0) return null;
+  let remainder = question.replace(/\b(?:how many|counts?|number of)\b/i, "");
+  for (const family of requested)
+    remainder = remainder.replace(family.test, "");
+  remainder = remainder
+    .replace(
+      /\b(?:what|is|are|there|do|we|have|of|for|and|the|this|selected|current|total|in|on|record|records|rows|screen|page|rail)\b/gi,
+      "",
+    )
+    .replace(/[\s?.,:;&!]/g, "");
+  if (remainder) return null;
+  const rows = requested.map((request) => {
+    const family = bundle.technologyEstate?.recordTypes.find(
+      (item) => item.objectType === request.type,
+    );
+    return {
+      family: family?.label ?? request.label,
+      rows: family ? family.rows.length : null,
+      type: request.type,
+    };
+  });
+  const available = rows.filter((row) => row.rows !== null);
+  const missing = rows.filter((row) => row.rows === null);
+  const citations: AvaCitation[] = available.map((row) => ({
+    id: `home-record-count-${row.type}`,
+    label: `Record on screen: ${row.family}`,
+    excerpt: `${row.family}: ${row.rows} rows in the selected Home record.`,
+    sourceClass: "tenant-fact",
+    recordId: bundle.provenance?.canonical_snapshot_hash,
+    confidence: "high",
+  }));
+  const directAnswer =
+    rows
+      .map(
+        (row) =>
+          `${row.family}: ${row.rows === null ? "not supplied" : row.rows}`,
+      )
+      .join("; ") + ".";
+  const basis =
+    "These are rows in the selected Home record, not unique vendors, enterprise completeness or independently verified outcomes.";
+  const packet = buildFallbackPacket(
+    tenantKey,
+    question,
+    "no_data",
+    directAnswer,
+    citations,
+  );
+  const status =
+    available.length === 0
+      ? "no_data"
+      : missing.length > 0
+        ? "partial"
+        : "answered";
+  return {
+    ...packet,
+    status,
+    artifacts:
+      available.length > 0
+        ? [
+            {
+              artifact: "table",
+              id: "home-visible-record-counts",
+              title: "Rows in the record on screen",
+              note: basis,
+              columns: [
+                { key: "family", label: "Evidence family" },
+                { key: "rows", label: "Rows", align: "right" },
+              ],
+              rows: rows.map((row) => ({
+                family: row.family,
+                rows: row.rows ?? "Not supplied",
+              })),
+              citationIds: citations.map((citation) => citation.id),
+            },
+          ]
+        : [],
+    gaps: missing.map((row) => ({
+      id: `home-count-gap-${row.type}`,
+      label: `${row.family} not supplied`,
+      detail:
+        "This family is absent from the selected record; its count is unknown, not zero.",
+      severity: "medium",
+    })),
+    caveats: [
+      { id: "home-count-basis", label: "Counting basis", detail: basis },
+    ],
+    quality: {
+      confidence: available.length > 0 ? "medium" : "low",
+      evidenceStrength: available.length > 0 ? "strong" : "thin",
+      tenantGrounding: "complete",
+      answerCompleteness: status === "answered" ? "complete" : "partial",
+    },
+  };
+}
+
 function packageModelResponse(
   parsed: ModelResponseShape,
   context: GroundingContext,
@@ -978,7 +1293,21 @@ function packageModelResponse(
     typeof parsed.direct_answer === "string" && parsed.direct_answer.trim()
       ? parsed.direct_answer.trim()
       : "I don't have a grounded answer for that yet.";
-  const proseRaw = typeof parsed.prose === "string" ? parsed.prose.trim() : "";
+  const keyPoints = visibleKeyPoints(parsed, question);
+  const proseRaw =
+    keyPoints.length > 0
+      ? keyPoints
+          .map(
+            (point) =>
+              `- ${point
+                .trim()
+                .replace(/^[-*]\s+/, "")
+                .replace(/\s+/g, " ")}`,
+          )
+          .join("\n\n")
+      : typeof parsed.prose === "string"
+        ? parsed.prose.trim()
+        : "";
 
   const citedTags = Array.isArray(parsed.cited_claim_tags)
     ? parsed.cited_claim_tags.filter((t): t is string => typeof t === "string")
@@ -1282,7 +1611,15 @@ function buildGraphUnavailablePacket(input: {
 function compactAnswerText(text: string, maxWordsPerParagraph: number): string {
   return text
     .split(/\n{2,}/)
-    .flatMap((paragraph) => splitLongParagraph(paragraph, maxWordsPerParagraph))
+    .flatMap((paragraph) =>
+      paragraph.split("\n").flatMap((line) => {
+        const bullet = line.match(/^\s*([-*]\s+)(.*)$/);
+        return splitLongParagraph(
+          bullet ? bullet[2] : line,
+          maxWordsPerParagraph,
+        ).map((chunk) => (bullet ? `- ${chunk}` : chunk));
+      }),
+    )
     .join("\n\n")
     .trim();
 }
@@ -1295,7 +1632,7 @@ function sanitizeAvaVisibleText(
   return scrubPublicAvaAnswerText(
     sanitizeVisibleStaleClaims(
       sanitizeRecordCountContradictions(
-        compactAnswerText(text, maxWordsPerParagraph),
+        compactAnswerText(stripInlineClaimTags(text), maxWordsPerParagraph),
         context,
       ),
       context,
@@ -1311,13 +1648,20 @@ function sanitizeVisibleStaleClaims(
   const replacement =
     "Use the current Vendor Contracts table for supplier concentration; the live record does not support the older supplier-pair concentration wording.";
   const paragraphs = text.split(/\n{2,}/).map((paragraph) => {
-    const sentences = splitNarrativeSentences(paragraph);
-    const next = sentences
-      .map((sentence) =>
-        isStaleAvaClaim(sentence, context) ? replacement : sentence,
-      )
-      .filter(Boolean);
-    return Array.from(new Set(next)).join(" ");
+    return paragraph
+      .split("\n")
+      .map((line) => {
+        const bullet = line.match(/^\s*([-*]\s+)(.*)$/);
+        const sentences = splitNarrativeSentences(bullet ? bullet[2] : line);
+        const next = sentences
+          .map((sentence) =>
+            isStaleAvaClaim(sentence, context) ? replacement : sentence,
+          )
+          .filter(Boolean);
+        const body = Array.from(new Set(next)).join(" ");
+        return bullet && body ? `- ${body}` : body;
+      })
+      .join("\n");
   });
   return paragraphs.join("\n\n").trim();
 }

@@ -79,7 +79,7 @@ describe("Verdict panel", () => {
     render(<VerdictPanel view={viewWith()} />);
     expect(
       screen.getByRole("heading", { level: 2 }).textContent,
-    ).toMatch(/The loaded claims project \$35\.5M a year\. No benefit amount is cleared for reporting\./);
+    ).toMatch(/The loaded benefit claims project \$35\.5M a year; their relationship to the AI cases is not reconciled here\. No benefit amount is cleared for reporting\./);
   });
 
   it("treats an absent annual assertion as unknown", () => {
@@ -96,7 +96,7 @@ describe("Verdict panel", () => {
  */
 describe("Verdict panel against live-shaped data", () => {
   function withRows(
-    rows: ReadonlyArray<{ financeStatus: string | null; promisedUsd: number }>,
+    rows: ReadonlyArray<{ financeStatus: string | null; promisedUsd: number; populationKind?: "ai_case" | "tool_rollout" }>,
   ) {
     const v = viewWith();
     return {
@@ -108,24 +108,25 @@ describe("Verdict panel against live-shaped data", () => {
         name: `Case ${i}`,
         financeStatus: r.financeStatus,
         promisedUsd: r.promisedUsd,
+        populationKind: r.populationKind ?? "ai_case",
       })),
     } as typeof v;
   }
 
   it("counts business cases only, never cases plus tool rollouts", () => {
-    // Tool rollouts share the collection but carry no finance status.
+    // Tool rollouts share the collection but have a different declared population.
     render(
       <VerdictPanel
         view={withRows([
           { financeStatus: "sponsor_claimed", promisedUsd: 1 },
           { financeStatus: "finance_validated_actual", promisedUsd: 2 },
-          { financeStatus: null, promisedUsd: 0 },
-          { financeStatus: null, promisedUsd: 0 },
+          { financeStatus: null, promisedUsd: 0, populationKind: "tool_rollout" },
+          { financeStatus: null, promisedUsd: 0, populationKind: "tool_rollout" },
         ])}
       />,
     );
-    expect(screen.getByText(/Where the 2 cases stand/)).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/Where the 4 cases stand/);
+    expect(screen.getByText(/Where 2 AI use cases stand/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/Where 4 AI use cases stand/);
   });
 
   it("does not repeat the claimable figure when no case carries a status", () => {
@@ -140,7 +141,7 @@ describe("Verdict panel against live-shaped data", () => {
     // Recharts omits labels on zero-width bars, so the absence is carried by the note rather than
     // a chart label. What matters is that the middle bar does not silently repeat the board figure.
     expect(document.body.textContent).toMatch(
-      /No case carries a finance status in this read/,
+      /2 of 2 AI use cases have no Finance status loaded/,
     );
     // A repeated zero-width middle bar must not copy another figure into a missing case status.
     const repeats = (document.body.textContent ?? "").split("$0.0M").length - 1;

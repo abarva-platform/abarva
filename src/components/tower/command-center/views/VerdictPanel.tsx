@@ -29,7 +29,7 @@ import {
 } from "recharts";
 
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
-import { approvedAiCaseFunding } from "./portfolio-kind";
+import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 
 const AMBER = "#ba7517";
 const AMBER_LIGHT = "#e8c98f";
@@ -241,12 +241,20 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   // attached to a validated case, which is a larger and more useful number than the validated
   // amount itself. Both come from `financeStatus`, so when no case carries one the bar is absent
   // rather than silently equal to the claimable figure below it.
-  // Business cases only. `allInitiatives` also carries tool rollouts, and counting both conflates
-  // two populations. `financeStatus` is written on case payloads only, so its presence is the
-  // separator — but only now that it reads its own key: it used to resolve through `fundingStatus`,
-  // which is non-null for every row (committee decision on a case, rollout stage on a tool) and so
-  // separated nothing. That is why this counted 55 where the portfolio has 42.
-  const cases = view.allInitiatives.filter((i) => i.financeStatus !== null);
+  // Case population comes from declared page and canonical object identity. Finance status may
+  // still be absent; a missing status is its own unknown bucket, never a submitted/not-submitted inference.
+  const cases = view.allInitiatives.filter(isBusinessCase);
+  const casesMissingFinanceStatus = cases.filter((item) => item.financeStatus === null).length;
+  const clearedValueStory = s.claimableAmountLoaded === false
+    ? "A cleared value amount is not verified for the loaded months."
+    : s.claimableAmountLoaded === true || s.claimableClaimCount > 0
+      ? `${bigMoney(s.claimableUsd)} is cleared for reporting across loaded benefit claims.`
+      : "No benefit amount is cleared for reporting.";
+  const verdictStory = casesMissingFinanceStatus > 0
+    ? `Review Finance status for ${casesMissingFinanceStatus} of ${cases.length} AI use cases before reporting case benefits; their status is not loaded. ${caseFunding === null ? "Approved AI case funding is not verified." : `${bigMoney(caseFunding)} in approved AI case funding is recorded.`} ${hasAssertion ? `The loaded benefit claims project ${bigMoney(s.promisedUsd)} a year; their relationship to the AI cases is not reconciled here.` : "No yearly benefit estimate is loaded."} ${clearedValueStory}`
+    : hasAssertion
+      ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === false ? "A cleared amount is not verified for the loaded months." : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
+      : "No yearly benefit estimate is loaded, so its value remains unknown.";
   const validatedCases = cases.filter(
     (i) => i.financeStatus === "finance_validated_actual",
   );
@@ -268,12 +276,10 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
     },
   ];
 
-  // Business cases only. `allInitiatives` also carries tool rollouts, and counting both conflates
-  // two populations — 55 rows where the portfolio has 42 cases. Only a case has a finance status,
-  // so filtering on it is also what separates them.
+  // Keep the case denominator even when Finance status was not loaded.
   const byStatus = new Map<string, number>();
   for (const item of cases) {
-    const key = item.financeStatus ?? "not_submitted";
+    const key = item.financeStatus ?? "not_recorded";
     byStatus.set(key, (byStatus.get(key) ?? 0) + 1);
   }
   const statusData: readonly BarDatum[] = (
@@ -282,6 +288,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
       ["finance_challenged", "Challenged", "#a32d2d"],
       ["cfo_approved_target", "CFO target", AMBER],
       ["not_submitted", "Not submitted", "#5f5e5a"],
+      ["not_recorded", "Status not loaded", "#898780"],
       ["finance_validated_actual", "Validated", TEAL],
     ] as const
   ).map(([key, name, fill]) => {
@@ -302,9 +309,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
           color: "var(--abarva-ink-black)",
         }}
       >
-        {hasAssertion
-          ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === false ? "A cleared amount is not verified for the loaded months." : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
-          : "No yearly benefit estimate is loaded, so its value remains unknown."}
+        {verdictStory}
       </h2>
 
       <div
@@ -343,7 +348,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 520px" }}>
           <h3 style={{ margin: "0 0 22px", fontSize: 15, fontWeight: 600 }}>
-            Yearly benefit estimates on cases checked by Finance
+            Yearly estimates in benefit claims and Finance-reviewed AI cases
           </h3>
           {hasAssertion ? (
             <HBar
@@ -354,11 +359,11 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
               axisFmt={money}
             />
           ) : (
-            <p>No value claims are loaded for this comparison.</p>
+            <p>No yearly case-benefit amounts are loaded for this comparison. Separate outcome-measure records may still be present in Tower.</p>
           )}
           <p style={NOTE}>
             {hasAssertion
-              ? "Both bars show yearly benefit estimates. The cleared amount above covers the loaded months, so it cannot be divided by either yearly estimate to show a success rate."
+              ? "The first bar covers loaded benefit claims; the second covers AI cases with a Finance validation status. Their crosswalk is not established here. The cleared amount covers loaded months, so it cannot be divided by either yearly estimate to show a success rate."
               : "No yearly benefit estimate is loaded, so there is no estimate to compare with Finance review."}
           </p>
           {validatedCases.length > 0 ? (
@@ -370,11 +375,11 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
 
         <div style={{ ...PANEL, flex: "1 1 340px" }}>
           <h3 style={{ margin: "0 0 22px", fontSize: 15, fontWeight: 600 }}>
-            Where the {cases.length} cases stand
+            Where {cases.length} AI use case{cases.length === 1 ? "" : "s"} {cases.length === 1 ? "stands" : "stand"}
           </h3>
           <HBar
             data={statusData}
-            axisLabel="Business cases"
+            axisLabel="AI use cases"
             height={210}
             labelWidth={140}
             right={40}
@@ -382,8 +387,8 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
           />
           <p style={{ ...NOTE, margin: "14px 0 0" }}>
             {cases.length === 0
-              ? "No case carries a finance status in this read, so there is nothing to place in the pipeline. This is a gap in the projection, not a portfolio without cases."
-              : null}{" "}
+              ? "No classified AI use cases are loaded for this pipeline."
+              : `${casesMissingFinanceStatus} of ${cases.length} AI use case${cases.length === 1 ? "" : "s"} ${cases.length === 1 ? "has" : "have"} no Finance status loaded.`}{" "}
             Validation and value are not the same gate: a case can be Finance
             validated and still assert no direct benefit. An enabler with no
             loaded value remains unknown.

@@ -3,7 +3,7 @@
 /**
  * Tools -> table.
  *
- * Tool rollouts are the AI rows with usage evidence. The adoption target and the supported-case
+ * Tool rollouts are the AI rows with declared rollout identity and usage evidence. The adoption target and the supported-case
  * count are both asserted on the source row (`adoption_target_pct`, `linked_business_case_count`);
  * this panel reads them directly. Neither is inferred, and a row that asserts neither renders as
  * absent rather than borrowing readiness, risk, or a shared vendor name.
@@ -88,6 +88,7 @@ export function ToolsTablePanel({
   onOpenAi?: (n: number) => void;
 }) {
   const rows = toolRows(view);
+  const declaredRollouts = view.allInitiatives.filter(isToolRollout).length;
   const withTarget = rows.filter(
     (row) => row.targetPct !== null && row.adoptionPct !== null,
   );
@@ -100,8 +101,10 @@ export function ToolsTablePanel({
       <section style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)", padding: "24px 26px" }}>
         <h3 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600 }}>Tool rollouts</h3>
         <p style={{ margin: 0, fontSize: 15, color: "var(--canon-gray-700)" }}>
-          No tool rollout carries usage evidence in this view. That is a tracking gap, not proof of
-          no adoption.
+          {declaredRollouts === 0
+            ? "No tool rollout records are loaded."
+            : `${formatCount(declaredRollouts)} tool rollout records are loaded without a displayable usage metric.`}
+          {" "}{formatCount(view.usageObservations.length)} separate adoption-source rows are loaded; they do not prove tool adoption, rollout targets, or vendor exposure.
         </p>
       </section>
     );

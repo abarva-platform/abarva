@@ -1,7 +1,10 @@
 const getProgramByIdMock = jest.fn();
+const getModuleStateMock = jest.fn();
 const fromMock = jest.fn();
 const listApprovedPhaseEvidenceMock = jest.fn();
 const loadApprovedMoveEvidenceSnapshotMock = jest.fn();
+const mockP5HandoffRead = jest.fn();
+jest.mock("@/lib/programs/p5-tower-handoff", () => ({ readP5Handoff: (...args: unknown[]) => mockP5HandoffRead(...args) }));
 
 let deliverablesFixture: Array<{
   id: string;
@@ -52,6 +55,7 @@ let roleApprovalsFixture: Array<{
 jest.mock("@/lib/programs/queries", () => ({
   __esModule: true,
   getProgramById: (...args: unknown[]) => getProgramByIdMock(...args),
+  getModuleState: (...args: unknown[]) => getModuleStateMock(...args),
 }));
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -73,6 +77,7 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 }));
 
 import { evaluateGate, findGateRule } from "@/lib/programs/governance";
+import { createPhasePageReadSet } from "@/lib/programs/phase-page-gate-reads";
 import { __resetUnevaluableApprovalCurrencyReports } from "@/lib/programs/deliverable-approval-currency";
 
 function tableResult(table: string) {
@@ -329,6 +334,99 @@ describe("evaluateGate", () => {
       },
     });
     fromMock.mockImplementation(tableResult);
+    getModuleStateMock.mockImplementation(async () =>
+      modulesFixture.map((row) => ({
+        moduleKey: row.module_key,
+        status: row.status,
+        state: row.state_jsonb ?? {},
+      })),
+    );
+  });
+
+  it("keeps canonical gate verdicts while sharing source reads across prior and displayed phases", async () => {
+    const ctx = {
+      clientId: "client-1",
+      clientKey: "tenant-1",
+      userId: "person-1",
+    };
+    deliverablesFixture.push(
+      {
+        id: "origination",
+        deliverable_type_key: "origination_brief",
+        status: "draft",
+      },
+      {
+        id: "discovery",
+        deliverable_type_key: "discovery_report",
+        status: "draft",
+      },
+    );
+    const transitions = [1, 2, 3];
+    const baseline = await Promise.all(
+      transitions.map((from) =>
+        evaluateGate(ctx, "program-1", from, from + 1, {
+          allowHistoricalPhase: true,
+        }),
+      ),
+    );
+    jest.clearAllMocks();
+    const readSet = createPhasePageReadSet(ctx, "program-1");
+    const gates = await Promise.all(
+      transitions.map((from) =>
+        evaluateGate(ctx, "program-1", from, from + 1, {
+          allowHistoricalPhase: true,
+          readSet,
+        }),
+      ),
+    );
+    expect(gates).toEqual(baseline);
+    expect(getProgramByIdMock).toHaveBeenCalledTimes(1);
+    expect(getModuleStateMock).toHaveBeenCalledTimes(1);
+    expect(loadApprovedMoveEvidenceSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(listApprovedPhaseEvidenceMock).toHaveBeenCalledTimes(1);
+    for (const table of [
+      "deliverables_v2",
+      "engagement_participants",
+      "program_approval_requests",
+      "program_milestones",
+    ]) {
+      expect(
+        fromMock.mock.calls.filter(([name]) => name === table),
+      ).toHaveLength(1);
+    }
+    expect(
+      fromMock.mock.calls.filter(([name]) => name === "program_modules"),
+    ).toHaveLength(0);
+    expect(
+      fromMock.mock.calls.filter(([name]) => name === "deliverable_versions"),
+    ).toHaveLength(2);
+  });
+
+  it("reports a shared module read failure as unavailable for every gate", async () => {
+    const ctx = {
+      clientId: "client-1",
+      clientKey: "tenant-1",
+      userId: "person-1",
+    };
+    getModuleStateMock.mockRejectedValue(new Error("read unavailable"));
+    const readSet = createPhasePageReadSet(ctx, "program-1");
+    const gates = await Promise.all(
+      [1, 2].map((from) =>
+        evaluateGate(ctx, "program-1", from, from + 1, {
+          allowHistoricalPhase: true,
+          readSet,
+        }),
+      ),
+    );
+    for (const gate of gates) {
+      expect(gate.pass).toBe(false);
+      expect(gate.failedChecks).toHaveLength(1);
+      expect(gate.failedChecks[0]?.check).toBe("gate_state_unreadable");
+      expect(gate.failedChecks[0]?.reason).toContain(
+        "the phase capture modules",
+      );
+    }
+    expect(getModuleStateMock).toHaveBeenCalledTimes(1);
   });
 
   function addApprovedTechnicalRouteCapture() {
@@ -3028,6 +3126,27 @@ describe("evaluateGate", () => {
         }),
       ]),
     );
+  });
+
+  it.each(["published", "not_yet_linked", "failed", "changed_contract"])("flagged P5 requires current independent publication: %s", async state => {
+    getProgramByIdMock.mockResolvedValue({ id: "program-1", currentPhase: 5, archetype: "agent_assist" });
+    deliverablesFixture = [
+      { id: "handoff", deliverable_type_key: "handoff_package", status: "signed_off" },
+      { id: "contract", deliverable_type_key: "value_measurement_contract", status: "signed_off" },
+    ];
+    if (state === "failed" || state === "changed_contract") mockP5HandoffRead.mockRejectedValue(new Error(state === "failed" ? "Ledger state unavailable" : "Signed contract changed"));
+    else mockP5HandoffRead.mockResolvedValue({ view: { publication: { state } } });
+    const result = await evaluateGate({ clientId: "client-1", clientKey: "meridian", userId: "authorized-operator" }, "program-1", 5, 6);
+    expect(mockP5HandoffRead).toHaveBeenCalledWith(expect.objectContaining({ clientKey: "meridian" }), "program-1", true);
+    expect(result.failedChecks.some(check => check.check === "p5_tower_publication_current")).toBe(state !== "published");
+  });
+
+  it("publication preflight skips only its own publication check and preserves existing document gates", async () => {
+    getProgramByIdMock.mockResolvedValue({ id: "program-1", currentPhase: 5 });
+    deliverablesFixture = [];
+    const result = await evaluateGate({ clientId: "client-1", clientKey: "meridian", userId: "authorized-operator" }, "program-1", 5, 6, { skipP5Publication: true });
+    expect(result.failedChecks).toEqual(expect.arrayContaining([expect.objectContaining({ check: "value_measurement_contract_signed_off", severity: "hard" })]));
+    expect(mockP5HandoffRead).not.toHaveBeenCalled();
   });
 
   it("passes the P5 to Tower handoff when package, value contract, and launch cadence are signed off", async () => {

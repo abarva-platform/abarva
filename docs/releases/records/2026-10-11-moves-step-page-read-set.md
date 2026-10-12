@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed`
 
 ## Plain-English Summary
 
@@ -56,7 +56,10 @@ The existing flagged intake also resumes confirmed answers, the title, conversat
 - Census: reconciled main `4b55978d` reports 2831 covered test files; the combined tree regenerates to 2833 with exactly two new covered files: request sharing and PDF inspection. Reload tests extend existing CI-covered suites. No values were edited by hand.
 - PASS: N's eight original behavior mutations, eight draft-resume/read-failure mutations and one mobile layout mutation were detected. Source was restored; the layout probe used a private rendered copy. K's release record retains its fifteen detected artifact-review mutations; carried product code and tests are unchanged.
 - PASS: actual component/CSS renders at 1440 and 390 with both color-scheme settings. The restored answer panel is fully within the viewport; the failed-read notice is readable. A private mutation restoring the clipped mobile grid fails the same bounds check. Temporary render test removed. These local fixtures do not establish signed-in runtime behavior or speed.
-- PENDING: K review of the carried scope, complete CI on the final combined head, and deployed signed-in timing/artifact proof.
+- PASS: K reviewed exact head `e08ee5292c966d4b0359826a1762d22ae3d53db7`; all 39 current-head checks succeeded with six expected skips. The immediate fetched-ref guard covered 116 open PRs including 18 drafts, with no count collision or head/main drift.
+- DEPLOYED: squash `5f63421baadd8d45207aa29a523ec8db33fca759`, main deploy 38203555457. The web template, 100% traffic revision and both workers matched digest `sha256:cbd1ac1b20189bfb15c1b4fa525e11a3e0c39c223887c3da71f1252ae1190fcf`.
+- FAIL: valid post-deploy walk 38204300162 reached 20 of 29 views, UX 95, six full-speed views and 14 timings above 2.5 seconds. No non-speed dimension was lower than baseline 38171682273. Validation deck PPTX and PDF each scored 75 with a slide-3 `internal_client_word` rejection; investment PPTX/PDF returned `500 preview_render_failed`, so their scores were unknown. Artifact acceptance remained failed.
+- FAIL: stable descendant walk 38207362621 on `061c036865c42165e03b4c534f097c1cee5d1afe` reached 20 of 29, UX 96, 13 full-speed views and seven slow timings (2579–10185 ms). No non-speed dimension was lower than baseline. The serving web/traffic/worker digest matched `sha256:548b7b2cb4989f1edb25cb9609df280becdc4e5d511fcf3fb088c895ba0b8462`; this remains failed speed acceptance.
 - Baseline: walk 38194353988 on serving `0b7cee8c`, 20 reachable views passing, UX 95, 7 full-speed rows, and no lower non-speed dimension than walk 38171682273.
 
 ## Rollout Plan
@@ -82,7 +85,10 @@ Revert this follow-up through a squash PR and let the repo-owned main deployment
 - Preceding release: PR #9414, squash `085b513af55f0ede43effa47ac91c791dd6f2e8d`.
 - Actual timing failure: https://github.com/abarva-platform/abarva/actions/runs/38194353988.
 - Combined release candidate: PR #9434, carrying #9406 head `54e74769ec488620049cd97364c21f32412d6e09` after reconciling P4/main `4b55978dbeac63f4eb45afc3d222024ac5837841`.
-- K review, combined-head CI, deployment and signed-in proof remain pending.
+- Squash: `5f63421baadd8d45207aa29a523ec8db33fca759`, merged 2026-10-12T04:22:58Z.
+- Main deployment: https://github.com/abarva-platform/abarva/actions/runs/38203555457.
+- Valid initial post-deploy walk: https://github.com/abarva-platform/abarva/actions/runs/38204300162. It completed before the next main deployment began; a later expected-old-digest mismatch reflected that approved deployment.
+- Stable descendant deployment/walk: https://github.com/abarva-platform/abarva/actions/runs/38206506901 and https://github.com/abarva-platform/abarva/actions/runs/38207362621.
 
 ## Known Gaps
 

@@ -138,7 +138,7 @@ describe("TowerCommandCenter", () => {
       screen.getByText("The three rules behind every number on this page"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Yearly benefit estimates on cases checked by Finance"),
+      screen.getByText("Yearly estimates in benefit claims and Finance-reviewed AI cases"),
     ).toBeInTheDocument();
   });
 
@@ -171,7 +171,7 @@ describe("TowerCommandCenter", () => {
     // The claim population is stated on the decision rail, which is where it now lives.
     goTo(TAB.decisions, /Decisions for this review/);
     expect(screen.queryByText(/969 claims/)).not.toBeInTheDocument();
-    expect(screen.getAllByText(/230 value records/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/230 benefit claims/).length).toBeGreaterThan(0);
   });
 
   it("keeps approved investment, benefit, and claim populations distinct", () => {
@@ -196,7 +196,7 @@ describe("TowerCommandCenter", () => {
 
     // The populations must stay distinct on the rail: 230 value claims, never the 969-row queue.
     goTo(TAB.decisions, /Decisions for this review/);
-    expect(screen.getAllByText(/230 value records/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/230 benefit claims/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/969 claims/)).not.toBeInTheDocument();
     expect(screen.queryByText(/1,619 open tasks/)).not.toBeInTheDocument();
     expect(
@@ -270,7 +270,7 @@ describe("TowerCommandCenter", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("Quarterly plan and recorded results")).toBeInTheDocument();
     expect(screen.getByText("Evidence recorded for each value claim")).toBeInTheDocument();
-    expect(screen.getByText("Cases awaiting a decision")).toBeInTheDocument();
+    expect(screen.getByText("Program decision rows")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(
       screen.queryByRole("tab", { name: "Stacked" }),
@@ -368,7 +368,7 @@ describe("TowerCommandCenter", () => {
     expect(document.body.textContent).not.toContain(
       "Every value claim has usage-to-value support",
     );
-    expect(screen.getByText("Value claims not loaded →")).toBeInTheDocument();
+    expect(screen.getByText("Benefit claims not loaded →")).toBeInTheDocument();
 
     expect(screen.getByText("No review decisions loaded")).toBeInTheDocument();
     expect(
@@ -385,12 +385,12 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Distinct review populations"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Action campaigns")).toBeInTheDocument();
+    expect(screen.getByText("Review follow-ups")).toBeInTheDocument();
     expect(container).toHaveTextContent(
-      /open tasks · campaigns show affected records/,
+      /source recommendations and evidence gaps shown · task-system status not loaded/,
     );
     expect(container).not.toHaveTextContent(/1–3 sequential/);
-    expect(screen.getAllByText("Task").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Recommendation").length).toBeGreaterThan(0);
     expect(container).not.toHaveTextContent(/Usage telemetry connection/);
     expect(container).not.toHaveTextContent(/Vendor leverage review/);
     expect(screen.getAllByText("Next step").length).toBeGreaterThan(0);
@@ -451,6 +451,7 @@ describe("TowerCommandCenter", () => {
           id: "TOOL-DETAIL",
           name: "Power BI Copilot",
           sourceFile: "23_ai_tool_rollout.csv",
+          populationKind: "tool_rollout",
           aiAmountBasis: "annualized_tool_cost",
           usageHeadline: "Usage evidence exists",
           usageBars: [

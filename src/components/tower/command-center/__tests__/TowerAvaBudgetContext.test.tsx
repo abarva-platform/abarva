@@ -61,7 +61,7 @@ it("keeps annual tool cost out of the assistant's approved funding measure", () 
     ...built,
     allInitiatives: [
       { ...built.allInitiatives[0]!, sourceFile: "22_ai_business_cases.csv", aiSpendUsd: 100, aiSpendLoaded: true, aiAmountBasis: "approved_funding" as const },
-      { ...built.allInitiatives[1]!, sourceFile: "23_ai_tool_rollout.csv", aiSpendUsd: 200, aiSpendLoaded: true, aiAmountBasis: "annualized_tool_cost" as const },
+      { ...built.allInitiatives[1]!, sourceFile: "23_ai_tool_rollout.csv", populationKind: "tool_rollout" as const, aiSpendUsd: 200, aiSpendLoaded: true, aiAmountBasis: "annualized_tool_cost" as const },
     ],
   };
 

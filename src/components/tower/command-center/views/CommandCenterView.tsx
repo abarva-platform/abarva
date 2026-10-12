@@ -13,7 +13,7 @@ import type {
 } from "@/lib/tower/command-center/types";
 import styles from "../TowerCommandCenter.module.css";
 import { cx } from "../primitives";
-import { approvedAiCaseFunding, isToolRollout } from "./portfolio-kind";
+import { approvedAiCaseFunding, isBusinessCase, isToolRollout } from "./portfolio-kind";
 import { byEvidencePriority, evidenceGapAmount } from "./evidence-gap-amount";
 
 interface ExecutiveMetric {
@@ -31,7 +31,7 @@ interface ExecutiveDecision {
   detail: string;
   metricLabel: string;
   metricValue: string;
-  due: string;
+  suggestedSequence: string;
   tone: "red" | "amber" | "gray";
   reviewTarget: "funnel" | "ai" | "actions";
 }
@@ -74,7 +74,7 @@ function openClaimCount(view: TowerCommandCenterView): number {
 }
 
 function aiToolRolloutCount(view: TowerCommandCenterView): number {
-  return Math.max(0, view.allInitiatives.length - view.programs.length);
+  return view.allInitiatives.filter(isToolRollout).length;
 }
 
 function toolCostGap(view: TowerCommandCenterView): string {
@@ -109,24 +109,26 @@ function absentCount(view: TowerCommandCenterView): number {
 
 function executiveHeadline(view: TowerCommandCenterView): string {
   const claims = valueClaimCount(view);
+  const outcomeRecords = view.summary.valueProofOutcomeRecordCount ?? 0;
   if (claims <= 0) {
-    return `Tower view: ${fundingSentence(view)} No value records are loaded, so cleared value is unknown.`;
+    return `Tower view: ${fundingSentence(view)} No benefit claims are loaded, so cleared value is unknown.${outcomeRecords > 0 ? ` ${formatCount(outcomeRecords)} separate outcome-measure records are loaded.` : ""}`;
   }
 
   return `Tower view: ${fundingSentence(view)} ${clearedValueSentence(view)} ${formatCount(openClaimCount(view))} of ${formatCount(
     claims,
-  )} value records do not show an amount cleared for reporting.`;
+  )} benefit claims do not show an amount cleared for reporting.${outcomeRecords > 0 ? ` ${formatCount(outcomeRecords)} outcome-measure records are separate.` : ""}`;
 }
 
 function executiveSummary(view: TowerCommandCenterView): string {
   const s = view.summary;
   const claims = valueClaimCount(view);
+  const outcomeRecords = s.valueProofOutcomeRecordCount ?? 0;
   const caseFunding = approvedAiCaseFunding(view.allInitiatives);
   const caseFundingSentence = caseFunding === null
     ? "Approved FY26 AI case funding is not verified."
     : `This includes ${formatUsdM(caseFunding)} in approved FY26 funding for AI business cases.`;
   if (claims <= 0) {
-    return `${view.summary.tenantName}: ${fundingSentence(view)} ${caseFundingSentence}${toolCostGap(view)} No value records are loaded yet, so Tower cannot assess their value.`;
+    return `${view.summary.tenantName}: ${fundingSentence(view)} ${caseFundingSentence}${toolCostGap(view)} No benefit claims are loaded yet, so Tower cannot assess their value.${outcomeRecords > 0 ? ` ${formatCount(outcomeRecords)} outcome-measure records are separate.` : ""}`;
   }
 
   const projected = s.promisedBenefitLoaded
@@ -134,16 +136,13 @@ function executiveSummary(view: TowerCommandCenterView): string {
     : "A reconciled yearly benefit amount is not loaded.";
   return `${view.summary.tenantName}: ${fundingSentence(view)} ${caseFundingSentence}${toolCostGap(view)} ${projected} ${clearedValueSentence(view)} ${formatCount(
     Math.max(0, claims - s.claimableClaimCount),
-  )} value records do not show an amount cleared for reporting. Each type needs its own evidence review.`;
+  )} benefit claims do not show an amount cleared for reporting.${outcomeRecords > 0 ? ` ${formatCount(outcomeRecords)} outcome-measure records are separate.` : ""} Each claim type needs its own evidence review.`;
 }
 
 function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   const s = view.summary;
   const claims = valueClaimCount(view);
   const caseFunding = approvedAiCaseFunding(view.allInitiatives);
-  const emitting = view.ai.filter(
-    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
-  ).length;
   return [
     {
       label: "Approved FY26 project funding",
@@ -173,20 +172,20 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
       value: s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? formatUsdM(s.claimableUsd) : "No amount cleared",
       note:
         claims <= 0
-          ? "No value records are loaded for Finance review."
+          ? "No benefit claims are loaded for Finance review."
           : `${formatCount(s.financeAttestedClaimCount)} of ${formatCount(
               claims,
-            )} value records have Finance sign-off`,
+            )} benefit claims have Finance sign-off`,
       tone: s.claimableClaimCount > 0 ? "teal" : "gray",
     },
     {
       label: "AI initiatives and tools tracked",
-      badge: emitting > 0 ? "VISIBLE" : "DARK",
+      badge: s.aiInitiativeCount > 0 ? "TRACKED" : "NOT LOADED",
       value: `${formatCount(s.aiInitiativeCount)}`,
-      note: `${formatCount(view.programs.length)} AI business cases + ${formatCount(
+      note: `${formatCount(view.allInitiatives.filter(isBusinessCase).length)} AI use cases + ${formatCount(
         aiToolRolloutCount(view),
-      )} tool rollouts · ${caseFunding === null ? "AI case funding not verified" : `${formatUsdM(caseFunding)} recorded AI case funding`}`,
-      tone: emitting > 0 ? "teal" : "red",
+      )} tool rollouts · ${formatCount(view.usageObservations.length)} separate adoption-source rows · ${caseFunding === null ? "AI case funding not verified" : `${formatUsdM(caseFunding)} recorded AI case funding`}`,
+      tone: s.aiInitiativeCount > 0 ? "teal" : "gray",
     },
     {
       label: "Claims with usage evidence",
@@ -200,7 +199,7 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
           : formatCount(s.usageSupportedClaimCount),
       note:
         claims <= 0
-          ? "No value claims loaded; usage evidence cannot be assessed."
+          ? "No benefit claims loaded; usage evidence cannot be assessed."
           : "Usage proof applies where adoption drives the benefit; sourcing and foundation claims need different proof.",
       tone: claims <= 0 ? "gray" : s.usageSupportedClaimCount > 0 ? "amber" : "red",
     },
@@ -223,7 +222,7 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       detail: `Usage evidence is recorded for ${formatCount(s.usageSupportedClaimCount)} claims. Check adoption for cases where use drives the benefit; sourcing opportunities need financial evidence, and foundations need a link to downstream results.`,
       metricLabel: "Claims with usage evidence",
       metricValue: formatCount(s.usageSupportedClaimCount),
-      due: "Next review",
+      suggestedSequence: "First review step",
       tone: "red",
       reviewTarget: "ai",
     },
@@ -235,7 +234,7 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
         `${formatCount(claimsMissingActual)} claims have no measured outcome recorded. Decide which need a direct result and which need a documented link to another result. A plan is not an earned benefit.`,
       metricLabel: "No outcome recorded",
       metricValue: formatCount(claimsMissingActual),
-      due: "Next month",
+      suggestedSequence: "After proof mapping",
       tone: "amber",
       reviewTarget: "funnel",
     },
@@ -243,10 +242,10 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       order: "3",
       kicker: "Assign · only then",
       title: "Review which financial claims need Finance sign-off",
-      detail: `${formatCount(claimsMissingFinance)} value records have no Finance sign-off recorded. Check which types require it before reporting a dollar benefit. ${clearedValueSentence(view)}`,
+      detail: `${formatCount(claimsMissingFinance)} benefit claims have no Finance sign-off recorded. Check which types require it before reporting a dollar benefit. ${clearedValueSentence(view)}`,
       metricLabel: "Finance sign-offs recorded",
       metricValue: formatCount(s.financeAttestedClaimCount),
-      due: "Following review",
+      suggestedSequence: "After outcome review",
       tone: "gray",
       reviewTarget: "actions",
     },
@@ -345,7 +344,7 @@ export function CommandCenterView({
             </div>
             <div className={styles.auditBadges}>
               <span className={styles.auditRed}>
-                {formatCount(conflictCount(view))} Tower projection conflicts
+                {formatCount(conflictCount(view))} conflicts in this Tower projection · intake reconciliation not assessed
               </span>
               <span className={styles.auditAmber}>
                 {formatCount(absentCount(view))} Tower projection gaps
@@ -407,8 +406,8 @@ export function CommandCenterView({
                   <strong>{decision.metricValue}</strong>
                 </div>
                 <div>
-                  <span>Due</span>
-                  <strong>{decision.due}</strong>
+                  <span>Suggested sequence</span>
+                  <strong>{decision.suggestedSequence}</strong>
                 </div>
                 <button
                   type="button"
@@ -428,7 +427,7 @@ export function CommandCenterView({
             <div className={styles.emptyPanel}>
               <h2>No review decisions loaded</h2>
               <p>
-                No value claims are loaded, so Tower cannot create claim-proof
+                No benefit claims are loaded, so Tower cannot create claim-proof
                 work or mark usage evidence complete.
               </p>
             </div>
@@ -448,7 +447,7 @@ export function CommandCenterView({
           <div className={styles.valueChartLegend}>
             {claims > 0
               ? `The yearly benefit is a plan. Finance-reviewed and cleared amounts cover the loaded months. These amounts describe different stages; do not add them together or use them to calculate a success rate.`
-              : "No value claims are loaded, so Tower cannot assess the value evidence states yet."}
+              : "No benefit claims are loaded, so Tower cannot assess the value evidence states yet."}
           </div>
         </div>
       </section>
@@ -459,8 +458,8 @@ export function CommandCenterView({
           <strong>{claims > 0 ? `${formatCount(missingActualClaims)} of ${formatCount(claims)}` : "Not loaded"}</strong>
           <p>
             {claims > 0
-              ? "value records have no measured result. A tool being used does not by itself prove a dollar benefit."
-              : "No value records are loaded yet, so Tower cannot tell which results have been proven."}
+              ? "benefit claims have no measured result. A tool being used does not by itself prove a dollar benefit."
+              : "No benefit claims are loaded yet, so Tower cannot tell which results have been proven."}
           </p>
         </article>
         <article className={styles.findingTeal}>
@@ -471,7 +470,7 @@ export function CommandCenterView({
           <p>
             {claims > 0
               ? `claims have no Finance sign-off recorded. Check which claim types need one before adding them to a board figure. ${clearedValueSentence(view)}`
-              : "No value records are loaded for Finance review."}
+              : "No benefit claims are loaded for Finance review."}
           </p>
         </article>
       </section>
@@ -480,12 +479,11 @@ export function CommandCenterView({
         <span>Detail lives where it belongs:</span>
         <button type="button" onClick={onGoToFunnel}>
           {claims > 0
-            ? `${formatCount(claims)} value claims and the gate that holds them →`
-            : "Value claims not loaded →"}
+            ? `${formatCount(claims)} benefit claims and the gate that holds them →`
+            : "Benefit claims not loaded →"}
         </button>
         <button type="button" onClick={onGoToAi}>
-          {formatCount(s.aiInitiativeCount)} AI initiatives
-          and tool rollouts by cost, risk and adoption →
+          {formatCount(view.allInitiatives.filter(isBusinessCase).length)} AI use cases + {formatCount(aiToolRolloutCount(view))} tool rollouts by cost, risk and adoption →
         </button>
         <button type="button" onClick={onGoToActions}>
           {evidenceFooterCount(view) > 0
@@ -506,8 +504,8 @@ export function CommandCenterView({
               onClick={() => onOpenGap(gap.id)}
             >
               <span>{gap.missing}</span>
-              <strong>{evidenceGapAmount(gap).value}</strong>
-              <small>{evidenceGapAmount(gap).label}</small>
+              <strong>{evidenceGapAmount(gap).value === "Not loaded" ? "Amount not loaded" : evidenceGapAmount(gap).value}</strong>
+              {evidenceGapAmount(gap).value === "Not loaded" ? null : <small>{evidenceGapAmount(gap).label}</small>}
               <small>{gap.owner ?? "No owner"}</small>
             </button>
           ))}

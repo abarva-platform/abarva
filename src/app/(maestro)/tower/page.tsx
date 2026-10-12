@@ -5,6 +5,8 @@
 // page is no longer a runtime fallback.
 
 import { Suspense } from "react";
+import { P5TowerPublicationReadback } from "@/components/strategic-moves/step-page/P5TowerHandoff";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
 import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
 import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
@@ -138,6 +140,9 @@ export async function renderTowerPage({
         context: `Command Center · ${tenantName}`,
       }}
     >
+      {firstSearchValue(resolved?.moveId) && isFeatureEnabled({ clientKey: effectiveClientKey, clientId: client?.id }, "moves_p5_tower_handoff_v1") ? (
+        <P5TowerPublicationReadback key={firstSearchValue(resolved?.moveId)} moveId={firstSearchValue(resolved?.moveId)!} />
+      ) : null}
       <Suspense fallback={null}>
         <TowerCommandCenterAvaShell
           view={commandCenterView}

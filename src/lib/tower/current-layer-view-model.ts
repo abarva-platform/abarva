@@ -28,6 +28,8 @@ export interface TowerMartCommandCenter {
   /** At least one claim carried an explicit amount and a valid reporting period. */
   claimableAmountLoaded?: boolean;
   valueClaimCount?: number;
+  /** Outcome-measure source records kept separate from benefit claims. */
+  valueProofOutcomeRecordCount?: number;
   knownValueClaimCount?: number;
   claimableValue?: number;
   financeValidatedBlockedValue?: number;
@@ -134,6 +136,11 @@ export interface TowerMartProgramLane {
   ownerRole: string | null;
   /** The business domain, from the loader's `domain_name`. Not the sponsor. */
   domainName?: string | null;
+  /** Functions explicitly marked as affected by this program; not a funding-domain classification. */
+  affectedFunctions?: Array<{ functionId: string; functionName: string }>;
+  technologyOwnerRole?: string | null;
+  sourceProgramStatus?: string | null;
+  sourceProgramPhase?: string | null;
   financeOwnerRole: string | null;
   decisionLane: "fund" | "fix" | "freeze" | "stop" | "unclassified";
   decisionRationale: string;
@@ -207,10 +214,18 @@ export type TowerAiAmountBasis =
   | "annualized_tool_cost"
   | "unknown";
 
+export type TowerAiPopulationKind =
+  | "ai_case"
+  | "tool_rollout"
+  | "usage_observation"
+  | "unknown";
+
 export interface TowerMartAiPortfolioItem {
   aiPortfolioKey: string;
   itemName: string;
   itemKind: string;
+  /** Declared serving page and canonical object relationship, not a source filename. */
+  populationKind?: TowerAiPopulationKind;
   vendorName: string | null;
   systemName: string | null;
   aiSpendType: string | null;
@@ -258,6 +273,8 @@ export interface TowerMartAiPortfolioItem {
   /** Cases this rollout supports, asserted by the source row — not inferred from a shared vendor. */
   linkedBusinessCaseCount: number | null;
   valueScore: number;
+  /** False when the source has no valid 0-100 value score. */
+  valueScoreLoaded?: boolean;
   /** Declared 0-100 score. Null when the source did not record one — never substituted. */
   readinessScore: number | null;
   /** Written upstream as (100 - readinessScore); carries no independent signal. */
@@ -275,6 +292,11 @@ export interface TowerMartAiPortfolioItem {
   /** Whether the source asserted anything for the blocker — `none` included. */
   controlBlockerReviewed?: boolean;
   sponsorRole?: string | null;
+  businessFunction?: string | null;
+  businessSegmentKey?: string | null;
+  sourceCaseStatus?: string | null;
+  operationalOwnerRole?: string | null;
+  expectedValueArchetype?: string | null;
   duplicateRisk: string | null;
   valueClaimStatus: string;
   towerClaimAllowed: string;

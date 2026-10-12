@@ -4,6 +4,15 @@ import { canonicalTenantKey } from "@/lib/tenant-keys";
 const APP_CLIENT_KEY = "meridian";
 const CANONICAL_KEY = canonicalTenantKey(APP_CLIENT_KEY);
 
+/** Produced only after the server profile and authenticated Clerk actor agree. */
+export interface SyntheticE2eOperatorAuthority {
+  source: "authenticated_clerk_profile";
+  clerkUserId: string;
+  email: string;
+  approvalRef: string;
+  profileSha256: string;
+}
+
 export interface SyntheticE2eOperatorMetadata {
   accountType?: unknown;
   automated?: unknown;

@@ -113,6 +113,7 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
   const blockers = rows.filter((row) => row.blockerCount > 0);
   const totalTools = rows.reduce((sum, row) => sum + row.toolCount, 0);
   const blockedTools = rows.reduce((sum, row) => sum + row.blockerCount, 0);
+  const hasActiveUsers = rows.some((row) => row.activeUsers !== null);
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -126,8 +127,8 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
           letterSpacing: "-0.02em",
         }}
       >
-        {rows.length === 0
-          ? "No vendor usage is loaded for tool rollouts."
+        {!hasActiveUsers
+          ? `No vendor-level active-user counts are loaded. ${formatCount(view.usageObservations.length)} adoption-source rows do not establish vendor exposure.`
           : `Active tool usage is grouped across ${formatCount(rows.length)} vendors.`}
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
@@ -173,9 +174,10 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
         </div>
       </div>
       <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-500)" }}>
-        Seats purchased are not loaded, so this counts people actually using each vendor&rsquo;s tools
-        — not what the contract entitles you to. Rollout counts use the current source-template marker;
-        {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without a recognized marker are excluded.
+        {hasActiveUsers
+          ? "The chart counts recorded active users, not licensed seats; license entitlements are not loaded."
+          : "No active-user or licensed-seat measure is loaded for a vendor comparison."} Rollout counts use declared page and canonical object identity;
+        {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without that identity are excluded.
       </p>
     </section>
   );

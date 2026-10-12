@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireProductModule } from "@/lib/auth/server-module-access";
 import {
   getModuleState,
+  getProgramById,
   getPhaseSnapshots,
   getStrategicMoveById,
 } from "@/lib/programs/queries";
@@ -108,7 +109,10 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { resolveEffectiveMovePhase } from "@/lib/programs/effective-move-phase";
-import { createPhasePageGateReads } from "@/lib/programs/phase-page-gate-reads";
+import {
+  createPhasePageGateReads,
+  createPhasePageReadSet,
+} from "@/lib/programs/phase-page-gate-reads";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import { parseUploadedSolutionOptions } from "@/lib/programs/phase-templates/uploaded-solution-options";
 import { loadApprovedSolutionApproach } from "@/lib/programs/approved-solution-approach";
@@ -473,8 +477,52 @@ export default async function StrategicMovePhaseWorkspacePage({
     resolvedSearchParams.legacy !== "1" &&
     parseStepPageView(resolvedSearchParams.step) !== null;
   const selectedStepView = parseStepPageView(resolvedSearchParams.step);
+  const readSet = flaggedStepView
+    ? createPhasePageReadSet(ctx, moveId)
+    : undefined;
+  const loadProgram: typeof getProgramById = (tctx, id, options) =>
+    readSet && !options?.supabase
+      ? readSet(tctx, id, "program", () =>
+          getProgramById(tctx, id, { readSet }),
+        )
+      : getProgramById(tctx, id, options);
+  const loadModules: typeof getModuleState = (tctx, id) =>
+    readSet
+      ? readSet(tctx, id, "moduleState", () =>
+          getModuleState(tctx, id, { readSet }),
+        )
+      : getModuleState(tctx, id);
+  const loadSnapshots: typeof getPhaseSnapshots = async (tctx, id, phase) => {
+    if (!readSet) return getPhaseSnapshots(tctx, id, phase);
+    const snapshots = await readSet(tctx, id, "phaseSnapshots", () =>
+      getPhaseSnapshots(tctx, id, undefined, { readSet }),
+    );
+    return phase === undefined
+      ? snapshots
+      : snapshots.filter((snapshot) => snapshot.phaseNumber === phase);
+  };
+  const loadEvidenceSnapshot: typeof loadApprovedMoveEvidenceSnapshot = async (
+    args,
+  ) => {
+    if (!readSet) return loadApprovedMoveEvidenceSnapshot(args);
+    if (args.tenantKey !== ctx.clientKey)
+      throw new Error("Phase page evidence tenant mismatch");
+    return readSet(ctx, args.moveId, "approvedEvidenceSnapshot", () =>
+      loadApprovedMoveEvidenceSnapshot(args),
+    );
+  };
+  const loadPhaseEvidence: typeof listApprovedPhaseEvidence = (
+    tctx,
+    id,
+    phase,
+  ) =>
+    readSet
+      ? readSet(tctx, id, `approvedPhaseEvidence:${phase}`, () =>
+          listApprovedPhaseEvidence(tctx, id, phase),
+        )
+      : listApprovedPhaseEvidence(tctx, id, phase);
   const readGate = flaggedStepView
-    ? createPhasePageGateReads(ctx, moveId)
+    ? createPhasePageGateReads(ctx, moveId, undefined, readSet)
     : undefined;
   const stepGateCriteriaPromise = flaggedStepView
     ? timed("gateCriteria", () =>
@@ -496,8 +544,18 @@ export default async function StrategicMovePhaseWorkspacePage({
     try {
       const tctx = await readTenancy();
       const [archetype, profile] = await Promise.all([
-        resolveMoveArchetypeForProgram(tctx, moveId),
-        inferMoveProfile(tctx),
+        readSet
+          ? loadProgram(tctx, moveId).then((program) => {
+              if (!program) throw new Error("Move unavailable for readiness");
+              return resolveMoveArchetypeForProgram(
+                tctx,
+                moveId,
+                program,
+                loadModules,
+              );
+            })
+          : resolveMoveArchetypeForProgram(tctx, moveId),
+        inferMoveProfile(tctx, {}, { readSet, moveId }),
       ]);
       return await resolveCurrentStateReadiness(
         tctx,
@@ -505,34 +563,84 @@ export default async function StrategicMovePhaseWorkspacePage({
         profile,
         parsedPhase,
         moveId,
+        { readSet, moveId },
       );
     } catch {
       return null;
     }
   };
   const captureModulesPromise = timed("stepRecords", () =>
-    getModuleState(ctx, moveId).then(
+    loadModules(ctx, moveId).then(
       (modules) => ({ modules, unavailable: false }),
       () => ({ modules: [], unavailable: true }),
     ),
   );
+  const currentStateReadinessPrefetch = flaggedStepView
+    ? timed("currentStateReadiness", loadCurrentStateReadiness)
+    : null;
+  const phaseSnapshotsPrefetch = flaggedStepView
+    ? loadSnapshots(ctx, moveId)
+    : null;
+  const approvalPolicyPromise = timed("accessPolicy", () =>
+    loadUserProgramAccessPolicy(ctx, { programId: moveId }).catch(() => null),
+  );
+  const assumptionRegisterEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    ASSUMPTION_REGISTER_FLAG,
+  );
+  const registerRowsPrefetch =
+    flaggedStepView && assumptionRegisterEnabled
+      ? timed("registerVisibility", async () => {
+          const [program, policy] = await Promise.all([
+            loadProgram(ctx, moveId),
+            approvalPolicyPromise,
+          ]);
+          if (!program || policy === null)
+            return { status: "unavailable" as const, rows: null };
+          try {
+            return {
+              status: "ok" as const,
+              rows: await listAssumptions(ctx, moveId),
+            };
+          } catch {
+            return { status: "unavailable" as const, rows: null };
+          }
+        })
+      : null;
+  const approvalArtifactsPrefetch = flaggedStepView
+    ? timed("gateReadback", async () => {
+        const program = await loadProgram(ctx, moveId);
+        if (!program) throw new Error("Move unavailable for gate readback");
+        return listMoveArtifacts(ctx, moveId, {
+          family: "approval_artifact",
+          currentOnly: true,
+        });
+      })
+    : null;
+  void Promise.allSettled([
+    currentStateReadinessPrefetch,
+    phaseSnapshotsPrefetch,
+    registerRowsPrefetch,
+    approvalArtifactsPrefetch,
+  ]);
 
   const [loadedMove, approvalPolicy] = await Promise.all([
     timed("move", () =>
       getStrategicMoveById(
         ctx,
         moveId,
-        flaggedStepView ? { evaluateGateCriteria: false } : undefined,
+        flaggedStepView
+          ? {
+              evaluateGateCriteria: false,
+              loadProgram,
+              loadPhaseSnapshots: loadSnapshots,
+            }
+          : undefined,
       ),
     ),
-    timed("accessPolicy", () =>
-      loadUserProgramAccessPolicy(ctx, { programId: moveId }).catch(() => null),
-    ),
+    approvalPolicyPromise,
   ]);
   if (!loadedMove) notFound();
-  const currentStateReadinessPrefetch = flaggedStepView
-    ? timed("currentStateReadiness", loadCurrentStateReadiness)
-    : null;
   const canApproveGates = approvalPolicy?.canApproveGates === true;
   const {
     effectivePhase: effectiveCurrentPhase,
@@ -544,8 +652,8 @@ export default async function StrategicMovePhaseWorkspacePage({
       loadedMove,
       readGate
         ? {
-            getPhaseSnapshots,
-            loadApprovedMoveEvidenceSnapshot,
+            getPhaseSnapshots: loadSnapshots,
+            loadApprovedMoveEvidenceSnapshot: loadEvidenceSnapshot,
             evaluateGate: readGate,
           }
         : undefined,
@@ -634,12 +742,6 @@ export default async function StrategicMovePhaseWorkspacePage({
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_charter_standing_after_discover_v1",
   );
-  // The Move's assumptions register. Resolved here, never in the client: off
-  // ⇒ the panel is not mounted and the charter bridge never runs.
-  const assumptionRegisterEnabled = isFeatureEnabled(
-    { clientKey: ctx.clientKey, clientId: ctx.clientId },
-    ASSUMPTION_REGISTER_FLAG,
-  );
   // Composition-only polish for the redesigned capture. It has nothing to show
   // unless the redesigned capture is what renders, so it is resolved as the
   // conjunction rather than left to the client to remember.
@@ -703,7 +805,7 @@ export default async function StrategicMovePhaseWorkspacePage({
     );
   const p2GateSnapshotsPromise = timed("catchUpGate", () =>
     catchUpEnabled && (effectiveMove.currentPhase ?? 0) > 2
-      ? getPhaseSnapshots(ctx, moveId, 2).catch(() => null)
+      ? loadSnapshots(ctx, moveId, 2).catch(() => null)
       : Promise.resolve(null),
   );
   const includeGateDocuments = needsGateDocumentRead({
@@ -714,24 +816,25 @@ export default async function StrategicMovePhaseWorkspacePage({
   const sharedRegisterReadEnabled =
     assumptionRegisterEnabled && flaggedStepView;
   const registerRowsPromise = sharedRegisterReadEnabled
-    ? approvalPolicy === null
-      ? Promise.resolve({ status: "unavailable" as const, rows: null })
-      : timed("registerVisibility", async () => {
-          try {
-            return {
-              status: "ok" as const,
-              rows: await listAssumptions(ctx, moveId),
-            };
-          } catch {
-            return { status: "unavailable" as const, rows: null };
-          }
-        })
+    ? (registerRowsPrefetch ??
+      (approvalPolicy === null
+        ? Promise.resolve({ status: "unavailable" as const, rows: null })
+        : timed("registerVisibility", async () => {
+            try {
+              return {
+                status: "ok" as const,
+                rows: await listAssumptions(ctx, moveId),
+              };
+            } catch {
+              return { status: "unavailable" as const, rows: null };
+            }
+          })))
     : Promise.resolve(null);
   const approvedEvidencePromise = timed("approvedEvidence", () =>
     Promise.all([
-      listApprovedPhaseEvidence(ctx, moveId, 2),
+      loadPhaseEvidence(ctx, moveId, 2),
       parsedPhase === 1
-        ? listApprovedPhaseEvidence(ctx, moveId, 1)
+        ? loadPhaseEvidence(ctx, moveId, 1)
         : Promise.resolve([]),
     ]),
   );
@@ -750,12 +853,14 @@ export default async function StrategicMovePhaseWorkspacePage({
         )
       : Promise.resolve([] as DeliverableContentSignal[]),
   );
-  const approvalArtifactsPromise = timed("gateReadback", async () =>
-    listMoveArtifacts(await readTenancy(), moveId, {
-      family: "approval_artifact",
-      currentOnly: true,
-    }),
-  );
+  const approvalArtifactsPromise =
+    approvalArtifactsPrefetch ??
+    timed("gateReadback", async () =>
+      listMoveArtifacts(await readTenancy(), moveId, {
+        family: "approval_artifact",
+        currentOnly: true,
+      }),
+    );
   const readinessWorkbookPhase = Math.min(
     parsedPhase,
     effectiveMove.currentPhase ?? 0,
@@ -784,7 +889,11 @@ export default async function StrategicMovePhaseWorkspacePage({
     },
   );
   const discoveryReadinessPromise = timed("evidenceReadiness", async () =>
-    loadDiscoveryEvidenceReadiness(await readTenancy(), moveId),
+    loadDiscoveryEvidenceReadiness(
+      await readTenancy(),
+      moveId,
+      readSet ? { loadProgram } : undefined,
+    ),
   );
   const p0EvidencePromise = timed("p0Evidence", async () =>
     parsedPhase === 0
@@ -1463,6 +1572,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
         phaseStepPagesEnabled={phaseStepPagesEnabled}
+        p5TowerHandoffEnabled={isFeatureEnabled(ctx, "moves_p5_tower_handoff_v1")}
         catchUpEnabled={catchUpEnabled && !captureModulesUnavailable}
         p2RootCausesForCatchUp={captureValue(2, "gaps_root_causes")}
         p2GateRecordConfirmed={p2GateRecordConfirmed}

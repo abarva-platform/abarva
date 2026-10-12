@@ -16,7 +16,7 @@ describe("trajectory period and value boundaries", () => {
   it("does not subtract a YTD claimable amount from an annual plan", () => {
     expect(SOURCE).not.toMatch(/promisedUsd\s*-\s*claimableUsd/);
     expect(SOURCE).not.toMatch(/<span>Not yet proven<\/span>/);
-    expect(SOURCE).toMatch(/Value records with measured results/);
+    expect(SOURCE).toMatch(/Benefit claims with measured results/);
   });
 
   it("does not substitute finance run-rate or cash for recorded P&L", () => {

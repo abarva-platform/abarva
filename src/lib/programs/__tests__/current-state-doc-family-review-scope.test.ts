@@ -2,6 +2,8 @@ const mockReviewRows: Array<Record<string, unknown>> = [];
 const mockEvidenceRows: Array<Record<string, unknown>> = [];
 const mockFilters: Array<{ table: string; column: string; value: unknown }> =
   [];
+const mockReads: string[] = [];
+let mockFailedTable: string | null = null;
 
 jest.mock("server-only", () => ({}));
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -34,8 +36,18 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
           return query;
         },
         then: (
-          resolve: (result: { data: unknown; error: null }) => unknown,
-        ) => Promise.resolve({ data: rowsFor(), error: null }).then(resolve),
+          resolve: (result: {
+            data: unknown;
+            error: { message: string } | null;
+          }) => unknown,
+        ) => {
+          mockReads.push(table);
+          return Promise.resolve(
+            mockFailedTable === table
+              ? { data: null, error: { message: "read unavailable" } }
+              : { data: rowsFor(), error: null },
+          ).then(resolve);
+        },
       };
       return query;
     },
@@ -47,7 +59,10 @@ import {
   appClientKeyForTenant,
   canonicalTenantKey,
 } from "@/lib/tenant/aliases";
-import { resolveDocFamilyReviews } from "../current-state-doc-ingest";
+import {
+  resolveDocFamilyReviews,
+  resolveDocFamilyReviewsBatch,
+} from "../current-state-doc-ingest";
 import {
   DECIDED_EVIDENCE_REVIEW_DECISIONS,
   describeRejectedEvidenceReview,
@@ -98,9 +113,101 @@ beforeEach(() => {
   mockReviewRows.length = 0;
   mockEvidenceRows.length = 0;
   mockFilters.length = 0;
+  mockReads.length = 0;
+  mockFailedTable = null;
 });
 
 describe("resolveDocFamilyReviews — tenant read scope", () => {
+  it("batches families with the same decisions and extraction as their individual reads", async () => {
+    const other = "stakeholder_map";
+    mockReviewRows.push(review(CANONICAL_KEY, "approved"), {
+      ...review(APP_KEY, "pending"),
+      family_key: other,
+    });
+    mockEvidenceRows.push(
+      evidence(CANONICAL_KEY, "approved"),
+      evidence(APP_KEY, "pending"),
+    );
+    const ctx = ctxFor(APP_KEY);
+    const keys = ["data_governance_ownership", other, "value_kpi_baseline"];
+    const baseline = await Promise.all(
+      keys.map((key) => resolveDocFamilyReviews(ctx, "move-a", key)),
+    );
+    mockReads.length = 0;
+    const states = await resolveDocFamilyReviewsBatch(ctx, "move-a", [
+      ...keys,
+      other,
+    ]);
+    expect(keys.map((key) => states.get(key))).toEqual(baseline);
+    expect(mockReads).toEqual([
+      "program_evidence_reviews",
+      "program_evidence_items",
+    ]);
+    expect(states.size).toBe(3);
+  });
+
+  it("fences a batch from other tenants, Moves and undeclared families", async () => {
+    mockReviewRows.push(
+      review(CANONICAL_KEY, "approved"),
+      review(OTHER_TENANT_KEY, "approved"),
+      { ...review(APP_KEY, "pending"), program_id: "move-b" },
+      { ...review(APP_KEY, "pending"), family_key: "another_family" },
+    );
+    mockEvidenceRows.push(
+      evidence(CANONICAL_KEY, "approved"),
+      evidence(OTHER_TENANT_KEY, "approved"),
+    );
+    const states = await resolveDocFamilyReviewsBatch(
+      ctxFor(APP_KEY),
+      "move-a",
+      ["data_governance_ownership"],
+    );
+    expect(states.get("data_governance_ownership")?.approved).toBe(1);
+    expect(states.get("data_governance_ownership")?.pending).toBe(0);
+    expect(
+      mockFilters.filter((filter) => filter.column === "tenant_key"),
+    ).toHaveLength(2);
+    expect(
+      mockFilters.filter((filter) => filter.column === "program_id"),
+    ).toEqual([
+      {
+        table: "program_evidence_reviews",
+        column: "program_id",
+        value: "move-a",
+      },
+      {
+        table: "program_evidence_items",
+        column: "program_id",
+        value: "move-a",
+      },
+    ]);
+  });
+
+  it.each(["program_evidence_reviews", "program_evidence_items"])(
+    "rejects an unavailable %s batch rather than claiming no evidence",
+    async (table) => {
+      mockReviewRows.push(review(APP_KEY, "approved"));
+      mockEvidenceRows.push(evidence(APP_KEY, "approved"));
+      mockFailedTable = table;
+      await expect(
+        resolveDocFamilyReviewsBatch(ctxFor(APP_KEY), "move-a", [
+          "data_governance_ownership",
+        ]),
+      ).rejects.toThrow("unavailable");
+      expect(mockReads.filter((name) => name === table)).toHaveLength(1);
+    },
+  );
+
+  it("does not read a batch without its tenant, Move or requested families", async () => {
+    await resolveDocFamilyReviewsBatch(ctxFor(""), "move-a", [
+      "data_governance_ownership",
+    ]);
+    await resolveDocFamilyReviewsBatch(ctxFor(APP_KEY), "", [
+      "data_governance_ownership",
+    ]);
+    await resolveDocFamilyReviewsBatch(ctxFor(APP_KEY), "move-a", []);
+    expect(mockReads).toHaveLength(0);
+  });
   it("sees an approved row stored under the tenant's canonical substrate key", async () => {
     // This is the P2 gate's reader. The product writes the app client key; a
     // data-plane load writes the canonical substrate key. Scoped to the app
@@ -193,7 +300,9 @@ describe("resolveDocFamilyReviews — tenant read scope", () => {
     );
     expect(tenantFilters).toHaveLength(2);
     for (const filter of tenantFilters) {
-      expect(filter.value).toEqual(expect.arrayContaining([APP_KEY, CANONICAL_KEY]));
+      expect(filter.value).toEqual(
+        expect.arrayContaining([APP_KEY, CANONICAL_KEY]),
+      );
       expect(filter.value).not.toEqual(
         expect.arrayContaining([OTHER_TENANT_KEY]),
       );

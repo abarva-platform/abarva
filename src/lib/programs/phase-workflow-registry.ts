@@ -230,6 +230,7 @@ const P5_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Tower measurement",
     depth: allFull,
     sectionKeys: same(["value_proof_rules", "governance_cadence"]),
+    recordKeys: same(["p5_measurement_handoff"]),
   },
   {
     id: "P5.3",
@@ -541,6 +542,15 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
       label: "Reviewed milestone and dependency plan",
       description:
         "Milestone IDs, workstreams, owner roles, planned windows, timing sources and explicitly reviewed dependencies. This planning record does not approve a gate or sign a document.",
+    },
+  ],
+  5: [
+    {
+      key: "p5_measurement_handoff",
+      stepId: "P5.2",
+      label: "Planned Tower measurement handoff",
+      description:
+        "Receiving participants, source, comparator, measurement method, cadence and exclusions for each approved P4 lever. Planned figures come from the deterministic case.",
     },
   ],
 };

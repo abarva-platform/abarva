@@ -7,7 +7,11 @@ import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/desig
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 import { FoundationsPanel } from "../views/FoundationsPanel";
+import { AiInitiativeDrawer } from "../drawers/AiInitiativeDrawer";
+import { CommandCenterView } from "../views/CommandCenterView";
 import { InitiativesTablePanel } from "../views/InitiativesTablePanel";
+import { QueueOwnerPanel } from "../views/QueueOwnerPanel";
+import { VerdictPanel } from "../views/VerdictPanel";
 import { buildBudgetDomainRows } from "../views/BudgetDomainPanel";
 import { BudgetShapePanel } from "../views/BudgetShapePanel";
 import { buildToolVendorRows } from "../views/ToolsVendorPanel";
@@ -24,10 +28,10 @@ function viewWith(items: TowerAiView[]): TowerCommandCenterView {
 }
 
 describe("Tower story denominators", () => {
-  it("uses only recognized case and rollout source-template markers", () => {
-    const cases = item({ id: "CASE", name: "A case", sourceFile: "22_ai_business_cases.csv" });
-    const tool = item({ id: "TOOL", name: "A rollout", sourceFile: "23_ai_tool_rollout.csv" });
-    const unknown = item({ id: "UNKNOWN", name: "Unknown type", sourceFile: null, rolloutGoal: "Pilot", financeStatus: "sponsor_claimed" });
+  it("uses declared canonical population, independent of source filenames", () => {
+    const cases = item({ id: "CASE", name: "A case", populationKind: "ai_case", sourceFile: null });
+    const tool = item({ id: "TOOL", name: "A rollout", populationKind: "tool_rollout", sourceFile: null });
+    const unknown = item({ id: "UNKNOWN", name: "Unknown type", populationKind: "unknown", sourceFile: "22_ai_business_cases.csv", rolloutGoal: "Pilot", financeStatus: "sponsor_claimed" });
     expect([isBusinessCase(cases), isToolRollout(cases)]).toEqual([true, false]);
     expect([isBusinessCase(tool), isToolRollout(tool)]).toEqual([false, true]);
     expect([isBusinessCase(unknown), isToolRollout(unknown)]).toEqual([false, false]);
@@ -40,12 +44,62 @@ describe("Tower story denominators", () => {
   });
 
   it("counts vendor exposure only among current tool rollout rows", () => {
-    const cases = item({ sourceFile: "22_ai_business_cases.csv", vendor: "Vendor A", usageHeadline: "Usage", controlBlocker: "DLP" });
-    const tool = item({ sourceFile: "23_ai_tool_rollout.csv", vendor: "Vendor B", usageHeadline: "Usage", controlBlocker: "DLP" });
+    const cases = item({ populationKind: "ai_case", vendor: "Vendor A", usageHeadline: "Usage", controlBlocker: "DLP" });
+    const tool = item({ populationKind: "tool_rollout", vendor: "Vendor B", usageHeadline: "Usage", controlBlocker: "DLP" });
     expect(buildToolVendorRows(viewWith([cases, tool]))).toEqual(expect.arrayContaining([
       expect.objectContaining({ vendor: "Vendor B", toolCount: 1, blockerCount: 1 }),
     ]));
     expect(buildToolVendorRows(viewWith([cases, tool]))).toHaveLength(1);
+  });
+
+  it("keeps cases in owner and Finance views when assignments and status are absent", () => {
+    const caseRow = item({ populationKind: "ai_case", sponsorRole: null, financeStatus: null });
+    const observation = item({ populationKind: "usage_observation", sponsorRole: null, financeStatus: null });
+    const view = { ...viewWith([caseRow]), usageObservations: [observation] };
+    render(<QueueOwnerPanel view={view} />);
+    expect(document.body.textContent).toContain("1 of 1 cases have no sponsor loaded");
+    render(<VerdictPanel view={view} />);
+    expect(document.body.textContent).toContain("Where 1 AI use case stands");
+    expect(document.body.textContent).toContain("1 of 1 AI use case has no Finance status loaded");
+    expect(document.body.textContent).not.toContain("Where 0 AI use cases stand");
+  });
+
+  it("shows an unscored case as needing evidence in its detail", () => {
+    render(<AiInitiativeDrawer item={item({
+      populationKind: "ai_case",
+      valueScore: 0,
+      valueScoreLoaded: false,
+      readinessScore: 0,
+      readinessScoreLoaded: false,
+      posture: "Needs evidence",
+    })} onClose={() => {}} />);
+    expect(document.body.textContent).toContain("Needs evidence");
+    expect(document.body.textContent).toContain("Not scored");
+    expect(document.body.textContent).not.toContain("0/100");
+  });
+
+  it("keeps the executive asset count separate from programs and usage observations", () => {
+    const cases = Array.from({ length: 18 }, (_, index) => item({
+      id: `case-${index}`,
+      populationKind: "ai_case",
+    }));
+    const observations = Array.from({ length: 18 }, (_, index) => item({
+      id: `observation-${index}`,
+      populationKind: "usage_observation",
+    }));
+    const sample = base();
+    const view = {
+      ...sample,
+      allInitiatives: cases,
+      usageObservations: observations,
+      programs: Array.from({ length: 38 }, (_, index) => ({ ...sample.programs[0], id: `program-${index}` })),
+      summary: { ...sample.summary, aiInitiativeCount: 18 },
+    };
+    render(<CommandCenterView view={view} onOpenGap={() => {}} onGoToFunnel={() => {}} onGoToAi={() => {}} onGoToActions={() => {}} />);
+    expect(document.body.textContent).toContain("18 AI use cases + 0 tool rollouts");
+    expect(document.body.textContent).toContain("18 separate adoption-source rows");
+    expect(document.body.textContent).not.toContain("36 assets");
+    expect(document.body.textContent).not.toContain("38 AI business cases");
   });
 
   it("does not turn a Finance validation status into a zero dollar amount", () => {

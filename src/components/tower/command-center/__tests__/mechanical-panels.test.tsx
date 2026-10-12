@@ -88,6 +88,7 @@ function initiative(overrides: Partial<TowerAiView> = {}): TowerAiView {
     usageBars: [],
     note: null,
     sourceFile: "22_ai_business_cases.csv",
+    populationKind: "ai_case",
     ...overrides,
   };
 }
@@ -361,6 +362,7 @@ describe("mechanical Tower Command Center panels", () => {
               id: "TOOL-REAL",
               name: "Actual tool rollout",
               sourceFile: "23_ai_tool_rollout.csv",
+              populationKind: "tool_rollout",
               usageHeadline: "Usage evidence exists",
               usageBars: [
                 { label: "Adoption", valueText: "55%", pct: 55, tone: "amber" },
@@ -389,6 +391,7 @@ describe("mechanical Tower Command Center panels", () => {
               id: "TOOL-SOX",
               name: "Power BI Copilot",
               sourceFile: "23_ai_tool_rollout.csv",
+              populationKind: "tool_rollout",
               usageHeadline: "Usage evidence exists",
               usageBars: [
                 { label: "Adoption", valueText: "30%", pct: 30, tone: "amber" },
@@ -455,6 +458,7 @@ describe("mechanical Tower Command Center panels", () => {
             initiative({
               id: "TOOL-COST",
               sourceFile: "23_ai_tool_rollout.csv",
+              populationKind: "tool_rollout",
               category: "Platform foundation",
               aiAmountBasis: "annualized_tool_cost",
               aiSpendUsd: 10 * M,
@@ -533,6 +537,7 @@ describe("mechanical Tower Command Center panels", () => {
               id: "TOOL-HEADLINE",
               name: "Coder rollout",
               sourceFile: "23_ai_tool_rollout.csv",
+              populationKind: "tool_rollout",
               usageHeadline: "Usage evidence exists",
               usageBars: [],
               readinessScore: 88,
@@ -573,6 +578,7 @@ describe("mechanical Tower Command Center panels", () => {
               id: "TOOL-REAL",
               name: "ServiceNow rollout",
               sourceFile: "23_ai_tool_rollout.csv",
+              populationKind: "tool_rollout",
               usageHeadline: "Active usage captured",
               usageBars: [
                 { label: "Active users", valueText: "55%", pct: 55, tone: "amber" },
@@ -675,9 +681,9 @@ describe("mechanical Tower Command Center panels", () => {
     );
 
     const text = document.body.textContent ?? "";
-    expect(text).toContain("Value claims not loaded");
+    expect(text).toContain("Benefit claims not loaded");
     expect(text).toContain("Usage support not loaded");
-    expect(text).toContain("No action campaigns are loaded for this review.");
+    expect(text).toContain("No source recommendations or evidence-gap follow-ups are loaded for this review.");
     expect(text).toContain("No evidence-owner queue rows are loaded. An empty queue does not mean every claim has proof.");
     expect(text).not.toContain("0 of 0");
     expect(text).not.toContain("Usage telemetry connection");

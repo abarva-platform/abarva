@@ -117,7 +117,7 @@ function surfaceSuggestions(
   subTab: string | null | undefined,
 ): string[] {
   const rollouts = view.allInitiatives.filter(
-    (item) => item.sourceFile === "23_ai_tool_rollout.csv",
+    (item) => item.populationKind === "tool_rollout",
   );
   const belowTarget = rollouts.filter((item) => {
     const adoption = item.usageBars.find((bar) => bar.label === "Adoption");
@@ -131,15 +131,21 @@ function surfaceSuggestions(
     (item) => item.controlBlocker !== null,
   ).length;
   const cases = view.allInitiatives.filter(
-    (item) => item.sourceFile !== "23_ai_tool_rollout.csv",
+    (item) => item.populationKind === "ai_case",
   );
   const unvalidated = cases.filter(
-    (item) => item.financeStatus !== "finance_validated_actual",
+    (item) => item.financeStatus !== null && item.financeStatus !== "finance_validated_actual",
   ).length;
+  const statusMissing = cases.filter((item) => item.financeStatus === null).length;
   const noBenefit = cases.filter((item) => !item.promisedBenefitLoaded).length;
 
   if (tab === "tools" && subTab === "vendor") {
-    return [
+    return rollouts.length === 0 ? [
+      view.usageObservations.length > 0
+        ? `Why do ${view.usageObservations.length} use-case usage observations not establish vendor exposure?`
+        : "What vendor usage evidence is loaded?",
+      "What source evidence is needed to identify tool rollouts and vendors?",
+    ] : [
       "Which vendors carry the most active users, and which of them are blocked?",
       "Where is tool spend concentrated across vendors?",
     ];
@@ -151,6 +157,12 @@ function surfaceSuggestions(
     ];
   }
   if (tab === "tools") {
+    if (rollouts.length === 0) return [
+      view.usageObservations.length > 0
+        ? `What do the ${view.usageObservations.length} use-case usage observations show?`
+        : "What usage evidence is loaded for AI use cases?",
+      "What is missing before these can be assessed as tool rollouts?",
+    ];
     return [
       belowTarget > 0
         ? `Which of the ${belowTarget} rollouts below target should move first?`
@@ -170,7 +182,9 @@ function surfaceSuggestions(
   if (tab === "initiatives") {
     return [
       "Which constraint blocks the most value?",
-      unvalidated > 0
+      statusMissing > 0
+        ? `Which ${statusMissing} AI use cases have no Finance status loaded?`
+        : unvalidated > 0
         ? `What would it take to validate the ${unvalidated} cases that are not yet finance-validated?`
         : "What is the finance status spread across the cases?",
       noBenefit > 0

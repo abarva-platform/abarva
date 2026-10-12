@@ -825,6 +825,24 @@ describe("StrategicMoveOriginateClient", () => {
       expect(container.querySelector("#orig-canvas")).not.toHaveClass("intakeResponsive");
     });
 
+    it.each([true, false])("preserves the Foundation inset editor and its flag-off markup (extended %s)", (enabled) => {
+      const { container } = render(<StrategicMoveOriginateClient tenantName="Tenant A"
+        extendedIntakeFieldsEnabled={enabled} />);
+      selectP0Tab(9);
+      const input = container.querySelector("#orig-canvas-brief-section-10-input") as HTMLTextAreaElement;
+      expect(input).not.toBeNull();
+      if (enabled) {
+        expect(screen.getByLabelText("Foundation readiness, constraints, and dependencies")).toBe(input);
+      } else {
+        expect(input).not.toHaveAttribute("aria-label");
+      }
+      fireEvent.change(input, { target: { value: "Access needs confirmation" } });
+      fireEvent.click(screen.getByRole("button", { name: "Submit readiness" }));
+      selectP0Tab(10);
+      expect(container.querySelector("#orig-canvas-brief-section-10-input")).toHaveValue("Access needs confirmation");
+      expect(screen.getAllByText(enabled ? "1 of 17 answers" : "1 of 10 answers")[0]).toBeInTheDocument();
+    });
+
     it("renders the universal Moves shell structure for origination", () => {
       const { container } = render(
         <StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />,

@@ -1,6 +1,11 @@
 const mockCanReadProgram = jest.fn();
 const mockAzureSelect = jest.fn();
 const mockAzureMaybeSingle = jest.fn();
+const mockBuildStrategicMove = jest.fn();
+
+jest.mock('../transformers', () => ({
+  buildStrategicMove: (...args: unknown[]) => mockBuildStrategicMove(...args),
+}));
 
 jest.mock('@/lib/auth/program-access-policy', () => ({
   canReadProgram: (...args: unknown[]) => mockCanReadProgram(...args),
@@ -14,6 +19,9 @@ jest.mock('@/lib/data-plane/azureRead', () => ({
 }));
 
 import { getEngagementWithPhaseData } from '../db-phase-queries';
+import { getStrategicMoveById, getProgramById, getModuleState, getPhaseSnapshots } from '../queries';
+import { createPhasePageReadSet } from '../phase-page-gate-reads';
+import type { TenancyCtx, ProgramCore } from '../types.db';
 
 describe('getEngagementWithPhaseData', () => {
   beforeEach(() => {
@@ -88,5 +96,82 @@ describe('getEngagementWithPhaseData', () => {
       { clientId: 'client-1', userId: 'user-1' },
     )).resolves.toBeNull();
     expect(mockAzureMaybeSingle).not.toHaveBeenCalled();
+  });
+});
+
+describe("getStrategicMoveById with a request-scoped canonical loader", () => {
+  const ctx: TenancyCtx = { clientId: "client-1", userId: "user-1" };
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockCanReadProgram.mockResolvedValue(false);
+    mockBuildStrategicMove.mockResolvedValue({ id: "move-1" });
+  });
+
+  it("reuses the loaded program and passes shared snapshots to its projection", async () => {
+    const program = { id: "move-1", clientId: "client-1" } as ProgramCore;
+    const loadProgram = jest.fn(async () => program);
+    const loadPhaseSnapshots = jest.fn(async () => []);
+    const options = {
+      evaluateGateCriteria: false,
+      loadProgram,
+      loadPhaseSnapshots,
+    };
+    expect(await getStrategicMoveById(ctx, "move-1", options)).toEqual({
+      id: "move-1",
+    });
+    expect(loadProgram).toHaveBeenCalledTimes(1);
+    expect(loadProgram).toHaveBeenCalledWith(ctx, "move-1", options);
+    expect(mockBuildStrategicMove).toHaveBeenCalledWith(ctx, program, options);
+    expect(mockCanReadProgram).not.toHaveBeenCalled();
+  });
+
+  it("does not project an inaccessible program or retry an unavailable shared read", async () => {
+    const absent = jest.fn(async () => null);
+    expect(
+      await getStrategicMoveById(ctx, "move-1", { loadProgram: absent }),
+    ).toBeNull();
+    const error = new Error("Move read unavailable");
+    const failed = jest.fn(async () => {
+      throw error;
+    });
+    await expect(
+      getStrategicMoveById(ctx, "move-1", { loadProgram: failed }),
+    ).rejects.toBe(error);
+    expect(failed).toHaveBeenCalledTimes(1);
+    expect(mockBuildStrategicMove).not.toHaveBeenCalled();
+  });
+
+  it("keeps the canonical RBAC check on the default path", async () => {
+    expect(await getStrategicMoveById(ctx, "move-1")).toBeNull();
+    expect(mockCanReadProgram).toHaveBeenCalledWith(ctx, "move-1");
+    expect(mockBuildStrategicMove).not.toHaveBeenCalled();
+  });
+
+  it("shares one canonical denial across program, module and snapshot readers", async () => {
+    const readSet = createPhasePageReadSet(ctx, 'move-1');
+    const results = await Promise.allSettled([
+      getProgramById(ctx, 'move-1', { readSet }),
+      getModuleState(ctx, 'move-1', { readSet }),
+      getPhaseSnapshots(ctx, 'move-1', undefined, { readSet }),
+    ]);
+    expect(mockCanReadProgram).toHaveBeenCalledTimes(1);
+    expect(results[0]).toEqual({ status: 'fulfilled', value: null });
+    for (const result of results.slice(1)) {
+      expect(result.status).toBe('rejected');
+      if (result.status === 'rejected') expect(String(result.reason)).toContain('not accessible');
+    }
+  });
+
+  it("propagates the same failed access read without treating it as a denial or retrying", async () => {
+    const error = new Error('Access read unavailable');
+    mockCanReadProgram.mockRejectedValue(error);
+    const readSet = createPhasePageReadSet(ctx, 'move-1');
+    const results = await Promise.allSettled([
+      getProgramById(ctx, 'move-1', { readSet }),
+      getModuleState(ctx, 'move-1', { readSet }),
+      getPhaseSnapshots(ctx, 'move-1', undefined, { readSet }),
+    ]);
+    expect(mockCanReadProgram).toHaveBeenCalledTimes(1);
+    expect(results).toEqual(Array.from({length: 3}, () => ({status: 'rejected', reason: error})));
   });
 });

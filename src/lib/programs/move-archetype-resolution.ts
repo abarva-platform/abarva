@@ -89,8 +89,9 @@ function moduleText(value: unknown): string | null {
 async function phaseCaptureText(
   ctx: TenancyCtx,
   programId: string,
+  loadModules: typeof getModuleState,
 ): Promise<string> {
-  const modules = await getModuleState(ctx, programId);
+  const modules = await loadModules(ctx, programId);
   const parts: string[] = [];
 
   for (const phase of [0, 1]) {
@@ -109,6 +110,7 @@ export async function resolveMoveArchetypeForProgram(
   ctx: TenancyCtx,
   programId: string,
   loadedProgram?: ProgramCore | null,
+  loadModules: typeof getModuleState = getModuleState,
 ): Promise<StrategicMoveArchetype> {
   const program = loadedProgram ?? (await getProgramById(ctx, programId));
   if (!program) return resolveProgramArchetype({});
@@ -116,7 +118,7 @@ export async function resolveMoveArchetypeForProgram(
   const charter = program.charter ?? null;
   let capture = "";
   try {
-    capture = await phaseCaptureText(ctx, programId);
+    capture = await phaseCaptureText(ctx, programId, loadModules);
   } catch {
     capture = "";
   }
