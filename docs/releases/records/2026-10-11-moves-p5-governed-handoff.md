@@ -24,7 +24,7 @@ P5 completion requires current publication readback when the new flag is enabled
 
 - Release lane: `global-control-lane`, restricted by a tenant feature flag.
 - Layers 1 and 2: no intake, template, source adapter or shared dataset rebuild.
-- Layer 3: one declared measurement step record and governed metadata on the existing outcome ledger; no schema migration. Planned figures come from the current deterministic approved P4 case. The ledger stores unknown baseline and realized amounts as null.
+- Layer 3: one declared measurement step record, immutable contract-plan and approval receipts on existing document records, and governed metadata on the existing outcome ledger; no schema migration. Planned figures come from the current deterministic approved P4 case. The ledger stores unknown baseline and realized amounts as null.
 - Layer 4: P5 measurement acceptance, publication-aware completion, exact-Move Tower readback and trace status.
 - Data-plane transaction seam: an opt-in `includeReads` option keeps policy, evidence and capture basis reads on the existing serializable publication transaction. Default callers keep their current independent read path.
 
@@ -52,11 +52,12 @@ P5 completion requires current publication readback when the new flag is enabled
 
 - PASS: baseline identity regressions fail before the fix and pass afterward; removing the identity key kills both regressions.
 - PASS: four isolated stale-plan regressions fail before the currency check and pass afterward. Source, comparator, participant and cadence edits retain the signed version unchanged and refuse review/acceptance.
-- PASS: signed-plan repair run, 1046 tests across 23 suites and 54 of 55 mutation probes killed. The redundant passive-clear survivor remains protected by the render-time Move guard. This is historical local proof before the final sign-off version fence; actual saved files remain pending.
+- PASS: current-main reconciliation followed by 1208 tests across 31 affected suites, including the signed-plan checks, durable approval receipt, actual mutation interleavings, shared persistence and inherited speed/deck seams. This is local proof only; actual saved files remain pending.
 - PASS: both actual-mutation version-race regressions fail before the guard and pass afterward. The route-to-real-mutation fixture covers both interleavings, changed content, changed saved plan, changed plan receipt and unavailable reads. The final focused handoff/sign-off run passes 128 tests across three suites without database or runtime writes, including the matching durable approval receipt requirement.
-- PENDING: current full combined suite, final invariant mutation probes and complete local QA after the reviewed-version fence and current-main reconciliation.
+- PASS: 61 of 62 deliberate mutation probes are killed on the reconciled code. The one redundant passive-clear survivor is independently covered by the render-time Move guard, whose removal is killed before passive effects run. All mutant source edits run in a separate temporary copy.
+- PASS: release check and pinned read-only peer review, including ten independent actual-mutation scenarios with an in-memory adapter. No blocking findings remain in the reviewed plan/version/receipt fence. This does not establish independent human approval or runtime acceptance.
 - PASS: real component renders at 1440 and 390 pixels, light and dark, with saved control selections and no horizontal overflow. Local synthetic fixtures do not establish runtime acceptance.
-- PENDING: final changed-file lint, orphan/reachability checks, coverage and tenancy censuses, manual/check, all six context/corpus validators, Node 24 typecheck and release check. There is still exactly one new persistent test file.
+- PASS: Node 24 typecheck including tests, changed-file lint (41 source files), no new library orphans, route/export reachability, manual/check, regenerated coverage/tenancy censuses and all six context/corpus validators. A fresh exported-tree census verifies actual main at 2833; this candidate genuinely regenerates to 2834 for exactly one new persistent test file.
 - PENDING: controlled PR, exact-head CI, fetched-ref collision scan, merge, repo-owned deployment and signed-in acceptance.
 
 ## Rollout Plan
