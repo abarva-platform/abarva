@@ -916,13 +916,19 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
 test("fetches both read-only reference-deck editions from the signed-in Move", async ({ page }, testInfo) => {
   test.setTimeout(15 * 60_000);
   expect(BASE_URL).toBe("https://app.abarva.ai");
-  expect(MOVE_ID).toBe("1557f032-5a5c-4475-abe5-b1a841576649");
+  expect(MOVE_ID).toMatch(/^[0-9a-f-]{36}$/i);
   expect(process.env.E2E_MOVES_CLIENT_KEY).toBe("meridian");
   expect(CLERK_SECRET_KEY).toMatch(/^sk_live_/);
   await withClerkAuth(page, {
     activeClient: process.env.E2E_MOVES_CLIENT_KEY,
     email: process.env.E2E_MOVES_OPERATOR_EMAIL,
   });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const lookup = await movesApi(page, `/api/v1/programs/${MOVE_ID}`);
+  expect(lookup.status, "The configured Move must be readable for this operator").toBe(200);
+  const program = lookup.body.program as { id?: string; clientName?: string } | undefined;
+  expect(program?.id).toBe(MOVE_ID);
+  expect(program?.clientName).toBe(EXPECTED_TENANT_NAME);
   const proof: Array<{ edition: string; format: string; status: number; score: number | null; titleFigureCount: number | null; wordsStatus: string | null; wordsReason: string | null; wordsRule: string | null; wordsSlide: number | null; fallbackCount: number | null; requestId: string | null; bytes: number; file: string | null; figureHash: string | null; errorCode?: string; findingCodes?: string[] }> = [];
   const failures: string[] = [];
   const recordTransportFailure = async (edition: string, format: string, error: unknown) => {
@@ -992,6 +998,11 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
       expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
       expect(Number.isInteger(fallbackCount) && fallbackCount >= 0).toBe(true);
       if (wordsStatus === "unavailable") expect(wordsReason).toMatch(/^(preflight_denied|model_error|parse_failed|slide_rejected)$/);
+      if (score < 90) failures.push(`${edition} ${format}: fidelity ${score} is below 90`);
+      if (wordsStatus !== "ok" || fallbackCount !== 0)
+        failures.push(`${edition} ${format}: drafted words were unavailable on ${fallbackCount} slide(s)`);
+      if (edition === "investment" && titleFigureCount === 0)
+        failures.push(`${edition} ${format}: no sourced figure appears in an action title`);
       const figureHash = response.headers()["x-abarva-deck-figure-hash"];
       expect(figureHash).toMatch(/^[0-9a-f]{64}$/);
       if (editionHash) expect(figureHash).toBe(editionHash);
