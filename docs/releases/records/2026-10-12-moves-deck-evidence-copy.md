@@ -57,22 +57,28 @@ readable type and word-boundary summaries, with complete source detail in notes.
 
 - Focused wording, edition, renderer, PDF/native inspection, value-read,
   preview-route and approved-estimate tests: pass; 112 tests across nine suites on Node.js 24.
-- Affected mock-isolated input scanner/upload tests after current-main
-  reconciliation: pass; 26 tests across two existing suites.
-- Planted-defect checks: pass; 20 defects detected and restored, covering title
+- Affected mock-isolated/static access, program queries/transformers, capture,
+  stored gate/readiness and artifact readers, Azure read context, governance,
+  clause basis and input scanner/upload tests after current-main reconciliation:
+  pass; 485 tests across 17 existing suites, including the 26 privacy cases.
+- Planted-defect checks on the unchanged product/test source: pass; 20 defects
+  previously detected and restored, covering title
   rules/retry controls, evidence/count/redaction gates, model prompt privacy,
   physical checks, architecture notes/type/width and failure markers.
-- Local synthetic PowerPoint and independently generated PDF inspection: pass;
+- Previously inspected local synthetic PowerPoint and independent PDF output: pass;
   readable architecture and long-table layouts reviewed as images. Eleven PDF
   variants have the expected 11/22-page editions and no extraction findings or
-  words outside the page boundary. These are isolated synthetic fixtures.
+  words outside the page boundary. All 15 repair product/test files are unchanged
+  through the latest main reconciliation. These are isolated synthetic fixtures.
 - Node.js 24 typecheck and changed-file lint: pass.
 - Manual, test coverage and tenancy censuses genuinely regenerated: pass.
-  After merging main `55ee865cd0768b00446a04b1300f8d9416691de7`,
-  the natural covered-test-file count is 2854, equal to that main. This change
+  After merging main `847782ee6e36cc7ff48c23e0cca8fd91170c0d0b`,
+  the natural covered-test-file count is 2856, equal to that main. This change
   extends existing covered suites and adds no covered test file.
 - Library orphan, route/export reachability and manual/census/fence checks:
-  pass. All 11 release gates passed after current-main reconciliation;
+  pass. All six context/corpus validators pass after the inherited governance
+  and manifest changes. Shared signed-in walk discovery passes locally only.
+  All 11 release gates passed after current-main reconciliation;
   exact-head CI and fetched-ref collision clearance remain required before landing.
 - Deployment, authenticated populated-case output and client visual acceptance:
   pending. Local fixtures, mock approvals and HTTP success are not acceptance.
