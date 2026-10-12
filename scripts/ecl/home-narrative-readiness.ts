@@ -69,21 +69,30 @@ export function verifiedReadiness(
   expectedHash: string,
   expectedContentHash: string,
 ): boolean {
-  return Boolean(
-    proof &&
-    proof.client_key === tenantKey &&
-    proof.tenant_id === tenantKey &&
-    proof.source_layer === "signal" &&
-    proof.classification === "internal" &&
-    proof.policy_validation_status === "pass" &&
-    proof.policy_version === POLICY_VERSION &&
-    proof.policy_validated_at &&
-    proof.source_hash === expectedHash &&
-    proof.content_hash === expectedContentHash &&
-    proof.source_basis &&
-    proof.agent_readiness_status === "agent_ready" &&
-    (proof.retrievability === "fts_indexed" || proof.retrievability === "search_indexed") &&
-    proof.cited_render_verified_at &&
-    (proof.confidence_level === "high" || proof.confidence_level === "medium"),
-  );
+  return narrativeReadinessIssues(proof, tenantKey, expectedHash, expectedContentHash).length === 0;
+}
+
+export function narrativeReadinessIssues(
+  proof: NarrativeReadinessProof | undefined,
+  tenantKey: string,
+  expectedHash: string,
+  expectedContentHash: string,
+): string[] {
+  if (!proof) return ["missing_readiness_proof"];
+  const requirements: Array<[string, boolean]> = [
+    ["tenant_mismatch", proof.client_key === tenantKey && proof.tenant_id === tenantKey],
+    ["source_layer_mismatch", proof.source_layer === "signal"],
+    ["classification_not_internal", proof.classification === "internal"],
+    ["policy_not_passed", proof.policy_validation_status === "pass"],
+    ["policy_version_mismatch", proof.policy_version === POLICY_VERSION],
+    ["policy_validation_missing", Boolean(proof.policy_validated_at)],
+    ["source_hash_mismatch", proof.source_hash === expectedHash],
+    ["content_hash_mismatch", proof.content_hash === expectedContentHash],
+    ["source_basis_missing", Boolean(proof.source_basis)],
+    ["not_agent_ready", proof.agent_readiness_status === "agent_ready"],
+    ["not_indexed", proof.retrievability === "fts_indexed" || proof.retrievability === "search_indexed"],
+    ["citation_render_unverified", Boolean(proof.cited_render_verified_at)],
+    ["confidence_insufficient", proof.confidence_level === "high" || proof.confidence_level === "medium"],
+  ];
+  return requirements.filter(([, satisfied]) => !satisfied).map(([issue]) => issue);
 }

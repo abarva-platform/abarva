@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
-import { assertNarrativeInspectionScope, narrativeReadinessOnlyMode, signalSourceHash, verifiedReadiness, type NarrativeReadinessProof } from "../home-narrative-readiness";
+import { assertNarrativeInspectionScope, narrativeReadinessOnlyMode, narrativeReadinessIssues, signalSourceHash, verifiedReadiness, type NarrativeReadinessProof } from "../home-narrative-readiness";
 
 const proof: NarrativeReadinessProof = {
   object_table: "ecl_projection.home_enterprise_landscape",
@@ -53,6 +53,13 @@ test("a signal's source hash covers every cited row, in any order, counted once"
   assert.equal(signalSourceHash(["source-a", "source-b"]), known);
   assert.notEqual(signalSourceHash(["source-a", "source-c"]), known);
   assert.notEqual(signalSourceHash(["source-a"]), known);
+});
+
+test("readiness diagnostics preserve every admission gate and identify missing evidence", () => {
+  assert.deepEqual(narrativeReadinessIssues(proof, "tenant-a", "source-v1", "content-v1"), []);
+  assert.deepEqual(narrativeReadinessIssues(undefined, "tenant-a", "source-v1", "content-v1"), ["missing_readiness_proof"]);
+  assert.deepEqual(narrativeReadinessIssues({ ...proof, retrievability: "not_indexed", cited_render_verified_at: null }, "tenant-a", "source-v1", "content-v1"), ["not_indexed", "citation_render_unverified"]);
+  assert.deepEqual(narrativeReadinessIssues(proof, "tenant-b", "source-v2", "content-v2"), ["tenant_mismatch", "source_hash_mismatch", "content_hash_mismatch"]);
 });
 
 test("readiness inspection is explicit and rejects plan writes before database access", () => {
