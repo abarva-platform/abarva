@@ -1,4 +1,6 @@
-import { existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CANONICAL_TENANT_KEYS } from "../../src/config/tenants/CANONICAL_TENANTS";
@@ -28,6 +30,20 @@ const defaultRuntime: InsightRuntime = {
   recordExists: (file) => existsSync(path.join(root, file)),
   store: (env) => blobProofStore(env.ECL_INSIGHT_STORAGE_ACCOUNT ?? "", env.AZURE_CLIENT_ID ?? "", jobLimits(env)),
 };
+
+export function emitInsightProofBundle(proof: unknown, report: (line: string) => void = console.log) {
+  const directory = mkdtempSync(path.join(tmpdir(), "integrated-insight-proof-"));
+  try {
+    writeFileSync(path.join(directory, "proof.json"), JSON.stringify(proof));
+    const archive = path.join(directory, "proof.tgz");
+    execFileSync("tar", ["-czf", archive, "-C", directory, "proof.json"], { timeout: 10_000 });
+    const encoded = readFileSync(archive).toString("base64");
+    if (encoded.length > 960_000) throw new Error("Proof exceeds bounded log transport; use the authoritative private Blob proof");
+    report("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+    for (let offset = 0; offset < encoded.length; offset += 4000) report(encoded.slice(offset, offset + 4000));
+    report("__SEMANTIC2_PROOF_TGZ_END__");
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+}
 
 export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "apply", runtime = defaultRuntime) {
   const tenant = env.ECL_INSIGHT_TENANT_KEY ?? "";
@@ -136,7 +152,17 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const arg = process.argv[2];
   const mode = arg === "--inventory" ? "inventory" : arg === "--plan" ? "plan" : arg === "--apply" ? "apply" : null;
   if (!mode) throw new Error("Use --inventory, --plan or --apply");
-  runInsightJob(process.env, mode).then((proof) => console.log(JSON.stringify(proof))).catch((error) => {
+  runInsightJob(process.env, mode).then((proof) => {
+    const plan = "plan" in proof ? proof.plan : null;
+    console.log(JSON.stringify({ checkpoint: "complete", mode, run_id: proof.run_id,
+      proof_uri: proof.blob_proof_bundle, mutation_applied: proof.mutation_applied,
+      load_version_hash: plan?.loadVersionHash ?? null, finding_count: plan?.findings.length ?? null,
+      evaluations: plan?.evaluations ?? [], quality_gate: proof.quality_gate }));
+    if (process.env.ECL_INSIGHT_EMIT_PROOF_BUNDLE === "true") {
+      try { emitInsightProofBundle(proof); }
+      catch (error) { throw new Error("Job completed and private Blob proof is stored, but local review-package export failed; inspect the completion summary before retrying", { cause: error }); }
+    }
+  }).catch((error) => {
     console.error(error); process.exitCode = 1;
   });
 }

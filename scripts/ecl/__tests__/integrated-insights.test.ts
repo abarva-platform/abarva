@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
 import { evaluateGovernedObject } from "../../../src/lib/governance/context-corpus-policy";
@@ -7,6 +9,8 @@ import { buildIntegratedInsightPlan, insightHash, insightUuid } from "../../../s
 import { candidateGovernance, persistInsightCandidates } from "../../../src/lib/ecl/insights/store";
 import type { InsightInput, InsightMeasure, InsightObject, InsightRelationship } from "../../../src/lib/ecl/insights/types";
 import type { JobDatabase } from "../synthetic_enterprise_home_job";
+import { emitInsightProofBundle } from "../integrated_insights_job";
+import { extractProofBundle } from "../../ops/submit-aca-operator-job.mjs";
 
 const tenantKey = CANONICAL_TENANT_KEYS[0];
 const assessmentId = "test-integrated-insights";
@@ -65,6 +69,18 @@ test("operator image carries the release binding and migration commands select o
   for (const [mode, flag] of [["dry", "--dry"], ["apply", "--ci"]]) {
     assert.equal(scripts[`ecl:integrated-insights:migrate:${mode}`], `npx tsx src/scripts/run-migrations.ts ${flag} --force ${migration}`);
   }
+});
+test("full candidate proof survives compressed operator export without raw input or truncated findings", () => {
+  const proof = { plan: buildIntegratedInsightPlan(input()), input_snapshot_uri: "https://example.org/private-input.json" };
+  const lines: string[] = [];
+  emitInsightProofBundle(proof, (line) => lines.push(line));
+  assert.ok(lines.every((line) => line.length <= 4000));
+  const directory = mkdtempSync(path.join(tmpdir(), "insight-proof-readback-"));
+  try {
+    const receipt = extractProofBundle(lines.join("\n"), directory);
+    assert.equal(receipt.extracted, true);
+    assert.deepEqual(JSON.parse(readFileSync(path.join(directory, "proof/proof.json"), "utf8")), proof);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
 test("five supported rule classes fire with stable evidence and candidate-only governance", () => {

@@ -42,11 +42,16 @@ ECL_INSIGHT_OPERATOR_IDENTITY=<actual operator identity>
 ECL_INSIGHT_BUILD_VERSION=integrated-insights-v1
 ECL_INSIGHT_RELEASE_RECORD=docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md
 ECL_INSIGHT_STORAGE_ACCOUNT=<private proof storage account>
+ECL_INSIGHT_EMIT_PROOF_BUNDLE=true
 ```
 
 Pass `DATABASE_URL` as a secret reference, not a literal connection string. The wrapper sets
 `ABARVA_OPERATOR_IMAGE` and `ABARVA_OPERATOR_BRANCH_COMMIT`; these bind the run to its pinned image
 and git SHA. Proofs go to the existing private proof container, with immutable run-specific paths.
+The optional compressed review package uses the wrapper's existing extraction protocol. It
+contains the full proof/findings, not raw intake or the canonical input snapshot. Compact logs
+always report the proof URI, candidate version/count and rule evaluations. Storage remains
+private-only; an export failure does not undo a completed database commit or private proof write.
 
 1. Run `ecl:integrated-insights:inventory-job`. It opens a read-only transaction and reports
    canonical families and measure definitions by assessment without reading raw intake text.
