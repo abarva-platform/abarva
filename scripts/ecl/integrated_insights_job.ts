@@ -134,7 +134,7 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
     } else {
       await db.query("rollback"); transaction = false;
     }
-    const proof = { ...record, mode, mutation_applied: committed, plan, receipt, load_approval: approval,
+    const proof = { ...record, blob_proof_bundle: store.uriFor(proofPath), mode, mutation_applied: committed, plan, receipt, load_approval: approval,
       input_snapshot_uri: store.uriFor(inputPath), input_snapshot_hash: plan.sourceSetHash,
       validation: { tenant_fenced: true, reproducible: true, exact_version_binding: plan.loadVersionHash },
       quality_gate: { product_serving_changed: false, candidate_only: true, agent_ready: false,

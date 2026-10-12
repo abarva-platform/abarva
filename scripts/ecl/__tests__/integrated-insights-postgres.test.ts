@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test, { before, after } from "node:test";
 import pg from "pg";
 import { input } from "./integrated-insights.test";
 import { buildIntegratedInsightPlan, insightUuid } from "../../../src/lib/ecl/insights/engine";
-import { persistInsightCandidates } from "../../../src/lib/ecl/insights/store";
+import { persistInsightCandidates, candidateGovernance } from "../../../src/lib/ecl/insights/store";
 import { readInsightInput } from "../../../src/lib/ecl/insights/read-input";
 import { runInsightJob, type InsightRuntime } from "../integrated_insights_job";
 import { connectDatabase } from "../synthetic_enterprise_home_job";
+import { insightHash } from "../../../src/lib/ecl/insights/engine";
+import { runHomeInsightAdmissionJob, type HomeAdmissionRuntime } from "../home_insight_admission_job";
 import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
 
 const databaseUrl = process.env.INSIGHT_TEST_DATABASE_URL;
@@ -71,6 +74,7 @@ before(async () => {
   for (const link of fixture.cubeMeasureLinks) await db.query("insert into ecl_projection.cube_slice_measure values($1,$2,$3,$4,$5)",
     [fixture.tenantKey,fixture.assessmentId,link.cube_slice_id,link.measure_id,link.metric_key]);
   await db.query(await readFile("supabase/migrations/20261011210000_enterprise_integrated_insight_candidates.sql", "utf8"));
+  await db.query(await readFile("supabase/migrations/20261012120000_home_integrated_insight_admission.sql", "utf8"));
   plan = buildIntegratedInsightPlan(await readInsightInput(db, fixture.tenantKey, fixture.assessmentId, fixture.asOf));
 });
 after(async () => { await db.end(); });
@@ -122,6 +126,198 @@ test("RLS hides candidates without scope and rejects cross-tenant writes", async
 });
 test("database cannot mark candidates agent-ready", async () => {
   await assert.rejects(db.query("update ecl_projection.enterprise_insight_finding set agent_ready=true"), /check constraint/);
+});
+const baseHomeToken = "d".repeat(64);
+function homeAdmissionRuntime(): {
+  runtime: HomeAdmissionRuntime;
+  env: Record<string, string>;
+} {
+  const review = {
+    contractVersion: "home-insight-review/v1",
+    tenantKey: plan.tenantKey,
+    assessmentId: plan.assessmentId,
+    releaseId: plan.releaseId,
+    loadVersionHash: plan.loadVersionHash,
+    baseHomeRecordToken: baseHomeToken,
+    reviewedBy: "Morgan Example",
+    reviewedAt: "2026-10-12",
+    findings: plan.findings.map((finding) => ({
+      findingId: finding.id,
+      findingHash: insightHash(finding),
+      governance: {
+        ...candidateGovernance(plan, finding, "local-pg-first"),
+        agent_readiness_status: "agent_ready",
+        retrievability: "fts_indexed",
+        confidence_level: "medium",
+        confidence_rationale: "Disposable local test only",
+        cited_render_verified_at: "2026-10-12T00:00:00Z",
+        last_reviewed_at: "2026-10-12T00:00:00Z",
+      },
+    })),
+  };
+  const bytes = Buffer.from(JSON.stringify(review));
+  const manifest = declaration(plan);
+  const env = {
+    DATABASE_URL: databaseUrl!,
+    ECL_INSIGHT_TENANT_KEY: fixture.tenantKey,
+    ECL_INSIGHT_ASSESSMENT_ID: fixture.assessmentId,
+    ECL_INSIGHT_AS_OF: fixture.asOf,
+    ECL_INSIGHT_DATASET_ID: "test-integrated",
+    ECL_INSIGHT_RUN_ID: "local-pg-home-admission",
+    ECL_INSIGHT_OPERATOR_IDENTITY: "Local test",
+    ECL_INSIGHT_BUILD_VERSION: "test-v1",
+    ECL_INSIGHT_RELEASE_RECORD: releaseRecord,
+    ECL_INSIGHT_EXPECTED_VERSION_HASH: plan.loadVersionHash,
+    ECL_INSIGHT_REVIEW_PROOF_URI: "https://example.org/private-review.json",
+    ECL_INSIGHT_REVIEW_PROOF_HASH: createHash("sha256")
+      .update(bytes)
+      .digest("hex"),
+    ABARVA_OPERATOR_IMAGE: `registry.example.org/test@sha256:${"a".repeat(64)}`,
+    ABARVA_OPERATOR_BRANCH_COMMIT: "a".repeat(40),
+  };
+  return {
+    env,
+    runtime: {
+      connect: connectDatabase,
+      recordExists: () => true,
+      manifests: async () => [
+        {
+          ...manifest,
+          serving_approval: { ...manifest.load_approval, surface: "home" },
+        },
+      ],
+      baseToken: async () => baseHomeToken,
+      store: async () => ({
+        uriFor: (key) => `https://example.org/${key}`,
+        read: async () => bytes,
+        writeOnce: async (key) => ({
+          uri: `https://example.org/${key}`,
+          created: true,
+        }),
+      }),
+    },
+  };
+}
+test("private admission persists an exact review and independently reads the serving view", async () => {
+  const { env, runtime } = homeAdmissionRuntime();
+  const proof = await runHomeInsightAdmissionJob(env, runtime);
+  assert.equal(proof.findings, 5);
+  assert.equal(proof.validation.independent_readback, "passed");
+  assert.equal(proof.quality_gate.signed_in_browser_proof, "not_run");
+  assert.equal(
+    (
+      await db.query(
+        "select count(*)::int as n from ecl_projection.home_insight_admission",
+      )
+    ).rows[0].n,
+    1,
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select count(*)::int as n from ecl_projection.enterprise_insight_finding where agent_ready",
+      )
+    ).rows[0].n,
+    0,
+  );
+});
+test("home admission replays identically and cannot overwrite an immutable receipt", async () => {
+  const { env, runtime } = homeAdmissionRuntime();
+  await runHomeInsightAdmissionJob(
+    { ...env, ECL_INSIGHT_RUN_ID: "local-pg-home-replay" },
+    runtime,
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select count(*)::int as n from ecl_projection.home_insight_admission",
+      )
+    ).rows[0].n,
+    1,
+  );
+  await assert.rejects(
+    db.query(
+      "update ecl_projection.home_insight_admission set first_run_id='different'",
+    ),
+    /immutable/,
+  );
+  await assert.rejects(
+    db.query("delete from ecl_projection.home_insight_admission"),
+    /immutable/,
+  );
+});
+test("private admission refuses a different signed-in base record and changed review bytes", async () => {
+  const { env, runtime } = homeAdmissionRuntime();
+  await assert.rejects(
+    runHomeInsightAdmissionJob(env, {
+      ...runtime,
+      baseToken: async () => "e".repeat(64),
+    }),
+    /not bound/,
+  );
+  await assert.rejects(
+    runHomeInsightAdmissionJob(
+      { ...env, ECL_INSIGHT_REVIEW_PROOF_HASH: "f".repeat(64) },
+      runtime,
+    ),
+    /bytes changed/,
+  );
+});
+test("home admission RLS and composite release FK prevent cross-tenant use", async () => {
+  await db.query(
+    `grant select on serving.home_insight_admissions to ${readerRole}`,
+  );
+  await db.query("begin");
+  try {
+    await db.query(`set local role ${readerRole}`);
+    assert.equal(
+      (await db.query("select * from serving.home_insight_admissions")).rows
+        .length,
+      0,
+    );
+    await db.query("select set_config('app.tenant_key',$1,true)", [
+      fixture.tenantKey,
+    ]);
+    assert.equal(
+      (await db.query("select * from serving.home_insight_admissions")).rows
+        .length,
+      1,
+    );
+    await db.query("select set_config('app.tenant_key',$1,true)", [
+      CANONICAL_TENANT_KEYS.find((key) => key !== fixture.tenantKey),
+    ]);
+    assert.equal(
+      (await db.query("select * from serving.home_insight_admissions")).rows
+        .length,
+      0,
+    );
+  } finally {
+    await db.query("rollback");
+  }
+  await assert.rejects(
+    db.query(
+      `insert into ecl_projection.home_insight_admission
+    (tenant_key,assessment_id,release_id,base_home_record_token,admission_hash,admission_json,review_proof_uri,first_run_id)
+    values($1,$2,$3,$4,$4,$5::jsonb,'local','local')`,
+      [
+        CANONICAL_TENANT_KEYS.find((key) => key !== fixture.tenantKey),
+        fixture.assessmentId,
+        plan.releaseId,
+        "f".repeat(64),
+        JSON.stringify({
+          review: {
+            tenantKey: CANONICAL_TENANT_KEYS.find(
+              (key) => key !== fixture.tenantKey,
+            ),
+            assessmentId: fixture.assessmentId,
+            releaseId: plan.releaseId,
+            baseHomeRecordToken: "f".repeat(64),
+          },
+        }),
+      ],
+    ),
+    /foreign key/,
+  );
 });
 test("unadmitted Cube slices are not used as lineage", async () => {
   await db.query("begin");

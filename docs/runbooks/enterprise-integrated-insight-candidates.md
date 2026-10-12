@@ -84,8 +84,47 @@ Money never becomes realized value by comparison. Source flags alone do not gran
 evidence approval. Unknown dates, conflicts, duplicate comparable measurements, missing sources,
 restricted sources and inferred relationships cannot establish a valid comparison.
 
-## Next Gate
+## Reviewed Home Admission
 
-This release does not admit findings to Home, Tower or agents. Review, source readiness,
-serving approval and signed-in retrieval/cite-render proof are later gates. Reuse the canonical
+Apply only `20261012120000_home_integrated_insight_admission.sql` through the private operator
+wrapper, first dry-running `ecl:integrated-insights:admission-migrate:dry`, then applying the
+named migration. The reader tolerates an absent additive view; it never joins unreviewed
+candidates into a stored snapshot.
+
+`ecl:integrated-insights:admit-home-job` requires the same tenant, assessment, as-of, dataset
+and exact candidate version bindings as the load. It also requires:
+
+```ini
+ECL_INSIGHT_REVIEW_PROOF_URI=<immutable private Blob human review receipt>
+ECL_INSIGHT_REVIEW_PROOF_HASH=<SHA-256 of the receipt bytes>
+```
+
+The receipt implements `HomeInsightReviewSchema`: exact candidate ID/hash, the base Home
+record equality token, a named human reviewer and a fully governed review for every finding.
+Confidence, indexing and end-to-end cite-render evidence must be supplied and verified, not
+invented by the job. A human may author the complete receipt directly; an operator may record
+it verbatim. A generic instruction to refresh is not a version-specific review receipt.
+
+The committed dataset manifest must carry both load and `surface: home` serving approval for
+the exact load version. A coherent live Home record of that same assessment is required.
+The admission job re-reads the canonical input and candidate content, writes a separate
+immutable admission, then performs independent readback. Original candidates remain
+`not_reviewed` and `agent_ready=false`. Conflicting admissions for the same base Home record
+are refused rather than overwritten. Page, aVa and export receive the same reviewed claims,
+source signals and admission equality marker.
+
+After the upstream workstream has produced its verified version, invoke
+`ecl:integrated-insights:refresh-job` through the private ACA wrapper. It plans, conditionally
+loads the exact approved candidate, then conditionally admits the human-reviewed version.
+Each step has a distinct proof/run ID. Missing approvals, review or version drift produce an
+explicit waiting state (exit 2), not a successful refresh. No Tower load, active Home pointer,
+new source version or cross-assessment identity mapping is inferred by this command.
+
+The three-step counter describes only this candidate refresh chain, not whole-product
+readiness. A completed admission still requires signed-in page/advisor/export proof.
+
+## Remaining Gates
+
+The candidate load alone does not admit findings to Home, Tower or agents. Review, source readiness,
+serving approval and signed-in retrieval/cite-render proof remain independent gates. Reuse the canonical
 IDs and source version throughout that work; do not copy another product's conclusions as facts.
