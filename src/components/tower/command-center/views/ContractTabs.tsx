@@ -51,6 +51,11 @@ type CostFinding = {
   actionId: string | null;
   gapId: string | null;
 };
+const usd = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
 type CampaignRow = {
   seq: string;
   title: string;
@@ -844,7 +849,9 @@ export function AiPortfolioContractView({
     {
       key: "cost" as const,
       label: "Funding and cost",
-      detail: `${formatCount(costLensFindings.length)} findings`,
+      detail: view.costLens
+        ? `${formatCount(view.costLens.categories.length)} spend categories`
+        : `${formatCount(costLensFindings.length)} findings`,
     },
     {
       key: "risk" as const,
@@ -886,6 +893,44 @@ export function AiPortfolioContractView({
       </div>
 
       {lens === "cost" ? (
+        <>
+        {view.costLens ? (
+          <section className={styles.costStory} aria-label="Annual IT spend and contract exposure">
+            <article className={cx(styles.contractCard, styles.costStorySummary)}>
+              <div className={styles.contractMiniKicker}>Annual IT spend from source rows</div>
+              <strong className={styles.costStoryTotal}>{usd.format(view.costLens.modeledAnnualSpendUsd)}</strong>
+              <p>One-source planning estimate from {formatCount(view.costLens.categories.length)} spend categories. The source does not name a fiscal year. This is not an approved budget or verified savings.</p>
+              <p><b>Approved FY budget:</b> {s.budgetUsd === null ? "Unknown" : usd.format(s.budgetUsd)}</p>
+              {view.costLens.sourceNarrativeDifferenceUsd !== null && view.costLens.sourceNarrativeDifferenceUsd !== 0 ? (
+                <p>The source summary and category rows differ by {usd.format(Math.abs(view.costLens.sourceNarrativeDifferenceUsd))}. This total uses the category rows.</p>
+              ) : null}
+            </article>
+            <details className={cx(styles.contractCard, styles.costStoryDetails)}>
+              <summary>See all {formatCount(view.costLens.categories.length)} spend categories</summary>
+              <p>These rows make up the annual IT spend total above. Do not add them to that total again. Category business IDs are not available.</p>
+              <div className={styles.costStoryTableWrap}>
+                <table className={styles.costStoryTable}>
+                  <thead><tr><th scope="col">Spend category</th><th scope="col">Annual amount</th><th scope="col">Source row</th></tr></thead>
+                  <tbody>{view.costLens.categories.map((row) => (
+                    <tr key={row.id}><th scope="row">{row.label}</th><td>{usd.format(row.amountUsd)}</td><td>{row.sourceFile} · row {row.sourceRow}</td></tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            </details>
+            <details className={cx(styles.contractCard, styles.costStoryDetails)}>
+              <summary>See {formatCount(view.costLens.contractExposure.length)} vendor contract {view.costLens.contractExposure.length === 1 ? "amount" : "amounts"}</summary>
+              <p>Contract amounts are a separate exposure. Their overlap with the IT spend categories is unknown, so they are not included in the total above.</p>
+              <div className={styles.costStoryTableWrap}>
+                <table className={styles.costStoryTable}>
+                  <thead><tr><th scope="col">Vendor</th><th scope="col">Annual contract amount</th><th scope="col">Source row</th></tr></thead>
+                  <tbody>{view.costLens.contractExposure.map((row) => (
+                    <tr key={row.id}><th scope="row">{row.label}</th><td>{usd.format(row.amountUsd)}</td><td>{row.sourceFile} · row {row.sourceRow}</td></tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            </details>
+          </section>
+        ) : null}
         <section className={styles.aiPortfolioGrid}>
           <div className={styles.aiPortfolioLeft}>
             <div className={styles.contractMiniKicker}>
@@ -955,6 +1000,7 @@ export function AiPortfolioContractView({
             </div>
           </div>
         </section>
+        </>
       ) : null}
 
       {lens === "risk" ? (
