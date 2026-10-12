@@ -32,6 +32,7 @@ describe("Tower detail proof states", () => {
       affectedFunctions: [{ functionId: "FUNC-1", functionName: "Member services" }],
       functionLabel: null,
       fundingAmountLoaded: false,
+      planningBudgetUsd: 1_250_000,
       promisedBenefitLoaded: false,
     };
     render(<ProgramDrawer program={program} onClose={() => {}} onSeeAction={() => {}} />);
@@ -44,6 +45,9 @@ describe("Tower detail proof states", () => {
     expect(within(drawer).getByText("Member services")).toBeInTheDocument();
     expect(within(drawer).getByText(/not funding categories/)).toBeInTheDocument();
     expect(within(drawer).getByText(/Approved FY26 funding is not verified/)).toBeInTheDocument();
+    expect(within(drawer).getByText("Program planning budget").parentElement).toHaveTextContent("$1.3M");
+    expect(within(drawer).getByText(/Its fiscal year and approval are not verified/)).toBeInTheDocument();
+    expect(within(drawer).getByText("Approved FY26 funding").parentElement).toHaveTextContent("Not verified");
   });
 
   it("does not claim Finance sign-off or reporting clearance for unverified program amounts", () => {

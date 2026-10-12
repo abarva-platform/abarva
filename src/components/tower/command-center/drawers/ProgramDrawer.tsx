@@ -192,6 +192,15 @@ export function ProgramDrawer({
             />
           </div>
 
+          <DrawerSection>Budget stated in the source plan</DrawerSection>
+          <DrawerRow
+            label="Program planning budget"
+            value={p.planningBudgetUsd === null || p.planningBudgetUsd === undefined
+              ? "Not recorded"
+              : formatUsdM(p.planningBudgetUsd)}
+            sub="The source lists this planning amount. Its fiscal year and approval are not verified, so it is separate from approved FY26 funding."
+          />
+
           <DrawerSection note={p.blockedValueComparable
             ? "— how a projected benefit moves toward an amount that can be reported"
             : "— the yearly plan and loaded-month results cover different periods; do not subtract them"}>

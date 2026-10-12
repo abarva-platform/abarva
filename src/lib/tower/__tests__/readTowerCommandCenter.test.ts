@@ -977,6 +977,7 @@ describe("readTowerCommandCenter", () => {
           technology_owner_role: "Technology owner",
           source_program_status: "active",
           source_program_phase: "execution",
+          planning_budget_usd: 1_250_000,
           affected_functions: [{ function_id: "FUNC-1", function_name: "Affected function" }],
           domain_name: null,
         },
@@ -1006,6 +1007,8 @@ describe("readTowerCommandCenter", () => {
     ]);
     expect(mart?.programLanes[0]?.sourceProgramStatus).toBe("active");
     expect(mart?.programLanes[0]?.sourceProgramPhase).toBe("execution");
+    expect(mart?.programLanes[0]?.planningBudgetUsd).toBe(1_250_000);
+    expect(mart?.programLanes[0]?.fundingAmountLoaded).toBe(false);
     expect(mart?.programLanes[0]?.technologyOwnerRole).toBe("Technology owner");
     expect(mart?.aiPortfolio[0]?.businessFunction).toBe("Business function");
     expect(mart?.aiPortfolio[0]?.businessSegmentKey).toBe("segment-1");
@@ -1019,9 +1022,55 @@ describe("readTowerCommandCenter", () => {
       { functionId: "FUNC-1", functionName: "Affected function" },
     ]);
     expect(view?.programs[0]?.sourceProgramStatus).toBe("active");
+    expect(view?.programs[0]?.planningBudgetUsd).toBe(1_250_000);
+    expect(view?.programs[0]?.fundingAmountLoaded).toBe(false);
     expect(view?.allInitiatives[0]?.businessFunction).toBe("Business function");
     expect(view?.allInitiatives[0]?.operationalOwnerRole).toBe("Operations owner");
     expect(view?.allInitiatives[0]?.financeStatus).toBeNull();
+  });
+
+  it("counts only source-declared production cases as active and rows with measured usage as usage-recorded", async () => {
+    const caseRow = (key: string, status: string, activeUsers: string | null = null) => servingRow({
+      row_key: key,
+      page_key: "ai_portfolio",
+      use_case_object_id: `${key}-object`,
+      active_users: activeUsers,
+      display_payload_json: { page_key: "ai_portfolio", title: key, source_case_status: status },
+    });
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
+      tower_ai_portfolio: [
+        caseRow("production-case", "production_enterprise_wide"),
+        caseRow("pilot-case", "pilot_multi_facility", "4"),
+        caseRow("paused-case", "paused_pending_governance_review"),
+        caseRow("production-paused-case", "production_paused"),
+      ],
+      tower_adoption_lens: [servingRow({
+        row_key: "usage-feed-row",
+        page_key: "adoption_lens",
+        use_case_object_id: "separate-claim-object",
+        active_users: "0",
+        display_payload_json: { page_key: "adoption_lens", title: "Separate usage feed" },
+      })],
+    });
+
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    expect(mart?.aiPortfolioCounts).toEqual(expect.objectContaining({
+      total: 5,
+      active: 1,
+      embeddedOrUsage: 2,
+    }));
+    expect(mart?.aiPortfolio.map((row) => [row.populationKind, row.valueClaimStatus])).toEqual([
+      ["ai_case", "usage_not_recorded"],
+      ["ai_case", "usage_recorded"],
+      ["ai_case", "usage_not_recorded"],
+      ["ai_case", "usage_not_recorded"],
+      ["usage_observation", "usage_recorded"],
+    ]);
+    expect(mart?.aiPortfolio[0]?.caveat).toContain("No usage measure is recorded");
+    expect(mart?.aiPortfolio[4]?.caveat).toContain("separate source feed");
+    expect(mart?.aiPortfolio[4]?.usageActual).toBe(0);
+    expect(mart?.aiPortfolio.every((row) => row.towerClaimAllowed === "blocked")).toBe(true);
   });
 
   it("requires a valid date period and an explicit claim amount before reporting value", async () => {
