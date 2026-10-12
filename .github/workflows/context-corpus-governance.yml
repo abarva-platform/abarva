@@ -14,6 +14,8 @@ on:
       - src/lib/governance/**
       - src/scripts/governance/**
       - src/config/tenants/CANONICAL_TENANTS.ts
+      - src/lib/tenant/synthetic-tenant-declaration.ts
+      - datasets/tenant-inputs/tenant-input-registry.json
       - docs/governance/policy-exceptions.json
       - docs/governance/dataset-manifests/**
       - .github/workflows/context-corpus-governance.yml
@@ -47,3 +49,6 @@ jobs:
 
       - name: Policy exception tests
         run: npx jest src/lib/governance/__tests__/policy-exceptions.test.ts
+
+      - name: Exact delegated and legacy approval tests
+        run: npx jest --runInBand src/lib/governance/__tests__/dataset-manifest.test.ts src/lib/governance/__tests__/delegated-approval.test.ts
