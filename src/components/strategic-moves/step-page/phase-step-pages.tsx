@@ -19,6 +19,7 @@ import { P1_STEP_PAGES } from "./p1-step-pages";
 import { P2_STEP_PAGES } from "./p2-step-pages";
 import { P4_STEP_PAGES } from "./p4-step-pages";
 import { P5_STEP_PAGES } from "./p5-step-pages";
+import type { P4ValueReadback } from "./useP4ValueReadback";
 
 export interface StepPageChrome {
   stepIndex: number;
@@ -47,6 +48,8 @@ export interface StepPageHostProps {
   chrome: StepPageChrome;
   stepDone: Readonly<Record<string, boolean>>;
   captureSaved?: Readonly<Record<string, boolean>>;
+  captureSaveErrors?: Readonly<Record<string, string>>;
+  p4ValueReadback?: P4ValueReadback;
   sectionReady?: Readonly<Record<string, boolean>>;
   p0SourceEvidenceReady?: boolean;
   p2Evidence?: {
