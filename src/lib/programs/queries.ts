@@ -32,6 +32,7 @@ import type { ArchetypeKey } from "./types.ui";
 import type { StrategicMove, StrategicMovePortfolio } from "./types.ui";
 import { extractProjectedValueFromLegacyBaseline } from "./value-utils";
 import { attachTemplateInstancesToPrograms } from "@/lib/templates/program-adapter";
+import type { PhasePageReadSet } from "./phase-page-gate-reads";
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -212,10 +213,10 @@ export async function getProgramPortfolio(
 export async function getProgramById(
   ctx: TenancyCtx,
   programId: string,
-  opts: { supabase?: SupabaseClient } = {},
+  opts: { supabase?: SupabaseClient; readSet?: PhasePageReadSet } = {},
 ): Promise<ProgramCore | null> {
   assertTenancy(ctx);
-  if (!(await canReadProgram(ctx, programId))) return null;
+  if (!(await readProgramAccess(ctx, programId, opts))) return null;
   const adapter = opts.supabase
     ? createSupabaseProgramsReadAdapter(() => opts.supabase as SupabaseClient)
     : selectProgramsReadAdapter(undefined, ctx.clientKey);
@@ -242,10 +243,23 @@ export async function getProgramForTurnByGraphNodeId(
 async function assertProgramReadable(
   ctx: TenancyCtx,
   programId: string,
+  opts: { supabase?: SupabaseClient; readSet?: PhasePageReadSet } = {},
 ): Promise<void> {
-  if (!(await canReadProgram(ctx, programId))) {
+  if (!(await readProgramAccess(ctx, programId, opts))) {
     throw new Error(`[programs/queries] program ${programId} not accessible`);
   }
+}
+
+function readProgramAccess(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient; readSet?: PhasePageReadSet },
+): Promise<boolean> {
+  return opts.readSet && !opts.supabase
+    ? opts.readSet(ctx, programId, "programReadAccess", () =>
+        canReadProgram(ctx, programId),
+      )
+    : canReadProgram(ctx, programId);
 }
 
 async function readRowsWithOptionalSupabase<R extends Record<string, unknown>>(
@@ -267,10 +281,10 @@ async function readRowsWithOptionalSupabase<R extends Record<string, unknown>>(
 export async function getModuleState(
   ctx: TenancyCtx,
   programId: string,
-  opts: { supabase?: SupabaseClient } = {},
+  opts: { supabase?: SupabaseClient; readSet?: PhasePageReadSet } = {},
 ): Promise<ProgramModuleRow[]> {
   assertTenancy(ctx);
-  await assertProgramReadable(ctx, programId);
+  await assertProgramReadable(ctx, programId, opts);
   const rows = await readRowsWithOptionalSupabase<Record<string, unknown>>(
     opts,
     (sb) =>
@@ -476,9 +490,10 @@ export async function getPhaseSnapshots(
   ctx: TenancyCtx,
   programId: string,
   phaseNumber?: number,
+  opts: { readSet?: PhasePageReadSet } = {},
 ): Promise<PhaseSnapshot[]> {
   assertTenancy(ctx);
-  await assertProgramReadable(ctx, programId);
+  await assertProgramReadable(ctx, programId, opts);
   const params: unknown[] = [programId];
   const phaseFilter =
     phaseNumber !== undefined
@@ -519,9 +534,14 @@ export async function getStrategicMovePortfolio(
 export async function getStrategicMoveById(
   ctx: TenancyCtx,
   moveId: string,
-  opts: { supabase?: SupabaseClient; evaluateGateCriteria?: boolean } = {},
+  opts: {
+    supabase?: SupabaseClient;
+    evaluateGateCriteria?: boolean;
+    loadProgram?: typeof getProgramById;
+    loadPhaseSnapshots?: typeof getPhaseSnapshots;
+  } = {},
 ): Promise<StrategicMove | null> {
-  const program = await getProgramById(ctx, moveId, opts);
+  const program = await (opts.loadProgram ?? getProgramById)(ctx, moveId, opts);
   if (!program) return null;
   const { buildStrategicMove } = await import("./transformers");
   return buildStrategicMove(ctx, program, opts);

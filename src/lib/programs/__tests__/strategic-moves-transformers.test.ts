@@ -341,7 +341,9 @@ describe("strategic move transformer helpers", () => {
     expect(historical).not.toBe(currentCriteria);
 
     evaluateGateMock.mockClear();
-    expect(await gateCriteriaForViewedPhase(ctx, move, 5)).toBe(currentCriteria);
+    expect(await gateCriteriaForViewedPhase(ctx, move, 5)).toBe(
+      currentCriteria,
+    );
     expect(evaluateGateMock).not.toHaveBeenCalled();
   });
 
@@ -435,63 +437,92 @@ describe("strategic move transformer helpers", () => {
     expect(criteria[0]).toMatchObject({ verified: true, completed: false });
   });
 
-  it("marks the Strategic Move page model terminal-complete from an approved P5 snapshot", async () => {
-    selectMock.mockImplementation(async (request) => {
-      if (request.table === "phase_snapshots") {
-        return [
-          {
-            created_at: "2026-07-17T07:01:06.000Z",
-            phase_number: 5,
-            approval_status: "approved",
-          },
-        ] as never;
+  it.each([false, true])(
+    "marks the Strategic Move page model terminal-complete from an approved P5 snapshot (shared=%s)",
+    async (shared) => {
+      const loadPhaseSnapshots = jest.fn(
+        async () =>
+          [
+            {
+              createdAt: "2026-07-17T07:01:06.000Z",
+              phaseNumber: 5,
+              approvalStatus: "approved",
+            },
+          ] as never,
+      );
+      selectMock.mockImplementation(async (request) => {
+        if (request.table === "phase_snapshots") {
+          return [
+            {
+              created_at: "2026-07-17T07:01:06.000Z",
+              phase_number: 5,
+              approval_status: "approved",
+            },
+          ] as never;
+        }
+        return [];
+      });
+
+      const move = await buildStrategicMove(
+        { clientId: "client-1", userId: "user-1" },
+        {
+          id: "move-1",
+          clientId: "client-1",
+          name: "Terminal handoff proof",
+          sponsorPersonId: null,
+          problemStatement: null,
+          targetOutcome: null,
+          timelineHorizon: null,
+          valueProjectedLowUsd: null,
+          valueProjectedHighUsd: null,
+          valueVerifiedUsd: null,
+          valueVerifiedStatus: null,
+          valueCurrency: null,
+          valueAssumptions: null,
+          archetype: null,
+          originSource: null,
+          originSourceRef: null,
+          status: "active",
+          lifecycleState: "active",
+          currentPhase: 5,
+          currentModuleKey: null,
+          maestroOversightLevel: null,
+          founderApprovalRequired: false,
+          phaseLockedAt: null,
+          phaseLockedByUserId: null,
+          dataResidencyRegion: null,
+          retentionPolicyYears: null,
+          archivedAt: null,
+          deletedAt: null,
+          createdAt: "2026-05-01T00:00:00.000Z",
+          updatedAt: null,
+          charter: null,
+          functionPackKey: null,
+          functionPackConfidence: null,
+          gatesPassed: [],
+        } as never,
+        {
+          evaluateGateCriteria: false,
+          ...(shared ? { loadPhaseSnapshots } : {}),
+        },
+      );
+
+      expect(move.terminalComplete).toBe(true);
+      if (shared) {
+        expect(loadPhaseSnapshots).toHaveBeenCalledWith(
+          { clientId: "client-1", userId: "user-1" },
+          "move-1",
+        );
+        expect(
+          selectMock.mock.calls.filter(
+            ([request]) => request.table === "phase_snapshots",
+          ),
+        ).toHaveLength(0);
+      } else {
+        expect(loadPhaseSnapshots).not.toHaveBeenCalled();
       }
-      return [];
-    });
-
-    const move = await buildStrategicMove(
-      { clientId: "client-1", userId: "user-1" },
-      {
-        id: "move-1",
-        clientId: "client-1",
-        name: "Terminal handoff proof",
-        sponsorPersonId: null,
-        problemStatement: null,
-        targetOutcome: null,
-        timelineHorizon: null,
-        valueProjectedLowUsd: null,
-        valueProjectedHighUsd: null,
-        valueVerifiedUsd: null,
-        valueVerifiedStatus: null,
-        valueCurrency: null,
-        valueAssumptions: null,
-        archetype: null,
-        originSource: null,
-        originSourceRef: null,
-        status: "active",
-        lifecycleState: "active",
-        currentPhase: 5,
-        currentModuleKey: null,
-        maestroOversightLevel: null,
-        founderApprovalRequired: false,
-        phaseLockedAt: null,
-        phaseLockedByUserId: null,
-        dataResidencyRegion: null,
-        retentionPolicyYears: null,
-        archivedAt: null,
-        deletedAt: null,
-        createdAt: "2026-05-01T00:00:00.000Z",
-        updatedAt: null,
-        charter: null,
-        functionPackKey: null,
-        functionPackConfidence: null,
-        gatesPassed: [],
-      } as never,
-      { evaluateGateCriteria: false },
-    );
-
-    expect(move.terminalComplete).toBe(true);
-  });
+    },
+  );
 
   it("marks the Strategic Move page model terminal-complete from the explicit P5 module row", async () => {
     selectMock.mockImplementation(async (request) => {

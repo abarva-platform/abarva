@@ -767,6 +767,7 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
                 const later = await captureStepTiming(page, uxInput.settledHeadMs);
                 if (later.documentTimeOriginMs === timing.documentTimeOriginMs) {
                   timing.secondaryReads = later.secondaryReads;
+                  timing.clientMountedMs ??= later.clientMountedMs;
                 }
               } catch (error) {
                 timingError = String(error);
