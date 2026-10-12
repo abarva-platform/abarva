@@ -488,8 +488,11 @@ async function inspect(client, candidate, receipt, options = {}) {
   };
 }
 
-function proofValue(candidateBytes, receiptBytes, inspection, localGaps) {
-  const gaps = [...new Set([...localGaps, ...inspection.gaps])];
+function proofValue(candidateBytes, receiptBytes, inspection, localGaps, approval) {
+  const approvalRecord = approval?.approved ? approval.approval : null;
+  const gaps = [...new Set([...localGaps, ...inspection.gaps,
+    ...(approval?.approved && (!approvalRecord || approvalRecord.release_record !== approval.release_record)
+      ? ["serving_approval:approval_record_missing_or_mismatched"] : [])])];
   return {
     contract_version: "tower-candidate-promotion-preflight/v1",
     status: gaps.length ? "blocked" : "ready",
@@ -507,6 +510,7 @@ function proofValue(candidateBytes, receiptBytes, inspection, localGaps) {
     physical_measure_links: inspection.physical_measure_links,
     fact_lineage: inspection.fact_lineage,
     private_blob_proof: inspection.private_blob_proof,
+    serving_approval: approvalRecord,
     gaps,
   };
 }
@@ -636,7 +640,7 @@ async function main() {
     inspection.fact_lineage = lineage.findings;
     inspection.private_blob_proof = blobProof;
     await client.query("commit");
-    const proof = proofValue(candidateBytes, receiptBytes, inspection, localGaps);
+    const proof = proofValue(candidateBytes, receiptBytes, inspection, localGaps, approval);
     if (options.mode === "preflight") {
       writeProof(options.outPath, proof);
       process.stdout.write(`${JSON.stringify({ status: proof.status, gaps: proof.gaps, out: options.outPath })}\n`);
@@ -648,9 +652,9 @@ async function main() {
     const reviewedBytes = fs.readFileSync(options.proofPath);
     const reviewed = JSON.parse(reviewedBytes);
     if (digest(reviewedBytes) !== options.expectedProofSha || reviewed.status !== "ready" || options.expectedInputSha !== candidate.input_fingerprint_sha256 || JSON.stringify(reviewed) !== JSON.stringify(proof)) throw new Error("reviewed_preflight_does_not_match_current_readback");
-    writeProof(options.outPath, { contract_version: "tower-candidate-promotion/v1", status: "promotion_pending", tenant_key: candidate.tenant_key, candidate_file_sha256: digest(candidateBytes), stage_receipt_sha256: digest(receiptBytes), input_fingerprint_sha256: candidate.input_fingerprint_sha256, approval_ref: options.approvalRef, prior_active: reviewed.prior_active, prior_view_fingerprints: reviewed.prior_view_fingerprints });
+    writeProof(options.outPath, { contract_version: "tower-candidate-promotion/v1", status: "promotion_pending", tenant_key: candidate.tenant_key, candidate_file_sha256: digest(candidateBytes), stage_receipt_sha256: digest(receiptBytes), input_fingerprint_sha256: candidate.input_fingerprint_sha256, approval_ref: options.approvalRef, serving_approval: approval.approval, prior_active: reviewed.prior_active, prior_view_fingerprints: reviewed.prior_view_fingerprints });
     const swap = await promote(client, candidate, receipt, reviewed, options.approvalRef);
-    writeProof(options.outPath, { contract_version: "tower-candidate-promotion/v1", status: "promoted", tenant_key: candidate.tenant_key, candidate_file_sha256: digest(candidateBytes), stage_receipt_sha256: digest(receiptBytes), input_fingerprint_sha256: candidate.input_fingerprint_sha256, approval_ref: options.approvalRef, ...swap });
+    writeProof(options.outPath, { contract_version: "tower-candidate-promotion/v1", status: "promoted", tenant_key: candidate.tenant_key, candidate_file_sha256: digest(candidateBytes), stage_receipt_sha256: digest(receiptBytes), input_fingerprint_sha256: candidate.input_fingerprint_sha256, approval_ref: options.approvalRef, serving_approval: approval.approval, ...swap });
   } finally {
     await client.end();
   }

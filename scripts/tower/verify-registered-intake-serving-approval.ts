@@ -35,5 +35,5 @@ const decision = resolveServingApproval(manifests, {
 });
 
 process.stdout.write(`${JSON.stringify(decision.approved
-  ? { approved: true, release_record: decision.approval.release_record }
+  ? { approved: true, release_record: decision.approval.release_record, approval: decision.approval }
   : { approved: false, reasons: decision.reasons })}\n`);
