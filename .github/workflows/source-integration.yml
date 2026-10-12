@@ -50,6 +50,9 @@ jobs:
       - name: Verify Source read-model K2 contract audit
         run: node --test scripts/source/read-model-k2-audit.test.mjs
 
+      - name: Verify document origin preservation and identity boundaries
+        run: node --test scripts/source/__tests__/load-contract-depth-document-evidence.test.mjs
+
       # The runner and directories are named literally here, and only the
       # exclusion flags are generated. The paths deliberately have no trailing
       # slash: the visibility gate requires whitespace or end-of-command.

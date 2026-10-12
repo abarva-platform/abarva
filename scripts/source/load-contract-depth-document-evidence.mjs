@@ -195,7 +195,40 @@ export function normalizeDocumentClauseRows(clauses, pages) {
   });
 }
 
-export function buildDocumentFileInputs(pages, clauses) {
+function documentOriginMetadata(sourceFileId, fileRows, origin) {
+  const contracts = new Set(fileRows.map((row) => nonEmpty(row.contract_id)));
+  if (contracts.size !== 1 || contracts.has(null)) {
+    throw new Error(`Document file contract identity conflict: ${sourceFileId}`);
+  }
+  const matches = (origin.manifest ?? []).filter((row) => row.source_file_id === sourceFileId);
+  if (matches.length > 1) throw new Error(`Ambiguous document origin: ${sourceFileId}`);
+  const declared = matches[0];
+  const first = fileRows[0];
+  if (declared && (
+    declared.tenant_key !== origin.tenantKey ||
+    declared.dataset_version !== origin.datasetVersion ||
+    declared.contract_id !== first.contract_id
+  )) {
+    throw new Error(`Document origin identity conflict: ${sourceFileId}`);
+  }
+  return {
+    dataset_version: origin.datasetVersion,
+    synthetic_policy: "synthetic_demo_only_not_client_truth",
+    vendor_name: first.vendor_name,
+    source_package: `${origin.datasetVersion}/source-files`,
+    processor_system: "source_contract_depth_document_evidence_loader",
+    source_basis: declared ? "declared_synthetic_manifest" : "not_declared",
+    upstream_source_system: nonEmpty(declared?.source_system),
+    upstream_source_file: nonEmpty(declared?.file_name),
+    upstream_source_row_id: nonEmpty(declared?.source_row_id),
+    upstream_source_owner: nonEmpty(declared?.source_owner),
+    upstream_document_type: nonEmpty(declared?.document_type),
+    source_manifest: declared ? "source-files/evidence_manifest.csv" : null,
+    source_manifest_sha256: declared ? origin.manifestSha256 : null,
+  };
+}
+
+export function buildDocumentFileInputs(pages, clauses, origin) {
   const pagesByFile = new Map();
   for (const row of pages) {
     const list = pagesByFile.get(row.source_file_id) ?? [];
@@ -229,7 +262,10 @@ export function buildDocumentFileInputs(pages, clauses) {
       const combinedText = filePages.length
         ? filePages.map((row) => row.page_text || "").join("\n")
         : fileClauses.map((row) => row.value_text || "").join("\n");
-      return { sourceFileId, first, pageCount, combinedText };
+      const metadata = origin
+        ? documentOriginMetadata(sourceFileId, [...filePages, ...fileClauses], origin)
+        : undefined;
+      return { sourceFileId, first, pageCount, combinedText, metadata };
     });
 }
 
@@ -472,7 +508,7 @@ async function deleteStalePackageFiles(client, args, fileIds) {
   );
 }
 
-async function loadDocumentEvidence(client, args, pages, clauses) {
+export async function loadDocumentEvidence(client, args, pages, clauses, documentFiles) {
   await ensureDocumentSchema(client);
 
   const fileIds = [...new Set([...pages.map((r) => r.source_file_id), ...clauses.map((r) => r.source_file_id)])].filter(Boolean);
@@ -535,9 +571,8 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
   // the concatenation of that file's page text, since the package has no
   // separate PDF binary -- consistent with how contract_page_text.csv already
   // ships a page_text_sha256 per page).
-  const documentFiles = buildDocumentFileInputs(pages, clauses);
   let fileCount = 0;
-  for (const { sourceFileId, first, pageCount, combinedText } of documentFiles) {
+  for (const { sourceFileId, first, pageCount, combinedText, metadata } of documentFiles) {
     await client.query(
       `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.file (
          file_id, tenant_key, blob_uri, content_sha256, file_name, media_type,
@@ -563,12 +598,7 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
         documentRole(sourceFileId),
         documentTypeFor(sourceFileId),
         nonEmpty(first.contract_id),
-        JSON.stringify({
-          dataset_version: args.datasetVersion,
-          synthetic_policy: "synthetic_demo_only_not_client_truth",
-          vendor_name: first.vendor_name,
-          source_package: `${args.datasetVersion}/source-files`,
-        }),
+        JSON.stringify(metadata),
       ],
     );
     fileCount += 1;
@@ -693,6 +723,14 @@ async function main() {
     allClauses.filter((row) => args.contractIds.includes(row.contract_id)),
     pages,
   );
+  const manifestPath = path.join(args.packageDir, "source-files", "evidence_manifest.csv");
+  const manifestExists = fs.existsSync(manifestPath);
+  // Validate origin identity before opening a database connection or deleting rows.
+  const documentFiles = buildDocumentFileInputs(pages, clauses, {
+    ...args,
+    manifest: manifestExists ? readCsv(args.packageDir, "evidence_manifest.csv") : [],
+    manifestSha256: manifestExists ? sha256(fs.readFileSync(manifestPath, "utf8")) : null,
+  });
 
   const plan = {
     event: "source_contract_depth_document_evidence_plan",
@@ -707,6 +745,10 @@ async function main() {
       contract_clauses: clauses.length,
       distinct_source_files: new Set([...pages.map((r) => r.source_file_id), ...clauses.map((r) => r.source_file_id)]).size,
     },
+    document_origins: documentFiles.map(({ sourceFileId, metadata }) => ({
+      source_file_id: sourceFileId,
+      ...metadata,
+    })),
     note: "Companion loader to load-contract-depth-package.ts. Writes doc.file/doc.page/doc.span/doc.extraction from CSV data that script already reads into source.contract_term and canonical_fact_assertion. Every row traces to a reviewed synthetic-package source row; nothing is invented here.",
   };
 
@@ -729,7 +771,7 @@ async function main() {
     await client.query("begin");
     await client.query("select set_config('app.tenant_key', $1, false)", [args.tenantKey]);
     const contracts = await verifyContractsExist(client, args);
-    const inserted = await loadDocumentEvidence(client, args, pages, clauses);
+    const inserted = await loadDocumentEvidence(client, args, pages, clauses, documentFiles);
     await client.query("commit");
     console.log(JSON.stringify({ ...plan, event: "source_contract_depth_document_evidence_loaded", apply: true, contracts, inserted }, null, 2));
   } catch (error) {
