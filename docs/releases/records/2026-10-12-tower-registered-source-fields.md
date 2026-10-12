@@ -51,26 +51,32 @@ Release lane: `client-data-lane`.
 
 ## Rollout Plan
 
-Keep this variant inactive. Merge the exact-version manifest through a protected PR, deploy it through the repo-owned ACA workflow, then run a digest-pinned private stage job. Check the private proof bundle and independent database readback. A separate serving approval, preflight, promotion, and signed-in product proof are required before selecting it for Tower.
+Keep this variant inactive. The exact-version manifest was merged through a protected PR, deployed by the repo-owned ACA workflow, and staged by a digest-pinned private job. The private proof bundle and independent database readback passed. A separate serving approval, ready preflight, promotion, and signed-in product proof are required before selecting it for Tower.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: only `.github/workflows/aca-main-deploy.yml` may shift shared web traffic.
 - Shared runtime mutators: none in this release.
-- Approved image digest: capture after the manifest deploy and bind it to the private operator job.
-- ACA runtime invariant: verify template, healthy 100% traffic revision, and worker images on the approved digest.
-- Worker image invariant: required before the private stage job.
+- Approved image digest: `sha256:579e1ef23946473651bcf58b755930d6d90dc80fa64fba6ea4fd365ff41cc4c5` for the merged manifest release and private stage.
+- ACA runtime invariant: the web template, healthy 100% traffic revision, and required worker images matched the approved digest before the private stage.
+- Worker image invariant: both required worker jobs matched the approved digest.
 - Feature/env flag update path: none.
 - Live signed-in proof required: after a separately approved serving promotion.
 
 ## Rollback Plan
 
-Before a private write, revert the manifest PR to withdraw the load authorization. After a private write, keep the new assessment inactive and use the guarded lifecycle controls for any later serving rollback. The previously approved candidate bytes and active assessment remain unchanged by the stage.
+Keep the staged assessment inactive until a separately approved serving decision. If a later serving promotion needs to be reversed, use the guarded lifecycle rollback to restore the prior assessment. The previously approved candidate bytes and active assessment remained unchanged by this stage.
 
 ## Audit Evidence
 
-The PR diff, focused test output, dry-stage `candidate.json`, `stage-preflight.json`, `stage-validation.json`, and `stage-quality-gate.json` support this release. The manifest records the exact approval; private write and serving proof must be recorded separately after execution.
+The PR diff, focused test output, dry-stage `candidate.json`, `stage-preflight.json`, `stage-validation.json`, and `stage-quality-gate.json` support this release. The manifest records the exact load approval. PR #9449 passed its checks and merged at `f04fe24ab0371ac17624f32d9575ae66f353ca9a`; repo-owned ACA deploy run `38238176478` succeeded.
+
+The private stage execution `job-abarva-private-operator-eus-h2a162s` succeeded for run `towerfieldsstage_20261012T105425Z`. A separate read-only database execution `job-abarva-private-operator-eus-xxhtje4` matched 17 source-file rows, 327 selected source records, 237 objects, 308 measures, 352 projection entries, all nine page counts and fingerprints, and 28 selected relationship records. The candidate had no active lifecycle row, and the prior active assessment stayed selected.
+
+Read-only re-attestation `job-abarva-private-operator-eus-g1rihhe` succeeded. Private Blob readback execution `job-abarva-private-operator-eus-awew7kp` verified final ZIP checksum `c5d694f7d975d4148fe40e0eb88a295eb6b4d7070e070819e654e0ef594cff7a`, candidate checksum `bc04b5bbd56115272c41973bafea26bf5e76834467f76f934fc48272d9889c14`, receipt, materialized validation, and passing quality gate. The operator job returned to its idle command and digest-pinned image, with no unfinished executions.
+
+The check-only serving preflight verified the private bundle and physical rows. Its sole remaining gap was `serving_approval:manifest carries no serving_approval`; it did not switch Tower serving.
 
 ## Known Gaps
 
-Ten programs have no declared affected-function relationship; no program has an explicit primary funding domain or approved fiscal-year funding in this source set. The 28 declared relationships remain informational until canonical function objects and governed relationship edges are materialized and read back. The AI intake has no declared crosswalk to the separate benefit and usage feeds, so Finance status, funded amount, and vendor cannot be attached to those AI cases. A tool rollout registry, reconciled Finance values, approved evidence, and normalized quarterly results remain separate source and governance work. The new field projection is not loaded or visible in the product.
+Ten programs have no declared affected-function relationship; no program has an explicit primary funding domain or approved fiscal-year funding in this source set. The 28 declared relationships remain informational until canonical function objects and governed relationship edges are materialized and read back. The AI intake has no declared crosswalk to the separate benefit and usage feeds, so Finance status, funded amount, and vendor cannot be attached to those AI cases. A tool rollout registry, reconciled Finance values, approved evidence, and normalized quarterly results remain separate source and governance work. The new field projection is loaded privately but remains inactive and is not visible in Tower. A separate human-supplied serving approval, governed promotion, and signed-in page proof are still required.
