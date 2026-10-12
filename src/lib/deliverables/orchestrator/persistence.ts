@@ -26,6 +26,13 @@ import { renderValidatedDeck } from "./render-validated-deck";
 import { humanizeSourceFamily } from "./source-register";
 import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
 import type { OrchestrationResult } from "./orchestrator";
+import {
+  assertP5MeasurementContractPlanCurrent,
+  renderP5MeasurementContractPlanHtml,
+  withP5MeasurementContractPlan,
+  type P5MeasurementContractPlan,
+} from "@/lib/programs/p5-measurement-contract";
+import { p5Hash } from "@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter";
 import { completeDeliverable } from "@/lib/programs/mutations";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
 import type { TenancyCtx } from "@/lib/programs/types.db";
@@ -88,6 +95,8 @@ export interface PersistDeliverableOptions {
   evidenceSnapshotHash?: string;
   /** Phase-scoped approved evidence used directly by this generated artifact. */
   phaseEvidenceSnapshotHash?: string;
+  /** Immutable saved definitions captured before this contract's generation starts. */
+  p5MeasurementContractPlan?: P5MeasurementContractPlan;
   /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
   deliverableTypeKey?: string;
   /**
@@ -418,7 +427,12 @@ export async function persistDeliverable(
       `cannot persist deliverable: ${result.blockedReason ?? "generation did not pass the gates"}`,
     );
   }
-  const doc = result.document;
+  const doc = opts.p5MeasurementContractPlan
+    ? withP5MeasurementContractPlan(
+        result.document,
+        opts.p5MeasurementContractPlan,
+      )
+    : result.document;
   const artifactType = artifactTypeFor(result.brief.module);
   // The prescribed primary format follows the deliverable type: most narrative
   // documents are Word/DOCX; the financial model (orchestrator 'estimate_model')
@@ -427,7 +441,8 @@ export async function persistDeliverable(
   const prescribedFormat = prescribedFormatForDeliverableType(
     result.brief.deliverableType,
   );
-  let html = renderDeliverableHtml(doc);
+  const narrativeDoc = opts.p5MeasurementContractPlan ? result.document : doc;
+  let html = renderDeliverableHtml(narrativeDoc);
   const outputFormat: GeneratedArtifactFormat =
     opts.outputFormat ?? prescribedFormat;
   const deliverableKey = deliverableKeyForOrchestratorType(
@@ -478,7 +493,7 @@ export async function persistDeliverable(
   if (opts.renderAsDeck && !profileRenderedHtml) {
     try {
       const deck = buildDeckHtmlFromDocument({
-        doc,
+        doc: narrativeDoc,
         deliverableType: result.brief.deliverableType,
         moveId: opts.sourceArtifactRef,
         ...(result.brief.decisionToSupport
@@ -501,6 +516,29 @@ export async function persistDeliverable(
   }
 
   html = sanitizeClientFacingArtifactHtml(html);
+  if (opts.p5MeasurementContractPlan) {
+    const definitions = renderP5MeasurementContractPlanHtml(
+      opts.p5MeasurementContractPlan,
+    );
+    html = /<\/body>/i.test(html)
+      ? html.replace(/<\/body>/i, () => `${definitions}</body>`)
+      : `${html}${definitions}`;
+  }
+  const p5MeasurementContractPlan = opts.p5MeasurementContractPlan
+    ? { ...opts.p5MeasurementContractPlan, contentHash: p5Hash(html) }
+    : undefined;
+  if (p5MeasurementContractPlan)
+    assertP5MeasurementContractPlanCurrent({
+      ctx: {
+        clientId: opts.clientId,
+        clientKey: opts.tenantKey,
+        userId: opts.userId ?? opts.renderedBy,
+      },
+      moveId: opts.sourceArtifactRef,
+      plan: p5MeasurementContractPlan.plan,
+      content: html,
+      structuredData: { p5MeasurementContractPlan },
+    });
 
   // ── Stage 5: Deliverable Quality Contract (blocking gate before persistence) ──
   // Runs for every deliverable whose key resolves a profile, and records the
@@ -691,6 +729,7 @@ export async function persistDeliverable(
     deliverableType: result.brief.deliverableType,
     registryKey: resolvedDeliverableTypeKey,
     renderableDoc: renderableDocWithType,
+    ...(p5MeasurementContractPlan ? { p5MeasurementContractPlan } : {}),
     ...(htmlPreviewRendered ? { htmlPreviewFormat: "html" } : {}),
     ...(generationMetrics ? { generationMetrics } : {}),
     ...(opts.generationLineage
@@ -745,6 +784,7 @@ export async function persistDeliverable(
           output_format: outputFormat,
           render_engine: "internal",
           requiresOfficeCompanionScan: Boolean(officeCompanion),
+          ...(p5MeasurementContractPlan ? { p5MeasurementContractPlan } : {}),
           ...(opts.generationLineage
             ? { generationLineage: opts.generationLineage }
             : {}),
@@ -809,6 +849,7 @@ export async function persistDeliverable(
                 }
               : {}),
             outputRole: `${officeCompanion.fileFormat}_editable_phase_record`,
+            ...(p5MeasurementContractPlan ? { p5MeasurementContractPlan } : {}),
           },
         },
       );

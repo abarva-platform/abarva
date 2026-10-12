@@ -41,7 +41,12 @@ export function createPhasePageGateReads(
     }
     if (opts.supabase)
       return read(readCtx, readMoveId, fromPhase, toPhase, opts);
-    const key = `${fromPhase}:${toPhase}:${opts.allowHistoricalPhase === true}`;
+    const key = [
+      fromPhase,
+      toPhase,
+      opts.allowHistoricalPhase === true,
+      opts.skipP5Publication === true,
+    ].join(":");
     let result = pending.get(key);
     if (!result) {
       result = read(readCtx, readMoveId, fromPhase, toPhase, {

@@ -61,6 +61,37 @@ describe("phase page gate reads", () => {
     expect(read).toHaveBeenCalledTimes(3);
   });
 
+  it.each([true, false])(
+    "keeps P5 publication preflight separate from the full gate, preflight first: %s",
+    async (preflightFirst) => {
+      const publicationMissing = {
+        ...result,
+        failedChecks: [
+          {
+            check: "p5_tower_publication_current",
+            severity: "hard" as const,
+            reason: "Current publication is required",
+          },
+        ],
+      };
+      const preflight = { ...result, pass: true, failedChecks: [] };
+      const read = jest.fn<
+        ReturnType<typeof evaluateGate>,
+        Parameters<typeof evaluateGate>
+      >(async (_ctx, _id, _from, _to, opts) =>
+        opts?.skipP5Publication ? preflight : publicationMissing,
+      );
+      const gate = createPhasePageGateReads(ctx, "move-a", read);
+      for (const skipP5Publication of [preflightFirst, !preflightFirst]) {
+        expect(
+          await gate(ctx, "move-a", 5, 6, { skipP5Publication }),
+        ).toBe(skipP5Publication ? preflight : publicationMissing);
+      }
+      expect(await gate(ctx, "move-a", 5, 6)).toBe(publicationMissing);
+      expect(read).toHaveBeenCalledTimes(2);
+    },
+  );
+
   it("refuses a different tenancy context or Move before reading", async () => {
     const read = jest.fn(async () => result);
     const gate = createPhasePageGateReads(ctx, "move-a", read);

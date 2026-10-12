@@ -5527,6 +5527,19 @@ describe("MovesPhaseStandaloneClient", () => {
       },
     );
 
+    it.each([true, false])("mounts P5 publication controls only with their flag: %s", async enabled => {
+      render(<MovesPhaseStandaloneClient
+        canApproveGates captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled
+        p5TowerHandoffEnabled={enabled} initialStepView="p5-measurement"
+        carriesForwardContent={[]} evidenceNeedPackets={[]}
+        move={makeMove({ name: "Synthetic Move", currentPhase: 5, phaseLabel: "P5 Mobilize" })}
+        phaseNum={5} phaseTallies={[...phaseTallies]} />);
+      const action = screen.queryByRole("button", { name: "Review saved handoff" });
+      if (enabled) expect(action).toBeInTheDocument();
+      else expect(action).not.toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Define Tower measurement" })).toBeInTheDocument();
+    });
+
     it("mounts the governed gate in a later phase under the phase flag", () => {
       render(
         <MovesPhaseStandaloneClient

@@ -64,6 +64,10 @@ import {
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { phaseStepRecordSections } from "@/lib/programs/phase-workflow-registry";
 import {
+  P5_TOWER_HANDOFF_FLAG,
+  P5_MEASUREMENT_PLAN_KEY,
+} from "@/lib/programs/p5-measurement-plan";
+import {
   PHASE_CAPTURE_SNAPSHOT_UNREADABLE_STATUS,
   phaseCaptureSnapshotUnreadableBody,
 } from "@/lib/programs/phase-capture-snapshot-refusal";
@@ -177,7 +181,11 @@ async function loadCaptureSnapshot(
   // Step-page records (e.g. P3's design traceability) sit beside the answers.
   // Only a saved record joins the snapshot, so a Move without one keeps the
   // revision it had.
-  for (const record of phaseStepRecordSections(phase)) {
+  for (const record of phaseStepRecordSections(phase).filter(
+    (record) =>
+      record.key !== P5_MEASUREMENT_PLAN_KEY ||
+      isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG) === true,
+  )) {
     const value = moduleValue(phase, record.key);
     if (value) values[record.key] = value;
   }
@@ -237,9 +245,7 @@ export async function GET(
       ...(snapshot.confirmedSolutionRoute
         ? { confirmedSolutionRoute: snapshot.confirmedSolutionRoute }
         : {}),
-      ...(phase === 1
-        ? { p1BasisBySection: snapshot.p1BasisBySection }
-        : {}),
+      ...(phase === 1 ? { p1BasisBySection: snapshot.p1BasisBySection } : {}),
       approvedEvidenceReferences: snapshot.approvedEvidenceReferences,
       approvedP1EvidenceReferences: snapshot.approvedP1EvidenceReferences,
       savePath: `/api/v1/programs/${programId}/phase-capture`,
@@ -428,7 +434,11 @@ export async function POST(
     );
     // Step-page records are stored as sent (trimmed), never evaluated as
     // capture questions; an emptied record leaves the snapshot, as on read.
-    for (const record of phaseStepRecordSections(phase)) {
+    for (const record of phaseStepRecordSections(phase).filter(
+      (record) =>
+        record.key !== P5_MEASUREMENT_PLAN_KEY ||
+        isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG) === true,
+    )) {
       const value = String(mergedValues[record.key] ?? "").trim();
       if (value) storedValues[record.key] = value;
     }
@@ -439,7 +449,9 @@ export async function POST(
     if (phase === 1) {
       const p1SectionKeys = new Set(
         evaluation.sections
-          .filter((section) => isP1CharterEvidenceFamily(section.evidenceFamily))
+          .filter((section) =>
+            isP1CharterEvidenceFamily(section.evidenceFamily),
+          )
           .map((section) => section.key),
       );
       if (Object.keys(incomingP1Basis).some((key) => !p1SectionKeys.has(key))) {
@@ -571,8 +583,7 @@ export async function POST(
       const candidateModules: CandidateModule[] = currentSnapshot.modules.map(
         (module) => {
           const section = evaluation.sections.find(
-            (item) =>
-              phaseCaptureModuleKey(1, item.key) === module.moduleKey,
+            (item) => phaseCaptureModuleKey(1, item.key) === module.moduleKey,
           );
           if (!section) {
             return {
@@ -634,8 +645,15 @@ export async function POST(
     const changedKeys = new Set(changedSections.map((c) => c.key));
     const hasBasisEdits = basisKeys.size > 0;
     const { nowIso, moduleKeys } = await persistPhaseCaptureModules({
-      programId, phase, evaluation, storedValues, changedKeys, basisKeys,
-      nextBasisRecords, markComplete,
+      p5HandoffEnabled: isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG) === true,
+      programId,
+      phase,
+      evaluation,
+      storedValues,
+      changedKeys,
+      basisKeys,
+      nextBasisRecords,
+      markComplete,
     });
     const sb = getAzureWriteFluentClient();
 

@@ -19,6 +19,20 @@ import type { GovernedEvidenceItem, OrchestrationResult } from "../index";
 import type { DeliverableArtifactBrief } from "../types";
 import type { TenantContextChunk } from "@/lib/azure-search/tenant-context-retriever";
 import type { DeliverablePlan } from "@/lib/deliverables/planning/deliverable-plan";
+import { p5Hash } from "@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter";
+let mockP5FlagOverride: boolean | string | undefined;
+jest.mock("@/lib/features/is-feature-enabled", () => {
+  const actual = jest.requireActual("@/lib/features/is-feature-enabled");
+  return {
+    ...actual,
+    isFeatureEnabled: (ctx: unknown, key: string) =>
+      mockP5FlagOverride === undefined
+        ? actual.isFeatureEnabled(ctx, key)
+        : key === "moves_p5_tower_handoff_v1"
+          ? mockP5FlagOverride
+          : false,
+  };
+});
 
 function chunk(over: Partial<TenantContextChunk>): TenantContextChunk {
   return {
@@ -328,7 +342,8 @@ describe("assembleGovernedEvidence", () => {
                               causes: [
                                 {
                                   id: "RC-1",
-                                  cause: "Covenant setup has no accountable owner",
+                                  cause:
+                                    "Covenant setup has no accountable owner",
                                   status: "accepted",
                                   evidence: ["Onboarding workshop notes"],
                                 },
@@ -391,7 +406,9 @@ describe("assembleGovernedEvidence", () => {
     expect(capture?.statement).toContain(
       "RC-1: Covenant setup has no accountable owner (accepted) · evidence: Onboarding workshop notes",
     );
-    expect(out.evidence.some((e) => e.statement.includes('"kind"'))).toBe(false);
+    expect(out.evidence.some((e) => e.statement.includes('"kind"'))).toBe(
+      false,
+    );
   });
 
   it("expands current-phase capture and excludes later-phase signals", async () => {
@@ -1378,6 +1395,153 @@ describe("runDeliverableForTenant", () => {
     policy: {},
   })) as never;
 
+  const p5Input = {
+    ...baseInput,
+    module: "moves" as const,
+    deliverableType: "value_measurement_contract",
+    deliverableTypeKey: "value_measurement_contract",
+    tenantClientKey: "meridian",
+    clientId: "22222222-2222-4222-a222-222222222222",
+    sourceArtifactRef: "11111111-1111-4111-a111-111111111111",
+    phase: 5,
+  };
+  const p5Plan = () => ({
+    kind: "p5_measurement_handoff" as const,
+    version: 1 as const,
+    measures: [
+      {
+        leverId: "L1",
+        ownerUserId: "receiving-participant",
+        ownerRole: "Measurement owner",
+        sourceReference: "Source A",
+        comparator: "Comparator A",
+        method: "Method A",
+        cadence: "monthly" as const,
+        firstReviewTrigger: "First mature cohort",
+        exclusionRules: "No duplicate attribution",
+        openConditions: "Source access review",
+      },
+    ],
+  });
+
+  it("captures the P5 plan before generation and forwards its immutable snapshot only to persistence", async () => {
+    mockP5FlagOverride = true;
+    try {
+      const plan = p5Plan();
+      const planAHash = p5Hash(plan);
+      const loadP5MeasurementPlan = jest.fn().mockResolvedValue(plan);
+      const generate = jest.fn().mockImplementation(async (request) => {
+        expect(JSON.stringify(request)).not.toMatch(
+          /Source A|receiving-participant|p5MeasurementContractPlan/,
+        );
+        plan.measures[0].comparator =
+          "Comparator B edited while generation runs";
+        return {
+          ok: true,
+          brief: {
+            module: "moves",
+            deliverableType: "value_measurement_contract",
+          },
+          document: { generatedSections: [{}] },
+          quality: { pass: true, warnings: [] },
+          passTrace: [],
+        };
+      });
+      const persist = jest
+        .fn()
+        .mockResolvedValue({ id: "p5-artifact", blobUrl: "/artifact" });
+      const out = await runDeliverableForTenant(p5Input, {
+        assemble,
+        loadPolicy,
+        generate: generate as never,
+        persist: persist as never,
+        loadP5MeasurementPlan,
+        loadAssumptionRegister: async () => null,
+      });
+      expect(out.ok).toBe(true);
+      expect(loadP5MeasurementPlan).toHaveBeenCalledTimes(1);
+      expect(persist.mock.calls[0][1].p5MeasurementContractPlan).toMatchObject({
+        planHash: planAHash,
+        moveId: p5Input.sourceArtifactRef,
+        clientId: p5Input.clientId,
+        tenantKey: "meridian-health",
+        plan: { measures: [{ comparator: "Comparator A" }] },
+      });
+    } finally {
+      mockP5FlagOverride = undefined;
+    }
+  });
+
+  it("blocks a missing or unreadable P5 saved plan before model generation or persistence", async () => {
+    mockP5FlagOverride = true;
+    try {
+      const generate = jest.fn();
+      const persist = jest.fn();
+      const assembleCheck = jest.fn();
+      const out = await runDeliverableForTenant(p5Input, {
+        assemble: assembleCheck as never,
+        generate: generate as never,
+        persist: persist as never,
+        loadP5MeasurementPlan: async () => {
+          throw new Error("saved plan read unavailable");
+        },
+      });
+      expect(out).toMatchObject({
+        ok: false,
+        qualityPass: false,
+        blockedReason: "measurement_contract_plan_unavailable",
+      });
+      expect(assembleCheck).not.toHaveBeenCalled();
+      expect(generate).not.toHaveBeenCalled();
+      expect(persist).not.toHaveBeenCalled();
+    } finally {
+      mockP5FlagOverride = undefined;
+    }
+  });
+
+  it.each([false, "true"])(
+    "keeps the prior generation path without a strict true P5 flag (%s)",
+    async (enabled) => {
+      mockP5FlagOverride = enabled;
+      try {
+        const loadP5MeasurementPlan = jest.fn();
+        const generate = jest
+          .fn()
+          .mockResolvedValue({
+            ok: true,
+            brief: {
+              module: "moves",
+              deliverableType: "value_measurement_contract",
+            },
+            document: { generatedSections: [{}] },
+            quality: { pass: true, warnings: [] },
+            passTrace: [],
+          });
+        const persist = jest
+          .fn()
+          .mockResolvedValue({ id: "p5-artifact", blobUrl: "/artifact" });
+        expect(
+          (
+            await runDeliverableForTenant(p5Input, {
+              assemble,
+              loadPolicy,
+              generate: generate as never,
+              persist: persist as never,
+              loadP5MeasurementPlan,
+              loadAssumptionRegister: async () => null,
+            })
+          ).ok,
+        ).toBe(true);
+        expect(loadP5MeasurementPlan).not.toHaveBeenCalled();
+        expect(persist.mock.calls[0][1]).not.toHaveProperty(
+          "p5MeasurementContractPlan",
+        );
+      } finally {
+        mockP5FlagOverride = undefined;
+      }
+    },
+  );
+
   it("persists and returns the artifact when generation passes the gates", async () => {
     const generate = (async () =>
       ({
@@ -1811,7 +1975,8 @@ describe("runDeliverableForTenant", () => {
       artifactType: "target_state_architecture",
       audience: "cio",
       decisionPurpose: "Approve the target recovery command architecture.",
-      storyline: "Current fragmentation must become a governed decision system.",
+      storyline:
+        "Current fragmentation must become a governed decision system.",
       currentStateInterpretation:
         "Recovery decisions are manually coordinated today.",
       majorGaps: [
