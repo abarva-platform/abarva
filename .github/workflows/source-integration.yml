@@ -76,6 +76,11 @@ jobs:
           SOURCE_ORIGIN_TEST_DATABASE_URL: postgresql://origin_test:fixture-only@127.0.0.1:5432/origin_repair_fixture
         run: node --test scripts/source/__tests__/document-origin-repair-postgres.test.mjs
 
+      - name: Verify contract writer provenance against disposable Postgres
+        env:
+          SOURCE_WRITER_TEST_DATABASE_URL: postgresql://origin_test:fixture-only@127.0.0.1:5432/origin_repair_fixture
+        run: node --test scripts/source/__tests__/contract-depth-writer-provenance-postgres.test.mjs
+
       # The runner and directories are named literally here, and only the
       # exclusion flags are generated. The paths deliberately have no trailing
       # slash: the visibility gate requires whitespace or end-of-command.
