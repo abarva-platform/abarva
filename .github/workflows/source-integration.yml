@@ -31,6 +31,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: origin_repair_fixture
+          POSTGRES_USER: origin_test
+          POSTGRES_PASSWORD: fixture-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -38,7 +50,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -52,6 +64,17 @@ jobs:
 
       - name: Verify document origin preservation and identity boundaries
         run: node --test scripts/source/__tests__/load-contract-depth-document-evidence.test.mjs
+
+      - name: Verify synthetic evidence and exact-target origin repair
+        run: node --test scripts/source/__tests__/subscription-evidence-package.test.mjs scripts/source/__tests__/document-origin-repair.test.mjs
+
+      - name: Verify declared row normalization reaches the real loader
+        run: npx jest --runInBand --runTestsByPath scripts/source/__tests__/source-row-normalization.test.ts --no-coverage --ci
+
+      - name: Verify origin repair transaction against disposable Postgres
+        env:
+          SOURCE_ORIGIN_TEST_DATABASE_URL: postgresql://origin_test:fixture-only@127.0.0.1:5432/origin_repair_fixture
+        run: node --test scripts/source/__tests__/document-origin-repair-postgres.test.mjs
 
       # The runner and directories are named literally here, and only the
       # exclusion flags are generated. The paths deliberately have no trailing

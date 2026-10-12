@@ -1,0 +1,25 @@
+{
+  "rule_key": "SUBSCRIPTION.UNUSED_ENTITLEMENT_DIAGNOSTIC",
+  "rule_version": "1.0.0",
+  "period": "2026-09",
+  "entitled_quantity": 2500,
+  "active_quantity": 1800,
+  "unused_quantity": 700,
+  "unused_entitlement_share": 0.28,
+  "maximum_renewal_reduction_quantity": 300,
+  "candidate_savings_usd": null,
+  "source_basis": "synthetic_modelled",
+  "review_state": "not_reviewed",
+  "cited_rows": [
+    "subscription:CTR-04CDB4D49D:usage:2026-09",
+    "subscription:CTR-04CDB4D49D:term:minimum_licensed_quantity",
+    "subscription:CTR-04CDB4D49D:term:true_down_rights",
+    "subscription:CTR-04CDB4D49D:term:notice_period_days"
+  ],
+  "constraints": [
+    "Renewal timing",
+    "Minimum quantity",
+    "Owner validates account retirement",
+    "Terms remain unreviewed"
+  ]
+}
