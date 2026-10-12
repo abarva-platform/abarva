@@ -705,12 +705,12 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
     ? CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH
     : CONSULTANT_ANSWER_SHAPE_CONTRACT;
   const rawSystem = modelAuthored
-    ? `${contextBlocks.join("\n\n")}\n\n${EXECUTIVE_BRIEF_CONTRACT}`
+    ? `${contextBlocks.join("\n\n")}\n\n${EXECUTIVE_BRIEF_CONTRACT}\n\n${executiveContext?.decisionGuard ?? ""}`
     : contextBlocks.length > 0
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = modelAuthored
-    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${EXECUTIVE_BRIEF_REMINDER}\n\n${executiveContext?.decisionGuard ?? ""}`
+    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${EXECUTIVE_BRIEF_REMINDER}`
     : answerOnly
       ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\n${universalAnswerVisualContract}`
       : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;

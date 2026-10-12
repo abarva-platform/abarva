@@ -89,9 +89,16 @@ it("never sends blocked sources or ungated supplemental data to Claude", async (
       output += delta;
     expect(input).toBeDefined();
     expect(`${input!.system}\n${input!.user}`).not.toContain("SECRET_MARKER");
-    expect(input!.user.split("USER QUESTION:")[1]).toContain(
+    expect(input!.system).toContain(
       "EVIDENCE RULE FOR THIS ANSWER",
     );
+    expect(input!.system).toContain("These rules bind EVERY visible field");
+    expect(input!.system).toContain("even when a supplied source contains them");
+    expect(input!.system).toContain("User-requested option counts");
+    expect(input!.system.indexOf("EVIDENCE RULE FOR THIS ANSWER")).toBeGreaterThan(
+      input!.system.indexOf("EXHIBIT PROTOCOL"),
+    );
+    expect(input!.user).not.toContain("EVIDENCE RULE FOR THIS ANSWER");
     expect(output).toBe("Validate first.\n\nKeep the original prose.");
   } finally {
     if (previous === undefined) delete process.env.ANTHROPIC_API_KEY;
