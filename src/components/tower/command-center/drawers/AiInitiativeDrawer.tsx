@@ -20,6 +20,7 @@ import {
   DrawerShell,
   DrawerStat,
 } from "./DrawerShell";
+import { sourceFieldLabel, sourceFieldNote } from "./sourceFieldCopy";
 
 const KIND_LABEL: Record<TowerAiView["kind"], string> = {
   funded: "Funded program",
@@ -307,7 +308,11 @@ export function AiInitiativeDrawer({
                 value={a.lifecycleStage ?? "Not recorded"}
               />
               {a.populationKind === "ai_case" && a.sourceCaseStatus ? (
-                <DrawerRow label="Status in intake" value={humanizeEvent(a.sourceCaseStatus)} />
+                <DrawerRow
+                  label="Status reported in intake"
+                  value={sourceFieldLabel("aiCaseStatus", a.sourceCaseStatus)}
+                  sub={sourceFieldNote(a.sourceCaseStatus, "This is a source description, not a checked outcome.")}
+                />
               ) : null}
               {a.populationKind === "ai_case" && a.businessFunction ? (
                 <DrawerRow label="Business work area" value={a.businessFunction} />
@@ -322,8 +327,8 @@ export function AiInitiativeDrawer({
               {a.populationKind === "ai_case" && a.expectedValueArchetype ? (
                 <DrawerRow
                   label="Expected kind of benefit"
-                  value={humanizeEvent(a.expectedValueArchetype)}
-                  sub="A source description of the plan, not a verified dollar benefit."
+                  value={sourceFieldLabel("benefitKind", a.expectedValueArchetype)}
+                  sub={sourceFieldNote(a.expectedValueArchetype, "This describes a possibility, not a measured or Finance-verified benefit.")}
                 />
               ) : null}
               <DrawerRow

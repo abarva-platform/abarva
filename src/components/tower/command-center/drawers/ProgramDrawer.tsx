@@ -19,6 +19,7 @@ import {
   DrawerShell,
   DrawerStat,
 } from "./DrawerShell";
+import { sourceFieldLabel, sourceFieldNote } from "./sourceFieldCopy";
 
 const EYEBROW_TONE = {
   teal: "eTeal",
@@ -274,8 +275,24 @@ export function ProgramDrawer({
           ) : null}
           {p.sourceProgramStatus || p.sourceProgramPhase ? (
             <>
-              <DrawerRow label="Status in intake" value={p.sourceProgramStatus?.replace(/_/g, " ") ?? "Not recorded"} />
-              <DrawerRow label="Phase in intake" value={p.sourceProgramPhase?.replace(/_/g, " ") ?? "Not recorded"} />
+              <DrawerRow
+                label="Status reported in intake"
+                value={p.sourceProgramStatus
+                  ? sourceFieldLabel("programStatus", p.sourceProgramStatus)
+                  : "Not recorded"}
+                sub={p.sourceProgramStatus
+                  ? sourceFieldNote(p.sourceProgramStatus, "This is the source's status, not a Finance or delivery check.")
+                  : undefined}
+              />
+              <DrawerRow
+                label="Work stage reported in intake"
+                value={p.sourceProgramPhase
+                  ? sourceFieldLabel("programPhase", p.sourceProgramPhase)
+                  : "Not recorded"}
+                sub={p.sourceProgramPhase
+                  ? sourceFieldNote(p.sourceProgramPhase, "This describes the planned or reported stage; it does not prove a gate passed.")
+                  : undefined}
+              />
               <DrawerRow
                 label="Affected work areas"
                 value={p.affectedFunctions?.length
