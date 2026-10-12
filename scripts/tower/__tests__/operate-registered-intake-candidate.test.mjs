@@ -124,6 +124,36 @@ test("physical rows require source hash, source reference, and unknown claims", 
   assert.ok(validatePhysicalPage([evidence], "evidence", { ...candidate, evidence_rows_not_approved: 1 }, 1).includes("page_source_ref_mismatch:evidence"));
 });
 
+test("evidence gap accepts only declared aggregate coverage references", (t) => {
+  const { root, candidate } = fixture();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const files = [
+    ["13_evidence_sources.csv", "register_coverage_only"],
+    ["SA08_AI_Benefits_Realization_Usage_Ledger.csv", "claim_evidence_id_coverage_only"],
+    ["SA09_AI_Tool_Usage_Feed.csv", "claim_evidence_id_coverage_only"],
+    ["SA11_AI_KPI_Operational_Outcome_Feed.csv", "claim_evidence_id_coverage_only"],
+  ];
+  const source_manifest = Object.fromEntries(files.map(([name]) => [name, { sha256: sha(name) }]));
+  const refs = files.map(([source_file, scope]) => ({ source_file, source_sha256: source_manifest[source_file].sha256, source_row: null, scope }));
+  const evidence = {
+    row_key: "evidence_approval_gap", source_hash: sha("projection"), source_refs_json: refs,
+    display_payload_json: { value: null, approval_gap_count: 1 },
+    claimable_value_usd: null, finance_validated_value_usd: null,
+  };
+  const report = { ...candidate, evidence_rows_not_approved: 1, source_manifest };
+  assert.deepEqual(validatePhysicalPage([evidence], "evidence", report, 1), []);
+  for (const changed of [
+    { source_sha256: sha("wrong") },
+    { source_file: "13_evidence_sources.csv", source_sha256: source_manifest["13_evidence_sources.csv"].sha256 },
+    { source_row: 2 },
+    { scope: "unknown_coverage_only" },
+  ]) {
+    const invalid = { ...evidence, source_refs_json: refs.map((ref, index) => index === 1 ? { ...ref, ...changed } : ref) };
+    assert.ok(validatePhysicalPage([invalid], "evidence", report, 1).includes("page_source_ref_mismatch:evidence"));
+  }
+  assert.ok(validatePhysicalPage([{ ...evidence, row_key: "other" }], "evidence", report, 1).includes("page_source_ref_mismatch:evidence"));
+});
+
 test("lineage allows one-source planning spend but blocks a conflicting headline", (t) => {
   const { root, candidate } = fixture();
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
