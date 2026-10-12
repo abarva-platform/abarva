@@ -2,7 +2,7 @@ import "server-only";
 
 import type { DeckFinding } from "./deck-quality";
 import {
-  clientCopyIssue, coverUsesEditionRule, referenceSourceLine, visibleFiguresOnSlide,
+  clientCopyIssue, coverUsesEditionRule, referenceNarrativeIssue, referenceSourceLine, visibleFiguresOnSlide,
   type ReferenceDeckSpec,
 } from "./reference-deck-model";
 
@@ -39,6 +39,9 @@ export function judgeReferencePdfPages(pages: ReferencePdfPage[], spec: Referenc
     }
     if (clientCopyIssue(page.text)) add("reference_client_copy", "internal_term", "PDF client text contains internal workflow language.");
     if (coverUsesEditionRule(page.text)) add("reference_client_copy", "edition_rule_visible", "The edition rule appears in PDF client text.");
+    const renderedAnswer = page.text.split(/THE ANSWER\s*:?\s*/i)[1]?.split(/\nSources:|\n[^\n]*Discussion draft/i)[0] ?? "";
+    const unsupported = referenceNarrativeIssue(`${expected.actionTitle}. ${renderedAnswer || expected.answer || ""}`, expected.narrativeEvidence);
+    if (unsupported) add("reference_client_copy", unsupported, "PDF interpretation violates its evidence basis.");
     if (!visible.includes(searchable(expected.actionTitle)))
       add("reference_structure", "pdf_title_missing", "The authored title is absent from the rendered PDF page.");
     if (expected.answer && !visible.includes(searchable(expected.answer)))
@@ -46,6 +49,10 @@ export function judgeReferencePdfPages(pages: ReferencePdfPage[], spec: Referenc
     if (expected.archetype === "divider" && expected.blocks.some((block) => block.kind === "text"
       && block.lines.some((line) => !visible.includes(searchable(line)))))
       add("reference_structure", "pdf_divider_text_missing", "The divider's supporting text is absent from the rendered PDF page.");
+    for (const block of expected.blocks) {
+      if (block.kind === "architecture" && block.layers.some((layer) => layer.items.some((item) => !visible.includes(searchable(item)))))
+        add("reference_structure", "pdf_architecture_label_missing", "An architecture label is absent from the rendered PDF page.");
+    }
     const sourceLine = referenceSourceLine(expected);
     if (expected.archetype !== "cover" && expected.archetype !== "divider" && sourceLine
       && !visible.includes(searchable(sourceLine)))

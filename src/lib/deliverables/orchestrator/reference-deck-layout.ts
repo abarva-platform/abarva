@@ -19,6 +19,29 @@ function advance(character: string): number {
 
 const widthEm = (text: string): number => Array.from(text).reduce((sum, character) => sum + advance(character), 0);
 
+/** Short diagram text; retain its complete source wording in the slide notes. */
+export function referenceArchitectureLabel(value: string, max = 72): string {
+  const words = value.replace(/\//g, " / ").replace(/\s+/g, " ").trim().split(" ");
+  let label = "";
+  for (const word of words) {
+    if ((label ? `${label} ${word}` : word).length > max) break;
+    label = label ? `${label} ${word}` : word;
+  }
+  return label.length === words.join(" ").length ? label : label ? `${label}…` : "Source details in notes";
+}
+
+/** Three wider columns over two rows, followed by one governance band. */
+export function layoutReferenceArchitecture(count: number, widthIn = 11.9) {
+  if (!Number.isInteger(count) || count < 1 || count > 6) throw new Error("reference_deck_architecture_shape_invalid");
+  const columns = Math.min(3, count);
+  const gap = 0.15;
+  const rowHeight = 1.2;
+  const rows = Math.ceil(count / columns);
+  const columnWidth = (widthIn - gap * (columns - 1)) / columns;
+  const governanceY = rows * (rowHeight + gap);
+  return { columns, rows, columnWidth, rowHeight, gap, governanceY, governanceHeight: 0.42, height: governanceY + 0.5 };
+}
+
 /** Estimate wrapped lines without deleting or abbreviating any cell content. */
 export function referenceCellLines(text: string, widthIn: number, fontSize: number): number {
   const capacity = widthIn * 72 / fontSize;

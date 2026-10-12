@@ -1,4 +1,4 @@
-import { layoutReferenceTable, referenceCellLines, referenceCellTextHeight } from "../reference-deck-layout";
+import { layoutReferenceArchitecture, layoutReferenceTable, referenceArchitectureLabel, referenceCellLines, referenceCellTextHeight } from "../reference-deck-layout";
 import { buildReferenceDeckPdf } from "../reference-deck-pdf";
 import type { ReferenceDeckSpec } from "../reference-deck-model";
 import { Document, Page, Text, View, Svg, Path } from "@react-pdf/renderer";
@@ -7,6 +7,23 @@ import { isValidElement, type ReactNode } from "react";
 const statement = "The analyst checks eligibility and supporting documentation before routing the decision to the accountable operations owner for review and resolution.";
 
 describe("readable reference tables", () => {
+  it("uses wider architecture columns and short labels without cutting a word", () => {
+    const layout = layoutReferenceArchitecture(6);
+    expect(layout.rows).toBe(2);
+    expect(layout.columns).toBe(3);
+    expect(layout.columnWidth).toBeGreaterThan(3.8);
+    expect(layout.height).toBeLessThan(3.3);
+    const full = "Reviewed source records / intake manifests / governed transformations with access and traceability controls retained by their accountable owner";
+    const label = referenceArchitectureLabel(full);
+    expect(label).toMatch(/…$/);
+    const prefix = label.slice(0, -1);
+    const normalized = full.replace(/\//g, " / ").replace(/\s+/g, " ");
+    expect(normalized.startsWith(prefix)).toBe(true);
+    expect(normalized[prefix.length]).toBe(" ");
+    expect(referenceCellTextHeight(label, layout.columnWidth - 0.24, 12)).toBeLessThan(0.71);
+    expect(referenceArchitectureLabel("X".repeat(200))).toBe("Source details in notes");
+    expect(() => layoutReferenceArchitecture(7)).toThrow("reference_deck_architecture_shape_invalid");
+  });
   it("emits readable PDF table text with room for the complete paragraph", () => {
     const spec: ReferenceDeckSpec = { edition: "investment", client: "Synthetic", program: "Synthetic scope", useCase: "Synthetic scope",
       sponsorRole: "Sponsor", monthYear: "October", sourcesCheckedTo: "2026-10-10", sources: {}, figureLedger: [],

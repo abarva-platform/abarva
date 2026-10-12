@@ -3,7 +3,7 @@ import "server-only";
 import { Document, Page, Path, Svg, Text, View, type DocumentProps } from "@react-pdf/renderer";
 import { Fragment, type ReactElement } from "react";
 import { COLORS } from "@/lib/design/design-tokens";
-import { layoutReferenceTable, REFERENCE_TABLE_PADDING_X, REFERENCE_TABLE_PADDING_Y } from "./reference-deck-layout";
+import { layoutReferenceArchitecture, layoutReferenceTable, REFERENCE_TABLE_PADDING_X, REFERENCE_TABLE_PADDING_Y } from "./reference-deck-layout";
 import { referenceSourceLine, type ReferenceBlock, type ReferenceCell, type ReferenceDeckSpec } from "./reference-deck-model";
 
 const ink = COLORS.deckInk;
@@ -86,15 +86,21 @@ function PdfBlock({ block, sharedBody = false }: { block: ReferenceBlock; shared
       {block.annotation && <Text style={{ marginTop: 10, fontSize: 10, color: muted }}>{block.annotation}</Text>}
     </View>;
   }
-  if (block.kind === "architecture") return (
-    <View style={{ flexDirection: "row", gap: 6, marginTop: 16 }}>
-      {block.layers.map((layer, index) => <View key={index} style={{ flex: 1, backgroundColor: "#EFEEEA", minHeight: 128, padding: 8 }}>
-        <Text style={{ fontSize: 9, color: accent }}>{layer.name.toUpperCase()}</Text>
-        <Text style={{ fontSize: 9, color: ink, marginTop: 8 }}>{layer.items.join("\n")}</Text>
+  if (block.kind === "architecture") {
+    const layout = layoutReferenceArchitecture(block.layers.length, 870 / 72);
+    return <View wrap={false} style={{ marginTop: 16 }}>
+      {Array.from({ length: layout.rows }, (_, row) => <View key={row} style={{ flexDirection: "row", gap: layout.gap * 72, marginBottom: layout.gap * 72 }}>
+        {block.layers.slice(row * layout.columns, (row + 1) * layout.columns).map((layer, index) => <View key={index} style={{ width: layout.columnWidth * 72,
+          height: layout.rowHeight * 72, backgroundColor: "#EFEEEA", padding: 9 }}>
+          <Text hyphenationCallback={(word) => [word]} style={{ fontSize: 10, color: accent }}>{layer.name.toUpperCase()}</Text>
+          <Text hyphenationCallback={(word) => [word]} style={{ fontSize: 12, lineHeight: 1.28, color: ink, marginTop: 8 }}>{layer.items.join("\n")}</Text>
+        </View>)}
       </View>)}
-      <View style={{ flex: 1, backgroundColor: ink, minHeight: 128, padding: 8 }}><Text style={{ fontSize: 9, color: "#FFFFFF" }}>{block.governance}</Text></View>
-    </View>
-  );
+      <View style={{ backgroundColor: ink, height: layout.governanceHeight * 72, padding: 8 }}>
+        <Text hyphenationCallback={(word) => [word]} style={{ fontSize: 11, color: "#FFFFFF" }}>GOVERNANCE  {block.governance}</Text>
+      </View>
+    </View>;
+  }
   if (block.kind === "bars") {
     const max = Math.max(1, ...block.items.map((item) => item.magnitude));
     return <View style={{ marginTop: 12 }}>{block.items.map((item, index) => <View key={index} style={{ flexDirection: "row", alignItems: "center", marginBottom: 7 }}>

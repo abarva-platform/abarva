@@ -4,7 +4,8 @@ import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
 import { ROM_DRIVER_LABELS, type RomDriver } from "@/lib/pricing/moves-workflow/rom-drivers";
 import type { EditionInputs } from "./reference-deck-inputs";
 import type { EditionWords } from "./reference-deck-words";
-import { buildReferenceSlotTable, type ReferenceSlotTable } from "./reference-deck-slots";
+import { buildReferenceNarrativeEvidence, buildReferenceSlotTable, type ReferenceSlotTable } from "./reference-deck-slots";
+import { referenceArchitectureLabel } from "./reference-deck-layout";
 import {
   type ReferenceArchetype, type ReferenceBlock, type ReferenceCell,
   type ReferenceDeckSpec, type ReferenceFigure, type ReferenceSection,
@@ -31,13 +32,17 @@ const text = (value: unknown, fallback = GAP): string =>
 const obj = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown> : null;
-const safeCaptured = (value: unknown): string => {
-  const line = text(value).replace(/\s+/g, " ");
+const safeCaptured = (value: unknown, maxLength: number | null = 170): string => {
+  const raw = text(value).replace(/\s+/g, " ");
+  // A contact/alias instruction does not establish a business rationale or commitment.
+  if (/^Synthetic role contact:|\bRole alias only\b/i.test(raw)) return GAP;
+  const line = raw.replace(/^Synthetic scope hypothesis:/i, "Working scope hypothesis:")
+    .replace(/^Stakeholder map:\s*Synthetic role roster:/i, "Working role map:");
   if (factTokens(line).length || clientCopyIssue(line)) return GAP;
-  if (line.length <= 170) return line;
-  const prefix = line.slice(0, 170);
+  if (maxLength === null || line.length <= maxLength) return line;
+  const prefix = line.slice(0, maxLength);
   const boundary = prefix.lastIndexOf(" ");
-  return `${prefix.slice(0, boundary > 0 ? boundary : 170).trimEnd()}…`;
+  return `${prefix.slice(0, boundary > 0 ? boundary : maxLength).trimEnd()}…`;
 };
 const hasGap = (value: ReferenceCell): boolean => typeof value === "string" && value.startsWith("Gap —");
 const clientCell = (value: ReferenceCell): ReferenceCell => hasGap(value) ? "To confirm" : value;
@@ -94,8 +99,8 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
   const sources: Record<string, string> = {};
   const figureLedger: ReferenceFigure[] = [];
   const figures = new Map<string, ReferenceFigure>();
-  const safeRead = (value: unknown): string => {
-    const result = safeCaptured(value);
+  const safeRead = (value: unknown, complete = false): string => {
+    const result = safeCaptured(value, complete ? null : 170);
     return inputs.edition === "validation" && /\b(cost|rom|roi|investment|solution|plan|roadmap|release)\b/i.test(result)
       ? GAP : result;
   };
@@ -116,8 +121,8 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     if (slot.editions.includes(inputs.edition) && slot.display !== null)
       bind(slot.sourceId, slot.sourceLabel, slot.display);
   }
-  const capture = (phase: 1 | 2 | 3, key: string): string =>
-    inputs.capture[phase].status === "ready" ? safeRead(inputs.capture[phase].value[key])
+  const capture = (phase: 1 | 2 | 3, key: string, complete = false): string =>
+    inputs.capture[phase].status === "ready" ? safeRead(inputs.capture[phase].value[key], complete)
       : GAP;
   const sourceCapture = (phase: 1 | 2 | 3, key: string) => {
     const id = `evidence:P${phase}:${key}`;
@@ -234,7 +239,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       return { ...block, items: block.items.map((item) => ({ ...item, value: clientCell(item.value) })) };
     }
     if (block.kind === "architecture") return { ...block, layers: block.layers.map((layer) => ({
-      ...layer, items: layer.items.map((item) => hasGap(item) ? "To confirm" : item),
+      ...layer, fullItems: [...layer.items], items: layer.items.map((item) => hasGap(item) ? "To confirm" : referenceArchitectureLabel(item)),
     })) };
     if (block.kind === "text") return { ...block, lines: block.lines.map((line) => line.replace(/Gap —[^\n]*/g, "To confirm")) };
     return block;
@@ -338,12 +343,12 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         || ["architecture_integration", "controls_governance", "solution_approach"].every((key) => hasGap(capture(3, key)))
         ? [gapPanel("The proposed design still needs your team's input")]
         : [{ kind: "architecture", layers: [
-        { name: "Sources", items: [capture(2, "current_state_findings")] },
-        { name: "Intake", items: [capture(3, "architecture_integration")] },
+        { name: "Sources", items: [capture(2, "current_state_findings", true)] },
+        { name: "Intake", items: [capture(3, "architecture_integration", true)] },
         { name: "Common view", items: ["Shared records"] },
         { name: "Measures", items: ["Calculated case"] },
-        { name: "Review", items: [capture(3, "controls_governance")] },
-        { name: "Use", items: [capture(3, "solution_approach")] },
+        { name: "Review", items: [capture(3, "controls_governance", true)] },
+        { name: "Use", items: [capture(3, "solution_approach", true)] },
       ], governance: "Access · traceability · approval" }];
       case "channels": return inputs.capture[3].status !== "ready"
         || ["workflow_delta", "operating_model"].every((key) => hasGap(capture(3, key)))
@@ -451,6 +456,10 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       noteParts.push("Edition guidance: this discussion validates the need and excludes the solution, plan and cost.");
     if (archetype === "flow_today" && actualFlow)
       noteParts.push(`Full handoffs: ${actualFlow.full.join(" → ")}.`);
+    for (const block of blocks) {
+      if (block.kind === "architecture") block.layers.forEach((layer) =>
+        noteParts.push(`Source detail — ${layer.name}: ${(layer.fullItems ?? layer.items).join("; ")}.`));
+    }
     if (["one_page", "big_number_context", "one_step_value", "three_year_value", "value_ledger"].includes(archetype)
       && inputs.valueCase.status !== "ready")
       noteParts.push(`Consultant follow-up: ${inputs.valueCase.detail}`);
@@ -459,6 +468,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       : archetype === "big_number_context" ? [sourceCapture(1, "scope_boundary"), sourceCapture(2, "current_state_findings")]
         : archetype === "flow_today" ? [sourceCapture(2, "process_handoffs"), sourceCapture(2, "current_state_findings")]
       : archetype === "team" ? [sourceCapture(1, "sponsor_commitment"), sourceCapture(3, "operating_model")]
+        : archetype === "target_state" ? [sourceCapture(2, "current_state_findings"), sourceCapture(3, "architecture_integration"), sourceCapture(3, "controls_governance"), sourceCapture(3, "solution_approach")]
         : [];
     return {
       archetype,
@@ -472,6 +482,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       visibleNarrativeFigures: [...visibleNarrativeFigures.values()],
       narrativeSourceLabels: [...narrativeSourceLabels],
       sourceIds: sourceIdsFor(blocks, [...extra, ...narrativeSourceIds]),
+      narrativeEvidence: buildReferenceNarrativeEvidence(slots, archetype, inputs.edition),
     };
   });
   const spec: ReferenceDeckSpec = {

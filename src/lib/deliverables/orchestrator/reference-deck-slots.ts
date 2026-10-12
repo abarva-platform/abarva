@@ -1,5 +1,5 @@
 import type { EditionInputs } from "./reference-deck-inputs";
-import type { ReferenceEdition } from "./reference-deck-model";
+import type { ReferenceArchetype, ReferenceEdition, ReferenceNarrativeEvidence } from "./reference-deck-model";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
 
 export interface ReferenceSlot {
@@ -74,6 +74,13 @@ export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTab
     missingPhrase: inputs.register.status === "ready" ? "withheld" : "unavailable", editions: both,
   });
   add({
+    key: "register.count.open", meaning: "count of assumptions whose current status is open; excludes confirmed and corrected assumptions",
+    display: activeRows ? count(activeRows.filter((row) => row.status === "open").length) : null,
+    sourceId: activeRows ? "evidence:register_open_count" : "gap:register_open_count",
+    sourceLabel: activeRows ? "Signed-in assumptions register: open status count" : "Open assumption count unavailable or withheld",
+    missingPhrase: inputs.register.status === "ready" ? "withheld" : "unavailable", editions: both,
+  });
+  add({
     key: "baseline.current", meaning: "measured current-state baseline, only when separately sourced and governed",
     display: null, sourceId: "gap:baseline_current", sourceLabel: "Current-state baseline not source-verified",
     missingPhrase: "baseline not yet source-verified", editions: both,
@@ -99,8 +106,29 @@ export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTab
   return Object.fromEntries(entries.map((slot) => [slot.key, slot]));
 }
 
-export function promptSlotDefinitions(table: ReferenceSlotTable, edition: ReferenceEdition): Array<{ name: string; token: string; meaning: string }> {
+export function promptSlotDefinitions(table: ReferenceSlotTable, edition: ReferenceEdition): Array<{ name: string; token: string; meaning: string; available: boolean }> {
   return Object.values(table).filter((slot) => slot.editions.includes(edition)).map((slot) => ({
-    name: slot.key, token: `{${slot.key}}`, meaning: slot.meaning,
+    name: slot.key, token: `{${slot.key}}`, meaning: slot.meaning, available: slot.display !== null,
   }));
+}
+
+/** Only booleans from this record enter the prompt; displays stay server-side. */
+export function buildReferenceNarrativeEvidence(table: ReferenceSlotTable, archetype: ReferenceArchetype, edition: ReferenceEdition): ReferenceNarrativeEvidence {
+  const valueKey = ["one_page", "one_step_value"].includes(archetype)
+    ? edition === "investment" ? "value.annual.plan" : "value.annual.base"
+    : ["big_number_context", "three_year_value", "value_ledger", "shared_foundation"].includes(archetype)
+      ? "value.three_year.credited" : null;
+  const available = (key: string) => table[key] ? table[key].display !== null : undefined;
+  const nonzero = (key: string) => table[key] ? table[key].display !== null && table[key].display !== "0" : undefined;
+  return {
+    ...(valueKey ? { valueAvailable: available(valueKey) } : {}),
+    ...(["releases", "shared_foundation", "rom_hours"].includes(archetype) ? { estimateAvailable: available("rom.total.plan") } : {}),
+    baselineAvailable: available("baseline.current"),
+    acceptedOwnersAvailable: nonzero("owners.count.accepted"),
+    publicSourcesAvailable: nonzero("sources.count.approved"),
+    ...(table["register.count.active"]?.display !== null && table["register.count.active"]?.display !== undefined
+      ? { activeCount: table["register.count.active"]!.display! } : {}),
+    ...(table["register.count.open"]?.display !== null && table["register.count.open"]?.display !== undefined
+      ? { openCount: table["register.count.open"]!.display! } : {}),
+  };
 }
