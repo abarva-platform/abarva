@@ -8,14 +8,16 @@ jest.mock("@/lib/ecl/insights/home-admission", () => ({
 }));
 
 import { readFile } from "node:fs/promises";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { attachHomeInsightAdmission } from "@/lib/ecl/insights/home-admission";
 import { insightHash } from "@/lib/ecl/insights/engine";
 import { readHomeIntegratedInsights } from "../integrated-insight-reader";
 import type { HomeRecordRenderSource, HomeReviewBundle } from "../types";
 
+const tenantKey = CANONICAL_TENANT_KEYS[0];
 const served = {
-  bundle: { tenantKey: "meridian-health" } as HomeReviewBundle,
+  bundle: { tenantKey } as HomeReviewBundle,
   recordSource: {
     kind: "ecl_serving_projection",
     canonicalSnapshotHash: "test",
@@ -65,7 +67,7 @@ it("keeps the base record when the additive view is absent or has no admission",
   expect(azureRead.query).toHaveBeenCalledWith(
     expect.stringContaining("base_home_record_token=$3"),
     [
-      "meridian-health",
+      tenantKey,
       "test-assessment",
       expect.stringMatching(/^[a-f0-9]{64}$/),
     ],
