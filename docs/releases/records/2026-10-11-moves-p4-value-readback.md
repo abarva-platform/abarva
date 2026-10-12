@@ -39,10 +39,10 @@ The P4 value page read a response field that the value-case API does not return,
 
 ## QA / Validation
 
-- Pass: seven focused suites, 536 tests, including the complete capture-host suite, P4/P5 page, approved-ROM reader, live-formula ROM workbook, value cost basis, value engine and value API route.
+- Pass: seven focused suites, 538 tests after merging actual main, including the complete capture-host suite, P4/P5 page, approved-ROM reader, live-formula ROM workbook, value cost basis, value engine and value API route.
 - Pass: thirteen original readback mutation checks and twelve additional save/readiness mutation checks killed; source restored after each run. Checks cover the API field, delivery choice, refusal, Move binding, retry, open inputs, blocked/restricted figures, ROI basis, ceiling wording, timing qualification, zero-cash rule, saving, stale responses, shared readiness and flag-off behavior.
 - Pass: Node 24 `npm run typecheck`, zero diagnostics.
-- Pass: targeted ESLint, library orphan audit, route/export reachability, coverage and tenancy write/check, manual check, and all 11 release gates. Coverage stays at 2,829 files: this change adds cases to an existing swept suite and adds no test file.
+- Pass: targeted ESLint, library orphan audit, route/export reachability, coverage and tenancy write/check, manual check, and all 11 release gates. Genuine regeneration after actual-main reconciliation reports 2,831 covered test files, the same as main: this change adds cases to existing swept suites and adds no test file.
 - Pass: eight actual component renders covering saved and funding-blocked states at 1440 and 390 in light/dark, compared with template v1.10; no horizontal overflow. The temporary render test was deleted. These local fixtures exclude the signed-in host and agent dock.
 - Not run: exact-head GitHub CI, merge, ACA runtime invariant or fresh signed-in P4 acceptance. Local fixtures are not runtime proof.
 
