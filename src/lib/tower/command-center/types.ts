@@ -235,6 +235,8 @@ export interface TowerProgramView {
   lane: TowerLaneKey;
 
   fundedUsd: number;
+  /** Source-listed program plan; separate from approved fiscal-year funding. */
+  planningBudgetUsd?: number | null;
   /** False when a program has no source-approved FY26 funding amount. */
   fundingAmountLoaded?: boolean;
   promisedUsd: number;

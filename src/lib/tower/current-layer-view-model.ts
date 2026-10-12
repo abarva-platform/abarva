@@ -145,6 +145,8 @@ export interface TowerMartProgramLane {
   decisionLane: "fund" | "fix" | "freeze" | "stop" | "unclassified";
   decisionRationale: string;
   approvedFundingUsd: number;
+  /** Source-listed program plan, with fiscal period and approval unverified. */
+  planningBudgetUsd?: number | null;
   fundedAmount?: number;
   /** The source explicitly records an approved FY26 amount for this program. */
   fundingAmountLoaded?: boolean;
