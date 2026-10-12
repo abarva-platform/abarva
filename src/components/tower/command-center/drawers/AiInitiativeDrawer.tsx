@@ -591,19 +591,23 @@ export function AiInitiativeDrawer({
                     <span className={styles.un}>{bar.label}</span>
                     <span className={styles.uv}>{bar.valueText}</span>
                   </div>
-                  <div className={styles.ubar}>
-                    <i
-                      style={{
-                        width: `${bar.pct}%`,
-                        background:
-                          bar.tone === "teal"
-                            ? "var(--canon-teal)"
-                            : bar.tone === "amber"
-                              ? "var(--canon-amber)"
-                              : "var(--canon-red)",
-                      }}
-                    />
-                  </div>
+                  {bar.label === "Adoption" ? (
+                    <div className={styles.ubar}>
+                      <i
+                        style={{
+                          width: `${bar.pct}%`,
+                          background:
+                            bar.tone === "teal"
+                              ? "var(--canon-teal)"
+                              : bar.tone === "amber"
+                                ? "var(--canon-amber)"
+                                : "var(--canon-red)",
+                        }}
+                      />
+                    </div>
+                  ) : a.adoptionActualPct == null ? (
+                    <p className={styles.us}>Count recorded; adoption rate not loaded.</p>
+                  ) : null}
                 </div>
               ))}
             </div>

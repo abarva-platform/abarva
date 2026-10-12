@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Tower program and AI use-case details now explain source status, work stage, and expected benefit type in everyday words. Each row also shows the exact source value, so a reader can check what the intake actually said. The program-by-function panel describes loaded row counts and clearly marks approved funding by function as unverified. The wording describes a plan or reported state; it does not turn it into a verified result.
+The Tower program and AI use-case details now explain source status, work stage, and expected benefit type in everyday words. Each row also shows the exact source value, so a reader can check what the intake actually said. The program-by-function panel describes loaded row counts and clearly marks approved funding by function as unverified. Usage counts in AI details appear as text without a percentage bar when the adoption rate is missing. The wording describes a plan or reported state; it does not turn it into a verified result.
 
 ## Layer Impact
 
@@ -36,10 +36,11 @@ Release lane: `global-control-lane`.
 - Shows the exact intake value beside each explanation and keeps missing fields as missing.
 - Keeps planned benefit language separate from measured or Finance-verified value.
 - Labels the program-by-function panel as loaded row counts; it does not add planning amounts or imply approved funding by function.
+- Shows count-only AI usage as text and reserves the percentage bar for recorded adoption rates.
 
 ## QA / Validation
 
-- Pass: 40 focused Tower tests across four suites cover source-code readback, planned-benefit language, the three registered expected-benefit types, and program-by-function copy with and without rows.
+- Pass: 41 focused Tower tests across four suites cover source-code readback, planned-benefit language, the three registered expected-benefit types, program-by-function copy with and without rows, and a count-only usage row without a percentage bar.
 - Pass: focused ESLint, full TypeScript typecheck, `git diff --check`, and all 11 release checks.
 - Pending: protected PR CI for the updated head. It is required before merge.
 

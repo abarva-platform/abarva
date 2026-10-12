@@ -69,6 +69,33 @@ describe("Tower detail proof states", () => {
     expect(within(drawer).getByText(/not a measured or Finance-verified benefit/)).toBeInTheDocument();
   });
 
+  it("shows a source usage count without a bar when no adoption rate is loaded", () => {
+    const mart = designFixtureMart();
+    const sourceCase = mart.aiPortfolio[0]!;
+    const countOnlyView = buildTowerCommandCenterView(
+      {
+        ...mart,
+        aiPortfolio: [{
+          ...sourceCase,
+          usageMetric: "active_users",
+          usageActual: 27,
+          adoptionRatePct: null,
+        }],
+      },
+      { tenantName: "Example tenant" },
+    )!;
+    const countOnlyCase = countOnlyView.allInitiatives[0]!;
+    expect(countOnlyCase.usageBars).toHaveLength(1);
+    expect(countOnlyCase.usageBars[0]?.valueText).toBe("27");
+    expect(countOnlyCase.usageBars.some((bar) => bar.label === "Adoption")).toBe(false);
+
+    render(<AiInitiativeDrawer item={countOnlyCase} onClose={() => {}} />);
+    const drawer = screen.getByRole("dialog");
+    const count = within(drawer).getByText("27");
+    expect(count.parentElement?.parentElement?.querySelector("i")).toBeNull();
+    expect(within(drawer).getByText("Count recorded; adoption rate not loaded.")).toBeInTheDocument();
+  });
+
   it.each([
     ["cost_productivity_or_cycle_time", "May lower cost, free staff time, or speed up work"],
     ["revenue_uplift_or_experience", "May improve revenue or customer experience"],
