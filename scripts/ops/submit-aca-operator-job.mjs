@@ -152,6 +152,25 @@ function assertScript(script) {
   }
 }
 
+function assertTowerStageJobBinding(options) {
+  if (!["tower:registered-intake:stage-job", "tower:registered-intake:stage-reattest-job"].includes(options.script)) return;
+  const entries = options.env.map((value) => splitKeyValue(value, "--env"));
+  const overrides = new Map(entries);
+  for (const key of ["TOWER_RELOAD_IMAGE_DIGEST", "TOWER_RELOAD_JOB_NAME",
+    "TOWER_RELOAD_TIMEOUT_SECONDS", "TOWER_RELOAD_EXECUTION_LANE"]) {
+    if (entries.filter(([name]) => name === key).length !== 1) {
+      throw new Error(`Tower stage requires exactly one ${key} override`);
+    }
+  }
+  const imageDigest = options.image.match(/@((?:sha256:)[0-9a-f]{64})$/)?.[1];
+  if (!imageDigest || overrides.get("TOWER_RELOAD_IMAGE_DIGEST") !== imageDigest ||
+      overrides.get("TOWER_RELOAD_JOB_NAME") !== options.job ||
+      overrides.get("TOWER_RELOAD_TIMEOUT_SECONDS") !== String(options.timeout) ||
+      overrides.get("TOWER_RELOAD_EXECUTION_LANE") !== "aca_operator_job") {
+    throw new Error("Tower stage job identity, image digest, timeout, and execution lane must match the ACA wrapper request");
+  }
+}
+
 function runAz(args, options = {}) {
   const result = spawnSync("az", args, {
     encoding: "utf8",
@@ -290,7 +309,13 @@ function resolvePackageScript(scriptName) {
   }
 }
 
-function migrationNamesFromScript(scriptCommand) {
+const TOWER_UNKNOWN_SCHEMA_SCRIPTS = ["tower:migrate:unknown-amounts:dry-job",
+  "tower:migrate:unknown-amounts:apply-job", "tower:migrate:unknown-amounts:reconcile-job"];
+
+export function migrationNamesFromScript(scriptName, scriptCommand) {
+  if (TOWER_UNKNOWN_SCHEMA_SCRIPTS.includes(scriptName)) {
+    return ["20261011173000_tower_value_chain_unknown_amounts.sql"];
+  }
   if (!scriptCommand || !scriptCommand.includes("run-migrations")) return [];
   return Array.from(
     new Set(scriptCommand.match(/\b\d{14}_[^\s"'`]+\.sql\b/g) ?? []),
@@ -313,7 +338,7 @@ function databaseEvidence(options, effectiveEnv) {
   };
 }
 
-function writeMigrationSeal(
+export function writeMigrationSeal(
   options,
   effectiveEnv,
   executionName,
@@ -321,16 +346,21 @@ function writeMigrationSeal(
   logText,
   finishedAt,
   outDir,
+  towerSchemaProofVerified = false,
+  towerSchemaManualReviewRequired = false,
 ) {
   const scriptCommand = resolvePackageScript(options.script);
-  const migrationNames = migrationNamesFromScript(scriptCommand);
+  const migrationNames = migrationNamesFromScript(options.script, scriptCommand);
   if (migrationNames.length === 0) return null;
 
-  const mode = scriptCommand.includes("--dry")
+  const mode = scriptCommand.includes("--mode dry-run") || scriptCommand.includes("--dry")
     ? "dry-run"
-    : scriptCommand.includes("--ci")
+    : scriptCommand.includes("--mode apply") || scriptCommand.includes("--ci")
       ? "apply"
-      : "unknown";
+      : scriptCommand.includes("--mode reconcile")
+        ? "reconcile-read-only"
+        : "unknown";
+  const towerSchemaScript = TOWER_UNKNOWN_SCHEMA_SCRIPTS.includes(options.script);
   const branchCommit =
     effectiveEnv
       .find((value) => value.startsWith("ABARVA_OPERATOR_BRANCH_COMMIT="))
@@ -357,7 +387,8 @@ function writeMigrationSeal(
       operator_image_digest: digest,
       database: databaseEvidence(options, effectiveEnv),
       execution_id: executionName,
-      applied_at: mode === "apply" && status === "Succeeded" ? finishedAt : null,
+      applied_at: mode === "apply" && status === "Succeeded" &&
+        (!towerSchemaScript || towerSchemaProofVerified) ? finishedAt : null,
     };
   });
   const seal = {
@@ -371,6 +402,8 @@ function writeMigrationSeal(
     operator_image_digest: digest,
     branch_commit: branchCommit,
     log_sha256: sha256(logText || ""),
+    ...(towerSchemaScript ? { tower_schema_proof_verified: towerSchemaProofVerified,
+      tower_schema_manual_review_required: towerSchemaManualReviewRequired } : {}),
     migrations,
   };
   const sealPath = path.join(outDir, "06-migration-seal.json");
@@ -672,6 +705,11 @@ export function extractProofBundle(logText, outDir) {
       end: "__HOME_ECL_NARRATIVE_PROOF_TGZ_END__",
       marker: "home_ecl_narrative",
     },
+    {
+      begin: "__TOWER_UNKNOWN_AMOUNT_SCHEMA_PROOF_TGZ_BEGIN__",
+      end: "__TOWER_UNKNOWN_AMOUNT_SCHEMA_PROOF_TGZ_END__",
+      marker: "tower_unknown_amount_schema",
+    },
   ];
   const lines = logText.split(/\r?\n/);
   const sourceSummary = extractServiceNowRequestSummary(lines, outDir) ??
@@ -729,6 +767,70 @@ export function extractProofBundle(logText, outDir) {
       summary: sourceSummary.summary,
     } : {}),
   };
+}
+
+export function verifyTowerSchemaProof(script, proof, outDir) {
+  if (!TOWER_UNKNOWN_SCHEMA_SCRIPTS.includes(script)) return;
+  const receiptPath = path.join(outDir, "proof", "schema-job-receipt.json");
+  if (!proof.extracted || proof.marker !== "tower_unknown_amount_schema" || !fs.existsSync(receiptPath)) {
+    throw new Error("Tower schema job proof bundle or receipt was not captured from ACA logs");
+  }
+  const receipt = JSON.parse(fs.readFileSync(receiptPath, "utf8"));
+  const expectedMode = script.endsWith(":apply-job") ? "apply" :
+    script.endsWith(":reconcile-job") ? "reconcile" : "dry-run";
+  const migration = "20261011173000_tower_value_chain_unknown_amounts.sql";
+  const sql = fs.readFileSync(path.join(process.cwd(), "supabase/migrations", migration), "utf8");
+  const baselinePath = path.join(outDir, "proof", "baseline.json");
+  const ledgerPrecheckPath = path.join(outDir, "proof", "ledger-precheck.json");
+  const dryLogPath = path.join(outDir, "proof", "targeted-dry.stdout.log");
+  const readbackPath = path.join(outDir, "proof", "readback.json");
+  const currentPath = path.join(outDir, "proof", "current.json");
+  const ledgerPath = path.join(outDir, "proof", "migration-ledger.json");
+  if (receipt.contract_version !== "tower-unknown-amount-schema-job/v1" || receipt.mode !== expectedMode ||
+      receipt.migration_name !== migration || receipt.migration_sha256 !== sha256(sql)) {
+    throw new Error("Tower schema job receipt did not pass its expected readback gate");
+  }
+  if (expectedMode === "reconcile") {
+    if (receipt.status !== "manual_review_required" ||
+        receipt.comparison_status !== "original_baseline_required" ||
+        !fs.existsSync(currentPath) || !fs.existsSync(ledgerPath) ||
+        receipt.current_sha256 !== sha256(fs.readFileSync(currentPath))) {
+      throw new Error("Tower schema reconciliation receipt is incomplete");
+    }
+    const current = JSON.parse(fs.readFileSync(currentPath, "utf8"));
+    const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
+    if (current.columns?.length !== 3 || current.columns.some((row) =>
+      row.is_nullable !== "YES" || row.column_default !== null) ||
+      current.unknown_amount_constraint?.length !== 1 ||
+      ledger.name !== migration || ledger.sha256 !== receipt.migration_sha256) {
+      throw new Error("Tower schema reconciliation current readback or ledger did not match");
+    }
+    return { fullProofVerified: false, manualReviewRequired: true };
+  }
+  if (receipt.status !== "pass" || !fs.existsSync(baselinePath) || !fs.existsSync(ledgerPrecheckPath) ||
+      !fs.existsSync(dryLogPath) ||
+      receipt.baseline_sha256 !== sha256(fs.readFileSync(baselinePath)) ||
+      receipt.comparison_status !== (expectedMode === "apply" ? "pass" : "baseline_only") ||
+      (expectedMode === "apply" && (!fs.existsSync(readbackPath) || !fs.existsSync(ledgerPath) ||
+        receipt.readback_sha256 !== sha256(fs.readFileSync(readbackPath))))) {
+    throw new Error("Tower schema job receipt did not pass its expected readback gate");
+  }
+  if (expectedMode === "apply") {
+    const baseline = JSON.parse(fs.readFileSync(baselinePath, "utf8"));
+    const ledgerPrecheck = JSON.parse(fs.readFileSync(ledgerPrecheckPath, "utf8"));
+    const readback = JSON.parse(fs.readFileSync(readbackPath, "utf8"));
+    const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
+    if (ledgerPrecheck.focused_migration !== null || readback.comparison_status !== "pass" ||
+        JSON.stringify(readback.unchanged_numeric_basis) !== JSON.stringify(baseline.unchanged_numeric_basis) ||
+        ledger.name !== migration || ledger.sha256 !== receipt.migration_sha256) {
+      throw new Error("Tower schema job extracted proof content failed numeric or ledger readback");
+    }
+  }
+  return { fullProofVerified: true, manualReviewRequired: false };
+}
+
+export function operatorSummaryOk({ failed, wait, status, manualReviewRequired }) {
+  return !failed && (!wait || status === "Succeeded") && !manualReviewRequired;
 }
 
 function restoreIdle(options, outDir) {
@@ -1133,6 +1235,7 @@ async function main() {
   assertDigestPinned(options.image);
   assertDigestPinned(options.idleImage);
   assertScript(options.script);
+  assertTowerStageJobBinding(options);
   if (!Number.isFinite(options.pollSeconds) || options.pollSeconds <= 0) {
     throw new Error("--poll-seconds must be a positive number");
   }
@@ -1177,6 +1280,8 @@ async function main() {
   let executionName = null;
   let status = "NotStarted";
   let proof = { extracted: false, reason: "not attempted" };
+  let towerSchemaProofVerified = false;
+  let towerSchemaManualReviewRequired = false;
   let migrationSeal = null;
   let logText = "";
   let restored = { restored: false };
@@ -1242,6 +1347,9 @@ async function main() {
       fs.writeFileSync(path.join(options.outDir, "04-logs.txt"), logText);
       proof = extractProofBundle(logText, options.outDir);
       writeJson(path.join(options.outDir, "05-proof-extraction.json"), proof);
+      const towerSchemaVerification = verifyTowerSchemaProof(options.script, proof, options.outDir);
+      towerSchemaProofVerified = towerSchemaVerification?.fullProofVerified === true;
+      towerSchemaManualReviewRequired = towerSchemaVerification?.manualReviewRequired === true;
     }
   } catch (error) {
     failed = error;
@@ -1266,6 +1374,8 @@ async function main() {
         logText,
         finishedAt,
         options.outDir,
+        towerSchemaProofVerified,
+        towerSchemaManualReviewRequired,
       );
     } catch (error) {
       migrationSeal = {
@@ -1280,8 +1390,9 @@ async function main() {
       status,
       proof,
       migrationSeal,
+      tower_schema_manual_review_required: towerSchemaManualReviewRequired,
       restored,
-      ok: !failed && (!options.wait || status === "Succeeded"),
+      ok: operatorSummaryOk({ failed, wait: options.wait, status, manualReviewRequired: towerSchemaManualReviewRequired }),
       outputDir: options.outDir,
     };
     writeJson(path.join(options.outDir, "summary.json"), summary);
