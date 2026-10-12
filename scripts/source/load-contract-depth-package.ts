@@ -390,9 +390,7 @@ function readSourceFiles(
     clause_type:
       stringValue(row, "clause_type") || stringValue(row, "concept_ref"),
     source_page_ref:
-      stringValue(row, "source_page_ref") ||
-      stringValue(row, "source_page") ||
-      stringValue(row, "source_section"),
+      stringValue(row, "source_page_ref") || stringValue(row, "source_page"),
   }));
   const rawChangeOrders = readCsv(path.join(sourceDir, "change_orders.csv"));
   const rawManifest: CsvRecord[] = readCsv(
@@ -477,7 +475,7 @@ function readSourceFiles(
         stringValue(row, "end_date"),
         Number(row.notice_period_days) || 0,
       ),
-      source_file_id: stringValue(row, "source_file_id") || "EVID-01",
+      source_file_id: stringValue(row, "source_file_id"),
     })),
     applications: rawApplications.map((row) =>
       alias(
@@ -667,10 +665,11 @@ function readSourceFiles(
       evidence_class: "contract_clause",
       subject_kind: "contract",
       subject_ref: stringValue(row, "contract_id"),
-      source_section: stringValue(row, "source_page_ref"),
-      source_page: stringValue(row, "source_page_ref"),
-      confidence: "0.95",
-      review_state: "system_extracted_synthetic_demo",
+      source_section: stringValue(row, "source_section"),
+      source_page:
+        stringValue(row, "source_page") || stringValue(row, "source_page_ref"),
+      confidence: stringValue(row, "confidence"),
+      review_state: stringValue(row, "review_state"),
     })),
     evidenceManifest: rawManifest.map((row) => ({
       ...row,
@@ -729,7 +728,7 @@ function readSourceFiles(
         "vendor_name",
       ),
       selected_for_action_state: "candidate",
-      source_file_id: "EVID-01",
+      source_file_id: stringValue(row, "source_file_id"),
     })),
     negotiationFindings: rawFindings,
     negotiationLevers: rawLevers,

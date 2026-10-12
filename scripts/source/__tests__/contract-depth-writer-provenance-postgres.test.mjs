@@ -2,6 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import vm from "node:vm";
 import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import Papa from "papaparse";
 import ts from "typescript";
 import pg from "pg";
 import { performanceMeasureFromSource } from "../../../src/lib/source/contract-intelligence/performance-units.ts";
@@ -26,9 +29,11 @@ const compiled = ts.transpileModule(functions, {
   compilerOptions: { target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const writer = vm.runInNewContext(
-  `${compiled}\n({upsertContractContextFacts,upsertContracts,upsertContractTerms,upsertContractScope,upsertSpend,upsertPerformance})`,
+  `${compiled}\n({readSourceFiles,upsertContractContextFacts,upsertContracts,upsertContractTerms,upsertContractScope,upsertSpend,upsertPerformance})`,
   {
     SOURCE_SYSTEM: "fixture_loader",
+    fs,
+    path,
     performanceMeasureFromSource,
     contractInputQualityState,
     contractTermGovernance,
@@ -150,6 +155,82 @@ test(
   "actual contract writers preserve provenance in disposable Postgres",
   { skip: !connectionString },
   async (t) => {
+    await t.test(
+      "genuine clause declarations survive actual normalization and canonical persistence",
+      async () => {
+        const dir = fs.mkdtempSync(
+          path.join(os.tmpdir(), "source-clause-writer-"),
+        );
+        fs.mkdirSync(path.join(dir, "source-files"));
+        try {
+          fs.writeFileSync(
+            path.join(dir, "source-files", "contracts.csv"),
+            Papa.unparse([row]),
+          );
+          fs.writeFileSync(
+            path.join(dir, "source-files", "contract_clauses.csv"),
+            Papa.unparse([
+              {
+                ...row,
+                source_basis: "document_extracted",
+                review_state: "human_reviewed",
+                confidence: "0.74",
+                source_page: "17",
+                source_section: "Schedule 4",
+                value_text: "Supplier shall maintain monthly availability.",
+              },
+            ]),
+          );
+          const normalized = writer.readSourceFiles(
+            dir,
+            args.tenantKey,
+            args.datasetVersion,
+          ).contractClauses[0];
+          const result = await persist("upsertContractTerms", normalized);
+          const term = result.contract_term[0];
+          assert.equal(term.quality_state, "reviewed");
+          assert.equal(Number(term.confidence), 0.74);
+          assert.equal(term.page_ref, "17");
+          assert.equal(term.clause_ref, "Schedule 4");
+          assert.equal(term.raw_payload.source_file_id, row.source_file_id);
+        } finally {
+          fs.rmSync(dir, { recursive: true, force: true });
+        }
+      },
+    );
+    await t.test(
+      "missing header document stays absent through normalization and actual purpose persistence",
+      async () => {
+        const dir = fs.mkdtempSync(
+          path.join(os.tmpdir(), "source-header-writer-"),
+        );
+        fs.mkdirSync(path.join(dir, "source-files"));
+        try {
+          fs.writeFileSync(
+            path.join(dir, "source-files", "contracts.csv"),
+            Papa.unparse([{ ...row, source_file_id: "" }]),
+          );
+          const normalized = writer.readSourceFiles(
+            dir,
+            args.tenantKey,
+            args.datasetVersion,
+          ).contracts[0];
+          const result = await persist(
+            "upsertContractContextFacts",
+            normalized,
+          );
+          assert.equal(
+            result.canonical_fact_assertion[0].source_document_id,
+            null,
+          );
+          assert.deepEqual(result.canonical_fact_assertion[0].source_refs, [
+            row.source_row_id,
+          ]);
+        } finally {
+          fs.rmSync(dir, { recursive: true, force: true });
+        }
+      },
+    );
     await t.test(
       "purpose keeps the declared document and does not claim extraction",
       async () => {
