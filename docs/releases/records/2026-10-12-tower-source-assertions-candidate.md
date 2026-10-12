@@ -24,7 +24,7 @@ Release lane: `client-data-lane`.
 ## Client Applicability
 
 - All clients: no automatic change.
-- Specific clients: one registry-selected synthetic tenant may be staged only after a separate exact-version load approval.
+- Specific clients: one registry-selected synthetic tenant has a separate named exact-version private load approval. Staging has not run and is subject to schema, image, private operator, and job preflight gates.
 - Internal only: candidate build and review.
 - Public/demo only: none.
 - Feature flag: none.
@@ -42,18 +42,18 @@ Release lane: `client-data-lane`.
 - Requires full source-to-canonical-to-projection parity for mapped fields and refuses an unsupported claimable or approved amount.
 - Keeps detailed Foundation records in bounded per-object projection rows while the Tower summary carries only counts and coverage notes. Source-reported actuals, forecasts, targets, and baselines retain their distinct measure scenarios without changing review or claim status.
 - Adds a narrow schema migration for the Foundation page and declared canonical object types. It is a prerequisite for a later approved stage; it is not applied by this candidate build.
-- Adds a manifest with `load_approval` and `serving_approval` null.
+- Records the user's named load approval for assessment `tower-registry-candidate-7de0ab623209418a` and source-set SHA-256 `dd8a1389fa694eb58e835ec55ff71a1ae4132f607fe6635d9b343f98bf885048` in the dataset manifest. `serving_approval` remains null.
 
 ## QA / Validation
 
-- Thirty-six focused candidate, stage, and promotion tests pass on Node 24 and are now named in the unit CI workflow. They cover outcome and source-measure parity, Foundation source/canonical/projection linkage, bounded per-row payload, hash/count-only content refusal, segment generator byte-for-byte regeneration, altered-source refusal, and refusal to stage without exact-version approval. Database parity SQL remains locally checked but has not run against a private database.
+- Thirty-six focused candidate, stage, and promotion tests pass on Node 24 and are now named in the unit CI workflow. They cover outcome and source-measure parity, Foundation source/canonical/projection linkage, bounded per-row payload, hash/count-only content refusal, segment generator byte-for-byte regeneration, altered-source refusal, exact load-approval recognition, and refusal to stage without ACA job identity. Database parity SQL remains locally checked but has not run against a private database.
 - The local dry-stage candidate and physical quality gate pass against the selected registered source hashes. The manifest has 24 entries: 22 selected physical source-file metadata rows plus two hash/count-only entries. The physical plan has 3,864 source records, 1,479 objects, 1,568 measures, and 1,594 rows across ten pages; the review preview has 1,637 rows because withheld evidence details collapse into one physical gap row. `materialized: false`.
-- The manifest validator, focused ESLint/MJS checks, Tower quote-mode lineage, migration-seal check, and all 11 release-control gates pass locally. A read-only comparison shows the schema migration retains every previously admitted catalog grain and object type, adding only the three declared source types. Review the exact candidate fingerprint, corrected source hash, counts, and approval refusal before any operator job.
-- No physical database stage, private Blob proof, deploy, promotion, or signed-in page proof is claimed by this release.
+- The manifest validator, focused ESLint/MJS checks, Tower quote-mode lineage, migration-seal check, and all 11 release-control gates pass locally. A read-only comparison shows the schema migration retains every previously admitted catalog grain and object type, adding only the three declared source types. The earlier unapproved dry preflight refused a stage; the current exact-version dry preflight reports approval `approved` and `materialized: false`. Review the candidate fingerprint, source hash, and counts again before any operator job; this dry result is not physical proof.
+- The source-assertion code deployment is tracked separately under repo-owned ACA run `38308824379`. At preparation of this approval PR, the approval manifest change had not deployed; its later deployment needs separate runtime readback. No physical database stage, private Blob proof, promotion, or signed-in v6 page proof is claimed by this record.
 
 ## Rollout Plan
 
-Review the dry candidate and exact source/version binding. Inspect the private database's pending migration set before applying the narrow schema migration through the governed `db-migration-lab` lane; coordinate any earlier pending migration with its owner. Capture the schema ledger and readback separately from web deploy and data load. A named exact-version load approval and an available private operator slot are required before an ACA stage. Independent database and Blob readback, a serving approval, guarded promotion, and signed-in checks are required before product use.
+Review the dry candidate and exact source/version binding. Inspect the private database's pending migration set before applying the narrow schema migration through the governed `db-migration-lab` lane; coordinate any earlier pending migration with its owner. Capture the schema ledger and readback separately from web deploy and data load. The user supplied the named exact-version private load approval on 2026-10-12; this records the decision, not a job dispatch or completed load. An available private operator slot and passing native preflight remain required before an ACA stage. Independent database and Blob readback, a separate serving approval, guarded promotion, and signed-in checks are required before product use.
 
 ## Deployment Authority
 

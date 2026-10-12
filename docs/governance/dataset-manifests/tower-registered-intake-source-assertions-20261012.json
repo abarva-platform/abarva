@@ -14,7 +14,13 @@
   "expected_object_count": 1479,
   "approved_by": "Anand Sundaram",
   "approved_at": "2026-10-11",
-  "load_approval": null,
+  "load_approval": {
+    "approved_by": "Anand Sundaram",
+    "approved_at": "2026-10-12",
+    "assessment_id": "tower-registry-candidate-7de0ab623209418a",
+    "source_set_hash": "dd8a1389fa694eb58e835ec55ff71a1ae4132f607fe6635d9b343f98bf885048",
+    "release_record": "docs/releases/records/2026-10-12-tower-source-assertions-candidate.md"
+  },
   "serving_approval": null,
-  "notes": "The named declaration records the user's delegated source-selection choice only. This mapping has no exact-version load or serving approval. Source-stated Finance and claim labels remain unverified assertions. Declared-ID enterprise records receive canonical identity and bounded Tower projections; segment, maturity, and relationship rows remain raw where mapping or evidence is insufficient. No independent Finance, evidence, or client attestation is claimed."
+  "notes": "The named declaration records the user's delegated source-selection choice. A separate named exact-version private load approval is recorded, but the stage has not run and serving is not approved. Source-stated Finance and claim labels remain unverified assertions. Declared-ID enterprise records receive canonical identity and bounded Tower projections; segment, maturity, and relationship rows remain raw where mapping or evidence is insufficient. No independent Finance, evidence, or client attestation is claimed."
 }

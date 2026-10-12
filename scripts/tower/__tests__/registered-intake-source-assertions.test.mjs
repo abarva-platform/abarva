@@ -256,7 +256,7 @@ test("segment fixture regeneration preserves corrected function and AI case rows
   }
 });
 
-test("v6 write refuses absent exact approval before opening a database", () => {
+test("v6 write with exact approval still requires ACA job identity before opening a database", () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-source-assertions-refusal-"));
   try {
     const result = spawnSync(process.execPath, ["--import", "tsx",
@@ -265,10 +265,11 @@ test("v6 write refuses absent exact approval before opening a database", () => {
       "--out-dir", outDir, "--write", "--job-run-id", "test-refusal",
     ], { cwd: ROOT, encoding: "utf8", env: { ...process.env, DATABASE_URL: "" } });
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Refusing stage\/proof/);
+    assert.match(result.stderr, /ACA job identity, build\/input version/);
     assert.equal(fs.existsSync(path.join(outDir, "stage-receipt.json")), false);
     const preflight = JSON.parse(fs.readFileSync(path.join(outDir, "stage-preflight.json"), "utf8"));
-    assert.equal(preflight.load_approval_status, "missing_or_mismatched");
+    assert.equal(preflight.load_approval_status, "approved");
+    assert.equal(preflight.stage_status, "not_written");
     assert.equal(preflight.physical_quality_gate_status, "pass");
   } finally {
     fs.rmSync(outDir, { recursive: true, force: true });
