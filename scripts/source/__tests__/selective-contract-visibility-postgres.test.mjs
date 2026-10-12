@@ -12,6 +12,12 @@ test("existing-row visibility transaction and conditional restore", async (t) =>
     uri,
     "Disposable Postgres is required; this suite cannot silently skip",
   );
+  const fixtureUrl = new URL(uri);
+  assert.ok(
+    ["127.0.0.1", "localhost"].includes(fixtureUrl.hostname) &&
+      fixtureUrl.pathname === "/origin_repair_fixture",
+    "Destructive fixtures are limited to the named disposable localhost database",
+  );
   const db = new pg.Client({ connectionString: uri });
   await db.connect();
   const tenant = "fixture-tenant";
