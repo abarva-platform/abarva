@@ -34,7 +34,7 @@ Release lane: `client-data-lane`.
 - The registered-intake candidate preserves source period labels and marks category rows as source-row identities with no business ID.
 - The physical stage writes category measures and projects their rows. Its gate checks each measure against the original source row and checks that the category sum equals the single aggregate. Amount-role flags tell later consumers that category rows, aggregate rows, and contract exposures are separate grains; this stage does not technically prevent every downstream consumer from summing them.
 - The stage identifies this plan as build `tower-registered-intake-partial/v2` and Tower projection version `4`, and binds any future load approval to this release record. The assessment ID, source-set hash, and operator idempotency key are unchanged because no earlier candidate was physically staged.
-- The runtime image now includes the exact release records referenced by approved dataset manifests. The stage job validates those paths before it writes; previously the image omitted them even though it included the manifests.
+- The runtime image now generates a narrow set of release records referenced by approved dataset manifests. The stage job validates those paths before it writes; previously the image omitted them even though it included the manifests.
 - Candidate coverage reports unregistered claim evidence IDs, AI claim programs without PMO links, Finance-value and claim-status conflicts, different usage-rate denominators, and the inability of a separate user-detail file to validate the claim usage feed. Interview text stays outside the candidate.
 - Focused tests verify category lineage, money reconciliation, retained period labels, and the missing-approval refusal.
 

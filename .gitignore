@@ -20,6 +20,7 @@
 
 # production
 /build
+/runtime-approved-release-records/
 
 # misc
 .DS_Store
