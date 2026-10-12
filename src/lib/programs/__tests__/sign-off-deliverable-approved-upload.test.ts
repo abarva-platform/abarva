@@ -170,6 +170,63 @@ describe("signOffDeliverable", () => {
     },
   );
 
+  it("refuses an uploaded replacement for a changed draft before inserting a version", async () => {
+    const versions: unknown[] = [];
+    const lifecycle: unknown[] = [];
+    let reads = 0;
+    fromMock.mockImplementation((table: string) => {
+      if (table === "deliverable_versions") return insertVersion(versions);
+      if (table === "deliverable_lifecycle_events")
+        return insertVersion(lifecycle);
+      if (++reads === 1)
+        return selectDeliverable({
+          data: {
+            current_version: 2,
+            signed_off_version: null,
+            structured_data: {},
+          },
+          error: null,
+        });
+      const filters: Array<[string, unknown]> = [];
+      const query = {
+        update: () => query,
+        eq: (key: string, value: unknown) => {
+          filters.push([key, value]);
+          return query;
+        },
+        in: () => query,
+        select: () => query,
+        maybeSingle: async () => ({
+          data:
+            filters.find(([key]) => key === "current_version")?.[1] === 2
+              ? { id: "deliverable-1" }
+              : null,
+          error: null,
+        }),
+      };
+      return query;
+    });
+    await expect(
+      signOffDeliverable(
+        { clientId: "client-1", userId: "synthetic-operator" },
+        "move-1",
+        "deliverable-1",
+        {
+          expectedCurrentVersion: 1,
+          approvedContent: {
+            content: "Reviewed replacement",
+            fileName: "replacement.docx",
+            mimeType:
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            parseMethod: "local_fixture",
+          },
+        },
+      ),
+    ).rejects.toMatchObject({ code: "deliverable_review_changed" });
+    expect(versions).toHaveLength(0);
+    expect(lifecycle).toHaveLength(0);
+  });
+
   it("turns an uploaded client-approved replacement into the signed-off authoritative version", async () => {
     const versionPayloads: unknown[] = [];
     const updatePayloads: unknown[] = [];

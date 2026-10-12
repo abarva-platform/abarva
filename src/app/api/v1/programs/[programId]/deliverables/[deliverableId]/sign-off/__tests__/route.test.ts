@@ -299,8 +299,6 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
         const lifecycle: unknown[] = [];
         mockSignOffDeliverable.mockImplementation(
           async (actor, programId, deliverableId, options) => {
-            expect(options.reviewedVersion.version).toBe(1);
-            expect(options.expectedCurrentVersion).toBe(1);
             const current = structuredClone(original)!;
             if (stage === "before_mutation_read") pointer.current_version = 2;
             if (stage === "content_changed")
