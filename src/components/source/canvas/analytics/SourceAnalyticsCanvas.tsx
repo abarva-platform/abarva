@@ -4584,53 +4584,72 @@ function FilesWorkspace({
       {view.files.byStage.length === 0 ? (
         <EmptyCard text="No Source artifacts are registered for this event yet." />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {view.files.byStage.map((group) => (
-            <section
-              key={group.stageKey}
-              style={{ ...CARD_STYLE, padding: 18 }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 12,
-                }}
+        <details data-testid="source-file-inventory">
+          <summary
+            style={{
+              padding: "14px 0",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 600,
+              borderTop: `1px solid ${ANALYTICS.LINE}`,
+            }}
+          >
+            File inventory (
+            {view.files.byStage.reduce(
+              (total, group) => total + group.items.length,
+              0,
+            )}{" "}
+            registered)
+          </summary>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {view.files.byStage.map((group) => (
+              <section
+                key={group.stageKey}
+                style={{ ...CARD_STYLE, padding: 18 }}
               >
-                <h2
+                <div
                   style={{
-                    fontFamily: ANALYTICS.SERIF,
-                    fontSize: 21,
-                    margin: 0,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 12,
                   }}
                 >
-                  {group.stageLabel}
-                </h2>
-                <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
-                  {group.items.length} item{group.items.length === 1 ? "" : "s"}
-                </span>
-              </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                  gap: 10,
-                }}
-              >
-                {group.items.map((item) => (
-                  <FileCard
-                    key={item.id}
-                    item={item}
-                    eventId={view.event.id}
-                    operation={operationByCode.get(item.artifactCode) ?? null}
-                    onAccepted={onClientFinalAccepted}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+                  <h2
+                    style={{
+                      fontFamily: ANALYTICS.SERIF,
+                      fontSize: 21,
+                      margin: 0,
+                    }}
+                  >
+                    {group.stageLabel}
+                  </h2>
+                  <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+                    {group.items.length} item
+                    {group.items.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                    gap: 10,
+                  }}
+                >
+                  {group.items.map((item) => (
+                    <FileCard
+                      key={item.id}
+                      item={item}
+                      eventId={view.event.id}
+                      operation={operationByCode.get(item.artifactCode) ?? null}
+                      onAccepted={onClientFinalAccepted}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </details>
       )}
     </section>
   );
