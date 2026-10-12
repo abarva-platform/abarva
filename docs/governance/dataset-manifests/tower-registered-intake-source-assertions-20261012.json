@@ -1,0 +1,20 @@
+{
+  "dataset_id": "tower-registered-intake-source-assertions-20261012",
+  "title": "Registered intake Tower source assertions candidate",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "Unchanged active tenant-input registry packet; synthetic planning and source-asserted financial fields with exact row lineage",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": false,
+  "pii_phi_handling": "The detailed user-level export contributes only a file hash and count; no user records enter canonical or projection rows.",
+  "expected_object_count": 1394,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-10-11",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "The named declaration records the user's earlier delegated choice of the existing registered synthetic source set only. This new field mapping has no exact-version load or serving approval. Source-stated Finance and claim labels are retained as unverified assertions, without independent Finance, evidence, or client attestation. Declared-ID Foundation records are canonicalized without inferred relationships; raw relationship rows remain unpromoted."
+}
