@@ -501,6 +501,123 @@ test("existing-row visibility transaction and conditional restore", async (t) =>
         }
       },
     );
+    await t.test(
+      "lost COMMIT acknowledgement is unknown even when Postgres committed",
+      async () => {
+        await seed();
+        const query = db.query.bind(db);
+        let rollbackCalls = 0;
+        const saved = [];
+        const transport = {
+          query: async (sql, params) => {
+            if (sql === "COMMIT") {
+              await query(sql, params);
+              const error = new Error("Simulated lost COMMIT acknowledgement");
+              error.code = "ECONNRESET";
+              throw error;
+            }
+            if (sql === "ROLLBACK") rollbackCalls++;
+            return query(sql, params);
+          },
+        };
+        let failure;
+        await assert.rejects(
+          runSelectiveVisibilityTransaction(
+            transport,
+            {
+              plan,
+              mode: "apply",
+              runId: "lost-ack-fixture",
+              planSha256: selectiveVisibilityHash(plan),
+            },
+            async (p) => {
+              saved.push(p);
+              return {
+                uri: "private://immutable-proof",
+                sha256: selectiveVisibilityHash(p),
+              };
+            },
+          ),
+          (error) => {
+            failure = error.visibilityProof;
+            assert.equal(failure.committed, null);
+            assert.equal(failure.commitAttempted, true);
+            assert.equal(failure.commitOutcome, "unknown");
+            assert.equal(failure.recoveryRequired, true);
+            assert.equal(failure.retryAllowed, false);
+            return true;
+          },
+        );
+        assert.equal(rollbackCalls, 0);
+        assert.equal(
+          (await snapshot()).contract.find((r) => r.tenant_key === tenant)
+            .load_run_id,
+          "new-run",
+        );
+        assert.equal(saved.at(-1).stage, "commit_outcome_unknown");
+        assert.equal(failure.attemptedRows, 2);
+        assert.equal(failure.updatedRows, null);
+        const reader = new pg.Client({ connectionString: uri });
+        await reader.connect();
+        try {
+          await reader.query("BEGIN READ ONLY");
+          const recovered = (
+            await reader.query(
+              "SELECT to_jsonb(t) AS row FROM source.contract t WHERE tenant_key=$1 AND id='contract-uuid'",
+              [tenant],
+            )
+          ).rows[0].row;
+          assert.deepEqual(recovered, failure.afterRows[0]);
+          await reader.query("ROLLBACK");
+        } finally {
+          await reader.end();
+        }
+        assert.equal(failure.committed, null);
+      },
+    );
+    await t.test(
+      "unknown COMMIT cannot be inferred committed when its request never reached Postgres",
+      async () => {
+        await seed();
+        const before = await snapshot();
+        const connection = new pg.Client({ connectionString: uri });
+        await connection.connect();
+        let rollbackCalls = 0;
+        const transport = {
+          query: async (sql, params) => {
+            if (sql === "COMMIT") {
+              await connection.end();
+              const error = new Error("Lost transport before COMMIT delivery");
+              error.code = "ECONNRESET";
+              throw error;
+            }
+            if (sql === "ROLLBACK") rollbackCalls++;
+            return connection.query(sql, params);
+          },
+        };
+        await assert.rejects(
+          runSelectiveVisibilityTransaction(
+            transport,
+            {
+              plan,
+              mode: "apply",
+              runId: "undelivered-commit-fixture",
+              planSha256: selectiveVisibilityHash(plan),
+            },
+            async (p) => ({
+              uri: "private://proof",
+              sha256: selectiveVisibilityHash(p),
+            }),
+          ),
+          (error) =>
+            error.visibilityProof.committed === null &&
+            error.visibilityProof.commitOutcome === "unknown" &&
+            error.visibilityProof.recoveryRequired === true,
+        );
+        assert.equal(rollbackCalls, 0);
+        assert.deepEqual(await snapshot(), before);
+      },
+    );
   } finally {
     await db.query("DROP SCHEMA IF EXISTS source CASCADE");
     await db.end();

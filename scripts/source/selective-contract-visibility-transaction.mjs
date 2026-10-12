@@ -213,7 +213,6 @@ export async function runSelectiveVisibilityTransaction(
       "Reviewed original selectors required for restore",
     );
   }
-  let committed = false;
   const proof = {
     operation: "selective_contract_visibility",
     mode,
@@ -222,6 +221,12 @@ export async function runSelectiveVisibilityTransaction(
     tenantKey: plan.tenantKey,
     contractId: plan.contractId,
     committed: false,
+    commitAttempted: false,
+    commitOutcome: "not_attempted",
+    rollbackAttempted: false,
+    rollbackOutcome: "not_attempted",
+    recoveryRequired: false,
+    retryAllowed: false,
     updatedRows: 0,
     overlayRows: 0,
     afterRows: [],
@@ -408,7 +413,10 @@ export async function runSelectiveVisibilityTransaction(
     proof.auditTimestampPolicy = plan.auditTimestampPolicy ?? "preserve";
     proof.backup = await save("before_first_write");
     if (mode === "preflight") {
+      proof.rollbackAttempted = true;
+      proof.rollbackOutcome = "unknown";
       await db.query("ROLLBACK");
+      proof.rollbackOutcome = "acknowledged";
       return { ...proof, rolledBack: true };
     }
     for (const [index, t] of plan.targets.entries()) {
@@ -515,9 +523,13 @@ export async function runSelectiveVisibilityTransaction(
       "Exact two rows and one overlay required",
     );
     proof.preCommitProof = await save("before_commit");
+    // Once COMMIT is sent, a lost transport acknowledgement cannot prove rollback.
+    proof.commitAttempted = true;
+    proof.commitOutcome = "unknown";
+    proof.committed = null;
     await db.query("COMMIT");
-    committed = true;
     proof.committed = true;
+    proof.commitOutcome = "acknowledged";
     try {
       proof.finalProof = await save("after_commit");
     } catch (error) {
@@ -525,7 +537,42 @@ export async function runSelectiveVisibilityTransaction(
     }
     return proof;
   } catch (error) {
-    if (!committed) await db.query("ROLLBACK");
-    throw error;
+    proof.attemptedRows = proof.updatedRows;
+    proof.attemptedOverlayRows = proof.overlayRows;
+    if (proof.commitAttempted) {
+      proof.committed = null;
+      proof.commitOutcome = "unknown";
+      proof.updatedRows = null;
+      proof.overlayRows = null;
+      proof.recoveryRequired = true;
+    } else {
+      proof.rollbackAttempted = true;
+      proof.rollbackOutcome = "unknown";
+      try {
+        await db.query("ROLLBACK");
+        proof.rollbackOutcome = "acknowledged";
+        proof.committed = false;
+        proof.updatedRows = 0;
+        proof.overlayRows = 0;
+      } catch {
+        proof.committed = null;
+        proof.updatedRows = null;
+        proof.overlayRows = null;
+        proof.recoveryRequired = true;
+      }
+    }
+    try {
+      proof.failureProof = await save(
+        proof.commitAttempted ? "commit_outcome_unknown" : "transaction_failed",
+      );
+    } catch {
+      proof.failureProofUnavailable = true;
+    }
+    const failure =
+      error instanceof Error
+        ? error
+        : new Error("Visibility transaction failed without a structured error");
+    failure.visibilityProof = { ...proof };
+    throw failure;
   }
 }
