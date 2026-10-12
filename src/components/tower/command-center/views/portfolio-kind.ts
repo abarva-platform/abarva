@@ -1,12 +1,12 @@
 import type { TowerAiView } from "@/lib/tower/command-center/types";
 
-/** Temporary source-template-scoped split until the mart exposes a canonical row type. */
+/** Declared page and canonical object identity are classified by the reader. */
 export function isToolRollout(item: TowerAiView): boolean {
-  return item.sourceFile === "23_ai_tool_rollout.csv";
+  return item.populationKind === "tool_rollout";
 }
 
 export function isBusinessCase(item: TowerAiView): boolean {
-  return item.sourceFile === "22_ai_business_cases.csv";
+  return item.populationKind === "ai_case";
 }
 
 /** A funding headline is complete only when every classified case has an amount. */

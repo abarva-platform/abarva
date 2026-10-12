@@ -127,7 +127,7 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         {rows.length === 0
-          ? "No vendor usage is loaded for tool rollouts."
+          ? `No vendor usage is loaded for tool rollouts. ${view.usageObservations.length} separate use-case usage observations do not establish vendor exposure.`
           : `Active tool usage is grouped across ${formatCount(rows.length)} vendors.`}
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
@@ -174,8 +174,8 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
       </div>
       <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-500)" }}>
         Seats purchased are not loaded, so this counts people actually using each vendor&rsquo;s tools
-        — not what the contract entitles you to. Rollout counts use the current source-template marker;
-        {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without a recognized marker are excluded.
+        — not what the contract entitles you to. Rollout counts use declared page and canonical object identity;
+        {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without that identity are excluded.
       </p>
     </section>
   );
