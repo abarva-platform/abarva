@@ -379,6 +379,7 @@ const ROLLOUT_ASSERTIONS: Readonly<
 function aiItems(): TowerMartAiPortfolioItem[] {
   const funded: TowerMartAiPortfolioItem[] = AI_SEEDS.map((seed, i) => ({
     aiPortfolioKey: `fixture::ai::${i + 1}`,
+    populationKind: "ai_case",
     itemName: seed.name,
     itemKind: seed.kind,
     vendorName: seed.vendor,
@@ -413,6 +414,7 @@ function aiItems(): TowerMartAiPortfolioItem[] {
     (seed, i) => ({
       ...funded[0],
       aiPortfolioKey: `fixture::ai::cand-${i + 1}`,
+      populationKind: "ai_case",
       itemName: seed.name,
       itemKind: "candidate_opportunity",
       aiSpendType: "candidate",

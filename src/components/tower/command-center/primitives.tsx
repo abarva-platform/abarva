@@ -67,6 +67,7 @@ export const AI_KIND_HEX: Record<TowerAiKind, string> = {
   candidate: "#b4b2a9",
   governance: "#ba7517",
   platform: "#444441",
+  unknown: "#898780",
 };
 
 export const AI_KIND_WORD: Record<TowerAiKind, string> = {
@@ -75,6 +76,7 @@ export const AI_KIND_WORD: Record<TowerAiKind, string> = {
   candidate: "Candidate",
   governance: "Governance",
   platform: "Platform",
+  unknown: "Unknown",
 };
 
 export const AI_KIND_CHIP_TONE: Record<TowerAiKind, Tone> = {
@@ -83,6 +85,7 @@ export const AI_KIND_CHIP_TONE: Record<TowerAiKind, Tone> = {
   candidate: "gray",
   governance: "amber",
   platform: "gray",
+  unknown: "gray",
 };
 
 // ── atoms ──────────────────────────────────────────────────────────────────

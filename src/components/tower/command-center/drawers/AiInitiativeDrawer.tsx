@@ -27,6 +27,7 @@ const KIND_LABEL: Record<TowerAiView["kind"], string> = {
   candidate: "Candidate idea",
   governance: "Governance",
   platform: "Platform",
+  unknown: "Spend type not loaded",
 };
 
 /**
@@ -64,7 +65,7 @@ function humanizeEvent(value: string | null): string {
 }
 
 function isToolRollout(a: TowerAiView): boolean {
-  return a.sourceFile === "23_ai_tool_rollout.csv";
+  return a.populationKind === "tool_rollout";
 }
 
 function financeAmount(a: TowerAiView): string {
@@ -167,6 +168,7 @@ export function plainAi(a: TowerAiView): string {
     governance:
       "a control that unblocks other AI, not a value generator on its own",
     platform: "shared platform consumption spread across many teams",
+    unknown: "a portfolio row whose spend type is not loaded",
   };
   return `This is ${definition[a.kind]}. Recommended posture: ${a.posture}.`;
 }

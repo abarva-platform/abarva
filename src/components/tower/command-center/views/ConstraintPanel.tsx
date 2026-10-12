@@ -36,7 +36,7 @@ export function ConstraintPanel({ view }: { view: TowerCommandCenterView }) {
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
       <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26 }}>
-        {recordedCount} of {caseCount} business cases have a recorded gating constraint.
+        {recordedCount} of {caseCount} AI use cases have a recorded gating constraint.
       </h2>
       <div style={PANEL}>
         <h3 style={{ margin: "0 0 18px", fontSize: 15, fontWeight: 600 }}>What is holding them back</h3>
@@ -57,7 +57,7 @@ export function ConstraintPanel({ view }: { view: TowerCommandCenterView }) {
         )}
         <p style={{ margin: "20px 0 0", paddingTop: 16, borderTop: "1px solid var(--canon-border)", lineHeight: 1.6 }}>
           {missingCount} cases have no constraint recorded. These labels come from the case review; they do not independently establish a cause of delayed value. Use the evidence and Finance review for each case before assigning a blocker or owner.
-          {" "}{unclassifiedPortfolioCount(view.allInitiatives)} portfolio rows have no recognized case or rollout source-template marker and are excluded from this count.
+          {" "}{unclassifiedPortfolioCount(view.allInitiatives)} portfolio rows have no declared case or rollout identity and are excluded from this count.
         </p>
       </div>
     </section>

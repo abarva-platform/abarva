@@ -207,10 +207,18 @@ export type TowerAiAmountBasis =
   | "annualized_tool_cost"
   | "unknown";
 
+export type TowerAiPopulationKind =
+  | "ai_case"
+  | "tool_rollout"
+  | "usage_observation"
+  | "unknown";
+
 export interface TowerMartAiPortfolioItem {
   aiPortfolioKey: string;
   itemName: string;
   itemKind: string;
+  /** Declared serving page and canonical object relationship, not a source filename. */
+  populationKind?: TowerAiPopulationKind;
   vendorName: string | null;
   systemName: string | null;
   aiSpendType: string | null;

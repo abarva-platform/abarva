@@ -100,8 +100,7 @@ export function ToolsTablePanel({
       <section style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)", padding: "24px 26px" }}>
         <h3 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600 }}>Tool rollouts</h3>
         <p style={{ margin: 0, fontSize: 15, color: "var(--canon-gray-700)" }}>
-          No tool rollout carries usage evidence in this view. That is a tracking gap, not proof of
-          no adoption.
+          No tool rollout record carries usage evidence in this view. {view.usageObservations.length} separate use-case usage observations are loaded; they do not establish rollout targets or vendor exposure.
         </p>
       </section>
     );

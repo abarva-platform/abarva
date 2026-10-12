@@ -94,6 +94,7 @@ function aiItem(
 ): TowerMartAiPortfolioItem {
   return {
     aiPortfolioKey: "tenant::ai::1",
+    populationKind: "ai_case",
     itemName: "Copilot",
     itemKind: "funded_program",
     adoptionTargetPct: null,
@@ -398,10 +399,10 @@ describe("buildTowerCommandCenterView", () => {
     )!;
     expect(view.ai.map((a) => a.name)).toEqual(["Copilot"]);
     expect(view.candidates.map((c) => c.name)).toEqual(["Branch Vision"]);
-    expect(view.summary.aiInitiativeCount).toBe(1);
+    expect(view.summary.aiInitiativeCount).toBe(2);
   });
 
-  it("uses the governed AI initiative count instead of the display slice count", () => {
+  it("uses classified asset rows instead of an unrelated command count", () => {
     const view = buildTowerCommandCenterView(
       mart({
         command: command({ aiInitiativeCount: 132 }),
@@ -419,7 +420,30 @@ describe("buildTowerCommandCenterView", () => {
     )!;
 
     expect(view.ai).toHaveLength(1);
-    expect(view.summary.aiInitiativeCount).toBe(132);
+    expect(view.summary.aiInitiativeCount).toBe(1);
+  });
+
+  it("keeps use cases and their usage observations on separate counting bases", () => {
+    const cases = Array.from({ length: 18 }, (_, index) => aiItem({
+      aiPortfolioKey: `case-${index}`,
+      itemName: `Case ${index}`,
+      populationKind: "ai_case",
+    }));
+    const observations = Array.from({ length: 18 }, (_, index) => aiItem({
+      aiPortfolioKey: `observation-${index}`,
+      itemName: `Observation ${index}`,
+      populationKind: "usage_observation",
+      financeStatus: null,
+    }));
+    const view = buildTowerCommandCenterView(mart({
+      command: command({ aiInitiativeCount: 38 }),
+      aiPortfolio: [...cases, ...observations],
+      aiPortfolioCounts: { total: 36, candidate: 0, active: 18, funded: 0, embeddedOrUsage: 0, attributedSpendUsd: 0 },
+    }), { tenantName: "Fixture" })!;
+    expect(view.summary.aiInitiativeCount).toBe(18);
+    expect(view.allInitiatives).toHaveLength(18);
+    expect(view.usageObservations).toHaveLength(18);
+    expect(view.portfolioCounts).toEqual(expect.objectContaining({ martItemCount: 36, eligibleItemCount: 18, observationCount: 18, excludedItemCount: 0 }));
   });
 
   it("keeps candidate pool integrity for the real candidate_opportunity enum", () => {
@@ -703,10 +727,10 @@ describe("aiKindFor", () => {
     },
   );
 
-  it("falls back to platform rather than dropping an unrecognised item", () => {
+  it("keeps an unrecognised item in an explicit unknown spend bucket", () => {
     expect(
       aiKindFor({ itemKind: "zzz", aiSpendType: null, fundingStatus: null }),
-    ).toBe("platform");
+    ).toBe("unknown");
   });
 });
 
