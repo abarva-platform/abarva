@@ -119,6 +119,7 @@ test("existing-row visibility transaction and conditional restore", async (t) =>
       const before = await snapshot();
       const result = await execute("preflight");
       assert.equal(result.committed, false);
+      assert.equal(result.transactionReadOnly, "on");
       assert.deepEqual(await snapshot(), before);
     });
     await t.test(

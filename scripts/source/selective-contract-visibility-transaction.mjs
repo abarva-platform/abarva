@@ -205,11 +205,13 @@ export async function runSelectiveVisibilityTransaction(
     (await db.query(sql, args)).rows.map((r) => r.row);
   const selectors = async () => ({
     base: await rows(
-      "SELECT to_jsonb(t) AS row FROM source.l4_cube_active_load_run t WHERE tenant_key=$1 ORDER BY to_jsonb(t)::text FOR UPDATE",
+      "SELECT to_jsonb(t) AS row FROM source.l4_cube_active_load_run t WHERE tenant_key=$1 ORDER BY to_jsonb(t)::text" +
+        (mode === "preflight" ? "" : " FOR UPDATE"),
       [plan.tenantKey],
     ),
     overlays: await rows(
-      "SELECT to_jsonb(t) AS row FROM source.l4_cube_active_load_run_overlay t WHERE tenant_key=$1 ORDER BY to_jsonb(t)::text FOR UPDATE",
+      "SELECT to_jsonb(t) AS row FROM source.l4_cube_active_load_run_overlay t WHERE tenant_key=$1 ORDER BY to_jsonb(t)::text" +
+        (mode === "preflight" ? "" : " FOR UPDATE"),
       [plan.tenantKey],
     ),
   });
@@ -217,7 +219,17 @@ export async function runSelectiveVisibilityTransaction(
     same(sorted(a.base), sorted(b.base)) &&
     same(sorted(a.overlays), sorted(b.overlays));
   try {
-    await db.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+    await db.query(
+      "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE" +
+        (mode === "preflight" ? " READ ONLY" : ""),
+    );
+    proof.transactionReadOnly = (
+      await db.query("SHOW transaction_read_only")
+    ).rows[0].transaction_read_only;
+    check(
+      proof.transactionReadOnly === (mode === "preflight" ? "on" : "off"),
+      "Exact transaction mode required",
+    );
     await db.query("SET LOCAL lock_timeout='5s'");
     await db.query("SET LOCAL statement_timeout='30s'");
     await db.query("SELECT set_config('app.tenant_key',$1,true)", [
@@ -234,9 +246,10 @@ export async function runSelectiveVisibilityTransaction(
       "Target-only tenant access required",
     );
     // Selector insertion must be serialized too; row locks cannot lock an absent key.
-    await db.query(
-      "LOCK TABLE source.contract,source.contract_scope,source.l4_cube_active_load_run,source.l4_cube_active_load_run_overlay IN SHARE ROW EXCLUSIVE MODE",
-    );
+    if (mode !== "preflight")
+      await db.query(
+        "LOCK TABLE source.contract,source.contract_scope,source.l4_cube_active_load_run,source.l4_cube_active_load_run_overlay IN SHARE ROW EXCLUSIVE MODE",
+      );
     const tables = (
       await db.query(`SELECT n.nspname AS schema,c.relname AS name,EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid=c.oid AND a.attname='load_run_id' AND NOT a.attisdropped) AS has_run
       FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN ('source','doc') AND c.relkind IN ('r','p')
@@ -330,7 +343,8 @@ export async function runSelectiveVisibilityTransaction(
       const key =
         t.table === "source.contract" ? "contract_id" : "contract_scope_id";
       const read = await rows(
-        `SELECT to_jsonb(t) AS row FROM ${t.table} t WHERE tenant_key=$1 AND ${key}=$2 AND id::text=$3 FOR UPDATE`,
+        `SELECT to_jsonb(t) AS row FROM ${t.table} t WHERE tenant_key=$1 AND ${key}=$2 AND id::text=$3` +
+          (mode === "preflight" ? "" : " FOR UPDATE"),
         [plan.tenantKey, t.key[key], String(t.before.id)],
       );
       check(
