@@ -57,47 +57,37 @@ Release lane: `experimental`.
 
 ## QA / Validation
 
-- Actual-main reconciliation: merged `2fd90ff0f5fbb8b8b3c4cf4c4c122e9a117f5b36`
-  into the published candidate without rebasing. Both feature-key declarations
-  survive the merge. The manual and tenancy census were regenerated, and the
-  fetched main census was regenerated from the actual tree: 2,829 covered Jest
-  files, with no new Jest test files added by this candidate. The browser suite
-  is outside that census. No coverage value was tuned to avoid a collision.
-- Reconciled ROM suites: pass, 70 tests. Targeted ESLint: pass. Library orphan,
-  route reachability and export reachability checks: pass, no new findings.
-  Node 24 typecheck: pass. All 11 release gates: pass. Generated manual,
-  coverage and tenancy census checks: pass. Browser discovery: pass, one test.
-  Current-head CI and the final fetched-ref collision guard remain pending
-  until the reconciled candidate is pushed and checked.
-- Origination response-contract regression: pass. The runner binds the exact
-  `engagementId` returned by the product before asynchronous navigation
-  settles, and rejects a malformed or protected identifier. Ignoring that
-  response field was killed by the regression; source SHA-256 was restored.
-  Node 24 typecheck and targeted lint after this repair: pass. Browser discovery
-  is two tests: this contract test and the separately authorized write walk.
-
-- ROM model and P3 component suites: 70 tests passed at candidate validation.
-  They cover stale previews, missing selection reasons, equal effort hours,
-  persisted member terms, selected approval, changes to either option and
-  changes to register values and repriced comparison figures, plus the visible
-  selection controls, flag-off absence and the unchanged five-column member form. Seven guard mutations were killed; the original source
-  hash was restored after each mutation.
-- Node 24 TypeScript check passed. Release check: all 11 gates passed.
-  Generated manual and the genuine coverage census are current. Targeted lint
-  passed after removing an unused runner import. These gates are rerun after
-  main reconciliation and recorded for the pushed candidate.
-- Playwright discovery: one operator walk discovered. Dedicated operator
-  Clerk sign-in passed in a fresh browser with exact identity/profile and an
-  active session without pending tasks. This is identity proof only; no
-  Move walk, data apply, gate approval or artifact acceptance is inferred.
-  Forward phase and step navigation uses visible controls; URL visits are
-  separately recorded as persisted-page readbacks. Downloaded documents need
-  an actual byte-bound review before sign-off.
-- Visual check passed for a temporary render of the real P3 component at
-  1440 and 390 pixels in light and dark, with no horizontal overflow. The
-  temporary test was deleted. The comparison is an added section in the pod
-  row, using the existing cards and control styles; there is no A/B mock.
-  A pending choice keeps that row visible and supplies the next action.
+- Actual main `0b7cee8c4b58ec87b5a3582f577c9f2b95f41656` was merged
+  without rebasing, including the required step-page response release. The
+  manual and both censuses were genuinely regenerated. Coverage is 2,831
+  from that tree. Committed main still records 2,830; the additional already-merged
+  source suite is now counted by the genuine regeneration. This candidate adds no Jest file;
+  its browser suite is outside that census. No coverage value was tuned.
+- Reconciled ROM, host, routing, evidence and phase suites: pass, 445 tests
+  across six suites. Targeted lint: pass. Library orphan, route reachability
+  and export reachability checks: pass, no new findings. Node 24 typecheck: pass. All 11 release gates: pass on the reconciled
+  candidate. Browser discovery: pass, four tests.
+- Browser response, identity and visible-input contracts: pass, three tests. The runner binds
+  the exact origination response identifier before asynchronous navigation.
+  Identity checks wait for frontend hydration after a full navigation, then
+  require the exact automated user and approved grants. Different identities,
+  widened admin grants and unavailable identity reads refuse the run.
+  A reviewed placeholder selector handles the observed unlabeled text area;
+  it requires an exact, unique, visible input and records that selector basis.
+- Response-field omission, hydration-wait omission and placeholder-selector
+  omission mutations: killed; the exact source bytes were restored and the
+  passing contracts repeated.
+  The seven unchanged ROM guard mutations and four viewport/theme component
+  renders were captured before this reconciliation and remain historical
+  local evidence, separate from current runtime acceptance.
+- Browser discovery includes four tests: three contracts and the
+  separately authorized write walk. Signed-in identity and account
+  onboarding preparation do not establish a completed Move journey.
+  Each document sign-off still requires review bound to downloaded bytes.
+- Complete exact-head CI and a fresh actual fetched-ref coverage guard for
+  every open Moves PR, including drafts and shared-census contenders, remain
+  required immediately before squash merge. Historical absent censuses are
+  recorded as absent, never as zero. No auto-merge is armed while pending.
 
 ## Rollout Plan
 

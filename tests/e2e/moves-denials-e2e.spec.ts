@@ -3,12 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { stepPageHref } from "../../src/lib/programs/step-page-views";
 import { DEMO_SAFE_CLIENT_NAMES } from "../../src/lib/client-config";
 import { captureWalkDomSnapshot } from "./_helpers/moves-walk-ux-capture";
 import { scoreWalkUx, type WalkUxInput, type UxVariant } from "./_helpers/moves-walk-ux-score";
-import { assertDedicatedOperator, prepareDedicatedOperator, signInDedicatedOperator, type DedicatedOperator } from "./_helpers/moves-dedicated-operator";
+import { assertDedicatedOperator, operatorMetadata, OPERATOR_NAME, OPERATOR_EMAIL, OPERATOR_CLIENT, prepareDedicatedOperator, signInDedicatedOperator, type DedicatedOperator } from "./_helpers/moves-dedicated-operator";
 
 const BASE = "https://app.abarva.ai";
 const PACK = path.resolve("datasets/tenant-inputs/meridian-health/moves/denials-pack-v1");
@@ -25,7 +25,17 @@ function createdMoveId(body: Record<string, unknown>, pageUrl: string): string {
   }
   return candidate;
 }
-type Action = { kind: "click" | "check" | "uncheck" | "fill" | "select" | "upload" | "download"; label: string; value?: string; file?: string; scopeId?: string; reviewedArtifact?: string };
+type Action = { kind: "click" | "check" | "uncheck" | "fill" | "select" | "upload" | "download"; label: string; labelSource?: "placeholder"; value?: string; file?: string; scopeId?: string; reviewedArtifact?: string };
+async function fillReviewedInput(root: Page | Locator, action: Action): Promise<void> {
+  if (action.kind !== "fill" || action.labelSource && action.labelSource !== "placeholder") {
+    throw new Error("reviewed_text_input_selector_refused");
+  }
+  const control = (action.labelSource === "placeholder"
+    ? root.getByPlaceholder(action.label, { exact: true })
+    : root.getByLabel(action.label, { exact: true })).filter({ visible: true });
+  if (await control.count() !== 1) throw new Error("visible_text_input_ambiguous_or_missing");
+  await control.fill(action.value ?? "");
+}
 interface Review {
   runId: string; operatorId: string; moveId: string | null; stepId: string;
   pageHash: string; actions: Action[]; complete: boolean;
@@ -46,6 +56,38 @@ test.describe("dedicated synthetic denials walk", () => {
     expect(() => createdMoveId({ engagementId: FORBIDDEN_MOVE }, `${BASE}/strategic-moves/new`)).toThrow("new_move_id_unverified");
     expect(() => createdMoveId({ engagementId: "invalid" }, `${BASE}/strategic-moves/new`)).toThrow("new_move_id_unverified");
     expect(() => createdMoveId({}, `${BASE}/strategic-moves/new`)).toThrow("new_move_id_unverified");
+  });
+
+  test("wait for navigation hydration while preserving exact operator identity and grants", async () => {
+    const operator: DedicatedOperator = { userId: "user_synthetic_walk_guard_fixture", name: OPERATOR_NAME,
+      email: OPERATOR_EMAIL, clientKey: OPERATOR_CLIENT, created: false };
+    let hydrated = false;
+    let user = { id: operator.userId, name: operator.name, metadata: operatorMetadata("fixture-approved-walk") };
+    const page = {
+      waitForFunction: async () => { hydrated = true; },
+      evaluate: async () => hydrated ? user : null,
+    } as unknown as Page;
+    await expect(assertDedicatedOperator(page, operator)).resolves.toBeUndefined();
+    user = { ...user, id: "user_other_fixture" };
+    await expect(assertDedicatedOperator(page, operator)).rejects.toThrow("dedicated_operator_identity_changed");
+    user = { ...user, id: operator.userId, metadata: { ...user.metadata, programCapabilities: { canAdminUsers: true } } };
+    await expect(assertDedicatedOperator(page, operator)).rejects.toThrow("dedicated_operator_admin_grant_refused");
+    page.waitForFunction = async () => { throw new Error("fixture_identity_never_hydrated"); };
+    await expect(assertDedicatedOperator(page, operator)).rejects.toThrow("fixture_identity_never_hydrated");
+  });
+
+  test("fill only an explicitly reviewed unique visible prompt when a text input has no label", async ({ page }) => {
+    await page.setContent('<label for="title">Move title</label><input id="title"><textarea placeholder="Tell the story in plain English"></textarea><textarea hidden placeholder="Tell the story in plain English"></textarea>');
+    await fillReviewedInput(page, { kind: "fill", label: "Move title", value: "Synthetic test title" });
+    await expect(page.getByLabel("Move title")).toHaveValue("Synthetic test title");
+    const action: Action = { kind: "fill", label: "Tell the story in plain English", labelSource: "placeholder", value: "Reviewed synthetic note" };
+    await fillReviewedInput(page, action);
+    await expect(page.locator("textarea:visible")).toHaveValue("Reviewed synthetic note");
+    await expect(fillReviewedInput(page, { ...action, labelSource: undefined })).rejects.toThrow("visible_text_input_ambiguous_or_missing");
+    await expect(fillReviewedInput(page, { ...action, label: "Tell the story" })).rejects.toThrow("visible_text_input_ambiguous_or_missing");
+    await expect(fillReviewedInput(page, { ...action, kind: "check" })).rejects.toThrow("reviewed_text_input_selector_refused");
+    await page.locator("body").evaluate((body) => body.append(body.querySelector("textarea")!.cloneNode()));
+    await expect(fillReviewedInput(page, action)).rejects.toThrow("visible_text_input_ambiguous_or_missing");
   });
 
   test("walk all 29 steps under the operator and save honest review evidence", async ({ page }, info) => {
@@ -97,7 +139,8 @@ test.describe("dedicated synthetic denials walk", () => {
       const prefix = `${stepId.replace(/[^A-Za-z0-9]/g, "-")}-${round}`;
       await page.screenshot({ path: path.join(out, `${prefix}.png`), fullPage: true });
       const controls = await page.locator("button,a,input,textarea,select").evaluateAll((elements) => elements.map((e) => ({ tag: e.tagName, text: e.textContent?.trim(), id: e.id,
-        label: e.getAttribute("aria-label") || (e as HTMLInputElement).labels?.[0]?.textContent?.trim(), disabled: (e as HTMLButtonElement).disabled }))).catch(() => []);
+        label: e.getAttribute("aria-label") || (e as HTMLInputElement).labels?.[0]?.textContent?.trim(), placeholder: e.getAttribute("placeholder"),
+        visible: !!(e as HTMLElement).offsetWidth && !!(e as HTMLElement).offsetHeight, disabled: (e as HTMLButtonElement).disabled }))).catch(() => []);
       fs.writeFileSync(path.join(out, "pending-review.json"), JSON.stringify({ runId, operatorId: operator.userId, moveId, stepId, pageUrl: page.url(), pageHash, screenshot: `${prefix}.png`, body, controls, notes, artifacts }, null, 2), { mode: 0o600 });
       report.status = "awaiting_agent_visual_review"; persist();
       const reviewFile = path.join(out, "reviewed-actions.json");
@@ -137,10 +180,11 @@ test.describe("dedicated synthetic denials walk", () => {
     const act = async (action: Action) => {
       await assertScope();
       if (!action.label?.trim() || forbiddenControl.test(action.label)) throw new Error("unsafe_or_unlabelled_control_refused");
+      if (action.labelSource && action.kind !== "fill") throw new Error("reviewed_text_input_selector_refused");
       if (/^Sign off(?: v\d+)?$/.test(action.label) && !artifacts.some((a) => a.filename === action.reviewedArtifact && a.status === "reviewed_accepted")) throw new Error("unreviewed_document_signoff_refused");
       if (action.scopeId && !/^[A-Za-z0-9:_-]{1,128}$/.test(action.scopeId)) throw new Error("invalid_visible_control_scope");
       const root = action.scopeId ? page.locator(`[id="${action.scopeId}"]`) : page;
-      if (action.kind === "fill") await root.getByLabel(action.label, { exact: true }).fill(action.value ?? "");
+      if (action.kind === "fill") await fillReviewedInput(root, action);
       else if (action.kind === "check" || action.kind === "uncheck") {
         if (action.kind === "check" && /notify|email|updates|subscription/i.test(action.label)) throw new Error("external_notification_not_authorized");
         await root.getByLabel(action.label, { exact: true }).setChecked(action.kind === "check");
@@ -169,7 +213,7 @@ test.describe("dedicated synthetic denials walk", () => {
       actionsPerformed += 1;
       if (action.kind === "click" || action.kind === "download") clicks += 1;
       (report.actionLog as unknown[]).push({ stepId: (JSON.parse(fs.readFileSync(path.join(out, "pending-review.json"), "utf8")) as {stepId: string}).stepId,
-        kind: action.kind, label: action.label, actorId: operator.userId, moveId, afterUrl: page.url(), at: new Date().toISOString() });
+        kind: action.kind, label: action.label, labelSource: action.labelSource, actorId: operator.userId, moveId, afterUrl: page.url(), at: new Date().toISOString() });
       report.artifacts = artifacts; persist();
     };
     try {

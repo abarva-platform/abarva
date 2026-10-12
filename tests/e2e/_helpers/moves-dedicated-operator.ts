@@ -187,6 +187,12 @@ export async function signInDedicatedOperator(page: Page, operator: DedicatedOpe
 }
 
 export async function assertDedicatedOperator(page: Page, operator: DedicatedOperator): Promise<void> {
+  // A full navigation can render the server page before Clerk hydrates.
+  // Wait for identity to be readable, then enforce the same exact scope.
+  await page.waitForFunction(() => {
+    const clerk = (window as unknown as { Clerk?: { loaded?: boolean; user?: { id?: string } } }).Clerk;
+    return clerk?.loaded === true && Boolean(clerk.user?.id);
+  }, undefined, { timeout: 15_000 });
   const user = await page.evaluate(() => {
     const clerk = (window as unknown as { Clerk?: { user?: { id: string; fullName: string; publicMetadata: Record<string, unknown> } } }).Clerk;
     return clerk?.user ? { id: clerk.user.id, name: clerk.user.fullName, metadata: clerk.user.publicMetadata } : null;
