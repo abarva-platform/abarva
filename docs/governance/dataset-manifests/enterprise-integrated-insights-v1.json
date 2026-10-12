@@ -10,10 +10,66 @@
   "ingestion_method": "operator_aca_job",
   "retrieval_plan": "postgres_fts",
   "retrieval_proof_required": true,
-  "expected_object_count": null,
-  "approved_by": "Pending human approval",
-  "approved_at": "2026-10-11",
-  "load_approval": null,
+  "expected_object_count": 2,
+  "approved_by": "Codex integrated manager",
+  "approved_at": "2026-10-12",
+  "load_approval": {
+    "approved_by": "Codex integrated manager",
+    "approved_at": "2026-10-12",
+    "assessment_id": "assessment-meridian-synthetic-enterprise-v2",
+    "source_set_hash": "77b3e7112d23f47b9cc607bee3f06fcba5e081445f457db1fb48062310c3a686",
+    "release_record": "docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md",
+    "delegated_decision": {
+      "contract_version": "nexus-delegated-approval-decision/v1",
+      "authority_id": "integrated-manager-anand-20261012",
+      "decision_id": "delegated-home-v2-candidate-load-20261012-001",
+      "authorizer": "Anand Sundaram",
+      "actor": {
+        "kind": "delegated_agent",
+        "identity": "Codex integrated manager",
+        "session_id": "01a11323-f628-7870-95b6-d8c00b50bd27"
+      },
+      "human_authorization_reference": {
+        "thread_id": "01a11323-f628-7870-95b6-d8c00b50bd27",
+        "message_id": "01a12ff3-843c-7cc2-9558-469efd03a191",
+        "text_sha256": "f903f7c80edf662f7b27fac96f1a41a85aaa6641157f183a0a3cb025c8194162"
+      },
+      "scope": {
+        "operation": "load",
+        "dataset_id": "enterprise-integrated-insights-v1",
+        "tenant_key": "meridian-health",
+        "assessment_id": "assessment-meridian-synthetic-enterprise-v2",
+        "source_set_hash": "77b3e7112d23f47b9cc607bee3f06fcba5e081445f457db1fb48062310c3a686",
+        "object_count": 2,
+        "ingestion_method": "operator_aca_job",
+        "release_record": "docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md",
+        "extra_bindings": {
+          "as_of": "2026-10-12",
+          "build_version": "integrated-insights-v1",
+          "canonical_source_set_hash": "2cff168cf01a364ce7551cee2f1308035fc77800b2aac2ba002fe23e0fe7090f",
+          "load_version_hash": "77b3e7112d23f47b9cc607bee3f06fcba5e081445f457db1fb48062310c3a686",
+          "release_id": "7d1a794d-3118-5bde-a335-0e37cf2381e1",
+          "result_hash": "b64a820e6843d863dae306774f0122144efa2720dd6b21dac66792cb0e380648",
+          "rule_set_hash": "ebe7a55157d414094acda2983b88a9714839328df0815fc21ecad6d29c317dd1",
+          "target_agent_ready": 0,
+          "target_review_state": "not_reviewed",
+          "target_state": "candidate"
+        }
+      },
+      "decided_at": "2026-10-12T13:29:09.927469+00:00",
+      "expires_at": null,
+      "independent_human_attestation": false,
+      "independent_finance_attestation": false,
+      "authority_proof": {
+        "uri": "https://stabarvaprivatedplab001.blob.core.windows.net/ecl-synthetic-intake/operator-proof/delegated-approvals/integrated-manager-anand-20261012/e4fefd276e57c09d8742084005793b37ace90dc9167e17a46e2ae5f3076b5136/authority.json",
+        "sha256": "e4fefd276e57c09d8742084005793b37ace90dc9167e17a46e2ae5f3076b5136"
+      },
+      "decision_proof": {
+        "uri": "https://stabarvaprivatedplab001.blob.core.windows.net/ecl-synthetic-intake/operator-proof/delegated-approvals/integrated-manager-anand-20261012/65fc3a3e51fce1bc55117ffedd5b6c33f1f544a325e5c07100b99394328b819b/decision.json",
+        "sha256": "65fc3a3e51fce1bc55117ffedd5b6c33f1f544a325e5c07100b99394328b819b"
+      }
+    }
+  },
   "serving_approval": null,
-  "notes": "Declaration only. No load is authorized. Read-only planning must establish the exact assessment, candidate count and load version hash first. The approval source_set_hash binds canonical inputs, rules and result together. Loaded candidates remain not_reviewed and are not wired to any product or agent."
+  "notes": "Conditional delegated load approval for one exact candidate version. Actual actor is separate from human authority; no independent human or Finance attestation. Native private proofs, released consumer, unchanged canonical preflight and independent readback are required. No serving approval. Candidates remain not_reviewed and agent_ready=false. Loaded is not indexed, retrievable, cited or product-ready."
 }

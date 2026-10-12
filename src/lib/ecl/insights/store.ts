@@ -1,6 +1,8 @@
 import type { JobDatabase } from "../../../../scripts/ecl/synthetic_enterprise_home_job";
 import { GovernedObjectSchema, POLICY_VERSION } from "@/lib/governance/context-corpus-policy";
 import { resolveLoadApproval, validateManifestRegistry } from "@/lib/governance/dataset-manifest";
+import type { ApprovalEvidenceContext } from "@/lib/governance/delegated-approval";
+import { insightLoadBinding } from "./load-approval";
 import { insightHash } from "./engine";
 import type { InsightFinding, InsightPlan } from "./types";
 
@@ -29,14 +31,14 @@ export async function persistInsightCandidates(
   options: {
     datasetId: string; manifests: unknown[]; recordExists: (path: string) => boolean;
     runId: string; releaseRecord: string; jobRecord: Record<string, unknown>;
+    approvalEvidence?: ApprovalEvidenceContext;
   },
 ): Promise<{ findings: number; idempotentReplay: boolean }> {
   const registryErrors = validateManifestRegistry(options.manifests.map((raw, i) => ({ file: String(i), raw })), options.recordExists);
   if (registryErrors.length) throw new Error(`Manifest registry refused: ${registryErrors.join("; ")}`);
-  const approval = resolveLoadApproval(options.manifests, {
-    dataset_id: options.datasetId, tenant_key: plan.tenantKey, assessment_id: plan.assessmentId,
-    source_set_hash: plan.loadVersionHash, object_count: plan.findings.length, ingestion_method: "operator_aca_job",
-  });
+  const approval = resolveLoadApproval(options.manifests,
+    insightLoadBinding(plan, options.datasetId, options.releaseRecord),
+    options.approvalEvidence);
   if (!approval.approved) throw new Error(`Load approval refused: ${approval.reasons.join("; ")}`);
   if (approval.approval.release_record !== options.releaseRecord) throw new Error("Approval release record mismatch");
   await db.query(

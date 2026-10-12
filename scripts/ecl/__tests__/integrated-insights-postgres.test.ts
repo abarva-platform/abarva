@@ -10,6 +10,7 @@ import { readInsightInput } from "../../../src/lib/ecl/insights/read-input";
 import { runInsightJob, type InsightRuntime } from "../integrated_insights_job";
 import { connectDatabase } from "../synthetic_enterprise_home_job";
 import { insightHash } from "../../../src/lib/ecl/insights/engine";
+import { INSIGHT_LOAD_BUILD_VERSION } from "../../../src/lib/ecl/insights/load-approval";
 import { runHomeInsightAdmissionJob, type HomeAdmissionRuntime } from "../home_insight_admission_job";
 import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
 
@@ -340,7 +341,7 @@ test("operator plan is read-only; approved apply proves independent serving read
   const env = { DATABASE_URL: databaseUrl, ECL_INSIGHT_TENANT_KEY: fixture.tenantKey,
     ECL_INSIGHT_ASSESSMENT_ID: fixture.assessmentId, ECL_INSIGHT_AS_OF: fixture.asOf,
     ECL_INSIGHT_DATASET_ID: "test-integrated", ECL_INSIGHT_RUN_ID: "local-job-plan",
-    ECL_INSIGHT_OPERATOR_IDENTITY: "test", ECL_INSIGHT_BUILD_VERSION: "v1", ECL_INSIGHT_RELEASE_RECORD: releaseRecord,
+    ECL_INSIGHT_OPERATOR_IDENTITY: "test", ECL_INSIGHT_BUILD_VERSION: INSIGHT_LOAD_BUILD_VERSION, ECL_INSIGHT_RELEASE_RECORD: releaseRecord,
     ABARVA_OPERATOR_IMAGE: `test/web@sha256:${"a".repeat(64)}`, ABARVA_OPERATOR_BRANCH_COMMIT: "b".repeat(40) };
   const proofs: Buffer[] = [];
   const runtime: InsightRuntime = { connect: connectDatabase, manifests: async () => [declaration(plan)], recordExists: () => true,
