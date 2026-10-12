@@ -146,6 +146,8 @@ export type HomeRecordSourceKind =
 
 export interface HomeContextVersion {
   assessmentId: string;
+  /** Exact reviewed insight admission attached to this base record. */
+  integratedInsightHash?: string;
   projectionContentHash: string;
   /** Null until every citable serving row has admitted source references and a source hash. */
   sourceSetHash?: string | null;
