@@ -56,8 +56,10 @@ readable type and word-boundary summaries, with complete source detail in notes.
 ## QA / Validation
 
 - Focused wording, edition, renderer, PDF/native inspection, value-read,
-  preview-route and approved-estimate tests: pass; Node.js 24, nine suites.
-- Planted-defect checks: pass; 19 defects detected and restored, covering title
+  preview-route and approved-estimate tests: pass; 112 tests across nine suites on Node.js 24.
+- Affected mock-isolated input scanner/upload tests after current-main
+  reconciliation: pass; 26 tests across two existing suites.
+- Planted-defect checks: pass; 20 defects detected and restored, covering title
   rules/retry controls, evidence/count/redaction gates, model prompt privacy,
   physical checks, architecture notes/type/width and failure markers.
 - Local synthetic PowerPoint and independently generated PDF inspection: pass;
@@ -66,10 +68,12 @@ readable type and word-boundary summaries, with complete source detail in notes.
   words outside the page boundary. These are isolated synthetic fixtures.
 - Node.js 24 typecheck and changed-file lint: pass.
 - Manual, test coverage and tenancy censuses genuinely regenerated: pass.
-  This change extends existing covered suites and adds no covered test file.
+  After merging main `55ee865cd0768b00446a04b1300f8d9416691de7`,
+  the natural covered-test-file count is 2854, equal to that main. This change
+  extends existing covered suites and adds no covered test file.
 - Library orphan, route/export reachability and manual/census/fence checks:
-  pass. Final release gates and current-main reconciliation are required before
-  publication; exact-head CI and fetched-ref collision clearance before landing.
+  pass. All 11 release gates passed after current-main reconciliation;
+  exact-head CI and fetched-ref collision clearance remain required before landing.
 - Deployment, authenticated populated-case output and client visual acceptance:
   pending. Local fixtures, mock approvals and HTTP success are not acceptance.
 
