@@ -59,8 +59,8 @@ partially populated slide in PowerPoint and PDF.
   and context pages were inspected as images in both renderer paths; the known
   evidence, gap panel and answer bar remain readable without overlap.
 - Manual, coverage census and tenancy fence census genuinely regenerated:
-  pass after merging actual main `061c036865c42165e03b4c534f097c1cee5d1afe`.
-  The covered-test-file count is 2835, identical to that main baseline; the new
+  pass after merging actual main `25961a6fe4378d0ccc58923082ced1c6fc522223`.
+  The covered-test-file count is 2841, identical to that main baseline; the new
   cases extend two existing covered suites. No count or filler adjustment.
 - Library orphan, route/export reachability, manual/census/fence checks: pass.
 - Release checks: pass; all 11 gates ran. Current-main reconciliation, genuine
