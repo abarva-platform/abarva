@@ -53,6 +53,13 @@ test("operator image carries the release binding and migration commands select o
   const releaseRecord = "docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md";
   const dockerfile = readFileSync(new URL("../../../Dockerfile", import.meta.url), "utf8");
   assert.ok(dockerfile.split("\n").includes(`COPY --from=build --chown=node:node /app/${releaseRecord} ./${releaseRecord}`));
+  const exclusions = readFileSync(new URL("../../../.dockerignore", import.meta.url), "utf8").split(/\r?\n/);
+  let position = exclusions.indexOf("docs/*");
+  for (const rule of ["!docs/releases/", "docs/releases/*", "!docs/releases/records/", "docs/releases/records/*", `!${releaseRecord}`]) {
+    const next = exclusions.indexOf(rule);
+    assert.ok(next > position, `Required build-context rule absent or out of order: ${rule}`);
+    position = next;
+  }
   const scripts = JSON.parse(readFileSync(new URL("../../../package.json", import.meta.url), "utf8")).scripts;
   const migration = "20261011210000_enterprise_integrated_insight_candidates.sql";
   for (const [mode, flag] of [["dry", "--dry"], ["apply", "--ci"]]) {

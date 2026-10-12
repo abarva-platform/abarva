@@ -3,6 +3,9 @@ name: Integrated insight candidate contract
 on:
   pull_request:
     paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
       - 'src/lib/ecl/insights/**'
       - 'scripts/ecl/integrated_insights_job.ts'
       - 'scripts/ecl/__tests__/integrated-insights*'
