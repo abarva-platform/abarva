@@ -39,8 +39,12 @@ scope is unchanged. No serving approval or source-state mutation is included.
 
 ## QA / Validation
 
-- Focused native load, shared delegated approval and legacy manifest tests: 104 passed.
-- Required named-suite wiring guard: 8 passed.
+- Focused native load, shared delegated approval, legacy manifest and required-suite wiring tests:
+  113 passed. The native tests run inside the required behavior sweep, not only an optional job.
+- Full required behavior coverage floor: 216 suites / 2,289 tests passed; lines and statements
+  90.07%, functions 72.60%, branches 73.42%, with the original thresholds unchanged.
+- A populated load exercises all five deterministic rule classes, persists each finding and all
+  lineage references, independently checks content/readback and retains candidate-only state.
 - Disposable Postgres 18 candidate/admission/operator pipeline: 66 passed, including 54 deterministic
   rule and transport regressions. No production database used.
 - Node 24 full typecheck (8 GiB), changed-file ESLint, context/corpus governance, coverage census and

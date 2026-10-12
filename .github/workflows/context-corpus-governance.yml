@@ -17,6 +17,7 @@ on:
       - scripts/ecl/synthetic_enterprise_home_job.ts
       - scripts/ecl/__tests__/integrated-insights.test.ts
       - src/__tests__/behaviors/delegated-approval.test.ts
+      - src/__tests__/behaviors/integrated-insight-load-approval.test.ts
       - src/scripts/governance/**
       - src/config/tenants/CANONICAL_TENANTS.ts
       - src/lib/tenant/synthetic-tenant-declaration.ts
@@ -57,9 +58,6 @@ jobs:
 
       - name: Legacy approval tests
         run: npx jest --runInBand src/lib/governance/__tests__/dataset-manifest.test.ts
-
-      - name: Native insight load approval tests
-        run: npx jest --runInBand src/lib/ecl/insights/__tests__/load-approval.test.ts
 
       - name: Native candidate load regressions
         env:
