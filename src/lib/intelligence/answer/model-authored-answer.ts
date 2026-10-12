@@ -103,7 +103,7 @@ export function decodeModelAuthoredAnswer(rawText: string) {
   const sourceIds: string[] = [];
   const protocolIssues: string[] = [];
   const prose = rawText.replace(
-    /^```(table|chart|graph|sources|followups)[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
+    /^```(table|chart|quadrant-matrix|graph|sources|followups)[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
     (block, kind: string, payload: string) => {
       try {
         const value: unknown = JSON.parse(payload);
@@ -117,13 +117,18 @@ export function decodeModelAuthoredAnswer(rawText: string) {
           const schema =
             kind === "table"
               ? tableSchema
-              : kind === "chart"
-                ? chartSchema
-                : graphSchema;
+              : kind === "quadrant-matrix"
+                ? matrixChartSchema
+                : kind === "chart"
+                  ? chartSchema
+                  : graphSchema;
           const decoded = schema.parse(value);
           if (artifacts.some((a) => a.id === decoded.id))
             throw new Error("Duplicate exhibit ID");
-          artifacts.push({ ...decoded, artifact: kind } as AvaArtifact);
+          artifacts.push({
+            ...decoded,
+            artifact: kind === "quadrant-matrix" ? "chart" : kind,
+          } as AvaArtifact);
         }
         return "";
       } catch {
