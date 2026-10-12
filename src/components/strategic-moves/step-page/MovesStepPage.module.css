@@ -6,6 +6,29 @@
  * `prefers-color-scheme` unless the root sets `data-theme`.
  */
 
+/* The existing flagged intake must keep the answer panel reachable on mobile. */
+@media (max-width: 767px) {
+  .intakeResponsive :global(p) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .intakeResponsive :global([aria-label="P0 steps"]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .intakeResponsive :global([aria-label="P0 steps"] > section) {
+    min-width: 0;
+    padding: var(--space-page-inline-mobile);
+    overflow-wrap: anywhere;
+  }
+  .intakeResponsive :global([aria-label="P0 steps"] > section > div:first-child) {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .intakeResponsive :global([aria-label="P0 steps"] h2) {
+    flex-basis: 100%;
+  }
+}
+
 /* ───────── Tokens ───────── canonical (moves-capture handoff). No new values. */
 .root {
   --mv-bg: #f5f1eb;

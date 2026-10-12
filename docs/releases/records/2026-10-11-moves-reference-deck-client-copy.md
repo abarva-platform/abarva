@@ -84,8 +84,8 @@ rendered pages and extracted text.
   tenant-fenced.
 - Combined candidate integration: **pass**; PR #9434 carries source head
   `54e74769ec488620049cd97364c21f32412d6e09` with unchanged deck product code
-  and tests. Its combined run passes 611 tests across 17 suites. Against main
-  `e23f26e5`, regeneration yields 2833 covered files from the two real additions:
+  and tests. After reconciling P4, its combined run passes 681 tests across 20 suites. Against main
+  `4b55978d`, regeneration yields 2833 covered files from the two real additions:
   this PDF inspection suite and N's request-sharing suite. K review of the
   carried changes and complete combined-head CI are **pending**.
 - Manual regenerated and consistency check: **pass**; no flag or manual text changed.

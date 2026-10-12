@@ -13,6 +13,7 @@ import {
 } from "@testing-library/react";
 import { TextDecoder } from "util";
 import { StrategicMoveOriginateClient } from "../StrategicMoveOriginateClient";
+import type { OriginationDraftState } from "@/lib/programs/origination-drafts";
 import {
   agreeNoun,
   buildOriginateRailRows,
@@ -373,6 +374,116 @@ describe("StrategicMoveOriginateClient", () => {
     ).toBeInTheDocument();
   });
 
+  describe("saved extended intake", () => {
+    const answers = {
+      "problem-statement": "Saved operational problem", archetype: "Operational optimization",
+      "sponsor-candidate": "Operations sponsor", "scope-in": "Existing operations",
+      "scope-out": "Unrelated operations", "value-hypothesis": "A working value hypothesis",
+      "outcomes-success": "An agreed success measure", "discovery-questions": "Test the working hypothesis",
+      "evidence-family": "Operating evidence", "foundation-readiness": "Access needs confirmation",
+      "business-segment": "Operations", "office-lens": "Back Office", "care-type": "Non-Clinical",
+      "value-hypothesis-quant": "A working estimate", "value-hypothesis-qual": "Less avoidable rework",
+      "stakeholders-list": "Operations lead", "complexity-tier": "Substantial",
+    };
+    const labels = [
+      "Business problem or opportunity", "Transformation pattern (archetype)", "Sponsor contact and update preference",
+      "In scope", "Out of scope", "Value hypothesis", "Intended outcomes and success criteria",
+      "Discovery questions and hypotheses to test", "Evidence families to collect",
+      "Foundation readiness, constraints, and dependencies", "Business segment", "Front / Middle / Back Office",
+      "Care type", "Value hypothesis — quantified", "Value hypothesis — qualitative", "Stakeholders", "Complexity tier",
+    ];
+    const savedDraft = (consent: boolean): OriginationDraftState => ({
+      turns: [{ id: "saved-user", role: "user", text: "Saved conversation" }], patternMatch: null,
+      brief: { programName: "Operations Intake", problemStatement: answers["problem-statement"],
+        targetOutcome: answers["value-hypothesis"], timeline: null, classification: answers.archetype,
+        discoveryArchetypeId: "governed_data_foundation", matchedPatternId: null,
+        sponsor: answers["sponsor-candidate"], lead: null, crossProgramDependencies: [],
+        intakeFields: answers, sponsorProgressEmails: consent },
+    });
+    const resume = (draft: OriginationDraftState, unavailable = false) => render(
+      <StrategicMoveOriginateClient tenantName="Tenant A" extendedIntakeFieldsEnabled
+        businessSegmentOptions={["Operations"]} initialDraftState={draft}
+        initialDraftUnavailable={unavailable} initialDiscoveryArchetypeId="governed_data_foundation"
+        discoveryArchetypeOptions={[{ blueprintId: "governed_data_foundation", archetypeLabel: "Data Foundation" }]} />,
+    );
+
+    it.each([true, false])("survives reload with all confirmed answers, title, blueprint and email preference %s", async (consent) => {
+      jest.useFakeTimers();
+      const fetchMock = mockFetchWithChatArtifact("");
+      const view = resume(savedDraft(consent));
+      try {
+        expect(screen.getAllByText(/17 of 17 answers/)[0]).toBeInTheDocument();
+        labels.forEach((label, index) => {
+          fireEvent.click(screen.getByRole("button", { name: label }));
+          expect(screen.getByLabelText(label)).toHaveValue(Object.values(answers)[index]);
+        });
+        selectP0Tab(2);
+        expect(screen.getByLabelText("Declare a discovery blueprint")).toHaveValue("governed_data_foundation");
+        selectP0Tab(3);
+        expect(screen.getByLabelText("Send this contact phase-progress emails")).toHaveProperty("checked", consent);
+        openAvaDock();
+        expect(screen.getByText("Saved conversation")).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: /review p0 intake/i }));
+        expect(screen.getByRole("heading", { name: "Operations Intake" })).toBeInTheDocument();
+        await act(async () => { jest.advanceTimersByTime(501); });
+        const call = (fetchMock.mock.calls as unknown as Array<[RequestInfo | URL, RequestInit]>).find(([url]) => url === "/api/programs/origination-draft");
+        const state = JSON.parse((call![1] as RequestInit).body as string).state as OriginationDraftState;
+        expect(state.brief?.intakeFields).toEqual(answers);
+        expect(state.brief?.programName).toBe("Operations Intake");
+        expect(state.brief?.discoveryArchetypeId).toBe("governed_data_foundation");
+        expect(state.brief?.sponsorProgressEmails).toBe(consent);
+        view.unmount();
+        const reloaded = resume(state);
+        labels.forEach((label, index) => {
+          fireEvent.click(screen.getByRole("button", { name: label }));
+          expect(screen.getByLabelText(label)).toHaveValue(Object.values(answers)[index]);
+        });
+        reloaded.unmount();
+      } finally { view.unmount(); jest.useRealTimers(); }
+    });
+
+    it("restores legacy saved answer keys without inventing missing intake fields", () => {
+      const draft = savedDraft(false);
+      delete draft.brief!.intakeFields;
+      draft.brief!.scopeIn = "Previously saved scope";
+      resume(draft);
+      expect(screen.getByLabelText(labels[0])).toHaveValue(answers["problem-statement"]);
+      selectP0Tab(4);
+      expect(screen.getByLabelText("In scope")).toHaveValue("Previously saved scope");
+      fireEvent.click(screen.getByRole("button", { name: "Business segment" }));
+      expect(screen.getByLabelText("Business segment")).toHaveValue("");
+    });
+
+    it("preserves the legacy flag-off draft payload and empty canvas", async () => {
+      jest.useFakeTimers();
+      const fetchMock = mockFetchWithChatArtifact("");
+      const view = render(<StrategicMoveOriginateClient tenantName="Tenant A"
+        initialDraftState={savedDraft(true)} initialDraftUnavailable />);
+      try {
+        expect(screen.getAllByText("0 of 10 answers")[0]).toBeInTheDocument();
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        await act(async () => { jest.advanceTimersByTime(501); });
+        const call = (fetchMock.mock.calls as unknown as Array<[RequestInfo | URL, RequestInit]>).find(([url]) => url === "/api/programs/origination-draft");
+        const brief = JSON.parse((call![1] as RequestInit).body as string).state.brief;
+        expect(brief.programName).toBeNull();
+        expect(brief).not.toHaveProperty("intakeFields");
+        expect(brief).not.toHaveProperty("sponsorProgressEmails");
+      } finally { view.unmount(); jest.useRealTimers(); }
+    });
+
+    it("refuses a failed saved-intake read and prevents autosave from replacing it", async () => {
+      jest.useFakeTimers();
+      const fetchMock = mockFetchWithChatArtifact("");
+      const view = resume(savedDraft(true), true);
+      try {
+        expect(screen.getByRole("alert")).toHaveTextContent("Saved intake unavailable");
+        expect(screen.queryByRole("button", { name: /submit p0 for review/i })).not.toBeInTheDocument();
+        await act(async () => { jest.advanceTimersByTime(5000); });
+        expect(fetchMock).not.toHaveBeenCalled();
+      } finally { view.unmount(); jest.useRealTimers(); }
+    });
+  });
+
   it("lets deterministic extraction override stale brief-progress artifact fields", async () => {
     const staleArtifact =
       "Captured all fields with a stale sponsor. [[artifact:brief-progress]]" +
@@ -711,6 +822,7 @@ describe("StrategicMoveOriginateClient", () => {
       const { container } = render(<StrategicMoveOriginateClient tenantName="Tenant A" />);
       expect(container.querySelector("#orig-canvas-brief-section-1-input"))
         .not.toHaveAttribute("aria-label");
+      expect(container.querySelector("#orig-canvas")).not.toHaveClass("intakeResponsive");
     });
 
     it("renders the universal Moves shell structure for origination", () => {
