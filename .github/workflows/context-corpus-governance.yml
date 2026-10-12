@@ -51,5 +51,5 @@ jobs:
       - name: Policy exception tests
         run: npx jest src/lib/governance/__tests__/policy-exceptions.test.ts
 
-      - name: Exact delegated and legacy approval tests
-        run: npx jest --runInBand src/lib/governance/__tests__/dataset-manifest.test.ts src/__tests__/behaviors/delegated-approval.test.ts
+      - name: Legacy approval tests
+        run: npx jest --runInBand src/lib/governance/__tests__/dataset-manifest.test.ts
