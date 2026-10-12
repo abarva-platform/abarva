@@ -133,6 +133,47 @@ test("reversed edge direction cannot establish a dependency", () => {
   [edge.from_object_id, edge.to_object_id] = [edge.to_object_id, edge.from_object_id];
   assert.equal(finding(data, "risk-critical-dependency").length, 0);
 });
+test("canonical criticality_tier establishes criticality without an invented attribute", () => {
+  const data = input();
+  data.objects.find((row) => row.object_type === "application")!.attributes_json = { criticality_tier: "tier_1" };
+  assert.equal(finding(data, "risk-critical-dependency").length, 1);
+});
+test("conflicting or unknown criticality declarations cannot establish a critical path", () => {
+  for (const criticality of ["low", "unknown"]) {
+    const data = input();
+    data.objects.find((row) => row.object_type === "application")!.attributes_json = { criticality, criticality_tier: "tier_1" };
+    assert.equal(finding(data, "risk-critical-dependency").length, 0);
+  }
+});
+function deploymentInput() {
+  const data = input();
+  data.objects.push(object("Deployment A", "application_deployment"));
+  data.relationships = [data.relationships[0], edge("deployment of", "Deployment A", "DEPLOYMENT_OF", "App A"),
+    edge("deployment hosted", "Deployment A", "HOSTED_ON", "Platform A")];
+  return data;
+}
+test("declared deployment hosting preserves all four objects and three edges", () => {
+  const data = deploymentInput();
+  const rows = finding(data, "risk-critical-dependency");
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].objectIds.length, 4);
+  assert.deepEqual(rows[0].relationshipIds, data.relationships.map((row) => row.id).sort());
+  assert.match(rows[0].detail, /declared deployment Deployment A is hosted on Platform A/);
+});
+test("a reversed deployment-of edge does not establish application hosting", () => {
+  const data = deploymentInput(); const link = data.relationships[1];
+  [link.from_object_id, link.to_object_id] = [link.to_object_id, link.from_object_id];
+  assert.equal(finding(data, "risk-critical-dependency").length, 0);
+});
+test("inferred hosting and a non-deployment intermediary cannot establish the path", () => {
+  for (const mutation of ["inferred", "wrong-type"]) {
+    const data = deploymentInput();
+    if (mutation === "inferred") data.relationships[2].basis = "model_inferred";
+    else data.objects.find((row) => row.object_type === "application_deployment")!.object_type = "application";
+    if (mutation === "wrong-type") data.objects.find((row) => row.display_name === "Deployment A")!.canonical_semantic_type = "application";
+    assert.equal(finding(data, "risk-critical-dependency").length, 0);
+  }
+});
 test("declared program link resolves the bounded priority mapping gap", () => {
   const data = input(); data.relationships.push(edge("advances", "Program A", "ADVANCES_PRIORITY", "Priority A"));
   assert.equal(finding(data, "priority-delivery-links").length, 0);

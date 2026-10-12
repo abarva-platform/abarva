@@ -9,7 +9,7 @@ export const INSIGHT_RULES = [
   { key: "priority-delivery-links", version: 1, basis: "Declared ADVANCES_PRIORITY edges from program or ai_program to strategic_priority; absence is scoped to this assessment." },
   { key: "program-forecast-budget", version: 1, basis: "Recorded forecast_usd exceeds approved_budget_usd for the same program, USD unit and exact dated period; no realized-value inference." },
   { key: "ai-target-actual-gap", version: 1, basis: "A dated AI-use-case target has no eligible actual of the same metric, unit and period in this assessment; absence is not proof of failure." },
-  { key: "risk-critical-dependency", version: 1, basis: "High/critical risk APPLIES_TO a critical application and that application HOSTED_ON or DEPENDS_ON a platform; only declared edge direction is traversed." },
+  { key: "risk-critical-dependency", version: 1, basis: "High/critical risk APPLIES_TO a critical application, then either direct HOSTED_ON/DEPENDS_ON a platform or an application_deployment DEPLOYMENT_OF the application and HOSTED_ON a platform; only declared edges are traversed." },
   { key: "compatible-benchmark", version: 1, basis: "Confirmed non-synthetic external reference, cited HTTPS source and matching definition, industry, cohort, geography, dated period and period basis; compare an actual to the recorded range, never calculate percentile." },
 ] as const;
 
@@ -169,21 +169,43 @@ export function buildIntegratedInsightPlan(raw: InsightInput): InsightPlan {
     });
   const risks = objects.filter((row) => type(row) === "risk" &&
     ["high", "critical"].includes(text(row.attributes_json.severity).toLowerCase()));
+  const criticalApplication = (row: InsightObject) => {
+    const values = [row.attributes_json.criticality, row.attributes_json.criticality_tier]
+      .filter((value) => value !== undefined && value !== null && text(value) !== "");
+    return type(row) === "application" && values.length > 0 &&
+      values.every((value) => ["high", "critical", "tier_1"].includes(text(value).toLowerCase()));
+  };
+  const isPlatform = (row: InsightObject) => ["infrastructure", "data_platform"].includes(type(row));
   let riskPaths = 0;
   evaluate("risk-critical-dependency", risks.length > 0,
     "Severity and criticality must be explicitly recorded; a dependency path does not establish causation or an uncontrolled risk.", () => {
       for (const risk of risks) {
         for (const applies of relationships.filter((edge) => edge.from_object_id === risk.id && edge.relationship_type === "APPLIES_TO")) {
           const app = byId.get(applies.to_object_id)!;
-          if (type(app) !== "application" || !["high", "critical", "tier_1"].includes(text(app.attributes_json.criticality).toLowerCase())) continue;
+          if (!criticalApplication(app)) continue;
           for (const dependency of relationships.filter((edge) => edge.from_object_id === app.id &&
             ["HOSTED_ON", "DEPENDS_ON"].includes(edge.relationship_type))) {
             const platform = byId.get(dependency.to_object_id)!;
-            if (!["infrastructure", "data_platform"].includes(type(platform))) continue;
+            if (!isPlatform(platform)) continue;
             riskPaths++;
             add("risk-critical-dependency", `${risk.display_name}: declared dependency reaches ${platform.display_name}`,
               `The risk applies to critical application ${app.display_name}, which has a declared ${dependency.relationship_type.toLowerCase().replaceAll("_", " ")} link to ${platform.display_name}.`,
               [risk, app, platform], [applies, dependency], [], ["Control effectiveness and causal impact are not established by these links."]);
+          }
+          for (const deploymentOf of relationships.filter((edge) => edge.to_object_id === app.id &&
+            edge.relationship_type === "DEPLOYMENT_OF")) {
+            const deployment = byId.get(deploymentOf.from_object_id)!;
+            if (type(deployment) !== "application_deployment") continue;
+            for (const hostedOn of relationships.filter((edge) => edge.from_object_id === deployment.id &&
+              edge.relationship_type === "HOSTED_ON")) {
+              const platform = byId.get(hostedOn.to_object_id)!;
+              if (!isPlatform(platform)) continue;
+              riskPaths++;
+              add("risk-critical-dependency", `${risk.display_name}: declared dependency reaches ${platform.display_name}`,
+                `The risk applies to critical application ${app.display_name}. Its declared deployment ${deployment.display_name} is hosted on ${platform.display_name}.`,
+                [risk, app, deployment, platform], [applies, deploymentOf, hostedOn], [],
+                ["Control effectiveness and causal impact are not established by these links."]);
+            }
           }
         }
       }

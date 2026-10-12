@@ -70,6 +70,9 @@ and git SHA. Proofs go to the existing private proof container, with immutable r
 - Recorded approved budget versus forecast, only for identical dated periods and USD units.
 - Ended-period AI targets without an eligible, comparable actual reading.
 - Declared high/critical-risk paths through explicitly critical applications to platforms.
+- Application criticality comes from explicit `criticality` or `criticality_tier`; conflicting
+  declarations abstain. Hosting can be direct or through a declared application deployment with
+  `DEPLOYMENT_OF` and `HOSTED_ON` edges. Every intermediary and edge stays in finding lineage.
 - Compatible actual-to-external-reference range comparisons; no percentile or causal inference.
 
 Money never becomes realized value by comparison. Source flags alone do not grant Finance or
