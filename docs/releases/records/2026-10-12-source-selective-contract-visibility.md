@@ -10,15 +10,16 @@
 
 ## Plain-English Summary
 
-Prepare a narrowly bounded review packet and transactional core for recovering an existing canonical contract and its explicitly declared application scope when their load runs are outside the selected book. Only two operational load-run references and one new owned overlay may change. Every business field and original before-image is preserved. The core has no CLI or product caller; a separately reviewed, execution-bound ACA wrapper is still required. This release does not apply data.
+Prepare a narrowly bounded review packet and transactional core for recovering an existing canonical contract and its explicitly declared application scope when their load runs are outside the selected book. Only two operational load-run references, explicitly authorized database-generated audit timestamps and one new owned overlay may change. Every business field and original before-image is preserved. The core has no CLI or product caller; a separately reviewed, execution-bound ACA wrapper is still required. This release does not apply data.
 
 ## Layer Impact
 
-Release lane: `client-data-lane`, internal bounded repair preparation. No client data apply is performed by this candidate.
+Release lane: `client-data-lane`, internal bounded repair preparation. The unchanged runtime dependency-manifest copy is a `global-control-lane` prerequisite. No client data apply is performed by this candidate.
 
 - SOURCE ADAPTERS: No new intake or adapter output.
 - CANONICAL MODEL: Describe two existing rows and their exact original and proposed lineage references. A tested transaction core changes only these references and one owned selector when called by a separately authorized native wrapper. The planner itself does not connect to or mutate the database.
 - PRODUCTS: Describe the existing-schema selector needed for later visibility recovery. No view, schema, route, traffic, UI or agent-readiness change is performed.
+- RUNTIME: Copy the unchanged dependency lock manifest into the runtime image so existing code-certification checks can read it. No dependencies or build/cache/registry policy change.
 
 ## Client Applicability
 
@@ -35,14 +36,15 @@ Release lane: `client-data-lane`, internal bounded repair preparation. No client
 - `scripts/source/selective-contract-visibility-transaction.mjs`: Exact-plan transaction, locked current full-row and selector comparisons, immutable proof acknowledgements, scoped new-run collision checks, tenant access controls, canonical collateral fingerprints, exact two-plus-one counts and selected-view readback. Restore compares the full applied rows and owned overlay before changing anything.
 - `scripts/source/__tests__/selective-contract-visibility-postgres.test.mjs`: Actual disposable-Postgres apply, rollback and restore controls; a missing database fails rather than silently skipping.
 - `.github/workflows/source-integration.yml`: Give the new script suite an explicit existing CI owner.
+- `Dockerfile`: Carry the build's unchanged dependency manifest into runtime.
 
 ## QA / Validation
 
 - Red-first missing implementation followed by 26 passing focused cases.
 - Replayed the planner against a complete private native proof; it proposes exactly two lineage-only targets and keeps execution disabled. Private rows and source bytes are not committed.
 - Four planted regressions are caught: enabling execution, altering a business field, dropping the application-ID check, and accepting a partial proof. Each caused a focused test failure and was restored; the final baseline passes.
-- Combined focused validation passes 71 cases across three suites. Node24 TypeScript, focused lint and all11 release gates pass.
-- The new transaction suite passes 21 cases, including the enclosing harness, with zero skips. A first run caught an ineffective test mutation of an already-empty overlay payload; the test now changes the payload and demonstrates restore refusal. Failed backup and precommit proof writes roll back; postcommit proof failure explicitly reports a committed transaction rather than claiming rollback.
+- Combined focused Jest validation passes 73 cases across three suites, including the explicit audit policy and runtime dependency-manifest boundary. Node24 TypeScript, focused lint and all11 release gates pass.
+- The transaction suite passes 27 cases, including the enclosing harness, with zero skips. It includes the real canonical timestamp-trigger behavior, default refusal without explicit audit policy, correct apply/restore audit times, business-field preservation, timestamp-only stale-restore refusal, arbitrary trigger timestamp refusal and a real competing Postgres connection blocked before backup. A first run caught an ineffective test mutation of an already-empty overlay payload; the test now changes the payload and demonstrates restore refusal. Failed backup and precommit proof writes roll back; postcommit proof failure explicitly reports a committed transaction rather than claiming rollback.
 - Preflight explicitly uses a serializable read-only transaction and reports its database mode. Apply and restore use current row and selector locks in a serializable write transaction; a read-only preflight is never mistaken for a locked apply.
 - Three transaction mutations were planted and restored: bypassing collateral comparison, omitting the pre-write backup and skipping selected-contract readback. Each fails the disposable-Postgres suite; the final baseline passes. The selected-contract mutation is additionally stopped by the scope readback, demonstrating layered refusal rather than a successful corrupt commit.
 - Genuine census regeneration found inherited base drift from another source suite; this candidate adds no src/Jest file and does not include that unrelated census hunk. The committed census shape remains valid. No native apply or browser acceptance is implied by these local checks.
@@ -63,7 +65,7 @@ Normal reviewed PR and applicable full exact-head CI, then squash merge and repo
 
 ## Rollback Plan
 
-Revert this proposal helper through a reviewed PR if needed. There is no database change to roll back from this release. A future data restore must compare full applied after-images, restore only the original two lineage references, remove only its owned overlay, and refuse newer edits or selector drift.
+Revert this code and runtime-manifest copy through a reviewed PR if needed. There is no database change to roll back from this release. A future data restore must compare full applied after-images including audit timestamps, restore the original business/source/load fields, remove only its owned overlay, and refuse newer edits or selector drift. Where explicitly authorized, restore retains its actual database-generated restoration timestamp and a distinct audit receipt. It does not claim literal historical full-row/hash equality when audit time changes.
 
 ## Audit Evidence
 

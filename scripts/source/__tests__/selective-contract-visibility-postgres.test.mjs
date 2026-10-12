@@ -113,6 +113,24 @@ test("existing-row visibility transaction and conditional restore", async (t) =>
       },
       save,
     );
+  const auditedFixture = async () => {
+    await seed();
+    await db.query(`ALTER TABLE source.contract ADD COLUMN updated_at timestamptz NOT NULL DEFAULT '2026-01-01T00:00:00Z';
+      ALTER TABLE source.contract_scope ADD COLUMN updated_at timestamptz NOT NULL DEFAULT '2026-01-01T00:00:00Z';
+      CREATE FUNCTION source.touch_updated_at() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN NEW.updated_at=now(); RETURN NEW; END';
+      CREATE TRIGGER source_contract_touch_updated_at BEFORE UPDATE ON source.contract FOR EACH ROW EXECUTE FUNCTION source.touch_updated_at();
+      CREATE TRIGGER source_contract_scope_touch_updated_at BEFORE UPDATE ON source.contract_scope FOR EACH ROW EXECUTE FUNCTION source.touch_updated_at();`);
+    const before = await snapshot();
+    for (const [i, t] of plan.targets.entries()) {
+      t.before =
+        i === 0
+          ? before.contract.find((r) => r.tenant_key === tenant)
+          : before.contract_scope[0];
+      t.beforeSha256 = selectiveVisibilityHash(t.before);
+      t.after = { ...t.before, load_run_id: plan.overlay.load_run_id };
+    }
+    return before;
+  };
   try {
     await t.test("preflight performs no writes", async () => {
       await seed();
@@ -128,10 +146,10 @@ test("existing-row visibility transaction and conditional restore", async (t) =>
         await seed();
         const before = await snapshot();
         const saved = [];
-          applied = await execute("apply", async (p) => {
-            if (p.stage === "before_first_write")
-              assert.deepEqual(await snapshot(), before);
-            saved.push(p);
+        applied = await execute("apply", async (p) => {
+          if (p.stage === "before_first_write")
+            assert.deepEqual(await snapshot(), before);
+          saved.push(p);
           return {
             uri: "private://immutable-proof",
             sha256: selectiveVisibilityHash(p),
@@ -356,6 +374,126 @@ test("existing-row visibility transaction and conditional restore", async (t) =>
       );
       assert.deepEqual(await snapshot(), before);
     });
+    await t.test(
+      "canonical audit timestamp triggers currently refuse instead of silently widening the plan",
+      async () => {
+        const before = await auditedFixture();
+        await assert.rejects(execute(), /after-image/);
+        assert.deepEqual(await snapshot(), before);
+      },
+    );
+    await t.test(
+      "explicit audit policy supports canonical triggers and conditional business restore",
+      async () => {
+        const before = await auditedFixture();
+        plan.auditTimestampPolicy = "database_transaction_timestamp";
+        for (const t of plan.targets)
+          t.allowedColumns = ["load_run_id", "updated_at"];
+        applied = await execute();
+        assert.equal(applied.committed, true);
+        assert.ok(
+          applied.afterRows.every(
+            (r) => r.updated_at === applied.transactionTimestamp,
+          ),
+        );
+        assert.equal(applied.afterRows[0].auto_renew, false);
+        assert.equal(applied.afterRows[0].annual_value, 100);
+        const restored = await execute("restore");
+        assert.equal(restored.committed, true);
+        assert.ok(
+          restored.afterRows.every(
+            (r) => r.updated_at === restored.transactionTimestamp,
+          ),
+        );
+        const after = await snapshot();
+        const strip = (row) => {
+          const { updated_at: _audit, ...rest } = row;
+          return rest;
+        };
+        assert.deepEqual(after.contract.map(strip), before.contract.map(strip));
+        assert.deepEqual(
+          after.contract_scope.map(strip),
+          before.contract_scope.map(strip),
+        );
+        assert.deepEqual(after.observation, before.observation);
+        assert.deepEqual(
+          after.l4_cube_active_load_run_overlay,
+          before.l4_cube_active_load_run_overlay,
+        );
+      },
+    );
+    await t.test(
+      "audit policy never permits a business-field trigger change",
+      async () => {
+        const before = await auditedFixture();
+        plan.auditTimestampPolicy = "database_transaction_timestamp";
+        for (const t of plan.targets)
+          t.allowedColumns = ["load_run_id", "updated_at"];
+        await db.query(
+          `CREATE FUNCTION source.bad_trigger() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN NEW.auto_renew=true; RETURN NEW; END'; CREATE TRIGGER bad BEFORE UPDATE ON source.contract FOR EACH ROW EXECUTE FUNCTION source.bad_trigger()`,
+        );
+        await assert.rejects(execute(), /after-image/);
+        assert.deepEqual(await snapshot(), before);
+      },
+    );
+    await t.test(
+      "audit-policy restore refuses even timestamp-only after-image drift",
+      async () => {
+        await auditedFixture();
+        plan.auditTimestampPolicy = "database_transaction_timestamp";
+        for (const t of plan.targets)
+          t.allowedColumns = ["load_run_id", "updated_at"];
+        applied = await execute();
+        await db.query(
+          "UPDATE source.contract SET updated_at=now() WHERE id='contract-uuid'",
+        );
+        const before = await snapshot();
+        await assert.rejects(execute("restore"), /after-image/);
+        assert.deepEqual(await snapshot(), before);
+      },
+    );
+    await t.test(
+      "audit policy refuses an arbitrary trigger-generated timestamp",
+      async () => {
+        const before = await auditedFixture();
+        plan.auditTimestampPolicy = "database_transaction_timestamp";
+        for (const target of plan.targets)
+          target.allowedColumns = ["load_run_id", "updated_at"];
+        await db.query(
+          "CREATE OR REPLACE FUNCTION source.touch_updated_at() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN NEW.updated_at=now()+interval ''1 hour''; RETURN NEW; END'",
+        );
+        await assert.rejects(execute(), /after-image/);
+        assert.deepEqual(await snapshot(), before);
+      },
+    );
+    await t.test(
+      "apply holds the target write lock before the first immutable backup",
+      async () => {
+        await seed();
+        const other = new pg.Client({ connectionString: uri });
+        await other.connect();
+        try {
+          await other.query("SET lock_timeout='100ms'");
+          const result = await execute("apply", async (p) => {
+            if (p.stage === "before_first_write")
+              await assert.rejects(
+                other.query(
+                  "UPDATE source.contract SET annual_value=999 WHERE id='contract-uuid'",
+                ),
+                (e) => e.code === "55P03",
+              );
+            return {
+              uri: "private://immutable-proof",
+              sha256: selectiveVisibilityHash(p),
+            };
+          });
+          assert.equal(result.committed, true);
+          assert.equal(result.afterRows[0].annual_value, 100);
+        } finally {
+          await other.end();
+        }
+      },
+    );
   } finally {
     await db.query("DROP SCHEMA IF EXISTS source CASCADE");
     await db.end();

@@ -31,6 +31,10 @@ const identifier = (s) => {
   return `"${s}"`;
 };
 const targetsAllowed = ["source.contract", "source.contract_scope"];
+const withoutAuditTimestamp = (row) => {
+  const { updated_at: _audit, ...rest } = row;
+  return rest;
+};
 
 export function validateSelectiveVisibilityTransactionPlan(plan, planSha256) {
   check(
@@ -56,6 +60,11 @@ export function validateSelectiveVisibilityTransactionPlan(plan, planSha256) {
     /^[a-f0-9]{64}$/.test(plan.sourceProofSha256),
     "Sealed native source proof required",
   );
+  const auditPolicy = plan.auditTimestampPolicy ?? "preserve";
+  check(
+    ["preserve", "database_transaction_timestamp"].includes(auditPolicy),
+    "Supported explicit audit timestamp policy required",
+  );
   for (const t of plan.targets) {
     check(
       t.before?.id &&
@@ -68,7 +77,12 @@ export function validateSelectiveVisibilityTransactionPlan(plan, planSha256) {
       "New lineage reference required",
     );
     check(
-      same(t.allowedColumns, ["load_run_id"]) &&
+      same(
+        t.allowedColumns,
+        auditPolicy === "preserve"
+          ? ["load_run_id"]
+          : ["load_run_id", "updated_at"],
+      ) &&
         same(t.after, { ...t.before, load_run_id: plan.overlay.load_run_id }),
       "Exact lineage-only after-image required",
     );
@@ -76,6 +90,12 @@ export function validateSelectiveVisibilityTransactionPlan(plan, planSha256) {
       t.beforeSha256 === selectiveVisibilityHash(t.before),
       "Full before-image hash mismatch",
     );
+    if (auditPolicy === "database_transaction_timestamp")
+      check(
+        typeof t.before.updated_at === "string" &&
+          Number.isFinite(Date.parse(t.before.updated_at)),
+        "Known native audit timestamp required",
+      );
     const key =
       t.table === "source.contract"
         ? { tenant_key: plan.tenantKey, contract_id: plan.contractId }
@@ -146,6 +166,8 @@ export async function runSelectiveVisibilityTransaction(
   persistImmutable,
 ) {
   const { plan, mode, runId, applied, planSha256 } = input;
+  const generatedAuditTimestamp =
+    plan.auditTimestampPolicy === "database_transaction_timestamp";
   validateSelectiveVisibilityTransactionPlan(plan, planSha256);
   check(
     ["preflight", "apply", "restore"].includes(mode) && runId,
@@ -168,11 +190,23 @@ export async function runSelectiveVisibilityTransaction(
     );
     check(
       same(
-        applied.afterRows,
-        plan.targets.map((t) => t.after),
+        applied.afterRows.map((r) =>
+          generatedAuditTimestamp ? withoutAuditTimestamp(r) : r,
+        ),
+        plan.targets.map((t) =>
+          generatedAuditTimestamp ? withoutAuditTimestamp(t.after) : t.after,
+        ),
       ),
       "Reviewed full after-images required for restore",
     );
+    if (generatedAuditTimestamp)
+      check(
+        typeof applied.transactionTimestamp === "string" &&
+          applied.afterRows.every(
+            (r) => r.updated_at === applied.transactionTimestamp,
+          ),
+        "Recorded generated audit timestamps required for restore",
+      );
     check(
       same(applied.selectorBaseline, plan.selectorBaseline),
       "Reviewed original selectors required for restore",
@@ -230,6 +264,9 @@ export async function runSelectiveVisibilityTransaction(
       proof.transactionReadOnly === (mode === "preflight" ? "on" : "off"),
       "Exact transaction mode required",
     );
+    proof.transactionTimestamp = (
+      await db.query("SELECT to_jsonb(transaction_timestamp()) AS timestamp")
+    ).rows[0].timestamp;
     await db.query("SET LOCAL lock_timeout='5s'");
     await db.query("SET LOCAL statement_timeout='30s'");
     await db.query("SELECT set_config('app.tenant_key',$1,true)", [
@@ -361,6 +398,13 @@ export async function runSelectiveVisibilityTransaction(
       check(exact.rowCount === 1, "Native full-row comparison mismatch");
       proof.beforeRows.push(read[0]);
     }
+    proof.preparedAfterRows = plan.targets.map((t) => ({
+      ...(mode === "restore" ? t.before : t.after),
+      ...(generatedAuditTimestamp
+        ? { updated_at: proof.transactionTimestamp }
+        : {}),
+    }));
+    proof.auditTimestampPolicy = plan.auditTimestampPolicy ?? "preserve";
     proof.backup = await save("before_first_write");
     if (mode === "preflight") {
       await db.query("ROLLBACK");
@@ -368,9 +412,9 @@ export async function runSelectiveVisibilityTransaction(
     }
     for (const [index, t] of plan.targets.entries()) {
       const expected = mode === "restore" ? applied.afterRows[index] : t.before;
-      const desired = mode === "restore" ? t.before : t.after;
+      const desired = proof.preparedAfterRows[index];
       const result = await db.query(
-        `UPDATE ${t.table} t SET load_run_id=$1 WHERE tenant_key=$2 AND id::text=$3 AND to_jsonb(t)=$4::jsonb RETURNING to_jsonb(t) AS row`,
+        `UPDATE ${t.table} t SET load_run_id=$1${generatedAuditTimestamp ? ",updated_at=transaction_timestamp()" : ""} WHERE tenant_key=$2 AND id::text=$3 AND to_jsonb(t)=$4::jsonb RETURNING to_jsonb(t) AS row`,
         [
           desired.load_run_id,
           plan.tenantKey,

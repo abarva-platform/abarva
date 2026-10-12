@@ -1,4 +1,5 @@
 import { CANONICAL_TENANT_KEYS } from "@/lib/tenant/aliases";
+import fs from "node:fs";
 import {
   buildSelectiveVisibilityPlan,
   buildSelectiveVisibilityPlanFromBytes,
@@ -6,6 +7,14 @@ import {
 } from "../selective-contract-visibility";
 
 const tenant = CANONICAL_TENANT_KEYS[0];
+
+test("runtime carries the unchanged dependency manifest needed by operator fingerprint checks", () => {
+  const docker = fs.readFileSync("Dockerfile", "utf8");
+  const runtime = docker.slice(docker.indexOf("AS runtime"));
+  expect(runtime).toContain(
+    "COPY --from=build --chown=node:node /app/package-lock.json ./package-lock.json",
+  );
+});
 const options = {
   contractId: "CONTRACT-fixture",
   scopeId: "SCOPE-fixture",
@@ -139,6 +148,37 @@ test("proposes only two lineage columns and one new overlay; never enables execu
   );
   expect(plan.requiredBeforeExecution).toContain(
     "locked_current_full_before_images",
+  );
+});
+
+test("audit timestamp effects require an explicit plan policy and known native timestamps", () => {
+  const proof = fixture();
+  expect(() =>
+    buildSelectiveVisibilityPlan(proof, {
+      ...options,
+      auditTimestampPolicy: "database_transaction_timestamp",
+    }),
+  ).toThrow(/Known native audit timestamps/);
+  for (const key of [
+    "contract_before_contract",
+    "contract_before_contract_scope",
+  ])
+    proof.sections[key].rows[0].row.updated_at = "2026-01-01T00:00:00Z";
+  const plan = buildSelectiveVisibilityPlan(proof, {
+    ...options,
+    auditTimestampPolicy: "database_transaction_timestamp",
+  });
+  expect(plan.auditTimestampPolicy).toBe("database_transaction_timestamp");
+  expect(plan.executionEnabled).toBe(false);
+  expect(
+    plan.targets.every(
+      (t) =>
+        JSON.stringify(t.allowedColumns) ===
+        JSON.stringify(["load_run_id", "updated_at"]),
+    ),
+  ).toBe(true);
+  expect(plan.targets[0].after.updated_at).toBe(
+    proof.sections.contract_before_contract.rows[0].row.updated_at,
   );
 });
 

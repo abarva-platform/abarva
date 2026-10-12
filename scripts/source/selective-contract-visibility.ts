@@ -22,6 +22,7 @@ export interface VisibilityPlanOptions {
   datasetVersion: string;
   idempotencyKey: string;
   proofSha256: string;
+  auditTimestampPolicy?: "preserve" | "database_transaction_timestamp";
 }
 const requireFact = (condition: unknown, message: string): void => {
   if (!condition) throw new Error(message);
@@ -139,6 +140,22 @@ export function buildSelectiveVisibilityPlan(
     /^[a-f0-9]{64}$/.test(options.proofSha256),
     "Sealed proof hash required",
   );
+  const auditTimestampPolicy = options.auditTimestampPolicy ?? "preserve";
+  requireFact(
+    ["preserve", "database_transaction_timestamp"].includes(
+      auditTimestampPolicy,
+    ),
+    "Explicit supported audit timestamp policy required",
+  );
+  if (auditTimestampPolicy === "database_transaction_timestamp")
+    requireFact(
+      [contract, scope].every(
+        (row) =>
+          typeof row.updated_at === "string" &&
+          Number.isFinite(Date.parse(row.updated_at)),
+      ),
+      "Known native audit timestamps required",
+    );
   const base = rows("l4_cube_active_load_run").map((row) => row.row as Row);
   const overlays = rows("l4_cube_active_load_run_overlay").map(
     (row) => row.row as Row,
@@ -212,7 +229,10 @@ export function buildSelectiveVisibilityPlan(
     },
   ].map((target) => ({
     ...target,
-    allowedColumns: ["load_run_id"],
+    allowedColumns:
+      auditTimestampPolicy === "preserve"
+        ? ["load_run_id"]
+        : ["load_run_id", "updated_at"],
     beforeSha256: visibilityHash(target.before),
     after: { ...target.before, load_run_id: options.newLoadRunId },
   }));
@@ -220,6 +240,7 @@ export function buildSelectiveVisibilityPlan(
   return {
     contractVersion: "source-selective-visibility-review-plan/v1",
     executionEnabled: false,
+    auditTimestampPolicy,
     tenantKey: proof.tenant,
     contractId: options.contractId,
     sourceProofRunId: proof.runId,
