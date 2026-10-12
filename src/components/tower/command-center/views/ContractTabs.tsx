@@ -77,6 +77,7 @@ const AI_KIND_LABEL: Record<TowerAiKind, string> = {
   candidate: "candidate",
   governance: "governance",
   platform: "platform",
+  unknown: "unknown",
 };
 
 function formatLoadedUsdM(value: number | null | undefined): string {
@@ -173,7 +174,7 @@ function ContractMasthead({ view }: { view: TowerCommandCenterView }) {
           )}
         </span>
         <span>{formatCount(s.outcomeMeasuredClaimCount)}/{formatCount(s.valueClaimCount)} claims outcome-measured</span>
-        <span>{formatCount(emittingAiCount(view))} tracked assets emitting</span>
+        <span>{formatCount(emittingAiCount(view))} asset rows with usage metrics · {formatCount(view.usageObservations.length)} separate use-case usage observations</span>
         <span>
           {s.asOfPeriod ? `As of ${s.asOfPeriod}` : "As-of date not recorded"}
         </span>
@@ -693,7 +694,7 @@ function aiAmountLabel(item: TowerAiView): string {
 
 function aiBenefitLabel(item: TowerAiView): string {
   if (!item.promisedBenefitLoaded) {
-    return item.financeStatus === null
+    return item.populationKind === "tool_rollout"
       ? "No tool-level benefit claim loaded"
       : "No case-level benefit claim loaded";
   }
@@ -798,7 +799,7 @@ function riskRows(view: TowerCommandCenterView): TowerEvidenceGapView[] {
 }
 
 function isToolRolloutRow(item: TowerAiView): boolean {
-  return item.sourceFile === "23_ai_tool_rollout.csv";
+  return item.populationKind === "tool_rollout";
 }
 
 function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
@@ -861,7 +862,7 @@ export function AiPortfolioContractView({
     {
       key: "adoption" as const,
       label: "Adoption lens",
-      detail: `${formatCount(adoptionLensRows.length)} tool rollouts`,
+      detail: `${formatCount(adoptionLensRows.length)} tool rollouts · ${formatCount(view.usageObservations.length)} case usage observations`,
     },
   ];
   return (
@@ -870,7 +871,7 @@ export function AiPortfolioContractView({
       <div className={styles.contractModeRow}>
         <SectionTitle
           title="AI initiatives and tool rollouts"
-          subtitle={`${formatCount(s.aiInitiativeCount)} assets · ${caseFunding === null ? "Approved FY26 AI case funding not verified" : `${formatUsdM(caseFunding)} approved FY26 AI case funding`}`}
+          subtitle={`${formatCount(s.aiInitiativeCount)} AI use cases and tool rollouts · ${formatCount(view.usageObservations.length)} separate use-case usage observations · ${caseFunding === null ? "Approved FY26 AI case funding not verified" : `${formatUsdM(caseFunding)} approved FY26 AI case funding`}`}
         />
         <div
           className={styles.contractSegments}
@@ -1047,6 +1048,7 @@ export function AiPortfolioContractView({
             "Adoption lens",
             "Tool rollouts ranked by recorded usage evidence",
           )}
+          <p>{formatCount(view.usageObservations.length)} separate use-case usage observations are loaded. They do not establish tool rollout targets or vendor exposure.</p>
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>
               <thead>
@@ -1082,6 +1084,16 @@ export function AiPortfolioContractView({
               </tbody>
             </table>
           </div>
+          {view.usageObservations.length > 0 ? (
+            <div className={styles.decisionLaneTableWrap}>
+              <table className={styles.contractTable}>
+                <thead><tr><th>Use-case usage observation</th><th>Recorded usage</th></tr></thead>
+                <tbody>{view.usageObservations.map((item) => (
+                  <tr key={item.id}><td>{item.name}</td><td>{aiUsageLabel(item)}</td></tr>
+                ))}</tbody>
+              </table>
+            </div>
+          ) : null}
         </article>
       ) : null}
 

@@ -27,6 +27,7 @@ const KIND_LABEL: Record<TowerAiView["kind"], string> = {
   candidate: "Candidate idea",
   governance: "Governance",
   platform: "Platform",
+  unknown: "Spend type not loaded",
 };
 
 /**
@@ -64,7 +65,7 @@ function humanizeEvent(value: string | null): string {
 }
 
 function isToolRollout(a: TowerAiView): boolean {
-  return a.sourceFile === "23_ai_tool_rollout.csv";
+  return a.populationKind === "tool_rollout";
 }
 
 function financeAmount(a: TowerAiView): string {
@@ -167,6 +168,7 @@ export function plainAi(a: TowerAiView): string {
     governance:
       "a control that unblocks other AI, not a value generator on its own",
     platform: "shared platform consumption spread across many teams",
+    unknown: "a portfolio row whose spend type is not loaded",
   };
   return `This is ${definition[a.kind]}. Recommended posture: ${a.posture}.`;
 }
@@ -198,9 +200,11 @@ export function AiInitiativeDrawer({
           <span className={styles.drTrust}>
             <Dot
               tone={
-                a && a.readinessScoreLoaded && a.readinessScore >= 60
-                  ? "teal"
-                  : "amber"
+                !a || a.posture === "Needs evidence"
+                  ? "gray"
+                  : a.readinessScoreLoaded && a.readinessScore >= 60
+                    ? "teal"
+                    : "amber"
               }
             />
             {a?.posture ?? ""}
@@ -223,9 +227,9 @@ export function AiInitiativeDrawer({
               label={
                 isToolRollout(a) ? "Adoption potential" : "Value potential"
               }
-              value={`${a.valueScore}/100`}
+              value={a.valueScoreLoaded ? `${a.valueScore}/100` : "Not scored"}
               small
-              tone="vTeal"
+              tone={a.valueScoreLoaded ? "vTeal" : undefined}
             />
             <DrawerStat
               label="Readiness"
@@ -236,9 +240,11 @@ export function AiInitiativeDrawer({
               }
               small
               tone={
-                a.readinessScoreLoaded && a.readinessScore >= 60
-                  ? "vTeal"
-                  : "vAmber"
+                !a.readinessScoreLoaded
+                  ? undefined
+                  : a.readinessScore >= 60
+                    ? "vTeal"
+                    : "vAmber"
               }
             />
           </div>

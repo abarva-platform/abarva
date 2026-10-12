@@ -13,7 +13,7 @@ import type {
 } from "@/lib/tower/command-center/types";
 import styles from "../TowerCommandCenter.module.css";
 import { cx } from "../primitives";
-import { approvedAiCaseFunding, isToolRollout } from "./portfolio-kind";
+import { approvedAiCaseFunding, isBusinessCase, isToolRollout } from "./portfolio-kind";
 import { byEvidencePriority, evidenceGapAmount } from "./evidence-gap-amount";
 
 interface ExecutiveMetric {
@@ -74,7 +74,7 @@ function openClaimCount(view: TowerCommandCenterView): number {
 }
 
 function aiToolRolloutCount(view: TowerCommandCenterView): number {
-  return Math.max(0, view.allInitiatives.length - view.programs.length);
+  return view.allInitiatives.filter(isToolRollout).length;
 }
 
 function toolCostGap(view: TowerCommandCenterView): string {
@@ -141,9 +141,6 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   const s = view.summary;
   const claims = valueClaimCount(view);
   const caseFunding = approvedAiCaseFunding(view.allInitiatives);
-  const emitting = view.ai.filter(
-    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
-  ).length;
   return [
     {
       label: "Approved FY26 project funding",
@@ -181,12 +178,12 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
     },
     {
       label: "AI initiatives and tools tracked",
-      badge: emitting > 0 ? "VISIBLE" : "DARK",
+      badge: s.aiInitiativeCount > 0 ? "TRACKED" : "NOT LOADED",
       value: `${formatCount(s.aiInitiativeCount)}`,
-      note: `${formatCount(view.programs.length)} AI business cases + ${formatCount(
+      note: `${formatCount(view.allInitiatives.filter(isBusinessCase).length)} AI use cases + ${formatCount(
         aiToolRolloutCount(view),
-      )} tool rollouts · ${caseFunding === null ? "AI case funding not verified" : `${formatUsdM(caseFunding)} recorded AI case funding`}`,
-      tone: emitting > 0 ? "teal" : "red",
+      )} tool rollouts · ${formatCount(view.usageObservations.length)} separate usage observations · ${caseFunding === null ? "AI case funding not verified" : `${formatUsdM(caseFunding)} recorded AI case funding`}`,
+      tone: s.aiInitiativeCount > 0 ? "teal" : "gray",
     },
     {
       label: "Claims with usage evidence",
@@ -484,7 +481,7 @@ export function CommandCenterView({
             : "Value claims not loaded →"}
         </button>
         <button type="button" onClick={onGoToAi}>
-          {formatCount(s.aiInitiativeCount)} AI initiatives
+          {formatCount(s.aiInitiativeCount)} AI use cases and tool rollouts
           and tool rollouts by cost, risk and adoption →
         </button>
         <button type="button" onClick={onGoToActions}>
