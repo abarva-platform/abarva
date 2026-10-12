@@ -140,7 +140,7 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
       >
         {!hasActiveUsers
           ? `No vendor-level active-user counts are loaded. ${formatCount(view.usageObservations.length)} adoption-source rows do not establish vendor exposure.`
-          : `${formatCount(vendorsWithActiveUsers)} of ${formatCount(rows.length)} vendor groups have recorded active-user counts.`}
+          : `${formatCount(vendorsWithActiveUsers)} of ${formatCount(rows.length)} vendor groups with usage-linked rollouts have recorded active-user counts.`}
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 440px" }}>
@@ -179,7 +179,7 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
           )}
           <p style={{ margin: "16px 0 0", paddingTop: 16, borderTop: "1px solid var(--canon-border)", fontSize: 15, lineHeight: 1.6, color: "var(--canon-gray-700)" }}>
             {blockedTools > 0
-              ? `${formatCount(blockedTools)} of ${formatCount(totalTools)} rollouts carry a named control blocker.`
+              ? `${formatCount(blockedTools)} of ${formatCount(totalTools)} usage-linked tool rollouts carry a named control blocker.`
               : "Control blockers are not loaded for the vendor usage rows."}
           </p>
         </div>
@@ -187,7 +187,7 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
       <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-500)" }}>
         {hasActiveUsers
           ? "Only rows explicitly measured as active users enter this chart. Counts are added across tool rollouts, so one person using two tools can be counted twice. Licensed seats are not loaded."
-          : "No explicitly named active-user or licensed-seat measure is loaded for a vendor comparison."} Rollout counts use declared page and canonical object identity;
+          : "No explicitly named active-user or licensed-seat measure is loaded for a vendor comparison."} Rollout counts here cover only tool rows with a usage metric, using declared page and canonical object identity;
         {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without that identity are excluded.
       </p>
     </section>

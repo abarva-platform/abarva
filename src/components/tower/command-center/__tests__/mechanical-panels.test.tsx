@@ -768,6 +768,7 @@ describe("mechanical Tower Command Center panels", () => {
     render(<ToolsVendorPanel view={view} />);
     expect(document.body.textContent).toContain("Active-user counts across tools by vendor");
     expect(document.body.textContent).toContain("one person using two tools can be counted twice");
+    expect(document.body.textContent).toContain("Rollout counts here cover only tool rows with a usage metric");
     expect(document.body.textContent).not.toContain("1,150");
   });
 

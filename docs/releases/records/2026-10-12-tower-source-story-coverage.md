@@ -34,7 +34,7 @@ Release lane: `global-control-lane`.
 - Show the source's expected benefit kind in the AI case table and distribution. Keep any separately classified value type visible and leave funding, yearly estimates, measured results, and Finance clearance under their own labels.
 - Show the source's expected benefit kind separately from its spend category in the full AI portfolio table. Identify Tower's funding display group as a grouping from intake labels, separate from recorded category and Finance approval.
 - In the adoption lens, show a percentage only when an adoption percentage is explicitly loaded; a usage count cannot become a 100% adoption claim.
-- In the vendor chart, include only metrics explicitly named as active users and explain that counts added across tools are not unique people.
+- In the vendor chart, include only metrics explicitly named as active users. Explain that counts added across tools are not unique people and that rollout denominators cover usage-linked tool rows only.
 - Withhold the Finance-case comparison and foundation benefit total when their inputs are missing. Draw zero claim coverage with an empty bar and describe missing budget split fields as missing.
 - Keep source codes and source references in existing detail and proof paths; no intake or serving data is rewritten.
 
