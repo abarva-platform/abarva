@@ -6,7 +6,10 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { DEMO_SAFE_CLIENT_NAMES } from "../../src/lib/client-config";
 import { resolvePhaseWorkflow } from "../../src/lib/programs/phase-workflow-registry";
-import { STEP_PAGE_VIEWS, type StepPageView } from "../../src/lib/programs/step-page-views";
+import {
+  STEP_PAGE_VIEWS,
+  type StepPageView,
+} from "../../src/lib/programs/step-page-views";
 import { withClerkAuth } from "./_helpers/auth";
 import { BASE_URL, CLERK_SECRET_KEY } from "./_helpers/env";
 import { movesApi } from "./_helpers/moves-gate-walk";
@@ -47,29 +50,43 @@ type ViewFinding = Finding & {
 };
 
 async function captureStepTiming(
-  page: Page, settledHeadMs: number | null,
+  page: Page,
+  settledHeadMs: number | null,
 ): Promise<StepTiming> {
   return page.evaluate((settledMs) => {
-    const raw = document.querySelector('[data-testid="moves-step-server-timing"]')
+    const raw = document
+      .querySelector('[data-testid="moves-step-server-timing"]')
       ?.getAttribute("data-timings");
     let server: StepTiming["server"] = null;
     if (raw) {
-      try { server = JSON.parse(raw) as StepTiming["server"]; } catch { server = null; }
+      try {
+        server = JSON.parse(raw) as StepTiming["server"];
+      } catch {
+        server = null;
+      }
     }
     const navigation = performance.getEntriesByType("navigation")[0] as
-      | PerformanceNavigationTiming | undefined;
-    const mounted = performance.getEntriesByName("moves-step-client-mounted", "mark")
+      | PerformanceNavigationTiming
+      | undefined;
+    const mounted = performance
+      .getEntriesByName("moves-step-client-mounted", "mark")
       .at(-1);
     return {
       settledHeadMs: settledMs,
       documentTimeOriginMs: performance.timeOrigin,
       server,
-      documentResponseMs: navigation ? Math.round(navigation.responseStart) : null,
+      documentResponseMs: navigation
+        ? Math.round(navigation.responseStart)
+        : null,
       clientMountedMs: mounted ? Math.round(mounted.startTime) : null,
-      secondaryReads: performance.getEntriesByType("resource")
+      secondaryReads: performance
+        .getEntriesByType("resource")
         .filter((entry) => entry.name.includes("/api/v1/programs/"))
         .map((entry) => ({
-          path: new URL(entry.name).pathname.replace(/\/api\/v1\/programs\/[^/]+/, "/api/v1/programs/:id"),
+          path: new URL(entry.name).pathname.replace(
+            /\/api\/v1\/programs\/[^/]+/,
+            "/api/v1/programs/:id",
+          ),
           startMs: Math.round(entry.startTime),
           durationMs: Math.round(entry.duration),
         })),
@@ -85,7 +102,9 @@ const VIEW_ENTRIES = Object.entries(STEP_PAGE_VIEWS) as Array<
   [StepPageView, (typeof STEP_PAGE_VIEWS)[StepPageView]]
 >;
 const P2_HAS_EVERY_STEP_PAGE = resolvePhaseWorkflow(2, null).every((step) =>
-  VIEW_ENTRIES.some(([, entry]) => entry.phase === 2 && entry.stepId === step.id),
+  VIEW_ENTRIES.some(
+    ([, entry]) => entry.phase === 2 && entry.stepId === step.id,
+  ),
 );
 
 // Add an exact phase, view, visible text, and reason only for a reviewed gap.
@@ -136,7 +155,9 @@ function emptyUxInput(unavailableReason?: string): WalkUxInput {
 }
 
 function markdownCell(value: unknown): string {
-  return String(value ?? "—").replaceAll("|", "\\|").replaceAll(/\s*\n\s*/g, " ");
+  return String(value ?? "—")
+    .replaceAll("|", "\\|")
+    .replaceAll(/\s*\n\s*/g, " ");
 }
 
 function summaryMarkdown(proof: {
@@ -156,8 +177,14 @@ function summaryMarkdown(proof: {
     "",
   ];
   for (const phase of PHASES) {
-    lines.push(`## P${phase} · UX average ${proof.phaseUxAverage[`P${phase}`] ?? "unmeasured"}`, "");
-    lines.push("| View | Status | UX / 100 | Measured points | Top issue |", "|---|---|---:|---:|---|");
+    lines.push(
+      `## P${phase} · UX average ${proof.phaseUxAverage[`P${phase}`] ?? "unmeasured"}`,
+      "",
+    );
+    lines.push(
+      "| View | Status | UX / 100 | Measured points | Top issue |",
+      "|---|---|---:|---:|---|",
+    );
     for (const view of proof.views.filter((item) => item.phase === phase)) {
       const unmeasured = Object.entries(view.ux.dimensions).find(
         ([, dimension]) => dimension.earned === null,
@@ -175,8 +202,16 @@ function summaryMarkdown(proof: {
     }
     lines.push("");
   }
-  lines.push(`Overall measured UX average: ${proof.overallUxAverage ?? "unmeasured"}`, "");
-  lines.push("## Move journey", "", "| Transition | State | Hard met / total | Soft met / total | First open hard check | Current documents built / signed |", "|---|---|---:|---:|---|---|");
+  lines.push(
+    `Overall measured UX average: ${proof.overallUxAverage ?? "unmeasured"}`,
+    "",
+  );
+  lines.push(
+    "## Move journey",
+    "",
+    "| Transition | State | Hard met / total | Soft met / total | First open hard check | Current documents built / signed |",
+    "|---|---|---:|---:|---|---|",
+  );
   for (const entry of proof.journey) {
     const hard = `${entry.hard.met ?? "unread"}/${entry.hard.total ?? "unread"}`;
     const soft = `${entry.soft.met ?? "unread"}/${entry.soft.total ?? "unread"}`;
@@ -185,9 +220,17 @@ function summaryMarkdown(proof: {
       `| ${entry.transition} | ${entry.state} | ${hard} | ${soft} | ${markdownCell(entry.firstOpenHard ? `${entry.firstOpenHard.id}: ${entry.firstOpenHard.reason}` : entry.gateReadbackReason)} | ${documents} |`,
     );
   }
-  lines.push("", "Document counts describe current generated artifacts observed in the Move cabinet; they do not assert that every required deliverable was built.");
+  lines.push(
+    "",
+    "Document counts describe current generated artifacts observed in the Move cabinet; they do not assert that every required deliverable was built.",
+  );
   if (proof.journeyReadbackErrors.length) {
-    lines.push("", "### Journey read gaps", "", ...proof.journeyReadbackErrors.map((error) => `- ${error}`));
+    lines.push(
+      "",
+      "### Journey read gaps",
+      "",
+      ...proof.journeyReadbackErrors.map((error) => `- ${error}`),
+    );
   }
   return `${lines.join("\n")}\n`;
 }
@@ -240,7 +283,9 @@ async function checkStepWorkspaceNavigation(
   ).toBeVisible();
   await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
   const storedDownload = page
-    .locator('a[href^="/api/v1/programs/"][href*="/artifacts/"][href$="/download"]')
+    .locator(
+      'a[href^="/api/v1/programs/"][href*="/artifacts/"][href$="/download"]',
+    )
     .first();
   await expect(storedDownload).toBeVisible();
   expect(await storedDownload.getAttribute("href")).toContain(moveId);
@@ -348,7 +393,9 @@ async function measureUxVariants(
       if (variant.colorScheme === "light") {
         observation.allAxeIds = violations.map((item) => item.id);
         observation.seriousCriticalAxeIds = violations
-          .filter((item) => item.impact === "serious" || item.impact === "critical")
+          .filter(
+            (item) => item.impact === "serious" || item.impact === "critical",
+          )
           .map((item) => item.id);
       } else {
         observation.contrastAxeIds = violations
@@ -370,7 +417,9 @@ async function measureUxVariants(
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ colorScheme: "light" });
   if (screenshotErrors.length) {
-    throw new Error(`Screenshot capture failed: ${screenshotErrors.join(" | ")}`);
+    throw new Error(
+      `Screenshot capture failed: ${screenshotErrors.join(" | ")}`,
+    );
   }
 }
 
@@ -380,28 +429,39 @@ async function checkRootCauseWorkReachability(
 ): Promise<void> {
   for (const width of [1906, 1440, 390] as const) {
     await page.setViewportSize({ width, height: 900 });
-    const root = page.locator('[class*="MovesStepPage-module"][class$="__root"]');
+    const root = page.locator(
+      '[class*="MovesStepPage-module"][class$="__root"]',
+    );
     const row = page.getByText("RANK 01 · RC-1");
     const action = page.getByRole("button", { name: "Confirm this order" });
     await expect(root).toHaveCount(1);
     await expect(row).toHaveCount(1);
     await expect(action).toHaveCount(1);
     const canScroll =
-      (await root.evaluate((element) => element.scrollHeight > element.clientHeight + 1)) ||
+      (await root.evaluate(
+        (element) => element.scrollHeight > element.clientHeight + 1,
+      )) ||
       (await page.evaluate(
         () => document.scrollingElement!.scrollHeight > window.innerHeight + 1,
       ));
-    expect(canScroll, `${width}px: the work page needs a scroll path`).toBe(true);
+    expect(canScroll, `${width}px: the work page needs a scroll path`).toBe(
+      true,
+    );
     await page.mouse.move(width / 2, 450);
     await page.mouse.wheel(0, -4000);
     await expect
-      .poll(async () => [await root.evaluate((element) => element.scrollTop), await page.evaluate(() => window.scrollY)])
+      .poll(async () => [
+        await root.evaluate((element) => element.scrollTop),
+        await page.evaluate(() => window.scrollY),
+      ])
       .toEqual([0, 0]);
     for (const target of [row, action]) {
       let reached = false;
       for (let attempt = 0; attempt < 12; attempt += 1) {
         reached = await target.evaluate((element) => {
-          const root = element.closest('[class*="MovesStepPage-module"][class$="__root"]');
+          const root = element.closest(
+            '[class*="MovesStepPage-module"][class$="__root"]',
+          );
           if (!root) return false;
           const targetRect = element.getBoundingClientRect();
           const rootRect = root.getBoundingClientRect();
@@ -413,18 +473,29 @@ async function checkRootCauseWorkReachability(
         if (reached) break;
         await page.mouse.wheel(0, 400);
       }
-      expect(reached, `${width}px: ${await target.textContent()} must be reachable by wheel`).toBe(true);
+      expect(
+        reached,
+        `${width}px: ${await target.textContent()} must be reachable by wheel`,
+      ).toBe(true);
       await expect(target).toBeInViewport();
     }
     const scrollDistance =
       (await root.evaluate((element) => element.scrollTop)) +
       (await page.evaluate(() => window.scrollY));
-    expect(scrollDistance, `${width}px: ordinary wheel scrolling must move the work`).toBeGreaterThan(0);
+    expect(
+      scrollDistance,
+      `${width}px: ordinary wheel scrolling must move the work`,
+    ).toBeGreaterThan(0);
     if (checkGlobalNav) {
       const topNav = page.getByTestId("nexus-top-nav");
       await expect(topNav).toBeVisible();
-      const navTop = await topNav.evaluate((element) => element.getBoundingClientRect().top);
-      expect(navTop, `${width}px: global navigation must stay at the top while scrolling`).toBeGreaterThanOrEqual(-1);
+      const navTop = await topNav.evaluate(
+        (element) => element.getBoundingClientRect().top,
+      );
+      expect(
+        navTop,
+        `${width}px: global navigation must stay at the top while scrolling`,
+      ).toBeGreaterThanOrEqual(-1);
     }
   }
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -442,8 +513,12 @@ async function inspectPage(
   const onConsole = (message: { type: () => string; text: () => string }) => {
     if (message.type() === "error") problems.push(`console: ${message.text()}`);
   };
-  const onPageError = (error: Error) => problems.push(`page error: ${error.message}`);
-  const onResponse = (response: { status: () => number; url: () => string }) => {
+  const onPageError = (error: Error) =>
+    problems.push(`page error: ${error.message}`);
+  const onResponse = (response: {
+    status: () => number;
+    url: () => string;
+  }) => {
     if (response.status() >= 400) {
       problems.push(`HTTP ${response.status()}: ${response.url()}`);
     }
@@ -456,12 +531,18 @@ async function inspectPage(
     await check();
     // Streaming and background reads can keep the network busy. The page's
     // visible landmark is required; network-idle is only a bounded settling aid.
-    await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => {});
+    await page
+      .waitForLoadState("networkidle", { timeout: 5_000 })
+      .catch(() => {});
     await afterSettle?.();
   } catch (error) {
     problems.push(error instanceof Error ? error.message : String(error));
   } finally {
-    problems.push(...blockedWrites.slice(writeCountBefore).map((item) => `Blocked write: ${item}`));
+    problems.push(
+      ...blockedWrites
+        .slice(writeCountBefore)
+        .map((item) => `Blocked write: ${item}`),
+    );
     page.off("console", onConsole);
     page.off("pageerror", onPageError);
     page.off("response", onResponse);
@@ -473,7 +554,9 @@ async function inspectPage(
   };
 }
 
-test("walks long work through pane and document scrolling", async ({ page }) => {
+test("walks long work through pane and document scrolling", async ({
+  page,
+}) => {
   await page.setContent(`
     <style>
       body { margin: 0; }
@@ -560,18 +643,26 @@ test("keeps phase bar labels readable in both themes", async ({ page }) => {
       await page.addStyleTag({ content: css });
       await expect
         .poll(() =>
-          page.locator('[aria-current="page"]').evaluate((element) =>
-            getComputedStyle(element).backgroundColor,
-          ),
+          page
+            .locator('[aria-current="page"]')
+            .evaluate((element) => getComputedStyle(element).backgroundColor),
         )
-        .toBe(colorScheme === "light" ? "rgb(44, 44, 42)" : "rgb(241, 239, 232)");
+        .toBe(
+          colorScheme === "light" ? "rgb(44, 44, 42)" : "rgb(241, 239, 232)",
+        );
       expect(
-        await page.locator(".phase-bar .code, .phase-bar .count").evaluateAll((elements) =>
-          elements.every((element) => getComputedStyle(element).opacity === "1"),
-        ),
+        await page
+          .locator(".phase-bar .code, .phase-bar .count")
+          .evaluateAll((elements) =>
+            elements.every(
+              (element) => getComputedStyle(element).opacity === "1",
+            ),
+          ),
         `${width}px ${colorScheme} phase labels use opaque theme colors`,
       ).toBe(true);
-      const axe = await new AxeBuilder({ page }).withTags(["wcag2aa"]).analyze();
+      const axe = await new AxeBuilder({ page })
+        .withTags(["wcag2aa"])
+        .analyze();
       const violations = axe.violations as Array<{ id: string }>;
       expect(
         violations.filter((violation) => violation.id === "color-contrast"),
@@ -582,10 +673,23 @@ test("keeps phase bar labels readable in both themes", async ({ page }) => {
 });
 
 test("keeps step text readable while the theme changes", async ({ page }) => {
-  const css = fs.readFileSync(
-    path.resolve(process.cwd(), "src/components/strategic-moves/step-page/MovesStepPage.module.css"),
+  const css = fs
+    .readFileSync(
+      path.resolve(
+        process.cwd(),
+        "src/components/strategic-moves/step-page/MovesStepPage.module.css",
+      ),
+      "utf8",
+    )
+    .replace(/:global\(([^)]+)\)/g, "$1");
+  const globalCss = fs.readFileSync(
+    path.resolve(process.cwd(), "src/app/globals.css"),
     "utf8",
   );
+  const interactiveTransitions = globalCss.match(
+    /:where\(a, button, \[role="button"\]\)\s*\{[^}]+\}/,
+  )?.[0];
+  expect(interactiveTransitions).toBeTruthy();
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ colorScheme: "light" });
@@ -596,15 +700,22 @@ test("keeps step text readable while the theme changes", async ({ page }) => {
           <li><span class="phase-tab" aria-current="page"><span class="code">P2</span><span class="name">Discover</span><span class="count">1 to confirm</span></span></li>
         </ol></nav>
         <nav aria-label="Surface"><a class="tab" href="#steps">Steps</a></nav>
+        <div class="topline-right"><button class="link-btn">Change theme</button></div>
         <header class="panel-head"><h1 class="panel-title">Choose a direction</h1><p class="panel-intro">Review the team's options.</p></header>
         <section class="next" role="status" aria-label="What to do next"><p class="next-do">Wait for the design elements.</p></section>
         <button class="btn-primary">Continue</button><button class="btn-quiet">Back</button><button class="btn-line">Details</button>
       </main>
+      <aside class="notes-panel" data-theme="light"><label for="notes">Session notes</label><textarea id="notes" class="q-input"></textarea><button class="btn-ink">Fill from notes</button></aside>
     `);
+    await page.addStyleTag({ content: interactiveTransitions! });
     await page.addStyleTag({ content: css });
+    await page.waitForTimeout(180);
     for (const theme of ["dark", "light"] as const) {
       await page.evaluate((nextTheme) => {
         document.querySelector(".root")!.setAttribute("data-theme", nextTheme);
+        document
+          .querySelector(".notes-panel")!
+          .setAttribute("data-theme", nextTheme);
         // Inspect a real intermediate frame rather than waiting past a fade.
         for (const animation of document.getAnimations()) {
           const duration = animation.effect?.getComputedTiming().duration;
@@ -614,8 +725,15 @@ test("keeps step text readable while the theme changes", async ({ page }) => {
           }
         }
       }, theme);
-      const axe = await new AxeBuilder({ page }).withTags(["wcag2aa"]).analyze();
+      const axe = await new AxeBuilder({ page })
+        .withTags(["wcag2aa"])
+        .analyze();
       const violations = axe.violations as Array<{ id: string }>;
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
       expect(
         violations.filter((violation) => violation.id === "color-contrast"),
         `${width}px ${theme} text and background stay readable during a palette switch`,
@@ -624,7 +742,9 @@ test("keeps step text readable while the theme changes", async ({ page }) => {
   }
 });
 
-test("walks every deployed Moves step page without writing", async ({ page }, testInfo) => {
+test("walks every deployed Moves step page without writing", async ({
+  page,
+}, testInfo) => {
   test.setTimeout(32 * 60_000);
   const missing = [
     !MOVE_ID && "E2E_MOVES_LIVE_MOVE_ID",
@@ -676,15 +796,19 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
       email: process.env.E2E_MOVES_OPERATOR_EMAIL,
     });
     const lookup = await movesApi(page, `/api/v1/programs/${MOVE_ID}`);
-    expect(lookup.status, "The input Move must be readable for this operator").toBe(200);
+    expect(
+      lookup.status,
+      "The input Move must be readable for this operator",
+    ).toBe(200);
     const program = lookup.body.program as
       | { id?: string; clientName?: string; currentPhase?: number }
       | undefined;
     expect(program?.id).toBe(MOVE_ID);
     expect(program?.clientName).toBe(EXPECTED_TENANT_NAME);
-    expect(program?.currentPhase, "The Move must have a readable current phase").toEqual(
-      expect.any(Number),
-    );
+    expect(
+      program?.currentPhase,
+      "The Move must have a readable current phase",
+    ).toEqual(expect.any(Number));
     expect(Number.isInteger(program!.currentPhase)).toBe(true);
     expect(program!.currentPhase).toBeGreaterThanOrEqual(0);
     expect(program!.currentPhase).toBeLessThanOrEqual(5);
@@ -725,23 +849,31 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         }
         continue;
       }
-      const landing = await inspectPage(page, routeFor(MOVE_ID!, phase), async () => {
-        await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/);
-        if (phase === 2 && !P2_HAS_EVERY_STEP_PAGE) {
-          await expect(page.getByTestId("moves-capture-flow")).toBeVisible({
-            timeout: VISIBLE_TIMEOUT_MS,
-          });
-          expect(new URL(page.url()).searchParams.has("step")).toBe(false);
-        } else {
-          await expect(page.locator("#step-panel-title")).toBeVisible({
-            timeout: VISIBLE_TIMEOUT_MS,
-          });
-          expect(new URL(page.url()).searchParams.get("step")).toBeTruthy();
-        }
-        await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME, {
-          timeout: VISIBLE_TIMEOUT_MS,
-        });
-      }, blockedWrites);
+      const landing = await inspectPage(
+        page,
+        routeFor(MOVE_ID!, phase),
+        async () => {
+          await expect(page).not.toHaveURL(/\/sign-in(?:\?|$)/);
+          if (phase === 2 && !P2_HAS_EVERY_STEP_PAGE) {
+            await expect(page.getByTestId("moves-capture-flow")).toBeVisible({
+              timeout: VISIBLE_TIMEOUT_MS,
+            });
+            expect(new URL(page.url()).searchParams.has("step")).toBe(false);
+          } else {
+            await expect(page.locator("#step-panel-title")).toBeVisible({
+              timeout: VISIBLE_TIMEOUT_MS,
+            });
+            expect(new URL(page.url()).searchParams.get("step")).toBeTruthy();
+          }
+          await expect(page.locator("body")).toContainText(
+            EXPECTED_TENANT_NAME,
+            {
+              timeout: VISIBLE_TIMEOUT_MS,
+            },
+          );
+        },
+        blockedWrites,
+      );
       proof.landings.push({ phase, ...landing });
 
       const legacy = await inspectPage(
@@ -752,7 +884,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             timeout: VISIBLE_TIMEOUT_MS,
           });
           await expect(page.locator("#step-panel-title")).toHaveCount(0);
-          await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
+          await expect(page.locator("body")).toContainText(
+            EXPECTED_TENANT_NAME,
+          );
           expect(new URL(page.url()).searchParams.get("legacy")).toBe("1");
         },
         blockedWrites,
@@ -776,13 +910,17 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
               timeout: VISIBLE_TIMEOUT_MS,
             });
             await expect(page.locator("#step-panel-title")).not.toBeEmpty();
-            const nextAction = page.getByRole("status", { name: "What to do next" });
+            const nextAction = page.getByRole("status", {
+              name: "What to do next",
+            });
             await expect(nextAction).toBeVisible();
             await expect(nextAction.locator("p").first()).not.toBeEmpty();
             const steps = page.locator('nav[aria-label$=" steps"] ol > li');
             const current = steps.locator('[aria-current="step"]');
             await expect(current).toHaveCount(1);
-            await expect(steps.nth(position).locator('[aria-current="step"]')).toBeVisible();
+            await expect(
+              steps.nth(position).locator('[aria-current="step"]'),
+            ).toBeVisible();
             uxInput.settledHeadMs = Date.now() - viewStartedAt;
             try {
               timing = await captureStepTiming(page, uxInput.settledHeadMs);
@@ -790,7 +928,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
               timingError = String(error);
             }
             expect(new URL(page.url()).searchParams.get("step")).toBe(view);
-            await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
+            await expect(page.locator("body")).toContainText(
+              EXPECTED_TENANT_NAME,
+            );
             await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
             await expect(page.getByTestId("nexus-primary-nav")).toBeVisible();
           },
@@ -807,8 +947,13 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             );
             if (timing) {
               try {
-                const later = await captureStepTiming(page, uxInput.settledHeadMs);
-                if (later.documentTimeOriginMs === timing.documentTimeOriginMs) {
+                const later = await captureStepTiming(
+                  page,
+                  uxInput.settledHeadMs,
+                );
+                if (
+                  later.documentTimeOriginMs === timing.documentTimeOriginMs
+                ) {
                   timing.secondaryReads = later.secondaryReads;
                   timing.clientMountedMs ??= later.clientMountedMs;
                 }
@@ -844,11 +989,15 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         }
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.emulateMedia({ colorScheme: "light" });
-        const visibleText = await page.locator("body").innerText().catch(() => "");
-        const allowance = KNOWN_GAPS.find((gap) =>
-          gap.phase === phase &&
-          gap.view === view &&
-          visibleText.includes(gap.text),
+        const visibleText = await page
+          .locator("body")
+          .innerText()
+          .catch(() => "");
+        const allowance = KNOWN_GAPS.find(
+          (gap) =>
+            gap.phase === phase &&
+            gap.view === view &&
+            visibleText.includes(gap.text),
         );
         if (allowance && result.status === "pass") {
           result.status = "known_gap";
@@ -886,7 +1035,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         if (response.status !== 200) {
           throw new Error(`HTTP ${response.status}`);
         }
-        const readback = response.body.gateReadback as PhaseGateReadback | undefined;
+        const readback = response.body.gateReadback as
+          | PhaseGateReadback
+          | undefined;
         if (
           !readback ||
           typeof readback.currentPhase !== "number" ||
@@ -897,7 +1048,9 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         readbacks.push(readback);
       } catch (error) {
         readbacks.push(null);
-        proof.journeyReadbackErrors.push(`P${phase} gate read: ${String(error)}`);
+        proof.journeyReadbackErrors.push(
+          `P${phase} gate read: ${String(error)}`,
+        );
       }
     }
 
@@ -912,9 +1065,12 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         throw new Error(`cabinet HTTP ${cabinet.status} or missing artifacts`);
       }
       currentDocuments = cabinet.body.artifacts as CurrentDocumentReadback[];
-      documentSignOffAvailable = cabinet.body.deliverableSignOffStatus === "available";
+      documentSignOffAvailable =
+        cabinet.body.deliverableSignOffStatus === "available";
       if (!documentSignOffAvailable) {
-        proof.journeyReadbackErrors.push("Document sign-off read is unavailable");
+        proof.journeyReadbackErrors.push(
+          "Document sign-off read is unavailable",
+        );
       }
     } catch (error) {
       proof.journeyReadbackErrors.push(`Document read: ${String(error)}`);
@@ -932,32 +1088,60 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
     );
     for (const phase of PHASES) {
       proof.phaseUxAverage[`P${phase}`] = floorAverage(
-        proof.views.filter((view) => view.phase === phase).map((view) => view.ux.score),
+        proof.views
+          .filter((view) => view.phase === phase)
+          .map((view) => view.ux.score),
       );
     }
-    proof.overallUxAverage = floorAverage(proof.views.map((view) => view.ux.score));
+    proof.overallUxAverage = floorAverage(
+      proof.views.map((view) => view.ux.score),
+    );
     if (proof.journey.length === 0) {
-      proof.journeyReadbackErrors.push("Walk stopped before the journey could be read");
+      proof.journeyReadbackErrors.push(
+        "Walk stopped before the journey could be read",
+      );
     }
     const output = testInfo.outputPath("proof.json");
     fs.mkdirSync(path.dirname(output), { recursive: true });
     fs.writeFileSync(output, `${JSON.stringify(proof, null, 2)}\n`);
-    await testInfo.attach("proof.json", { path: output, contentType: "application/json" });
+    await testInfo.attach("proof.json", {
+      path: output,
+      contentType: "application/json",
+    });
     const summary = testInfo.outputPath("summary.md");
     fs.writeFileSync(summary, summaryMarkdown(proof));
-    await testInfo.attach("summary.md", { path: summary, contentType: "text/markdown" });
+    await testInfo.attach("summary.md", {
+      path: summary,
+      contentType: "text/markdown",
+    });
   }
 
   const failures = [
-    ...proof.landings.map((entry) => ({ label: `P${entry.phase} landing`, ...entry })),
-    ...proof.legacy.map((entry) => ({ label: `P${entry.phase} legacy`, ...entry })),
-    ...proof.views.map((entry) => ({ label: `P${entry.phase} ${entry.view}`, ...entry })),
+    ...proof.landings.map((entry) => ({
+      label: `P${entry.phase} landing`,
+      ...entry,
+    })),
+    ...proof.legacy.map((entry) => ({
+      label: `P${entry.phase} legacy`,
+      ...entry,
+    })),
+    ...proof.views.map((entry) => ({
+      label: `P${entry.phase} ${entry.view}`,
+      ...entry,
+    })),
   ].filter((entry) => entry.status === "fail");
-  expect(failures, "Every failed view remains visible in proof.json").toEqual([]);
-  expect(proof.journeyReadbackErrors, "The live journey must be readable").toEqual([]);
+  expect(failures, "Every failed view remains visible in proof.json").toEqual(
+    [],
+  );
+  expect(
+    proof.journeyReadbackErrors,
+    "The live journey must be readable",
+  ).toEqual([]);
 });
 
-test("fetches both read-only reference-deck editions from the signed-in Move", async ({ page }, testInfo) => {
+test("fetches both read-only reference-deck editions from the signed-in Move", async ({
+  page,
+}, testInfo) => {
   test.setTimeout(15 * 60_000);
   expect(BASE_URL).toBe("https://app.abarva.ai");
   expect(MOVE_ID).toMatch(/^[0-9a-f-]{36}$/i);
@@ -969,21 +1153,65 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
   });
   await page.goto("/", { waitUntil: "domcontentloaded" });
   const lookup = await movesApi(page, `/api/v1/programs/${MOVE_ID}`);
-  expect(lookup.status, "The configured Move must be readable for this operator").toBe(200);
-  const program = lookup.body.program as { id?: string; clientName?: string } | undefined;
+  expect(
+    lookup.status,
+    "The configured Move must be readable for this operator",
+  ).toBe(200);
+  const program = lookup.body.program as
+    | { id?: string; clientName?: string }
+    | undefined;
   expect(program?.id).toBe(MOVE_ID);
   expect(program?.clientName).toBe(EXPECTED_TENANT_NAME);
-  const proof: Array<{ edition: string; format: string; status: number; score: number | null; titleFigureCount: number | null; wordsStatus: string | null; wordsReason: string | null; wordsRule: string | null; wordsSlide: number | null; fallbackCount: number | null; requestId: string | null; bytes: number; file: string | null; figureHash: string | null; errorCode?: string; findingCodes?: string[] }> = [];
+  const proof: Array<{
+    edition: string;
+    format: string;
+    status: number;
+    score: number | null;
+    titleFigureCount: number | null;
+    wordsStatus: string | null;
+    wordsReason: string | null;
+    wordsRule: string | null;
+    wordsSlide: number | null;
+    fallbackCount: number | null;
+    requestId: string | null;
+    bytes: number;
+    file: string | null;
+    figureHash: string | null;
+    errorCode?: string;
+    findingCodes?: string[];
+  }> = [];
   const failures: string[] = [];
-  const recordTransportFailure = async (edition: string, format: string, error: unknown) => {
+  const recordTransportFailure = async (
+    edition: string,
+    format: string,
+    error: unknown,
+  ) => {
     // Playwright request errors may contain session cookies. Persist only a safe class.
-    const errorCode = error instanceof Error && /timeout/i.test(error.name) ? "request_timeout" : "request_failed";
+    const errorCode =
+      error instanceof Error && /timeout/i.test(error.name)
+        ? "request_timeout"
+        : "request_failed";
     const diagnostic = { edition, format, status: 0, errorCode };
     const file = testInfo.outputPath(`${edition}.${format}.error.json`);
     fs.writeFileSync(file, `${JSON.stringify(diagnostic, null, 2)}\n`);
-    await testInfo.attach(`${edition}.${format}.error.json`, { path: file, contentType: "application/json" });
-    proof.push({ ...diagnostic, score: null, titleFigureCount: null, wordsStatus: null, wordsReason: null,
-      wordsRule: null, wordsSlide: null, fallbackCount: null, requestId: null, bytes: 0, file: path.basename(file), figureHash: null });
+    await testInfo.attach(`${edition}.${format}.error.json`, {
+      path: file,
+      contentType: "application/json",
+    });
+    proof.push({
+      ...diagnostic,
+      score: null,
+      titleFigureCount: null,
+      wordsStatus: null,
+      wordsReason: null,
+      wordsRule: null,
+      wordsSlide: null,
+      fallbackCount: null,
+      requestId: null,
+      bytes: 0,
+      file: path.basename(file),
+      figureHash: null,
+    });
     failures.push(`${edition} ${format}: ${errorCode}`);
   };
   for (const edition of ["validation", "investment"] as const) {
@@ -991,62 +1219,129 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
     for (const format of ["pptx", "pdf"] as const) {
       let response;
       try {
-        response = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/preview?format=${format}`, { timeout: 120_000 });
+        response = await page.request.get(
+          `${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/preview?format=${format}`,
+          { timeout: 120_000 },
+        );
       } catch (error) {
         await recordTransportFailure(edition, format, error);
         continue;
       }
       if (response.status() !== 200) {
-        const body = await response.json().catch(() => null) as { error?: unknown; findings?: unknown } | null;
-        const errorCode = typeof body?.error === "string" ? body.error : "unreadable_error";
+        const body = (await response.json().catch(() => null)) as {
+          error?: unknown;
+          findings?: unknown;
+        } | null;
+        const errorCode =
+          typeof body?.error === "string" ? body.error : "unreadable_error";
         const findingCodes = Array.isArray(body?.findings)
           ? body.findings.flatMap((finding: unknown) => {
-            if (finding === null || typeof finding !== "object") return [];
-            const row = finding as { kind?: unknown; detailCode?: unknown; slide?: unknown };
-            if (typeof row.kind !== "string") return [];
-            return [`${row.kind}${typeof row.detailCode === "string" ? `:${row.detailCode}` : ""}${typeof row.slide === "number" ? `@slide${row.slide}` : ""}`];
-          }) : [];
+              if (finding === null || typeof finding !== "object") return [];
+              const row = finding as {
+                kind?: unknown;
+                detailCode?: unknown;
+                slide?: unknown;
+              };
+              if (typeof row.kind !== "string") return [];
+              return [
+                `${row.kind}${typeof row.detailCode === "string" ? `:${row.detailCode}` : ""}${typeof row.slide === "number" ? `@slide${row.slide}` : ""}`,
+              ];
+            })
+          : [];
         const rawScore = response.headers()["x-abarva-deck-fidelity-score"];
-        const score = rawScore && Number.isFinite(Number(rawScore)) ? Number(rawScore) : null;
-        const rawTitleFigures = response.headers()["x-abarva-deck-title-figure-count"];
-        const titleFigureCount = rawTitleFigures && Number.isInteger(Number(rawTitleFigures)) ? Number(rawTitleFigures) : null;
+        const score =
+          rawScore && Number.isFinite(Number(rawScore))
+            ? Number(rawScore)
+            : null;
+        const rawTitleFigures =
+          response.headers()["x-abarva-deck-title-figure-count"];
+        const titleFigureCount =
+          rawTitleFigures && Number.isInteger(Number(rawTitleFigures))
+            ? Number(rawTitleFigures)
+            : null;
         const rawWordsSlide = response.headers()["x-abarva-deck-words-slide"];
-        const wordsSlide = rawWordsSlide && Number.isInteger(Number(rawWordsSlide)) ? Number(rawWordsSlide) : null;
-        const rawFallbackCount = response.headers()["x-abarva-deck-fallback-count"];
-        const fallbackCount = rawFallbackCount && Number.isInteger(Number(rawFallbackCount)) ? Number(rawFallbackCount) : null;
-        const requestId = response.headers()["x-abarva-deck-request-id"] ?? null;
-        const diagnostic = { edition, format, status: response.status(), errorCode, findingCodes, score, titleFigureCount, wordsSlide, fallbackCount, requestId };
+        const wordsSlide =
+          rawWordsSlide && Number.isInteger(Number(rawWordsSlide))
+            ? Number(rawWordsSlide)
+            : null;
+        const rawFallbackCount =
+          response.headers()["x-abarva-deck-fallback-count"];
+        const fallbackCount =
+          rawFallbackCount && Number.isInteger(Number(rawFallbackCount))
+            ? Number(rawFallbackCount)
+            : null;
+        const requestId =
+          response.headers()["x-abarva-deck-request-id"] ?? null;
+        const diagnostic = {
+          edition,
+          format,
+          status: response.status(),
+          errorCode,
+          findingCodes,
+          score,
+          titleFigureCount,
+          wordsSlide,
+          fallbackCount,
+          requestId,
+        };
         const file = testInfo.outputPath(`${edition}.${format}.error.json`);
         fs.writeFileSync(file, `${JSON.stringify(diagnostic, null, 2)}\n`);
-        await testInfo.attach(`${edition}.${format}.error.json`, { path: file, contentType: "application/json" });
-        proof.push({ ...diagnostic, wordsStatus: response.headers()["x-abarva-deck-words-status"] ?? null,
+        await testInfo.attach(`${edition}.${format}.error.json`, {
+          path: file,
+          contentType: "application/json",
+        });
+        proof.push({
+          ...diagnostic,
+          wordsStatus: response.headers()["x-abarva-deck-words-status"] ?? null,
           wordsReason: response.headers()["x-abarva-deck-words-reason"] ?? null,
           wordsRule: response.headers()["x-abarva-deck-words-rule"] ?? null,
-          bytes: 0, file: path.basename(file), figureHash: null });
-        failures.push(`${edition} ${format}: HTTP ${response.status()} ${errorCode} ${findingCodes.join(", ")}`);
+          bytes: 0,
+          file: path.basename(file),
+          figureHash: null,
+        });
+        failures.push(
+          `${edition} ${format}: HTTP ${response.status()} ${errorCode} ${findingCodes.join(", ")}`,
+        );
         continue;
       }
       expect(response.headers()["x-abarva-preview"]).toBe("not-persisted");
       expect(response.headers()["cache-control"]).toContain("no-store");
       const score = Number(response.headers()["x-abarva-deck-fidelity-score"]);
       expect(Number.isFinite(score) && score >= 0 && score <= 100).toBe(true);
-      const titleFigureCount = Number(response.headers()["x-abarva-deck-title-figure-count"]);
-      expect(Number.isInteger(titleFigureCount) && titleFigureCount >= 0).toBe(true);
+      const titleFigureCount = Number(
+        response.headers()["x-abarva-deck-title-figure-count"],
+      );
+      expect(Number.isInteger(titleFigureCount) && titleFigureCount >= 0).toBe(
+        true,
+      );
       const wordsStatus = response.headers()["x-abarva-deck-words-status"];
       expect(wordsStatus).toMatch(/^(ok|unavailable)$/);
-      const wordsReason = response.headers()["x-abarva-deck-words-reason"] ?? null;
+      const wordsReason =
+        response.headers()["x-abarva-deck-words-reason"] ?? null;
       const wordsRule = response.headers()["x-abarva-deck-words-rule"] ?? null;
-      const wordsSlide = response.headers()["x-abarva-deck-words-slide"] ? Number(response.headers()["x-abarva-deck-words-slide"]) : null;
-      const fallbackCount = Number(response.headers()["x-abarva-deck-fallback-count"]);
+      const wordsSlide = response.headers()["x-abarva-deck-words-slide"]
+        ? Number(response.headers()["x-abarva-deck-words-slide"])
+        : null;
+      const fallbackCount = Number(
+        response.headers()["x-abarva-deck-fallback-count"],
+      );
       const requestId = response.headers()["x-abarva-deck-request-id"] ?? null;
       expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
       expect(Number.isInteger(fallbackCount) && fallbackCount >= 0).toBe(true);
-      if (wordsStatus === "unavailable") expect(wordsReason).toMatch(/^(preflight_denied|model_error|parse_failed|slide_rejected)$/);
-      if (score < 90) failures.push(`${edition} ${format}: fidelity ${score} is below 90`);
+      if (wordsStatus === "unavailable")
+        expect(wordsReason).toMatch(
+          /^(preflight_denied|model_error|parse_failed|slide_rejected)$/,
+        );
+      if (score < 90)
+        failures.push(`${edition} ${format}: fidelity ${score} is below 90`);
       if (wordsStatus !== "ok" || fallbackCount !== 0)
-        failures.push(`${edition} ${format}: drafted words were unavailable on ${fallbackCount} slide(s)`);
+        failures.push(
+          `${edition} ${format}: drafted words were unavailable on ${fallbackCount} slide(s)`,
+        );
       if (edition === "investment" && titleFigureCount === 0)
-        failures.push(`${edition} ${format}: no sourced figure appears in an action title`);
+        failures.push(
+          `${edition} ${format}: no sourced figure appears in an action title`,
+        );
       const figureHash = response.headers()["x-abarva-deck-figure-hash"];
       expect(figureHash).toMatch(/^[0-9a-f]{64}$/);
       if (editionHash) expect(figureHash).toBe(editionHash);
@@ -1058,21 +1353,52 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
       fs.writeFileSync(file, bytes);
       if (format === "pptx") {
         const zip = await JSZip.loadAsync(bytes);
-        const slideFiles = Object.keys(zip.files).filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name));
+        const slideFiles = Object.keys(zip.files).filter((name) =>
+          /^ppt\/slides\/slide\d+\.xml$/.test(name),
+        );
         expect(slideFiles.length).toBe(edition === "validation" ? 11 : 22);
-        const xml = (await Promise.all(slideFiles.map((name) => zip.file(name)!.async("string")))).join("\n");
+        const xml = (
+          await Promise.all(
+            slideFiles.map((name) => zip.file(name)!.async("string")),
+          )
+        ).join("\n");
         expect(xml).toContain("ref:source-line");
         expect(xml).not.toContain("draft words unavailable");
-        if (edition === "validation") expect(xml).not.toMatch(/ref:body:(?:timeline|architecture)/);
+        if (edition === "validation")
+          expect(xml).not.toMatch(/ref:body:(?:timeline|architecture)/);
       } else {
         expect(bytes.subarray(0, 4).toString()).toBe("%PDF");
       }
-      await testInfo.attach(`${edition}.${format}`, { path: file, contentType: format === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
-      proof.push({ edition, format, status: response.status(), score, titleFigureCount, wordsStatus, wordsReason, wordsRule, wordsSlide, fallbackCount, requestId, bytes: bytes.length, file: path.basename(file), figureHash });
+      await testInfo.attach(`${edition}.${format}`, {
+        path: file,
+        contentType:
+          format === "pdf"
+            ? "application/pdf"
+            : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      });
+      proof.push({
+        edition,
+        format,
+        status: response.status(),
+        score,
+        titleFigureCount,
+        wordsStatus,
+        wordsReason,
+        wordsRule,
+        wordsSlide,
+        fallbackCount,
+        requestId,
+        bytes: bytes.length,
+        file: path.basename(file),
+        figureHash,
+      });
     }
     let workbookResponse;
     try {
-      workbookResponse = await page.request.get(`${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/workbook`, { timeout: 120_000 });
+      workbookResponse = await page.request.get(
+        `${BASE_URL}/api/v1/programs/${MOVE_ID}/decks/${edition}/workbook`,
+        { timeout: 120_000 },
+      );
     } catch (error) {
       await recordTransportFailure(edition, "xlsx", error);
       continue;
@@ -1080,28 +1406,81 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
     if (workbookResponse.status() !== 200) {
       const status = workbookResponse.status();
       const file = testInfo.outputPath(`${edition}.xlsx.error.json`);
-      const diagnostic = { edition, format: "xlsx", status, errorCode: "workbook_fetch_failed" };
+      const diagnostic = {
+        edition,
+        format: "xlsx",
+        status,
+        errorCode: "workbook_fetch_failed",
+      };
       fs.writeFileSync(file, `${JSON.stringify(diagnostic, null, 2)}\n`);
-      await testInfo.attach(`${edition}.xlsx.error.json`, { path: file, contentType: "application/json" });
-      proof.push({ ...diagnostic, score: null, titleFigureCount: null, wordsStatus: null, wordsReason: null,
-        wordsRule: null, wordsSlide: null, fallbackCount: null, requestId: null, bytes: 0, file: path.basename(file), figureHash: null });
+      await testInfo.attach(`${edition}.xlsx.error.json`, {
+        path: file,
+        contentType: "application/json",
+      });
+      proof.push({
+        ...diagnostic,
+        score: null,
+        titleFigureCount: null,
+        wordsStatus: null,
+        wordsReason: null,
+        wordsRule: null,
+        wordsSlide: null,
+        fallbackCount: null,
+        requestId: null,
+        bytes: 0,
+        file: path.basename(file),
+        figureHash: null,
+      });
       failures.push(`${edition} workbook: HTTP ${status}`);
       continue;
     }
-    expect(workbookResponse.headers()["x-abarva-preview"]).toBe("not-persisted");
-    const workbookHash = workbookResponse.headers()["x-abarva-deck-figure-hash"] ?? null;
+    expect(workbookResponse.headers()["x-abarva-preview"]).toBe(
+      "not-persisted",
+    );
+    const workbookHash =
+      workbookResponse.headers()["x-abarva-deck-figure-hash"] ?? null;
     if (editionHash) expect(workbookHash).toBe(editionHash);
     expect(workbookHash).toMatch(/^[0-9a-f]{64}$/);
     const workbookBytes = await workbookResponse.body();
     const workbookZip = await JSZip.loadAsync(workbookBytes);
-    expect(await workbookZip.file("xl/workbook.xml")?.async("string")).toContain("Deck Figures");
+    expect(
+      await workbookZip.file("xl/workbook.xml")?.async("string"),
+    ).toContain("Deck Figures");
     const workbookFile = testInfo.outputPath(`${edition}.xlsx`);
     fs.writeFileSync(workbookFile, workbookBytes);
-    await testInfo.attach(`${edition}.xlsx`, { path: workbookFile, contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    proof.push({ edition, format: "xlsx", status: workbookResponse.status(), score: null, titleFigureCount: null, wordsStatus: null, wordsReason: null, wordsRule: null, wordsSlide: null, fallbackCount: null, requestId: null, bytes: workbookBytes.length, file: path.basename(workbookFile), figureHash: workbookHash });
+    await testInfo.attach(`${edition}.xlsx`, {
+      path: workbookFile,
+      contentType:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    proof.push({
+      edition,
+      format: "xlsx",
+      status: workbookResponse.status(),
+      score: null,
+      titleFigureCount: null,
+      wordsStatus: null,
+      wordsReason: null,
+      wordsRule: null,
+      wordsSlide: null,
+      fallbackCount: null,
+      requestId: null,
+      bytes: workbookBytes.length,
+      file: path.basename(workbookFile),
+      figureHash: workbookHash,
+    });
   }
   const proofFile = testInfo.outputPath("deck-fidelity.json");
-  fs.writeFileSync(proofFile, `${JSON.stringify({ moveId: MOVE_ID, deployedSha: DEPLOYED_SHA, previews: proof }, null, 2)}\n`);
-  await testInfo.attach("deck-fidelity.json", { path: proofFile, contentType: "application/json" });
-  expect(failures, "Every failed deck fetch remains visible in deck-fidelity.json").toEqual([]);
+  fs.writeFileSync(
+    proofFile,
+    `${JSON.stringify({ moveId: MOVE_ID, deployedSha: DEPLOYED_SHA, previews: proof }, null, 2)}\n`,
+  );
+  await testInfo.attach("deck-fidelity.json", {
+    path: proofFile,
+    contentType: "application/json",
+  });
+  expect(
+    failures,
+    "Every failed deck fetch remains visible in deck-fidelity.json",
+  ).toEqual([]);
 });

@@ -3,17 +3,19 @@
 // Postgres), newest first, filterable by family / current-only.
 
 import { NextRequest } from "next/server";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { requireTenancy, tenancyErrorResponse } from "../../_auth";
 import {
   listMoveArtifacts,
   type ArtifactFamily,
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
-import { loadDeliverableSignOffByKey, type DeliverableSignOffState } from "@/lib/programs/deliverable-sign-off-readback";
-import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import {
-  getAzureWriteFluentClient,
-} from "@/lib/data-plane/postgresCompat";
+  loadDeliverableSignOffByKey,
+  type DeliverableSignOffState,
+} from "@/lib/programs/deliverable-sign-off-readback";
+import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   initialReviewedEvidenceExtraction,
@@ -207,6 +209,7 @@ interface CabinetReviewedEvidence {
   familyKey: string;
   phase: number | null;
   reviewedAt: string | null;
+  reviewerAttribution?: "delegated_automated" | "unreported";
 }
 
 /** A rejected review, which no cabinet list used to carry. */
@@ -238,13 +241,16 @@ async function loadDecidedEvidenceReviews(
   available: boolean;
 }> {
   const unavailable = { approved: [], rejected: [], available: false };
+  const discloseAttribution = isFeatureEnabled(ctx, "moves_step_pages_v3");
   try {
     const db = getAzureWriteFluentClient();
     const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
     const { data: reviews, error: reviewError } = await db
       .from("program_evidence_reviews")
       .select(
-        "id, evidence_id, family_key, phase, source_ref, reviewed_at, decision, rationale",
+        discloseAttribution
+          ? "id, evidence_id, family_key, phase, source_ref, reviewed_at, decision, rationale, reviewed_by_user_id"
+          : "id, evidence_id, family_key, phase, source_ref, reviewed_at, decision, rationale",
       )
       .in("tenant_key", tenantKeys)
       .eq("program_id", programId)
@@ -297,6 +303,15 @@ async function loadDecidedEvidenceReviews(
         phase: typeof review.phase === "number" ? review.phase : null,
         reviewedAt:
           typeof review.reviewed_at === "string" ? review.reviewed_at : null,
+        ...(discloseAttribution
+          ? {
+              reviewerAttribution:
+                ctx.syntheticE2eOperator === true &&
+                review.reviewed_by_user_id === ctx.userId
+                  ? ("delegated_automated" as const)
+                  : ("unreported" as const),
+            }
+          : {}),
       };
     };
     const split = splitDecidedEvidenceReviews(reviewRows);
@@ -331,10 +346,7 @@ function deliverableSignOffFields(
   key: string | null,
   byKey: Map<string, DeliverableSignOffState>,
 ): Partial<
-  Pick<
-    CabinetArtifact,
-    "deliverableId" | "signedOffVersion" | "currentVersion"
-  >
+  Pick<CabinetArtifact, "deliverableId" | "signedOffVersion" | "currentVersion">
 > {
   const signOff = key ? byKey.get(key) : undefined;
   if (!signOff) return {};

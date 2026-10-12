@@ -14,12 +14,18 @@ The deployed shared-read repair improved 18 of 20 reachable views to full speed.
 
 The blocked P2 work area now uses the template's existing empty-state presentation. Its refusal and saved-answer message stay visible and Continue remains disabled. This corrects an observed template regression; it does not turn the blocked state into a completed one.
 
+The existing step pages also share their theme with the notes panel and switch interactive foreground/background palettes together. Explicitly labelled trigger and problem paragraphs remain separate. Historical P0 reads show the recorded phase approval separately from the origination request and Move lifecycle; role placeholders and automated reviewer attribution remain explicit. Charter basis writes wait for saved answers and the previous write, and client readback adopts the full authoritative basis map. Future unsigned briefs distinguish the canonical Move archetype from its declared discovery archetype; existing signed versions are retained.
+
+The flagged capture path preserves existing stored answers, including deliberately blank answers. A narrowly scoped correction command on the existing capture route can restore four retained reviewed fields after the original approver reviews a before/retained preview. It requires current permission, actual P1, unchanged capture/source/snapshot/signature revisions, an accepted source record where available, and a signed version-one binding. A single serializable transaction changes only those P0 values, records a mandatory audit and reads back the result. Charter, approval, original request, signed version, all other modules, statuses and completion flags are preserved; an uncertain commit is reported as requiring readback before retry.
+
+P1–P4 gate pages expose the existing transition workbook download, parse and accepted-review producer beside its required build evidence. Build and gate requirements remain enforced.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`, within existing tenant step-page flags.
-- Layer 3: existing program, membership, participant, snapshot and evidence sources retain their authority. No schema, migration, dataset, seed or calculation change.
+- Layer 3: existing program, membership, participant, snapshot and evidence sources retain their authority. No schema, migration, dataset, seed or calculation change. The existing capture command gains a guarded retained-input correction.
 - Layer 4: request scheduling and the standard blocked empty state change. Policy sharing remains inside one authenticated request with the exact tenancy context and Move fence; no result persists across requests.
-- Intake owners and adapters retain their existing contracts. Stored answers and approvals are unchanged.
+- Intake owners and adapters retain their existing contracts. Approval records remain unchanged. Stored answers change only through the explicit scoped correction command.
 
 ## Client Applicability
 
@@ -42,14 +48,15 @@ The blocked P2 work area now uses the template's existing empty-state presentati
 ## QA / Validation
 
 - PASS: eight reproduced assertions failed before the repair and pass afterward.
-- PASS: 1501 focused and affected tests in 55 suites, including the actual landed deck predecessor; the route scheduling case executes the real server page with all data and authority dependencies mocked. No database was touched.
-- PASS: ten mutations detected individually: policy sharing, canonical reader wiring, early page readiness, parallel approved/backlog reads, each failed-read path, unreadable Move refusal, early participant names, shared latest snapshot and the blocked empty state. Every source was restored.
-- PASS: typecheck and changed-code lint on the prepared source.
-- PASS: final regenerated manual/coverage/tenancy checks, library/route/export reachability and all six corpus validators.
-- PASS: the real blocked component/CSS at 390 and 1440 in both themes has no contrast violations or horizontal overflow. The temporary render probe was removed; three existing local CSS browser checks also pass.
-- PASS: all 11 local release gates. Final tests, typecheck, lint, validators and local CSS checks also pass on Node 24.15.0.
+- PASS: 1946 focused and affected tests in 67 suites on the prepared source, including the current predecessor; the route scheduling case executes the real server page with all data and authority dependencies mocked. No database was touched.
+- HISTORICAL PASS: ten scheduling mutations detected individually: policy sharing, canonical reader wiring, early page readiness, parallel approved/backlog reads, each failed-read path, unreadable Move refusal, early participant names, shared latest snapshot and the blocked empty state. Every source was restored.
+- PENDING: final current-source typecheck, lint and mutation summary after main reconciliation.
+- PENDING: final regenerated manual/coverage/tenancy checks, library/route/export reachability and all six corpus validators after main reconciliation.
+- PASS: 28 actual component/CSS variants covering text capture, notes, recorded approval, retained-input correction and the actual transition workbook controls pass at 390 and 1440 in both themes, with no contrast violations or horizontal overflow. Temporary render probes were removed. This is local component proof; the full signed-in shell remains to be validated.
+- HISTORICAL PASS: the real blocked component/CSS at 390 and 1440 in both themes has no contrast violations or horizontal overflow. The temporary render probe was removed; three existing local CSS browser checks also pass.
+- PENDING: all 11 final local release gates on the reconciled source. Node 24.15.0 is the validation runtime.
 - PENDING: exact new-head remote CI and the immediate fresh all-open fetched guard.
-- PASS: an independent immutable `53da0b271595f3897994f952923da6aa7a6e3769` source export regenerates 2848 and matches every candidate count field. Zero new N test files and genuine delta zero; no count is edited by hand.
+- HISTORICAL PASS: an independent immutable `53da0b271595f3897994f952923da6aa7a6e3769` source export regenerates 2848 and matches every earlier candidate count field. Final current-main reconciliation is pending. Zero new N test files and genuine delta zero; no count is edited by hand.
 - FAIL: preceding deployed acceptance on `5afb6c4e`, as shown below. No follow-up deployed timing exists yet.
 
 ## Before / After Timing
@@ -116,3 +123,15 @@ Revert through a squash PR and the repo-owned main deployment, preserving the ap
 - Full 29-view proof depends on the separate authorized writer's fresh journey. This task does not mutate that Move, its intake or protected evidence.
 - Native intake reload and independent deck/artifact acceptance remain separate.
 - The current before sample has two slow views and one non-speed regression; averages do not clear either failure.
+
+
+## Additional Before Evidence
+
+Walk [38248657090](https://github.com/abarva-platform/abarva/actions/runs/38248657090) embeds serving `025fbcfe` and passes twenty reachable views: UX 99, eighteen full-speed views, Validate 2873 ms and Gate 3254 ms. Evidence Plan's template dimension is 16 against the baseline's 20. This is before data for this candidate. The overall workflow failed its independent deck check; it does not establish fresh journey, full-29 or deck acceptance. No current candidate after timing exists.
+
+## Current Release Limits
+
+- Final new-head CI, fresh all-open fetched guard and deployed acceptance remain pending.
+- The original approver must review and execute any displayed correction through the product, followed by independent native audit and preserved-binding verification. Local transaction tests do not establish runtime correction or downstream gate clearance.
+- Full 29-view acceptance depends on the authorized journey owner reaching P5; existing twenty-view samples cannot prove it.
+- Independent workbook review, participant assignment, original request lifecycle and signed artifact binding remain distinct governed actions and evidence.

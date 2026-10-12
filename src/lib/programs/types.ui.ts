@@ -479,7 +479,12 @@ export interface StrategicMove {
   };
   statusColor: StrategicMoveStatusColor;
   sponsor: { id: string; name: string; role: string } | null;
-  participants: Array<{ personId: string; name: string; role: string }>;
+  participants: Array<{
+    personId: string;
+    name: string;
+    role: string;
+    declaredRoleOnly?: boolean;
+  }>;
   valueAtStake: {
     projected: { low: number; high: number; currency: string } | null;
     verified: {

@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   DELIVERABLE_REGISTRY,
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
 import { planPhaseGateSubmitWithoutBuild } from "@/lib/programs/phase-build-settlement";
 import type { ChangeProfile } from "@/lib/programs/phase-workflow-registry";
+import type { OriginationApprovalReadback } from "@/lib/programs/approved-gate-phases";
 import {
   GATE_DOCUMENTS_ROW_ID,
   GATE_RATIONALE_ROW_ID,
@@ -102,6 +103,9 @@ export interface GateReadinessStepProps {
   onSubmit: (settlement: BuildSettledResult) => Promise<void>;
   /** P0 is approved from its captured brief and reviewed source evidence; it has no build batch. */
   originationReady?: boolean;
+  originationApproval?: OriginationApprovalReadback;
+  /** Existing transition workbook producer, including parse and accepted review. */
+  readinessWorkbookActions?: ReactNode;
   /** The last P0 capture decision remains editable before approval. */
   originationRecommendation?: {
     value: string;
@@ -364,6 +368,79 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
   const [rebuildAsk, setRebuildAsk] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [correctionRationale, setCorrectionRationale] = useState("");
+  const [correcting, setCorrecting] = useState(false);
+  const [correctionError, setCorrectionError] = useState<string | null>(null);
+  const correctionInFlight = useRef(false);
+  const restoreReviewedInput = async () => {
+    const stored = props.originationApproval;
+    const preview =
+      stored?.state === "recorded" && stored.moveId === props.moveId
+        ? stored.captureCorrection
+        : undefined;
+    if (
+      preview?.state !== "available" ||
+      !props.canApprove ||
+      !correctionRationale.trim() ||
+      correctionInFlight.current
+    )
+      return;
+    correctionInFlight.current = true;
+    setCorrecting(true);
+    setCorrectionError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/programs/${encodeURIComponent(props.moveId)}/phase-capture`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: 0,
+            expectedRevision: preview.captureRevision,
+            restoreReviewedP0: {
+              sourceRevision: preview.sourceRevision,
+              snapshotId: preview.snapshotId,
+              snapshotRevision: preview.snapshotRevision,
+              signatureRevision: preview.signatureRevision,
+              rationale: correctionRationale.trim(),
+            },
+          }),
+        },
+      );
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(
+          result.detail ?? "The captured-input correction was refused.",
+        );
+      if (
+        result.ok !== true ||
+        result.persisted !== true ||
+        result.programId !== props.moveId ||
+        result.phase !== 0 ||
+        result.snapshotId !== preview.snapshotId ||
+        result.signedOffVersion !== 1 ||
+        result.preservedBindings !== true ||
+        typeof result.correctionAuditId !== "string" ||
+        !result.correctionAuditId ||
+        preview.fields.some(
+          (field) => result.values?.[field.key] !== field.retained,
+        )
+      )
+        throw new Error(
+          "The correction readback could not be confirmed. Read the stored input before retrying.",
+        );
+      onRecordChanged();
+    } catch (error) {
+      setCorrectionError(
+        error instanceof Error
+          ? error.message
+          : "The captured-input correction could not be confirmed.",
+      );
+    } finally {
+      correctionInFlight.current = false;
+      setCorrecting(false);
+    }
+  };
 
   const artifactByKey = useMemo(() => {
     const byKey = new Map<string, PhaseBuildArtifact>();
@@ -479,6 +556,18 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
             <span className={cx("lead")}>Build held.</span>{" "}
             {props.buildHeldReason}
           </p>
+        ) : null}
+        {props.readinessWorkbookActions ? (
+          <section
+            aria-label="Transition readiness workbook"
+            className={cx("empty-note")}
+          >
+            <p>
+              Required transition evidence: download the readiness workbook,
+              upload the completed file, then review and accept its preview.
+            </p>
+            {props.readinessWorkbookActions}
+          </section>
         ) : null}
         {build.error ? (
           <p className={cx("lead-line")} role="alert">
@@ -773,6 +862,218 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
     .join("\n\n");
 
   if (props.phaseNum === 0) {
+    const stored = props.originationApproval;
+    const approvalUnavailable =
+      stored &&
+      (stored.moveId !== props.moveId || stored.state === "unavailable");
+    if (stored) {
+      const recorded =
+        !approvalUnavailable && stored.state === "recorded" ? stored : null;
+      const correction = recorded?.captureCorrection;
+      const needsCorrection = correction?.state === "available";
+      const correctionUnavailable = correction?.state === "unavailable";
+      const correctionRows: StepPageRow[] = needsCorrection
+        ? [
+            {
+              id: "P0-RETAINED-CAPTURE",
+              eyebrow: "Captured input",
+              rank: 2,
+              state: "decision",
+              shortName: "retained input correction",
+              wide: true,
+              subject: "Restore the retained reviewed input",
+              middle: (
+                <>
+                  <p className={cx("item-note")}>
+                    The saved input differs from its retained source. Review
+                    each change before restoring it. The signed version and
+                    phase approval remain recorded.
+                  </p>
+                  {correction.fields.map((field) => (
+                    <section key={field.key} aria-label={field.label}>
+                      <p className={cx("lead-line")}>
+                        <b>{field.label}</b>
+                      </p>
+                      <p className={cx("item-note")}>Current saved input</p>
+                      <p className={cx("proposal")}>{field.current}</p>
+                      <p className={cx("item-note")}>Retained reviewed input</p>
+                      <p className={cx("proposal")}>{field.retained}</p>
+                    </section>
+                  ))}
+                  {props.canApprove ? (
+                    <label className={cx("q-label")}>
+                      Correction rationale
+                      <textarea
+                        className={cx("q-input")}
+                        rows={4}
+                        value={correctionRationale}
+                        maxLength={2000}
+                        disabled={correcting}
+                        onChange={(event) =>
+                          setCorrectionRationale(event.target.value)
+                        }
+                      />
+                    </label>
+                  ) : (
+                    <p className={cx("item-note")}>
+                      The recorded P0 approver must restore this input.
+                    </p>
+                  )}
+                  {correctionError ? (
+                    <p role="alert">{correctionError}</p>
+                  ) : null}
+                </>
+              ),
+            },
+          ]
+        : correctionUnavailable
+          ? [
+              {
+                id: "P0-CAPTURE-UNAVAILABLE",
+                eyebrow: "Captured input",
+                rank: 2,
+                state: "decision",
+                shortName: "input consistency",
+                wide: true,
+                subject: "Captured input consistency unavailable",
+                middle: (
+                  <p>
+                    {correction.reason ??
+                      "The retained input could not be verified."}
+                  </p>
+                ),
+              },
+            ]
+          : [];
+      const page = (
+        <MovesStepPage
+          moveName={props.moveName}
+          clientDisplayName={props.clientDisplayName}
+          tabs={props.tabs}
+          phases={props.phases}
+          phaseCode={props.phaseCode}
+          phaseName={props.phaseName}
+          steps={props.steps}
+          stepIndex={props.stepIndex}
+          title="Approve origination"
+          intro={
+            recorded
+              ? "The stored phase gate approval is retained. The origination request has a separate lifecycle."
+              : stored.state === "not_recorded" && !approvalUnavailable
+                ? "No stored phase gate approval was found."
+                : "The stored approval could not be checked."
+          }
+          nextAction={{
+            state: needsCorrection
+              ? "in_progress"
+              : recorded && !correctionUnavailable
+                ? "done"
+                : "blocked",
+            eyebrow: needsCorrection
+              ? "Review retained input"
+              : recorded
+                ? "Phase gate approval recorded"
+                : "Approval unavailable",
+            sentence: needsCorrection
+              ? "Review the retained input and record why it should be restored."
+              : correctionUnavailable
+                ? "Wait for the retained input binding to be verified."
+                : recorded
+                  ? "Open P1 Charter."
+                  : "Wait for the stored origination approval to be read.",
+            settled: recorded ? 1 : 0,
+            total: needsCorrection || correctionUnavailable ? 2 : 1,
+            continueEnabled: needsCorrection
+              ? props.canApprove &&
+                Boolean(correctionRationale.trim()) &&
+                !correcting
+              : Boolean(recorded) && !correctionUnavailable,
+          }}
+          checks={model.checks.map((check) => ({
+            met: check.met,
+            unknown: check.unknown,
+            level: check.level,
+            text: check.text,
+            note: check.note,
+          }))}
+          countLabel={
+            needsCorrection
+              ? `${correction.fields.length} retained input field${correction.fields.length === 1 ? "" : "s"} to review`
+              : recorded
+                ? "1 phase gate approval recorded"
+                : "Approval readback unavailable"
+          }
+          context={{ items: ["Stored phase approval"], details: [] }}
+          blockedWork={
+            correctionUnavailable
+              ? correction.reason
+              : "Approval and saved answers are unchanged. Refresh to read the stored approval."
+          }
+          rows={
+            recorded
+              ? [
+                  {
+                    id: "P0-RECORDED-APPROVAL",
+                    eyebrow: "Stored phase approval",
+                    rank: 1,
+                    state: "settled",
+                    shortName: "phase approval record",
+                    subject: "Phase approval and request state",
+                    wide: true,
+                    middle: (
+                      <>
+                        <p className={cx("proposal")}>
+                          {recorded.rationale ??
+                            "The approval record did not include rationale in this readback."}
+                        </p>
+                        <p className={cx("item-note")}>
+                          {recorded.approvedAt
+                            ? `Recorded at ${recorded.approvedAt}`
+                            : "Approval time unavailable."}
+                        </p>
+                        <p className={cx("item-note")}>
+                          {recorded.requestLifecycle?.readable
+                            ? recorded.requestLifecycle.status
+                              ? `Origination request: ${recorded.requestLifecycle.status.replace(/_/g, " ")}.`
+                              : "No origination request record was found."
+                            : "Origination request status unavailable."}
+                        </p>
+                        <p className={cx("item-note")}>
+                          {recorded.moveLifecycle
+                            ? `Move lifecycle: ${recorded.moveLifecycle.replace(/_/g, " ")}.`
+                            : "Move lifecycle unavailable."}
+                        </p>
+                      </>
+                    ),
+                  },
+                  ...correctionRows,
+                ]
+              : []
+          }
+          continueLabel={
+            needsCorrection
+              ? correcting
+                ? "Restoring…"
+                : "Restore reviewed input"
+              : "Open P1 Charter"
+          }
+          onContinue={() => {
+            if (needsCorrection) void restoreReviewedInput();
+            else if (recorded && !correctionUnavailable)
+              window.location.assign(
+                `/strategic-moves/${encodeURIComponent(props.moveId)}/phase/1?step=p1-sponsor-scope`,
+              );
+          }}
+          onBack={props.onBack}
+        />
+      );
+      return props.frame
+        ? props.frame(
+            page,
+            "The stored origination approval is read only; no new approval is requested.",
+          )
+        : page;
+    }
     const recommendation = props.originationRecommendation;
     const recommendationReady =
       !recommendation ||

@@ -31,6 +31,8 @@ import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-overr
 import { sendMoveProgressUpdate } from "@/lib/programs/move-progress-notifications";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import type { OriginationCloseOutcome } from "@/lib/programs/origination-close-outcome";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { normalizeDiscoveryArchetypeDeclaration } from "@/lib/programs/discovery/discovery-archetype-declaration";
 
 interface EngagementSeedRow {
   id: string;
@@ -39,6 +41,7 @@ interface EngagementSeedRow {
   current_phase: number | null;
   problem_statement: string | null;
   charter: Record<string, unknown> | null;
+  program_archetype?: string | null;
 }
 
 function charterStr(
@@ -132,13 +135,41 @@ export async function ensureOriginationBrief(
   const sponsor =
     charterStr(charter, "sponsor_candidate", "sponsorCandidate", "sponsor") ??
     "Sponsor candidate recorded at origination.";
+  const declaredArchetypes = isFeatureEnabled(
+    ctx,
+    "moves_extended_intake_fields_v1",
+  );
+  const classification = charter.classification;
+  const discoveryArchetypeId = declaredArchetypes
+    ? normalizeDiscoveryArchetypeDeclaration(
+        classification &&
+          typeof classification === "object" &&
+          !Array.isArray(classification)
+          ? (classification as Record<string, unknown>).archetype
+          : null,
+      )
+    : null;
   const archetype =
-    charterStr(charter, "classification", "archetype", "pattern") ??
+    (declaredArchetypes
+      ? row.program_archetype?.trim() ||
+        charterStr(
+          charter.scaffold && typeof charter.scaffold === "object"
+            ? (charter.scaffold as Record<string, unknown>)
+            : null,
+          "resolved_program_archetype",
+          "archetype",
+          "classification",
+        )
+      : null) ||
+    charterStr(charter, "classification", "archetype", "pattern") ||
     "unclassified";
 
   const draftContent = [
     `# P0 Origination Brief — ${row.name ?? programId}`,
-    `Archetype classification: ${archetype}`,
+    `${declaredArchetypes ? "Move archetype" : "Archetype classification"}: ${archetype}`,
+    ...(declaredArchetypes
+      ? [`Discovery archetype: ${discoveryArchetypeId ?? "not declared"}`]
+      : []),
     "",
     "## Problem / trigger",
     problem,
@@ -159,7 +190,14 @@ export async function ensureOriginationBrief(
     deliverableTypeKey: "origination_brief",
     title: "P0 Origination Brief",
     draftContent,
-    structuredData: { archetype, sponsor, scope, problem, outcome },
+    structuredData: {
+      archetype,
+      sponsor,
+      scope,
+      problem,
+      outcome,
+      ...(declaredArchetypes ? { discoveryArchetypeId } : {}),
+    },
   });
   if (!deliverableId) return { outcome: "not_created" };
   await publishDeliverable(ctx, programId, deliverableId);
@@ -214,7 +252,14 @@ export async function closeP0OnApproval(input: {
     // Move was archived and steered them off the one action that works.
     const { data, error: moveError } = await sb
       .from("engagements")
-      .select("id, client_id, name, current_phase, problem_statement, charter")
+      .select(
+        isFeatureEnabled(
+          { clientKey: input.tenantKey },
+          "moves_extended_intake_fields_v1",
+        )
+          ? "id, client_id, name, current_phase, problem_statement, charter, program_archetype"
+          : "id, client_id, name, current_phase, problem_statement, charter",
+      )
       .eq("id", input.programId)
       .maybeSingle();
     if (moveError) {

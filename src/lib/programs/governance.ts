@@ -30,7 +30,14 @@ import {
   type PostgresCompatClient as SupabaseClient,
 } from "@/lib/data-plane/postgresCompat";
 import type { ApprovalAuthority, GateCheck, TenancyCtx } from "./types.db";
-import { getModuleState, getProgramById } from "./queries";
+import {
+  getModuleState,
+  getProgramById,
+  getPhaseSnapshots,
+  getOriginationRequestState,
+  getProgramDeliverables,
+} from "./queries";
+import { originationApprovalReadback } from "./approved-gate-phases";
 import type { PhasePageReadSet } from "./phase-page-gate-reads";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
@@ -655,12 +662,22 @@ export async function evaluateGate(
     { data: milestones, error: milestonesError },
   ] = await readSource("gateState", () =>
     Promise.all([
-      sb
-        .from("deliverables_v2")
-        .select(
-          "id, deliverable_type_key, status, approved_artifact_id, structured_data",
-        )
-        .eq("engagement_id", programId),
+      sharedReads
+        ? readSource("deliverables", () =>
+            getProgramDeliverables(ctx, programId, { readSet: sharedReads }),
+          ).then(
+            (rows) => ({ data: rows, error: null }),
+            () => ({
+              data: null,
+              error: { message: "Move deliverables unavailable" },
+            }),
+          )
+        : sb
+            .from("deliverables_v2")
+            .select(
+              "id, deliverable_type_key, status, approved_artifact_id, structured_data",
+            )
+            .eq("engagement_id", programId),
       sharedReads
         ? readSource("moduleState", () =>
             getModuleState(ctx, programId, { readSet: sharedReads }),
@@ -686,12 +703,30 @@ export async function evaluateGate(
         .from("engagement_participants")
         .select("user_id, approval_authority, role")
         .eq("engagement_id", programId),
-      sb
-        .from("program_approval_requests")
-        .select("request_status, brief_snapshot")
-        .eq("program_id", programId)
-        .order("created_at", { ascending: false })
-        .limit(1),
+      sharedReads
+        ? readSource("originationApprovalRequests", () =>
+            getOriginationRequestState(ctx, programId, {
+              readSet: sharedReads,
+            }),
+          ).then(
+            (rows) => ({
+              data: rows.map((row) => ({
+                request_status: row.requestStatus,
+                brief_snapshot: row.briefSnapshot,
+              })),
+              error: null,
+            }),
+            () => ({
+              data: null,
+              error: { message: "Origination request state unavailable" },
+            }),
+          )
+        : sb
+            .from("program_approval_requests")
+            .select("request_status, brief_snapshot")
+            .eq("program_id", programId)
+            .order("created_at", { ascending: false })
+            .limit(1),
       sb
         .from("program_milestones")
         .select("id, name, status")
@@ -1015,6 +1050,17 @@ export async function evaluateGate(
     (d) => d.deliverable_type_key === "charter",
   );
   const hasSignedOriginationBrief = isSignedOff(originationBriefRow);
+  const historicalOriginationApproval =
+    historicalReapproval && fromPhase === 0 && sharedReads
+      ? originationApprovalReadback(
+          programId,
+          await sharedReads(ctx, programId, "phaseSnapshots", () =>
+            getPhaseSnapshots(ctx, programId, undefined, {
+              readSet: sharedReads,
+            }),
+          ),
+        ).state === "recorded"
+      : false;
   const designRows = findDeliverables(
     "design_spec",
     "design",
@@ -1331,11 +1377,11 @@ export async function evaluateGate(
         // Initial Setup approval only unlocks P0. P0 -> P1 needs the
         // actual P0 seed artifact signed off; otherwise the button can skip
         // the Origination work Nexus just coached the user through.
-        pass = hasSignedOriginationBrief;
+        pass = hasSignedOriginationBrief || historicalOriginationApproval;
         break;
       case "value_hypothesis_seed": {
         pass =
-          hasSignedOriginationBrief &&
+          (hasSignedOriginationBrief || historicalOriginationApproval) &&
           ((hasText(p0ProblemText) && hasText(p0ValueText)) ||
             (/\b(problem|problem_statement|trigger|current pain|pain)\b/.test(
               p0SeedEvidenceText,

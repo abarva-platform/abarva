@@ -44,6 +44,12 @@ import { persistPhaseCaptureModules } from "@/lib/programs/phase-capture-writer"
 import { getModuleState, getProgramById } from "@/lib/programs/queries";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import {
+  restoreP0ReviewedCapture,
+  type P0CorrectionCommand,
+} from "@/lib/data-plane/write-adapters/p0ReviewedCaptureCorrectionAdapter";
+import { P0CaptureCorrectionRefusal } from "@/lib/programs/p0-reviewed-capture-correction";
+import { writeTransactionOutcome } from "@/lib/data-plane/postgresCompat";
+import {
   listApprovedPhaseEvidence,
   type ApprovedPhaseEvidenceReference,
 } from "@/lib/programs/approved-phase-evidence";
@@ -287,7 +293,38 @@ export async function POST(
       /** Revision the client loaded. A mismatch means the write is stale. */
       expectedRevision?: string;
       p1BasisBySection?: Record<string, unknown>;
+      restoreReviewedP0?: Omit<P0CorrectionCommand, "expectedRevision">;
     };
+    if (body.restoreReviewedP0 !== undefined) {
+      if (
+        !body.restoreReviewedP0 ||
+        typeof body.restoreReviewedP0 !== "object" ||
+        Object.keys(body).some(
+          (key) =>
+            !["phase", "expectedRevision", "restoreReviewedP0"].includes(key),
+        ) ||
+        Array.isArray(body.restoreReviewedP0) ||
+        body.phase !== 0 ||
+        body.complete ||
+        body.sections ||
+        body.items ||
+        body.p1BasisBySection
+      )
+        return Response.json(
+          {
+            error: "correction_mixed_input",
+            detail:
+              "Use the reviewed-input correction preview as one scoped command.",
+          },
+          { status: 400 },
+        );
+      return Response.json(
+        await restoreP0ReviewedCapture(ctx, programId, {
+          ...body.restoreReviewedP0,
+          expectedRevision: body.expectedRevision ?? "",
+        }),
+      );
+    }
     const phase = parsePhase(
       body.phase === undefined
         ? String(program.currentPhase ?? 0)
@@ -800,6 +837,31 @@ export async function POST(
       },
     });
   } catch (err) {
+    if (writeTransactionOutcome(err) === "unknown") {
+      return Response.json(
+        {
+          error: "correction_outcome_unknown",
+          detail:
+            "The correction outcome could not be confirmed. Read the stored input and audit before retrying.",
+          transactionOutcome: "unknown",
+        },
+        { status: 503 },
+      );
+    }
+    if (err instanceof P0CaptureCorrectionRefusal) {
+      const outcome = writeTransactionOutcome(err);
+      return Response.json(
+        {
+          error: err.code,
+          detail:
+            outcome === "unknown"
+              ? "The correction outcome could not be confirmed. Read the stored input and audit before retrying."
+              : err.detail,
+          transactionOutcome: outcome,
+        },
+        { status: outcome === "unknown" ? 503 : err.status },
+      );
+    }
     try {
       return tenancyErrorResponse(err);
     } catch {

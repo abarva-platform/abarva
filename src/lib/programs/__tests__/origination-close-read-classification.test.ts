@@ -38,6 +38,10 @@ const advancePhaseMock = jest.fn();
 const evaluateGateMock = jest.fn();
 const saveGateDecisionArtifactMock = jest.fn();
 const sendMoveProgressUpdateMock = jest.fn();
+const mockIsFeatureEnabled = jest.fn();
+jest.mock("@/lib/features/is-feature-enabled", () => ({
+  isFeatureEnabled: (...args: unknown[]) => mockIsFeatureEnabled(...args),
+}));
 
 const PROGRAM_ID = "move-1";
 const CLIENT_ID = "client-1";
@@ -135,6 +139,7 @@ function close() {
 }
 
 beforeEach(() => {
+  mockIsFeatureEnabled.mockReturnValue(false);
   jest.clearAllMocks();
   issued.length = 0;
   selectResults = {};
@@ -356,5 +361,102 @@ describe("a failed Move read is not reported as a Move that does not exist", () 
     expect(result.blockedBy).toEqual(["program_seed_recorded"]);
     expect(result.briefSigned).toBe(true);
     expect(advancePhaseMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("future origination briefs use the declared archetype", () => {
+  it.each([true, false])(
+    "uses canonical declaration only on the flagged path: %s",
+    async (flagged) => {
+      const { ensureOriginationBrief } = await import("../origination-close");
+      mockIsFeatureEnabled.mockReturnValue(flagged);
+      selectResults.deliverables_v2 = { data: null, error: null };
+      await ensureOriginationBrief(
+        { clientId: CLIENT_ID, userId: DECIDER },
+        PROGRAM_ID,
+        {
+          ...MOVE_ROW,
+          program_archetype: "platform_modernization",
+          charter: { scaffold: { archetype: "ai_product_enablement" } },
+        },
+      );
+      expect(draftModuleDeliverableMock).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          programId: PROGRAM_ID,
+          deliverableTypeKey: "origination_brief",
+          structuredData: expect.objectContaining({
+            archetype: flagged ? "platform_modernization" : "unclassified",
+          }),
+        }),
+      );
+    },
+  );
+  it("keeps an existing signed brief intact instead of regenerating its declaration", async () => {
+    const { ensureOriginationBrief } = await import("../origination-close");
+    mockIsFeatureEnabled.mockReturnValue(true);
+    selectResults.deliverables_v2 = {
+      data: { id: "existing-signed-brief", status: "signed_off" },
+      error: null,
+    };
+    expect(
+      await ensureOriginationBrief(
+        { clientId: CLIENT_ID, userId: DECIDER },
+        PROGRAM_ID,
+        { ...MOVE_ROW, program_archetype: "platform_modernization" },
+      ),
+    ).toEqual({ outcome: "existing", deliverableId: "existing-signed-brief" });
+    expect(draftModuleDeliverableMock).not.toHaveBeenCalled();
+    expect(publishDeliverableMock).not.toHaveBeenCalled();
+    expect(signOffDeliverableMock).not.toHaveBeenCalled();
+    expect(advancePhaseMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("declared Move and discovery archetypes stay separate", () => {
+  it("keeps the declared discovery blueprint beside the canonical Move archetype", async () => {
+    const { ensureOriginationBrief } = await import("../origination-close");
+    mockIsFeatureEnabled.mockReturnValue(true);
+    selectResults.deliverables_v2 = { data: null, error: null };
+    await ensureOriginationBrief(
+      { clientId: CLIENT_ID, userId: DECIDER },
+      PROGRAM_ID,
+      {
+        ...MOVE_ROW,
+        program_archetype: "platform_modernization",
+        charter: { classification: { archetype: "governed_data_foundation" } },
+      },
+    );
+    const options = draftModuleDeliverableMock.mock.calls[0][1];
+    expect(options.structuredData.archetype).toBe("platform_modernization");
+    expect(options.structuredData.discoveryArchetypeId).toBe(
+      "governed_data_foundation",
+    );
+    expect(options.draftContent).toContain(
+      "Move archetype: platform_modernization",
+    );
+    expect(options.draftContent).toContain(
+      "Discovery archetype: governed_data_foundation",
+    );
+  });
+  it("does not silently replace an unknown declared blueprint", async () => {
+    const { ensureOriginationBrief } = await import("../origination-close");
+    mockIsFeatureEnabled.mockReturnValue(true);
+    selectResults.deliverables_v2 = { data: null, error: null };
+    await expect(
+      ensureOriginationBrief(
+        { clientId: CLIENT_ID, userId: DECIDER },
+        PROGRAM_ID,
+        {
+          ...MOVE_ROW,
+          program_archetype: "platform_modernization",
+          charter: {
+            classification: { archetype: "not-a-declared-blueprint" },
+          },
+        },
+      ),
+    ).rejects.toThrow("unknown_discovery_archetype");
+    expect(draftModuleDeliverableMock).not.toHaveBeenCalled();
+    expect(publishDeliverableMock).not.toHaveBeenCalled();
   });
 });

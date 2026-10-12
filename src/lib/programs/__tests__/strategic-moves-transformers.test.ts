@@ -741,3 +741,68 @@ describe("strategic move transformer helpers", () => {
     expect(move.recentActivity).toEqual([]);
   });
 });
+
+describe("declared sponsor placeholders", () => {
+  it.each([true, false])(
+    "carries the declared placeholder marker only for flagged projections: %s",
+    async (flagged) => {
+      maybeSingleMock.mockResolvedValue(null);
+      queryMock.mockResolvedValue([]);
+      evaluateGateMock.mockResolvedValue({
+        pass: false,
+        failedChecks: [],
+        evaluatedChecks: [],
+      } as never);
+      selectMock.mockImplementation(async (request) => {
+        if (request.table === "engagement_participants")
+          return [
+            {
+              person_id: "proposal",
+              user_id: "proposal",
+              role: "Sponsor",
+              approval_authority: "sponsor",
+            },
+          ] as never;
+        if (request.table === "persons")
+          return [
+            {
+              id: "proposal",
+              name: "Proposed sponsor",
+              role: "Sponsor candidate",
+              personal_threads: ["origination_placeholder"],
+            },
+          ] as never;
+        return [];
+      });
+      const result = await buildStrategicMove(
+        {
+          clientId: "client-1",
+          userId: "user-1",
+          clientKey: flagged ? "meridian" : "unflagged-fixture",
+        },
+        {
+          id: "move-1",
+          clientId: "client-1",
+          name: "Fixture",
+          currentPhase: 1,
+          gatesPassed: [],
+        } as never,
+        {
+          evaluateGateCriteria: false,
+          loadPhaseSnapshots: jest.fn(async () => []),
+        },
+      );
+      if (flagged) expect(result.participants[0].declaredRoleOnly).toBe(true);
+      else
+        expect(result.participants[0]).not.toHaveProperty("declaredRoleOnly");
+      expect(selectMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          table: "persons",
+          columns: flagged
+            ? ["id", "name", "role", "personal_threads"]
+            : ["id", "name", "role"],
+        }),
+      );
+    },
+  );
+});

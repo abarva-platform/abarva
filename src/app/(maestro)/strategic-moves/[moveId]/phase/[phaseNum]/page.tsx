@@ -4,9 +4,15 @@ import {
   getModuleState,
   getProgramById,
   getPhaseSnapshots,
+  getOriginationRequestState,
+  getProgramDeliverables,
   getStrategicMoveById,
 } from "@/lib/programs/queries";
-import { snapshotsApprovePhase } from "@/lib/programs/approved-gate-phases";
+import {
+  snapshotsApprovePhase,
+  originationApprovalReadback,
+} from "@/lib/programs/approved-gate-phases";
+import { previewP0ReviewedCaptureCorrection } from "@/lib/programs/p0-reviewed-capture-correction";
 import {
   detectPhaseCatchUp,
   firstCatchUpHref,
@@ -646,6 +652,7 @@ export default async function StrategicMovePhaseWorkspacePage({
               evaluateGateCriteria: false,
               loadProgram,
               loadPhaseSnapshots: loadSnapshots,
+              readSet,
             }
           : undefined,
       ),
@@ -1513,6 +1520,56 @@ export default async function StrategicMovePhaseWorkspacePage({
     initialPhaseCaptureValues,
     parsedPhase === 1 ? initialP1CharterBasisBySection : undefined,
   );
+  const initialOriginationApproval =
+    flaggedStepView && parsedPhase === 0 && selectedStepView === "p0-approve"
+      ? await Promise.all([
+          loadSnapshots(ctx, moveId).catch(() => null),
+          readSet!(ctx, moveId, "originationApprovalRequests", () =>
+            getOriginationRequestState(ctx, moveId, { readSet }),
+          ).catch(() => null),
+          loadProgram(ctx, moveId),
+          loadModules(ctx, moveId).catch(() => null),
+          readSet!(ctx, moveId, "deliverables", () =>
+            getProgramDeliverables(ctx, moveId, { readSet }),
+          ).catch(() => null),
+        ]).then(
+          ([snapshots, requests, declaredProgram, modules, deliverables]) => {
+            const approval = originationApprovalReadback(
+              moveId,
+              snapshots,
+              requests,
+              declaredProgram?.lifecycleState,
+            );
+            if (
+              approval.state === "recorded" &&
+              declaredProgram?.currentPhase === 1 &&
+              isFeatureEnabled(ctx, "moves_extended_intake_fields_v1")
+            ) {
+              const briefs = deliverables?.filter((row) =>
+                [
+                  "origination_brief",
+                  "program_seed_brief",
+                  "program_seed",
+                ].includes(row.deliverable_type_key),
+              );
+              approval.captureCorrection =
+                !snapshots || !modules || !deliverables
+                  ? {
+                      state: "unavailable",
+                      reason: "Captured input consistency could not be read.",
+                    }
+                  : previewP0ReviewedCaptureCorrection({
+                      program: declaredProgram,
+                      actorId: ctx.userId,
+                      snapshots,
+                      modules,
+                      signedBrief: briefs?.length === 1 ? briefs[0] : null,
+                    });
+            }
+            return approval;
+          },
+        )
+      : undefined;
 
   finish();
 
@@ -1547,6 +1604,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         }}
         evidenceNeedPackets={evidenceNeedPackets}
         initialPhaseCaptureRevision={initialPhaseCaptureRevision}
+        initialOriginationApproval={initialOriginationApproval}
         initialPhaseCaptureValues={initialPhaseCaptureValues}
         priorPhaseCaptureValues={priorPhaseCaptureValues}
         initialReferenceDraftValues={initialReferenceDraftValues}
