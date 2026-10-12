@@ -24,6 +24,10 @@ const PAGE_TABLE = Object.freeze({
   ai_portfolio: ["tower_ai_portfolio", "display_payload_json"],
   adoption_lens: ["tower_ai_portfolio", "display_payload_json"],
 });
+const AGGREGATE_SERVING_PAGES = Object.freeze({
+  command_center: ["command_center", "decision_lanes", "recommended_actions"],
+  value_proof: ["value_proof", "cost_lens"],
+});
 const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
 const jsonBytes = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
 const pageFingerprint = (rows) => sha(JSON.stringify(rows
@@ -44,7 +48,7 @@ function boundedInteger(env, key, minimum) {
 }
 
 export function configFromEnv(mode, env = process.env) {
-  if (!["preflight", "promote"].includes(mode)) throw new Error("Use preflight or promote");
+  if (!["preflight", "promote", "verify"].includes(mode)) throw new Error("Use preflight, promote, or verify");
   const get = (suffix) => required(env, `TOWER_PROMOTION_${suffix}`);
   const config = {
     mode,
@@ -59,8 +63,8 @@ export function configFromEnv(mode, env = process.env) {
     timeoutSeconds: boundedInteger(env, "TOWER_PROMOTION_TIMEOUT_SECONDS", 1),
     releaseRecord: get("RELEASE_RECORD"),
     approvalRef: mode === "promote" ? get("APPROVAL_REF") : null,
-    reviewedUri: mode === "promote" ? get("PREFLIGHT_PROOF_URI") : null,
-    reviewedSha: mode === "promote" ? get("PREFLIGHT_PROOF_SHA256") : null,
+    reviewedUri: mode !== "preflight" ? get("PREFLIGHT_PROOF_URI") : null,
+    reviewedSha: mode !== "preflight" ? get("PREFLIGHT_PROOF_SHA256") : null,
   };
   for (const [key, value] of [["stage proof", config.stageSha], ["candidate", config.candidateSha],
     ["input", config.sourceSha], ["reviewed preflight", config.reviewedSha]]) {
@@ -221,17 +225,16 @@ export function validateServingPage(page, rows, served, priorRows, config, recei
 }
 
 export function servingRowsForPage(page, allRows, config, receipt, reviewed) {
-  const allowed = page === "value_proof" ? ["value_proof", "cost_lens"] : [page];
+  const allowed = AGGREGATE_SERVING_PAGES[page] ?? [page];
   if (allRows.some((row) => !allowed.includes(row.page_key) || row.assessment_id !== config.assessment ||
       Number(row.projection_version) !== receipt.projection_version)) {
     throw new Error(`Serving view has an unexpected generation or page: ${page}`);
   }
-  if (page === "value_proof") {
-    const costRows = allRows.filter((row) => row.page_key === "cost_lens");
-    const costFingerprint = pageFingerprint(costRows);
-    if (costRows.length !== reviewed.physical_view_counts.cost_lens ||
-        costFingerprint !== reviewed.physical_view_fingerprints.cost_lens) {
-      throw new Error("Serving value view cost population differs");
+  for (const sibling of allowed.filter((member) => member !== page)) {
+    const siblingRows = allRows.filter((row) => row.page_key === sibling);
+    if (siblingRows.length !== reviewed.physical_view_counts[sibling] ||
+        pageFingerprint(siblingRows) !== reviewed.physical_view_fingerprints[sibling]) {
+      throw new Error(`Serving ${page} view ${sibling} population differs`);
     }
   }
   return allRows.filter((row) => row.page_key === page);
@@ -359,6 +362,12 @@ export function preflightProofLog(bytes, output) {
       uri: output.uri, sha256: output.sha256 })}\n`;
 }
 
+export function servingReadbackProofLog(bytes, output) {
+  return `__TOWER_SERVING_READBACK_JSON_BEGIN__\n${bytes.toString("utf8")}` +
+    `__TOWER_SERVING_READBACK_JSON_END__\n${JSON.stringify({ event: "tower_candidate_serving_readback",
+      uri: output.uri, sha256: output.sha256 })}\n`;
+}
+
 async function progress(container, config, startedAt, status, detail = {}) {
   const value = { contract_version: "tower-candidate-aca-progress/v1", status, mode: config.mode,
     job_run_id: config.runId, tenant_key: config.tenant, assessment_id: config.assessment,
@@ -404,6 +413,20 @@ export async function execute(mode, env = process.env) {
     validateReviewedProof(reviewed, config, stage.receiptBytes);
     const reviewedPath = path.join(dir, "reviewed-preflight.json");
     fs.writeFileSync(reviewedPath, reviewedBytes);
+    if (mode === "verify") {
+      await progress(container, config, startedAt, "running", { checkpoint: "read_only_serving_readback" });
+      const readback = await servingReadback(config, stage.receipt, reviewed);
+      const readbackBytes = jsonBytes(readback);
+      outputs.proof = await uploadAndReadback(container, config, "serving-readback.json", readbackBytes);
+      outputs.validation = outputs.proof;
+      outputs.quality = outputs.proof;
+      await progress(container, config, startedAt, "succeeded", { checkpoint: "serving_readback_verified",
+        serving_readback_sha256: outputs.proof.sha256 });
+      outputs.job_contract = await uploadAndReadback(container, config, "job-contract.json",
+        jsonBytes(jobMetadata(config, startedAt, "succeeded", outputs)));
+      process.stdout.write(servingReadbackProofLog(readbackBytes, outputs.proof));
+      return { status: "succeeded", outputs, gaps: [] };
+    }
     await progress(container, config, startedAt, "running", { checkpoint: "guarded_promotion" });
     promotionAttempted = true;
     const result = runOperator("promote", candidatePath, receiptPath, path.join(dir, "promotion.json"), config, reviewedPath);

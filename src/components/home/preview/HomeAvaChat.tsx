@@ -28,12 +28,14 @@ export function HomeAvaChat({
   activeChapterId,
   recordSource,
   requestedProvider,
+  onQuestion,
   children,
 }: {
   tenantKey: string;
   activeChapterId?: string;
   recordSource: HomeRecordRenderSource;
   requestedProvider?: string;
+  onQuestion?: (question: string) => void;
   children: ReactNode;
 }) {
   const [thread, setThread] = useState<ChatMessage[]>([]);
@@ -43,6 +45,7 @@ export function HomeAvaChat({
     async (text: string) => {
       const trimmed = text.trim();
       if (!trimmed) return;
+      onQuestion?.(trimmed);
 
       setThread((prev) => [
         ...prev,
@@ -93,15 +96,20 @@ export function HomeAvaChat({
         }
         const data = (await res.json()) as { answer: AvaAnswerPacket };
         const answer = data.answer;
-        const sourceDate = recordSource.contextVersion?.sourceDateCoverage?.latest;
-        const citations: AskSource[] = (answer.citations ?? []).map((citation) => ({
-          type: "SURFACE",
-          name: citation.label,
-          id: citation.recordId ?? null,
-          detail: citation.excerpt ?? (citation.id === "home-current-record"
-            ? `Current Home record; ${sourceDate ? `registered source files dated through ${sourceDate}` : "source date not established"}. Data currency is not attested.`
-            : "Source-linked governed row."),
-        }));
+        const sourceDate =
+          recordSource.contextVersion?.sourceDateCoverage?.latest;
+        const citations: AskSource[] = (answer.citations ?? []).map(
+          (citation) => ({
+            type: "SURFACE",
+            name: citation.label,
+            id: citation.recordId ?? null,
+            detail:
+              citation.excerpt ??
+              (citation.id === "home-current-record"
+                ? `Current Home record; ${sourceDate ? `registered source files dated through ${sourceDate}` : "source date not established"}. Data currency is not attested.`
+                : "Source-linked governed row."),
+          }),
+        );
         setThread((prev) => [
           ...prev,
           {
@@ -127,7 +135,7 @@ export function HomeAvaChat({
         setIsBusy(false);
       }
     },
-    [tenantKey, activeChapterId, recordSource, requestedProvider],
+    [tenantKey, activeChapterId, recordSource, requestedProvider, onQuestion],
   );
 
   return (
