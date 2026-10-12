@@ -204,6 +204,8 @@ describe("ensureOperatorPersonProvisioned — provisioning", () => {
       ...base, clerkRole: "client_viewer", clientKey: "meridian",
       tenantRoles: {}, syntheticE2eOperator: true,
       syntheticE2eApprovalRef: "private-approval-reference",
+      syntheticE2eAuthority: { source: "authenticated_clerk_profile", clerkUserId: base.clerkUserId,
+        email: base.email, approvalRef: "private-approval-reference", profileSha256: "a".repeat(64) },
     });
     expect(r).toEqual({ personId: "person-uuid-1", role: "client_viewer", accessLevel: "program_member" });
     expect(createPersonMock).toHaveBeenCalledWith(expect.objectContaining({
