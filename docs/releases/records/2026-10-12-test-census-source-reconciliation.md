@@ -44,6 +44,11 @@ Regenerate the test coverage inventory from the integrated source tree. An alrea
 - Fail, interim: the first release-control run correctly refused an uncommitted census edit without a release record. Pass: after adding this controlled record, all 11 release-control gates ran and passed on the final candidate.
 - Fail, supplementary: a broad full-auth sweep has ten failures in five pre-existing quarantined suites. The exact same ten cases reproduce on pre-repair source `087c997f377ab8b65801661879b0d30f5b1b7043`; no new failing case, quarantine or threshold change.
 - Mutation: no executable code changes in this PR. The earlier repair's 14 killed semantic mutants remain applicable because its executable source blobs are unchanged.
+- Pass: after merging actual `691a1b4337c3916038495ad3a6e491a46ab4dd40` without rebase and genuinely regenerating, the remaining PR delta is this control record alone; no code, workflow, manifest or census delta.
+- Pass: current-main auth/native contracts, 6 suites / 59 tests; complete Programs directory, 247 suites / 3,952 tests; affected write-transaction and P5 handoff contracts, 2 suites / 89 tests.
+- Pass: all 19 prior authentication/workflow source blobs match the validated repair on actual main and on this reconciled candidate. Current typecheck, library-orphan, census, tenancy, manual and all 11 release checks pass. Counts explicitly match, with 3,013 / 2,848 and no transient probe.
+- The genuine predecessor's exact published source passed 41 check runs with five skipped and is tree-identical to landed main. Its complete 214-suite / 2,253-test floor passed at 90.00%. These receipts plus the owning current-source checks resolve forward source applicability; they do not retroactively replace the retained failed predecessor preflight.
+- The remaining documentation candidate requires its own current-head CI and actual-scope release review. It introduces no additional runtime or native-data gate for the existing approved execution path.
 - Visual: no component or layout change; browser and runtime acceptance remain unverified by this source-only audit.
 
 ## Rollout Plan
