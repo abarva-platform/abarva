@@ -154,8 +154,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!mode) throw new Error("Use --inventory, --plan or --apply");
   runInsightJob(process.env, mode).then((proof) => {
     const plan = "plan" in proof ? proof.plan : null;
-    console.log(JSON.stringify({ checkpoint: "complete", mode, run_id: proof.run_id,
-      proof_uri: proof.blob_proof_bundle, mutation_applied: proof.mutation_applied,
+    const metadata: Record<string, unknown> = proof;
+    console.log(JSON.stringify({ checkpoint: "complete", mode, run_id: metadata.run_id,
+      proof_uri: metadata.blob_proof_bundle, mutation_applied: proof.mutation_applied,
       load_version_hash: plan?.loadVersionHash ?? null, finding_count: plan?.findings.length ?? null,
       evaluations: plan?.evaluations ?? [], quality_gate: proof.quality_gate }));
     if (process.env.ECL_INSIGHT_EMIT_PROOF_BUNDLE === "true") {
