@@ -30,7 +30,7 @@ export type ReferenceBlock =
   | { kind: "architecture"; layers: { name: string; items: string[] }[]; governance: string }
   | { kind: "bars"; items: { label: string; value: ReferenceFigure; magnitude: number }[] }
   | { kind: "timeline"; quarters: string[]; rows: { label: string; from: number; to: number; cost?: ReferenceFigure }[]; today: number; commit: number }
-  | { kind: "gap"; title: string; detail: string; nextAction: string }
+  | { kind: "gap"; title: string; detail: string; nextAction: string; compact?: boolean }
   | { kind: "text"; lines: string[] };
 
 export interface ReferenceSlide {

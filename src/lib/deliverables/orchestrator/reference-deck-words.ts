@@ -162,7 +162,8 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
   if (LITERAL_FIGURE.test(literal)) return "literal_figure";
   if (!entry.notes.startsWith("The point:") || !entry.notes.includes("How to read:")) return "notes_format";
   if (entry.title.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(entry.title)) return "title_format";
-  if (clientCopyIssue(`${entry.title} ${entry.answer}`)) return "internal_client_word";
+  // Validated tokens are binding metadata, not words shown to the client.
+  if (clientCopyIssue(`${entry.title} ${entry.answer}`.replace(SLOT_TOKEN, ""))) return "internal_client_word";
   if (answerIsCountDump(entry.answer)) return "count_dump_answer";
   const editionText = archetype === "cover" ? `${entry.answer} ${entry.notes}` : literal;
   if (edition === "validation" && VALIDATION_FORBIDDEN.test(editionText)) return "edition_language";
@@ -310,17 +311,20 @@ export async function draftEditionWords(input: {
         ? null : modelWordRule(words[index]!, input.edition, input.slots, input.archetypes[index]);
     const rejected = words.flatMap((_, index) => {
       const rule = ruleAt(index);
-      return rule ? [{ index, rule }] : [];
+      const blockedClientTerm = rule === "internal_client_word"
+        ? clientCopyIssue(`${words[index]!.title} ${words[index]!.answer}`.replace(SLOT_TOKEN, "")) : null;
+      return rule ? [{ index, rule, ...(blockedClientTerm ? { blockedClientTerm } : {}) }] : [];
     });
     if (rejected.length) {
-      const repairSystem = `${system} This is a targeted retry. Return one words entry per rejected slide, in the same order. Correct each stated rule; never invent a fact or a figure.`;
+      const repairSystem = `${system} This is a targeted retry. Return one words entry per rejected slide, in the same order. Correct each stated rule; never invent a fact or a figure. When a blockedClientTerm is supplied, remove that vocabulary and its forms from the title and answer. Use advance instead of move, confirm instead of capture, and identify instead of flag. Keep permitted figure tokens exactly as supplied.`;
       const repairChunks = Array.from({ length: Math.ceil(rejected.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) =>
         rejected.slice(chunk * PARSE_RECOVERY_CHUNK_SIZE, (chunk + 1) * PARSE_RECOVERY_CHUNK_SIZE));
       const repairs = await Promise.allSettled(repairChunks.map(async (chunk) => {
         const repairUser = JSON.stringify({
           profile,
-          rejectedSlides: chunk.map(({ index, rule }) => ({
+          rejectedSlides: chunk.map(({ index, rule, ...detail }) => ({
             archetype: input.archetypes[index], rejectedRule: rule,
+            ...detail,
             ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]
               ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]}}` } : {}),
           })),
