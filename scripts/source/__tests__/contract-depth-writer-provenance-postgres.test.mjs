@@ -235,6 +235,34 @@ test(
         assert.equal(term.raw_payload.clause_text_basis, "document_extracted");
       },
     );
+    for (const [sourceBasis, expectedBasis] of [
+      ["authored_reference", "derived_not_extracted"],
+      ["", "imported_unverified"],
+      ["unknown_import", "imported_unverified"],
+    ]) {
+      await t.test(
+        `term writer does not promote ${sourceBasis || "undeclared"} import`,
+        async () => {
+          const result = await persist("upsertContractTerms", {
+            ...row,
+            value_text:
+              "Proposed operating model assigns an owner to the transition review.",
+            source_basis: sourceBasis,
+            review_state: "unreviewed",
+            confidence: "0.9",
+          });
+          const term = result.contract_term[0];
+          assert.equal(term.quality_state, "unreviewed");
+          assert.equal(term.page_ref, null);
+          assert.equal(term.confidence, null);
+          assert.equal(term.raw_payload.clause_text_basis, expectedBasis);
+          assert.equal(
+            term.term_value,
+            "Proposed operating model assigns an owner to the transition review.",
+          );
+        },
+      );
+    }
     await t.test(
       "credit writer also preserves unreviewed quality and unknown confidence",
       async () => {

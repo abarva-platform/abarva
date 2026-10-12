@@ -26,12 +26,23 @@
  * classification therefore has to run in code, over the row, at both sinks.
  */
 
-export type ClauseTextBasis = "derived_not_extracted" | "document_extracted";
+export type ClauseTextBasis =
+  | "derived_not_extracted"
+  | "imported_unverified"
+  | "document_extracted";
 
 export const DERIVED_CLAUSE_TEXT_BASIS: ClauseTextBasis =
   "derived_not_extracted";
 export const EXTRACTED_CLAUSE_TEXT_BASIS: ClauseTextBasis =
   "document_extracted";
+export const UNVERIFIED_CLAUSE_TEXT_BASIS: ClauseTextBasis =
+  "imported_unverified";
+
+const AUTHORED_BASES = new Set([
+  "authored_reference",
+  "synthetic_modelled",
+  "derived_not_extracted",
+]);
 
 /**
  * The review state a derived row carries. `unreviewed` is the column default
@@ -109,8 +120,7 @@ function trimmed(row: Record<string, string>, key: string): string {
 
 /** Import preserves an explicit review marker; it does not perform a review. */
 export function contractInputQualityState(row: Record<string, string>): string {
-  if (trimmed(row, "source_basis") === "synthetic_modelled")
-    return "unreviewed";
+  if (AUTHORED_BASES.has(trimmed(row, "source_basis"))) return "unreviewed";
   const state = trimmed(row, "review_state") || trimmed(row, "quality_state");
   return state === "reviewed" ||
     state === "human_reviewed" ||
@@ -144,11 +154,12 @@ export function classifyContractClauseTextBasis(
 ): ClauseTextBasisVerdict {
   const valueText = trimmed(clause, "value_text");
   const reviewState = trimmed(clause, "review_state");
+  const sourceBasis = trimmed(clause, "source_basis");
 
   const derived =
     describesNoClauseContent(valueText) ||
     declaresDerivedText(reviewState) ||
-    trimmed(clause, "source_basis") === "synthetic_modelled";
+    AUTHORED_BASES.has(sourceBasis);
 
   if (derived) {
     return {
@@ -163,12 +174,31 @@ export function classifyContractClauseTextBasis(
   }
 
   const sourcePage = trimmed(clause, "source_page");
+  // Legacy reviewed, page-cited rows predate source_basis. Unknown explicit
+  // bases never enter that compatibility path; ordinary prose is not proof.
+  const declaredExtraction =
+    sourceBasis === EXTRACTED_CLAUSE_TEXT_BASIS ||
+    (sourceBasis === "" &&
+      contractInputQualityState(clause) === "reviewed" &&
+      /^[1-9]\d*$/.test(sourcePage));
+  if (!declaredExtraction) {
+    return {
+      textBasis: UNVERIFIED_CLAUSE_TEXT_BASIS,
+      confidence: null,
+      sourcePage: null,
+      sourceExcerpt: null,
+      extractorVersion: null,
+      reviewState: reviewState || DERIVED_CLAUSE_QUALITY_STATE,
+      qualityState: "unreviewed",
+    };
+  }
   return {
     textBasis: EXTRACTED_CLAUSE_TEXT_BASIS,
     confidence: parsedConfidence(trimmed(clause, "confidence")),
     sourcePage: sourcePage || null,
     sourceExcerpt: valueText || null,
-    extractorVersion: options.extractorVersion ?? null,
+    extractorVersion:
+      trimmed(clause, "extractor_version") || options.extractorVersion || null,
     reviewState: reviewState || DERIVED_CLAUSE_QUALITY_STATE,
     qualityState: contractInputQualityState(clause),
   };

@@ -11,7 +11,6 @@ import {
 } from "./clause-text-basis";
 
 /** Stamped only on rows a document actually produced. */
-const CLAUSE_EXTRACTOR_VERSION = "synthetic-contract-depth-v1";
 
 export interface ContractDepthPackageInput {
   readonly contracts: readonly CsvRecord[];
@@ -491,9 +490,7 @@ export function projectContractDepthPackage(
     // produce it. These four fields were previously asserted unconditionally,
     // so a sentence stating only the row's own provenance was projected as a
     // page-cited excerpt at 0.91.
-    const basis = classifyContractClauseTextBasis(clause, {
-      extractorVersion: CLAUSE_EXTRACTOR_VERSION,
-    });
+    const basis = classifyContractClauseTextBasis(clause);
     return {
       _tenant_key: value(clause, "tenant_key"),
       _dataset_id: value(clause, "dataset_version"),
@@ -508,7 +505,7 @@ export function projectContractDepthPackage(
       extractor_version: basis.extractorVersion ?? "",
       extracted_at:
         basis.textBasis === EXTRACTED_CLAUSE_TEXT_BASIS
-          ? "2026-08-28T00:00:00.000Z"
+          ? value(clause, "extracted_at")
           : "",
     };
   });

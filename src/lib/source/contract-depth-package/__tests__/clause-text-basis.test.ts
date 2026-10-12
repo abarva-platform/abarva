@@ -39,6 +39,90 @@ const SOURCE_DIR = path.join(PACKAGE_DIR, "source-files");
 const CLAUSE_ROW_COUNT = 56;
 
 describe("imported review and authored text", () => {
+  it.each([
+    ["authored_reference", "derived_not_extracted"],
+    ["", "imported_unverified"],
+    ["unknown_import", "imported_unverified"],
+  ])(
+    "does not invent extraction provenance for basis %s",
+    (sourceBasis, expected) => {
+      const clause = {
+        value_text:
+          "Proposed operating model assigns an owner to the transition review.",
+        review_state: "unreviewed",
+        source_basis: sourceBasis,
+        source_page: "3",
+        confidence: "0.9",
+        extracted_at: "2026-08-28T00:00:00.000Z",
+      };
+      const verdict = classifyContractClauseTextBasis(clause, {
+        extractorVersion: "parser-test",
+      });
+      expect(verdict).toMatchObject({
+        textBasis: expected,
+        sourceExcerpt: null,
+        sourcePage: null,
+        confidence: null,
+        extractorVersion: null,
+        qualityState: "unreviewed",
+      });
+      const [projected] = projectContractDepthPackage({
+        ...packageInput(),
+        contractClauses: [clause],
+      }).contractPdfClauseExtractions;
+      expect(projected).toMatchObject({
+        clause_text_basis: expected,
+        source_excerpt: "",
+        source_page: "",
+        confidence: "",
+        extractor_version: "",
+        extracted_at: "",
+      });
+    },
+  );
+  it("does not promote an unknown declared basis using a review marker", () => {
+    const verdict = classifyContractClauseTextBasis({
+      value_text: "A proposed term from an unknown import.",
+      source_basis: "unknown_import",
+      source_page: "3",
+      review_state: "human_reviewed",
+    });
+    expect(verdict.textBasis).toBe("imported_unverified");
+    expect(verdict.sourceExcerpt).toBeNull();
+  });
+  it("preserves explicitly declared extraction without manufacturing its date", () => {
+    const clause = {
+      value_text: "Supplier shall provide ninety days notice.",
+      source_basis: "document_extracted",
+      source_page: "17",
+      confidence: "0.74",
+      review_state: "human_reviewed",
+      extractor_version: "declared-parser-v2",
+      extracted_at: "2026-09-03T12:00:00.000Z",
+    };
+    const [projected] = projectContractDepthPackage({
+      ...packageInput(),
+      contractClauses: [clause],
+    }).contractPdfClauseExtractions;
+    expect(projected).toMatchObject({
+      clause_text_basis: "document_extracted",
+      source_excerpt: clause.value_text,
+      source_page: "17",
+      confidence: "0.74",
+      extractor_version: "declared-parser-v2",
+      extracted_at: clause.extracted_at,
+    });
+    const [withoutDate] = projectContractDepthPackage({
+      ...packageInput(),
+      contractClauses: [{ ...clause, extracted_at: "" }],
+    }).contractPdfClauseExtractions;
+    expect(withoutDate.extracted_at).toBe("");
+    const [withoutParser] = projectContractDepthPackage({
+      ...packageInput(),
+      contractClauses: [{ ...clause, extractor_version: "" }],
+    }).contractPdfClauseExtractions;
+    expect(withoutParser.extractor_version).toBe("");
+  });
   it("keeps substantive unreviewed extraction unreviewed", () => {
     expect(
       classifyContractClauseTextBasis({
