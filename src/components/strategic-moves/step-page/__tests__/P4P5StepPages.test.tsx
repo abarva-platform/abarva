@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import {
   previewMatchesApproval,
   readApprovedRomSnapshot,
@@ -214,7 +214,7 @@ describe("Governed P5 publication UI", () => {
     fireEvent.click(accept);
     expect(
       await screen.findByRole("link", { name: "Read this Move in Tower" }),
-    ).toHaveAttribute("href", `/tower?moveId=${moveId}`);
+    ).toHaveAttribute("href", `/strategic-moves/${moveId}/tower-handoff`);
     const init = jest.mocked(fetch).mock.calls[1][1]!;
     expect(JSON.parse(String(init.body))).toEqual({
       action: "accept_planned_handoff",
@@ -373,6 +373,32 @@ describe("Governed P5 publication UI", () => {
     rejectNext(new Error("Next Move read failed"));
     await screen.findByText("Next Move read failed");
     expect(screen.queryByText(/planned annual cash/)).not.toBeInTheDocument();
+  });
+
+  it("withholds prior Move amounts before the next passive read effect", async () => {
+    const observations: string[] = [];
+    function ObservedPanel({ id }: { id: string }) {
+      const container = useRef<HTMLDivElement>(null);
+      useLayoutEffect(() => {
+        observations.push(container.current?.textContent ?? "");
+      }, [id]);
+      return (
+        <div ref={container}>
+          <P5TowerPublicationReadback moveId={id} />
+        </div>
+      );
+    }
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(response(currentView(true)))
+      .mockImplementationOnce(() => new Promise(() => {}));
+    const component = render(<ObservedPanel id={moveId} />);
+    await screen.findByText(/planned annual cash/);
+    component.rerender(
+      <ObservedPanel id="77777777-7777-4777-a777-777777777777" />,
+    );
+    expect(observations.at(-1)).not.toContain("$4,000.00");
+    expect(observations.at(-1)).not.toContain("Ledger rows:");
   });
 });
 

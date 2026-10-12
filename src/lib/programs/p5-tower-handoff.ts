@@ -413,6 +413,20 @@ export async function readP5Handoff(
       "publication_basis_changed",
       "The published handoff no longer has a current signed contract and saved measurement plan. Review a governed rebaseline.",
     );
+  if (published.length) {
+    const { evaluateGate } = await import("./governance");
+    for (const phase of [4, 5]) {
+      const gate = await evaluateGate(ctx, moveId, phase, phase + 1, {
+        allowHistoricalPhase: true,
+        skipP5Publication: true,
+      });
+      if (gate.failedChecks.some((check) => check.severity === "hard"))
+        throw new P5HandoffRefusal(
+          "publication_prerequisites_changed",
+          "The published handoff no longer passes its current P4/P5 document and approval checks. Review the current prerequisites before proceeding.",
+        );
+    }
+  }
   if (
     basis.view.binding &&
     verifyP5PublishedRows(published, basis.view.binding, basis.rows)

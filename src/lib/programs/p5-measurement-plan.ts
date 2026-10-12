@@ -3,6 +3,10 @@ import { z } from "zod";
 export const P5_TOWER_HANDOFF_FLAG = "moves_p5_tower_handoff_v1" as const;
 export const P5_MEASUREMENT_PLAN_KEY = "p5_measurement_handoff";
 
+export function p5TowerHandoffHref(moveId: string): string {
+  return `/strategic-moves/${encodeURIComponent(moveId)}/tower-handoff`;
+}
+
 const words = z.string().trim().min(1).max(2000);
 export const P5MeasurementPlanSchema = z
   .strictObject({

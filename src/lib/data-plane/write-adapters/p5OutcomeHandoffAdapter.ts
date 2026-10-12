@@ -83,7 +83,7 @@ export async function readP5PublishedRows(
   const { data, error } = await sb
     .from("outcome_ledger")
     .select(
-      "id, tenant_client_key, client_id, subject_kind, subject_ref, subject_label, is_current, value_rung, category, unit, counterfactual_confidence, governance_review_status, projected_amount, realized_amount, baseline_amount, measurement_owner_role, evidence_pointer, evidence_claim_ids, note, recorded_by, recorded_at, metadata",
+      "id, tenant_client_key, client_id, subject_kind, subject_ref, subject_label, is_current, value_rung, value_category, measurement_unit, counterfactual_confidence, governance_review_status, projected_amount, realized_amount, baseline_amount, measurement_owner_role, evidence_pointer, evidence_claim_ids, note, recorded_by, recorded_at, metadata",
     )
     .eq("client_id", ctx.clientId)
     .eq("subject_kind", "move")
@@ -135,8 +135,8 @@ export function verifyP5PublishedRows(
           row.subject_label === item.subjectLabel &&
           row.is_current === true &&
           row.value_rung === "projected_only" &&
-          row.category === item.category &&
-          row.unit === "usd_seed" &&
+          row.value_category === item.category &&
+          row.measurement_unit === "usd_seed" &&
           row.counterfactual_confidence === "low" &&
           row.governance_review_status === "approved" &&
           row.measurement_owner_role === item.ownerRole &&
@@ -243,8 +243,8 @@ export async function persistP5Handoff(
         subject_label: row.subjectLabel,
         is_current: true,
         value_rung: "projected_only",
-        category: row.category,
-        unit: "usd_seed",
+        value_category: row.category,
+        measurement_unit: "usd_seed",
         projected_amount: row.projectedUsd,
         realized_amount: null,
         baseline_amount: null,

@@ -1,4 +1,5 @@
 jest.mock("server-only", () => ({}));
+import { readFileSync } from "node:fs";
 const mockAuth = jest.fn();
 const mockFlag = jest.fn();
 const mockPolicy = jest.fn();
@@ -10,18 +11,54 @@ const mockCase = jest.fn();
 const mockGate = jest.fn();
 const mockReadClient = jest.fn();
 const mockTransaction = jest.fn();
+const mockRequireModule = jest.fn();
+jest.mock("@/lib/auth/server-module-access", () => ({
+  requireProductModule: (...args: unknown[]) => mockRequireModule(...args),
+}));
+jest.mock("@/lib/programs/strategic-moves-context", () => ({
+  getStrategicMovesTenancy: () => mockAuth(),
+}));
+jest.mock("next/navigation", () => ({
+  notFound: () => {
+    throw new Error("NEXT_NOT_FOUND");
+  },
+  redirect: () => {
+    throw new Error("NEXT_REDIRECT");
+  },
+}));
+jest.mock("@/components/shell/AppShell", () => ({ AppShell: () => null }));
 const mockTables: Record<string, Array<Record<string, unknown>>> = {};
 let mockTableError: string | null = null;
 let mockHideIndependentRows = false;
 const mockFences: Array<[string, string, unknown]> = [];
+const mockLedgerDefinition = readFileSync(
+  "supabase/migrations/20260516180000_outcome_ledger.sql",
+  "utf8",
+)
+  .replace(/--[^\n]*/g, "")
+  .match(/CREATE TABLE IF NOT EXISTS outcome_ledger \(([\s\S]*?)\n\);/)![1];
+const mockLedgerColumns = new Set(
+  [
+    ...mockLedgerDefinition.matchAll(
+      /^\s{2}([a-z_]\w*)\s+(?:UUID|BOOLEAN|TEXT|NUMERIC|JSONB|TIMESTAMPTZ)\b/gm,
+    ),
+  ].map((match) => match[1]),
+);
 
 function mockClient(independent = false) {
   return {
     from: (table: string) => {
       const filters: Array<[string, unknown]> = [];
       let inserted: Array<Record<string, unknown>> | null = null;
+      let shapeError = false;
       const query = {
-        select: () => query,
+        select: (columns = "*") => {
+          if (table === "outcome_ledger" && columns !== "*")
+            shapeError ||= columns
+              .split(",")
+              .some((column) => !mockLedgerColumns.has(column.trim()));
+          return query;
+        },
         eq: (key: string, value: unknown) => {
           filters.push([key, value]);
           mockFences.push([table, key, value]);
@@ -29,12 +66,21 @@ function mockClient(independent = false) {
         },
         insert: (rows: Array<Record<string, unknown>>) => {
           inserted = rows;
+          if (table === "outcome_ledger")
+            shapeError ||= rows.some(
+              (row) =>
+                Object.keys(row).some(
+                  (column) => !mockLedgerColumns.has(column),
+                ) ||
+                !row.value_category ||
+                !row.measurement_unit,
+            );
           return query;
         },
         then: (
           resolve: (result: { data: unknown; error: unknown }) => unknown,
         ) => {
-          if (mockTableError === table)
+          if (mockTableError === table || shapeError)
             return Promise.resolve(
               resolve({ data: null, error: { message: "read failed" } }),
             );
@@ -102,6 +148,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 }));
 
 import { NextRequest } from "next/server";
+import MoveTowerHandoffPage from "@/app/(maestro)/strategic-moves/[moveId]/tower-handoff/page";
 import {
   GET,
   POST,
@@ -242,6 +289,7 @@ beforeEach(() => {
     },
   ];
   mockAuth.mockResolvedValue(ctx);
+  mockRequireModule.mockResolvedValue(undefined);
   mockFlag.mockReturnValue(true);
   mockPolicy.mockResolvedValue({
     canApproveGates: true,
@@ -349,6 +397,71 @@ test("previews the current signed version, current P4 basis and explicit unknown
   expect(mockTables.outcome_ledger).toHaveLength(0);
 });
 
+test("the scoped browser handoff reads one assigned Move with existing Programs access", async () => {
+  const element = await MoveTowerHandoffPage({
+    params: Promise.resolve({ moveId }),
+  });
+  expect(mockRequireModule).toHaveBeenCalledWith("programs");
+  expect(mockProgram).toHaveBeenCalledWith(ctx, moveId);
+  const children = element.props.children as Array<{
+    props: { moveId?: string };
+  }>;
+  expect(children.some((child) => child.props.moveId === moveId)).toBe(true);
+  expect(mockTables.outcome_ledger).toHaveLength(0);
+  expect(mockTransaction).not.toHaveBeenCalled();
+});
+
+test.each([
+  "flag_off",
+  "flag_unknown",
+  "foreign_move",
+  "outside_grant",
+  "no_financial",
+])("the scoped browser handoff refuses %s", async (mode) => {
+  if (mode === "flag_off") mockFlag.mockReturnValue(false);
+  if (mode === "flag_unknown") mockFlag.mockReturnValue(undefined);
+  if (mode === "foreign_move")
+    mockProgram.mockResolvedValue({
+      id: moveId,
+      clientId: "foreign-client",
+      currentPhase: 5,
+    });
+  if (mode === "outside_grant")
+    mockPolicy.mockResolvedValue({
+      canViewFinancialData: true,
+      programIdsAllowed: [],
+    });
+  if (mode === "no_financial")
+    mockPolicy.mockResolvedValue({
+      canViewFinancialData: false,
+      programIdsAllowed: [moveId],
+    });
+  await expect(
+    MoveTowerHandoffPage({ params: Promise.resolve({ moveId }) }),
+  ).rejects.toThrow("NEXT_NOT_FOUND");
+  expect(mockTransaction).not.toHaveBeenCalled();
+});
+
+test("the scoped browser handoff redirects a signed-out session", async () => {
+  mockAuth.mockResolvedValue(null);
+  await expect(
+    MoveTowerHandoffPage({ params: Promise.resolve({ moveId }) }),
+  ).rejects.toThrow("NEXT_REDIRECT");
+  expect(mockProgram).not.toHaveBeenCalled();
+});
+
+test("the scoped browser handoff refuses module denial before tenant or Move reads", async () => {
+  mockRequireModule.mockRejectedValue(new Error("PROGRAMS_REQUIRED"));
+  await expect(MoveTowerHandoffPage({ params: Promise.resolve({ moveId }) })).rejects.toThrow("PROGRAMS_REQUIRED");
+  expect(mockAuth).not.toHaveBeenCalled();
+  expect(mockProgram).not.toHaveBeenCalled();
+});
+
+test("the scoped browser handoff rejects malformed Move identity before the data-plane read", async () => {
+  await expect(MoveTowerHandoffPage({ params: Promise.resolve({ moveId: "wrong/id" }) })).rejects.toThrow("NEXT_NOT_FOUND");
+  expect(mockProgram).not.toHaveBeenCalled();
+});
+
 test("publishes projected-only governed rows with valid identity, actor, timestamps and independent readback", async () => {
   const expected = await binding();
   const response = await post(expected);
@@ -367,11 +480,15 @@ test("publishes projected-only governed rows with valid identity, actor, timesta
     client_id: clientId,
     subject_ref: moveId,
     projected_amount: 4000,
+    value_category: "cost_avoidance",
+    measurement_unit: "usd_seed",
     realized_amount: null,
     baseline_amount: null,
     value_rung: "projected_only",
     recorded_by: ctx.userId,
   });
+  expect(row).not.toHaveProperty("category");
+  expect(row).not.toHaveProperty("unit");
   expect(row.id).toMatch(
     /^[a-f0-9]{8}-[a-f0-9]{4}-5[a-f0-9]{3}-a[a-f0-9]{3}-[a-f0-9]{12}$/,
   );
@@ -551,6 +668,41 @@ test("refuses a changed signed contract after publication and withholds stale re
     error: "publication_basis_changed",
   });
   expect(mockTables.outcome_ledger).toHaveLength(2);
+});
+
+test.each([
+  "value_measurement_contract_signed_off",
+  "financial_model_signed_off",
+])(
+  "withholds published readback after the current %s prerequisite no longer passes",
+  async (check) => {
+    expect((await post(await binding())).status).toBe(200);
+    mockGate.mockResolvedValue({
+      failedChecks: [
+        {
+          check,
+          severity: "hard",
+          reason: "Approval source is no longer current",
+        },
+      ],
+    });
+    const response = await get();
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe("publication_prerequisites_changed");
+    expect(body.publication).toBeUndefined();
+    expect(mockTables.outcome_ledger).toHaveLength(2);
+  },
+);
+
+test("a failed prerequisite read after publication reports unknown rather than published", async () => {
+  expect((await post(await binding())).status).toBe(200);
+  mockGate.mockRejectedValue(new Error("Prerequisite read failed"));
+  const response = await get();
+  expect(response.status).toBe(503);
+  const body = await response.json();
+  expect(body.publication).toBeUndefined();
+  expect(body.detail).toContain("stored state is unknown");
 });
 
 test.each([

@@ -27,7 +27,7 @@ test.each(["published", "not_yet_linked", "read_unavailable"] as const)("governe
     towerHandoffRead: { state, detail: state === "read_unavailable" ? "Read failed; publication unknown" : "Independent ledger state", rowId: state === "published" ? "persisted-row" : undefined } });
   const tower = trace.steps.find(step => step.module === "tower")!;
   expect(tower.linkState).toBe(state === "published" ? "linked" : state);
-  expect(tower.href).toBe(state === "published" ? `/tower?moveId=${move.id}` : null);
+  expect(tower.href).toBe(state === "published" ? `/strategic-moves/${move.id}/tower-handoff` : null);
   if (state === "read_unavailable") expect(tower.title).toBe("Tower handoff state unavailable");
 });
 

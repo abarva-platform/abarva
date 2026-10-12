@@ -21,6 +21,7 @@ import type { StrategicMove } from "./types.ui";
 import type { OutcomeLedgerRow } from "@/lib/tower/outcome-ledger/types";
 import type { ControlEvalMatrix } from "@/lib/programs/controls/control-eval-matrix";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
+import { p5TowerHandoffHref } from "./p5-measurement-plan";
 import {
   buildSr117ControlDeliverable,
   isSr117RegulatedTenant,
@@ -314,7 +315,7 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
       artifactKind: "Tower planned outcome handoff", linkState: read.state === "published" ? "linked" : read.state,
       title: read.state === "published" ? "Current planned handoff read back" : read.state === "read_unavailable" ? "Tower handoff state unavailable" : "No planned handoff published for this Move",
       detail: read.detail, joinId: read.rowId ?? null,
-      href: read.state === "published" ? `/tower?moveId=${encodeURIComponent(input.move.id)}` : null,
+      href: read.state === "published" ? p5TowerHandoffHref(input.move.id) : null,
       gapRef: null, regulatoryDeliverable: null };
   }
   // The Source -> Tower / Tower -> Outcome hand-off (GAP-4 / GAP-5):

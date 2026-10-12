@@ -5,6 +5,7 @@ import {
   P5MeasurementPlanSchema,
   P5HandoffViewSchema,
   readP5MeasurementPlan,
+  p5TowerHandoffHref,
   type P5HandoffView,
   type P5MeasurementPlan,
   type P5MeasurementRow,
@@ -326,7 +327,7 @@ export function P5TowerHandoff({
       {view?.publication.state === "published" && matchesSaved ? (
         <a
           className={styles["link-btn"]}
-          href={`/tower?moveId=${encodeURIComponent(moveId)}`}
+          href={p5TowerHandoffHref(moveId)}
         >
           Read this Move in Tower
         </a>
@@ -337,6 +338,7 @@ export function P5TowerHandoff({
 
 export function P5TowerPublicationReadback({ moveId }: { moveId: string }) {
   const [view, setView] = useState<P5HandoffView | null>(null);
+  const currentView = view?.programId === moveId ? view : null;
   const [detail, setDetail] = useState("Reading this Move's planned handoff…");
   useEffect(() => {
     let live = true;
@@ -369,14 +371,14 @@ export function P5TowerPublicationReadback({ moveId }: { moveId: string }) {
     >
       <h2 className={styles["q-label"]}>Planned outcome handoff</h2>
       <p className={styles.proposal} role="status">
-        {detail}
+        {view && !currentView ? "Reading this Move's planned handoff…" : detail}
       </p>
       <p className={styles["item-note"]}>
         Move {moveId} · ESTIMATE · Baseline and realized values unknown.
       </p>
-      {view?.publication.state === "published" ? (
+      {currentView?.publication.state === "published" ? (
         <>
-          {view.levers.map((lever) => (
+          {currentView.levers.map((lever) => (
             <p className={styles.proposal} key={lever.leverId}>
               {lever.name}: planned annual cash{" "}
               {lever.projectedUsd.toLocaleString("en-US", {
@@ -385,19 +387,19 @@ export function P5TowerPublicationReadback({ moveId }: { moveId: string }) {
               })}{" "}
               ·{" "}
               {
-                view.savedPlan?.measures.find(
+                currentView.savedPlan?.measures.find(
                   (row) => row.leverId === lever.leverId,
                 )?.ownerRole
               }
             </p>
           ))}
           <p className={styles["item-note"]}>
-            Contract {view.binding?.contractId} · v
-            {view.binding?.contractVersion} · SHA-256{" "}
-            {view.binding?.contractHash}
+            Contract {currentView.binding?.contractId} · v
+            {currentView.binding?.contractVersion} · SHA-256{" "}
+            {currentView.binding?.contractHash}
           </p>
           <p className={styles["item-note"]}>
-            Ledger rows: {view.publication.rowIds.join(", ")}
+            Ledger rows: {currentView.publication.rowIds.join(", ")}
           </p>
         </>
       ) : null}
