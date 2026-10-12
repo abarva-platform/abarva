@@ -36,15 +36,24 @@ export function proofInputs(env = process.env) {
   const decision = JSON.parse(decisionBytes.toString("utf8"));
   const authorityId = required(env, "DELEGATED_PROOF_AUTHORITY_ID");
   const decisionId = required(env, "DELEGATED_PROOF_DECISION_ID");
-  if (authority.authority_id !== authorityId || !SAFE_ID.test(authorityId) ||
-      decision.decisionId !== decisionId || !SAFE_ID.test(decisionId) ||
-      authority.status !== "active" || decision.status !== "approved_with_execution_conditions" ||
+  if (authority.contract_version !== "nexus-delegated-approval-authority/v1" ||
+      decision.contract_version !== "nexus-delegated-approval-decision/v1" ||
+      authority.authority_id !== authorityId || decision.authority_id !== authorityId || !SAFE_ID.test(authorityId) ||
+      decision.decision_id !== decisionId || !SAFE_ID.test(decisionId) ||
+      authority.status !== "active" || !["approved", "approved_with_execution_conditions"].includes(decision.status) ||
       authority.authorizer !== decision.authorizer ||
-      authority.actor?.session_id !== decision.managerThreadId ||
-      authority.human_authorization_reference?.message_id !== decision.humanAuthorizationMessageId ||
+      authority.actor?.kind !== "delegated_agent" || decision.actor?.kind !== "delegated_agent" ||
+      authority.actor?.identity !== decision.actor?.identity ||
+      authority.actor?.session_id !== decision.actor?.session_id ||
+      authority.human_authorization_reference?.thread_id !== decision.human_authorization_reference?.thread_id ||
+      authority.human_authorization_reference?.message_id !== decision.human_authorization_reference?.message_id ||
+      authority.human_authorization_reference?.text_sha256 !== decision.human_authorization_reference?.text_sha256 ||
+      !authority.scope?.allowed_operations?.includes(decision.scope?.operation) ||
+      (decision.scope?.surface && !authority.scope?.allowed_serving_surfaces?.includes(decision.scope.surface)) ||
       authority.independent_human_attestation !== false ||
       authority.independent_finance_attestation !== false ||
-      decision.independentHumanClientOrFinanceAttestation !== false) {
+      decision.independent_human_attestation !== false ||
+      decision.independent_finance_attestation !== false) {
     throw new Error("Delegated approval authority and decision identity mismatch");
   }
   const config = {

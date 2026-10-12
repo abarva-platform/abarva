@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-An operator can save the exact authority and decision files for a delegated approval in the private data store. The job checks their checksums, confirms they refer to the same authorizer and delegate session, refuses to overwrite different content, and reads both files back. It only saves evidence; it does not approve a dataset or change what a product shows.
+An operator can save the exact authority and normalized decision files for a delegated approval in the private data store. The job checks their checksums, confirms they refer to the same authorizer, delegate session, and human authorization reference, refuses to overwrite different content, and reads both files back. It only saves evidence; it does not approve a dataset or change what a product shows.
 
 ## Layer Impact
 

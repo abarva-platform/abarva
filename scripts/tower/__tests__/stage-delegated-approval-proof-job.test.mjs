@@ -6,16 +6,21 @@ import { proofInputs, proofPath, uploadExact } from "../stage-delegated-approval
 
 const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
 const authority = {
+  contract_version: "nexus-delegated-approval-authority/v1",
   authority_id: "integrated-manager-anand-20261012", status: "active",
-  authorizer: "Anand Sundaram", actor: { session_id: "manager-thread" },
-  human_authorization_reference: { message_id: "human-message" },
+  authorizer: "Anand Sundaram", actor: { kind: "delegated_agent", identity: "Codex integrated manager", session_id: "manager-thread" },
+  human_authorization_reference: { thread_id: "manager-thread", message_id: "human-message", text_sha256: "c".repeat(64) },
+  scope: { allowed_operations: ["serve"], allowed_serving_surfaces: ["tower"] },
   independent_human_attestation: false, independent_finance_attestation: false,
 };
 const decision = {
-  decisionId: "delegated-tower-source-fields-serving-20261012-001",
+  contract_version: "nexus-delegated-approval-decision/v1",
+  authority_id: authority.authority_id,
+  decision_id: "delegated-tower-source-fields-serving-20261012-001",
   status: "approved_with_execution_conditions", authorizer: "Anand Sundaram",
-  managerThreadId: "manager-thread", humanAuthorizationMessageId: "human-message",
-  independentHumanClientOrFinanceAttestation: false,
+  actor: authority.actor, human_authorization_reference: authority.human_authorization_reference,
+  scope: { operation: "serve", surface: "tower" },
+  independent_human_attestation: false, independent_finance_attestation: false,
 };
 const encoded = (value) => Buffer.from(JSON.stringify(value)).toString("base64");
 const digest = (value) => sha(Buffer.from(JSON.stringify(value)));
@@ -27,7 +32,7 @@ function validEnv() {
     DELEGATED_PROOF_AUTHORITY_SHA256: digest(authority),
     DELEGATED_PROOF_DECISION_SHA256: digest(decision),
     DELEGATED_PROOF_AUTHORITY_ID: authority.authority_id,
-    DELEGATED_PROOF_DECISION_ID: decision.decisionId,
+    DELEGATED_PROOF_DECISION_ID: decision.decision_id,
     DELEGATED_PROOF_BLOB_ACCOUNT: "stabarvaprivatedplab001",
     DELEGATED_PROOF_BLOB_CONTAINER: "ecl-synthetic-intake",
     DELEGATED_PROOF_RUN_ID: "proof_20261012", DELEGATED_PROOF_IDEMPOTENCY_KEY: "proof-key",
@@ -54,14 +59,14 @@ test("changed bytes, mismatched reviewer provenance, or independent attestation 
   changed.DELEGATED_PROOF_SECRET_DECISION_BASE64 = encoded({ ...decision, status: "denied" });
   assert.throws(() => proofInputs(changed), /SHA-256 mismatch/);
   const wrongManager = validEnv();
-  wrongManager.DELEGATED_PROOF_SECRET_DECISION_BASE64 = encoded({ ...decision, managerThreadId: "other" });
-  wrongManager.DELEGATED_PROOF_DECISION_SHA256 = digest({ ...decision, managerThreadId: "other" });
+  wrongManager.DELEGATED_PROOF_SECRET_DECISION_BASE64 = encoded({ ...decision, actor: { ...decision.actor, session_id: "other" } });
+  wrongManager.DELEGATED_PROOF_DECISION_SHA256 = digest({ ...decision, actor: { ...decision.actor, session_id: "other" } });
   assert.throws(() => proofInputs(wrongManager), /identity mismatch/);
   const falseAttestation = validEnv();
   falseAttestation.DELEGATED_PROOF_SECRET_DECISION_BASE64 = encoded({ ...decision,
-    independentHumanClientOrFinanceAttestation: true });
+    independent_human_attestation: true });
   falseAttestation.DELEGATED_PROOF_DECISION_SHA256 = digest({ ...decision,
-    independentHumanClientOrFinanceAttestation: true });
+    independent_human_attestation: true });
   assert.throws(() => proofInputs(falseAttestation), /identity mismatch/);
 });
 
