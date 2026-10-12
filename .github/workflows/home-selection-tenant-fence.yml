@@ -19,6 +19,7 @@ on:
       - "src/lib/auth/agent-client-logins.ts"
       - "src/lib/client-config.ts"
       - "src/lib/data-plane/azureRead.ts"
+      - "src/lib/data-plane/postgresCompat.ts"
       - "src/lib/data-plane/read-adapters/azureSession.ts"
       - "src/lib/data-plane/tenantConnectionResolver.ts"
       - "src/lib/ecl/denseAssessment.ts"

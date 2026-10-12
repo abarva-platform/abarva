@@ -27,6 +27,7 @@ P5 completion requires current publication readback when the new flag is enabled
 - Layer 3: one declared measurement step record, immutable contract-plan and approval receipts on existing document records, and governed metadata on the existing outcome ledger; no schema migration. Planned figures come from the current deterministic approved P4 case. The ledger stores unknown baseline and realized amounts as null.
 - Layer 4: P5 measurement acceptance, publication-aware completion, exact-Move Tower readback and trace status.
 - Data-plane transaction seam: an opt-in `includeReads` option keeps policy, evidence and capture basis reads on the existing serializable publication transaction. Default callers keep their current independent read path.
+- CI dependency boundary: the Home tenant-fence workflow now triggers on the compatibility transaction module that its reader loads through that shared seam.
 
 ## Client Applicability
 
