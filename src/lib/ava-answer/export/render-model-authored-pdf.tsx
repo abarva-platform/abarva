@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   eyebrow: { color: "#166534", fontSize: 8, marginBottom: 8 },
-  title: { fontSize: 22, fontWeight: 700, marginBottom: 14 },
+  title: { fontSize: 20, fontWeight: 700, marginBottom: 14 },
   heading: { fontSize: 13, fontWeight: 700, marginBottom: 10 },
   prose: { fontSize: 10, lineHeight: 1.5, marginBottom: 10 },
   meta: { fontSize: 8, lineHeight: 1.5, color: "#57534e", marginBottom: 12 },
@@ -144,7 +144,7 @@ function exhibitBlock(a: AvaArtifact) {
                 <Svg
                   viewBox={`0 0 ${p.width} ${p.height}`}
                   width="100%"
-                  height={Math.min(320, p.height * 0.61)}
+                  height={Math.min(320, p.height * 0.52)}
                 >
                   {p.quadrants.map((q, i) => (
                     <G key={i}>
@@ -168,7 +168,7 @@ function exhibitBlock(a: AvaArtifact) {
                             y={item.y + 5}
                             textAnchor="middle"
                             fill="white"
-                            style={{ fontSize: 12, fontWeight: 700 }}
+                            style={{ fontSize: 14, fontWeight: 700 }}
                           >
                             {String(item.index)}
                           </Text>
