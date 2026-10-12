@@ -2,7 +2,7 @@ import "server-only";
 
 import type PptxGenJS from "pptxgenjs";
 import { COLORS } from "@/lib/design/design-tokens";
-import { layoutReferenceTable, REFERENCE_TABLE_PADDING_X, REFERENCE_TABLE_PADDING_Y } from "./reference-deck-layout";
+import { layoutReferenceArchitecture, layoutReferenceTable, REFERENCE_TABLE_PADDING_X, REFERENCE_TABLE_PADDING_Y } from "./reference-deck-layout";
 import {
   figuresOnSlide,
   referenceSourceLine,
@@ -234,22 +234,22 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number, sharedBody = f
       return y + flowHeight + (block.annotation ? 0.47 : 0);
     }
     case "architecture": {
-      const count = block.layers.length;
-      const itemW = (w - 2.5 - (count - 1) * 0.13) / count;
+      const layout = layoutReferenceArchitecture(block.layers.length, w);
       block.layers.forEach((layer, i) => {
-        const xx = x + i * (itemW + 0.13);
-        slide.addShape("rect", { x: xx, y, w: itemW, h: 2.55,
+        const xx = x + (i % layout.columns) * (layout.columnWidth + layout.gap);
+        const yy = y + Math.floor(i / layout.columns) * (layout.rowHeight + layout.gap);
+        slide.addShape("rect", { x: xx, y: yy, w: layout.columnWidth, h: layout.rowHeight,
           line: { color: C.rule, width: 0.7 }, fill: { color: C.panel }, objectName: "ref:body:architecture" });
-        slide.addText(layer.name.toUpperCase(), { x: xx + 0.08, y: y + 0.14, w: itemW - 0.16, h: 0.3,
-          fontFace: BODY, fontSize: 9, bold: true, color: C.accent, align: "center" });
-        slide.addText(layer.items.join("\n"), { x: xx + 0.08, y: y + 0.62, w: itemW - 0.16, h: 1.68,
-          fontFace: BODY, fontSize: 11, color: C.ink, align: "center", fit: "shrink" });
+        slide.addText(layer.name.toUpperCase(), { x: xx + 0.12, y: yy + 0.12, w: layout.columnWidth - 0.24, h: 0.23,
+          fontFace: BODY, fontSize: 10, bold: true, color: C.accent });
+        slide.addText(layer.items.join("\n"), { x: xx + 0.12, y: yy + 0.43, w: layout.columnWidth - 0.24, h: 0.71,
+          fontFace: BODY, fontSize: 12, color: C.ink, objectName: `ref:body:architecture-label:${i}` });
       });
-      slide.addShape("rect", { x: x + w - 2.34, y, w: 2.34, h: 2.55,
+      slide.addShape("rect", { x, y: y + layout.governanceY, w, h: layout.governanceHeight,
         line: { color: C.rule, width: 0.7 }, fill: { color: C.ink } });
-      slide.addText(`GOVERNANCE\n${block.governance}`, { x: x + w - 2.18, y: y + 0.2, w: 2.02, h: 2.18,
-        fontFace: BODY, fontSize: 11, color: C.white, fit: "shrink" });
-      return y + 2.7;
+      slide.addText(`GOVERNANCE  ${block.governance}`, { x: x + 0.12, y: y + layout.governanceY + 0.09, w: w - 0.24, h: 0.24,
+        fontFace: BODY, fontSize: 11, color: C.white });
+      return y + layout.height;
     }
     case "bars": {
       const max = Math.max(1, ...block.items.map((item) => item.magnitude));

@@ -35,6 +35,22 @@ beforeEach(() => {
 });
 
 describe("rendered reference PDF", () => {
+  it("rejects an unsupported owner claim in the PDF's own answer text", () => {
+    const guarded = structuredClone(spec);
+    guarded.slides[1]!.narrativeEvidence = { acceptedOwnersAvailable: false };
+    const rendered = pages();
+    rendered[1]!.text += "\nTHE ANSWER: Each decision has been mapped to the user who holds authority for it.\nSources: Workshop evidence.";
+    expect(judgeReferencePdfPages(rendered, guarded)).toContainEqual(expect.objectContaining({ kind: "reference_client_copy", detailCode: "unaccepted_owner_claim" }));
+  });
+
+  it("checks every shortened architecture label in the PDF's own text", () => {
+    const architecture = structuredClone(spec);
+    architecture.slides[1]!.blocks = [{ kind: "architecture", layers: [{ name: "Source", items: ["Reviewed input sources"] }], governance: "Traceability" }];
+    const rendered = pages();
+    expect(judgeReferencePdfPages(rendered, architecture)).toContainEqual(expect.objectContaining({ detailCode: "pdf_architecture_label_missing" }));
+    rendered[1]!.text += "\nReviewed input sources";
+    expect(judgeReferencePdfPages(rendered, architecture)).not.toContainEqual(expect.objectContaining({ detailCode: "pdf_architecture_label_missing" }));
+  });
   it("accepts its own complete pages and releases the parser", async () => {
     expect(judgeReferencePdfPages(pages(), spec)).toEqual([]);
     expect(await inspectReferenceDeckPdf(Buffer.from("synthetic PDF"), spec)).toEqual([]);

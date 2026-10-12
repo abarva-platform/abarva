@@ -41,6 +41,7 @@ export interface InspectedSlide {
   namedText?: Record<string, string>;
   /** Table text geometry and declared type size from the rendered file. */
   tableText?: { text: string; widthIn: number; heightIn: number; fontSize: number }[];
+  architectureText?: { text: string; widthIn: number; heightIn: number; fontSize: number }[];
   /** Notes tied to this slide through its relationship file. */
   notesText?: string;
   offCanvas: InspectedShape[];
@@ -86,6 +87,7 @@ export async function inspectDeck(buffer: Buffer): Promise<InspectedDeck> {
 
     const namedText: Record<string, string> = {};
     const tableText: NonNullable<InspectedSlide['tableText']> = [];
+    const architectureText: NonNullable<InspectedSlide['architectureText']> = [];
     const objectNames: string[] = [];
     for (const shape of xml.matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)) {
       const objectName = /<p:cNvPr[^>]*\bname="([^"]*)"/.exec(shape[0])?.[1];
@@ -95,11 +97,12 @@ export async function inspectDeck(buffer: Buffer): Promise<InspectedDeck> {
       namedText[decodedName] = [...shape[0].matchAll(T_TAG)]
         .map((match) => decodeXml(match[1] ?? '').trim())
         .filter(Boolean).join(' ');
-      if (decodedName.startsWith('ref:body:table-text:')) {
+      if (decodedName.startsWith('ref:body:table-text:') || decodedName.startsWith('ref:body:architecture-label:')) {
         const geometry = /<a:ext cx="(\d+)" cy="(\d+)"/.exec(shape[0]);
         const sizes = [...shape[0].matchAll(/<a:(?:rPr|defRPr|endParaRPr)\b[^>]*\bsz="(\d+)"/g)]
           .map((match) => Number(match[1]) / 100);
-        tableText.push({ text: namedText[decodedName]!,
+        const target = decodedName.startsWith('ref:body:table-text:') ? tableText : architectureText;
+        target.push({ text: namedText[decodedName]!,
           widthIn: geometry ? Number(geometry[1]) / EMU_PER_INCH : 0,
           heightIn: geometry ? Number(geometry[2]) / EMU_PER_INCH : 0,
           fontSize: sizes.length ? Math.min(...sizes) : 0 });
@@ -161,6 +164,7 @@ export async function inspectDeck(buffer: Buffer): Promise<InspectedDeck> {
       chartCount: (xml.match(/<c:chart[\s/>]/g) ?? []).length,
       objectNames,
       namedText,
+      architectureText,
       tableText,
       notesText,
       offCanvas,

@@ -50,6 +50,88 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
 }
 
 describe("live-input reference edition", () => {
+  it("binds active and open assumption counts to distinct governed sources", () => {
+    const inputs = fixture("validation");
+    if (inputs.register.status !== "ready") throw new Error("fixture unavailable");
+    const row = inputs.register.value.assumptions[0]!;
+    inputs.register.value.assumptions = ["open", "confirmed", "corrected"].map((status, index) => ({ ...row, registerId: `V${index + 1}`, status }));
+    const authored = words(VALIDATION_SEQUENCE.length);
+    authored[9]!.answer = "Of {register.count.active} active assumptions, {register.count.open} remain open for review.";
+    const spec = buildReferenceEdition(inputs, authored);
+    expect(spec.slides[9]?.answer).toBe("Of 3 active assumptions, 1 remain open for review.");
+    expect(spec.figureLedger).toContainEqual(expect.objectContaining({ sourceId: "evidence:register_active_count", display: "3" }));
+    expect(spec.figureLedger).toContainEqual(expect.objectContaining({ sourceId: "evidence:register_open_count", display: "1" }));
+    authored[9]!.answer = "The {register.count.active} open assumptions require review.";
+    expect(() => buildReferenceEdition(inputs, authored)).toThrow("unsupported_narrative");
+  });
+
+  it("allows the governed open count when every active assumption is open", () => {
+    const inputs = fixture("validation");
+    const authored = words(VALIDATION_SEQUENCE.length);
+    authored[9]!.answer = "The {register.count.open} open assumptions require review before the next decision.";
+    const spec = buildReferenceEdition(inputs, authored);
+    expect(spec.slides[9]?.answer).toBe("The 1 open assumptions require review before the next decision.");
+    expect(spec.slides[9]?.narrativeEvidence).toMatchObject({ activeCount: "1", openCount: "1" });
+    expect(spec.slides[9]?.visibleNarrativeFigures).toContainEqual(expect.objectContaining({ sourceId: "evidence:register_open_count" }));
+  });
+
+  it("withholds role setup as evidence and retains substantive scope hypotheses", () => {
+    const inputs = fixture("investment");
+    inputs.capture[1] = { status: "ready", value: {
+      sponsor_commitment: "Synthetic role contact: Executive sponsor. Role alias only; no real person, external email, or outreach.",
+      scope_boundary: "Synthetic scope hypothesis: reviewed reporting boundaries and owner decisions.", success_criteria: "Decision clarity",
+    } };
+    const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+    const bodies = JSON.stringify(spec.slides.map((slide) => slide.blocks));
+    expect(bodies).not.toMatch(/Role alias only|no real person|external email|Synthetic role contact/);
+    expect(bodies).toContain("Working scope hypothesis: reviewed reporting boundaries and owner decisions.");
+    expect(spec.slides[5]?.sourceIds).toContain("evidence:P1:sponsor_commitment");
+  });
+
+  it("withholds both active and open counts when register figures are redacted", () => {
+    const inputs = fixture("validation");
+    if (inputs.register.status !== "ready") throw new Error("fixture unavailable");
+    inputs.register.value.figuresRedacted = true;
+    const authored = words(VALIDATION_SEQUENCE.length);
+    authored[9]!.answer = "Of {register.count.active} active assumptions, {register.count.open} remain open for review.";
+    const spec = buildReferenceEdition(inputs, authored);
+    expect(spec.figureLedger.some((figure) => /register_(active|open)_count/.test(figure.sourceId))).toBe(false);
+    expect(spec.slides[9]?.narrativeEvidence?.activeCount).toBeUndefined();
+    expect(spec.slides[9]?.narrativeEvidence?.openCount).toBeUndefined();
+    expect(spec.slides[9]?.answer).not.toMatch(/\d/);
+  });
+
+  it("preserves architecture source detail and identifiers behind short editable labels", async () => {
+    const inputs = fixture("investment");
+    const detail = "Source integration / reviewed transformations / access boundaries with complete provenance and the accountable owner identified in the original approved evidence. The recorded transformation detail remains attached to its source identifier and can be checked without relying on the short diagram label.";
+    inputs.capture[3] = { status: "ready", value: { architecture_integration: detail,
+      controls_governance: "Reviewed source permissions and recorded transformation provenance establish the controls for use", solution_approach: "A reviewer uses the evidence to make a decision" } };
+    const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+    const block = spec.slides[12]?.blocks.find((item) => item.kind === "architecture");
+    expect(block?.kind).toBe("architecture");
+    if (block?.kind !== "architecture") throw new Error("architecture absent");
+    expect(block.layers[1]?.items[0]).toMatch(/…$/);
+    expect(block.layers[1]?.fullItems?.[0]).toBe(detail);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(rendered.slides[12]?.notesText).toContain(detail);
+    expect(rendered.slides[12]?.notesText).toContain("evidence:P3:architecture_integration");
+    expect(rendered.slides[12]?.architectureText).toHaveLength(6);
+    expect(rendered.slides[12]?.architectureText?.every((label) => label.fontSize >= 12 && label.widthIn > 3.5)).toBe(true);
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) => finding.kind === "reference_layout")).toEqual([]);
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) {
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-architecture.pptx`, await renderReferenceDeck(spec));
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-architecture-spec.json`, JSON.stringify(spec));
+    }
+  });
+
+  it.each([
+    [11, "Each decision has been mapped to the user who holds authority for it."],
+    [14, "This figure represents the approved delivery estimate."],
+  ])("refuses an unsupported completed-evidence claim on slide %i", (index, answer) => {
+    const authored = words(INVESTMENT_SEQUENCE.length); authored[index]!.answer = answer;
+    expect(() => buildReferenceEdition(fixture("investment"), authored)).toThrow("unsupported_narrative");
+  });
+
   it.each(["validation", "investment"] as const)("renders long %s workshop answers and assumptions without shrinking table type", async (edition) => {
     const inputs = fixture(edition);
     const statement = "The accountable operations owner checks supporting documentation and the timing basis before deciding how the reviewed exception should be resolved and monitored.";
