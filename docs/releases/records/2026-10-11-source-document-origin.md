@@ -35,8 +35,8 @@ Layer 2 (Source Adapters): carry existing intake manifest lineage through a pure
 ## QA / Validation
 
 - Red first: four existing cases passed and six new behavioral cases failed on the original implementation.
-- Twelve focused cases pass, including the actual SQL parameter binding and CLI plan path without database credentials.
-- Eight deliberate mutations are assertion-killed; the twelve-case baseline passes before and after restoration.
+- Fourteen focused cases pass, including the actual SQL parameter binding, CLI plan path without database credentials and conflicts in a page/clause row despite a matching manifest. The two row-conflict cases also failed first on the prior implementation.
+- Ten deliberate mutations are assertion-killed; the fourteen-case baseline passes before and after restoration.
 - Focused ESLint passes. Coverage census remains unchanged because it counts Jest suites under src; the explicit Node workflow command supplies this suite's execution owner.
 - All five existing contract-depth package plans pass offline, without a database connection. Export reachability matches the existing baseline; all eleven release gates pass.
 

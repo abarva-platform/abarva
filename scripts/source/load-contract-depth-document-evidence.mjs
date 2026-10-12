@@ -196,6 +196,12 @@ export function normalizeDocumentClauseRows(clauses, pages) {
 }
 
 function documentOriginMetadata(sourceFileId, fileRows, origin) {
+  if (fileRows.some((row) =>
+    (nonEmpty(row.tenant_key) && row.tenant_key !== origin.tenantKey) ||
+    (nonEmpty(row.dataset_version) && row.dataset_version !== origin.datasetVersion)
+  )) {
+    throw new Error(`Document row identity conflict: ${sourceFileId}`);
+  }
   const contracts = new Set(fileRows.map((row) => nonEmpty(row.contract_id)));
   if (contracts.size !== 1 || contracts.has(null)) {
     throw new Error(`Document file contract identity conflict: ${sourceFileId}`);

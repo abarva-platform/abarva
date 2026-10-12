@@ -191,6 +191,14 @@ for (const field of ["tenant_key", "dataset_version", "contract_id"]) {
   });
 }
 
+for (const field of ["tenant_key", "dataset_version"]) {
+  test(`refuses document rows with a conflicting ${field} even when the manifest matches`, () => {
+    assert.throws(() => buildDocumentFileInputs([
+      { ...originPage, [field]: "other" },
+    ], [], originOptions), /Document row identity conflict/);
+  });
+}
+
 test("refuses ambiguous manifest entries and cross-contract page ownership", () => {
   assert.throws(() => buildDocumentFileInputs([originPage], [], {
     ...originOptions,
