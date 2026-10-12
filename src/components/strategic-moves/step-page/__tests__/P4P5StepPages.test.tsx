@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 
 import "@testing-library/jest-dom";
+import { emptyP4RoadmapPlan, newP4RoadmapMilestone, serializeP4RoadmapPlan } from "@/lib/programs/p4-roadmap-plan";
 import {
   act,
   fireEvent,
@@ -160,10 +161,33 @@ describe("P4 and P5 step pages", () => {
     expect(screen.queryByText(/from the P2 route/)).not.toBeInTheDocument();
   });
 
-  it("keeps P4.1 open when its milestone read returns zero rows", async () => {
+  const reviewedPlan = () =>
+    serializeP4RoadmapPlan({
+      ...emptyP4RoadmapPlan(),
+      milestones: [
+        {
+          ...newP4RoadmapMilestone("m1"),
+          name: "Approve input scope",
+          workstream: "Data readiness",
+          ownerRole: "Data owner",
+          plannedWindow: "R1 first week",
+          timingBasis: "Approved ROM R1 [A:T1]",
+          dependencyNotes: "First decision, no predecessor",
+          dependenciesReviewed: true,
+          reviewed: true,
+        },
+      ],
+    });
+
+  it("keeps P4.1 open with legacy milestone names and no reviewed plan", () => {
     global.fetch = jest
       .fn()
-      .mockResolvedValue({ ok: true, json: async () => ({ milestones: [] }) });
+      .mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          milestones: [{ id: "legacy", name: "Legacy name" }],
+        }),
+      });
     render(
       page(
         P4_STEP_PAGES,
@@ -171,35 +195,63 @@ describe("P4 and P5 step pages", () => {
         host(4, { roadmap_sequencing: "Sequence approved by the team." }),
       ),
     );
-    await waitFor(() =>
-      expect(screen.getByText(/0 milestones recorded/)).toBeInTheDocument(),
-    );
     expect(
-      screen.getByRole("status", { name: "What to do next" }),
-    ).not.toHaveTextContent("Ready");
+      screen.getByText(/milestone plan needs a reviewed, saved record/),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    expect(
+      jest
+        .mocked(global.fetch)
+        .mock.calls.some(([url]) => String(url).includes("/milestones")),
+    ).toBe(false);
   });
 
-  it("settles the milestone row only after the route returns a milestone", async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        milestones: [{ id: "m1", name: "Design signoff" }],
+  it("settles P4.1 only for a structured reviewed plan with its saved readback", () => {
+    const props = {
+      ...host(4, {
+        roadmap_sequencing: "Sequence approved by the team.",
+        p4_roadmap_plan: reviewedPlan(),
       }),
-    });
-    render(
-      page(
-        P4_STEP_PAGES,
-        "p4-milestones",
-        host(4, { roadmap_sequencing: "Sequence approved by the team." }),
-      ),
-    );
-    await waitFor(() =>
-      expect(screen.getByText(/1 milestone recorded/)).toBeInTheDocument(),
-    );
+      captureSaved: { p4_roadmap_plan: false, roadmap_sequencing: true },
+    };
+    const { rerender } = render(page(P4_STEP_PAGES, "p4-milestones", props));
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     expect(
-      screen.getByRole("status", { name: "What to do next" }),
-    ).toHaveTextContent("Ready");
+      screen.getByText(/Waiting for the milestone plan's saved readback/),
+    ).toBeInTheDocument();
+    rerender(
+      page(P4_STEP_PAGES, "p4-milestones", {
+        ...props,
+        captureSaved: { p4_roadmap_plan: true, roadmap_sequencing: true },
+      }),
+    );
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    expect(screen.getByText(/1 reviewed milestone saved/)).toBeInTheDocument();
+  });
+
+  it("keeps local milestone edits intact when the settled row reopens and writes only on review", () => {
+    const props = {
+      ...host(4, {
+        roadmap_sequencing: "Sequence approved by the team.",
+        p4_roadmap_plan: reviewedPlan(),
+      }),
+      captureSaved: { p4_roadmap_plan: true, roadmap_sequencing: true },
+    };
+    render(page(P4_STEP_PAGES, "p4-milestones", props));
+    fireEvent.change(screen.getByLabelText("Milestone name · 1"), {
+      target: { value: "Review source scope" },
+    });
+    expect(screen.getByLabelText("Milestone name · 1")).toHaveValue(
+      "Review source scope",
+    );
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    expect(props.setValue).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("Milestone reviewed · 1"));
+    fireEvent.click(screen.getByRole("button", { name: "Save reviewed plan" }));
+    expect(props.setValue).toHaveBeenCalledWith(
+      "p4_roadmap_plan",
+      expect.stringContaining("Review source scope"),
+    );
   });
 
   it("names the absent approved ROM basis and keeps estimate review human", async () => {

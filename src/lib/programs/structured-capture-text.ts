@@ -26,6 +26,12 @@ import {
   CAPTURE_TEXT_STEP_RECORD_KEYS,
   captureTextStepWords,
 } from "@/lib/programs/capture-text-step-record";
+import {
+  P4_ROADMAP_PLAN_KEY,
+  parseP4RoadmapPlan,
+  p4RoadmapPlanText,
+  p4RoadmapPlanGateText,
+} from "@/lib/programs/p4-roadmap-plan";
 
 /**
  * How a capture answer reads as text, by section key. Step pages store some
@@ -38,6 +44,10 @@ import {
  */
 
 export function captureValueText(key: string, raw: string): string {
+  if (key === P4_ROADMAP_PLAN_KEY) {
+    const plan = parseP4RoadmapPlan(raw);
+    return plan ? p4RoadmapPlanText(plan) : "";
+  }
   if ((CAPTURE_TEXT_STEP_RECORD_KEYS as readonly string[]).includes(key))
     return captureTextStepWords(raw);
   if (key === "gaps_root_causes") return rootCauseCaptureText(raw);
@@ -62,6 +72,10 @@ export function captureValueText(key: string, raw: string): string {
 
 /** Only the team's own words, never a register's labels, for phrase checks. */
 export function captureValueGateText(key: string, raw: string): string {
+  if (key === P4_ROADMAP_PLAN_KEY) {
+    const plan = parseP4RoadmapPlan(raw);
+    return plan ? p4RoadmapPlanGateText(plan) : "";
+  }
   if ((CAPTURE_TEXT_STEP_RECORD_KEYS as readonly string[]).includes(key))
     return captureTextStepWords(raw);
   if (key === "gaps_root_causes") return rootCauseGateText(raw);
