@@ -12,7 +12,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listEffectiveDiscoveryArchetypeOptions } from "@/lib/deliverables/orchestrator/briefs/archetype-declaration-surface";
-import { getOpenDraft } from "@/lib/programs/origination-drafts";
+import { getOpenDraft, type OriginationDraftState } from "@/lib/programs/origination-drafts";
 import { normalizeDiscoveryArchetypeDeclaration } from "@/lib/programs/discovery/discovery-archetype-declaration";
 
 export const dynamic = "force-dynamic";
@@ -127,25 +127,35 @@ export default async function StrategicMoveOriginatePage({
   // which the routing cutover supersedes.
   let discoveryIntakeEnabled = false;
   let extendedIntakeFieldsEnabled = false;
+  let initialDraftState: OriginationDraftState | null = null;
+  let initialDraftUnavailable = false;
   try {
     const ctx = await requireTenancy();
-    firstMessage = await composeOriginateFirstMessage(
-      ctx,
-      fromInitiative,
-      fromIntelligence,
-    );
+    discoveryIntakeEnabled = isFeatureEnabled(ctx, "discovery_intake_v2");
+    extendedIntakeFieldsEnabled = isFeatureEnabled(ctx, "moves_extended_intake_fields_v1");
+    if (!extendedIntakeFieldsEnabled) {
+      firstMessage = await composeOriginateFirstMessage(ctx, fromInitiative, fromIntelligence);
+    }
+    let draft = null;
     try {
-      const draft = await getOpenDraft(ctx, "/strategic-moves/new");
+      draft = extendedIntakeFieldsEnabled
+        ? await getOpenDraft(ctx, "/strategic-moves/new", { failOnReadError: true })
+        : await getOpenDraft(ctx, "/strategic-moves/new");
       initialDiscoveryArchetypeId = normalizeDiscoveryArchetypeDeclaration(
         draft?.state.brief?.discoveryArchetypeId,
       );
+      if (extendedIntakeFieldsEnabled && !fromInitiative && !fromIntelligence
+        && draft?.committed_engagement_id == null) {
+        initialDraftState = draft?.state ?? null;
+      }
     } catch {
-      // A failed or stale draft must not disable the rest of the origination page.
+      initialDraftUnavailable = extendedIntakeFieldsEnabled;
     }
-    discoveryIntakeEnabled = isFeatureEnabled(ctx, "discovery_intake_v2");
-    extendedIntakeFieldsEnabled = isFeatureEnabled(
+    if (extendedIntakeFieldsEnabled) firstMessage = await composeOriginateFirstMessage(
       ctx,
-      "moves_extended_intake_fields_v1",
+      fromInitiative,
+      fromIntelligence,
+      { draft },
     );
   } catch {
     // Tenancy or draft read failure — fall through; client uses its default 2A message.
@@ -164,6 +174,8 @@ export default async function StrategicMoveOriginatePage({
         businessSegmentOptions={businessSegmentOptions}
         discoveryArchetypeOptions={listEffectiveDiscoveryArchetypeOptions()}
         initialDiscoveryArchetypeId={initialDiscoveryArchetypeId}
+        initialDraftState={initialDraftState}
+        initialDraftUnavailable={initialDraftUnavailable}
       />
     </AppShell>
   );

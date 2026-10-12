@@ -13,6 +13,7 @@ const classifyOrigination = jest.fn();
 const classifierMatchToViewModel = jest.fn();
 const getOpenDraft = jest.fn();
 const saveDraft = jest.fn();
+const getAzureWriteFluentClient = jest.fn();
 const azureRead = {
   maybeSingle: jest.fn(),
   query: jest.fn(),
@@ -46,7 +47,38 @@ jest.mock('@/lib/programs/origination-drafts', () => ({
   saveDraft,
 }));
 
+jest.mock('@/lib/data-plane/postgresCompat', () => ({ getAzureWriteFluentClient }));
+
 const CTX = { clientId: 'client_meridian', userId: 'person_1', role: 'client_admin' };
+
+describe('saved origination intake read boundary', () => {
+  const actual = jest.requireActual<typeof import('@/lib/programs/origination-drafts')>('@/lib/programs/origination-drafts');
+  const client = () => {
+    const query = { select: jest.fn(), eq: jest.fn(), is: jest.fn(), maybeSingle: jest.fn() };
+    query.select.mockReturnValue(query); query.eq.mockReturnValue(query); query.is.mockReturnValue(query);
+    const from = jest.fn(() => query);
+    getAzureWriteFluentClient.mockReturnValue({ from });
+    return { query, from };
+  };
+  it('reads only the current actor, tenant, surface and uncommitted slot', async () => {
+    const { query, from } = client();
+    const state = { turns: [], brief: { programName: 'Saved Intake', intakeFields: { 'scope-in': 'Saved scope' }, sponsorProgressEmails: false }, patternMatch: null };
+    query.maybeSingle.mockResolvedValue({ data: { id: 'draft-a', surface: '/strategic-moves/new', state, committed_engagement_id: null, updated_at: '2026-10-11T00:00:00Z' }, error: null });
+    const draft = await actual.getOpenDraft(CTX, '/strategic-moves/new', { failOnReadError: true });
+    expect(from).toHaveBeenCalledWith('program_origination_drafts');
+    expect(query.eq.mock.calls).toEqual([['user_id', CTX.userId], ['client_id', CTX.clientId], ['surface', '/strategic-moves/new']]);
+    expect(query.is).toHaveBeenCalledWith('committed_engagement_id', null);
+    expect(draft?.state).toEqual(state);
+  });
+  it('returns null only for absence while the flagged strict read exposes an error', async () => {
+    const { query } = client();
+    query.maybeSingle.mockResolvedValue({ data: null, error: null });
+    await expect(actual.getOpenDraft(CTX, '/strategic-moves/new', { failOnReadError: true })).resolves.toBeNull();
+    query.maybeSingle.mockResolvedValue({ data: null, error: { message: 'unavailable' } });
+    await expect(actual.getOpenDraft(CTX, '/strategic-moves/new', { failOnReadError: true })).rejects.toThrow('origination_draft_read_unavailable');
+    await expect(actual.getOpenDraft(CTX, '/strategic-moves/new')).resolves.toBeNull();
+  });
+});
 
 function makePost(body: unknown): NextRequest {
   return new Request('http://localhost', {
