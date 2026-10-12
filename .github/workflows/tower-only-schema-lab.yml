@@ -131,8 +131,7 @@ jobs:
             --output json > audit-artifacts/tower-only-schema/operator-before.json
           az containerapp job execution list --name job-abarva-private-operator-eus --resource-group "$RESOURCE_GROUP" \
             --output json > audit-artifacts/tower-only-schema/operator-executions-before.json
-          nonterminal="$(jq '[.[] | select((.properties.status // "") as $s |
-            ($s != "Succeeded" and $s != "Failed" and $s != "Cancelled"))] | length' \
+          nonterminal="$(jq -f scripts/tower/operator-nonterminal-executions.jq \
             audit-artifacts/tower-only-schema/operator-executions-before.json)"
           [[ "$nonterminal" == 0 ]] || { echo "Private operator has a nonterminal execution" >&2; exit 1; }
           idle="$(jq -r '[.properties.template.containers[]? | select(.name == "db-migrate") |
@@ -219,8 +218,7 @@ jobs:
           }
           az containerapp job execution list --name job-abarva-private-operator-eus --resource-group "$RESOURCE_GROUP" \
             --output json > audit-artifacts/tower-only-schema/operator-executions-before-apply.json
-          nonterminal="$(jq '[.[] | select((.properties.status // "") as $s |
-            ($s != "Succeeded" and $s != "Failed" and $s != "Cancelled"))] | length' \
+          nonterminal="$(jq -f scripts/tower/operator-nonterminal-executions.jq \
             audit-artifacts/tower-only-schema/operator-executions-before-apply.json)"
           [[ "$nonterminal" == 0 ]] || { echo "Private operator is busy" >&2; exit 1; }
 

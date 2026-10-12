@@ -31,10 +31,11 @@ Adds an operator workflow that can inspect and apply exactly two approved Tower 
 - `scripts/tower/tower-only-schema-lane.ts` and its redacted proof verifier.
 - `.github/workflows/tower-only-schema-lab.yml` and the early reconciliation guard in `.github/workflows/db-migration-lab.yml`.
 - Three npm operator script entries and focused tests.
+- The private operator idle guard now treats a historical `Stopped` execution as terminal while still blocking running, pending, and unknown statuses.
 
 ## QA / Validation
 
-- **Pass:** Local focused Node tests, ESLint, and YAML parsing.
+- **Pass:** Local focused Node tests, including the terminal versus active operator-status regression, ESLint, and YAML parsing.
 - **Pass:** Release validation after this record is finalized.
 - **Not run:** Live status/apply/readback dispatch; a merged PR is not a migration apply.
 - The live read-only run must separately confirm the exact ledger state, prerequisites, and private proof readback before any apply. A merged PR is not a migration apply.
