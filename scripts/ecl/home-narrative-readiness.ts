@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { CANONICAL_TENANT_KEYS } from "../../src/config/tenants/CANONICAL_TENANTS";
 import { POLICY_VERSION } from "../../src/lib/governance/context-corpus-policy";
 
 export interface NarrativeReadinessProof {
@@ -22,6 +23,30 @@ export interface NarrativeReadinessProof {
 
 export const PROJECTION_READINESS_TABLE = "ecl_projection.home_enterprise_landscape";
 export const SIGNAL_READINESS_TABLE = "home_ecl_narrative_signal";
+
+export function narrativeReadinessOnlyMode(
+  argv: readonly string[],
+  env: Record<string, string | undefined>,
+  write: boolean,
+  fromPlanPath: string | null,
+): boolean {
+  const value = env.HOME_ECL_NARRATIVE_READINESS_ONLY;
+  if (value !== undefined && value !== "true" && value !== "false") {
+    throw new Error("HOME_ECL_NARRATIVE_READINESS_ONLY must be true or false");
+  }
+  const enabled = argv.includes("--readiness-only") || value === "true";
+  if (enabled && (write || fromPlanPath)) {
+    throw new Error("Readiness-only inspection cannot apply or replay a narrative plan");
+  }
+  return enabled;
+}
+
+export function assertNarrativeInspectionScope(tenantKey: string | null | undefined, assessmentId: string | null | undefined): void {
+  if (!tenantKey || !(CANONICAL_TENANT_KEYS as readonly string[]).includes(tenantKey) ||
+    !assessmentId || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{2,119}$/.test(assessmentId)) {
+    throw new Error("Readiness inspection requires an explicit canonical tenant and assessment");
+  }
+}
 
 export function readinessKey(objectTable: string, objectId: string): string {
   return `${objectTable}:${objectId}`;
