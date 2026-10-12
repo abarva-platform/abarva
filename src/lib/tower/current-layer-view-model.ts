@@ -28,6 +28,8 @@ export interface TowerMartCommandCenter {
   /** At least one claim carried an explicit amount and a valid reporting period. */
   claimableAmountLoaded?: boolean;
   valueClaimCount?: number;
+  /** Outcome-measure source records kept separate from benefit claims. */
+  valueProofOutcomeRecordCount?: number;
   knownValueClaimCount?: number;
   claimableValue?: number;
   financeValidatedBlockedValue?: number;

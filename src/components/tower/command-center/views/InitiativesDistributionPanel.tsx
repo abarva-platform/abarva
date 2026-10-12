@@ -183,8 +183,7 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
         </div>
       </div>
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--canon-gray-500)" }}>
-        {missingTypes} cases have no benefit type; {missingFunding} have no funding amount;
-        {missingBenefits} have no projected benefit amount. Bars marked partial omit unknown
+        {`${missingTypes} cases have no benefit type; ${missingFunding} have no funding amount; ${missingBenefits} have no projected benefit amount.`} Bars marked partial omit unknown
         amounts rather than treating them as zero. The loaded funding category repeats this
         same grouping, so there is no second category chart. A reliable business-area
         breakdown needs each case linked to its business area.

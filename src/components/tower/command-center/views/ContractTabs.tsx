@@ -146,8 +146,8 @@ function contractSummaryLine(view: TowerCommandCenterView) {
         : `${formatUsdM(s.approvedInvestmentUsd)} in approved FY26 project funding`} ·{" "}
       <strong>{s.claimableAmountLoaded === false ? "Cleared amount not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${formatUsdM(s.claimableUsd)} cleared for reporting in loaded months` : "No benefit amount cleared for reporting"}</strong> ·{" "}
       {claimCount > 0
-        ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} claims not cleared for reporting`
-        : "Value claims not loaded"}
+        ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} benefit claims do not show a cleared amount`
+        : "Benefit claims not loaded"}
     </>
   );
 }
@@ -167,14 +167,17 @@ function ContractMasthead({ view }: { view: TowerCommandCenterView }) {
         <span>
           {valueClaimCount(view) > 0 ? (
             <>
-              <b>{formatCount(s.usageSupportedClaimCount)}</b> claims with usage evidence
+              <b>{formatCount(s.usageSupportedClaimCount)}</b> benefit claims with usage evidence
             </>
           ) : (
             "Usage support not loaded"
           )}
         </span>
-        <span>{formatCount(s.outcomeMeasuredClaimCount)}/{formatCount(s.valueClaimCount)} claims outcome-measured</span>
-        <span>{formatCount(emittingAiCount(view))} asset rows with usage metrics · {formatCount(view.usageObservations.length)} separate use-case usage observations</span>
+        <span>{formatCount(s.outcomeMeasuredClaimCount)}/{formatCount(s.valueClaimCount)} benefit claims outcome-measured</span>
+        {(s.valueProofOutcomeRecordCount ?? 0) > 0 ? (
+          <span>{formatCount(s.valueProofOutcomeRecordCount ?? 0)} separate outcome-measure records</span>
+        ) : null}
+        <span>{formatCount(emittingAiCount(view))} asset rows with usage metrics · {formatCount(view.usageObservations.length)} separate adoption-source rows</span>
         <span>
           {s.asOfPeriod ? `As of ${s.asOfPeriod}` : "As-of date not recorded"}
         </span>
@@ -453,7 +456,7 @@ export function ValueProofContractView({
       <ContractMasthead view={view} />
       <SectionTitle
         title="Results and proof"
-        subtitle={`${valueClaimCount(view)} claims · evidence on record; requirements differ by claim type`}
+        subtitle={`${formatCount(valueClaimCount(view))} benefit claims${(s.valueProofOutcomeRecordCount ?? 0) > 0 ? ` + ${formatCount(s.valueProofOutcomeRecordCount ?? 0)} separate outcome-measure records` : ""} · evidence requirements differ by record type`}
       />
 
       <section className={styles.valueProofGrid}>
@@ -475,7 +478,9 @@ export function ValueProofContractView({
         <article className={styles.contractCard}>
           {cardTitle(
             "Quarterly plan and recorded results",
-            `${formatCount(view.valueTrajectory.length)} quarter${view.valueTrajectory.length === 1 ? "" : "s"} loaded · ${s.sourceFiles[0] ?? s.sourceStandard}`,
+            hasTrajectory
+              ? `${formatCount(view.valueTrajectory.length)} quarter${view.valueTrajectory.length === 1 ? "" : "s"} loaded from the quarterly trajectory`
+              : "Quarterly trajectory not loaded",
           )}
           <div className={styles.trajectoryStats}>
             <div>
@@ -487,7 +492,7 @@ export function ValueProofContractView({
               <strong>{formatLoadedUsdM(recordedPAndL)}</strong>
             </div>
             <div>
-              <span>Value records with measured results</span>
+              <span>Benefit claims with measured results</span>
               <strong>{formatCount(s.outcomeMeasuredClaimCount)} / {formatCount(s.valueClaimCount)}</strong>
             </div>
           </div>
@@ -501,9 +506,11 @@ export function ValueProofContractView({
             </div>
           )}
           <p className={styles.contractCallout}>
-            {recordedPAndL === null
-              ? "No actual financial result is recorded in the loaded quarters. Gray bars show only the plan."
-              : "The red line shows actual financial results for the loaded quarters; gray bars show the plan. This is a complete eight-quarter view only when all eight quarters are loaded."}
+            {!hasTrajectory
+              ? "No quarterly plan or actual-result rows are loaded, so there is no quarter-by-quarter comparison to assess."
+              : recordedPAndL === null
+                ? "The loaded quarters have no recorded financial result. Gray bars show any plan amounts recorded for those quarters."
+                : "The red line shows actual financial results for the loaded quarters; gray bars show the plan. This is a complete eight-quarter view only when all eight quarters are loaded."}
           </p>
         </article>
 
@@ -531,15 +538,15 @@ export function ValueProofContractView({
         */}
         <article className={styles.contractCard}>
           {cardTitle(
-            "Cases awaiting a decision",
-            `Top ${formatCount(programs.length)} of ${formatCount(view.programs.length)}`,
+            "Program decision rows",
+            `Top ${formatCount(programs.length)} of ${formatCount(view.programs.length)} reviewed program rows`,
           )}
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Case</th>
+                  <th>Program</th>
                   <th>Projected yearly benefit</th>
                   <th>Proof progress</th>
                 </tr>
@@ -567,8 +574,8 @@ export function ValueProofContractView({
             </table>
           </div>
           <p className={styles.contractCallout}>
-            These are case-level plans, not benefits already earned. They are part of the
-            projected yearly total above, so do not add them to it again.
+            These are program-level planning amounts where recorded, not benefits already earned.
+            Their relationship to the portfolio estimate is not reconciled here; do not add them to it.
           </p>
         </article>
       </section>
@@ -707,7 +714,7 @@ function aiBenefitLabel(item: TowerAiView): string {
 function aiUsageLabel(item: TowerAiView): string {
   if (item.usageHeadline) return item.usageHeadline;
   if (item.usageBars.length > 0) return "usage evidence recorded";
-  return "no usage evidence";
+  return "Usage metric not loaded";
 }
 
 function aiUsageScore(item: TowerAiView): number | null {
@@ -862,7 +869,7 @@ export function AiPortfolioContractView({
     {
       key: "adoption" as const,
       label: "Adoption lens",
-      detail: `${formatCount(adoptionLensRows.length)} tool rollouts · ${formatCount(view.usageObservations.length)} case usage observations`,
+      detail: `${formatCount(adoptionLensRows.length)} tool rollouts · ${formatCount(view.usageObservations.length)} adoption-source rows`,
     },
   ];
   return (
@@ -871,7 +878,7 @@ export function AiPortfolioContractView({
       <div className={styles.contractModeRow}>
         <SectionTitle
           title="AI initiatives and tool rollouts"
-          subtitle={`${formatCount(s.aiInitiativeCount)} AI use cases and tool rollouts · ${formatCount(view.usageObservations.length)} separate use-case usage observations · ${caseFunding === null ? "Approved FY26 AI case funding not verified" : `${formatUsdM(caseFunding)} approved FY26 AI case funding`}`}
+          subtitle={`${formatCount(view.allInitiatives.filter(isBusinessCase).length)} AI use cases + ${formatCount(view.allInitiatives.filter(isToolRolloutRow).length)} tool rollouts · ${formatCount(view.usageObservations.length)} separate adoption-source rows · ${caseFunding === null ? "Approved FY26 AI case funding not verified" : `${formatUsdM(caseFunding)} approved FY26 AI case funding`}`}
         />
         <div
           className={styles.contractSegments}
@@ -1030,8 +1037,12 @@ export function AiPortfolioContractView({
                     </td>
                     <td>{gap.owner ?? "Unassigned"}</td>
                     <td>
-                      {evidenceGapAmount(gap).value}
-                      <small>{evidenceGapAmount(gap).label}</small>
+                      {evidenceGapAmount(gap).value === "Not loaded"
+                        ? "Amount not loaded"
+                        : evidenceGapAmount(gap).value}
+                      {evidenceGapAmount(gap).value === "Not loaded" ? null : (
+                        <small> {evidenceGapAmount(gap).label}</small>
+                      )}
                     </td>
                     <td>{gap.priority}</td>
                   </tr>
@@ -1048,14 +1059,14 @@ export function AiPortfolioContractView({
             "Adoption lens",
             "Tool rollouts ranked by recorded usage evidence",
           )}
-          <p>{formatCount(view.usageObservations.length)} separate use-case usage observations are loaded. They do not establish tool rollout targets or vendor exposure.</p>
+          <p>{formatCount(view.usageObservations.length)} separate adoption-source rows are loaded; {formatCount(view.usageObservations.filter((item) => item.usageHeadline || item.usageBars.length > 0).length)} carry a displayable usage metric. These rows do not establish tool rollout targets or vendor exposure.</p>
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>
               <thead>
                 <tr>
                   <th>#</th>
                   <th>Initiative / tool</th>
-                  <th>Usage</th>
+                  <th>Usage metric</th>
                   <th>Adoption</th>
                   <th>Benefit</th>
                 </tr>
@@ -1087,7 +1098,7 @@ export function AiPortfolioContractView({
           {view.usageObservations.length > 0 ? (
             <div className={styles.decisionLaneTableWrap}>
               <table className={styles.contractTable}>
-                <thead><tr><th>Use-case usage observation</th><th>Recorded usage</th></tr></thead>
+                <thead><tr><th>Adoption-source row</th><th>Usage metric</th></tr></thead>
                 <tbody>{view.usageObservations.map((item) => (
                   <tr key={item.id}><td>{item.name}</td><td>{aiUsageLabel(item)}</td></tr>
                 ))}</tbody>
@@ -1129,7 +1140,7 @@ export function AiPortfolioContractView({
                         </button>
                         <span>{aiUsageLabel(item)}</span>
                       </td>
-                      <td>{item.vendor ?? "Unassigned"}</td>
+                      <td>{item.vendor ?? "Not loaded"}</td>
                       <td>
                         {humanizeLabel(
                           item.businessValueType ??
@@ -1173,7 +1184,7 @@ function campaignRows(view: TowerCommandCenterView): CampaignRow[] {
     title: action.title.replace(/^FIX PROOF:\s*/i, ""),
     owner: action.ownerRole,
     tasks: 1,
-    unit: "Task",
+    unit: "Recommendation",
     valueUsd: action.amountExposedUsd,
     valueLabel: action.moduleHandoff?.toLowerCase() === "source" ? "Potential annual saving" : "Projected yearly benefit affected",
     due: nextStepLabel(action.due),
@@ -1239,14 +1250,14 @@ function sourceContractActions(view: TowerCommandCenterView) {
 
 function reconciliationRows(view: TowerCommandCenterView) {
   const ai = view.summary.aiInitiativeCount;
-  const tasks = view.actions.length;
+  const recommendations = view.actions.length;
   const claims = valueClaimCount(view);
   return [
     ["AI portfolio assets", ai],
-    ["Value claims", claims],
+    ["Benefit claims", claims],
     ["AI risk lens evidence gaps", view.gaps.length],
     ["Pipeline field gaps (ops)", view.pipelineGaps.length],
-    ["Action queue tasks", tasks],
+    ["Source recommendations", recommendations],
   ] as const;
 }
 
@@ -1273,19 +1284,19 @@ export function EvidenceActionsContractView({
       <ContractMasthead view={view} />
       <SectionTitle
         title="Distinct review populations"
-        subtitle="Assets, claims, evidence gaps, pipeline gaps and tasks have different counting bases"
+        subtitle="Assets, benefit claims, evidence gaps, pipeline gaps and recommendations have different counting bases"
       />
 
       <section className={styles.populationGrid}>
         <article>
           <strong>{formatCount(valueClaimCount(view))}</strong>
-          <span>Value claims</span>
-          <p>Benefit assertions attached to a value case. Not tasks.</p>
+          <span>Benefit claims</span>
+          <p>Benefit assertions attached to a value case. Not follow-up records.</p>
         </article>
         <article>
           <strong>{formatCount(view.actions.length)}</strong>
-          <span>Open tasks</span>
-          <p>Assignable work items. Campaigns show affected records.</p>
+          <span>Source recommendations</span>
+          <p>Suggested follow-ups from the projection. Task-system assignment, status, and due date are not loaded.</p>
         </article>
         <article>
           <strong>{formatCount(economicRows)}</strong>
@@ -1295,14 +1306,14 @@ export function EvidenceActionsContractView({
       </section>
 
       <p className={styles.contractCallout}>
-        The same case may appear in several tasks or evidence gaps. Each dollar amount
+        The same case may appear in several recommendations or evidence gaps. Each dollar amount
         shows the value affected by that item; do not add those amounts together.
       </p>
 
       <section>
         <SectionTitle
-          title="Action campaigns"
-          subtitle={`${formatCount(view.actions.length)} open tasks · campaigns show affected records`}
+          title="Review follow-ups"
+          subtitle={`Up to ${formatCount(campaigns.length)} source recommendations and evidence gaps shown · task-system status not loaded`}
         />
         <div className={styles.campaignStack}>
           {campaigns.length > 0 ? (
@@ -1339,7 +1350,7 @@ export function EvidenceActionsContractView({
             ))
           ) : (
             <div className={styles.contractEmpty}>
-              No action campaigns are loaded for this review.
+              No source recommendations or evidence-gap follow-ups are loaded for this review.
             </div>
           )}
         </div>
@@ -1396,8 +1407,12 @@ export function EvidenceActionsContractView({
                     <i>{gap.owner ?? "Unassigned"}</i>
                   </span>
                   <b>
-                    {evidenceGapAmount(gap).value}
-                    <small>{evidenceGapAmount(gap).label}</small>
+                    {evidenceGapAmount(gap).value === "Not loaded"
+                      ? "Amount not loaded"
+                      : evidenceGapAmount(gap).value}
+                    {evidenceGapAmount(gap).value === "Not loaded" ? null : (
+                      <small> {evidenceGapAmount(gap).label}</small>
+                    )}
                   </b>
                 </button>
               ))

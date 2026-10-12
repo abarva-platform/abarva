@@ -109,16 +109,15 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
       </h2>
 
       <p style={{ margin: "-10px 0 0", maxWidth: 980, fontSize: 15, lineHeight: 1.55, color: "var(--canon-gray-700)" }}>
-        These records are labeled as platform, governance or foundation work. Their approved
-        funding is part of the AI case funding total; do not add it again. The cases
-        they support are not linked here, so their funding or benefits cannot be assigned to
-        a particular downstream case.
+        {noRows
+          ? "No AI case has an explicit platform, governance, or foundation category in this read. Foundation funding, share, and direct benefit are not loaded."
+          : "These records are labeled as platform, governance or foundation work. Their approved funding is part of the AI case funding total; do not add it again. The cases they support are not linked here, so their funding or benefits cannot be assigned to a particular downstream case."}
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 }}>
         {[
           ["Foundation rows", noRows ? "Not loaded" : formatCount(rows.length)],
-          ["Approved foundation funding", noRows || missingSpendRows > 0 ? "Partial" : formatUsdM(spendUsd)],
+          ["Approved foundation funding", noRows ? "Not loaded" : missingSpendRows > 0 ? "Partial" : formatUsdM(spendUsd)],
           ["Share of approved AI funding", share === null ? "Not loaded" : formatPct(share)],
           ["Projected direct benefit", loadedValueRows.length === 0 ? "Not loaded" : formatUsdM(promisedUsd)],
         ].map(([label, value]) => (
@@ -199,7 +198,9 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
       </div>
 
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--canon-gray-500)" }}>
-        {allLoadedValuesAreZero
+        {noRows
+          ? "Foundation classification is not loaded; no funding or value conclusion can be drawn from this panel."
+          : allLoadedValuesAreZero
           ? "These rows are loaded as foundations, not direct value claims. Their value depends on linked use cases proving outcomes later."
           : "Some foundation rows carry sponsor-stated value or missing value fields, so this panel does not call the foundation portfolio no-value by default."}
       </p>

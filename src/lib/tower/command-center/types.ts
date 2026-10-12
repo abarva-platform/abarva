@@ -104,6 +104,7 @@ export interface TowerCommandSummary {
   /** False when blocked dollars cannot be compared on one reporting period. */
   blockedValueComparable: boolean;
   valueClaimCount: number;
+  valueProofOutcomeRecordCount?: number;
   knownValueClaimCount: number;
   financeValidatedBlockedUsd: number;
   promisedValueExposureUsd: number;
