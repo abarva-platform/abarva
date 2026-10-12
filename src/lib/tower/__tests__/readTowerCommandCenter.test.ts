@@ -315,8 +315,9 @@ describe("readTowerCommandCenter", () => {
           row_key: "adoption-1",
           page_key: "adoption_lens",
           use_case_object_id: "use-case-1",
-          tool_object_id: "tool-1",
+          tool_object_id: null,
           display_payload_json: { page_key: "adoption_lens", title: "Usage observation" },
+          tool_name: "Case one",
         }),
       ],
     });
@@ -330,6 +331,11 @@ describe("readTowerCommandCenter", () => {
 
     expect(mart?.generatedFrom).toBe("ecl_serving");
     expect(mart?.aiPortfolio.map((row) => row.populationKind)).toEqual(["ai_case", "usage_observation"]);
+    expect(mart?.aiPortfolio[0]?.vendorName).toBeNull();
+    expect(mart?.aiPortfolio[0]?.systemName).toBeNull();
+    expect(mart?.aiPortfolio[1]?.systemName).toBeNull();
+    expect(view?.allInitiatives[0]?.vendor).toBeNull();
+    expect(view?.usageObservations[0]?.system).toBeNull();
     expect(mart?.aiPortfolio[0]?.valueScoreLoaded).toBe(false);
     expect(view?.summary.aiInitiativeCount).toBe(1);
     expect(view?.allInitiatives[0]?.valueScoreLoaded).toBe(false);
@@ -1059,7 +1065,13 @@ describe("readTowerCommandCenter", () => {
       ...servingRow({
         row_key: key,
         page_key: "cost_lens",
-        display_payload_json: { title, value, canonical_measure_id: `measure:${key}`, ...extras },
+        display_payload_json: {
+          title, value, canonical_measure_id: `measure:${key}`,
+          benefit_reconciliation_status: "reconciled", benefit_period: "annual",
+          promised_value_usd: "99000000",
+          period_start: "2026-01-01", period_end: "2026-03-31", fiscal_quarter: "2026-Q1",
+          ...extras,
+        },
         measure_id: `measure:${key}`,
         measure_value_number: value,
       }),
@@ -1089,13 +1101,43 @@ describe("readTowerCommandCenter", () => {
         additive_to_it_spend: false,
       }),
     ];
+    const benefit = {
+      ...servingRow({
+        row_key: "benefit-1", page_key: "value_proof", claim_id: "benefit-1",
+        display_payload_json: {
+          title: "Benefit one", benefit_reconciliation_status: "reconciled",
+          benefit_period: "annual", promised_value_usd: "2000000",
+        },
+      }),
+      row_type: "value_claim_gap", projection_version: 4,
+    };
+    const outcomeMeasure = {
+      ...servingRow({
+        row_key: "metric:outcome-1", page_key: "value_proof", claim_id: "metric:outcome-1",
+        display_payload_json: {
+          title: "Outcome measure one", benefit_reconciliation_status: "reconciled",
+          benefit_period: "annual", promised_value_usd: "4000000",
+          period_start: "2026-01-01", period_end: "2026-03-31", fiscal_quarter: "2026-Q1",
+        },
+      }),
+      row_type: "value_claim_gap", projection_version: 4,
+    };
     mockServingRows({
       tower_command_center: [{ ...servingRow({ row_key: "executive_summary", page_key: "command_center" }), projection_version: 4 }],
+      tower_value_proof: [benefit, outcomeMeasure, ...rows],
       tower_cost_lens: [...rows, { ...rows[0], projection_version: 3, source_refs_json: [] }],
     });
     const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
     const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
     expect(view?.costLens?.modeledAnnualSpendUsd).toBe(10_000_000);
+    expect(mart?.command.valueClaimCount).toBe(1);
+    expect(mart?.command.valueProofOutcomeRecordCount).toBe(1);
+    expect(mart?.command.knownValueAmountUsd).toBe(2_000_000);
+    expect(mart?.valueFunnel[0]?.claimCount).toBe(1);
+    expect(mart?.valueFunnel[0]?.valueNumeric).toBe(2_000_000);
+    expect(mart?.valueTrajectory).toEqual([]);
+    expect(view?.summary.valueClaimCount).toBe(1);
+    expect(view?.summary.valueProofOutcomeRecordCount).toBe(1);
     expect(view?.costLens?.categories).toHaveLength(2);
     expect(view?.costLens?.contractExposure[0]?.amountUsd).toBe(9_000_000);
     expect(view?.costLens?.categories[0]?.sourceRow).toBe(2);

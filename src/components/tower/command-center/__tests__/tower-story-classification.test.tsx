@@ -97,7 +97,7 @@ describe("Tower story denominators", () => {
     };
     render(<CommandCenterView view={view} onOpenGap={() => {}} onGoToFunnel={() => {}} onGoToAi={() => {}} onGoToActions={() => {}} />);
     expect(document.body.textContent).toContain("18 AI use cases + 0 tool rollouts");
-    expect(document.body.textContent).toContain("18 separate usage observations");
+    expect(document.body.textContent).toContain("18 separate adoption-source rows");
     expect(document.body.textContent).not.toContain("36 assets");
     expect(document.body.textContent).not.toContain("38 AI business cases");
   });

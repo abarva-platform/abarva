@@ -65,6 +65,8 @@ export function buildBudgetDomainRows(
 
 export function BudgetDomainPanel({ view }: { view: TowerCommandCenterView }) {
   const rows = buildBudgetDomainRows(view);
+  const reviewedCount = rows.reduce((sum, row) => sum + row.reviewedCount, 0);
+  const missingDomainCount = rows.find((row) => row.domain === "Domain not loaded")?.reviewedCount ?? 0;
 
   if (rows.length === 0) {
     return (
@@ -92,7 +94,11 @@ export function BudgetDomainPanel({ view }: { view: TowerCommandCenterView }) {
           letterSpacing: "-0.02em",
         }}
       >
-        {rows.reduce((sum, row) => sum + row.reviewedCount, 0)} reviewed programs are grouped by their loaded domain.
+        {missingDomainCount === reviewedCount
+          ? `${formatCount(reviewedCount)} reviewed program rows have no domain classification loaded.`
+          : missingDomainCount > 0
+            ? `${formatCount(missingDomainCount)} of ${formatCount(reviewedCount)} reviewed program rows have no domain classification loaded.`
+            : `${formatCount(reviewedCount)} reviewed programs are grouped by their loaded domain.`}
       </h2>
       <div style={PANEL}>
         <div style={HEAD}>
@@ -121,7 +127,9 @@ export function BudgetDomainPanel({ view }: { view: TowerCommandCenterView }) {
         })}
       </div>
       <p style={{ margin: 0, fontSize: 15, color: "var(--canon-gray-500)" }}>
-        The domain labels and program counts are available. Funding amounts are withheld until
+        {missingDomainCount === reviewedCount
+          ? "No program domain labels are loaded. The counts remain grouped under Domain not loaded. "
+          : "Loaded program domain labels and counts are shown. "}Funding amounts are withheld until
         source reconciliation is exposed on this view. A domain-level run/change/transform split
         is not loaded.
       </p>

@@ -30,8 +30,8 @@ describe("Tower financial story boundaries", () => {
       ...view,
       summary: { ...view.summary, claimableAmountLoaded: true, claimableClaimCount: 1, claimableUsd: 1_000_000 },
     }} />);
-    expect(html).toContain("The loaded claims project");
-    expect(html).toContain("cleared the reporting gate in the loaded months");
+    expect(html).toContain("The loaded benefit claims project");
+    expect(html).toContain("is cleared for reporting across loaded benefit claims");
     expect(html).toContain("Approved FY26 AI project funding");
     expect(html).toContain("Not verified");
     expect(html).not.toContain("of asserted value is claimable");
@@ -102,8 +102,8 @@ describe("Tower financial story boundaries", () => {
       />,
     );
     expect(html).toContain("No yearly benefit estimate is loaded");
-    expect(html).toContain("its value remains unknown");
-    expect(html).toContain("No value claims are loaded for this comparison");
+    expect(html).toContain("No yearly benefit estimate is loaded");
+    expect(html).toContain("No yearly case-benefit amounts are loaded for this comparison");
   });
 
   it("keeps yearly projected benefit separate from Finance-reviewed value in loaded months", () => {
@@ -136,7 +136,7 @@ describe("Tower financial story boundaries", () => {
         onGoToActions={() => undefined}
       />,
     );
-    expect(html).toContain("No value records are loaded, so cleared value is unknown");
+    expect(html).toContain("No benefit claims are loaded, so cleared value is unknown");
     expect(html).not.toContain("$0 has cleared reporting");
   });
 
@@ -154,9 +154,9 @@ describe("Tower financial story boundaries", () => {
         summary: { ...view.summary, claimableUsd: 0, claimableClaimCount: 0, claimableAmountLoaded: true },
       }} />,
     );
-    expect(unknown).toContain("A cleared amount is not verified");
+    expect(unknown).toContain("A cleared value amount is not verified");
     expect(unknown).toContain("Not verified");
-    expect(recordedZero).toContain("has cleared the reporting gate");
-    expect(recordedZero).not.toContain("A cleared amount is not verified");
+    expect(recordedZero).toContain("$0.0M is cleared for reporting across loaded benefit claims");
+    expect(recordedZero).not.toContain("A cleared value amount is not verified");
   });
 });
