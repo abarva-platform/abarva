@@ -16,6 +16,15 @@ const FORBIDDEN_MOVE = "1557f032-5a5c-4475-abe5-b1a841576649";
 const forbiddenControl = /rebuild|sign off anyway|acknowledg.*block|delete|archive|reset|impersonat/i;
 const sha = (value: string | Buffer) => crypto.createHash("sha256").update(value).digest("hex");
 const escape = (value: string) => value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+function createdMoveId(body: Record<string, unknown>, pageUrl: string): string {
+  const candidate = body.engagementId || body.programId || body.moveId ||
+    (body.program as { id?: unknown } | undefined)?.id ||
+    new URL(pageUrl).pathname.match(/\/strategic-moves\/([0-9a-f-]{36})/)?.[1];
+  if (typeof candidate !== "string" || !/^[0-9a-f-]{36}$/i.test(candidate) || candidate === FORBIDDEN_MOVE) {
+    throw new Error("new_move_id_unverified");
+  }
+  return candidate;
+}
 type Action = { kind: "click" | "check" | "uncheck" | "fill" | "select" | "upload" | "download"; label: string; value?: string; file?: string; scopeId?: string; reviewedArtifact?: string };
 interface Review {
   runId: string; operatorId: string; moveId: string | null; stepId: string;
@@ -28,6 +37,16 @@ interface Review {
 test.use({ baseURL: BASE, storageState: { cookies: [], origins: [] }, trace: "off", video: "off" });
 test.describe("dedicated synthetic denials walk", () => {
   test.describe.configure({ retries: 0 });
+
+  test("bind the new Move from the actual origination response before navigation settles", () => {
+    const fresh = "9adf8db2-a4f6-4b52-b9a8-134b1030a789";
+    expect(createdMoveId({ engagementId: fresh }, `${BASE}/strategic-moves/new`)).toBe(fresh);
+    expect(createdMoveId({ engagementId: fresh }, `${BASE}/strategic-moves/${FORBIDDEN_MOVE}/phase/0`)).toBe(fresh);
+    expect(createdMoveId({}, `${BASE}/strategic-moves/${fresh}/phase/0`)).toBe(fresh);
+    expect(() => createdMoveId({ engagementId: FORBIDDEN_MOVE }, `${BASE}/strategic-moves/new`)).toThrow("new_move_id_unverified");
+    expect(() => createdMoveId({ engagementId: "invalid" }, `${BASE}/strategic-moves/new`)).toThrow("new_move_id_unverified");
+    expect(() => createdMoveId({}, `${BASE}/strategic-moves/new`)).toThrow("new_move_id_unverified");
+  });
 
   test("walk all 29 steps under the operator and save honest review evidence", async ({ page }, info) => {
     test.skip(process.env.MOVES_E2E_WRITE_RUN !== "brief-p-approved", "Requires the named Brief P operator approval and private credentials.");
@@ -167,10 +186,7 @@ test.describe("dedicated synthetic denials walk", () => {
           const response = await creation;
           const body = await response.json();
           if (!response.ok()) throw new Error(body.detail || body.error || `origination_http_${response.status()}`);
-          const url = new URL(page.url());
-          const candidate = body.programId || body.moveId || body.program?.id || url.pathname.match(/\/strategic-moves\/([0-9a-f-]{36})/)?.[1];
-          if (typeof candidate !== "string" || !/^[0-9a-f-]{36}$/i.test(candidate) || candidate === FORBIDDEN_MOVE) throw new Error("new_move_id_unverified");
-          moveId = candidate; report.moveId = moveId;
+          moveId = createdMoveId(body, page.url()); report.moveId = moveId;
         }
       }
       if (!moveId) throw new Error("origination_not_completed");

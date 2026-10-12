@@ -69,6 +69,12 @@ Release lane: `experimental`.
   coverage and tenancy census checks: pass. Browser discovery: pass, one test.
   Current-head CI and the final fetched-ref collision guard remain pending
   until the reconciled candidate is pushed and checked.
+- Origination response-contract regression: pass. The runner binds the exact
+  `engagementId` returned by the product before asynchronous navigation
+  settles, and rejects a malformed or protected identifier. Ignoring that
+  response field was killed by the regression; source SHA-256 was restored.
+  Node 24 typecheck and targeted lint after this repair: pass. Browser discovery
+  is two tests: this contract test and the separately authorized write walk.
 
 - ROM model and P3 component suites: 70 tests passed at candidate validation.
   They cover stale previews, missing selection reasons, equal effort hours,
