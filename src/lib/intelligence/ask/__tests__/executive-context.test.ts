@@ -95,6 +95,8 @@ it("never sends blocked sources or ungated supplemental data to Claude", async (
     expect(input!.system).toContain("These rules bind EVERY visible field");
     expect(input!.system).toContain("even when a supplied source contains them");
     expect(input!.system).toContain("User-requested option counts");
+    expect(input!.system).toContain("incremental annual benefit covers all annualized");
+    expect(input!.system).toContain("ONE capability in the opening and exhibit title");
     expect(input!.system.indexOf("EVIDENCE RULE FOR THIS ANSWER")).toBeGreaterThan(
       input!.system.indexOf("EXHIBIT PROTOCOL"),
     );

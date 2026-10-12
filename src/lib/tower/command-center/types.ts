@@ -1,4 +1,4 @@
-import type { TowerAiAmountBasis } from "../current-layer-view-model";
+import type { TowerAiAmountBasis, TowerMartCostLens } from "../current-layer-view-model";
 
 // Tower Command Center v2 — the shape the design consumes.
 //
@@ -619,6 +619,8 @@ export interface TowerCommandCenterView {
   allInitiatives: readonly TowerAiView[];
   portfolioCounts: TowerPortfolioCountReconciliation;
   spendLens: readonly TowerSpendLensRow[];
+  /** Active governed annual spend breakdown. Contract exposure is a separate population. */
+  costLens?: TowerMartCostLens | null;
   /** Business evidence gaps — what proof is missing before value can be claimed. */
   gaps: readonly TowerEvidenceGapView[];
   /** Executive maturity diagnosis for sparse evidence states and reload work. */
