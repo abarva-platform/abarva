@@ -29,6 +29,8 @@ import {
 type Status = "pass" | "fail" | "known_gap" | "not_reachable";
 type Finding = { status: Status; reason: string; landed: string };
 type StepTiming = {
+  settledHeadMs: number | null;
+  documentTimeOriginMs: number;
   server: Record<string, { startMs: number; durationMs: number }> | null;
   documentResponseMs: number | null;
   clientMountedMs: number | null;
@@ -44,8 +46,10 @@ type ViewFinding = Finding & {
   timingError?: string;
 };
 
-async function captureStepTiming(page: Page): Promise<StepTiming> {
-  return page.evaluate(() => {
+async function captureStepTiming(
+  page: Page, settledHeadMs: number | null,
+): Promise<StepTiming> {
+  return page.evaluate((settledMs) => {
     const raw = document.querySelector('[data-testid="moves-step-server-timing"]')
       ?.getAttribute("data-timings");
     let server: StepTiming["server"] = null;
@@ -57,6 +61,8 @@ async function captureStepTiming(page: Page): Promise<StepTiming> {
     const mounted = performance.getEntriesByName("moves-step-client-mounted", "mark")
       .at(-1);
     return {
+      settledHeadMs: settledMs,
+      documentTimeOriginMs: performance.timeOrigin,
       server,
       documentResponseMs: navigation ? Math.round(navigation.responseStart) : null,
       clientMountedMs: mounted ? Math.round(mounted.startTime) : null,
@@ -68,7 +74,7 @@ async function captureStepTiming(page: Page): Promise<StepTiming> {
           durationMs: Math.round(entry.duration),
         })),
     };
-  });
+  }, settledHeadMs);
 }
 
 const MOVE_ID = process.env.E2E_MOVES_LIVE_MOVE_ID;
@@ -715,6 +721,8 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
       )) {
         const screenshots: string[] = [];
         const uxInput = emptyUxInput();
+        let timing: StepTiming | null = null;
+        let timingError: string | undefined;
         const viewStartedAt = Date.now();
         const position = Number(definition.stepId.split(".")[1]) - 1;
         const result = await inspectPage(
@@ -733,6 +741,11 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
             await expect(current).toHaveCount(1);
             await expect(steps.nth(position).locator('[aria-current="step"]')).toBeVisible();
             uxInput.settledHeadMs = Date.now() - viewStartedAt;
+            try {
+              timing = await captureStepTiming(page, uxInput.settledHeadMs);
+            } catch (error) {
+              timingError = String(error);
+            }
             expect(new URL(page.url()).searchParams.get("step")).toBe(view);
             await expect(page.locator("body")).toContainText(EXPECTED_TENANT_NAME);
             await expect(page.getByTestId("nexus-top-nav")).toBeVisible();
@@ -749,6 +762,16 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
               screenshots,
               uxInput,
             );
+            if (timing) {
+              try {
+                const later = await captureStepTiming(page, uxInput.settledHeadMs);
+                if (later.documentTimeOriginMs === timing.documentTimeOriginMs) {
+                  timing.secondaryReads = later.secondaryReads;
+                }
+              } catch (error) {
+                timingError = String(error);
+              }
+            }
             if (phase === 2 && view === "root-causes") {
               await checkRootCauseWorkReachability(page, true);
               await checkStepWorkspaceNavigation(page, MOVE_ID!);
@@ -786,13 +809,6 @@ test("walks every deployed Moves step page without writing", async ({ page }, te
         if (allowance && result.status === "pass") {
           result.status = "known_gap";
           result.reason = allowance.reason;
-        }
-        let timing: StepTiming | null = null;
-        let timingError: string | undefined;
-        try {
-          timing = await captureStepTiming(page);
-        } catch (error) {
-          timingError = String(error);
         }
         proof.views.push({
           phase,

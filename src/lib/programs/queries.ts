@@ -519,7 +519,7 @@ export async function getStrategicMovePortfolio(
 export async function getStrategicMoveById(
   ctx: TenancyCtx,
   moveId: string,
-  opts: { supabase?: SupabaseClient } = {},
+  opts: { supabase?: SupabaseClient; evaluateGateCriteria?: boolean } = {},
 ): Promise<StrategicMove | null> {
   const program = await getProgramById(ctx, moveId, opts);
   if (!program) return null;
