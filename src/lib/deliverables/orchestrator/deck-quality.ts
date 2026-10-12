@@ -116,6 +116,13 @@ function judgeReferenceSlide(
     add("reference_structure", `slide ${slide.index}: answer bar is missing.`);
   if (answerIsCountDump(named["ref:answer:text"] ?? ""))
     add("reference_count_dump", `slide ${slide.index}: the answer bar lists a count without interpretation.`, "count_dump");
+  if (expected.archetype === "contents") {
+    const rows = expected.blocks.find((block) => block.kind === "table")?.rows ?? [];
+    rows.forEach((_, index) => {
+      if (named[`ref:body:contents-number:${index}`] !== String(index + 1))
+        add("reference_structure", `slide ${slide.index}: a contents section number is missing.`, "contents_number_missing");
+    });
+  }
   for (const block of expected.blocks) {
     if (block.kind !== "flow") continue;
     block.nodes.forEach((label, nodeIndex) => {
@@ -153,7 +160,7 @@ function judgeReferenceSlide(
   }
   for (const block of expected.blocks) {
     if (block.kind !== "table" || slide.tableCount > 0) continue;
-    const expectedCells = (block.rows.length + 1) * block.columns.length;
+    const expectedCells = (block.rows.length + (expected.archetype === "contents" ? 0 : 1)) * block.columns.length;
     const renderedCells = names.filter((name) => name.startsWith("ref:body:table-cell:")).length;
     if (renderedCells < expectedCells)
       add("reference_editability", `slide ${slide.index}: shape-built table is missing editable cells.`);

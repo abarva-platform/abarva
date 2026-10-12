@@ -299,6 +299,33 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
   }
 }
 
+function addContents(slide: Slide, block: Extract<ReferenceBlock, { kind: "table" }>, y: number): number {
+  block.rows.forEach((row, index) => {
+    const heading = display(row[0] ?? "").match(/^0?(\d+)\s+(.+)$/);
+    const yy = y + index * 0.79;
+    slide.addText(heading?.[1] ?? String(index + 1), {
+      x: 0.72, y: yy, w: 0.52, h: 0.48, fontFace: SERIF, fontSize: 26,
+      color: C.accent, objectName: `ref:body:contents-number:${index}`,
+    });
+    slide.addText(heading?.[2] ?? display(row[0] ?? ""), {
+      x: 1.48, y: yy + 0.02, w: 3.1, h: 0.31, fontFace: BODY, fontSize: 14, bold: true,
+      color: C.ink, objectName: `ref:body:table-cell:${index + 1}:0`,
+    });
+    slide.addText(display(row[1] ?? ""), {
+      x: 4.8, y: yy + 0.02, w: 7.8, h: 0.42, fontFace: BODY, fontSize: 13,
+      color: C.ink, fit: "shrink", objectName: `ref:body:table-cell:${index + 1}:1`,
+    });
+    slide.addText(`Slides ${display(row[2] ?? "")}`, {
+      x: 1.48, y: yy + 0.38, w: 10.6, h: 0.21, fontFace: BODY, fontSize: 9, italic: true,
+      color: C.muted, objectName: `ref:body:table-cell:${index + 1}:2`,
+    });
+    if (index < block.rows.length - 1) slide.addShape("line", {
+      x: 1.48, y: yy + 0.7, w: 11.12, h: 0, line: { color: C.rule, width: 0.5 },
+    });
+  });
+  return y + block.rows.length * 0.79;
+}
+
 /** Render only validated, editable shapes and text. No raster exhibit path exists here. */
 export async function renderReferenceDeck(spec: ReferenceDeckSpec): Promise<Buffer> {
   const hard = validateReferenceDeck(spec).filter((finding) => finding.blocking);
@@ -317,7 +344,8 @@ export async function renderReferenceDeck(spec: ReferenceDeckSpec): Promise<Buff
     else {
       addChrome(slide, spec, content, index);
       let y = 1.83;
-      for (const block of content.blocks) y = addBlock(slide, block, y);
+      for (const block of content.blocks) y = content.archetype === "contents" && block.kind === "table"
+        ? addContents(slide, block, y) : addBlock(slide, block, y);
       if (y > 6.16) throw new Error(`reference_deck_body_overflow: slide ${index + 1}`);
     }
     if (content.speakerNotes) {

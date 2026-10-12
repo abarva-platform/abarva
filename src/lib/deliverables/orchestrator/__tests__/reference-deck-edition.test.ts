@@ -50,7 +50,7 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
 }
 
 describe("live-input reference edition", () => {
-  it.each(["validation", "investment"] as const)("uses a real %s cover and section-answer contents", (edition) => {
+  it.each(["validation", "investment"] as const)("uses a real %s cover and section-answer contents", async (edition) => {
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
     const spec = buildReferenceEdition(fixture(edition), words(sequence.length));
     expect(spec.slides[0]?.actionTitle).toBe("Synthetic facility performance");
@@ -67,6 +67,14 @@ describe("live-input reference edition", () => {
     ]));
     expect(contents.rows.every((row) => String(row[1]).trim().split(/\s+/).length >= 5 && String(row[2]).trim())).toBe(true);
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    const contentsPage = rendered.slides[2]!;
+    expect(Array.from({ length: 5 }, (_, index) => contentsPage.namedText?.[`ref:body:contents-number:${index}`]))
+      .toEqual(["1", "2", "3", "4", "5"]);
+    const damaged = [...rendered.slides];
+    damaged[2] = { ...contentsPage, namedText: { ...contentsPage.namedText, "ref:body:contents-number:2": "" } };
+    expect(judgeRenderedDeck({ ...rendered, slides: damaged }, { referenceDeck: spec }).findings)
+      .toContainEqual(expect.objectContaining({ kind: "reference_structure", slide: 3, detailCode: "contents_number_missing" }));
   });
 
   it("preserves domain wording in the use-case name while refusing internal phrases", () => {

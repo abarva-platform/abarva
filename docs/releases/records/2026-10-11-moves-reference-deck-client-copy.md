@@ -59,7 +59,8 @@ rendered pages and extracted text.
 - Failed wording calls display "Draft words unavailable" in the affected answer
   bars and retain their fidelity penalty.
 - The PDF uses the shared deck palette, a bottom answer bar, and readable divider
-  text. Its own page count, canvas, titles, answers, source lines and bound figures
+  text, section rail, and case footer. Both formats use flat numbered contents
+  rows instead of a grid. PDF flow labels wrap at whole words. Its own page count, canvas, titles, answers, source lines and bound figures
   are inspected before download; a PDF finding refuses that format with score zero.
 - The signed-in walk checks both editions for the configured synthetic Move
   after verifying its tenant, so a newly created demo case can be inspected.
@@ -70,13 +71,16 @@ rendered pages and extracted text.
 
 - Focused specification, wording, render, and preview-route suites: **pass**;
   53 tests across five suites on synthetic fixtures.
-- Thirteen additional one-at-a-time mutations from artifact review: **pass**;
+- Fifteen additional one-at-a-time mutations from artifact review: **pass**;
   each was caught by a focused test and restored.
 - Typecheck and changed-file ESLint: **pass**.
 - Library orphan, route reachability, and export reachability checks: **pass**;
   no new findings against their baselines.
-- Test coverage census: **pass**; one new PDF inspection suite increases the
-  branch-base count from 2829 to 2830. Tenancy fence census: **pass**; the existing route remains
+- Test coverage census: **pass**; the reconciled tree has 2832 covered files.
+  Removing only the new PDF inspection suite for a private check gives 2831,
+  so this candidate adds exactly one covered file. Regeneration also includes
+  one already-merged file missing from main's prior committed census of 2830.
+  Tenancy fence census: **pass**; the existing route remains
   tenant-fenced.
 - Manual regenerated and consistency check: **pass**; no flag or manual text changed.
 - Release checks: **pass**; all 11 gates ran and passed.
@@ -134,3 +138,6 @@ be reversed.
 - Current production behavior, populated demo figures, actual model wording,
   and human slide-by-slide acceptance remain to be verified after merge and
   deployment.
+- Wording prompts currently contain type, phase, read-state controls and figure
+  tokens. Specific case prose stays outside model egress until the approved
+  model-ready context path is available.
