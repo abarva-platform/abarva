@@ -301,14 +301,14 @@ function usageBarsFor(item: {
     typeof item.usageActual === "number" &&
     Number.isFinite(item.usageActual)
   ) {
-    // A raw usage count has no natural 0–100 scale. Adoption, when present, is
-    // the only honest fill; otherwise the bar renders full-width neutral and
-    // the number carries the meaning.
+    // A raw usage count has no natural 0–100 scale. Without an adoption rate,
+    // keep the numeric bar field at zero; the drawer shows the count as text.
+    // Only a recorded adoption rate may supply a percentage fill.
     const pct =
       typeof item.adoptionRatePct === "number" &&
       Number.isFinite(item.adoptionRatePct)
         ? Math.max(0, Math.min(100, item.adoptionRatePct))
-        : 100;
+        : 0;
     bars.push({
       label: humanize(metric) ?? metric,
       valueText: formatCount(item.usageActual),

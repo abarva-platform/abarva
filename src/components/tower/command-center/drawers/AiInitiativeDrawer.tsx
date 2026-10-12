@@ -591,7 +591,9 @@ export function AiInitiativeDrawer({
                     <span className={styles.un}>{bar.label}</span>
                     <span className={styles.uv}>{bar.valueText}</span>
                   </div>
-                  {bar.label === "Adoption" ? (
+                  {a.adoptionActualPct != null &&
+                  bar.label === "Adoption" &&
+                  bar.valueText.endsWith("%") ? (
                     <div className={styles.ubar}>
                       <i
                         style={{

@@ -40,7 +40,7 @@ Release lane: `global-control-lane`.
 
 ## QA / Validation
 
-- Pass: 41 focused Tower tests across four suites cover source-code readback, planned-benefit language, the three registered expected-benefit types, program-by-function copy with and without rows, and a count-only usage row without a percentage bar.
+- Pass: 42 focused Tower tests across four suites cover source-code readback, planned-benefit language, the three registered expected-benefit types, program-by-function copy with and without rows, and two count-only usage metrics without a percentage bar, including one named Adoption.
 - Pass: focused ESLint, full TypeScript typecheck, `git diff --check`, and all 11 release checks.
 - Pending: protected PR CI for the updated head. It is required before merge.
 
