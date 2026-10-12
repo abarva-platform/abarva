@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower can now show more of what the source files actually say without calling those figures approved money or earned value. Program details show source expected value, dates, stage and progress. The Cost view shows prior-year figures, next-year forecasts and possible savings for each recorded spend category. Value Proof keeps outcome measures and separate AI benefit, usage and KPI feed assertions visible under their own source labels. AI case details show the stated benefit idea, approval route and controls.
+Tower can now show more of what the source files actually say without calling those figures approved money or earned value. Program details show source expected value, dates, stage and progress. The Cost view shows prior-year figures, next-year forecasts and possible savings for each recorded spend category. Value Proof keeps outcome measures and separate AI benefit, usage and KPI feed assertions visible under their own source labels. AI case details show the stated benefit idea, approval route and controls. The existing Foundations tab also offers a paged, searchable source inventory for records with declared IDs, kept apart from AI foundation funding.
 
 ## Layer Impact
 
@@ -33,13 +33,13 @@ Release lane: `global-control-lane`.
 - Show category-level prior-year, forecast and possible-savings figures in the Cost view without summing them into a new total. Category rows still lack a declared business ID and contract amounts remain a separate population.
 - Show outcome measures and benefit, usage and KPI feed claims in separate expandable Value Proof sections. Preserve each feed's source amount and raw status code, and label both as unverified for Tower reporting. No feed reconciliation or AI case identity crosswalk is inferred.
 - Show source AI case hypotheses, approval routes and listed controls as intake context, without implying approval or testing occurred.
-- Foundation objects stay outside Tower until they have a governed Layer 4 projection and story.
+- Browse exact-ID organization, function, workforce, system, data, infrastructure, process and managed-service source records in the existing Foundations tab. The reader requests one bounded page only when that tab opens; the executive read omits those individual rows. Record details show selected business fields, source identity and quality. Source dollar fields are individual statements, never a sum or approved amount.
 
 ## QA / Validation
 
-- Focused reader and rendering tests: 4 suites, 63 tests passed, including source amounts that must not enter approved or claimable totals.
-- TypeScript, changed-file lint, all 11 release gates and diff check: passed on the release candidate.
-- Signed-in review: required after a normal main deployment and explicit selection of the source-assertion projection.
+- PASS (local): four focused reader and rendering suites, 62 tests, including source amounts that must not enter approved or claimable totals and a paged Foundation reader that leaves executive money counts unchanged.
+- PASS (local): TypeScript, changed-file lint, diff check and all 11 release gates. Exact-head validation must rerun after the source projection contract is frozen.
+- NOT RUN: signed-in review; it requires a normal main deployment and explicit selection of the source-assertion projection.
 
 ## Rollout Plan
 
@@ -65,4 +65,4 @@ The PR diff, focused tests, typecheck, lint, release-gate output, later ACA dige
 
 ## Known Gaps
 
-The source files do not independently prove program budget approval, outcome Finance clearance, AI feed reconciliation, or a case-to-feed identity link. Cost categories lack declared business IDs, and possible savings are not verified. Foundation objects need a separate governed Layer 4 projection before Tower can present them.
+The source files do not independently prove program budget approval, outcome Finance clearance, AI feed reconciliation, or a case-to-feed identity link. Cost categories lack declared business IDs, and possible savings are not verified. Foundation maturity rows without declared record IDs and raw relationship rows are described as coverage gaps, not assigned to individual objects or shown as verified links. Business segment mapping remains pending, so no segment rollup is shown.

@@ -113,6 +113,10 @@ export async function renderTowerPage({
     readTowerCommandCenter({
       tenantKeyCandidates,
       tenantDisplayName: tenantName,
+      includeFoundationInventory: firstSearchValue(resolved?.tab) === "foundations",
+      foundationPage: Number(firstSearchValue(resolved?.foundationPage)),
+      foundationFilter: firstSearchValue(resolved?.foundationFilter) ?? undefined,
+      foundationSearch: firstSearchValue(resolved?.foundationSearch) ?? undefined,
     }),
     null,
   );

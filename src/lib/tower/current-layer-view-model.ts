@@ -432,6 +432,38 @@ export interface TowerMartSourceValueRow {
   statusAssertions: Array<{ sourceField: string; label: string; code: string }>;
 }
 
+/** Declared-ID source inventory; these rows never contribute to Tower money or graph totals. */
+export interface TowerMartFoundationRecord {
+  id: string;
+  objectType: string;
+  sourceObjectId: string;
+  canonicalObjectId: string;
+  sourceRecordId: string;
+  name: string;
+  sourceFields: Record<string, string | number>;
+  sourceFile: string;
+  sourceRow: number | null;
+  sourceSha256: string;
+  qualityLabel: string;
+  reviewState: string;
+  segmentIdentityStatus: string | null;
+}
+
+export interface TowerMartFoundationInventory {
+  records: TowerMartFoundationRecord[];
+  totalRecords: number;
+  matchingRecords: number;
+  page: number;
+  pageSize: number;
+  filter: string;
+  search: string;
+  /** Projection rows omitted because a declared identity or source reference was incomplete. */
+  unreadableRowCount: number;
+  rawMaturityRowsWithoutId: number | null;
+  rawRelationshipRows: number | null;
+  itsmExtractAvailable: boolean | null;
+}
+
 export interface TowerMartCostLens {
   modeledAnnualSpendUsd: number;
   sourceNarrativeDifferenceUsd: number | null;
@@ -454,4 +486,6 @@ export interface TowerMartCommandViewModel {
   costLens?: TowerMartCostLens | null;
   /** v6 source assertions for separate outcome/AI feed records, never headline money. */
   sourceValueRows?: TowerMartSourceValueRow[];
+  /** Exact-ID source inventory for the Foundations tab; no derived links or value. */
+  foundationInventory?: TowerMartFoundationInventory | null;
 }

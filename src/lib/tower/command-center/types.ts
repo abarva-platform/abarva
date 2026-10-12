@@ -1,4 +1,4 @@
-import type { TowerAiAmountBasis, TowerMartCostLens, TowerMartSourceValueRow } from "../current-layer-view-model";
+import type { TowerAiAmountBasis, TowerMartCostLens, TowerMartFoundationInventory, TowerMartSourceValueRow } from "../current-layer-view-model";
 
 // Tower Command Center v2 — the shape the design consumes.
 //
@@ -655,6 +655,8 @@ export interface TowerCommandCenterView {
   costLens?: TowerMartCostLens | null;
   /** Separate source assertions, never inputs to approved or claimable totals. */
   sourceValueRows?: readonly TowerMartSourceValueRow[];
+  /** Exact-ID source inventory, separate from AI foundation funding and benefit cases. */
+  foundationInventory?: TowerMartFoundationInventory | null;
   /** Business evidence gaps — what proof is missing before value can be claimed. */
   gaps: readonly TowerEvidenceGapView[];
   /** Executive maturity diagnosis for sparse evidence states and reload work. */

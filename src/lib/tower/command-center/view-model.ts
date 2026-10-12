@@ -1726,6 +1726,7 @@ export function buildTowerCommandCenterView(
     spendLens: buildSpendLens(ai),
     costLens: mart.costLens ?? null,
     sourceValueRows: mart.sourceValueRows ?? [],
+    foundationInventory: mart.foundationInventory ?? null,
     gaps,
     evidenceMaturity,
     pipelineGaps,

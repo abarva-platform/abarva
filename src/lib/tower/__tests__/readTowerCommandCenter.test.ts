@@ -113,6 +113,103 @@ describe("readTowerCommandCenter", () => {
     delete process.env.TOWER_RUNTIME_READ_ROLE;
   });
 
+  it("reads a bounded Foundation page only when requested and keeps its rows out of financial claims", async () => {
+    const summary = servingRow({
+      row_key: "executive_summary", page_key: "command_center",
+      display_payload_json: {
+        title: "Tower summary",
+        foundations: {
+          no_declared_row_id: { row_count: 17 },
+          relationship_rows: 2302,
+          itsm_extract_available: false,
+        },
+      },
+    });
+    const foundation = {
+      ...servingRow({
+        row_key: "foundation:application:APP-041", page_key: "foundations",
+        display_payload_json: {
+          object_type: "application", source_object_id: "APP-041", title: "Example system",
+          canonical_source_record_id: "source-record-41", source_fields: { hosting_model: "cloud" },
+          source_recorded: true, source_review_state: "not_reviewed",
+          source_quality_label: "Source-reported; not independently verified",
+          approved_fy_budget_usd: null, claimable_value_usd: null,
+        },
+      }),
+      row_type: "foundation_record",
+      primary_object_id: "canonical-object-41",
+      source_refs_json: [{ source_file: "02_applications.csv", source_row: 42, source_sha256: "file-hash" }],
+    };
+    query.mockImplementation(async (sql, params) => {
+      const text = String(sql);
+      if (!text.includes("serving.tower_command_center")) return [];
+      if (text.includes("count(*)")) return [{ count: text.includes("$3") ? 41 : 41 }];
+      if (text.includes("page_key = 'foundations'")) {
+        expect(text).toContain("limit $4 offset $5");
+        expect(params).toEqual(["example-tenant", ["application", "data_flow", "infrastructure", "process"], "example", 40, 40]);
+        return [foundation];
+      }
+      expect(text).toContain("page_key <> 'foundations'");
+      return [summary];
+    });
+
+    const defaultRead = await readTowerCommandCenter({ tenantKeyCandidates: ["example-tenant"] });
+    expect(defaultRead?.foundationInventory).toBeNull();
+    expect(query.mock.calls.some(([sql]) => String(sql).includes("page_key = 'foundations'"))).toBe(false);
+
+    query.mockClear();
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["example-tenant"], includeFoundationInventory: true,
+      foundationPage: 100, foundationFilter: "operations", foundationSearch: "example",
+    });
+    expect(mart?.foundationInventory).toEqual(expect.objectContaining({
+      totalRecords: 41, matchingRecords: 41, page: 2, pageSize: 40,
+      rawMaturityRowsWithoutId: 17, rawRelationshipRows: 2302,
+      itsmExtractAvailable: false,
+      records: [expect.objectContaining({
+        sourceObjectId: "APP-041", sourceRecordId: "source-record-41",
+        canonicalObjectId: "canonical-object-41", sourceRow: 42,
+      })],
+    }));
+    expect(mart?.command.valueClaimCount).toBe(defaultRead?.command.valueClaimCount);
+    expect(mart?.command.realizedValueYtdAllowed).toBe(defaultRead?.command.realizedValueYtdAllowed);
+
+    query.mockClear();
+    query.mockImplementation(async (sql, params) => {
+      const text = String(sql);
+      if (!text.includes("serving.tower_command_center")) return [];
+      if (text.includes("count(*)")) return [{ count: text.includes("$3") ? 0 : 41 }];
+      if (text.includes("page_key = 'foundations'")) throw new Error("Empty search must not fetch a page");
+      expect(params).toEqual(["example-tenant"]);
+      return [summary];
+    });
+    const empty = await readTowerCommandCenter({
+      tenantKeyCandidates: ["example-tenant"], includeFoundationInventory: true,
+      foundationPage: 99, foundationFilter: "functions", foundationSearch: "nothing matches",
+    });
+    expect(empty?.foundationInventory).toEqual(expect.objectContaining({
+      totalRecords: 41, matchingRecords: 0, page: 1, records: [],
+    }));
+
+    query.mockClear();
+    query.mockImplementation(async (sql, params) => {
+      const text = String(sql);
+      if (!text.includes("serving.tower_command_center")) return [];
+      if (text.includes("count(*)")) {
+        if (text.includes("$3")) expect(params?.[1]).toBeNull();
+        return [{ count: 0 }];
+      }
+      if (text.includes("page_key = 'foundations'")) throw new Error("No Foundation page exists yet");
+      return [summary];
+    });
+    const beforePromotion = await readTowerCommandCenter({
+      tenantKeyCandidates: ["example-tenant"], includeFoundationInventory: true,
+      foundationFilter: "__proto__",
+    });
+    expect(beforePromotion?.foundationInventory).toBeNull();
+    expect(beforePromotion?.command.valueClaimCount).toBe(defaultRead?.command.valueClaimCount);
+  });
+
   it("fails closed when ECL serving rows are not loaded for a tenant", async () => {
     query.mockResolvedValue([]);
 
