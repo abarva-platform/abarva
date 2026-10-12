@@ -48,6 +48,13 @@ import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import { emptyP4RoadmapPlan, newP4RoadmapMilestone, serializeP4RoadmapPlan } from "@/lib/programs/p4-roadmap-plan";
+import { readValueModel } from "@/lib/programs/value-model-capture";
+import { evaluateValueCase } from "@/lib/programs/value-engine";
+import {
+  withCostBasis,
+  type CostBasis,
+} from "@/lib/programs/value-engine/cost-basis";
+import { valueCaseForViewer } from "@/lib/programs/value-engine/value-case-view";
 import {
   emptyRomEstimate,
   romInputsFingerprint,
@@ -4962,6 +4969,161 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   describe("phase-generic step page mount", () => {
+    const valueRef = (value: number) => ({
+      kind: "literal",
+      value,
+      source: "synthetic test",
+    });
+    const p4ValuePlan = JSON.stringify({
+      kind: "value_model",
+      version: 1,
+      case: {
+        horizonYears: 3,
+        discountRate: valueRef(0.08),
+        cost: { kind: "rom", snapshotId: "v2" },
+        levers: [
+          {
+            id: "L1",
+            name: "Reduced spend",
+            conversion: "cost_reduction",
+            driver: {
+              name: "share avoided",
+              unit: "share",
+              direction: "increase",
+              baseline: valueRef(0),
+              target: valueRef(1),
+            },
+            terms: [
+              { role: "base", label: "Spend base", ref: valueRef(100_000) },
+              { role: "driver_delta" },
+            ],
+            attribution: valueRef(1),
+            probability: valueRef(1),
+            timing: { startMonth: 1, rampMonths: 0, paymentLagMonths: 0 },
+          },
+        ],
+      },
+    });
+    it.each(["evaluated", "blocked", "restricted", "provisional", "refusal"])(
+      "shares %s value readiness with the P4 step bar",
+      async (state) => {
+        const move = makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" });
+        const model = readValueModel(p4ValuePlan);
+        if (model.kind !== "model") throw new Error("Invalid fixture");
+        const costBasis: CostBasis =
+          state === "blocked"
+            ? {
+                status: "blocked",
+                reason: "rom_snapshot_not_approved",
+                detail: "Reapprove the current estimate.",
+                planningBenchmark: null,
+              }
+            : {
+                status: "resolved",
+                basis: "rom_snapshot",
+                source: "rom:v2",
+                deliveryModel: null,
+                cents: { low: 10_000_000, base: 10_000_000, high: 10_000_000 },
+                planningBenchmark: null,
+              };
+        const result = evaluateValueCase(
+          withCostBasis(model.model.case, costBasis),
+        );
+        if (state === "provisional") result.mustValidate = ["L1.attribution"];
+        const body = valueCaseForViewer(
+          { programId: move.id, result, costBasis, registerInputs: [] },
+          { seesFigures: state !== "restricted" },
+        );
+        const defaultFetch = global.fetch;
+        global.fetch = jest.fn((input, init) =>
+          String(input).endsWith("/value-case")
+            ? Promise.resolve({
+                ok: state !== "refusal",
+                json: async () =>
+                  state === "refusal"
+                    ? { detail: "The current value read failed." }
+                    : body,
+              } as Response)
+            : defaultFetch(input, init),
+        );
+        const original = PHASE_STEP_PAGES["p4-tower"];
+        PHASE_STEP_PAGES["p4-tower"] = (props) => (
+          <div data-testid="p4-shared-value-readiness">
+            {String(props.stepDone["P4.3"])}:
+            {String(props.chrome.steps[2].done)}:
+            {String(props.p4ValueReadback?.ready)}:
+            {props.p4ValueReadback?.body
+              ? "read"
+              : props.p4ValueReadback?.status}
+          </div>
+        );
+        try {
+          render(
+            <MovesPhaseStandaloneClient
+              captureV2Enabled
+              stepPagesV3Enabled
+              phaseStepPagesEnabled
+              initialStepView="p4-tower"
+              carriesForwardContent={[]}
+              evidenceNeedPackets={[]}
+              move={move}
+              phaseNum={4}
+              phaseTallies={[...phaseTallies]}
+              initialPhaseCaptureValues={{
+                value_plan: p4ValuePlan,
+                funding_governance: "Finance lead reviews funding.",
+              }}
+            />,
+          );
+          const ready = state === "evaluated";
+          await waitFor(() =>
+            expect(
+              screen.getByTestId("p4-shared-value-readiness"),
+            ).toHaveTextContent(
+              `${ready}:${ready}:${ready}:${state === "refusal" ? "The current value read failed." : "read"}`,
+            ),
+          );
+          expect(
+            (global.fetch as jest.Mock).mock.calls.filter(([url]) =>
+              String(url).endsWith("/value-case"),
+            ),
+          ).toHaveLength(1);
+        } finally {
+          PHASE_STEP_PAGES["p4-tower"] = original;
+        }
+      },
+    );
+
+    it.each(["flag off", "legacy"])(
+      "does not add a value read on the %s P4 path",
+      (path) => {
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled={path !== "flag off"}
+            legacyCaptureRequested={path === "legacy"}
+            initialStepView="p4-value"
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+            phaseNum={4}
+            phaseTallies={[...phaseTallies]}
+            initialPhaseCaptureValues={{
+              value_plan: p4ValuePlan,
+              funding_governance: "Finance lead reviews funding.",
+            }}
+          />,
+        );
+        expect(screen.getByTestId("moves-capture-flow")).toBeInTheDocument();
+        expect(
+          (global.fetch as jest.Mock).mock.calls.some(([url]) =>
+            String(url).endsWith("/value-case"),
+          ),
+        ).toBe(false);
+      },
+    );
+
     const p0p1Views = [
       ["p0-signal", 0, "Name the signal and problem"],
       ["p0-scope", 0, "Draw the scope boundary"],
