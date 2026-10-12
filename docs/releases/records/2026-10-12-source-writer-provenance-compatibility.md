@@ -46,6 +46,7 @@ Release lanes: `global-control-lane` for import/projection controls and `public-
 - Disposable Postgres: 14 writer subtests pass with actual canonical table definitions, including repeat imports, missing references, synthetic review, missing confidence, genuine extraction and credit writes. This is not full migration/RLS replay or live schema acceptance.
 - Combined generator, authority, runtime-binding, transaction and writer Node suites: 66 passing tests, zero skips.
 - Contract workspace, adapter, loader and suite-owner Jest sweep: 46 suites, 480 passing tests using exact paths.
+- After the prerequisite squash merge and rebase onto actual main, the expanded Source/shared-governance sweep passes 55 suites / 634 tests. The shared delegated foundation survives unchanged except the intended optional derived-text declaration. Genuine census regeneration measures one new covered clause suite; unrelated missing suites are not assigned invented counts.
 - Mutation checks: unconditional reviewed state failed nine writer subtests; invented default document failed two; ignoring the authored synthetic basis failed the dedicated clause assertion. All mutations restored.
 - Manifest governance passes with the existing agent-attribution warnings retained. Engineering attribution is not a personal review or load approval.
 - Node 24 TypeScript passed with an 8 GiB heap; the first 4 GiB run exhausted memory, not type validation. Focused lint passed. CI census regenerated with explicit test ownership.
@@ -53,6 +54,8 @@ Release lanes: `global-control-lane` for import/projection controls and `public-
 ## Rollout Plan
 
 Review and squash merge after the prerequisite adapter/operator candidate and current-main reconciliation. Only the repo-owned ACA main workflow builds and promotes the shared image. No data loader runs automatically. A later package apply requires current native identity and row before-images, an exact delegated write plan, transactional proof, private backup, independent readback and signed-in projection checks. Do not bulk downgrade or replay historical rows as part of this code release.
+
+Because this candidate changes the shared census, obtain a fresh actual fetched-ref guard across all open Moves/shared-census contenders, including drafts, immediately before arming. Treat absent historical censuses as unknown, never zero. Do not alter coverage counts to avoid a collision.
 
 ## Deployment Authority
 
