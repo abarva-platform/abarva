@@ -6161,7 +6161,6 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 export function ContractEvidenceDocuments({
-  coverage,
   files,
   extractions,
 }: {
@@ -6238,32 +6237,12 @@ export function ContractEvidenceDocuments({
         </div>
       ) : (
         <div className="sw-v2-evidence-empty">
-          <b>Document package not attached in this demo-safe layer.</b>
+          <b>No contract-linked document passages are available in this view.</b>
           <p>
-            Source can still optimize this contract because structured spend,
-            scope, performance, and opportunity rows are loaded separately from
-            raw PDF page text. That is why document counts stay at zero while
-            the Economics, Scope, and Optimize tabs can still render governed
-            rows.
+            Contract manager / Legal ops: provide the executed agreement and SOW,
+            bound to this contract ID. Structured exports, where available,
+            do not establish contractual rights or a cited recommendation.
           </p>
-          <div className="sw-v2-fact-grid">
-            <Fact
-              label="Spend rows"
-              value={formatCount(coverage?.spend_rows)}
-            />
-            <Fact
-              label="Scope rows"
-              value={formatCount(coverage?.scope_rows)}
-            />
-            <Fact
-              label="Opportunity rows"
-              value={formatCount(coverage?.opportunity_rows)}
-            />
-            <Fact
-              label="Performance rows"
-              value={formatCount(coverage?.performance_rows)}
-            />
-          </div>
         </div>
       )}
       {rankedFiles.length > visibleFiles.length ? (

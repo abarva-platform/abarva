@@ -4367,7 +4367,228 @@
   color: var(--sw-c3-red);
 }
 
-/* --- contract anatomy ---------------------------------------------------- */
+/* --- contract evidence path --------------------------------------------- */
+
+.sw-c3-flow {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr);
+  gap: 64px;
+  margin-top: 24px;
+}
+.sw-c3-flow-wires {
+  position: absolute;
+  top: 47px;
+  width: 100%;
+  height: 476px;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--sw-c3-rule);
+  stroke-width: 1.5;
+}
+.sw-c3-flow-wires .is-selected {
+  stroke: var(--sw-c3-green);
+  stroke-width: 2;
+}
+.sw-c3-anatomy-col.sw-c3-flow-inputs {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+.sw-c3-flow-columns,
+.sw-c3-flow-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+}
+.sw-c3-flow-example-note {
+  font-size: 11px;
+  color: var(--sw-c3-muted);
+  margin: 6px 0 16px;
+}
+.sw-c3-flow-input {
+  position: relative;
+  width: 100%;
+  min-height: 68px;
+  text-align: left;
+  align-items: center;
+  padding: 12px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--sw-c3-hairline);
+  background: transparent;
+  color: var(--sw-c3-ink);
+  cursor: pointer;
+  letter-spacing: 0;
+  font-family: inherit;
+}
+.sw-c3-flow-input[aria-pressed="true"] {
+  background: var(--sw-c3-green-tint);
+  box-shadow: inset 3px 0 var(--sw-c3-green);
+}
+.sw-c3-flow-input:hover {
+  background: var(--sw-c3-green-tint);
+}
+.sw-c3-flow-input:focus-visible {
+  outline: 2px solid var(--sw-c3-green-deep);
+  outline-offset: 2px;
+}
+.sw-c3-flow-source {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.sw-c3-flow-input strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.sw-c3-flow-input small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--sw-c3-muted);
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.sw-c3-flow-arrow {
+  position: absolute;
+  left: calc(50% - 7px);
+  color: var(--sw-c3-muted);
+}
+.sw-c3-flow-record {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  background: var(--sw-c3-green-tint);
+  border-left: 2px solid var(--sw-c3-green);
+  padding: 16px 0 16px 20px;
+  min-width: 0;
+}
+.sw-c3-flow-record > strong {
+  display: block;
+  font-size: 16px;
+  margin-top: 16px;
+}
+.sw-c3-flow-contract-id {
+  display: block;
+  font-size: 11px;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  color: var(--sw-c3-muted);
+}
+.sw-c3-flow-record ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 18px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.sw-c3-flow-structure-label {
+  font-size: 11px;
+  color: var(--sw-c3-muted);
+  margin-top: 18px;
+}
+.sw-c3-flow-output {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sw-c3-green-deep);
+  border-top: 1px solid var(--sw-c3-hairline);
+  padding-top: 14px;
+}
+.sw-c3-flow-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 18px 28px;
+  border-top: 1px solid var(--sw-c3-rule);
+  margin-top: 22px;
+  padding-top: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.sw-c3-flow-detail strong {
+  display: block;
+  margin-top: 6px;
+}
+.sw-c3-flow-detail p {
+  margin: 8px 0;
+  color: var(--sw-c3-muted);
+}
+.sw-c3-flow-detail small {
+  font-size: 11px;
+  color: var(--sw-c3-green-deep);
+}
+.sw-c3-flow-lineage {
+  grid-column: 1 / -1;
+}
+.sw-c3-flow-lineage summary,
+.sw-c3-flow-facets summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--sw-c3-ink);
+}
+.sw-c3-flow-lineage ul {
+  margin: 10px 0;
+  padding-left: 18px;
+  font-size: 11px;
+}
+.sw-c3-flow-facets {
+  border-top: 1px solid var(--sw-c3-hairline);
+  margin-top: 18px;
+  padding-top: 14px;
+}
+.sw-c3-flow-facets summary span {
+  font-size: 11px;
+  color: var(--sw-c3-muted);
+  margin-left: 8px;
+}
+.sw-c3-flow-facets .sw-c3-facets {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .sw-c3-flow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+  .sw-c3-flow-wires {
+    display: none;
+  }
+  .sw-c3-flow-record {
+    align-self: stretch;
+  }
+}
+@media (max-width: 600px) {
+  .sw-c3-flow-input {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 14px;
+  }
+  .sw-c3-flow-columns {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .sw-c3-flow-arrow {
+    display: none;
+  }
+  .sw-c3-flow-extract {
+    padding-left: 0;
+  }
+  .sw-c3-flow-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sw-c3-flow-facets .sw-c3-facets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --- legacy anatomy ----------------------------------------------------- */
 
 .sw-c3-anatomy {
   display: grid;

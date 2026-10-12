@@ -1,8 +1,9 @@
 /** @jest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { ContractAnatomy } from "../ContractAnatomy";
+import { ContractEvidenceDocuments } from "../WorkspaceExecutiveShell";
 import type { SourceContractEvidenceCoverageRow } from "@/lib/source/data-model/types";
 import type { SourceWorkspaceVM } from "../buildViewModel";
 
@@ -64,18 +65,46 @@ const vmWith = (opts: {
       },
     },
     opportunityView: {
-      opportunities: Array.from({ length: opts.opportunities ?? 6 }, (_, i) => ({
-        id: `o${i}`,
-      })),
+      opportunities: Array.from(
+        { length: opts.opportunities ?? 6 },
+        (_, i) => ({
+          id: `o${i}`,
+        }),
+      ),
     },
   }) as unknown as SourceWorkspaceVM;
 
 const facet = (container: HTMLElement, name: string) =>
-  [...container.querySelectorAll(".sw-c3-facet")].find((node) =>
-    node.querySelector(".sw-c3-facet-name")?.textContent === name,
+  [...container.querySelectorAll(".sw-c3-facet")].find(
+    (node) => node.querySelector(".sw-c3-facet-name")?.textContent === name,
   );
 
 describe("ContractAnatomy", () => {
+  it("does not claim other evidence lanes or optimization when no documents are attached", () => {
+    const { container } = render(
+      <ContractEvidenceDocuments
+        files={[]}
+        extractions={[]}
+        coverage={coverage({
+          spend_rows: 0,
+          scope_rows: 0,
+          performance_rows: 0,
+          opportunity_rows: 0,
+        })}
+      />,
+    );
+    expect(container.textContent).not.toContain(
+      "Source can still optimize this contract",
+    );
+    expect(container.textContent).not.toContain(
+      "scope, performance, and opportunity rows are loaded",
+    );
+    expect(
+      screen.getByText(
+        /No contract-linked document passages are available in this view/,
+      ),
+    ).toBeTruthy();
+  });
   it("marks a facet not-applicable rather than open when the archetype excludes it", () => {
     const { container } = render(
       <ContractAnatomy
@@ -141,7 +170,9 @@ describe("ContractAnatomy", () => {
 
     const optimize = facet(container, "Optimize");
     expect(optimize?.className).toContain("sw-c3-facet-answered");
-    expect(optimize?.textContent).toContain("✓");
+    expect(
+      optimize?.querySelector('[aria-label="Evidence present"]'),
+    ).toBeTruthy();
   });
 
   /**
@@ -165,9 +196,7 @@ describe("ContractAnatomy", () => {
       "sw-c3-facet-open",
     );
     // Only Story is answered, from the archetype.
-    expect(
-      screen.getByText(/This contract answers 1 of 7 decision questions\./),
-    ).toBeTruthy();
+    expect(screen.getByText(/View coverage: 1 of 7\./)).toBeTruthy();
   });
 
   /**
@@ -188,7 +217,7 @@ describe("ContractAnatomy", () => {
     expect(feeds?.textContent).not.toContain("governed lever");
     expect(feeds?.textContent).not.toContain("6 governed");
     // The loaded lane is what may appear, and it says which population it is.
-    expect(feeds?.textContent).toContain("opportunity evidence row");
+    expect(feeds?.textContent).toContain("Cited opportunity inputs needed");
   });
 
   it("reports loaded opportunity evidence in the feeds block", () => {
@@ -201,7 +230,7 @@ describe("ContractAnatomy", () => {
     );
 
     const feeds = container.querySelector(".sw-c3-anatomy-col");
-    expect(feeds?.textContent).toContain("4 opportunity evidence rows");
+    expect(feeds?.textContent).toContain("4 opportunity records");
   });
 
   /**
@@ -223,9 +252,7 @@ describe("ContractAnatomy", () => {
 
     // Story, Scope, Economics, Relationship, Evidence answered; Performance
     // not required; Optimize open — no opportunity evidence is loaded.
-    expect(
-      screen.getByText(/This contract answers 5 of 7 decision questions\./),
-    ).toBeTruthy();
+    expect(screen.getByText(/View coverage: 5 of 7\./)).toBeTruthy();
   });
 
   it("does not claim Story is answered on an unmapped archetype", () => {
@@ -240,7 +267,7 @@ describe("ContractAnatomy", () => {
     expect(facet(container, "Story")?.className).toContain("sw-c3-facet-open");
   });
 
-  it("says why named upstream systems are not drawn", () => {
+  it("labels requested systems as examples rather than verified connections", () => {
     render(
       <ContractAnatomy
         coverage={coverage()}
@@ -251,8 +278,258 @@ describe("ContractAnatomy", () => {
 
     // The deck draws seven integrated systems. The data records only the
     // loader, so the surface says so rather than implying an integration.
+    expect(screen.getByText(/Examples, not verified connections/)).toBeTruthy();
+  });
+
+  it("draws the extract-to-record path without claiming example systems are connected", () => {
+    render(
+      <ContractAnatomy
+        coverage={coverage()}
+        scopeRowCount={4}
+        vm={vmWith({ performanceRequired: true })}
+      />,
+    );
     expect(
-      screen.getByText(/no integration with a named system exists to display/),
+      screen.getByRole("region", { name: "Contract evidence path" }),
     ).toBeTruthy();
+    expect(screen.getByText("Source systems")).toBeTruthy();
+    expect(screen.getByText("Extracts & workbooks")).toBeTruthy();
+    expect(screen.getByText("Canonical contract")).toBeTruthy();
+    expect(screen.getByText(/Examples, not verified connections/)).toBeTruthy();
+    expect(screen.queryByText(/This contract answers/)).toBeNull();
+    expect(screen.queryByText(/Every question.*evidence behind it/)).toBeNull();
+  });
+
+  it("turns a missing input into an owner and precise next action", () => {
+    render(
+      <ContractAnatomy
+        coverage={coverage({ document_page_text_rows: 0 })}
+        scopeRowCount={0}
+        vm={vmWith({ performanceRequired: true })}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Agreements & terms/ }));
+    const detail = screen.getByRole("region", {
+      name: "Agreements & terms input detail",
+    });
+    expect(
+      within(detail).getByText("Contract manager / Legal ops"),
+    ).toBeTruthy();
+    expect(
+      within(detail).getByText(/executed agreement.*SOW.*notice.*pricing/),
+    ).toBeTruthy();
+    expect(within(detail).getByText(/same canonical contract ID/)).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Invoices & payments/ }),
+    );
+    expect(
+      screen.getByText(/invoice IDs.*PO.*paid amount.*period/),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        /Spend rows do not prove invoice reconciliation or measured usage/,
+      ),
+    ).toBeTruthy();
+  });
+
+  it("shows a declared synthetic origin as synthetic, not as a live connector", () => {
+    const vm = vmWith({ performanceRequired: true });
+    Object.assign(vm, {
+      detail: {
+        contract: { contract_id: "C1", tenant_key: "t1" },
+        documentFiles: [
+          {
+            file_id: "F1",
+            tenant_key: "t1",
+            contract_ref: "C1",
+            document_type: "master_services_agreement",
+            file_name: "agreement.txt",
+            content_authenticity: "synthetic",
+            metadata_json: { source_system: "SharePoint" },
+          },
+        ],
+      },
+    });
+    render(<ContractAnatomy coverage={coverage()} scopeRowCount={4} vm={vm} />);
+    fireEvent.click(screen.getByRole("button", { name: /Agreements & terms/ }));
+    expect(screen.getByText("Synthetic origin: SharePoint")).toBeTruthy();
+    expect(screen.getByText("agreement.txt")).toBeTruthy();
+    expect(screen.queryByText(/SharePoint connected/)).toBeNull();
+  });
+
+  it("does not describe contract-wide passages as agreement completeness", () => {
+    render(
+      <ContractAnatomy
+        coverage={coverage()}
+        scopeRowCount={4}
+        vm={vmWith({ performanceRequired: true })}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /Agreements & terms/ }).textContent,
+    ).toContain("Contract-wide: 6 document passages");
+  });
+
+  it("does not relabel the internal package loader as an upstream connector", () => {
+    const vm = vmWith({ performanceRequired: true });
+    Object.assign(vm, {
+      detail: {
+        contract: { contract_id: "C1", tenant_key: "t1" },
+        documentFiles: [
+          {
+            file_id: "F1",
+            tenant_key: "t1",
+            contract_ref: "C1",
+            document_type: "contract",
+            metadata_json: {
+              source_system: "source_contract_depth_package_loader",
+            },
+          },
+        ],
+      },
+    });
+    render(<ContractAnatomy coverage={coverage()} scopeRowCount={4} vm={vm} />);
+    expect(screen.getByText("Upstream origin not declared")).toBeTruthy();
+    expect(
+      screen.queryByText(
+        /Recorded origin: source_contract_depth_package_loader/,
+      ),
+    ).toBeNull();
+  });
+
+  it("shows requested extracts rather than a zero-heavy missing evidence grid", () => {
+    const { container } = render(
+      <ContractAnatomy
+        scopeRowCount={0}
+        coverage={coverage({
+          spend_rows: 0,
+          document_page_text_rows: 0,
+          performance_rows: 0,
+          change_order_rows: 0,
+          opportunity_rows: 0,
+        })}
+        vm={vmWith({ performanceRequired: true })}
+      />,
+    );
+    const inputs = container.querySelector(".sw-c3-flow-inputs");
+    expect(inputs?.textContent).not.toMatch(
+      /0 document|0 spend|0 declared|0 performance|0 change-order|0 opportunity/,
+    );
+    expect(
+      screen.getByText("Executed agreement and terms needed"),
+    ).toBeTruthy();
+    expect(screen.getByText("Invoice and payment extract needed")).toBeTruthy();
+    expect(screen.getByText("Scope extract needed")).toBeTruthy();
+    expect(screen.getByText("SLA history needed")).toBeTruthy();
+    expect(screen.getByText("Approved change ledger needed")).toBeTruthy();
+    expect(screen.getByText("Cited opportunity inputs needed")).toBeTruthy();
+  });
+
+  it("scopes structured source rows to the same tenant and contract", () => {
+    const vm = vmWith({ performanceRequired: true });
+    Object.assign(vm, {
+      detail: {
+        contract: { contract_id: "C1", tenant_key: "t1" },
+        spendMonths: [
+          {
+            tenant_key: "t1",
+            contract_id: "C1",
+            source_system: "ERP extract",
+            source_record_id: "invoice-1",
+          },
+          {
+            tenant_key: "t2",
+            contract_id: "C1",
+            source_system: "WRONG-TENANT",
+          },
+          {
+            tenant_key: "t1",
+            contract_id: "C2",
+            source_system: "WRONG-CONTRACT",
+          },
+        ],
+        performancePeriods: [
+          {
+            tenant_key: "t1",
+            contract_id: "C1",
+            source_system: "ITSM extract",
+            source_record_id: "incident-1",
+          },
+          {
+            tenant_key: "t2",
+            contract_id: "C1",
+            source_system: "WRONG-TENANT",
+          },
+          {
+            tenant_key: "t1",
+            contract_id: "C2",
+            source_system: "WRONG-CONTRACT",
+          },
+        ],
+      },
+    });
+    render(<ContractAnatomy coverage={coverage()} scopeRowCount={4} vm={vm} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Invoices & payments/ }),
+    );
+    const spend = screen.getByRole("region", {
+      name: "Invoices & payments input detail",
+    });
+    expect(
+      within(spend).getByText("Recorded origin: ERP extract"),
+    ).toBeTruthy();
+    expect(within(spend).getByText("invoice-1")).toBeTruthy();
+    expect(spend.textContent).not.toMatch(/WRONG-TENANT|WRONG-CONTRACT/);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Service performance/ }),
+    );
+    const perf = screen.getByRole("region", {
+      name: "Service performance input detail",
+    });
+    expect(
+      within(perf).getByText("Recorded origin: ITSM extract"),
+    ).toBeTruthy();
+    expect(within(perf).getByText("incident-1")).toBeTruthy();
+    expect(perf.textContent).not.toMatch(/WRONG-TENANT|WRONG-CONTRACT/);
+  });
+
+  it("does not use vendor documents, another contract or another tenant as contract provenance", () => {
+    const vm = vmWith({ performanceRequired: true });
+    Object.assign(vm, {
+      detail: {
+        contract: { contract_id: "C1", tenant_key: "t1" },
+        documentFiles: [
+          {
+            file_id: "F2",
+            tenant_key: "t1",
+            contract_ref: "C2",
+            document_type: "contract",
+            metadata_json: { source_system: "WRONG-CONTRACT" },
+          },
+          {
+            file_id: "F3",
+            tenant_key: "t2",
+            contract_ref: "C1",
+            document_type: "contract",
+            metadata_json: { source_system: "WRONG-TENANT" },
+          },
+          {
+            file_id: "F4",
+            tenant_key: "t1",
+            contract_ref: null,
+            document_type: "contract",
+            metadata_json: { source_system: "VENDOR-ONLY" },
+          },
+        ],
+      },
+    });
+    const { container } = render(
+      <ContractAnatomy coverage={coverage()} scopeRowCount={4} vm={vm} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Agreements & terms/ }));
+    expect(container.textContent).not.toMatch(
+      /WRONG-CONTRACT|WRONG-TENANT|VENDOR-ONLY/,
+    );
+    expect(screen.getByText("Upstream origin not declared")).toBeTruthy();
   });
 });
