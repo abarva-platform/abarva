@@ -306,10 +306,26 @@ export function AiInitiativeDrawer({
                 label="Lifecycle stage"
                 value={a.lifecycleStage ?? "Not recorded"}
               />
+              {a.populationKind === "ai_case" && a.sourceCaseStatus ? (
+                <DrawerRow label="Status in intake" value={humanizeEvent(a.sourceCaseStatus)} />
+              ) : null}
+              {a.populationKind === "ai_case" && a.businessFunction ? (
+                <DrawerRow label="Business work area" value={a.businessFunction} />
+              ) : null}
+              {a.populationKind === "ai_case" && a.businessSegmentKey ? (
+                <DrawerRow label="Business segment" value={humanizeEvent(a.businessSegmentKey)} />
+              ) : null}
               <DrawerRow
                 label="Value type"
                 value={a.businessValueType ?? "Not recorded"}
               />
+              {a.populationKind === "ai_case" && a.expectedValueArchetype ? (
+                <DrawerRow
+                  label="Expected kind of benefit"
+                  value={humanizeEvent(a.expectedValueArchetype)}
+                  sub="A source description of the plan, not a verified dollar benefit."
+                />
+              ) : null}
               <DrawerRow
                 label="Stopped at"
                 value={a.gatingConstraint ?? "Not recorded"}
@@ -342,6 +358,9 @@ export function AiInitiativeDrawer({
                 label="Sponsor"
                 value={a.sponsorRole ?? "Not recorded"}
               />
+              {a.populationKind === "ai_case" && a.operationalOwnerRole ? (
+                <DrawerRow label="Day-to-day owner" value={a.operationalOwnerRole} />
+              ) : null}
               <DrawerRow
                 label="Finance partner"
                 value={a.financePartnerRole ?? "Not recorded"}

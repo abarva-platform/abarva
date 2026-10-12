@@ -370,6 +370,10 @@ function toProgramView(
     name: row.programName,
     ownerRole: trimOrNull(row.ownerRole),
     financeOwnerRole: trimOrNull(row.financeOwnerRole),
+    affectedFunctions: row.affectedFunctions ?? [],
+    technologyOwnerRole: trimOrNull(row.technologyOwnerRole),
+    sourceProgramStatus: trimOrNull(row.sourceProgramStatus),
+    sourceProgramPhase: trimOrNull(row.sourceProgramPhase),
     // The mart has no separate business-function column; the owning role is the
     // closest governed proxy and is labelled as such in the drawer.
     // The domain, not the sponsor. This read `ownerRole`, so a column headed DOMAIN listed
@@ -453,6 +457,11 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     controlBlocker: item.controlBlocker ?? null,
     controlBlockerReviewed: item.controlBlockerReviewed ?? false,
     sponsorRole: item.sponsorRole ?? null,
+    businessFunction: trimOrNull(item.businessFunction),
+    businessSegmentKey: trimOrNull(item.businessSegmentKey),
+    sourceCaseStatus: trimOrNull(item.sourceCaseStatus),
+    operationalOwnerRole: trimOrNull(item.operationalOwnerRole),
+    expectedValueArchetype: trimOrNull(item.expectedValueArchetype),
     aiSpendUsd: num(item.aiTaggedSpendUsd),
     aiAmountBasis: item.aiAmountBasis ?? "unknown",
     // `aiTaggedSpendUsd` is typed `number`, so `!== null` was always true and this discarded

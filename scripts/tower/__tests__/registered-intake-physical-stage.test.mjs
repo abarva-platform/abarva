@@ -60,6 +60,42 @@ test("physical plan preserves source identity and unknown amounts", () => {
   assert.equal(evidence.source_refs_json[0].source_row, null);
 });
 
+test("source-field physical plan carries the declared source rows through canonical and serving projections", () => {
+  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey, variant: "source-fields-v1" });
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  assert.equal(validatePhysicalPlan(report, plan, viewCounts).status, "pass");
+  assert.equal(plan.sourceFiles.length, 17);
+  assert.equal(plan.sourceRecords.length, 327);
+  assert.equal(plan.sourceRecords.filter((row) => row.record_type === "12_relationships").length, 28);
+  assert.equal(plan.objects.length, 237);
+  assert.equal(plan.measures.length, 308);
+  assert.equal(Object.values(viewCounts).reduce((sum, count) => sum + count, 0), 352);
+  assert.equal(plan.projectionSourceRefs.length, 467);
+  assert.ok(plan.projectionManifests.every((row) => row.projection_version === 5));
+  assert.equal(plan.snapshot.created_by_job, "tower-registered-intake-source-fields/v1");
+  assert.ok(plan.commandRows.filter((row) => row.page_key === "decision_lanes")
+    .every((row) => row.owner_role === row.display_payload_json.business_sponsor_role &&
+      row.display_payload_json.domain_name === null));
+  assert.ok(plan.aiRows.filter((row) => row.display_payload_json.page_key === "ai_portfolio")
+    .every((row) => row.business_function === row.display_payload_json.business_function &&
+      row.tool_name === "" && row.tool_object_id === null &&
+      row.display_payload_json.claimable_value_usd === null));
+});
+
+test("source-field physical gate rejects a renamed affected function and an invented case tool", () => {
+  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey, variant: "source-fields-v1" });
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  const program = plan.commandRows.find((row) => row.page_key === "decision_lanes" &&
+    row.display_payload_json.affected_functions.length > 0);
+  const useCase = plan.aiRows.find((row) => row.display_payload_json.page_key === "ai_portfolio");
+  program.display_payload_json.affected_functions[0].function_name = "Invented function";
+  useCase.tool_name = useCase.use_case_name;
+  const gate = validatePhysicalPlan(report, plan, viewCounts);
+  assert.equal(gate.status, "fail");
+  assert.ok(gate.errors.some((error) => error.includes("affected function differs")));
+  assert.ok(gate.errors.some((error) => error.includes("AI case source fields differ")));
+});
+
 test("physical gate refuses category drift that would misstate the spend breakdown", () => {
   const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey });
   const { plan, viewCounts } = buildPhysicalPlan(report);
@@ -116,6 +152,26 @@ test("write preflight recognizes exact approval and requires private job identit
     assert.equal(preflight.stage_status, "not_written");
     assert.equal(preflight.load_approval_status, "approved");
     assert.equal(preflight.physical_quality_gate_status, "pass");
+  } finally {
+    fs.rmSync(outDir, { recursive: true, force: true });
+  }
+});
+
+test("source-field write refuses the prior approval before any database connection", () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-source-fields-refusal-"));
+  try {
+    const result = spawnSync(process.execPath, [
+      "--import", "tsx", path.join(ROOT, "scripts/tower/stage-registered-intake-partial.mjs"),
+      "--tenant-key", tenantKey, "--candidate-variant", "source-fields-v1",
+      "--out-dir", outDir, "--write", "--job-run-id", "test-refusal",
+    ], { cwd: ROOT, encoding: "utf8", env: { ...process.env, DATABASE_URL: "" } });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Refusing stage\/proof/);
+    assert.equal(fs.existsSync(path.join(outDir, "stage-receipt.json")), false);
+    const preflight = JSON.parse(fs.readFileSync(path.join(outDir, "stage-preflight.json"), "utf8"));
+    assert.equal(preflight.load_approval_status, "missing_or_mismatched");
+    assert.equal(preflight.physical_quality_gate_status, "pass");
+    assert.equal(preflight.projection_version, 5);
   } finally {
     fs.rmSync(outDir, { recursive: true, force: true });
   }

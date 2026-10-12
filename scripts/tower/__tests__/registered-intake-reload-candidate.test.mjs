@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -56,6 +57,28 @@ test("registered intake candidate keeps unsupported money unknown and maps all v
   assert.equal(report.source_manifest["extracts/ms365-copilot-usage-user-detail.csv"].detail_suppressed, true);
   assert.ok(!JSON.stringify(report).includes("userPrincipalName"));
   assert.ok(!JSON.stringify(report).includes("displayName"));
+});
+
+test("source-field candidate keeps declared roles and affected functions without inventing a funding domain", () => {
+  const prior = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey });
+  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey, variant: "source-fields-v1" });
+  const priorHash = crypto.createHash("sha256").update(`${JSON.stringify(prior, null, 2)}\n`).digest("hex");
+  assert.equal(priorHash, "0428caec53f4a3a2366acf117ba42ec9a82e0cac94ab917fb6ce87a027e9821c");
+  assert.equal(report.input_fingerprint_sha256, prior.input_fingerprint_sha256);
+  assert.notEqual(report.assessment_id, prior.assessment_id);
+  assert.equal(report.candidate_rules_version, "source-fields-v1");
+  assert.equal(report.canonical.programs.length, 38);
+  assert.equal(report.canonical.ai_use_cases.length, 18);
+  assert.equal(report.canonical.programs.filter((row) => row.affected_functions.length > 0).length, 28);
+  assert.ok(report.views.decision_lanes.every((row) => row.business_sponsor_role &&
+    row.technology_owner_role && row.source_program_status && row.source_program_phase &&
+    row.domain_name === null && row.source_refs[0].source_file === "09_programs_initiatives.csv" &&
+    row.source_refs.slice(1).every((ref) => ref.source_file === "12_relationships.csv")));
+  assert.ok(report.views.ai_portfolio.every((row) => row.business_function && row.business_segment_key &&
+    row.source_case_status && row.business_sponsor_role && row.operational_owner_role &&
+    row.expected_value_archetype && row.claimable_value_usd === null));
+  assert.ok(!Object.hasOwn(report.source_manifest, "01_business_functions.csv"));
+  assert.ok(report.canonical.ai_use_cases.every((row) => row.planning_promise_usd === null));
 });
 
 test("registry identity rejects an inactive tenant", () => {
