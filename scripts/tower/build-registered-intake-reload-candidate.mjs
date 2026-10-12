@@ -26,11 +26,42 @@ const INPUT_FILES = [
   "SA09_AI_Tool_Usage_Feed.csv",
   "SA11_AI_KPI_Operational_Outcome_Feed.csv",
 ];
+const SOURCE_ASSERTION_EXTRA_FILES = [
+  "00_enterprise_profile.csv", "01_business_functions.csv", "01b_business_segments.csv",
+  "03_workforce_roles.csv", "17_service_scope_managed_services.csv",
+];
 const PAGES = [
   "command_center", "decision_lanes", "recommended_actions", "value_proof",
   "cost_lens", "evidence", "risk_lens", "ai_portfolio", "adoption_lens",
 ];
 const SOURCE_FIELDS_VARIANT = "source-fields-v1";
+const SOURCE_ASSERTIONS_VARIANT = "source-assertions-v1";
+const FOUNDATION_OBJECT_CONTRACT = [
+  ["00_enterprise_profile.csv", "enterprise_profile", "portfolio_company_id", "entity_name",
+    ["industry", "sub_industry", "revenue_usd", "employee_count", "headquarters", "operating_regions",
+      "business_model", "customer_segments", "mission", "vision", "strategic_priorities", "current_state_notes", "target_state_notes", "known_gaps"]],
+  ["01_business_functions.csv", "business_function", "function_id", "function_name",
+    ["parent_function", "executive_owner", "business_capabilities", "criticality", "annual_budget_usd", "fte_count",
+      "headcount_fte", "cost_to_serve_usd", "process_maturity", "change_appetite", "regulatory_exposure",
+      "business_segment_key", "function_type", "office_lens_abarva", "expected_value_archetype", "segment_sponsor_role"]],
+  ["03_workforce_roles.csv", "workforce_role", "workforce_role_id", "persona_or_role",
+    ["function_name", "role_count", "location_model", "employment_type", "vendor_supported", "skills",
+      "pain_points", "automation_opportunity", "known_gaps"]],
+  ["17_service_scope_managed_services.csv", "managed_service_scope", "managed_service_id", "service_name",
+    ["service_tower", "scope_description", "in_scope_functions", "in_scope_systems", "current_provider",
+      "service_volume", "sla_or_kpi", "run_cost_usd", "target_state_option", "known_gaps"]],
+  ["02_org_ownership.csv", "organization", "org_unit_id", "org_unit",
+    ["parent_org_unit", "leader_name_or_role", "decision_rights", "owned_functions", "location_scope", "budget_authority_usd"]],
+  ["04_applications_systems.csv", "application", "system_id", "system_name",
+    ["system_type", "business_function", "lifecycle_state", "criticality", "business_owner", "technology_owner", "annual_cost_usd", "annual_cost_basis"]],
+  ["05_data_assets_integrations.csv", "data_flow", "data_asset_id", "data_asset_name",
+    ["data_domain", "source_system", "target_system", "integration_type", "quality_status", "regulated_data_flag"]],
+  ["06_infrastructure_platforms.csv", "infrastructure", "infrastructure_id", "platform_name",
+    ["platform_type", "hosting_model", "lifecycle_state", "criticality", "operational_owner", "capacity_or_scale", "annual_cost_usd", "utilization_pct"]],
+  ["18_operational_process_evidence.csv", "process", "process_id", "process_name",
+    ["business_function", "process_owner", "systems_used", "volume_metric", "control_points", "automation_candidate",
+      "transaction_volume", "error_rate_pct", "rework_pct", "automation_pct", "cost_per_transaction"]],
+];
 
 function sha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex");
@@ -170,7 +201,10 @@ function addPage(pages, key, id, title, text, value, refs, extras = {}) {
 }
 
 export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey, outDir, variant = null }) {
-  if (variant !== null && variant !== SOURCE_FIELDS_VARIANT) throw new Error(`Unknown candidate variant: ${variant}`);
+  if (variant !== null && ![SOURCE_FIELDS_VARIANT, SOURCE_ASSERTIONS_VARIANT].includes(variant)) throw new Error(`Unknown candidate variant: ${variant}`);
+  const sourceFieldsEnabled = variant === SOURCE_FIELDS_VARIANT || variant === SOURCE_ASSERTIONS_VARIANT;
+  const sourceAssertionsEnabled = variant === SOURCE_ASSERTIONS_VARIANT;
+  const selectedInputFiles = sourceAssertionsEnabled ? [...INPUT_FILES, ...SOURCE_ASSERTION_EXTRA_FILES] : INPUT_FILES;
   if (!tenantKey) throw new Error("--tenant-key is required; tenancy must be declared in the active registry");
   const registry = JSON.parse(fs.readFileSync(path.join(repoRoot, REGISTRY), "utf8"));
   const tenant = registry.activeTenants?.find((entry) => entry.tenantKey === tenantKey);
@@ -180,7 +214,7 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   if (!inputRoot.startsWith(`${canonicalRoot}${path.sep}`)) throw new Error("Active input root is outside the canonical registry root");
   const sourceManifest = {};
   const inputs = {};
-  for (const file of INPUT_FILES) {
+  for (const file of selectedInputFiles) {
     const full = path.join(inputRoot, file);
     if (!fs.existsSync(full)) throw new Error(`Required active intake file is missing: ${file}`);
     const bytes = fs.readFileSync(full);
@@ -189,6 +223,17 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     if (wrongTenant.length) throw new Error(`${file} has ${wrongTenant.length} rows outside the registered tenant`);
     sourceManifest[file] = { sha256: sha256(bytes), row_count: rows.length, source_path: path.join(tenant.canonicalInputRoot, file) };
     inputs[file] = rows;
+  }
+  if (sourceAssertionsEnabled) {
+    const file = "SA10_AI_Value_Interview_Evidence.csv";
+    const full = path.join(inputRoot, file);
+    if (!fs.existsSync(full)) throw new Error(`Required interview-evidence census is missing: ${file}`);
+    const bytes = fs.readFileSync(full);
+    const rows = csvRows(bytes.toString("utf8"));
+    if (rows.some((row) => row.tenant_key !== tenantKey)) throw new Error("Interview-evidence census tenant mismatch");
+    sourceManifest[file] = { sha256: sha256(bytes), row_count: rows.length,
+      source_path: path.join(tenant.canonicalInputRoot, file), content_disposition: "hash_count_only",
+      content_loaded: false, quality_state: "held", privacy_disposition: "consent_and_evidence_link_unresolved" };
   }
 
   const spend = inputs["08_spend_value.csv"];
@@ -213,11 +258,30 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   const usageIndex = rowsById(usage, "ai_use_case_id", "usage");
   const kpiIndex = rowsById(kpis, "ai_use_case_id", "kpi");
   const duplicates = [caseIndex, benefitIndex, usageIndex, kpiIndex].flatMap((index) => index.duplicateIds);
+  const foundationObjects = sourceAssertionsEnabled ? FOUNDATION_OBJECT_CONTRACT.flatMap(
+    ([file, type, idField, nameField, fields]) => inputs[file].map((row) => ({
+      object_type: type, id: row[idField]?.trim() || null, name: row[nameField] || null,
+      source_ref: { ...sourceRef(file, row, sourceManifest), source_record_id: row[idField]?.trim() || null },
+      source_fields: Object.fromEntries(fields.map((field) => [field, row[field] || null])),
+      ...(type === "business_function" ? {
+        segment_attribution_status: inputs["01b_business_segments.csv"].some((segment) =>
+          segment.segment_key === row.business_segment_key) ? "source_key_present_mapping_pending" : "unresolved_key",
+      } : {}),
+    }))) : [];
+  const foundationIdentityErrors = sourceAssertionsEnabled ? FOUNDATION_OBJECT_CONTRACT.flatMap(
+    ([file, , idField]) => rowsById(inputs[file], idField, file).duplicateIds) : [];
+  const segmentKeys = sourceAssertionsEnabled ? new Set(inputs["01b_business_segments.csv"].map((row) => row.segment_key)) : new Set();
+  const unresolvedFunctionSegments = sourceAssertionsEnabled ? inputs["01_business_functions.csv"].filter((row) =>
+    !segmentKeys.has(row.business_segment_key)).length : 0;
+  const completeRelationshipRows = relationships.filter((row) => row.from_object_id?.trim() && row.to_object_id?.trim());
+  const uniqueRelationshipTriples = new Set(completeRelationshipRows.map((row) => [
+    row.from_object_type, row.from_object_id, row.relationship_type, row.to_object_type, row.to_object_id,
+  ].join("|")));
   const caseIds = [...caseIndex.result.keys()].sort();
   const benefitIds = [...benefitIndex.result.keys()].sort();
   const programIds = new Set(programs.map((row) => row.program_id).filter(Boolean));
   const affectedFunctionsByProgram = new Map();
-  if (variant === SOURCE_FIELDS_VARIANT) {
+  if (sourceFieldsEnabled) {
     for (const row of relationships) {
       if (row.from_object_type !== "program" || row.relationship_type !== "impacts" ||
           row.to_object_type !== "function" || !programIds.has(row.from_object_id) ||
@@ -287,6 +351,8 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       row_count: rawRows.length,
       source_path: path.join(tenant.canonicalInputRoot, "extracts/ms365-copilot-usage-user-detail.csv"),
       detail_suppressed: true,
+      ...(sourceAssertionsEnabled ? { content_disposition: "hash_count_only", content_loaded: false,
+        quality_state: "held", privacy_disposition: "user_detail_suppressed" } : {}),
     };
   }
   const approvedBudgetRows = spend.filter((row) => row.approved_budget_usd && row.fiscal_year && row.budget_approval_status === "approved");
@@ -305,12 +371,23 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       source_refs: spend.map((row) => sourceRef("08_spend_value.csv", row, sourceManifest)),
     },
     programs: programs.map((row) => ({ id: row.program_id, name: row.program_name, planning_budget_usd: amount(row.budget_usd), approved_fy_budget_usd: null, source_ref: sourceRef("09_programs_initiatives.csv", row, sourceManifest),
-      ...(variant === SOURCE_FIELDS_VARIANT ? {
+      ...(sourceFieldsEnabled ? {
         business_sponsor_role: row.business_sponsor || null,
         technology_owner_role: row.technology_owner || null,
         source_program_status: row.status || null,
         source_program_phase: row.phase || null,
         affected_functions: affectedFunctionsByProgram.get(row.program_id) || [],
+        ...(sourceAssertionsEnabled ? {
+          source_stated_expected_value_usd: amount(row.expected_value_usd),
+          source_start_date: row.start_date || null,
+          source_end_date: row.end_date || null,
+          source_pct_complete: amount(row.pct_complete),
+          source_stage_gate: row.stage_gate || null,
+          source_benefit_realization_start: row.benefit_realization_start || null,
+          source_blocked_reason: row.blocked_reason || null,
+          source_objective: row.objective || null,
+          source_target_outcomes: row.target_outcomes || null,
+        } : {}),
       } : {}) })),
     ai_use_cases: caseIds.map((id) => {
       const row = caseIndex.result.get(id);
@@ -319,11 +396,17 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         name: row.use_case_name,
         status: row.current_status,
         sponsor_role: row.sponsor_role,
-        ...(variant === SOURCE_FIELDS_VARIANT ? {
+        ...(sourceFieldsEnabled ? {
           business_function: row.business_function || null,
           business_segment_key: row.business_segment_key || null,
           operational_owner_role: row.operational_owner_role || null,
           expected_value_archetype: row.expected_value_archetype || null,
+          ...(sourceAssertionsEnabled ? {
+            source_value_hypothesis: row.value_hypothesis || null,
+            source_approval_path: row.approval_path || null,
+            source_risk_controls: row.risk_controls || null,
+            source_required_systems: row.required_systems || null,
+          } : {}),
         } : {}),
         planning_promise_usd: null,
         active_users: null,
@@ -356,7 +439,46 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         usage_licensed_users: amount(u?.licensed_users),
         usage_active_users: amount(u?.active_users),
         usage_denominator: amount(u?.enabled_users),
+        ...(sourceAssertionsEnabled ? {
+          usage_power_users: amount(u?.power_users),
+          usage_events: amount(u?.usage_events),
+          usage_period_start: u?.usage_period_start || null,
+          usage_period_end: u?.usage_period_end || null,
+          usage_source_system: u?.source_system || null,
+          usage_collection_method: u?.collection_method || null,
+          usage_refresh_lag_hours: amount(u?.refresh_lag_hours),
+          usage_shadow_flag: u?.shadow_usage_flag || null,
+          outcome_feed_kpi_name: k?.kpi_name || null,
+          outcome_feed_baseline: amount(k?.baseline_value),
+          outcome_feed_target: amount(k?.target_value),
+          outcome_feed_actual: amount(k?.actual_value),
+          outcome_feed_unit: k?.metric_unit || null,
+          outcome_feed_period_start: k?.measurement_period_start || null,
+          outcome_feed_period_end: k?.measurement_period_end || null,
+          outcome_feed_claim_status: k?.value_claim_status || null,
+          outcome_feed_claim_allowed: k?.tower_claim_allowed || null,
+          outcome_feed_source_finance_assertion_usd: amount(k?.finance_validated_value_usd),
+          outcome_feed_source_record_id: k?.source_record_id || null,
+        } : {}),
         claimable_value_usd: null,
+        ...(sourceAssertionsEnabled ? {
+          source_asserted_finance_value_usd: amount(b.finance_validated_value_usd),
+          benefit_feed_source_funded_spend_usd: amount(b.funded_spend_usd),
+          benefit_feed_source_actual_spend_ytd_usd: amount(b.actual_spend_ytd_usd),
+          usage_feed_source_promised_value_usd: amount(u?.promised_value_usd),
+          usage_feed_source_finance_assertion_usd: amount(u?.finance_validated_value_usd),
+          usage_feed_source_claim_status: u?.value_claim_status || null,
+          source_finance_validation_status: b.finance_validation_status || null,
+          source_value_claim_status: b.value_claim_status || null,
+          source_tower_claim_allowed: b.tower_claim_allowed || null,
+          source_realized_value_allowed: b.realized_value_allowed || null,
+          source_owner_attestation_status: b.owner_attestation_status || null,
+          source_evidence_id: b.evidence_id || null,
+          source_evidence_freshness_status: b.evidence_freshness_status || null,
+          source_duplicate_risk: b.duplicate_risk || null,
+          source_additive_status: b.additive_status || null,
+          source_assertion_caveat: "Benefit-feed assertion only; evidence is not load-approved and cross-feed amounts disagree. No value is claimable.",
+        } : {}),
         source_refs: [
           sourceRef("SA08_AI_Benefits_Realization_Usage_Ledger.csv", b, sourceManifest),
           u && sourceRef("SA09_AI_Tool_Usage_Feed.csv", u, sourceManifest),
@@ -365,6 +487,12 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       };
     }),
     foundations: {
+      ...(sourceAssertionsEnabled ? {
+        enterprise_profile_rows: inputs["00_enterprise_profile.csv"].length,
+        business_function_rows: inputs["01_business_functions.csv"].length,
+        workforce_role_rows: inputs["03_workforce_roles.csv"].length,
+        managed_service_rows: inputs["17_service_scope_managed_services.csv"].length,
+      } : {}),
       owner_rows: owners.length,
       application_rows: applications.length,
       data_asset_rows: assets.length,
@@ -373,11 +501,38 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       process_rows: processes.length,
       maturity_rows: maturity.length,
       itsm_extract_available: fs.existsSync(path.join(inputRoot, "20_itsm_platform_workflow.csv")),
+      ...(sourceAssertionsEnabled ? {
+        source_objects: foundationObjects,
+        segment_source_rows_mapping_pending: inputs["01b_business_segments.csv"].length,
+        function_segment_keys_unresolved: foundationObjects.filter((row) =>
+          row.object_type === "business_function" && row.segment_attribution_status === "unresolved_key").length,
+        no_declared_row_id: { source_file: "19_data_analytics_platform_maturity.csv", row_count: maturity.length },
+        relationship_census: {
+          source_rows: relationships.length,
+          complete_declared_endpoint_ids: completeRelationshipRows.length,
+          missing_from_id: relationships.filter((row) => !row.from_object_id?.trim()).length,
+          missing_to_id: relationships.filter((row) => !row.to_object_id?.trim()).length,
+          unique_declared_edge_keys: uniqueRelationshipTriples.size,
+          repeated_declared_edge_rows: completeRelationshipRows.length - uniqueRelationshipTriples.size,
+          workshop_certified_rows: relationships.filter((row) =>
+            !row.known_gaps?.includes("not yet certified by a client workshop")).length,
+          canonical_edges_admitted: 0,
+          rule: "Raw rows may be staged in Layer 2; no new graph edge passes independent evidence and physical dictionary review.",
+        },
+      } : {}),
     },
     contract_exposure: vendors.map((row) => ({
       id: row.vendor_id,
       vendor: row.vendor_name,
       annual_contract_spend_usd: amount(row.annual_spend_usd),
+      ...(sourceAssertionsEnabled ? {
+        source_contract_name: row.contract_name || null,
+        source_service_category: row.service_category || null,
+        source_contract_owner_role: row.contract_owner || null,
+        source_renewal_date: row.renewal_date || null,
+        source_term_end: row.term_end || null,
+        source_risk_rating: row.risk_rating || null,
+      } : {}),
       source_ref: sourceRef("07_vendors_contracts.csv", row, sourceManifest),
     })),
     outcome_metrics: metrics.map((row) => ({
@@ -391,12 +546,29 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       claimable_value_usd: null,
       source_ref: sourceRef("14_metrics_outcomes.csv", row, sourceManifest),
       evidence_basis: row.evidence_basis || null,
+      ...(sourceAssertionsEnabled ? {
+        source_asserted_finance_value_usd: amount(row.finance_attested_value_usd),
+        source_definition: row.definition || null,
+        source_metric_domain: row.metric_domain || null,
+        source_business_function: row.business_function || null,
+        source_owner_role: row.owner || null,
+        source_data_source: row.data_source || null,
+        source_calculation_basis: row.calculation_basis || null,
+        source_unblock_target_period: row.unblock_target_period || null,
+        source_value_claim_status: row.value_claim_status || null,
+        source_claim_readiness: row.claim_readiness || null,
+        source_attestation_owner: row.attestation_owner || null,
+        source_assertion_caveat: "Outcome-feed assertion only; independent Finance and evidence approval have not been verified for Tower.",
+      } : {}),
       blocked_reason: row.claim_blocked_reason || "Evidence approval and Finance reconciliation pending",
       next_action: row.unblock_action || "Approve evidence and reconcile the measurement",
     })),
   };
 
-  const pages = Object.fromEntries(PAGES.map((key) => [key, []]));
+  const foundationSummary = sourceAssertionsEnabled ? { ...canonical.foundations } : canonical.foundations;
+  if (sourceAssertionsEnabled) delete foundationSummary.source_objects;
+  const selectedPages = sourceAssertionsEnabled ? [...PAGES, "foundations"] : PAGES;
+  const pages = Object.fromEntries(selectedPages.map((key) => [key, []]));
   addPage(pages, "command_center", "executive_summary", "Tower at a glance",
     "Approved FY budget is not supplied. The annual spend figure is a planning estimate from one source; program budgets cover unspecified periods. No realized AI value is ready to claim.",
     null, canonical.modeled_annual_spend.source_refs, {
@@ -414,15 +586,29 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       claim_status_feed_conflict_count: claimStatusConflicts.length,
       raw_usage_validates_claim_feed: rawUsageValidation.validates_claim_usage,
       use_case_to_benefit_ids_joined: declaredCrosswalk,
-      foundations: canonical.foundations,
+      foundations: foundationSummary,
     });
+  if (sourceAssertionsEnabled) {
+    for (const item of foundationObjects) {
+      addPage(pages, "foundations", `foundation:${item.object_type}:${item.id}`, item.name,
+        "This is a source-recorded enterprise item. Its owner, cost and links have not been independently verified for a Tower decision.",
+        null, [item.source_ref], {
+          object_type: item.object_type, source_object_id: item.id, source_fields: item.source_fields,
+          source_recorded: true, source_review_state: "not_reviewed",
+          source_quality_label: "Source-reported; not independently verified",
+          segment_identity_status: item.object_type === "business_function" ? item.segment_attribution_status : null,
+          approved_fy_budget_usd: null, claimable_value_usd: null, relationship_status: "not_promoted",
+        });
+    }
+  }
   for (const program of canonical.programs) {
     addPage(pages, "decision_lanes", program.id, program.name,
-      "Planning budget only. The amount has no approved fiscal-year basis in this extract.",
+      sourceAssertionsEnabled ? "The source lists a planning budget and expected value. Neither is approved fiscal-year funding or measured return." :
+        "Planning budget only. The amount has no approved fiscal-year basis in this extract.",
       program.planning_budget_usd,
       [program.source_ref, ...(program.affected_functions || []).map((item) => item.source_ref)],
       { fiscal_year: null, approval_state: "not_verified",
-        ...(variant === SOURCE_FIELDS_VARIANT ? {
+        ...(sourceFieldsEnabled ? {
           business_sponsor_role: program.business_sponsor_role,
           technology_owner_role: program.technology_owner_role,
           source_program_status: program.source_program_status,
@@ -430,19 +616,37 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
           affected_functions: program.affected_functions.map(({ function_id, function_name }) => ({ function_id, function_name })),
           affected_function_name: program.affected_functions.length === 1 ? program.affected_functions[0].function_name : null,
           domain_name: null,
+          ...(sourceAssertionsEnabled ? {
+            source_stated_expected_value_usd: program.source_stated_expected_value_usd,
+            source_start_date: program.source_start_date,
+            source_end_date: program.source_end_date,
+            source_pct_complete: program.source_pct_complete,
+            source_stage_gate: program.source_stage_gate,
+            source_benefit_realization_start: program.source_benefit_realization_start,
+            source_blocked_reason: program.source_blocked_reason,
+            source_objective: program.source_objective,
+            source_target_outcomes: program.source_target_outcomes,
+            source_assertion_caveat: "Source-stated planning value, not approved funding or realized value.",
+          } : {}),
         } : {}) });
   }
   for (const item of canonical.ai_use_cases) {
     addPage(pages, "ai_portfolio", item.id, item.name,
       "This use case has no declared link to the benefit or usage records. Its money and adoption remain unknown.",
       null, item.source_refs, { claimable_value_usd: null,
-        ...(variant === SOURCE_FIELDS_VARIANT ? {
+        ...(sourceFieldsEnabled ? {
           business_function: item.business_function,
           business_segment_key: item.business_segment_key,
           source_case_status: item.status,
           business_sponsor_role: item.sponsor_role,
           operational_owner_role: item.operational_owner_role,
           expected_value_archetype: item.expected_value_archetype,
+          ...(sourceAssertionsEnabled ? {
+            source_value_hypothesis: item.source_value_hypothesis,
+            source_approval_path: item.source_approval_path,
+            source_risk_controls: item.source_risk_controls,
+            source_required_systems: item.source_required_systems,
+          } : {}),
         } : {}) });
     addPage(pages, "evidence", item.id, item.name, "Evidence has not been approved for loading or cited proof.", null, item.source_refs,
       { next_step: "Approve and reconcile evidence" });
@@ -450,9 +654,40 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   }
   for (const item of canonical.ai_claims) {
     addPage(pages, "value_proof", item.id, item.name,
-      `Benefit and usage extracts give different amounts. ${item.evidence_reference_registered ? "The cited evidence ID is registered but not approved." : "The cited evidence ID is not in the evidence register."} The benefit promise is planning only; no realized value is claimable.`,
+      sourceAssertionsEnabled ?
+        `The benefit feed states a Finance value and claim status, but the feeds disagree and its evidence ID is not approved for loading. This is a source assertion, not cleared value.` :
+        `Benefit and usage extracts give different amounts. ${item.evidence_reference_registered ? "The cited evidence ID is registered but not approved." : "The cited evidence ID is not in the evidence register."} The benefit promise is planning only; no realized value is claimable.`,
       null, item.source_refs, { planning_promise_usd: item.planning_promise_usd, claimable_value_usd: null,
-        evidence_reference_registered: item.evidence_reference_registered });
+        evidence_reference_registered: item.evidence_reference_registered,
+        ...(sourceAssertionsEnabled ? {
+          source_asserted_finance_value_usd: item.source_asserted_finance_value_usd,
+          benefit_feed_source_funded_spend_usd: item.benefit_feed_source_funded_spend_usd,
+          benefit_feed_source_actual_spend_ytd_usd: item.benefit_feed_source_actual_spend_ytd_usd,
+          usage_feed_source_promised_value_usd: item.usage_feed_source_promised_value_usd,
+          usage_feed_source_finance_assertion_usd: item.usage_feed_source_finance_assertion_usd,
+          usage_feed_source_claim_status: item.usage_feed_source_claim_status,
+          outcome_feed_kpi_name: item.outcome_feed_kpi_name,
+          outcome_feed_baseline: item.outcome_feed_baseline,
+          outcome_feed_target: item.outcome_feed_target,
+          outcome_feed_actual: item.outcome_feed_actual,
+          outcome_feed_unit: item.outcome_feed_unit,
+          outcome_feed_period_start: item.outcome_feed_period_start,
+          outcome_feed_period_end: item.outcome_feed_period_end,
+          outcome_feed_claim_status: item.outcome_feed_claim_status,
+          outcome_feed_claim_allowed: item.outcome_feed_claim_allowed,
+          outcome_feed_source_finance_assertion_usd: item.outcome_feed_source_finance_assertion_usd,
+          outcome_feed_source_record_id: item.outcome_feed_source_record_id,
+          source_finance_validation_status: item.source_finance_validation_status,
+          source_value_claim_status: item.source_value_claim_status,
+          source_tower_claim_allowed: item.source_tower_claim_allowed,
+          source_realized_value_allowed: item.source_realized_value_allowed,
+          source_owner_attestation_status: item.source_owner_attestation_status,
+          source_evidence_id: item.source_evidence_id,
+          source_evidence_freshness_status: item.source_evidence_freshness_status,
+          source_duplicate_risk: item.source_duplicate_risk,
+          source_additive_status: item.source_additive_status,
+          source_assertion_caveat: item.source_assertion_caveat,
+        } : {}) });
     addPage(pages, "adoption_lens", item.id, item.name,
       `Active users and enabled users come from the usage feed. ${rawUsageValidation.validates_claim_usage ? "The separate user-detail file has matching identity, source and period fields." : "The separate user-detail file cannot validate these records."} Usage does not establish a dollar benefit.`,
       item.usage_active_users, item.source_refs.filter((ref) => ref.source_file === "SA09_AI_Tool_Usage_Feed.csv"),
@@ -461,15 +696,42 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         reported_usage_rate_pct: item.usage_feed_reported_rate_pct,
         reported_usage_rate_denominator: item.usage_feed_usage_rate_basis,
         licensed_users: item.usage_licensed_users,
+        ...(sourceAssertionsEnabled ? {
+          power_users: item.usage_power_users,
+          usage_events: item.usage_events,
+          usage_period_start: item.usage_period_start,
+          usage_period_end: item.usage_period_end,
+          usage_source_system: item.usage_source_system,
+          usage_collection_method: item.usage_collection_method,
+          usage_refresh_lag_hours: item.usage_refresh_lag_hours,
+          usage_shadow_flag: item.usage_shadow_flag,
+        } : {}),
         raw_detail_validation_status: rawUsageValidation.validates_claim_usage ? "validated" : "not_validated" });
   }
   for (const item of canonical.outcome_metrics) {
     addPage(pages, "value_proof", `metric:${item.id}`, item.name,
-      "Baseline, target and observed values come from the outcome feed. Dollar value is withheld until evidence and Finance review are complete.",
+      sourceAssertionsEnabled ?
+        "The outcome feed records baseline, target and observed values. Some rows state a Finance amount; Tower has not independently verified that assertion or approved evidence." :
+        "Baseline, target and observed values come from the outcome feed. Dollar value is withheld until evidence and Finance review are complete.",
       null, [item.source_ref], {
         baseline: item.baseline, target: item.target, observed: item.observed,
         baseline_period: item.baseline_period, observed_period: item.observed_period,
         claimable_value_usd: null, claim_blocked_reason: item.blocked_reason,
+        ...(sourceAssertionsEnabled ? {
+          source_asserted_finance_value_usd: item.source_asserted_finance_value_usd,
+          source_definition: item.source_definition,
+          source_metric_domain: item.source_metric_domain,
+          source_business_function: item.source_business_function,
+          source_owner_role: item.source_owner_role,
+          source_data_source: item.source_data_source,
+          source_calculation_basis: item.source_calculation_basis,
+          source_unblock_target_period: item.source_unblock_target_period,
+          source_value_claim_status: item.source_value_claim_status,
+          source_claim_readiness: item.source_claim_readiness,
+          source_attestation_owner: item.source_attestation_owner,
+          source_evidence_basis: item.evidence_basis,
+          source_assertion_caveat: item.source_assertion_caveat,
+        } : {}),
       });
     addPage(pages, "recommended_actions", `metric:${item.id}`, item.name,
       item.next_action, null, [item.source_ref]);
@@ -489,24 +751,151 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         category_business_id: null, category_label: row.spend_category,
         source_row_identity_only: true, additive_to_aggregate_spend: false,
         additive_to_contract_spend: false, period_basis: "annual_unspecified_year",
+        ...(sourceAssertionsEnabled ? {
+          source_prior_year_actual_usd: amount(row.prior_year_actual_usd),
+          source_forecast_next_year_usd: amount(row.forecast_next_year_usd),
+          source_savings_opportunity_usd: amount(row.savings_opportunity_usd),
+          source_savings_claim_status: "source_estimate_not_verified",
+          source_calculation_basis: row.calculation_basis || null,
+          source_budget_owner_role: row.budget_owner || null,
+        } : {}),
       });
   }
   for (const row of vendors) {
     addPage(pages, "cost_lens", `contract:${row.vendor_id}`, row.vendor_name,
       "Annual contract spend is a separate exposure. It must not be added to modeled IT spend without a declared overlap rule.",
       amount(row.annual_spend_usd), [sourceRef("07_vendors_contracts.csv", row, sourceManifest)],
-      { metric_label: "Annual contract spend", additive_to_it_spend: false });
+      { metric_label: "Annual contract spend", additive_to_it_spend: false,
+        ...(sourceAssertionsEnabled ? {
+          source_contract_name: row.contract_name || null,
+          source_service_category: row.service_category || null,
+          source_contract_owner_role: row.contract_owner || null,
+          source_renewal_date: row.renewal_date || null,
+          source_term_end: row.term_end || null,
+          source_risk_rating: row.risk_rating || null,
+        } : {}) });
   }
   for (const row of risks) {
     addPage(pages, "risk_lens", row.risk_id || `risk:${row.__source_row}`, row.risk_or_control_name,
       "Source-recorded risk. Review the control and evidence before making an executive assurance claim.",
-      null, [sourceRef("11_risks_controls.csv", row, sourceManifest)], { severity: row.severity, control_status: row.control_status });
+      null, [sourceRef("11_risks_controls.csv", row, sourceManifest)], { severity: row.severity, control_status: row.control_status,
+        ...(sourceAssertionsEnabled ? {
+          source_likelihood: row.likelihood || null,
+          source_control_owner_role: row.control_owner || null,
+          source_evidence_required: row.evidence_required || null,
+          source_mitigation_plan: row.mitigation_plan || null,
+          source_last_tested_date: row.last_tested_date || null,
+          source_regulatory_driver: row.regulatory_driver || null,
+        } : {}) });
   }
 
+  const assertionParity = !sourceAssertionsEnabled || (
+    programs.every((raw) => {
+      const item = canonical.programs.find((row) => row.id === raw.program_id);
+      const page = pages.decision_lanes.find((row) => row.row_key === raw.program_id);
+      return item && page && raw.expected_value_usd.trim() && amount(raw.expected_value_usd) !== null &&
+        item.source_stated_expected_value_usd === amount(raw.expected_value_usd) &&
+        page.source_stated_expected_value_usd === item.source_stated_expected_value_usd &&
+        page.source_start_date === (raw.start_date || null) &&
+        page.source_end_date === (raw.end_date || null) &&
+        page.source_pct_complete === amount(raw.pct_complete) &&
+        page.source_stage_gate === (raw.stage_gate || null) &&
+        page.source_benefit_realization_start === (raw.benefit_realization_start || null) &&
+        page.source_blocked_reason === (raw.blocked_reason || null) &&
+        page.source_objective === (raw.objective || null) &&
+        page.source_target_outcomes === (raw.target_outcomes || null) &&
+        page.approved_fy_budget_usd === undefined && item.approved_fy_budget_usd === null;
+    }) &&
+    metrics.every((raw) => {
+      const item = canonical.outcome_metrics.find((row) => row.id === raw.metric_id);
+      const page = pages.value_proof.find((row) => row.row_key === `metric:${raw.metric_id}`);
+      return item && page && (!raw.finance_attested_value_usd.trim() || amount(raw.finance_attested_value_usd) !== null) &&
+        item.source_asserted_finance_value_usd === amount(raw.finance_attested_value_usd) &&
+        page.source_asserted_finance_value_usd === item.source_asserted_finance_value_usd &&
+        page.source_value_claim_status === raw.value_claim_status &&
+        page.source_claim_readiness === raw.claim_readiness &&
+        page.source_data_source === (raw.data_source || null) &&
+        page.source_calculation_basis === (raw.calculation_basis || null) &&
+        page.source_unblock_target_period === (raw.unblock_target_period || null) &&
+        page.claimable_value_usd === null && item.claimable_value_usd === null;
+    }) &&
+    benefits.every((raw) => {
+      const item = canonical.ai_claims.find((row) => row.id === raw.ai_use_case_id);
+      const page = pages.value_proof.find((row) => row.row_key === raw.ai_use_case_id);
+      return item && page && (!raw.finance_validated_value_usd.trim() || amount(raw.finance_validated_value_usd) !== null) &&
+        item.source_asserted_finance_value_usd === amount(raw.finance_validated_value_usd) &&
+        page.source_asserted_finance_value_usd === item.source_asserted_finance_value_usd &&
+        page.source_finance_validation_status === raw.finance_validation_status &&
+        page.source_value_claim_status === raw.value_claim_status &&
+        page.benefit_feed_source_funded_spend_usd === amount(raw.funded_spend_usd) &&
+        page.benefit_feed_source_actual_spend_ytd_usd === amount(raw.actual_spend_ytd_usd) &&
+        page.source_evidence_id === raw.evidence_id &&
+        page.claimable_value_usd === null && item.claimable_value_usd === null;
+    }) && usage.every((raw) => {
+      const page = pages.adoption_lens.find((row) => row.row_key === raw.ai_use_case_id);
+      const value = pages.value_proof.find((row) => row.row_key === raw.ai_use_case_id);
+      return page && value && value.usage_feed_source_promised_value_usd === amount(raw.promised_value_usd) &&
+        value.usage_feed_source_finance_assertion_usd === amount(raw.finance_validated_value_usd) &&
+        value.usage_feed_source_claim_status === (raw.value_claim_status || null) &&
+        value.claimable_value_usd === null && page.power_users === amount(raw.power_users) &&
+        page.usage_events === amount(raw.usage_events) &&
+        page.usage_period_start === (raw.usage_period_start || null) &&
+        page.usage_period_end === (raw.usage_period_end || null) &&
+        page.usage_source_system === (raw.source_system || null) &&
+        page.value_attribution_usd === null;
+    }) && kpis.every((raw) => {
+      const page = pages.value_proof.find((row) => row.row_key === raw.ai_use_case_id);
+      return page && page.outcome_feed_baseline === amount(raw.baseline_value) &&
+        page.outcome_feed_target === amount(raw.target_value) &&
+        page.outcome_feed_actual === amount(raw.actual_value) &&
+        page.outcome_feed_unit === (raw.metric_unit || null) &&
+        page.outcome_feed_claim_status === (raw.value_claim_status || null) &&
+        page.outcome_feed_claim_allowed === (raw.tower_claim_allowed || null) &&
+        page.outcome_feed_source_finance_assertion_usd === amount(raw.finance_validated_value_usd) &&
+        page.outcome_feed_source_record_id === (raw.source_record_id || null) &&
+        page.claimable_value_usd === null;
+    }) && vendors.every((raw) => {
+      const page = pages.cost_lens.find((row) => row.row_key === `contract:${raw.vendor_id}`);
+      return page && page.source_contract_name === (raw.contract_name || null) &&
+        page.source_renewal_date === (raw.renewal_date || null) &&
+        page.source_contract_owner_role === (raw.contract_owner || null);
+    }) && useCases.every((raw) => {
+      const page = pages.ai_portfolio.find((row) => row.row_key === raw.use_case_id);
+      return page && page.source_value_hypothesis === (raw.value_hypothesis || null) &&
+        page.source_approval_path === (raw.approval_path || null) &&
+        page.claimable_value_usd === null;
+    }) && risks.every((raw) => {
+      const page = pages.risk_lens.find((row) => row.row_key === raw.risk_id);
+      return page && page.source_likelihood === (raw.likelihood || null) &&
+        page.source_mitigation_plan === (raw.mitigation_plan || null) &&
+        page.value === null;
+    }) && spend.every((raw) => {
+      const page = pages.cost_lens.find((row) => row.row_key === `spend:${raw.__source_row}`);
+      return page && page.source_prior_year_actual_usd === amount(raw.prior_year_actual_usd) &&
+        page.source_forecast_next_year_usd === amount(raw.forecast_next_year_usd) &&
+        page.source_savings_opportunity_usd === amount(raw.savings_opportunity_usd) &&
+        page.source_calculation_basis === (raw.calculation_basis || null) &&
+        page.savings_claim_usd === null;
+    })
+  );
   const gates = [
     check("active_registry_binding", true, "Tenant and source root were resolved from the active input registry."),
-    check("intake_population", INPUT_FILES.every((file) => sourceManifest[file].row_count > 0), "Every required Tower input file must contain rows."),
+    check("intake_population", selectedInputFiles.every((file) => sourceManifest[file].row_count > 0), "Every required Tower input file must contain rows."),
     check("canonical_identity", !duplicates.length && linked && !extraIds.length, `Duplicate IDs: ${duplicates.length}; unlinked or extra benefit/usage/KPI IDs: ${(!linked ? 1 : 0) + extraIds.length}.`),
+    ...(sourceAssertionsEnabled ? [check("foundation_declared_identity", !foundationIdentityErrors.length &&
+      foundationObjects.length === FOUNDATION_OBJECT_CONTRACT.reduce((total, [file]) => total + inputs[file].length, 0) &&
+      foundationObjects.every((row) => row.id && row.name && row.source_ref?.source_sha256),
+    "Every included Foundation object must have a declared, unique source ID and exact source-row lineage.")] : []),
+    ...(sourceAssertionsEnabled ? [check("segment_mapping_not_inferred", unresolvedFunctionSegments === 0 &&
+      foundationObjects.filter((row) => row.object_type === "business_function" &&
+        row.segment_attribution_status === "unresolved_key").length === unresolvedFunctionSegments &&
+      pages.foundations.every((row) => row.object_type !== "business_function" ||
+        row.segment_identity_status !== null),
+    "Function segment keys are preserved as source text; unmatched keys are marked unresolved, with no segment join or budget rollup.")] : []),
+    ...(sourceAssertionsEnabled ? [check("relationship_source_census", relationships.length === 2302 &&
+      completeRelationshipRows.length === 2123 && uniqueRelationshipTriples.size === 2027 &&
+      relationships.every((row) => row.known_gaps?.includes("not yet certified by a client workshop")),
+    "All relationship rows are counted by declared endpoint IDs; new canonical edges stay withheld pending evidence and dictionary proof.")] : []),
     check("no_inferred_case_claim_join", !declaredCrosswalk && canonical.ai_use_cases.every((row) => row.planning_promise_usd === null) || declaredCrosswalk,
       "Different identifier systems cannot be joined by matching names."),
     check("unapproved_evidence_not_consumed", canonical.ai_claims.every((row) => row.claimable_value_usd === null),
@@ -515,8 +904,11 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       "Conflicting benefit and usage dollars remain source-specific and unclaimed."),
     check("modeled_spend_not_budget", approvedBudget !== null || canonical.budget.approved_fy_budget_usd === null,
       "Modeled annual spend must not be called an approved FY budget."),
-    check("all_nine_views_mapped", PAGES.every((key) => pages[key].length > 0), "Each Tower view needs at least one source-backed candidate row."),
+    check(sourceAssertionsEnabled ? "all_views_mapped" : "all_nine_views_mapped",
+      selectedPages.every((key) => pages[key].length > 0), "Each Tower view needs at least one source-backed candidate row."),
     check("no_claimable_value_without_proof", [...canonical.ai_use_cases, ...canonical.ai_claims].every((row) => row.claimable_value_usd === null), "No AI dollars become claimable while financial and evidence gates fail."),
+    ...(sourceAssertionsEnabled ? [check("source_assertion_field_coverage", assertionParity,
+      "Source-reported spend, program, outcome, and benefit fields must match exact source rows and remain unapproved or unclaimable where required.")] : []),
   ];
   const coverageGaps = [
     coverage("declared_case_claim_crosswalk", declaredCrosswalk, "Use-case IDs and benefit IDs differ; an explicit relationship is required before combining records."),
@@ -536,19 +928,24 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       return benefitBasis !== "not_reconciled" && benefitBasis === usageBasis;
     }), "Benefit usage rates use active/enabled while usage-feed rates use active/licensed; the percentages are not comparable."),
     coverage("interview_evidence_linked", false,
-      "Interview evidence is outside this candidate source manifest; it cannot corroborate claim value here."),
+      sourceAssertionsEnabled ?
+        `${sourceManifest["SA10_AI_Value_Interview_Evidence.csv"].row_count} interview rows are hash/count only; consent, contradictions, and absent evidence-register ID links prevent their use as claim proof.` :
+        "Interview evidence is outside this candidate source manifest; it cannot corroborate claim value here."),
     coverage("ai_money_usage_reconciled", conflicts.length === 0, `${conflicts.length} use cases disagree between benefit and usage extracts.`),
     coverage("approved_fy_budget_available", approvedBudget !== null, "Approved FY budget needs an explicit Finance amount, year and approval state."),
     coverage("modeled_spend_rounding_reconciled", canonical.modeled_annual_spend.row_sum_difference_usd === 0,
       `Category row sum differs from source narrative model total by ${canonical.modeled_annual_spend.row_sum_difference_usd ?? "unknown"} USD; use the row sum as one-source modeled spend, not a tied-out budget.`),
     coverage("program_funding_period_approved", programs.every((row) => row.fiscal_year && row.approval_status === "approved"), "Program budgets need an approved fiscal period before they can be called funded."),
     coverage("foundation_itsm_extract", canonical.foundations.itsm_extract_available, "ITSM workflow extract is absent; show this as a Foundations gap."),
+    ...(sourceAssertionsEnabled ? [coverage("function_segment_keys_reconciled", unresolvedFunctionSegments === 0,
+      `${unresolvedFunctionSegments} function rows have segment keys absent from the declared segment source; no segment budget attribution is published.`),
+      coverage("segment_canonical_mapping", false, "Segment source rows are staged as raw records only while canonical mapping remains pending.")] : []),
     coverage("raw_tool_usage_validates_claim_feed", rawUsageValidation.validates_claim_usage,
       `User-detail extract is ${rawUsageValidation.detail_available ? "present" : "absent"}; declared use-case join: ${rawUsageValidation.declared_use_case_join}; source-system join: ${rawUsageValidation.declared_source_system_join}; matching period: ${rawUsageValidation.compatible_period}; aggregate user-count reconciliation: ${rawUsageValidation.aggregate_user_count_reconciled}. A file hash or structural join cannot validate the claim usage feed.`),
   ];
   const fingerprint = sha256(JSON.stringify(sourceManifest));
-  const assessmentId = variant === SOURCE_FIELDS_VARIANT
-    ? `tower-registry-candidate-${sha256(`${fingerprint}|${SOURCE_FIELDS_VARIANT}`).slice(0, 16)}`
+  const assessmentId = variant !== null
+    ? `tower-registry-candidate-${sha256(`${fingerprint}|${variant}`).slice(0, 16)}`
     : `tower-registry-candidate-${fingerprint.slice(0, 16)}`;
   const report = {
     contract_version: "tower-registered-intake-candidate/v1",
@@ -556,7 +953,7 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     input_root: tenant.canonicalInputRoot,
     input_fingerprint_sha256: fingerprint,
     assessment_id: assessmentId,
-    ...(variant === SOURCE_FIELDS_VARIANT ? { candidate_rules_version: SOURCE_FIELDS_VARIANT } : {}),
+    ...(variant !== null ? { candidate_rules_version: variant } : {}),
     build_state: "dry_run_only",
     runtime_eligible: false,
     physical_write_ready: false,
@@ -576,12 +973,22 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     claim_status_missing_ids: claimStatusMissingIds,
     raw_usage_validation: rawUsageValidation,
     evidence_rows_not_approved: rejectedEvidence.length,
+    ...(sourceAssertionsEnabled ? { source_assertion_coverage: {
+      program_expected_value_rows: programs.filter((row) => row.expected_value_usd.trim()).length,
+      outcome_finance_amount_rows: metrics.filter((row) => row.finance_attested_value_usd.trim()).length,
+      benefit_finance_amount_rows: benefits.filter((row) => row.finance_validated_value_usd.trim()).length,
+      benefit_funded_spend_rows: benefits.filter((row) => row.funded_spend_usd.trim()).length,
+      benefit_actual_spend_ytd_rows: benefits.filter((row) => row.actual_spend_ytd_usd.trim()).length,
+      usage_promise_rows: usage.filter((row) => row.promised_value_usd.trim()).length,
+      usage_finance_amount_rows: usage.filter((row) => row.finance_validated_value_usd.trim()).length,
+      outcome_feed_finance_amount_rows: kpis.filter((row) => row.finance_validated_value_usd.trim()).length,
+    } } : {}),
     gates,
     coverage_gaps: coverageGaps,
     quality_gate_status: gates.every((gate) => gate.status === "pass") ? "pass" : "fail",
     canonical,
     views: pages,
-    view_counts: Object.fromEntries(PAGES.map((key) => [key, pages[key].length])),
+    view_counts: Object.fromEntries(selectedPages.map((key) => [key, pages[key].length])),
     activation_requirement: "Before any write, read the exact tenant's declared active lifecycle row and fail if absent. Stage under an inactive assessment, prove every view by direct assessment readback, then atomically promote the active key. Do not insert an executive summary into the current automatic selector.",
   };
   if (outDir) {

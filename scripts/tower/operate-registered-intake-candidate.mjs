@@ -22,7 +22,10 @@ const PAGES = Object.freeze({
   risk_lens: ["tower_evidence_queue", "page_key"],
   ai_portfolio: ["tower_ai_portfolio", "display_payload_json"],
   adoption_lens: ["tower_ai_portfolio", "display_payload_json"],
+  foundations: ["tower_command_center", "page_key"],
 });
+const LEGACY_PAGES = Object.fromEntries(Object.entries(PAGES).filter(([page]) => page !== "foundations"));
+const pagesFor = (candidate) => candidate.candidate_rules_version === "source-assertions-v1" ? PAGES : LEGACY_PAGES;
 const SHA256 = /^[a-f0-9]{64}$/;
 const SENSITIVE_MONEY_KEYS = new Set([
   "approved_fy_budget_usd", "total_it_budget_usd", "board_claimable_ytd_usd",
@@ -69,7 +72,9 @@ export function validateCandidate(candidate, registry, root = ROOT) {
   if (!candidate.canonical?.budget || candidate.canonical.budget.approved_fy_budget_usd !== null) gaps.push("approved_budget_must_remain_unknown");
   if (!Array.isArray(candidate.canonical?.ai_claims) || candidate.canonical.ai_claims.some((row) => row.claimable_value_usd !== null)) gaps.push("claimable_ai_value_must_remain_unknown");
   if (!Array.isArray(candidate.views?.value_proof) || candidate.views.value_proof.some((row) => row.value !== null || row.value_state !== "unknown")) gaps.push("value_proof_must_remain_unknown");
-  if (!candidate.view_counts || Object.keys(PAGES).some((page) => !Number.isInteger(candidate.view_counts[page]) || candidate.view_counts[page] < 1)) gaps.push("nine_view_counts_missing");
+  if (!candidate.view_counts || Object.keys(pagesFor(candidate)).some((page) => !Number.isInteger(candidate.view_counts[page]) || candidate.view_counts[page] < 1)) gaps.push("view_counts_missing");
+  if (candidate.view_counts && JSON.stringify(Object.keys(candidate.view_counts).sort()) !==
+      JSON.stringify(Object.keys(pagesFor(candidate)).sort())) gaps.push("candidate_page_set_mismatch");
   const manifest = candidate.source_manifest;
   if (!manifest || Object.keys(manifest).length === 0) gaps.push("source_manifest_missing");
   else {
@@ -86,7 +91,9 @@ export function validateCandidate(candidate, registry, root = ROOT) {
     }
     if (digest(JSON.stringify(manifest)) !== candidate.input_fingerprint_sha256) gaps.push("input_fingerprint_mismatch");
   }
-  if (!candidate.views || Object.entries(PAGES).some(([page]) => !Array.isArray(candidate.views[page]) || candidate.views[page].length !== candidate.view_counts?.[page])) gaps.push("candidate_view_rows_missing");
+  if (!candidate.views || Object.entries(pagesFor(candidate)).some(([page]) => !Array.isArray(candidate.views[page]) || candidate.views[page].length !== candidate.view_counts?.[page])) gaps.push("candidate_view_rows_missing");
+  if (candidate.views && JSON.stringify(Object.keys(candidate.views).sort()) !==
+      JSON.stringify(Object.keys(pagesFor(candidate)).sort())) gaps.push("candidate_view_page_set_mismatch");
   else for (const [page, rows] of Object.entries(candidate.views)) {
     for (const row of rows) {
       if (!string(row.row_key) || !Array.isArray(row.source_refs) || row.source_refs.length === 0) gaps.push(`candidate_source_refs_missing:${page}`);
@@ -152,8 +159,10 @@ export function validateReceipt(receipt, candidate, candidateBytes) {
   if (!string(receipt?.job_run_id) || !string(receipt?.build_version) || !string(receipt?.idempotency_key)) gaps.push("stage_job_identity_missing");
   if (!string(receipt?.dataset_id) || !Number.isInteger(receipt?.object_count) || receipt.object_count < 1 || receipt?.ingestion_method !== "operator_aca_job") gaps.push("stage_governance_binding_missing");
   if (!Number.isInteger(receipt?.source_file_count) || receipt.source_file_count < 1 || !Number.isInteger(receipt?.source_record_count) || receipt.source_record_count < 1) gaps.push("stage_source_counts_missing");
-  if (!receipt?.view_counts || Object.keys(PAGES).some((page) => !Number.isInteger(receipt.view_counts[page]) || receipt.view_counts[page] < 1)) gaps.push("stage_view_counts_missing");
-  if (!receipt?.view_fingerprints || Object.keys(PAGES).some((page) => !SHA256.test(receipt.view_fingerprints[page] ?? ""))) gaps.push("stage_view_fingerprints_missing");
+  if (!receipt?.view_counts || Object.keys(pagesFor(candidate)).some((page) => !Number.isInteger(receipt.view_counts[page]) || receipt.view_counts[page] < 1)) gaps.push("stage_view_counts_missing");
+  if (receipt?.view_counts && JSON.stringify(Object.keys(receipt.view_counts).sort()) !==
+      JSON.stringify(Object.keys(pagesFor(candidate)).sort())) gaps.push("stage_page_set_mismatch");
+  if (!receipt?.view_fingerprints || Object.keys(pagesFor(candidate)).some((page) => !SHA256.test(receipt.view_fingerprints[page] ?? ""))) gaps.push("stage_view_fingerprints_missing");
   if (!string(receipt?.proof_bundle_uri) || !string(receipt?.validation_output_uri) || !string(receipt?.quality_gate_output_uri)) gaps.push("private_proof_uri_missing");
   return gaps;
 }
@@ -234,6 +243,9 @@ export function validatePhysicalPage(rows, page, candidate, expectedCount) {
     }
     for (const ref of refs) {
       const expected = candidate.source_manifest?.[ref.source_file]?.sha256;
+      if (candidate.source_manifest?.[ref.source_file]?.content_disposition === "hash_count_only") {
+        gaps.push(`hash_count_only_source_cited:${page}`);
+      }
       const coverageOnly = page === "evidence" && row.row_key === "evidence_approval_gap"
         && ref.source_row === null && (
           (ref.scope === "register_coverage_only" && ref.source_file === "13_evidence_sources.csv") ||
@@ -284,7 +296,7 @@ async function physicalPages(client, candidate, receipt) {
   const counts = {};
   const fingerprints = {};
   const gaps = [];
-  for (const [page, [table, column]] of Object.entries(PAGES)) {
+  for (const [page, [table, column]] of Object.entries(pagesFor(candidate))) {
     const predicate = column === "page_key"
       ? "page_key = $4"
       : "display_payload_json ->> 'page_key' = $4";
@@ -314,7 +326,7 @@ async function physicalSubstrate(client, candidate, receipt) {
     [candidate.tenant_key, candidate.assessment_id],
   )).rows;
   const expectedFiles = Object.entries(candidate.source_manifest)
-    .filter(([name]) => !name.startsWith("extracts/"))
+    .filter(([name, entry]) => !name.startsWith("extracts/") && entry.content_disposition !== "hash_count_only")
     .map(([file_name, entry]) => ({ file_name, file_hash: entry.sha256 }))
     .sort((a, b) => a.file_name.localeCompare(b.file_name));
   if (JSON.stringify(files.sort((a, b) => a.file_name.localeCompare(b.file_name))) !== JSON.stringify(expectedFiles)) gaps.push("physical_source_file_hash_mismatch");
@@ -349,6 +361,34 @@ async function physicalSubstrate(client, candidate, receipt) {
     .map(([page, row_count]) => ({ projection_key: `tower_${page}`, source_hash: candidate.input_fingerprint_sha256, row_count }))
     .sort((a, b) => a.projection_key.localeCompare(b.projection_key));
   if (JSON.stringify(manifests.sort((a, b) => a.projection_key.localeCompare(b.projection_key))) !== JSON.stringify(expectedManifests)) gaps.push("physical_projection_manifest_mismatch");
+  if (candidate.candidate_rules_version === "source-assertions-v1") {
+    const foundations = (await client.query(`
+      select count(*)::int as total,
+             count(*) filter (where o.id is null or r.id is null or f.id is null or bridge.source_record_id is null
+               or p.row_key <> 'foundation:' || o.object_type || ':' || o.object_key
+               or p.display_payload_json ->> 'source_object_id' is distinct from o.object_key
+               or p.display_payload_json ->> 'object_type' is distinct from o.object_type
+               or p.display_payload_json ->> 'canonical_source_record_id' is distinct from o.source_record_id::text
+               or p.source_refs_json -> 0 ->> 'source_file' is distinct from f.file_name
+               or p.source_refs_json -> 0 ->> 'source_sha256' is distinct from f.file_hash
+               or (p.source_refs_json -> 0 ->> 'source_row')::int is distinct from r.row_number
+               or jsonb_array_length(p.source_refs_json) <> 1)::int as mismatches
+        from ecl_projection.tower_command_center p
+        left join ecl_context.object o on o.tenant_key=p.tenant_key and o.assessment_id=p.assessment_id
+          and o.id=p.primary_object_id
+        left join ecl_source.source_record r on r.tenant_key=o.tenant_key and r.assessment_id=o.assessment_id
+          and r.id=o.source_record_id
+        left join ecl_source.source_file f on f.tenant_key=r.tenant_key and f.assessment_id=r.assessment_id
+          and f.id=r.source_file_id
+        left join ecl_projection.projection_entry_source_record_ref bridge on bridge.tenant_key=p.tenant_key
+          and bridge.assessment_id=p.assessment_id and bridge.projection_entry_id=p.projection_entry_id
+          and bridge.source_record_id=r.id and bridge.ref_role='primary'
+       where p.tenant_key=$1 and p.assessment_id=$2 and p.projection_version=$3 and p.page_key='foundations'`,
+      [candidate.tenant_key, candidate.assessment_id, receipt.projection_version])).rows[0];
+    if (foundations?.total !== candidate.view_counts.foundations || foundations?.mismatches !== 0) {
+      gaps.push("physical_foundation_canonical_or_source_link_mismatch");
+    }
+  }
   return { objects, source_files: files.length, source_records: sourceRecords?.total ?? null,
     projection_source_refs: projectionRefs?.total ?? null, projection_manifests: manifests.length, gaps };
 }
@@ -433,7 +473,7 @@ export async function physicalMeasures(client, candidate, receipt) {
 
 async function generationFingerprints(client, tenant, assessment, version) {
   const result = {};
-  for (const [page, [table, column]] of Object.entries(PAGES)) {
+  for (const [page, [table, column]] of Object.entries(version >= 6 ? PAGES : LEGACY_PAGES)) {
     const predicate = column === "page_key"
       ? "page_key = $4"
       : "display_payload_json ->> 'page_key' = $4";

@@ -69,6 +69,43 @@ test("candidate remains review-only and source drift blocks the physical stage",
   assert.ok(validateCandidate(candidate, registry, root).includes("source_hash_mismatch:source.csv"));
 });
 
+test("v6 promotion requires the Foundation page and refuses hash-count-only citations", (t) => {
+  const { root, candidate, registry, receipt } = fixture();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  candidate.candidate_rules_version = "source-assertions-v1";
+  candidate.views.foundations = [{ ...candidate.views.command_center[0], row_key: "foundation:application:one" }];
+  candidate.view_counts.foundations = 1;
+  receipt.view_counts.foundations = 1;
+  receipt.view_fingerprints.foundations = sha("foundation");
+  assert.deepEqual(validateCandidate(candidate, registry, root), []);
+  assert.deepEqual(validateReceipt(receipt, candidate, Buffer.from(JSON.stringify(candidate)))
+    .filter((gap) => gap.includes("view_counts") || gap.includes("fingerprints")), []);
+  const withoutPage = { ...candidate, views: { ...candidate.views }, view_counts: { ...candidate.view_counts } };
+  delete withoutPage.views.foundations;
+  delete withoutPage.view_counts.foundations;
+  assert.ok(validateCandidate(withoutPage, registry, root).includes("view_counts_missing"));
+  const cited = {
+    ...candidate,
+    source_manifest: { ...candidate.source_manifest },
+    views: {
+      ...candidate.views,
+      foundations: [{
+        ...candidate.views.foundations[0],
+        source_refs: [{
+          source_file: "source.csv",
+          source_sha256: candidate.source_manifest["source.csv"].sha256,
+          source_row: 2,
+        }],
+      }],
+    },
+  };
+  cited.source_manifest["source.csv"] = { ...cited.source_manifest["source.csv"], content_disposition: "hash_count_only" };
+  assert.ok(validatePhysicalPage([{ row_key: "foundation:application:one", source_hash: sha("row"),
+    source_refs_json: cited.views.foundations[0].source_refs, display_payload_json: { value: null },
+    claimable_value_usd: null, finance_validated_value_usd: null }], "foundations", cited, 1)
+    .includes("hash_count_only_source_cited:foundations"));
+});
+
 test("stage receipt is bound to candidate identity and supplies all nine physical page counts and hashes", (t) => {
   const { root, candidate, receipt } = fixture();
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

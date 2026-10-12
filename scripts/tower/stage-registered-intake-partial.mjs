@@ -21,22 +21,112 @@ const PAGE_TABLE = {
   risk_lens: "tower_evidence_queue",
   ai_portfolio: "tower_ai_portfolio",
   adoption_lens: "tower_ai_portfolio",
+  foundations: "tower_command_center",
 };
-const PAGE_KEYS = Object.keys(PAGE_TABLE);
+const LEGACY_PAGE_KEYS = Object.keys(PAGE_TABLE).filter((page) => page !== "foundations");
+function pageKeys(report) {
+  return candidateConfig(report).sourceAssertions ? Object.keys(PAGE_TABLE) : LEGACY_PAGE_KEYS;
+}
 const PROJECTION_VERSION = 4;
 const BUILD_VERSION = "tower-registered-intake-partial/v2";
 const SOURCE_FIELDS_VARIANT = "source-fields-v1";
+const SOURCE_ASSERTIONS_VARIANT = "source-assertions-v1";
+const FOUNDATION_MEASURES = {
+  enterprise_profile: [["revenue_usd", "enterprise_source_revenue_usd", "USD"],
+    ["employee_count", "enterprise_source_employee_count", "people"]],
+  business_function: [["annual_budget_usd", "function_source_annual_budget_usd", "USD"],
+    ["fte_count", "function_source_fte_count", "FTE"],
+    ["headcount_fte", "function_source_headcount_fte", "FTE"],
+    ["cost_to_serve_usd", "function_source_cost_to_serve_usd", "USD"]],
+  workforce_role: [["role_count", "workforce_source_role_count", "people"]],
+  managed_service_scope: [["run_cost_usd", "managed_service_source_run_cost_usd", "USD"]],
+  organization: [["budget_authority_usd", "organization_source_budget_authority_usd", "USD"]],
+  application: [["annual_cost_usd", "application_source_annual_cost_usd", "USD"]],
+  data_flow: [],
+  infrastructure: [["annual_cost_usd", "infrastructure_source_annual_cost_usd", "USD"],
+    ["utilization_pct", "infrastructure_source_utilization_pct", "percent"]],
+  process: [["transaction_volume", "process_source_transaction_volume", "source_unit"],
+    ["error_rate_pct", "process_source_error_rate_pct", "percent"],
+    ["rework_pct", "process_source_rework_pct", "percent"],
+    ["automation_pct", "process_source_automation_pct", "percent"],
+    ["cost_per_transaction", "process_source_cost_per_transaction", "source_unit"]],
+};
+const SOURCE_ASSERTION_SCENARIOS = {
+  enterprise_source_revenue_usd: "candidate",
+  enterprise_source_employee_count: "candidate",
+  function_source_annual_budget_usd: "candidate",
+  function_source_fte_count: "candidate",
+  function_source_headcount_fte: "candidate",
+  function_source_cost_to_serve_usd: "candidate",
+  workforce_source_role_count: "candidate",
+  managed_service_source_run_cost_usd: "candidate",
+  program_source_expected_value_usd: "planned",
+  spend_source_prior_year_actual_usd: "actual",
+  spend_source_forecast_next_year_usd: "forecast",
+  spend_source_savings_opportunity_usd: "planned",
+  benefit_feed_source_finance_assertion_usd: "candidate",
+  benefit_feed_source_funded_spend_usd: "planned",
+  benefit_feed_source_actual_spend_ytd_usd: "actual",
+  usage_feed_source_promised_value_usd: "planned",
+  usage_feed_source_finance_assertion_usd: "candidate",
+  ai_outcome_feed_baseline: "baseline",
+  ai_outcome_feed_target: "target",
+  ai_outcome_feed_actual: "actual",
+  ai_outcome_feed_source_finance_assertion_usd: "candidate",
+  outcome_source_finance_assertion_usd: "candidate",
+  organization_source_budget_authority_usd: "candidate",
+  application_source_annual_cost_usd: "candidate",
+  infrastructure_source_annual_cost_usd: "candidate",
+  infrastructure_source_utilization_pct: "candidate",
+  process_source_transaction_volume: "candidate",
+  process_source_error_rate_pct: "candidate",
+  process_source_rework_pct: "candidate",
+  process_source_automation_pct: "candidate",
+  process_source_cost_per_transaction: "candidate",
+};
+export const OUTCOME_MEASURE_PARITY_SQL = `
+  select count(*)::int as mismatches
+  from ecl_projection.tower_value_chain p
+  join ecl_projection.projection_entry_measure_ref r
+    on r.tenant_key = p.tenant_key and r.assessment_id = p.assessment_id
+   and r.projection_entry_id = p.projection_entry_id
+  left join ecl_context.measure m
+    on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = r.measure_id
+  where p.tenant_key = $1 and p.assessment_id = $2 and p.page_key = 'value_proof'
+    and p.row_key like 'metric:%'
+    and (m.id is null or m.subject_object_id is distinct from p.primary_object_id
+      or m.source_record_id is distinct from p.source_record_id
+      or case m.metric_key
+        when 'outcome_source_value' then
+          m.value_number is not null or m.scenario not in ('baseline', 'target', 'actual')
+          or m.value_text is distinct from case m.scenario
+            when 'baseline' then p.display_payload_json ->> 'baseline'
+            when 'target' then p.display_payload_json ->> 'target'
+            when 'actual' then p.display_payload_json ->> 'observed'
+            end
+        when 'outcome_source_finance_assertion_usd' then
+          m.value_text is not null or m.scenario <> 'candidate'
+          or m.id::text is distinct from p.display_payload_json ->> 'source_finance_assertion_measure_id'
+          or m.value_number is distinct from (p.display_payload_json ->> 'source_asserted_finance_value_usd')::numeric
+          or m.attributes_json ->> 'source_assertion_only' is distinct from 'true'
+          or p.claimable_value_usd is not null
+        else true end)`;
 
 function candidateConfig(report) {
-  const sourceFields = report.candidate_rules_version === SOURCE_FIELDS_VARIANT;
-  const datasetId = sourceFields ? "tower-registered-intake-source-fields-20261012" : DATASET_ID;
+  const sourceAssertions = report.candidate_rules_version === SOURCE_ASSERTIONS_VARIANT;
+  const sourceFields = sourceAssertions || report.candidate_rules_version === SOURCE_FIELDS_VARIANT;
+  const datasetId = sourceAssertions ? "tower-registered-intake-source-assertions-20261012" :
+    sourceFields ? "tower-registered-intake-source-fields-20261012" : DATASET_ID;
   return {
     datasetId,
     manifestPath: path.join(ROOT, "docs/governance/dataset-manifests", `${datasetId}.json`),
-    releaseRecord: sourceFields ? "docs/releases/records/2026-10-12-tower-registered-source-fields.md" : RELEASE_RECORD,
-    projectionVersion: sourceFields ? 5 : PROJECTION_VERSION,
-    buildVersion: sourceFields ? "tower-registered-intake-source-fields/v1" : BUILD_VERSION,
+    releaseRecord: sourceAssertions ? "docs/releases/records/2026-10-12-tower-source-assertions-candidate.md" :
+      sourceFields ? "docs/releases/records/2026-10-12-tower-registered-source-fields.md" : RELEASE_RECORD,
+    projectionVersion: sourceAssertions ? 6 : sourceFields ? 5 : PROJECTION_VERSION,
+    buildVersion: sourceAssertions ? "tower-registered-intake-source-assertions/v1" :
+      sourceFields ? "tower-registered-intake-source-fields/v1" : BUILD_VERSION,
     sourceFields,
+    sourceAssertions,
   };
 }
 const IDENTITY = JSON.parse(fs.readFileSync(IDENTITY_PATH, "utf8"));
@@ -103,15 +193,16 @@ function addObject(plan, report, type, key, title, ref, attrs = {}, reviewState 
   return id;
 }
 
-function addMeasure(plan, report, object, metric, value, unit, ref, state, attrs = {}) {
+function addMeasure(plan, report, object, metric, value, unit, ref, state, attrs = {}, scenario) {
   if (value === null || value === undefined) return;
+  if (!scenario) throw new Error(`Measure scenario must be declared independently of value state: ${metric}`);
   plan.measures.push({
     id: uuid("measure", report.tenant_key, report.assessment_id, object, metric,
       ref?.source_file || "aggregate", ref?.source_row || "aggregate"),
     tenant_key: report.tenant_key, assessment_id: report.assessment_id,
     subject_object_id: object, metric_key: metric, value_number: value,
     value_text: null, unit, period_start: null, period_end: null,
-    scenario: state === "estimated" ? "planned" : "current",
+    scenario,
     source_record_id: ref ? sourceRowId(report, ref) : null,
     document_extraction_id: null, basis: "source_recorded", value_state: state,
     quality_state: state === "estimated" ? "estimated" : "usable",
@@ -139,6 +230,7 @@ function addOutcomeTextMeasure(plan, report, object, value, scenario, sourceFiel
 }
 
 function recordTypeFor(file) {
+  if (file === "19_data_analytics_platform_maturity.csv") return "maturity_source_record_identity_unresolved";
   if (file.startsWith("SA08_")) return "ai_benefit_record";
   if (file.startsWith("SA09_")) return "ai_usage_record";
   if (file.startsWith("SA11_")) return "ai_outcome_record";
@@ -156,7 +248,7 @@ function sourceTypeFor(file) {
 
 function addSourceRows(plan, report) {
   const refs = new Map();
-  for (const page of PAGE_KEYS) {
+  for (const page of pageKeys(report)) {
     for (const row of report.views[page]) {
       for (const ref of sourceRefsFor(row)) {
         const key = `${ref.source_file}:${ref.source_row}`;
@@ -166,8 +258,31 @@ function addSourceRows(plan, report) {
     }
   }
   for (const ref of report.canonical.programs.map((row) => row.source_ref)) refs.set(`${ref.source_file}:${ref.source_row}`, ref);
+  for (const item of report.canonical.foundations.source_objects || []) {
+    const ref = item.source_ref;
+    refs.set(`${ref.source_file}:${ref.source_row}`, ref);
+  }
+  if (candidateConfig(report).sourceAssertions) {
+    for (const [file, expectedRows] of [
+      ["12_relationships.csv", report.canonical.foundations.relationship_census.source_rows],
+      ["19_data_analytics_platform_maturity.csv", report.canonical.foundations.no_declared_row_id.row_count],
+      ["01b_business_segments.csv", report.canonical.foundations.segment_source_rows_mapping_pending],
+    ]) {
+      const metadata = report.source_manifest[file];
+      const bytes = fs.readFileSync(path.join(ROOT, metadata.source_path));
+      if (hash(bytes) !== metadata.sha256) throw new Error(`${file} source hash changed after candidate review`);
+      const rows = csvRows(bytes.toString("utf8"));
+      if (rows.length !== expectedRows) throw new Error(`${file} source census changed after candidate review`);
+      rows.forEach((row, index) => {
+        if (row.tenant_key !== report.tenant_key) throw new Error(`${file} source tenant mismatch`);
+        const ref = { source_file: file, source_sha256: metadata.sha256, source_row: index + 2,
+          source_record_id: null };
+        refs.set(`${file}:${index + 2}`, ref);
+      });
+    }
+  }
   for (const file of Object.keys(report.source_manifest).sort()) {
-    if (file.startsWith("extracts/")) continue;
+    if (file.startsWith("extracts/") || report.source_manifest[file].content_disposition === "hash_count_only") continue;
     const metadata = report.source_manifest[file];
     plan.sourceFiles.push({
       id: uuid("source_file", report.tenant_key, report.assessment_id, file, metadata.sha256),
@@ -177,25 +292,37 @@ function addSourceRows(plan, report) {
       file_hash: metadata.sha256, source_date: null, access_class: "internal",
       quality_state: file === "13_evidence_sources.csv" ? "blocked" : "partial",
       metadata_json: { source_path: metadata.source_path, row_count: metadata.row_count,
-        content_loaded: file !== "13_evidence_sources.csv" && [...refs.values()].some((ref) => ref.source_file === file) },
+        content_loaded: file !== "13_evidence_sources.csv" && [...refs.values()].some((ref) => ref.source_file === file),
+        canonical_identity_unresolved: file === "19_data_analytics_platform_maturity.csv",
+        canonical_mapping_pending: file === "01b_business_segments.csv" },
       origin: "synthetic_generator",
     });
   }
+  const parsedFiles = new Map();
   for (const ref of refs.values()) {
     if (ref.source_file === "13_evidence_sources.csv") continue;
     const metadata = report.source_manifest[ref.source_file];
+    if (metadata?.content_disposition === "hash_count_only") {
+      throw new Error(`Hash-count-only source content cannot be staged: ${ref.source_file}`);
+    }
     if (!metadata || metadata.sha256 !== ref.source_sha256) throw new Error("Source reference hash does not match manifest");
-    const full = path.join(ROOT, metadata.source_path);
-    const bytes = fs.readFileSync(full);
-    if (hash(bytes) !== metadata.sha256) throw new Error(`Source file changed after candidate build: ${ref.source_file}`);
-    const payload = csvRows(bytes.toString("utf8"))[ref.source_row - 2];
+    if (!parsedFiles.has(ref.source_file)) {
+      const bytes = fs.readFileSync(path.join(ROOT, metadata.source_path));
+      if (hash(bytes) !== metadata.sha256) throw new Error(`Source file changed after candidate build: ${ref.source_file}`);
+      parsedFiles.set(ref.source_file, csvRows(bytes.toString("utf8")));
+    }
+    const payload = parsedFiles.get(ref.source_file)[ref.source_row - 2];
     if (!payload || payload.tenant_key !== report.tenant_key) throw new Error(`Invalid source row: ${ref.source_file}:${ref.source_row}`);
     plan.sourceRecords.push({
       id: sourceRowId(report, ref), tenant_key: report.tenant_key, assessment_id: report.assessment_id,
       source_file_id: uuid("source_file", report.tenant_key, report.assessment_id, ref.source_file, ref.source_sha256),
       native_id: ref.source_record_id || `${ref.source_file}#${ref.source_row}`,
-      record_type: recordTypeFor(ref.source_file), row_number: ref.source_row,
-      payload_json: payload, parse_state: "parsed", parse_notes: null,
+      record_type: ref.source_file === "01b_business_segments.csv" ? "segment_source_record_mapping_pending" :
+        recordTypeFor(ref.source_file), row_number: ref.source_row,
+      payload_json: payload, parse_state: "parsed",
+      parse_notes: ref.source_file === "19_data_analytics_platform_maturity.csv" ?
+        "source_row_only_identity_unresolved_no_canonical_object" :
+        ref.source_file === "01b_business_segments.csv" ? "source_row_only_mapping_pending_no_canonical_object" : null,
     });
   }
 }
@@ -215,7 +342,7 @@ function addCanonicalRows(plan, report) {
     "USD", null, "estimated", { source_basis: IDENTITY.aggregate_spend_metric.basis,
       period: "annual_unspecified_year", source_refs: spendRefs,
       money_population: "modeled_it_spend", amount_role: "aggregate",
-      do_not_add_to_category_rows: true, do_not_add_to_contract_spend: true });
+      do_not_add_to_category_rows: true, do_not_add_to_contract_spend: true }, "planned");
   plan.measures.at(-1).basis = "calculated";
   for (const row of report.views.cost_lens.filter((item) => item.row_key.startsWith("spend:"))) {
     const ref = sourceRefsFor(row)[0];
@@ -229,7 +356,19 @@ function addCanonicalRows(plan, report) {
         amount_role: "aggregate_component", parent_metric_key: SPEND_METRIC_KEY,
         period: "annual_unspecified_year", do_not_add_to_aggregate: true,
         do_not_add_to_contract_spend: true,
-      });
+      }, "planned");
+    if (candidateConfig(report).sourceAssertions) {
+      for (const [metric, field, sourceField, scenario] of [
+        ["spend_source_prior_year_actual_usd", "source_prior_year_actual_usd", "prior_year_actual_usd", "actual"],
+        ["spend_source_forecast_next_year_usd", "source_forecast_next_year_usd", "forecast_next_year_usd", "forecast"],
+        ["spend_source_savings_opportunity_usd", "source_savings_opportunity_usd", "savings_opportunity_usd", "planned"],
+      ]) addMeasure(plan, report, spendId, metric, row[field], "USD", ref, "estimated", {
+        category_business_id: null, category_label: row.category_label,
+        identity_basis: "source_row_only", source_field: sourceField,
+        source_assertion_only: true, approved_fy_budget_usd: null, claimable_value_usd: null,
+        period_basis: "source_text_unverified", additive_to_aggregate_spend: false,
+      }, scenario);
+    }
   }
   for (const program of report.canonical.programs) {
     const id = addObject(plan, report, "program", program.id, program.name, program.source_ref,
@@ -242,10 +381,26 @@ function addCanonicalRows(plan, report) {
           source_program_phase: program.source_program_phase,
           affected_functions: program.affected_functions.map(({ function_id, function_name }) => ({ function_id, function_name })),
           primary_funding_domain: null,
+          ...(candidateConfig(report).sourceAssertions ? {
+            source_stated_expected_value_usd: program.source_stated_expected_value_usd,
+            source_start_date: program.source_start_date,
+            source_end_date: program.source_end_date,
+            source_pct_complete: program.source_pct_complete,
+            source_stage_gate: program.source_stage_gate,
+            source_benefit_realization_start: program.source_benefit_realization_start,
+            source_blocked_reason: program.source_blocked_reason,
+            source_objective: program.source_objective,
+            source_target_outcomes: program.source_target_outcomes,
+            source_assertion_caveat: "Planning source only; period, approval and realization are not verified.",
+          } : {}),
         } : {}) });
     addMeasure(plan, report, id, "program_planning_budget_usd", program.planning_budget_usd, "USD", program.source_ref,
       "estimated", { approved_fy_budget_usd: null, fiscal_year: null,
-        funding_approval_status: "not_verified", period_basis: "unspecified" });
+        funding_approval_status: "not_verified", period_basis: "unspecified" }, "planned");
+    if (candidateConfig(report).sourceAssertions) addMeasure(plan, report, id,
+      "program_source_expected_value_usd", program.source_stated_expected_value_usd, "USD", program.source_ref,
+      "estimated", { source_assertion_only: true, claimable_value_usd: null,
+        period_basis: "unspecified", source_field: "expected_value_usd" }, "planned");
   }
   for (const item of report.canonical.ai_use_cases) {
     addObject(plan, report, "ai_use_case", item.id, item.name, item.source_refs[0],
@@ -257,6 +412,12 @@ function addCanonicalRows(plan, report) {
           business_sponsor_role: item.sponsor_role,
           operational_owner_role: item.operational_owner_role,
           expected_value_archetype: item.expected_value_archetype,
+          ...(candidateConfig(report).sourceAssertions ? {
+            source_value_hypothesis: item.source_value_hypothesis,
+            source_approval_path: item.source_approval_path,
+            source_risk_controls: item.source_risk_controls,
+            source_required_systems: item.source_required_systems,
+          } : {}),
         } : {}) });
   }
   for (const claim of report.canonical.ai_claims) {
@@ -269,7 +430,36 @@ function addCanonicalRows(plan, report) {
         finance_feed_conflict: claim.finance_feed_conflict,
         finance_feed_missing: claim.finance_feed_missing,
         claim_status_feed_conflict: claim.claim_status_feed_conflict,
-        claim_status_feed_missing: claim.claim_status_feed_missing });
+        claim_status_feed_missing: claim.claim_status_feed_missing,
+        ...(candidateConfig(report).sourceAssertions ? {
+          source_asserted_finance_value_usd: claim.source_asserted_finance_value_usd,
+          benefit_feed_source_funded_spend_usd: claim.benefit_feed_source_funded_spend_usd,
+          benefit_feed_source_actual_spend_ytd_usd: claim.benefit_feed_source_actual_spend_ytd_usd,
+          usage_feed_source_promised_value_usd: claim.usage_feed_source_promised_value_usd,
+          usage_feed_source_finance_assertion_usd: claim.usage_feed_source_finance_assertion_usd,
+          usage_feed_source_claim_status: claim.usage_feed_source_claim_status,
+          source_finance_validation_status: claim.source_finance_validation_status,
+          source_value_claim_status: claim.source_value_claim_status,
+          source_tower_claim_allowed: claim.source_tower_claim_allowed,
+          source_realized_value_allowed: claim.source_realized_value_allowed,
+          source_owner_attestation_status: claim.source_owner_attestation_status,
+          source_evidence_id: claim.source_evidence_id,
+          source_evidence_freshness_status: claim.source_evidence_freshness_status,
+          source_duplicate_risk: claim.source_duplicate_risk,
+          source_additive_status: claim.source_additive_status,
+          source_assertion_caveat: claim.source_assertion_caveat,
+          outcome_feed_kpi_name: claim.outcome_feed_kpi_name,
+          outcome_feed_baseline: claim.outcome_feed_baseline,
+          outcome_feed_target: claim.outcome_feed_target,
+          outcome_feed_actual: claim.outcome_feed_actual,
+          outcome_feed_unit: claim.outcome_feed_unit,
+          outcome_feed_period_start: claim.outcome_feed_period_start,
+          outcome_feed_period_end: claim.outcome_feed_period_end,
+          outcome_feed_claim_status: claim.outcome_feed_claim_status,
+          outcome_feed_claim_allowed: claim.outcome_feed_claim_allowed,
+          outcome_feed_source_finance_assertion_usd: claim.outcome_feed_source_finance_assertion_usd,
+          outcome_feed_source_record_id: claim.outcome_feed_source_record_id,
+        } : {}) });
     addMeasure(plan, report, id, "usage_feed_active_users", claim.usage_active_users, "users", ref,
       "known", { enabled_users: claim.usage_denominator,
         licensed_users: claim.usage_licensed_users,
@@ -277,40 +467,138 @@ function addCanonicalRows(plan, report) {
         reported_usage_rate_denominator: claim.usage_feed_usage_rate_basis,
         benefit_feed_usage_rate_denominator: claim.benefit_feed_usage_rate_basis,
         raw_detail_validates_usage: report.raw_usage_validation.validates_claim_usage,
-        value_attribution_usd: null });
+        value_attribution_usd: null }, "current");
+    if (candidateConfig(report).sourceAssertions) {
+      for (const [metric, value, unit, sourceField] of [
+        ["usage_feed_power_users", claim.usage_power_users, "users", "power_users"],
+        ["usage_feed_usage_events", claim.usage_events, "events", "usage_events"],
+      ]) addMeasure(plan, report, id, metric, value, unit, ref, "known", {
+        source_field: sourceField, source_assertion_only: true,
+        usage_period_start: claim.usage_period_start, usage_period_end: claim.usage_period_end,
+        value_attribution_usd: null,
+      }, "current");
+    }
     const benefitRef = claim.source_refs.find((item) => item.source_file.startsWith("SA08_"));
     addMeasure(plan, report, id, "benefit_feed_planning_promise_usd", claim.planning_promise_usd, "USD", benefitRef,
-      "estimated", { cross_source_conflict: claim.source_conflict, claimable_value_usd: null });
+      "estimated", { cross_source_conflict: claim.source_conflict, claimable_value_usd: null }, "planned");
+    if (candidateConfig(report).sourceAssertions) addMeasure(plan, report, id,
+      "benefit_feed_source_finance_assertion_usd", claim.source_asserted_finance_value_usd,
+      "USD", benefitRef, "estimated", { source_assertion_only: true, claimable_value_usd: null,
+        source_field: "finance_validated_value_usd", source_finance_validation_status: claim.source_finance_validation_status,
+        source_evidence_id: claim.source_evidence_id, cross_feed_conflict: claim.finance_feed_conflict,
+        evidence_reference_registered: claim.evidence_reference_registered }, "candidate");
+    if (candidateConfig(report).sourceAssertions) {
+      for (const [metric, value, sourceField, sourceRef, scenario] of [
+        ["benefit_feed_source_funded_spend_usd", claim.benefit_feed_source_funded_spend_usd, "funded_spend_usd", benefitRef, "planned"],
+        ["benefit_feed_source_actual_spend_ytd_usd", claim.benefit_feed_source_actual_spend_ytd_usd, "actual_spend_ytd_usd", benefitRef, "actual"],
+        ["usage_feed_source_promised_value_usd", claim.usage_feed_source_promised_value_usd, "promised_value_usd", ref, "planned"],
+        ["usage_feed_source_finance_assertion_usd", claim.usage_feed_source_finance_assertion_usd, "finance_validated_value_usd", ref, "candidate"],
+      ]) addMeasure(plan, report, id, metric, value, "USD", sourceRef, "estimated", {
+        source_field: sourceField, source_assertion_only: true,
+        approved_fy_budget_usd: null, claimable_value_usd: null,
+        do_not_sum_across_feeds: true, cross_feed_conflict: claim.finance_feed_conflict,
+      }, scenario);
+    }
+    if (candidateConfig(report).sourceAssertions) {
+      const outcomeRef = claim.source_refs.find((item) => item.source_file.startsWith("SA11_"));
+      for (const [metric, value, unit, sourceField, scenario] of [
+        ["ai_outcome_feed_baseline", claim.outcome_feed_baseline, claim.outcome_feed_unit, "baseline_value", "baseline"],
+        ["ai_outcome_feed_target", claim.outcome_feed_target, claim.outcome_feed_unit, "target_value", "target"],
+        ["ai_outcome_feed_actual", claim.outcome_feed_actual, claim.outcome_feed_unit, "actual_value", "actual"],
+        ["ai_outcome_feed_source_finance_assertion_usd", claim.outcome_feed_source_finance_assertion_usd, "USD", "finance_validated_value_usd", "candidate"],
+      ]) addMeasure(plan, report, id, metric, value, unit, outcomeRef, "estimated", {
+        source_field: sourceField, source_assertion_only: true, claimable_value_usd: null,
+        measurement_period_start: claim.outcome_feed_period_start,
+        measurement_period_end: claim.outcome_feed_period_end,
+      }, scenario);
+    }
   }
   for (const vendor of report.canonical.contract_exposure) {
     const id = addObject(plan, report, "vendor", vendor.id, vendor.vendor, vendor.source_ref,
-      { overlap_with_it_spend_unknown: true });
+      { overlap_with_it_spend_unknown: true,
+        ...(candidateConfig(report).sourceAssertions ? {
+          source_contract_name: vendor.source_contract_name,
+          source_service_category: vendor.source_service_category,
+          source_contract_owner_role: vendor.source_contract_owner_role,
+          source_renewal_date: vendor.source_renewal_date,
+          source_term_end: vendor.source_term_end,
+          source_risk_rating: vendor.source_risk_rating,
+        } : {}) });
     addMeasure(plan, report, id, "vendor_annual_contract_spend_usd", vendor.annual_contract_spend_usd,
       "USD", vendor.source_ref, "estimated", {
         money_population: "vendor_contract_exposure", amount_role: "separate_exposure",
         overlap_with_it_spend: "unknown", additive_to_it_spend: false,
-      });
+      }, "planned");
   }
   for (const row of report.views.risk_lens) {
     addObject(plan, report, "risk", row.row_key, row.title, sourceRefsFor(row)[0],
-      { severity: row.severity, control_status: row.control_status });
+      { severity: row.severity, control_status: row.control_status,
+        ...(candidateConfig(report).sourceAssertions ? {
+          source_likelihood: row.source_likelihood,
+          source_control_owner_role: row.source_control_owner_role,
+          source_evidence_required: row.source_evidence_required,
+          source_mitigation_plan: row.source_mitigation_plan,
+          source_last_tested_date: row.source_last_tested_date,
+          source_regulatory_driver: row.source_regulatory_driver,
+        } : {}) });
   }
   for (const metric of report.canonical.outcome_metrics) {
     const id = addObject(plan, report, "metric", metric.id, metric.name, metric.source_ref,
       { baseline: metric.baseline, baseline_period: metric.baseline_period,
         target: metric.target, observed: metric.observed, observed_period: metric.observed_period,
-        claimable_value_usd: null, blocked_reason: metric.blocked_reason });
+        claimable_value_usd: null, blocked_reason: metric.blocked_reason,
+        ...(candidateConfig(report).sourceAssertions ? {
+          source_asserted_finance_value_usd: metric.source_asserted_finance_value_usd,
+          source_definition: metric.source_definition,
+          source_metric_domain: metric.source_metric_domain,
+          source_business_function: metric.source_business_function,
+          source_owner_role: metric.source_owner_role,
+          source_data_source: metric.source_data_source,
+          source_calculation_basis: metric.source_calculation_basis,
+          source_unblock_target_period: metric.source_unblock_target_period,
+          source_value_claim_status: metric.source_value_claim_status,
+          source_claim_readiness: metric.source_claim_readiness,
+          source_attestation_owner: metric.source_attestation_owner,
+          source_evidence_basis: metric.evidence_basis,
+          source_assertion_caveat: metric.source_assertion_caveat,
+        } : {}) });
     addOutcomeTextMeasure(plan, report, id, metric.baseline, "baseline", "baseline", metric.source_ref,
       metric.baseline_period);
     addOutcomeTextMeasure(plan, report, id, metric.target, "target", "target", metric.source_ref);
     addOutcomeTextMeasure(plan, report, id, metric.observed, "actual", "observed", metric.source_ref,
       metric.observed_period);
+    if (candidateConfig(report).sourceAssertions) addMeasure(plan, report, id,
+      "outcome_source_finance_assertion_usd", metric.source_asserted_finance_value_usd,
+      "USD", metric.source_ref, "estimated", { source_assertion_only: true,
+        claimable_value_usd: null, source_field: "finance_attested_value_usd",
+        source_value_claim_status: metric.source_value_claim_status,
+        source_claim_readiness: metric.source_claim_readiness,
+        source_evidence_basis: metric.evidence_basis }, "candidate");
+  }
+  for (const item of report.canonical.foundations.source_objects || []) {
+    const id = addObject(plan, report, item.object_type, item.id, item.name, item.source_ref,
+      { ...item.source_fields, source_semantic_type: item.object_type === "data_flow" ?
+        "declared_data_asset_integration" : item.object_type,
+      source_population: "registered_foundation_intake", no_inferred_relationships: true,
+      segment_identity_status: item.segment_attribution_status ?? null });
+    for (const [sourceField, metric, unit] of FOUNDATION_MEASURES[item.object_type]) {
+      const raw = item.source_fields[sourceField];
+      const value = raw === null ? null : Number(raw);
+      if (raw !== null && (!Number.isFinite(value) || value < 0)) {
+        throw new Error(`Foundation source amount invalid: ${item.source_ref.source_file}:${item.source_ref.source_row}:${sourceField}`);
+      }
+      addMeasure(plan, report, id, metric, value, unit, item.source_ref, "estimated", {
+        source_field: sourceField, source_assertion_only: true,
+        approved_fy_budget_usd: null, claimable_value_usd: null,
+        overlap_with_modeled_spend: "unknown", source_unit_not_normalized: unit === "source_unit",
+      }, "candidate");
+    }
   }
 }
 
 function physicalPreviewRows(report) {
-  const result = Object.fromEntries(PAGE_KEYS.map((page) => [page, []]));
-  for (const page of PAGE_KEYS) {
+  const result = Object.fromEntries(pageKeys(report).map((page) => [page, []]));
+  for (const page of pageKeys(report)) {
     result[page] = report.views[page];
   }
   result.decision_lanes = result.decision_lanes.map((row) => ({ ...row,
@@ -348,9 +636,9 @@ function physicalPreviewRows(report) {
 }
 
 function addProjectionRows(plan, report, views) {
-  const { projectionVersion, buildVersion, sourceFields } = candidateConfig(report);
+  const { projectionVersion, buildVersion, sourceFields, sourceAssertions } = candidateConfig(report);
   const snapshotId = plan.snapshot.id;
-  for (const page of PAGE_KEYS) {
+  for (const page of pageKeys(report)) {
     const table = PAGE_TABLE[page];
     const manifestId = uuid("projection_manifest", report.tenant_key, report.assessment_id, page, projectionVersion);
     plan.projectionManifests.push({
@@ -385,7 +673,36 @@ function addProjectionRows(plan, report, views) {
         }
         canonicalMeasure = matches[0];
         canonicalMeasureRefs = matches;
+        if (sourceAssertions && category) {
+          const sourceRecordId = sourceRowId(report, sourceRefsFor(row)[0]);
+          const supplemental = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
+            measure.source_record_id === sourceRecordId && measure.metric_key.startsWith("spend_source_"));
+          if (supplemental.length !== 3) throw new Error(`Spend source fields lack canonical measures: ${row.row_key}`);
+          canonicalMeasureRefs = [...matches, ...supplemental];
+          payload.source_measure_refs = Object.fromEntries(supplemental.map((measure) => [measure.metric_key, measure.id]));
+        }
         payload.canonical_measure_id = canonicalMeasure.id;
+      } else if (sourceAssertions && page === "decision_lanes") {
+        canonicalObjectId = objectId(report, "program", row.row_key);
+        const assertion = plan.measures.find((measure) => measure.subject_object_id === canonicalObjectId &&
+          measure.metric_key === "program_source_expected_value_usd");
+        if (!assertion || assertion.value_number !== row.source_stated_expected_value_usd) {
+          throw new Error(`Program source assertion has no canonical measure: ${row.row_key}`);
+        }
+        canonicalMeasureRefs = [assertion];
+        payload.source_expected_value_measure_id = assertion.id;
+      } else if (sourceAssertions && page === "foundations") {
+        const ref = sourceRefsFor(row)[0];
+        canonicalObjectId = objectId(report, row.object_type, row.source_object_id);
+        const object = plan.objects.find((item) => item.id === canonicalObjectId);
+        if (!ref || !object || object.source_record_id !== sourceRowId(report, ref) ||
+            object.object_key !== row.source_object_id || object.object_type !== row.object_type) {
+          throw new Error(`Foundation projection lacks exact canonical identity: ${row.row_key}`);
+        }
+        canonicalMeasureRefs = plan.measures.filter((measure) =>
+          measure.subject_object_id === canonicalObjectId && measure.source_record_id === object.source_record_id);
+        payload.canonical_source_record_id = object.source_record_id;
+        payload.canonical_measure_refs = Object.fromEntries(canonicalMeasureRefs.map((measure) => [measure.metric_key, measure.id]));
       } else if (page === "value_proof" && row.row_key.startsWith("metric:")) {
         canonicalObjectId = objectId(report, "metric", row.row_key.slice(7));
         const measures = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
@@ -398,7 +715,45 @@ function addProjectionRows(plan, report, views) {
         }
         payload.canonical_measure_refs = Object.fromEntries(measures.map((measure) => [measure.scenario, measure.id]));
         canonicalMeasureRefs = measures;
+        if (sourceAssertions && row.source_asserted_finance_value_usd !== null) {
+          const assertion = plan.measures.find((measure) => measure.subject_object_id === canonicalObjectId &&
+            measure.metric_key === "outcome_source_finance_assertion_usd");
+          if (!assertion || assertion.value_number !== row.source_asserted_finance_value_usd) {
+            throw new Error(`Outcome source assertion has no canonical measure: ${row.row_key}`);
+          }
+          canonicalMeasureRefs = [...measures, assertion];
+          payload.source_finance_assertion_measure_id = assertion.id;
+        }
         canonicalMeasure = measures.find((measure) => measure.scenario === "actual") || null;
+      } else if (sourceAssertions && page === "value_proof" && row.source_asserted_finance_value_usd !== null) {
+        canonicalObjectId = objectId(report, "ai_use_case", row.row_key);
+        const assertion = plan.measures.find((measure) => measure.subject_object_id === canonicalObjectId &&
+          measure.metric_key === "benefit_feed_source_finance_assertion_usd");
+        if (!assertion || assertion.value_number !== row.source_asserted_finance_value_usd) {
+          throw new Error(`Benefit source assertion has no canonical measure: ${row.row_key}`);
+        }
+        const outcomeRef = row.source_refs.find((ref) => ref.source_file.startsWith("SA11_"));
+        const outcomeMeasures = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
+          measure.source_record_id === sourceRowId(report, outcomeRef) &&
+          measure.metric_key.startsWith("ai_outcome_feed_"));
+        if (outcomeMeasures.length !== 4) throw new Error(`Outcome feed lacks canonical measures: ${row.row_key}`);
+        const moneyMeasures = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
+          ["benefit_feed_source_funded_spend_usd", "benefit_feed_source_actual_spend_ytd_usd",
+            "usage_feed_source_promised_value_usd", "usage_feed_source_finance_assertion_usd"].includes(measure.metric_key));
+        if (moneyMeasures.length !== 4) throw new Error(`Separate source money fields lack canonical measures: ${row.row_key}`);
+        canonicalMeasureRefs = [assertion, ...outcomeMeasures, ...moneyMeasures];
+        payload.outcome_feed_measure_refs = Object.fromEntries(outcomeMeasures.map((measure) => [measure.metric_key, measure.id]));
+        payload.source_money_measure_refs = Object.fromEntries(moneyMeasures.map((measure) => [measure.metric_key, measure.id]));
+        payload.source_finance_assertion_measure_id = assertion.id;
+      } else if (sourceAssertions && page === "adoption_lens") {
+        canonicalObjectId = objectId(report, "ai_use_case", row.row_key);
+        const usageRef = sourceRefsFor(row)[0];
+        const usageMeasures = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
+          measure.source_record_id === sourceRowId(report, usageRef) &&
+          ["usage_feed_power_users", "usage_feed_usage_events"].includes(measure.metric_key));
+        if (usageMeasures.length !== 2) throw new Error(`Usage feed lacks supplemental measures: ${row.row_key}`);
+        canonicalMeasureRefs = usageMeasures;
+        payload.usage_feed_measure_refs = Object.fromEntries(usageMeasures.map((measure) => [measure.metric_key, measure.id]));
       }
       const refs = row.source_refs || [];
       const entryId = uuid("projection_entry", report.tenant_key, report.assessment_id, page, row.row_key, projectionVersion);
@@ -438,21 +793,24 @@ function addProjectionRows(plan, report, views) {
       };
       const primaryRef = sourceRefsFor(row)[0];
       if (table === "tower_command_center") {
+        const isFoundation = page === "foundations";
+        const isSummary = page === "command_center";
         plan.commandRows.push({ ...common, page_key: page,
-          row_type: page === "command_center" ? "portfolio_summary" : page === "decision_lanes" ? "program" : "recommended_action",
-          primary_object_id: page === "decision_lanes" ? objectId(report, "program", row.row_key) : null,
-          claim_id: page === "command_center" ? null : row.row_key,
-          claim_gate_status: page === "command_center" ? "not_applicable" : "gated",
-          claim_gate_reason_code: page === "command_center" ? null : "source_approval_needed",
-          claim_gate_reason_detail: page === "command_center" ? null : row.plain_language,
-          next_gate: page === "command_center" ? null : "owner_review",
-          evidence_needed_json: page === "command_center" ? [] : ["Finance or source-owner approval"],
+          row_type: isSummary ? "portfolio_summary" : isFoundation ? "foundation_record" : page === "decision_lanes" ? "program" : "recommended_action",
+          primary_object_id: isFoundation ? canonicalObjectId : page === "decision_lanes" ? objectId(report, "program", row.row_key) : null,
+          claim_id: isSummary || isFoundation ? null : row.row_key,
+          claim_gate_status: isSummary || isFoundation ? "not_applicable" : "gated",
+          claim_gate_reason_code: isSummary || isFoundation ? null : "source_approval_needed",
+          claim_gate_reason_detail: isSummary || isFoundation ? null : row.plain_language,
+          next_gate: isSummary || isFoundation ? null : "owner_review",
+          evidence_needed_json: isSummary || isFoundation ? [] : ["Finance or source-owner approval"],
           funded_amount_usd: null, promised_value_usd: null,
           usage_supported_value_usd: null, finance_validated_value_usd: null,
           claimable_value_usd: null, blocked_value_usd: null,
           proof_maturity_score: null, risk_pressure_score: null,
           usage_strength_score: null, owner_role: sourceFields && page === "decision_lanes" ? row.business_sponsor_role : null, handoff_module: "Tower",
-          value_state: "unknown", quality_state: "warning", metric_keys_json: [], gap_flags_json: ["unapproved_financial_basis"],
+          value_state: "unknown", quality_state: "warning", metric_keys_json: [],
+          gap_flags_json: isFoundation ? ["source_not_independently_verified", "relationship_not_promoted"] : ["unapproved_financial_basis"],
         });
       } else if (table === "tower_value_chain") {
         const isCost = page === "cost_lens";
@@ -543,6 +901,28 @@ export function buildPhysicalPlan(report) {
     ["vendor_annual_contract_spend_usd", "Vendor annual contract spend", "Contract exposure from source records; overlap with category spend is unknown.", "USD", "annual", "none"],
     ["unverified_value_claim", "Unverified value claim", "Placeholder metric key for value rows with no approved claimable amount.", "USD", "point_in_time", "none"],
     ["outcome_source_value", "Source-reported outcome value", "Raw baseline, target, or observed text with source unit and period unnormalized.", "source_text", "point_in_time", "none"],
+    ...(candidateConfig(report).sourceAssertions ? [
+      ...Object.values(FOUNDATION_MEASURES).flat().map(([sourceField, metric, unit]) => [
+        metric, `Foundation source ${sourceField}`, "Source-recorded numeric field; no approval, overlap or aggregation inferred.",
+        unit, "point_in_time", "none",
+      ]),
+      ["usage_feed_power_users", "Usage-feed power users", "Source-reported users for the source period; no dollar attribution.", "users", "point_in_time", "none"],
+      ["usage_feed_usage_events", "Usage-feed events", "Source-reported activity events for the source period; no dollar attribution.", "events", "point_in_time", "none"],
+      ["ai_outcome_feed_baseline", "AI outcome-feed baseline", "Source-specific operational KPI baseline; no cross-population join or benefit attribution.", "source_unit", "point_in_time", "none"],
+      ["ai_outcome_feed_target", "AI outcome-feed target", "Source-specific operational KPI target; no cross-population join or benefit attribution.", "source_unit", "point_in_time", "none"],
+      ["ai_outcome_feed_actual", "AI outcome-feed actual", "Source-specific operational KPI actual; no cross-population join or benefit attribution.", "source_unit", "point_in_time", "none"],
+      ["ai_outcome_feed_source_finance_assertion_usd", "AI outcome-feed Finance assertion", "Source-specific dollar assertion with independent Finance and evidence approval unverified.", "USD", "point_in_time", "none"],
+      ["spend_source_prior_year_actual_usd", "Source-reported prior-year spend", "One category source-row amount with fiscal period and Finance approval unverified.", "USD", "point_in_time", "none"],
+      ["spend_source_forecast_next_year_usd", "Source-reported next-year forecast", "One category source-row forecast; not an approved budget.", "USD", "point_in_time", "none"],
+      ["spend_source_savings_opportunity_usd", "Source-reported savings opportunity", "One category source-row planning opportunity; not verified or claimable savings.", "USD", "point_in_time", "none"],
+      ["program_source_expected_value_usd", "Source-stated program expected value", "Planning source assertion with period, approval and realization unverified; never an approved or claimable amount.", "USD", "point_in_time", "none"],
+      ["outcome_source_finance_assertion_usd", "Outcome-feed Finance assertion", "Exact source-stated amount only; independent Finance and evidence approval have not been verified for Tower.", "USD", "point_in_time", "none"],
+      ["benefit_feed_source_finance_assertion_usd", "Benefit-feed Finance assertion", "Exact source-stated amount only; conflicting feeds and unapproved evidence prevent a claimable value.", "USD", "point_in_time", "none"],
+      ["benefit_feed_source_funded_spend_usd", "Benefit-feed source funded spend", "Source-stated funded spend without an approved fiscal basis; not approved Tower funding.", "USD", "point_in_time", "none"],
+      ["benefit_feed_source_actual_spend_ytd_usd", "Benefit-feed source YTD spend", "Source-stated spend for an unverified period; not realized value.", "USD", "point_in_time", "none"],
+      ["usage_feed_source_promised_value_usd", "Usage-feed source promise", "Source-specific planning promise; do not add to benefit-feed promise.", "USD", "point_in_time", "none"],
+      ["usage_feed_source_finance_assertion_usd", "Usage-feed Finance assertion", "Source-specific assertion that conflicts with other feeds; no approved claimable amount.", "USD", "point_in_time", "none"],
+    ] : []),
   ];
   plan.metricDefinitions = metricDefinitions.map(([metric_key, metric_name, definition, unit, cadence, aggregation_rule]) => ({
     id: uuid("metric_definition", report.tenant_key, metric_key), tenant_key: report.tenant_key,
@@ -552,9 +932,10 @@ export function buildPhysicalPlan(report) {
   addCanonicalRows(plan, report);
   const views = physicalPreviewRows(report);
   addProjectionRows(plan, report, views);
-  const viewCounts = Object.fromEntries(PAGE_KEYS.map((page) => [page, views[page].length]));
+  const viewCounts = Object.fromEntries(pageKeys(report).map((page) => [page, views[page].length]));
   if (Object.values(viewCounts).some((count) => count < 1)) throw new Error("A physical Tower view would be empty");
-  if (plan.objects.length !== 237) throw new Error(`Canonical object count changed: ${plan.objects.length}`);
+  const expectedObjects = 237 + (report.canonical.foundations.source_objects?.length || 0);
+  if (plan.objects.length !== expectedObjects) throw new Error(`Canonical object count changed: ${plan.objects.length}`);
   return { plan, viewCounts };
 }
 
@@ -566,7 +947,8 @@ function rowsForPage(plan, page) {
 }
 
 export function viewFingerprints(plan) {
-  return Object.fromEntries(PAGE_KEYS.map((page) => [page, fingerprintRows(rowsForPage(plan, page))]));
+  return Object.fromEntries(plan.projectionManifests.map((manifest) => manifest.projection_key.slice(6))
+    .map((page) => [page, fingerprintRows(rowsForPage(plan, page))]));
 }
 
 function fingerprintRows(rows) {
@@ -576,15 +958,25 @@ function fingerprintRows(rows) {
 
 export function validatePhysicalPlan(report, plan, viewCounts) {
   const errors = [];
-  const expectedSourceRecords = 299 + (candidateConfig(report).sourceFields ?
-    report.canonical.programs.reduce((count, program) => count + program.affected_functions.length, 0) : 0);
-  if (plan.sourceFiles.length !== 17 || plan.sourceRecords.length !== expectedSourceRecords) errors.push("source rows changed");
-  if (plan.objects.length !== 237) errors.push("canonical object count changed");
+  const expectedSourceRecords = 299 + (candidateConfig(report).sourceAssertions ?
+    report.canonical.foundations.relationship_census.source_rows +
+      report.canonical.foundations.no_declared_row_id.row_count +
+      report.canonical.foundations.segment_source_rows_mapping_pending : candidateConfig(report).sourceFields ?
+      report.canonical.programs.reduce((count, program) => count + program.affected_functions.length, 0) : 0) +
+    (report.canonical.foundations.source_objects?.length || 0);
+  const expectedFiles = Object.entries(report.source_manifest).filter(([file, metadata]) =>
+    !file.startsWith("extracts/") && metadata.content_disposition !== "hash_count_only").length;
+  if (plan.sourceFiles.length !== expectedFiles || plan.sourceRecords.length !== expectedSourceRecords) errors.push("source rows changed");
+  if (plan.objects.length !== 237 + (report.canonical.foundations.source_objects?.length || 0)) errors.push("canonical object count changed");
   const fileById = new Map(plan.sourceFiles.map((row) => [row.id, row.file_name]));
   const userDetailRecordCount = plan.sourceRecords.filter((row) =>
     fileById.get(row.source_file_id)?.startsWith("extracts/") || row.record_type.includes("user_detail")).length;
   if (plan.sourceFiles.some((row) => row.file_name.startsWith("extracts/")) || userDetailRecordCount > 0) {
     errors.push("user-detail extract entered physical source rows");
+  }
+  if (plan.sourceFiles.some((row) => report.source_manifest[row.file_name]?.content_disposition === "hash_count_only") ||
+      plan.sourceRecords.some((row) => report.source_manifest[fileById.get(row.source_file_id)]?.content_disposition === "hash_count_only")) {
+    errors.push("hash-count-only evidence content entered physical source rows");
   }
   const unapprovedEvidenceRecordCount = plan.sourceRecords.filter((row) => row.record_type === "13_evidence_sources" ||
       fileById.get(row.source_file_id) === "13_evidence_sources.csv").length;
@@ -595,7 +987,7 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       plan.valueRows.some((row) => row.claimable_value_usd !== null || row.blocked_value_usd !== null)) {
     errors.push("unknown financial amounts must be null");
   }
-  for (const page of PAGE_KEYS) {
+  for (const page of pageKeys(report)) {
     if (rowsForPage(plan, page).length !== viewCounts[page] || viewCounts[page] < 1) errors.push(`${page} count mismatch`);
   }
   const objectIds = new Set(plan.objects.map((row) => row.id));
@@ -603,6 +995,46 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
   const sourceRecordsById = new Map(plan.sourceRecords.map((row) => [row.id, row]));
   const measureIds = new Set(plan.measures.map((row) => row.id));
   const sourceFiles = new Map(plan.sourceFiles.map((row) => [row.file_name, row.file_hash]));
+  if (candidateConfig(report).sourceAssertions) {
+    const sourceRowsByFile = new Map();
+    for (const record of plan.sourceRecords) {
+      const file = fileById.get(record.source_file_id);
+      const metadata = report.source_manifest[file];
+      if (!metadata || sourceFiles.get(file) !== metadata.sha256) {
+        errors.push(`source record file identity differs: ${record.id}`);
+        continue;
+      }
+      if (!sourceRowsByFile.has(file)) {
+        const bytes = fs.readFileSync(path.join(ROOT, metadata.source_path));
+        if (hash(bytes) !== metadata.sha256) errors.push(`source file changed during validation: ${file}`);
+        sourceRowsByFile.set(file, csvRows(bytes.toString("utf8")));
+      }
+      const raw = sourceRowsByFile.get(file)[record.row_number - 2];
+      if (!raw || raw.tenant_key !== report.tenant_key || stable(raw) !== stable(record.payload_json)) {
+        errors.push(`source record differs from exact intake: ${file}:${record.row_number}`);
+      }
+    }
+    if (plan.sourceRecords.filter((row) => fileById.get(row.source_file_id) === "12_relationships.csv").length !==
+        report.canonical.foundations.relationship_census.source_rows) {
+      errors.push("raw relationship source-record coverage differs");
+    }
+    const maturityRows = plan.sourceRecords.filter((row) =>
+      fileById.get(row.source_file_id) === "19_data_analytics_platform_maturity.csv");
+    if (maturityRows.length !== report.canonical.foundations.no_declared_row_id.row_count ||
+        maturityRows.some((row) => row.record_type !== "maturity_source_record_identity_unresolved" ||
+          row.parse_notes !== "source_row_only_identity_unresolved_no_canonical_object") ||
+        plan.objects.some((row) => row.source_record_id && maturityRows.some((source) => source.id === row.source_record_id))) {
+      errors.push("raw maturity identity-unresolved coverage differs");
+    }
+    const segmentRows = plan.sourceRecords.filter((row) =>
+      fileById.get(row.source_file_id) === "01b_business_segments.csv");
+    if (segmentRows.length !== report.canonical.foundations.segment_source_rows_mapping_pending ||
+        segmentRows.some((row) => row.record_type !== "segment_source_record_mapping_pending" ||
+          row.parse_notes !== "source_row_only_mapping_pending_no_canonical_object") ||
+        plan.objects.some((row) => row.source_record_id && segmentRows.some((source) => source.id === row.source_record_id))) {
+      errors.push("raw segment mapping-pending coverage differs");
+    }
+  }
   if (objectIds.size !== plan.objects.length || sourceIds.size !== plan.sourceRecords.length ||
       measureIds.size !== plan.measures.length) errors.push("duplicate identity");
   for (const row of [...plan.commandRows, ...plan.valueRows, ...plan.evidenceRows, ...plan.aiRows]) {
@@ -610,6 +1042,9 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
     if (row.use_case_object_id && !objectIds.has(row.use_case_object_id)) errors.push(`missing use case for ${row.row_key}`);
     for (const ref of row.source_refs_json) {
       if (ref.source_file.startsWith("extracts/")) errors.push(`user-detail extract cited by ${row.row_key}`);
+      if (report.source_manifest[ref.source_file]?.content_disposition === "hash_count_only") {
+        errors.push(`hash-count-only evidence cited by ${row.row_key}`);
+      }
       if (sourceFiles.get(ref.source_file) !== ref.source_sha256) errors.push(`source hash mismatch for ${row.row_key}`);
       if (Number.isInteger(ref.source_row) && !sourceIds.has(sourceRowId(report, ref))) errors.push(`missing source row for ${row.row_key}`);
       if (ref.source_file === "13_evidence_sources.csv" && ref.scope !== "register_coverage_only") errors.push("unapproved evidence cited");
@@ -659,6 +1094,12 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
         ["business_sponsor_role", "sponsor_role"],
         ["operational_owner_role", "operational_owner_role"],
         ["expected_value_archetype", "expected_value_archetype"],
+        ...(candidateConfig(report).sourceAssertions ? [
+          ["source_value_hypothesis", "value_hypothesis"],
+          ["source_approval_path", "approval_path"],
+          ["source_risk_controls", "risk_controls"],
+          ["source_required_systems", "required_systems"],
+        ] : []),
       ];
       if (!raw || fileById.get(source.source_file_id) !== "10_ai_automation_use_cases.csv" ||
           raw.use_case_id !== row.row_key || row.business_function !== (raw.business_function || null) ||
@@ -673,6 +1114,53 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
     errors.push("evidence gap is not aggregate-only");
   }
   const measuresById = new Map(plan.measures.map((measure) => [measure.id, measure]));
+  if (candidateConfig(report).sourceAssertions) {
+    const foundation = report.canonical.foundations.source_objects || [];
+    const objectsById = new Map(plan.objects.map((row) => [row.id, row]));
+    if (foundation.length !== 1242) errors.push("Foundation declared-ID object coverage differs");
+    for (const item of foundation) {
+      const sourceId = sourceRowId(report, item.source_ref);
+      const source = sourceRecordsById.get(sourceId);
+      const object = objectsById.get(objectId(report, item.object_type, item.id));
+      const raw = source?.payload_json;
+      if (!source || fileById.get(source.source_file_id) !== item.source_ref.source_file ||
+          !object || object.source_record_id !== sourceId || object.object_key !== item.id ||
+          object.object_type !== item.object_type || object.display_name !== item.name ||
+          Object.entries(item.source_fields).some(([field, value]) =>
+            value !== (raw[field] || null) || object.attributes_json[field] !== value)) {
+        errors.push(`Foundation object differs from exact source row: ${item.source_ref.source_file}:${item.source_ref.source_row}`);
+      }
+      for (const [sourceField, metric] of FOUNDATION_MEASURES[item.object_type] || []) {
+        const expected = item.source_fields[sourceField] === null ? null : Number(item.source_fields[sourceField]);
+        const matches = plan.measures.filter((row) => row.subject_object_id === object?.id &&
+          row.metric_key === metric && row.source_record_id === sourceId);
+        if (expected === null ? matches.length !== 0 : matches.length !== 1 ||
+            matches[0].value_number !== expected || matches[0].attributes_json.source_assertion_only !== true ||
+            matches[0].attributes_json.approved_fy_budget_usd !== null ||
+            matches[0].attributes_json.claimable_value_usd !== null) {
+          errors.push(`Foundation measure differs from exact source row: ${item.source_ref.source_file}:${item.source_ref.source_row}:${sourceField}`);
+        }
+      }
+      const projected = rowsForPage(plan, "foundations").find((row) =>
+        row.row_key === `foundation:${item.object_type}:${item.id}`);
+      const display = projected?.display_payload_json;
+      if (!projected || projected.primary_object_id !== object?.id || projected.row_type !== "foundation_record" ||
+          projected.source_refs_json.length !== 1 ||
+          projected.source_refs_json[0].source_sha256 !== item.source_ref.source_sha256 ||
+          projected.source_refs_json[0].source_row !== item.source_ref.source_row ||
+          display.canonical_source_record_id !== sourceId ||
+          display.source_object_id !== item.id || display.object_type !== item.object_type ||
+          stable(display.source_fields) !== stable(item.source_fields) ||
+          display.segment_identity_status !== (item.segment_attribution_status ?? null) ||
+          object.attributes_json.segment_identity_status !== (item.segment_attribution_status ?? null) ||
+          display.source_review_state !== "not_reviewed" || display.relationship_status !== "not_promoted" ||
+          display.approved_fy_budget_usd !== null || display.claimable_value_usd !== null ||
+          Buffer.byteLength(JSON.stringify(display)) > 8192) {
+        errors.push(`Foundation projection differs from exact canonical source: ${item.source_ref.source_file}:${item.source_ref.source_row}`);
+      }
+    }
+    if (rowsForPage(plan, "foundations").length !== foundation.length) errors.push("Foundation projection count differs");
+  }
   const spendAggregate = plan.measures.find((measure) => measure.metric_key === SPEND_METRIC_KEY);
   const spendCategories = plan.measures.filter((measure) => measure.metric_key === "modeled_annual_spend_category_usd");
   const spendCategoryRows = rowsForPage(plan, "cost_lens").filter((row) => row.row_key.startsWith("spend:"));
@@ -705,6 +1193,29 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
           measure.source_record_id !== row.source_record_id)) {
       errors.push(`cost amount is not tied to its canonical measure: ${row.row_key}`);
     }
+    if (candidateConfig(report).sourceAssertions && row.row_key.startsWith("spend:")) {
+      const raw = sourceRecordsById.get(row.source_record_id)?.payload_json;
+      const fields = [
+        ["source_prior_year_actual_usd", "prior_year_actual_usd", "spend_source_prior_year_actual_usd"],
+        ["source_forecast_next_year_usd", "forecast_next_year_usd", "spend_source_forecast_next_year_usd"],
+        ["source_savings_opportunity_usd", "savings_opportunity_usd", "spend_source_savings_opportunity_usd"],
+      ];
+      for (const [payloadField, sourceField, metric] of fields) {
+        const amount = raw?.[sourceField]?.trim() ? Number(raw[sourceField]) : null;
+        const supplemental = measuresById.get(row.display_payload_json.source_measure_refs?.[metric]);
+        const linked = supplemental && plan.projectionMeasureRefs.some((ref) =>
+          ref.projection_entry_id === row.projection_entry_id && ref.measure_id === supplemental.id);
+        if (!raw || (amount !== null && (!Number.isFinite(amount) || amount < 0)) ||
+            row.display_payload_json[payloadField] !== amount ||
+            !supplemental || supplemental.value_number !== amount ||
+            supplemental.source_record_id !== row.source_record_id ||
+            supplemental.subject_object_id !== row.primary_object_id ||
+            supplemental.attributes_json.source_assertion_only !== true || !linked ||
+            row.display_payload_json.savings_claim_usd !== null) {
+          errors.push(`spend source field differs from exact intake and canonical measure: ${row.row_key}:${sourceField}`);
+        }
+      }
+    }
   }
   for (const row of rowsForPage(plan, "value_proof").filter((item) => item.row_key.startsWith("metric:"))) {
     const refs = row.display_payload_json.canonical_measure_refs || {};
@@ -723,6 +1234,31 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
         errors.push(`outcome period was normalized or lost: ${row.row_key}:${field}`);
       }
     }
+    if (candidateConfig(report).sourceAssertions && row.display_payload_json.source_asserted_finance_value_usd !== null) {
+      const assertion = measuresById.get(row.display_payload_json.source_finance_assertion_measure_id);
+      const linked = assertion && plan.projectionMeasureRefs.some((ref) =>
+        ref.projection_entry_id === row.projection_entry_id && ref.measure_id === assertion.id);
+      if (!assertion || assertion.metric_key !== "outcome_source_finance_assertion_usd" ||
+          assertion.subject_object_id !== row.primary_object_id ||
+          assertion.source_record_id !== row.source_record_id ||
+          assertion.value_number !== row.display_payload_json.source_asserted_finance_value_usd ||
+          assertion.value_text !== null || assertion.scenario !== "candidate" ||
+          assertion.attributes_json.source_assertion_only !== true || !linked ||
+          row.claimable_value_usd !== null) {
+        errors.push(`outcome finance assertion is not tied to its canonical measure: ${row.row_key}`);
+      }
+    }
+  }
+  if (candidateConfig(report).sourceAssertions) {
+    for (const measure of plan.measures) {
+      const expectedScenario = SOURCE_ASSERTION_SCENARIOS[measure.metric_key];
+      if (expectedScenario && (measure.scenario !== expectedScenario ||
+          measure.attributes_json.source_assertion_only !== true ||
+          measure.review_state !== "not_reviewed" ||
+          measure.attributes_json.claimable_value_usd !== null)) {
+        errors.push(`source assertion scenario or review state differs: ${measure.metric_key}:${measure.id}`);
+      }
+    }
   }
   for (const row of rowsForPage(plan, "adoption_lens")) {
     const matching = plan.measures.filter((measure) => measure.subject_object_id === row.use_case_object_id &&
@@ -733,9 +1269,169 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       errors.push(`adoption count is not tied to its usage source measure: ${row.row_key}`);
     }
   }
+  if (candidateConfig(report).sourceAssertions) {
+    for (const [page, file, fields] of [
+      ["cost_lens", "07_vendors_contracts.csv", [["source_contract_name", "contract_name"],
+        ["source_service_category", "service_category"], ["source_contract_owner_role", "contract_owner"],
+        ["source_renewal_date", "renewal_date"], ["source_term_end", "term_end"],
+        ["source_risk_rating", "risk_rating"]]],
+      ["risk_lens", "11_risks_controls.csv", [["source_likelihood", "likelihood"],
+        ["source_control_owner_role", "control_owner"], ["source_evidence_required", "evidence_required"],
+        ["source_mitigation_plan", "mitigation_plan"], ["source_last_tested_date", "last_tested_date"],
+        ["source_regulatory_driver", "regulatory_driver"]]],
+    ]) {
+      const rows = rowsForPage(plan, page).filter((row) => row.source_refs_json[0]?.source_file === file);
+      if (rows.length !== report.source_manifest[file].row_count) errors.push(`source context row coverage differs: ${file}`);
+      for (const row of rows) {
+        const raw = sourceRecordsById.get(sourceRowId(report, row.source_refs_json[0]))?.payload_json;
+        if (!raw || fields.some(([target, source]) => row.display_payload_json[target] !== (raw[source] || null))) {
+          errors.push(`source context differs from exact intake: ${file}:${row.row_key}`);
+        }
+      }
+    }
+    const assertionFields = [
+      { page: "decision_lanes", file: "09_programs_initiatives.csv", sourceId: "program_id",
+        sourceAmount: "expected_value_usd", payloadAmount: "source_stated_expected_value_usd",
+        metric: "program_source_expected_value_usd", measureId: "source_expected_value_measure_id",
+        statuses: [["source_start_date", "start_date"], ["source_end_date", "end_date"],
+          ["source_stage_gate", "stage_gate"], ["source_benefit_realization_start", "benefit_realization_start"],
+          ["source_blocked_reason", "blocked_reason"], ["source_objective", "objective"],
+          ["source_target_outcomes", "target_outcomes"]] },
+      { page: "value_proof", file: "14_metrics_outcomes.csv", sourceId: "metric_id",
+        sourceAmount: "finance_attested_value_usd", payloadAmount: "source_asserted_finance_value_usd",
+        metric: "outcome_source_finance_assertion_usd", measureId: "source_finance_assertion_measure_id",
+        statuses: [["source_value_claim_status", "value_claim_status"],
+          ["source_claim_readiness", "claim_readiness"], ["source_attestation_owner", "attestation_owner"],
+          ["source_evidence_basis", "evidence_basis"], ["source_definition", "definition"],
+          ["source_metric_domain", "metric_domain"], ["source_business_function", "business_function"],
+          ["source_owner_role", "owner"], ["source_data_source", "data_source"],
+          ["source_calculation_basis", "calculation_basis"],
+          ["source_unblock_target_period", "unblock_target_period"]] },
+      { page: "value_proof", file: "SA08_AI_Benefits_Realization_Usage_Ledger.csv", sourceId: "ai_use_case_id",
+        sourceAmount: "finance_validated_value_usd", payloadAmount: "source_asserted_finance_value_usd",
+        metric: "benefit_feed_source_finance_assertion_usd", measureId: "source_finance_assertion_measure_id",
+        statuses: [["source_finance_validation_status", "finance_validation_status"],
+          ["source_value_claim_status", "value_claim_status"], ["source_tower_claim_allowed", "tower_claim_allowed"],
+          ["source_realized_value_allowed", "realized_value_allowed"],
+          ["source_owner_attestation_status", "owner_attestation_status"],
+          ["source_evidence_id", "evidence_id"],
+          ["source_evidence_freshness_status", "evidence_freshness_status"],
+          ["source_duplicate_risk", "duplicate_risk"], ["source_additive_status", "additive_status"]] },
+    ];
+    for (const contract of assertionFields) {
+      const rows = rowsForPage(plan, contract.page).filter((row) =>
+        row.source_refs_json[0]?.source_file === contract.file);
+      const expectedCount = report.source_manifest[contract.file].row_count;
+      if (rows.length !== expectedCount) errors.push(`source assertion row coverage differs: ${contract.file}`);
+      for (const row of rows) {
+        const sourceId = sourceRowId(report, row.source_refs_json[0]);
+        const raw = sourceRecordsById.get(sourceId)?.payload_json;
+        const display = row.display_payload_json;
+        const recorded = raw?.[contract.sourceAmount]?.trim();
+        const expectedAmount = recorded ? Number(recorded) : null;
+        const measure = measuresById.get(display[contract.measureId]);
+        const hasRef = measure && plan.projectionMeasureRefs.some((ref) =>
+          ref.projection_entry_id === row.projection_entry_id && ref.measure_id === measure.id);
+        const badAmount = !raw || raw[contract.sourceId] !== row.row_key.replace(/^metric:/, "") ||
+          (recorded && (!Number.isFinite(expectedAmount) || expectedAmount < 0)) ||
+          display[contract.payloadAmount] !== expectedAmount ||
+          (expectedAmount === null ? display[contract.measureId] !== undefined :
+            !measure || measure.value_number !== expectedAmount || measure.metric_key !== contract.metric ||
+            measure.subject_object_id !== row.primary_object_id || measure.source_record_id !== sourceId ||
+            measure.attributes_json.source_assertion_only !== true || !hasRef) ||
+          contract.statuses.some(([target, input]) => display[target] !== (raw[input] || null)) ||
+          (contract.page === "decision_lanes" && display.source_pct_complete !== Number(raw.pct_complete)) ||
+          !display.source_assertion_caveat ||
+          (contract.page === "decision_lanes" ? display.approved_fy_budget_usd !== null :
+            display.claimable_value_usd !== null) ||
+          row.claimable_value_usd !== null || row.display_payload_json.value !== null;
+        if (badAmount) errors.push(`source assertion differs from exact intake and canonical measure: ${contract.file}:${row.row_key}`);
+      }
+    }
+    for (const row of rowsForPage(plan, "adoption_lens")) {
+      const raw = sourceRecordsById.get(sourceRowId(report, row.source_refs_json[0]))?.payload_json;
+      for (const [metric, payloadField, sourceField] of [
+        ["usage_feed_power_users", "power_users", "power_users"],
+        ["usage_feed_usage_events", "usage_events", "usage_events"],
+      ]) {
+        const measure = measuresById.get(row.display_payload_json.usage_feed_measure_refs?.[metric]);
+        if (!raw || row.display_payload_json[payloadField] !== Number(raw[sourceField]) ||
+            !measure || measure.value_number !== Number(raw[sourceField]) ||
+            measure.source_record_id !== sourceRowId(report, row.source_refs_json[0]) ||
+            measure.subject_object_id !== row.use_case_object_id ||
+            !plan.projectionMeasureRefs.some((ref) => ref.projection_entry_id === row.projection_entry_id && ref.measure_id === measure.id)) {
+          errors.push(`usage source field differs from exact intake and canonical measure: ${row.row_key}:${sourceField}`);
+        }
+      }
+      if (raw && (row.display_payload_json.usage_period_start !== raw.usage_period_start ||
+          row.display_payload_json.usage_period_end !== raw.usage_period_end ||
+          row.display_payload_json.usage_source_system !== raw.source_system ||
+          row.display_payload_json.value_attribution_usd !== null)) {
+        errors.push(`usage source context differs from intake: ${row.row_key}`);
+      }
+    }
+    for (const row of rowsForPage(plan, "value_proof").filter((item) => !item.row_key.startsWith("metric:"))) {
+      for (const [metric, payloadField, sourceField, sourcePrefix] of [
+        ["benefit_feed_source_funded_spend_usd", "benefit_feed_source_funded_spend_usd", "funded_spend_usd", "SA08_"],
+        ["benefit_feed_source_actual_spend_ytd_usd", "benefit_feed_source_actual_spend_ytd_usd", "actual_spend_ytd_usd", "SA08_"],
+        ["usage_feed_source_promised_value_usd", "usage_feed_source_promised_value_usd", "promised_value_usd", "SA09_"],
+        ["usage_feed_source_finance_assertion_usd", "usage_feed_source_finance_assertion_usd", "finance_validated_value_usd", "SA09_"],
+      ]) {
+        const ref = row.source_refs_json.find((item) => item.source_file.startsWith(sourcePrefix));
+        const sourceId = ref && sourceRowId(report, ref);
+        const rawMoney = sourceRecordsById.get(sourceId)?.payload_json;
+        const measure = measuresById.get(row.display_payload_json.source_money_measure_refs?.[metric]);
+        if (!rawMoney || row.display_payload_json[payloadField] !== Number(rawMoney[sourceField]) ||
+            !measure || measure.value_number !== Number(rawMoney[sourceField]) ||
+            measure.source_record_id !== sourceId || measure.subject_object_id !== row.primary_object_id ||
+            measure.attributes_json.source_assertion_only !== true ||
+            measure.attributes_json.claimable_value_usd !== null ||
+            !plan.projectionMeasureRefs.some((item) => item.projection_entry_id === row.projection_entry_id && item.measure_id === measure.id)) {
+          errors.push(`separate money source field differs from exact intake and canonical measure: ${row.row_key}:${metric}`);
+        }
+      }
+      const outcomeRef = row.source_refs_json.find((ref) => ref.source_file.startsWith("SA11_"));
+      const raw = outcomeRef && sourceRecordsById.get(sourceRowId(report, outcomeRef))?.payload_json;
+      for (const [metric, payloadField, sourceField] of [
+        ["ai_outcome_feed_baseline", "outcome_feed_baseline", "baseline_value"],
+        ["ai_outcome_feed_target", "outcome_feed_target", "target_value"],
+        ["ai_outcome_feed_actual", "outcome_feed_actual", "actual_value"],
+        ["ai_outcome_feed_source_finance_assertion_usd", "outcome_feed_source_finance_assertion_usd", "finance_validated_value_usd"],
+      ]) {
+        const measure = measuresById.get(row.display_payload_json.outcome_feed_measure_refs?.[metric]);
+        if (!raw || raw.ai_use_case_id !== row.row_key ||
+            row.display_payload_json[payloadField] !== Number(raw[sourceField]) ||
+            !measure || measure.value_number !== Number(raw[sourceField]) ||
+            measure.source_record_id !== sourceRowId(report, outcomeRef) ||
+            measure.subject_object_id !== row.primary_object_id ||
+            !plan.projectionMeasureRefs.some((ref) => ref.projection_entry_id === row.projection_entry_id && ref.measure_id === measure.id)) {
+          errors.push(`outcome feed field differs from exact intake and canonical measure: ${row.row_key}:${sourceField}`);
+        }
+      }
+      if (raw && (row.display_payload_json.outcome_feed_period_start !== raw.measurement_period_start ||
+          row.display_payload_json.outcome_feed_period_end !== raw.measurement_period_end ||
+          row.display_payload_json.outcome_feed_unit !== raw.metric_unit ||
+          row.display_payload_json.outcome_feed_claim_status !== raw.value_claim_status ||
+          row.display_payload_json.outcome_feed_claim_allowed !== raw.tower_claim_allowed ||
+          row.display_payload_json.claimable_value_usd !== null)) {
+        errors.push(`outcome feed context differs from intake: ${row.row_key}`);
+      }
+    }
+    if (plan.measures.filter((row) => row.metric_key === "program_source_expected_value_usd").length !== 38 ||
+        plan.measures.filter((row) => row.metric_key === "outcome_source_finance_assertion_usd").length !== 7 ||
+        plan.measures.filter((row) => row.metric_key === "benefit_feed_source_finance_assertion_usd").length !== 18 ||
+        plan.measures.filter((row) => row.metric_key.startsWith("spend_source_")).length !== 81 ||
+        plan.measures.filter((row) => row.metric_key.startsWith("ai_outcome_feed_")).length !== 72 ||
+        plan.measures.filter((row) => ["usage_feed_power_users", "usage_feed_usage_events"].includes(row.metric_key)).length !== 36 ||
+        plan.measures.filter((row) => ["benefit_feed_source_funded_spend_usd", "benefit_feed_source_actual_spend_ytd_usd",
+          "usage_feed_source_promised_value_usd", "usage_feed_source_finance_assertion_usd"].includes(row.metric_key)).length !== 72) {
+      errors.push("source assertion measure coverage differs from declared source fields");
+    }
+  }
   return { status: errors.length === 0 ? "pass" : "fail", errors,
     checks: { source_files: plan.sourceFiles.length, source_records: plan.sourceRecords.length,
       canonical_objects: plan.objects.length, measures: plan.measures.length,
+      foundation_objects: report.canonical.foundations.source_objects?.length || 0,
       physical_rows: Object.values(viewCounts).reduce((sum, count) => sum + count, 0),
       unapproved_evidence_records_loaded: unapprovedEvidenceRecordCount,
       user_detail_records_loaded: userDetailRecordCount,
@@ -787,6 +1483,28 @@ async function writePlan(report, plan) {
       select 1 from pg_constraint where conrelid = 'ecl_projection.tower_value_chain'::regclass
         and conname = 'tower_value_chain_unknown_amounts_check'`);
     if (unknownCheck.rows.length !== 1) throw new Error("Unknown-amount schema check is absent");
+    if (candidateConfig(report).sourceAssertions) {
+      const foundationCheck = await client.query(`
+        select pg_get_constraintdef(oid) as definition from pg_constraint
+         where conrelid = 'ecl_projection.tower_command_center'::regclass
+           and conname = 'tower_command_center_page_key_check'`);
+      if (foundationCheck.rows.length !== 1 || !foundationCheck.rows[0].definition.includes("foundations")) {
+        throw new Error("Foundations page-key schema migration has not been applied and read back");
+      }
+      const objectTypeCheck = await client.query(`
+        select pg_get_constraintdef(oid) as definition from pg_constraint
+         where conrelid = 'ecl_context.object'::regclass and conname = 'object_type_check'`);
+      if (objectTypeCheck.rows.length !== 1 ||
+          ["enterprise_profile", "data_flow", "workforce_role", "managed_service_scope"]
+            .some((type) => !objectTypeCheck.rows[0].definition.includes(type))) {
+        throw new Error("Foundation object-type schema migration has not been applied and read back");
+      }
+      const catalog = await client.query(`
+        select object_type from ecl_context.object_type_catalog
+         where object_type = any($1::text[])`, [["enterprise_profile", "business_function",
+        "workforce_role", "managed_service_scope", "organization", "application", "data_flow", "infrastructure", "process"]]);
+      if (catalog.rows.length !== 9) throw new Error("Foundation object-type catalog is incomplete");
+    }
     const existingMetrics = await client.query(
       "select metric_key, metric_name, definition, unit, directionality, cadence, aggregation_rule from ecl_context.metric_definition where tenant_key = $1 and metric_key = any($2::text[])",
       [report.tenant_key, plan.metricDefinitions.map((row) => row.metric_key)],
@@ -819,7 +1537,7 @@ async function writePlan(report, plan) {
     const readback = { view_counts: {}, view_fingerprints: {},
       active_before: { assessment_id: declared.rows[0].assessment_id,
         projection_version: Number(declared.rows[0].projection_version) } };
-    for (const page of PAGE_KEYS) {
+    for (const page of pageKeys(report)) {
       const pagePredicate = PAGE_TABLE[page] === "tower_ai_portfolio" ? "display_payload_json ->> 'page_key' = $3" : "page_key = $3";
       const rows = await client.query(
         `select row_key, source_hash from ecl_projection.${PAGE_TABLE[page]} where tenant_key = $1 and assessment_id = $2 and ${pagePredicate} order by row_key`,
@@ -829,7 +1547,7 @@ async function writePlan(report, plan) {
       readback.view_fingerprints[page] = fingerprintRows(rows.rows);
     }
     const expected = viewFingerprints(plan);
-    for (const page of PAGE_KEYS) {
+    for (const page of pageKeys(report)) {
       if (readback.view_counts[page] !== rowsForPage(plan, page).length || readback.view_fingerprints[page] !== expected[page]) {
         throw new Error(`Transaction readback differs for ${page}`);
       }
@@ -848,25 +1566,8 @@ async function writePlan(report, plan) {
       [report.tenant_key, report.assessment_id],
     );
     if (costParity.rows[0].mismatches !== 0) throw new Error("Transaction cost measure parity failed");
-    const outcomeParity = await client.query(`
-      select count(*)::int as mismatches
-      from ecl_projection.tower_value_chain p
-      join ecl_projection.projection_entry_measure_ref r
-        on r.tenant_key = p.tenant_key and r.assessment_id = p.assessment_id
-       and r.projection_entry_id = p.projection_entry_id
-      left join ecl_context.measure m
-        on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = r.measure_id
-      where p.tenant_key = $1 and p.assessment_id = $2 and p.page_key = 'value_proof'
-        and p.row_key like 'metric:%'
-        and (m.id is null or m.subject_object_id is distinct from p.primary_object_id
-          or m.metric_key <> 'outcome_source_value'
-          or m.value_text is distinct from case m.scenario
-            when 'baseline' then p.display_payload_json ->> 'baseline'
-            when 'target' then p.display_payload_json ->> 'target'
-            when 'actual' then p.display_payload_json ->> 'observed'
-            else null end)`,
-      [report.tenant_key, report.assessment_id],
-    );
+    const outcomeParity = await client.query(OUTCOME_MEASURE_PARITY_SQL,
+      [report.tenant_key, report.assessment_id]);
     if (outcomeParity.rows[0].mismatches !== 0) throw new Error("Transaction outcome measure parity failed");
     const measureRefCount = await client.query(`
       select count(*)::int as rows from ecl_projection.projection_entry_measure_ref
@@ -987,7 +1688,7 @@ async function reattestPlan(report, plan, expectedProofUri) {
       active_before: { assessment_id: active.rows[0].assessment_id,
         projection_version: Number(active.rows[0].projection_version) } };
     const expectedFingerprints = viewFingerprints(plan);
-    for (const page of PAGE_KEYS) {
+    for (const page of pageKeys(report)) {
       const pagePredicate = PAGE_TABLE[page] === "tower_ai_portfolio" ? "display_payload_json ->> 'page_key' = $3" : "page_key = $3";
       const rows = await client.query(
         `select row_key, source_hash, display_payload_json from ecl_projection.${PAGE_TABLE[page]} where tenant_key = $1 and assessment_id = $2 and ${pagePredicate}`,
