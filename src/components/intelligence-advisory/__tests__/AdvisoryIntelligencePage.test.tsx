@@ -3,12 +3,20 @@
  */
 
 import { TextDecoder, TextEncoder } from "util";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import {
   AdvisoryIntelligencePage,
   buildStarterPrompts,
 } from "../AdvisoryIntelligencePage";
 import { getEnterpriseLandscapeViewModel } from "@/lib/home/enterprise-landscape-view-model";
+import { rememberHomeQuestion } from "@/lib/home/preview/intelligence-handoff";
 
 describe("AdvisoryIntelligencePage", () => {
   const viewModel = getEnterpriseLandscapeViewModel({
@@ -43,8 +51,71 @@ describe("AdvisoryIntelligencePage", () => {
     const prompts = buildStarterPrompts(viewModel);
     expect(prompts.length).toBeGreaterThan(0);
     for (const prompt of prompts) {
-      expect(screen.getByTestId(`agent-dock-suggestion-${prompt}`)).toBeTruthy();
+      expect(
+        screen.getByTestId(`agent-dock-suggestion-${prompt}`),
+      ).toBeTruthy();
     }
+  });
+
+  it("shows the Home source and selected question without automatically invoking the advisor", async () => {
+    const request = {
+      tenantKey: "reference-enterprise",
+      recordToken: "a".repeat(64),
+    };
+    const question = "Which recorded constraint should we validate first?";
+    rememberHomeQuestion(request, question);
+    const originalFetch = global.fetch;
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock;
+    try {
+      render(
+        <StrictMode>
+          <AdvisoryIntelligencePage
+            viewModel={viewModel}
+            homeHandoff={{
+              request,
+              status: "ready",
+              sourceLabel: "Reviewed stored record",
+              chapterTitle: "Technology & Data",
+            }}
+          />
+        </StrictMode>,
+      );
+      expect(screen.getByLabelText("Home continuation").textContent).toContain(
+        "Reviewed stored record",
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByTestId(`agent-dock-suggestion-${question}`),
+        ).toBeTruthy(),
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it("keeps a changed record blocked instead of falling back to unrelated Intelligence context", () => {
+    render(
+      <AdvisoryIntelligencePage
+        viewModel={viewModel}
+        homeHandoff={{
+          request: {
+            tenantKey: "reference-enterprise",
+            recordToken: "a".repeat(64),
+          },
+          status: "changed",
+        }}
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Home's record changed.",
+    );
+    expect(screen.getByRole("link", { name: "Return to Home" })).toBeTruthy();
+    for (const prompt of buildStarterPrompts(viewModel))
+      expect(
+        screen.queryByTestId(`agent-dock-suggestion-${prompt}`),
+      ).toBeNull();
   });
 });
 

@@ -5,19 +5,13 @@ import { AppShell } from "@/components/shell/AppShell";
 import { HomeCanvasApp } from "@/components/home/canvas/HomeCanvasApp";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
-  getHomeReviewBundle,
   HOME_PREVIEW_TENANT_KEYS,
   isHomePreviewTenantKey,
   type HomePreviewTenantKey,
 } from "@/lib/home/preview/golden-snapshot";
-import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
-import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
+import { resolveHomeRecord } from "@/lib/home/preview/resolve-home-record";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
-import {
-  isEclProductProvider,
-  resolveEclProductProvider,
-} from "@/lib/ecl/product-provider";
 
 export const metadata: Metadata = {
   title: "Home | AbarVa",
@@ -58,20 +52,11 @@ export default async function HomePage({
   // src/app/api/home/walkthrough-export/route.ts has, before a non-demo tenant is added to it.
   const tenantKey =
     requestedTenantKey ?? activeTenantKey ?? HOME_PREVIEW_TENANT_KEYS[0];
-  const productProvider = resolveEclProductProvider(provider);
-  const served = isEclProductProvider(productProvider)
-    ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
-    : null;
-  const bundle = served?.bundle ?? getHomeReviewBundle(tenantKey);
-
-  if (!bundle) {
+  const record = await resolveHomeRecord(tenantKey, provider);
+  if (!record) {
     throw new Error(`Home: missing governed Home bundle for ${tenantKey}.`);
   }
-
-  const recordSource = served?.recordSource ?? {
-    kind: "reviewed_snapshot" as const,
-    canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
-  };
+  const { bundle, recordSource, recordToken } = record;
 
   const tenantName =
     canonicalClientDisplayName({
@@ -99,7 +84,7 @@ export default async function HomePage({
       <HomeCanvasApp
         bundle={bundle}
         recordSource={recordSource}
-        recordToken={homeRecordSourceToken(tenantKey, recordSource)}
+        recordToken={recordToken}
         tenantKey={tenantKey}
         tenantName={tenantName}
         requestedProvider={provider}

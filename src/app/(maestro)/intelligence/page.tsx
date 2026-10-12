@@ -22,6 +22,8 @@ import {
   isEclProductProvider,
   resolveEclProductProvider,
 } from "@/lib/ecl/product-provider";
+import { parseHomeIntelligenceRequest } from "@/lib/home/preview/intelligence-handoff";
+import { resolveIntelligenceHomeHandoff } from "@/lib/intelligence/home-context-handoff";
 
 export const metadata = {
   title: "Intelligence · Advisory Board | AbarVa",
@@ -70,8 +72,11 @@ export default async function IntelligencePage({
   const resolvedSearchParams = await searchParams;
   const rawRequestedClient = firstSearchValue(resolvedSearchParams?.client);
   const requestedProvider = firstSearchValue(resolvedSearchParams?.provider);
-  const requestedDiagnostics = firstSearchValue(resolvedSearchParams?.diagnostics);
+  const requestedDiagnostics = firstSearchValue(
+    resolvedSearchParams?.diagnostics,
+  );
   const requestedDebug = firstSearchValue(resolvedSearchParams?.debug);
+  const homeContextToken = firstSearchValue(resolvedSearchParams?.homeContext);
   const productProvider = resolveEclProductProvider(requestedProvider);
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
@@ -97,6 +102,22 @@ export default async function IntelligencePage({
     client?.name ??
     tenant?.displayName ??
     "AbarVa Client";
+  const homeRequest = homeContextToken
+    ? parseHomeIntelligenceRequest({
+        tenantKey: canonicalTenantKey(rawRequestedClient),
+        recordToken: homeContextToken,
+        chapterId:
+          firstSearchValue(resolvedSearchParams?.homeChapter) ?? undefined,
+        requestedProvider:
+          firstSearchValue(resolvedSearchParams?.homeProvider) ?? undefined,
+      })
+    : null;
+  const homeHandoff = homeRequest
+    ? await resolveIntelligenceHomeHandoff(
+        homeRequest,
+        canonicalTenantKey(contextTenantKey),
+      )
+    : null;
 
   // Canonical first. The authored view model stays as a fallback for the case where the projector
   // has not yet run for a tenant, but it is a fallback and is labelled as one — the previous
@@ -142,7 +163,21 @@ export default async function IntelligencePage({
           <EclDemoFindingsPanel product="intelligence" />
         </>
       ) : null}
-      <AdvisoryIntelligencePage viewModel={viewModel} />
+      {homeContextToken && !homeRequest ? (
+        <div role="alert" className="border-b px-6 py-4">
+          This Home continuation is invalid. <a href="/home">Return to Home</a>
+        </div>
+      ) : (
+        <AdvisoryIntelligencePage
+          key={
+            homeRequest
+              ? `${homeRequest.tenantKey}:${homeRequest.recordToken}`
+              : viewModel.clientKey
+          }
+          viewModel={viewModel}
+          homeHandoff={homeHandoff?.state}
+        />
+      )}
     </AppShell>
   );
 }
