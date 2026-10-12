@@ -38,7 +38,7 @@ Release lane: `internal-admin`. The job writes two audit files in the private op
 
 ## Rollout Plan
 
-Merge through a protected PR. The repo-owned ACA main workflow builds and deploys the exact commit. After runtime digest parity is checked and the shared private operator job is available, submit this helper on that digest with the two exact approved JSON files. The job creates the private proof objects and confirms their bytes. The separate serving approval verifier still has to check authority, scope, and the exact candidate before any selector change.
+Merge through a protected PR. The repo-owned ACA main workflow builds and deploys the exact commit. After runtime digest parity is checked and the shared private operator job is available, submit this helper on that digest with the two exact approved JSON files. Pass the file bytes through temporary job-scoped secret references, never plain job-start environment values: execution metadata and local polling artifacts can retain plain values. Confirm the execution is terminal, remove only the two temporary secrets, and read back the original job configuration. The job creates the private proof objects and confirms their bytes. The separate serving approval verifier still has to check authority, scope, and the exact candidate before any selector change.
 
 ## Deployment Authority
 
