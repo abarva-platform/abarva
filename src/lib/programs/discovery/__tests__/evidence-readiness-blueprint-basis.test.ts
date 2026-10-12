@@ -1,11 +1,56 @@
 import fs from "node:fs";
 import path from "node:path";
+const mockGetProgramById = jest.fn();
+const mockQuery = jest.fn();
+jest.mock("@/lib/programs/queries", () => ({
+  getProgramById: (...args: unknown[]) => mockGetProgramById(...args),
+}));
+jest.mock("@/lib/data-plane/azureRead", () => ({
+  azureRead: { query: (...args: unknown[]) => mockQuery(...args) },
+}));
 import {
   buildDiscoveryBlueprintInputFromProgram,
   evaluateDiscoveryEvidenceReadiness,
   resolveDeclaredProgramArchetypeId,
+  loadDiscoveryEvidenceReadiness,
 } from "../evidence-readiness";
 import { resolveDiscoveryBlueprintWithBasis } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+
+describe("discovery readiness shares the page's authorized program", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockQuery.mockResolvedValue([]);
+  });
+  const ctx = { clientId: "client-1", clientKey: "tenant-a", userId: "user-a" };
+  it("retains the declared blueprint without repeating the program read", async () => {
+    const loadProgram = jest.fn(
+      async () =>
+        ({
+          id: "move-a",
+          name: "A move",
+          functionPackKey: "governed_data_foundation",
+        }) as never,
+    );
+    const pack = await loadDiscoveryEvidenceReadiness(ctx, "move-a", {
+      loadProgram,
+    });
+    expect(pack.blueprintId).toBe("governed_data_foundation");
+    expect(pack.blueprintBasis).toBe("declared");
+    expect(loadProgram).toHaveBeenCalledWith(ctx, "move-a");
+    expect(mockGetProgramById).not.toHaveBeenCalled();
+  });
+  it("propagates an unavailable shared program instead of using a fallback blueprint", async () => {
+    const error = new Error("Move read unavailable");
+    const loadProgram = jest.fn(async () => {
+      throw error;
+    });
+    await expect(
+      loadDiscoveryEvidenceReadiness(ctx, "move-a", { loadProgram }),
+    ).rejects.toBe(error);
+    expect(mockQuery).not.toHaveBeenCalled();
+    expect(mockGetProgramById).not.toHaveBeenCalled();
+  });
+});
 
 /** Resolve a program exactly as `loadDiscoveryEvidenceReadiness` does. */
 function resolveForProgram(program: Record<string, unknown>) {

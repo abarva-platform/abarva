@@ -1035,46 +1035,12 @@ export async function resolveDocFamilyReviews(
       source_ref: Record<string, unknown> | null;
       created_at: string;
     }>;
-    const state: DocFamilyReviewState = {
-      ...empty,
-      pendingItems: [],
-      committedSignals: [],
-    };
-    const approvedEvidenceIds: string[] = [];
-    for (const r of rows) {
-      if (r.decision === "approved") {
-        state.approved += 1;
-        approvedEvidenceIds.push(r.evidence_id);
-      } else if (r.decision === "rejected") state.rejected += 1;
-      else {
-        state.pending += 1;
-        const ref = r.source_ref ?? {};
-        state.pendingItems.push({
-          evidenceId: r.evidence_id,
-          reviewId: r.id,
-          sourceArtifactId:
-            typeof ref.move_artifact_id === "string"
-              ? ref.move_artifact_id
-              : null,
-          title: String(ref.title ?? ref.filename ?? "Uploaded document"),
-          parseMethod: String(ref.parse_method ?? "unknown"),
-          confidence: typeof ref.confidence === "number" ? ref.confidence : 0.7,
-          submittedAt: r.created_at,
-          extraction: initialReviewedEvidenceExtraction({
-            summary: null,
-            extractedText: null,
-            extractedStructured: null,
-          }),
-          sourceTextPreview: "",
-        });
-      }
-    }
-
     const allEvidenceIds = [
-      ...new Set([
-        ...approvedEvidenceIds,
-        ...state.pendingItems.map((item) => item.evidenceId),
-      ]),
+      ...new Set(
+        rows
+          .filter((row) => row.decision !== "rejected")
+          .map((row) => row.evidence_id),
+      ),
     ];
     const evidenceById = new Map<string, Record<string, unknown>>();
     if (allEvidenceIds.length) {
@@ -1091,51 +1057,172 @@ export async function resolveDocFamilyReviews(
         }
       }
     }
-    for (const pending of state.pendingItems) {
-      const item = evidenceById.get(pending.evidenceId);
-      pending.extraction = initialReviewedEvidenceExtraction({
-        summary: item?.summary,
-        extractedText: item?.extracted_text,
-        extractedStructured: item?.extracted_structured,
-      });
-      pending.sourceTextPreview = String(item?.extracted_text ?? "");
-    }
-
-    // Pull the REAL extracted content from the approved (committed) evidence so
-    // grounded deliverables can cite actual decisions/risks/baselines — not just
-    // "committed". Generic across families (uses the shared extraction shape).
-    if (approvedEvidenceIds.length) {
-      const reviewByEvidenceId = new Map(
-        rows
-          .filter((row) => row.decision === "approved")
-          .map((row) => [row.evidence_id, row.source_ref]),
-      );
-      state.committedSignals = buildCommittedSignals(
-        approvedEvidenceIds.flatMap((id) => {
-          const item = evidenceById.get(id);
-          if (!item) return [];
-          const reviewed = reviewedExtractionFromStoredSourceRef(
-            reviewByEvidenceId.get(id),
-          );
-          return [
-            {
-              extracted_structured: reviewed
-                ? toStoredReviewedStructured(
-                    reviewed,
-                    item.extracted_structured,
-                  )
-                : (item.extracted_structured as Record<string, unknown> | null),
-              summary: reviewed?.summary ?? (item.summary as string | null),
-              title: item.title as string | null,
-            },
-          ];
-        }),
-      );
-    }
-    return state;
+    return buildDocFamilyReviewState(familyKey, rows, evidenceById);
   } catch {
     return empty;
   }
+}
+
+type DocumentFamilyReviewRow = {
+  id: string;
+  evidence_id: string;
+  family_key?: string;
+  decision: ReviewDecision;
+  source_ref: Record<string, unknown> | null;
+  created_at: string;
+};
+
+function emptyDocFamilyReviewState(familyKey: string): DocFamilyReviewState {
+  return {
+    familyKey,
+    approved: 0,
+    pending: 0,
+    rejected: 0,
+    pendingItems: [],
+    committedSignals: [],
+  };
+}
+
+function buildDocFamilyReviewState(
+  familyKey: string,
+  rows: DocumentFamilyReviewRow[],
+  evidenceById: Map<string, Record<string, unknown>>,
+): DocFamilyReviewState {
+  const empty = emptyDocFamilyReviewState(familyKey);
+  const state: DocFamilyReviewState = {
+    ...empty,
+    pendingItems: [],
+    committedSignals: [],
+  };
+  const approvedEvidenceIds: string[] = [];
+  for (const r of rows) {
+    if (r.decision === "approved") {
+      state.approved += 1;
+      approvedEvidenceIds.push(r.evidence_id);
+    } else if (r.decision === "rejected") state.rejected += 1;
+    else {
+      state.pending += 1;
+      const ref = r.source_ref ?? {};
+      state.pendingItems.push({
+        evidenceId: r.evidence_id,
+        reviewId: r.id,
+        sourceArtifactId:
+          typeof ref.move_artifact_id === "string"
+            ? ref.move_artifact_id
+            : null,
+        title: String(ref.title ?? ref.filename ?? "Uploaded document"),
+        parseMethod: String(ref.parse_method ?? "unknown"),
+        confidence: typeof ref.confidence === "number" ? ref.confidence : 0.7,
+        submittedAt: r.created_at,
+        extraction: initialReviewedEvidenceExtraction({
+          summary: null,
+          extractedText: null,
+          extractedStructured: null,
+        }),
+        sourceTextPreview: "",
+      });
+    }
+  }
+
+  for (const pending of state.pendingItems) {
+    const item = evidenceById.get(pending.evidenceId);
+    pending.extraction = initialReviewedEvidenceExtraction({
+      summary: item?.summary,
+      extractedText: item?.extracted_text,
+      extractedStructured: item?.extracted_structured,
+    });
+    pending.sourceTextPreview = String(item?.extracted_text ?? "");
+  }
+
+  // Pull the REAL extracted content from the approved (committed) evidence so
+  // grounded deliverables can cite actual decisions/risks/baselines — not just
+  // "committed". Generic across families (uses the shared extraction shape).
+  if (approvedEvidenceIds.length) {
+    const reviewByEvidenceId = new Map(
+      rows
+        .filter((row) => row.decision === "approved")
+        .map((row) => [row.evidence_id, row.source_ref]),
+    );
+    state.committedSignals = buildCommittedSignals(
+      approvedEvidenceIds.flatMap((id) => {
+        const item = evidenceById.get(id);
+        if (!item) return [];
+        const reviewed = reviewedExtractionFromStoredSourceRef(
+          reviewByEvidenceId.get(id),
+        );
+        return [
+          {
+            extracted_structured: reviewed
+              ? toStoredReviewedStructured(reviewed, item.extracted_structured)
+              : (item.extracted_structured as Record<string, unknown> | null),
+            summary: reviewed?.summary ?? (item.summary as string | null),
+            title: item.title as string | null,
+          },
+        ];
+      }),
+    );
+  }
+  return state;
+}
+
+/** One tenant- and Move-scoped review/evidence batch for a page's families.
+ * A failed batch rejects, so the page reports readiness as unavailable. */
+export async function resolveDocFamilyReviewsBatch(
+  ctx: TenancyCtx,
+  moveId: string,
+  familyKeys: readonly string[],
+): Promise<Map<string, DocFamilyReviewState>> {
+  const keys = [...new Set(familyKeys)];
+  const states = new Map(
+    keys.map((key) => [key, emptyDocFamilyReviewState(key)]),
+  );
+  if (!ctx.clientKey || !moveId || !keys.length) return states;
+  const tenantKeys = moveEvidenceReadTenantKeys(ctx.clientKey);
+  const sb = getAzureWriteFluentClient();
+  const reviewResult = await sb
+    .from("program_evidence_reviews")
+    .select("id, evidence_id, family_key, decision, source_ref, created_at")
+    .in("tenant_key", tenantKeys)
+    .eq("program_id", moveId)
+    .in("family_key", keys);
+  if (reviewResult.error || !Array.isArray(reviewResult.data)) {
+    throw new Error("Current-state document reviews unavailable");
+  }
+  const rows = reviewResult.data as DocumentFamilyReviewRow[];
+  const ids = [
+    ...new Set(
+      rows
+        .filter((row) => row.decision !== "rejected")
+        .map((row) => row.evidence_id),
+    ),
+  ];
+  const evidenceById = new Map<string, Record<string, unknown>>();
+  if (ids.length) {
+    const evidenceResult = await sb
+      .from("program_evidence_items")
+      .select("id, extracted_structured, extracted_text, summary, title")
+      .in("tenant_key", tenantKeys)
+      .eq("program_id", moveId)
+      .in("id", ids);
+    if (evidenceResult.error || !Array.isArray(evidenceResult.data)) {
+      throw new Error("Current-state document evidence unavailable");
+    }
+    for (const item of evidenceResult.data as Record<string, unknown>[]) {
+      const id = String(item.id ?? "");
+      if (id) evidenceById.set(id, item);
+    }
+  }
+  for (const key of keys) {
+    states.set(
+      key,
+      buildDocFamilyReviewState(
+        key,
+        rows.filter((row) => row.family_key === key),
+        evidenceById,
+      ),
+    );
+  }
+  return states;
 }
 
 /**

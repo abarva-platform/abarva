@@ -46,6 +46,7 @@ import type {
 import {
   getMilestones,
   getModuleState,
+  getPhaseSnapshots,
   getRisks,
   getWorkItems,
 } from "./queries";
@@ -58,6 +59,7 @@ import { canonicalProgramClientName } from "./client-name";
 type TransformerOptions = {
   supabase?: unknown;
   evaluateGateCriteria?: boolean;
+  loadPhaseSnapshots?: typeof getPhaseSnapshots;
 };
 
 function displayText(value: unknown, fallback = "—"): string {
@@ -1594,19 +1596,30 @@ export async function buildStrategicMove(
         limit: 1,
       })
       .catch(() => []),
-    azureRead
-      .select<{
-        created_at: string;
-        phase_number: number;
-        approval_status: string;
-      }>({
-        table: "phase_snapshots",
-        columns: ["created_at", "phase_number", "approval_status"],
-        where: { engagement_id: move.id },
-        orderBy: { column: "created_at", direction: "desc" },
-        limit: 8,
-      })
-      .catch(() => []),
+    opts.loadPhaseSnapshots
+      ? opts
+          .loadPhaseSnapshots(ctx, move.id)
+          .then((rows) =>
+            rows.slice(0, 8).map((row) => ({
+              created_at: row.createdAt,
+              phase_number: row.phaseNumber,
+              approval_status: row.approvalStatus,
+            })),
+          )
+          .catch(() => [])
+      : azureRead
+          .select<{
+            created_at: string;
+            phase_number: number;
+            approval_status: string;
+          }>({
+            table: "phase_snapshots",
+            columns: ["created_at", "phase_number", "approval_status"],
+            where: { engagement_id: move.id },
+            orderBy: { column: "created_at", direction: "desc" },
+            limit: 8,
+          })
+          .catch(() => []),
     fetchLinkedEvidence(move.id).catch(() => []),
     fetchMoveDeliverables(move.id).catch(() => []),
     getMoveStatus(ctx, move).catch(() => ({

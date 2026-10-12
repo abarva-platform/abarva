@@ -30,7 +30,8 @@ import {
   type PostgresCompatClient as SupabaseClient,
 } from "@/lib/data-plane/postgresCompat";
 import type { ApprovalAuthority, GateCheck, TenancyCtx } from "./types.db";
-import { getProgramById } from "./queries";
+import { getModuleState, getProgramById } from "./queries";
+import type { PhasePageReadSet } from "./phase-page-gate-reads";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { P5_TOWER_HANDOFF_FLAG } from "./p5-measurement-plan";
@@ -534,10 +535,20 @@ export async function evaluateGate(
   opts: {
     supabase?: SupabaseClient;
     allowHistoricalPhase?: boolean;
+    readSet?: PhasePageReadSet;
     skipP5Publication?: boolean;
   } = {},
 ): Promise<GateCheck> {
   assertTenancy(ctx);
+  const sharedReads = opts.supabase ? undefined : opts.readSet;
+  const readSource = <T>(source: string, load: () => Promise<T>) =>
+    sharedReads ? sharedReads(ctx, programId, source, load) : load();
+  const readProgram = () =>
+    readSource("program", () =>
+      sharedReads
+        ? getProgramById(ctx, programId, { readSet: sharedReads })
+        : getProgramById(ctx, programId),
+    );
   let rule = findGateRule(fromPhase, toPhase);
   // Classify fast lane: (1, 5) has no GATE_RULES entry, so the plain lookup
   // above always misses it — exactly as before this feature existed. Only
@@ -546,7 +557,7 @@ export async function evaluateGate(
   // other (fromPhase, toPhase) pair never reaches this branch.
   let program: Awaited<ReturnType<typeof getProgramById>> = null;
   if (!rule && fromPhase === 1 && toPhase === 5) {
-    program = await getProgramById(ctx, programId);
+    program = await readProgram();
     if (program) {
       const tier = resolveMoveTier(program.charter);
       const fastLaneEnabled = isFeatureEnabled(
@@ -573,7 +584,7 @@ export async function evaluateGate(
     };
   }
   if (!program) {
-    program = await getProgramById(ctx, programId);
+    program = await readProgram();
   }
   if (!program) {
     return {
@@ -609,6 +620,27 @@ export async function evaluateGate(
   }
 
   const sb = opts.supabase ?? getAzureWriteFluentClient();
+  const loadEvidenceBasis = () =>
+    resolveApprovedEvidenceCurrencyBasis({
+      tenantKey: ctx.clientKey,
+      moveId: programId,
+      load: (args) =>
+        readSource("approvedEvidenceSnapshot", () =>
+          loadApprovedMoveEvidenceSnapshot(args),
+        ),
+    });
+  const loadRouteEvidence = () =>
+    readSource("approvedPhaseEvidence:2", () =>
+      listApprovedPhaseEvidence(ctx, programId, 2),
+    );
+  // The page already validated the Move scope. These independent reads can
+  // start with the state batch while the unflagged path keeps its read order.
+  const evidenceBasisPrefetch = sharedReads ? loadEvidenceBasis() : null;
+  const routeEvidencePrefetch =
+    sharedReads && (fromPhase === 2 || fromPhase === 3)
+      ? loadRouteEvidence()
+      : null;
+  void Promise.allSettled([evidenceBasisPrefetch, routeEvidencePrefetch]);
 
   // Collect state signals
   // `error` is read on every one of these: the compat client never throws, so a
@@ -621,33 +653,52 @@ export async function evaluateGate(
     { data: participants, error: participantsError },
     { data: approvalRequests, error: approvalRequestsError },
     { data: milestones, error: milestonesError },
-  ] = await Promise.all([
-    sb
-      .from("deliverables_v2")
-      .select(
-        "id, deliverable_type_key, status, approved_artifact_id, structured_data",
-      )
-      .eq("engagement_id", programId),
-    sb
-      .from("program_modules")
-      .select("module_key, status, state_jsonb")
-      .eq("engagement_id", programId),
-    sb
-      .from("engagement_participants")
-      .select("user_id, approval_authority, role")
-      .eq("engagement_id", programId),
-    sb
-      .from("program_approval_requests")
-      .select("request_status, brief_snapshot")
-      .eq("program_id", programId)
-      .order("created_at", { ascending: false })
-      .limit(1),
-    sb
-      .from("program_milestones")
-      .select("id, name, status")
-      .eq("engagement_id", programId)
-      .limit(20),
-  ]);
+  ] = await readSource("gateState", () =>
+    Promise.all([
+      sb
+        .from("deliverables_v2")
+        .select(
+          "id, deliverable_type_key, status, approved_artifact_id, structured_data",
+        )
+        .eq("engagement_id", programId),
+      sharedReads
+        ? readSource("moduleState", () =>
+            getModuleState(ctx, programId, { readSet: sharedReads }),
+          ).then(
+            (rows) => ({
+              data: rows.map((row) => ({
+                module_key: row.moduleKey,
+                status: row.status,
+                state_jsonb: row.state,
+              })),
+              error: null,
+            }),
+            () => ({
+              data: null,
+              error: { message: "Move module state unavailable" },
+            }),
+          )
+        : sb
+            .from("program_modules")
+            .select("module_key, status, state_jsonb")
+            .eq("engagement_id", programId),
+      sb
+        .from("engagement_participants")
+        .select("user_id, approval_authority, role")
+        .eq("engagement_id", programId),
+      sb
+        .from("program_approval_requests")
+        .select("request_status, brief_snapshot")
+        .eq("program_id", programId)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      sb
+        .from("program_milestones")
+        .select("id, name, status")
+        .eq("engagement_id", programId)
+        .limit(20),
+    ]),
+  );
 
   const deliverableRows =
     (deliverables as Array<{
@@ -673,14 +724,43 @@ export async function evaluateGate(
     deliverableRows.find((d) => keys.includes(d.deliverable_type_key));
   const findDeliverables = (...keys: string[]) =>
     deliverableRows.filter((d) => keys.includes(d.deliverable_type_key));
+  const originationBriefRow = findDeliverable(
+    "origination_brief",
+    "program_seed_brief",
+    "program_seed",
+  );
+  const discoveryReportRow = findDeliverable(
+    "discovery_report",
+    "discovery_synthesis",
+    "discovery_findings",
+  );
+  const loadVersion = (id: string) =>
+    readSource(
+      `deliverableVersion:${id}`,
+      async () =>
+        await sb
+          .from("deliverable_versions")
+          .select("content, structured_data, generated_at")
+          .eq("deliverable_id", id)
+          .order("generated_at", { ascending: false })
+          .limit(1),
+    );
+  const originationVersionPrefetch =
+    sharedReads && originationBriefRow
+      ? loadVersion(originationBriefRow.id)
+      : null;
+  const discoveryVersionPrefetch =
+    sharedReads && discoveryReportRow
+      ? loadVersion(discoveryReportRow.id)
+      : null;
+  void Promise.allSettled([
+    originationVersionPrefetch,
+    discoveryVersionPrefetch,
+  ]);
   // Not `snapshot | null`: a null conflates "nothing approved" with "I could not
   // read the basis", and only the first of those may veto a recorded human
   // approval. See `approved-evidence-currency-basis.ts`.
-  const evidenceBasis = await resolveApprovedEvidenceCurrencyBasis({
-    tenantKey: ctx.clientKey,
-    moveId: programId,
-    load: loadApprovedMoveEvidenceSnapshot,
-  });
+  const evidenceBasis = await (evidenceBasisPrefetch ?? loadEvidenceBasis());
   const currentEvidenceSnapshot = evidenceBasis.evaluable
     ? evidenceBasis.snapshot
     : null;
@@ -689,14 +769,18 @@ export async function evaluateGate(
     .filter((id): id is string => typeof id === "string" && id.length > 0);
   const linkedArtifactRows =
     ctx.clientKey && linkedArtifactIds.length > 0
-      ? await sb
-          .from("move_artifacts")
-          .select(
-            "artifact_id, tenant_key, move_id, artifact_family, lifecycle_state, created_at, metadata",
-          )
-          .eq("tenant_key", ctx.clientKey)
-          .eq("move_id", programId)
-          .in("artifact_id", linkedArtifactIds)
+      ? await readSource(
+          `linkedArtifacts:${linkedArtifactIds.join(",")}`,
+          async () =>
+            await sb
+              .from("move_artifacts")
+              .select(
+                "artifact_id, tenant_key, move_id, artifact_family, lifecycle_state, created_at, metadata",
+              )
+              .eq("tenant_key", ctx.clientKey)
+              .eq("move_id", programId)
+              .in("artifact_id", linkedArtifactIds),
+        )
       : { data: [], error: null };
   const linkedArtifactById = new Map(
     (
@@ -930,11 +1014,6 @@ export async function evaluateGate(
   const charterRow = deliverableRows.find(
     (d) => d.deliverable_type_key === "charter",
   );
-  const originationBriefRow = findDeliverable(
-    "origination_brief",
-    "program_seed_brief",
-    "program_seed",
-  );
   const hasSignedOriginationBrief = isSignedOff(originationBriefRow);
   const designRows = findDeliverables(
     "design_spec",
@@ -960,11 +1039,6 @@ export async function evaluateGate(
     "business_case",
     "funding_business_case",
     "approval_business_case",
-  );
-  const discoveryReportRow = findDeliverable(
-    "discovery_report",
-    "discovery_synthesis",
-    "discovery_findings",
   );
   const changePlanRow = findDeliverable(
     "change_management_plan",
@@ -1035,7 +1109,7 @@ export async function evaluateGate(
     );
   const routeEvidenceReferences =
     fromPhase === 2 || fromPhase === 3
-      ? await listApprovedPhaseEvidence(ctx, programId, 2)
+      ? await (routeEvidencePrefetch ?? loadRouteEvidence())
       : [];
   const confirmedSolutionRoute =
     fromPhase === 2 || fromPhase === 3
@@ -1055,12 +1129,7 @@ export async function evaluateGate(
   let originationVersionError: { message?: string | null } | null = null;
   if (originationBriefRow) {
     const { data: originationVersions, error: originationVersionsError } =
-      await sb
-        .from("deliverable_versions")
-        .select("content, structured_data, generated_at")
-        .eq("deliverable_id", (originationBriefRow as { id?: string }).id)
-        .order("generated_at", { ascending: false })
-        .limit(1);
+      await (originationVersionPrefetch ?? loadVersion(originationBriefRow.id));
     originationVersionError = originationVersionsError ?? null;
     const latestOriginationVersion = ((originationVersions as Array<{
       content: string | null;
@@ -1144,12 +1213,8 @@ export async function evaluateGate(
   let latestDiscoveryReportText = "";
   let discoveryVersionError: { message?: string | null } | null = null;
   if (discoveryReportRow) {
-    const { data: discoveryVersions, error: discoveryVersionsError } = await sb
-      .from("deliverable_versions")
-      .select("content, structured_data, generated_at")
-      .eq("deliverable_id", (discoveryReportRow as { id?: string }).id)
-      .order("generated_at", { ascending: false })
-      .limit(1);
+    const { data: discoveryVersions, error: discoveryVersionsError } =
+      await (discoveryVersionPrefetch ?? loadVersion(discoveryReportRow.id));
     discoveryVersionError = discoveryVersionsError ?? null;
     const latestDiscoveryVersion = ((discoveryVersions as Array<{
       content: string | null;

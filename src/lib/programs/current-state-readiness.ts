@@ -9,8 +9,8 @@
 //
 // Honest ingestion ladder (AGENTS.md): missing -> staged -> parsing -> committed.
 // v1 reports committed (rows in the backing tower_* table) vs missing.
-// Read-only + defensive: every probe is wrapped; a missing/renamed table reads as
-// "no committed data" rather than throwing.
+// Legacy probes retain their defensive fallback. A flagged page's shared
+// read set rejects unavailable probes so readiness stays explicitly unknown.
 // =============================================================================
 
 import "server-only";
@@ -19,6 +19,7 @@ import type { TenancyCtx } from "@/lib/programs/types.db";
 import { resolveArchetypeRequirements } from "@/lib/programs/archetypes/resolver";
 import {
   resolveDocFamilyReviews,
+  resolveDocFamilyReviewsBatch,
   type DocFamilyReviewState,
 } from "@/lib/programs/current-state-doc-ingest";
 import type {
@@ -26,6 +27,12 @@ import type {
   PhaseKey,
   EvidenceKind,
 } from "@/lib/programs/archetypes/types";
+import type { PhasePageReadSet } from "./phase-page-gate-reads";
+
+interface CurrentStateReadOptions {
+  readSet?: PhasePageReadSet;
+  moveId?: string;
+}
 
 // ── Profile dimensions (the estate axis) ─────────────────────────────────────
 
@@ -114,26 +121,53 @@ export type Severity = "hard" | "soft";
 
 // ── Estate discovery: infer the profile from what the tenant HAS ─────────────
 
-/** Count committed rows for a table, scoped to the tenant. Never throws. */
+/** Count tenant-scoped committed rows; shared page reads reject outages. */
 async function tableCount(
   ctx: TenancyCtx,
   table: string,
   keyColumn: "client_id" | "tenant_key",
+  strict = false,
 ): Promise<number> {
   const keyVal =
     keyColumn === "client_id" ? ctx.clientId : (ctx.clientKey ?? "");
-  if (!keyVal) return 0;
+  if (!keyVal) {
+    if (strict) throw new Error("Current-state count tenant unavailable");
+    return 0;
+  }
   try {
     const sb = getAzureReadFluentClient();
     const { count, error } = await sb
       .from(table)
       .select("*", { count: "exact", head: true })
       .eq(keyColumn, keyVal);
-    if (error) return 0;
+    if (error) {
+      if (strict) throw new Error("Current-state committed count unavailable");
+      return 0;
+    }
+    if (strict && typeof count !== "number") {
+      throw new Error("Current-state committed count unavailable");
+    }
     return typeof count === "number" ? count : 0;
-  } catch {
+  } catch (error) {
+    if (strict) throw error;
     return 0;
   }
+}
+
+function readTableCount(
+  ctx: TenancyCtx,
+  table: string,
+  keyColumn: "client_id" | "tenant_key",
+  options: CurrentStateReadOptions,
+): Promise<number> {
+  return options.readSet && options.moveId
+    ? options.readSet(
+        ctx,
+        options.moveId,
+        `currentStateCount:${table}:${keyColumn}`,
+        () => tableCount(ctx, table, keyColumn, true),
+      )
+    : tableCount(ctx, table, keyColumn);
 }
 
 /**
@@ -145,12 +179,13 @@ async function tableCount(
 export async function inferMoveProfile(
   ctx: TenancyCtx,
   declared: Partial<MoveProfile> = {},
+  options: CurrentStateReadOptions = {},
 ): Promise<MoveProfile> {
   const profile = emptyProfile();
 
   const [doraRows, aiToolRows] = await Promise.all([
-    tableCount(ctx, "tower_dora_metrics", "client_id"),
-    tableCount(ctx, "tower_ai_tool_usage", "client_id"),
+    readTableCount(ctx, "tower_dora_metrics", "client_id", options),
+    readTableCount(ctx, "tower_ai_tool_usage", "client_id", options),
   ]);
 
   // DORA present => the client ships via CI/CD => at least one cloud/full-stack team.
@@ -239,14 +274,29 @@ export async function resolveCurrentStateReadiness(
   profile: MoveProfile,
   phase: number,
   moveId?: string,
+  options: CurrentStateReadOptions = {},
 ): Promise<ReadinessReport> {
   const phaseKey = PHASE_KEY_BY_NUM[phase];
   const required = phaseKey
     ? resolveArchetypeRequirements(archetype, phaseKey, profile)
     : [];
 
-  const instruments: InstrumentReadiness[] = [];
-  for (const { family, severity, rationale } of required) {
+  const documentStates =
+    options.readSet && moveId
+      ? resolveDocFamilyReviewsBatch(
+          ctx,
+          moveId,
+          required
+            .filter(({ family }) => !family.backing)
+            .map(({ family }) => family.key),
+        )
+      : null;
+  void documentStates?.catch(() => undefined);
+  const loadInstrument = async ({
+    family,
+    severity,
+    rationale,
+  }: (typeof required)[number]): Promise<InstrumentReadiness> => {
     let committedRows = 0;
     let status: ReadinessStatus = "missing";
     let pendingReviews: DocFamilyReviewState["pendingItems"] = [];
@@ -255,10 +305,11 @@ export async function resolveCurrentStateReadiness(
 
     if (family.backing) {
       // Structured family — committed when rows exist in the canonical store.
-      committedRows = await tableCount(
+      committedRows = await readTableCount(
         ctx,
         family.backing.table,
         family.backing.keyColumn,
+        { ...options, moveId },
       );
       status = committedRows > 0 ? "committed" : "missing";
       if (status === "committed") {
@@ -274,7 +325,9 @@ export async function resolveCurrentStateReadiness(
     } else if (moveId) {
       // Document family — governed review ladder decides the state. Approved
       // (committed) > pending (review_required) > none (missing). Move-scoped.
-      const reviews = await resolveDocFamilyReviews(ctx, moveId, family.key);
+      const reviews = documentStates
+        ? (await documentStates).get(family.key)!
+        : await resolveDocFamilyReviews(ctx, moveId, family.key);
       pendingReviews = reviews.pendingItems;
       if (reviews.approved > 0) {
         committedRows = reviews.approved;
@@ -292,7 +345,7 @@ export async function resolveCurrentStateReadiness(
     // Without a moveId we cannot resolve document evidence — stays "missing"
     // (honest: tenant-scoped renders can't see move-scoped review state).
 
-    instruments.push({
+    return {
       key: family.key,
       label: family.label,
       kind: family.kind,
@@ -306,7 +359,14 @@ export async function resolveCurrentStateReadiness(
       documentFamily,
       pendingReviews,
       evidenceDigest,
-    });
+    };
+  };
+  const instruments: InstrumentReadiness[] = [];
+  if (options.readSet) {
+    instruments.push(...(await Promise.all(required.map(loadInstrument))));
+  } else {
+    for (const requirement of required)
+      instruments.push(await loadInstrument(requirement));
   }
 
   const hardGaps = instruments

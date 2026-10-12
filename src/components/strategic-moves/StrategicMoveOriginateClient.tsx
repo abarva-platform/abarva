@@ -1982,6 +1982,9 @@ function P0OriginationContractCanvas({
                       ) : null}
                       <textarea
                         id="orig-canvas-brief-section-10-input"
+                        aria-label={extendedIntakeFieldsEnabled
+                          ? scaffoldDefs.find((def) => def.id === "foundation-readiness")?.label
+                          : undefined}
                         className={styles.p0AnswerInput}
                         value={draftFields["foundation-readiness"]}
                         placeholder={

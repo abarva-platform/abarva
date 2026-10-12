@@ -1,4 +1,7 @@
-import { createPhasePageGateReads } from "@/lib/programs/phase-page-gate-reads";
+import {
+  createPhasePageGateReads,
+  createPhasePageReadSet,
+} from "@/lib/programs/phase-page-gate-reads";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import type { evaluateGate } from "@/lib/programs/governance";
 
@@ -58,6 +61,37 @@ describe("phase page gate reads", () => {
     expect(read).toHaveBeenCalledTimes(3);
   });
 
+  it.each([true, false])(
+    "keeps P5 publication preflight separate from the full gate, preflight first: %s",
+    async (preflightFirst) => {
+      const publicationMissing = {
+        ...result,
+        failedChecks: [
+          {
+            check: "p5_tower_publication_current",
+            severity: "hard" as const,
+            reason: "Current publication is required",
+          },
+        ],
+      };
+      const preflight = { ...result, pass: true, failedChecks: [] };
+      const read = jest.fn<
+        ReturnType<typeof evaluateGate>,
+        Parameters<typeof evaluateGate>
+      >(async (_ctx, _id, _from, _to, opts) =>
+        opts?.skipP5Publication ? preflight : publicationMissing,
+      );
+      const gate = createPhasePageGateReads(ctx, "move-a", read);
+      for (const skipP5Publication of [preflightFirst, !preflightFirst]) {
+        expect(
+          await gate(ctx, "move-a", 5, 6, { skipP5Publication }),
+        ).toBe(skipP5Publication ? preflight : publicationMissing);
+      }
+      expect(await gate(ctx, "move-a", 5, 6)).toBe(publicationMissing);
+      expect(read).toHaveBeenCalledTimes(2);
+    },
+  );
+
   it("refuses a different tenancy context or Move before reading", async () => {
     const read = jest.fn(async () => result);
     const gate = createPhasePageGateReads(ctx, "move-a", read);
@@ -73,5 +107,81 @@ describe("phase page gate reads", () => {
     await createPhasePageGateReads(ctx, "move-a", read)(ctx, "move-a", 2, 3);
     await createPhasePageGateReads(ctx, "move-a", read)(ctx, "move-a", 2, 3);
     expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares pending source reads across different gate transitions", async () => {
+    const readSet = createPhasePageReadSet(ctx, "move-a");
+    let finish!: (value: string[]) => void;
+    const source = jest.fn(
+      () =>
+        new Promise<string[]>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const reader = jest.fn(async (_ctx, _id, _from, _to, options) => {
+      await options.readSet(ctx, "move-a", "modules", source);
+      return result;
+    });
+    const gate = createPhasePageGateReads(ctx, "move-a", reader, readSet);
+    const gates = [gate(ctx, "move-a", 1, 2), gate(ctx, "move-a", 2, 3)];
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(source).toHaveBeenCalledTimes(1);
+    finish(["same canonical state"]);
+    expect(await Promise.all(gates)).toEqual([result, result]);
+    expect(reader).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares the same source rejection and keeps a new request independent", async () => {
+    const error = new Error("source unavailable");
+    const source = jest.fn(async () => {
+      throw error;
+    });
+    const readSet = createPhasePageReadSet(ctx, "move-a");
+    const reads = await Promise.allSettled([
+      readSet(ctx, "move-a", "modules", source),
+      readSet(ctx, "move-a", "modules", source),
+    ]);
+    expect(reads).toEqual([
+      { status: "rejected", reason: error },
+      { status: "rejected", reason: error },
+    ]);
+    expect(source).toHaveBeenCalledTimes(1);
+    await expect(
+      createPhasePageReadSet(ctx, "move-a")(ctx, "move-a", "modules", source),
+    ).rejects.toBe(error);
+    expect(source).toHaveBeenCalledTimes(2);
+  });
+
+  it("refuses source scope drift before consulting a cached result", async () => {
+    const source = jest.fn(async () => []);
+    const readSet = createPhasePageReadSet(ctx, "move-a");
+    await readSet(ctx, "move-a", "modules", source);
+    await expect(
+      readSet({ ...ctx }, "move-a", "modules", source),
+    ).rejects.toThrow("scope mismatch");
+    await expect(readSet(ctx, "move-b", "modules", source)).rejects.toThrow(
+      "scope mismatch",
+    );
+    expect(source).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps distinct sources separate and bypasses sharing for an explicit client", async () => {
+    const source = jest.fn(async () => []);
+    const readSet = createPhasePageReadSet(ctx, "move-a");
+    await readSet(ctx, "move-a", "modules", source);
+    await readSet(ctx, "move-a", "snapshots", source);
+    expect(source).toHaveBeenCalledTimes(2);
+    const reader = jest.fn<
+      ReturnType<typeof evaluateGate>,
+      Parameters<typeof evaluateGate>
+    >(async () => result);
+    const gate = createPhasePageGateReads(ctx, "move-a", reader, readSet);
+    const client = {} as NonNullable<
+      Parameters<typeof evaluateGate>[4]
+    >["supabase"];
+    await gate(ctx, "move-a", 2, 3, { supabase: client });
+    await gate(ctx, "move-a", 2, 3, { supabase: client });
+    expect(reader).toHaveBeenCalledTimes(2);
+    expect(reader.mock.calls[0]?.[4]).toEqual({ supabase: client });
   });
 });

@@ -1,4 +1,5 @@
 const getProgramByIdMock = jest.fn();
+const getModuleStateMock = jest.fn();
 const fromMock = jest.fn();
 const listApprovedPhaseEvidenceMock = jest.fn();
 const loadApprovedMoveEvidenceSnapshotMock = jest.fn();
@@ -54,6 +55,7 @@ let roleApprovalsFixture: Array<{
 jest.mock("@/lib/programs/queries", () => ({
   __esModule: true,
   getProgramById: (...args: unknown[]) => getProgramByIdMock(...args),
+  getModuleState: (...args: unknown[]) => getModuleStateMock(...args),
 }));
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -75,6 +77,7 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 }));
 
 import { evaluateGate, findGateRule } from "@/lib/programs/governance";
+import { createPhasePageReadSet } from "@/lib/programs/phase-page-gate-reads";
 import { __resetUnevaluableApprovalCurrencyReports } from "@/lib/programs/deliverable-approval-currency";
 
 function tableResult(table: string) {
@@ -331,6 +334,99 @@ describe("evaluateGate", () => {
       },
     });
     fromMock.mockImplementation(tableResult);
+    getModuleStateMock.mockImplementation(async () =>
+      modulesFixture.map((row) => ({
+        moduleKey: row.module_key,
+        status: row.status,
+        state: row.state_jsonb ?? {},
+      })),
+    );
+  });
+
+  it("keeps canonical gate verdicts while sharing source reads across prior and displayed phases", async () => {
+    const ctx = {
+      clientId: "client-1",
+      clientKey: "tenant-1",
+      userId: "person-1",
+    };
+    deliverablesFixture.push(
+      {
+        id: "origination",
+        deliverable_type_key: "origination_brief",
+        status: "draft",
+      },
+      {
+        id: "discovery",
+        deliverable_type_key: "discovery_report",
+        status: "draft",
+      },
+    );
+    const transitions = [1, 2, 3];
+    const baseline = await Promise.all(
+      transitions.map((from) =>
+        evaluateGate(ctx, "program-1", from, from + 1, {
+          allowHistoricalPhase: true,
+        }),
+      ),
+    );
+    jest.clearAllMocks();
+    const readSet = createPhasePageReadSet(ctx, "program-1");
+    const gates = await Promise.all(
+      transitions.map((from) =>
+        evaluateGate(ctx, "program-1", from, from + 1, {
+          allowHistoricalPhase: true,
+          readSet,
+        }),
+      ),
+    );
+    expect(gates).toEqual(baseline);
+    expect(getProgramByIdMock).toHaveBeenCalledTimes(1);
+    expect(getModuleStateMock).toHaveBeenCalledTimes(1);
+    expect(loadApprovedMoveEvidenceSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(listApprovedPhaseEvidenceMock).toHaveBeenCalledTimes(1);
+    for (const table of [
+      "deliverables_v2",
+      "engagement_participants",
+      "program_approval_requests",
+      "program_milestones",
+    ]) {
+      expect(
+        fromMock.mock.calls.filter(([name]) => name === table),
+      ).toHaveLength(1);
+    }
+    expect(
+      fromMock.mock.calls.filter(([name]) => name === "program_modules"),
+    ).toHaveLength(0);
+    expect(
+      fromMock.mock.calls.filter(([name]) => name === "deliverable_versions"),
+    ).toHaveLength(2);
+  });
+
+  it("reports a shared module read failure as unavailable for every gate", async () => {
+    const ctx = {
+      clientId: "client-1",
+      clientKey: "tenant-1",
+      userId: "person-1",
+    };
+    getModuleStateMock.mockRejectedValue(new Error("read unavailable"));
+    const readSet = createPhasePageReadSet(ctx, "program-1");
+    const gates = await Promise.all(
+      [1, 2].map((from) =>
+        evaluateGate(ctx, "program-1", from, from + 1, {
+          allowHistoricalPhase: true,
+          readSet,
+        }),
+      ),
+    );
+    for (const gate of gates) {
+      expect(gate.pass).toBe(false);
+      expect(gate.failedChecks).toHaveLength(1);
+      expect(gate.failedChecks[0]?.check).toBe("gate_state_unreadable");
+      expect(gate.failedChecks[0]?.reason).toContain(
+        "the phase capture modules",
+      );
+    }
+    expect(getModuleStateMock).toHaveBeenCalledTimes(1);
   });
 
   function addApprovedTechnicalRouteCapture() {

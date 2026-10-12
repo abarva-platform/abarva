@@ -63,6 +63,20 @@ beforeEach(() => {
 });
 
 describe("resolveMoveArchetypeForProgram — a declaration reaches the registry", () => {
+  it("uses the page's authorized program and module read without repeating either source", async () => {
+    const loaded = program({ functionPackKey: "governed_data_foundation" });
+    const loadModules = jest.fn(async () => []);
+    const resolved = await resolveMoveArchetypeForProgram(
+      CTX,
+      "move-1",
+      loaded as never,
+      loadModules,
+    );
+    expect(resolved.id).toBe("GOVERNED_DATA_FOUNDATION");
+    expect(mockGetProgramById).not.toHaveBeenCalled();
+    expect(mockGetModuleState).not.toHaveBeenCalled();
+    expect(loadModules).toHaveBeenCalledWith(CTX, "move-1");
+  });
   it("honors charter.classification.archetype (where the job writes it)", async () => {
     mockGetProgramById.mockResolvedValue(
       program({
@@ -102,7 +116,9 @@ describe("resolveMoveArchetypeForProgram — a declaration reaches the registry"
       program({
         functionPackKey: "governed_data_foundation",
         charter: {
-          classification: { archetype: "healthcare_contact_center_agent_assist" },
+          classification: {
+            archetype: "healthcare_contact_center_agent_assist",
+          },
         },
       }),
     );
