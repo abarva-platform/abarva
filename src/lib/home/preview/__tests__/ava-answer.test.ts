@@ -276,6 +276,204 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.prose?.match(/^-/gm)).toHaveLength(2);
   });
 
+  it("repairs overlong points once using the same admitted context", async () => {
+    const longPoint = `${"Supporting evidence remains incomplete. ".repeat(9)}Finance has not attested the value.`;
+    const initial = {
+      status: "partial",
+      direct_answer: "Check the value proof.",
+      key_points: [longPoint],
+      cited_claim_tags: ["PV-K1"],
+      caveats: ["Finance attestation remains incomplete."],
+    };
+    const repaired = {
+      ...initial,
+      status: "answered",
+      caveats: [],
+      key_points: [
+        "Only 23 of 50 tracked metrics are claimable or ready (PV-K1).",
+        "Finance attestation does not cover every value claim.",
+        "Review integration dependence alongside value proof (TD-K1).",
+      ],
+      cited_claim_tags: ["PV-K1", "TD-K1"],
+    };
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({
+        content: [{ type: "text", text: JSON.stringify(initial) }],
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: "text", text: JSON.stringify(repaired) }],
+      });
+    mockGetAuditedAnthropicClient.mockResolvedValue({
+      client: { messages: { create } },
+    } as never);
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "test-tenant",
+      question: "Give me three concise bullets about technology and value.",
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    expect(mockGetAuditedAnthropicClient.mock.calls[1][0]).toMatchObject({
+      tenantId: "test-tenant",
+      metadata: { presentationRepair: true },
+    });
+    const firstMessage = create.mock.calls[0][0].messages[0].content;
+    expect(create.mock.calls[1][0].messages[0].content).toContain(firstMessage);
+    expect(answer.prose?.match(/^-/gm)).toHaveLength(3);
+    expect(maxParagraphWords(answer.prose)).toBeLessThanOrEqual(31);
+    expect(answer.prose).not.toMatch(/PV-K1|TD-K1/);
+    expect(answer.citations.map((citation) => citation.id)).toEqual([
+      "PV-K1",
+      "TD-K1",
+    ]);
+    expect(answer.caveats[0].detail).toContain("incomplete");
+    expect(answer.status).toBe("partial");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("checks point length after stale-count sanitization expands the visible wording", async () => {
+    mockClaudeJson({
+      status: "partial",
+      direct_answer: "Check the data evidence.",
+      key_points: [
+        `395 of 540 data assets ${"require review ".repeat(12)}`.trim(),
+        "Integration dependence needs review.",
+        "Finance attestation is incomplete.",
+      ],
+      cited_claim_tags: ["PV-K1"],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "test-tenant",
+      question: "Give me three concise bullets about data.",
+    });
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    expect(answer.prose).toBeUndefined();
+    expect(answer.directAnswer).toContain("concise summary");
+  });
+
+  it("reports a presentation gap without truncating qualifiers after a failed repair", async () => {
+    mockClaudeJson({
+      status: "partial",
+      direct_answer: "Review value proof.",
+      key_points: [
+        `${"Recorded measures require careful review. ".repeat(8)}This is not Finance-attested value.`,
+      ],
+      cited_claim_tags: ["PV-K1"],
+      caveats: ["Finance attestation does not cover every value claim."],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS },
+      tenantKey: "test-tenant",
+      question: "Give me three concise bullets about value.",
+    });
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    expect(answer.status).toBe("partial");
+    expect(answer.directAnswer).toContain(
+      "couldn't safely produce a concise summary",
+    );
+    expect(answer.prose).toBeUndefined();
+    expect(answer.citations[0].excerpt).toBe(
+      CHAPTERS[1].key_insights[0].statement,
+    );
+    expect(answer.caveats[0].detail).toContain("attestation");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("does not adopt a concise repair that has no valid citations", async () => {
+    const initial = {
+      status: "partial",
+      key_points: ["A detailed answer remains necessary."],
+      cited_claim_tags: ["PV-K1"],
+    };
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({
+        content: [{ type: "text", text: JSON.stringify(initial) }],
+      })
+      .mockResolvedValueOnce({
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              status: "answered",
+              key_points: [
+                "Unsupported first claim.",
+                "Unsupported second claim.",
+                "Unsupported third claim.",
+              ],
+              cited_claim_tags: ["PV-K999"],
+            }),
+          },
+        ],
+      });
+    mockGetAuditedAnthropicClient.mockResolvedValue({
+      client: { messages: { create } },
+    } as never);
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS },
+      tenantKey: "test-tenant",
+      question: "Give me three concise bullets about value.",
+    });
+    expect(answer.directAnswer).not.toContain("Unsupported");
+    expect(answer.prose).toBeUndefined();
+    expect(answer.citations.map((citation) => citation.id)).toEqual(["PV-K1"]);
+  });
+
+  it("does not reset the request deadline for a presentation repair", async () => {
+    mockClaudeJson({
+      status: "partial",
+      key_points: ["Value proof is incomplete."],
+      cited_claim_tags: ["PV-K1"],
+    });
+    const now = jest
+      .spyOn(Date, "now")
+      .mockReturnValueOnce(0)
+      .mockReturnValue(44_000);
+    try {
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS },
+        tenantKey: "test-tenant",
+        question: "Give me three concise bullets about value.",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+      expect(answer.directAnswer).toContain(
+        "couldn't safely produce a concise summary",
+      );
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  it("suppresses inline claim codes without removing source citations or business names", async () => {
+    mockClaudeJson({
+      status: "partial",
+      direct_answer: "Check value proof (PV-K1).",
+      key_points: [
+        "Review Epic Hyperspace integration dependence [TD-K1].",
+        "Only 23 of 50 metrics are claimable or ready (PV-K1, TD-K1).",
+        "Finance attestation is incomplete (PV-K1).",
+      ],
+      cited_claim_tags: ["PV-K1", "TD-K1"],
+      caveats: ["Do not treat this as approval (PV-K1)."],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS },
+      tenantKey: "test-tenant",
+      question: "Give me three concise bullets.",
+    });
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+    expect(
+      [answer.directAnswer, answer.prose, answer.caveats[0].detail].join(" "),
+    ).not.toMatch(/PV-K1|TD-K1|\(\)|\[\]/);
+    expect(answer.prose).toContain("Epic Hyperspace");
+    expect(answer.citations.map((citation) => citation.id)).toEqual([
+      "PV-K1",
+      "TD-K1",
+    ]);
+  });
+
   it("packages a grounded answer, resolving a cited tag to its real claim text", async () => {
     mockClaudeJson({
       status: "answered",
