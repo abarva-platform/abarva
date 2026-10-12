@@ -60,6 +60,12 @@ import {
 } from "@/lib/deliverables/public-research/research-runner";
 import { resolveTenantAlias } from "@/lib/tenant/aliases";
 import type { ValueGenerationSnapshot } from "@/lib/programs/value-model-capture-evidence";
+import {
+  captureP5MeasurementContractPlan,
+  loadCurrentP5MeasurementPlan,
+  type P5MeasurementContractPlan,
+} from "@/lib/programs/p5-measurement-contract";
+import { P5_TOWER_HANDOFF_FLAG } from "@/lib/programs/p5-measurement-plan";
 
 const STRUCTURED_ARCHITECTURE_KEYS = new Set<DeliverableKey>([
   "target_state_architecture",
@@ -139,6 +145,7 @@ export interface GenerateServiceDeps {
   loadPolicy?: typeof defaultLoadPolicy;
   generate?: typeof defaultGenerate;
   persist?: typeof defaultPersist;
+  loadP5MeasurementPlan?: typeof loadCurrentP5MeasurementPlan;
   /** Reason-first deliverable plan generation. Injectable for tests. */
   generatePlan?: (
     req: DeliverablePlanGenRequest,
@@ -328,7 +335,11 @@ export function buildSectionDrivenEvidenceQueries(
   });
   return queries.length > 0
     ? queries
-    : [spellIdentifiersAsWords(normalizeQuery(`${prefix} current state baseline`))];
+    : [
+        spellIdentifiersAsWords(
+          normalizeQuery(`${prefix} current state baseline`),
+        ),
+      ];
 }
 
 function defaultLoadAssumptionRegister(scope: {
@@ -384,6 +395,43 @@ export async function runDeliverableForTenant(
   const loadPolicy = deps.loadPolicy ?? defaultLoadPolicy;
   const generate = deps.generate ?? defaultGenerate;
   const persist = deps.persist ?? defaultPersist;
+  let p5MeasurementContractPlan: P5MeasurementContractPlan | undefined;
+  if (
+    input.module === "moves" &&
+    (input.deliverableTypeKey ?? input.deliverableType) ===
+      "value_measurement_contract" &&
+    isFeatureEnabled(
+      { clientKey: input.tenantClientKey },
+      P5_TOWER_HANDOFF_FLAG,
+    ) === true
+  ) {
+    try {
+      const ctx = {
+        clientId: input.clientId,
+        clientKey: input.tenantClientKey,
+        userId: input.userId,
+      };
+      const plan = await (
+        deps.loadP5MeasurementPlan ?? loadCurrentP5MeasurementPlan
+      )(ctx, input.sourceArtifactRef);
+      p5MeasurementContractPlan = captureP5MeasurementContractPlan(
+        ctx,
+        input.sourceArtifactRef,
+        plan,
+      );
+    } catch (error) {
+      return {
+        ok: false,
+        qualityPass: false,
+        blockers: [
+          error instanceof Error
+            ? error.message
+            : "Measurement plan unavailable.",
+        ],
+        blockedReason: "measurement_contract_plan_unavailable",
+      };
+    }
+  }
 
   const audienceIsVendorFacing =
     input.audience?.includes("vendor_facing") ?? false;
@@ -399,7 +447,9 @@ export async function runDeliverableForTenant(
       initiativeDisplayName: input.initiativeDisplayName,
       outputFormats: input.outputFormats,
       adaptiveDepth: input.adaptiveDepth,
-      ...(input.valueGeneration ? { valueGeneration: input.valueGeneration } : {}),
+      ...(input.valueGeneration
+        ? { valueGeneration: input.valueGeneration }
+        : {}),
     },
     [],
     [],
@@ -429,16 +479,22 @@ export async function runDeliverableForTenant(
     isFeatureEnabled({ clientKey: input.tenantClientKey }, PUBLIC_RESEARCH_FLAG)
   ) {
     try {
-      const approved = await (deps.loadPublicSources ?? defaultLoadPublicSources)({
+      const approved = await (
+        deps.loadPublicSources ?? defaultLoadPublicSources
+      )({
         tenantClientKey: input.tenantClientKey,
         clientId: input.clientId,
         userId: input.userId,
         programId: input.sourceArtifactRef,
       });
-      if (approved === null) throw new Error("approved-source read returned no result");
+      if (approved === null)
+        throw new Error("approved-source read returned no result");
       publicSources = publicCitationSourcesFromApproved(approved);
     } catch (err) {
-      console.error("[generate-service] approved public source read failed; generation blocked", err);
+      console.error(
+        "[generate-service] approved public source read failed; generation blocked",
+        err,
+      );
       return {
         ok: false,
         qualityPass: false,
@@ -519,7 +575,9 @@ export async function runDeliverableForTenant(
         ? { approvedAssumptions: registerAssumptions }
         : {}),
       ...(publicSources ? { publicSources } : {}),
-      ...(input.valueGeneration ? { valueGeneration: input.valueGeneration } : {}),
+      ...(input.valueGeneration
+        ? { valueGeneration: input.valueGeneration }
+        : {}),
     },
     evidence,
     sourceRegister,
@@ -788,6 +846,7 @@ export async function runDeliverableForTenant(
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
+    ...(p5MeasurementContractPlan ? { p5MeasurementContractPlan } : {}),
     ...(input.phaseEvidenceSnapshotHash
       ? { phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash }
       : {}),
@@ -805,8 +864,7 @@ export async function runDeliverableForTenant(
               : {}),
             ...(input.phaseEvidenceSnapshotHash
               ? {
-                  phaseEvidenceSnapshotHash:
-                    input.phaseEvidenceSnapshotHash,
+                  phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash,
                   evidenceSnapshotScope: "phase",
                 }
               : {}),
@@ -818,8 +876,7 @@ export async function runDeliverableForTenant(
               evidenceSnapshotHash: input.evidenceSnapshotHash,
               ...(input.phaseEvidenceSnapshotHash
                 ? {
-                    phaseEvidenceSnapshotHash:
-                      input.phaseEvidenceSnapshotHash,
+                    phaseEvidenceSnapshotHash: input.phaseEvidenceSnapshotHash,
                     evidenceSnapshotScope: "phase",
                   }
                 : {}),

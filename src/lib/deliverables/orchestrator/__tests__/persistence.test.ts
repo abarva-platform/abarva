@@ -12,6 +12,11 @@ import { getArtifactBrief } from "../artifact-brief-registry";
 import { amsRfpRequest, goodDocument } from "../__fixtures__/ams-rfp";
 import type { GeneratedArtifactRecord } from "@/lib/artifacts/repository";
 import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
+import {
+  captureP5MeasurementContractPlan,
+  assertP5MeasurementContractPlanCurrent,
+} from "@/lib/programs/p5-measurement-contract";
+import { p5Hash } from "@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter";
 
 const tenantPolicy = {} as TenantAiPolicy;
 
@@ -47,6 +52,131 @@ function okResult(): OrchestrationResult {
 }
 
 describe("persistDeliverable", () => {
+  it("carries one captured P5 plan into the rendered contract, immutable version and Office companion", async () => {
+    const moveId = "11111111-1111-4111-a111-111111111111";
+    const ctx = {
+      clientId: "22222222-2222-4222-a222-222222222222",
+      clientKey: "meridian",
+      userId: "synthetic-operator",
+    };
+    const plan = {
+      kind: "p5_measurement_handoff" as const,
+      version: 1 as const,
+      measures: [
+        {
+          leverId: "L1",
+          ownerUserId: "receiving-participant",
+          ownerRole: "Measurement owner",
+          sourceReference: "Source A",
+          comparator: "Comparator A",
+          method: "Method A",
+          cadence: "monthly" as const,
+          firstReviewTrigger: "First mature cohort",
+          exclusionRules: "No duplicate attribution",
+          openConditions: "Source access review",
+        },
+      ],
+    };
+    const snapshot = captureP5MeasurementContractPlan(ctx, moveId, plan);
+    const result = okResult();
+    result.brief = getArtifactBrief({
+      ...amsRfpRequest(),
+      module: "moves",
+      deliverableType: "value_measurement_contract",
+    });
+    result.document = {
+      ...goodDocument(),
+      title: "Measurement contract",
+      clientDisplayName: "Synthetic organization",
+      initiativeDisplayName: "Synthetic Move",
+    };
+    const originalSections = result.document.generatedSections.length;
+    const save = jest
+      .fn()
+      .mockResolvedValue({ id: "generated-artifact-1", metadata: {} });
+    const materialize = jest
+      .fn()
+      .mockResolvedValue({
+        deliverableId: "contract-1",
+        versionId: "version-1",
+      });
+    const companion = jest
+      .fn()
+      .mockResolvedValue({
+        fileFormat: "docx",
+        fileName: "measurement.docx",
+        body: Buffer.from("local companion fixture"),
+      });
+    const saveCompanion = jest.fn();
+    await persistDeliverable(
+      result,
+      {
+        clientId: ctx.clientId,
+        renderedBy: ctx.userId,
+        userId: ctx.userId,
+        tenantKey: ctx.clientKey,
+        sourceArtifactRef: moveId,
+        phase: 5,
+        tenantPolicy,
+        deliverableTypeKey: "value_measurement_contract",
+        p5MeasurementContractPlan: snapshot,
+      },
+      {
+        save: save as never,
+        materializeDeliverableDraft: materialize as never,
+        renderOfficeCompanion: companion as never,
+        saveGeneratedOfficeCompanion: saveCompanion as never,
+      },
+    );
+    const rendered = save.mock.calls[0][1];
+    const stored = materialize.mock.calls[0][2];
+    const proof = stored.structuredData.p5MeasurementContractPlan;
+    expect(proof.plan).toEqual(plan);
+    expect(proof.planHash).toBe(p5Hash(plan));
+    expect(proof.contentHash).toBe(p5Hash(stored.content));
+    expect(rendered.html).toBe(stored.content);
+    for (const words of [
+      "Source A",
+      "Comparator A",
+      "Method A",
+      "Measurement owner",
+      "monthly",
+      "First mature cohort",
+      "No duplicate attribution",
+      "Source access review",
+      snapshot.planHash,
+    ])
+      expect(stored.content).toContain(words);
+    expect(stored.content).not.toContain("receiving-participant");
+    expect(save.mock.calls[0][2].p5MeasurementContractPlan).toEqual(proof);
+    expect(
+      saveCompanion.mock.calls[0][1].metadata.p5MeasurementContractPlan,
+    ).toEqual(proof);
+    expect(
+      companion.mock.calls[0][0].generatedSections.at(-1).bodyMarkdown,
+    ).toContain("Comparator A");
+    expect(() =>
+      assertP5MeasurementContractPlanCurrent({
+        ctx,
+        moveId,
+        plan,
+        content: stored.content,
+        structuredData: stored.structuredData,
+      }),
+    ).not.toThrow();
+    expect(result.document.generatedSections).toHaveLength(originalSections);
+    plan.measures[0].comparator = "Comparator B";
+    expect(() =>
+      assertP5MeasurementContractPlanCurrent({
+        ctx,
+        moveId,
+        plan,
+        content: stored.content,
+        structuredData: stored.structuredData,
+      }),
+    ).toThrow("different saved definitions");
+    expect(snapshot.plan.measures[0].comparator).toBe("Comparator A");
+  });
   it("maps the document into the generated_artifacts contract and saves it", async () => {
     let savedInput: unknown;
     let savedRendered: unknown;

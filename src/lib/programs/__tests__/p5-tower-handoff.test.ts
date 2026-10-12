@@ -175,6 +175,10 @@ const moveId = "11111111-1111-4111-a111-111111111111";
 const clientId = "22222222-2222-4222-a222-222222222222";
 const contractId = "33333333-3333-4333-a333-333333333333";
 const ctx = { clientId, clientKey: "meridian", userId: "delegated-operator" };
+import {
+  captureP5MeasurementContractPlan,
+  renderP5MeasurementContractPlanHtml,
+} from "../p5-measurement-contract";
 const lit = (value: number) => ({
   kind: "literal" as const,
   value,
@@ -351,12 +355,20 @@ beforeEach(() => {
       structured_data: { phaseEvidenceSnapshotHash: "p5-current" },
     },
   ];
+  const contractPlan = captureP5MeasurementContractPlan(ctx, moveId, plan);
+  const signedContent = `Synthetic signed measurement contract${renderP5MeasurementContractPlanHtml(contractPlan)}`;
   mockTables.deliverable_versions = [
     {
       deliverable_id: contractId,
       version: 2,
-      content: "Synthetic signed measurement contract",
-      structured_data: { source: "generated_by_orchestrator" },
+      content: signedContent,
+      structured_data: {
+        source: "generated_by_orchestrator",
+        p5MeasurementContractPlan: {
+          ...contractPlan,
+          contentHash: p5Hash(signedContent),
+        },
+      },
     },
   ];
   mockTables.outcome_ledger = [];
@@ -387,7 +399,7 @@ test("previews the current signed version, current P4 basis and explicit unknown
     moveId,
     contractId,
     contractVersion: 2,
-    contractHash: p5Hash("Synthetic signed measurement contract"),
+    contractHash: p5Hash(mockTables.deliverable_versions[0].content),
   });
   expect(body.levers).toEqual([
     { leverId: "L1", name: cost.name, inCash: true, projectedUsd: 4000 },
@@ -396,6 +408,34 @@ test("previews the current signed version, current P4 basis and explicit unknown
   expect(body.publication).toEqual({ state: "not_yet_linked", rowIds: [] });
   expect(mockTables.outcome_ledger).toHaveLength(0);
 });
+
+test.each(["sourceReference", "comparator", "ownerUserId", "cadence"] as const)(
+  "refuses signed plan A after %s changes to B without changing signed bytes",
+  async (field) => {
+    const signedVersion = structuredClone(mockTables.deliverable_versions[0]);
+    const reviewedA = await binding();
+    if (field === "ownerUserId") {
+      mockTables.engagement_participants.push({
+        ...mockTables.engagement_participants[0],
+        user_id: "second-receiving-participant",
+      });
+      plan.measures[0].ownerUserId = "second-receiving-participant";
+    } else if (field === "cadence") {
+      plan.measures[0].cadence = "weekly";
+    } else {
+      plan.measures[0][field] = "Changed plan B definition";
+    }
+    modules[1].state.value = JSON.stringify(plan);
+    const review = await get();
+    expect(review.status).toBe(409);
+    expect((await review.json()).error).toBe("contract_plan_stale");
+    const accept = await post(reviewedA);
+    expect(accept.status).toBe(409);
+    expect((await accept.json()).error).toBe("contract_plan_stale");
+    expect(mockTables.deliverable_versions[0]).toEqual(signedVersion);
+    expect(mockTables.outcome_ledger).toHaveLength(0);
+  },
+);
 
 test("the scoped browser handoff reads one assigned Move with existing Programs access", async () => {
   const element = await MoveTowerHandoffPage({
@@ -452,13 +492,17 @@ test("the scoped browser handoff redirects a signed-out session", async () => {
 
 test("the scoped browser handoff refuses module denial before tenant or Move reads", async () => {
   mockRequireModule.mockRejectedValue(new Error("PROGRAMS_REQUIRED"));
-  await expect(MoveTowerHandoffPage({ params: Promise.resolve({ moveId }) })).rejects.toThrow("PROGRAMS_REQUIRED");
+  await expect(
+    MoveTowerHandoffPage({ params: Promise.resolve({ moveId }) }),
+  ).rejects.toThrow("PROGRAMS_REQUIRED");
   expect(mockAuth).not.toHaveBeenCalled();
   expect(mockProgram).not.toHaveBeenCalled();
 });
 
 test("the scoped browser handoff rejects malformed Move identity before the data-plane read", async () => {
-  await expect(MoveTowerHandoffPage({ params: Promise.resolve({ moveId: "wrong/id" }) })).rejects.toThrow("NEXT_NOT_FOUND");
+  await expect(
+    MoveTowerHandoffPage({ params: Promise.resolve({ moveId: "wrong/id" }) }),
+  ).rejects.toThrow("NEXT_NOT_FOUND");
   expect(mockProgram).not.toHaveBeenCalled();
 });
 
@@ -665,10 +709,78 @@ test("refuses a changed signed contract after publication and withholds stale re
   const response = await get();
   expect(response.status).toBe(409);
   expect(await response.json()).toMatchObject({
-    error: "publication_basis_changed",
+    error: "contract_plan_stale",
   });
   expect(mockTables.outcome_ledger).toHaveLength(2);
 });
+
+test("refuses a signed version without an immutable plan binding", async () => {
+  const reviewed = await binding();
+  const metadata = mockTables.deliverable_versions[0].structured_data as Record<
+    string,
+    unknown
+  >;
+  delete metadata.p5MeasurementContractPlan;
+  const response = await get();
+  expect(response.status).toBe(409);
+  expect((await response.json()).error).toBe("contract_plan_binding_absent");
+  expect((await post(reviewed)).status).toBe(409);
+  expect(mockTables.outcome_ledger).toHaveLength(0);
+});
+
+test("refuses changed signed text even when its saved-plan definition block is still present", async () => {
+  mockTables.deliverable_versions[0].content +=
+    "<p>Changed signed narrative.</p>";
+  const response = await get();
+  expect(response.status).toBe(409);
+  expect((await response.json()).error).toBe("contract_plan_stale");
+  expect(mockTables.outcome_ledger).toHaveLength(0);
+});
+
+test("refuses a contract whose hash receipt exists but whose text omits the saved definitions", async () => {
+  const version = mockTables.deliverable_versions[0];
+  version.content = "Contract without saved definitions";
+  const metadata = version.structured_data as Record<string, unknown>;
+  const proof = metadata.p5MeasurementContractPlan as Record<string, unknown>;
+  proof.contentHash = p5Hash(version.content);
+  const response = await get();
+  expect(response.status).toBe(409);
+  expect((await response.json()).error).toBe("contract_plan_stale");
+  expect(mockTables.outcome_ledger).toHaveLength(0);
+});
+
+test("refuses altered operational receiver provenance inside the immutable plan snapshot", async () => {
+  const metadata = mockTables.deliverable_versions[0].structured_data as Record<
+    string,
+    unknown
+  >;
+  const proof = metadata.p5MeasurementContractPlan as {
+    plan: P5MeasurementPlan;
+  };
+  proof.plan.measures[0].ownerUserId = "different-bound-participant";
+  const response = await get();
+  expect(response.status).toBe(409);
+  expect((await response.json()).error).toBe("contract_plan_stale");
+  expect(mockTables.outcome_ledger).toHaveLength(0);
+});
+
+test.each(["tenantKey", "clientId", "moveId", "planHash", "contentHash"])(
+  "refuses a tampered immutable contract %s binding",
+  async (field) => {
+    const metadata = mockTables.deliverable_versions[0]
+      .structured_data as Record<string, unknown>;
+    const proof = metadata.p5MeasurementContractPlan as Record<string, unknown>;
+    proof[field] = field.endsWith("Hash")
+      ? "a".repeat(64)
+      : field === "tenantKey"
+        ? "other-tenant"
+        : "44444444-4444-4444-a444-444444444444";
+    const response = await get();
+    expect(response.status).toBe(409);
+    expect((await response.json()).error).toBe("contract_plan_stale");
+    expect(mockTables.outcome_ledger).toHaveLength(0);
+  },
+);
 
 test.each([
   "value_measurement_contract_signed_off",

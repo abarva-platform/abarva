@@ -31,6 +31,7 @@ import {
 } from "./p5-measurement-plan";
 import type { TenancyCtx } from "./types.db";
 import type { ValueCaseResult, LeverResult } from "./value-engine/types";
+import { assertP5MeasurementContractPlanCurrent } from "./p5-measurement-contract";
 
 interface ContractRow {
   id: string;
@@ -340,6 +341,13 @@ export async function loadP5HandoffBasis(
       "contract_content_absent",
       "The current signed measurement contract has no readable content.",
     );
+  assertP5MeasurementContractPlanCurrent({
+    ctx,
+    moveId,
+    plan,
+    content: versions[0].content,
+    structuredData: versions[0].structured_data,
+  });
   const binding: P5HandoffBinding = {
     tenantKey,
     clientId: ctx.clientId,
