@@ -67,6 +67,85 @@ describe("strategic move transformer helpers", () => {
     queryMock.mockResolvedValue([]);
   });
 
+  const projectionProgram = {
+    id: "move-1",
+    clientId: "client-1",
+    name: "Projection fixture",
+    currentPhase: 2,
+    status: "active",
+    lifecycleState: "active",
+    createdAt: "2026-10-12T00:00:00Z",
+    gatesPassed: [],
+  } as never;
+
+  it("starts participant-name reads while independent projection reads are still pending", async () => {
+    let finishClient!: (row: never) => void;
+    const client = new Promise<never>((resolve) => {
+      finishClient = resolve;
+    });
+    maybeSingleMock.mockImplementation((request) =>
+      request.table === "clients" ? client : Promise.resolve(null),
+    );
+    selectMock.mockImplementation(async (request) => {
+      if (request.table === "engagement_participants")
+        return [
+          { person_id: "person-1", user_id: "person-1", role: "Delivery lead" },
+        ] as never;
+      if (request.table === "persons")
+        return [
+          { id: "person-1", name: "Delivery owner", role: "Lead" },
+        ] as never;
+      return [];
+    });
+    const reading = buildStrategicMove(
+      { clientId: "client-1", userId: "user-1" },
+      projectionProgram,
+      {
+        evaluateGateCriteria: false,
+        loadPhaseSnapshots: jest.fn(async () => []),
+      },
+    );
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    try {
+      expect(selectMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          table: "persons",
+          where: { id: { op: "in", value: ["person-1"] } },
+        }),
+      );
+    } finally {
+      finishClient({ id: "client-1", name: "Demo tenant" } as never);
+    }
+    expect((await reading).participants[0].name).toBe("Delivery owner");
+  });
+
+  it("uses the shared latest snapshot for the page status without a second canonical snapshot query", async () => {
+    const loadPhaseSnapshots = jest.fn(
+      async () =>
+        [
+          {
+            createdAt: "2026-10-12T00:00:00Z",
+            phaseNumber: 2,
+            approvalStatus: "pending",
+          },
+        ] as never,
+    );
+    const move = await buildStrategicMove(
+      { clientId: "client-1", userId: "user-1" },
+      projectionProgram,
+      {
+        evaluateGateCriteria: false,
+        loadPhaseSnapshots,
+      },
+    );
+    expect(move.status.key).toBe("awaiting_decision");
+    expect(
+      maybeSingleMock.mock.calls.filter(
+        ([request]) => request.table === "phase_snapshots",
+      ),
+    ).toHaveLength(0);
+  });
+
   it("derives display code from industry code, name, and year", () => {
     const code = deriveDisplayCode(
       {

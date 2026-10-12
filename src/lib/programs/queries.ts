@@ -257,7 +257,7 @@ function readProgramAccess(
 ): Promise<boolean> {
   return opts.readSet && !opts.supabase
     ? opts.readSet(ctx, programId, "programReadAccess", () =>
-        canReadProgram(ctx, programId),
+        canReadProgram(ctx, programId, { readSet: opts.readSet }),
       )
     : canReadProgram(ctx, programId);
 }

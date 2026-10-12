@@ -241,6 +241,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     const gaps = mapped.filter((block) => block.kind === "gap");
     const otherEvidence = mapped.some((block) => block.kind !== "gap" && block.kind !== "text");
     if (gaps.length > 1 && !otherEvidence) return [gaps[0]!];
+    // Leave room for known evidence alongside the same visible confirmation panel.
+    if (gaps.length && mapped.length > 1) return mapped.map((block) =>
+      block.kind === "gap" ? { ...block, compact: true } : block);
     return mapped;
   };
 

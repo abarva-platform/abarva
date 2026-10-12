@@ -175,12 +175,9 @@ function P2Page({
           : undefined
       }
       blockedWork={
-        blockedBy ? (
-          <p className={cx("item-note")}>
-            Previously saved answers remain on the Move. Refresh to re-read the
-            governed status before editing this step.
-          </p>
-        ) : undefined
+        blockedBy
+          ? "Previously saved answers remain on the Move. Refresh to re-read the governed status before editing this step."
+          : undefined
       }
       context={{ items: context, details: [] }}
       contextAction={contextAction}

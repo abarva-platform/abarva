@@ -9,6 +9,7 @@ jest.mock('../transformers', () => ({
 
 jest.mock('@/lib/auth/program-access-policy', () => ({
   canReadProgram: (...args: unknown[]) => mockCanReadProgram(...args),
+  loadUserProgramAccessPolicy: jest.fn(async () => ({ canApproveGates: false })),
 }));
 
 jest.mock('@/lib/data-plane/azureRead', () => ({
@@ -155,6 +156,7 @@ describe("getStrategicMoveById with a request-scoped canonical loader", () => {
       getPhaseSnapshots(ctx, 'move-1', undefined, { readSet }),
     ]);
     expect(mockCanReadProgram).toHaveBeenCalledTimes(1);
+    expect(mockCanReadProgram).toHaveBeenCalledWith(ctx, 'move-1', { readSet });
     expect(results[0]).toEqual({ status: 'fulfilled', value: null });
     for (const result of results.slice(1)) {
       expect(result.status).toBe('rejected');
@@ -173,5 +175,53 @@ describe("getStrategicMoveById with a request-scoped canonical loader", () => {
     ]);
     expect(mockCanReadProgram).toHaveBeenCalledTimes(1);
     expect(results).toEqual(Array.from({length: 3}, () => ({status: 'rejected', reason: error})));
+  });
+});
+
+describe('phase page independent readiness scheduling', () => {
+  it('starts discovery readiness before the Move projection completes', async () => {
+    jest.resetModules();
+    await jest.isolateModulesAsync(async () => {
+      const moveId = '00000000-0000-4000-8000-000000000001';
+      const ctx = { clientId: 'tenant-a', clientKey: 'tenant-a', userId: 'user-a' };
+      const stop = new Error('End the route after the scheduling observation');
+      let finish!: (error: Error) => void;
+      const projection = new Promise<never>((_resolve, reject) => { finish = reject; });
+      const discovery = jest.fn(async () => ({}));
+      jest.doMock('@/lib/auth/server-module-access', () => ({ requireProductModule: jest.fn(async () => {}) }));
+      jest.doMock('@/lib/programs/strategic-moves-context', () => ({ getStrategicMovesTenancy: jest.fn(async () => ctx) }));
+      jest.doMock('@/lib/programs/queries', () => ({
+        getProgramById: jest.fn(async () => ({ id: moveId, name: 'A Move' })),
+        getModuleState: jest.fn(async () => []),
+        getPhaseSnapshots: jest.fn(async () => []),
+        getStrategicMoveById: jest.fn(() => projection),
+      }));
+      jest.doMock('@/lib/programs/transformers', () => ({ buildGateCriteria: jest.fn(async () => []) }));
+      jest.doMock('@/lib/programs/governance', () => ({ evaluateGate: jest.fn() }));
+      jest.doMock('@/lib/auth/program-access-policy', () => ({ loadUserProgramAccessPolicy: jest.fn(async () => ({ canApproveGates: false })) }));
+      jest.doMock('@/lib/features/is-feature-enabled', () => ({
+        isFeatureEnabled: (_ctx: unknown, flag: string) => [
+          'moves_capture_v2', 'moves_step_pages_v3', 'moves_step_pages_p0p1_v1',
+        ].includes(flag),
+      }));
+      jest.doMock('@/lib/programs/current-state-readiness', () => ({
+        inferMoveProfile: jest.fn(async () => ({})), resolveCurrentStateReadiness: jest.fn(async () => null),
+      }));
+      jest.doMock('@/lib/programs/move-archetype-resolution', () => ({ resolveMoveArchetypeForProgram: jest.fn(async () => 'governed_data_foundation') }));
+      jest.doMock('@/lib/programs/discovery/evidence-readiness', () => ({ loadDiscoveryEvidenceReadiness: discovery }));
+      jest.doMock('@/lib/programs/deliverables/move-artifacts', () => ({ listMoveArtifacts: jest.fn(async () => []) }));
+      jest.doMock('@/components/strategic-moves/MovesPhaseStandaloneClient', () => ({ MovesPhaseStandaloneClient: jest.fn() }));
+      jest.doMock('@/components/shell/AppShell', () => ({ AppShell: jest.fn() }));
+      const { default: Page } = await import('@/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page');
+      const result = Page({
+        params: Promise.resolve({ moveId, phaseNum: '2' }),
+        searchParams: Promise.resolve({ step: 'p2-validate' }),
+      }).catch((error) => error);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      try {
+        expect(discovery).toHaveBeenCalledWith(ctx, moveId, expect.objectContaining({ parallelReadbacks: true }));
+      } finally { finish(stop); }
+      expect(await result).toBe(stop);
+    });
   });
 });

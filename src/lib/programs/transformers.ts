@@ -1264,6 +1264,7 @@ export function deriveMapLabel(move: Pick<ProgramCore, "name">): string {
 export async function getMoveStatus(
   ctx: TenancyCtx,
   move: Pick<ProgramCore, "id" | "status" | "lifecycleState" | "currentPhase">,
+  opts: Pick<TransformerOptions, "loadPhaseSnapshots"> = {},
 ): Promise<MoveStatus> {
   const [
     latestSnapshot,
@@ -1271,12 +1272,25 @@ export async function getMoveStatus(
     pendingFounderResult,
     milestonesResult,
   ] = await Promise.all([
-    azureRead.maybeSingle<{ approval_status?: string; created_at: string }>({
-      table: "phase_snapshots",
-      columns: ["approval_status", "created_at"],
-      where: { engagement_id: move.id },
-      orderBy: { column: "created_at", direction: "desc" },
-    }),
+    opts.loadPhaseSnapshots
+      ? opts
+          .loadPhaseSnapshots(ctx, move.id)
+          .then((rows) =>
+            rows[0]
+              ? {
+                  approval_status: rows[0].approvalStatus,
+                  created_at: rows[0].createdAt,
+                }
+              : null,
+          )
+      : azureRead.maybeSingle<{ approval_status?: string; created_at: string }>(
+          {
+            table: "phase_snapshots",
+            columns: ["approval_status", "created_at"],
+            where: { engagement_id: move.id },
+            orderBy: { column: "created_at", direction: "desc" },
+          },
+        ),
     azureRead.select<{ severity: string | null }>({
       table: "maestro_oversight_flags",
       columns: ["severity"],
@@ -1511,6 +1525,40 @@ export async function buildStrategicMove(
   move: ProgramCore,
   opts: TransformerOptions = {},
 ): Promise<StrategicMove> {
+  const readParticipants = () =>
+    azureRead
+      .select<{
+        person_id: string | null;
+        user_id: string;
+        role: string | null;
+        approval_authority: string | null;
+      }>({
+        table: "engagement_participants",
+        columns: ["person_id", "user_id", "role", "approval_authority"],
+        where: { engagement_id: move.id },
+      })
+      .catch(() => []);
+  const readParticipantNames = (
+    rows: Awaited<ReturnType<typeof readParticipants>>,
+  ) => {
+    const personIds = Array.from(
+      new Set(rows.map((row) => row.person_id || row.user_id).filter(Boolean)),
+    );
+    return personIds.length
+      ? azureRead
+          .select<{ id: string; name: string | null; role: string | null }>({
+            table: "persons",
+            columns: ["id", "name", "role"],
+            where: { id: { op: "in", value: personIds } },
+          })
+          .catch(() => [])
+      : Promise.resolve([]);
+  };
+  const participantsPrefetch = opts.loadPhaseSnapshots
+    ? readParticipants()
+    : null;
+  const participantNamesPrefetch =
+    participantsPrefetch?.then(readParticipantNames);
   const [
     clientRow,
     peopleRows,
@@ -1532,18 +1580,7 @@ export async function buildStrategicMove(
       columns: ["id", "name", "industry_code", "slug"],
       where: { id: move.clientId },
     }),
-    azureRead
-      .select<{
-        person_id: string | null;
-        user_id: string;
-        role: string | null;
-        approval_authority: string | null;
-      }>({
-        table: "engagement_participants",
-        columns: ["person_id", "user_id", "role", "approval_authority"],
-        where: { engagement_id: move.id },
-      })
-      .catch(() => []),
+    participantsPrefetch ?? readParticipants(),
     azureRead
       .select<{
         created_at: string;
@@ -1622,7 +1659,7 @@ export async function buildStrategicMove(
           .catch(() => []),
     fetchLinkedEvidence(move.id).catch(() => []),
     fetchMoveDeliverables(move.id).catch(() => []),
-    getMoveStatus(ctx, move).catch(() => ({
+    getMoveStatus(ctx, move, opts).catch(() => ({
       statusKey: "idle",
       statusText: "Needs setup",
       statusDescription:
@@ -1632,26 +1669,8 @@ export async function buildStrategicMove(
   ]);
 
   const participantRows = peopleRows;
-  const personIds = Array.from(
-    new Set(
-      participantRows
-        .map((row) => row.person_id || row.user_id)
-        .filter(Boolean),
-    ),
-  );
-  const personData = personIds.length
-    ? await azureRead
-        .select<{
-          id: string;
-          name: string | null;
-          role: string | null;
-        }>({
-          table: "persons",
-          columns: ["id", "name", "role"],
-          where: { id: { op: "in", value: personIds } },
-        })
-        .catch(() => [])
-    : [];
+  const personData = await (participantNamesPrefetch ??
+    readParticipantNames(participantRows));
   const personMap = new Map<string, { name: string; role: string }>(
     personData.map((row) => [
       row.id,

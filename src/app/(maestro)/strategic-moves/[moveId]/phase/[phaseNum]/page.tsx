@@ -581,8 +581,19 @@ export default async function StrategicMovePhaseWorkspacePage({
   const phaseSnapshotsPrefetch = flaggedStepView
     ? loadSnapshots(ctx, moveId)
     : null;
+  const discoveryReadinessPrefetch = flaggedStepView
+    ? timed("evidenceReadiness", async () =>
+        loadDiscoveryEvidenceReadiness(await readTenancy(), moveId, {
+          loadProgram,
+          parallelReadbacks: true,
+        }),
+      )
+    : null;
   const approvalPolicyPromise = timed("accessPolicy", () =>
-    loadUserProgramAccessPolicy(ctx, { programId: moveId }).catch(() => null),
+    loadUserProgramAccessPolicy(ctx, {
+      programId: moveId,
+      ...(readSet ? { readSet } : {}),
+    }).catch(() => null),
   );
   const assumptionRegisterEnabled = isFeatureEnabled(
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
@@ -620,6 +631,7 @@ export default async function StrategicMovePhaseWorkspacePage({
   void Promise.allSettled([
     currentStateReadinessPrefetch,
     phaseSnapshotsPrefetch,
+    discoveryReadinessPrefetch,
     registerRowsPrefetch,
     approvalArtifactsPrefetch,
   ]);
@@ -888,13 +900,11 @@ export default async function StrategicMovePhaseWorkspacePage({
         : null;
     },
   );
-  const discoveryReadinessPromise = timed("evidenceReadiness", async () =>
-    loadDiscoveryEvidenceReadiness(
-      await readTenancy(),
-      moveId,
-      readSet ? { loadProgram } : undefined,
-    ),
-  );
+  const discoveryReadinessPromise =
+    discoveryReadinessPrefetch ??
+    timed("evidenceReadiness", async () =>
+      loadDiscoveryEvidenceReadiness(await readTenancy(), moveId),
+    );
   const p0EvidencePromise = timed("p0Evidence", async () =>
     parsedPhase === 0
       ? readTenancy().then((tctx) =>
@@ -1572,7 +1582,10 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
         phaseStepPagesEnabled={phaseStepPagesEnabled}
-        p5TowerHandoffEnabled={isFeatureEnabled(ctx, "moves_p5_tower_handoff_v1")}
+        p5TowerHandoffEnabled={isFeatureEnabled(
+          ctx,
+          "moves_p5_tower_handoff_v1",
+        )}
         catchUpEnabled={catchUpEnabled && !captureModulesUnavailable}
         p2RootCausesForCatchUp={captureValue(2, "gaps_root_causes")}
         p2GateRecordConfirmed={p2GateRecordConfirmed}
