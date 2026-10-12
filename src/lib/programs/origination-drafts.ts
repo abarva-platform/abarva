@@ -21,7 +21,7 @@ export interface OriginationDraftState {
   turns: Array<{
     id: string;
     role: 'user' | 'assistant';
-    agentName?: 'Steward';
+    agentName?: 'Steward' | 'Nexus';
     text: string;
   }>;
   /** Program brief draft fields. Shape mirrors `ProgramBriefDraft`. */
@@ -36,6 +36,15 @@ export interface OriginationDraftState {
     sponsor: string | null;
     lead: string | null;
     crossProgramDependencies: string[];
+    scopeIn?: string | null;
+    scopeOut?: string | null;
+    outcomesSuccess?: string | null;
+    discoveryQuestions?: string | null;
+    evidenceFamily?: string | null;
+    foundationReadiness?: string | null;
+    /** Confirmed answers from the existing flagged intake canvas. */
+    intakeFields?: Record<string, string>;
+    sponsorProgressEmails?: boolean;
   } | null;
   /** Rich pattern card data. Shape mirrors `PatternMatchCard`. */
   patternMatch: {
@@ -72,6 +81,7 @@ function assertSurface(surface: string): void {
 export async function getOpenDraft(
   ctx: TenancyCtx,
   surface: string,
+  options: { failOnReadError?: boolean } = {},
 ): Promise<OriginationDraftRow | null> {
   assertSurface(surface);
   const sb = getAzureWriteFluentClient();
@@ -84,6 +94,9 @@ export async function getOpenDraft(
     .is('committed_engagement_id', null)
     .maybeSingle();
 
+  if (error && options.failOnReadError) {
+    throw new Error('origination_draft_read_unavailable');
+  }
   if (error || !data) return null;
 
   const row = data as {

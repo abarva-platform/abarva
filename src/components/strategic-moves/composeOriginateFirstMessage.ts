@@ -10,7 +10,7 @@
 // 500+ characters; Nexus handles it inline. This helper covers 2A/2B.
 
 import type { TenancyCtx } from "@/lib/programs/types.db";
-import { getOpenDraft } from "@/lib/programs/origination-drafts";
+import { getOpenDraft, type OriginationDraftRow } from "@/lib/programs/origination-drafts";
 import {
   isPatternBindable,
   requiredGroundingForText,
@@ -203,6 +203,7 @@ export async function composeOriginateFirstMessage(
   ctx: TenancyCtx,
   fromInitiative?: FromInitiativeCtx | null,
   fromIntelligence?: FromIntelligenceCtx | null,
+  resolvedDraft?: { draft: OriginationDraftRow | null },
 ): Promise<OriginateFirstMessage> {
   if (fromIntelligence?.patternId) {
     return composeFromIntelligenceMessage(fromIntelligence);
@@ -213,11 +214,13 @@ export async function composeOriginateFirstMessage(
     return composeFromInitiativeMessage(fromInitiative);
   }
 
-  let draft = null;
-  try {
-    draft = await getOpenDraft(ctx, "/strategic-moves/new");
-  } catch {
-    // Draft read failure is non-fatal — fall through to empty entry
+  let draft = resolvedDraft?.draft ?? null;
+  if (!resolvedDraft) {
+    try {
+      draft = await getOpenDraft(ctx, "/strategic-moves/new");
+    } catch {
+      // Draft read failure is non-fatal — fall through to empty entry
+    }
   }
 
   const uncommitted = draft?.committed_engagement_id == null ? draft : null;

@@ -27,7 +27,7 @@ function blockFor(archetype: ReferenceArchetype): ReferenceBlock {
   if (archetype === "target_state")
     return { kind: "architecture", layers: [
       { name: "Sources", items: ["Landing"] }, { name: "Bronze", items: ["Raw"] },
-      { name: "Silver", items: ["Clean"] }, { name: "Gold", items: ["Governed"] },
+      { name: "Silver", items: ["Clean"] }, { name: "Gold", items: ["Reviewed"] },
       { name: "Semantic", items: ["Measures"] }, { name: "Use", items: ["Decisions"] },
     ], governance: "Lineage and quality checks" };
   if (archetype === "releases")
@@ -35,7 +35,7 @@ function blockFor(archetype: ReferenceArchetype): ReferenceBlock {
       { label: "Foundation", from: 0, to: 1 }, { label: "Validation", from: 1, to: 2 },
     ], today: 0, commit: 2 };
   if (archetype === "ai_options")
-    return { kind: "text", lines: ["Candidate: reviewed summary", "Purpose: help owners compare evidence", "Prerequisite: governed source access"] };
+    return { kind: "text", lines: ["Candidate: reviewed summary", "Purpose: help owners compare evidence", "Prerequisite: approved source access"] };
   if (archetype === "cover" || archetype === "divider")
     return { kind: "text", lines: ["The synthetic evidence supports a decision."] };
   return { kind: "table", columns: ["Measure", "Working figure"], rows: [
@@ -48,9 +48,7 @@ function slide(archetype: ReferenceArchetype, edition: ReferenceDeckSpec["editio
   return {
     archetype,
     ...(archetype === "cover" || archetype === "divider" ? {} : { section }),
-    actionTitle: archetype === "cover" && edition === "validation"
-      ? "Validate the problem and value; no solution, plan or cost."
-      : TITLE,
+    actionTitle: archetype === "cover" ? "Demo case" : TITLE,
     answerLabel: "The answer",
     answer: "The next decision depends on confirming the working basis.",
     speakerNotes: NOTES,
@@ -132,7 +130,8 @@ describe("reference deck components", () => {
       { change: { notesText: "" }, kind: "reference_structure" },
       { change: { pictureCount: 1 }, kind: "reference_editability" },
       { change: { textRuns: target.textRuns.filter((run) => !run.includes("$1,000")) }, kind: "reference_source", detailCode: "bound_figure_missing" },
-    ] as const;
+      { change: { textRuns: [...target.textRuns, "The readback is ready"] }, kind: "reference_client_copy", detailCode: "internal_term" },
+    ];
     for (const item of cases) {
       const { change, kind } = item;
       const slides = [...rendered.slides];
@@ -143,5 +142,17 @@ describe("reference deck components", () => {
         expect(verdict.findings).toContainEqual(expect.objectContaining({ kind, slide: 6, detailCode: item.detailCode }));
       }
     }
+    const cover = rendered.slides[0]!;
+    const coverSlides = [...rendered.slides];
+    coverSlides[0] = { ...cover, namedText: { ...cover.namedText, "ref:cover:title": "Validate the need; no solution, plan or cost." } };
+    expect(judgeRenderedDeck({ ...rendered, slides: coverSlides }, { referenceDeck: draft }).findings)
+      .toContainEqual(expect.objectContaining({ kind: "reference_client_copy", slide: 1, detailCode: "cover_use_case" }));
+    coverSlides[0] = { ...cover, textRuns: [...cover.textRuns, "Validate the need; no solution, plan or cost."] };
+    expect(judgeRenderedDeck({ ...rendered, slides: coverSlides }, { referenceDeck: draft }).findings)
+      .toContainEqual(expect.objectContaining({ kind: "reference_client_copy", slide: 1, detailCode: "edition_rule_visible" }));
+    const bodySlides = [...rendered.slides];
+    bodySlides[5] = { ...target, textRuns: [...target.textRuns, "Validate the need; no solution, plan or cost."] };
+    expect(judgeRenderedDeck({ ...rendered, slides: bodySlides }, { referenceDeck: draft }).findings)
+      .toContainEqual(expect.objectContaining({ kind: "reference_client_copy", slide: 6, detailCode: "edition_rule_visible" }));
   }, 60_000);
 });
