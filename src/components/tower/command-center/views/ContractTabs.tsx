@@ -539,7 +539,7 @@ export function ValueProofContractView({
         <article className={styles.contractCard}>
           {cardTitle(
             "Program decision rows",
-            `Top ${formatCount(programs.length)} of ${formatCount(view.programs.length)} reviewed program rows`,
+            `Top ${formatCount(programs.length)} of ${formatCount(view.programs.length)} loaded program rows`,
           )}
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>

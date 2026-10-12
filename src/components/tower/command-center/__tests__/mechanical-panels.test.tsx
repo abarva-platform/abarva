@@ -316,9 +316,9 @@ describe("mechanical Tower Command Center panels", () => {
       />,
     );
 
-    expect(document.body.textContent).toMatch(/distribution is only partially loaded/);
+    expect(document.body.textContent).toMatch(/Expected benefit kinds and the financial breakdown are not loaded/);
     expect(document.body.textContent).not.toMatch(/leads value type/);
-    expect(document.body.textContent).toMatch(/Approved AI funding by benefit type/);
+    expect(document.body.textContent).toMatch(/Approved AI funding by recorded value category/);
     expect(document.body.textContent).not.toMatch(/By AI spend category/);
   });
 
