@@ -47,6 +47,9 @@ bundle. Each finding belongs to one chapter; caveats and source references remai
   immutable receipts, exact candidate content, independent admission readback and RLS.
 - PASS: real Home selection/retirement/tenant-fence proof against two disposable Postgres
   tenants. The workflow trigger list now includes the reader's new policy dependencies.
+- PASS: existing synthetic v1/v2 canonical loads, pre-projection tamper readback,
+  Home projection and 20 promotion/retirement checks against a disposable database.
+  Both physical-admission and tenant-fence dependency trigger contracts are retained.
 - PASS: Home ratchet 749/777, 12 baselined suites, no movement; no baseline rewrite.
 - PASS: Node 24 TypeScript with an 8 GiB heap and changed-file ESLint. The default 4 GiB
   TypeScript run exhausted memory before the successful full rerun.
