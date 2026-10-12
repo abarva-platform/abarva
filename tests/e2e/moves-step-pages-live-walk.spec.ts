@@ -581,6 +581,49 @@ test("keeps phase bar labels readable in both themes", async ({ page }) => {
   }
 });
 
+test("keeps step text readable while the theme changes", async ({ page }) => {
+  const css = fs.readFileSync(
+    path.resolve(process.cwd(), "src/components/strategic-moves/step-page/MovesStepPage.module.css"),
+    "utf8",
+  );
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.setContent(`
+      <main class="root" data-theme="light">
+        <nav class="phase-bar" aria-label="Phases"><ol>
+          <li><a class="phase-tab" href="#previous"><span class="code">P1</span><span class="name">Charter</span><span class="count">Done</span></a></li>
+          <li><span class="phase-tab" aria-current="page"><span class="code">P2</span><span class="name">Discover</span><span class="count">1 to confirm</span></span></li>
+        </ol></nav>
+        <nav aria-label="Surface"><a class="tab" href="#steps">Steps</a></nav>
+        <header class="panel-head"><h1 class="panel-title">Choose a direction</h1><p class="panel-intro">Review the team's options.</p></header>
+        <section class="next" role="status" aria-label="What to do next"><p class="next-do">Wait for the design elements.</p></section>
+        <button class="btn-primary">Continue</button><button class="btn-quiet">Back</button><button class="btn-line">Details</button>
+      </main>
+    `);
+    await page.addStyleTag({ content: css });
+    for (const theme of ["dark", "light"] as const) {
+      await page.evaluate((nextTheme) => {
+        document.querySelector(".root")!.setAttribute("data-theme", nextTheme);
+        // Inspect a real intermediate frame rather than waiting past a fade.
+        for (const animation of document.getAnimations()) {
+          const duration = animation.effect?.getComputedTiming().duration;
+          if (typeof duration === "number" && duration > 0) {
+            animation.pause();
+            animation.currentTime = duration / 10;
+          }
+        }
+      }, theme);
+      const axe = await new AxeBuilder({ page }).withTags(["wcag2aa"]).analyze();
+      const violations = axe.violations as Array<{ id: string }>;
+      expect(
+        violations.filter((violation) => violation.id === "color-contrast"),
+        `${width}px ${theme} text and background stay readable during a palette switch`,
+      ).toEqual([]);
+    }
+  }
+});
+
 test("walks every deployed Moves step page without writing", async ({ page }, testInfo) => {
   test.setTimeout(32 * 60_000);
   const missing = [

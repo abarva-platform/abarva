@@ -753,10 +753,20 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       payloadText(row, "claim_id") ?? nullableText(display.program_id),
     programName: title,
     ownerRole:
-      payloadText(row, "owner_role") ?? nullableText(display.owner_role),
+      payloadText(row, "owner_role") ??
+      nullableText(display.business_sponsor_role),
     // The business domain the program sits in. Distinct from who sponsors it: a domain groups
     // work by where it happens, an owner groups it by who answers for it.
     domainName: nullableText(display.domain_name),
+    affectedFunctions: jsonArray(display.affected_functions).flatMap((value) => {
+      const functionRow = asRecord(value);
+      const functionId = nullableText(functionRow.function_id);
+      const functionName = nullableText(functionRow.function_name);
+      return functionId && functionName ? [{ functionId, functionName }] : [];
+    }),
+    technologyOwnerRole: nullableText(display.technology_owner_role),
+    sourceProgramStatus: nullableText(display.source_program_status),
+    sourceProgramPhase: nullableText(display.source_program_phase),
     financeOwnerRole: nullableText(display.finance_owner_role),
     decisionLane: decisionLane(display.decision_lane as string | null),
     decisionRationale:
@@ -1035,6 +1045,11 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
       "business_sponsor_role",
       "business_owner_role",
     ]),
+    businessFunction: payloadTextFrom(row, ["business_function"]),
+    businessSegmentKey: payloadTextFrom(row, ["business_segment_key"]),
+    sourceCaseStatus: payloadTextFrom(row, ["source_case_status"]),
+    operationalOwnerRole: payloadTextFrom(row, ["operational_owner_role"]),
+    expectedValueArchetype: payloadTextFrom(row, ["expected_value_archetype"]),
     duplicateRisk: null,
     valueClaimStatus: "usage_supported",
     towerClaimAllowed: "blocked",

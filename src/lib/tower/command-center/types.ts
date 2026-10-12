@@ -228,6 +228,10 @@ export interface TowerProgramView {
   ownerRole: string | null;
   financeOwnerRole: string | null;
   functionLabel: string | null;
+  affectedFunctions?: Array<{ functionId: string; functionName: string }>;
+  technologyOwnerRole?: string | null;
+  sourceProgramStatus?: string | null;
+  sourceProgramPhase?: string | null;
   lane: TowerLaneKey;
 
   fundedUsd: number;
@@ -357,6 +361,11 @@ export interface TowerAiView {
   /** True when the source asserted a blocker or explicitly asserted `none`. */
   controlBlockerReviewed: boolean;
   sponsorRole: string | null;
+  businessFunction?: string | null;
+  businessSegmentKey?: string | null;
+  sourceCaseStatus?: string | null;
+  operationalOwnerRole?: string | null;
+  expectedValueArchetype?: string | null;
   /** 0–100, mart `risk_score`. Candidate pipeline diagnostic. */
   riskScore: number;
   /** Bubble size. */

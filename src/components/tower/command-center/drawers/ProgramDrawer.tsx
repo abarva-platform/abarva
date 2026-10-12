@@ -269,6 +269,22 @@ export function ProgramDrawer({
 
           <DrawerSection>Owner &amp; next gate</DrawerSection>
           <DrawerRow label="Owner" value={p.ownerRole ?? "Not recorded"} />
+          {p.technologyOwnerRole ? (
+            <DrawerRow label="Technology owner" value={p.technologyOwnerRole} />
+          ) : null}
+          {p.sourceProgramStatus || p.sourceProgramPhase ? (
+            <>
+              <DrawerRow label="Status in intake" value={p.sourceProgramStatus?.replace(/_/g, " ") ?? "Not recorded"} />
+              <DrawerRow label="Phase in intake" value={p.sourceProgramPhase?.replace(/_/g, " ") ?? "Not recorded"} />
+              <DrawerRow
+                label="Affected work areas"
+                value={p.affectedFunctions?.length
+                  ? p.affectedFunctions.map((item) => item.functionName).join(", ")
+                  : "No work area linked in intake"}
+                sub="Source-linked work areas; these are not funding categories."
+              />
+            </>
+          ) : null}
           <DrawerRow
             label="Finance owner"
             value={p.financeOwnerRole ?? "Not recorded"}

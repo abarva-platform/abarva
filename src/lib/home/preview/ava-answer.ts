@@ -36,7 +36,7 @@ type AvaAnswerBundleSlice = Pick<
 > &
   Partial<Pick<HomeReviewBundle, "thesis" | "contextVersion" | "provenance">>;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v2";
+const PROMPT_VERSION = "home-preview-ava-answer-v3";
 const CLAUDE_MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 1600;
 const TIMEOUT_MS = 45_000;
@@ -712,7 +712,7 @@ const SYSTEM_PROMPT = `You are aVa, AbarVa's enterprise advisor for this tenant'
 
 The enterprise context spine is always available. Treat the active chapter as the user's current focus, not as a boundary. When the question touches one domain, consider whether another domain materially changes the answer: technology may depend on strategy, ownership, contracts, risk, programs, data, value, or leadership testimony. Do not force cross-domain connections when they are not relevant.
 If the question is broad but relevant cited claims are available, answer directionally with explicit limits instead of returning no_data. Use compact consulting structure: short answer, 3-5 bullets, confidence/evidence, caveat. Avoid long paragraphs.
-Put the main points in key_points: 3-5 short strings, at most 30 words each. Respect an explicitly requested number of bullets. Keep direct_answer to one short sentence. Do not repeat key_points in prose; leave prose empty when key_points cover the answer.
+Put the main points in key_points: 3-5 short strings, at most 30 words each. Aim for 15-25 words: one priority and one reason, not a compound paragraph. Respect an explicitly requested number of bullets. Keep direct_answer to one short sentence. Do not repeat key_points in prose; leave prose empty when key_points cover the answer. Put citation tags ONLY in cited_claim_tags, never inline in key_points, direct_answer, prose or caveats. Preserve uncertainty and evidence limits when shortening; do not strengthen association into causation.
 
 Context-use boundaries:
 - enterprise_context_spine and record_summaries are orientation and routing context unless they point to cited claim tags.
@@ -723,7 +723,7 @@ Rules, no exceptions:
 1. Never state a number, date, name, or fact that is not verbatim present in the context. If the question isn't covered, say so plainly and set status to "no_data" (nothing relevant) or "partial" (some but incomplete) -- never guess, estimate, or reason from outside general knowledge.
 2. Every tagged chapter claim you rely on must be cited by its exact tag in cited_claim_tags. Only cite tags that appear in the context.
 3. You may request at most one chart or table, and only by naming a dataset_ref taken EXACTLY from plottable_datasets -- you never invent, adjust, estimate, or fabricate the underlying numbers, you only choose whether a precomputed dataset helps answer the question. If none fits, set visual.type to "none".
-4. Speak in plain business language a newly appointed CXO would use. Do not mention internal pipeline terms (dataset names, schema versions, "context payload", "governed", tag syntax, ECL, projection, agent-ready state, hashes, source rows) in direct_answer or prose.
+4. Speak in plain business language a newly appointed CXO would use. Do not mention internal pipeline terms (dataset names, schema versions, "context payload", "governed", tag syntax, ECL, projection, agent-ready state, hashes, source rows) in direct_answer, key_points, prose or caveats.
 5. Output strict JSON only -- no markdown code fences, no commentary before or after the JSON.
 
 Schema:
@@ -787,6 +787,8 @@ const ALLOWED_STATUS = new Set(["answered", "partial", "no_data"]);
 const ALLOWED_CHART_KIND = new Set(["bar", "horizontal-bar"]);
 const MAX_DIRECT_ANSWER_WORDS = 55;
 const MAX_PROSE_PARAGRAPH_WORDS = 70;
+const MAX_KEY_POINT_WORDS = 30;
+const INLINE_CLAIM_TAG = `(?:${Object.values(CHAPTER_ABBREV).join("|")})-[KTW]\\d+`;
 const INTERNAL_RECOVERY_CAVEAT_RE =
   /\b(advisor model|advisor engine|unparseable|could not be exported|exported safely|packag(?:e|ed|ing)|JSON|parser|parse)\b/i;
 const DEFAULT_RECOVERY_CAVEAT =
@@ -909,6 +911,7 @@ export async function answerHomeAvaQuestion(args: {
     messages: [{ role: "user" as const, content: userMessage }],
   };
 
+  const startedAt = Date.now();
   try {
     const { client } = await getAuditedAnthropicClient({
       tenantId: args.tenantKey,
@@ -930,7 +933,7 @@ export async function answerHomeAvaQuestion(args: {
       TIMEOUT_MS,
     );
     const rawText = extractMessageText(message).trim();
-    const parsed = parseJsonLoose<ModelResponseShape>(
+    let parsed = parseJsonLoose<ModelResponseShape>(
       rawText,
       "home-preview-ava-answer",
     );
@@ -956,6 +959,109 @@ export async function answerHomeAvaQuestion(args: {
       );
     }
 
+    if (needsCompactAnswerRepair(parsed, question, context)) {
+      const repairMessage = `${userMessage}\n\nPresentation correction: use key_points, one complete sentence per point, 15-25 words and never more than 30. Respect the requested bullet count. All claim tags belong only in cited_claim_tags. Preserve qualifications; do not invent a causal connection. Return the complete JSON schema.`;
+      const remainingMs = TIMEOUT_MS - (Date.now() - startedAt);
+      if (remainingMs > 3_000) {
+        try {
+          const { client: repairClient } = await getAuditedAnthropicClient({
+            tenantId: args.tenantKey,
+            userId: args.userId ?? undefined,
+            workflow: "home-preview-ava-answer",
+            model: CLAUDE_MODEL,
+            dataClass: "confidential",
+            prompt: `${SYSTEM_PROMPT}\n\n${repairMessage}`,
+            metadata: {
+              promptVersion: PROMPT_VERSION,
+              surface: "home",
+              activeChapterId: args.activeChapterId ?? null,
+              contextScope: "enterprise_spine_plus_focus",
+              presentationRepair: true,
+            },
+          });
+          const repairTimeout = TIMEOUT_MS - (Date.now() - startedAt);
+          if (repairTimeout > 0) {
+            const repairedMessage = await withTimeout(
+              repairClient.messages.create({
+                ...requestPayload,
+                messages: [{ role: "user", content: repairMessage }],
+              }),
+              repairTimeout,
+            );
+            const repaired = parseJsonLoose<ModelResponseShape>(
+              extractMessageText(repairedMessage),
+              "home-preview-ava-compact-repair",
+            );
+            if (
+              repaired &&
+              repaired.status !== "no_data" &&
+              Array.isArray(repaired.cited_claim_tags) &&
+              repaired.cited_claim_tags.some((tag) =>
+                context.citationIndex.has(tag),
+              ) &&
+              !needsCompactAnswerRepair(repaired, question, context)
+            ) {
+              parsed = {
+                ...repaired,
+                status:
+                  parsed.status === "partial" ? "partial" : repaired.status,
+                cited_claim_tags: Array.from(
+                  new Set([
+                    ...(Array.isArray(parsed.cited_claim_tags)
+                      ? parsed.cited_claim_tags
+                      : []),
+                    ...repaired.cited_claim_tags,
+                  ]),
+                ),
+                caveats: Array.from(
+                  new Set([
+                    ...(Array.isArray(parsed.caveats) ? parsed.caveats : []),
+                    ...(Array.isArray(repaired.caveats)
+                      ? repaired.caveats
+                      : []),
+                  ]),
+                ),
+              };
+            }
+          }
+        } catch {
+          // Keep the original admitted citations when a presentation repair fails.
+        }
+      }
+      if (needsCompactAnswerRepair(parsed, question, context)) {
+        const packet = packageModelResponse(
+          parsed,
+          context,
+          args.tenantKey,
+          question,
+        );
+        if (packet.citations.length === 0) return packet;
+        return {
+          ...packet,
+          status: "partial",
+          directAnswer:
+            "I couldn't safely produce a concise summary. Open Evidence basis for the supporting claims.",
+          prose: undefined,
+          artifacts: [],
+          gaps: [
+            {
+              id: "home-ava-compact-gap",
+              label: "Concise summary unavailable",
+              detail:
+                "Supporting claims are retained without cutting away their qualifications.",
+              severity: "medium",
+              citationIds: packet.citations.map((citation) => citation.id),
+            },
+          ],
+          quality: {
+            ...packet.quality,
+            confidence: "low",
+            answerCompleteness: "partial",
+          },
+        };
+      }
+    }
+
     return packageModelResponse(parsed, context, args.tenantKey, question);
   } catch (error) {
     const recovered = shouldRecoverFromRelevantClaims(question)
@@ -978,6 +1084,68 @@ export async function answerHomeAvaQuestion(args: {
       error instanceof Error ? error.message : String(error),
     );
   }
+}
+
+function requestedKeyPointLimit(question: string): number {
+  return /\b(?:three|3)\s+(?:(?:concise|crisp|short)\s+)*bullets?\b/i.test(
+    question,
+  )
+    ? 3
+    : 5;
+}
+
+function visibleKeyPoints(
+  parsed: ModelResponseShape,
+  question: string,
+): string[] {
+  return Array.isArray(parsed.key_points)
+    ? parsed.key_points
+        .filter(
+          (point): point is string =>
+            typeof point === "string" && point.trim().length > 0,
+        )
+        .slice(0, requestedKeyPointLimit(question))
+        .map((point) =>
+          stripInlineClaimTags(point)
+            .replace(/^[-*]\s+/, "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        )
+        .filter(Boolean)
+    : [];
+}
+
+function needsCompactAnswerRepair(
+  parsed: ModelResponseShape,
+  question: string,
+  context: GroundingContext,
+): boolean {
+  if (parsed.status === "no_data") return false;
+  const points = visibleKeyPoints(parsed, question);
+  return (
+    (requestedKeyPointLimit(question) === 3 && points.length !== 3) ||
+    points.some(
+      (point) =>
+        wordCount(
+          sanitizeAvaVisibleText(point, context, MAX_PROSE_PARAGRAPH_WORDS),
+        ) > MAX_KEY_POINT_WORDS,
+    )
+  );
+}
+
+function stripInlineClaimTags(text: string): string {
+  return text
+    .replace(
+      new RegExp(
+        `[\\[(]\\s*${INLINE_CLAIM_TAG}(?:\\s*[,;]\\s*${INLINE_CLAIM_TAG})*\\s*[\\])]`,
+        "g",
+      ),
+      "",
+    )
+    .replace(new RegExp(`\\b${INLINE_CLAIM_TAG}\\b`, "g"), "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([,.;:!?])/g, "$1")
+    .trim();
 }
 
 function answerVisibleRecordCounts(
@@ -1125,18 +1293,7 @@ function packageModelResponse(
     typeof parsed.direct_answer === "string" && parsed.direct_answer.trim()
       ? parsed.direct_answer.trim()
       : "I don't have a grounded answer for that yet.";
-  const maxKeyPoints =
-    /\b(?:three|3)\s+(?:(?:concise|crisp|short)\s+)*bullets?\b/i.test(question)
-      ? 3
-      : 5;
-  const keyPoints = Array.isArray(parsed.key_points)
-    ? parsed.key_points
-        .filter(
-          (point): point is string =>
-            typeof point === "string" && point.trim().length > 0,
-        )
-        .slice(0, maxKeyPoints)
-    : [];
+  const keyPoints = visibleKeyPoints(parsed, question);
   const proseRaw =
     keyPoints.length > 0
       ? keyPoints
@@ -1475,7 +1632,7 @@ function sanitizeAvaVisibleText(
   return scrubPublicAvaAnswerText(
     sanitizeVisibleStaleClaims(
       sanitizeRecordCountContradictions(
-        compactAnswerText(text, maxWordsPerParagraph),
+        compactAnswerText(stripInlineClaimTags(text), maxWordsPerParagraph),
         context,
       ),
       context,

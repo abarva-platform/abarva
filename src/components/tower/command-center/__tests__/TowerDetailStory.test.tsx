@@ -9,17 +9,61 @@ import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/desig
 import type {
   TowerActionView,
   TowerAiView,
+  TowerProgramView,
 } from "@/lib/tower/command-center/types";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
 import { ActionDrawer } from "../drawers/ActionDrawer";
 import { AiInitiativeDrawer } from "../drawers/AiInitiativeDrawer";
+import { ProgramDrawer } from "../drawers/ProgramDrawer";
 
 const view = buildTowerCommandCenterView(designFixtureMart(), {
   tenantName: "Example tenant",
 })!;
 
 describe("Tower detail proof states", () => {
+  it("shows source program roles and affected work areas without calling them funding categories", () => {
+    const program: TowerProgramView = {
+      ...view.programs[0]!,
+      ownerRole: "Program sponsor",
+      technologyOwnerRole: "Technology lead",
+      sourceProgramStatus: "in_progress",
+      sourceProgramPhase: "delivery",
+      affectedFunctions: [{ functionId: "FUNC-1", functionName: "Member services" }],
+      functionLabel: null,
+      fundingAmountLoaded: false,
+      promisedBenefitLoaded: false,
+    };
+    render(<ProgramDrawer program={program} onClose={() => {}} onSeeAction={() => {}} />);
+    const drawer = screen.getByRole("dialog");
+    expect(within(drawer).getByText("Technology lead")).toBeInTheDocument();
+    expect(within(drawer).getByText("in progress")).toBeInTheDocument();
+    expect(within(drawer).getByText("Member services")).toBeInTheDocument();
+    expect(within(drawer).getByText(/not funding categories/)).toBeInTheDocument();
+    expect(within(drawer).getByText(/Approved FY26 funding is not verified/)).toBeInTheDocument();
+  });
+
+  it("shows declared AI case context separately from Finance verification", () => {
+    const caseRow: TowerAiView = {
+      ...view.allInitiatives[0]!,
+      populationKind: "ai_case",
+      businessFunction: "Service operations",
+      businessSegmentKey: "north_region",
+      sourceCaseStatus: "pilot",
+      operationalOwnerRole: "Operations lead",
+      expectedValueArchetype: "time_savings",
+      financeStatus: null,
+    };
+    render(<AiInitiativeDrawer item={caseRow} onClose={() => {}} />);
+    const drawer = screen.getByRole("dialog");
+    expect(within(drawer).getByText("Service operations")).toBeInTheDocument();
+    expect(within(drawer).getByText("north region")).toBeInTheDocument();
+    expect(within(drawer).getByText("pilot")).toBeInTheDocument();
+    expect(within(drawer).getByText("Operations lead")).toBeInTheDocument();
+    expect(within(drawer).getByText("time savings")).toBeInTheDocument();
+    expect(within(drawer).getByText(/not a verified dollar benefit/)).toBeInTheDocument();
+  });
+
   it("shows conflicting case amounts and dates as unreconciled bases", () => {
     const caseRow: TowerAiView = {
       ...view.allInitiatives[0]!,

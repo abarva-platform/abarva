@@ -251,9 +251,7 @@
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  transition:
-    background 200ms,
-    color 200ms;
+  /* Theme foregrounds and backgrounds must switch together for contrast. */
 }
 .root button {
   font-family: inherit;
@@ -413,7 +411,6 @@
   padding: 12px 16px;
   border-radius: var(--mv-radius);
   cursor: pointer;
-  transition: color var(--mv-ease);
 }
 .btn-quiet:hover {
   color: var(--mv-ink);
@@ -427,7 +424,6 @@
   padding: 12px 22px;
   border-radius: var(--mv-radius);
   cursor: pointer;
-  transition: background var(--mv-ease);
 }
 .btn-primary:hover {
   background: var(--mv-accent-hover);
@@ -462,7 +458,6 @@
   border-radius: var(--mv-radius);
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--mv-ease);
 }
 .btn-line:hover {
   background: var(--mv-bg);
@@ -514,7 +509,6 @@
   cursor: pointer;
   background: transparent;
   color: var(--mv-ink);
-  transition: background var(--mv-ease);
 }
 .phase-tab:hover {
   background: var(--mv-bg);
@@ -1622,7 +1616,6 @@ textarea.q-input {
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: color var(--mv-ease);
 }
 .tab:hover {
   color: var(--mv-ink);

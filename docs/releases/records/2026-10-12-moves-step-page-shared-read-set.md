@@ -12,7 +12,7 @@
 
 Valid deployed step walks still exceed 2.5 seconds on reachable views. The earlier measured readiness read took 6878 ms. Current-state requirements were queried one family at a time, while historical gate checks repeated the same program, module, evidence and document-version reads. This candidate shares those canonical reads within one authenticated page request and batches independent readiness requirements. It starts readiness, snapshots, gate readback and register visibility with the Move load. Gate rules, approvals and evidence content keep their existing authority.
 
-The existing Foundation inset editor also receives its visible prompt as an accessible name under the existing extended-intake flag. It remains a second editor of the same saved answer, with the normal handler and autosave.
+The existing Foundation inset editor also receives its visible prompt as an accessible name under the existing extended-intake flag. It remains a second editor of the same saved answer, with the normal handler and autosave. Theme text and background tokens now switch together: their separate fades briefly combined colors from opposite palettes and failed contrast. Final palette values and layout retain the canonical template.
 
 ## Layer Impact
 
@@ -39,46 +39,52 @@ The existing Foundation inset editor also receives its visible prompt as an acce
 - Query all required document families in one tenant- and Move-scoped review batch and one evidence batch. Keep per-family decisions, pending extraction and human-reviewed committed content.
 - Run structured requirements concurrently and reuse estate counts. Failed flagged reads remain unavailable; legacy defensive behavior is retained.
 - Start readiness and snapshot reads earlier. Start register visibility and gate readback after the canonical program/access reads authorize them, alongside the Move projection.
+- Switch step-page foregrounds, backgrounds, active-phase labels and controls together across themes, retaining the canonical token values and focus effects.
 - Retain a later client-mount mark only when it belongs to the same navigation whose settled head was measured.
 - Name the existing Foundation inset editor without changing its answer, save path or flag-off markup.
 
 ## QA / Validation
 
-- PASS: 959 focused tests across 34 suites on the final source, including canonical verdict equivalence, shared failures, tenant/Move fencing, document content, readiness concurrency, access-check reuse, declared blueprint reuse, snapshot projection and the existing intake handlers.
-- PASS: after merging actual main `64f59af8`, 1007 focused tests across 38 suites, including the changed canonical access-policy and tenancy behavior, with zero failures.
-- PASS: 16 meaningful mutations detected one at a time; every source restored. These cover request cache/fence, gate sharing, module failure, readiness concurrency, both document fences and failures, strict count failure, program/module/snapshot reuse the inset name, canonical access sharing and discovery-program reuse.
-- PASS: clean typecheck and ESLint on all changed code; library orphan audit, route/export reachability, manual/coverage/tenancy checks, all six context-corpus validators, five discovered live-walk tests, and all 11 release gates.
-- PENDING: complete exact-current-head remote CI, the immediate merge guard, deployment and a valid after walk.
-- Census: after merging the actual main predecessor `64f59af8`, independently regenerated actual main and candidate both report 2847 covered test files, a zero delta with no new test files. Behavior cases extend existing CI-covered suites. Main’s carried census was one existing upstream suite stale; this regeneration repairs that drift. Counts were not edited by hand.
+- PASS: 1026 focused tests across 39 suites on the final source, including canonical verdict equivalence, shared failures, tenant/Move fencing, document content, readiness concurrency, access-check reuse, declared blueprint reuse, snapshot projection and the existing intake handlers.
+- PASS: 16 request/readiness mutations and six separate palette-fade mutations detected one at a time; every source restored. These cover request cache/fence, gate sharing, module failure, readiness concurrency, both document fences and failures, strict count failure, program/module/snapshot reuse the inset name, canonical access sharing and discovery-program reuse.
+- PASS: clean typecheck and ESLint on all changed code; library orphan audit, route/export reachability, manual/coverage/tenancy checks, all six context-corpus validators, six discovered live-walk tests, and all 11 release gates.
+- PASS: the palette regression is reproduced as an actual WCAG contrast failure before the fix. Three local browser checks pass, including both directions of the palette switch at 390 and 1440. Real component/CSS fixtures have no contrast violations or horizontal overflow in either theme at both widths; the temporary render probe was removed.
+- FAIL: required unit CI on superseded head `31023aba` failed an unchanged sampler timing assertion (105.98 ms, limit 100 ms). That head remains ineligible; the genuine palette repair requires complete CI on its new head.
+- PENDING: complete new exact-current-head remote CI, the immediate merge guard, deployment and a valid after walk.
+- Census: after merging the actual main predecessor `64f59af8` and the later `e4863a6c` descendant, independently regenerated actual main and candidate both report 2847 covered test files, a zero delta with no new test files. Behavior cases extend existing CI-covered suites. Main’s carried census was one existing upstream suite stale; this regeneration repairs that drift. Counts were not edited by hand.
 - PASS: current real-component/CSS fixtures at 1440 and 390 with both color-scheme settings. The named inset stays within the viewport (mobile x71, width270); normal save behavior and flag-off markup are tested. Temporary render probe removed. These fixtures are local proof.
 - FAIL: the preceding deployed speed acceptance. Local tests do not establish runtime latency.
 
 ## Before / After Timing
 
-These are exact settled-head observations on the existing read-only walk. The candidate has no deployed after sample yet.
+These are observed settled-head milliseconds from valid serving before walks. This candidate has no deployed after sample. Walk 38211625754 on `65c57641` reached 20/29, UX 97, with 14 full-speed views and no lower non-speed dimension than baseline 38171682273. Later walk 38216031458 on `087c997f` reached 20/29, UX 93, with two full-speed views and 18 slow views at 2627–6768 ms. Its historical repo deployment artifact verifies the matching web/traffic/worker digest.
 
-| View | Walk 38204300162, serving 5f63421b | Walk 38207362621, serving 061c0368 | Candidate after |
+| View | Stable 65c57641 before | Later stable 087c997f before | Candidate after |
 | --- | ---: | ---: | --- |
-| P0 signal | 2583 ms | 4343 ms | Pending |
-| P1 sponsor and scope | 3500 ms | 4241 ms | Pending |
-| P2 evidence plan | 4601 ms | 4383 ms | Pending |
-| P2 validate | 5884 ms | 5420 ms | Pending |
-| P2 gate | 4937 ms | 10185 ms | Pending |
-| Root-cause design | 4580 ms | 4408 ms | Pending |
-| P3 gate | 2577 ms | 2579 ms | Pending |
+| p0-signal | 4493 ms | 4356 ms | Pending |
+| p0-scope | 2312 ms | 2830 ms | Pending |
+| p0-value | 2029 ms | 2831 ms | Pending |
+| p0-owner-evidence | 2054 ms | 2682 ms | Pending |
+| p0-approve | 2277 ms | 2671 ms | Pending |
+| p1-sponsor-scope | 3917 ms | 4383 ms | Pending |
+| p1-stakeholders | 1950 ms | 2672 ms | Pending |
+| p1-success | 1878 ms | 2284 ms | Pending |
+| p1-evidence-change | 2025 ms | 2694 ms | Pending |
+| p1-charter-gate | 2119 ms | 2709 ms | Pending |
+| p2-evidence-plan | 4604 ms | 4519 ms | Pending |
+| p2-baseline | 2110 ms | 2494 ms | Pending |
+| root-causes | 2074 ms | 2738 ms | Pending |
+| p2-validate | 5286 ms | 5880 ms | Pending |
+| p2-gate | 5833 ms | 6768 ms | Pending |
+| root-cause-design | 4580 ms | 4520 ms | Pending |
+| architecture-options | 2235 ms | 2886 ms | Pending |
+| operating-adoption | 2337 ms | 2686 ms | Pending |
+| rom-estimate | 2181 ms | 2627 ms | Pending |
+| gate | 2307 ms | 2923 ms | Pending |
 
-The five largest server contributors in the 061c0368 benchmark were P2 gate readiness (6878 ms), P2 validate readiness (3129 ms), P2 gate effective phase (2957 ms), P2 evidence-plan readiness (2938 ms), and P0 signal effective phase (2605 ms). These overlap; they are not added together.
+The five largest 087c997f server contributors were P2 gate readiness (4086 ms), P2 validate readiness (3491 ms), P2 gate effective phase (3387 ms), P2 validate effective phase (2962 ms), and P2 evidence-plan readiness (2932 ms). These overlap and are not added together.
 
-A later valid serving benchmark is walk 38211625754 on `65c5764107fec53f0c703bee33123844222af35b`, after main deployment 38210769900 completed. It reaches 20/29, UX 97, with 14 full-speed views and six failures at 3917–5833 ms. No non-speed dimension is lower than baseline 38171682273. This is a before sample for the unmerged candidate.
-
-| View | Stable serving 65c57641 before | Candidate after |
-| --- | ---: | --- |
-| P0 signal | 4493 ms | Pending |
-| P1 sponsor and scope | 3917 ms | Pending |
-| P2 evidence plan | 4604 ms | Pending |
-| P2 validate | 5286 ms | Pending |
-| P2 gate | 5833 ms | Pending |
-| Root-cause design | 4580 ms | Pending |
+The later walk also lowers the themes dimension from 10 to 7 on P0 owner/evidence, architecture options and operating/adoption because of dark contrast. Desktop screenshots capture the palette fade; the corresponding phone screenshots have the final dark palette. Local browser reproduction catches a 3.09:1 intermediate contrast ratio where 4.5:1 is required. The palette fix has local proof; runtime acceptance remains pending.
 
 ## Rollout Plan
 
@@ -106,7 +112,9 @@ Revert through a squash PR and let the repo-owned main deployment promote the re
 - Later independently verified before speed walk: https://github.com/abarva-platform/abarva/actions/runs/38211625754, serving `65c5764107fec53f0c703bee33123844222af35b`.
 - Its successful main deployment: https://github.com/abarva-platform/abarva/actions/runs/38210769900.
 - Earlier verified descendant main deploy: https://github.com/abarva-platform/abarva/actions/runs/38206506901, serving `061c036865c42165e03b4c534f097c1cee5d1afe`, digest `sha256:548b7b2cb4989f1edb25cb9609df280becdc4e5d511fcf3fb088c895ba0b8462`.
-- Candidate PR, exact-head CI, merge, deployment and after timings remain pending.
+- Candidate PR: #9442. The superseded 31023aba unit failure is run 38220639316. Complete new-head CI, merge, deployment and after timings remain pending.
+- Latest independently downloaded before walk: https://github.com/abarva-platform/abarva/actions/runs/38216031458, serving `087c997f377ab8b65801661879b0d30f5b1b7043`.
+- Its successful repo-owned deployment: https://github.com/abarva-platform/abarva/actions/runs/38215247360, digest `sha256:30463dc3316c1eb0909860632e6542089d59ec4880b70c29dd7422cf4a7f8ccc`.
 
 ## Known Gaps
 
