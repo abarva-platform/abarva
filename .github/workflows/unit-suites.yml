@@ -1200,6 +1200,8 @@ jobs:
         run: >-
           npx jest --runTestsByPath
           src/lib/data-plane/__tests__/postgresCompat.write-transaction.test.ts
+          src/lib/data-plane/__tests__/moves-operator-program-policy-sql.test.ts
+          src/lib/programs/__tests__/moves-operator-origination-participant.test.ts
           --no-coverage --ci
 
       # Last, because it asks what the steps above left behind: did any suite

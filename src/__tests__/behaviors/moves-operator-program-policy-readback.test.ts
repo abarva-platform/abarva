@@ -1,80 +1,84 @@
-import { withAzureWriteTransaction } from "@/lib/data-plane/postgresCompat";
-import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
-
-jest.mock("@/lib/data-plane/postgresCompat", () => {
-  const actual = jest.requireActual("@/lib/data-plane/postgresCompat");
-  return { ...actual, getAzureReadFluentClient: () => actual.getAzureWriteFluentClient() };
-});
-
+import { loadUserProgramAccessPolicy, canReadProgram } from "@/lib/auth/program-access-policy";
 const actor = "00000000-0000-4000-8000-000000000101";
 const client = "00000000-0000-4000-8000-000000000102";
 const program = "00000000-0000-4000-8000-000000000104";
-const ctx = { userId: actor, clientId: client, clientKey: "meridian", role: "client_viewer",
-  syntheticE2eOperator: true, email: "proof@synthetic.invalid" };
-
-async function readPolicy(mode: "assigned" | "empty" | "denied" | "membership-error" | "programs-error" | "participants-error") {
-  const statements: Array<{ sql: string; params: unknown[] }> = [];
-  const connection = { query: jest.fn(async (sql: string, params: unknown[] = []) => {
-    statements.push({ sql, params });
-    if (/^BEGIN|^SET LOCAL|^COMMIT|^ROLLBACK/.test(sql)) return { command: sql.startsWith("COMMIT") ? "COMMIT" : "CONTROL", rows: [] };
-    if (sql.includes('FROM "person_client_memberships"')) {
-      if (mode === "membership-error") throw Object.assign(new Error("unavailable"), { code: "08006" });
-      return { rows: [{ role: "client_viewer", access_level: "program_member", financial_visibility: true,
-        can_admin_users: false, can_create_programs: mode !== "denied", can_approve_gates: true }] };
-    }
-    if (sql.includes('FROM "engagements"')) {
-      if (mode === "programs-error") throw new Error("unavailable");
-      expect(sql).toContain('"client_id" = $1');
-      expect(sql).toContain('"archived_at" IS NULL');
-      expect(sql).toContain('"deleted_at" IS NULL');
-      expect(params).toEqual([client]);
-      return { rows: mode === "empty" ? [] : [{ id: program }] };
-    }
-    if (sql.includes('FROM "engagement_participants"')) {
-      if (mode === "participants-error") throw new Error("unavailable");
-      if (sql.includes('"engagement".')) throw new Error("embedded relationship has no SQL join");
-      expect(sql).toContain('"user_id" = $1');
-      expect(sql).toContain('"engagement_id" = ANY($2)');
-      expect(params).toEqual([actor, [program]]);
-      return { rows: [{ engagement_id: program, role: "Automated E2E Operator", approval_authority: "approver",
-        program_access_level: "program_member", can_view_financial: true, can_upload: true,
-        can_generate_deliverables: true, can_publish_deliverables: true, can_approve_phase_gates: true }] };
-    }
-    throw new Error("Unexpected SQL " + sql);
-  }), release: jest.fn() };
-  let result: Awaited<ReturnType<typeof loadUserProgramAccessPolicy>> | null = null;
-  let error: unknown;
-  try { result = await withAzureWriteTransaction("fixture-only", () => loadUserProgramAccessPolicy(ctx), {
-    connect: async () => connection as unknown as Pick<import("pg").PoolClient, "query" | "release">,
-  }); }
-  catch (caught) { error = caught; }
-  expect(statements.some(({ sql }) => /^(INSERT|UPDATE|DELETE)/.test(sql))).toBe(false);
-  expect(connection.release).toHaveBeenCalledTimes(1);
-  return { result, error, statements };
-}
-
-it("reads assigned scope through real Postgres predicates and no embedded relationship", async () => {
-  const { result, error } = await readPolicy("assigned");
-  expect(error).toBeUndefined();
-  expect(result).toMatchObject({ accessLevel: "program_member", programScope: "assigned_programs_only",
-    programIdsAllowed: [program], canCreatePrograms: true, canAdminUsers: false, canApproveGates: true });
+const ctx = { userId: actor, clientId: client, clientKey: "meridian", role: "client_viewer", syntheticE2eOperator: true, email: "proof@synthetic.invalid" };
+const mockState = { member: { role: "client_viewer", access_level: "program_member", financial_visibility: true,
+  can_admin_users: false, can_create_programs: true, can_approve_gates: true } as Record<string, unknown> | null,
+  programs: [{ id: program }], participants: [{ engagement_id: program, role: "Automated E2E Operator",
+    program_access_level: "program_member", approval_authority: "approver", can_approve_phase_gates: true,
+    can_view_financial: true, can_upload: true, can_generate_deliverables: true, can_publish_deliverables: true }] as Array<Record<string, unknown>>,
+  fail: "", calls: [] as Array<{ table: string; method: string; args: unknown[] }> };
+jest.mock("@/lib/data-plane/postgresCompat", () => ({ getAzureReadFluentClient: () => ({ from: (table: string) => {
+  const b: Record<string, unknown> = {};
+  for (const method of ["select", "eq", "in", "is"]) b[method] = (...args: unknown[]) => {
+    mockState.calls.push({ table, method, args }); return b;
+  };
+  const result = () => ({ data: mockState.fail === table ? null : table === "person_client_memberships" ? mockState.member
+    : table === "engagements" ? mockState.programs : mockState.participants,
+    error: mockState.fail === table ? { message: "unavailable" } : null });
+  b.maybeSingle = async () => result();
+  b.then = (resolve: (v: unknown) => unknown) => Promise.resolve(result()).then(resolve);
+  return b;
+} }) }));
+beforeEach(() => {
+  mockState.member = { role: "client_viewer", access_level: "program_member", financial_visibility: true,
+    can_admin_users: false, can_create_programs: true, can_approve_gates: true };
+  mockState.programs = [{ id: program }]; mockState.fail = ""; mockState.calls = [];
+  mockState.participants = [{ engagement_id: program, role: "Automated E2E Operator", program_access_level: "program_member",
+    approval_authority: "approver", can_approve_phase_gates: true, can_view_financial: true,
+    can_upload: true, can_generate_deliverables: true, can_publish_deliverables: true }];
+});
+it("preserves assigned-only creation and exact tenant/actor read predicates", async () => {
+  expect(await loadUserProgramAccessPolicy(ctx)).toMatchObject({ accessLevel: "program_member", programIdsAllowed: [program],
+    programScope: "assigned_programs_only", canCreatePrograms: true, canAdminUsers: false });
+  expect(mockState.calls).toEqual(expect.arrayContaining([
+    { table: "engagements", method: "eq", args: ["client_id", client] },
+    { table: "engagement_participants", method: "eq", args: ["user_id", actor] },
+    { table: "engagement_participants", method: "in", args: ["engagement_id", [program]] },
+  ]));
+  expect(await canReadProgram(ctx, program)).toBe(true);
+  expect(await canReadProgram(ctx, "unassigned-program")).toBe(false);
+});
+it("allows first creation without viewing all programs", async () => {
+  mockState.programs = [];
+  expect(await loadUserProgramAccessPolicy(ctx)).toMatchObject({ programIdsAllowed: [], canCreatePrograms: true, canAdminUsers: false });
+  expect(mockState.calls.some((c) => c.table === "engagement_participants")).toBe(false);
+});
+it("retains real creation denial and financial restrictions", async () => {
+  mockState.member!.can_create_programs = false; mockState.member!.financial_visibility = false;
+  mockState.participants = [];
+  expect(await loadUserProgramAccessPolicy(ctx)).toMatchObject({ canCreatePrograms: false, canViewFinancialData: false,
+    outputPolicy: { exactFinancialValues: false } });
+});
+it("does not turn a sponsor contact into product access", async () => {
+  mockState.member = null; mockState.participants = [{ engagement_id: program, role: "Sponsor", approval_authority: "sponsor" }];
+  expect(await loadUserProgramAccessPolicy(ctx)).toMatchObject({ accessLevel: "no_program_access", programIdsAllowed: [], canCreatePrograms: false });
+});
+it.each(["person_client_memberships", "engagements", "engagement_participants"])("keeps %s read failure unavailable", async (table) => {
+  mockState.fail = table;
+  await expect(loadUserProgramAccessPolicy(ctx)).rejects.toMatchObject({ code: "program_access_policy_unavailable" });
 });
 
-it("allows first creation with zero active Moves and no all-program visibility", async () => {
-  const { result, statements, error } = await readPolicy("empty");
-  expect(error).toBeUndefined();
-  expect(result).toMatchObject({ programIdsAllowed: [], canCreatePrograms: true, canAdminUsers: false });
-  expect(statements.some(({ sql }) => sql.includes('FROM "engagement_participants"'))).toBe(false);
+it("preserves an ordinary declared client administrator's existing client scope", async () => {
+  expect(await loadUserProgramAccessPolicy({ ...ctx, syntheticE2eOperator: false, tenantRole: "tenant_admin" }))
+    .toMatchObject({ accessLevel: "client_admin", programIdsAllowed: null, canCreatePrograms: true, canAdminUsers: true });
 });
-
-it("preserves a real create=false denial", async () => {
-  const { result, error } = await readPolicy("denied");
-  expect(error).toBeUndefined();
-  expect(result?.canCreatePrograms).toBe(false);
+it("derives only assigned member access from a real participant without membership", async () => {
+  mockState.member = null;
+  expect(await loadUserProgramAccessPolicy(ctx)).toMatchObject({ accessLevel: "program_member", programIdsAllowed: [program],
+    canCreatePrograms: false, canAdminUsers: false, canApproveGates: true, canViewFinancialData: true });
 });
-
-it.each(["membership-error", "programs-error", "participants-error"] as const)("keeps %s unavailable instead of an empty permission result", async (mode) => {
-  const { result, error } = await readPolicy(mode);
-  expect(result).toBeNull();
-  expect(error).toMatchObject({ code: "program_access_policy_unavailable" });
+it("keeps a participant viewer assigned and without creator or publishing rights", async () => {
+  mockState.member = null; mockState.participants = [{ engagement_id: program, role: "Reviewer",
+    program_access_level: "program_viewer", can_view_financial: false, can_upload: false, can_generate_deliverables: false }];
+  expect(await loadUserProgramAccessPolicy(ctx)).toMatchObject({ accessLevel: "program_viewer", programIdsAllowed: [program],
+    canCreatePrograms: false, canApproveGates: false, canPublishDeliverables: false,
+    canUploadArtifacts: false, canGenerateDeliverables: false, canViewFinancialData: false });
+});
+it("denies a noncanonical actor with no identity resolver input", async () => {
+  mockState.member = null; mockState.participants = [];
+  expect(await loadUserProgramAccessPolicy({ ...ctx, userId: "clerk:unbound", email: undefined }))
+    .toMatchObject({ accessLevel: "no_program_access", programIdsAllowed: [], canCreatePrograms: false });
+  expect(mockState.calls).toHaveLength(0);
 });

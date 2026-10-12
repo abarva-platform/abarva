@@ -7,6 +7,7 @@ import "server-only";
 import { requireTenancy, TenancyError } from "@/app/api/v1/programs/_auth";
 import { getActiveClientRow } from "@/lib/active-client";
 import { loadUserProgramAccessPolicy, ProgramAccessPolicyUnavailableError } from "@/lib/auth/program-access-policy";
+import { isAutomaticOperatorParticipant } from "@/lib/auth/synthetic-e2e-operator-participant";
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from "@/lib/client-config";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { submitForApproval } from "@/lib/programs/approval";
@@ -1111,8 +1112,7 @@ export async function submitOriginationBrief(
       briefSnapshot,
     });
 
-    const operatorAlreadyAssigned = (personId: string) =>
-      tenancy.syntheticE2eOperator === true && personId === tenancy.userId;
+    const operatorAlreadyAssigned = (personId: string) => isAutomaticOperatorParticipant(tenancy, personId);
     if (!operatorAlreadyAssigned(sponsor.id)) await insertParticipant({
       programId,
       person: sponsor,

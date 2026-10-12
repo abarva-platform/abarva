@@ -5,6 +5,11 @@ import { isSyntheticE2eOperatorTenant } from "@/lib/auth/synthetic-e2e-operator"
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Used after automatic assignment succeeds; preserve that exact person's role. */
+export function isAutomaticOperatorParticipant(ctx: TenancyCtx, personId: string): boolean {
+  return ctx.syntheticE2eOperator === true && personId === ctx.userId;
+}
+
 /** Assign the creator only to the fresh Move. A failed assignment stops the flow. */
 export async function assignSyntheticE2eOperatorToCreatedMove(
   ctx: TenancyCtx,

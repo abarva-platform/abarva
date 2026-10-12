@@ -1,4 +1,5 @@
 import { ensureOperatorPersonProvisioned } from "@/lib/auth/operator-persona-provisioning";
+import { isSyntheticE2eOperatorProfile } from "@/lib/auth/synthetic-e2e-operator";
 
 const mockPerson = {
   id: "00000000-0000-4000-8000-000000000101", name: "Automated Proof",
@@ -21,7 +22,8 @@ const mockState = {
   person: { ...mockPerson }, memberships: [{ ...mockMembership }], participants: [] as unknown[],
   duplicatePerson: false, auditFailure: false, auditZeroRows: false, personCasFailure: false, membershipCasFailure: false,
   readbackFailure: false, personDrift: false, queries: [] as string[], audits: [] as Record<string, unknown>[],
-  commits: 0, rollbacks: 0, fluentWrites: 0, params: [] as unknown[][],
+  commits: 0, rollbacks: 0, fluentWrites: 0, params: [] as unknown[][], noPerson: false,
+  fluentPayloads: [] as Array<{ table: string; operation: string; row: Record<string, unknown> }>,
 };
 const mockCreatePerson = jest.fn();
 jest.mock("@/lib/db/person", () => ({ createPerson: (...args: unknown[]) => mockCreatePerson(...args) }));
@@ -32,10 +34,10 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
       select: () => builder, eq: () => builder,
       maybeSingle: async () => ({ data: table === "person_client_memberships"
         ? { ...mockState.memberships[0], ...(mockState.readbackFailure ? { can_admin_users: true } : {}) }
-        : { ...mockState.person }, error: null }),
-      update: () => { mockState.fluentWrites++; return builder; },
-      insert: () => { mockState.fluentWrites++; return builder; },
-      then: (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve),
+        : mockState.noPerson ? null : { ...mockState.person }, error: null }),
+      update: (row: Record<string, unknown>) => { mockState.fluentWrites++; mockState.fluentPayloads.push({ table, operation: "update", row }); return builder; },
+      insert: (row: Record<string, unknown>) => { mockState.fluentWrites++; mockState.fluentPayloads.push({ table, operation: "insert", row }); return builder; },
+      then: (resolve: (v: unknown) => unknown) => Promise.resolve({ data: table === "person_client_memberships" ? mockState.memberships : [], error: null }).then(resolve),
     };
     return builder;
   } }),
@@ -94,8 +96,9 @@ const input = {
 beforeEach(() => {
   Object.assign(mockState, { person: { ...mockPerson }, memberships: [{ ...mockMembership }], participants: [],
     duplicatePerson: false, auditFailure: false, auditZeroRows: false, personCasFailure: false, membershipCasFailure: false,
-    readbackFailure: false, personDrift: false, queries: [], params: [], audits: [], commits: 0, rollbacks: 0, fluentWrites: 0 });
-  mockCreatePerson.mockReset();
+    readbackFailure: false, personDrift: false, queries: [], params: [], audits: [], commits: 0, rollbacks: 0, fluentWrites: 0,
+    noPerson: false, fluentPayloads: [] });
+  mockCreatePerson.mockReset().mockResolvedValue({ id: mockPerson.id });
 });
 
 it("reconciles only the verified actor's unchanged unbound viewer and one membership atomically", async () => {
@@ -185,4 +188,45 @@ it("does not reconcile or grant creation to an ordinary viewer with the same ema
   expect(mockState.person).toEqual(mockPerson);
   expect(mockState.memberships[0].can_create_programs).toBe(false);
   expect(mockState.queries).toHaveLength(0);
+});
+
+it("creates a new declared operator with one member and no Source or administrator rights", async () => {
+  mockState.noPerson = true; mockState.memberships = [];
+  expect(await ensureOperatorPersonProvisioned(input)).toMatchObject({ personId: mockPerson.id, accessLevel: "program_member" });
+  expect(mockCreatePerson).toHaveBeenCalledWith(expect.objectContaining({ graph_node_id: "clerk:user_fixture_operator", role: "client_viewer" }));
+  expect(mockState.fluentPayloads.find((p) => p.table === "person_client_memberships")?.row).toMatchObject({
+    person_id: mockPerson.id, client_id: input.clientId, access_level: "program_member", can_admin_users: false,
+    can_create_programs: true, can_approve_gates: true, financial_visibility: true,
+    can_upload_source_artifacts: false, can_generate_sourcing_artifacts: false, can_publish_sourcing_artifacts: false,
+  });
+  expect(mockState.fluentPayloads.find((p) => p.table === "admin_audit_log")?.row).toMatchObject({
+    metadata: expect.objectContaining({ authoritySource: "authenticated_clerk_profile", profileSha256: "a".repeat(64) }),
+  });
+});
+
+it("retains an already linked operator's exact membership without a person rebind", async () => {
+  mockState.person.graph_node_id = "clerk:user_fixture_operator";
+  expect(await ensureOperatorPersonProvisioned(input)).toMatchObject({ personId: mockPerson.id, accessLevel: "program_member" });
+  expect(mockCreatePerson).not.toHaveBeenCalled();
+  expect(mockState.queries).toHaveLength(0);
+  expect(mockState.fluentPayloads.some((p) => p.table === "persons")).toBe(false);
+  expect(mockState.fluentPayloads.find((p) => p.table === "person_client_memberships")?.row.can_admin_users).toBe(false);
+});
+
+const declaredProfile = { accountType: "synthetic_e2e_operator", automated: true, approvalRef: "private-approval-reference",
+  role: "client", clientId: "meridian", defaultClientId: "meridian", clientLocked: true, moduleAccess: ["programs"],
+  programScope: "assigned_programs_only", programCapabilities: { accessLevel: "program_member", canAdminUsers: false,
+    canCreatePrograms: true, canApproveGates: true, financialVisibility: true, canUploadArtifacts: true,
+    canGenerateDeliverables: true, canPublishDeliverables: true } };
+it("accepts the complete declared profile and its optional single-client viewer scope", () => {
+  expect(isSyntheticE2eOperatorProfile(declaredProfile)).toBe(true);
+  expect(isSyntheticE2eOperatorProfile({ ...declaredProfile, allowedClientKeys: ["meridian"], visibleClientKeys: ["meridian"], tenantRoles: { meridian: "viewer" } })).toBe(true);
+});
+it.each([
+  { accountType: "ordinary" }, { automated: false }, { approvalRef: "" }, { person_id: mockPerson.id },
+  { clientLocked: false }, { programScope: "all_client_programs" }, { moduleAccess: ["programs", "source"] },
+  { allowedClientKeys: ["other"] }, { visibleClientKeys: ["other"] }, { tenantRoles: { meridian: "tenant_admin" } },
+  { tenantRoles: { other: "viewer" } }, { programCapabilities: { ...declaredProfile.programCapabilities, canAdminUsers: true } },
+])("refuses malformed or widened profile %p", (change) => {
+  expect(isSyntheticE2eOperatorProfile({ ...declaredProfile, ...change })).toBe(false);
 });
