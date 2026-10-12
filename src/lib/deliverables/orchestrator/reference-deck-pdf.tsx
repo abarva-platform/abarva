@@ -109,7 +109,7 @@ function PdfBlock({ block, sharedBody = false }: { block: ReferenceBlock; shared
       {block.rows.map((row, index) => <View key={index} style={{ flexDirection: "row", marginBottom: 8 }}><Text style={{ width: 130, fontSize: 10, color: ink }}>{row.label}</Text>{block.quarters.map((_, q) => <View key={q} style={{ flex: 1, height: 18, backgroundColor: q >= row.from && q <= row.to ? ink : "#EFEEEA", marginRight: 4 }} />)}{row.cost && <Text style={{ width: 85, fontSize: 10, textAlign: "right" }}>{row.cost.display}</Text>}</View>)}
     </View>
   );
-  if (block.kind === "gap") return <View style={{ marginTop: block.compact ? 12 : 18, minHeight: block.compact ? 120 : 255,
+  if (block.kind === "gap") return <View style={{ marginTop: block.compact ? 12 : 18, minHeight: block.compact ? 100 : 255,
     backgroundColor: "#EFEEEA", borderLeftWidth: 6, borderLeftColor: accent, padding: block.compact ? 14 : 25 }}>
     <Text style={{ fontSize: block.compact ? 17 : 22, fontFamily: "Times-Roman", color: ink }}>{block.title}</Text>
     <Text style={{ fontSize: block.compact ? 11 : 14, color: ink, marginTop: block.compact ? 10 : 22 }}>{block.detail}</Text>

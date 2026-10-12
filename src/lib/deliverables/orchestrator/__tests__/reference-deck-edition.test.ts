@@ -102,7 +102,9 @@ describe("live-input reference edition", () => {
   it("keeps an eight-stage flow and its missing evidence panel inside the investment body", async () => {
     const inputs = fixture("investment");
     inputs.capture[2] = { status: "ready", value: { process_handoffs: "Intake reviews evidence; Operations checks eligibility; The analyst examines documentation; The owner assesses the exception; The reviewer confirms the basis; Finance checks timing; The team records the decision; The lead monitors the outcome" } };
-    const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+    const authored = words(INVESTMENT_SEQUENCE.length);
+    authored[6]!.title = "The workflow spans several accountable teams whose supporting evidence must be confirmed before leaders can rely on the proposed outcome";
+    const spec = buildReferenceEdition(inputs, authored);
     const flow = spec.slides[6]!;
     expect(flow.blocks[0]).toMatchObject({ kind: "flow", nodes: expect.any(Array) });
     expect(flow.blocks[1]).toMatchObject({ kind: "gap", compact: true });

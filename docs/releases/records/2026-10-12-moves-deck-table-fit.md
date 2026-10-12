@@ -52,11 +52,13 @@ their notes and figure ledger.
 
 - Local focused renderer, wording, inspection, preview and approved-estimate
   boundary tests: pass, 97 tests across nine suites on Node.js 24.
-- Mutation checks: pass, 17 planted defects detected; all changes restored.
+- Mutation checks: pass, 18 planted defects detected; all changes restored.
 - Actual local synthetic PowerPoint and PDF files: pass for long answers,
   assumptions, approved estimate rows and a workflow with missing evidence.
   Native PowerPoint files were rendered through LibreOffice and inspected as
   images alongside the separately generated PDFs. This is local layout evidence.
+- Direct PDF background separation: pass with a two-line headline; reverting
+  the compact panel size is detected from actual PDF drawing coordinates.
 - Direct PDF inspection: pass; long validation has 11 pages and long investment
   and workflow-plus-gap cases have 22 pages, with no extraction findings.
 - Node.js 24 typecheck and changed-file lint: pass.
@@ -65,6 +67,9 @@ their notes and figure ledger.
   layout suite reached by the existing orchestrator CI sweep.
 - Library orphan, route/export reachability and manual/census/fence checks:
   pass. Release checks: pass; all 11 gates ran.
+- Actual main `d75ca628f02f4c2087f7ed571d8df313ffb0a654` merged before
+  publication. Its changes are Tower release records only; product and generated
+  baselines remain unchanged. Documentation and censuses genuinely regenerated.
 - Exact-head CI, fetched-ref collision guard, deployment and authenticated
   populated-case acceptance: pending.
 
