@@ -904,12 +904,12 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const canonicalUseCaseId = nullableText(payload(row).use_case_object_id);
   const canonicalToolId = nullableText(payload(row).tool_object_id);
   const populationKind =
-    declaredPage === "ai_portfolio" && canonicalUseCaseId && !canonicalToolId
+    declaredPage === "ai_portfolio" && canonicalUseCaseId
       ? "ai_case"
-      : declaredPage === "adoption_lens" && canonicalToolId
-        ? "tool_rollout"
-        : declaredPage === "adoption_lens" && canonicalUseCaseId && !canonicalToolId
-          ? "usage_observation"
+      : declaredPage === "adoption_lens" && canonicalUseCaseId
+        ? "usage_observation"
+        : declaredPage === "adoption_lens" && canonicalToolId
+          ? "tool_rollout"
           : "unknown";
   const licensedUsersRaw = payloadNullableNumberFrom(row, [
     "licensed_users",

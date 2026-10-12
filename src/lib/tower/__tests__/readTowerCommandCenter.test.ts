@@ -315,6 +315,7 @@ describe("readTowerCommandCenter", () => {
           row_key: "adoption-1",
           page_key: "adoption_lens",
           use_case_object_id: "use-case-1",
+          tool_object_id: "tool-1",
           display_payload_json: { page_key: "adoption_lens", title: "Usage observation" },
         }),
       ],
