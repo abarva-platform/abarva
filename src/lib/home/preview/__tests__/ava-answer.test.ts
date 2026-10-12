@@ -3,6 +3,7 @@ import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacke
 
 import { answerHomeAvaQuestion } from "../ava-answer";
 import type { ChapterView, TechnologyEstateBundle } from "../types";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 
 jest.mock("@/lib/agent/stream", () => ({
   getAuditedAnthropicClient: jest.fn(),
@@ -194,6 +195,53 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.directAnswer).toContain("not supplied");
     expect(answer.gaps[0].detail).toContain("unknown, not zero");
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it.each([
+    ["reviewed_snapshot", "Reviewed stored record"],
+    ["reviewed_snapshot_fallback", "Reviewed stored record fallback"],
+    ["ecl_serving_projection", "Live governed rows"],
+  ] as const)("answers conversational counts using the actual %s source", async (kind, label) => {
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      recordSource: { kind, canonicalSnapshotHash: "record-count-version-test" },
+      question: "For the record currently on screen, how many vendor contracts and data assets/integrations are available? State the record source. Use two short bullets; do not substitute another assessment or version.",
+    });
+    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+    expect(answer.status).toBe("answered");
+    expect(answer.directAnswer).toBe(`Record on screen: ${label}.`);
+    expect(answer.prose).toBe("- Vendor Contracts: 230 rows.\n- Data Assets & Integrations: 1710 rows.");
+    expect(answer.citations).toHaveLength(2);
+    expect(answer.citations.every((citation) => citation.recordId === "record-count-version-test")).toBe(true);
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("does not invent a record source when only counts are available", async () => {
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      question: "How many vendor contracts are currently available? State the record source.",
+    });
+    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+    expect(answer.status).toBe("partial");
+    expect(answer.directAnswer).toContain("Record source: not supplied");
+    expect(answer.directAnswer).not.toContain("Live governed record");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it.each([
+    "How many critical vendor contracts are currently available? Use two short bullets.",
+    "How many vendor contracts are available and why are they our biggest exposure? State the record source.",
+    "How many vendor contracts were added since last quarter? Use two short bullets.",
+  ])("does not replace a filtered, interpretive or historical question with a total: %s", async (question) => {
+    mockClaudeJson({ status: "no_data", direct_answer: "Unknown", cited_claim_tags: [],
+      visual: { type: "none" }, caveats: ["Requested basis is not established."] });
+    await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: CANONICAL_TENANT_KEYS[0], question,
+    });
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalled();
   });
 
   it("does not treat unique vendors or spend as family row counts", async () => {
