@@ -26,6 +26,7 @@ export function homeRecordSourceToken(
         version?.narrativeGeneratedAt ?? null,
         version?.dataAsOf ?? null,
         version?.coherence ?? null,
+        ...(version?.integratedInsightHash ? [version.integratedInsightHash] : []),
       ]),
     )
     .digest("hex");

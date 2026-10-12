@@ -32,6 +32,7 @@ import {
 } from "@/lib/home/preview/record-source";
 import type {
   ChapterView,
+  GroundedClaim,
   HomeRecordRenderSource,
   HomeReviewBundle,
   TechObjectType,
@@ -227,6 +228,7 @@ function chapterHtml(
   recordSource: HomeRecordRenderSource,
   narrativeDate: string,
   enterpriseContext: HomeEnterpriseContext | null | undefined,
+  evidenceById: Record<string, string[]>,
 ): string {
   const depth = chapterDepth(chapter.chapterId, estate);
   const mixed = mixedNarrative(recordSource);
@@ -272,7 +274,21 @@ function chapterHtml(
   const prior = `
     <h2>${escapeHtml(chapter.headline)}</h2>
     <p class="question">${escapeHtml(chapter.guidingQuestion)}</p>
-    <p>${escapeHtml(chapter.executive_synthesis)}</p>`;
+    <p>${escapeHtml(chapter.executive_synthesis)}</p>
+    ${claimSections(chapter)
+      .map(([label, claims]) =>
+        claims.length
+          ? `<h3>${escapeHtml(label)}</h3><ul>${claims
+              .map(
+                (claim) =>
+                  `<li><p>${escapeHtml(claim.statement)}</p><p class="note">${escapeHtml(claim.claim_type === "ADVISORY_INFERENCE" ? "Interpretation" : "Published claim")} · Confidence: ${escapeHtml(claim.confidence)}</p><p class="note">Evidence: ${escapeHtml(claim.evidence_ids.flatMap((id) => evidenceById[id] ?? [id]).join("; "))}</p></li>`,
+              )
+              .join("")}</ul>`
+          : "",
+      )
+      .join("")}
+    ${chapter.questions_to_ask.length ? `<h3>Questions to ask</h3><ul>${chapter.questions_to_ask.map((question) => `<li>${escapeHtml(question)}</li>`).join("")}</ul>` : ""}
+    ${chapter.limitations.length ? `<h3>Limitations</h3><ul>${chapter.limitations.map((limit) => `<li>${escapeHtml(limit)}</li>`).join("")}</ul>` : ""}`;
   const noInterviews =
     chapter.chapterId === "leadership_perspective" &&
     !estate.interviews?.length;
@@ -290,6 +306,28 @@ function chapterHtml(
         : `${prior}${currentContext}${currentDepth}`
     }
   </article>`;
+}
+
+function claimSections(chapter: ChapterView): Array<[string, GroundedClaim[]]> {
+  return [
+    ["Key insights", chapter.key_insights],
+    ["Tensions", chapter.tensions],
+    ["What to watch", chapter.what_to_watch],
+  ];
+}
+
+function exportEvidenceReferences(
+  bundle: HomeReviewBundle,
+): Record<string, string[]> {
+  return Object.fromEntries(
+    [
+      ...bundle.thesis.signalPacket.signals,
+      ...bundle.thesis.signalPacket.contextItems,
+    ].map((item) => [
+      item.id,
+      item.evidenceRefs?.length ? item.evidenceRefs : [item.id],
+    ]),
+  );
 }
 
 export function renderHomeWalkthroughHtml({
@@ -362,7 +400,7 @@ export function renderHomeWalkthroughHtml({
   </section>
   ${familySummaryHtml(bundle)}
   ${architectureSummaryHtml(bundle)}
-  ${bundle.chapters.map((chapter, index) => chapterHtml(chapter, index, estate, recordSource, compiled, bundle.thesis.signalPacket.homeEnterpriseContext)).join("")}
+  ${bundle.chapters.map((chapter, index) => chapterHtml(chapter, index, estate, recordSource, compiled, bundle.thesis.signalPacket.homeEnterpriseContext, exportEvidenceReferences(bundle))).join("")}
 </main>
 </body>
 </html>`;
@@ -523,6 +561,7 @@ function PdfChapter({
   recordSource,
   narrativeDate,
   enterpriseContext,
+  evidenceById,
 }: {
   chapter: ChapterView;
   index: number;
@@ -530,6 +569,7 @@ function PdfChapter({
   recordSource: HomeRecordRenderSource;
   narrativeDate: string;
   enterpriseContext: HomeEnterpriseContext | null | undefined;
+  evidenceById: Record<string, string[]>;
 }) {
   const depth = chapterDepth(chapter.chapterId, estate);
   const mixed = mixedNarrative(recordSource);
@@ -581,15 +621,66 @@ function PdfChapter({
     </>
   );
   const prior = (
-    <View wrap={false}>
-      {mixed ? <Text style={pdfStyles.h3}>{priorLabel}</Text> : null}
-      <Text style={pdfStyles.title}>{chapter.headline}</Text>
-      <Text style={pdfStyles.meta}>{chapter.guidingQuestion}</Text>
-      <Text style={pdfStyles.text}>{chapter.executive_synthesis}</Text>
+    <View>
+      <View wrap={false}>
+        {mixed ? <Text style={pdfStyles.h3}>{priorLabel}</Text> : null}
+        <Text style={pdfStyles.title} hyphenationCallback={(word) => [word]}>
+          {chapter.headline}
+        </Text>
+        <Text style={pdfStyles.meta}>{chapter.guidingQuestion}</Text>
+        <Text style={pdfStyles.text}>{chapter.executive_synthesis}</Text>
+      </View>
+      {claimSections(chapter).map(([label, claims]) =>
+        claims.length ? (
+          <View key={label}>
+            <Text style={pdfStyles.h3}>{label}</Text>
+            {claims.map((claim, claimIndex) => (
+              <View
+                key={claim.claim_ref ?? `${label}-${claimIndex}`}
+                wrap={false}
+              >
+                <Text style={pdfStyles.text}>{claim.statement}</Text>
+                <Text style={pdfStyles.meta}>
+                  {claim.claim_type === "ADVISORY_INFERENCE"
+                    ? "Interpretation"
+                    : "Published claim"}{" "}
+                  · Confidence: {claim.confidence}
+                </Text>
+                <Text style={pdfStyles.meta}>
+                  Evidence:{" "}
+                  {claim.evidence_ids
+                    .flatMap((id) => evidenceById[id] ?? [id])
+                    .join("; ")}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null,
+      )}
+      {chapter.questions_to_ask.length ? (
+        <Text style={pdfStyles.h3}>Questions to ask</Text>
+      ) : null}
+      {chapter.questions_to_ask.map((question, questionIndex) => (
+        <Text key={`question-${questionIndex}`} style={pdfStyles.text}>
+          {question}
+        </Text>
+      ))}
+      {chapter.limitations.length ? (
+        <Text style={pdfStyles.h3}>Limitations</Text>
+      ) : null}
+      {chapter.limitations.map((limit, limitIndex) => (
+        <Text key={`limit-${limitIndex}`} style={pdfStyles.text}>
+          {limit}
+        </Text>
+      ))}
     </View>
   );
   return (
-    <Page size="LETTER" orientation={contextSection ? "landscape" : "portrait"} style={pdfStyles.page}>
+    <Page
+      size="LETTER"
+      orientation={contextSection ? "landscape" : "portrait"}
+      style={pdfStyles.page}
+    >
       <Text style={pdfStyles.eyebrow}>
         Chapter {String(index + 1).padStart(2, "0")} · {chapter.title}
       </Text>
@@ -597,7 +688,9 @@ function PdfChapter({
         <>
           <View style={pdfStyles.scope} wrap={false}>
             <Text style={pdfStyles.h2}>
-              {contextSection ? "Current source-linked record" : "Current record, interpretation pending review"}
+              {contextSection
+                ? "Current source-linked record"
+                : "Current record, interpretation pending review"}
             </Text>
             <Text style={pdfStyles.meta}>
               {homeRecordSourceLabel(recordSource)} ·{" "}
@@ -610,7 +703,9 @@ function PdfChapter({
                 interpretation cannot establish what leaders said.
               </Text>
             ) : null}
-            {!contextSection && !depth.findings.length && !depth.tables.length ? (
+            {!contextSection &&
+            !depth.findings.length &&
+            !depth.tables.length ? (
               <Text style={pdfStyles.text}>
                 No current chapter-specific tables or findings are available in
                 this export.
@@ -622,10 +717,13 @@ function PdfChapter({
             <View>
               <Text style={pdfStyles.h3}>{contextSection.title}</Text>
               <Text style={pdfStyles.meta}>
-                Synthetic reference · Not client-attested · Source-linked governed rows
+                Synthetic reference · Not client-attested · Source-linked
+                governed rows
               </Text>
               {contextSection.paragraphs.map((paragraph, paragraphIndex) => (
-                <Text key={paragraphIndex} style={pdfStyles.text}>{paragraph}</Text>
+                <Text key={paragraphIndex} style={pdfStyles.text}>
+                  {paragraph}
+                </Text>
               ))}
               {contextSection.tables.map((table) => (
                 <PdfTable key={table.caption} table={table} />
@@ -728,6 +826,7 @@ export function buildHomeWalkthroughPdf({
           recordSource={recordSource}
           narrativeDate={compiled}
           enterpriseContext={bundle.thesis.signalPacket.homeEnterpriseContext}
+          evidenceById={exportEvidenceReferences(bundle)}
         />
       ))}
     </Document>

@@ -15,6 +15,7 @@ import {
   reportHomeProjectionFault,
 } from "./home-projection-fault";
 import { normalizeHomeReviewBundle } from "./bundle-normalization";
+import { readHomeIntegratedInsights } from "./integrated-insight-reader";
 import { buildHomeEnterpriseContext } from "./ecl-enterprise-context";
 import { homeProjectionPayload } from "./projection-row-payload";
 import {
@@ -3249,14 +3250,14 @@ export async function getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
       };
     }
     const bundle = await getHomeEclProjectionBundle(tenantKey, selection);
-    return {
+    return await readHomeIntegratedInsights({
       bundle,
       recordSource: {
         kind: "ecl_serving_projection",
         canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
         contextVersion: bundle.contextVersion,
       },
-    };
+    });
   } catch (error) {
     reportHomeProjectionFault({
       tenantKey,
