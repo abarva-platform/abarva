@@ -97,6 +97,14 @@ export interface ContextItem {
   evidenceRefs?: string[];
 }
 
+export interface BusinessEconomicsContext {
+  operatingSegments: string[];
+  customerSegments: string[];
+  technologyBudget: number | null;
+  technologyBudgetShareOfRevenue: number | null;
+  recordedApplicationAnnualCost?: number | null;
+}
+
 /** A relationship the compiler could not confirm from an explicit canonical link, only propose. */
 export interface CandidateRelationship {
   id: string;
@@ -1485,6 +1493,12 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
     });
   }
 
+  const businessEconomics: BusinessEconomicsContext = {
+    operatingSegments: dc.business.operatingSegments,
+    customerSegments: dc.business.customerSegments,
+    technologyBudget: dc.technology.technologyBudget,
+    technologyBudgetShareOfRevenue: dc.business.revenue ? dc.technology.technologyBudget / dc.business.revenue : null,
+  };
   return {
     enterpriseIdentity: {
       businessModel: dc.business.businessModel,
@@ -1492,12 +1506,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
       revenue: dc.business.revenue,
       employeeCount: dc.business.employeeCount,
     },
-    businessEconomics: {
-      operatingSegments: dc.business.operatingSegments,
-      customerSegments: dc.business.customerSegments,
-      technologyBudget: dc.technology.technologyBudget,
-      technologyBudgetShareOfRevenue: dc.business.revenue ? dc.technology.technologyBudget / dc.business.revenue : null,
-    },
+    businessEconomics,
     strategicPriorities: dc.strategy.statedPriorities,
     signals,
     contextItems: buildContextItems(dc),
