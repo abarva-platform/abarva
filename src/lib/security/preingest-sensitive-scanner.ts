@@ -198,6 +198,8 @@ function luhnPasses(raw: string): boolean {
 }
 
 function countLikelyCardNumbers(text: string): number {
-  const candidates = text.match(/\b(?:\d[ -]*?){13,19}\b/g) ?? [];
+  // A decimal component is a quantity, even when its digits pass Luhn.
+  const candidates =
+    text.match(/(?<!\d\.)\b(?:\d[ -]*?){13,19}\b(?!\.\d)/g) ?? [];
   return candidates.filter(luhnPasses).length;
 }
