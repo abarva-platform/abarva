@@ -9,9 +9,9 @@ import {
   type ArtifactFamily,
 } from "@/lib/programs/deliverables/move-artifacts";
 import { listGeneratedArtifactsForMoveAllRefs } from "@/lib/artifacts/repository";
+import { loadDeliverableSignOffByKey, type DeliverableSignOffState } from "@/lib/programs/deliverable-sign-off-readback";
 import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import {
-  getAzureReadFluentClient,
   getAzureWriteFluentClient,
 } from "@/lib/data-plane/postgresCompat";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
@@ -322,69 +322,6 @@ async function loadDecidedEvidenceReviews(
     };
   } catch {
     return unavailable;
-  }
-}
-
-interface DeliverableSignOffState {
-  deliverableId: string;
-  signedOffVersion: number | null;
-  currentVersion: number | null;
-}
-
-/**
- * Per-deliverable sign-off state from deliverables_v2, keyed by
- * deliverable_type_key. This reuses the SAME projection (columns + engagement
- * filter) that PhaseDocumentsPanel reads to render its "Signed off" badge and
- * mount DeliverableApprovalAction. The gate step's attestation ledger consumes
- * it through this route so it can show sign-off state inline rather than only
- * on /evidence. Newest row per key wins (ordered by updated_at), matching the
- * panel's dedupe intent.
- *
- * Non-fatal, but NOT silent: a read failure yields an empty map, and an empty
- * map strips the sign-off columns from every row at once, so the ledger would
- * report a phase whose documents are signed off as having no sign-off tracked
- * at all. `available` is therefore returned alongside the map so the response
- * can say which of the two it is; `gate-sign-off-readback.ts` turns that into
- * what the ledger may assert. The fluent client resolves a failed query to
- * `{ data: null, error }` rather than throwing, so `error` is the signal and
- * the surrounding `catch` covers only client construction.
- */
-async function loadDeliverableSignOffByKey(programId: string): Promise<{
-  byKey: Map<string, DeliverableSignOffState>;
-  available: boolean;
-}> {
-  const byKey = new Map<string, DeliverableSignOffState>();
-  try {
-    const sb = getAzureReadFluentClient();
-    const { data, error } = await sb
-      .from("deliverables_v2")
-      .select(
-        "id, deliverable_type_key, current_version, signed_off_version, updated_at",
-      )
-      .eq("engagement_id", programId)
-      .order("updated_at", { ascending: false });
-    if (error || !Array.isArray(data)) return { byKey, available: false };
-    for (const row of data as Array<Record<string, unknown>>) {
-      const key =
-        typeof row.deliverable_type_key === "string"
-          ? row.deliverable_type_key
-          : "";
-      // Newest-first ordering means the first row seen per key is the current
-      // one; later (older) rows for the same key are ignored.
-      if (!key || byKey.has(key)) continue;
-      byKey.set(key, {
-        deliverableId: String(row.id ?? ""),
-        signedOffVersion:
-          typeof row.signed_off_version === "number"
-            ? row.signed_off_version
-            : null,
-        currentVersion:
-          typeof row.current_version === "number" ? row.current_version : null,
-      });
-    }
-    return { byKey, available: true };
-  } catch {
-    return { byKey, available: false };
   }
 }
 

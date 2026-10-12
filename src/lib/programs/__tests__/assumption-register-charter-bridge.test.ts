@@ -283,6 +283,34 @@ describe("bridgeCharterAssumptions", () => {
     expect(outcome).toMatchObject({ status: "ok", created: 0 });
   });
 
+  it("reuses the page register read and returns the same rows for the step page", async () => {
+    const existing = [scopeRow()];
+    const onRows = jest.fn();
+    const outcome = await bridgeCharterAssumptions({
+      ctx,
+      programId: MOVE_ID,
+      modules,
+      write: false,
+      records: existing,
+      onRows,
+    });
+    expect(mockList).not.toHaveBeenCalled();
+    expect(onRows).toHaveBeenCalledWith(existing);
+    expect(outcome).toMatchObject({ status: "ok", created: 0 });
+  });
+
+  it("preserves a failed shared register read as unavailable", async () => {
+    const outcome = await bridgeCharterAssumptions({
+      ctx,
+      programId: MOVE_ID,
+      modules,
+      write: false,
+      records: null,
+    });
+    expect(mockList).not.toHaveBeenCalled();
+    expect(outcome).toEqual({ status: "unavailable" });
+  });
+
   it("writes only the missing section", async () => {
     mockList.mockResolvedValue([scopeRow()]);
     mockUpsert.mockResolvedValue({
