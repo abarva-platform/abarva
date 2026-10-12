@@ -1,0 +1,12 @@
+{
+  "contract_version": "tower-registered-intake-identity/v1",
+  "aggregate_spend_metric": {
+    "object_key": "modeled_annual_it_spend_usd",
+    "object_type": "metric",
+    "source_file": "08_spend_value.csv",
+    "source_field": "annual_spend_usd",
+    "grain": "one aggregate across registered category rows",
+    "basis": "one_source_modeled_annual_planning_estimate",
+    "separate_category_object_rule": "requires_declared_business_id"
+  }
+}

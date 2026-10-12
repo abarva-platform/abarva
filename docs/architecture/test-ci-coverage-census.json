@@ -19,9 +19,9 @@
   ],
   "counts": {
     "testFiles": 2995,
-    "coveredTestFiles": 2828,
-    "pullRequestCoveredTestFiles": 2828,
-    "uncoveredTestFiles": 167,
+    "coveredTestFiles": 2829,
+    "pullRequestCoveredTestFiles": 2829,
+    "uncoveredTestFiles": 166,
     "directoriesWithTests": 525,
     "directoriesFullyCovered": 455,
     "directoriesPartiallyCovered": 27,
@@ -29,14 +29,14 @@
     "directoriesWithUnrunTestFiles": 70,
     "directoriesWithUntriagedUnrunTestFiles": 59,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 115,
+    "untriagedUnrunTestFiles": 114,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 1,
     "unclassifiedRiskDirectories": 58,
-    "rankedDirectories": 2,
-    "rankedUntriagedUnrunTestFiles": 23,
+    "rankedDirectories": 1,
+    "rankedUntriagedUnrunTestFiles": 21,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 52,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
@@ -358,9 +358,9 @@
     {
       "directory": "src/components/agent-answer/__tests__",
       "testFiles": 4,
-      "coveredTestFiles": 2,
+      "coveredTestFiles": 3,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
+      "untriagedUnrunTestFiles": 1,
       "via": [
         "command"
       ]
@@ -1246,31 +1246,11 @@
         "productSourceCount": 29,
         "rank": 1
       }
-    },
-    {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "verdictHeldUntriagedUnrunTestFiles": 1,
-      "drawableUnrunTestFiles": 1,
-      "drawableTestPaths": [
-        "src/components/agent-answer/__tests__/ModelAuthoredExhibits.test.tsx"
-      ],
-      "admittedBy": "untriaged_unrun_work",
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4,
-        "rank": 2
-      }
     }
   ],
   "triageVerdicts": {
     "heldUntriagedUnrunTestFiles": 112,
-    "drawableUntriagedUnrunTestFiles": 3,
+    "drawableUntriagedUnrunTestFiles": 2,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 36,
       "real": 1,
@@ -2710,19 +2690,6 @@
       }
     },
     {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 2,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 2,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4
-      }
-    },
-    {
       "directory": "src/lib/source/contract-evidence/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 2,
@@ -2734,6 +2701,19 @@
         "signals": [
           "tenant_scoped_read"
         ],
+        "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/components/agent-answer/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
         "productSourceCount": 4
       }
     },

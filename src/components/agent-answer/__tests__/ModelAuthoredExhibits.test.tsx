@@ -93,10 +93,10 @@ it("renders authored qualitative tradeoffs with their evidence caveat and no num
   });
   const { container } = render(<ModelAuthoredExhibits answer={answer} />);
   expect(
-    container.querySelector('[data-chart-renderer="categorical-matrix"]'),
+    container.querySelector('[data-chart-renderer="svg-matrix"]'),
   ).not.toBeNull();
-  expect(screen.getByText("Assist")).toBeTruthy();
-  expect(screen.getByText("reason: Needs economics")).toBeTruthy();
+  expect(screen.getAllByText("Assist")).toHaveLength(2);
+  expect(screen.getByText("Needs economics")).toBeTruthy();
   expect(
     screen.getByText("Advisory judgment; validate before investment"),
   ).toBeTruthy();
